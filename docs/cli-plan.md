@@ -20,8 +20,8 @@ The architecture consists of:
 
 **Key Design Decision**: All todo data will be stored on Walrus, with the Sui blockchain maintaining only references to the data. This ensures true decentralization of user data.
 
-### 2.2 Project Structure
-
+### 2.2 Project Structure 
+Sprint 1 
 ```
 sui-todo-cli/
 ├── src/
@@ -48,7 +48,7 @@ sui-todo-cli/
 ## 3. CLI Interface Design
 
 ### 3.1 Core Todo Management Commands
-
+Sprint 1
 ```
 # Creating and managing todo items
 waltodo create --name <list-name>                   - Create a new todo list (stored on Walrus)
@@ -62,7 +62,7 @@ waltodo add --list <list-name> --task <description> [options]  - Add a new todo 
 ```
 
 ### 3.2 List and Item Management Commands
-
+Sprint 1
 ```
 # Viewing and modifying todos
 waltodo list [--list <list-name>] [options]         - List all todos
@@ -79,7 +79,7 @@ waltodo delete --list <list-name> --id <id>            - Delete a todo item
 ```
 
 ### 3.3 Blockchain and Sharing Commands
-
+Sprint 1
 ```
 # Blockchain operations
 waltodo publish --list <list-name>                    - Publish list to blockchain
@@ -88,7 +88,7 @@ waltodo share --list <list-name> --recipient <address> - Share a todo list
 ```
 
 ### 3.4 Configuration Commands
-
+Sprint 1
 ```
 # Configuration and account
 waltodo configure                    - Set up blockchain connection and wallet settings
@@ -99,7 +99,7 @@ waltodo network [name]               - Switch between devnet, testnet, and mainn
 ## 4. Technical Implementation
 
 ### 4.1 Development Environment Setup
-
+Sprint 1
 #### Prerequisites
 
 - Node.js (v16+)
@@ -148,7 +148,7 @@ The `tsconfig.json` should include:
 The foundation of our design is storing all todo data in the Walrus decentralized storage:
 
 #### Storing Todo Content
-
+Sprint 1
 ```typescript
 // Store all todo content in Walrus
 async function storeInWalrus(todoData: object) {
@@ -163,7 +163,7 @@ async function storeInWalrus(todoData: object) {
 ```
 
 #### Retrieving Todo Content
-
+Sprint 1
 ```typescript
 // Retrieve todo content from Walrus
 async function retrieveFromWalrus(dataId: string) {
@@ -180,7 +180,7 @@ async function retrieveFromWalrus(dataId: string) {
 ```
 
 ### 4.3 Blockchain Integration
-
+Sprint 1
 #### Connecting to Sui Network
 
 ```typescript
@@ -193,7 +193,7 @@ const client = new SuiClient({
 ```
 
 #### Wallet Management
-
+Sprint 1
 ```typescript
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromB64 } from '@mysten/sui/utils';
@@ -208,7 +208,7 @@ const address = keypair.getPublicKey().toSuiAddress();
 ```
 
 #### Transaction Handling
-
+Sprint 1
 ```typescript
 // Example: Calling the smart contract to add a todo
 const tx = new TransactionBlock();
@@ -241,7 +241,7 @@ const result = await client.signAndExecuteTransactionBlock({
 ```
 
 ### 4.4 Smart Contract Architecture
-
+Sprint 1
 ```move
 module todo_list {
     use sui::object::{Self, UID};
@@ -272,7 +272,7 @@ module todo_list {
 ```
 
 ### 4.5 Command Implementation
-
+Sprint 1
 ```typescript
 // Command: waltodo add --list "My Tasks" --task "Buy groceries"
 async function addTodo(listName: string, description: string, options: any) {
@@ -316,7 +316,7 @@ async function addTodo(listName: string, description: string, options: any) {
 ## 5. User Experience Enhancements
 
 ### 5.1 Interactive Prompts
-
+Sprint 2
 ```typescript
 import inquirer from 'inquirer';
 
@@ -342,7 +342,7 @@ async function interactiveAddTodo() {
 ```
 
 ### 5.2 Progress Indicators
-
+Sprint 2
 ```typescript
 import ora from 'ora';
 
@@ -360,7 +360,7 @@ async function executeWithSpinner(transactionPromise, message) {
 ```
 
 ## 6. Collaborative Features
-
+Sprint 2
 ### 6.1 Shared Object Fundamentals
 
 Sui's architecture provides four distinct ownership models:
@@ -378,7 +378,7 @@ Unlike owned objects that bypass consensus, shared object transactions require s
 Where T represents transactions modifying the shared todo list. This linearizability guarantee prevents race conditions in collaborative editing.
 
 ### 6.2 Capability-Based Access Control
-
+Sprint 2
 In the context of Sui and Move programming, "capabilities" refers to a design pattern that implements access control through dedicated objects rather than direct address-based permissions. A capability is essentially a token of authority that grants its holder the right to perform specific actions.
 
 #### Key Characteristics of Capabilities
@@ -411,7 +411,7 @@ struct AdminCapability has key {
 ```
 
 #### Capability Flow
-
+Sprint 2
 1. **Creation**: When a user creates a todo list, they automatically receive the primary capabilities:
 
 ```move
