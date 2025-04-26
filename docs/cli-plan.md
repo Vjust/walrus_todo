@@ -227,7 +227,7 @@ const walrusBlobId = await walrusClient.store(JSON.stringify(todoData));
 
 // Only store the reference to the data in the blockchain
 tx.moveCall({
-  target: `${packageId}::todo_list::add_todo_reference`,
+  target: `${packageId}::wal_todo::add_todo_reference`,
   arguments: [
     tx.pure(listId),
     tx.pure(walrusBlobId) // Reference to complete data stored in Walrus
@@ -243,7 +243,7 @@ const result = await client.signAndExecuteTransactionBlock({
 ### 4.4 Smart Contract Architecture
 Sprint 1
 ```move
-module todo_list {
+module wal_todo {
     use sui::object::{Self, UID};
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
@@ -296,7 +296,7 @@ async function addTodo(listName: string, description: string, options: any) {
   // Construct transaction to call smart contract - only storing the reference
   const tx = new TransactionBlock();
   tx.moveCall({
-    target: `${packageId}::todo_list::add_todo_reference`,
+    target: `${packageId}::wal_todo::add_todo_reference`,
     arguments: [
       tx.object(listId),
       tx.pure(walrusBlobId)
@@ -488,7 +488,7 @@ public fun revoke_capability(
 ### 6.3 Collaborative Contract Architecture
 
 ```move
-module todo_list::collaborative {
+module wal_todo::collaborative {
     use sui::object::{Self, UID};
     use sui::dynamic_field;
     use sui::tx_context::{Self, TxContext};

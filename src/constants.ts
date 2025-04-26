@@ -29,6 +29,14 @@ export const TIME_PERIODS = {
 } as const;
 
 // Sui Package Config for smart contract
+export const DEFAULT_MODULE_NAME = 'wal_todo';
+export const DEFAULT_PACKAGE_CONFIG = {
+  // Default testnet package ID - this should be updated after contract deployment
+  TESTNET_ID: '0x0', // Replace with actual testnet package ID after deployment
+  MAINNET_ID: '0x0', // Replace with actual mainnet package ID after deployment
+  MODULE: DEFAULT_MODULE_NAME
+} as const;
+
 // Temporarily bypass the PACKAGE_ID check to allow the program to run without it.
 // This will be implemented later as per user instructions.
 if (!process.env.PACKAGE_ID) {
@@ -44,7 +52,7 @@ if (!process.env.MODULE_NAME) {
 
 export const PACKAGE_CONFIG = {
   ID: process.env.PACKAGE_ID,
-  MODULE: process.env.MODULE_NAME || 'todo_list'
+  MODULE: process.env.MODULE_NAME || DEFAULT_MODULE_NAME
 } as const;
 
 // CLI specific constants
