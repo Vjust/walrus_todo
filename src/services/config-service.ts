@@ -1,7 +1,18 @@
+/**
+ * Configuration Service
+ * Handles local configuration and private todo storage
+ * Manages user preferences and local-only todo items
+ */
+
 import fs from 'fs';
 import path from 'path';
 import { Config, Todo, TodoList } from '../types';
+import { CLI_CONFIG, CURRENT_NETWORK } from '../constants';
 
+/**
+ * Manages application configuration and local storage
+ * Provides methods for handling private todos and user settings
+ */
 export class ConfigService {
   private configPath: string;
   private localDataPath: string;
@@ -9,23 +20,36 @@ export class ConfigService {
 
   constructor() {
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    this.configPath = path.join(homeDir, '.waltodo.json');
+    this.configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
     this.localDataPath = path.join(homeDir, '.waltodo-data.json');
     this.config = this.loadConfig();
   }
 
+  /**
+   * Loads configuration from disk
+   * Creates default configuration if none exists
+   * @returns Config object with application settings
+   */
   private loadConfig(): Config {
     try {
       if (fs.existsSync(this.configPath)) {
         const configData = fs.readFileSync(this.configPath, 'utf-8');
-        return JSON.parse(configData);
+        const savedConfig = JSON.parse(configData);
+        
+        // Always use the environment variable network if it exists
+        if (process.env.NETWORK) {
+          savedConfig.network = CURRENT_NETWORK;
+        }
+        
+        return savedConfig;
       }
     } catch (error) {
       console.error('Error loading config:', error);
     }
 
+    // Return default config with network from environment variable
     return {
-      network: 'devnet'
+      network: CURRENT_NETWORK
     };
   }
 
@@ -103,6 +127,24 @@ export class ConfigService {
     data[listName].todos = data[listName].todos.filter(t => t.id !== todoId);
     await this.saveLocalData(data);
   }
+
+  /**
+   * Get a specific todo item by ID from local storage
+   * @param todoId - ID of the todo to retrieve
+   * @returns Promise<Todo | null> - The retrieved todo or null if not found
+   */
+  public async getLocalTodoById(todoId: string): Promise<Todo | null> {
+    const data = await this.loadLocalData();
+    
+    // Search through all lists for the todo with matching ID
+    for (const listName in data) {
+      const todo = data[listName].todos.find(t => t.id === todoId);
+      if (todo) return todo;
+    }
+    
+    return null;
+  }
 }
 
+// Singleton instance
 export const configService = new ConfigService();

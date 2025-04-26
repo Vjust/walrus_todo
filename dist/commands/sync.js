@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Sync Command Module
+ * Synchronizes local state with blockchain
+ * Handles conflict resolution and merging
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,6 +12,10 @@ exports.sync = sync;
 const chalk_1 = __importDefault(require("chalk"));
 const sui_service_1 = require("../services/sui-service");
 const walrus_service_1 = require("../services/walrus-service");
+/**
+ * Synchronizes local state with blockchain
+ * @param options - Command line options for syncing
+ */
 async function sync(options) {
     try {
         const { list } = options;

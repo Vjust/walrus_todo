@@ -1,5 +1,5 @@
 export type Priority = 'high' | 'medium' | 'low';
-export type Network = 'devnet' | 'testnet' | 'mainnet';
+export type Network = 'testnet' | 'mainnet';
 
 export interface Todo {
   id: string;
@@ -27,4 +27,5 @@ export interface Config {
   network: Network;
   walletAddress?: string;
   privateKey?: string;
+  owner?: string;
 }

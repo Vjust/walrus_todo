@@ -1,14 +1,28 @@
+/**
+ * List Command Module
+ * Displays todo items with filtering and formatting options
+ * Supports both local and Walrus storage items
+ */
+
 import chalk from 'chalk';
 import { walrusService } from '../services/walrus-service';
 import { formatTodoOutput } from '../utils';
 import { Todo } from '../types';
 
+/**
+ * Interface for list command options
+ * @interface ListOptions
+ */
 interface ListOptions {
   list?: string;
   completed?: boolean;
   pending?: boolean;
 }
 
+/**
+ * Lists todo items based on provided filters
+ * @param options - Command line options for listing todos
+ */
 export async function list(options: ListOptions): Promise<void> {
   try {
     const todoList = options.list 

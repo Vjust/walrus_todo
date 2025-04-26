@@ -1,12 +1,25 @@
+/**
+ * Complete Command Module
+ * Handles marking todo items as completed
+ * Updates both local and blockchain state
+ */
+
 import chalk from 'chalk';
 import { walrusService } from '../services/walrus-service';
-import { Todo } from '../types';
 
+/**
+ * Interface for complete command options
+ * @interface CompleteOptions
+ */
 interface CompleteOptions {
   list: string;
   id: string;
 }
 
+/**
+ * Marks a todo item as completed
+ * @param options - Command line options for completing todo
+ */
 export async function complete(options: CompleteOptions): Promise<void> {
   try {
     const { list, id } = options;

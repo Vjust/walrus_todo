@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * List Command Module
+ * Displays todo items with filtering and formatting options
+ * Supports both local and Walrus storage items
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,6 +12,10 @@ exports.list = list;
 const chalk_1 = __importDefault(require("chalk"));
 const walrus_service_1 = require("../services/walrus-service");
 const utils_1 = require("../utils");
+/**
+ * Lists todo items based on provided filters
+ * @param options - Command line options for listing todos
+ */
 async function list(options) {
     try {
         const todoList = options.list

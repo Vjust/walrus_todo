@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Configuration Service
+ * Handles local configuration and private todo storage
+ * Manages user preferences and local-only todo items
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -6,6 +11,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.configService = exports.ConfigService = void 0;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+/**
+ * Manages application configuration and local storage
+ * Provides methods for handling private todos and user settings
+ */
 class ConfigService {
     constructor() {
         const homeDir = process.env.HOME || process.env.USERPROFILE || '';
@@ -13,6 +22,11 @@ class ConfigService {
         this.localDataPath = path_1.default.join(homeDir, '.waltodo-data.json');
         this.config = this.loadConfig();
     }
+    /**
+     * Loads configuration from disk
+     * Creates default configuration if none exists
+     * @returns Config object with application settings
+     */
     loadConfig() {
         try {
             if (fs_1.default.existsSync(this.configPath)) {
@@ -99,4 +113,5 @@ class ConfigService {
     }
 }
 exports.ConfigService = ConfigService;
+// Singleton instance
 exports.configService = new ConfigService();

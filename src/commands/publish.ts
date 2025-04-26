@@ -1,11 +1,25 @@
+/**
+ * Publish Command Module
+ * Handles publishing todo lists to blockchain
+ * Manages encryption and transaction submission
+ */
+
 import chalk from 'chalk';
 import { suiService } from '../services/sui-service';
 import { walrusService } from '../services/walrus-service';
 
+/**
+ * Interface for publish command options
+ * @interface PublishOptions
+ */
 interface PublishOptions {
   list: string;
 }
 
+/**
+ * Publishes a todo list to the blockchain
+ * @param options - Command line options for publishing
+ */
 export async function publish(options: PublishOptions): Promise<void> {
   try {
     const { list } = options;

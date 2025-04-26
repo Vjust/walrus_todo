@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Delete Command Module
+ * Handles removal of todo items
+ * Supports deletion from both local and Walrus storage
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,6 +12,10 @@ exports.deleteTodo = deleteTodo;
 const chalk_1 = __importDefault(require("chalk"));
 const prompts_1 = require("@inquirer/prompts");
 const walrus_service_1 = require("../services/walrus-service");
+/**
+ * Deletes a todo item with optional confirmation
+ * @param options - Command line options for deleting todo
+ */
 async function deleteTodo(options) {
     try {
         const { list, id, force } = options;
