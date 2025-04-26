@@ -1,11 +1,25 @@
+/**
+ * Sync Command Module
+ * Synchronizes local state with blockchain
+ * Handles conflict resolution and merging
+ */
+
 import chalk from 'chalk';
 import { suiService } from '../services/sui-service';
 import { walrusService } from '../services/walrus-service';
 
+/**
+ * Interface for sync command options
+ * @interface SyncOptions
+ */
 interface SyncOptions {
   list: string;
 }
 
+/**
+ * Synchronizes local state with blockchain
+ * @param options - Command line options for syncing
+ */
 export async function sync(options: SyncOptions): Promise<void> {
   try {
     const { list } = options;

@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Complete Command Module
+ * Handles marking todo items as completed
+ * Updates both local and blockchain state
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -6,6 +11,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.complete = complete;
 const chalk_1 = __importDefault(require("chalk"));
 const walrus_service_1 = require("../services/walrus-service");
+/**
+ * Marks a todo item as completed
+ * @param options - Command line options for completing todo
+ */
 async function complete(options) {
     try {
         const { list, id } = options;

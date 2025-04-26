@@ -1,9 +1,19 @@
+/**
+ * Update Command Module
+ * Handles modifications to existing todo items
+ * Supports updating both local and Walrus-stored items
+ */
+
 import { input, select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { walrusService } from '../services/walrus-service';
 import { validateDate, validatePriority } from '../utils';
 import { Todo } from '../types';
 
+/**
+ * Interface for update command options
+ * @interface UpdateOptions
+ */
 interface UpdateOptions {
   list: string;
   id: string;
@@ -13,7 +23,11 @@ interface UpdateOptions {
   tags?: string;
 }
 
-export async function update(options: UpdateOptions) {
+/**
+ * Updates an existing todo item
+ * @param options - Command line options for updating todo
+ */
+export async function update(options: UpdateOptions): Promise<void> {
   try {
     const { list, id } = options;
     const todoList = await walrusService.getTodoList(list);

@@ -1,15 +1,25 @@
+/**
+ * Configure Command Module
+ * Handles wallet and blockchain connection setup
+ * Manages authentication and encryption settings
+ */
+
 import { select, input, confirm } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { Config, Network } from '../types';
 import { configService } from '../services/config-service';
+import { SUPPORTED_NETWORKS } from '../constants';
 
-export async function configure() {
+/**
+ * Configures blockchain connection and wallet settings
+ * Handles interactive configuration process
+ */
+export async function configure(): Promise<void> {
   try {
     // Select network
     const network = await select<Network>({
       message: 'Select network:',
       choices: [
-        { value: 'devnet', name: 'Devnet' },
         { value: 'testnet', name: 'Testnet' },
         { value: 'mainnet', name: 'Mainnet' }
       ]

@@ -1,3 +1,9 @@
+/**
+ * Sui Blockchain Service
+ * Handles interaction with Sui blockchain
+ * Manages smart contract calls and transaction submission
+ */
+
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
@@ -7,6 +13,10 @@ import { configService } from './config-service';
 import { NETWORK_URLS, PACKAGE_CONFIG } from '../constants';
 import { TodoList } from '../types';
 
+/**
+ * Manages blockchain operations for todo lists
+ * Handles transaction submission and state synchronization
+ */
 class SuiService {
   private client: SuiClient;
 
@@ -23,6 +33,12 @@ class SuiService {
     return Ed25519Keypair.fromSecretKey(fromB64(config.privateKey));
   }
 
+  /**
+   * Publishes a todo list to the blockchain
+   * @param listName - Name of the todo list
+   * @param todoList - Todo list data to publish
+   * @returns Promise<void>
+   */
   public async publishList(listName: string, todoList: TodoList): Promise<void> {
     const tx = new Transaction();
     
@@ -46,6 +62,11 @@ class SuiService {
     });
   }
 
+  /**
+   * Retrieves todo list state from blockchain
+   * @param listName - Name of the todo list
+   * @returns Promise<TodoList | null>
+   */
   public async getListState(listName: string): Promise<TodoList | null> {
     const config = configService.getConfig();
     
@@ -114,4 +135,5 @@ class SuiService {
   }
 }
 
+// Singleton instance
 export const suiService = new SuiService();

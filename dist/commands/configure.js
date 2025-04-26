@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Configure Command Module
+ * Handles wallet and blockchain connection setup
+ * Manages authentication and encryption settings
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,6 +12,10 @@ exports.configure = configure;
 const prompts_1 = require("@inquirer/prompts");
 const chalk_1 = __importDefault(require("chalk"));
 const config_service_1 = require("../services/config-service");
+/**
+ * Configures blockchain connection and wallet settings
+ * Handles interactive configuration process
+ */
 async function configure() {
     try {
         // Select network

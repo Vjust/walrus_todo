@@ -47,3 +47,39 @@ export function validateDate(date: string): boolean {
 export function validatePriority(priority: string): boolean {
   return ['high', 'medium', 'low'].includes(priority.toLowerCase());
 }
+
+/**
+ * Utility to retry an async operation with exponential backoff
+ * 
+ * @param operation - The async operation to retry
+ * @param maxRetries - Maximum number of retry attempts
+ * @param baseDelay - Base delay in milliseconds between retries
+ * @returns The result of the operation
+ */
+export async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      console.warn(`Operation failed (attempt ${attempt + 1}/${maxRetries}):`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Calculate exponential backoff delay
+      const delay = baseDelay * Math.pow(2, attempt);
+      // Add some jitter to prevent multiple retries happening at exactly the same time
+      const jitter = Math.random() * 100;
+      
+      // Wait before next attempt
+      await new Promise(resolve => setTimeout(resolve, delay + jitter));
+    }
+  }
+  
+  // If we've reached this point, all retries failed
+  throw lastError || new Error('Operation failed after maximum retry attempts');
+}

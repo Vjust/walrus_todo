@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 "use strict";
+/**
+ * Main CLI application entry point for Walrus Todo
+ * Implements a command-line interface using Commander.js for managing todos
+ * with Sui blockchain and Walrus storage integration
+ */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -40,11 +45,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = require("commander");
 const chalk_1 = __importDefault(require("chalk"));
 const constants_1 = require("./constants");
+// Initialize the main CLI program
 const program = new commander_1.Command();
+// Set up basic CLI metadata
 program
     .name(constants_1.CLI_CONFIG.APP_NAME)
     .description('A CLI todo application using Sui blockchain and Walrus storage')
     .version(constants_1.CLI_CONFIG.VERSION);
+/**
+ * Command: add
+ * Adds a new todo item with optional encryption and privacy settings
+ * Options:
+ * - list: Target todo list name
+ * - task: Todo item description
+ * - priority: Priority level (high/medium/low)
+ * - due: Due date in YYYY-MM-DD format
+ * - tags: Comma-separated tags
+ * - encrypt: Enable Seal protocol encryption
+ * - private: Store locally without blockchain sync
+ */
 program
     .command('add')
     .description('Add a new todo item')
@@ -64,6 +83,15 @@ program
         console.error(chalk_1.default.red('Error adding todo:'), error);
     }
 });
+/**
+ * Command: list
+ * Displays todos with various filtering options
+ * Options:
+ * - list: Filter by specific list name
+ * - completed: Show only completed items
+ * - pending: Show only pending items
+ * - encrypted: Show encrypted items (requires auth)
+ */
 program
     .command('list')
     .description('List all todos')
@@ -80,6 +108,18 @@ program
         console.error(chalk_1.default.red('Error listing todos:'), error);
     }
 });
+/**
+ * Command: update
+ * Updates existing todo items
+ * Required Options:
+ * - list: Todo list name
+ * - id: Todo item identifier
+ * Optional Options:
+ * - task: New description
+ * - priority: New priority level
+ * - due: New due date
+ * - tags: New tags
+ */
 program
     .command('update')
     .description('Update a todo item')
@@ -98,6 +138,13 @@ program
         console.error(chalk_1.default.red('Error updating todo:'), error);
     }
 });
+/**
+ * Command: complete
+ * Marks a todo item as completed
+ * Required Options:
+ * - list: Todo list name
+ * - id: Todo item identifier
+ */
 program
     .command('complete')
     .description('Mark a todo as complete')
@@ -112,6 +159,15 @@ program
         console.error(chalk_1.default.red('Error completing todo:'), error);
     }
 });
+/**
+ * Command: delete
+ * Removes a todo item
+ * Required Options:
+ * - list: Todo list name
+ * - id: Todo item identifier
+ * Optional:
+ * - force: Skip deletion confirmation
+ */
 program
     .command('delete')
     .description('Delete a todo item')
@@ -127,6 +183,11 @@ program
         console.error(chalk_1.default.red('Error deleting todo:'), error);
     }
 });
+/**
+ * Command: configure
+ * Sets up blockchain connection and wallet configuration
+ * No options required - interactive prompt based
+ */
 program
     .command('configure')
     .description('Configure blockchain connection and wallet settings')
@@ -139,6 +200,12 @@ program
         console.error(chalk_1.default.red('Error configuring:'), error);
     }
 });
+/**
+ * Command: publish
+ * Publishes a local todo list to the blockchain
+ * Required Options:
+ * - list: Todo list name to publish
+ */
 program
     .command('publish')
     .description('Publish list to blockchain')
@@ -152,6 +219,12 @@ program
         console.error(chalk_1.default.red('Error publishing list:'), error);
     }
 });
+/**
+ * Command: sync
+ * Synchronizes local state with blockchain
+ * Required Options:
+ * - list: Todo list name to sync
+ */
 program
     .command('sync')
     .description('Sync with blockchain state')

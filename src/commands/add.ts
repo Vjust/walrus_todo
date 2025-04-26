@@ -1,3 +1,9 @@
+/**
+ * Add Command Module
+ * Handles the creation and storage of new todo items
+ * Supports both local and Walrus storage with encryption options
+ */
+
 import { input } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { configService } from '../services/config-service';
@@ -5,6 +11,10 @@ import { walrusService } from '../services/walrus-service';
 import { generateId } from '../utils';
 import { Todo } from '../types';
 
+/**
+ * Interface defining the possible options for adding a todo item
+ * @interface AddOptions
+ */
 interface AddOptions {
   list?: string;
   task?: string;
@@ -15,6 +25,14 @@ interface AddOptions {
   private?: boolean; 
 }
 
+/**
+ * Adds a new todo item to either local storage or Walrus storage
+ * Handles interactive prompts if required options are not provided
+ * Supports encryption and private storage options
+ * 
+ * @param options - Command line options for adding a todo
+ * @throws Will throw an error if storage operations fail
+ */
 export async function add(options: AddOptions): Promise<void> {
   try {
     // Get list name if not provided
@@ -29,7 +47,7 @@ export async function add(options: AddOptions): Promise<void> {
       validate: (input) => input.length > 0
     });
 
-    // Create todo data
+    // Create todo data with metadata
     const todo: Todo = {
       id: generateId(),
       description,
@@ -43,15 +61,15 @@ export async function add(options: AddOptions): Promise<void> {
       walrusBlobId: ''
     };
 
-    // Store in Walrus if not private
+    // Handle storage based on privacy setting
     if (!todo.private) {
       const blobId = await walrusService.storeTodo(listName, todo);
       todo.walrusBlobId = blobId;
     } else {
-
       await configService.saveLocalTodo(listName, todo);
     }
 
+    // Provide user feedback
     console.log(chalk.green('✔ Todo added successfully'));
     console.log(chalk.dim('List:'), listName);
     console.log(chalk.dim('Task:'), description);

@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Publish Command Module
+ * Handles publishing todo lists to blockchain
+ * Manages encryption and transaction submission
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,6 +12,10 @@ exports.publish = publish;
 const chalk_1 = __importDefault(require("chalk"));
 const sui_service_1 = require("../services/sui-service");
 const walrus_service_1 = require("../services/walrus-service");
+/**
+ * Publishes a todo list to the blockchain
+ * @param options - Command line options for publishing
+ */
 async function publish(options) {
     try {
         const { list } = options;

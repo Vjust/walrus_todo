@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Sui Blockchain Service
+ * Handles interaction with Sui blockchain
+ * Manages smart contract calls and transaction submission
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.suiService = void 0;
 const ed25519_1 = require("@mysten/sui/keypairs/ed25519");
@@ -8,6 +13,10 @@ const bcs_1 = require("@mysten/sui/bcs");
 const utils_1 = require("@mysten/sui/utils");
 const config_service_1 = require("./config-service");
 const constants_1 = require("../constants");
+/**
+ * Manages blockchain operations for todo lists
+ * Handles transaction submission and state synchronization
+ */
 class SuiService {
     constructor() {
         const config = config_service_1.configService.getConfig();
@@ -20,6 +29,12 @@ class SuiService {
         }
         return ed25519_1.Ed25519Keypair.fromSecretKey((0, utils_1.fromB64)(config.privateKey));
     }
+    /**
+     * Publishes a todo list to the blockchain
+     * @param listName - Name of the todo list
+     * @param todoList - Todo list data to publish
+     * @returns Promise<void>
+     */
     async publishList(listName, todoList) {
         const tx = new transactions_1.Transaction();
         // Create new todo list on chain with references to Walrus blobs
@@ -40,6 +55,11 @@ class SuiService {
             }
         });
     }
+    /**
+     * Retrieves todo list state from blockchain
+     * @param listName - Name of the todo list
+     * @returns Promise<TodoList | null>
+     */
     async getListState(listName) {
         const config = config_service_1.configService.getConfig();
         try {
@@ -101,4 +121,5 @@ class SuiService {
         });
     }
 }
+// Singleton instance
 exports.suiService = new SuiService();

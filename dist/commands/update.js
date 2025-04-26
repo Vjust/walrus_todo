@@ -1,4 +1,9 @@
 "use strict";
+/**
+ * Update Command Module
+ * Handles modifications to existing todo items
+ * Supports updating both local and Walrus-stored items
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,6 +12,10 @@ exports.update = update;
 const chalk_1 = __importDefault(require("chalk"));
 const walrus_service_1 = require("../services/walrus-service");
 const utils_1 = require("../utils");
+/**
+ * Updates an existing todo item
+ * @param options - Command line options for updating todo
+ */
 async function update(options) {
     try {
         const { list, id } = options;

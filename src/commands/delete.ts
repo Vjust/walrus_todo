@@ -1,14 +1,28 @@
+/**
+ * Delete Command Module
+ * Handles removal of todo items
+ * Supports deletion from both local and Walrus storage
+ */
+
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { walrusService } from '../services/walrus-service';
 
+/**
+ * Interface for delete command options
+ * @interface DeleteOptions
+ */
 interface DeleteOptions {
   list: string;
   id: string;
   force?: boolean;
 }
 
-export async function deleteTodo(options: DeleteOptions) {
+/**
+ * Deletes a todo item with optional confirmation
+ * @param options - Command line options for deleting todo
+ */
+export async function deleteTodo(options: DeleteOptions): Promise<void> {
   try {
     const { list, id, force } = options;
 
