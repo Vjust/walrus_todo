@@ -4,16 +4,18 @@
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
   "main": "dist/index.js",
   "bin": {
-    "waltodo": "./dist/index.js"
+    "waltodo": "bin/waltodo"
   },
   "scripts": {
+    "prestart": "chmod +x ./bin/waltodo",
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist",
     "prepare": "npm run clean && npm run build",
     "link": "npm link",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "chmod +x ./bin/waltodo"
   },
   "keywords": [
     "cli",

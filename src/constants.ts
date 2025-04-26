@@ -29,13 +29,15 @@ export const TIME_PERIODS = {
 } as const;
 
 // Sui Package Config for smart contract
-// Ensure the package ID is set in the environment variables
+// Temporarily bypass the PACKAGE_ID check to allow the program to run without it.
+// This will be implemented later as per user instructions.
 if (!process.env.PACKAGE_ID) {
-  throw new Error('PACKAGE_ID environment variable is not set. Please set it to the Sui package ID.');
+  console.warn('Warning: PACKAGE_ID environment variable is not set. This will be implemented later.');
 }
-// Ensure the module name is set in the environment variables
+// Temporarily bypass the MODULE_NAME check to allow the program to run without it.
+// This will be implemented later as per user instructions.
 if (!process.env.MODULE_NAME) {
-  throw new Error('MODULE_NAME environment variable is not set. Please set it to the Sui module name.');
+  console.warn('Warning: MODULE_NAME environment variable is not set. This will be implemented later.');
 }
 // Sui package ID and module name
 // These are used to interact with the smart contract
