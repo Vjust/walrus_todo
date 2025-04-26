@@ -25,7 +25,7 @@ This will prompt you to:
 
 ### Add a todo
 ```bash
-waltodo add -l "my-list" -t "Buy groceries" -p high --tags "shopping,errands" -d "2025-05-01"
+waltodo add -l "my-list" -t "Buy groceries" -p high --tags "shopping,errands" -d "2025-05-01" [--encrypt] [--private]
 ```
 
 Options:
@@ -34,7 +34,8 @@ Options:
 - `-p, --priority`: Priority level (high/medium/low)
 - `-d, --due`: Due date (YYYY-MM-DD)
 - `--tags`: Comma-separated tags
-- `--encrypt`: Encrypt this todo item
+- `--encrypt`: Encrypt this todo item using the Seal protocol
+- `--private`: Mark todo as private (stored locally only)
 
 ### List todos
 ```bash
@@ -78,6 +79,45 @@ Options:
 - `-i, --id`: ID of the todo
 - `-f, --force`: Skip confirmation prompt
 
+### Publish a list to blockchain
+```bash
+waltodo publish -l "my-list"
+```
+
+Options:
+- `-l, --list`: Name of the todo list to publish
+
+### Sync with blockchain
+```bash
+waltodo sync -l "my-list"
+```
+
+Options:
+- `-l, --list`: Name of the todo list to synchronize
+
+### Share a list
+```bash
+waltodo share -l "my-list" --recipient "0x123...abc"
+```
+
+Options:
+- `-l, --list`: Name of the todo list to share
+- `--recipient`: Sui address of the recipient
+
+### View account information
+```bash
+waltodo account
+```
+
+### Switch network
+```bash
+waltodo network [testnet|mainnet]
+```
+
 ## Storage
 
-Tasks are stored using Walrus storage for data persistence and the Sui blockchain for decentralized access control.
+Tasks are stored using Walrus storage for data persistence and the Sui blockchain for decentralized access control. Private todos are stored locally only, while shared todos leverage blockchain capabilities for collaborative management.
+
+## Encryption
+
+Sensitive todos can be encrypted using the Seal protocol, ensuring that only authorized users can view their contents.
