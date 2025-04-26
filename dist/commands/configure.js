@@ -22,7 +22,6 @@ async function configure() {
         const network = await (0, prompts_1.select)({
             message: 'Select network:',
             choices: [
-                { value: 'devnet', name: 'Devnet' },
                 { value: 'testnet', name: 'Testnet' },
                 { value: 'mainnet', name: 'Mainnet' }
             ]
