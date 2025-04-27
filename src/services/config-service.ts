@@ -15,14 +15,40 @@ import { CLI_CONFIG, CURRENT_NETWORK } from '../constants';
  */
 export class ConfigService {
   private configPath: string;
-  private localDataPath: string;
+  private todosPath: string;
   private config: Config;
 
   constructor() {
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     this.configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
-    this.localDataPath = path.join(homeDir, '.waltodo-data.json');
+    
+    // Always use absolute path from current directory for Todos folder
+    this.todosPath = path.resolve(process.cwd(), 'Todos');
+    
     this.config = this.loadConfig();
+    this.ensureTodosDirectory();
+  }
+
+  /**
+   * Ensures the todos directory exists
+   */
+  private ensureTodosDirectory(): void {
+    try {
+      if (!fs.existsSync(this.todosPath)) {
+        fs.mkdirSync(this.todosPath, { recursive: true });
+        console.log(`Created Todos directory at: ${this.todosPath}`);
+      }
+    } catch (error) {
+      console.error('Error creating Todos directory:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Gets the path for a specific todo list file
+   */
+  private getListPath(listName: string): string {
+    return path.join(this.todosPath, `${listName}.json`);
   }
 
   /**
@@ -67,37 +93,50 @@ export class ConfigService {
     }
   }
 
-  // Handle local-only private todos
-  private async loadLocalData(): Promise<Record<string, TodoList>> {
+  // Handle local todos in todos directory
+  private async loadListData(listName: string): Promise<TodoList | null> {
+    const listPath = this.getListPath(listName);
     try {
-      if (fs.existsSync(this.localDataPath)) {
-        const data = await fs.promises.readFile(this.localDataPath, 'utf-8');
+      if (fs.existsSync(listPath)) {
+        const data = await fs.promises.readFile(listPath, 'utf-8');
         return JSON.parse(data);
       }
     } catch (error) {
-      console.error('Error loading local data:', error);
+      console.error(`Error loading todo list ${listName}:`, error);
     }
-    return {};
+    return null;
   }
 
-  private async saveLocalData(data: Record<string, TodoList>): Promise<void> {
+  public async saveListData(listName: string, list: TodoList): Promise<void> {
+    const listPath = this.getListPath(listName);
     try {
-      await fs.promises.writeFile(this.localDataPath, JSON.stringify(data, null, 2));
+      await fs.promises.writeFile(listPath, JSON.stringify(list, null, 2));
     } catch (error) {
-      console.error('Error saving local data:', error);
+      console.error(`Error saving todo list ${listName}:`, error);
       throw error;
     }
   }
 
   public async getLocalTodos(listName: string): Promise<TodoList | null> {
-    const data = await this.loadLocalData();
-    return data[listName] || null;
+    return this.loadListData(listName);
+  }
+
+  public async getAllLists(): Promise<string[]> {
+    try {
+      const files = await fs.promises.readdir(this.todosPath);
+      return files
+        .filter(file => file.endsWith('.json'))
+        .map(file => file.replace('.json', ''));
+    } catch (error) {
+      console.error('Error reading todo lists:', error);
+      return [];
+    }
   }
 
   public async saveLocalTodo(listName: string, todo: Todo): Promise<void> {
-    const data = await this.loadLocalData();
-    if (!data[listName]) {
-      data[listName] = {
+    let list = await this.loadListData(listName);
+    if (!list) {
+      list = {
         id: listName,
         name: listName,
         owner: this.config.walletAddress || 'local',
@@ -105,43 +144,50 @@ export class ConfigService {
         version: 1
       };
     }
-    data[listName].todos.push(todo);
-    await this.saveLocalData(data);
+    list.todos.push(todo);
+    await this.saveListData(listName, list);
   }
 
   public async updateLocalTodo(listName: string, todo: Todo): Promise<void> {
-    const data = await this.loadLocalData();
-    if (!data[listName]) return;
+    const list = await this.loadListData(listName);
+    if (!list) return;
     
-    const index = data[listName].todos.findIndex(t => t.id === todo.id);
+    const index = list.todos.findIndex(t => t.id === todo.id);
     if (index !== -1) {
-      data[listName].todos[index] = todo;
-      await this.saveLocalData(data);
+      list.todos[index] = todo;
+      await this.saveListData(listName, list);
     }
   }
 
   public async deleteLocalTodo(listName: string, todoId: string): Promise<void> {
-    const data = await this.loadLocalData();
-    if (!data[listName]) return;
+    const list = await this.loadListData(listName);
+    if (!list) return;
     
-    data[listName].todos = data[listName].todos.filter(t => t.id !== todoId);
-    await this.saveLocalData(data);
+    list.todos = list.todos.filter(t => t.id !== todoId);
+    await this.saveListData(listName, list);
   }
 
-  /**
-   * Get a specific todo item by ID from local storage
-   * @param todoId - ID of the todo to retrieve
-   * @returns Promise<Todo | null> - The retrieved todo or null if not found
-   */
-  public async getLocalTodoById(todoId: string): Promise<Todo | null> {
-    const data = await this.loadLocalData();
-    
-    // Search through all lists for the todo with matching ID
-    for (const listName in data) {
-      const todo = data[listName].todos.find(t => t.id === todoId);
-      if (todo) return todo;
+  public async deleteList(listName: string): Promise<void> {
+    const listPath = this.getListPath(listName);
+    try {
+      if (fs.existsSync(listPath)) {
+        await fs.promises.unlink(listPath);
+      }
+    } catch (error) {
+      console.error(`Error deleting list ${listName}:`, error);
+      throw error;
     }
-    
+  }
+
+  public async getLocalTodoById(todoId: string): Promise<Todo | null> {
+    const lists = await this.getAllLists();
+    for (const listName of lists) {
+      const list = await this.loadListData(listName);
+      if (list) {
+        const todo = list.todos.find(t => t.id === todoId);
+        if (todo) return todo;
+      }
+    }
     return null;
   }
 }

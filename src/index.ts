@@ -19,6 +19,9 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { CLI_CONFIG } from './constants';
+import { setupListCommand } from './commands/list';
+import { setupCheckCommands } from './commands/check';
+import { handleError, CLIError } from './utils/error-handler';
 
 /**
  * Initialize the main CLI program
@@ -34,9 +37,30 @@ const program = new Command();
  * - version: Current version, displayed with --version flag
  */
 program
-  .name(CLI_CONFIG.APP_NAME)
-  .description('A CLI todo application using Sui blockchain and Walrus storage')
-  .version(CLI_CONFIG.VERSION);
+  .version('1.0.0')
+  .description('Waltodo CLI - A blockchain-based todo manager');
+
+/**
+ * Input validation functions
+ * - validatePriority: Ensures the priority is one of the allowed values
+ * - validateDate: Ensures the date is in the correct format
+ */
+function validatePriority(value: string): string {
+  const valid = ['high', 'medium', 'low'];
+  const normalized = value.toLowerCase();
+  if (!valid.includes(normalized)) {
+    throw new CLIError(`Invalid priority level: ${value}`, 'INVALID_PRIORITY');
+  }
+  return normalized;
+}
+
+function validateDate(value: string): string {
+  const date = new Date(value);
+  if (isNaN(date.getTime()) || !value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    throw new CLIError(`Invalid date format: ${value}. Use YYYY-MM-DD format.`, 'INVALID_DATE');
+  }
+  return value;
+}
 
 /**
  * Command: add
@@ -56,27 +80,44 @@ program
  * - tags: Comma-separated tags
  * - encrypt: Enable Seal protocol encryption
  * - private: Store locally without blockchain sync
+ * - test: Mark todo as test (stored locally only)
  */
 program
   .command('add')
-  .description('Add a new todo item')
+  .description('Add new todo(s) to a list')
+  .argument('[listName]', 'name of the todo list')
   .option('-l, --list <name>', 'name of the todo list')
-  .option('-t, --task <description>', 'task description')
-  .option('-p, --priority <level>', 'priority level (high|medium|low)')
-  .option('-d, --due <date>', 'due date (YYYY-MM-DD)')
+  .option('-t, --task <description>', 'task description (can be used multiple times)', collect, [])
+  .option('-p, --priority <level>', 'priority level (high|medium|low)', validatePriority)
+  .option('-d, --due <date>', 'due date (YYYY-MM-DD)', validateDate)
   .option('--tags <tags>', 'comma-separated tags')
   .option('--encrypt', 'encrypt this todo item using the Seal protocol')
   .option('--private', 'mark todo as private (stored locally only)')
-  .action(async (options) => {
+  .option('--test', 'mark todo as test (stored locally only)')
+  .action(async (listName, options) => {
     try {
-      // Dynamic import avoids loading all command modules at startup
-      // This improves performance for large applications
+      // Validate required inputs
+      if (listName) {
+        options.list = listName;
+      }
+      if (!options.list) {
+        throw new CLIError('List name is required', 'MISSING_LIST');
+      }
+      if (!options.task || options.task.length === 0) {
+        throw new CLIError('At least one task is required', 'NO_TASKS');
+      }
+
       const { add } = await import('./commands/add');
       await add(options);
     } catch (error) {
-      console.error(chalk.red('Error adding todo:'), error);
+      handleError(error);
     }
   });
+
+// Helper function to collect multiple values for an option
+function collect(value: string, previous: string[]) {
+  return previous.concat([value]);
+}
 
 /**
  * Command: list
@@ -93,21 +134,7 @@ program
  * - pending: Show only pending items
  * - encrypted: Show encrypted items (requires auth)
  */
-program
-  .command('list')
-  .description('List all todos')
-  .option('-l, --list <name>', 'filter by list name')
-  .option('--completed', 'show only completed items')
-  .option('--pending', 'show only pending items')
-  .option('--encrypted', 'show encrypted items (requires authentication)')
-  .action(async (options) => {
-    try {
-      const { list } = await import('./commands/list');
-      await list(options);
-    } catch (error) {
-      console.error(chalk.red('Error listing todos:'), error);
-    }
-  });
+setupListCommand(program);
 
 /**
  * Command: update
@@ -135,15 +162,15 @@ program
   .requiredOption('-l, --list <name>', 'name of the todo list')
   .requiredOption('-i, --id <id>', 'id of the todo')
   .option('-t, --task <description>', 'new task description')
-  .option('-p, --priority <level>', 'new priority level (high|medium|low)')
-  .option('-d, --due <date>', 'new due date (YYYY-MM-DD)')
+  .option('-p, --priority <level>', 'new priority level (high|medium|low)', validatePriority)
+  .option('-d, --due <date>', 'new due date (YYYY-MM-DD)', validateDate)
   .option('--tags <tags>', 'new comma-separated tags')
   .action(async (options) => {
     try {
       const { update } = await import('./commands/update');
       await update(options);
     } catch (error) {
-      console.error(chalk.red('Error updating todo:'), error);
+      handleError(error);
     }
   });
 
@@ -170,7 +197,22 @@ program
       const { complete } = await import('./commands/complete');
       await complete(options);
     } catch (error) {
-      console.error(chalk.red('Error completing todo:'), error);
+      handleError(error);
+    }
+  });
+
+program
+  .command('check')
+  .description('Toggle completion status of a todo item')
+  .requiredOption('-l, --list <name>', 'name of the todo list')
+  .requiredOption('-i, --id <id>', 'id of the todo')
+  .option('--uncheck', 'uncheck instead of check')
+  .action(async (options) => {
+    try {
+      const { check } = await import('./commands/check');
+      await check(options);
+    } catch (error) {
+      handleError(error);
     }
   });
 
@@ -192,16 +234,16 @@ program
  */
 program
   .command('delete')
-  .description('Delete a todo item')
+  .description('Delete a todo item or list')
   .requiredOption('-l, --list <name>', 'name of the todo list')
-  .requiredOption('-i, --id <id>', 'id of the todo')
+  .option('-i, --id <id>', 'id of the todo (if not provided, deletes entire list)')
   .option('-f, --force', 'skip confirmation prompt')
   .action(async (options) => {
     try {
       const { deleteTodo } = await import('./commands/delete');
       await deleteTodo(options);
     } catch (error) {
-      console.error(chalk.red('Error deleting todo:'), error);
+      handleError(error);
     }
   });
 
@@ -225,7 +267,7 @@ program
       const { configure } = await import('./commands/configure');
       await configure();
     } catch (error) {
-      console.error(chalk.red('Error configuring:'), error);
+      handleError(error);
     }
   });
 
@@ -251,7 +293,7 @@ program
       const { publish } = await import('./commands/publish');
       await publish(options);
     } catch (error) {
-      console.error(chalk.red('Error publishing list:'), error);
+      handleError(error);
     }
   });
 
@@ -277,14 +319,42 @@ program
       const { sync } = await import('./commands/sync');
       await sync(options);
     } catch (error) {
-      console.error(chalk.red('Error syncing:'), error);
+      handleError(error);
     }
   });
 
-/**
- * Parse and execute commands
- * This must be the last line in the file
- * Commander.js will read the process.argv array and route to the appropriate command handler
- * If no matching command is found, the help text will be displayed
- */
-program.parse();
+setupCheckCommands(program);
+
+// Handle errors in option parsing
+program.showHelpAfterError();
+program.showSuggestionAfterError();
+
+// Handle unknown commands
+program.on('command:*', () => {
+  handleError(new Error('Unknown command'));
+});
+
+// Handle validation errors from Commander.js
+program.on('option:*', () => {
+  const error = program.error;
+  if (error) {
+    handleError(error);
+  }
+});
+
+// Add error handler for all commands
+program.exitOverride((error) => {
+  handleError(error);
+});
+
+// Parse and execute commands
+try {
+  program.parse(process.argv);
+
+  // Show help if no command is provided
+  if (!process.argv.slice(2).length) {
+    program.outputHelp();
+  }
+} catch (error: unknown) {
+  handleError(error);
+}

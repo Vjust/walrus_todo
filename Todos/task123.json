@@ -1,0 +1,47 @@
+{
+  "id": "task123",
+  "name": "task123",
+  "owner": "local",
+  "todos": [
+    {
+      "id": "m9zzdwf7h3kzhohl3ut",
+      "task": "one",
+      "priority": "high",
+      "tags": [],
+      "createdAt": "2025-04-27T18:26:42.403Z",
+      "updatedAt": "2025-04-27T18:26:42.403Z",
+      "completed": false,
+      "private": false,
+      "isEncrypted": false,
+      "isTest": false,
+      "walrusBlobId": "blob-m9zzdwf7h3kzhohl3ut-1745778402403"
+    },
+    {
+      "id": "m9zzdwf89s3wp8ddzkw",
+      "task": "two",
+      "priority": "high",
+      "tags": [],
+      "createdAt": "2025-04-27T18:26:42.404Z",
+      "updatedAt": "2025-04-27T18:26:42.404Z",
+      "completed": false,
+      "private": false,
+      "isEncrypted": false,
+      "isTest": false,
+      "walrusBlobId": "blob-m9zzdwf89s3wp8ddzkw-1745778402404"
+    },
+    {
+      "id": "m9zzdwf8og5g983pvk",
+      "task": "3",
+      "priority": "high",
+      "tags": [],
+      "createdAt": "2025-04-27T18:26:42.404Z",
+      "updatedAt": "2025-04-27T18:26:42.404Z",
+      "completed": false,
+      "private": false,
+      "isEncrypted": false,
+      "isTest": false,
+      "walrusBlobId": "blob-m9zzdwf8og5g983pvk-1745778402404"
+    }
+  ],
+  "version": 1
+}

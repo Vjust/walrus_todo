@@ -17,7 +17,7 @@ import { Todo } from '../types';
 interface UpdateOptions {
   list: string;
   id: string;
-  description?: string;
+  task?: string;
   priority?: string;
   due?: string;
   tags?: string;
@@ -43,9 +43,9 @@ export async function update(options: UpdateOptions): Promise<void> {
       process.exit(1);
     }
 
-    // Update description if provided or prompted
-    if (options.description) {
-      todo.description = options.description;
+    // Update task if provided or prompted
+    if (options.task) {
+      todo.task = options.task;
     }
 
     // Update priority if provided or prompted
@@ -75,6 +75,7 @@ export async function update(options: UpdateOptions): Promise<void> {
     console.log(chalk.green('✔ Todo updated successfully'));
     console.log(chalk.dim('List:'), list);
     console.log(chalk.dim('ID:'), id);
+    console.log(chalk.dim('Task:'), todo.task); // Changed from todo.description
 
   } catch (error) {
     console.error(chalk.red('Failed to update todo:'), error);

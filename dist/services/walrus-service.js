@@ -9,6 +9,7 @@ exports.walrusService = void 0;
 const walrus_1 = require("@mysten/walrus");
 const client_1 = require("@mysten/sui/client");
 const config_service_1 = require("./config-service");
+const sui_service_1 = require("./sui-service");
 const utils_1 = require("../utils");
 const constants_1 = require("../constants");
 /**
@@ -17,26 +18,25 @@ const constants_1 = require("../constants");
  */
 class WalrusService {
     constructor() {
+        this.initialized = false;
+        if (!process.env.PACKAGE_ID || !process.env.MODULE_NAME) {
+            this.initialized = false;
+            return;
+        }
+        this.initialized = true;
         const config = config_service_1.configService.getConfig();
-        // Initialize SuiClient first, required for WalrusClient
-        // Use network from environment variables (via constants) with fallback to config
         const network = constants_1.CURRENT_NETWORK || config.network;
-        // Get appropriate RPC URL for the selected network
         const rpcUrl = constants_1.NETWORK_URLS[network] || (0, client_1.getFullnodeUrl)(network);
-        this.suiClient = new client_1.SuiClient({
-            url: rpcUrl,
-        });
-        // Initialize WalrusClient with the SuiClient instance
+        this.suiClient = new client_1.SuiClient({ url: rpcUrl });
+        const walrusNetwork = (network === 'testnet' || network === 'mainnet') ? network : 'testnet';
         this.walrusClient = new walrus_1.WalrusClient({
-            network: network,
+            network: walrusNetwork,
             suiClient: this.suiClient,
-            // Optional custom error handling
             storageNodeClientOptions: {
                 onError: (error) => console.error('Walrus error:', error),
-                timeout: 30000, // 30 seconds timeout
+                timeout: 30000,
             },
         });
-        console.log(`Walrus client initialized for network: ${network}`);
     }
     async encryptData(data) {
         // Convert JSON to Uint8Array (we'll implement proper encryption later)
@@ -50,14 +50,14 @@ class WalrusService {
     }
     /**
      * Stores a todo item in Walrus storage
-     * @param listName - Name of the todo list
+     * @param listId - Name of the todo list
      * @param todo - Todo item to store
      * @returns Promise<string> - Blob ID of stored todo
      */
     async storeTodo(listId, todo) {
         try {
-            // Handle private todos separately using local storage
-            if (todo.private) {
+            // Handle test or private todos using local storage
+            if (todo.isTest || todo.private) {
                 await config_service_1.configService.saveLocalTodo(listId, todo);
                 return `local-${todo.id}`;
             }
@@ -120,50 +120,23 @@ class WalrusService {
      * @returns Promise<TodoList | null>
      */
     async getTodoList(listId) {
+        if (!this.initialized) {
+            return null;
+        }
         try {
-            // First, get list metadata (stored as a separate blob)
-            const listMetadataBlobId = `${listId}_metadata`;
-            let listMetadata = null;
-            try {
-                // Try to read the list metadata
-                const metadataBlob = await this.walrusClient.readBlob({ blobId: listMetadataBlobId });
-                if (metadataBlob) {
-                    listMetadata = await this.decryptData(metadataBlob);
-                }
-            }
-            catch (error) {
-                console.warn(`No metadata found for list ${listId}, creating new list.`);
-            }
-            // Get local private todos
+            // First check local storage
             const localList = await config_service_1.configService.getLocalTodos(listId);
-            const localTodos = localList?.todos || [];
-            // Initialize the list structure
-            const todoList = {
-                id: listId,
-                name: listId, // We can update this if we find metadata
-                owner: config_service_1.configService.getConfig().owner || 'current-user',
-                todos: [...localTodos.filter(todo => todo.private)],
-                version: 1
-            };
-            // If we have metadata, fetch all todos by their IDs
-            if (listMetadata && listMetadata.todoIds && listMetadata.todoIds.length > 0) {
-                const fetchPromises = listMetadata.todoIds.map(async (todoId) => {
-                    try {
-                        const todo = await this.getTodo(todoId);
-                        return todo;
-                    }
-                    catch (error) {
-                        console.warn(`Failed to retrieve todo with ID ${todoId}:`, error);
-                        return null;
-                    }
-                });
-                // Wait for all todos to be fetched
-                const fetchedTodos = await Promise.all(fetchPromises);
-                // Add all non-null, non-private todos to the list
-                todoList.todos.push(...fetchedTodos
-                    .filter((todo) => todo !== null && !todo.private));
+            if (localList) {
+                return localList;
             }
-            return todoList;
+            // If no local list is found, try the blockchain
+            const onChainList = await sui_service_1.suiService.getListState(listId);
+            if (onChainList) {
+                // Save to local storage for future access
+                await config_service_1.configService.saveListData(listId, onChainList);
+                return onChainList;
+            }
+            return null;
         }
         catch (error) {
             console.error('Error retrieving todo list:', error);
