@@ -29,9 +29,9 @@ async function update(options) {
             console.error(chalk_1.default.red(`Todo with id '${id}' not found`));
             process.exit(1);
         }
-        // Update description if provided or prompted
-        if (options.description) {
-            todo.description = options.description;
+        // Update task if provided or prompted
+        if (options.task) {
+            todo.task = options.task;
         }
         // Update priority if provided or prompted
         if (options.priority) {
@@ -57,6 +57,7 @@ async function update(options) {
         console.log(chalk_1.default.green('✔ Todo updated successfully'));
         console.log(chalk_1.default.dim('List:'), list);
         console.log(chalk_1.default.dim('ID:'), id);
+        console.log(chalk_1.default.dim('Task:'), todo.task); // Changed from todo.description
     }
     catch (error) {
         console.error(chalk_1.default.red('Failed to update todo:'), error);

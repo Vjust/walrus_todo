@@ -1,0 +1,21 @@
+{
+  "id": "Testing list",
+  "name": "Testing list",
+  "owner": "local",
+  "todos": [
+    {
+      "id": "m9zypj9mskae6jbkzg7",
+      "task": "Test",
+      "priority": "medium",
+      "tags": [],
+      "createdAt": "2025-04-27T18:07:45.610Z",
+      "updatedAt": "2025-04-27T18:07:45.610Z",
+      "completed": false,
+      "private": false,
+      "isEncrypted": false,
+      "isTest": false,
+      "walrusBlobId": "blob-m9zypj9mskae6jbkzg7-1745777265610"
+    }
+  ],
+  "version": 1
+}

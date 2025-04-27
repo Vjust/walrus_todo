@@ -32,7 +32,7 @@ async function complete(options) {
         await walrus_service_1.walrusService.updateTodo(list, todo);
         console.log(chalk_1.default.green(`✔ Marked todo ${id} as complete`));
         console.log(chalk_1.default.dim('List:'), list);
-        console.log(chalk_1.default.dim('Task:'), todo.description);
+        console.log(chalk_1.default.dim('Task:'), todo.task);
     }
     catch (error) {
         console.error(chalk_1.default.red('Failed to complete todo:'), error);

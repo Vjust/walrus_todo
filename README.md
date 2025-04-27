@@ -23,101 +23,132 @@ This will prompt you to:
 
 ## Usage
 
-### Add a todo
+### Add todos
+Add one or more todos to a list:
+
 ```bash
-waltodo add -l "my-list" -t "Buy groceries" -p high --tags "shopping,errands" -d "2025-05-01" [--encrypt] [--private]
+# Add a single todo
+waltodo add "my-list" -t "Buy groceries" -p high --tags "shopping,errands" -d "2025-05-01"
+
+# Add multiple todos at once
+waltodo add "shopping-list" -t "Buy milk" -t "Buy eggs" -t "Buy bread" -p high
 ```
 
 Options:
-- `-l, --list`: Name of the todo list
-- `-t, --task`: Task description
+- First argument or `--list, -l`: Name of the todo list (required)
+- `-t, --task`: Task description (required, can be used multiple times)
 - `-p, --priority`: Priority level (high/medium/low)
-- `-d, --due`: Due date (YYYY-MM-DD)
+- `-d, --due`: Due date (YYYY-MM-DD format)
 - `--tags`: Comma-separated tags
-- `--encrypt`: Encrypt this todo item using the Seal protocol
-- `--private`: Mark todo as private (stored locally only)
+- `--encrypt`: Encrypt these todo items using the Seal protocol
+- `--private`: Mark todos as private (stored locally only)
+- `--test`: Mark todos as test items (stored locally only)
+
+Validation:
+- Priority must be one of: high, medium, low (case insensitive)
+- Due date must be in YYYY-MM-DD format
+- List name and at least one task are required
 
 ### List todos
 ```bash
-waltodo list -l "my-list" [--completed|--pending]
+waltodo list              # List all todo lists
+waltodo list "my-list"    # Show tasks in a specific list
 ```
 
 Options:
-- `-l, --list`: Filter by list name
+- `[listName]`: Optional name of list to display
 - `--completed`: Show only completed items
 - `--pending`: Show only pending items
+- `--encrypted`: Show encrypted items (requires authentication)
 
-### Complete a todo
-```bash
-waltodo complete -l "my-list" -i "todo-id"
-```
-
-Options:
-- `-l, --list`: Name of the todo list
-- `-i, --id`: ID of the todo
-
-### Update a todo
+### Update todos
 ```bash
 waltodo update -l "my-list" -i "todo-id" [-t "New description"] [-p "high"] [-d "2025-05-01"] [--tags "updated,tags"]
 ```
 
-Options:
+Required Options:
 - `-l, --list`: Name of the todo list
 - `-i, --id`: ID of the todo
+
+Optional Updates:
 - `-t, --task`: New task description
-- `-p, --priority`: New priority level
-- `-d, --due`: New due date
+- `-p, --priority`: New priority level (high/medium/low)
+- `-d, --due`: New due date (YYYY-MM-DD)
 - `--tags`: New comma-separated tags
 
-### Delete a todo
+### Complete todos
 ```bash
-waltodo delete -l "my-list" -i "todo-id" [-f]
+waltodo complete -l "my-list" -i "todo-id"
 ```
 
-Options:
+Required Options:
 - `-l, --list`: Name of the todo list
 - `-i, --id`: ID of the todo
-- `-f, --force`: Skip confirmation prompt
 
-### Publish a list to blockchain
+### Check/Uncheck todos
 ```bash
-waltodo publish -l "my-list"
+# Check a todo
+waltodo check -l "my-list" -i "todo-id"
+
+# Uncheck a todo
+waltodo uncheck -l "my-list" -i "todo-id"
 ```
 
-Options:
-- `-l, --list`: Name of the todo list to publish
-
-### Sync with blockchain
-```bash
-waltodo sync -l "my-list"
-```
-
-Options:
-- `-l, --list`: Name of the todo list to synchronize
-
-### Share a list
-```bash
-waltodo share -l "my-list" --recipient "0x123...abc"
-```
-
-Options:
-- `-l, --list`: Name of the todo list to share
-- `--recipient`: Sui address of the recipient
-
-### View account information
-```bash
-waltodo account
-```
-
-### Switch network
-```bash
-waltodo network [testnet|mainnet]
-```
+Required Options:
+- `-l, --list`: Name of the todo list
+- `-i, --id`: ID of the todo
 
 ## Storage
 
-Tasks are stored using Walrus storage for data persistence and the Sui blockchain for decentralized access control. Private todos are stored locally only, while shared todos leverage blockchain capabilities for collaborative management.
+Todo lists are stored in JSON files in the `Todos` directory, with each list having its own file (e.g., `Todos/my-list.json`).
 
-## Encryption
+Storage behavior depends on the todo type:
+- Regular todos: Synchronized with both Walrus storage and Sui blockchain
+- Private todos: Stored only in local files
+- Test todos: Stored only in local files
+- Encrypted todos: Stored encrypted in Walrus storage with Seal protocol
 
-Sensitive todos can be encrypted using the Seal protocol, ensuring that only authorized users can view their contents.
+### Storage Locations
+- Local todos: `./Todos/*.json` files
+- Configuration: `~/.waltodo.json`
+- Blockchain: Sui network (references only)
+- Decentralized Storage: Walrus protocol (encrypted todo data)
+
+## Error Handling
+
+The CLI provides detailed error messages for common issues:
+- Invalid priority levels
+- Incorrect date formats
+- Missing required fields
+- Authentication failures
+- Network connectivity issues
+
+Each error includes:
+- A descriptive message explaining the issue
+- An error code for troubleshooting
+- Suggested solutions where applicable
+
+## Dependencies
+
+The CLI uses the following key dependencies:
+- @mysten/sui: ^1.28.2 - Sui blockchain integration
+- @mysten/walrus: latest - Walrus storage protocol
+- commander: ^11.1.0 - CLI framework
+- chalk: ^4.1.2 - Terminal styling
+- inquirer: ^8.2.5 - Interactive prompts
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Start in development mode
+npm run dev
+
+# Create symlink for local testing
+npm link
+```

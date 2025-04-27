@@ -41,7 +41,7 @@ export async function complete(options: CompleteOptions): Promise<void> {
     
     console.log(chalk.green(`✔ Marked todo ${id} as complete`));
     console.log(chalk.dim('List:'), list);
-    console.log(chalk.dim('Task:'), todo.description);
+    console.log(chalk.dim('Task:'), todo.task);
 
   } catch (error) {
     console.error(chalk.red('Failed to complete todo:'), error);
