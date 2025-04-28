@@ -21,116 +21,38 @@ export class CLIError extends Error {
 }
 
 /**
- * Centralized error handler for consistent error display and handling
- * 
- * @param {any} error - The error to handle
- * @returns {void}
+ * Centralized error handler for the application
+ * Formats and displays different types of errors appropriately
+ * @param error Error object to handle
  */
-export function handleError(error: any): void {
-  // Handle Walrus storage errors
-  if (error instanceof WalrusError) {
-    console.error(chalk.red('\nStorage Error:'), error.message);
-    
-    // Check if the error has a code property (using type assertion)
-    if ((error as any).code) {
-      console.log(chalk.dim('Error Code:'), (error as any).code);
-    }
-    
-    // Add recovery suggestions based on error type
-    if (error.message.includes('network') || error.message.includes('timeout')) {
-      console.log(chalk.yellow('\nSuggestions:'));
-      console.log('• Check your internet connection');
-      console.log('• Try again later as the service might be temporarily unavailable');
-    }
-  } 
-  // Handle Sui blockchain errors
-  else if (error instanceof SuiError) {
-    console.error(chalk.red('\nBlockchain Error:'), error.message);
+export function handleError(error: unknown): void {
+  // Log the full error to console for debugging
+  console.error('Debug error:', error);
+  
+  // Handle specific error types
+  if (error instanceof SuiError) {
+    console.error(`\n❌ Sui Blockchain Error: ${error.message}`);
     if (error.txHash) {
-      console.log(chalk.dim('Transaction Hash:'), error.txHash);
+      console.error(`Transaction hash: ${error.txHash}`);
     }
-  } 
-  // Handle CLI errors
-  else if (error instanceof CLIError) {
-    console.error(chalk.red('\nError:'), error.message);
-    
-    // Add helpful suggestions based on error code
-    switch (error.code) {
-      case 'INVALID_LIST':
-        console.log(chalk.yellow('\nSuggestions:'));
-        console.log('• Check if the list name is correct');
-        console.log('• Use "waltodo list" to see all available lists');
-        console.log('• Create the list first using "waltodo add <list-name> -t <task>"');
-        break;
-      
-      case 'INVALID_TASK_ID':
-        console.log(chalk.yellow('\nSuggestions:'));
-        console.log('• Check if the task ID is correct');
-        console.log('• Use "waltodo list <list-name>" to see all tasks and their IDs');
-        break;
-      
-      case 'INVALID_PRIORITY':
-        console.log(chalk.yellow('\nSuggestions:'));
-        console.log('• Priority must be one of: high, medium, low');
-        console.log('• Example: waltodo add "my-list" -t "task" -p high');
-        break;
-      
-      case 'INVALID_DATE':
-        console.log(chalk.yellow('\nSuggestions:'));
-        console.log('• Date must be in YYYY-MM-DD format');
-        console.log('• Example: waltodo add "my-list" -t "task" -d 2024-12-31');
-        break;
-      
-      case 'NO_TASKS':
-        console.log(chalk.yellow('\nSuggestions:'));
-        console.log('• Add at least one task using -t flag');
-        console.log('• Example: waltodo add "my-list" -t "task1" -t "task2"');
-        break;
-      
-      case 'MISSING_LIST':
-        console.log(chalk.yellow('\nSuggestions:'));
-        console.log('• Specify a list name using -l flag or as first argument');
-        console.log('• Example: waltodo add "my-list" -t "task"');
-        console.log('• Or: waltodo add -l "my-list" -t "task"');
-        break;
-    }
-  } 
-  // Handle missing required flag errors
-  else if (error?.message?.includes('Missing required flag')) {
-    console.error(chalk.red('\nError:'), error.message);
-    console.log(chalk.yellow('\nExample usage:'));
-    console.log('• waltodo add -l "my-list" -t "my task"');
-    console.log('• waltodo list -l "my-list"');
-  } 
-  // Handle unknown command errors
-  else if (error?.message?.includes('Unknown command')) {
-    console.error(chalk.red('\nError: Unknown command'));
-    console.log(chalk.yellow('\nAvailable commands:'));
-    console.log('• add      - Add new todo(s)');
-    console.log('• list     - List todos or todo lists');
-    console.log('• update   - Update a todo');
-    console.log('• check    - Mark a todo as complete/incomplete');
-    console.log('• delete   - Delete a todo or list');
-    console.log('• publish  - Publish list to blockchain');
-    console.log('• sync     - Sync with blockchain');
-    console.log('• configure- Configure CLI settings');
-    console.log('\nRun "waltodo --help" for more information');
-  } 
-  // Handle unknown option errors
-  else if (error?.message?.includes('unknown option')) {
-    console.error(chalk.red('\nError:'), error.message);
-    console.log(chalk.yellow('\nUse --help to see available options'));
-  } 
-  // Handle other errors
-  else {
-    console.error(chalk.red('\nError:'), error?.message || 'An unknown error occurred');
-    console.log(chalk.yellow('\nIf this persists, try:'));
-    console.log('1. Run "waltodo configure" to check your settings');
-    console.log('2. Check your network connection');
-    console.log('3. Ensure you have proper permissions');
+    return;
   }
   
-  process.exit(1);
+  if (error instanceof WalrusError) {
+    console.error(`\n❌ Walrus Storage Error: ${error.message}`);
+    if (error.code) {
+      console.error(`Error code: ${error.code}`);
+    }
+    return;
+  }
+  
+  if (error instanceof Error) {
+    console.error(`\n❌ Error: ${error.message}`);
+    return;
+  }
+  
+  // Handle unknown error types
+  console.error('\n❌ Unknown error occurred');
 }
 
 /**

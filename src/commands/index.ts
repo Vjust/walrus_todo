@@ -1,9 +1,35 @@
-export { default as AddCommand } from './add';
-export { default as CheckCommand } from './check';
-export { default as CompleteCommand } from './complete';
-export { default as ConfigureCommand } from './configure';
-export { default as DeleteCommand } from './delete';
-export { default as ListCommand } from './list';
-export { default as PublishCommand } from './publish';
-export { default as SyncCommand } from './sync';
-export { default as UpdateCommand } from './update';
+// Export all commands
+import { createCommand } from './create';
+import { shareCommand } from './share';
+import { accountCommand } from './account';
+import { networkCommand } from './network';
+
+// Default exports
+import AddCommand from './add';
+import CheckCommand from './check';
+import CompleteCommand from './complete';
+import ConfigureCommand from './configure';
+import DeleteCommand from './delete';
+import ListCommand from './list';
+import PublishCommand from './publish';
+import SyncCommand from './sync';
+import UpdateCommand from './update';
+
+export {
+  // Default exports
+  AddCommand,
+  CheckCommand,
+  CompleteCommand,
+  ConfigureCommand,
+  DeleteCommand,
+  ListCommand,
+  PublishCommand,
+  SyncCommand,
+  UpdateCommand,
+  
+  // Named exports
+  createCommand,
+  shareCommand,
+  accountCommand,
+  networkCommand
+};
