@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import crypto from "crypto";
+import { SuiClient } from '@mysten/sui/client';
+import { NETWORK_URLS } from '../constants';
+import { Config } from '../types';
 
 type TodoItem = {
 	id: string;
@@ -30,17 +33,55 @@ export interface ISuiService {
 }
 
 /**
+ * Interface for account information returned by the service
+ */
+export interface AccountInfo {
+  address: string;
+  balance: string;
+  objects?: Array<{
+    objectId: string;
+    type: string;
+  }>;
+}
+
+/**
  * A deterministic, in‑memory implementation of the Sui service
  * for unit / integration tests.  Does *not* touch the network.
  */
 export class SuiTestService implements ISuiService {
 	private walletAddress: string;
 	private lists = new Map<string, TodoList>();
+	private client: SuiClient;
+	private config: Config;
 
-	constructor(walletAddress?: string) {
+	/**
+	 * Create a new SuiTestService instance.
+	 *  • `config`  – full Config object  
+	 *  • `string`  – wallet address, defaults network to 'testnet'  
+	 *  • omitted   – uses default dummy config (network 'testnet')
+	 */
+	constructor(config?: Config | string) {
+		// Normalise constructor argument
+		if (typeof config === 'string') {
+			this.config = {
+				network: 'testnet',
+				walletAddress: config,
+				encryptedStorage: false
+			};
+		} else if (config) {
+			this.config = config;
+		} else {
+			this.config = {
+				network: 'testnet',
+				walletAddress: '0x0',
+				encryptedStorage: false
+			};
+		}
+
+		this.client = new SuiClient({ url: NETWORK_URLS[this.config.network] });
 		// Allow overriding for multi‑user tests
 		this.walletAddress =
-			walletAddress ??
+			this.config.walletAddress ??
 			`0x${crypto.randomBytes(20).toString("hex").toLowerCase()}`;
 	}
 
@@ -96,6 +137,47 @@ export class SuiTestService implements ISuiService {
 	async deleteTodoList(listId: string): Promise<void> {
 		if (!this.lists.delete(listId)) {
 			throw new Error(`Todo list "${listId}" does not exist`);
+		}
+	}
+
+	/**
+	 * Gets account information including balance and owned objects
+	 * @returns Promise<AccountInfo> Account information object
+	 */
+	public async getAccountInfo(): Promise<AccountInfo> {
+		try {
+			// Ensure wallet address is available
+			if (!this.config.walletAddress) {
+				throw new Error('Wallet address not configured');
+			}
+
+			// Get balance information
+			const balanceResponse = await this.client.getBalance({
+				owner: this.config.walletAddress
+			});
+
+			// Get owned objects (limit to first 5 for display purposes)
+			const objectsResponse = await this.client.getOwnedObjects({
+				owner: this.config.walletAddress,
+				limit: 5
+			});
+
+			// Format objects for display
+			const objects = objectsResponse.data.map(obj => {
+				return {
+					objectId: obj.data?.objectId || 'unknown',
+					type: obj.data?.type || 'unknown'
+				};
+			});
+
+			return {
+				address: this.config.walletAddress,
+				balance: balanceResponse.totalBalance,
+				objects
+			};
+		} catch (error) {
+			console.error('Error getting account info:', error);
+			throw error;
 		}
 	}
 

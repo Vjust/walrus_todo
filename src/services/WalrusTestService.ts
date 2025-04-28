@@ -1,19 +1,83 @@
 import crypto from 'crypto';
-import { Todo, TodoList } from '../types';
+import { Todo, TodoList, WalrusBlob, WalrusClientInterface, WalrusError } from '../types';
 
 /**
- * In-memory implementation of Walrus storage service for testing
- * Does NOT make network requests or use the actual Walrus SDK
+ * Test implementation of Walrus storage service
+ * Provides mock functionality for development and testing
  */
-export class WalrusTestService {
-  // In-memory storage structure
-  private storage = new Map<string, Uint8Array>();
+export class WalrusTestService implements WalrusClientInterface {
+  private isActive: boolean = false;
+  public network: string = 'testnet';
+  private storage: Map<string, Uint8Array> = new Map();
   private metadata = new Map<string, { todoIds: string[], name?: string, version?: number }>();
   private todos = new Map<string, Todo>();
   private lists = new Map<string, TodoList>();
-  
+
   constructor() {
-    // No real initialization needed - everything stays in memory
+    this.isActive = true;
+  }
+
+  /**
+   * Check if client is connected
+   * @returns boolean Connection status
+   */
+  public isConnected(): boolean {
+    return this.isActive;
+  }
+
+  /**
+   * Connect to the Walrus service
+   */
+  public async connect(): Promise<void> {
+    this.isActive = true;
+    return Promise.resolve();
+  }
+
+  /**
+   * Disconnect from the Walrus service
+   */
+  public async disconnect(): Promise<void> {
+    this.isActive = false;
+    return Promise.resolve();
+  }
+
+  /**
+   * Write blob data to storage
+   * @param data Blob content as Uint8Array
+   * @param size Optional size parameter
+   * @param isPublic Optional public flag
+   * @returns Promise<string> Blob ID
+   */
+  public async writeBlob(data: Uint8Array, size?: number, isPublic?: boolean): Promise<string> {
+    if (!this.isActive) {
+      throw new WalrusError('Client not connected', 'CONNECTION_ERROR');
+    }
+    
+    // Generate mock blob ID
+    const blobId = `test-blob-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+    
+    // Store data in memory
+    this.storage.set(blobId, data);
+    
+    return blobId;
+  }
+
+  /**
+   * Read blob data from storage
+   * @param blobId ID of the blob to read
+   * @returns Promise<Uint8Array> Blob content
+   */
+  public async readBlob(blobId: string): Promise<Uint8Array> {
+    if (!this.isActive) {
+      throw new WalrusError('Client not connected', 'CONNECTION_ERROR');
+    }
+    
+    const data = this.storage.get(blobId);
+    if (!data) {
+      throw new WalrusError(`Blob not found: ${blobId}`, 'NOT_FOUND');
+    }
+    
+    return data;
   }
 
   /**
