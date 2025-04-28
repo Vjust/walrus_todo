@@ -4,18 +4,18 @@
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
   "main": "dist/index.js",
   "bin": {
-    "waltodo": "bin/waltodo"
+    "waltodo": "./bin/run.js"
   },
   "scripts": {
-    "prestart": "chmod +x ./bin/waltodo",
+    "prestart": "chmod +x ./bin/run.js",
     "build": "tsc",
-    "start": "ts-node src/index.ts",
+    "start": "node bin/run.js",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist",
     "prepare": "npm run clean && npm run build",
     "link": "npm link",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "chmod +x ./bin/waltodo"
+    "test": "jest",
+    "postinstall": "chmod +x ./bin/run.js"
   },
   "keywords": [
     "cli",
@@ -29,17 +29,40 @@
   "dependencies": {
     "@inquirer/prompts": "^3.0.0",
     "@mysten/sui": "^1.28.2",
-    "@mysten/sui.js": "^0.54.1",
-    "@mysten/walrus": "latest",
-    "@mysten/walrus-wasm": "latest",
+    "@oclif/core": "^3.25.2",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "dotenv": "^16.5.0",
-    "inquirer": "^8.2.5"
+    "inquirer": "^8.2.5",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@mysten/sui.js": "^0.54.1",
+    "@mysten/walrus": "^0.0.19",
+    "@types/inquirer": "^9.0.7",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.17.31",
+    "@typescript-eslint/eslint-plugin": "^8.31.0",
+    "@typescript-eslint/parser": "^8.31.0",
+    "eslint": "^9.25.1",
+    "eslint-config-prettier": "^10.1.2",
+    "jest": "^29.5.0",
+    "prettier": "^3.5.3",
+    "ts-jest": "^29.3.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.0"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json"
+  ],
+  "oclif": {
+    "bin": "waltodo",
+    "dirname": "waltodo",
+    "commands": "./dist/commands",
+    "plugins": [],
+    "topicSeparator": " "
   }
 }

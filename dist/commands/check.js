@@ -4,96 +4,62 @@
  * Toggles completion status of todo items
  * Supports both local and Walrus-stored items
  */
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.check = check;
-exports.setupCheckCommands = setupCheckCommands;
-const chalk_1 = __importDefault(require("chalk"));
-const walrus_service_1 = require("../services/walrus-service");
+const tslib_1 = require("tslib");
+const core_1 = require("@oclif/core");
+const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const todoService_1 = require("../services/todoService");
-/**
- * Toggles or sets the completion status of a todo item
- * @param options - Command line options for checking/unchecking todo
- */
-async function check(options) {
-    try {
-        const { list, id, uncheck } = options;
-        const todoList = await walrus_service_1.walrusService.getTodoList(list);
-        if (!todoList) {
-            console.error(chalk_1.default.red(`Todo list '${list}' not found`));
-            process.exit(1);
-        }
-        const todo = todoList.todos.find(t => t.id === id);
-        if (!todo) {
-            console.error(chalk_1.default.red(`Todo with id '${id}' not found`));
-            process.exit(1);
-        }
-        // Toggle or set completion status
-        todo.completed = uncheck ? false : true;
-        await walrus_service_1.walrusService.updateTodo(list, todo);
-        const status = todo.completed ? 'checked' : 'unchecked';
-        console.log(chalk_1.default.green(`✔ Marked todo as ${status}`));
-        console.log(chalk_1.default.dim('List:'), list);
-        console.log(chalk_1.default.dim('Task:'), todo.task);
-    }
-    catch (error) {
-        console.error(chalk_1.default.red('Failed to update todo status:'), error);
-        process.exit(1);
-    }
-}
-function setupCheckCommands(program) {
-    // Check command with list subcommand
-    program
-        .command('check')
-        .argument('[list]', 'list command or list name')
-        .argument('[listName]', 'name of the list')
-        .argument('[itemNumber]', 'number or ID of the item')
-        .option('--uncheck', 'uncheck instead of check')
-        .description('Check/uncheck a todo item')
-        .action(async (list, listName, itemNumber, options) => {
-        if (list === 'list') {
-            await handleCheckByNumber(listName, parseInt(itemNumber) || itemNumber, !options.uncheck);
-        }
-    });
-    // Uncheck command with list subcommand
-    program
-        .command('uncheck')
-        .argument('[list]', 'list command or list name')
-        .argument('[listName]', 'name of the list')
-        .argument('[itemNumber]', 'number or ID of the item')
-        .description('Uncheck a todo item')
-        .action(async (list, listName, itemNumber) => {
-        if (list === 'list') {
-            await handleCheckByNumber(listName, parseInt(itemNumber) || itemNumber, false);
-        }
-    });
-}
-async function handleCheckByNumber(listName, itemNumber, checked) {
-    try {
+const error_handler_1 = require("../utils/error-handler");
+const dotenv_1 = tslib_1.__importDefault(require("dotenv"));
+dotenv_1.default.config();
+class CheckCommand extends core_1.Command {
+    async run() {
+        const { args, flags } = await this.parse(CheckCommand);
         const todoService = new todoService_1.TodoService();
-        const list = await todoService.getList(listName);
-        if (!list) {
-            throw new Error(`List "${listName}" not found`);
+        try {
+            const list = await todoService.getList(args.listName);
+            if (!list) {
+                throw new error_handler_1.CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
+            }
+            const todo = list.todos.find(t => t.id === flags.id);
+            if (!todo) {
+                throw new error_handler_1.CLIError(`Todo with ID "${flags.id}" not found in list "${args.listName}"`, 'INVALID_TASK_ID');
+            }
+            todo.completed = !flags.uncheck;
+            todo.updatedAt = new Date().toISOString();
+            await todoService.saveList(args.listName, list);
+            const status = todo.completed ? chalk_1.default.green('✓') : chalk_1.default.yellow('☐');
+            console.log(`${status} Todo ${chalk_1.default.bold(todo.task)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
+            console.log(chalk_1.default.dim(`List: ${args.listName}`));
+            console.log(chalk_1.default.dim(`ID: ${flags.id}`));
         }
-        let item;
-        if (typeof itemNumber === 'number') {
-            // Use array index if number provided
-            item = list.todos[itemNumber - 1];
+        catch (error) {
+            throw error;
         }
-        else {
-            // Use item ID if string provided
-            item = list.todos.find((i) => i.id === itemNumber);
-        }
-        if (!item) {
-            throw new Error(`Item ${itemNumber} not found in list "${listName}"`);
-        }
-        await todoService.toggleItemStatus(listName, item.id, checked);
-        console.log(chalk_1.default.green(`Item ${itemNumber} ${checked ? 'checked' : 'unchecked'} ✓`));
-    }
-    catch (error) {
-        console.error(chalk_1.default.red('Error:'), error);
-        process.exit(1);
     }
 }
+CheckCommand.description = 'Mark a todo item as complete/incomplete';
+CheckCommand.examples = [
+    '<%= config.bin %> check my-list -i task-123',
+    '<%= config.bin %> check my-list -i task-123 --uncheck'
+];
+CheckCommand.flags = {
+    id: core_1.Flags.string({
+        char: 'i',
+        description: 'Todo ID',
+        required: true
+    }),
+    uncheck: core_1.Flags.boolean({
+        char: 'u',
+        description: 'Uncheck the todo instead of checking it',
+        default: false
+    })
+};
+CheckCommand.args = {
+    listName: core_1.Args.string({
+        name: 'listName',
+        description: 'Name of the todo list',
+        required: true
+    })
+};
+exports.default = CheckCommand;

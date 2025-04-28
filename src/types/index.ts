@@ -11,12 +11,14 @@ export interface Config {
   network: NetworkType;
   walletAddress?: string;
   privateKey?: string;
+  encryptedStorage: boolean;
 }
 
 // Todo types
 export interface Todo {
   id: string;
   task: string;
+  description?: string;
   completed: boolean;
   priority: 'high' | 'medium' | 'low';
   dueDate?: string;
@@ -46,6 +48,15 @@ export interface WalrusBlob {
   metadata?: Record<string, any>;
 }
 
+export interface WalrusClientInterface {
+  writeBlob: (data: Uint8Array, size?: number, isPublic?: boolean) => Promise<string>;
+  readBlob: (blobId: string) => Promise<Uint8Array>;
+  network: string;
+  isConnected: () => boolean;
+  disconnect: () => Promise<void>;
+  connect: () => Promise<void>;
+}
+
 // Smart contract types
 export interface TodoListObject {
   id: string;
@@ -58,14 +69,20 @@ export interface TodoListObject {
 
 // Error types
 export class WalrusError extends Error {
-  constructor(message: string, public code?: string) {
+  constructor(
+    message: string,
+    public code?: string
+  ) {
     super(message);
     this.name = 'WalrusError';
   }
 }
 
 export class SuiError extends Error {
-  constructor(message: string, public code?: string) {
+  constructor(
+    message: string,
+    public txHash?: string
+  ) {
     super(message);
     this.name = 'SuiError';
   }
@@ -77,3 +94,5 @@ export interface RetryOptions {
   baseDelay: number;
   maxDelay?: number;
 }
+
+export * from './todo';

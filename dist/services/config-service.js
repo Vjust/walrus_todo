@@ -4,13 +4,11 @@
  * Handles local configuration and private todo storage
  * Manages user preferences and local-only todo items
  */
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.configService = exports.ConfigService = void 0;
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
+const tslib_1 = require("tslib");
+const fs_1 = tslib_1.__importDefault(require("fs"));
+const path_1 = tslib_1.__importDefault(require("path"));
 const constants_1 = require("../constants");
 /**
  * Manages application configuration and local storage
@@ -54,21 +52,17 @@ class ConfigService {
     loadConfig() {
         try {
             if (fs_1.default.existsSync(this.configPath)) {
-                const configData = fs_1.default.readFileSync(this.configPath, 'utf-8');
-                const savedConfig = JSON.parse(configData);
-                // Always use the environment variable network if it exists
-                if (process.env.NETWORK) {
-                    savedConfig.network = constants_1.CURRENT_NETWORK;
-                }
-                return savedConfig;
+                const data = fs_1.default.readFileSync(this.configPath, 'utf8');
+                return JSON.parse(data);
             }
         }
         catch (error) {
             console.error('Error loading config:', error);
         }
-        // Return default config with network from environment variable
         return {
-            network: constants_1.CURRENT_NETWORK
+            network: 'testnet',
+            walletAddress: '',
+            encryptedStorage: false
         };
     }
     getConfig() {

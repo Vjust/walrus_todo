@@ -36,6 +36,7 @@ class SuiService {
      * @returns Promise<void>
      */
     async publishList(listName, todoList) {
+        var _a, _b;
         const tx = new transactions_1.Transaction();
         // Create new todo list on chain with references to Walrus blobs
         tx.moveCall({
@@ -47,13 +48,24 @@ class SuiService {
             ]
         });
         const keypair = this.getKeypair();
-        await this.client.signAndExecuteTransaction({
+        const result = await this.client.signAndExecuteTransaction({
             transaction: tx,
             signer: keypair,
             options: {
                 showEffects: true
             }
         });
+        if (!((_b = (_a = result.effects) === null || _a === void 0 ? void 0 : _a.gasUsed) === null || _b === void 0 ? void 0 : _b.computationCost)) {
+            throw new Error('Failed to get transaction effects');
+        }
+        return {
+            digest: result.digest,
+            effects: {
+                gasUsed: {
+                    computationCost: result.effects.gasUsed.computationCost.toString()
+                }
+            }
+        };
     }
     /**
      * Retrieves todo list state from blockchain
@@ -61,6 +73,7 @@ class SuiService {
      * @returns Promise<TodoList | null>
      */
     async getListState(listName) {
+        var _a;
         const config = config_service_1.configService.getConfig();
         try {
             // Query the blockchain for list data
@@ -80,7 +93,7 @@ class SuiService {
                     id: obj.data.objectId,
                     options: { showContent: true }
                 });
-                const content = details.data?.content;
+                const content = (_a = details.data) === null || _a === void 0 ? void 0 : _a.content;
                 if (content && 'fields' in content) {
                     const fields = content.fields;
                     if (fields.name === listName) {

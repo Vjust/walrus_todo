@@ -4,20 +4,22 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SuiError = exports.WalrusError = void 0;
+const tslib_1 = require("tslib");
 // Error types
 class WalrusError extends Error {
-    constructor(message, code) {
+    constructor(message, hint) {
         super(message);
-        this.code = code;
+        this.hint = hint;
         this.name = 'WalrusError';
     }
 }
 exports.WalrusError = WalrusError;
 class SuiError extends Error {
-    constructor(message, code) {
+    constructor(message, txHash) {
         super(message);
-        this.code = code;
+        this.txHash = txHash;
         this.name = 'SuiError';
     }
 }
 exports.SuiError = SuiError;
+tslib_1.__exportStar(require("./todo"), exports);

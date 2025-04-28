@@ -1,84 +1,123 @@
-/**
- * Update Command Module
- * Handles modifications to existing todo items
- * Supports updating both local and Walrus-stored items
- */
-
-import { input, select } from '@inquirer/prompts';
+import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
-import { walrusService } from '../services/walrus-service';
+import { TodoService } from '../services/todoService';
 import { validateDate, validatePriority } from '../utils';
-import { Todo } from '../types';
+import { Todo } from '../types/todo';
+import { CLIError } from '../utils/error-handler';
 
-/**
- * Interface for update command options
- * @interface UpdateOptions
- */
-interface UpdateOptions {
-  list: string;
-  id: string;
-  task?: string;
-  priority?: string;
-  due?: string;
-  tags?: string;
-}
+export default class UpdateCommand extends Command {
+  static description = 'Update an existing todo item';
 
-/**
- * Updates an existing todo item
- * @param options - Command line options for updating todo
- */
-export async function update(options: UpdateOptions): Promise<void> {
-  try {
-    const { list, id } = options;
-    const todoList = await walrusService.getTodoList(list);
-    
-    if (!todoList) {
-      console.error(chalk.red(`Todo list '${list}' not found`));
-      process.exit(1);
-    }
+  static examples = [
+    '<%= config.bin %> update my-list -i task-123 -t "Updated task"',
+    '<%= config.bin %> update my-list -i task-123 -p high',
+    '<%= config.bin %> update my-list -i task-123 -d 2024-05-01'
+  ];
 
-    const todo = todoList.todos.find(t => t.id === id);
-    if (!todo) {
-      console.error(chalk.red(`Todo with id '${id}' not found`));
-      process.exit(1);
-    }
+  static flags = {
+    id: Flags.string({
+      char: 'i',
+      description: 'Todo ID to update',
+      required: true
+    }),
+    task: Flags.string({
+      char: 't',
+      description: 'New task description'
+    }),
+    priority: Flags.string({
+      char: 'p',
+      description: 'New priority (high, medium, low)',
+      options: ['high', 'medium', 'low']
+    }),
+    due: Flags.string({
+      char: 'd',
+      description: 'New due date (YYYY-MM-DD)'
+    }),
+    tags: Flags.string({
+      char: 'g',
+      description: 'New comma-separated tags'
+    }),
+    private: Flags.boolean({
+      description: 'Mark todo as private'
+    })
+  };
 
-    // Update task if provided or prompted
-    if (options.task) {
-      todo.task = options.task;
-    }
+  static args = {
+    listName: Args.string({
+      name: 'listName',
+      description: 'Name of the todo list',
+      required: true
+    })
+  };
 
-    // Update priority if provided or prompted
-    if (options.priority) {
-      if (!validatePriority(options.priority)) {
-        console.error(chalk.red('Invalid priority. Must be high, medium, or low'));
-        process.exit(1);
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(UpdateCommand);
+    const todoService = new TodoService();
+
+    try {
+      const list = await todoService.getList(args.listName);
+      if (!list) {
+        throw new CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
       }
-      todo.priority = options.priority as Todo['priority'];
-    }
 
-    // Update due date if provided
-    if (options.due) {
-      if (!validateDate(options.due)) {
-        console.error(chalk.red('Invalid date format. Use YYYY-MM-DD'));
-        process.exit(1);
+      const todo = list.todos.find(t => t.id === flags.id);
+      if (!todo) {
+        throw new CLIError(`Todo with ID "${flags.id}" not found`, 'INVALID_TASK_ID');
       }
-      todo.dueDate = options.due;
+
+      let changes = 0;
+
+      // Update task if provided
+      if (flags.task) {
+        todo.task = flags.task;
+        changes++;
+      }
+
+      // Update priority if provided
+      if (flags.priority) {
+        if (!validatePriority(flags.priority)) {
+          throw new CLIError('Invalid priority. Must be high, medium, or low', 'INVALID_PRIORITY');
+        }
+        todo.priority = flags.priority as Todo['priority'];
+        changes++;
+      }
+
+      // Update due date if provided
+      if (flags.due) {
+        if (!validateDate(flags.due)) {
+          throw new CLIError('Invalid date format. Use YYYY-MM-DD', 'INVALID_DATE');
+        }
+        todo.dueDate = flags.due;
+        changes++;
+      }
+
+      // Update tags if provided
+      if (flags.tags) {
+        todo.tags = flags.tags.split(',').map(tag => tag.trim());
+        changes++;
+      }
+
+      // Update private flag if provided
+      if (flags.private !== undefined) {
+        todo.private = flags.private;
+        changes++;
+      }
+
+      if (changes === 0) {
+        console.log(chalk.yellow('No changes specified. Use -h to see available options.'));
+        return;
+      }
+
+      todo.updatedAt = new Date().toISOString();
+      await todoService.saveList(args.listName, list);
+
+      console.log(chalk.green('✓'), 'Updated todo:', chalk.bold(todo.task));
+      console.log(chalk.dim('List:'), args.listName);
+      console.log(chalk.dim('ID:'), flags.id);
+      console.log(chalk.dim(`Changes made: ${changes}`));
+
+    } catch (error) {
+      throw error;
     }
-
-    // Update tags if provided
-    if (options.tags) {
-      todo.tags = options.tags.split(',').map(tag => tag.trim());
-    }
-
-    await walrusService.updateTodo(list, todo);
-    console.log(chalk.green('✔ Todo updated successfully'));
-    console.log(chalk.dim('List:'), list);
-    console.log(chalk.dim('ID:'), id);
-    console.log(chalk.dim('Task:'), todo.task); // Changed from todo.description
-
-  } catch (error) {
-    console.error(chalk.red('Failed to update todo:'), error);
-    process.exit(1);
   }
 }

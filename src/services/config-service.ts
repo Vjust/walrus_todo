@@ -59,23 +59,17 @@ export class ConfigService {
   private loadConfig(): Config {
     try {
       if (fs.existsSync(this.configPath)) {
-        const configData = fs.readFileSync(this.configPath, 'utf-8');
-        const savedConfig = JSON.parse(configData);
-        
-        // Always use the environment variable network if it exists
-        if (process.env.NETWORK) {
-          savedConfig.network = CURRENT_NETWORK;
-        }
-        
-        return savedConfig;
+        const data = fs.readFileSync(this.configPath, 'utf8');
+        return JSON.parse(data);
       }
     } catch (error) {
       console.error('Error loading config:', error);
     }
 
-    // Return default config with network from environment variable
     return {
-      network: CURRENT_NETWORK
+      network: 'testnet',
+      walletAddress: '',
+      encryptedStorage: false
     };
   }
 

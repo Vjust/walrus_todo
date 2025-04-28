@@ -71,12 +71,11 @@ class WalrusService {
                 // This is a simplification - in a real app, you'd need proper signer, epochs, etc.
                 const mockResponse = { blobId: `blob-${todo.id}-${Date.now()}` };
                 // Uncomment the real implementation when you have proper signer and WAL tokens:
-                // return await this.walrusClient.writeBlob({
-                //   blob: blobContent,
-                //   deletable: false,
-                //   epochs: 3,
-                //   signer: keypair, // You would need to implement this
-                // });
+                // return await this.walrusClient.writeBlob(
+                //   blobContent,
+                //   undefined,
+                //   false
+                // );
                 return mockResponse;
             }, 3, 1000);
             return result.blobId;
@@ -101,7 +100,7 @@ class WalrusService {
             // Use retry with backoff for resilience to network issues
             const encryptedData = await (0, utils_1.retryWithBackoff)(async () => {
                 // Read blob from Walrus storage using the official SDK
-                return await this.walrusClient.readBlob({ blobId });
+                return await this.walrusClient.readBlob(blobId);
             }, 3, 1000);
             if (!encryptedData)
                 return null;
@@ -166,12 +165,11 @@ class WalrusService {
                 // Mock implementation for now
                 const mockResponse = { blobId: `blob-${todo.id}-${Date.now()}` };
                 // Uncomment the real implementation when you have proper signer and WAL tokens:
-                // return await this.walrusClient.writeBlob({
-                //   blob: blobContent,
-                //   deletable: false,
-                //   epochs: 3,
-                //   signer: keypair, // You would need to implement this
-                // });
+                // return await this.walrusClient.writeBlob(
+                //   blobContent,
+                //   undefined,
+                //   false
+                // );
                 return mockResponse;
             }, 3, 1000);
             const blobId = result.blobId;
@@ -180,7 +178,7 @@ class WalrusService {
             const listMetadataBlobId = `${listId}_metadata`;
             let listMetadata = { todoIds: [] };
             try {
-                const metadataBlob = await this.walrusClient.readBlob({ blobId: listMetadataBlobId });
+                const metadataBlob = await this.walrusClient.readBlob(listMetadataBlobId);
                 if (metadataBlob) {
                     listMetadata = await this.decryptData(metadataBlob);
                 }
@@ -211,13 +209,11 @@ class WalrusService {
             // In a real implementation, this would use the proper Walrus SDK calls
             console.log(`Storing metadata for list ${listId} with blob ID ${listMetadataBlobId}`);
             // Uncomment the real implementation when you have proper signer and WAL tokens:
-            // await this.walrusClient.writeBlob({ 
-            //   blob: metadataToStore,
-            //   deletable: false,
-            //   epochs: 3,
-            //   signer: keypair,
-            //   blobId: listMetadataBlobId // Note: not sure if blobId is supported as a parameter
-            // });
+            // await this.walrusClient.writeBlob(
+            //   metadataToStore,
+            //   undefined,
+            //   false
+            // );
         }
         catch (error) {
             console.error('Error updating todo:', error);
@@ -239,7 +235,7 @@ class WalrusService {
             const listMetadataBlobId = `${listId}_metadata`;
             try {
                 // Get the current metadata
-                const metadataBlob = await this.walrusClient.readBlob({ blobId: listMetadataBlobId });
+                const metadataBlob = await this.walrusClient.readBlob(listMetadataBlobId);
                 if (metadataBlob) {
                     const listMetadata = await this.decryptData(metadataBlob);
                     // Filter out the blob ID for the todo we want to delete
@@ -256,13 +252,11 @@ class WalrusService {
                     // Save the updated metadata - using mock implementation for now
                     const metadataToStore = await this.encryptData(listMetadata);
                     // Uncomment the real implementation when you have proper signer and WAL tokens:
-                    // await this.walrusClient.writeBlob({ 
-                    //   blob: metadataToStore,
-                    //   deletable: false,
-                    //   epochs: 3,
-                    //   signer: keypair,
-                    //   // Note: Not sure if custom blobId is supported, might need additional research
-                    // });
+                    // await this.walrusClient.writeBlob(
+                    //   metadataToStore,
+                    //   undefined,
+                    //   false
+                    // );
                     console.log(`Updated metadata for list ${listId} after deleting todo ${todoId}`);
                 }
             }
@@ -308,13 +302,11 @@ class WalrusService {
                 // Mock implementation for now
                 console.log(`Storing initial metadata for list ${listId}`);
                 // Uncomment the real implementation when you have proper signer and WAL tokens:
-                // await this.walrusClient.writeBlob({
-                //   blob: metadataToStore,
-                //   deletable: false,
-                //   epochs: 3,
-                //   signer: keypair,
-                //   // Note: Custom blobId might need additional implementation
-                // });
+                // await this.walrusClient.writeBlob(
+                //   metadataToStore,
+                //   undefined,
+                //   false
+                // );
                 return;
             }
             // Sync versions if blockchain version is newer
@@ -322,7 +314,7 @@ class WalrusService {
                 const metadataBlobId = `${listId}_metadata`;
                 try {
                     // Try to read the list metadata
-                    const metadataBlob = await this.walrusClient.readBlob({ blobId: metadataBlobId });
+                    const metadataBlob = await this.walrusClient.readBlob(metadataBlobId);
                     let listMetadata = { todoIds: [] };
                     if (metadataBlob) {
                         listMetadata = await this.decryptData(metadataBlob);
@@ -364,13 +356,11 @@ class WalrusService {
                     // Mock implementation for now
                     console.log(`Storing updated metadata for list ${listId}`);
                     // Uncomment the real implementation when you have proper signer and WAL tokens:
-                    // await this.walrusClient.writeBlob({
-                    //   blob: metadataToStore,
-                    //   deletable: false,
-                    //   epochs: 3,
-                    //   signer: keypair,
-                    //   // Note: Custom blobId might need additional implementation
-                    // });
+                    // await this.walrusClient.writeBlob(
+                    //   metadataToStore,
+                    //   undefined,
+                    //   false
+                    // );
                 }
                 catch (error) {
                     console.error(`Error updating metadata for list ${listId}:`, error);
