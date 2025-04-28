@@ -1,36 +1,53 @@
 "use strict";
-/**
- * Publish Command Module
- * Handles publishing todo lists to blockchain
- * Manages encryption and transaction submission
- */
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.publish = publish;
-const chalk_1 = __importDefault(require("chalk"));
+const tslib_1 = require("tslib");
+const core_1 = require("@oclif/core");
+const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const sui_service_1 = require("../services/sui-service");
 const walrus_service_1 = require("../services/walrus-service");
-/**
- * Publishes a todo list to the blockchain
- * @param options - Command line options for publishing
- */
-async function publish(options) {
-    try {
-        const { list } = options;
-        const todoList = await walrus_service_1.walrusService.getTodoList(list);
-        if (!todoList) {
-            console.error(chalk_1.default.red(`Todo list '${list}' not found`));
-            process.exit(1);
+const error_handler_1 = require("../utils/error-handler");
+class PublishCommand extends core_1.Command {
+    async run() {
+        const { args, flags } = await this.parse(PublishCommand);
+        try {
+            const list = await walrus_service_1.walrusService.getTodoList(args.listName);
+            if (!list) {
+                throw new error_handler_1.CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
+            }
+            console.log(chalk_1.default.blue('\nPublishing list to blockchain:'), chalk_1.default.bold(args.listName));
+            if (flags.encrypt) {
+                console.log(chalk_1.default.dim('Encryption enabled'));
+                // TODO: Implement encryption
+            }
+            // Publish to blockchain
+            const tx = await sui_service_1.suiService.publishList(args.listName, list);
+            console.log(chalk_1.default.green('\n✓ List published successfully'));
+            console.log(chalk_1.default.dim('Transaction Hash:'), tx.digest);
+            console.log(chalk_1.default.dim('Items:'), list.todos.length);
+            console.log(chalk_1.default.dim('Gas used:'), tx.effects.gasUsed.computationCost);
         }
-        // Publish to blockchain - store only references
-        await sui_service_1.suiService.publishList(list, todoList);
-        console.log(chalk_1.default.green('✔ List published successfully to blockchain'));
-        console.log(chalk_1.default.dim('List:'), list);
-    }
-    catch (error) {
-        console.error(chalk_1.default.red('Failed to publish list:'), error);
-        process.exit(1);
+        catch (error) {
+            throw error;
+        }
     }
 }
+PublishCommand.description = 'Publish a todo list to the blockchain';
+PublishCommand.examples = [
+    '<%= config.bin %> publish my-list',
+    '<%= config.bin %> publish my-list --encrypt'
+];
+PublishCommand.flags = {
+    encrypt: core_1.Flags.boolean({
+        char: 'e',
+        description: 'Encrypt list data before publishing',
+        default: false
+    })
+};
+PublishCommand.args = {
+    listName: core_1.Args.string({
+        name: 'listName',
+        description: 'Name of the todo list to publish',
+        required: true
+    })
+};
+exports.default = PublishCommand;

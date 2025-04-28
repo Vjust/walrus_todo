@@ -48,3 +48,5 @@ export async function complete(options: CompleteOptions): Promise<void> {
     process.exit(1);
   }
 }
+
+export default complete;

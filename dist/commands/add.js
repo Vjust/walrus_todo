@@ -1,123 +1,113 @@
 "use strict";
-/**
- * Add Command Module
- * Handles the creation and storage of new todo items
- * Supports both local and Walrus storage with encryption options
- */
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.add = add;
-const prompts_1 = require("@inquirer/prompts");
-const chalk_1 = __importDefault(require("chalk"));
-const config_service_1 = require("../services/config-service");
-const walrus_service_1 = require("../services/walrus-service");
+const tslib_1 = require("tslib");
+const core_1 = require("@oclif/core");
+const chalk_1 = tslib_1.__importDefault(require("chalk"));
+const todoService_1 = require("../services/todoService");
 const utils_1 = require("../utils");
 const error_handler_1 = require("../utils/error-handler");
-/**
- * Adds new todo items to either local storage or Walrus storage
- * Handles interactive prompts if required options are not provided
- * Supports encryption and private storage options
- *
- * @param options - Command line options for adding todos
- * @throws Will throw an error if storage operations fail
- */
-async function add(options) {
-    try {
-        // Get list name if not provided
-        const listName = options.list || await (0, prompts_1.input)({
-            message: 'Enter the name of the todo list:',
-            validate: (input) => input.length > 0 || 'List name cannot be empty'
-        });
-        // Get tasks if not provided
-        const tasks = options.task || [await (0, prompts_1.input)({
-                message: 'What do you need to do?',
-                validate: (input) => input.length > 0 || 'Task description cannot be empty'
-            })];
-        // Get todo list
-        let todoList = await config_service_1.configService.getLocalTodos(listName);
-        if (!todoList) {
-            // Initialize new list
-            todoList = {
-                id: (0, utils_1.generateId)(),
-                name: listName,
-                owner: config_service_1.configService.getConfig().walletAddress || 'local',
-                todos: [],
-                version: 1
-            };
-        }
-        // Validate priority if provided
-        if (options.priority && !['high', 'medium', 'low'].includes(options.priority.toLowerCase())) {
-            throw new error_handler_1.CLIError(`Invalid priority level: ${options.priority}`, 'INVALID_PRIORITY');
-        }
-        // Validate date if provided
-        if (options.due) {
-            const date = new Date(options.due);
-            if (isNaN(date.getTime()) || !options.due.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                throw new error_handler_1.CLIError(`Invalid date format: ${options.due}. Use YYYY-MM-DD format.`, 'INVALID_DATE');
+class AddCommand extends core_1.Command {
+    async run() {
+        const { args, flags } = await this.parse(AddCommand);
+        const todoService = new todoService_1.TodoService();
+        try {
+            // Create or get the list
+            let list = await todoService.getList(args.listName);
+            if (!list) {
+                list = {
+                    id: args.listName,
+                    name: args.listName,
+                    owner: 'local',
+                    todos: [],
+                    version: 1
+                };
+                console.log(chalk_1.default.blue('✨ Created new list:'), chalk_1.default.bold(args.listName));
             }
-        }
-        // Add each task as a separate todo
-        for (const description of tasks) {
-            if (!description.trim()) {
-                throw new error_handler_1.CLIError('Task description cannot be empty', 'INVALID_TASK');
-            }
-            // Create todo data with metadata
-            const todo = {
-                id: (0, utils_1.generateId)(),
-                task: description,
-                priority: options.priority?.toLowerCase() || 'medium',
-                dueDate: options.due,
-                tags: options.tags ? options.tags.split(',').map(tag => tag.trim()) : [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                completed: false,
-                private: options.private || false,
-                isEncrypted: options.encrypt || false,
-                isTest: options.test || false,
-                walrusBlobId: ''
-            };
-            // Add the new todo to the list
-            todoList.todos.push(todo);
-            // Save the updated list
-            if (todo.private || todo.isTest) {
-                await config_service_1.configService.saveLocalTodo(listName, todo).catch((error) => {
-                    throw new error_handler_1.CLIError(`Failed to save todo: ${error.message}`, 'SAVE_ERROR');
-                });
-            }
-            else {
-                try {
-                    // For non-private todos, store in Walrus and get blob ID
-                    const blobId = await walrus_service_1.walrusService.storeTodo(listName, todo);
-                    todo.walrusBlobId = blobId;
-                    // Also save locally for immediate access
-                    await config_service_1.configService.saveLocalTodo(listName, todo);
-                }
-                catch (error) {
-                    if (error instanceof error_handler_1.CLIError) {
-                        throw error;
+            console.log(chalk_1.default.blue('\nAdding tasks to:'), chalk_1.default.bold(args.listName));
+            // Add each task from the -t flags
+            for (const taskText of flags.task) {
+                const todo = {
+                    id: (0, utils_1.generateId)(),
+                    task: taskText,
+                    completed: false,
+                    priority: flags.priority,
+                    tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    private: flags.private
+                };
+                if (flags.due) {
+                    if (!(0, utils_1.validateDate)(flags.due)) {
+                        throw new error_handler_1.CLIError('Invalid date format. Use YYYY-MM-DD', 'INVALID_DATE');
                     }
-                    const message = error instanceof Error ? error.message : String(error);
-                    throw new error_handler_1.CLIError(`Failed to store todo: ${message}`, 'STORAGE_ERROR');
+                    todo.dueDate = flags.due;
+                }
+                list.todos.push(todo);
+                // Enhanced feedback with emoji indicators
+                const priorityEmoji = {
+                    high: '⚡',
+                    medium: '○',
+                    low: '▿'
+                }[todo.priority];
+                console.log(chalk_1.default.green('✓'), 'Added:', chalk_1.default.bold(taskText));
+                const details = [
+                    `${priorityEmoji} Priority: ${todo.priority}`,
+                    flags.due && `📅 Due: ${flags.due}`,
+                    todo.tags.length > 0 && `🏷️  Tags: ${todo.tags.join(', ')}`,
+                    flags.private && '🔒 Private'
+                ].filter(Boolean);
+                if (details.length) {
+                    console.log(chalk_1.default.dim(`  ${details.join(' | ')}`));
                 }
             }
-            // Provide user feedback for each task
-            console.log(chalk_1.default.green('✔ Todo added successfully'));
-            console.log(chalk_1.default.dim('Task:'), description);
+            await todoService.saveList(args.listName, list);
+            console.log(chalk_1.default.blue('\nSummary:'));
+            console.log(chalk_1.default.dim(`• List: ${args.listName}`));
+            console.log(chalk_1.default.dim(`• Total items: ${list.todos.length}`));
+            console.log(chalk_1.default.dim(`• Added: ${flags.task.length} task(s)`));
         }
-        // Summary feedback
-        console.log(chalk_1.default.dim('\nList:'), listName);
-        console.log(chalk_1.default.dim('Total tasks added:'), tasks.length);
-        if (options.private || options.test) {
-            console.log(chalk_1.default.dim('Storage:'), options.test ? 'Local (Test)' : 'Local only');
-        }
-    }
-    catch (error) {
-        if (error instanceof error_handler_1.CLIError) {
+        catch (error) {
             throw error;
         }
-        const message = error instanceof Error ? error.message : String(error);
-        throw new error_handler_1.CLIError(`Failed to add todos: ${message}`);
     }
 }
+AddCommand.description = 'Add new todo items to a list';
+AddCommand.examples = [
+    '<%= config.bin %> add my-list -t "Buy groceries"',
+    '<%= config.bin %> add my-list -t "Important task" -p high',
+    '<%= config.bin %> add my-list -t "Meeting" --due 2024-05-01'
+];
+AddCommand.flags = {
+    task: core_1.Flags.string({
+        char: 't',
+        description: 'Task description',
+        required: true,
+        multiple: true
+    }),
+    priority: core_1.Flags.string({
+        char: 'p',
+        description: 'Task priority (high, medium, low)',
+        options: ['high', 'medium', 'low'],
+        default: 'medium'
+    }),
+    due: core_1.Flags.string({
+        char: 'd',
+        description: 'Due date (YYYY-MM-DD)'
+    }),
+    tags: core_1.Flags.string({
+        char: 'g',
+        description: 'Comma-separated tags'
+    }),
+    private: core_1.Flags.boolean({
+        description: 'Mark todo as private',
+        default: false
+    })
+};
+AddCommand.args = {
+    listName: core_1.Args.string({
+        name: 'listName',
+        description: 'Name of the todo list',
+        required: true
+    })
+};
+exports.default = AddCommand;

@@ -4,113 +4,70 @@
  * Supports both local and Walrus-stored items
  */
 
+import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
-import { walrusService } from '../services/walrus-service';
-import { Command } from 'commander';
 import { TodoService } from '../services/todoService';
-import { Todo, TodoList } from '../types';
+import { CLIError } from '../utils/error-handler';
+import dotenv from 'dotenv';
 
-/**
- * Interface for check command options
- * @interface CheckOptions
- */
-interface CheckOptions {
-  list: string;
-  id: string;
-  uncheck?: boolean;
-}
+dotenv.config();
 
-/**
- * Toggles or sets the completion status of a todo item
- * @param options - Command line options for checking/unchecking todo
- */
-export async function check(options: CheckOptions): Promise<void> {
-  try {
-    const { list, id, uncheck } = options;
-    const todoList = await walrusService.getTodoList(list);
-    
-    if (!todoList) {
-      console.error(chalk.red(`Todo list '${list}' not found`));
-      process.exit(1);
-    }
+export default class CheckCommand extends Command {
+  static description = 'Mark a todo item as complete/incomplete';
 
-    const todo = todoList.todos.find(t => t.id === id);
-    if (!todo) {
-      console.error(chalk.red(`Todo with id '${id}' not found`));
-      process.exit(1);
-    }
+  static examples = [
+    '<%= config.bin %> check my-list -i task-123',
+    '<%= config.bin %> check my-list -i task-123 --uncheck'
+  ];
 
-    // Toggle or set completion status
-    todo.completed = uncheck ? false : true;
-    await walrusService.updateTodo(list, todo);
-    
-    const status = todo.completed ? 'checked' : 'unchecked';
-    console.log(chalk.green(`✔ Marked todo as ${status}`));
-    console.log(chalk.dim('List:'), list);
-    console.log(chalk.dim('Task:'), todo.task);
+  static flags = {
+    id: Flags.string({
+      char: 'i',
+      description: 'Todo ID',
+      required: true
+    }),
+    uncheck: Flags.boolean({
+      char: 'u',
+      description: 'Uncheck the todo instead of checking it',
+      default: false
+    })
+  };
 
-  } catch (error) {
-    console.error(chalk.red('Failed to update todo status:'), error);
-    process.exit(1);
-  }
-}
+  static args = {
+    listName: Args.string({
+      name: 'listName',
+      description: 'Name of the todo list',
+      required: true
+    })
+  };
 
-export function setupCheckCommands(program: Command) {
-  // Check command with list subcommand
-  program
-    .command('check')
-    .argument('[list]', 'list command or list name')
-    .argument('[listName]', 'name of the list')
-    .argument('[itemNumber]', 'number or ID of the item')
-    .option('--uncheck', 'uncheck instead of check')
-    .description('Check/uncheck a todo item')
-    .action(async (list, listName, itemNumber, options) => {
-      if (list === 'list') {
-        await handleCheckByNumber(listName, parseInt(itemNumber) || itemNumber, !options.uncheck);
-      }
-    });
-
-  // Uncheck command with list subcommand
-  program
-    .command('uncheck')
-    .argument('[list]', 'list command or list name')
-    .argument('[listName]', 'name of the list')
-    .argument('[itemNumber]', 'number or ID of the item')
-    .description('Uncheck a todo item')
-    .action(async (list, listName, itemNumber) => {
-      if (list === 'list') {
-        await handleCheckByNumber(listName, parseInt(itemNumber) || itemNumber, false);
-      }
-    });
-}
-
-async function handleCheckByNumber(listName: string, itemNumber: number | string, checked: boolean) {
-  try {
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(CheckCommand);
     const todoService = new TodoService();
-    const list = await todoService.getList(listName);
-    
-    if (!list) {
-      throw new Error(`List "${listName}" not found`);
-    }
 
-    let item: Todo | undefined;
-    if (typeof itemNumber === 'number') {
-      // Use array index if number provided
-      item = list.todos[itemNumber - 1];
-    } else {
-      // Use item ID if string provided
-      item = list.todos.find((i: Todo) => i.id === itemNumber);
-    }
+    try {
+      const list = await todoService.getList(args.listName);
+      if (!list) {
+        throw new CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
+      }
 
-    if (!item) {
-      throw new Error(`Item ${itemNumber} not found in list "${listName}"`);
-    }
+      const todo = list.todos.find(t => t.id === flags.id);
+      if (!todo) {
+        throw new CLIError(`Todo with ID "${flags.id}" not found in list "${args.listName}"`, 'INVALID_TASK_ID');
+      }
 
-    await todoService.toggleItemStatus(listName, item.id, checked);
-    console.log(chalk.green(`Item ${itemNumber} ${checked ? 'checked' : 'unchecked'} ✓`));
-    
-  } catch (error) {
-    console.error(chalk.red('Error:'), error);
-    process.exit(1);
+      todo.completed = !flags.uncheck;
+      todo.updatedAt = new Date().toISOString();
+      
+      await todoService.saveList(args.listName, list);
+
+      const status = todo.completed ? chalk.green('✓') : chalk.yellow('☐');
+      console.log(`${status} Todo ${chalk.bold(todo.task)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
+      console.log(chalk.dim(`List: ${args.listName}`));
+      console.log(chalk.dim(`ID: ${flags.id}`));
+
+    } catch (error) {
+      throw error;
+    }
   }
 }

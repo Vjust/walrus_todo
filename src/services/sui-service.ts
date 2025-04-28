@@ -39,7 +39,14 @@ class SuiService {
    * @param todoList - Todo list data to publish
    * @returns Promise<void>
    */
-  public async publishList(listName: string, todoList: TodoList): Promise<void> {
+  public async publishList(listName: string, todoList: TodoList): Promise<{
+    digest: string;
+    effects: {
+      gasUsed: {
+        computationCost: string;
+      };
+    };
+  }> {
     const tx = new Transaction();
     
     // Create new todo list on chain with references to Walrus blobs
@@ -53,13 +60,26 @@ class SuiService {
     });
 
     const keypair = this.getKeypair();
-    await this.client.signAndExecuteTransaction({
+    const result = await this.client.signAndExecuteTransaction({
       transaction: tx,
       signer: keypair,
       options: {
         showEffects: true
       }
     });
+
+    if (!result.effects?.gasUsed?.computationCost) {
+      throw new Error('Failed to get transaction effects');
+    }
+
+    return {
+      digest: result.digest,
+      effects: {
+        gasUsed: {
+          computationCost: result.effects.gasUsed.computationCost.toString()
+        }
+      }
+    };
   }
 
   /**

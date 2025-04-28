@@ -1,11 +1,10 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CLIError = void 0;
 exports.handleError = handleError;
-const chalk_1 = __importDefault(require("chalk"));
+const tslib_1 = require("tslib");
+const chalk_1 = tslib_1.__importDefault(require("chalk"));
+const types_1 = require("../types");
 class CLIError extends Error {
     constructor(message, code = 'GENERAL_ERROR') {
         super(message);
@@ -15,7 +14,20 @@ class CLIError extends Error {
 }
 exports.CLIError = CLIError;
 function handleError(error) {
-    if (error instanceof CLIError) {
+    var _a, _b, _c;
+    if (error instanceof types_1.WalrusError) {
+        console.error(chalk_1.default.red('\nStorage Error:'), error.message);
+        if (error.hint) {
+            console.log(chalk_1.default.yellow('\nHint:'), error.hint);
+        }
+    }
+    else if (error instanceof types_1.SuiError) {
+        console.error(chalk_1.default.red('\nBlockchain Error:'), error.message);
+        if (error.txHash) {
+            console.log(chalk_1.default.dim('Transaction Hash:'), error.txHash);
+        }
+    }
+    else if (error instanceof CLIError) {
         console.error(chalk_1.default.red('\nError:'), error.message);
         // Add helpful suggestions based on error code
         switch (error.code) {
@@ -53,24 +65,35 @@ function handleError(error) {
                 break;
         }
     }
-    else if (error?.message?.includes('Unknown command')) {
+    else if ((_a = error === null || error === void 0 ? void 0 : error.message) === null || _a === void 0 ? void 0 : _a.includes('Missing required flag')) {
+        console.error(chalk_1.default.red('\nError:'), error.message);
+        console.log(chalk_1.default.yellow('\nExample usage:'));
+        console.log('• waltodo add -l "my-list" -t "my task"');
+        console.log('• waltodo list -l "my-list"');
+    }
+    else if ((_b = error === null || error === void 0 ? void 0 : error.message) === null || _b === void 0 ? void 0 : _b.includes('Unknown command')) {
         console.error(chalk_1.default.red('\nError: Unknown command'));
         console.log(chalk_1.default.yellow('\nAvailable commands:'));
-        console.log('• add     - Add new todo(s)');
-        console.log('• list    - List todos or todo lists');
-        console.log('• update  - Update a todo');
-        console.log('• check   - Mark a todo as complete/incomplete');
-        console.log('• delete  - Delete a todo or list');
-        console.log('• publish - Publish list to blockchain');
-        console.log('• sync    - Sync with blockchain');
+        console.log('• add      - Add new todo(s)');
+        console.log('• list     - List todos or todo lists');
+        console.log('• update   - Update a todo');
+        console.log('• check    - Mark a todo as complete/incomplete');
+        console.log('• delete   - Delete a todo or list');
+        console.log('• publish  - Publish list to blockchain');
+        console.log('• sync     - Sync with blockchain');
+        console.log('• configure- Configure CLI settings');
         console.log('\nRun "waltodo --help" for more information');
     }
-    else if (error?.message?.includes('unknown option')) {
+    else if ((_c = error === null || error === void 0 ? void 0 : error.message) === null || _c === void 0 ? void 0 : _c.includes('unknown option')) {
         console.error(chalk_1.default.red('\nError:'), error.message);
-        console.log(chalk_1.default.yellow('\nRun "waltodo <command> --help" to see available options'));
+        console.log(chalk_1.default.yellow('\nUse --help to see available options'));
     }
     else {
-        console.error(chalk_1.default.red('\nError:'), error?.message || 'An unknown error occurred');
+        console.error(chalk_1.default.red('\nError:'), (error === null || error === void 0 ? void 0 : error.message) || 'An unknown error occurred');
+        console.log(chalk_1.default.yellow('\nIf this persists, try:'));
+        console.log('1. Run "waltodo configure" to check your settings');
+        console.log('2. Check your network connection');
+        console.log('3. Ensure you have proper permissions');
     }
     process.exit(1);
 }

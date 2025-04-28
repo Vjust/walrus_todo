@@ -1,50 +1,101 @@
-/**
- * Delete Command Module
- * Handles removal of todo items
- * Supports deletion from both local and Walrus storage
- */
-
+import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
-import { walrusService } from '../services/walrus-service';
+import { TodoService } from '../services/todoService';
+import { CLIError } from '../utils/error-handler';
 
-/**
- * Interface for delete command options
- * @interface DeleteOptions
- */
-interface DeleteOptions {
-  list: string;
-  id: string;
-  force?: boolean;
-}
+export default class DeleteCommand extends Command {
+  static description = 'Delete a todo item or list';
 
-/**
- * Deletes a todo item with optional confirmation
- * @param options - Command line options for deleting todo
- */
-export async function deleteTodo(options: DeleteOptions): Promise<void> {
-  try {
-    const { list, id, force } = options;
+  static examples = [
+    '<%= config.bin %> delete my-list -i task-123',
+    '<%= config.bin %> delete my-list -i task-123 --force',
+    '<%= config.bin %> delete my-list --all'
+  ];
 
-    if (!force) {
-      const shouldDelete = await confirm({
-        message: 'Are you sure you want to delete this todo?',
-        default: false
-      });
+  static flags = {
+    id: Flags.string({
+      char: 'i',
+      description: 'Todo ID to delete',
+      exclusive: ['all']
+    }),
+    all: Flags.boolean({
+      char: 'a',
+      description: 'Delete entire list',
+      exclusive: ['id']
+    }),
+    force: Flags.boolean({
+      char: 'f',
+      description: 'Skip confirmation prompt',
+      default: false
+    })
+  };
 
-      if (!shouldDelete) {
-        console.log(chalk.yellow('Operation cancelled'));
+  static args = {
+    listName: Args.string({
+      name: 'listName',
+      description: 'Name of the todo list',
+      required: true
+    })
+  };
+
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(DeleteCommand);
+    const todoService = new TodoService();
+
+    try {
+      const list = await todoService.getList(args.listName);
+      if (!list) {
+        throw new CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
+      }
+
+      if (flags.all) {
+        if (!flags.force) {
+          const shouldDelete = await confirm({
+            message: `Are you sure you want to delete the entire list "${args.listName}"?`,
+            default: false
+          });
+          if (!shouldDelete) {
+            console.log(chalk.yellow('Operation cancelled'));
+            return;
+          }
+        }
+
+        await todoService.deleteList(args.listName);
+        console.log(chalk.green('✓'), `Deleted list: ${chalk.bold(args.listName)}`);
+        console.log(chalk.dim(`Items removed: ${list.todos.length}`));
         return;
       }
+
+      if (!flags.id) {
+        throw new CLIError('Either --id or --all must be specified', 'MISSING_ID');
+      }
+
+      const todo = list.todos.find(t => t.id === flags.id);
+      if (!todo) {
+        throw new CLIError(`Todo with ID "${flags.id}" not found`, 'INVALID_TASK_ID');
+      }
+
+      if (!flags.force) {
+        const shouldDelete = await confirm({
+          message: `Are you sure you want to delete todo "${todo.task}"?`,
+          default: false
+        });
+        if (!shouldDelete) {
+          console.log(chalk.yellow('Operation cancelled'));
+          return;
+        }
+      }
+
+      list.todos = list.todos.filter(t => t.id !== flags.id);
+      await todoService.saveList(args.listName, list);
+      
+      console.log(chalk.green('✓'), 'Deleted todo:', chalk.bold(todo.task));
+      console.log(chalk.dim('List:'), args.listName);
+      console.log(chalk.dim('ID:'), flags.id);
+
+    } catch (error) {
+      throw error;
     }
-
-    await walrusService.deleteTodo(list, id);
-    console.log(chalk.green('✔ Todo deleted successfully'));
-    console.log(chalk.dim('List:'), list);
-    console.log(chalk.dim('ID:'), id);
-
-  } catch (error) {
-    console.error(chalk.red('Failed to delete todo:'), error);
-    process.exit(1);
   }
 }

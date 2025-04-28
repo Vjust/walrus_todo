@@ -4,12 +4,10 @@
  * Handles marking todo items as completed
  * Updates both local and blockchain state
  */
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.complete = complete;
-const chalk_1 = __importDefault(require("chalk"));
+const tslib_1 = require("tslib");
+const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const walrus_service_1 = require("../services/walrus-service");
 /**
  * Marks a todo item as completed
@@ -39,3 +37,4 @@ async function complete(options) {
         process.exit(1);
     }
 }
+exports.default = complete;
