@@ -1,7 +1,7 @@
 import { WalrusImageStorage } from '../src/walrus-image-storage';
 import * as dotenv from 'dotenv';
 
-async function main() {
+async function main(): Promise<void> {
     // Load environment variables
     dotenv.config();
 
@@ -20,8 +20,12 @@ async function main() {
             description: "A decentralized todo item",
             image_url: imageUrl
         }, null, 2));
-    } catch (error) {
-        console.error('Failed to upload image:', error);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.error('Failed to upload image:', error.message);
+        } else {
+            console.error('An unknown error occurred during image upload');
+        }
         process.exit(1);
     }
 }
