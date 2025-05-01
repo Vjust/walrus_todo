@@ -17,12 +17,15 @@ export class WalrusTestService implements WalrusClientInterface {
     this.isActive = true;
   }
 
+  // Note: These methods are no longer part of the WalrusClientInterface
+  // But we'll keep them for backward compatibility with our test code
+  
   /**
    * Check if client is connected
-   * @returns boolean Connection status
+   * @returns Promise<boolean> Connection status
    */
-  public isConnected(): boolean {
-    return this.isActive;
+  public async isConnected(): Promise<boolean> {
+    return Promise.resolve(this.isActive);
   }
 
   /**
@@ -43,31 +46,68 @@ export class WalrusTestService implements WalrusClientInterface {
 
   /**
    * Write blob data to storage
-   * @param data Blob content as Uint8Array
-   * @param size Optional size parameter
-   * @param isPublic Optional public flag
-   * @returns Promise<string> Blob ID
+   * @param params Object containing content and optional metadata
+   * @returns Promise with blob info
    */
-  public async writeBlob(data: Uint8Array, size?: number, isPublic?: boolean): Promise<string> {
+  public async writeBlob(params: { 
+    content: Uint8Array; 
+    metadata?: Record<string, any>; 
+  }): Promise<{
+    blobId: string;
+    blobObject: {
+      id: { id: string };
+      blob_id: string;
+      registered_epoch: number;
+      size: string;
+      encoding_type: number;
+      certified_epoch: number | null;
+      storage: {
+        id: { id: string };
+        start_epoch: number;
+        end_epoch: number;
+        storage_size: string;
+      };
+      deletable: boolean;
+    }
+  }> {
     if (!this.isActive) {
       throw new WalrusError('Client not connected', 'CONNECTION_ERROR');
     }
     
     // Generate mock blob ID
     const blobId = `test-blob-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+    const objectId = `test-obj-${Date.now()}-${Math.round(Math.random() * 1000)}`;
     
     // Store data in memory
-    this.storage.set(blobId, data);
+    this.storage.set(blobId, params.content);
     
-    return blobId;
+    return {
+      blobId,
+      blobObject: {
+        id: { id: objectId },
+        blob_id: blobId,
+        registered_epoch: 1,
+        size: params.content.length.toString(),
+        encoding_type: 0,
+        certified_epoch: null,
+        storage: {
+          id: { id: `storage-${objectId}` },
+          start_epoch: 1,
+          end_epoch: 10,
+          storage_size: params.content.length.toString()
+        },
+        deletable: true
+      }
+    };
   }
 
   /**
    * Read blob data from storage
    * @param blobId ID of the blob to read
-   * @returns Promise<Uint8Array> Blob content
+   * @param signal Optional AbortSignal to cancel the request
+   * @returns Promise with blob content
    */
-  public async readBlob(blobId: string): Promise<Uint8Array> {
+  public async readBlob(blobId: string, signal?: AbortSignal): Promise<Uint8Array> {
     if (!this.isActive) {
       throw new WalrusError('Client not connected', 'CONNECTION_ERROR');
     }
@@ -101,17 +141,30 @@ export class WalrusTestService implements WalrusClientInterface {
     // Simulate encryption and storage
     const jsonString = JSON.stringify(todo);
     const encryptedData = new TextEncoder().encode(jsonString);
-    this.storage.set(blobId, encryptedData);
+    
+    // Use the proper writeBlob interface
+    const result = await this.writeBlob({
+      content: encryptedData,
+      metadata: {
+        type: 'todo',
+        id: todo.id,
+        listId
+      }
+    });
+    
+    const storedBlobId = result.newlyCreated?.blobObject.blobId || 
+                         result.alreadyCertified?.blobId || 
+                         blobId;
     
     // Update metadata for the list if not skipped
     if (!skipMetadata) {
       if (!this.metadata.has(listId)) {
         this.metadata.set(listId, { todoIds: [] });
       }
-      this.metadata.get(listId)?.todoIds.push(blobId);
+      this.metadata.get(listId)?.todoIds.push(storedBlobId);
     }
     
-    return blobId;
+    return storedBlobId;
   }
 
   /**
@@ -127,14 +180,17 @@ export class WalrusTestService implements WalrusClientInterface {
       return todo || null;
     }
     
-    // Get encrypted data from storage
-    const encryptedData = this.storage.get(blobId);
-    if (!encryptedData) return null;
-    
-    // Simulate decryption
-    const jsonString = new TextDecoder().decode(encryptedData);
-    const todo = JSON.parse(jsonString) as Todo;
-    return todo;
+    try {
+      // Use the proper readBlob interface
+      const content = await this.readBlob(blobId);
+      
+      // Simulate decryption
+      const jsonString = new TextDecoder().decode(content);
+      const todo = JSON.parse(jsonString) as Todo;
+      return todo;
+    } catch (error) {
+      return null;
+    }
   }
 
   /**
