@@ -46,7 +46,8 @@ class SuiService {
       arguments: [
         bcs.string().serialize(listName),
         bcs.u64().serialize(BigInt(todoList.version)),
-        bcs.vector(bcs.string()).serialize(todoList.todos.map(todo => todo.walrusBlobId || ''))
+        bcs.vector(bcs.string()).serialize(todoList.todos.map(todo => todo.walrusBlobId || '')),
+        bcs.string().serialize(todoList.todos[0]?.imageUrl || '') // Assuming the first todo's image URL is representative for the list NFT
       ]
     });
 
@@ -57,6 +58,9 @@ class SuiService {
     if (!result.effects?.gasUsed?.computationCost) {
       throw new Error('Failed to get transaction effects');
     }
+    // Note: The actual NFT object ID is not directly available here from the publish transaction.
+    // We would typically need to query for the created object after the transaction is successful.
+    // For this example, we'll proceed assuming the list object is created and can be found later.
 
     return {
       digest: result.digest,
@@ -106,7 +110,8 @@ class SuiService {
               owner: config.walletAddress!,
               todos: [], // Actual todos are stored in Walrus, these are just references
               version: parseInt(fields.version),
-              collaborators: fields.collaborators || []
+              collaborators: fields.collaborators || [],
+              imageUrl: details.data?.display?.data?.image_url // Assuming image_url is in display data
             };
           }
         }
@@ -129,6 +134,9 @@ class SuiService {
         bcs.u64().serialize(BigInt(newVersion))
       ]
     });
+    // Note: Updating the image URL for the list NFT would require a separate move call
+    // if the smart contract supports updating the image_url field.
+    // This is not currently implemented in the provided contract structure.
 
     // Use sui CLI to sign and execute transaction
     const txBytes = tx.serialize();
