@@ -4,11 +4,10 @@
  * Manages smart contract calls and transaction submission
  */
 
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
 import { bcs } from '@mysten/sui/bcs';
-import { fromB64 } from '@mysten/sui/utils';
+import { execSync } from 'child_process';
 import { configService } from './config-service';
 import { NETWORK_URLS, PACKAGE_CONFIG } from '../constants';
 import { TodoList } from '../types';
@@ -23,14 +22,6 @@ class SuiService {
   constructor() {
     const config = configService.getConfig();
     this.client = new SuiClient({ url: NETWORK_URLS[config.network] });
-  }
-
-  private getKeypair(): Ed25519Keypair {
-    const config = configService.getConfig();
-    if (!config.privateKey) {
-      throw new Error('Private key not configured. Run `waltodo configure` first.');
-    }
-    return Ed25519Keypair.fromSecretKey(fromB64(config.privateKey));
   }
 
   /**
@@ -59,14 +50,9 @@ class SuiService {
       ]
     });
 
-    const keypair = this.getKeypair();
-    const result = await this.client.signAndExecuteTransaction({
-      transaction: tx,
-      signer: keypair,
-      options: {
-        showEffects: true
-      }
-    });
+    // Use sui CLI to sign and execute transaction
+    const txBytes = tx.serialize();
+    const result = JSON.parse(execSync(`sui client sign-and-execute --json --gas-budget 10000000 ${txBytes}`).toString());
 
     if (!result.effects?.gasUsed?.computationCost) {
       throw new Error('Failed to get transaction effects');
@@ -144,14 +130,9 @@ class SuiService {
       ]
     });
 
-    const keypair = this.getKeypair();
-    await this.client.signAndExecuteTransaction({
-      transaction: tx,
-      signer: keypair,
-      options: {
-        showEffects: true
-      }
-    });
+    // Use sui CLI to sign and execute transaction
+    const txBytes = tx.serialize();
+    await execSync(`sui client sign-and-execute --gas-budget 10000000 ${txBytes}`);
   }
 }
 
