@@ -73,7 +73,7 @@ For all blockchain commands, the Walrus Todo CLI uses the Sui CLI for secure key
 
 ### `deploy`
 
-Deploy the Todo NFT smart contract to the Sui blockchain.
+Deploy the Todo NFT smart contract to the Sui blockchain. This command will automatically save the deployment information (including the package ID) to a JSON file.
 
 ```bash
 waltodo deploy --network <network>
@@ -82,7 +82,7 @@ waltodo deploy --network <network>
 Options:
 - `-n, --network <network>`: Network to deploy to (localnet, devnet, testnet, mainnet)
 - `-a, --address <address>`: Sui address to use (defaults to active address in Sui CLI)
-- `-o, --output <path>`: Path to save deployment info
+- `-o, --output <path>`: Path to save deployment info (defaults to `todo_nft_deployment.json`)
 
 ### `store`
 

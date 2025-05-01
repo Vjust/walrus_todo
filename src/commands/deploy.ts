@@ -193,4 +193,90 @@ todo_nft = "0x0"
       handleError('Deployment failed', error);
       process.exit(1);
     }
-  });
+  });import { Command, Flags } from '@oclif/core';
+import { execSync } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import chalk from 'chalk';
+import { CLIError } from '../utils/error-handler';
+
+interface DeploymentInfo {
+  packageId: string;
+  digest: string;
+  network: string;
+}
+
+export default class DeployCommand extends Command {
+  static description = 'Deploy the Todo NFT smart contract to the Sui blockchain';
+
+  static examples = [
+    '<%= config.bin %> deploy --network testnet',
+  ];
+
+  static flags = {
+    network: Flags.string({
+      char: 'n',
+      description: 'Network to deploy to (localnet, devnet, testnet, mainnet)',
+      required: true,
+      options: ['localnet', 'devnet', 'testnet', 'mainnet'],
+    }),
+    address: Flags.string({
+      char: 'a',
+      description: 'Sui address to use (defaults to active address in Sui CLI)',
+    }),
+    output: Flags.string({
+      char: 'o',
+      description: 'Path to save deployment info',
+      default: 'todo_nft_deployment.json',
+    }),
+  };
+
+  async run(): Promise<void> {
+    const { flags } = await this.parse(DeployCommand);
+    const { network, address, output } = flags;
+
+    try {
+      this.log(chalk.blue(`\nDeploying smart contract to ${network} network...`));
+
+      let command = `sui client publish --json --gas-budget 10000000 --skip-dependency-verification --network ${network}`;
+      if (address) {
+        command += ` --sender ${address}`;
+      }
+      command += ` ${path.join(__dirname, '..', 'move')}`;
+
+      const result = execSync(command).toString();
+      const deploymentOutput = JSON.parse(result);
+
+      if (!deploymentOutput.published || deploymentOutput.published.length === 0) {
+        throw new CLIError('Deployment failed: Could not find published package in output.', 'DEPLOYMENT_FAILED');
+      }
+
+      const packageInfo = deploymentOutput.published.find((pkg: any) => pkg.packageId);
+
+      if (!packageInfo) {
+        throw new CLIError('Deployment failed: Could not find package ID in output.', 'DEPLOYMENT_FAILED');
+      }
+
+      const deploymentInfo: DeploymentInfo = {
+        packageId: packageInfo.packageId,
+        digest: deploymentOutput.digest,
+        network: network,
+      };
+
+      fs.writeFileSync(output, JSON.stringify(deploymentInfo, null, 2));
+
+      this.log(chalk.green('\n✓ Smart contract deployed successfully!'));
+      this.log(chalk.blue('Deployment Info:'));
+      this.log(chalk.dim(`  Package ID: ${deploymentInfo.packageId}`));
+      this.log(chalk.dim(`  Digest: ${deploymentInfo.digest}`));
+      this.log(chalk.dim(`  Network: ${deploymentInfo.network}`));
+      this.log(chalk.dim(`  Saved to: ${output}`));
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Deployment failed: ${error instanceof Error ? error.message : String(error)}`, 'DEPLOYMENT_FAILED');
+    }
+  }
+}
