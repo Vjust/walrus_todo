@@ -7,7 +7,7 @@
  * @returns {string} A unique identifier string
  */
 export function generateId(): string {
-  const timestamp = new Date().getTime();
+  const timestamp = Date.now();
   const randomPart = Math.floor(Math.random() * 1000000);
   return `${timestamp}-${randomPart}`;
 }

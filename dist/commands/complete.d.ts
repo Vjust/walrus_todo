@@ -1,19 +1,13 @@
-/**
- * Complete Command Module
- * Handles marking todo items as completed
- * Updates both local and blockchain state
- */
-/**
- * Interface for complete command options
- * @interface CompleteOptions
- */
-interface CompleteOptions {
-    list: string;
-    id: string;
+import { Command } from '@oclif/core';
+export default class CompleteCommand extends Command {
+    static description: string;
+    static examples: string[];
+    static flags: {
+        id: import("@oclif/core/lib/interfaces").OptionFlag<string, import("@oclif/core/lib/interfaces/parser").CustomOptions>;
+    };
+    static args: {
+        list: import("@oclif/core/lib/interfaces/parser").Arg<string, Record<string, unknown>>;
+    };
+    private todoService;
+    run(): Promise<void>;
 }
-/**
- * Marks a todo item as completed
- * @param options - Command line options for completing todo
- */
-export declare function complete(options: CompleteOptions): Promise<void>;
-export default complete;

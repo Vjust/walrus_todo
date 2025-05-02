@@ -5,69 +5,63 @@ const core_1 = require("@oclif/core");
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const todoService_1 = require("../services/todoService");
 const utils_1 = require("../utils");
-const error_handler_1 = require("../utils/error-handler");
+const error_1 = require("../types/error");
 class AddCommand extends core_1.Command {
+    constructor() {
+        super(...arguments);
+        this.todoService = new todoService_1.TodoService();
+    }
+    validateDate(date) {
+        const regex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!regex.test(date))
+            return false;
+        const d = new Date(date);
+        return d instanceof Date && !isNaN(d.getTime());
+    }
     async run() {
-        const { args, flags } = await this.parse(AddCommand);
-        const todoService = new todoService_1.TodoService();
         try {
-            // Create or get the list
-            let list = await todoService.getList(args.listName);
-            if (!list) {
-                list = {
-                    id: args.listName,
-                    name: args.listName,
-                    owner: 'local',
-                    todos: [],
-                    version: 1
-                };
-                console.log(chalk_1.default.blue('✨ Created new list:'), chalk_1.default.bold(args.listName));
+            const { args, flags } = await this.parse(AddCommand);
+            if (flags.due && !this.validateDate(flags.due)) {
+                throw new error_1.CLIError('Invalid date format. Use YYYY-MM-DD', 'INVALID_DATE');
             }
-            console.log(chalk_1.default.blue('\nAdding tasks to:'), chalk_1.default.bold(args.listName));
-            // Add each task from the -t flags
-            for (const taskText of flags.task) {
-                const todo = {
-                    id: (0, utils_1.generateId)(),
-                    task: taskText,
-                    completed: false,
-                    priority: flags.priority,
-                    tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    private: flags.private
-                };
-                if (flags.due) {
-                    if (!(0, utils_1.validateDate)(flags.due)) {
-                        throw new error_handler_1.CLIError('Invalid date format. Use YYYY-MM-DD', 'INVALID_DATE');
-                    }
-                    todo.dueDate = flags.due;
-                }
-                list.todos.push(todo);
-                // Enhanced feedback with emoji indicators
-                const priorityEmoji = {
-                    high: '⚡',
-                    medium: '○',
-                    low: '▿'
-                }[todo.priority];
-                console.log(chalk_1.default.green('✓'), 'Added:', chalk_1.default.bold(taskText));
-                const details = [
-                    `${priorityEmoji} Priority: ${todo.priority}`,
-                    flags.due && `📅 Due: ${flags.due}`,
-                    todo.tags.length > 0 && `🏷️  Tags: ${todo.tags.join(', ')}`,
-                    flags.private && '🔒 Private'
-                ].filter(Boolean);
-                if (details.length) {
-                    console.log(chalk_1.default.dim(`  ${details.join(' | ')}`));
-                }
+            const now = new Date().toISOString();
+            const todo = {
+                id: (0, utils_1.generateId)(),
+                title: flags.task[0], // Use first task string as title
+                task: flags.task.join(' '), // Join all task strings for backward compatibility
+                completed: false,
+                priority: flags.priority,
+                tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
+                createdAt: now,
+                updatedAt: now,
+                private: flags.private
+            };
+            if (flags.due) {
+                todo.dueDate = flags.due;
             }
-            await todoService.saveList(args.listName, list);
-            console.log(chalk_1.default.blue('\nSummary:'));
-            console.log(chalk_1.default.dim(`• List: ${args.listName}`));
-            console.log(chalk_1.default.dim(`• Total items: ${list.todos.length}`));
-            console.log(chalk_1.default.dim(`• Added: ${flags.task.length} task(s)`));
+            await this.todoService.addTodo(args.list, todo);
+            // Get priority color
+            const priorityColors = {
+                high: chalk_1.default.red,
+                medium: chalk_1.default.yellow,
+                low: chalk_1.default.green
+            }[todo.priority];
+            // Success message
+            this.log(chalk_1.default.green('\n✓ Todo added successfully'));
+            this.log(chalk_1.default.dim('Details:'));
+            this.log([
+                `  ${chalk_1.default.bold(todo.title)}`,
+                `  ${priorityColors(`⚡ Priority: ${todo.priority}`)}`,
+                flags.due && `  📅 Due: ${flags.due}`,
+                todo.tags.length > 0 && `  🏷️  Tags: ${todo.tags.join(', ')}`,
+                flags.private && '  🔒 Private'
+            ].filter(Boolean).join('\n'));
         }
         catch (error) {
-            throw error;
+            if (error instanceof error_1.CLIError) {
+                throw error;
+            }
+            throw new error_1.CLIError(`Failed to add todo: ${error instanceof Error ? error.message : String(error)}`, 'ADD_FAILED');
         }
     }
 }
@@ -104,10 +98,10 @@ AddCommand.flags = {
     })
 };
 AddCommand.args = {
-    listName: core_1.Args.string({
-        name: 'listName',
+    list: core_1.Args.string({
+        name: 'list',
         description: 'Name of the todo list',
-        required: true
+        default: 'default'
     })
 };
 exports.default = AddCommand;

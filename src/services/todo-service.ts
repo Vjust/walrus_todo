@@ -1,100 +1,71 @@
-import { walrusService } from './walrus-service';
-import { suiService } from './sui-service';
-import { Todo, TodoList, WalrusError, SuiError } from '../types';
+import { Todo, TodoList } from '../types';
+import { configService } from './config-service';
 import { generateId } from '../utils/id-generator';
-import { ConfigService } from './config-service';
+import { CLIError } from '../types/error';
 
-/**
- * Service that manages todo operations
- * Coordinates between local storage, Walrus storage, and blockchain
- */
 export class TodoService {
-  private configService: ConfigService;
-  
-  constructor() {
-    this.configService = new ConfigService();
+  async createList(name: string, owner: string): Promise<TodoList> {
+    const list: TodoList = {
+      id: generateId(),
+      name,
+      owner,
+      todos: [],
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    await configService.saveListData(name, list);
+    return list;
   }
-  
-  /**
-   * Create a new todo list with the given name
-   * @param listName Name of the todo list to create
-   * @returns Promise<TodoList> The created todo list
-   */
-  public async createList(listName: string): Promise<TodoList> {
-    try {
-      const config = this.configService.getConfig();
-      if (!config.walletAddress) {
-        throw new Error('Wallet not configured. Run "waltodo configure" first.');
-      }
-      
-      // Create new empty list
-      const newList: TodoList = {
-        id: generateId(),
-        name: listName,
-        owner: config.walletAddress,
-        todos: [],
-        version: 1,
-        collaborators: [],
-        lastSynced: new Date().toISOString()
-      };
-      
-      // Save locally and return
-      return newList;
-    } catch (error: unknown) {
-      if (error instanceof WalrusError || error instanceof SuiError) {
-        throw error;
-      }
-      throw new Error(`Failed to create list: ${error instanceof Error ? error.message : String(error)}`);
-    }
+
+  async getList(name: string): Promise<TodoList | null> {
+    return configService.getLocalTodos(name);
   }
-  
-  /**
-   * Share a todo list with another user
-   * @param listId ID of the list to share
-   * @param targetAddress Address of the user to share with
-   * @returns Promise<boolean> Whether the operation was successful
-   */
-  public async shareList(listId: string, targetAddress: string): Promise<boolean> {
-    try {
-      const listState = await suiService.getListState(listId);
-      if (!listState) {
-        throw new Error(`Todo list with ID ${listId} not found`);
-      }
 
-      // Prepare updated collaborators list
-      const updatedCollaborators = [
-        ...(listState.collaborators || []),
-        targetAddress
-      ];
-
-      // Increment version to signal an update on‑chain
-      await suiService.updateListVersion(listId, listState.version + 1);
-
-      // OPTIONAL: call a future addCollaborator/updateCollaborators Move call here
-      // await suiService.addCollaborator(listId, targetAddress);
-
-      // Verify (best‑effort)
-      const updatedListState = await suiService.getListState(listId);
-      if (
-        updatedListState &&
-        updatedListState.collaborators &&
-        updatedListState.collaborators.includes(targetAddress)
-      ) {
-        return true;
-      }
-
-      // Fallback – assume success if no error was thrown
-      return true;
-    } catch (error: unknown) {
-      if (error instanceof WalrusError || error instanceof SuiError) {
-        throw error;
-      }
-      throw new Error(
-        `Failed to share list: ${error instanceof Error ? error.message : String(error)}`
-      );
+  async addTodo(listName: string, todo: Partial<Todo>): Promise<Todo> {
+    const list = await this.getList(listName);
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
+
+    const newTodo: Todo = {
+      id: generateId(),
+      title: todo.title || '',
+      task: todo.task || todo.title || '',
+      description: todo.description,
+      completed: false,
+      priority: todo.priority || 'medium',
+      tags: todo.tags || [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      private: true
+    };
+
+    list.todos.push(newTodo);
+    list.updatedAt = new Date().toISOString();
+    await configService.saveListData(listName, list);
+    return newTodo;
+  }
+
+  async toggleItemStatus(listName: string, todoId: string, completed: boolean): Promise<void> {
+    const list = await this.getList(listName);
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    }
+
+    const todo = list.todos.find(t => t.id === todoId);
+    if (!todo) {
+      throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
+    }
+
+    todo.completed = completed;
+    todo.updatedAt = new Date().toISOString();
+    if (completed) {
+      todo.completedAt = new Date().toISOString();
+    } else {
+      delete todo.completedAt;
+    }
+
+    await configService.saveListData(listName, list);
   }
 }
-
-// Export singleton instance
-export const todoService = new TodoService();

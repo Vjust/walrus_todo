@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mockNetworkLatency = exports.mockNetworkError = exports.waitForSync = exports.createMockTodo = exports.setupMockTodoList = exports.createTestContext = void 0;
+exports.mockNetworkLatency = exports.mockNetworkError = exports.waitForSync = exports.setupMockTodoList = exports.createTestContext = void 0;
+exports.createMockTodo = createMockTodo;
 const walrus_1 = require("../../__mocks__/@mysten/walrus");
 const sui_1 = require("../../__mocks__/@mysten/sui");
 const createTestContext = () => {
@@ -26,19 +27,20 @@ const setupMockTodoList = (context, todos = []) => {
     return todoList.id;
 };
 exports.setupMockTodoList = setupMockTodoList;
-const createMockTodo = (overrides = {}) => {
+function createMockTodo(overrides = {}) {
+    const now = new Date().toISOString();
     return {
-        id: `mock-todo-${Math.random().toString(36).substr(2, 9)}`,
-        task: 'Mock Todo Task',
+        id: 'test-todo-id',
+        title: 'Test Todo',
+        task: 'Test todo task',
         completed: false,
         priority: 'medium',
         tags: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
         ...overrides
     };
-};
-exports.createMockTodo = createMockTodo;
+}
 const waitForSync = async (ms = 100) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 };

@@ -1,59 +1,58 @@
 "use strict";
-/**
- * Configure Command Module
- * Handles wallet and blockchain connection setup
- * Manages authentication and encryption settings
- */
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const core_1 = require("@oclif/core");
 const prompts_1 = require("@inquirer/prompts");
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const config_service_1 = require("../services/config-service");
-const constants_1 = require("../constants");
+const error_1 = require("../types/error");
 class ConfigureCommand extends core_1.Command {
+    validateUserIdentifier(userId) {
+        return userId.trim().length > 0;
+    }
     async run() {
-        const { flags } = await this.parse(ConfigureCommand);
         try {
+            const { flags } = await this.parse(ConfigureCommand);
             if (flags.reset) {
                 await config_service_1.configService.saveConfig({
-                    network: 'testnet',
+                    network: 'local',
                     walletAddress: '',
                     encryptedStorage: false
                 });
-                console.log(chalk_1.default.green('✓ Configuration reset to defaults'));
+                this.log(chalk_1.default.green('✓ Configuration reset to defaults'));
                 return;
             }
-            const network = await (0, prompts_1.select)({
-                message: 'Select network:',
-                choices: constants_1.SUPPORTED_NETWORKS.map(n => ({ name: n, value: n }))
+            const userId = await (0, prompts_1.input)({
+                message: 'Enter your user identifier:',
             });
-            const walletAddress = await (0, prompts_1.input)({
-                message: 'Enter your wallet address:',
-            });
+            if (!this.validateUserIdentifier(userId)) {
+                throw new error_1.CLIError('Invalid user identifier format', 'INVALID_USER_ID');
+            }
             const encryptedStorage = await (0, prompts_1.confirm)({
                 message: 'Enable encryption for sensitive data?',
                 default: true
             });
             await config_service_1.configService.saveConfig({
-                network,
-                walletAddress,
+                network: 'local',
+                walletAddress: userId,
                 encryptedStorage
             });
-            console.log(chalk_1.default.green('\n✓ Configuration saved successfully'));
-            console.log(chalk_1.default.dim('Network:'), network);
-            console.log(chalk_1.default.dim('Wallet:'), walletAddress);
-            console.log(chalk_1.default.dim('Encryption:'), encryptedStorage ? 'Enabled' : 'Disabled');
+            this.log(chalk_1.default.green('\n✓ Configuration saved successfully'));
+            this.log(chalk_1.default.dim('User ID:'), userId);
+            this.log(chalk_1.default.dim('Encryption:'), encryptedStorage ? 'Enabled' : 'Disabled');
         }
         catch (error) {
-            console.error(chalk_1.default.red('Configuration failed:'), error);
-            this.exit(1);
+            if (error instanceof error_1.CLIError) {
+                throw error;
+            }
+            throw new error_1.CLIError(`Configuration failed: ${error instanceof Error ? error.message : String(error)}`, 'CONFIG_FAILED');
         }
     }
 }
-ConfigureCommand.description = 'Configure wallet and blockchain settings';
+ConfigureCommand.description = 'Configure CLI settings';
 ConfigureCommand.examples = [
-    '<%= config.bin %> configure'
+    '<%= config.bin %> configure',
+    '<%= config.bin %> configure --reset'
 ];
 ConfigureCommand.flags = {
     reset: core_1.Flags.boolean({

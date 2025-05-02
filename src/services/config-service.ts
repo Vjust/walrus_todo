@@ -1,18 +1,9 @@
-/**
- * Configuration Service
- * Handles local configuration and private todo storage
- * Manages user preferences and local-only todo items
- */
-
 import fs from 'fs';
 import path from 'path';
 import { Config, Todo, TodoList } from '../types';
-import { CLI_CONFIG, CURRENT_NETWORK } from '../constants';
+import { CLI_CONFIG } from '../constants';
+import { CLIError } from '../types/error';
 
-/**
- * Manages application configuration and local storage
- * Provides methods for handling private todos and user settings
- */
 export class ConfigService {
   private configPath: string;
   private todosPath: string;
@@ -21,41 +12,28 @@ export class ConfigService {
   constructor() {
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     this.configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
-    
-    // Always use absolute path from current directory for Todos folder
     this.todosPath = path.resolve(process.cwd(), 'Todos');
-    
     this.config = this.loadConfig();
     this.ensureTodosDirectory();
   }
 
-  /**
-   * Ensures the todos directory exists
-   */
   private ensureTodosDirectory(): void {
     try {
       if (!fs.existsSync(this.todosPath)) {
         fs.mkdirSync(this.todosPath, { recursive: true });
-        console.log(`Created Todos directory at: ${this.todosPath}`);
       }
     } catch (error) {
-      console.error('Error creating Todos directory:', error);
-      throw error;
+      throw new CLIError(
+        `Failed to create Todos directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'DIRECTORY_CREATE_FAILED'
+      );
     }
   }
 
-  /**
-   * Gets the path for a specific todo list file
-   */
   private getListPath(listName: string): string {
     return path.join(this.todosPath, `${listName}.json`);
   }
 
-  /**
-   * Loads configuration from disk
-   * Creates default configuration if none exists
-   * @returns Config object with application settings
-   */
   private loadConfig(): Config {
     try {
       if (fs.existsSync(this.configPath)) {
@@ -63,7 +41,10 @@ export class ConfigService {
         return JSON.parse(data);
       }
     } catch (error) {
-      console.error('Error loading config:', error);
+      throw new CLIError(
+        `Failed to load config: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'CONFIG_LOAD_FAILED'
+      );
     }
 
     return {
@@ -82,12 +63,13 @@ export class ConfigService {
     try {
       await fs.promises.writeFile(this.configPath, JSON.stringify(this.config, null, 2));
     } catch (error) {
-      console.error('Error saving config:', error);
-      throw error;
+      throw new CLIError(
+        `Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'CONFIG_SAVE_FAILED'
+      );
     }
   }
 
-  // Handle local todos in todos directory
   private async loadListData(listName: string): Promise<TodoList | null> {
     const listPath = this.getListPath(listName);
     try {
@@ -96,18 +78,24 @@ export class ConfigService {
         return JSON.parse(data);
       }
     } catch (error) {
-      console.error(`Error loading todo list ${listName}:`, error);
+      throw new CLIError(
+        `Failed to load list "${listName}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'LIST_LOAD_FAILED'
+      );
     }
     return null;
   }
 
-  public async saveListData(listName: string, list: TodoList): Promise<void> {
+  public async saveListData(listName: string, list: TodoList): Promise<TodoList> {
     const listPath = this.getListPath(listName);
     try {
       await fs.promises.writeFile(listPath, JSON.stringify(list, null, 2));
+      return list;
     } catch (error) {
-      console.error(`Error saving todo list ${listName}:`, error);
-      throw error;
+      throw new CLIError(
+        `Failed to save list "${listName}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'LIST_SAVE_FAILED'
+      );
     }
   }
 
@@ -122,8 +110,10 @@ export class ConfigService {
         .filter(file => file.endsWith('.json'))
         .map(file => file.replace('.json', ''));
     } catch (error) {
-      console.error('Error reading todo lists:', error);
-      return [];
+      throw new CLIError(
+        `Failed to read todo lists: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'LIST_READ_FAILED'
+      );
     }
   }
 
@@ -133,9 +123,11 @@ export class ConfigService {
       list = {
         id: listName,
         name: listName,
-        owner: this.config.walletAddress || 'local',
+        owner: 'local',
         todos: [],
-        version: 1
+        version: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
     }
     list.todos.push(todo);
@@ -144,20 +136,33 @@ export class ConfigService {
 
   public async updateLocalTodo(listName: string, todo: Todo): Promise<void> {
     const list = await this.loadListData(listName);
-    if (!list) return;
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    }
     
     const index = list.todos.findIndex(t => t.id === todo.id);
-    if (index !== -1) {
-      list.todos[index] = todo;
-      await this.saveListData(listName, list);
+    if (index === -1) {
+      throw new CLIError(`Todo "${todo.id}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
     }
+
+    list.todos[index] = todo;
+    list.updatedAt = new Date().toISOString();
+    await this.saveListData(listName, list);
   }
 
   public async deleteLocalTodo(listName: string, todoId: string): Promise<void> {
     const list = await this.loadListData(listName);
-    if (!list) return;
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    }
+
+    const todoIndex = list.todos.findIndex(t => t.id === todoId);
+    if (todoIndex === -1) {
+      throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
+    }
     
     list.todos = list.todos.filter(t => t.id !== todoId);
+    list.updatedAt = new Date().toISOString();
     await this.saveListData(listName, list);
   }
 
@@ -168,8 +173,10 @@ export class ConfigService {
         await fs.promises.unlink(listPath);
       }
     } catch (error) {
-      console.error(`Error deleting list ${listName}:`, error);
-      throw error;
+      throw new CLIError(
+        `Failed to delete list "${listName}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'LIST_DELETE_FAILED'
+      );
     }
   }
 
@@ -186,5 +193,4 @@ export class ConfigService {
   }
 }
 
-// Singleton instance
 export const configService = new ConfigService();

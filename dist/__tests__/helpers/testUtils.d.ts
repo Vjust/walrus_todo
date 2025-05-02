@@ -10,7 +10,7 @@ export interface TestContext {
 }
 export declare const createTestContext: () => TestContext;
 export declare const setupMockTodoList: (context: TestContext, todos?: Todo[]) => string;
-export declare const createMockTodo: (overrides?: Partial<Todo>) => Todo;
+export declare function createMockTodo(overrides?: Partial<Todo>): Todo;
 export declare const waitForSync: (ms?: number) => Promise<void>;
 export declare const mockNetworkError: (client: WalrusClientInterface | typeof mockSuiClient, method: string) => void;
 export declare const mockNetworkLatency: (client: WalrusClientInterface | typeof mockSuiClient, method: string, latencyMs: number) => void;

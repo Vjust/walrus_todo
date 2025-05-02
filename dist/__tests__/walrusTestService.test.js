@@ -9,6 +9,7 @@ describe("WalrusTestService (in-memory)", () => {
     it("stores and retrieves a todo", async () => {
         const todo = {
             id: "todo1",
+            title: "Test Todo",
             task: "Test todo", // required field
             priority: "medium", // required field
             tags: [], // required field
@@ -22,6 +23,7 @@ describe("WalrusTestService (in-memory)", () => {
         expect(retrieved).not.toBeNull();
         expect(retrieved).toMatchObject({
             id: todo.id,
+            title: todo.title,
             task: todo.task,
             completed: todo.completed
         });
@@ -30,6 +32,7 @@ describe("WalrusTestService (in-memory)", () => {
         const todos = [
             {
                 id: "todo1",
+                title: "First Todo",
                 task: "First task",
                 priority: "low",
                 tags: ["work"],
@@ -39,6 +42,7 @@ describe("WalrusTestService (in-memory)", () => {
             },
             {
                 id: "todo2",
+                title: "Second Todo",
                 task: "Second task",
                 priority: "high",
                 tags: ["home", "urgent"],
@@ -58,6 +62,7 @@ describe("WalrusTestService (in-memory)", () => {
     it("updates a todo correctly", async () => {
         const todo = {
             id: "todo-update",
+            title: "Original Todo",
             task: "Original task",
             priority: "medium",
             tags: ["init"],
@@ -69,6 +74,7 @@ describe("WalrusTestService (in-memory)", () => {
         await service.storeTodo(listId, todo);
         const updatedTodo = {
             ...todo,
+            title: "Updated Todo",
             task: "Updated task",
             priority: "low",
             tags: ["updated"],
@@ -79,6 +85,7 @@ describe("WalrusTestService (in-memory)", () => {
         expect(list.todos).toHaveLength(1);
         expect(list.todos[0]).toMatchObject({
             id: updatedTodo.id,
+            title: updatedTodo.title,
             task: updatedTodo.task,
             completed: true
         });

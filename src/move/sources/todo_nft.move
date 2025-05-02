@@ -8,8 +8,8 @@ module todo_app::todo_nft {
     use std::string::{Self, String};
     use sui::url::{Self, Url};
 
-    // Default image URL for todos
-    const DEFAULT_IMAGE_URL: vector<u8> = b"https://raw.githubusercontent.com/YOUR_ACTUAL_USERNAME/walrus_todo/main/assets/todo_bottle.png";
+    // Default image URL for todos - Use the raw URL, not the GitHub webpage URL
+    const DEFAULT_IMAGE_URL: vector<u8> = b"https://raw.githubusercontent.com/Vjust/walrus_todo/main/assets/todo_bottle.jpeg";
 
     // One-time witness for the module
     struct TODO_NFT has drop {}

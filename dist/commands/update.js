@@ -52,15 +52,15 @@ class UpdateCommand extends core_1.Command {
                 changes++;
             }
             if (changes === 0) {
-                console.log(chalk_1.default.yellow('No changes specified. Use -h to see available options.'));
+                this.log(chalk_1.default.yellow('No changes specified. Use -h to see available options.'));
                 return;
             }
             todo.updatedAt = new Date().toISOString();
             await todoService.saveList(args.listName, list);
-            console.log(chalk_1.default.green('✓'), 'Updated todo:', chalk_1.default.bold(todo.task));
-            console.log(chalk_1.default.dim('List:'), args.listName);
-            console.log(chalk_1.default.dim('ID:'), flags.id);
-            console.log(chalk_1.default.dim(`Changes made: ${changes}`));
+            this.log(chalk_1.default.green('✓') + ' Updated todo: ' + chalk_1.default.bold(todo.task));
+            this.log(chalk_1.default.dim('List: ') + args.listName);
+            this.log(chalk_1.default.dim('ID: ') + flags.id);
+            this.log(chalk_1.default.dim(`Changes made: ${changes}`));
         }
         catch (error) {
             throw error;
