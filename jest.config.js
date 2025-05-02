@@ -1,21 +1,15 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleNameMapper: {
-    '^@mysten/sui$': '<rootDir>/src/__mocks__/@mysten/sui.ts',
-    '^@mysten/walrus$': '<rootDir>/src/__mocks__/@mysten/walrus.ts'
-  },
+  roots: ['<rootDir>/src'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.json'
-    }]
+    '^.+\\.tsx?$': 'ts-jest',
   },
-  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-    'setup.ts',
-    'testUtils.ts',
-    'helpers/'
-  ]
-}; 
+  testRegex: '(/__tests__/.*|\\.(test|spec))\\.(tsx?|jsx?)$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json'
+    }
+  }
+};

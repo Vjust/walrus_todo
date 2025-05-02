@@ -6,7 +6,7 @@ export default class SyncCommand extends Command {
         force: import("@oclif/core/lib/interfaces").BooleanFlag<boolean>;
     };
     static args: {
-        listName: import("@oclif/core/lib/interfaces").Arg<string, Record<string, unknown>>;
+        listName: import("@oclif/core/lib/interfaces/parser").Arg<string, Record<string, unknown>>;
     };
     run(): Promise<void>;
 }

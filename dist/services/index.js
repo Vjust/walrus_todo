@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WalrusTestService = exports.SuiTestService = void 0;
-var SuiTestService_1 = require("./SuiTestService");
-Object.defineProperty(exports, "SuiTestService", { enumerable: true, get: function () { return SuiTestService_1.SuiTestService; } });
-var WalrusTestService_1 = require("./WalrusTestService");
-Object.defineProperty(exports, "WalrusTestService", { enumerable: true, get: function () { return WalrusTestService_1.WalrusTestService; } });
+exports.TodoService = exports.ConfigService = void 0;
+var config_service_1 = require("./config-service");
+Object.defineProperty(exports, "ConfigService", { enumerable: true, get: function () { return config_service_1.ConfigService; } });
+var todoService_1 = require("./todoService");
+Object.defineProperty(exports, "TodoService", { enumerable: true, get: function () { return todoService_1.TodoService; } });

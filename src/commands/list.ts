@@ -2,7 +2,13 @@ import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/error';
+
+const priorityColors: Record<string, (text: string) => string> = {
+  high: chalk.red,
+  medium: chalk.yellow,
+  low: chalk.blue
+};
 
 export default class ListCommand extends Command {
   static description = 'List todos or todo lists';
@@ -33,39 +39,34 @@ export default class ListCommand extends Command {
     })
   };
 
-  async run(): Promise<void> {
-    const { args, flags } = await this.parse(ListCommand);
-    const todoService = new TodoService();
+  private todoService = new TodoService();
 
+  async run(): Promise<void> {
     try {
+      const { args, flags } = await this.parse(ListCommand);
+
       if (args.listName) {
-        const list = await todoService.getList(args.listName);
+        const list = await this.todoService.getList(args.listName);
         if (!list) {
-          throw new CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
+          throw new CLIError(`List "${args.listName}" not found`, 'LIST_NOT_FOUND');
         }
 
-        // Display list header
-        console.log(chalk.blue('\n📋 List:'), chalk.bold(args.listName));
+        this.log(chalk.blue('\n📋 List:'), chalk.bold(args.listName));
         const completed = list.todos.filter(t => t.completed).length;
-        console.log(chalk.dim(`${completed}/${list.todos.length} completed\n`));
+        this.log(chalk.dim(`${completed}/${list.todos.length} completed\n`));
 
-        // Filter and display todos
         let todos = list.todos;
         if (flags.completed) todos = todos.filter(t => t.completed);
         if (flags.pending) todos = todos.filter(t => !t.completed);
 
         if (todos.length === 0) {
-          console.log(chalk.yellow('No matching todos found'));
+          this.log(chalk.yellow('No matching todos found'));
         } else {
           todos.forEach((todo: Todo) => {
             const status = todo.completed ? chalk.green('✓') : chalk.yellow('☐');
-            const priority = {
-              high: chalk.red('⚡'),
-              medium: chalk.yellow('○'),
-              low: chalk.blue('▿')
-            }[todo.priority];
+            const priority = priorityColors[todo.priority]('⚡');
 
-            console.log(`${status} ${priority} ${todo.task}`);
+            this.log(`${status} ${priority} ${todo.task}`);
             
             const details = [
               todo.dueDate && `Due: ${todo.dueDate}`,
@@ -74,33 +75,39 @@ export default class ListCommand extends Command {
             ].filter(Boolean);
             
             if (details.length) {
-              console.log(chalk.dim(`   ${details.join(' | ')}`));
+              this.log(chalk.dim(`   ${details.join(' | ')}`));
             }
           });
         }
       } else {
-        // List all todo lists
-        const lists = await todoService.getAllLists();
+        const lists = await this.todoService.getAllLists();
         
         if (lists.length === 0) {
-          console.log(chalk.yellow('\nNo todo lists found'));
-          console.log(chalk.dim('\nCreate your first list:'));
-          console.log(`$ ${this.config.bin} add my-list -t "My first task"`);
+          this.log(chalk.yellow('\nNo todo lists found'));
+          this.log(chalk.dim('\nCreate your first list:'));
+          this.log(`$ ${this.config.bin} add my-list -t "My first task"`);
           return;
         }
 
-        console.log(chalk.blue('\n📚 Available Lists:'));
+        this.log(chalk.blue('\n📚 Available Lists:'));
         for (const listName of lists) {
-          const list = await todoService.getList(listName);
+          const list = await this.todoService.getList(listName);
           if (list) {
             const completed = list.todos.filter(t => t.completed).length;
-            console.log(`${chalk.white('•')} ${listName} ${chalk.dim(`(${completed}/${list.todos.length} completed)`)}`)
+            this.log(`${chalk.white('•')} ${listName} ${chalk.dim(`(${completed}/${list.todos.length} completed)`)}`)
           }
         }
       }
-      console.log(); // Add newline at end
+      this.log();
+
     } catch (error) {
-      throw error;
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to list todos: ${error instanceof Error ? error.message : String(error)}`,
+        'LIST_FAILED'
+      );
     }
   }
 }

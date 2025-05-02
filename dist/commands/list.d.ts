@@ -7,7 +7,8 @@ export default class ListCommand extends Command {
         pending: import("@oclif/core/lib/interfaces").BooleanFlag<boolean>;
     };
     static args: {
-        listName: import("@oclif/core/lib/interfaces").Arg<string | undefined, Record<string, unknown>>;
+        listName: import("@oclif/core/lib/interfaces/parser").Arg<string | undefined, Record<string, unknown>>;
     };
+    private todoService;
     run(): Promise<void>;
 }

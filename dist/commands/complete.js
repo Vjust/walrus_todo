@@ -1,40 +1,55 @@
 "use strict";
-/**
- * Complete Command Module
- * Handles marking todo items as completed
- * Updates both local and blockchain state
- */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.complete = complete;
 const tslib_1 = require("tslib");
+const core_1 = require("@oclif/core");
 const chalk_1 = tslib_1.__importDefault(require("chalk"));
-const walrus_service_1 = require("../services/walrus-service");
-/**
- * Marks a todo item as completed
- * @param options - Command line options for completing todo
- */
-async function complete(options) {
-    try {
-        const { list, id } = options;
-        const todoList = await walrus_service_1.walrusService.getTodoList(list);
-        if (!todoList) {
-            console.error(chalk_1.default.red(`Todo list '${list}' not found`));
-            process.exit(1);
-        }
-        const todo = todoList.todos.find(t => t.id === id);
-        if (!todo) {
-            console.error(chalk_1.default.red(`Todo with id '${id}' not found`));
-            process.exit(1);
-        }
-        todo.completed = true;
-        await walrus_service_1.walrusService.updateTodo(list, todo);
-        console.log(chalk_1.default.green(`✔ Marked todo ${id} as complete`));
-        console.log(chalk_1.default.dim('List:'), list);
-        console.log(chalk_1.default.dim('Task:'), todo.task);
+const todoService_1 = require("../services/todoService");
+const error_1 = require("../types/error");
+class CompleteCommand extends core_1.Command {
+    constructor() {
+        super(...arguments);
+        this.todoService = new todoService_1.TodoService();
     }
-    catch (error) {
-        console.error(chalk_1.default.red('Failed to complete todo:'), error);
-        process.exit(1);
+    async run() {
+        try {
+            const { args, flags } = await this.parse(CompleteCommand);
+            const list = await this.todoService.getList(args.list);
+            if (!list) {
+                throw new error_1.CLIError(`List "${args.list}" not found`, 'LIST_NOT_FOUND');
+            }
+            const todo = list.todos.find(t => t.id === flags.id);
+            if (!todo) {
+                throw new error_1.CLIError(`Todo "${flags.id}" not found in list "${args.list}"`, 'TODO_NOT_FOUND');
+            }
+            await this.todoService.toggleItemStatus(args.list, flags.id, true);
+            this.log(chalk_1.default.green(`\n✓ Marked todo as completed`));
+            this.log(chalk_1.default.dim('Details:'));
+            this.log(`  ${chalk_1.default.bold(todo.title)}`);
+        }
+        catch (error) {
+            if (error instanceof error_1.CLIError) {
+                throw error;
+            }
+            throw new error_1.CLIError(`Failed to complete todo: ${error instanceof Error ? error.message : String(error)}`, 'COMPLETE_FAILED');
+        }
     }
 }
-exports.default = complete;
+CompleteCommand.description = 'Mark a todo as completed';
+CompleteCommand.examples = [
+    '<%= config.bin %> complete my-list -i todo-123'
+];
+CompleteCommand.flags = {
+    id: core_1.Flags.string({
+        char: 'i',
+        description: 'Todo ID to mark as completed',
+        required: true
+    })
+};
+CompleteCommand.args = {
+    list: core_1.Args.string({
+        name: 'list',
+        description: 'List name',
+        default: 'default'
+    })
+};
+exports.default = CompleteCommand;

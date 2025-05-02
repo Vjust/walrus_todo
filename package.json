@@ -4,7 +4,7 @@
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
   "main": "dist/index.js",
   "bin": {
-    "waltodo": "./bin/run.js"
+    "waltodo": "dist/index.js"
   },
   "scripts": {
     "prestart": "chmod +x ./bin/run.js",
@@ -15,7 +15,8 @@
     "prepare": "npm run clean && npm run build",
     "link": "npm link",
     "test": "jest",
-    "postinstall": "chmod +x ./bin/run.js"
+    "postinstall": "chmod +x ./bin/run.js",
+    "upload-image": "ts-node scripts/upload-default-image.ts"
   },
   "keywords": [
     "cli",
@@ -28,29 +29,30 @@
   "license": "ISC",
   "dependencies": {
     "@inquirer/prompts": "^3.0.0",
-    "@mysten/sui": "^1.28.2",
-    "@oclif/core": "^3.25.2",
-    "chalk": "^4.1.2",
-    "commander": "^11.1.0",
-    "dotenv": "^16.5.0",
-    "inquirer": "^8.2.5",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
+    "@mysten/sui": "^1.29.1",
     "@mysten/sui.js": "^0.54.1",
     "@mysten/walrus": "^0.0.19",
-    "@types/inquirer": "^9.0.7",
-    "@types/jest": "^29.5.14",
-    "@types/node": "^20.17.31",
-    "@typescript-eslint/eslint-plugin": "^8.31.0",
-    "@typescript-eslint/parser": "^8.31.0",
-    "eslint": "^9.25.1",
-    "eslint-config-prettier": "^10.1.2",
+    "@oclif/core": "^2.11.7",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.3.1",
+    "form-data": "^4.0.0",
+    "inquirer": "^8.2.5",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.3",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "@types/node-fetch": "^2.6.4",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
+    "eslint": "^8.38.0",
+    "eslint-config-prettier": "^8.8.0",
     "jest": "^29.5.0",
-    "prettier": "^3.5.3",
-    "ts-jest": "^29.3.2",
+    "prettier": "^2.8.7",
+    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.4"
   },
   "files": [
     "/bin",

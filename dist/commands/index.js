@@ -1,22 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateCommand = exports.SyncCommand = exports.PublishCommand = exports.ListCommand = exports.DeleteCommand = exports.ConfigureCommand = exports.CompleteCommand = exports.CheckCommand = exports.AddCommand = void 0;
+exports.SimpleCommand = void 0;
 const tslib_1 = require("tslib");
-var add_1 = require("./add");
-Object.defineProperty(exports, "AddCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(add_1).default; } });
-var check_1 = require("./check");
-Object.defineProperty(exports, "CheckCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(check_1).default; } });
-var complete_1 = require("./complete");
-Object.defineProperty(exports, "CompleteCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(complete_1).default; } });
-var configure_1 = require("./configure");
-Object.defineProperty(exports, "ConfigureCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(configure_1).default; } });
-var delete_1 = require("./delete");
-Object.defineProperty(exports, "DeleteCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(delete_1).default; } });
-var list_1 = require("./list");
-Object.defineProperty(exports, "ListCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(list_1).default; } });
-var publish_1 = require("./publish");
-Object.defineProperty(exports, "PublishCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(publish_1).default; } });
-var sync_1 = require("./sync");
-Object.defineProperty(exports, "SyncCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(sync_1).default; } });
-var update_1 = require("./update");
-Object.defineProperty(exports, "UpdateCommand", { enumerable: true, get: function () { return tslib_1.__importDefault(update_1).default; } });
+// Default exports
+const simple_1 = tslib_1.__importDefault(require("./simple"));
+exports.SimpleCommand = simple_1.default;

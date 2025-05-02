@@ -2,7 +2,7 @@ import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/error';
 
 export default class DeleteCommand extends Command {
   static description = 'Delete a todo item or list';
@@ -39,14 +39,15 @@ export default class DeleteCommand extends Command {
     })
   };
 
-  async run(): Promise<void> {
-    const { args, flags } = await this.parse(DeleteCommand);
-    const todoService = new TodoService();
+  private todoService = new TodoService();
 
+  async run(): Promise<void> {
     try {
-      const list = await todoService.getList(args.listName);
+      const { args, flags } = await this.parse(DeleteCommand);
+
+      const list = await this.todoService.getList(args.listName);
       if (!list) {
-        throw new CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
+        throw new CLIError(`List "${args.listName}" not found`, 'LIST_NOT_FOUND');
       }
 
       if (flags.all) {
@@ -56,24 +57,24 @@ export default class DeleteCommand extends Command {
             default: false
           });
           if (!shouldDelete) {
-            console.log(chalk.yellow('Operation cancelled'));
+            this.log(chalk.yellow('Operation cancelled'));
             return;
           }
         }
 
-        await todoService.deleteList(args.listName);
-        console.log(chalk.green('✓'), `Deleted list: ${chalk.bold(args.listName)}`);
-        console.log(chalk.dim(`Items removed: ${list.todos.length}`));
+        await this.todoService.deleteList(args.listName);
+        this.log(chalk.green('✓'), `Deleted list: ${chalk.bold(args.listName)}`);
+        this.log(chalk.dim(`Items removed: ${list.todos.length}`));
         return;
       }
 
       if (!flags.id) {
-        throw new CLIError('Either --id or --all must be specified', 'MISSING_ID');
+        throw new CLIError('Either --id or --all must be specified', 'MISSING_PARAMETER');
       }
 
       const todo = list.todos.find(t => t.id === flags.id);
       if (!todo) {
-        throw new CLIError(`Todo with ID "${flags.id}" not found`, 'INVALID_TASK_ID');
+        throw new CLIError(`Todo "${flags.id}" not found in list "${args.listName}"`, 'TODO_NOT_FOUND');
       }
 
       if (!flags.force) {
@@ -82,20 +83,25 @@ export default class DeleteCommand extends Command {
           default: false
         });
         if (!shouldDelete) {
-          console.log(chalk.yellow('Operation cancelled'));
+          this.log(chalk.yellow('Operation cancelled'));
           return;
         }
       }
 
-      list.todos = list.todos.filter(t => t.id !== flags.id);
-      await todoService.saveList(args.listName, list);
+      await this.todoService.deleteTodo(args.listName, flags.id);
       
-      console.log(chalk.green('✓'), 'Deleted todo:', chalk.bold(todo.task));
-      console.log(chalk.dim('List:'), args.listName);
-      console.log(chalk.dim('ID:'), flags.id);
+      this.log(chalk.green('✓'), 'Deleted todo:', chalk.bold(todo.task));
+      this.log(chalk.dim('List:'), args.listName);
+      this.log(chalk.dim('ID:'), flags.id);
 
     } catch (error) {
-      throw error;
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to delete todo: ${error instanceof Error ? error.message : String(error)}`,
+        'DELETE_FAILED'
+      );
     }
   }
 }

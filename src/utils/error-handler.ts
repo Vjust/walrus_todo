@@ -1,19 +1,10 @@
 import chalk from 'chalk';
-import { SuiError, WalrusError } from '../types';
+import { isErrorWithMessage, getErrorMessage } from '../types/error';
 
 /**
  * Custom CLI error class for application-specific errors
- * 
- * @class CLIError
- * @extends {Error}
  */
 export class CLIError extends Error {
-  /**
-   * Creates a new CLIError
-   * 
-   * @param {string} message - Human-readable error description
-   * @param {string} [code='GENERAL_ERROR'] - Error code for programmatic handling
-   */
   constructor(message: string, public code: string = 'GENERAL_ERROR') {
     super(message);
     this.name = 'CLIError';
@@ -22,46 +13,38 @@ export class CLIError extends Error {
 
 /**
  * Centralized error handler for the application
- * Formats and displays different types of errors appropriately
- * @param error Error object to handle
  */
-export function handleError(error: unknown): void {
-  // Log the full error to console for debugging
-  console.error('Debug error:', error);
-  
-  // Handle specific error types
-  if (error instanceof SuiError) {
-    console.error(`\n❌ Sui Blockchain Error: ${error.message}`);
-    if (error.txHash) {
-      console.error(`Transaction hash: ${error.txHash}`);
-    }
-    return;
+export function handleError(messageOrError: string | unknown, error?: unknown): void {
+  // Handle the case where only one parameter is passed
+  if (error === undefined) {
+    error = messageOrError;
+    messageOrError = '';
   }
   
-  if (error instanceof WalrusError) {
-    console.error(`\n❌ Walrus Storage Error: ${error.message}`);
-    if (error.code) {
-      console.error(`Error code: ${error.code}`);
-    }
+  const contextMessage = typeof messageOrError === 'string' ? messageOrError : '';
+  
+  if (error instanceof CLIError) {
+    console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}CLI Error: ${error.message}`);
     return;
   }
   
   if (error instanceof Error) {
-    console.error(`\n❌ Error: ${error.message}`);
+    console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}Error: ${error.message}`);
     return;
   }
   
-  // Handle unknown error types
-  console.error('\n❌ Unknown error occurred');
+  // Handle unknown error types with a message
+  if (isErrorWithMessage(error)) {
+    console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}Error: ${error.message}`);
+    return;
+  }
+  
+  // Handle completely unknown error types
+  console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}Unknown error occurred: ${getErrorMessage(error)}`);
 }
 
 /**
  * Wraps an async function with retry logic for transient errors
- * 
- * @param {Function} fn - The async function to execute
- * @param {number} maxRetries - Maximum number of retry attempts
- * @param {number} baseDelay - Base delay between retries in ms
- * @returns {Promise<T>} - Result of the function execution
  */
 export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDelay = 1000): Promise<T> {
   let lastError: Error;
@@ -88,18 +71,21 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDel
 
 /**
  * Determines if an error is likely transient and can be retried
- * 
- * @param {any} error - The error to evaluate
- * @returns {boolean} - True if the error is likely transient
  */
-function isTransientError(error: any): boolean {
-  const message = error?.message?.toLowerCase() || '';
+function isTransientError(error: unknown): boolean {
+  const message = (error as Error)?.message?.toLowerCase() || '';
   return (
     message.includes('network') ||
     message.includes('timeout') ||
     message.includes('connection') ||
     message.includes('econnrefused') ||
     message.includes('econnreset') ||
-    message.includes('429') // Too many requests
+    message.includes('429')
   );
+}
+
+export function assert(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message);
+  }
 }
