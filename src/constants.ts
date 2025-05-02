@@ -11,9 +11,9 @@ export const STORAGE_CONFIG = {
 } as const;
 
 export const NETWORK_URLS = {
-  mainnet: 'https://rpc.mainnet.sui.io',
-  testnet: 'https://rpc.testnet.sui.io',
-  devnet: 'https://rpc.devnet.sui.io',
+  mainnet: 'https://fullnode.mainnet.sui.io:443',
+  testnet: 'https://fullnode.testnet.sui.io:443',
+  devnet: 'https://fullnode.devnet.sui.io:443',
   local: 'http://127.0.0.1:9000'
 } as const;
 

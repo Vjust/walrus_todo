@@ -1,22 +1,31 @@
-# Dependency directories
+# Dependencies
 node_modules/
+jspm_packages/
 
 # TypeScript output
 dist/
+*.tsbuildinfo
+.tsbuildinfo
 
-# Testing
+# Testing and coverage
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
+junit.xml
+*.lcov
 
 # Environment variables
 .env
-.env.local
 .env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE files
 .vscode/
 .idea/
-.github/
 *.sublime-workspace
 *.sublime-project
 
@@ -26,12 +35,21 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Build files
-*.tsbuildinfo
+# Build and cache
 out/
 build/
+.cache/
 tmp/
+.eslintcache
+
+# Sui Move build artifacts
+*.mv
+move/build/
+bytecode.dump.json
+Move.lock
+sui.log.*
 
 # Temporary files
 .DS_Store
@@ -39,13 +57,27 @@ Thumbs.db
 *.swp
 *.swo
 
-# Project-specific
+# Project-specific files
 todo_nft_deployment.json
 walrus_deployment.json
 .waltodo.json
+.waltodo-*.json
 Todos/
-CLAUDE.md
 
-# AI tools
-**/.claude/settings.local.json
+# Local data and config
+data/
+config.local.json
+*.dev.local.*
+
+# Blockchain keys and configs
+.keys/
+.wallet/
+sui.keystore
+*.key
+*.pem
+
+# AI tools and configs
 .aider*
+.cody/
+**/.claude/
+CLAUDE.md

@@ -156,7 +156,3 @@ The [Todo NFT contract](src/move/sources/todo_nft.move) handles:
 - Metadata updates
 - Completion status
 - Transfer logic
-
-## License
-
-ISC
