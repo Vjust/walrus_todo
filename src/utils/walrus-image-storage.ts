@@ -45,6 +45,23 @@ export class WalrusImageStorage {
     }
   }
 
+  async getTransactionSigner(): Promise<KeystoreSigner> {
+    if (this.signer) {
+      return this.signer;
+    }
+
+    const balance = await this.suiClient.getBalance({
+      owner: this.activeAddress!
+    });
+
+    if (balance.totalBalance === '0') {
+      throw new Error('No WAL tokens found');
+    }
+
+    this.signer = new KeystoreSigner(this.suiClient);
+    return this.signer;
+  }
+
   async uploadImage(imagePath: string): Promise<string> {
     if (!this.isInitialized || !this.signer) {
       throw new Error('WalrusImageStorage not initialized. Call connect() first.');
