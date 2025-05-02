@@ -8,8 +8,11 @@ module todo_app::todo_nft {
     use std::string::{Self, String};
     use sui::url::{Self, Url};
 
-    // Default image URL for todos - Use the raw URL, not the GitHub webpage URL
-    const DEFAULT_IMAGE_URL: vector<u8> = b"https://raw.githubusercontent.com/Vjust/walrus_todo/main/assets/todo_bottle.jpeg";
+    // Default image URL for todos using Walrus CDN
+    const DEFAULT_IMAGE_URL: vector<u8> = b"https://testnet.wal.app/blob/";
+
+    // Error codes
+    const EINVALID_BLOB_ID: u64 = 1;
 
     // One-time witness for the module
     struct TODO_NFT has drop {}
@@ -78,19 +81,20 @@ module todo_app::todo_nft {
         title: vector<u8>,
         description: vector<u8>,
         walrus_blob_id: vector<u8>,
-        image_url: vector<u8>,
         ctx: &mut TxContext
     ) {
         let title_str = string::utf8(title);
         let description_str = string::utf8(description);
         let walrus_blob_id_str = string::utf8(walrus_blob_id);
         
-        // Use provided image_url if not empty, otherwise use default
-        let image_url_str = if (std::vector::length(&image_url) > 0) {
-            url::new_unsafe_from_bytes(image_url)
-        } else {
-            url::new_unsafe_from_bytes(DEFAULT_IMAGE_URL)
-        };
+        // Validate blob ID is not empty
+        assert!(std::vector::length(&walrus_blob_id) > 0, EINVALID_BLOB_ID);
+        
+        // Construct image URL from Walrus blob ID
+        let image_url_bytes = std::vector::empty<u8>();
+        std::vector::append(&mut image_url_bytes, DEFAULT_IMAGE_URL);
+        std::vector::append(&mut image_url_bytes, walrus_blob_id);
+        let image_url_str = url::new_unsafe_from_bytes(image_url_bytes);
         
         let todo = TodoNFT {
             id: object::new(ctx),

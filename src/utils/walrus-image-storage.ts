@@ -66,24 +66,19 @@ export class WalrusImageStorage {
           bytes: Buffer.from(tx).toString('base64')
         };
       },
+      signMessage: async (message: Uint8Array): Promise<string> => {
+        return signWithCLI(message);
+      },
       sign: async (data: Uint8Array): Promise<Uint8Array> => {
-        const signature = await signWithCLI(data);
-        return Buffer.from(signature, 'base64');
+        const signatureStr = await signWithCLI(data);
+        return new Uint8Array(Buffer.from(signatureStr, 'base64'));
       },
-      signWithIntent: async (data: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> => {
+      signWithIntent: async (data: Uint8Array, intent: IntentScope): Promise<string> => {
         const messageBytes = messageWithIntent(intent, data);
-        const signature = await signWithCLI(messageBytes);
-        return {
-          signature,
-          bytes: Buffer.from(messageBytes).toString('base64')
-        };
+        return signWithCLI(messageBytes);
       },
-      signPersonalMessage: async (message: Uint8Array): Promise<{ bytes: string; signature: string }> => {
-        const signature = await signWithCLI(message);
-        return {
-          bytes: Buffer.from(message).toString('base64'),
-          signature
-        };
+      signPersonalMessage: async (message: Uint8Array): Promise<string> => {
+        return signWithCLI(message);
       },
       toSuiAddress: () => activeAddress,
       getPublicKey: () => {

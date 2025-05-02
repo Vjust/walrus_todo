@@ -8,6 +8,10 @@ import chalk from 'chalk';
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
 
+interface NetworkInfo {
+  [key: string]: string;
+}
+
 interface DeploymentInfo {
   packageId: string;
   digest: string;
@@ -37,7 +41,7 @@ export default class DeployCommand extends Command {
   };
 
   private getNetworkUrl(network: string): string {
-    const networkUrls = {
+    const networkUrls: NetworkInfo = {
       localnet: 'http://localhost:9000',
       devnet: 'https://fullnode.devnet.sui.io:443',
       testnet: 'https://fullnode.testnet.sui.io:443',
@@ -80,81 +84,18 @@ export default class DeployCommand extends Command {
       const sourcesDir = path.join(tempDir, 'sources');
       fs.mkdirSync(sourcesDir, { recursive: true });
       
-      // Write Move contract
-      const todoNftPath = path.join(sourcesDir, 'todo_nft.move');
-      fs.writeFileSync(todoNftPath, `
-module todo_nft::todo_nft {
-    use sui::url::{Self, Url};
-    use std::string;
-    use sui::object::{Self, UID};
-    use sui::event;
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
-
-    // Todo NFT struct
-    struct TodoNFT has key, store {
-        id: UID,
-        name: string::String,
-        description: string::String,
-        url: Url,
-        completed: bool,
-        walrus_blob_id: string::String,
-    }
-
-    // Events
-    struct TodoCreated has copy, drop {
-        id: address,
-        name: string::String,
-    }
-
-    struct TodoCompleted has copy, drop {
-        id: address,
-        timestamp: u64,
-    }
-
-    // Entry functions for todo operations
-    public fun create_todo(
-        name: vector<u8>,
-        description: vector<u8>,
-        image_url: vector<u8>,
-        walrus_blob_id: vector<u8>,
-        ctx: &mut TxContext
-    ) {
-        let todo = TodoNFT {
-            id: object::new(ctx),
-            name: string::utf8(name),
-            description: string::utf8(description),
-            url: url::new_unsafe_from_bytes(image_url),
-            completed: false,
-            walrus_blob_id: string::utf8(walrus_blob_id),
-        };
-
-        event::emit(TodoCreated {
-            id: object::uid_to_inner(&todo.id),
-            name: todo.name,
-        });
-
-        transfer::public_transfer(todo, tx_context::sender(ctx));
-    }
-
-    public fun complete_todo(todo: &mut TodoNFT, ctx: &TxContext) {
-        todo.completed = true;
-        
-        event::emit(TodoCompleted {
-            id: object::uid_to_inner(&todo.id),
-            timestamp: tx_context::epoch(ctx),
-        });
-    }
-
-    // View functions
-    public fun is_completed(todo: &TodoNFT): bool {
-        todo.completed
-    }
-
-    public fun get_blob_id(todo: &TodoNFT): string::String {
-        todo.walrus_blob_id
-    }
-}`);
+      // Copy Move.toml to temp directory
+      const moveTomlSource = path.resolve(__dirname, '../../src/move/Move.toml');
+      const moveTomlDest = path.join(tempDir, 'Move.toml');
+      fs.copyFileSync(moveTomlSource, moveTomlDest);
+      
+      // Copy contract files
+      const contractFiles = ['todo_nft.move'];
+      for (const file of contractFiles) {
+        const sourcePath = path.resolve(__dirname, `../../src/move/sources/${file}`);
+        const destPath = path.join(sourcesDir, file);
+        fs.copyFileSync(sourcePath, destPath);
+      }
 
       try {
         // Publish package using Sui CLI
@@ -167,7 +108,7 @@ module todo_nft::todo_nft {
         }
         
         // Find published package
-        const packageObj = publishResult.effects.created.find(obj => obj.owner === 'Immutable');
+        const packageObj = publishResult.effects.created.find((obj: { owner: string }) => obj.owner === 'Immutable');
         if (!packageObj) {
           throw new CLIError('Could not find package ID in created objects', 'DEPLOYMENT_FAILED');
         }
@@ -189,9 +130,6 @@ module todo_nft::todo_nft {
 
         this.log(chalk.green('\n✓ Smart contract deployed successfully!'));
         this.log(chalk.blue('Deployment Info:'));
-
-        this.log(chalk.green('\n✓ Smart contract deployed successfully!'));
-        this.log(chalk.blue('Deployment Info:'));
         this.log(chalk.dim(`  Package ID: ${packageId}`));
         this.log(chalk.dim(`  Digest: ${publishResult.digest}`));
         this.log(chalk.dim(`  Network: ${network}`));
@@ -203,7 +141,8 @@ module todo_nft::todo_nft {
           fs.rmSync(tempDir, { recursive: true });
           this.log('Cleaned up temporary deployment directory');
         } catch (cleanupError) {
-          this.warn(`Warning: Failed to clean up temporary directory: ${cleanupError.message}`);
+          const error = cleanupError as Error;
+          this.warn(`Warning: Failed to clean up temporary directory: ${error.message}`);
         }
       }
 

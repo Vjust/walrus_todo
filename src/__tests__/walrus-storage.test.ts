@@ -17,7 +17,7 @@ describe('WalrusImageStorage', () => {
   beforeEach(() => {
     suiClient = {
       getBalance: jest.fn(),
-      signAndExecuteTransactionBlock: jest.fn(),
+      signAndExecuteTransactionBlock: jest.fn().mockImplementation((txb) => Promise.resolve({ digest: 'test-digest' })),
       waitForTransactionBlock: jest.fn()
     } as any;
 
@@ -57,7 +57,7 @@ describe('WalrusImageStorage', () => {
 
     it('should create WalletExtensionSigner when wallet is connected', async () => {
       wallet.connected = true;
-      storage = new WalrusImageStorage(suiClient, wallet);
+      storage = new WalrusImageStorage(suiClient);
       const signer = await (storage as any).getTransactionSigner();
       expect(signer).toBeInstanceOf(WalletExtensionSigner);
     });
