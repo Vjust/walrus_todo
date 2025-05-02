@@ -1,38 +1,31 @@
 import { SuiClient } from '@mysten/sui/client';
-import { Signer } from '@mysten/sui/cryptography';
+import { type Signer, type SignatureWithBytes } from '@mysten/sui/cryptography';
 import { WalrusClient } from '@mysten/walrus';
-import { WalletAdapter } from '@mysten/wallet-adapter-base';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getAssetPath } from './path-utils';
 import { handleError } from './error-handler';
 import { execSync } from 'child_process';
-import { CLIError } from '../types/error';
-import { KeystoreSigner } from './sui-keystore';
-import { WalletExtensionSigner } from './wallet-extension';
-
-const WAL_COIN_TYPE = '0x8270feb7375eee355e64fdb69c50abb6b5f9393a722883c1cf45f8e26048810a::wal::WAL';
+import { IntentScope, messageWithIntent } from '@mysten/sui/cryptography';
 
 export class WalrusImageStorage {
+  private suiClient: SuiClient;
   private walrusClient!: WalrusClient;
   private isInitialized: boolean = false;
-  private signer: Signer | null = null;
 
-  constructor(
-    private suiClient: SuiClient,
-    private wallet?: WalletAdapter
-  ) {}
+  constructor(suiClient: SuiClient) {
+    this.suiClient = suiClient;
+  }
 
   async connect(): Promise<void> {
     try {
+      // Get active environment info from Sui CLI
       const envInfo = execSync('sui client active-env').toString().trim();
       if (!envInfo.includes('testnet')) {
-        throw new CLIError(
-          'Must be connected to testnet environment. Use "sui client switch --env testnet"',
-          'WRONG_NETWORK'
-        );
+        throw new Error('Must be connected to testnet environment. Use "sui client switch --env testnet"');
       }
 
+      // Initialize Walrus client with network config
       this.walrusClient = new WalrusClient({
         network: 'testnet',
         suiClient: this.suiClient,
@@ -44,68 +37,85 @@ export class WalrusImageStorage {
 
       this.isInitialized = true;
     } catch (error) {
-      if (error instanceof CLIError) throw error;
-      throw new CLIError(
-        `Failed to initialize Walrus client: ${error instanceof Error ? error.message : String(error)}`,
-        'INIT_FAILED'
-      );
+      handleError('Failed to initialize Walrus client', error);
+      throw error;
     }
   }
 
   private async getTransactionSigner(): Promise<Signer> {
-    try {
-      if (this.signer) {
-        return this.signer;
+    // Use CLI to get active address
+    const activeAddress = execSync('sui client active-address').toString().trim();
+
+    // Helper function to sign data using CLI
+    const signWithCLI = async (data: Uint8Array): Promise<string> => {
+      const base64Data = Buffer.from(data).toString('base64');
+      const result = execSync(`sui client sign-data "${base64Data}"`).toString();
+      const match = result.match(/signature: ([^\n]+)/);
+      if (!match) {
+        throw new Error('Failed to extract signature from sui client output');
       }
-
-      let signer: Signer;
-      if (this.wallet?.connected) {
-        signer = new WalletExtensionSigner(this.wallet);
-      } else {
-        signer = new KeystoreSigner(this.suiClient);
+      return match[1];
+    };
+    
+    return {
+      // Required methods from Signer interface
+      getKeyScheme: () => 'ED25519',
+      signTransaction: async (tx: Uint8Array): Promise<SignatureWithBytes> => {
+        return {
+          signature: await signWithCLI(tx),
+          bytes: Buffer.from(tx).toString('base64')
+        };
+      },
+      sign: async (data: Uint8Array): Promise<Uint8Array> => {
+        const signature = await signWithCLI(data);
+        return Buffer.from(signature, 'base64');
+      },
+      signWithIntent: async (data: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> => {
+        const messageBytes = messageWithIntent(intent, data);
+        const signature = await signWithCLI(messageBytes);
+        return {
+          signature,
+          bytes: Buffer.from(messageBytes).toString('base64')
+        };
+      },
+      signPersonalMessage: async (message: Uint8Array): Promise<{ bytes: string; signature: string }> => {
+        const signature = await signWithCLI(message);
+        return {
+          bytes: Buffer.from(message).toString('base64'),
+          signature
+        };
+      },
+      toSuiAddress: () => activeAddress,
+      getPublicKey: () => {
+        throw new Error('getPublicKey not implemented - using CLI for signing only');
       }
-
-      const balance = await this.suiClient.getBalance({
-        owner: signer.toSuiAddress(),
-        coinType: WAL_COIN_TYPE
-      });
-
-      if (balance.totalBalance === '0') {
-        throw new CLIError(
-          'No WAL tokens found in wallet. WAL tokens are required to upload to Walrus storage.',
-          'NO_WAL_TOKENS'
-        );
-      }
-
-      this.signer = signer;
-      return signer;
-    } catch (error) {
-      if (error instanceof CLIError) throw error;
-      throw new CLIError(
-        `Failed to create signer: ${error instanceof Error ? error.message : String(error)}`,
-        'SIGNER_FAILED'
-      );
-    }
+    };
   }
 
+  /**
+   * Upload the default todo bottle image to Walrus
+   * @returns Promise<string> The URL of the uploaded image on Walrus
+   */
   async uploadDefaultImage(): Promise<string> {
     if (!this.isInitialized) {
-      throw new CLIError('WalrusImageStorage not initialized. Call connect() first.', 'NOT_INITIALIZED');
+      throw new Error('WalrusImageStorage not initialized. Call connect() first.');
     }
 
     try {
       const imagePath = getAssetPath('todo_bottle.jpeg');
       if (!fs.existsSync(imagePath)) {
-        throw new CLIError(`Default image not found at ${imagePath}`, 'IMAGE_NOT_FOUND');
+        throw new Error(`Default image not found at ${imagePath}`);
       }
 
+      // Read image file as buffer
       const imageBuffer = fs.readFileSync(imagePath);
+
+      // Upload to Walrus using CLI signer
       const signer = await this.getTransactionSigner();
-      
       const { blobObject } = await this.walrusClient.writeBlob({
         blob: new Uint8Array(imageBuffer),
         deletable: false,
-        epochs: 52,
+        epochs: 52, // Store for ~6 months
         signer,
         attributes: {
           contentType: 'image/jpeg',
@@ -114,23 +124,28 @@ export class WalrusImageStorage {
         }
       });
 
+      // Return the Walrus URL format
       return `https://testnet.wal.app/blob/${blobObject.blob_id}`;
     } catch (error) {
-      if (error instanceof CLIError) throw error;
-      throw new CLIError(
-        `Failed to upload default image to Walrus: ${error instanceof Error ? error.message : String(error)}`,
-        'UPLOAD_FAILED'
-      );
+      handleError('Failed to upload default image to Walrus', error);
+      throw error;
     }
   }
 
+  /**
+   * Upload a custom image for a todo
+   * @param imagePath Path to the image file
+   * @param title Todo title (for metadata)
+   * @param completed Todo completion status (for metadata)
+   * @returns Promise<string> The URL of the uploaded image on Walrus
+   */
   async uploadCustomTodoImage(
     imagePath: string,
     title: string,
     completed: boolean
   ): Promise<string> {
     if (!this.isInitialized) {
-      throw new CLIError('WalrusImageStorage not initialized. Call connect() first.', 'NOT_INITIALIZED');
+      throw new Error('WalrusImageStorage not initialized. Call connect() first.');
     }
 
     try {
@@ -138,11 +153,12 @@ export class WalrusImageStorage {
       const ext = path.extname(imagePath).toLowerCase();
       const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg';
 
+      // Upload to Walrus using CLI signer
       const signer = await this.getTransactionSigner();
       const { blobObject } = await this.walrusClient.writeBlob({
         blob: new Uint8Array(imageBuffer),
         deletable: false,
-        epochs: 52,
+        epochs: 52, // Store for ~6 months
         signer,
         attributes: {
           contentType: mimeType,
@@ -153,20 +169,15 @@ export class WalrusImageStorage {
         }
       });
 
+      // Return the Walrus URL format
       return `https://testnet.wal.app/blob/${blobObject.blob_id}`;
     } catch (error) {
-      if (error instanceof CLIError) throw error;
-      throw new CLIError(
-        `Failed to upload custom image: ${error instanceof Error ? error.message : String(error)}`,
-        'UPLOAD_FAILED'
-      );
+      handleError('Failed to upload custom image to Walrus', error);
+      throw error;
     }
   }
 }
 
-export function createWalrusImageStorage(
-  suiClient: SuiClient,
-  wallet?: WalletAdapter
-): WalrusImageStorage {
-  return new WalrusImageStorage(suiClient, wallet);
+export function createWalrusImageStorage(suiClient: SuiClient): WalrusImageStorage {
+  return new WalrusImageStorage(suiClient);
 }
