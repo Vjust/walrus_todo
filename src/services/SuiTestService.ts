@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { SuiClient } from '@mysten/sui/client';
 import { NETWORK_URLS } from '../constants';
 import { Config } from '../types';
+import { NetworkType } from '../types/network';
 import { CLIError } from '../types/error';
 
 type TodoItem = {
@@ -57,7 +58,7 @@ export class SuiTestService implements ISuiService {
   constructor(config?: Config | string) {
     if (typeof config === 'string') {
       this.config = {
-        network: 'testnet',
+        network: 'testnet' as NetworkType,
         walletAddress: config,
         encryptedStorage: false
       };
@@ -65,13 +66,13 @@ export class SuiTestService implements ISuiService {
       this.config = config;
     } else {
       this.config = {
-        network: 'testnet',
+        network: 'testnet' as NetworkType,
         walletAddress: '',
         encryptedStorage: false
       };
     }
 
-    this.client = new SuiClient({ url: NETWORK_URLS[this.config.network] });
+    this.client = new SuiClient({ url: NETWORK_URLS[this.config.network as NetworkType] });
     this.walletAddress =
       this.config.walletAddress ??
       `0x${crypto.randomBytes(20).toString("hex").toLowerCase()}`;

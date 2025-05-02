@@ -1,6 +1,18 @@
+import * as path from 'path';
+
+const DEFAULT_IMAGE_PATH = path.resolve(__dirname, '../../assets/todo_bottle.jpeg');
+
 /**
  * Utility for generating NFT images for todos
  */
+
+/**
+ * Get the path to the default todo image
+ * @returns Path to the default todo image
+ */
+export function getDefaultImagePath(): string {
+  return DEFAULT_IMAGE_PATH;
+}
 
 /**
  * Generate a URL for the NFT image
