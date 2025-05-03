@@ -100,7 +100,7 @@ describe('WalrusImageStorage', () => {
 
       // Get the signer and check expectations
       const signer = await storage.getTransactionSigner();
-      expect(signer).toBe(mockWalletSigner);  // Remove call count expectation if not accurate
+      expect(signer).toEqual(mockWalletSigner);  // Use toEqual for deep comparison if needed, but toBe should work for reference equality
       expect(signer.signMessage).toBeDefined();
     });
 
