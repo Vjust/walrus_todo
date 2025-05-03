@@ -66,8 +66,7 @@ describe('WalrusImageStorage', () => {
     it('should create WalletExtensionSigner when wallet is connected', async () => {
       wallet.connected = true;
       storage = new WalrusImageStorage(suiClient);
-      const mockWalletSigner: Partial<KeystoreSigner> = {
-        signMessage: jest.fn(),
+      const mockWalletSigner: Partial<WalletExtensionSigner> = {  // Use the correct type
         sign: jest.fn(),
         signWithIntent: jest.fn(),
         signPersonalMessage: jest.fn(),
@@ -75,10 +74,12 @@ describe('WalrusImageStorage', () => {
         getPublicKey: jest.fn(),
         toSuiAddress: jest.fn(),
         signTransaction: jest.fn(),
+        signMessage: jest.fn(),  // Ensure all methods are properly mocked
       };
-      (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner as KeystoreSigner);
+      (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner as unknown as WalletExtensionSigner);  // Cast appropriately
       
-      // Ensure getTransactionSigner is called without 'as any'
+      // Mock the internal logic to ensure signer is created
+      jest.spyOn(storage, 'connect').mockResolvedValue();  // Simulate successful connection
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
       expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
