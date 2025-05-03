@@ -148,8 +148,8 @@ describe('CLI Commands', () => {
         expect(config).toHaveProperty('network', 'testnet');
         expect(config).toHaveProperty('walletAddress', '0x123...');
 
-        // Restore the mock after the test
-        mockExecSync.mockRestore();
+        // Restore only the fs mock, execSync is handled by beforeEach reset
+        mockReadFileSync.mockRestore();
       });
     });
 
