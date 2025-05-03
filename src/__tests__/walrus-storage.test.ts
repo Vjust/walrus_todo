@@ -21,7 +21,7 @@ describe('WalrusImageStorage', () => {
       getBalance: jest.fn().mockResolvedValue({  // Mock with sample data to simulate tokens
         coinType: 'WAL',
         coinObjectCount: 1,
-        totalBalance: '1000',  // Ensure balance is greater than 0
+        totalBalance: '1000',  // Ensure balance is greater than 0 for all tests
         lockedBalance: { lockedTotal: '0', locked: '0' }
       }),
       signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({ digest: 'test-digest' }),
@@ -82,12 +82,20 @@ describe('WalrusImageStorage', () => {
         signMessage: jest.fn(),
         cachedAddress: 'test-address',
         wallet: wallet as any,
-      } as unknown as WalletExtensionSigner;  // Cast to unknown first to avoid type error
+      } as unknown as WalletExtensionSigner;
 
       // Set up mock for WalletExtensionSigner constructor
       (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);
 
-      // Call connect to initialize the storage, assuming it sets the signer
+      // Mock the balance check to avoid actual network calls
+      suiClient.getBalance.mockResolvedValue({
+        coinType: 'WAL',
+        coinObjectCount: 1,
+        totalBalance: '1000',  // Ensure non-zero balance
+        lockedBalance: { lockedTotal: '0', locked: '0' }
+      });
+
+      // Call connect to initialize the storage
       await storage.connect();
 
       // Get the signer and check expectations
