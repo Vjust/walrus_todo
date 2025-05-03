@@ -48,7 +48,7 @@ describe('WalrusImageStorage', () => {
   });
 
   describe('getTransactionSigner', () => {
-    beforeEach() => {
+    beforeEach(() => {
       suiClient.getBalance.mockResolvedValue({
         coinType: 'WAL',  // Changed to 'WAL' to match expected coin type
         coinObjectCount: 1,
