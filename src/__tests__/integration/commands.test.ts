@@ -22,12 +22,7 @@ describe('CLI Commands', () => {
     
     // Setup test environment (e.g., configure CLI)
     // Enhanced mocking to handle potential errors and ensure command simulation
-    jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
-      if (command.includes('configure')) {
-        return 'Command executed successfully';  // Simulate success for configure command
-      }
-      throw new Error(`Command failed: ${command}`);
-    });
+    // Move mocking inside the specific test to avoid redefinition
     execSync(`${CLI_CMD} configure --network testnet`, { stdio: 'inherit' });
   });
 
