@@ -108,7 +108,11 @@ describe('CLI Commands', () => {
       it('should verify config file after configuration', async () => {  // Make it async if needed, or ensure it's synchronous
         // Mock fs.readFileSync to simulate config file content
         const mockReadFileSync = jest.spyOn(fs, 'readFileSync').mockImplementation((filePath: string | PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
-          // Removed redundant code to avoid duplication and errors
+          if (typeof filePath === 'string' && filePath.includes('.waltodo/config.json')) {
+            return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
+          }
+          throw new Error(`File not mocked: ${String(filePath)}`);
+        });
 
         const result = execSync(`${CLI_CMD} configure --network testnet --wallet-address 0x123...`).toString();
         
