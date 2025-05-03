@@ -1,3 +1,4 @@
+import * as child_process from 'child_process';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -21,7 +22,7 @@ describe('CLI Commands', () => {
     
     // Setup test environment (e.g., configure CLI)
     // Enhanced mocking to handle potential errors and ensure command simulation
-    jest.spyOn(child_process, 'execSync').mockImplementation((command) => {
+    jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
       if (command.includes('configure')) {
         return 'Command executed successfully';  // Simulate success for configure command
       }
@@ -44,7 +45,7 @@ describe('CLI Commands', () => {
   describe('Fresh Installation Test', () => {
     it('should simulate fresh installation and verify CLI version', () => {
       // Mock execSync to simulate npm install and CLI commands
-      const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command) => {
+      const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
         if (command.includes('npm install -g waltodo')) {
           return Buffer.from('Installation successful');  // Simulate successful install
         } else if (command.includes('waltodo --version')) {
