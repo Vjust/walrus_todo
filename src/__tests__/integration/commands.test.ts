@@ -136,17 +136,24 @@ describe('CLI Commands', () => {
         expect(config.walletAddress).toBe('0x123...');
 
         // Restore the mock after the test
-        mockReadFileSync.mockRestore();  // Ensure this is inside the test block
+        mockReadFileSync.mockRestore();  // Moved to correct position if needed, but already handled
       });
     });
 
+    // Enhanced for production-like testing: Add a test case with actual error handling
     describe('error handling', () => {
       it('should handle network error simulation', () => {
-        // Mock network error for testing; in practice, use external tools
         jest.spyOn(process, 'exit').mockImplementation(() => { throw new Error('Simulated network error'); });
         expect(() => {
           execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
-        }).toThrow();
+        }).toThrow('Simulated network error');  // More specific assertion
+      });
+
+      // Add a new test for better coverage
+      it('should handle invalid command', () => {
+        expect(() => {
+          execSync(`${CLI_CMD} invalid-command`, { stdio: 'inherit' });
+        }).toThrow();  // Expect error for non-existent command
       });
     });
   });
