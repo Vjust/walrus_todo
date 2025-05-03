@@ -119,5 +119,6 @@ describe('CLI Commands', () => {
         execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
       }).toThrow();
     });
-  });
+  }
+});
 });
