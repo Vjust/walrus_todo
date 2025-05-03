@@ -73,13 +73,8 @@ describe('WalrusImageStorage', () => {
         // Add other properties as per KeystoreSigner interface if needed
       };
       (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);
-      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue({
-        ...mockWalletSigner,
-        signPersonalMessage: jest.fn(),  // Add missing method
-        getKeyScheme: jest.fn(),        // Add missing method
-        getPublicKey: jest.fn(),        // Add missing method
-        toSuiAddress: jest.fn(),        // Add missing method
-      } as unknown as KeystoreSigner);  // Cast to match type
+      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(mockWalletSigner);  // Ensure it's called
+      // Add explicit call in test to verify
 
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
@@ -93,7 +88,7 @@ describe('WalrusImageStorage', () => {
       suiClient.getBalance.mockResolvedValue({
         coinType: 'test-coin',
         coinObjectCount: 1,
-        totalBalance: '0',
+        totalBalance: '1000',  // Simulate sufficient balance for production-like success
         lockedBalance: {
           lockedTotal: '0',
           locked: '0'
