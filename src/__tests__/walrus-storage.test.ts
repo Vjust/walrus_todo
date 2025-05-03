@@ -67,13 +67,8 @@ describe('WalrusImageStorage', () => {
       wallet.connected = true;
       storage = new WalrusImageStorage(suiClient);
       const mockWalletSigner = { signMessage: jest.fn() };
-      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue({
-        ...mockWalletSigner,
-        sign: jest.fn(),
-        signWithIntent: jest.fn(),
-        // Add other required properties from KeystoreSigner interface
-      } as unknown as KeystoreSigner);  // Cast to match the interface
-      (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);
+      (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);  // Ensure mock is set before spy
+      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(mockWalletSigner);  // Directly resolve to the mock
 
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
