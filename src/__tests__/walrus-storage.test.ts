@@ -86,7 +86,17 @@ describe('WalrusImageStorage', () => {
       // Mock the internal logic to ensure signer is created
       jest.spyOn(storage, 'connect').mockResolvedValue();  // Simulate successful connection
       // Add explicit mock call to ensure it's triggered
-      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(mockWalletSigner as WalletExtensionSigner);
+      // Mock the signer to return an object that matches the expected interface
+      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue({
+        sign: jest.fn(),
+        signWithIntent: jest.fn(),
+        signPersonalMessage: jest.fn(),
+        getKeyScheme: jest.fn(),
+        getPublicKey: jest.fn(),
+        toSuiAddress: jest.fn(),
+        signTransaction: jest.fn(),
+        signMessage: jest.fn(),
+      } as unknown as WalletExtensionSigner);  // Cast to satisfy type, ensuring all methods are mocked
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
       expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
