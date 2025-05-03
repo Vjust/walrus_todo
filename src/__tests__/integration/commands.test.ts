@@ -139,7 +139,7 @@ describe('CLI Commands', () => {
         expect(config).toHaveProperty('walletAddress', '0x123...');
 
         // Restore the mock after the test
-        mockReadFileSync.mockRestore();  // Ensure mock is restored without null check if it's always defined
+        mockReadFileSync.mockRestore();  // Reference is valid; no changes needed here for this error
       });
     });
 
