@@ -5,6 +5,7 @@ import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
 import * as path from 'path';
 
 jest.mock('child_process', () => ({ execSync: jest.fn() }));
+jest.mock('fs', () => ({ readFileSync: jest.fn() }));
 
 describe('CLI Commands', () => {
   const CLI_CMD = 'node ./bin/run.js';  // Use the local build path
@@ -77,7 +78,7 @@ describe('CLI Commands', () => {
       // Add more test cases as per the guide, e.g., for image handling
       it('should handle invalid image', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('create --image ./invalid.txt')) {
+          if (command.includes('node ./bin/run.js create --image ./invalid.txt')) {  // Make mock more specific to the full command
             throw new Error('Invalid image file provided');
           }
           throw new Error(`Command not mocked: ${command}`);
@@ -118,10 +119,9 @@ describe('CLI Commands', () => {
         expect(result).toContain('Command executed successfully');
       });
 
-      it('should verify config file after configuration', () => {  // Remove async as it's not needed for synchronous code
-        // Mock fs.readFileSync to simulate config file content
-        const mockReadFileSync = jest.spyOn(fs, 'readFileSync').mockImplementation((filePath: string | PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
-          if (typeof filePath === 'string' && filePath.includes('.waltodo/config.json')) {
+      it('should verify config file after configuration', () => {
+        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string | PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
+          if (typeof filePath === 'string' and filePath.includes('.waltodo/config.json')) {
             return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
           }
           throw new Error(`File not mocked: ${String(filePath)}`);
@@ -147,9 +147,6 @@ describe('CLI Commands', () => {
         // Add more comprehensive assertions for production-like testing
         expect(config).toHaveProperty('network', 'testnet');
         expect(config).toHaveProperty('walletAddress', '0x123...');
-
-        // Restore only the fs mock, execSync is handled by beforeEach reset
-        mockReadFileSync.mockRestore();
       });
     });
 
