@@ -87,7 +87,8 @@ describe('WalrusImageStorage', () => {
       jest.spyOn(storage, 'connect').mockResolvedValue();  // Simulate successful connection
       // Add explicit mock call to ensure it's triggered
       // Mock the signer to return an object that matches the expected interface
-      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue({
+      // Fix type mismatch by returning a Promise of KeystoreSigner or adjusting mock
+      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(Promise.resolve({
         sign: jest.fn(),
         signWithIntent: jest.fn(),
         signPersonalMessage: jest.fn(),
@@ -96,7 +97,7 @@ describe('WalrusImageStorage', () => {
         toSuiAddress: jest.fn(),
         signTransaction: jest.fn(),
         signMessage: jest.fn(),
-      } as unknown as WalletExtensionSigner);  // Cast to satisfy type, ensuring all methods are mocked
+      } as unknown as KeystoreSigner));  // Change cast to KeystoreSigner to match expected type
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
       expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
