@@ -22,8 +22,7 @@ describe('CLI Commands', () => {
     
     // Setup test environment (e.g., configure CLI)
     // Enhanced mocking to handle potential errors and ensure command simulation
-    // Move mocking inside the specific test to avoid redefinition
-    execSync(`${CLI_CMD} configure --network testnet`, { stdio: 'inherit' });
+    // Mocking moved inside tests to avoid redefinition issues
   });
 
   afterAll(() => {
