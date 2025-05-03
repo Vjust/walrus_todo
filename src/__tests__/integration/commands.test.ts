@@ -24,7 +24,7 @@ describe('CLI Commands', () => {
     }
     
     // Create test image if it doesn't exist
-    if (!fs.existsSync(TEST_IMAGE)) {  // Assuming TEST_IMAGE is defined above; if not, ensure it's declared
+    if (!fs.existsSync(TEST_IMAGE)) {
       fs.writeFileSync(TEST_IMAGE, 'test image data');
     }
   });
