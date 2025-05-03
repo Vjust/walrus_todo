@@ -20,7 +20,12 @@ describe('CLI Commands', () => {
     }
     
     // Setup test environment (e.g., configure CLI)
-    execSync(`${CLI_CMD} configure --network testnet`, { stdio: 'inherit' });
+    try {
+      execSync(`${CLI_CMD} configure --network testnet`, { stdio: 'inherit' });
+    } catch (error) {
+      // Mock or handle command not found error for testing
+      throw new Error('Command failed: ensure waltodo is built and available');
+    }
   });
 
   afterAll(() => {
