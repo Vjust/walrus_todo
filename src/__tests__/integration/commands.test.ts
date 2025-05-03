@@ -1,9 +1,10 @@
 import * as child_process from 'child_process';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
-import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';  // Add missing imports
+import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
 import * as path from 'path';
-import * as jestMock from 'jest-mock'; // Import jest-mock for better mocking if needed, but using jest.spyOn
+
+jest.mock('child_process', () => ({ execSync: jest.fn() }));
 
 describe('CLI Commands', () => {
   const CLI_CMD = 'node ./bin/run.js';  // Use the local build path
@@ -37,9 +38,12 @@ describe('CLI Commands', () => {
   });
 
   describe('Fresh Installation Test', () => {
+    beforeEach(() => {
+      (execSync as jest.Mock).mockReset();
+    });
+
     it('should simulate fresh installation and verify CLI version', () => {
-      // Mock execSync for this test only
-      const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
+      (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command === 'waltodo --version') {
           return Buffer.from('1.0.0');
         } else if (command === 'which waltodo') {
@@ -53,13 +57,11 @@ describe('CLI Commands', () => {
 
       expect(resultVersion).toBe('1.0.0');
       expect(resultWhich).toContain('/usr/local/bin/waltodo');
-
-      mockExecSync.mockRestore();  // Restore after test
     });
 
     describe('create command', () => {
       it('should create todo with default image', () => {
-        const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
+        (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('create')) {
             return Buffer.from('Todo created successfully with default image');
           }
@@ -67,16 +69,14 @@ describe('CLI Commands', () => {
         });
 
         const result = execSync(`${CLI_CMD} create --title "Test Todo" --description "Test Desc"`).toString();
-        
+    
         expect(result).toContain('Todo created successfully');
         expect(result).toContain('default image');  // Adjusted for mock response
-
-        mockExecSync.mockRestore();  // Restore after test
       });
 
       // Add more test cases as per the guide, e.g., for image handling
       it('should handle invalid image', () => {
-        const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
+        (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('create --image ./invalid.txt')) {
             throw new Error('Invalid image file provided');
           }
@@ -86,14 +86,12 @@ describe('CLI Commands', () => {
         expect(() => {
           execSync(`${CLI_CMD} create --title "Invalid Image Todo" --image ./invalid.txt`, { stdio: 'inherit' });
         }).toThrow('Invalid image file provided');  // Specific error message
-
-        mockExecSync.mockRestore();  // Restore after test
       });
     });
 
     describe('list command', () => {
       it('should list todos', () => {
-        const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
+        (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('list')) {
             return Buffer.from('Listed todos: Test Todo');  // Mock response with expected content
           }
@@ -102,15 +100,13 @@ describe('CLI Commands', () => {
 
         const result = execSync(`${CLI_CMD} list ${TEST_LIST}`).toString();
         expect(result).toContain('Test Todo');
-
-        mockExecSync.mockRestore();  // Restore after test
       });
     });
 
     // Add more describes for other sections like error handling, etc.
     describe('Configuration Command Test', () => {
       it('should configure CLI with network and wallet address', () => {
-        const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
+        (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('configure')) {
             return Buffer.from('Command executed successfully');
           }
@@ -118,10 +114,8 @@ describe('CLI Commands', () => {
         });
 
         const result = execSync(`${CLI_CMD} configure --network testnet --wallet-address 0x123...`).toString();
-        
+    
         expect(result).toContain('Command executed successfully');
-
-        mockExecSync.mockRestore();  // Restore after test
       });
 
       it('should verify config file after configuration', () => {  // Remove async as it's not needed for synchronous code
@@ -163,27 +157,23 @@ describe('CLI Commands', () => {
     // Enhanced for production-like testing: Add a test case with actual error handling
     describe('error handling', () => {
       it('should handle network error simulation', () => {
-        const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation(() => {
+        (execSync as jest.Mock).mockImplementation(() => {
           throw new Error('Simulated network error');
         });
 
         expect(() => {
           execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
         }).toThrow('Simulated network error');
-
-        mockExecSync.mockRestore();  // Restore after test
       });
 
       it('should handle invalid command', () => {
-        const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation(() => {
+        (execSync as jest.Mock).mockImplementation(() => {
           throw new Error('Command not found');
         });
 
         expect(() => {
           execSync(`${CLI_CMD} invalid-command`, { stdio: 'inherit' });
         }).toThrow('Command not found');
-
-        mockExecSync.mockRestore();  // Restore after test
       });
     });
   });
