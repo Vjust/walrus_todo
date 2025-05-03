@@ -70,9 +70,11 @@ describe('WalrusImageStorage', () => {
       (WalletExtensionSigner as jest.Mock).mockReturnValue(mockWalletSigner);
 
       const signer = await storage.getTransactionSigner();
-      expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);  // Ensure it's called once
-      expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));  // More flexible check
-      expect(signer).toEqual(mockWalletSigner);  // Use toEqual for object comparison
+      expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
+      expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
+      expect(signer).toEqual(mockWalletSigner);
+      // Add assertion to verify signer functionality if needed
+      expect(signer.signMessage).toBeDefined();  // Ensure the signer has the expected methods
     });
 
     it('should throw error when WAL balance is 0', async () => {
