@@ -105,7 +105,7 @@ describe('CLI Commands', () => {
         expect(result).toContain('Command executed successfully');  // Based on mocked implementation
       });
 
-      it('should verify config file after configuration', async () => {  // Make it async if needed, or ensure it's synchronous
+      it('should verify config file after configuration', () => {  // Remove async as it's not needed for synchronous code
         // Mock fs.readFileSync to simulate config file content
         const mockReadFileSync = jest.spyOn(fs, 'readFileSync').mockImplementation((filePath: string | PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
           if (typeof filePath === 'string' && filePath.includes('.waltodo/config.json')) {
