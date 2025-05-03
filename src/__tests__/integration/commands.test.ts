@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('CLI Commands', () => {
-  const CLI_CMD = 'waltodo';  // Adjust if needed based on your setup
+  const CLI_CMD = 'node ./bin/run.js';  // Use the local build path
   const TEST_LIST = 'test-list';
   const FIXTURES_DIR = path.join(__dirname, 'fixtures');
   const TEST_IMAGE = path.join(FIXTURES_DIR, 'test.jpg');  // Ensure fixtures directory exists

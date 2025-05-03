@@ -65,7 +65,7 @@ describe('WalrusImageStorage', () => {
 
     it('should create WalletExtensionSigner when wallet is connected', async () => {
       wallet.connected = true;
-      storage = new WalrusImageStorage(suiClient, wallet);  // Pass wallet to constructor
+      storage = new WalrusImageStorage(suiClient);  // Constructor takes only suiClient
       const mockWalletSigner = { signMessage: jest.fn() };
       (WalletExtensionSigner as jest.Mock).mockReturnValue(mockWalletSigner);
 
