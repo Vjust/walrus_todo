@@ -127,8 +127,7 @@ describe('CLI Commands', () => {
           throw new Error(`File not mocked: ${String(filePath)}`);
         });
 
-        // Mock execSync for this test only
-        const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
+        (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('configure')) {
             return Buffer.from('Command executed successfully');
           }
