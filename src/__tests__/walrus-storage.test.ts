@@ -71,7 +71,7 @@ describe('WalrusImageStorage', () => {
     it('should create WalletExtensionSigner when wallet is connected', async () => {
       wallet.connected = true;
       storage = new WalrusImageStorage(suiClient);
-      const mockWalletSigner = {
+      const mockWalletSigner: WalletExtensionSigner = {
         sign: jest.fn(),
         signWithIntent: jest.fn(),
         signPersonalMessage: jest.fn(),
@@ -80,7 +80,9 @@ describe('WalrusImageStorage', () => {
         toSuiAddress: jest.fn(),
         signTransaction: jest.fn(),
         signMessage: jest.fn(),
-      } as WalletExtensionSigner;  // Cast to WalletExtensionSigner
+        cachedAddress: 'test-address',  // Add missing property to satisfy type
+        wallet: wallet as any,  // Add missing property; cast wallet to any to avoid further errors
+      } as WalletExtensionSigner;  // Ensure all properties are defined to fix type error
 
       // Set up mock for WalletExtensionSigner constructor
       (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);
