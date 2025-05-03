@@ -19,13 +19,13 @@ describe('WalrusImageStorage', () => {
   beforeEach(() => {
     suiClient = {
       getBalance: jest.fn(),
-      signAndExecuteTransactionBlock: jest.fn().mockImplementation((txb) => Promise.resolve({ digest: 'test-digest' })),
+      signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({ digest: 'test-digest' }),
       waitForTransactionBlock: jest.fn()
     } as any;
 
     wallet = {
       connected: false,
-      getAccounts: jest.fn().mockReturnValue([{
+      getAccounts: jest.fn().mockResolvedValue([{
         address: 'test-address',
         publicKey: '0x'
       }]),
@@ -57,8 +57,8 @@ describe('WalrusImageStorage', () => {
 
     it('should create KeystoreSigner when wallet is not connected', async () => {
       storage = new WalrusImageStorage(suiClient);
-      await (storage as any).connect(); // Call connect to set activeAddress and signer
-      const signer = await (storage as any).getTransactionSigner();
+      await storage.connect(); // Call connect to set activeAddress and signer; assume connect is public or handle accordingly
+      const signer = await storage.getTransactionSigner(); // Remove 'as any' cast by ensuring method is accessible
       expect(KeystoreSigner).toHaveBeenCalledWith(suiClient);
       expect(signer).toBeInstanceOf(KeystoreSigner);
     });
@@ -77,9 +77,8 @@ describe('WalrusImageStorage', () => {
         signTransaction: jest.fn(),
       };
       (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner as KeystoreSigner);
-      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(mockWalletSigner as KeystoreSigner);
-      // Add explicit call in test to verify
-
+      
+      // Ensure getTransactionSigner is called without 'as any'
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
       expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
@@ -92,7 +91,7 @@ describe('WalrusImageStorage', () => {
       suiClient.getBalance.mockResolvedValue({
         coinType: 'test-coin',
         coinObjectCount: 1,
-        totalBalance: '1000',  // Simulate sufficient balance for production-like success
+        totalBalance: '0',  // Simulate zero balance to test error
         lockedBalance: {
           lockedTotal: '0',
           locked: '0'
@@ -104,11 +103,12 @@ describe('WalrusImageStorage', () => {
 
     it('should reuse existing signer instance', async () => {
       storage = new WalrusImageStorage(suiClient);
-      await (storage as any).connect(); // Call connect to initialize the signer
-      const signer1 = await (storage as any).getTransactionSigner();
-      const signer2 = await (storage as any).getTransactionSigner();
+      await storage.connect(); // Call connect to initialize the signer
+      const signer1 = await storage.getTransactionSigner();
+      const signer2 = await storage.getTransactionSigner();
       expect(signer1).toBe(signer2);
       expect(KeystoreSigner).toHaveBeenCalledTimes(1); // Ensure signer is only created once
     });
   });
 });
+
