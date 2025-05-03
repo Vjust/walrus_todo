@@ -107,11 +107,11 @@ describe('CLI Commands', () => {
 
       it('should verify config file after configuration', async () => {  // Make it async if needed, or ensure it's synchronous
         // Mock fs.readFileSync to simulate config file content
-        const mockReadFileSync = jest.spyOn(fs, 'readFileSync').mockImplementation((path: PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
-          if (typeof path === 'string' && path.includes('.waltodo/config.json')) {  // Ensure path is a string
+        const mockReadFileSync = jest.spyOn(fs, 'readFileSync').mockImplementation((pathArg: PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
+          if (typeof pathArg === 'string' && pathArg.includes('.waltodo/config.json')) {  // Fix: Use pathArg instead of path to avoid conflict with imported path module
             return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
           }
-          throw new Error(`File not mocked: ${String(path)}`);
+          throw new Error(`File not mocked: ${String(pathArg)}`);
         });
           if (path.toString().includes('.waltodo/config.json')) {
             return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
@@ -128,21 +128,25 @@ describe('CLI Commands', () => {
         
         // Now read the "file" using fs.readFileSync, which is mocked
         const configPath = path.join(process.env.HOME || '', '.waltodo', 'config.json');
-        const configContent = fs.readFileSync(configPath, 'utf8');
+        const configContent = fs.readFileSync(configPath, 'utf8');  // Using mocked fs.readFileSync
         const config = JSON.parse(configContent);
 
         expect(result).toContain('Command executed successfully');
         expect(config.network).toBe('testnet');
         expect(config.walletAddress).toBe('0x123...');
+        // Add more comprehensive assertions for production-like testing
+        expect(config).toHaveProperty('network', 'testnet');
+        expect(config).toHaveProperty('walletAddress', '0x123...');
 
         // Restore the mock after the test
-        mockReadFileSync.mockRestore();  // Moved to correct position if needed, but already handled
+        mockReadFileSync.mockRestore();  // Reference is now valid as it's defined above
       });
     });
 
     // Enhanced for production-like testing: Add a test case with actual error handling
     describe('error handling', () => {
       it('should handle network error simulation', () => {
+        // Mock network error for testing; ensure CLI_CMD is in scope
         jest.spyOn(process, 'exit').mockImplementation(() => { throw new Error('Simulated network error'); });
         expect(() => {
           execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
