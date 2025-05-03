@@ -64,18 +64,18 @@ describe('WalrusImageStorage', () => {
     });
 
     it('should create WalletExtensionSigner when wallet is connected', async () => {
-      // Ensure wallet is properly mocked and passed or accessed
+      // Ensure wallet is properly mocked and the class can access it
       wallet.connected = true;
-      storage = new WalrusImageStorage(suiClient);  // Constructor takes only suiClient, so mock internal access if needed
+      // Assuming WalrusImageStorage has a way to access the wallet; if not, this test needs adjustment
+      storage = new WalrusImageStorage(suiClient);
       const mockWalletSigner = { signMessage: jest.fn() };
-      (WalletExtensionSigner as jest.Mock).mockReturnValue(mockWalletSigner);
+      (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);
 
-      // Simulate the class using the wallet; adjust if WalrusImageStorage needs wallet injection
       const signer = await storage.getTransactionSigner();
-      expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
+      expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);  // Verify call count
       expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
       expect(signer).toEqual(mockWalletSigner);
-      expect(signer.signMessage).toBeDefined();  // Verify method existence
+      expect(signer.signMessage).toBeDefined();  // Verify the signer is functional
     });
 
     it('should throw error when WAL balance is 0', async () => {
