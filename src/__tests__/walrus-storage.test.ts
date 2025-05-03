@@ -70,14 +70,13 @@ describe('WalrusImageStorage', () => {
         signMessage: jest.fn(),
         sign: jest.fn(),
         signWithIntent: jest.fn(),
-        keypair: {} as any,  // Mock minimal required properties for KeystoreSigner
         suiClient: suiClient,  // Reference the mocked suiClient
         signPersonalMessage: jest.fn(),
         getKeyScheme: jest.fn(),
         getPublicKey: jest.fn(),
         toSuiAddress: jest.fn(),
         signTransaction: jest.fn(),
-      };
+      };  // Removed invalid 'keypair' property
       (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner as KeystoreSigner);
       jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(mockWalletSigner as KeystoreSigner);
       // Add explicit call in test to verify

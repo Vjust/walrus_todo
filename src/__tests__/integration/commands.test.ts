@@ -10,11 +10,12 @@ describe('CLI Commands', () => {
   const TEST_IMAGE = path.join(FIXTURES_DIR, 'test.jpg');  // Ensure fixtures directory exists
   
   beforeAll(() => {
-    jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => Buffer.from('Command executed successfully') as any);  // Explicitly cast to match execSync return type
-      if (command.includes('waltodo')) {
-        return Buffer.from('Command executed successfully');  // Simulate success for all waltodo commands
+    jest.spyOn(child_process, 'execSync').mockImplementation((commandArg: string) => {  // Renamed parameter to avoid conflicts
+      if (commandArg.includes('waltodo')) {
+        return Buffer.from('Command executed successfully');
       }
-      throw new Error(`Command not found: ${command}`);
+      throw new Error(`Command not found: ${commandArg}`);
+    });
     });
 
     // Ensure fixtures directory exists
@@ -117,5 +118,4 @@ describe('CLI Commands', () => {
       }).toThrow();
     });
   });
-});
-});
+});  // Remove the extra closing brace
