@@ -11,7 +11,6 @@ jest.mock('../utils/sui-keystore'); // Mock KeystoreSigner
 jest.mock('../utils/wallet-extension'); // Mock WalletExtensionSigner
 jest.mock('@mysten/wallet-adapter-base');
 
-
 describe('WalrusImageStorage', () => {
   let suiClient: jest.Mocked<SuiClient>;
   let wallet: jest.Mocked<WalletAdapter>;
@@ -66,24 +65,11 @@ describe('WalrusImageStorage', () => {
 
     it('should create WalletExtensionSigner when wallet is connected', async () => {
       wallet.connected = true;
-      storage = new WalrusImageStorage(suiClient);
-      // Need to mock the WalletExtensionSigner constructor to return a mock instance
+      storage = new WalrusImageStorage(suiClient, wallet);  // Pass wallet to constructor
       const mockWalletSigner = { signMessage: jest.fn() };
       (WalletExtensionSigner as jest.Mock).mockReturnValue(mockWalletSigner);
 
-      // We need a way to pass the wallet to WalrusImageStorage if it's connected.
-      // The current constructor doesn't take a wallet.
-      // For this test to pass with the current class structure, we'll have to
-      // manually set the wallet property on the storage instance if it exists.
-      // A better approach would be to pass the wallet in the constructor or a connect method.
-      // For now, let's assume a way to set the wallet for testing purposes.
-      // In a real refactor, the constructor or connect method should handle this.
-
-      // Assuming a test-specific way to set the wallet:
-      (storage as any).wallet = wallet;
-      (storage as any).isInitialized = true; // Manually set initialized for this test
-
-      const signer = await (storage as any).getTransactionSigner();
+      const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledWith(wallet);
       expect(signer).toBe(mockWalletSigner); // Expect the mock instance
     });

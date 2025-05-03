@@ -5,9 +5,15 @@ import * as path from 'path';
 describe('CLI Commands', () => {
   const CLI_CMD = 'waltodo';  // Adjust if needed based on your setup
   const TEST_LIST = 'test-list';
-  const TEST_IMAGE = path.join(__dirname, 'fixtures/test.jpg');  // Assume fixtures directory exists
+  const FIXTURES_DIR = path.join(__dirname, 'fixtures');
+  const TEST_IMAGE = path.join(FIXTURES_DIR, 'test.jpg');  // Ensure fixtures directory exists
   
   beforeAll(() => {
+    // Ensure fixtures directory exists
+    if (!fs.existsSync(FIXTURES_DIR)) {
+      fs.mkdirSync(FIXTURES_DIR, { recursive: true });
+    }
+    
     // Create test image if it doesn't exist
     if (!fs.existsSync(TEST_IMAGE)) {
       fs.writeFileSync(TEST_IMAGE, 'test image data');
@@ -21,6 +27,10 @@ describe('CLI Commands', () => {
     // Cleanup
     if (fs.existsSync(TEST_IMAGE)) {
       fs.unlinkSync(TEST_IMAGE);
+    }
+    // Optionally remove fixtures directory if empty
+    if (fs.existsSync(FIXTURES_DIR) && fs.readdirSync(FIXTURES_DIR).length === 0) {
+      fs.rmdirSync(FIXTURES_DIR);
     }
   });
 
@@ -52,10 +62,11 @@ describe('CLI Commands', () => {
   // Add more describes for other sections like error handling, etc.
   describe('error handling', () => {
     it('should handle network error simulation', () => {
-      // This is a placeholder; actual network simulation might require external tools
+      // Mock network error for testing; in practice, use external tools
+      jest.spyOn(process, 'exit').mockImplementation(() => { throw new Error('Simulated network error'); });
       expect(() => {
         execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
-      }).toThrow();  // Expect error, but may need mocking
+      }).toThrow();
     });
   });
 });
