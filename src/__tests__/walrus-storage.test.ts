@@ -71,24 +71,7 @@ describe('WalrusImageStorage', () => {
     it('should create WalletExtensionSigner when wallet is connected', async () => {
       wallet.connected = true;
       storage = new WalrusImageStorage(suiClient);
-      const mockWalletSigner: Partial<WalletExtensionSigner> = {  // Use the correct type
-        sign: jest.fn(),
-        signWithIntent: jest.fn(),
-        signPersonalMessage: jest.fn(),
-        getKeyScheme: jest.fn(),
-        getPublicKey: jest.fn(),
-        toSuiAddress: jest.fn(),
-        signTransaction: jest.fn(),
-        signMessage: jest.fn(),  // Ensure all methods are properly mocked
-      };
-      (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner as unknown as WalletExtensionSigner);  // Cast appropriately
-      
-      // Mock the internal logic to ensure signer is created
-      jest.spyOn(storage, 'connect').mockResolvedValue();  // Simulate successful connection
-      // Add explicit mock call to ensure it's triggered
-      // Mock the signer to return an object that matches the expected interface
-      // Fix type mismatch by returning a Promise of KeystoreSigner or adjusting mock
-      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(Promise.resolve({
+      const mockWalletSigner = {
         sign: jest.fn(),
         signWithIntent: jest.fn(),
         signPersonalMessage: jest.fn(),
@@ -97,11 +80,19 @@ describe('WalrusImageStorage', () => {
         toSuiAddress: jest.fn(),
         signTransaction: jest.fn(),
         signMessage: jest.fn(),
-      } as unknown as KeystoreSigner));  // Change cast to KeystoreSigner to match expected type
+      } as WalletExtensionSigner;  // Cast to WalletExtensionSigner
+
+      // Set up mock for WalletExtensionSigner constructor
+      (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);
+
+      // Call connect to initialize the storage, assuming it sets the signer
+      await storage.connect();
+
+      // Get the signer and check expectations
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
       expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
-      expect(signer).toEqual(mockWalletSigner);
+      expect(signer).toBe(mockWalletSigner);
       expect(signer.signMessage).toBeDefined();
     });
 
