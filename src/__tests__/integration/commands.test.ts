@@ -91,6 +91,26 @@ describe('CLI Commands', () => {
   });
 
   // Add more describes for other sections like error handling, etc.
+  describe('Configuration Command Test', () => {
+    it('should configure CLI with network and wallet address', () => {
+      const result = execSync(
+        `${CLI_CMD} configure --network testnet --wallet-address 0x123...`
+      ).toString();
+      
+      expect(result).toContain('Command executed successfully');  // Based on mocked implementation
+    });
+
+    it('should verify config file after configuration', () => {
+      // Assuming config file path from earlier code or constants
+      const configPath = path.join(process.env.HOME || '', '.waltodo', 'config.json');
+      const result = execSync(`${CLI_CMD} configure --network testnet --wallet-address 0x123...`).toString();
+      
+      // Mock or check file content; in real test, read file
+      expect(fs.readFileSync(configPath, 'utf8')).toContain('testnet');  // Simulate verification
+      expect(fs.readFileSync(configPath, 'utf8')).toContain('0x123...');
+    });
+  });
+
   describe('error handling', () => {
     it('should handle network error simulation', () => {
       // Mock network error for testing; in practice, use external tools
