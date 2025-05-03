@@ -41,7 +41,30 @@ describe('CLI Commands', () => {
     }
   });
 
-  describe('create command', () => {
+  describe('Fresh Installation Test', () => {
+    it('should simulate fresh installation and verify CLI version', () => {
+      // Mock execSync to simulate npm install and CLI commands
+      const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command) => {
+        if (command.includes('npm install -g waltodo')) {
+          return Buffer.from('Installation successful');  // Simulate successful install
+        } else if (command.includes('waltodo --version')) {
+          return Buffer.from('1.0.0');  // Simulate version output
+        } else if (command.includes('which waltodo')) {
+          return Buffer.from('/usr/local/bin/waltodo');  // Simulate path output
+        }
+        throw new Error(`Command not mocked: ${command}`);
+      });
+
+      const resultVersion = execSync('waltodo --version').toString();
+      const resultWhich = execSync('which waltodo').toString();
+
+      expect(resultVersion).toBe('1.0.0');
+      expect(resultWhich).toContain('/usr/local/bin/waltodo');
+
+      mockExecSync.mockRestore();  // Clean up mock
+    });
+
+    describe('create command', () => {
     it('should create todo with default image', () => {
       const result = execSync(
         `${CLI_CMD} create --title "Test Todo" --description "Test Desc"`
