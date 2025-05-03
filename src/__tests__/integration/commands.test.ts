@@ -10,12 +10,14 @@ describe('CLI Commands', () => {
   const TEST_IMAGE = path.join(FIXTURES_DIR, 'test.jpg');  // Ensure fixtures directory exists
   
   beforeAll(() => {
-    jest.spyOn(child_process, 'execSync').mockImplementation((commandArg: string) => {  // Renamed parameter to avoid conflicts
-      if (commandArg.includes('waltodo')) {
-        return Buffer.from('Command executed successfully');
+    // Mock execSync to handle CLI commands starting with CLI_CMD or specific keywords
+    jest.spyOn(child_process, 'execSync').mockImplementation((commandArg: string) => {
+      if (commandArg.startsWith(`${CLI_CMD}`)) {
+        return Buffer.from('Command executed successfully');  // Simulate successful CLI command execution
+      } else if (commandArg.includes('waltodo')) {
+        return Buffer.from('Command executed successfully');  // Fallback for any 'waltodo' related commands
       }
-      throw new Error(`Command not found: ${commandArg}`);
-    });
+      throw new Error(`Command not mocked: ${commandArg}`);
     });
 
     // Ensure fixtures directory exists
@@ -30,6 +32,9 @@ describe('CLI Commands', () => {
   });
 
   afterAll(() => {
+    // Restore the original execSync after all tests to avoid side effects
+    jest.restoreAllMocks();
+
     // Cleanup
     if (fs.existsSync(TEST_IMAGE)) {
       fs.unlinkSync(TEST_IMAGE);
@@ -42,7 +47,7 @@ describe('CLI Commands', () => {
 
   describe('Fresh Installation Test', () => {
     it('should simulate fresh installation and verify CLI version', () => {
-      // Mock execSync to simulate npm install and CLI commands
+      // Mock execSync specifically for this test to override global mock if needed
       const mockExecSync = jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
         if (command.includes('npm install -g waltodo')) {
           return Buffer.from('Installation successful');  // Simulate successful install
@@ -60,62 +65,64 @@ describe('CLI Commands', () => {
       expect(resultVersion).toBe('1.0.0');
       expect(resultWhich).toContain('/usr/local/bin/waltodo');
 
-      mockExecSync.mockRestore();  // Clean up mock
+      mockExecSync.mockRestore();  // Clean up mock after this test
     });
 
     describe('create command', () => {
-    it('should create todo with default image', () => {
-      const result = execSync(
-        `${CLI_CMD} create --title "Test Todo" --description "Test Desc"`
-      ).toString();
-      
-      expect(result).toContain('Todo created successfully');
-      expect(result).toContain('Image URL:');
+      it('should create todo with default image', () => {
+        const result = execSync(
+          `${CLI_CMD} create --title "Test Todo" --description "Test Desc"`
+        ).toString();
+        
+        expect(result).toContain('Todo created successfully');
+        expect(result).toContain('Image URL:');
+      });
+
+      // Add more test cases as per the guide, e.g., for image handling
+      it('should handle invalid image', () => {
+        expect(() => {
+          execSync(`${CLI_CMD} create --title "Invalid Image Todo" --image ./invalid.txt`, { stdio: 'inherit' });
+        }).toThrow();  // Expect error for invalid file
+      });
     });
 
-    // Add more test cases as per the guide, e.g., for image handling
-    it('should handle invalid image', () => {
-      expect(() => {
-        execSync(`${CLI_CMD} create --title "Invalid Image Todo" --image ./invalid.txt`, { stdio: 'inherit' });
-      }).toThrow();  // Expect error for invalid file
+    describe('list command', () => {
+      it('should list todos', () => {
+        const result = execSync(`${CLI_CMD} list ${TEST_LIST}`).toString();
+        expect(result).toContain('Test Todo');  // Assuming the todo was created
+      });
+    });
+
+    // Add more describes for other sections like error handling, etc.
+    describe('Configuration Command Test', () => {
+      it('should configure CLI with network and wallet address', () => {
+        const result = execSync(
+          `${CLI_CMD} configure --network testnet --wallet-address 0x123...`
+        ).toString();
+        
+        expect(result).toContain('Command executed successfully');  // Based on mocked implementation
+      });
+
+      it('should verify config file after configuration', () => {
+        // Assuming config file path from earlier code or constants
+        const configPath = path.join(process.env.HOME || '', '.waltodo', 'config.json');
+        const result = execSync(`${CLI_CMD} configure --network testnet --wallet-address 0x123...`).toString();
+        
+        // Mock or check file content; in real test, read file
+        expect(fs.readFileSync(configPath, 'utf8')).toContain('testnet');  // Simulate verification
+        expect(fs.readFileSync(configPath, 'utf8')).toContain('0x123...');
+      });
+    });
+
+    describe('error handling', () => {
+      it('should handle network error simulation', () => {
+        // Mock network error for testing; in practice, use external tools
+        jest.spyOn(process, 'exit').mockImplementation(() => { throw new Error('Simulated network error'); });
+        expect(() => {
+          execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
+        }).toThrow();
+      });
     });
   });
+});
 
-  describe('list command', () => {
-    it('should list todos', () => {
-      const result = execSync(`${CLI_CMD} list ${TEST_LIST}`).toString();
-      expect(result).toContain('Test Todo');  // Assuming the todo was created
-    });
-  });
-
-  // Add more describes for other sections like error handling, etc.
-  describe('Configuration Command Test', () => {
-    it('should configure CLI with network and wallet address', () => {
-      const result = execSync(
-        `${CLI_CMD} configure --network testnet --wallet-address 0x123...`
-      ).toString();
-      
-      expect(result).toContain('Command executed successfully');  // Based on mocked implementation
-    });
-
-    it('should verify config file after configuration', () => {
-      // Assuming config file path from earlier code or constants
-      const configPath = path.join(process.env.HOME || '', '.waltodo', 'config.json');
-      const result = execSync(`${CLI_CMD} configure --network testnet --wallet-address 0x123...`).toString();
-      
-      // Mock or check file content; in real test, read file
-      expect(fs.readFileSync(configPath, 'utf8')).toContain('testnet');  // Simulate verification
-      expect(fs.readFileSync(configPath, 'utf8')).toContain('0x123...');
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle network error simulation', () => {
-      // Mock network error for testing; in practice, use external tools
-      jest.spyOn(process, 'exit').mockImplementation(() => { throw new Error('Simulated network error'); });
-      expect(() => {
-        execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
-      }).toThrow();
-    });
-  });
-});  // Remove the extra closing brace
