@@ -10,7 +10,7 @@ describe('CLI Commands', () => {
   const TEST_IMAGE = path.join(FIXTURES_DIR, 'test.jpg');  // Ensure fixtures directory exists
   
   beforeAll(() => {
-    jest.spyOn(child_process, 'execSync').mockImplementation((command: string) => {
+    jest.spyOn(child_process, 'execSync' as any).mockImplementation((command: string) => {  // Cast to any to avoid redefinition issues
       if (command.includes('waltodo')) {
         return Buffer.from('Command executed successfully');  // Simulate success for all waltodo commands
       }
