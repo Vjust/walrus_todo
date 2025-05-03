@@ -18,7 +18,12 @@ describe('WalrusImageStorage', () => {
 
   beforeEach(() => {
     suiClient = {
-      getBalance: jest.fn(),
+      getBalance: jest.fn().mockResolvedValue({  // Mock with sample data to simulate tokens
+        coinType: 'WAL',
+        coinObjectCount: 1,
+        totalBalance: '1000',  // Ensure balance is greater than 0
+        lockedBalance: { lockedTotal: '0', locked: '0' }
+      }),
       signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({ digest: 'test-digest' }),
       waitForTransactionBlock: jest.fn()
     } as any;
@@ -80,6 +85,8 @@ describe('WalrusImageStorage', () => {
       
       // Mock the internal logic to ensure signer is created
       jest.spyOn(storage, 'connect').mockResolvedValue();  // Simulate successful connection
+      // Add explicit mock call to ensure it's triggered
+      jest.spyOn(storage, 'getTransactionSigner').mockResolvedValue(mockWalletSigner as WalletExtensionSigner);
       const signer = await storage.getTransactionSigner();
       expect(WalletExtensionSigner).toHaveBeenCalledTimes(1);
       expect(WalletExtensionSigner).toHaveBeenCalledWith(expect.objectContaining({ connected: true }));
