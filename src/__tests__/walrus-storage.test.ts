@@ -80,9 +80,9 @@ describe('WalrusImageStorage', () => {
         toSuiAddress: jest.fn(),
         signTransaction: jest.fn(),
         signMessage: jest.fn(),
-        cachedAddress: 'test-address',  // Add missing property to satisfy type
-        wallet: wallet as any,  // Add missing property; cast wallet to any to avoid further errors
-      } as WalletExtensionSigner;  // Ensure all properties are defined to fix type error
+        cachedAddress: 'test-address',
+        wallet: wallet as any,
+      } as unknown as WalletExtensionSigner;  // Cast to unknown first to avoid type error
 
       // Set up mock for WalletExtensionSigner constructor
       (WalletExtensionSigner as jest.Mock).mockImplementation(() => mockWalletSigner);

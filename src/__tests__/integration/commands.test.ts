@@ -113,7 +113,7 @@ describe('CLI Commands', () => {
           }
           throw new Error(`File not mocked: ${String(filePath)}`);
         });
-          if (path.toString().includes('.waltodo/config.json')) {
+          if (typeof filePath === 'string' && filePath.includes('.waltodo/config.json')) {
             return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
           }
           throw new Error(`File not mocked: ${path.toString()}`);
