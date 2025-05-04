@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiClient } from '@mysten/sui/client';
 import { type Transaction } from '@mysten/sui/transactions';
@@ -16,9 +19,49 @@ export class KeystoreSigner implements Signer {
   private keypair: Ed25519Keypair;
 
   constructor(private suiClient: SuiClient) {
-    const activeAddress = execSync('sui client active-address').toString().trim();
-    const privateKey = execSync(`sui keytool convert ${activeAddress}`).toString().trim();
-    this.keypair = Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
+    // Get active address
+    const activeAddressOutput = execSync('sui client active-address').toString().trim();
+    const activeAddress = activeAddressOutput.trim();
+    if (!activeAddress) {
+      throw new Error('No active Sui address found');
+    }
+  
+    // Read keystore file
+    const homeDir = os.homedir();
+    const keystorePath = path.join(homeDir, '.sui', 'sui_config', 'sui.keystore');
+    let keystore;
+    try {
+      const keystoreData = fs.readFileSync(keystorePath, 'utf-8');
+      keystore = JSON.parse(keystoreData); // Array of base64 strings
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to read keystore file: ${errorMessage}`);
+    }
+  
+    // Find the key that matches the active address
+    let secretKeyBuffer: Buffer | undefined;
+    for (const keyBase64 of keystore) {
+      const keyBuffer = Buffer.from(keyBase64, 'base64');
+      const skBuffer = keyBuffer.slice(1); // Remove flag byte, should be 32 bytes
+      try {
+        const keypair = Ed25519Keypair.fromSecretKey(skBuffer);
+        const address = keypair.getPublicKey().toSuiAddress();
+        if (address === activeAddress) {
+          secretKeyBuffer = skBuffer;
+          break;
+        }
+      } catch (e) {
+        // Skip invalid keys
+        continue;
+      }
+    }
+  
+    if (!secretKeyBuffer) {
+      throw new Error(`No key found in keystore for address ${activeAddress}`);
+    }
+  
+    // Create keypair from secret key
+    this.keypair = Ed25519Keypair.fromSecretKey(secretKeyBuffer);
   }
 
   async sign(bytes: Uint8Array): Promise<Uint8Array> {

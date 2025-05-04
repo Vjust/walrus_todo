@@ -1,5 +1,6 @@
 import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { validateDate, validatePriority } from '../utils';
 import { Todo } from '../types/todo';
@@ -69,7 +70,7 @@ export default class UpdateCommand extends Command {
 
       // Update task if provided
       if (flags.task) {
-        todo.task = flags.task;
+        todo.title = flags.task;
         changes++;
       }
 
@@ -111,7 +112,7 @@ export default class UpdateCommand extends Command {
       todo.updatedAt = new Date().toISOString();
       await todoService.saveList(args.listName, list);
 
-      this.log(chalk.green('✓') + ' Updated todo: ' + chalk.bold(todo.task));
+      this.log(chalk.green('✓') + ' Updated todo: ' + chalk.bold(todo.title));
       this.log(chalk.dim('List: ') + args.listName);
       this.log(chalk.dim('ID: ') + flags.id);
       this.log(chalk.dim(`Changes made: ${changes}`));

@@ -1,5 +1,6 @@
 import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { generateId } from '../utils';
 import { Todo } from '../types/todo';
@@ -68,41 +69,37 @@ export default class AddCommand extends Command {
       }
 
       const now = new Date().toISOString();
-      const todo: Todo = {
-        id: generateId(),
-        title: flags.task[0], // Use first task string as title
-        task: flags.task.join(' '), // Join all task strings for backward compatibility
-        completed: false,
+      const todo: Partial<Todo> = {
+        title: flags.task.join(' '), // Join all task strings for backward compatibility
         priority: flags.priority as 'high' | 'medium' | 'low',
+        dueDate: flags.due,
         tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
-        createdAt: now,
-        updatedAt: now,
         private: flags.private
       };
 
-      if (flags.due) {
-        todo.dueDate = flags.due;
-      }
-
-      await this.todoService.addTodo(args.list, todo);
+      await this.todoService.addTodo(args.list, todo as Todo);
 
       // Get priority color
-      const priorityColors = {
+      const priorityColor = {
         high: chalk.red,
         medium: chalk.yellow,
         low: chalk.green
-      }[todo.priority];
+      }[todo.priority || 'medium'];
 
-      // Success message
-      this.log(chalk.green('\n✓ Todo added successfully'));
-      this.log(chalk.dim('Details:'));
-      this.log([
-        `  ${chalk.bold(todo.title)}`,
-        `  ${priorityColors(`⚡ Priority: ${todo.priority}`)}`,
-        flags.due && `  📅 Due: ${flags.due}`,
-        todo.tags.length > 0 && `  🏷️  Tags: ${todo.tags.join(', ')}`,
-        flags.private && '  🔒 Private'
-      ].filter(Boolean).join('\n'));
+      // Build output
+      this.log(
+        chalk.green('✓') + ' Added todo: ' + chalk.bold(flags.task.join(' ')),
+        '\n',
+        '  📋 List: ' + chalk.cyan(args.list || 'default'),
+        '\n',
+        todo.dueDate && `  📅 Due: ${chalk.blue(todo.dueDate)}`,
+        '\n',
+        `  🔄 Priority: ${priorityColor(todo.priority || 'medium')}`,
+        '\n',
+        (todo.tags && todo.tags.length > 0) && `  🏷️  Tags: ${todo.tags.join(', ')}`,
+        '\n',
+        `  🔒 Private: ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`
+      );
 
     } catch (error) {
       if (error instanceof CLIError) {

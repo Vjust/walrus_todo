@@ -55,8 +55,7 @@ export class WalrusStorage {
       // Mock retrieval - in real impl this would call Walrus API
       return {
         id: 'mock-id',
-        title: 'Mock Todo',
-        task: 'Mock task',
+        title: 'Mock task',
         description: 'Mock description',
         completed: false,
         priority: 'medium',

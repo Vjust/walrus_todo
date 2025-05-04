@@ -1,5 +1,8 @@
 import { Args, Command, Flags } from '@oclif/core';
 import { TodoService } from '../services/todoService';
+import { Todo } from '../types/todo';
+import { generateId } from '../utils/id-generator';
+// Import chalk dynamically for ESM compatibility
 import chalk from 'chalk';
 
 export default class SimpleCommand extends Command {
@@ -26,6 +29,16 @@ export default class SimpleCommand extends Command {
     id: Flags.string({
       char: 'i',
       description: 'Todo ID (for complete command)'
+    }),
+    sort: Flags.string({
+      char: 's',
+      description: 'Sort by field (e.g., priority, title)',
+      options: ['priority', 'title']
+    }),
+    filter: Flags.string({
+      char: 'f',
+      description: 'Filter by status (e.g., completed, incomplete)',
+      options: ['completed', 'incomplete']
     })
   };
 
@@ -64,7 +77,7 @@ export default class SimpleCommand extends Command {
           }
           const todo = await this.todoService.addTodo(args.list, {
             title: args.title,
-            task: args.title,
+            completed: false,
             priority: flags.priority as 'high' | 'medium' | 'low',
             tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
             private: true
@@ -80,7 +93,35 @@ export default class SimpleCommand extends Command {
             return;
           }
           this.log(`\n${chalk.bold(todoList.name)} (${todoList.todos.length} todos):`);
-          todoList.todos.forEach(todo => {
+          let filteredTodos = todoList.todos;
+          
+          // Apply filter if specified
+          if (flags.filter) {
+            if (flags.filter === 'completed') {
+              filteredTodos = filteredTodos.filter(todo => todo.completed);
+            } else if (flags.filter === 'incomplete') {
+              filteredTodos = filteredTodos.filter(todo => !todo.completed);
+            } else {
+              this.warn(`Unknown filter: ${flags.filter}. Ignoring.`);
+            }
+          }
+          
+          // Apply sort if specified
+          if (flags.sort) {
+            if (flags.sort === 'priority') {
+              filteredTodos.sort((a, b) => {
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                return priorityOrder[b.priority] - priorityOrder[a.priority];
+              });
+            } else if (flags.sort === 'title') {
+              filteredTodos.sort((a, b) => a.title.localeCompare(b.title));
+            } else {
+              this.warn(`Unknown sort field: ${flags.sort}. Ignoring.`);
+            }
+          }
+          
+          // Display the todos
+          filteredTodos.forEach(todo => {
             const status = todo.completed ? chalk.green('✓') : chalk.gray('☐');
             const priority = todo.priority === 'high' ? chalk.red('⚠️') :
                            todo.priority === 'medium' ? chalk.yellow('•') :

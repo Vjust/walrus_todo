@@ -5,23 +5,19 @@ import { execSync } from 'child_process';
 import { Todo } from '../types/todo';
 import { handleError } from './error-handler';
 import { bcs } from '@mysten/sui/bcs';
+import { Signer } from '@mysten/sui/cryptography';
+import { KeystoreSigner } from './sui-keystore';
 
 export class SuiNftStorage {
   private suiClient: SuiClient;
   private moduleAddress: string;
-  private signer: Ed25519Keypair;
+  private signer: Signer;
 
   constructor(suiClient: SuiClient, moduleAddress: string) {
     try {
       this.suiClient = suiClient;
       this.moduleAddress = moduleAddress;
-      
-      // Initialize signer from environment
-      const privateKey = process.env.SUI_PRIVATE_KEY;
-      if (!privateKey) {
-        throw new Error('SUI_PRIVATE_KEY environment variable is required');
-      }
-      this.signer = Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'base64'));
+      this.signer = new KeystoreSigner(suiClient);
     } catch (error) {
       handleError('Failed to initialize Sui NFT Storage', error);
       throw error;
@@ -45,7 +41,7 @@ export class SuiNftStorage {
           bcs.vector(bcs.u8()).serialize(titleBytes),
           bcs.vector(bcs.u8()).serialize(descriptionBytes),
           bcs.vector(bcs.u8()).serialize(blobIdBytes),
-          bcs.vector(bcs.u8()).serialize(imageUrlBytes)
+          bcs.bool().serialize(todo.private)
         ],
       });
       

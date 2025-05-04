@@ -1,5 +1,6 @@
 import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
@@ -79,7 +80,7 @@ export default class DeleteCommand extends Command {
 
       if (!flags.force) {
         const shouldDelete = await confirm({
-          message: `Are you sure you want to delete todo "${todo.task}"?`,
+          message: `Are you sure you want to delete todo "${todo.title}"?`,
           default: false
         });
         if (!shouldDelete) {
@@ -90,7 +91,7 @@ export default class DeleteCommand extends Command {
 
       await this.todoService.deleteTodo(args.listName, flags.id);
       
-      this.log(chalk.green('✓'), 'Deleted todo:', chalk.bold(todo.task));
+      this.log(chalk.green('✓'), 'Deleted todo:', chalk.bold(todo.title));
       this.log(chalk.dim('List:'), args.listName);
       this.log(chalk.dim('ID:'), flags.id);
 

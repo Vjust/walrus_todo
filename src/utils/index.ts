@@ -15,7 +15,7 @@ export function validatePriority(priority: string): priority is 'high' | 'medium
   return ['high', 'medium', 'low'].includes(priority);
 }
 
-export function formatTodoOutput(todo: { completed: boolean; priority: 'high' | 'medium' | 'low'; task: string; dueDate?: string; tags: string[] }): string {
+export function formatTodoOutput(todo: { completed: boolean; priority: 'high' | 'medium' | 'low'; title: string; dueDate?: string; tags: string[] }): string {
   const status = todo.completed ? '✓' : '⃞';
   const priority = {
     high: '⚠️',
@@ -23,7 +23,7 @@ export function formatTodoOutput(todo: { completed: boolean; priority: 'high' | 
     low: '○'
   }[todo.priority] || '•';
 
-  return `${status} ${priority} ${todo.task}${todo.dueDate ? ` (due: ${todo.dueDate})` : ''}${
+  return `${status} ${priority} ${todo.title}${todo.dueDate ? ` (due: ${todo.dueDate})` : ''}${
     todo.tags.length ? ` [${todo.tags.join(', ')}]` : ''
   }`;
 }

@@ -1,10 +1,9 @@
 [package]
 name = "todo_app"
-version = "0.0.1"
+version = "0.1.0"
 
 [dependencies]
-# Default dependency without explicitly including standard library
-# This avoids the duplicate module issue
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }
 
 [addresses]
 todo_app = "0x0"

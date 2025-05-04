@@ -81,3 +81,4 @@ sui.keystore
 .cody/
 **/.claude/
 CLAUDE.md
+node_modules

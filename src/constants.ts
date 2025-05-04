@@ -25,7 +25,7 @@ export const WALRUS_CONFIG = {
 export const TODO_NFT_CONFIG = {
   PACKAGE_NAME: 'TodoNFT',
   MODULE_NAME: 'todo_nft',
-  MODULE_ADDRESS: '0x0', // Will be updated after deployment
+  MODULE_ADDRESS: '0x25a04efc88188231b2f9eb35310a5025c293c4211d2482fd24fe2c8e2dbc9f74', // Deployed to testnet on 2025-05-03 with correct Walrus aggregator URL
   STRUCT_NAME: 'TodoNFT'
 } as const;
 

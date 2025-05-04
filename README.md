@@ -156,3 +156,50 @@ The [Todo NFT contract](src/move/sources/todo_nft.move) handles:
 - Metadata updates
 - Completion status
 - Transfer logic
+
+## Walrus Image Storage
+
+This project includes a module for storing images on Sui's Walrus storage protocol. The `WalrusImageStorage` class provides functionality to:
+
+1. Connect to the Sui blockchain and Walrus storage
+2. Upload images and get a permanent URL for them
+3. Support mock mode for development without WAL tokens
+
+### Usage
+
+```typescript
+import { SuiClient } from '@mysten/sui/client';
+import { createWalrusImageStorage } from './src/utils/walrus-image-storage';
+
+// Create SuiClient
+const suiClient = new SuiClient({ url: 'https://fullnode.testnet.sui.io:443' });
+
+// Create Walrus storage client (mock mode for development)
+const walrusStorage = createWalrusImageStorage(suiClient, true);
+
+// Connect 
+await walrusStorage.connect();
+
+// Upload an image
+const imageUrl = await walrusStorage.uploadImage('/path/to/image.jpg');
+console.log('Image URL:', imageUrl);
+
+// Or use the default image
+const defaultImageUrl = await walrusStorage.uploadDefaultImage();
+```
+
+### Real Walrus Storage Usage
+
+To use real Walrus storage (not mock mode):
+
+1. You need WAL tokens in your wallet
+2. Set `mockMode=false` when creating the storage client
+3. Make sure you're on the Sui testnet
+4. Ensure you have a valid Sui address and keypair
+
+```typescript
+// Create with mock mode disabled
+const walrusStorage = createWalrusImageStorage(suiClient, false);
+```
+
+This implementation uses the `@mysten/walrus` SDK to interact with Walrus storage.

@@ -3,7 +3,8 @@ import { SuiClient } from '@mysten/sui/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import chalk from 'chalk';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
@@ -13,6 +14,7 @@ export default class CreateCommand extends Command {
 
   static examples = [
     '<%= config.bin %> create --title "My first todo" --description "A test todo item" --image ./todo.png',
+    '<%= config.bin %> create --title "Private todo" --description "Hidden task" --private',
   ];
 
   static flags = {
@@ -30,11 +32,16 @@ export default class CreateCommand extends Command {
       char: 'i',
       description: 'Path to an image file for the todo item. If not provided, uses default image.',
     }),
+    private: Flags.boolean({
+      char: 'p',
+      description: 'Create a private todo (will show as "Untitled" in wallets)',
+      default: false,
+    }),
   };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(CreateCommand);
-    const { title, description, image } = flags;
+    const { title, description, image, private: isPrivate } = flags;
 
     try {
       // Verify network and get config
@@ -62,11 +69,7 @@ export default class CreateCommand extends Command {
             throw new CLIError(`Image file not found: ${image}`, 'IMAGE_NOT_FOUND');
           }
           
-          imageUrl = await walrusStorage.uploadCustomTodoImage(
-            image,
-            title,
-            false // Initial completed state
-          );
+          imageUrl = await walrusStorage.uploadImage(image);
         } else {
           // Use default image
           imageUrl = await walrusStorage.uploadDefaultImage();
@@ -93,7 +96,7 @@ export default class CreateCommand extends Command {
         '--module', 'todo_nft',
         '--function', 'create_todo',
         '--args',
-        `"${title}"`,
+        `"${isPrivate ? 'Untitled' : title}"`,
         `"${description}"`,
         `"${blobId}"`,
         '--gas-budget', '10000000'

@@ -5,8 +5,10 @@
  */
 
 import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
+import { formatTodoOutput } from '../utils';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 import { CLIError } from '../utils/error-handler';
 import dotenv from 'dotenv';
 
@@ -62,7 +64,7 @@ export default class CheckCommand extends Command {
       await todoService.saveList(args.listName, list);
 
       const status = todo.completed ? chalk.green('✓') : chalk.yellow('☐');
-      console.log(`${status} Todo ${chalk.bold(todo.task)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
+      console.log(`${status} Todo ${chalk.bold(todo.title)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
       console.log(chalk.dim(`List: ${args.listName}`));
       console.log(chalk.dim(`ID: ${flags.id}`));
 

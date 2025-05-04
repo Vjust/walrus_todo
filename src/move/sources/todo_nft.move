@@ -8,8 +8,7 @@ module todo_app::todo_nft {
     use std::string::{Self, String};
     use sui::url::{Self, Url};
 
-    // Default image URL for todos using Walrus CDN
-    const DEFAULT_IMAGE_URL: vector<u8> = b"https://testnet.wal.app/blob/";
+    // Walrus image URL format: https://blobid.walrus/
 
     // Error codes
     const EINVALID_BLOB_ID: u64 = 1;
@@ -24,7 +23,8 @@ module todo_app::todo_nft {
         description: String, 
         walrus_blob_id: String,
         completed: bool,
-        image_url: Url
+        image_url: Url,
+        is_private: bool
     }
 
     // Events
@@ -47,6 +47,7 @@ module todo_app::todo_nft {
             string::utf8(b"description"),
             string::utf8(b"image_url"),
             string::utf8(b"status"),
+            string::utf8(b"privacy"),
             string::utf8(b"external_url"),
             string::utf8(b"project_url")
         ];
@@ -56,8 +57,9 @@ module todo_app::todo_nft {
             string::utf8(b"{description}"),
             string::utf8(b"{image_url}"),
             string::utf8(b"Status: {completed}"),
+            string::utf8(b"Private: {is_private}"),
             string::utf8(b"https://explorer.sui.io/object/{id}"),
-            string::utf8(b"https://github.com/yourusername/walrus_todo")
+            string::utf8(b"https://wal.app/")
         ];
         
         // Create the Publisher for display
@@ -81,18 +83,23 @@ module todo_app::todo_nft {
         title: vector<u8>,
         description: vector<u8>,
         walrus_blob_id: vector<u8>,
+        is_private: bool,
         ctx: &mut TxContext
     ) {
-        let title_str = string::utf8(title);
+        let title_str = if (is_private) {
+            string::utf8(b"Untitled")
+        } else {
+            string::utf8(title)
+        };
         let description_str = string::utf8(description);
         let walrus_blob_id_str = string::utf8(walrus_blob_id);
         
         // Validate blob ID is not empty
         assert!(std::vector::length(&walrus_blob_id) > 0, EINVALID_BLOB_ID);
         
-        // Construct image URL from Walrus blob ID
+        // Construct image URL from Walrus blob ID using the correct aggregator URL
         let image_url_bytes = std::vector::empty<u8>();
-        std::vector::append(&mut image_url_bytes, DEFAULT_IMAGE_URL);
+        std::vector::append(&mut image_url_bytes, b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/");
         std::vector::append(&mut image_url_bytes, walrus_blob_id);
         let image_url_str = url::new_unsafe_from_bytes(image_url_bytes);
         
@@ -102,7 +109,8 @@ module todo_app::todo_nft {
             description: description_str,
             walrus_blob_id: walrus_blob_id_str,
             completed: false,
-            image_url: image_url_str
+            image_url: image_url_str,
+            is_private: is_private
         };
 
         // Emit creation event
