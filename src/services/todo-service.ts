@@ -31,9 +31,8 @@ export class TodoService {
     const newTodo: Todo = {
       id: generateId(),
       title: todo.title || '',
-      task: todo.task || todo.title || '',
+      completed: todo.completed || false,
       description: todo.description,
-      completed: false,
       priority: todo.priority || 'medium',
       tags: todo.tags || [],
       createdAt: new Date().toISOString(),

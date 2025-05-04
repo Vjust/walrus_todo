@@ -1,20 +1,28 @@
 import { SuiClient } from '@mysten/sui/client';
-import { WalletAdapter } from '@mysten/wallet-adapter-base';
+import { type Wallet } from '@mysten/wallet-standard';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import { WalletExtensionSigner } from '../utils/wallet-extension';
 import { execSync } from 'child_process';
+import { type Signer } from '@mysten/sui/cryptography';
+
+// Create a test subclass that exposes protected methods for testing
+class TestableWalrusImageStorage extends WalrusImageStorage {
+  public async getTransactionSigner(): Promise<Signer> {
+    return super.getTransactionSigner();
+  }
+}
 
 jest.mock('child_process');
 jest.mock('@mysten/sui/client');
 jest.mock('../utils/sui-keystore'); // Mock KeystoreSigner
 jest.mock('../utils/wallet-extension'); // Mock WalletExtensionSigner
-jest.mock('@mysten/wallet-adapter-base');
+jest.mock('@mysten/wallet-standard');
 
 describe('WalrusImageStorage', () => {
   let suiClient: jest.Mocked<SuiClient>;
-  let wallet: jest.Mocked<WalletAdapter>;
-  let storage: WalrusImageStorage;
+  let wallet: jest.Mocked<Wallet>;
+  let storage: TestableWalrusImageStorage;
 
   beforeEach(() => {
     suiClient = {
@@ -61,7 +69,7 @@ describe('WalrusImageStorage', () => {
     });
 
     it('should create KeystoreSigner when wallet is not connected', async () => {
-      storage = new WalrusImageStorage(suiClient);
+      storage = new TestableWalrusImageStorage(suiClient);
       await storage.connect(); // Call connect to set activeAddress and signer; assume connect is public or handle accordingly
       const signer = await storage.getTransactionSigner(); // Remove 'as any' cast by ensuring method is accessible
       expect(KeystoreSigner).toHaveBeenCalledWith(suiClient);
@@ -70,7 +78,8 @@ describe('WalrusImageStorage', () => {
 
     // Removed test case as WalrusImageStorage does not support WalletExtensionSigner
     it('should throw error when WAL balance is 0', async () => {
-      storage = new WalrusImageStorage(suiClient);
+      const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});  // Mock console.error to suppress output
+      storage = new TestableWalrusImageStorage(suiClient);
       suiClient.getBalance.mockResolvedValue({
         coinType: 'WAL',  // Changed to 'WAL' for consistency
         coinObjectCount: 1,
@@ -82,10 +91,11 @@ describe('WalrusImageStorage', () => {
       });
       await expect(storage.connect()).rejects.toThrow('No WAL tokens found in the active address');
       await expect(storage.getTransactionSigner()).rejects.toThrow('No WAL tokens found');
+      consoleErrorMock.mockRestore();  // Restore console.error after the test
     });
 
     it('should reuse existing signer instance', async () => {
-      storage = new WalrusImageStorage(suiClient);
+      storage = new TestableWalrusImageStorage(suiClient);
       await storage.connect(); // Call connect to initialize the signer
       const signer1 = await storage.getTransactionSigner();
       const signer2 = await storage.getTransactionSigner();

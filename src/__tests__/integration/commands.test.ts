@@ -5,7 +5,15 @@ import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
 import * as path from 'path';
 
 jest.mock('child_process', () => ({ execSync: jest.fn() }));
-jest.mock('fs', () => ({ readFileSync: jest.fn() }));
+jest.mock('fs', () => ({
+  readFileSync: jest.fn(),
+  existsSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  unlinkSync: jest.fn(),
+  rmdirSync: jest.fn(),
+  readdirSync: jest.fn(), // Added for afterAll usage
+  writeFileSync: jest.fn(),
+}));
 
 describe('CLI Commands', () => {
   const CLI_CMD = 'node ./bin/run.js';  // Use the local build path
@@ -78,7 +86,7 @@ describe('CLI Commands', () => {
       // Add more test cases as per the guide, e.g., for image handling
       it('should handle invalid image', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('node ./bin/run.js create --image ./invalid.txt')) {  // Make mock more specific to the full command
+          if (command === 'node ./bin/run.js create --title "Invalid Image Todo" --image ./invalid.txt') {
             throw new Error('Invalid image file provided');
           }
           throw new Error(`Command not mocked: ${command}`);
@@ -121,7 +129,7 @@ describe('CLI Commands', () => {
 
       it('should verify config file after configuration', () => {
         (fs.readFileSync as jest.Mock).mockImplementation((filePath: string | PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
-          if (typeof filePath === 'string' and filePath.includes('.waltodo/config.json')) {
+          if (typeof filePath === 'string' && filePath.includes('.waltodo/config.json')) {
             return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
           }
           throw new Error(`File not mocked: ${String(filePath)}`);

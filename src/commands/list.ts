@@ -1,5 +1,6 @@
 import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/error';
@@ -23,11 +24,15 @@ export default class ListCommand extends Command {
   static flags = {
     completed: Flags.boolean({
       description: 'Show only completed items',
-      exclusive: ['pending']
+      exclusive: ['pending', 'sort']
     }),
     pending: Flags.boolean({
       description: 'Show only pending items',
-      exclusive: ['completed']
+      exclusive: ['completed', 'sort']
+    }),
+    sort: Flags.string({
+      description: 'Sort todos by field (e.g., priority, dueDate)',
+      options: ['priority', 'dueDate']
     })
   };
 
@@ -59,6 +64,22 @@ export default class ListCommand extends Command {
         if (flags.completed) todos = todos.filter(t => t.completed);
         if (flags.pending) todos = todos.filter(t => !t.completed);
 
+        // Apply sorting if sort flag is provided
+        if (flags.sort) {
+          if (flags.sort === 'priority') {
+            todos.sort((a, b) => {
+              const priorityOrder = { high: 3, medium: 2, low: 1 };
+              return priorityOrder[b.priority] - priorityOrder[a.priority];
+            });
+          } else if (flags.sort === 'dueDate') {
+            todos.sort((a, b) => {
+              if (!a.dueDate) return 1; // Items without dueDate go to the end
+              if (!b.dueDate) return -1;
+              return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+            });
+          }
+        }
+
         if (todos.length === 0) {
           this.log(chalk.yellow('No matching todos found'));
         } else {
@@ -66,7 +87,7 @@ export default class ListCommand extends Command {
             const status = todo.completed ? chalk.green('✓') : chalk.yellow('☐');
             const priority = priorityColors[todo.priority]('⚡');
 
-            this.log(`${status} ${priority} ${todo.task}`);
+            this.log(`${status} ${priority} ${todo.title}`);
             
             const details = [
               todo.dueDate && `Due: ${todo.dueDate}`,

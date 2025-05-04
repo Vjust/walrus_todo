@@ -6,8 +6,6 @@ export interface Todo {
   id: string;
   /** Title of the todo item */
   title: string;
-  /** Task description */
-  task: string;
   /** Detailed description of the todo item */
   description?: string;
   /** Whether the todo is completed */

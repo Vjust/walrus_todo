@@ -67,11 +67,7 @@ export default class ImageCommand extends Command {
       if (flags.image) {
         // Resolve relative path to absolute
         const absoluteImagePath = path.resolve(process.cwd(), flags.image);
-        imageUrl = await walrusImageStorage.uploadCustomTodoImage(
-          absoluteImagePath,
-          todoItem.title,
-          todoItem.completed
-        );
+        imageUrl = await walrusImageStorage.uploadCustomTodoImage(absoluteImagePath, todoItem.title, todoItem.completed);
       } else {
         // Use default image
         imageUrl = await walrusImageStorage.uploadDefaultImage();
@@ -99,11 +95,7 @@ export default class ImageCommand extends Command {
 
       // Create NFT if requested
       if (flags.nft) {
-        if (!process.env.SUI_PRIVATE_KEY) {
-          throw new CLIError('SUI_PRIVATE_KEY environment variable is required to create NFTs');
-        }
-
-        if (!TODO_NFT_CONFIG.MODULE_ADDRESS || TODO_NFT_CONFIG.MODULE_ADDRESS === '0x0') {
+        if (!TODO_NFT_CONFIG.MODULE_ADDRESS || TODO_NFT_CONFIG.MODULE_ADDRESS.startsWith('0x0')) {
           throw new CLIError('Todo NFT module address is not configured. Please deploy the NFT module first.');
         }
 

@@ -1,6 +1,6 @@
 import { Command, Flags } from '@oclif/core';
 import { select, input, confirm } from '@inquirer/prompts';
-import chalk from 'chalk';
+const chalk = require('chalk');
 import { Config } from '../types';
 import { configService } from '../services/config-service';
 import { CLIError } from '../types/error';
@@ -10,7 +10,9 @@ export default class ConfigureCommand extends Command {
 
   static examples = [
     '<%= config.bin %> configure',
-    '<%= config.bin %> configure --reset'
+    '<%= config.bin %> configure --reset',
+    '<%= config.bin %> configure --network testnet --wallet-address 0x1234567890abcdef',
+    '<%= config.bin %> configure --network local'
   ];
 
   static flags = {
@@ -18,6 +20,13 @@ export default class ConfigureCommand extends Command {
       char: 'r',
       description: 'Reset all settings to defaults',
       default: false
+    }),
+    network: Flags.string({
+      description: 'Network to use (mainnet, testnet, devnet, local)',
+      options: ['mainnet', 'testnet', 'devnet', 'local']
+    }),
+    walletAddress: Flags.string({
+      description: 'Wallet address for configuration'
     })
   };
 
@@ -39,12 +48,30 @@ export default class ConfigureCommand extends Command {
         return;
       }
 
-      const userId = await input({
-        message: 'Enter your user identifier:',
-      });
-      
-      if (!this.validateUserIdentifier(userId)) {
-        throw new CLIError('Invalid user identifier format', 'INVALID_USER_ID');
+      let network = flags.network;
+      let walletAddress = flags.walletAddress;
+
+      if (!network) {
+        network = await select({
+          message: 'Select network:',
+          choices: [
+            { name: 'mainnet', value: 'mainnet' },
+            { name: 'testnet', value: 'testnet' },
+            { name: 'devnet', value: 'devnet' },
+            { name: 'local', value: 'local' }
+          ]
+        });
+      } else if (!['mainnet', 'testnet', 'devnet', 'local'].includes(network)) {
+        throw new CLIError('Invalid network specified. Use mainnet, testnet, devnet, or local.', 'INVALID_NETWORK');
+      }
+
+      if (!walletAddress) {
+        walletAddress = await input({
+          message: 'Enter your wallet address (e.g., 0x123...):',
+        });
+        if (!/^0x[a-fA-F0-9]{40,}$/.test(walletAddress)) {
+          throw new CLIError('Invalid wallet address format. Must be a valid hex address starting with 0x.', 'INVALID_WALLET_ADDRESS');
+        }
       }
 
       const encryptedStorage = await confirm({
@@ -53,13 +80,14 @@ export default class ConfigureCommand extends Command {
       });
 
       await configService.saveConfig({
-        network: 'local',
-        walletAddress: userId,
+        network,
+        walletAddress,
         encryptedStorage
       });
 
       this.log(chalk.green('\n✓ Configuration saved successfully'));
-      this.log(chalk.dim('User ID:'), userId);
+      this.log(chalk.dim('Network:'), network);
+      this.log(chalk.dim('Wallet Address:'), walletAddress);
       this.log(chalk.dim('Encryption:'), encryptedStorage ? 'Enabled' : 'Disabled');
 
     } catch (error) {

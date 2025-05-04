@@ -4,7 +4,8 @@ import { TodoService } from '../services/todoService';
 import { WalrusStorage } from '../utils/walrus-storage';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 import { CLIError } from '../types/error';
-import chalk from 'chalk';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 
 export default class RetrieveCommand extends Command {
   static description = 'Retrieve todos from blockchain or Walrus storage';

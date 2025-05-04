@@ -1,7 +1,9 @@
 import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';
+// Use require for chalk since it's an ESM module
+const chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
+import { confirm } from '@inquirer/prompts';
 
 export default class CompleteCommand extends Command {
   static description = 'Mark a todo as completed';
