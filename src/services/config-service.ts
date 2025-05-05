@@ -10,8 +10,14 @@ export class ConfigService {
   private config: Config;
 
   constructor() {
+    // Look for config file in current directory first, then in home directory
+    const currentDirConfig = path.join(process.cwd(), CLI_CONFIG.CONFIG_FILE);
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    this.configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
+    const homeDirConfig = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
+
+    // Use current directory config if it exists, otherwise use home directory
+    this.configPath = fs.existsSync(currentDirConfig) ? currentDirConfig : homeDirConfig;
+
     this.todosPath = path.resolve(process.cwd(), 'Todos');
     this.config = this.loadConfig();
     this.ensureTodosDirectory();
@@ -139,7 +145,7 @@ export class ConfigService {
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
-    
+
     const index = list.todos.findIndex(t => t.id === todo.id);
     if (index === -1) {
       throw new CLIError(`Todo "${todo.id}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
@@ -160,7 +166,7 @@ export class ConfigService {
     if (todoIndex === -1) {
       throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
     }
-    
+
     list.todos = list.todos.filter(t => t.id !== todoId);
     list.updatedAt = new Date().toISOString();
     await this.saveListData(listName, list);

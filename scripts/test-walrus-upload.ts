@@ -11,7 +11,7 @@ import { NETWORK_URLS } from '../src/constants';
  *
  * @param useMockMode - If true, uses mock mode to generate a URL without actually uploading
  */
-async function uploadDefaultImageToWalrus(useMockMode: boolean = false): Promise<string | null> {
+async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
   try {
     console.log('🌊 Walrus NFT Image Uploader 🌊\n');
 
@@ -43,7 +43,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false): Promise
     const suiClient = new SuiClient({ url: NETWORK_URLS.testnet });
 
     // Check if image exists
-    const defaultImagePath = path.join(__dirname, '..', 'assets', 'todo_bottle.jpeg');
+    const defaultImagePath = path.join(__dirname, 'assets/todo_bottle.jpeg');
     if (!fs.existsSync(defaultImagePath)) {
       console.error(`❌ Error: Default image not found at ${defaultImagePath}`);
       console.error('Please ensure the image exists before running this script.');

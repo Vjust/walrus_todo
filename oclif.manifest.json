@@ -1,0 +1,180 @@
+{
+  "version": "1.0.0",
+  "commands": {
+    "account": {
+      "id": "account",
+      "description": "account command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/account"
+    },
+    "add": {
+      "id": "add",
+      "description": "add command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/add"
+    },
+    "check": {
+      "id": "check",
+      "description": "check command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/check"
+    },
+    "complete": {
+      "id": "complete",
+      "description": "complete command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/complete"
+    },
+    "configure": {
+      "id": "configure",
+      "description": "configure command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/configure"
+    },
+    "create": {
+      "id": "create",
+      "description": "create command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/create"
+    },
+    "delete": {
+      "id": "delete",
+      "description": "delete command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/delete"
+    },
+    "deploy": {
+      "id": "deploy",
+      "description": "deploy command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/deploy"
+    },
+    "fetch": {
+      "id": "fetch",
+      "description": "fetch command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/fetch"
+    },
+    "image": {
+      "id": "image",
+      "description": "image command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/image"
+    },
+    "list": {
+      "id": "list",
+      "description": "list command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/list"
+    },
+    "retrieve": {
+      "id": "retrieve",
+      "description": "retrieve command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/retrieve"
+    },
+    "share": {
+      "id": "share",
+      "description": "share command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/share"
+    },
+    "simple": {
+      "id": "simple",
+      "description": "simple command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/simple"
+    },
+    "store": {
+      "id": "store",
+      "description": "store command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store"
+    },
+    "template": {
+      "id": "template",
+      "description": "template command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/template"
+    },
+    "update": {
+      "id": "update",
+      "description": "update command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/update"
+    }
+  },
+  "topics": {
+    "simple": {
+      "description": "Simple todo management commands"
+    }
+  }
+}

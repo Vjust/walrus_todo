@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# This is a standalone bash script for the waltodo CLI
+# It doesn't rely on oclif or any other dependencies
+# It handles the 'add' command with spaces in the title correctly
+
+# Use the actual project root directory
+PROJECT_ROOT="/Users/angle/Documents/Projects/walrus_todo"
+
+# Print debug info
+echo "Project root: $PROJECT_ROOT"
+echo "Current directory: $(pwd)"
+
+# Function to show help
+show_help() {
+  echo "waltodo - A CLI for managing todos with Sui blockchain and Walrus storage"
+  echo ""
+  echo "Usage:"
+  echo "  waltodo add \"Todo title\" [options]"
+  echo "  waltodo list [options]"
+  echo "  waltodo complete <id> [options]"
+  echo ""
+  echo "Commands:"
+  echo "  add         Add a new todo"
+  echo "  list        List all todos"
+  echo "  complete    Mark a todo as complete"
+  echo "  delete      Delete a todo"
+  echo "  update      Update a todo"
+  echo "  fetch       Fetch todos from the blockchain"
+  echo "  store       Store a todo on the blockchain"
+  echo "  retrieve    Retrieve a todo from storage"
+  echo "  share       Share a todo"
+  echo "  configure   Configure the CLI"
+  echo "  deploy      Deploy the smart contract"
+  echo "  account     Manage account settings"
+  echo "  image       Manage todo images"
+  echo "  template    Manage todo templates"
+  echo "  create      Create a new todo list"
+  echo "  quickadd    Quickly add a todo"
+  echo "  check       Check the status of a todo"
+  echo "  simple      Simple todo management"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help     Show help information"
+  echo "  -v, --verbose  Show verbose output"
+  echo ""
+  echo "Examples:"
+  echo "  waltodo add \"Buy groceries\""
+  echo "  waltodo add \"Important task\" -p high"
+  echo "  waltodo list"
+  echo "  waltodo complete 123"
+}
+
+# Check if no arguments are provided
+if [ $# -eq 0 ]; then
+  show_help
+  exit 0
+fi
+
+# Check if help is requested
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+  show_help
+  exit 0
+fi
+
+# Get the command
+COMMAND="$1"
+shift
+
+# Handle the add command
+if [ "$COMMAND" = "add" ]; then
+  # Check if there's a second argument that might be a title
+  if [ $# -gt 0 ] && [[ "$1" != -* ]]; then
+    # This is likely a title with spaces
+    TITLE="$1"
+    shift
+
+    # Run the command using the run.js script
+    cd "$PROJECT_ROOT" && node bin/run.js add -t "$TITLE" "$@"
+    exit $?
+  fi
+fi
+
+# For all other commands, just pass through to the run.js script
+cd "$PROJECT_ROOT" && node bin/run.js "$COMMAND" "$@"
+exit $?

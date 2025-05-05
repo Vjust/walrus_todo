@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { run, flush, handle } from '@oclif/core';
+const { run, flush, handle } = require('@oclif/core');
 
 run()
   .then(flush)

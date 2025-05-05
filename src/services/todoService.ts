@@ -25,7 +25,7 @@ export class TodoService {
     if (existingList) {
       throw new CLIError(`List "${name}" already exists`, 'LIST_EXISTS');
     }
-    
+
     const newList: TodoList = {
       id: generateId(),
       name,
@@ -35,7 +35,7 @@ export class TodoService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     await this.saveList(name, newList);
     return newList;
   }
@@ -43,7 +43,7 @@ export class TodoService {
   async getList(listName: string): Promise<TodoList | null> {
     try {
       const data = await fsPromises.readFile(
-        path.join(this.todosDir, `${listName}${STORAGE_CONFIG.FILE_EXT}`), 
+        path.join(this.todosDir, `${listName}${STORAGE_CONFIG.FILE_EXT}`),
         'utf8'
       );
       return JSON.parse(data) as TodoList;
@@ -73,7 +73,7 @@ export class TodoService {
       tags: todo.tags || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      private: true
+      private: todo.private !== undefined ? todo.private : true
     };
 
     list.todos.push(newTodo);
@@ -107,7 +107,7 @@ export class TodoService {
   }
 
   async toggleItemStatus(listName: string, itemId: string, checked: boolean): Promise<void> {
-    await this.updateTodo(listName, itemId, { 
+    await this.updateTodo(listName, itemId, {
       completed: checked,
       completedAt: checked ? new Date().toISOString() : undefined
     });

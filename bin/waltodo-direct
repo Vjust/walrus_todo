@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# This script is a wrapper for the waltodo CLI
+# It handles the 'add' command with spaces in the title correctly
+
+# Check if at least one argument is provided
+if [ $# -eq 0 ]; then
+  # Just run the original waltodo with no arguments
+  cd "$(dirname "$0")/.." && node ./bin/run.js
+  exit $?
+fi
+
+# Check if the first argument is 'add'
+if [ "$1" = "add" ]; then
+  # Check if there's a second argument that might be a title
+  if [ $# -gt 1 ] && [[ "$2" != -* ]]; then
+    # This is likely a title with spaces
+    TITLE="$2"
+    shift 2
+
+    # Run the command using the original waltodo add with the -t flag
+    cd "$(dirname "$0")/.." && node ./bin/run.js add -t "$TITLE" "$@"
+    exit $?
+  fi
+fi
+
+# For all other commands, just pass through to the original waltodo
+cd "$(dirname "$0")/.." && node ./bin/run.js "$@"
+exit $?

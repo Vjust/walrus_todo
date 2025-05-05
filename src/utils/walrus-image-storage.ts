@@ -22,6 +22,12 @@ export class WalrusImageStorage {
 
   async connect(): Promise<void> {
     try {
+      if (this.useMockMode) {
+        console.log('Using mock mode for Walrus image storage');
+        this.isInitialized = true;
+        return;
+      }
+
       // Get active environment info from Sui CLI
       const envInfo = execSync('sui client active-env').toString().trim();
       if (!envInfo.includes('testnet')) {
@@ -76,6 +82,11 @@ export class WalrusImageStorage {
     }
 
     try {
+      if (this.useMockMode) {
+        console.log('Using mock mode for default image upload');
+        return 'https://testnet.wal.app/blob/mock-default-image-blob-id';
+      }
+
       const imagePath = getAssetPath('todo_bottle.jpeg');
       if (!fs.existsSync(imagePath)) {
         throw new Error(`Default image not found at ${imagePath}`);
@@ -123,6 +134,12 @@ export class WalrusImageStorage {
     }
 
     try {
+      if (this.useMockMode) {
+        console.log('Using mock mode for custom image upload');
+        return `https://testnet.wal.app/blob/mock-custom-image-blob-id-${Date.now()}`;
+      }
+
+      await this.ensureStorageAllocated(); // Ensure storage is allocated before uploading
       const imageBuffer = fs.readFileSync(imagePath);
       const ext = path.extname(imagePath).toLowerCase();
       const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg';
@@ -161,6 +178,11 @@ export class WalrusImageStorage {
       throw new Error('WalrusImageStorage not initialized. Call connect() first.');
     }
     try {
+      if (this.useMockMode) {
+        console.log('Using mock mode for image upload');
+        return `https://testnet.wal.app/blob/mock-image-blob-id-${Date.now()}`;
+      }
+
       if (!fs.existsSync(imagePath)) {
         throw new Error(`Image not found at ${imagePath}`);
       }
@@ -185,6 +207,45 @@ export class WalrusImageStorage {
       throw error;
     }
   }
+
+  /**
+   * Ensure that at least 1GB of storage is allocated for the user in Walrus.
+   * This method checks for available storage and buys it if necessary.
+   * @param sizeBytes Number of bytes to ensure are allocated (default: 1GB).
+   */
+  async ensureStorageAllocated(_sizeBytes: number = 1073741824): Promise<void> { // 1GB = 1073741824 bytes
+    if (!this.isInitialized) {
+      throw new Error('WalrusImageStorage not initialized. Call connect() first.');
+    }
+    try {
+      if (this.useMockMode) {
+        console.log('Using mock mode for storage allocation');
+        return;
+      }
+
+      console.log('Checking Walrus storage allocation...');
+      // TODO: Implement actual storage check and buy logic based on Walrus API documentation.
+      console.log('Storage allocation check is not fully implemented yet.');
+      console.log('Assuming sufficient storage is available for this operation.');
+
+      // Uncomment when ready to implement
+      // Example implementation if using Sui transactions:
+      // const packageId = 'your_walrus_package_id'; // Replace with actual package ID
+      // await this.suiClient.executeMoveCall({
+      //   packageObjectId: packageId,
+      //   module: 'storage_module', // Replace with correct module name
+      //   function: 'buy_storage',
+      //   typeArguments: [],
+      //   arguments: [_sizeBytes.toString()], // Adjust arguments based on contract
+      //   gasBudget: 10000,
+      //   signer: await this.getTransactionSigner()
+      // });
+    } catch (error) {
+      handleError('Failed to ensure storage allocation', error);
+      throw error;
+    }
+  }
+
 }
 
 export function createWalrusImageStorage(suiClient: SuiClient, useMockMode: boolean = false): WalrusImageStorage {
