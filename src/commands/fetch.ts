@@ -9,12 +9,12 @@ import { configService } from '../services/config-service';
 // Use require for chalk since it's an ESM module
 const chalk = require('chalk');
 
-export default class RetrieveCommand extends Command {
-  static description = 'Retrieve todos from blockchain or Walrus storage';
+export default class FetchCommand extends Command {
+  static description = 'Fetch todos from blockchain or Walrus storage';
 
   static examples = [
-    '<%= config.bin %> retrieve --blob-id QmXyz --list my-todos',
-    '<%= config.bin %> retrieve --object-id 0x123 --list my-todos',
+    '<%= config.bin %> fetch --blob-id QmXyz --list my-todos',
+    '<%= config.bin %> fetch --object-id 0x123 --list my-todos',
   ];
 
   static flags = {
@@ -35,11 +35,11 @@ export default class RetrieveCommand extends Command {
 
   private todoService = new TodoService();
   private suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
-  private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
+  private walrusStorage = createWalrusStorage(true); // Use mock mode for testing
 
   async run(): Promise<void> {
     try {
-      const { flags } = await this.parse(RetrieveCommand);
+      const { flags } = await this.parse(FetchCommand);
 
       // Validate input
       if (!flags['blob-id'] && !flags['object-id']) {
@@ -68,7 +68,7 @@ export default class RetrieveCommand extends Command {
         this.log(`  Title: ${todo.title}`);
         this.log(`  Status: ${todo.completed ? 'Completed' : 'Pending'}`);
         this.log(`  Priority: ${todo.priority}`);
-
+        
         if (todo.tags?.length) {
           this.log(`  Tags: ${todo.tags.join(', ')}`);
         }
@@ -78,29 +78,29 @@ export default class RetrieveCommand extends Command {
       } else if (flags['object-id']) {
         // Initialize Sui NFT storage
         const suiNftStorage = new SuiNftStorage(this.suiClient, config.lastDeployment.packageId);
-
+        
         // Retrieve NFT from blockchain
         this.log(chalk.blue(`Retrieving NFT from blockchain (object ID: ${flags['object-id']})...`));
         const nftData = await suiNftStorage.getTodoNft(flags['object-id']);
-
+        
         if (!nftData.walrusBlobId) {
           throw new CLIError('NFT does not contain a Walrus blob ID', 'INVALID_NFT');
         }
-
+        
         // Initialize Walrus storage
         await this.walrusStorage.connect();
-
+        
         // Retrieve todo data from Walrus
         this.log(chalk.blue(`Retrieving todo data from Walrus (blob ID: ${nftData.walrusBlobId})...`));
         const todo = await this.walrusStorage.retrieveTodo(nftData.walrusBlobId);
-
+        
         // Save to local list
         const savedTodo = await this.todoService.addTodo(flags.list, {
           ...todo,
           nftObjectId: flags['object-id'],
           walrusBlobId: nftData.walrusBlobId
         });
-
+        
         this.log(chalk.green(`✓ Todo retrieved successfully from blockchain and Walrus`));
         this.log(chalk.dim('Details:'));
         this.log(`  Title: ${todo.title}`);
@@ -108,15 +108,15 @@ export default class RetrieveCommand extends Command {
         this.log(`  Priority: ${todo.priority}`);
         this.log(`  NFT Object ID: ${flags['object-id']}`);
         this.log(`  Walrus Blob ID: ${nftData.walrusBlobId}`);
-
+        
         if (todo.tags?.length) {
           this.log(`  Tags: ${todo.tags.join(', ')}`);
         }
-
+        
         // Cleanup
         await this.walrusStorage.disconnect();
       }
-
+      
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

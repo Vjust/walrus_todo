@@ -1,2 +1,42 @@
 #!/usr/bin/env node
-require('../dist/index.js');
+
+// Force stdout and stderr to be synchronous to prevent output issues
+process.stdout._handle && process.stdout._handle.setBlocking && process.stdout._handle.setBlocking(true);
+process.stderr._handle && process.stderr._handle.setBlocking && process.stderr._handle.setBlocking(true);
+
+// Find the project root directory
+const path = require('path');
+const fs = require('fs');
+
+function findProjectRoot(startDir) {
+  let dir = startDir;
+
+  // Try to find package.json by traversing up directories
+  while (dir !== path.dirname(dir)) {
+    if (fs.existsSync(path.join(dir, 'package.json'))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+
+  // If we can't find it by traversing up, return the directory of this script
+  return path.dirname(__dirname);
+}
+
+// Get the project root
+const projectRoot = findProjectRoot(__dirname);
+
+// Add the project's node_modules/.bin to PATH
+process.env.PATH = `${path.join(projectRoot, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH}`;
+
+// Set environment variables to suppress warnings
+process.env.NODE_NO_WARNINGS = '1';
+process.env.OCLIF_HIDE_WARN = 'true';
+
+// Use the run.js script directly which uses oclif's built-in command handling
+try {
+  require(path.join(projectRoot, 'bin', 'run.js'));
+} catch (error) {
+  console.error('Error executing command:', error);
+  process.exit(1);
+}

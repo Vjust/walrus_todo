@@ -2,7 +2,6 @@ import { Args, Command, Flags } from '@oclif/core';
 // Use require for chalk since it's an ESM module
 const chalk = require('chalk');
 import { TodoService } from '../services/todoService';
-import { generateId } from '../utils';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/error';
 
@@ -10,16 +9,18 @@ export default class AddCommand extends Command {
   static description = 'Add new todo items to a list';
 
   static examples = [
+    '<%= config.bin %> add "Buy groceries"',
+    '<%= config.bin %> add "Important task" -p high',
+    '<%= config.bin %> add "Meeting" --due 2024-05-01',
     '<%= config.bin %> add my-list -t "Buy groceries"',
-    '<%= config.bin %> add my-list -t "Important task" -p high',
-    '<%= config.bin %> add my-list -t "Meeting" --due 2024-05-01'
+    '<%= config.bin %> add -t "Task 1" -t "Task 2"'
   ];
 
   static flags = {
     task: Flags.string({
       char: 't',
-      description: 'Task description',
-      required: true,
+      description: 'Task description (can be used multiple times)',
+      required: false,
       multiple: true
     }),
     priority: Flags.string({
@@ -39,14 +40,19 @@ export default class AddCommand extends Command {
     private: Flags.boolean({
       description: 'Mark todo as private',
       default: false
+    }),
+    list: Flags.string({
+      char: 'l',
+      description: 'Name of the todo list',
+      default: 'default'
     })
   };
 
   static args = {
-    list: Args.string({
-      name: 'list',
-      description: 'Name of the todo list',
-      default: 'default'
+    title: Args.string({
+      name: 'title',
+      description: 'Todo title (alternative to -t flag)',
+      required: false
     })
   };
 
@@ -63,21 +69,45 @@ export default class AddCommand extends Command {
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(AddCommand);
-      
+
       if (flags.due && !this.validateDate(flags.due)) {
         throw new CLIError('Invalid date format. Use YYYY-MM-DD', 'INVALID_DATE');
       }
 
-      const now = new Date().toISOString();
+      // Determine the list name - either from the list flag or default
+      const listName = flags.list || 'default';
+
+      // Determine the todo title - either from the title argument or task flag
+      let todoTitle: string;
+      if (args.title) {
+        // Use the title argument directly
+        todoTitle = args.title;
+      } else if (flags.task && flags.task.length > 0) {
+        // Use the task flag(s)
+        todoTitle = flags.task.join(' ');
+      } else {
+        throw new CLIError('Todo title is required. Provide it as an argument or with -t flag', 'MISSING_TITLE');
+      }
+
       const todo: Partial<Todo> = {
-        title: flags.task.join(' '), // Join all task strings for backward compatibility
+        title: todoTitle,
         priority: flags.priority as 'high' | 'medium' | 'low',
         dueDate: flags.due,
         tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
         private: flags.private
       };
 
-      await this.todoService.addTodo(args.list, todo as Todo);
+      // Check if list exists first
+      const listExists = await this.todoService.getList(listName);
+
+      // If list doesn't exist, create it
+      if (!listExists) {
+        await this.todoService.createList(listName, 'default-owner');
+        this.log(chalk.blue('ℹ') + ' Created new list: ' + chalk.cyan(listName));
+      }
+
+      // Add todo to the list
+      await this.todoService.addTodo(listName, todo as Todo);
 
       // Get priority color
       const priorityColor = {
@@ -87,19 +117,19 @@ export default class AddCommand extends Command {
       }[todo.priority || 'medium'];
 
       // Build output
-      this.log(
-        chalk.green('✓') + ' Added todo: ' + chalk.bold(flags.task.join(' ')),
-        '\n',
-        '  📋 List: ' + chalk.cyan(args.list || 'default'),
-        '\n',
-        todo.dueDate && `  📅 Due: ${chalk.blue(todo.dueDate)}`,
-        '\n',
-        `  🔄 Priority: ${priorityColor(todo.priority || 'medium')}`,
-        '\n',
-        (todo.tags && todo.tags.length > 0) && `  🏷️  Tags: ${todo.tags.join(', ')}`,
-        '\n',
-        `  🔒 Private: ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`
-      );
+      const outputLines = [
+          chalk.green('✓') + ' Added todo: ' + chalk.bold(todoTitle),
+          `  📋 List: ${chalk.cyan(listName)}`,
+          `  🔄 Priority: ${priorityColor(todo.priority || 'medium')}`,
+      ];
+      if (todo.dueDate) {
+          outputLines.push(`  📅 Due: ${chalk.blue(todo.dueDate)}`);
+      }
+      if (todo.tags && todo.tags.length > 0) {
+          outputLines.push(`  🏷️  Tags: ${todo.tags.join(', ')}`);
+      }
+      outputLines.push(`  🔒 Private: ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`);
+      this.log(outputLines.join('\n'));
 
     } catch (error) {
       if (error instanceof CLIError) {

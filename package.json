@@ -2,22 +2,25 @@
   "name": "waltodo",
   "version": "1.0.0",
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "type": "commonjs",
-  "bin": {
-    "waltodo": "dist/index.js"
-  },
+  "bin": "bin/waltodo-direct",
   "scripts": {
-    "prestart": "chmod +x ./bin/run.js",
+    "prestart": "chmod +x ./bin/run.js ./bin/waltodo ./bin/waltodo-direct",
     "build": "tsc",
     "start": "node bin/run.js",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist",
-    "prepare": "npm run clean && npm run build",
+    "prepare": "npm run clean && npm run build && npm run manifest",
     "link": "npm link",
+    "global-install": "./install-global.sh",
     "test": "jest",
-    "postinstall": "chmod +x ./bin/run.js",
-    "upload-image": "ts-node scripts/upload-default-image.ts"
+    "postinstall": "chmod +x ./bin/run.js ./bin/waltodo ./bin/waltodo-direct && touch oclif.manifest.json",
+    "upload-image": "ts-node scripts/upload-default-image.ts",
+    "manifest": "touch oclif.manifest.json",
+    "postbuild": "npm run manifest",
+    "fix-cli": "./fix-cli.sh",
+    "local-install": "mkdir -p ~/.local/bin && npm pack && tar -xzf waltodo-1.0.0.tgz && cp -r package/bin/* ~/.local/bin/ && chmod +x ~/.local/bin/waltodo && rm -rf package waltodo-1.0.0.tgz"
   },
   "keywords": [
     "cli",
@@ -36,6 +39,7 @@
     "@mysten/walrus": "^0.0.21",
     "@oclif/core": "^3.25.2",
     "@smithery/cli": "^1.1.84",
+    "axios": "^1.9.0",
     "chalk": "^4.1.2",
     "dotenv": "^16.4.5",
     "form-data": "^4.0.0",
@@ -70,7 +74,15 @@
     "dirname": "waltodo",
     "commands": "./dist/src/commands",
     "plugins": [],
-    "topicSeparator": " "
+    "topicSeparator": ":",
+    "macos": {
+      "identifier": "com.waltodo.cli"
+    },
+    "topics": {
+      "simple": {
+        "description": "Simple todo management commands"
+      }
+    }
   },
   "engines": {
     "node": ">=23.11.0",

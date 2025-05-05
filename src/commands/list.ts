@@ -1,6 +1,7 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 // Use require for chalk since it's an ESM module
 const chalk = require('chalk');
+import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/error';
@@ -11,7 +12,7 @@ const priorityColors: Record<string, (text: string) => string> = {
   low: chalk.blue
 };
 
-export default class ListCommand extends Command {
+export default class ListCommand extends BaseCommand {
   static description = 'List todos or todo lists';
 
   static examples = [
@@ -22,6 +23,7 @@ export default class ListCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     completed: Flags.boolean({
       description: 'Show only completed items',
       exclusive: ['pending', 'sort']
@@ -88,13 +90,13 @@ export default class ListCommand extends Command {
             const priority = priorityColors[todo.priority]('⚡');
 
             this.log(`${status} ${priority} ${todo.title}`);
-            
+
             const details = [
               todo.dueDate && `Due: ${todo.dueDate}`,
               todo.tags?.length && `Tags: ${todo.tags.join(', ')}`,
               todo.private && 'Private'
             ].filter(Boolean);
-            
+
             if (details.length) {
               this.log(chalk.dim(`   ${details.join(' | ')}`));
             }
@@ -102,7 +104,7 @@ export default class ListCommand extends Command {
         }
       } else {
         const lists = await this.todoService.getAllLists();
-        
+
         if (lists.length === 0) {
           this.log(chalk.yellow('\nNo todo lists found'));
           this.log(chalk.dim('\nCreate your first list:'));
@@ -119,7 +121,7 @@ export default class ListCommand extends Command {
           }
         }
       }
-      this.log();
+      this.log(' ');
 
     } catch (error) {
       if (error instanceof CLIError) {
