@@ -1,4 +1,9 @@
 /**
+ * Defines where a todo is stored
+ */
+export type StorageLocation = 'local' | 'blockchain' | 'both';
+
+/**
  * Represents a todo item with blockchain storage capabilities
  */
 export interface Todo {
@@ -24,6 +29,8 @@ export interface Todo {
   completedAt?: string;
   /** Whether the todo is private (stored only locally) */
   private: boolean;
+  /** Where the todo is stored (local, blockchain, or both) */
+  storageLocation?: StorageLocation;
   /** Walrus blob ID for decentralized storage */
   walrusBlobId?: string;
   /** Sui NFT object ID referencing this todo */

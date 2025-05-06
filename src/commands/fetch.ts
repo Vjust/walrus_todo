@@ -3,11 +3,10 @@ import { SuiClient } from '@mysten/sui/client';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
-import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
+import { NETWORK_URLS } from '../constants';
 import { CLIError } from '../types/error';
 import { configService } from '../services/config-service';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import chalk from 'chalk';
 
 export default class FetchCommand extends Command {
   static description = 'Fetch todos from blockchain or Walrus storage';
@@ -34,12 +33,12 @@ export default class FetchCommand extends Command {
   };
 
   private todoService = new TodoService();
-  private suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
   private walrusStorage = createWalrusStorage(true); // Use mock mode for testing
 
   async run(): Promise<void> {
     try {
       const { flags } = await this.parse(FetchCommand);
+      const configFetch = await configService.getConfig();  // Changed to avoid redeclaration
 
       // Validate input
       if (!flags['blob-id'] && !flags['object-id']) {
@@ -47,8 +46,8 @@ export default class FetchCommand extends Command {
       }
 
       // Get config for Sui client
-      const config = await configService.getConfig();
-      if (!config?.lastDeployment?.packageId) {
+      const configInner = await configService.getConfig();  // Changed to avoid redeclaration
+      if (!configInner?.lastDeployment?.packageId) {
         throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
       }
 
@@ -63,8 +62,8 @@ export default class FetchCommand extends Command {
         // Save to local list
         const savedTodo = await this.todoService.addTodo(flags.list, todo);
 
-        this.log(chalk.green(`✓ Todo retrieved successfully`));
-        this.log(chalk.dim('Details:'));
+        this.log(chalk.green("✓ Todo retrieved successfully"));
+        this.log(chalk.dim("Details:"));
         this.log(`  Title: ${todo.title}`);
         this.log(`  Status: ${todo.completed ? 'Completed' : 'Pending'}`);
         this.log(`  Priority: ${todo.priority}`);
@@ -76,8 +75,13 @@ export default class FetchCommand extends Command {
         // Cleanup
         await this.walrusStorage.disconnect();
       } else if (flags['object-id']) {
+        // Initialize Sui client first
+        const suiClient = new SuiClient({ url: NETWORK_URLS[configInner.network as keyof typeof NETWORK_URLS] });
         // Initialize Sui NFT storage
-        const suiNftStorage = new SuiNftStorage(this.suiClient, config.lastDeployment.packageId);
+        if (!configInner.lastDeployment) {
+          throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
+        }
+        const suiNftStorage = new SuiNftStorage(suiClient, configInner.lastDeployment.packageId);
         
         // Retrieve NFT from blockchain
         this.log(chalk.blue(`Retrieving NFT from blockchain (object ID: ${flags['object-id']})...`));

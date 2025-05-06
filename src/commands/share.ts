@@ -1,5 +1,5 @@
 import { Command, Flags } from '@oclif/core';
-import { TodoService } from '../services';
+import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
 
 export default class ShareCommand extends Command {
@@ -40,13 +40,13 @@ export default class ShareCommand extends Command {
       if (todoList.collaborators.includes(recipient)) {
         throw new CLIError(`User "${recipient}" already has access to list "${list}"`, 'ALREADY_SHARED');
       }
-      
+
       todoList.collaborators.push(recipient);
       todoList.updatedAt = new Date().toISOString();
-      
+
       await this.todoService.saveList(list, todoList);
-      this.log(`✓ Todo list "${list}" shared successfully with ${recipient}`);
-      
+      this.log(`✓ Todo list "${list}" shared successfully with ${recipient}`);  // Using template literals for cleaner code
+
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

@@ -1,0 +1,95 @@
+import { Command, Flags } from '@oclif/core';
+import { CLIError } from '../../utils/error-handler';
+import { TodoService } from '../../services/todoService';
+import { createWalrusImageStorage } from '../../utils/walrus-image-storage';
+import { NETWORK_URLS } from '../../constants';
+import { SuiClient } from '@mysten/sui/client';
+import chalk from 'chalk';
+import * as path from 'path';
+import { configService } from '../../services/config-service';
+
+export default class UploadCommand extends Command {
+  static description = 'Upload an image for a todo item';
+
+  static examples = [
+    '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png',
+  ];
+
+  static flags = {
+    todo: Flags.string({
+      char: 't',
+      description: 'ID of the todo to upload image for',
+      required: true,
+    }),
+    list: Flags.string({
+      char: 'l',
+      description: 'Name of the todo list',
+      required: true,
+    }),
+    image: Flags.string({
+      char: 'i',
+      description: 'Path to a custom image file',
+      required: true,
+    }),
+    'show-url': Flags.boolean({
+      description: 'Display only the image URL',
+    }),
+  };
+
+  async run(): Promise<void> {
+    const config = await configService.getConfig();
+    const { flags } = await this.parse(UploadCommand);
+    const todoService = new TodoService();
+
+    try {
+      // Get the todo item
+      const todoItem = await todoService.getTodo(flags.todo, flags.list);
+      if (!todoItem) {
+        throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list}`);
+      }
+
+      // Setup SuiClient
+      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network] });
+
+      // Initialize WalrusImageStorage
+      const walrusImageStorage = createWalrusImageStorage(suiClient);
+
+      // Connect to Walrus
+      this.log('Connecting to Walrus storage...');
+      await walrusImageStorage.connect();
+      this.log('Connected to Walrus storage');
+
+      // Upload image
+      this.log('Uploading image to Walrus...');
+      const imageUrl = await walrusImageStorage.uploadCustomTodoImage(path.resolve(process.cwd(), flags.image), todoItem.title, todoItem.completed);
+
+      // Extract blob ID from URL
+      const blobId = imageUrl.split('/').pop() || '';
+
+      // Update todo with image URL
+      const updatedTodo = { ...todoItem, imageUrl };
+      await todoService.updateTodo(flags.list, flags.todo, updatedTodo);
+
+      if (flags['show-url']) {
+        this.log(imageUrl);
+        return;
+      }
+
+      this.log(`✅ Image uploaded successfully to Walrus`);
+      this.log(`📝 Image URL: ${imageUrl}`);
+      this.log(`📝 Blob ID: ${blobId}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to upload image: ${error instanceof Error ? error.message : String(error)}`, 'IMAGE_UPLOAD_FAILED');
+    } finally {
+      // Disconnect from Walrus if connected
+      try {
+        await walrusImageStorage.disconnect();
+      } catch (error) {
+        // Ignore disconnection errors
+      }
+    }
+  }
+}

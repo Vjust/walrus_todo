@@ -1,6 +1,5 @@
 import { Args, Command, Flags } from '@oclif/core';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';

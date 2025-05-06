@@ -1,9 +1,10 @@
 import { Args, Command, Flags } from '@oclif/core';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import * as chalk from 'chalk';
 import { TodoService } from '../services/todoService';
-import { Todo } from '../types/todo';
+import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
+import { createWalrusStorage } from '../utils/walrus-storage';
+import { configService } from '../services/config-service';
 
 export default class AddCommand extends Command {
   static description = 'Add new todo items to a list';
@@ -13,7 +14,9 @@ export default class AddCommand extends Command {
     '<%= config.bin %> add "Important task" -p high',
     '<%= config.bin %> add "Meeting" --due 2024-05-01',
     '<%= config.bin %> add my-list -t "Buy groceries"',
-    '<%= config.bin %> add -t "Task 1" -t "Task 2"'
+    '<%= config.bin %> add -t "Task 1" -t "Task 2"',
+    '<%= config.bin %> add "Blockchain task" -s blockchain',
+    '<%= config.bin %> add "Hybrid task" -s both'
   ];
 
   static flags = {
@@ -45,6 +48,12 @@ export default class AddCommand extends Command {
       char: 'l',
       description: 'Name of the todo list',
       default: 'default'
+    }),
+    storage: Flags.string({
+      char: 's',
+      description: 'Where to store the todo (local, blockchain, both)',
+      options: ['local', 'blockchain', 'both'],
+      default: 'local'
     })
   };
 
@@ -57,6 +66,7 @@ export default class AddCommand extends Command {
   };
 
   private todoService = new TodoService();
+  private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
 
   private validateDate(date: string): boolean {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -71,7 +81,7 @@ export default class AddCommand extends Command {
       const { args, flags } = await this.parse(AddCommand);
 
       if (flags.due && !this.validateDate(flags.due)) {
-        throw new CLIError('Invalid date format. Use YYYY-MM-DD', 'INVALID_DATE');
+        throw new CLIError("Invalid date format. Use YYYY-MM-DD", 'INVALID_DATE');  // No change, already fixed
       }
 
       // Determine the list name - either from the list flag or default
@@ -89,12 +99,15 @@ export default class AddCommand extends Command {
         throw new CLIError('Todo title is required. Provide it as an argument or with -t flag', 'MISSING_TITLE');
       }
 
+      const storageLocation = flags.storage as StorageLocation;
+
       const todo: Partial<Todo> = {
         title: todoTitle,
         priority: flags.priority as 'high' | 'medium' | 'low',
         dueDate: flags.due,
         tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
-        private: flags.private
+        private: flags.private,
+        storageLocation: storageLocation
       };
 
       // Check if list exists first
@@ -107,7 +120,46 @@ export default class AddCommand extends Command {
       }
 
       // Add todo to the list
-      await this.todoService.addTodo(listName, todo as Todo);
+      const addedTodo = await this.todoService.addTodo(listName, todo as Todo);
+
+      // If storage is blockchain or both, store on blockchain
+      if (storageLocation === 'blockchain' || storageLocation === 'both') {
+        this.log(chalk.blue('ℹ') + ' Storing todo on blockchain...');
+
+        try {
+          // Initialize Walrus storage
+          await this.walrusStorage.connect();
+
+          // Store todo on Walrus
+          const blobId = await this.walrusStorage.storeTodo(addedTodo);
+
+          // Update local todo with Walrus blob ID if we're keeping a local copy
+          if (storageLocation === 'both') {
+            await this.todoService.updateTodo(listName, addedTodo.id, {
+              walrusBlobId: blobId,
+              updatedAt: new Date().toISOString()
+            });
+          }
+
+          // If storage is blockchain only, remove from local storage
+          if (storageLocation === 'blockchain') {
+            await this.todoService.deleteTodo(listName, addedTodo.id);
+          }
+
+          this.log(chalk.green('✓') + ' Todo stored on blockchain with blob ID: ' + chalk.dim(blobId));
+
+          // Cleanup
+          await this.walrusStorage.disconnect();
+        } catch (error) {
+          this.log(chalk.red('✗') + ' Failed to store todo on blockchain: ' + chalk.red(error instanceof Error ? error.message : String(error)));
+
+          // If blockchain-only storage failed, keep it locally
+          if (storageLocation === 'blockchain') {
+            this.log(chalk.yellow('⚠') + ' Keeping todo locally due to blockchain storage failure');
+            todo.storageLocation = 'local';
+          }
+        }
+      }
 
       // Get priority color
       const priorityColor = {
@@ -116,19 +168,27 @@ export default class AddCommand extends Command {
         low: chalk.green
       }[todo.priority || 'medium'];
 
+      // Get storage location color and icon
+      const storageInfo = {
+        local: { color: chalk.green, icon: '💻', text: 'Local only' },
+        blockchain: { color: chalk.blue, icon: '🔗', text: 'Blockchain only' },
+        both: { color: chalk.magenta, icon: '🔄', text: 'Local & Blockchain' }
+      }[addedTodo.storageLocation || 'local'];
+
       // Build output
       const outputLines = [
-          chalk.green('✓') + ' Added todo: ' + chalk.bold(todoTitle),
-          `  📋 List: ${chalk.cyan(listName)}`,
-          `  🔄 Priority: ${priorityColor(todo.priority || 'medium')}`,
+        chalk.green('✓') + ' Added todo: ' + chalk.bold(todoTitle),
+        `  📋 List: ${chalk.cyan(listName)}`,
+        `  🔄 Priority: ${priorityColor(todo.priority || 'medium')}`,
       ];
       if (todo.dueDate) {
-          outputLines.push(`  📅 Due: ${chalk.blue(todo.dueDate)}`);
+        outputLines.push(`  📅 Due: ${chalk.blue(todo.dueDate)}`);
       }
       if (todo.tags && todo.tags.length > 0) {
-          outputLines.push(`  🏷️  Tags: ${todo.tags.join(', ')}`);
+        outputLines.push(`  🏷️  Tags: ${todo.tags.join(', ')}`);
       }
       outputLines.push(`  🔒 Private: ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`);
+      outputLines.push(`  ${storageInfo.icon} Storage: ${storageInfo.color(storageInfo.text)}`);
       this.log(outputLines.join('\n'));
 
     } catch (error) {

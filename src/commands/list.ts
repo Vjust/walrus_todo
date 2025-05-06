@@ -1,6 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import chalk from 'chalk';
 import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
@@ -94,7 +93,7 @@ export default class ListCommand extends BaseCommand {
             const details = [
               todo.dueDate && `Due: ${todo.dueDate}`,
               todo.tags?.length && `Tags: ${todo.tags.join(', ')}`,
-              todo.private && 'Private'
+              todo.private && "Private"  // Changed to double quotes for consistency
             ].filter(Boolean);
 
             if (details.length) {

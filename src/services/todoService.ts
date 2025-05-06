@@ -73,7 +73,8 @@ export class TodoService {
       tags: todo.tags || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      private: todo.private !== undefined ? todo.private : true
+      private: todo.private !== undefined ? todo.private : true,
+      storageLocation: todo.storageLocation || 'local'
     };
 
     list.todos.push(newTodo);
