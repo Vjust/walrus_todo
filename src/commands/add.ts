@@ -4,7 +4,7 @@ import { TodoService } from '../services/todoService';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
 import { createWalrusStorage } from '../utils/walrus-storage';
-import { configService } from '../services/config-service';
+// Removed unused configService import
 
 export default class AddCommand extends Command {
   static description = 'Add new todo items to a list';

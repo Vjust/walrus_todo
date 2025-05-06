@@ -10,9 +10,10 @@ export default abstract class BaseCommand extends Command {
   };
 
   // Helper method to log debug messages
-  logDebug(message: string, ...args: any[]): void {
+  async logDebug(message: string, ...args: unknown[]): Promise<void> {
     // Get the flags from the command
-    const { flags } = this.parse() as any;
+    // Await the parse result and use a simpler type assertion
+    const { flags } = await this.parse() as { flags: { verbose?: boolean } }; // Call parse without arguments
 
     // Check if verbose flag is set
     if (flags.verbose) {
@@ -21,7 +22,7 @@ export default abstract class BaseCommand extends Command {
   }
 
   // Helper method to ensure output is displayed
-  logForce(message: string, ...args: any[]): void {
+  logForce(message: string, ...args: unknown[]): void {
     // Use console.log directly to ensure output is displayed
     console.log(message, ...args);
   }

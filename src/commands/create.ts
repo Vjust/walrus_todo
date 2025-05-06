@@ -1,11 +1,13 @@
 import { Command, Flags } from '@oclif/core';
-import { SuiClient, SuiTransactionBlock } from '@mysten/sui/client';  // Updated to correct export name
+import { SuiClient } from '@mysten/sui/client';
+import { Transaction } from '@mysten/sui/transactions';  // Corrected to 'Transaction' as suggested by error
 import * as fs from 'fs';
-import * as path from 'path';
+// Removed unused path import
 import { KeystoreSigner } from '../utils/sui-keystore';
 import chalk from 'chalk';  // Updated to import style for consistency
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
+import { bcs } from '@mysten/bcs';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 
 export default class CreateCommand extends Command {
@@ -91,11 +93,11 @@ export default class CreateCommand extends Command {
         throw new CLIError('Failed to extract blob ID from image URL', 'INVALID_URL');
       }
 
-      // Create todo NFT transaction with proper type handling
-      const txb = new (SuiTransactionBlock as any)();  // Keeping type assertion for now; consider checking SDK documentation for correct import if error persists
+      // Create todo NFT transaction with correct TransactionBlock
+      const txb = new Transaction();  // Changed to use 'Transaction' value
       txb.moveCall({
         target: `${config.lastDeployment.packageId}::todo_nft::create_todo`,
-        arguments: [txb.pure(isPrivate ? 'Untitled' : title), txb.pure(description), txb.pure(blobId)],
+        arguments: [txb.pure(bcs.string().serialize(isPrivate ? 'Untitled' : title).toBytes()), txb.pure(bcs.string().serialize(description).toBytes()), txb.pure(bcs.string().serialize(blobId).toBytes())],
       });
       const tx = await suiClient.signAndExecuteTransaction({
         signer: new KeystoreSigner(suiClient),

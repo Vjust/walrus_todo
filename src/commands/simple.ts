@@ -1,8 +1,8 @@
 import { Args, Command, Flags } from '@oclif/core';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
-import { Todo } from '../types/todo';
-import chalk from 'chalk';  // Removed unused import for generateId
+// Removed unused Todo import
+import chalk from 'chalk';
 
 export default class SimpleCommand extends Command {
   static description = 'Simple todo management';
@@ -65,8 +65,8 @@ export default class SimpleCommand extends Command {
     try {
       switch (args.action) {
         case 'create': {
-          const list = await this.todoService.createList(args.list, 'local-user');
-          this.log("✅ Todo list \"" + args.list + "\" created successfully");  // Changed to double quotes for consistency
+          await this.todoService.createList(args.list, 'local-user'); // Removed unused list variable assignment
+          this.log("✅ Todo list \"" + args.list + "\" created successfully");
           break;
         }
 

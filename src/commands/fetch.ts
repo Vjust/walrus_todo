@@ -38,7 +38,7 @@ export default class FetchCommand extends Command {
   async run(): Promise<void> {
     try {
       const { flags } = await this.parse(FetchCommand);
-      const configFetch = await configService.getConfig();  // Changed to avoid redeclaration
+      // Removed unused configFetch variable
 
       // Validate input
       if (!flags['blob-id'] && !flags['object-id']) {
@@ -60,7 +60,7 @@ export default class FetchCommand extends Command {
         const todo = await this.walrusStorage.retrieveTodo(flags['blob-id']);
 
         // Save to local list
-        const savedTodo = await this.todoService.addTodo(flags.list, todo);
+        await this.todoService.addTodo(flags.list, todo); // Removed unused savedTodo variable
 
         this.log(chalk.green("✓ Todo retrieved successfully"));
         this.log(chalk.dim("Details:"));
@@ -99,7 +99,7 @@ export default class FetchCommand extends Command {
         const todo = await this.walrusStorage.retrieveTodo(nftData.walrusBlobId);
         
         // Save to local list
-        const savedTodo = await this.todoService.addTodo(flags.list, {
+        await this.todoService.addTodo(flags.list, { // Removed unused savedTodo variable
           ...todo,
           nftObjectId: flags['object-id'],
           walrusBlobId: nftData.walrusBlobId

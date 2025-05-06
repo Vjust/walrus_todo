@@ -6,7 +6,7 @@
 
 import { Args, Command, Flags } from '@oclif/core';
 import { TodoService } from '../services/todoService';
-import { formatTodoOutput } from '../utils';
+// Removed unused formatTodoOutput import
 import chalk from 'chalk';
 import { CLIError } from '../utils/error-handler';
 import dotenv from 'dotenv';

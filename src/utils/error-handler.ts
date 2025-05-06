@@ -1,5 +1,5 @@
 // Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import chalk from 'chalk';
 import { isErrorWithMessage, getErrorMessage } from '../types/error';
 
 /**

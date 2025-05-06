@@ -4,7 +4,7 @@ import { TodoService } from '../../services/todoService';
 import { createSuiNftStorage } from '../../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../../constants';
 import { SuiClient } from '@mysten/sui/client';
-import chalk from 'chalk';
+// Removed unused chalk import
 import { configService } from '../../services/config-service';
 
 export default class CreateNftCommand extends Command {
@@ -49,8 +49,8 @@ export default class CreateNftCommand extends Command {
         throw new CLIError('Todo NFT module address not configured. Please deploy the NFT module first.', 'NOT_DEPLOYED');
       }
 
-      // Setup SuiClient
-      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network] });
+      // Setup SuiClient with type assertion for network
+      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS] });
 
       // Initialize Sui NFT storage
       const suiNftStorage = createSuiNftStorage(suiClient, config.lastDeployment.packageId);

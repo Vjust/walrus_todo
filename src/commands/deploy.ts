@@ -1,5 +1,4 @@
 import { Command, Flags } from '@oclif/core';
-import { SuiClient } from '@mysten/sui/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -61,16 +60,16 @@ export default class DeployCommand extends Command {
 
     try {
       // Get active address from Sui CLI if not provided
-      let deployAddress = address || (await configService.getConfig()).walletAddress;
+      const deployAddress = address || (await configService.getConfig()).walletAddress;
       if (!deployAddress) {
         throw new CLIError('No wallet address configured. Please run "waltodo configure" first or provide --address flag.', 'NO_WALLET_ADDRESS');
       }
 
       this.log(chalk.blue(`\nDeploying to ${network} network with address ${deployAddress}...`));
 
-      // Initialize Sui client for network interaction
+      // Get and log network URL
       const networkUrl = this.getNetworkUrl(network);
-      const suiClient = new SuiClient({ url: networkUrl });
+      this.log(chalk.dim(`Network URL: ${networkUrl}`));
       
       // Create temporary directory for deployment
       const tempDir = fs.mkdtempSync(path.join(path.resolve(os.tmpdir()), 'todo_nft_deploy_'));

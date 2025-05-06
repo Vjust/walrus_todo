@@ -7,6 +7,18 @@ import { bcs } from '@mysten/sui/bcs';
 import { Signer } from '@mysten/sui/cryptography';
 import { KeystoreSigner } from './sui-keystore';
 
+interface TodoNftContent {
+  type: string;
+  dataType: 'moveObject';
+  hasPublicTransfer: boolean;
+  fields: {
+    title: string;
+    description: string;
+    completed: boolean;
+    walrus_blob_id: string;
+  };
+}
+
 export class SuiNftStorage {
   private suiClient: SuiClient;
   private moduleAddress: string;
@@ -148,7 +160,7 @@ export class SuiNftStorage {
         throw new Error(`Failed to retrieve Todo NFT with ID: ${normalizedObjectId}`);
       }
 
-      const content = response.data.content as any;
+      const content = response.data.content as unknown as TodoNftContent;
 
       console.log(`Successfully retrieved Todo NFT:`);
       console.log(`  Title: ${content.fields.title}`);
@@ -237,7 +249,7 @@ export class SuiNftStorage {
             return null;
           }
 
-          const content = item.data.content as any;
+          const content = item.data.content as TodoNftContent;
           if (!content.fields) return null;
 
           return {

@@ -1,4 +1,4 @@
-import { Signer, type SignatureScheme, type IntentScope } from '@mysten/sui/cryptography';
+import { Signer, type SignatureScheme, type IntentScope, type PublicKey } from '@mysten/sui/cryptography';
 import { toB64 } from '@mysten/sui/utils';
 
 /**
@@ -13,12 +13,12 @@ export class WalletExtensionSigner implements Signer {
     this.cachedAddress = 'demo-address';
   }
 
-  async sign(bytes: Uint8Array): Promise<Uint8Array> {
+  async sign(_bytes: Uint8Array): Promise<Uint8Array> {
     // Mock implementation
     return new Uint8Array(Buffer.from('demo-signature'));
   }
 
-  async signWithIntent(bytes: Uint8Array, intent: IntentScope): Promise<{ bytes: string; signature: string }> {
+  async signWithIntent(bytes: Uint8Array, _intent: IntentScope): Promise<{ bytes: string; signature: string }> {
     // Mock implementation
     return {
       bytes: toB64(bytes),
@@ -48,12 +48,20 @@ export class WalletExtensionSigner implements Signer {
     return 'ED25519';
   }
 
-  getPublicKey(): any {
+  getPublicKey(): PublicKey {
     // Mock implementation
-    return {
+    const mockKey = {
+      flag: () => 0,
+      schema: 'ED25519',
       toBytes: () => new Uint8Array(32),
       toBase64: () => 'demo-public-key',
-      toSuiAddress: () => this.cachedAddress
+      toSuiAddress: () => this.cachedAddress,
+      equals: () => false,
+      toSuiPublicKey: () => 'demo-sui-public-key',
+      verifyWithIntent: () => Promise.resolve(false),
+      verifyPersonalMessage: () => Promise.resolve(false),
+      verify: () => Promise.resolve(false)
     };
+    return mockKey as unknown as PublicKey;
   }
 }

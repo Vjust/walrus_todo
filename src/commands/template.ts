@@ -31,7 +31,7 @@ export default class SomeCommand extends Command {  // Removed placeholder comme
    * @returns {returnType} Description of return value
    * @private
    */
-  private someHelperMethod(param: string): boolean {
+  private someHelperMethod(_param: string): boolean { // Renamed unused param to _param
     // Implementation with comments for complex logic
     return true;
   }

@@ -1,7 +1,7 @@
 import { Command, Flags } from '@oclif/core';
 import { select, input, confirm } from '@inquirer/prompts';
 import chalk from 'chalk';
-import { Config } from '../types';
+// Removed unused Config import
 import { configService } from '../services/config-service';
 import { CLIError } from '../types/error';
 

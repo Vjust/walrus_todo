@@ -6,9 +6,8 @@ import { configService } from '../services/config-service';
 import { createWalrusImageStorage } from '../utils/walrus-image-storage';
 import { NETWORK_URLS } from '../constants';
 import { SuiClient } from '@mysten/sui/client';
-import chalk from 'chalk';
+// Removed unused chalk import
 import * as path from 'path';
-import { Todo } from '../types/todo';  // Added import for Todo
 
 export default class ImageCommand extends Command {
   static description = 'Manage images for todos and NFTs';
@@ -58,8 +57,7 @@ export default class ImageCommand extends Command {
         throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list || 'default'}`);
       }
       
-      // Added type annotation for better linting
-      const todoItemTyped: Todo = todoItem;  // Ensure Todo type is explicitly used if needed, but no change here as it's already typed
+      // Removed unused todoItemTyped variable
 
       // Setup SuiClient
       const suiClient = new SuiClient({ url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS] });
@@ -76,7 +74,7 @@ export default class ImageCommand extends Command {
         // Upload image logic
         this.log('Uploading image to Walrus...');
         let imageUrl;
-        let blobId;
+        // blobId will be declared below where it's assigned
 
         if (flags.image) {
           // Resolve relative path to absolute
@@ -88,7 +86,7 @@ export default class ImageCommand extends Command {
         }
 
         // Extract blob ID from URL - this is important for NFT creation
-        blobId = imageUrl.split('/').pop() || '';
+        const blobId = imageUrl.split('/').pop() || ''; // Use const as it's not reassigned
 
         // Update todo with image URL
         const updatedTodo = {

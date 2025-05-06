@@ -1,5 +1,4 @@
 import { SuiClient } from '@mysten/sui/client';
-import { type Wallet } from '@mysten/wallet-standard';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import { WalletExtensionSigner } from '../utils/wallet-extension';
@@ -21,31 +20,19 @@ jest.mock('@mysten/wallet-standard');
 
 describe('WalrusImageStorage', () => {
   let suiClient: jest.Mocked<SuiClient>;
-  let wallet: jest.Mocked<Wallet>;
   let storage: TestableWalrusImageStorage;
 
   beforeEach(() => {
     suiClient = {
-      getBalance: jest.fn().mockResolvedValue({  // Mock with sample data to simulate tokens
+      getBalance: jest.fn().mockResolvedValue({
         coinType: 'WAL',
         coinObjectCount: 1,
-        totalBalance: '1000',  // Ensure balance is greater than 0 for all tests
+        totalBalance: '1000',
         lockedBalance: { lockedTotal: '0', locked: '0' }
       }),
-      signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({ digest: 'test-digest' }),
-      waitForTransactionBlock: jest.fn()
-    } as any;
-
-    wallet = {
-      connected: false,
-      getAccounts: jest.fn().mockResolvedValue([{
-        address: 'test-address',
-        publicKey: '0x'
-      }]),
-      signMessage: jest.fn(),
-      signTransactionBlock: jest.fn(),
-      signAndExecuteTransactionBlock: jest.fn()
-    } as any;
+      signAndExecuteTransaction: jest.fn().mockResolvedValue({ digest: 'test-digest' }),
+      waitForTransaction: jest.fn()
+    } as unknown as jest.Mocked<SuiClient>;
 
     // Mock execSync for active-address
     (execSync as jest.Mock).mockReturnValue('test-active-address');
