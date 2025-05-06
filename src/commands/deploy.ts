@@ -4,8 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { execSync } from 'child_process';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import chalk from 'chalk';
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
 
@@ -62,13 +61,9 @@ export default class DeployCommand extends Command {
 
     try {
       // Get active address from Sui CLI if not provided
-      let deployAddress = address;
+      let deployAddress = address || (await configService.getConfig()).walletAddress;
       if (!deployAddress) {
-        try {
-          deployAddress = execSync('sui client active-address').toString().trim();
-        } catch (error) {
-          throw new CLIError('Failed to get active address from Sui CLI. Please run "sui client new-address" first.', 'NO_ACTIVE_ADDRESS');
-        }
+        throw new CLIError('No wallet address configured. Please run "waltodo configure" first or provide --address flag.', 'NO_WALLET_ADDRESS');
       }
 
       this.log(chalk.blue(`\nDeploying to ${network} network with address ${deployAddress}...`));
@@ -85,9 +80,12 @@ export default class DeployCommand extends Command {
       const sourcesDir = path.join(tempDir, 'sources');
       fs.mkdirSync(sourcesDir, { recursive: true });
       
-      // Copy Move.toml to temp directory
+      // Copy Move.toml to temp directory with existence check
       const moveTomlSource = path.resolve(__dirname, '../../src/move/Move.toml');
       const moveTomlDest = path.join(tempDir, 'Move.toml');
+      if (!fs.existsSync(moveTomlSource)) {
+        throw new CLIError('Move.toml not found in src/move. Ensure the file exists.', 'FILE_NOT_FOUND');
+      }
       fs.copyFileSync(moveTomlSource, moveTomlDest);
       
       // Copy contract files
@@ -123,11 +121,10 @@ export default class DeployCommand extends Command {
           network,
           timestamp: new Date().toISOString()
         };
-        // Cast to `any` to bypass excess‑property checks while persisting the deployment info.
-        await configService.saveConfig({
+        await configService.saveConfig({  // Removed unnecessary cast to 'any' for better TypeScript practice
           network,
           lastDeployment: deploymentInfo,
-        } as any);
+        });
 
         this.log(chalk.green('\n✓ Smart contract deployed successfully!'));
         this.log(chalk.blue('Deployment Info:'));

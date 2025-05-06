@@ -1,5 +1,6 @@
 // Export all commands
-import AccountCommand from './account';
+import AccountShowCommand from './account/show';
+import AccountSwitchCommand from './account/switch';
 import AddCommand from './add';
 import CheckCommand from './check';
 import CompleteCommand from './complete';
@@ -7,9 +8,7 @@ import ConfigureCommand from './configure';
 import CreateCommand from './create';
 import DeleteCommand from './delete';
 import DeployCommand from './deploy';
-import ImageCommand from './image';
 import ListCommand from './list';
-import QuickAddCommand from './quickadd';
 import RetrieveCommand from './retrieve';
 import ShareCommand from './share';
 import SimpleCommand from './simple';
@@ -18,7 +17,8 @@ import TemplateCommand from './template';
 import UpdateCommand from './update';
 
 export {
-  AccountCommand,
+  AccountShowCommand,
+  AccountSwitchCommand,
   AddCommand,
   CheckCommand,
   CompleteCommand,
@@ -26,9 +26,6 @@ export {
   CreateCommand,
   DeleteCommand,
   DeployCommand,
-  ImageCommand,
-  ListCommand,
-  QuickAddCommand,
   RetrieveCommand,
   ShareCommand,
   SimpleCommand,

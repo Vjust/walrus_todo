@@ -1,0 +1,76 @@
+import { Command, Flags } from '@oclif/core';
+import { CLIError } from '../../utils/error-handler';
+import { TodoService } from '../../services/todoService';
+import { createSuiNftStorage } from '../../utils/sui-nft-storage';
+import { NETWORK_URLS } from '../../constants';
+import { SuiClient } from '@mysten/sui/client';
+import chalk from 'chalk';
+import { configService } from '../../services/config-service';
+
+export default class CreateNftCommand extends Command {
+  static description = 'Create an NFT for a todo item with an existing image';
+
+  static examples = [
+    '<%= config.bin %> image create-nft --todo 123 --list my-todos',
+  ];
+
+  static flags = {
+    todo: Flags.string({
+      char: 't',
+      description: 'ID of the todo to create NFT for',
+      required: true,
+    }),
+    list: Flags.string({
+      char: 'l',
+      description: 'Name of the todo list',
+      required: true,
+    }),
+  };
+
+  async run(): Promise<void> {
+    const config = await configService.getConfig();
+    const { flags } = await this.parse(CreateNftCommand);
+    const todoService = new TodoService();
+
+    try {
+      // Get the todo item
+      const todoItem = await todoService.getTodo(flags.todo, flags.list);
+      if (!todoItem) {
+        throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list}`, 'TODO_NOT_FOUND');
+      }
+
+      if (!todoItem.imageUrl) {
+        throw new CLIError('No image URL found for this todo. Please upload an image first using "image upload".', 'NO_IMAGE_URL');
+      }
+
+      const blobId = todoItem.imageUrl.split('/').pop() || '';
+
+      if (!config.lastDeployment?.packageId) {
+        throw new CLIError('Todo NFT module address not configured. Please deploy the NFT module first.', 'NOT_DEPLOYED');
+      }
+
+      // Setup SuiClient
+      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network] });
+
+      // Initialize Sui NFT storage
+      const suiNftStorage = createSuiNftStorage(suiClient, config.lastDeployment.packageId);
+
+      // Create NFT
+      this.log('Creating NFT on Sui blockchain...');
+      const txDigest = await suiNftStorage.createTodoNft(todoItem, blobId, todoItem.imageUrl);
+
+      this.log(`✅ NFT created successfully!`);
+      this.log(`📝 Transaction: ${txDigest}`);
+      this.log(`📝 Your NFT has been created with the following:`);
+      this.log(`   - Title: ${todoItem.title}`);
+      this.log(`   - Image URL: ${todoItem.imageUrl}`);
+      this.log(`   - Walrus Blob ID: ${blobId}`);
+      this.log('\nYou can view this NFT in your wallet with the embedded image from Walrus.');
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to create NFT: ${error instanceof Error ? error.message : String(error)}`, 'NFT_CREATE_FAILED');
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import { Command, Flags } from '@oclif/core';
 import { select, input, confirm } from '@inquirer/prompts';
-const chalk = require('chalk');
+import chalk from 'chalk';
 import { Config } from '../types';
 import { configService } from '../services/config-service';
 import { CLIError } from '../types/error';
@@ -70,7 +70,7 @@ export default class ConfigureCommand extends Command {
           message: 'Enter your wallet address (e.g., 0x123...):',
         });
         if (!/^0x[a-fA-F0-9]{40,}$/.test(walletAddress)) {
-          throw new CLIError('Invalid wallet address format. Must be a valid hex address starting with 0x.', 'INVALID_WALLET_ADDRESS');
+          throw new CLIError("Invalid wallet address format. Must be a valid hex address starting with 0x.", 'INVALID_WALLET_ADDRESS');  // Changed to double quotes for consistency
         }
       }
 

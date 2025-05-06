@@ -7,18 +7,8 @@
 
 import { Command, Flags } from '@oclif/core';
 import { CLIError } from '../utils/error-handler';
-// ...other imports
 
-/**
- * [Command] class
- * 
- * [Detailed description of the command's purpose and functionality]
- * 
- * @class [Command]Command
- * @extends {Command}
- */
-export default class SomeCommand extends Command {
-  static description = 'Description shown in help';
+export default class SomeCommand extends Command {  // Removed placeholder comments for cleanliness, as they are not standard code
 
   static examples = [
     '<%=config.bin%> command',

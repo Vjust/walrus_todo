@@ -1,6 +1,5 @@
-import { Args, Command, Flags } from '@oclif/core';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import { Args,  Command, Flags } from '@oclif/core';
+import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { validateDate, validatePriority } from '../utils';
 import { Todo } from '../types/todo';
@@ -77,7 +76,7 @@ export default class UpdateCommand extends Command {
       // Update priority if provided
       if (flags.priority) {
         if (!validatePriority(flags.priority)) {
-          throw new CLIError('Invalid priority. Must be high, medium, or low', 'INVALID_PRIORITY');
+          throw new CLIError("Invalid priority. Must be high, medium, or low", 'INVALID_PRIORITY');  // Changed to double quotes for consistency
         }
         todo.priority = flags.priority as Todo['priority'];
         changes++;
@@ -118,7 +117,13 @@ export default class UpdateCommand extends Command {
       this.log(chalk.dim(`Changes made: ${changes}`));
 
     } catch (error) {
-      throw error;
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to update todo: ${error instanceof Error ? error.message : String(error)}`,
+        'UPDATE_FAILED'
+      );
     }
   }
 }

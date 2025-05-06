@@ -7,8 +7,7 @@
 import { Args, Command, Flags } from '@oclif/core';
 import { TodoService } from '../services/todoService';
 import { formatTodoOutput } from '../utils';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import chalk from 'chalk';
 import { CLIError } from '../utils/error-handler';
 import dotenv from 'dotenv';
 
@@ -65,11 +64,17 @@ export default class CheckCommand extends Command {
 
       const status = todo.completed ? chalk.green('✓') : chalk.yellow('☐');
       console.log(`${status} Todo ${chalk.bold(todo.title)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
-      console.log(chalk.dim(`List: ${args.listName}`));
-      console.log(chalk.dim(`ID: ${flags.id}`));
+      console.log(chalk.dim("List: " + args.listName));  // Changed to double quotes for consistency
+      console.log(chalk.dim("ID: " + flags.id));  // Changed to double quotes for consistency
 
     } catch (error) {
-      throw error;
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to check todo: ${error instanceof Error ? error.message : String(error)}`,
+        'CHECK_FAILED'
+      );
     }
   }
 }

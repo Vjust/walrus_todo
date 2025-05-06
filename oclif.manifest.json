@@ -1,16 +1,6 @@
 {
   "version": "1.0.0",
   "commands": {
-    "account": {
-      "id": "account",
-      "description": "account command",
-      "pluginName": "waltodo",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": [],
-      "path": "./dist/src/commands/account"
-    },
     "add": {
       "id": "add",
       "description": "add command",

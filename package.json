@@ -79,6 +79,9 @@
       "identifier": "com.waltodo.cli"
     },
     "topics": {
+      "account": {
+        "description": "Manage Sui accounts"
+      },
       "simple": {
         "description": "Simple todo management commands"
       }

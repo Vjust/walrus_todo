@@ -3,11 +3,12 @@ import { SuiClient } from '@mysten/sui/client';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
-import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
+import { NETWORK_URLS } from '../constants';
 import { CLIError } from '../types/error';
 import { configService } from '../services/config-service';
-// Use require for chalk since it's an ESM module
-const chalk = require('chalk');
+import chalk from 'chalk';
+
+// Added import for SuiClient initialization
 
 export default class CompleteCommand extends Command {
   static description = 'Mark a todo as completed (updates blockchain if NFT exists)';
@@ -33,12 +34,12 @@ export default class CompleteCommand extends Command {
   };
 
   private todoService = new TodoService();
-  private suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
   private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
 
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(CompleteCommand);
+      const config = await configService.getConfig();
 
       const list = await this.todoService.getList(args.list);
       if (!list) {
@@ -49,6 +50,10 @@ export default class CompleteCommand extends Command {
       if (!todo) {
         throw new CLIError(`Todo "${flags.id}" not found in list "${args.list}"`, 'TODO_NOT_FOUND');
       }
+      
+      // Add SuiClient initialization
+      const configInner = await configService.getConfig();  // Use a different variable name to avoid redeclaration
+      const suiClient = new SuiClient({ url: NETWORK_URLS[configInner.network as keyof typeof NETWORK_URLS] });
 
       // Update local todo
       this.log(chalk.blue(`Marking todo "${todo.title}" as completed...`));
@@ -56,9 +61,9 @@ export default class CompleteCommand extends Command {
 
       // Check if the todo has an NFT object ID
       if (todo.nftObjectId) {
-        // Get config for Sui client
-        const config = await configService.getConfig();
-        if (!config?.lastDeployment?.packageId) {
+        // Get config for Sui client – avoid redeclaration
+        const configInner = await configService.getConfig();  // Use consistent variable name
+        if (!configInner?.lastDeployment?.packageId) {
           throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
         }
 
@@ -66,7 +71,10 @@ export default class CompleteCommand extends Command {
         this.log(chalk.blue(`Updating NFT on blockchain...`));
 
         // Initialize Sui NFT storage
-        const suiNftStorage = new SuiNftStorage(this.suiClient, config.lastDeployment.packageId);
+        if (!config.lastDeployment) {
+          throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
+        }
+        const suiNftStorage = new SuiNftStorage(suiClient, config.lastDeployment.packageId);
         await suiNftStorage.completeTodoNft(todo.nftObjectId);
 
         // If the todo has a Walrus blob ID, update it

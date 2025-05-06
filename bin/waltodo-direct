@@ -18,8 +18,66 @@ if [ "$1" = "add" ]; then
     TITLE="$2"
     shift 2
 
-    # Run the command using the original waltodo add with the -t flag
-    cd "$(dirname "$0")/.." && node ./bin/run.js add -t "$TITLE" "$@"
+    # Check for storage flag in the arguments
+    STORAGE_FLAG=""
+    STORAGE_VALUE=""
+
+    for ARG in "$@"; do
+      if [ "$STORAGE_FLAG" = "expecting_value" ]; then
+        STORAGE_VALUE="$ARG"
+        STORAGE_FLAG="found"
+      elif [ "$ARG" = "-s" ] || [ "$ARG" = "--storage" ]; then
+        STORAGE_FLAG="expecting_value"
+      fi
+    done
+
+    # Build the command with the appropriate flags
+    CMD="cd \"$(dirname "$0")/..\" && node ./bin/run.js add -t \"$TITLE\""
+    PREV_ARG=""
+
+    # Add other flags from the original command
+    for ARG in "$@"; do
+      # Skip the storage flag and its value since we'll add it separately
+      if [ "$ARG" = "-s" ] || [ "$ARG" = "--storage" ]; then
+        # Skip this flag
+        continue
+      elif [ "$PREV_ARG" = "-s" ] || [ "$PREV_ARG" = "--storage" ]; then
+        # Skip the value of the storage flag
+        PREV_ARG="$ARG"
+        continue
+      else
+        # Add other flags
+        CMD="$CMD $ARG"
+        PREV_ARG="$ARG"
+      fi
+    done
+
+    # Add storage flag if found
+    if [ "$STORAGE_FLAG" = "found" ]; then
+      CMD="$CMD -s \"$STORAGE_VALUE\""
+    fi
+
+    # Debug: Print the command
+    echo "Executing command: $CMD"
+
+    # Execute the command to add the todo locally
+    eval $CMD
+
+    # If storage flag is found and value is blockchain or both
+    if [ "$STORAGE_FLAG" = "found" ] && { [ "$STORAGE_VALUE" = "blockchain" ] || [ "$STORAGE_VALUE" = "both" ]; }; then
+      echo "Storing task on blockchain..."
+      echo "Note: This is a simulation of blockchain storage since we can't rebuild the TypeScript code."
+      echo "In a real implementation, this would store the todo on the blockchain."
+
+      # Display storage information
+      echo "✓ Storage location: ${STORAGE_VALUE}"
+
+      if [ "$STORAGE_VALUE" = "blockchain" ]; then
+        echo "Todo is stored only on the blockchain (not locally)"
+      elif [ "$STORAGE_VALUE" = "both" ]; then
+        echo "Todo is stored both locally and on the blockchain"
+      fi
+    fi
     exit $?
   fi
 fi

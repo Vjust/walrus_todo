@@ -1,9 +1,8 @@
 import { Args, Command, Flags } from '@oclif/core';
 import { TodoService } from '../services/todoService';
+import { CLIError } from '../types/error';
 import { Todo } from '../types/todo';
-import { generateId } from '../utils/id-generator';
-// Import chalk dynamically for ESM compatibility
-import chalk from 'chalk';
+import chalk from 'chalk';  // Removed unused import for generateId
 
 export default class SimpleCommand extends Command {
   static description = 'Simple todo management';
@@ -67,7 +66,7 @@ export default class SimpleCommand extends Command {
       switch (args.action) {
         case 'create': {
           const list = await this.todoService.createList(args.list, 'local-user');
-          this.log(`✅ Todo list "${args.list}" created successfully`);
+          this.log("✅ Todo list \"" + args.list + "\" created successfully");  // Changed to double quotes for consistency
           break;
         }
 
@@ -82,7 +81,7 @@ export default class SimpleCommand extends Command {
             tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
             private: true
           });
-          this.log(`✅ Added todo "${todo.title}" to list "${args.list}"`);
+          this.log("✅ Added todo \"" + todo.title + "\" to list \"" + args.list + "\"");  // Changed to double quotes for consistency
           break;
         }
 
@@ -128,7 +127,7 @@ export default class SimpleCommand extends Command {
                            chalk.green('○');
             this.log(`${status} ${priority} ${todo.title} (${todo.id})`);
             if (todo.tags.length > 0) {
-              this.log(`   ${chalk.dim(`Tags: ${todo.tags.join(', ')}`)}`);
+              this.log(`   ${chalk.dim("Tags: " + todo.tags.join(', '))}`);  // Changed to double quotes for consistency
             }
           });
           break;
@@ -139,7 +138,7 @@ export default class SimpleCommand extends Command {
             throw new Error('Todo ID is required for complete command (use --id)');
           }
           await this.todoService.toggleItemStatus(args.list, flags.id, true);
-          this.log(`✅ Marked todo as completed`);
+          this.log("✅ Marked todo as completed");  // Changed to double quotes for consistency
           break;
         }
 
@@ -147,7 +146,13 @@ export default class SimpleCommand extends Command {
           this.error(`Unknown action: ${args.action}`);
       }
     } catch (error) {
-      this.error(error instanceof Error ? error.message : String(error));
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed in simple command: ${error instanceof Error ? error.message : String(error)}`,
+        'SIMPLE_FAILED'
+      );
     }
   }
 }

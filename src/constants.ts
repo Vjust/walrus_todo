@@ -6,7 +6,7 @@ export const CLI_CONFIG = {
 } as const;
 
 export const STORAGE_CONFIG = {
-  TODOS_DIR: 'Todos',
+  TODOS_DIR: 'todos',
   FILE_EXT: '.json'
 } as const;
 
