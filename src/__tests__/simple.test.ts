@@ -1,6 +1,10 @@
 import { expect, test } from '@oclif/test';
 import { TodoService } from '../services/todoService';
 
+interface TestContext {
+  stdout: string;
+}
+
 describe('simple list command', () => {
   let todoService: TodoService;
 
@@ -30,7 +34,7 @@ describe('simple list command', () => {
   test
     .stdout()
     .command(['simple', 'list', 'test-list'])
-    .it('lists all todos in the list', (ctx: any) => {
+    .it('lists all todos in the list', (ctx: TestContext) => {
       expect(ctx.stdout).to.contain('Test Todo 1');
       expect(ctx.stdout).to.contain('Test Todo 2');
     });
@@ -38,7 +42,7 @@ describe('simple list command', () => {
   test
     .stdout()
     .command(['simple', 'list', 'test-list', '--sort', 'priority'])
-    .it('sorts todos by priority', (ctx: any) => {
+    .it('sorts todos by priority', (ctx: TestContext) => {
       // Expect high priority first; adjust expectation if output format changes
       expect(ctx.stdout).to.match(/✓.*⚠️.*Test Todo 1/);
     });
@@ -46,7 +50,7 @@ describe('simple list command', () => {
   test
     .stdout()
     .command(['simple', 'list', 'test-list', '--filter', 'completed'])
-    .it('filters completed todos', (ctx: any) => {
+    .it('filters completed todos', (ctx: TestContext) => {
       expect(ctx.stdout).to.contain('Test Todo 2'); // Completed todo
       expect(ctx.stdout).not.to.contain('Test Todo 1'); // Incomplete todo
     });
@@ -54,7 +58,7 @@ describe('simple list command', () => {
   test
     .stdout()
     .command(['simple', 'list', 'test-list', '--filter', 'incomplete'])
-    .it('filters incomplete todos', (ctx: any) => {
+    .it('filters incomplete todos', (ctx: TestContext) => {
       expect(ctx.stdout).to.contain('Test Todo 1'); // Incomplete todo
       expect(ctx.stdout).not.to.contain('Test Todo 2'); // Completed todo
     });

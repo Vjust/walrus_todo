@@ -26,7 +26,7 @@ async function main() {
     const todoToUpdate = list.todos[0];
     console.log(`Updating todo: ${todoToUpdate.title}`);
     
-    const updatedTodo = await todoService.updateTodo(listName, todoToUpdate.id, {
+    await todoService.updateTodo(listName, todoToUpdate.id, { // Removed unused updatedTodo variable assignment
       title: 'Updated Todo Title',
       description: 'This todo has been updated',
       priority: 'medium',

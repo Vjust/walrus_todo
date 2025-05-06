@@ -52,9 +52,8 @@ export default class RetrieveCommand extends Command {
         throw new CLIError('Either --blob-id or --object-id must be specified', 'MISSING_PARAMETER');
       }
 
-      // Get config for Sui client
-      const configInner = await configService.getConfig();  // Changed to avoid redeclaration
-      if (!configRetrieve?.lastDeployment?.packageId) {
+      // Check deployment status using existing configRetrieve
+      if (!configRetrieve?.lastDeployment?.packageId) { // Used configRetrieve instead of configInner
         throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
       }
 
@@ -67,7 +66,7 @@ export default class RetrieveCommand extends Command {
         const todo = await walrusStorage.retrieveTodo(flags['blob-id']);
 
         // Save to local list
-        const savedTodo = await this.todoService.addTodo(flags.list, todo);
+        await this.todoService.addTodo(flags.list, todo); // Removed unused savedTodo variable
 
         this.log(chalk.green(`✓ Todo retrieved successfully`));
         this.log(chalk.dim('Details:'));
@@ -104,7 +103,7 @@ export default class RetrieveCommand extends Command {
         const todo = await walrusStorage.retrieveTodo(nftData.walrusBlobId);
 
         // Save to local list
-        const savedTodo = await this.todoService.addTodo(flags.list, {
+        await this.todoService.addTodo(flags.list, { // Removed unused savedTodo variable
           ...todo,
           nftObjectId: flags['object-id'],
           walrusBlobId: nftData.walrusBlobId

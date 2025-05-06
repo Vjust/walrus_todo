@@ -14,7 +14,7 @@ async function main() {
   console.log(`\nCreating new list: ${newListName}`);
   
   try {
-    const newList = await todoService.createList(newListName, 'test-user');
+    await todoService.createList(newListName, 'test-user'); // Removed unused newList variable assignment
     console.log('New list created');
 
     // Add multiple todos
@@ -57,7 +57,7 @@ async function main() {
       console.log(`\n${list.name} (${list.todos.length} todos):`);
       list.todos.forEach(todo => {
         const status = todo.completed ? '' : '';
-        const priority = todo.priority === 'high' ? '†' : todo.priority === 'medium' ? '"' : 'À';
+        const priority = todo.priority === 'high' ? 'ù' : todo.priority === 'medium' ? '"' : 'ù';
         console.log(`${status} ${priority} ${todo.title}`);
         console.log(`   Tags: ${todo.tags.join(', ')}`);
       });
@@ -72,7 +72,7 @@ async function main() {
         console.log(`\n${list.name} (${list.todos.length} todos):`);
         list.todos.forEach(todo => {
           const status = todo.completed ? '' : '';
-          const priority = todo.priority === 'high' ? '†' : todo.priority === 'medium' ? '"' : 'À';
+          const priority = todo.priority === 'high' ? 'ù' : todo.priority === 'medium' ? '"' : 'ù';
           console.log(`${status} ${priority} ${todo.title}`);
           console.log(`   Tags: ${todo.tags.join(', ')}`);
         });

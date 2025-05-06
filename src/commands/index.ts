@@ -26,6 +26,7 @@ export {
   CreateCommand,
   DeleteCommand,
   DeployCommand,
+  ListCommand, // Added missing export
   RetrieveCommand,
   ShareCommand,
   SimpleCommand,

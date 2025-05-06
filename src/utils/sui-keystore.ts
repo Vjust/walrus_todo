@@ -3,16 +3,13 @@ import * as os from 'os';
 import * as path from 'path';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SuiClient } from '@mysten/sui/client';
-import { type Transaction } from '@mysten/sui/transactions';
 import { execSync } from 'child_process';
-import { 
+import {
   type Signer,
   type SignatureScheme,
   type PublicKey,
   type SignatureWithBytes,
-  messageWithIntent,
-  IntentScope,
-  toSerializedSignature
+  IntentScope
 } from '@mysten/sui/cryptography';
 
 export class KeystoreSigner implements Signer {

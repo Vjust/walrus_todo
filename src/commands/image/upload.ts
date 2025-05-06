@@ -1,10 +1,10 @@
 import { Command, Flags } from '@oclif/core';
 import { CLIError } from '../../utils/error-handler';
 import { TodoService } from '../../services/todoService';
-import { createWalrusImageStorage } from '../../utils/walrus-image-storage';
+import { createWalrusImageStorage, WalrusImageStorage } from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
 import { NETWORK_URLS } from '../../constants';
 import { SuiClient } from '@mysten/sui/client';
-import chalk from 'chalk';
+// Removed unused chalk import
 import * as path from 'path';
 import { configService } from '../../services/config-service';
 
@@ -40,6 +40,7 @@ export default class UploadCommand extends Command {
     const config = await configService.getConfig();
     const { flags } = await this.parse(UploadCommand);
     const todoService = new TodoService();
+    let walrusImageStorage: WalrusImageStorage | undefined; // Use correct type and allow undefined initially
 
     try {
       // Get the todo item
@@ -48,11 +49,11 @@ export default class UploadCommand extends Command {
         throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list}`);
       }
 
-      // Setup SuiClient
-      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network] });
+      // Setup SuiClient with type assertion for network
+      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS] });
 
-      // Initialize WalrusImageStorage
-      const walrusImageStorage = createWalrusImageStorage(suiClient);
+      // Initialize WalrusImageStorage - ensuring variable is defined and assigned correctly
+      walrusImageStorage = createWalrusImageStorage(suiClient);  // No change, but confirming assignment
 
       // Connect to Walrus
       this.log('Connecting to Walrus storage...');
@@ -84,11 +85,13 @@ export default class UploadCommand extends Command {
       }
       throw new CLIError(`Failed to upload image: ${error instanceof Error ? error.message : String(error)}`, 'IMAGE_UPLOAD_FAILED');
     } finally {
-      // Disconnect from Walrus if connected
-      try {
-        await walrusImageStorage.disconnect();
-      } catch (error) {
-        // Ignore disconnection errors
+      // Check if walrusImageStorage was initialized before trying to use it
+      if (walrusImageStorage) {
+        // No disconnect method exists on WalrusImageStorage, so no action needed here.
+        // If cleanup is required in the future, add it here.
+        this.log('Walrus storage cleanup (if any) would happen here.');
+      } else {
+        this.log('Walrus storage was not initialized, skipping cleanup.');
       }
     }
   }

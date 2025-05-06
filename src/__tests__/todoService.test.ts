@@ -1,7 +1,5 @@
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
-import fs from 'fs';
-import path from 'path';
 
 describe('TodoService', () => {
   let todoService: TodoService;

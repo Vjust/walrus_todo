@@ -1,5 +1,23 @@
-
 import { Todo, TodoList } from '../types/todo';
+
+interface WalrusStorageInfo {
+  id: { id: string };
+  storage_size: number | string;
+  used_size?: number;
+  end_epoch: number;
+  start_epoch?: number;
+}
+
+interface WalrusStorageContent {
+  dataType: 'moveObject';
+  fields: {
+    storage_size: string;
+    used_size: string;
+    end_epoch: string;
+  };
+}
+
+
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 import { TodoSerializer } from './todo-serializer';
 import { CLIError } from '../types/error';
@@ -9,7 +27,8 @@ import { KeystoreSigner } from './sui-keystore';
 import { execSync } from 'child_process';
 import { handleError } from './error-handler';
 // Import node-fetch dynamically to avoid ESM issues
-let fetch: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let fetch: any; // Using any here is safer than fighting with node-fetch types
 
 export class WalrusStorage {
   private isInitialized: boolean = false;
@@ -551,9 +570,9 @@ export class WalrusStorage {
    * @param sizeBytes Number of bytes to ensure are allocated (default: 1GB).
    * @returns The storage object if allocation was successful, undefined otherwise
    */
-  async ensureStorageAllocated(sizeBytes: number = 1073741824): Promise<any> { // 1GB = 1073741824 bytes
+  async ensureStorageAllocated(sizeBytes: number = 1073741824): Promise<WalrusStorageInfo | null> { // 1GB = 1073741824 bytes
     if (this.useMockMode) {
-      return undefined; // Skip in mock mode
+      return null; // Skip in mock mode
     }
 
     if (!this.isInitialized || !this.walrusClient) {
@@ -601,8 +620,14 @@ export class WalrusStorage {
       console.log(`  End epoch: ${storage.end_epoch}`);
       console.log(`  Storage size: ${storage.storage_size}`);
 
-      return storage;
-    } catch (error: any) {
+      return {
+        id: storage.id,
+        storage_size: storage.storage_size,
+        used_size: 0, // New storage has no used space
+        end_epoch: storage.end_epoch,
+        start_epoch: storage.start_epoch
+      };
+    } catch (error: unknown) {
       // Use our error handler to get a consistent error message
       const formattedError = this.handleWalrusError(error, 'storage allocation');
 
@@ -615,14 +640,14 @@ export class WalrusStorage {
 
       // Log the error but don't throw - we'll let the caller handle it
       console.warn('Storage allocation failed:', formattedError.message);
-      return undefined;
+      return null;
     }
   }
 
-  async checkExistingStorage(): Promise<any> {
+  async checkExistingStorage(): Promise<WalrusStorageInfo | null> {
     try {
       if (this.useMockMode) {
-        return undefined;
+        return null;
       }
 
       const address = this.getActiveAddress();
@@ -639,15 +664,16 @@ export class WalrusStorage {
         }
       });
 
-      const existingStorage = response.data
+      const existingStorage: WalrusStorageInfo[] = response.data
         .filter(item => item.data?.content?.dataType === 'moveObject')
         .map(item => {
-          const content = item.data?.content as any;
+          const content = item.data?.content as unknown as WalrusStorageContent;
           return {
-            id: { id: item.data?.objectId },
+            id: { id: item.data?.objectId || '' },
             storage_size: Number(content?.fields?.storage_size || 0),
             used_size: Number(content?.fields?.used_size || 0),
-            end_epoch: Number(content?.fields?.end_epoch || 0)
+            end_epoch: Number(content?.fields?.end_epoch || 0),
+            start_epoch: 0 // Default value since it's required by the type
           };
         });
 
@@ -658,15 +684,15 @@ export class WalrusStorage {
 
         // Find storage with sufficient remaining capacity and time
         const suitableStorage = existingStorage.find(storage => {
-          const remainingSize = storage.storage_size - storage.used_size;
+          const remainingSize = Number(storage.storage_size) - (storage.used_size || 0);
           const remainingEpochs = storage.end_epoch - currentEpoch;
 
           return remainingSize >= 1000000 && remainingEpochs >= 10;
         });
 
-        if (suitableStorage) {
+        if (suitableStorage && suitableStorage.id) {
           console.log(`Found suitable existing storage: ${suitableStorage.id.id}`);
-          return suitableStorage;
+          return suitableStorage as WalrusStorageInfo;
         }
       }
 
@@ -679,7 +705,7 @@ export class WalrusStorage {
   }
 
   // Helper method to handle Walrus errors consistently
-  protected handleWalrusError(error: any, operation: string): Error {
+  protected handleWalrusError(error: unknown, operation: string): Error {
     if (error instanceof Error) {
       if (error.message.includes('insufficient')) {
         return new CLIError(

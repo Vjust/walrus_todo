@@ -1,4 +1,3 @@
-import * as child_process from 'child_process';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
@@ -128,7 +127,7 @@ describe('CLI Commands', () => {
       });
 
       it('should verify config file after configuration', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string | PathOrFileDescriptor, options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
+        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string | PathOrFileDescriptor, _options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
           if (typeof filePath === 'string' && filePath.includes('.waltodo/config.json')) {
             return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
           }
