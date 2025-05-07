@@ -1,79 +1,92 @@
-import { SuiObjectResponse, SuiTransactionBlockResponse, CoinBalance, SuiSystemStateResponse, PaginatedObjectsResponse, TransactionBlock } from '@mysten/sui.js/client';
+import type { SuiClient, PaginatedObjectsResponse, GetOwnedObjectsParams, SuiTransactionBlockResponse, ExecuteTransactionBlockParams, TransactionEffects, SuiObjectResponse, GasCostSummary, GetObjectParams } from '@mysten/sui.js/client';
+import { mock } from 'jest-mock-extended';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 
-export { CoinBalance, SuiSystemStateResponse, PaginatedObjectsResponse };
+const ownedRef = {
+  owner: { AddressOwner: 'mock-address' },
+  reference: {
+    objectId: 'mock-object-id',
+    digest: 'mock-digest',
+    version: '1'
+  }
+};
 
-export interface CoinBalance {
-  coinType: string;
-  totalBalance: bigint;
-  coinObjectCount: number;
-  lockedBalance: { number: bigint };
-}
+const effects: TransactionEffects = {
+  messageVersion: 'v1',
+  status: { status: 'success' },
+  executedEpoch: '0',
+  transactionDigest: 'mock-digest',
+  created: [ownedRef],
+  gasObject: ownedRef,
+  gasUsed: {
+    computationCost: '1000',
+    storageCost: '1000',
+    storageRebate: '0',
+    nonRefundableStorageFee: '10'
+  },
+  dependencies: [],
+  sharedObjects: [],
+  mutated: [],
+  deleted: [],
+  unwrapped: [],
+  wrapped: [],
+  eventsDigest: null
+};
 
-export interface SuiSystemStateResponse {
-  epoch: string;
-}
+const response: SuiTransactionBlockResponse = {
+  digest: 'mock-digest',
+  effects,
+  confirmedLocalExecution: true,
+  timestampMs: null,
+  checkpoint: null,
+  events: [],
+  objectChanges: [],
+  balanceChanges: []
+};
 
-export interface PaginatedObjectsResponse {
-  data: SuiObjectResponse[];
-  hasNextPage: boolean;
-  nextCursor: string | null;
-}
-
-export interface SuiClientInterface {
-  readonly address: string;
-  readonly instanceId: string;
-  connect(): Promise<void>;
-  getLatestSuiSystemState(): Promise<SuiSystemStateResponse>;
-  getBalance(address: string, coinType?: string): Promise<CoinBalance>;
-  getOwnedObjects(args: { owner: string }): Promise<PaginatedObjectsResponse>;
-  signAndExecuteTransactionBlock(transaction: TransactionBlock, options?: { requestType?: 'WaitForLocalExecution', options?: { showEffects?: boolean } }): Promise<SuiTransactionBlockResponse>;
-  getTransactionBlock(digest: string): Promise<SuiTransactionBlockResponse>;
-  executeTransactionBlock(txb: TransactionBlock): Promise<SuiTransactionBlockResponse>;
-}
-
-export const SuiClient = jest.fn<SuiClientInterface, []>().mockImplementation(() => ({
-  instanceId: 'mock-instance',
-  address: 'mock-address',
-  getLatestSuiSystemState: jest.fn().mockImplementation(async (): Promise<SuiSystemStateResponse> => ({
-    epoch: '1'
+const mockSuiClient = mock<SuiClient>({
+  getObject: jest.fn().mockImplementation(async (input: GetObjectParams): Promise<SuiObjectResponse> => ({
+    data: {
+      objectId: 'mock-object-id',
+      version: '1',
+      digest: 'mock-digest',
+      type: 'mock-type',
+      owner: { AddressOwner: 'mock-owner-address' },
+      previousTransaction: 'mock-previous-transaction',
+      storageRebate: '1000',
+      content: {
+        dataType: 'moveObject',
+        type: 'mock-type',
+        hasPublicTransfer: true,
+        fields: {}
+      }
+    }
   })),
 
-  getBalance: jest.fn().mockImplementation(async (address: string, coinType?: string): Promise<CoinBalance> => ({
-    coinType: 'WAL',
-    totalBalance: BigInt(1000),
-    coinObjectCount: 1,
-    lockedBalance: { number: BigInt(0) }
-  })),
-
-  getOwnedObjects: jest.fn().mockImplementation(async (args: { owner: string }): Promise<PaginatedObjectsResponse> => ({
-    data: [],
+  getOwnedObjects: jest.fn().mockImplementation(async (input: GetOwnedObjectsParams): Promise<PaginatedObjectsResponse> => ({
+    data: [{
+      data: {
+        objectId: 'mock-object-id',
+        digest: 'mock-digest',
+        version: '1',
+        content: {
+          dataType: 'moveObject',
+          type: 'mock-type',
+          hasPublicTransfer: true,
+          fields: {}
+        }
+      }
+    }],
     hasNextPage: false,
     nextCursor: null
   })),
 
-  connect: jest.fn().mockImplementation(async () => {}),
+  executeTransactionBlock: jest.fn().mockImplementation(async (): Promise<SuiTransactionBlockResponse> => response),
 
-  signAndExecuteTransactionBlock: jest.fn().mockImplementation(async (transaction: TransactionBlock): Promise<SuiTransactionBlockResponse> => ({
-    digest: 'mock-digest',
-    effects: {
-      status: { status: 'success' },
-      created: [{ reference: { objectId: 'mock-object-id' } }]
-    }
-  })),
+  getTransactionBlock: jest.fn().mockImplementation(async (): Promise<SuiTransactionBlockResponse> => response),
 
-  getTransactionBlock: jest.fn().mockImplementation(async (digest: string): Promise<SuiTransactionBlockResponse> => ({
-    digest: 'mock-digest',
-    effects: {
-      status: { status: 'success' },
-      created: [{ reference: { objectId: 'mock-object-id' } }]
-    }
-  })),
+  signAndExecuteTransactionBlock: jest.fn().mockImplementation(async (): Promise<SuiTransactionBlockResponse> => response)
+});
 
-  executeTransactionBlock: jest.fn().mockImplementation(async (transaction: TransactionBlock): Promise<SuiTransactionBlockResponse> => ({
-    digest: 'mock-digest',
-    effects: {
-      status: { status: 'success' },
-      created: [{ reference: { objectId: 'mock-object-id' } }]
-    }
-  }))
-}));
+type MockedSuiClient = typeof mockSuiClient;
+export default mockSuiClient as MockedSuiClient;

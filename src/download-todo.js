@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { WalrusClient } = require('@mysten/walrus');
-const { SuiClient } = require('@mysten/sui/client');
+const { SuiClient } = require('@mysten/sui.js/client');
 const fs = require('fs');
 
 async function downloadTodo() {

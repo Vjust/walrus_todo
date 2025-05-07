@@ -1,8 +1,8 @@
-import type { SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui/client';
+import type { SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
 
 import { Signer } from '@mysten/sui.js/cryptography';
 
-declare module '@mysten/sui/client' {
+declare module '@mysten/sui.js/client' {
   interface SuiClient {
     instanceId: string;
     address: string;
@@ -72,7 +72,14 @@ declare module '@mysten/sui/client' {
 
   interface SuiTransactionBlockEffects {
     status: { status: string };
-    created?: Array<{ reference: { objectId: string } }>;
+    created?: Array<{ 
+      owner?: { AddressOwner?: string };
+      reference: { 
+        objectId: string;
+        digest: string;
+        version: string;
+      } 
+    }>;
     gasUsed?: { computationCost: string; storageCost: string };
   }
 
@@ -88,8 +95,11 @@ declare module '@mysten/sui/client' {
         status?: string;
       };
       created?: Array<{
-        reference?: {
-          objectId?: string;
+        owner?: { AddressOwner?: string };
+        reference: {
+          objectId: string;
+          digest: string;
+          version: string;
         };
       }>;
     };

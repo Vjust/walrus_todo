@@ -1,8 +1,11 @@
-import { Signer } from '@mysten/sui/cryptography';
+import { Signer } from '@mysten/sui.js/cryptography';
+import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { Logger } from './Logger';
 import {
   ValidationError,
-  BlockchainError
+  BlockchainError,
+  TransactionError
 } from '../types/errors';
 
 export interface RetryConfig {
@@ -46,13 +49,15 @@ export class TransactionHelper {
       requireSigner?: boolean;
       customSigner?: Signer;
       customRetry?: Partial<RetryConfig>;
+      validateResponse?: (response: T) => boolean;
     }
   ): Promise<T> {
     const {
       name,
       requireSigner = false,
       customSigner,
-      customRetry
+      customRetry,
+      validateResponse
     } = options;
 
     // Validate signer if required
@@ -61,7 +66,7 @@ export class TransactionHelper {
       if (!signer) {
         throw new ValidationError(
           'Signer required for operation',
-          { field: 'signer', value: 'missing' }
+          { field: 'signer', value: 'missing', recoverable: false }
         );
       }
     }
@@ -72,43 +77,67 @@ export class TransactionHelper {
       this.config;
 
     let lastError: Error | null = null;
+    let attempts = 0;
     
     for (let attempt = 1; attempt <= retryConfig.attempts; attempt++) {
+      attempts = attempt;
       try {
-        return await operation();
-      } catch (error) {
-        lastError = error as Error;
+        const response = await operation();
         
-        if (attempt < retryConfig.attempts) {
-          // Calculate delay with exponential backoff
-          const delay = retryConfig.exponential ?
-            Math.min(
-              retryConfig.baseDelay * Math.pow(2, attempt - 1),
-              retryConfig.maxDelay
-            ) :
-            retryConfig.baseDelay;
-
-          this.logger.warn(
-            `Retry attempt ${attempt} for ${name}`,
+        // Validate response if validator provided
+        if (validateResponse && !validateResponse(response)) {
+          throw new ValidationError(
+            'Invalid response from operation',
             {
+              operation: name,
               attempt,
-              delay,
-              error: lastError.message,
-              maxAttempts: retryConfig.attempts
+              recoverable: true
             }
           );
-
-          await new Promise(resolve => setTimeout(resolve, delay));
         }
+        
+        return response;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        
+        const shouldRetry = this.shouldRetry(lastError) && attempt < retryConfig.attempts;
+        if (!shouldRetry) break;
+
+        // Calculate delay with exponential backoff
+        const delay = this.getRetryDelay(attempt);
+        this.logger.warn(
+          `Retry attempt ${attempt} for ${name}`,
+          {
+            attempt,
+            delay,
+            error: lastError.message,
+            maxAttempts: retryConfig.attempts
+          }
+        );
+
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
+    // Handle transaction-specific errors
+    if (lastError instanceof TransactionError) {
+      throw new BlockchainError(
+        `Transaction '${name}' failed after ${attempts} attempts: ${lastError.message}`,
+        {
+          operation: name,
+          transactionId: lastError.transactionId,
+          recoverable: lastError.recoverable,
+          cause: lastError
+        }
+      );
+    }
+
     throw new BlockchainError(
-      `Operation '${name}' failed after ${retryConfig.attempts} attempts`,
+      `Operation '${name}' failed after ${attempts} attempts: ${lastError?.message || 'Unknown error'}`,
       {
         operation: name,
-        recoverable: false,
-        cause: lastError || new Error('Unknown error')
+        recoverable: lastError instanceof ValidationError ? lastError.recoverable : true,
+        cause: lastError
       }
     );
   }

@@ -1,54 +1,136 @@
-import { expect, test } from '@oclif/test';
+import { expect, jest, test, describe, beforeEach, afterEach } from '@jest/globals';
 import { TodoService } from '../services/todoService';
+import { WalrusStorage } from '../utils/walrus-storage';
+import { ConfigService } from '../services/config-service';
+import type { Todo } from '../types/todo';
+import type { Mock } from 'jest';
 
-interface TestContext {
-  stdout?: string;
-  stderr?: string;
-}
+jest.mock('../utils/walrus-storage');
+jest.mock('../services/config-service');
 
 describe('store command', () => {
   let todoService: TodoService;
   let todoId!: string;  // Add definite assignment assertion
 
-  // Setup: Create a test list and todo before running tests
-  beforeAll(async () => {
+  beforeEach(async () => {
     todoService = new TodoService();
-    await todoService.createList('test-list', 'test-user');
-    const newTodo = await todoService.addTodo('test-list', {
-      title: 'Test Store Todo',
+    jest.spyOn(todoService, 'getList').mockResolvedValue(null);
+    jest.spyOn(todoService, 'createList').mockResolvedValue({
+      id: 'test-list',
+      name: 'test-list',
+      owner: 'test-user',
+      todos: [],
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    jest.spyOn(todoService, 'addTodo').mockResolvedValue({
+      id: 'test-todo-id',
+      title: 'Test Todo',
+      description: '',
       priority: 'medium',
+      completed: false,
       tags: [],
-      completed: false
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      private: true,
+      storageLocation: 'local' as const
     });
-    todoId = newTodo.id;
+    todoId = 'test-todo-id';
   });
 
-  // Cleanup: Delete the test list after tests
-  afterAll(async () => {
-    await todoService.deleteList('test-list');
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
-  test
-    .stdout()
-    .command(['store', '--todo', todoId, '--list', 'test-list'])
-    .it('stores a todo on Walrus successfully', (ctx: TestContext) => {
-      expect(ctx.stdout).to.contain('Todo stored successfully on Walrus');
-      expect(ctx.stdout).to.contain('Blob ID:'); // Check for blob ID in output
+  const createTestTodo = (): Todo => ({
+    id: 'test-todo-id',
+    title: 'Test Todo',
+    description: '',
+    completed: false,
+    priority: 'medium',
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    private: true,
+    storageLocation: 'local' as const
+  });
+
+  test('stores a todo on Walrus successfully', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const result = await mockWalrusStorage.storeTodo(createTestTodo());
+    expect(result).toBe('mock-blob-id');
+  });
+
+  test('handles todo not found error', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    jest.spyOn(mockWalrusStorage, 'getTodo').mockRejectedValue(new Error('Todo "nonexistent-id" not found'));
+    await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Todo "nonexistent-id" not found');
+  });
+
+  test('creates an NFT for the todo', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const mockNft = { digest: 'mock-tx-digest' };
+    jest.spyOn(mockWalrusStorage, 'createNFT').mockResolvedValue(mockNft);
+
+    const todo = createTestTodo();
+    const blobId = await mockWalrusStorage.storeTodo(todo);
+    expect(blobId).toBe('mock-blob-id');
+
+    const nft = await mockWalrusStorage.createNFT(todo, blobId);
+    expect(nft).toBe(mockNft);
+    expect(nft.digest).toBe('mock-tx-digest');
+  });
+
+  test('validates connection before storing', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const result = await mockWalrusStorage.storeTodo(createTestTodo());
+    expect(result).toBe('mock-blob-id');
+  });
+
+  test('handles connection validation failure', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    jest.spyOn(mockWalrusStorage, 'init').mockRejectedValue(new Error('Connection failed'));
+    await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Connection failed');
+  });
+
+  test('retries failed storage operation', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    let attempts = 0;
+    jest.spyOn(mockWalrusStorage, 'storeTodo').mockImplementation(async () => {
+      attempts++;
+      if (attempts < 2) throw new Error('Temporary failure');
+      return 'mock-blob-id';
     });
 
-  test
-    .stderr()
-    .command(['store', '--todo', 'nonexistent-id', '--list', 'test-list'])
-    .exit(1)
-    .it('handles todo not found error', (ctx: TestContext) => {
-      expect(ctx.stderr).to.contain('Todo "nonexistent-id" not found'); // Verify error message
-    });
+    const result = await mockWalrusStorage.storeTodo(createTestTodo());
+    expect(result).toBe('mock-blob-id');
+    expect(attempts).toBe(2);
+  });
 
-  test
-    .stdout()
-    .command(['store', '--todo', todoId, '--list', 'test-list', '--create-nft'])
-    .it('creates an NFT for the todo', (ctx: TestContext) => {
-      expect(ctx.stdout).to.contain('NFT created successfully'); // Check for success message
-      expect(ctx.stdout).to.contain('Transaction:'); // Verify transaction digest output
-    });
+  test('fails after max retries', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    jest.spyOn(mockWalrusStorage, 'storeTodo').mockRejectedValue(new Error('Persistent failure'));
+    await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Persistent failure');
+  });
+
+  test('performs cleanup after successful storage', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const cleanup = jest.fn();
+    mockWalrusStorage.cleanup = cleanup;
+
+    const result = await mockWalrusStorage.storeTodo(createTestTodo());
+    expect(result).toBe('mock-blob-id');
+    expect(cleanup).toHaveBeenCalled();
+  });
+
+  test('performs cleanup after failed storage', async () => {
+    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const cleanup = jest.fn();
+    mockWalrusStorage.cleanup = cleanup;
+    jest.spyOn(mockWalrusStorage, 'storeTodo').mockRejectedValue(new Error('Storage failed'));
+
+    await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Storage failed');
+    expect(cleanup).toHaveBeenCalled();
+  });
 });

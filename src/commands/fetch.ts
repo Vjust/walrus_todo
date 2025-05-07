@@ -1,11 +1,11 @@
 import { Command, Flags } from '@oclif/core';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../constants';
 import { CLIError } from '../types/error';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 

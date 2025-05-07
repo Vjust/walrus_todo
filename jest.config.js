@@ -21,6 +21,7 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '@mysten/sui/(.*)': '<rootDir>/src/__mocks__/@mysten/sui/$1',
+    '@mysten/sui.js/transactions': '<rootDir>/src/__mocks__/@mysten/sui/transactions.ts',
     '@mysten/walrus': '<rootDir>/src/__mocks__/@mysten/walrus',
     'chalk': '<rootDir>/src/__mocks__/chalk.ts',
     '^@oclif/test$': '<rootDir>/node_modules/@oclif/test/lib/index.js',

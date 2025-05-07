@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError } from '../types/error';
 import { execSync } from 'child_process';
@@ -286,6 +286,102 @@ export class StorageManager {
       coinType: 'WAL'
     });
     return balance.totalBalance;
+  }
+
+  /**
+   * Get current storage usage for an address
+   */
+  async getStorageUsage(address: string): Promise<{
+    totalAllocated: number;
+    totalUsed: number;
+    storageObjects: Array<{
+      id: string;
+      totalSize: number;
+      usedSize: number;
+      endEpoch: number;
+    }>;
+  }> {
+    try {
+      const response = await this.suiClient.getOwnedObjects({
+        owner: address,
+        filter: { StructType: '0x2::storage::Storage' },
+        options: { showContent: true }
+      });
+
+      const storageObjects = response.data
+        .map(item => {
+          const content = item.data?.content as SuiParsedData & {
+            fields: { storage_size: string; used_size?: string; end_epoch: number }
+          };
+          if (!content?.fields) return null;
+
+          return {
+            id: item.data?.objectId || '',
+            totalSize: Number(content.fields.storage_size),
+            usedSize: Number(content.fields.used_size || 0),
+            endEpoch: Number(content.fields.end_epoch)
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null);
+
+      const totalAllocated = storageObjects.reduce((sum, obj) => sum + obj.totalSize, 0);
+      const totalUsed = storageObjects.reduce((sum, obj) => sum + obj.usedSize, 0);
+
+      return {
+        totalAllocated,
+        totalUsed,
+        storageObjects
+      };
+    } catch (error) {
+      throw new CLIError(
+        `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`,
+        'WALRUS_STORAGE_QUERY_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Get storage cost estimate for the given size and duration
+   */
+  async storageCost(sizeBytes: number, epochDuration: number = this.DEFAULT_EPOCH_DURATION): Promise<{
+    storageCost: bigint;
+    writeCost: bigint;
+    totalCost: bigint;
+    breakdown: {
+      baseStorageCost: bigint;
+      epochMultiplier: number;
+      writeOperationCost: bigint;
+      networkFees: bigint;
+    };
+  }> {
+    try {
+      const { storageCost, writeCost, totalCost } = await this.walrusClient.storageCost(
+        sizeBytes,
+        epochDuration
+      );
+
+      // Calculate cost breakdown
+      const baseStorageCost = BigInt(storageCost);
+      const writeOperationCost = BigInt(writeCost);
+      const networkFees = (BigInt(totalCost) * BigInt(10)) / BigInt(100); // 10% for network fees
+
+      return {
+        storageCost: BigInt(storageCost),
+        writeCost: BigInt(writeCost),
+        totalCost: BigInt(totalCost),
+        breakdown: {
+          baseStorageCost,
+          epochMultiplier: epochDuration,
+          writeOperationCost,
+          networkFees
+        }
+      };
+    } catch (error) {
+      throw new CLIError(
+        `Failed to calculate storage cost: ${error instanceof Error ? error.message : String(error)}`,
+        'WALRUS_COST_CALCULATION_FAILED'
+      );
+    }
   }
 
   async allocateStorage(size: string, signer: any): Promise<{

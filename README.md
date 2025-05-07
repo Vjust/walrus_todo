@@ -1,6 +1,10 @@
-# waltodo
+# WalTodo
 
-A CLI for managing todos with Sui blockchain and Walrus decentralized storage.
+A powerful CLI for managing todos with Sui blockchain and Walrus decentralized storage.
+
+## Overview
+
+WalTodo is a feature-rich command-line interface (CLI) application that combines traditional todo list management with blockchain technology. It allows you to create, manage, and organize your todos locally, while also providing the option to store them on the Sui blockchain as NFTs and in Walrus decentralized storage.
 
 ## Features
 
@@ -11,6 +15,10 @@ A CLI for managing todos with Sui blockchain and Walrus decentralized storage.
 - **Multi-list Support**: Organize todos in different lists
 - **Automatic Image Generation**: Generate images for todo NFTs
 - **Seamless Sync**: Sync todos between CLI, blockchain and decentralized storage
+- **Priority & Tags**: Add priority levels and tags to your todos
+- **Flexible Filtering**: Filter todos by status, priority, or tags
+- **Ownership & Transfer**: Transfer todo NFTs between users
+- **Secure Storage**: Todos stored on blockchain cannot be lost or corrupted
 
 ## CLI Commands Overview
 
@@ -74,7 +82,147 @@ The local installation will make the `waltodo` command available in your `~/.loc
 
 For detailed CLI usage instructions, see [CLI-USAGE.md](CLI-USAGE.md).
 
-## Prerequisites for Blockchain Integration
+## Quick Start
+
+Get up and running with WalTodo in minutes:
+
+```bash
+# Install the CLI
+npm run global-install
+
+# Add your first todo
+waltodo add "My first todo task"
+
+# List your todos
+waltodo list
+
+# Add a todo with priority and tags
+waltodo add "Important task" -p high -g "work,urgent"
+
+# Create a new list and add a todo to it
+waltodo add "Shopping item" -l shopping
+
+# Mark a todo as complete (replace 123 with your todo ID)
+waltodo complete --id 123
+```
+
+For blockchain integration:
+
+```bash
+# Configure with your Sui address
+waltodo configure
+
+# Deploy the smart contract (one-time setup)
+waltodo deploy --network testnet
+
+# Store a todo on the blockchain (replace 123 with your todo ID)
+waltodo store --todo 123 --list default
+```
+
+## Getting Started
+
+### Setting Up Your Environment
+
+1. **Install Dependencies**:
+   Make sure you have Node.js v18+ and npm v8+ installed:
+   ```bash
+   node --version
+   npm --version
+   ```
+
+2. **Clone and Install**:
+   ```bash
+   git clone https://github.com/Vjust/walrus_todo.git
+   cd walrus_todo
+   npm install
+   ```
+
+3. **Install the CLI**:
+   ```bash
+   # Option 1: Global installation
+   npm run global-install
+
+   # Option 2: Local installation
+   ./fix-cli.sh
+   ```
+
+4. **Verify Installation**:
+   ```bash
+   waltodo --version
+   ```
+
+### Basic Todo Management
+
+1. **Create Your First Todo**:
+   ```bash
+   waltodo add "Complete project documentation"
+   ```
+
+2. **View Your Todos**:
+   ```bash
+   waltodo list
+   ```
+
+3. **Create a New List**:
+   ```bash
+   waltodo add "Buy groceries" -l shopping
+   ```
+
+4. **Add Todos with Priority and Tags**:
+   ```bash
+   waltodo add "Call client" -p high -g "work,urgent"
+   ```
+
+5. **Mark a Todo as Complete**:
+   ```bash
+   # First, list todos to get the ID
+   waltodo list
+
+   # Then complete the todo (replace 123 with your todo ID)
+   waltodo complete --id 123
+   ```
+
+### Advanced: Blockchain Integration
+
+1. **Configure Blockchain Settings**:
+   ```bash
+   waltodo configure
+   ```
+   You'll need to provide your Sui wallet address and select a network.
+
+2. **Deploy the Smart Contract** (one-time setup):
+   ```bash
+   waltodo deploy --network testnet
+   ```
+
+3. **Store a Todo on the Blockchain**:
+   ```bash
+   # First, list todos to get the ID
+   waltodo list
+
+   # Then store the todo (replace 123 with your todo ID)
+   waltodo store --todo 123 --list default
+   ```
+
+4. **Retrieve a Todo from the Blockchain**:
+   ```bash
+   # Retrieve by NFT object ID
+   waltodo retrieve --object-id 0x123...
+   ```
+
+## Prerequisites
+
+### System Requirements
+
+- **Node.js**: v18.0.0 or higher
+- **npm**: v8.0.0 or higher (or pnpm)
+- **Operating Systems**: macOS, Linux, or Windows with WSL
+
+### For Local Usage Only
+
+- No additional requirements for basic local todo management
+
+### For Blockchain Integration
 
 Before using the blockchain features, you need to set up:
 
@@ -97,6 +245,8 @@ Before using the blockchain features, you need to set up:
    # Check your balance
    sui client gas
    ```
+
+4. **Internet Connection**: Required for blockchain and Walrus interactions
 
 ## Configuration
 
@@ -431,14 +581,46 @@ When making changes to the CLI, use the following scripts:
 
 ### Project Structure
 
-- `src/commands/`: CLI command implementations
-- `src/services/`: Core services
-  - `todo-service.ts`: Local todo management
-  - `todo-blockchain-service.ts`: Blockchain integration
-  - `walrus-service.ts`: Decentralized storage
-- `src/utils/`: Utility functions
-- `src/move/`: Smart contracts
-  - `sources/todo_nft.move`: Todo NFT contract
+```
+walrus_todo/
+├── bin/                  # CLI executable scripts
+│   ├── run               # OCLIF runner
+│   ├── run.js            # Node.js entry point
+│   ├── waltodo           # Main CLI executable
+│   └── waltodo-direct    # Direct CLI executable
+├── src/
+│   ├── commands/         # Command implementations
+│   │   ├── add.ts        # Add todo command
+│   │   ├── list.ts       # List todos command
+│   │   ├── complete.ts   # Complete todo command
+│   │   ├── account.ts    # Account management
+│   │   ├── configure.ts  # Configuration command
+│   │   ├── deploy.ts     # Deploy smart contract
+│   │   ├── store.ts      # Store on blockchain
+│   │   └── retrieve.ts   # Retrieve from blockchain
+│   ├── services/         # Core services
+│   │   ├── todo-service.ts         # Local todo management
+│   │   ├── todo-blockchain-service.ts  # Blockchain integration
+│   │   ├── walrus-service.ts       # Decentralized storage
+│   │   ├── sui-service.ts          # Sui blockchain service
+│   │   └── config-service.ts       # Configuration management
+│   ├── utils/            # Utility functions
+│   │   ├── walrus-storage.ts       # Walrus storage utilities
+│   │   ├── walrus-image-storage.ts # Image storage utilities
+│   │   └── cli-utils.ts            # CLI helper functions
+│   ├── types/            # TypeScript type definitions
+│   ├── move/             # Smart contracts
+│   │   └── sources/todo_nft.move   # Todo NFT contract
+│   ├── constants.ts      # Configuration constants
+│   └── index.ts          # Main CLI entry point
+├── docs/                 # Documentation
+│   ├── walrusintegration.md  # Walrus integration details
+│   └── cli-plan.md           # CLI development plan
+├── CLI-COMMANDS.md       # Command reference
+├── CLI-USAGE.md          # Usage guide
+├── fix-cli.sh            # CLI installation script
+└── README.md             # This file
+```
 
 ## Walrus Image Storage
 
@@ -451,7 +633,7 @@ This project includes a module for storing images on Sui's Walrus storage protoc
 ### Usage
 
 ```typescript
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 import { createWalrusImageStorage } from './src/utils/walrus-image-storage';
 
 // Create SuiClient
@@ -486,3 +668,30 @@ const walrusStorage = createWalrusImageStorage(suiClient, false);
 ```
 
 This implementation uses the `@mysten/walrus` SDK to interact with Walrus storage.
+
+## Contributing
+
+Contributions to WalTodo are welcome! Here's how you can contribute:
+
+1. **Fork the Repository**: Create your own fork of the project
+2. **Create a Branch**: Make your changes in a new branch
+3. **Submit a Pull Request**: Open a PR with a clear description of your changes
+
+### Development Guidelines
+
+- Follow the existing code style and patterns
+- Add tests for new functionality
+- Update documentation for any changes
+- Ensure all tests pass before submitting a PR
+
+### Reporting Issues
+
+If you find a bug or have a feature request, please open an issue on GitHub with:
+- A clear description of the problem or feature
+- Steps to reproduce (for bugs)
+- Expected behavior
+- Screenshots if applicable
+
+## License
+
+This project is licensed under the ISC License.

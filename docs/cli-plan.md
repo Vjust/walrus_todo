@@ -184,7 +184,7 @@ Sprint 1
 #### Connecting to Sui Network
 
 ```typescript
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 
 // Connect to the appropriate Sui network
 const client = new SuiClient({

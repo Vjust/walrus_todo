@@ -1,9 +1,9 @@
-import type { TransactionBlock } from '@mysten/sui';
-import type { Signer } from '@mysten/sui';
+import type { TransactionBlock } from '@mysten/sui.js/transactions';
+import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 
 export type EnumOutputShapeWithKeys<T extends Record<string, true>, K extends keyof T> = {
   [P in K]: T[P];
-} & { kind: K };
+} & { $kind: K };
 
 export interface Hash {
   primary_hash: DigestHash;
@@ -12,7 +12,7 @@ export interface Hash {
 
 export interface DigestHash {
   Digest: Uint8Array;
-  kind: 'Digest';
+  $kind: 'Digest';
 }
 
 export interface StorageObject {
@@ -20,6 +20,7 @@ export interface StorageObject {
   start_epoch: number;
   end_epoch: number;
   storage_size: string;
+  used_size?: string;
 }
 
 export interface BlobObject {
@@ -34,15 +35,25 @@ export interface BlobObject {
 }
 
 export interface BlobMetadata {
+  V1: {
+    encoding_type: EnumOutputShapeWithKeys<{ RedStuff: true; RS2: true }, 'RedStuff' | 'RS2'>;
+    unencoded_length: string;
+    hashes: Array<Hash>;
+    $kind: 'V1';
+  };
+  $kind: 'V1';
+}
+
+export interface BlobMetadataShape {
   blob_id: string;
   metadata: {
     V1: {
       encoding_type: EnumOutputShapeWithKeys<{ RedStuff: true; RS2: true }, 'RedStuff' | 'RS2'>;
       unencoded_length: string;
       hashes: Array<Hash>;
-      kind: 'V1';
+      $kind: 'V1';
     };
-    kind: 'V1';
+    $kind: 'V1';
   };
 }
 
@@ -63,4 +74,33 @@ export interface Config {
   maxSize: number;
 }
 
-export type SignerType = Keypair;
+export interface WriteBlobOptions {
+  blob: Uint8Array;
+  deletable?: boolean;
+  epochs?: number;
+  signer: Ed25519Keypair;
+  attributes?: Record<string, string>;
+  transaction?: TransactionBlock;
+}
+
+export interface ReadBlobOptions {
+  blobId: string;
+  signal?: AbortSignal;
+}
+
+export interface StorageWithSizeOptions {
+  size: number | string;
+  epochs: number;
+  owner?: string;
+  signer?: Ed25519Keypair;
+}
+
+export interface WalrusClientConfig {
+  network?: string;
+  nodeUrl?: string;
+  nodeOptions?: {
+    timeout?: number;
+    onError?: (error: Error) => void;
+  };
+  suiClient?: object;
+}

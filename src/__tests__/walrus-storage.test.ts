@@ -1,5 +1,5 @@
-import { SuiClient } from '@mysten/sui/dist/client';
-import type { JsonRpcProvider } from '@mysten/sui/dist/client';
+import { SuiClient } from '@mysten/sui.js';
+import { TransactionBlock } from '@mysten/sui.js';
 import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
 import type { Mocked } from 'jest-mock';
 import { createWalrusStorage } from '../utils/walrus-storage';
@@ -8,25 +8,26 @@ import { CLIError } from '../types/error';
 import { execSync } from 'child_process';
 import { Todo } from '../types/todo';
 
-interface MockedWalrusClient extends Partial<WalrusClient> {
+interface MockedWalrusClient extends WalrusClient {
   readBlob: jest.Mock<Promise<Uint8Array>, [string]>;
-  writeBlob: jest.Mock<Promise<{ blobId: string; blobObject: BlobObject }>, [{ deletable: boolean; epochs: number; attributes: Record<string, string> }]>;
+  writeBlob: jest.Mock<Promise<{ blobId: string; blobObject: BlobObject }>, [{ data: Uint8Array; deletable: boolean; epochs: number; attributes: Record<string, string> }]>;
   storageCost: jest.Mock<Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>, [number, number]>;
   executeCreateStorageTransaction: jest.Mock<Promise<{ storage: Storage }>, [{ storageSize: number; epochs: number }]>;
-  getBlobType?: jest.Mock<string, [BlobType]>;
+  getBlobType: jest.Mock<Promise<BlobType>, [string]>;
+  connect: jest.Mock<Promise<void>, []>;
 }
 
-interface MockedSuiClient extends Partial<SuiClient> {
-  provider: JsonRpcProvider;
+interface MockedSuiClient extends SuiClient {
+  connect: jest.Mock<Promise<void>, []>;
   getBalance: jest.Mock<Promise<{ coinType: string; totalBalance: string; coinObjectCount: number; lockedBalance: { number: string } }>, [string]>;
   getLatestSuiSystemState: jest.Mock<Promise<{ epoch: string }>, []>;
-  getOwnedObjects: jest.Mock<Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null }>, [any]>;
-  signAndExecuteTransactionBlock: jest.Mock<Promise<{ digest: string; effects: { status: { status: string } } }>, [any]>;
-  executeTransactionBlock: jest.Mock<Promise<{ digest: string; effects: { status: { status: string } } }>, [any]>;
+  getOwnedObjects: jest.Mock<Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null }>, [{ owner: string }]>;
+  signAndExecuteTransactionBlock: jest.Mock<Promise<{ digest: string; effects: { status: { status: string }; created?: { reference: { objectId: string } }[] } }>, [TransactionBlock]>;
+  executeTransactionBlock: jest.Mock<Promise<{ digest: string; effects: { status: { status: string } } }>, [TransactionBlock]>;
 }
 
 jest.mock('child_process');
-jest.mock('@mysten/sui/client');
+jest.mock('@mysten/sui');
 jest.mock('@mysten/walrus');
 jest.mock('../utils/sui-keystore');
 
@@ -57,7 +58,7 @@ describe('WalrusStorage', () => {
 
     mockWalrusClient = {
       readBlob: jest.fn<Promise<Uint8Array>, [string]>().mockResolvedValue(new Uint8Array()),
-      writeBlob: jest.fn<Promise<{ blobId: string; blobObject: BlobObject }>, [{ deletable: boolean; epochs: number; attributes: Record<string, string> }]>()
+      writeBlob: jest.fn<Promise<{ blobId: string; blobObject: BlobObject }>, [{ data: Uint8Array; deletable: boolean; epochs: number; attributes: Record<string, string> }]>()
         .mockResolvedValue({ blobId: '', blobObject: {} as BlobObject }),
       storageCost: jest.fn<Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>, [number, number]>()
         .mockResolvedValue({
@@ -65,7 +66,7 @@ describe('WalrusStorage', () => {
           writeCost: BigInt(50),
           totalCost: BigInt(150)
         }),
-      getBlobType: jest.fn<string, [BlobType]>().mockReturnValue('todo'),
+      getBlobType: jest.fn<Promise<BlobType>, [string]>().mockResolvedValue('todo' as BlobType),
       executeCreateStorageTransaction: jest.fn<Promise<{ storage: Storage }>, [{ storageSize: number; epochs: number }]>()
         .mockResolvedValue({
           storage: {
@@ -74,7 +75,8 @@ describe('WalrusStorage', () => {
             end_epoch: 100,
             start_epoch: 1
           } as Storage
-        })
+        }),
+      connect: jest.fn<Promise<void>, []>().mockResolvedValue(undefined)
     } satisfies MockedWalrusClient;
 
     (execSync as jest.Mock).mockImplementation((cmd: string): string => {

@@ -1,15 +1,16 @@
-import { Signer } from '@mysten/sui/cryptography';
-import type { Transaction } from '@mysten/sui/transactions';
-import { SuiClient } from '@mysten/sui/client';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { toSerializedSignature } from '@mysten/sui/cryptography';
-import type { SignatureWithBytes } from '@mysten/sui/cryptography';
+import { Signer, SignatureScheme, toSerializedSignature } from '@mysten/sui.js/cryptography';
+import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { SuiClient } from '@mysten/sui.js/client';
+import { IntentScope } from '@mysten/sui.js/cryptography';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SerializedMessage } from '@mysten/sui.js/cryptography/keystore';
 
-export class MockKeystoreSigner implements Signer {
+export class MockKeystoreSigner extends Signer {
   private keypair: Ed25519Keypair;
   private _client?: SuiClient;
 
   constructor(client?: SuiClient) {
+    super();
     this._client = client;
     // Initialize with empty key bytes for mock
     const keypairData = {
@@ -31,56 +32,52 @@ export class MockKeystoreSigner implements Signer {
     return new Uint8Array(64).fill(1);
   }
 
-  async sign(transaction: Transaction): Promise<SignatureWithBytes> {
+  async sign(transaction: TransactionBlock): Promise<string> {
     const bytes = await transaction.serialize();
-    return this.signTransaction(bytes);
-  }
-
-  get publicKey(): Ed25519Keypair['publicKey'] {
-    return this.keypair.getPublicKey();
+    const signature = await this.signData(bytes);
+    return toSerializedSignature({
+      signature,
+      signatureScheme: this.getKeyScheme(),
+      publicKey: this.getPublicKey()
+    });
   }
 
   getPublicKey(): Ed25519Keypair['publicKey'] {
     return this.keypair.getPublicKey();
   }
 
-  async signTransaction(bytes: Uint8Array): Promise<SignatureWithBytes> {
+  override async signTransaction(bytes: Uint8Array): Promise<string> {
     const signature = await this.signData(bytes);
-    return {
-      signature: toSerializedSignature({
-        signature,
-        signatureScheme: this.getKeyScheme(),
-        publicKey: this.getPublicKey()
-      }),
-      bytes: Buffer.from(bytes).toString('base64')
-    };
+    return toSerializedSignature({
+      signature,
+      signatureScheme: this.getKeyScheme(),
+      publicKey: this.getPublicKey()
+    });
   }
 
-  connect(client: SuiClient): Signer & { client: SuiClient } {
-    return new MockKeystoreSigner(client) as Signer & { client: SuiClient };
+  connect(client: SuiClient): this & { client: SuiClient } {
+    this._client = client;
+    return this as this & { client: SuiClient };
   }
 
-  async signMessage(message: Uint8Array): Promise<SignatureWithBytes> {
-    const signature = await this.signData(message);
-    return {
-      signature: toSerializedSignature({
-        signature,
-        signatureScheme: this.getKeyScheme(),
-        publicKey: this.getPublicKey()
-      }),
-      bytes: Buffer.from(message).toString('base64')
-    };
+  override async signMessage(message: SerializedMessage): Promise<string> {
+    const signature = await this.signData(message.messageBytes);
+    return toSerializedSignature({
+      signature,
+      signatureScheme: this.getKeyScheme(),
+      publicKey: this.getPublicKey()
+    });
   }
 
-  async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
+  override async signPersonalMessage(message: SerializedMessage): Promise<string> {
     return this.signMessage(message);
   }
 
-  async signWithIntent(message: Uint8Array, intent: string): Promise<SignatureWithBytes> {
-    return this.signMessage(message);
+  override async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<string> {
+    return this.signMessage({ messageBytes: message });
   }
 
-  getKeyScheme(): 'ED25519' | 'Secp256k1' {
+  override getKeyScheme(): SignatureScheme {
     return 'ED25519';
   }
 

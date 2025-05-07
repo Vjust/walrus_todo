@@ -26,7 +26,7 @@
     "forceConsistentCasingInFileNames": true,
     "strict": false,
     "skipLibCheck": true,
-    "declaration": true,
+    "declaration": false,
     "noEmitOnError": false,
     "noImplicitAny": false,
     "noImplicitThis": false,
@@ -37,7 +37,8 @@
     "strictFunctionTypes": false,
     "strictBindCallApply": false,
     "strictPropertyInitialization": false,  
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "5.0",
+    "downlevelIteration": true
   },
   "include": [
     "src/**/*",

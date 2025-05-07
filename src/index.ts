@@ -105,6 +105,16 @@ export const run = async () => {
       return;
     }
 
+    // Special handling for -h flag when used with a command
+    if (args.length > 1 && args.includes('-h')) {
+      const cmdIndex = args.findIndex(arg => !arg.startsWith('-'));
+      if (cmdIndex !== -1) {
+        const cmd = args[cmdIndex];
+        await WalTodo.run([cmd, '--help']);
+        return;
+      }
+    }
+
     // Find the command class
     const CommandClass = Object.entries(Commands).find(([name, _]) => {
       return name.toLowerCase().replace('command', '') === commandName.toLowerCase();

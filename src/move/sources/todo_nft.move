@@ -155,4 +155,31 @@ module todo_app::todo_nft {
     public fun image_url(todo: &TodoNFT): &Url {
         &todo.image_url
     }
+
+    // Update todo title
+    public entry fun update_todo_title(todo: &mut TodoNFT, new_title: vector<u8>, ctx: &mut TxContext) {
+        let new_title_str = string::utf8(new_title);
+        todo.title = new_title_str;
+    }
+
+    // Update todo description
+    public entry fun update_todo_description(todo: &mut TodoNFT, new_description: vector<u8>, ctx: &mut TxContext) {
+        let new_description_str = string::utf8(new_description);
+        todo.description = new_description_str;
+    }
+
+    // Update todo image URL
+    public entry fun update_todo_image_url(todo: &mut TodoNFT, new_walrus_blob_id: vector<u8>, ctx: &mut TxContext) {
+        // Validate new blob ID
+        assert!(std::vector::length(&new_walrus_blob_id) > 0, EINVALID_BLOB_ID);
+        
+        // Update walrus blob ID
+        todo.walrus_blob_id = string::utf8(new_walrus_blob_id);
+        
+        // Update image URL
+        let image_url_bytes = std::vector::empty<u8>();
+        std::vector::append(&mut image_url_bytes, b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/");
+        std::vector::append(&mut image_url_bytes, new_walrus_blob_id);
+        todo.image_url = url::new_unsafe_from_bytes(image_url_bytes);
+    }
 }

@@ -1,38 +1,35 @@
-import { WalrusClient, WalrusClientExt, BlobObject, BlobInfo, StorageWithSizeOptions, WriteBlobOptions, ReadBlobOptions, BlobMetadataShape, CertifyBlobOptions, WriteBlobAttributesOptions, DeleteBlobOptions, WalrusClientConfig, RegisterBlobOptions, TransactionResult } from '@mysten/walrus';
+import type { WalrusClient, WalrusClientConfig, StorageWithSizeOptions, WriteBlobOptions, ReadBlobOptions, RegisterBlobOptions, CertifyBlobOptions, WriteBlobAttributesOptions, DeleteBlobOptions } from '@mysten/walrus';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import type { Signer } from '../sui/signer';
+import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import type { BlobObject, BlobInfo, BlobMetadataShape, BlobMetadata, BlobHashPair, EncodingType } from '../../../types/walrus';
+import type { WalrusClientExt } from '../../../types/client';
 
 export class MockWalrusClient implements WalrusClient, WalrusClientExt {
-  private readonly mockBlobId: string;
-  private readonly mockStorageId: string;
-  private readonly mockDigest: string;
-  private readonly config: WalrusClientConfig;
-  private readonly #private: symbol;
+  private readonly mockBlobId: string = 'test-blob-id';
+  private readonly mockStorageId: string = 'test-storage-id';
+  private readonly mockDigest: string = 'mock-digest';
+  private readonly #private: any = Symbol('WalrusClient');
 
-  mockTransactionResult: TransactionResult;
+  constructor(config?: WalrusClientConfig) {}
 
-  constructor(config?: Partial<WalrusClientConfig>) {
-    this.mockBlobId = 'test-blob-id';
-    this.mockStorageId = 'test-storage-id';
-    this.mockDigest = 'mock-digest';
-    this.#private = Symbol('WalrusClient');
-    
-    this.config = {
-      network: config?.network ?? 'testnet',
-      endpoint: config?.endpoint ?? 'http://localhost:8080',
-      version: config?.version ?? '1.0.0',
-      maxBlobSize: config?.maxBlobSize ?? 1000000,
-      ...config
-    };
-
-    this.mockTransactionResult = {
+  async executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: TransactionBlock; signer: Ed25519Keypair }): Promise<{ 
+    digest: string; 
+    storage: { 
+      id: { id: string }; 
+      start_epoch: number; 
+      end_epoch: number; 
+      storage_size: string; 
+    } 
+  }> {
+    return {
       digest: this.mockDigest,
-      success: true,
-      error: null
+      storage: {
+        id: { id: this.mockStorageId },
+        start_epoch: 1,
+        end_epoch: 100,
+        storage_size: '1000000'
+      }
     };
-
-  executeCreateStorageTransaction(options: StorageWithSizeOptions & { signer: Signer }): (tx: TransactionBlock) => Promise<TransactionResult> {
-    return async (tx: TransactionBlock) => this.mockTransactionResult;
   }
 
   async getConfig(): Promise<{ network: string; version: string; maxSize: number }> {
@@ -98,7 +95,7 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
       registered_epoch: 1,
       blob_id: params.blobId,
       size: '1000',
-      encoding_type: 0,
+      encoding_type: 1,
       certified_epoch: 1,
       storage: {
         id: { id: this.mockStorageId },
@@ -159,33 +156,64 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
     };
   }
 
-  executeCertifyBlobTransaction(options: CertifyBlobOptions & { signer: Signer }): (tx: TransactionBlock) => Promise<TransactionResult> {
-    return async (tx: TransactionBlock) => this.mockTransactionResult;
+  async executeCertifyBlobTransaction(options: CertifyBlobOptions & { transaction?: TransactionBlock }): Promise<{ digest: string }> {
+    return { digest: this.mockDigest };
   }
 
-  executeWriteBlobAttributesTransaction(options: WriteBlobAttributesOptions & { signer: Signer }): (tx: TransactionBlock) => Promise<TransactionResult> {
-    return async (tx: TransactionBlock) => this.mockTransactionResult;
+  async executeWriteBlobAttributesTransaction(options: WriteBlobAttributesOptions & { transaction?: TransactionBlock }): Promise<{ digest: string }> {
+    return { digest: this.mockDigest };
   }
 
-  deleteBlob(options: DeleteBlobOptions & { signer: Signer }): (tx: TransactionBlock) => Promise<TransactionResult> {
-    return async (tx: TransactionBlock) => this.mockTransactionResult;
+  async deleteBlob(options: DeleteBlobOptions & { transaction?: TransactionBlock }): Promise<{ digest: string }> {
+    return { digest: this.mockDigest };
   }
 
-  executeRegisterBlobTransaction(options: RegisterBlobOptions & { signer: Signer }): (tx: TransactionBlock) => Promise<TransactionResult> {
-    return async (tx: TransactionBlock) => this.mockTransactionResult;
+  async executeRegisterBlobTransaction(options: RegisterBlobOptions & { transaction?: TransactionBlock }): Promise<{ 
+    blob: BlobObject;
+    digest: string; 
+  }> {
+    return {
+      blob: {
+        id: { id: this.mockBlobId },
+        registered_epoch: 1,
+        blob_id: this.mockBlobId,
+        size: '1000',
+        encoding_type: 1,
+        certified_epoch: 1,
+        storage: {
+          id: { id: this.mockStorageId },
+          storage_size: '1000000',
+          used_size: '1000',
+          end_epoch: 100,
+          start_epoch: 1
+        },
+        deletable: true
+      },
+      digest: this.mockDigest
+    };
   }
 
   async getStorageConfirmationFromNode(blobId: string): Promise<boolean> {
     return true;
   }
 
-  async encodeBlob(blob: Uint8Array): Promise<Uint8Array> {
-    return blob;
+  async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock> {
+    const txb = new TransactionBlock();
+    return txb;
   }
 
-  async writeSliversToNode(slivers: Uint8Array[], signal?: AbortSignal): Promise<void> {
-    return;
+  reset(): void {
+    // Reset any stored state
   }
+
+  // Implementing experimental API required by WalrusClientExt
+  experimental = {
+    getBlobData: async (): Promise<any> => {
+      return {
+        data: 'mock-data'
+      };
+    }
+  };
 }
 
 const mockClient = new MockWalrusClient();

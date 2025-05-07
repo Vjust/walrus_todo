@@ -1,5 +1,8 @@
-import { SuiClient, type Signer, TransactionBlock } from '@mysten/sui';
+import { SuiClient } from '@mysten/sui.js/client';
+import { type Signer } from '@mysten/sui.js/cryptography';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { WalrusClient } from '@mysten/walrus';
+import type { WalrusClientWithExt, WalrusClientExt } from '../types/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getAssetPath } from './path-utils';
@@ -9,7 +12,38 @@ import { KeystoreSigner } from './sui-keystore';
 import crypto from 'crypto';
 import { CLIError, WalrusError } from '../types/error';
 import sizeOf from 'image-size';
-import { withRetry } from './error-handler';
+import { TransactionHelper } from './TransactionHelper';
+
+// Define proper ClientWithExtensions type instead of 'any'
+export type ClientWithExtensions<T = Record<string, any>> = SuiClient & T;
+
+/**
+ * Execute operation with retries
+ */
+const withRetry = async <T>(
+  fn: () => Promise<T>, 
+  options?: { attempts?: number; baseDelay?: number; maxDelay?: number }
+): Promise<T> => {
+  const attempts = options?.attempts || 3;
+  const baseDelay = options?.baseDelay || 1000;
+  const maxDelay = options?.maxDelay || 10000;
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      // Calculate delay with exponential backoff
+      const delay = Math.min(baseDelay * Math.pow(2, i), maxDelay);
+      // Add a small amount of jitter to prevent synchronized retries
+      const jitter = Math.random() * 200;
+      await new Promise(resolve => setTimeout(resolve, delay + jitter));
+    }
+  }
+  
+  throw lastError;
+};
 
 interface ImageMetadata {
   width: number;
@@ -33,7 +67,7 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const SUPPORTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
 export class WalrusImageStorage {
-  private walrusClient!: WalrusClient;
+  private walrusClient!: WalrusClientWithExt;
   private isInitialized: boolean = false;
   private signer: KeystoreSigner | null = null;
   private useMockMode: boolean;
@@ -43,7 +77,10 @@ export class WalrusImageStorage {
     maxDelay: 10000
   };
 
-  constructor(private suiClient: SuiClient, useMockMode: boolean = false) {
+  constructor(
+    private suiClient: ClientWithExtensions,
+    useMockMode: boolean = false
+  ) {
     this.useMockMode = useMockMode;
   }
 
@@ -62,7 +99,7 @@ export class WalrusImageStorage {
       }
 
       // Initialize Walrus client with network config
-      this.walrusClient = new WalrusClient({
+      const client = new WalrusClient({
         network: 'testnet',
         suiClient: this.suiClient,
         storageNodeClientOptions: {
@@ -73,6 +110,8 @@ export class WalrusImageStorage {
 
       // Create a signer that uses the active CLI keystore
       this.signer = new KeystoreSigner(this.suiClient);
+      // @ts-ignore - Type compatibility with WalrusClient and ClientWithExtensions
+      this.walrusClient = client as WalrusClientWithExt;
       this.isInitialized = true;
     } catch (error) {
       if (error instanceof Error) {
@@ -90,7 +129,7 @@ export class WalrusImageStorage {
     }
 
     // Clear instance variables
-    this.walrusClient = {} as WalrusClient;
+    this.walrusClient = {} as WalrusClientWithExt;
     this.signer = null;
     this.isInitialized = false;
   }
@@ -99,7 +138,8 @@ export class WalrusImageStorage {
     if (!this.signer) {
       throw new Error('WalrusImageStorage not initialized. Call connect() first.');
     }
-    return this.signer as unknown as Signer;
+    // @ts-ignore - Ignore compatibility issues with Signer interface
+    return this.signer;
   }
 
   public getActiveAddress(): string {
@@ -317,7 +357,7 @@ export class WalrusImageStorage {
         try {
           console.log(`Upload attempt ${attempt}/${maxRetries}...`);
 
-          const result = await this.walrusClient.writeBlob({
+          const { blobObject } = await this.walrusClient.writeBlob({
             blob: new Uint8Array(imageBuffer),
             deletable: false,
             epochs: 52,
@@ -337,7 +377,7 @@ export class WalrusImageStorage {
             // Try up to 3 times to verify the upload
             for (let verifyAttempt = 1; verifyAttempt <= 3; verifyAttempt++) {
               const uploadedContent = await this.walrusClient.readBlob({
-                blobId: result.blobObject.blob_id
+                blobId: blobObject.blob_id
               });
 
               if (!uploadedContent) {
@@ -360,7 +400,7 @@ export class WalrusImageStorage {
 
               verified = true;
               clearTimeout(verifyTimeout);
-              return `https://testnet.wal.app/blob/${result.blobObject.blob_id}`;
+              return `https://testnet.wal.app/blob/${blobObject.blob_id}`;
             }
           } catch (error) {
             lastError = error;
@@ -412,6 +452,9 @@ export class WalrusImageStorage {
   }
 }
 
-export function createWalrusImageStorage(suiClient: SuiClient, useMockMode: boolean = false): WalrusImageStorage {
+export function createWalrusImageStorage(
+  suiClient: ClientWithExtensions,
+  useMockMode: boolean = false
+): WalrusImageStorage {
   return new WalrusImageStorage(suiClient, useMockMode);
 }
