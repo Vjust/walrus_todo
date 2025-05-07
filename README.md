@@ -6,6 +6,8 @@ A powerful CLI for managing todos with Sui blockchain and Walrus decentralized s
 
 WalTodo is a feature-rich command-line interface (CLI) application that combines traditional todo list management with blockchain technology. It allows you to create, manage, and organize your todos locally, while also providing the option to store them on the Sui blockchain as NFTs and in Walrus decentralized storage.
 
+The project is built with TypeScript and uses the OCLIF (Open CLI Framework) to create a robust, extensible command-line interface. It includes comprehensive testing with Jest, mock implementations for external dependencies, and detailed documentation to help developers understand and contribute to the codebase.
+
 ## Features
 
 - **Intuitive CLI**: Natural language command syntax for adding todos with spaces
@@ -19,6 +21,9 @@ WalTodo is a feature-rich command-line interface (CLI) application that combines
 - **Flexible Filtering**: Filter todos by status, priority, or tags
 - **Ownership & Transfer**: Transfer todo NFTs between users
 - **Secure Storage**: Todos stored on blockchain cannot be lost or corrupted
+- **Comprehensive Testing**: Extensive test suite with unit, integration, and edge case tests
+- **Mock Infrastructure**: Mock implementations for external dependencies
+- **Developer-Friendly**: Well-documented codebase with clear patterns
 
 ## CLI Commands Overview
 
@@ -563,6 +568,12 @@ npm run build
 # Run tests
 npm test
 
+# Run specific tests
+npm test -- -t "test name pattern"
+
+# Run tests with coverage
+npm test -- --coverage
+
 # Run in dev mode
 npm run dev
 ```
@@ -579,46 +590,164 @@ When making changes to the CLI, use the following scripts:
 ./test-all-commands.sh
 ```
 
+### Testing Infrastructure
+
+WalTodo has a comprehensive testing infrastructure:
+
+- **Unit Tests**: Test individual components and functions
+- **Integration Tests**: Test interactions between components
+- **Edge Case Tests**: Test boundary conditions and error handling
+- **Fuzz Tests**: Test with random inputs to find unexpected issues
+- **Command Tests**: Test CLI commands end-to-end
+
+The test files are organized in the `src/__tests__/` directory, mirroring the structure of the source code. We use Jest as our testing framework.
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report
+npm test -- --coverage
+
+# Run specific test files
+npm test -- src/__tests__/commands/add.test.ts
+
+# Run tests matching a pattern
+npm test -- -t "should add a todo"
+
+# Run tests in watch mode (re-run on file changes)
+npm test -- --watch
+```
+
+Mock implementations for external dependencies are provided in the `src/__mocks__/` directory, allowing tests to run without external services like Sui blockchain or Walrus storage.
+
 ### Project Structure
 
 ```
 walrus_todo/
+├── assets/               # Static assets and images
 ├── bin/                  # CLI executable scripts
 │   ├── run               # OCLIF runner
 │   ├── run.js            # Node.js entry point
 │   ├── waltodo           # Main CLI executable
-│   └── waltodo-direct    # Direct CLI executable
-├── src/
-│   ├── commands/         # Command implementations
-│   │   ├── add.ts        # Add todo command
-│   │   ├── list.ts       # List todos command
-│   │   ├── complete.ts   # Complete todo command
-│   │   ├── account.ts    # Account management
-│   │   ├── configure.ts  # Configuration command
-│   │   ├── deploy.ts     # Deploy smart contract
-│   │   ├── store.ts      # Store on blockchain
-│   │   └── retrieve.ts   # Retrieve from blockchain
-│   ├── services/         # Core services
-│   │   ├── todo-service.ts         # Local todo management
-│   │   ├── todo-blockchain-service.ts  # Blockchain integration
-│   │   ├── walrus-service.ts       # Decentralized storage
-│   │   ├── sui-service.ts          # Sui blockchain service
-│   │   └── config-service.ts       # Configuration management
-│   ├── utils/            # Utility functions
-│   │   ├── walrus-storage.ts       # Walrus storage utilities
-│   │   ├── walrus-image-storage.ts # Image storage utilities
-│   │   └── cli-utils.ts            # CLI helper functions
-│   ├── types/            # TypeScript type definitions
-│   ├── move/             # Smart contracts
-│   │   └── sources/todo_nft.move   # Todo NFT contract
-│   ├── constants.ts      # Configuration constants
-│   └── index.ts          # Main CLI entry point
+│   ├── waltodo-bash      # Bash wrapper for CLI
+│   ├── waltodo-debug     # Debug version of CLI
+│   ├── waltodo-direct    # Direct CLI executable
+│   ├── waltodo-new       # New CLI implementation
+│   ├── waltodo-standalone # Standalone CLI version
+│   └── waltodo-wrapper   # Wrapper script for CLI
 ├── docs/                 # Documentation
-│   ├── walrusintegration.md  # Walrus integration details
-│   └── cli-plan.md           # CLI development plan
+│   ├── cli-plan.md           # CLI development plan
+│   ├── cli_examples.md       # Examples of CLI usage
+│   ├── implementation-status.md # Current implementation status
+│   ├── mocking.md            # Mocking strategy for tests
+│   ├── tests.md              # Testing documentation
+│   └── walrusintegration.md  # Walrus integration details
+├── examples/             # Example code and usage patterns
+├── scripts/              # Utility scripts
+├── src/
+│   ├── __mocks__/        # Mock implementations for testing
+│   ├── __tests__/        # Test files
+│   │   ├── commands/     # Command tests
+│   │   ├── edge-cases/   # Edge case tests
+│   │   ├── fuzz/         # Fuzz testing
+│   │   ├── helpers/      # Test helpers
+│   │   ├── integration/  # Integration tests
+│   │   ├── types/        # Type tests
+│   │   └── utils/        # Utility tests
+│   ├── commands/         # Command implementations
+│   │   ├── account/      # Account management commands
+│   │   │   ├── show.ts   # Show account details
+│   │   │   └── switch.ts # Switch between accounts
+│   │   ├── image/        # Image-related commands
+│   │   │   ├── create-nft.ts # Create NFT with image
+│   │   │   └── upload.ts # Upload image to Walrus
+│   │   ├── add.ts        # Add todo command
+│   │   ├── check.ts      # Check todo status
+│   │   ├── complete.ts   # Complete todo command
+│   │   ├── configure.ts  # Configuration command
+│   │   ├── create.ts     # Create todo list
+│   │   ├── delete.ts     # Delete todo or list
+│   │   ├── deploy.ts     # Deploy smart contract
+│   │   ├── fetch.ts      # Fetch todos
+│   │   ├── image.ts      # Image command group
+│   │   ├── index.ts      # Command exports
+│   │   ├── list.ts       # List todos command
+│   │   ├── retrieve.ts   # Retrieve from blockchain
+│   │   ├── share.ts      # Share todos
+│   │   ├── simple.ts     # Simple mode commands
+│   │   ├── store.ts      # Store on blockchain
+│   │   ├── template.ts   # Template for new commands
+│   │   └── update.ts     # Update todo
+│   ├── hooks/            # OCLIF hooks
+│   │   └── init.ts       # Initialization hook
+│   ├── move/             # Smart contracts
+│   │   ├── build/        # Compiled contracts
+│   │   └── sources/      # Contract source code
+│   ├── services/         # Core services
+│   │   ├── config-service.ts     # Configuration management
+│   │   ├── index.ts              # Service exports
+│   │   ├── SuiTestService.ts     # Test service for Sui
+│   │   ├── todo-service.ts       # Todo management
+│   │   ├── todoService.ts        # Alternative todo service
+│   │   └── WalrusTestService.ts  # Test service for Walrus
+│   ├── types/            # TypeScript type definitions
+│   │   ├── blob.ts       # Blob storage types
+│   │   ├── client.ts     # Client types
+│   │   ├── error.ts      # Error types
+│   │   ├── errors.ts     # Error definitions
+│   │   ├── index.ts      # Type exports
+│   │   ├── network.ts    # Network types
+│   │   ├── signer.ts     # Signer types
+│   │   ├── todo.d.ts     # Todo type declarations
+│   │   ├── todo.ts       # Todo type implementations
+│   │   ├── transaction.ts # Transaction types
+│   │   ├── walrus.d.ts   # Walrus type declarations
+│   │   └── walrus.ts     # Walrus type implementations
+│   ├── utils/            # Utility functions
+│   │   ├── blob-verification.ts  # Verify blobs
+│   │   ├── error-handler.ts      # Error handling
+│   │   ├── ExpiryMonitor.ts      # Monitor expirations
+│   │   ├── FileValidator.ts      # Validate files
+│   │   ├── id-generator.ts       # Generate IDs
+│   │   ├── image-generator.ts    # Generate images
+│   │   ├── index.ts              # Utility exports
+│   │   ├── Logger.ts             # Logging
+│   │   ├── MockWalrusClient.ts   # Mock Walrus client
+│   │   ├── NetworkValidator.ts   # Validate networks
+│   │   ├── path-utils.ts         # Path utilities
+│   │   ├── retry-manager.ts      # Retry logic
+│   │   ├── storage-manager.ts    # Storage management
+│   │   ├── StorageManager.ts     # Storage manager class
+│   │   ├── sui-keystore.ts       # Sui keystore
+│   │   ├── sui-nft-storage.ts    # NFT storage on Sui
+│   │   ├── todo-serializer.ts    # Serialize todos
+│   │   ├── todo-size-calculator.ts # Calculate todo size
+│   │   ├── TransactionHelper.ts  # Transaction helpers
+│   │   ├── VaultManager.ts       # Manage secure storage
+│   │   ├── wallet-extension.ts   # Wallet extensions
+│   │   ├── walrus-image-storage.ts # Image storage on Walrus
+│   │   ├── walrus-storage.ts     # Walrus storage
+│   │   └── WalrusUrlManager.ts   # Manage Walrus URLs
+│   ├── base-command.ts   # Base command class
+│   ├── constants.ts      # Configuration constants
+│   ├── create-todo.ts    # Todo creation logic
+│   ├── delete-todo.ts    # Todo deletion logic
+│   ├── index.ts          # Main CLI entry point
+│   ├── manage-lists.ts   # List management
+│   ├── manage-todos.ts   # Todo management
+│   └── update-todo.ts    # Todo update logic
+├── todos/                # Local todo storage directory
 ├── CLI-COMMANDS.md       # Command reference
 ├── CLI-USAGE.md          # Usage guide
 ├── fix-cli.sh            # CLI installation script
+├── install-global.sh     # Global installation script
+├── jest.config.js        # Jest configuration
+├── package.json          # Package configuration
+├── pnpm-workspace.yaml   # PNPM workspace config
+├── test-all-commands.sh  # Test script
+├── tsconfig.json         # TypeScript configuration
+├── update-cli.sh         # CLI update script
 └── README.md             # This file
 ```
 

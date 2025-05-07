@@ -2,6 +2,7 @@ import { Todo, TodoList } from '../types/todo';
 import { withRetry } from './error-handler';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 import { TodoSerializer } from './todo-serializer';
+import { TodoSizeCalculator } from './todo-size-calculator';
 import { CLIError } from '../types/error';
 import { SuiClient, SuiObjectData, SuiObjectResponse, type MoveStruct } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
@@ -340,8 +341,14 @@ export class WalrusStorage {
         );
       }
 
-      const sizeBytes = buffer.length;
-      if (sizeBytes > 10 * 1024 * 1024) { // 10MB limit
+      // Get accurate size measurement with our new calculator
+      import { TodoSizeCalculator } from './todo-size-calculator';
+      const exactSize = buffer.length;
+      const calculatedSize = TodoSizeCalculator.calculateTodoSize(todo);
+      
+      console.log(`Todo size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`);
+
+      if (exactSize > 10 * 1024 * 1024) { // 10MB limit
         throw new CLIError(
           'Todo data is too large. Maximum size is 10MB.',
           'WALRUS_DATA_TOO_LARGE'
@@ -350,7 +357,8 @@ export class WalrusStorage {
 
       const checksum = this.calculateChecksum(buffer);
 
-      const storage = await this.ensureStorageAllocated(sizeBytes + 1000);
+      // Use our precise size calculation for storage allocation
+      const storage = await this.ensureStorageAllocated(calculatedSize);
       if (!storage) {
         // First check if it's due to WAL token balance
         try {
@@ -781,12 +789,20 @@ export class WalrusStorage {
       // Validate todo list data
       this.validateTodoListData(todoList);
 
-      await this.ensureStorageAllocated();
-
       console.log(`Serializing todo list "${todoList.name}" for storage...`);
       const buffer = TodoSerializer.todoListToBuffer(todoList);
+      
+      // Use our size calculator for precise measurement
+      const exactSize = buffer.length;
+      const calculatedSize = TodoSizeCalculator.calculateTodoListSize(todoList);
+      
+      console.log(`Todo list size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`);
+      console.log(`Contains ${todoList.todos.length} todos`);
+      
+      // Ensure we have enough storage allocated
+      await this.ensureStorageAllocated(calculatedSize);
+
       const checksum = this.calculateChecksum(buffer);
-      const sizeBytes = buffer.length;
       const signer = await this.getTransactionSigner();
 
       const { blobObject } = await this.executeWithRetry(
@@ -951,6 +967,14 @@ export class WalrusStorage {
     }
   }
 
+  /**
+   * Ensures sufficient storage is allocated for the given size requirements
+   * Uses smart optimization to either reuse existing storage or allocate new storage
+   * based on precise size calculations
+   * 
+   * @param sizeBytes The required storage size in bytes
+   * @returns Storage information if successfully allocated, null for mock mode
+   */
   async ensureStorageAllocated(sizeBytes = 1073741824): Promise<WalrusStorageInfo | null> {
     if (this.useMockMode) {
       return null;
@@ -961,10 +985,48 @@ export class WalrusStorage {
     }
 
     try {
-      console.log('Validating storage requirements...');
+      console.log(`Validating storage requirements for ${sizeBytes} bytes...`);
       this.initializeManagers();
 
-      // Comprehensive storage validation
+      // Check existing storage first
+      const { epoch } = await this.suiClient.getLatestSuiSystemState();
+      const currentEpoch = Number(epoch);
+      const existingStorage = await this.storageManager.verifyExistingStorage(sizeBytes, currentEpoch);
+
+      if (existingStorage.isValid && existingStorage.details) {
+        // Analyze if existing storage is sufficient
+        const analysis = TodoSizeCalculator.analyzeStorageRequirements(
+          sizeBytes, 
+          existingStorage.remainingSize,
+          { minimumBuffer: 1024 * 1024 } // 1MB buffer
+        );
+
+        if (analysis.isStorageSufficient) {
+          const details = existingStorage.details;
+          console.log('Using existing storage:');
+          console.log(`  Storage ID: ${details.id}`);
+          console.log(`  Remaining size: ${existingStorage.remainingSize} bytes (${analysis.remainingPercentage.toFixed(2)}% after this operation)`);
+          console.log(`  Remaining epochs: ${existingStorage.remainingEpochs}`);
+
+          return {
+            id: { id: details.id },
+            storage_size: details.totalSize.toString(),
+            used_size: details.usedSize.toString(),
+            end_epoch: details.endEpoch.toString(),
+            start_epoch: '0', // We don't track this
+            content: null,
+            data: undefined
+          };
+        }
+        
+        console.log('Existing storage is insufficient:');
+        console.log(`  Required: ${sizeBytes} bytes`);
+        console.log(`  Available: ${existingStorage.remainingSize} bytes`);
+        console.log(`  Remaining after operation: ${analysis.remainingBytes} bytes`);
+        console.log(`  Recommendation: ${analysis.recommendation}`);
+      }
+
+      // Fallback to comprehensive storage validation
       const validation = await this.storageManager.validateStorageRequirements(sizeBytes);
 
       if (!validation.canProceed) {
@@ -986,7 +1048,7 @@ export class WalrusStorage {
       // If we can use existing storage, return it
       if (validation.existingStorage?.isValid && validation.existingStorage.details) {
         const details = validation.existingStorage.details;
-        console.log('Using existing storage:');
+        console.log('Using existing storage from validation check:');
         console.log(`  Storage ID: ${details.id}`);
         console.log(`  Remaining size: ${validation.existingStorage.remainingSize} bytes`);
         console.log(`  Remaining epochs: ${validation.existingStorage.remainingEpochs}`);
@@ -1013,7 +1075,7 @@ export class WalrusStorage {
       console.log('Allocating new storage:');
       console.log(`  Size: ${sizeBytes} bytes`);
       console.log(`  Duration: ${validation.requiredCost.epochs} epochs`);
-      console.log(`  Total cost: ${validation.requiredCost.totalCost} WAL`);
+      console.log(`  Estimated cost: ${validation.requiredCost.totalCost} WAL`);
 
       // Attempt storage allocation with exponential backoff
       const maxRetries = 3;

@@ -7,7 +7,7 @@
   "bin": "bin/waltodo-direct",
   "scripts": {
     "prestart": "chmod +x ./bin/run.js ./bin/waltodo ./bin/waltodo-direct",
-    "build": "tsc",
+    "build": "tsc --skipLibCheck --noEmitOnError false",
     "start": "node bin/run.js",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist",

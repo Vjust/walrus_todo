@@ -28,6 +28,7 @@
     "skipLibCheck": true,
     "declaration": false,
     "noEmitOnError": false,
+    "ignoreDeprecations": "5.0",
     "noImplicitAny": false,
     "noImplicitThis": false,
     "noImplicitReturns": false,
@@ -38,7 +39,11 @@
     "strictBindCallApply": false,
     "strictPropertyInitialization": false,  
     "ignoreDeprecations": "5.0",
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "useDefineForClassFields": true
+  },
+  "ts-node": {
+    "transpileOnly": true
   },
   "include": [
     "src/**/*",

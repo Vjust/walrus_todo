@@ -1,9 +1,16 @@
-// @ts-ignore
-import { type TransactionBlock as RealTransactionBlock, type TransactionArgument, type TransactionResult, type TransactionObjectInput } from '@mysten/sui.js/transactions';
-// Define TypeTagSerializer locally to avoid import issues
-type TypeTagSerializer = any;
+import { 
+  type TransactionBlock as RealTransactionBlock, 
+  type TransactionArgument, 
+  type TransactionResult, 
+  type TransactionObjectInput, 
+  type BuildOptions 
+} from '@mysten/sui.js/transactions';
 import type { SuiObjectRef } from '@mysten/sui.js/client';
 
+// Define TypeTagSerializer locally to avoid import issues
+type TypeTagSerializer = any;
+
+// Define more accurate transaction interfaces
 interface MoveCallTransaction {
   kind: 'MoveCall';
   target: `${string}::${string}::${string}`;
@@ -17,8 +24,41 @@ interface TransferObjectsTransaction {
   address: TransactionArgument;
 }
 
-type Transaction = MoveCallTransaction | TransferObjectsTransaction;
+interface SplitCoinsTransaction {
+  kind: 'SplitCoins';
+  coin: TransactionArgument;
+  amounts: TransactionArgument[];
+}
 
+interface MergeCoinsTransaction {
+  kind: 'MergeCoins';
+  destination: TransactionArgument;
+  sources: TransactionArgument[];
+}
+
+interface PublishTransaction {
+  kind: 'Publish';
+  modules: Uint8Array[];
+  dependencies: string[];
+}
+
+interface UpgradeTransaction {
+  kind: 'Upgrade';
+  modules: Uint8Array[];
+  dependencies: string[];
+  packageId: string;
+  ticket: TransactionArgument;
+}
+
+type Transaction = 
+  | MoveCallTransaction 
+  | TransferObjectsTransaction 
+  | SplitCoinsTransaction 
+  | MergeCoinsTransaction
+  | PublishTransaction
+  | UpgradeTransaction;
+
+// Improved input type definitions
 type TransactionInput = {
   kind: 'Input';
   index: number;
@@ -32,16 +72,25 @@ type BlockDataInputs = TransactionInput[];
 
 type BlockDataTransactions = {
   typeArguments: string[];
-  kind: 'MoveCall';
+  kind: string;
   arguments: TransactionArgument[];
-  target: `${string}::${string}::${string}`;
+  target?: `${string}::${string}::${string}`;
 }[];
+
+// Standard result type
+const createTransactionResult = (index: number): TransactionResult => ({
+  kind: 'Result',
+  index: index,
+  type: undefined, // Optional in the interface
+  digest: undefined, // Optional in the interface
+  value: undefined // Optional in the interface
+});
 
 export class TransactionBlock implements RealTransactionBlock {
   private transactions: Transaction[] = [];
   private inputs: TransactionArgument[] = [];
   private sharedObjectRefs: Set<string> = new Set();
-  // @ts-ignore - Interface compatibility issue
+  
   public blockData: {
     version: 1;
     inputs: BlockDataInputs;
@@ -75,7 +124,6 @@ export class TransactionBlock implements RealTransactionBlock {
     this.blockData.gasConfig.price = BigInt(price);
   }
 
-  // @ts-ignore - Interface compatibility issue
   private add(transaction: Transaction): TransactionResult {
     this.transactions.push(transaction);
     if (transaction.kind === 'MoveCall') {
@@ -85,15 +133,41 @@ export class TransactionBlock implements RealTransactionBlock {
         arguments: transaction.arguments,
         typeArguments: transaction.typeArguments
       });
+    } else if (transaction.kind === 'TransferObjects') {
+      this.blockData.transactions.push({
+        kind: 'TransferObjects',
+        arguments: [...transaction.objects, transaction.address],
+        typeArguments: []
+      });
+    } else if (transaction.kind === 'SplitCoins') {
+      this.blockData.transactions.push({
+        kind: 'SplitCoins',
+        arguments: [transaction.coin, ...transaction.amounts],
+        typeArguments: []
+      });
+    } else if (transaction.kind === 'MergeCoins') {
+      this.blockData.transactions.push({
+        kind: 'MergeCoins',
+        arguments: [transaction.destination, ...transaction.sources],
+        typeArguments: []
+      });
+    } else if (transaction.kind === 'Publish') {
+      this.blockData.transactions.push({
+        kind: 'Publish',
+        arguments: [],
+        typeArguments: []
+      });
+    } else if (transaction.kind === 'Upgrade') {
+      this.blockData.transactions.push({
+        kind: 'Upgrade',
+        arguments: [transaction.ticket],
+        typeArguments: []
+      });
     }
-    // @ts-ignore - Type compatibility
-    return {
-      index: this.transactions.length - 1,
-      kind: 'Result'
-    };
+    
+    return createTransactionResult(this.transactions.length - 1);
   }
 
-  // @ts-ignore - Interface compatibility issue
   moveCall({ target, arguments: args = [], typeArguments = [] }: { 
     target: `${string}::${string}::${string}`; 
     arguments?: TransactionArgument[];
@@ -102,12 +176,11 @@ export class TransactionBlock implements RealTransactionBlock {
     return this.add({
       kind: 'MoveCall',
       target,
-      arguments: args,
-      typeArguments
+      arguments: args || [],
+      typeArguments: typeArguments || []
     });
   }
 
-  // @ts-ignore - Interface compatibility issue
   transferObjects(
     objects: TransactionArgument[],
     address: TransactionArgument
@@ -119,7 +192,7 @@ export class TransactionBlock implements RealTransactionBlock {
     });
   }
 
-  object(value: string | SuiObjectRef): { index: number; kind: 'Input'; type: 'object'; value: any } {
+  object(value: string | SuiObjectRef | TransactionObjectInput): TransactionArgument {
     const input = { 
       kind: 'Input' as const,
       type: 'object' as const,
@@ -131,7 +204,7 @@ export class TransactionBlock implements RealTransactionBlock {
     return input;
   }
 
-  pure(value: any, type?: string): { index: number; kind: 'Input'; type: 'pure'; value: any } {
+  pure(value: any, type?: TypeTagSerializer): TransactionArgument {
     const input = { 
       kind: 'Input' as const,
       type: 'pure' as const,
@@ -144,15 +217,14 @@ export class TransactionBlock implements RealTransactionBlock {
   }
 
   setSender(sender: string): void {
-    // Sender is not stored in blockData anymore
+    // Sender is not stored in blockData anymore in newer versions
   }
 
   setSenderIfNotSet(sender: string): void {
-    // Sender is not stored in blockData anymore
+    // Not needed in newer versions
   }
 
-  // @ts-ignore - Build options compatibility
-  async build(options?: any): Promise<Uint8Array> {
+  async build(options?: BuildOptions): Promise<Uint8Array> {
     // Return a mock serialized transaction
     return new Uint8Array([1, 2, 3, 4]);
   }
@@ -161,9 +233,9 @@ export class TransactionBlock implements RealTransactionBlock {
     // Mock implementation - no actual deserialization needed
   }
 
-  serialize(): Uint8Array {
-    // Mock serialization - return empty bytes
-    return new Uint8Array();
+  serialize(): string {
+    // Mock serialization - return empty base64 string
+    return 'AAAA';
   }
 
   async getDigest(): Promise<string> {
@@ -171,56 +243,57 @@ export class TransactionBlock implements RealTransactionBlock {
     return '0x1234567890abcdef';
   }
 
-  makeMoveVec(objects?: TransactionObjectInput[], type?: TypeTagSerializer): TransactionArgument {
-    return {
-      kind: 'Input',
-      type: 'pure',
+  makeMoveVec(objects?: (TransactionObjectInput | TransactionArgument)[], type?: TypeTagSerializer): TransactionArgument {
+    const input = {
+      kind: 'Input' as const,
+      type: 'pure' as const,
       value: objects || [],
       index: this.inputs.length
     };
+    this.inputs.push(input);
+    this.blockData.inputs.push(input);
+    return input;
   }
 
-  // @ts-ignore - Interface compatibility issue
   splitCoins(coin: TransactionArgument, amounts: TransactionArgument[]): TransactionResult {
-    // @ts-ignore - Type compatibility
-    return {
-      index: this.transactions.length,
-      kind: 'Result'
-    };
+    return this.add({
+      kind: 'SplitCoins',
+      coin,
+      amounts
+    });
   }
 
-  // @ts-ignore - Interface compatibility issue
   mergeCoins(destination: TransactionArgument, sources: TransactionArgument[]): TransactionResult {
-    // @ts-ignore - Type compatibility
-    return {
-      index: this.transactions.length,
-      kind: 'Result'
-    };
+    return this.add({
+      kind: 'MergeCoins',
+      destination,
+      sources
+    });
   }
 
-  // @ts-ignore - Interface compatibility issue
   gas(objectId?: string): TransactionArgument {
-    // @ts-ignore - Type compatibility
-    return { 
-      kind: 'GasCoin'
+    const input = { 
+      kind: 'GasCoin' as const
     };
+    this.blockData.inputs.push(input);
+    return input;
   }
   
-  // @ts-ignore - Interface compatibility issue
   publish(modules: Uint8Array[], dependencies: string[]): TransactionResult {
-    // @ts-ignore - Type compatibility
-    return {
-      index: this.transactions.length,
-      kind: 'Result'
-    };
+    return this.add({
+      kind: 'Publish',
+      modules,
+      dependencies
+    });
   }
   
-  // @ts-ignore - Interface compatibility issue
   upgrade(modules: Uint8Array[], dependencies: string[], packageId: string, ticket: TransactionArgument): TransactionResult {
-    // @ts-ignore - Type compatibility
-    return {
-      index: this.transactions.length,
-      kind: 'Result'
-    };
+    return this.add({
+      kind: 'Upgrade',
+      modules,
+      dependencies,
+      packageId,
+      ticket
+    });
   }
 }
