@@ -5,6 +5,7 @@ import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../constants';
 import { CLIError } from '../types/error';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 
@@ -76,12 +77,25 @@ export default class FetchCommand extends Command {
         await this.walrusStorage.disconnect();
       } else if (flags['object-id']) {
         // Initialize Sui client first
-        const suiClient = new SuiClient({ url: NETWORK_URLS[configInner.network as keyof typeof NETWORK_URLS] });
+        const suiClient = {
+          url: NETWORK_URLS[configInner.network as keyof typeof NETWORK_URLS],
+          core: {},
+          jsonRpc: {},
+          signAndExecuteTransaction: async () => { },
+          getEpochMetrics: async () => null,
+          getObject: async () => null,
+          getTransactionBlock: async () => null
+        } as unknown as SuiClient;
         // Initialize Sui NFT storage
         if (!configInner.lastDeployment) {
           throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
         }
-        const suiNftStorage = new SuiNftStorage(suiClient, configInner.lastDeployment.packageId);
+        const signer = {} as Ed25519Keypair;
+        const suiNftStorage = new SuiNftStorage(suiClient, signer, {
+          address: configInner.lastDeployment.packageId,
+          packageId: configInner.lastDeployment.packageId,
+          collectionId: ''
+        });
         
         // Retrieve NFT from blockchain
         this.log(chalk.blue(`Retrieving NFT from blockchain (object ID: ${flags['object-id']})...`));

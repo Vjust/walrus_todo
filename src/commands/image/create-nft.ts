@@ -1,9 +1,10 @@
 import { Command, Flags } from '@oclif/core';
 import { CLIError } from '../../utils/error-handler';
 import { TodoService } from '../../services/todoService';
-import { createSuiNftStorage } from '../../utils/sui-nft-storage';
+import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../../constants';
 import { SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // Removed unused chalk import
 import { configService } from '../../services/config-service';
 
@@ -53,11 +54,15 @@ export default class CreateNftCommand extends Command {
       const suiClient = new SuiClient({ url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS] });
 
       // Initialize Sui NFT storage
-      const suiNftStorage = createSuiNftStorage(suiClient, config.lastDeployment.packageId);
+      const suiNftStorage = new SuiNftStorage(
+        suiClient,
+        {} as Ed25519Keypair,
+        { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId }
+      );
 
       // Create NFT
       this.log('Creating NFT on Sui blockchain...');
-      const txDigest = await suiNftStorage.createTodoNft(todoItem, blobId, todoItem.imageUrl);
+      const txDigest = await suiNftStorage.createTodoNft(todoItem, blobId);
 
       this.log(`✅ NFT created successfully!`);
       this.log(`📝 Transaction: ${txDigest}`);

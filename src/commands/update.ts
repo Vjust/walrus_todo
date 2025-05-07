@@ -10,14 +10,14 @@ export default class UpdateCommand extends Command {
 
   static examples = [
     '<%= config.bin %> update my-list -i task-123 -t "Updated task"',
-    '<%= config.bin %> update my-list -i task-123 -p high',
+    '<%= config.bin %> update my-list -i "Buy groceries" -p high',
     '<%= config.bin %> update my-list -i task-123 -d 2024-05-01'
   ];
 
   static flags = {
     id: Flags.string({
       char: 'i',
-      description: 'Todo ID to update',
+      description: 'Todo ID or title to update',
       required: true
     }),
     task: Flags.string({
@@ -60,9 +60,10 @@ export default class UpdateCommand extends Command {
         throw new CLIError(`List "${args.listName}" not found`, 'INVALID_LIST');
       }
 
-      const todo = list.todos.find(t => t.id === flags.id);
+      // Find todo by title or ID
+      const todo = await todoService.getTodoByTitleOrId(flags.id, args.listName);
       if (!todo) {
-        throw new CLIError(`Todo with ID "${flags.id}" not found`, 'INVALID_TASK_ID');
+        throw new CLIError(`Todo "${flags.id}" not found in list "${args.listName}"`, 'INVALID_TASK_ID');
       }
 
       let changes = 0;
@@ -113,7 +114,7 @@ export default class UpdateCommand extends Command {
 
       this.log(chalk.green('✓') + ' Updated todo: ' + chalk.bold(todo.title));
       this.log(chalk.dim('List: ') + args.listName);
-      this.log(chalk.dim('ID: ') + flags.id);
+      this.log(chalk.dim('ID: ') + todo.id);
       this.log(chalk.dim(`Changes made: ${changes}`));
 
     } catch (error) {

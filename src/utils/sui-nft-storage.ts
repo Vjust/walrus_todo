@@ -1,275 +1,264 @@
-import { SuiClient } from '@mysten/sui/client';
-import { Transaction } from '@mysten/sui/transactions';
-import { execSync } from 'child_process';
+import { SuiClient } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { bcs } from '@mysten/sui.js/bcs';
+import { CLIError } from '../types/error';
 import { Todo } from '../types/todo';
-import { handleError } from './error-handler';
-import { bcs } from '@mysten/sui/bcs';
-import { Signer } from '@mysten/sui/cryptography';
-import { KeystoreSigner } from './sui-keystore';
+
+export interface SuiNFTStorageConfig {
+  readonly address: string;
+  readonly packageId: string;
+  readonly collectionId?: string;
+}
 
 interface TodoNftContent {
   type: string;
   dataType: 'moveObject';
   hasPublicTransfer: boolean;
-  fields: {
-    title: string;
-    description: string;
-    completed: boolean;
-    walrus_blob_id: string;
-  };
+  fields: Record<string, any>;
 }
 
 export class SuiNftStorage {
-  private suiClient: SuiClient;
-  private moduleAddress: string;
-  private signer: Signer;
+  private readonly client: SuiClient;
+  private readonly signer: Ed25519Keypair;
+  private readonly config: SuiNFTStorageConfig;
+  private readonly retryAttempts = 3;
+  private readonly retryDelay = 1000; // ms
 
-  constructor(suiClient: SuiClient, moduleAddress: string) {
+  constructor(
+    client: SuiClient,
+    signer: Ed25519Keypair,
+    config: SuiNFTStorageConfig
+  ) {
+    this.client = client;
+    this.signer = signer;
+    this.config = config;
+  }
+
+  private async checkConnectionHealth(): Promise<boolean> {
     try {
-      this.suiClient = suiClient;
-      this.moduleAddress = moduleAddress;
-      this.signer = new KeystoreSigner(suiClient);
+      const systemState = await this.client.getLatestSuiSystemState();
+      if (!systemState || !systemState.epoch) {
+        console.warn('Invalid system state response:', systemState);
+        return false;
+      }
+      return true;
     } catch (error) {
-      handleError('Failed to initialize Sui NFT Storage', error);
-      throw error;
+      console.warn('Failed to check network health:', error);
+      return false;
     }
   }
 
-  async createTodoNft(todo: Todo, walrusBlobId: string, _imageUrl: string): Promise<string> {
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    validateResponse: (response: T) => boolean,
+    errorMessage: string
+  ): Promise<T> {
+    let lastError: Error | null = null;
+    const isHealthy = await this.checkConnectionHealth();
+    if (!isHealthy) {
+      throw new CLIError('Failed to check network health. Please verify your Sui RPC endpoint configuration.', 'SUI_NETWORK_ERROR');
+    }
+
+    for (let attempt = 1; attempt <= this.retryAttempts; attempt++) {
+      try {
+        const response = await operation();
+        if (!validateResponse(response)) {
+          throw new Error('Invalid response from network');
+        }
+        return response;
+      } catch (error) {
+        lastError = error as Error;
+        if (attempt < this.retryAttempts) {
+          await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
+          continue;
+        }
+      }
+    }
+
+    throw new CLIError(
+      `${errorMessage}: ${lastError instanceof Error ? lastError.message : 'Unknown error'}`,
+      'SUI_NETWORK_ERROR'
+    );
+  }
+
+  async createTodoNft(todo: Todo, walrusBlobId: string): Promise<string> {
+    if (!todo.title) {
+      throw new CLIError('Todo title is required', 'INVALID_TODO');
+    }
+
+    if (!walrusBlobId) {
+      throw new CLIError('A valid Walrus blob ID must be provided', 'INVALID_BLOB_ID');
+    }
+
+    if (todo.title.length > 100) {
+      throw new CLIError('Todo title must be less than 100 characters', 'INVALID_TITLE');
+    }
+
+    console.log('Preparing Todo NFT creation...');
+    console.log('Title:', todo.title);
+    console.log('Walrus Blob ID:', walrusBlobId);
+
     try {
-      const txb = new Transaction();
-
-      // Serialize strings to Uint8Array for Move
-      const titleBytes = new TextEncoder().encode(todo.title);
-      const descriptionBytes = new TextEncoder().encode(todo.description || '');
-      const blobIdBytes = new TextEncoder().encode(walrusBlobId);
-
-      // Call the create_todo function with properly serialized arguments
-      txb.moveCall({
-        target: `${this.moduleAddress}::todo_nft::create_todo`,
+      const tx = new TransactionBlock();
+      const moveCall = tx.moveCall({
+        target: `${this.config.packageId}::todo_nft::create_todo_nft`,
         arguments: [
-          bcs.vector(bcs.u8()).serialize(titleBytes),
-          bcs.vector(bcs.u8()).serialize(descriptionBytes),
-          bcs.vector(bcs.u8()).serialize(blobIdBytes),
-          bcs.bool().serialize(todo.private)
+          tx.pure(bcs.string().serialize(todo.title)),
+          tx.pure(bcs.string().serialize(todo.description || '')),
+          tx.pure(bcs.string().serialize(walrusBlobId)),
+          tx.pure(bcs.bool().serialize(false)),
+          tx.object(this.config.collectionId || ''),
         ],
       });
 
-      // Sign and execute the transaction
-      const response = await this.suiClient.signAndExecuteTransaction({
-        transaction: txb,
-        options: {
-          showEffects: true,
+      return await this.executeWithRetry(
+        async () => {
+          const response = await this.client.signAndExecuteTransactionBlock(
+            transaction: tx,
+            signer: this.signer,
+            requestType: 'WaitForLocalExecution',
+            options: {
+              showEffects: true,
+            },
+          });
+
+          if (!response.effects?.status?.status || response.effects.status.status !== 'success') {
+            throw new Error(response.effects?.status?.error || 'Unknown error');
+          }
+
+          if (!response.effects.created?.length) {
+            throw new Error('NFT creation failed: no NFT was created');
+          }
+
+          return response.digest;
         },
-        signer: this.signer
-      });
-
-      if (!response.digest) {
-        throw new Error('Transaction failed: No digest returned');
-      }
-
-      return response.digest;
+        (response) => Boolean(response && response.length > 0),
+        'Failed to create Todo NFT'
+      );
     } catch (error) {
-      handleError('Error creating Todo NFT on Sui', error);
-      throw error;
+      throw new CLIError(
+        `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
+        'SUI_CREATION_FAILED'
+      );
     }
   }
 
-  /**
-   * Normalize an object ID to ensure it has the 0x prefix and is a valid Sui object ID
-   * @param objectId The object ID to normalize
-   * @returns The normalized object ID with 0x prefix
-   */
-  private async normalizeObjectId(objectId: string): Promise<string> {
-    // If the objectId is a transaction digest (which is what we're storing in nftObjectId),
-    // we need to get the actual object ID from the transaction effects
-    if (objectId.length > 50) {
-      console.log(`Object ID ${objectId} appears to be a transaction digest, not an object ID`);
-      console.log('Attempting to get the actual object ID from the transaction effects...');
-
-      try {
-        // Query the transaction effects to get the created object ID
-        const txResponse = await this.suiClient.getTransactionBlock({
-          digest: objectId,
-          options: {
-            showEffects: true,
-            showEvents: true
-          }
-        });
-
-        if (!txResponse.effects?.created || txResponse.effects.created.length === 0) {
-          throw new Error(`No created objects found in transaction ${objectId}`);
-        }
-
-        // Find the created object that matches our TodoNFT type
-        // We need to get the object details to check its type
-        for (const createdObj of txResponse.effects.created) {
-          try {
-            const objDetails = await this.suiClient.getObject({
-              id: createdObj.reference.objectId,
-              options: { showType: true }
-            });
-
-            if (objDetails.data?.type?.includes('todo_nft::TodoNFT')) {
-              console.log(`Found TodoNFT object: ${createdObj.reference.objectId}`);
-              return createdObj.reference.objectId;
-            }
-          } catch (error) {
-            console.warn(`Error checking object ${createdObj.reference.objectId}:`, error);
-          }
-        }
-
-        // If we get here, we didn't find a matching object
-        throw new Error(`No TodoNFT object found in transaction ${objectId}`);
-      } catch (error) {
-        console.error('Failed to get object ID from transaction digest:', error);
-        throw new Error(`Failed to get object ID from transaction digest: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
-
-    // If the objectId doesn't start with 0x, add it
-    let normalized = objectId.startsWith('0x') ? objectId : `0x${objectId}`;
-
-    // Ensure the object ID is lowercase
-    normalized = normalized.toLowerCase();
-
-    return normalized;
-  }
-
-  async getTodoNft(nftObjectId: string): Promise<{
+  async getTodoNft(nftId: string): Promise<{
     objectId: string;
     title: string;
     description: string;
     completed: boolean;
     walrusBlobId: string;
   }> {
-    try {
-      // Normalize the object ID to ensure it has the 0x prefix
-      const normalizedObjectId = await this.normalizeObjectId(nftObjectId);
-
-      console.log(`Retrieving Todo NFT with object ID: ${normalizedObjectId}`);
-
-      const response = await this.suiClient.getObject({
-        id: normalizedObjectId,
-        options: {
-          showContent: true,
-        },
-      });
-
-      if (!response.data?.content || response.data.content.dataType !== 'moveObject') {
-        throw new Error(`Failed to retrieve Todo NFT with ID: ${normalizedObjectId}`);
-      }
-
-      const content = response.data.content as unknown as TodoNftContent;
-
-      console.log(`Successfully retrieved Todo NFT:`);
-      console.log(`  Title: ${content.fields.title}`);
-      console.log(`  Description: ${content.fields.description || '(none)'}`);
-      console.log(`  Completed: ${Boolean(content.fields.completed)}`);
-      console.log(`  Walrus Blob ID: ${content.fields.walrus_blob_id}`);
-
-      return {
-        objectId: normalizedObjectId,
-        title: content.fields.title,
-        description: content.fields.description,
-        completed: content.fields.completed,
-        walrusBlobId: content.fields.walrus_blob_id,
-      };
-    } catch (error) {
-      handleError('Error retrieving Todo NFT from Sui', error);
-      throw error;
+    if (!nftId) {
+      throw new CLIError('NFT object ID is required', 'INVALID_NFT_ID');
     }
+
+    const objectId = await this.normalizeObjectId(nftId);
+    console.log('Retrieving Todo NFT with object ID:', objectId);
+    console.log('Retrieving NFT object data...');
+
+    return await this.executeWithRetry(
+      async () => {
+        const response = await this.client.getObject({
+          id: objectId,
+          options: {
+            showContent: true,
+          },
+        });
+
+        if (!response.data) {
+          throw new CLIError(`Todo NFT not found: ${objectId}. The NFT may have been deleted.`, 'SUI_OBJECT_NOT_FOUND');
+        }
+
+        const content = response.data.content as TodoNftContent;
+        if (!content || !content.fields) {
+          throw new CLIError('Invalid NFT data format', 'SUI_INVALID_DATA');
+        }
+
+        const fields = content.fields;
+        return {
+          objectId,
+          title: fields.title || '',
+          description: fields.description || '',
+          completed: fields.completed || false,
+          walrusBlobId: fields.walrus_blob_id || fields.walrusBlobId || '',
+        };
+      },
+      (response) => Boolean(response && response.objectId),
+      'Failed to fetch Todo NFT'
+    );
   }
 
-  async completeTodoNft(nftObjectId: string): Promise<string> {
-    try {
-      // Normalize the object ID to ensure it has the 0x prefix
-      const normalizedObjectId = await this.normalizeObjectId(nftObjectId);
+  async updateTodoNftCompletionStatus(nftId: string): Promise<string> {
+    if (!nftId) {
+      throw new CLIError('NFT object ID is required', 'INVALID_NFT_ID');
+    }
 
-      console.log(`Completing Todo NFT with object ID: ${normalizedObjectId}`);
+    const tx = new TransactionBlock();
+    const moveCall = tx.moveCall({
+      target: `${this.config.packageId}::todo_nft::update_completion_status`,
+      arguments: [
+        tx.object(nftId),
+        tx.pure(bcs.bool().serialize(true)),
+      ],
+    });
 
-      const txb = new Transaction();
+    return await this.executeWithRetry(
+      async () => {
+        const response = await this.client.signAndExecuteTransactionBlock(
+          transaction: tx,
+          signer: this.signer,
+          requestType: 'WaitForLocalExecution',
+          options: {
+            showEffects: true,
+          },
+        });
 
-      // Call the complete_todo function with the NFT object ID
-      txb.moveCall({
-        target: `${this.moduleAddress}::todo_nft::complete_todo`,
-        arguments: [
-          txb.object(normalizedObjectId)
-        ],
-      });
+        if (!response.effects?.status?.status || response.effects.status.status !== 'success') {
+          throw new Error(response.effects?.status?.error || 'Unknown error');
+        }
 
-      // Sign and execute the transaction
-      const response = await this.suiClient.signAndExecuteTransaction({
-        transaction: txb,
+        return response.digest;
+      },
+      (response) => Boolean(response && response.length > 0),
+      'Failed to update Todo NFT completion status'
+    );
+  }
+
+  private async normalizeObjectId(idOrDigest: string): Promise<string> {
+    // Check if input looks like a transaction digest rather than an object ID
+    if (idOrDigest.length === 44) {
+      console.log('Object ID', idOrDigest, 'appears to be a transaction digest, not an object ID');
+      console.log('Attempting to get the actual object ID from the transaction effects...');
+
+      // Get transaction details to find the created NFT
+      const tx = await this.client.getTransactionBlock({
+        digest: idOrDigest,
         options: {
           showEffects: true,
         },
-        signer: this.signer
       });
 
-      if (!response.digest) {
-        throw new Error('Transaction failed: No digest returned');
+      if (!tx.effects?.created?.length) {
+        throw new CLIError('No NFT was created in this transaction', 'SUI_INVALID_TRANSACTION');
       }
 
-      console.log(`Successfully completed Todo NFT with transaction digest: ${response.digest}`);
-
-      return response.digest;
-    } catch (error) {
-      handleError('Error completing Todo NFT on Sui', error);
-      throw error;
-    }
-  }
-
-  async getOwnedTodoNfts(): Promise<{
-    objectId: string;
-    title: string;
-    completed: boolean;
-    walrusBlobId: string;
-  }[]> {
-    try {
-      const address = execSync('sui client active-address').toString().trim();
-
-      const response = await this.suiClient.getOwnedObjects({
-        owner: address,
-        options: {
-          showContent: true,
-        },
-        filter: {
-          StructType: `${this.moduleAddress}::todo_nft::TodoNFT`
-        }
+      // Find the first created object
+      const nftObject = tx.effects.created.find(obj => {
+        return obj && typeof obj === 'object' && 'reference' in obj && obj.reference && typeof obj.reference === 'object' && 'objectId' in obj.reference && typeof obj.reference.objectId === 'string';
       });
 
-      if (!response.data) {
-        return [];
+      if (!nftObject || !('reference' in nftObject) || !nftObject.reference || !('objectId' in nftObject.reference)) {
+        throw new CLIError('Could not find created NFT in transaction', 'SUI_INVALID_TRANSACTION');
       }
 
-      return response.data
-        .map(item => {
-          if (!item.data?.content || item.data.content.dataType !== 'moveObject') {
-            return null;
-          }
-
-          const content = item.data.content as TodoNftContent;
-          if (!content.fields) return null;
-
-          return {
-            objectId: item.data.objectId,
-            title: content.fields.title,
-            completed: Boolean(content.fields.completed),
-            walrusBlobId: content.fields.walrus_blob_id,
-          };
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
-    } catch (error) {
-      handleError('Error retrieving owned Todo NFTs from Sui', error);
-      throw error;
+      const objectId = nftObject.reference.objectId;
+      console.log('Found TodoNFT object:', objectId);
+      return objectId;
     }
-  }
-}
 
-export function createSuiNftStorage(
-  suiClient: SuiClient,
-  moduleAddress: string
-): SuiNftStorage {
-  return new SuiNftStorage(suiClient, moduleAddress);
+    return idOrDigest;
+  }
 }

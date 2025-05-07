@@ -1,11 +1,12 @@
 import { Command, Flags, Args } from '@oclif/core';  // Added Args to import
 import { CLIError } from '../utils/error-handler';
 import { TodoService } from '../services/todoService';
-import { createSuiNftStorage } from '../utils/sui-nft-storage';
+import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { configService } from '../services/config-service';
-import { createWalrusImageStorage } from '../utils/walrus-image-storage';
+import { WalrusImageStorage } from '../utils/walrus-image-storage';
 import { NETWORK_URLS } from '../constants';
 import { SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // Removed unused chalk import
 import * as path from 'path';
 
@@ -20,9 +21,9 @@ export default class ImageCommand extends Command {
   static args = {
     action: Args.string({
       name: 'action',
-      description: 'Action to perform (upload or create-nft)',
+      description: 'Action to perform (upload, create-nft, or list)',
       required: true,
-      options: ['upload', 'create-nft'],
+      options: ['upload', 'create-nft', 'list'],
     }),
   };
 
@@ -30,7 +31,8 @@ export default class ImageCommand extends Command {
     todo: Flags.string({
       char: 't',
       description: 'ID of the todo to create an image for',
-      required: true,
+      required: false, // Changed from true to false
+      dependsOn: ['list'], // Only makes sense with list specified
     }),
     list: Flags.string({
       char: 'l',
@@ -51,19 +53,58 @@ export default class ImageCommand extends Command {
     const todoService = new TodoService();
 
     try {
+      // Setup SuiClient
+      const suiClient = {
+        url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS],
+        core: {},
+        jsonRpc: {},
+        signAndExecuteTransaction: async () => { },
+        getEpochMetrics: async () => null,
+        getObject: async () => null,
+        getTransactionBlock: async () => null
+      } as unknown as SuiClient;
+
+      // Initialize WalrusImageStorage
+      const walrusImageStorage = new WalrusImageStorage(suiClient);
+
+      // For list action, we don't need a todo item or connection to Walrus
+      if (args.action === 'list') {
+        const allLists = await todoService.getAllLists();
+        let foundImages = false;
+        
+        this.log('📷 Todos with associated images:');
+        for (const listName of allLists) {
+          const list = await todoService.getList(listName);
+          if (list) {
+            const todosWithImages = list.todos.filter(todo => todo.imageUrl);
+            if (todosWithImages.length > 0) {
+              this.log(`\n📝 List: ${listName}`);
+              todosWithImages.forEach(todo => {
+                this.log(`   - [${todo.id}] ${todo.title}: ${todo.imageUrl}`);
+              });
+              foundImages = true;
+            }
+          }
+        }
+        
+        if (!foundImages) {
+          this.log('⚠️ No todos with images found');
+          this.log('\nTo add an image to a todo, use:');
+          this.log('  waltodo image upload --todo <id> --list <list> [--image <path>]');
+        }
+        return;
+      }
+      
+      // For upload and create-nft actions, we need a todo item
+      if (!flags.todo || !flags.list) {
+        throw new CLIError(`Todo ID (--todo) and list name (--list) are required for ${args.action} action`, 'MISSING_PARAMETERS');
+      }
+      
       // Get the todo item
       const todoItem = await todoService.getTodo(flags.todo, flags.list);
       if (!todoItem) {
-        throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list || 'default'}`);
+        throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list}`, 'TODO_NOT_FOUND');
       }
-      
-      // Removed unused todoItemTyped variable
-
-      // Setup SuiClient
-      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS] });
-
-      // Initialize WalrusImageStorage
-      const walrusImageStorage = createWalrusImageStorage(suiClient);
 
       // Connect to Walrus
       this.log('Connecting to Walrus storage...');
@@ -74,26 +115,25 @@ export default class ImageCommand extends Command {
         // Upload image logic
         this.log('Uploading image to Walrus...');
         let imageUrl;
-        // blobId will be declared below where it's assigned
 
         if (flags.image) {
           // Resolve relative path to absolute
           const absoluteImagePath = path.resolve(process.cwd(), flags.image);
-          imageUrl = await walrusImageStorage.uploadCustomTodoImage(absoluteImagePath, todoItem.title, todoItem.completed);
+          imageUrl = await walrusImageStorage.uploadTodoImage(absoluteImagePath, todoItem.title, todoItem.completed);
         } else {
           // Use default image
           imageUrl = await walrusImageStorage.uploadDefaultImage();
         }
 
         // Extract blob ID from URL - this is important for NFT creation
-        const blobId = imageUrl.split('/').pop() || ''; // Use const as it's not reassigned
+        const blobId = imageUrl.split('/').pop() || '';
 
         // Update todo with image URL
         const updatedTodo = {
           ...todoItem,
           imageUrl
         };
-        await todoService.updateTodo(flags.todo, flags.list || 'default', updatedTodo);
+        await todoService.updateTodo(flags.todo, flags.list, updatedTodo);
 
         if (flags['show-url']) {
           // Only show the URL if requested
@@ -116,13 +156,14 @@ export default class ImageCommand extends Command {
         }
 
         this.log('Creating NFT on Sui blockchain...');
-        const nftStorage = createSuiNftStorage(
+        const nftStorage = new SuiNftStorage(
           suiClient,
-          config.lastDeployment.packageId
+          {} as Ed25519Keypair,
+          { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId }
         );
 
-        // Pass both the blob ID and image URL to createTodoNft
-        const txDigest = await nftStorage.createTodoNft(todoItem, blobId, todoItem.imageUrl);
+        // Create NFT with todo data and blob ID
+        const txDigest = await nftStorage.createTodoNft(todoItem, blobId);
         this.log(`✅ NFT created successfully!`);
         this.log(`📝 Transaction: ${txDigest}`);
         this.log(`📝 Your NFT has been created with the following:`);
@@ -131,7 +172,7 @@ export default class ImageCommand extends Command {
         this.log(`   - Walrus Blob ID: ${blobId}`);
         this.log('\nYou can view this NFT in your wallet with the embedded image from Walrus.');
       } else {
-        throw new CLIError(`Invalid action: ${args.action}. Use 'upload' or 'create-nft'.`, 'INVALID_ACTION');
+        throw new CLIError(`Invalid action: ${args.action}. Use 'upload', 'create-nft', or 'list'.`, 'INVALID_ACTION');
       }
     } catch (error) {
       if (error instanceof CLIError) {
