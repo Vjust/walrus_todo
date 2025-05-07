@@ -9,13 +9,20 @@ import { getAssetPath } from './path-utils';
 import { handleError } from './error-handler';
 import { execSync } from 'child_process';
 import { KeystoreSigner } from './sui-keystore';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { CLIError, WalrusError } from '../types/error';
 import sizeOf from 'image-size';
 import { TransactionHelper } from './TransactionHelper';
 
-// Define proper ClientWithExtensions type instead of 'any'
-export type ClientWithExtensions<T = Record<string, any>> = SuiClient & T;
+// Define ClientWithExtensions type that's compatible with SuiClient and its extensions
+// @ts-ignore - We're defining a flexible type that may not match exactly with SuiClient's extensions
+export type ClientWithExtensions<T extends Record<string, any> = Record<string, any>> = SuiClient & Partial<{
+  network: string;
+  cache: unknown;
+  core: unknown;
+  $extend: unknown;
+  jsonRpc: SuiClient;
+}> & T;
 
 /**
  * Execute operation with retries

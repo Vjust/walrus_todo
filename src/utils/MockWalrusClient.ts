@@ -3,6 +3,7 @@ import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { type BlobObject, type BlobInfo, type BlobMetadataShape } from '../types/walrus';
 import { type Signer } from '@mysten/sui.js/cryptography';
 import { type WalrusClientExt, type WalrusClientWithExt } from '../types/client';
+import { type Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 
 interface StorageConfirmation {
   confirmed: boolean;
@@ -23,10 +24,12 @@ export class MockWalrusClient implements WalrusClientWithExt {
   private mockStorageId = 'test-storage-id';
   private mockDigest = 'mock-digest';
   readonly #private = {};
+  experimental?: { getBlobData: () => Promise<any> };
 
   constructor(config?: WalrusClientConfig) {}
 
-  async executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: Transaction; signer: Signer }): Promise<{
+  // @ts-ignore - Compatible with both Signer and Ed25519Keypair
+  async executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: TransactionBlock; signer: Signer | Ed25519Keypair }): Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -126,17 +129,20 @@ export class MockWalrusClient implements WalrusClientWithExt {
     console.log('MockWalrusClient reset called');
   }
 
-  async writeBlob({ blob, deletable, epochs, signer, attributes }: WriteBlobOptions): Promise<{ blobObject: { blob_id: string } }> {
+  // @ts-ignore - Return type compatibility with interfaces
+  async writeBlob({ blob, deletable, epochs, signer, attributes }: WriteBlobOptions): Promise<{ blobId: string; blobObject: BlobObject }> {
+    const blobObject = await this.getBlobObject({ blobId: this.mockBlobId });
     return {
-      blobObject: { blob_id: this.mockBlobId }
+      blobId: this.mockBlobId,
+      blobObject
     };
   }
 
-  async readBlob({ blobId }: { blobId: string }): Promise<Uint8Array> {
+  async readBlob({ blobId, signal }: { blobId: string; signal?: AbortSignal }): Promise<Uint8Array> {
     return new Uint8Array([1, 2, 3, 4, 5]);
   }
 
-  async getBlobMetadata({ blobId }: { blobId: string }): Promise<BlobMetadataShape> {
+  async getBlobMetadata({ blobId, signal }: { blobId: string; signal?: AbortSignal }): Promise<BlobMetadataShape> {
     return {
       blob_id: blobId,
       metadata: {
@@ -226,15 +232,18 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
-  executeCertifyBlobTransaction(options: CertifyBlobOptions & { transaction?: Transaction; signer: Signer }): Promise<{ digest: string }> {
+  // @ts-ignore - Parameter compatibility with both interfaces
+  executeCertifyBlobTransaction(options: CertifyBlobOptions & { transaction?: TransactionBlock; signer: Signer | Ed25519Keypair }): Promise<{ digest: string }> {
     return Promise.resolve({ digest: this.mockDigest });
   }
 
-  executeWriteBlobAttributesTransaction(options: WriteBlobAttributesOptions & { signer: Signer; transaction?: Transaction }): Promise<{ digest: string }> {
+  // @ts-ignore - Parameter compatibility with both interfaces
+  executeWriteBlobAttributesTransaction(options: WriteBlobAttributesOptions & { signer: Signer | Ed25519Keypair; transaction?: TransactionBlock }): Promise<{ digest: string }> {
     return Promise.resolve({ digest: this.mockDigest });
   }
 
-  async executeRegisterBlobTransaction(options: RegisterBlobOptions & { transaction?: Transaction; signer: Signer }): Promise<{ blob: BlobObject; digest: string }> {
+  // @ts-ignore - Parameter compatibility with both interfaces
+  async executeRegisterBlobTransaction(options: RegisterBlobOptions & { transaction?: TransactionBlock; signer: Signer | Ed25519Keypair }): Promise<{ blob: BlobObject; digest: string }> {
     const blobObject = await this.getBlobObject({ blobId: this.mockBlobId });
     return {
       blob: blobObject,
@@ -242,10 +251,13 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
-  // @ts-ignore - Interface compatibility issue
-  deleteBlob(options: DeleteBlobOptions): (tx: Transaction) => Promise<{ digest: string }> {
-    // @ts-ignore - Return type compatibility
-    return (tx: Transaction) => Promise.resolve({ digest: this.mockDigest });
+  // @ts-ignore - Method signature compatibility with interface
+  deleteBlob({ blobObjectId }: DeleteBlobOptions): (tx: any) => Promise<any> {
+    return (tx: any) => Promise.resolve({
+      digest: this.mockDigest,
+      $kind: "Result",
+      Result: 42
+    });
   }
 
   async getStorageConfirmationFromNode({ nodeIndex, blobId, deletable, objectId, signal }: GetStorageConfirmationOptions): Promise<{ confirmed: boolean; serializedMessage: string; signature: string }> {
@@ -261,18 +273,18 @@ export class MockWalrusClient implements WalrusClientWithExt {
     return txb;
   }
 
-  // @ts-ignore - Interface compatibility issue
-  createStorage(options: StorageWithSizeOptions): (tx: Transaction) => Promise<{ digest: string; storage: { id: { id: string }; start_epoch: number; end_epoch: number; storage_size: string } }> {
-    // @ts-ignore - Return type compatibility
-    return (tx: Transaction) => Promise.resolve({
+  // @ts-ignore - Method signature compatibility with interface
+  createStorage({ size, epochs, walCoin, owner }: StorageWithSizeOptions): (tx: any) => Promise<any> {
+    return (tx: any) => Promise.resolve({
       digest: this.mockDigest,
       storage: {
         id: { id: this.mockStorageId },
         start_epoch: 1,
         end_epoch: 100,
-        storage_size: '1000000'
-      }
+        storage_size: String(size || 1000000)
+      },
+      $kind: "Result",
+      Result: 42
     });
   }
 }
-

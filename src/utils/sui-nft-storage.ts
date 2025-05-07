@@ -126,14 +126,18 @@ export class SuiNftStorage {
       return await this.executeWithRetry(
         async () => {
           try {
-            // @ts-ignore - Compatibility with different TransactionBlock APIs
+            // Build and serialize transaction in a way that's compatible with different API versions
             const serializedTx = await tx.build({ client: this.client });
-            // @ts-ignore - Type compatibility with Signer interface
+            
+            // Sign the transaction block
+            // @ts-ignore - Type compatibility with Ed25519Keypair's signTransactionBlock
             const signature = await this.signer.signTransactionBlock(serializedTx);
             
+            // Get transaction bytes for execution
+            const txBytes = await tx.serialize();
+            
             const response = await this.client.executeTransactionBlock({
-              // @ts-ignore - Compatibility with different executeTransactionBlock APIs
-              transactionBlock: tx,
+              transactionBlock: txBytes,
               signature: signature.signature,
               requestType: 'WaitForLocalExecution',
               options: {
@@ -232,14 +236,18 @@ export class SuiNftStorage {
     return await this.executeWithRetry(
       async () => {
         try {
-          // @ts-ignore - Compatibility with different TransactionBlock APIs
+          // Build and serialize transaction in a way that's compatible with different API versions
           const serializedTx = await tx.build({ client: this.client });
-          // @ts-ignore - Type compatibility with Signer interface
+          
+          // Sign the transaction block
+          // @ts-ignore - Type compatibility with Ed25519Keypair's signTransactionBlock
           const signature = await this.signer.signTransactionBlock(serializedTx);
           
+          // Get transaction bytes for execution
+          const txBytes = await tx.serialize();
+          
           const response = await this.client.executeTransactionBlock({
-            // @ts-ignore - Compatibility with different executeTransactionBlock APIs
-            transactionBlock: tx,
+            transactionBlock: txBytes,
             signature: signature.signature,
             requestType: 'WaitForLocalExecution',
             options: {

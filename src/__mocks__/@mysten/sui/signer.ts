@@ -1,24 +1,23 @@
 import { IntentScope, Signer } from '@mysten/sui.js/cryptography';
 import { Ed25519PublicKey } from './cryptography/ed25519';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { TransactionEffects } from '@mysten/sui.js/client';
+import { SuiClient, TransactionEffects } from '@mysten/sui.js/client';
 
+// Define a more complete type that better matches what the library expects
 export class SignerWithProvider implements Signer {
   #publicKey: Ed25519PublicKey;
+  // Add reference to client for connect() method
+  private client: SuiClient | null = null;
 
   constructor() {
     this.#publicKey = new Ed25519PublicKey(new Uint8Array([1, 2, 3, 4]));
   }
 
-  // @ts-ignore - Interface compatibility issue
-  async signData(data: Uint8Array): Promise<{ signature: string; bytes: string }> {
-    return {
-      signature: Buffer.from([1, 2, 3, 4]).toString('base64'),
-      bytes: Buffer.from(data).toString('base64')
-    };
+  async signData(data: Uint8Array): Promise<Uint8Array> {
+    // Mock implementation returns a fixed signature
+    return new Uint8Array([1, 2, 3, 4]);
   }
 
-  // @ts-ignore - Interface compatibility issue
   async signTransaction(transaction: TransactionBlock): Promise<{ signature: string; bytes: string }> {
     return {
       signature: 'mock-signature',
@@ -26,20 +25,14 @@ export class SignerWithProvider implements Signer {
     };
   }
 
-  // @ts-ignore - Interface compatibility issue
-  async signPersonalMessage(message: Uint8Array): Promise<{ signature: string; bytes: string }> {
-    return {
-      signature: 'mock-signature',
-      bytes: Buffer.from(message).toString('base64')
-    };
+  async signPersonalMessage(message: Uint8Array): Promise<Uint8Array> {
+    // Mock implementation returns a fixed signature
+    return new Uint8Array([1, 2, 3, 4]);
   }
 
-  // @ts-ignore - Interface compatibility issue
-  async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<{ signature: string; bytes: string }> {
-    return {
-      signature: Buffer.from([1, 2, 3, 4]).toString('base64'),
-      bytes: Buffer.from(message).toString('base64')
-    };
+  async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<Uint8Array> {
+    // Mock implementation returns a fixed signature
+    return new Uint8Array([1, 2, 3, 4]);
   }
 
   getKeyScheme(): 'ED25519' | 'Secp256k1' {
@@ -54,25 +47,27 @@ export class SignerWithProvider implements Signer {
     return this.#publicKey;
   }
 
-  // @ts-ignore - Interface compatibility issue
-  connect(client: any): SignerWithProvider {
+  // Improved connect method with proper typing
+  connect(client: SuiClient): SignerWithProvider {
+    this.client = client;
     return this;
   }
   
-  // @ts-ignore - Interface compatibility issue
-  async signTransactionBlock(transactionBlock: Uint8Array): Promise<{ signature: string; bytes: string }> {
-    return {
-      signature: Buffer.from([1, 2, 3, 4]).toString('base64'),
-      bytes: Buffer.from(transactionBlock).toString('base64')
-    };
+  async signTransactionBlock(transactionBlock: Uint8Array): Promise<Uint8Array> {
+    // Mock implementation returns a fixed signature
+    return new Uint8Array([1, 2, 3, 4]);
   }
 
+  // Properly typed options parameter
   async signAndExecuteTransactionBlock(
     tx: TransactionBlock,
     options?: { 
       requestType?: 'WaitForLocalExecution'; 
       showEffects?: boolean; 
-      showObjectChanges?: boolean 
+      showObjectChanges?: boolean;
+      showEvents?: boolean;
+      showContent?: boolean;
+      showBalanceChanges?: boolean;
     }
   ): Promise<{
     digest: string;
