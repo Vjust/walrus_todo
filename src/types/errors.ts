@@ -1,0 +1,284 @@
+/**
+ * Base error class for all Walrus errors
+ * Ensures consistent error handling and logging
+ */
+export class WalrusError extends Error {
+  public readonly code: string;
+  public readonly publicMessage: string;
+  public readonly timestamp: string;
+  public readonly shouldRetry: boolean;
+  public readonly cause?: Error;
+
+  constructor(
+    message: string,
+    options: {
+      code?: string;
+      publicMessage?: string;
+      shouldRetry?: boolean;
+      cause?: Error;
+    } = {}
+  ) {
+    const {
+      code = 'WALRUS_ERROR',
+      publicMessage = 'An unexpected error occurred',
+      shouldRetry = false,
+      cause
+    } = options;
+
+    super(message);
+    if (cause) {
+      Object.defineProperty(this, 'cause', {
+        value: cause,
+        enumerable: false
+      });
+    }
+    
+    this.name = this.constructor.name;
+    this.code = code;
+    this.publicMessage = publicMessage;
+    this.timestamp = new Date().toISOString();
+    this.shouldRetry = shouldRetry;
+
+    // Ensure proper stack trace
+    Error.captureStackTrace(this, this.constructor);
+  }
+
+  /**
+   * Get a safe error response suitable for client/user consumption
+   */
+  public toPublicError(): PublicErrorResponse {
+    return {
+      code: this.code,
+      message: this.publicMessage,
+      timestamp: this.timestamp,
+      shouldRetry: this.shouldRetry
+    };
+  }
+
+  /**
+   * Get full error details for logging (internal use only)
+   */
+  public toLogEntry(): ErrorLogEntry {
+    return {
+      name: this.name,
+      code: this.code,
+      message: this.message,
+      publicMessage: this.publicMessage,
+      timestamp: this.timestamp,
+      shouldRetry: this.shouldRetry,
+      stack: this.stack,
+      cause: this.cause instanceof Error ? this.cause.message : String(this.cause)
+    };
+  }
+}
+
+/**
+ * Network-related errors
+ */
+export class NetworkError extends WalrusError {
+  constructor(
+    message: string,
+    options: Partial<NetworkErrorOptions> = {}
+  ) {
+    const {
+      network = 'unknown',
+      operation = 'unknown',
+      recoverable = true,
+      ...rest
+    } = options;
+
+    super(message, {
+      code: `NETWORK_${operation.toUpperCase()}_ERROR`,
+      publicMessage: 'A network operation failed',
+      shouldRetry: recoverable,
+      ...rest
+    });
+
+    // Hide sensitive network details from stack trace
+    Object.defineProperty(this, 'network', {
+      value: network,
+      enumerable: false
+    });
+  }
+}
+
+/**
+ * Blockchain-related errors
+ */
+export class BlockchainError extends WalrusError {
+  constructor(
+    message: string,
+    options: Partial<BlockchainErrorOptions> = {}
+  ) {
+    const {
+      operation = 'unknown',
+      transactionId,
+      recoverable = false,
+      ...rest
+    } = options;
+
+    super(message, {
+      code: `BLOCKCHAIN_${operation.toUpperCase()}_ERROR`,
+      publicMessage: 'A blockchain operation failed',
+      shouldRetry: recoverable,
+      ...rest
+    });
+
+    // Hide sensitive blockchain details from stack trace
+    if (transactionId) {
+      Object.defineProperty(this, 'transactionId', {
+        value: transactionId,
+        enumerable: false
+      });
+    }
+  }
+}
+
+/**
+ * Storage-related errors
+ */
+export class StorageError extends WalrusError {
+  constructor(
+    message: string,
+    options: Partial<StorageErrorOptions> = {}
+  ) {
+    const {
+      operation = 'unknown',
+      blobId,
+      recoverable = true,
+      ...rest
+    } = options;
+
+    super(message, {
+      code: `STORAGE_${operation.toUpperCase()}_ERROR`,
+      publicMessage: 'A storage operation failed',
+      shouldRetry: recoverable,
+      ...rest
+    });
+
+    // Hide sensitive storage details from stack trace
+    if (blobId) {
+      Object.defineProperty(this, 'blobId', {
+        value: blobId,
+        enumerable: false
+      });
+    }
+  }
+}
+
+/**
+ * Validation-related errors
+ */
+export class ValidationError extends WalrusError {
+  constructor(
+    message: string,
+    options: Partial<ValidationErrorOptions> = {}
+  ) {
+    const {
+      field,
+      value,
+      constraint,
+      ...rest
+    } = options;
+
+    // Ensure error message doesn't contain sensitive data
+    const publicMessage = field ? 
+      `Invalid value for ${field}` : 
+      'Validation failed';
+
+    super(message, {
+      code: 'VALIDATION_ERROR',
+      publicMessage,
+      shouldRetry: false,
+      ...rest
+    });
+
+    // Hide validation details from stack trace
+    Object.defineProperties(this, {
+      field: { value: field, enumerable: false },
+      constraint: { value: constraint, enumerable: false }
+    });
+  }
+}
+
+/**
+ * Authorization-related errors
+ */
+export class AuthorizationError extends WalrusError {
+  constructor(
+    message: string,
+    options: Partial<AuthErrorOptions> = {}
+  ) {
+    const {
+      operation = 'unknown',
+      resource,
+      ...rest
+    } = options;
+
+    super(message, {
+      code: 'AUTHORIZATION_ERROR',
+      publicMessage: 'Not authorized to perform this operation',
+      shouldRetry: false,
+      ...rest
+    });
+
+    // Hide sensitive auth details from stack trace
+    if (resource) {
+      Object.defineProperty(this, 'resource', {
+        value: resource,
+        enumerable: false
+      });
+    }
+  }
+}
+
+// Error response safe for client consumption
+interface PublicErrorResponse {
+  code: string;
+  message: string;
+  timestamp: string;
+  shouldRetry: boolean;
+}
+
+// Full error details for logging
+interface ErrorLogEntry extends PublicErrorResponse {
+  name: string;
+  publicMessage: string;
+  stack?: string;
+  cause?: string;
+}
+
+// Error options interfaces
+interface NetworkErrorOptions {
+  network: string;
+  operation: string;
+  recoverable: boolean;
+  cause?: Error;
+}
+
+interface BlockchainErrorOptions {
+  operation: string;
+  transactionId?: string;
+  recoverable: boolean;
+  cause?: Error;
+}
+
+interface StorageErrorOptions {
+  operation: string;
+  blobId?: string;
+  recoverable: boolean;
+  cause?: Error;
+}
+
+interface ValidationErrorOptions {
+  field?: string;
+  value?: unknown;
+  constraint?: string;
+  cause?: Error;
+}
+
+interface AuthErrorOptions {
+  operation: string;
+  resource?: string;
+  cause?: Error;
+}

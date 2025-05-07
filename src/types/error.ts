@@ -50,3 +50,10 @@ export class CLIError extends Error {
     this.name = 'CLIError';
   }
 }
+
+export class WalrusError extends CLIError {
+  constructor(message: string, code: string = 'WALRUS_ERROR') {
+    super(message, code);
+    this.name = 'WalrusError';
+  }
+}

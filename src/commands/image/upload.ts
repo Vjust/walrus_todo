@@ -62,7 +62,7 @@ export default class UploadCommand extends Command {
 
       // Upload image
       this.log('Uploading image to Walrus...');
-      const imageUrl = await walrusImageStorage.uploadCustomTodoImage(path.resolve(process.cwd(), flags.image), todoItem.title, todoItem.completed);
+      const imageUrl = await walrusImageStorage.uploadTodoImage(path.resolve(process.cwd(), flags.image), todoItem.title, todoItem.completed);
 
       // Extract blob ID from URL
       const blobId = imageUrl.split('/').pop() || '';

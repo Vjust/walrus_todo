@@ -1,13 +1,12 @@
 import { Command, Flags } from '@oclif/core';
-import { SuiClient } from '@mysten/sui/client';
-import { Transaction } from '@mysten/sui/transactions';  // Corrected to 'Transaction' as suggested by error
+import { SuiClient } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { bcs } from '@mysten/sui.js/bcs';
 import * as fs from 'fs';
-// Removed unused path import
 import { KeystoreSigner } from '../utils/sui-keystore';
-import chalk from 'chalk';  // Updated to import style for consistency
+import chalk from 'chalk';
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
-import { bcs } from '@mysten/bcs';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 
 export default class CreateCommand extends Command {
@@ -94,15 +93,18 @@ export default class CreateCommand extends Command {
       }
 
       // Create todo NFT transaction with correct TransactionBlock
-      const txb = new Transaction();  // Changed to use 'Transaction' value
+      const txb = new TransactionBlock();
+      const args = [
+        txb.pure(isPrivate ? 'Untitled' : title),
+        txb.pure(description),
+        txb.pure(blobId)
+      ];
       txb.moveCall({
         target: `${config.lastDeployment.packageId}::todo_nft::create_todo`,
-        arguments: [txb.pure(bcs.string().serialize(isPrivate ? 'Untitled' : title).toBytes()), txb.pure(bcs.string().serialize(description).toBytes()), txb.pure(bcs.string().serialize(blobId).toBytes())],
+        arguments: args
       });
-      const tx = await suiClient.signAndExecuteTransaction({
-        signer: new KeystoreSigner(suiClient),
-        transaction: txb,
-      });
+      const signer = new KeystoreSigner(suiClient);
+      const tx = await signer.signAndExecuteTransactionBlock(txb);
       if (tx.effects?.status.status !== 'success') {  // Add optional chaining for null check
         throw new CLIError('Transaction failed', 'TX_FAILED');
       }

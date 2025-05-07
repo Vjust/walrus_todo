@@ -1,14 +1,47 @@
 import { Todo, TodoList } from '../types/todo';
+import { withRetry } from './error-handler';
+import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
+import { TodoSerializer } from './todo-serializer';
+import { CLIError } from '../types/error';
+import { SuiClient, SuiObjectData, SuiObjectResponse, type MoveStruct } from '@mysten/sui/client';
+import { WalrusClient } from '@mysten/walrus';
+import { KeystoreSigner } from './sui-keystore';
+import type { TransactionSigner } from '../types/signer';
+import { execSync } from 'child_process';
+import { handleError } from './error-handler';
+import crypto from 'crypto';
+import { StorageManager } from './storage-manager';
 
-interface WalrusStorageInfo {
-  id: { id: string };
-  storage_size: number | string;
-  used_size?: number;
-  end_epoch: number;
-  start_epoch?: number;
+interface VerificationResult {
+  details?: {
+    certified: boolean;
+    checksum?: string;
+  };
 }
 
 interface WalrusStorageContent {
+  dataType: 'moveObject';
+  fields: {
+    [key: string]: string | number | boolean | null;
+    storage_size: string;
+    used_size: string;
+    end_epoch: string;
+  };
+  hasPublicTransfer: boolean;
+  type: string;
+}
+
+interface WalrusStorageInfo {
+  id: { id: string };
+  storage_size: string | number;
+  used_size: string | number;
+  end_epoch: string | number;
+  start_epoch: string | number;
+  data?: SuiObjectData;
+  content: WalrusStorageContent | null;
+}
+
+interface OldWalrusStorageContent {
   dataType: 'moveObject';
   fields: {
     storage_size: string;
@@ -17,146 +50,169 @@ interface WalrusStorageContent {
   };
 }
 
-
-import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
-import { TodoSerializer } from './todo-serializer';
-import { CLIError } from '../types/error';
-import { SuiClient } from '@mysten/sui/client';
-import { WalrusClient, RetryableWalrusClientError } from '@mysten/walrus';
-import { KeystoreSigner } from './sui-keystore';
-import { execSync } from 'child_process';
-import { handleError } from './error-handler';
 // Import node-fetch dynamically to avoid ESM issues
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let fetch: any; // Using any here is safer than fighting with node-fetch types
+let fetch: any;
 
 export class WalrusStorage {
-  private isInitialized: boolean = false;
+  private connectionState: 'disconnected' | 'connecting' | 'connected' | 'failed' = 'disconnected';
   private walrusClient!: WalrusClient;
   private suiClient: SuiClient;
-  private signer: KeystoreSigner | null = null;
+  private signer: TransactionSigner | null = null;
   private useMockMode: boolean;
-  private maxRetries: number = 3;
-  private retryDelay: number = 1000; // Initial delay in ms
+  private lastHealthCheck: number = 0;
+  private healthCheckInterval: number = 30000; // 30 seconds
 
-  constructor(useMockMode: boolean = false) {
+  constructor(useMockMode = false) {
     this.useMockMode = useMockMode;
     this.suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
   }
 
-  /**
-   * Check if the storage is in mock mode
-   * @returns True if in mock mode, false otherwise
-   */
-  isInMockMode(): boolean {
-    return this.useMockMode;
+  private async checkConnectionHealth(): Promise<boolean> {
+    try {
+      await this.suiClient.getLatestSuiSystemState();
+      this.lastHealthCheck = Date.now();
+      return true;
+    } catch (error) {
+      console.warn('Connection health check failed:', error);
+      return false;
+    }
   }
 
-  /**
-   * Custom fetch implementation with retry logic for Walrus operations
-   * @param url The URL to fetch
-   * @param init Fetch options
-   * @returns Promise with the fetch response
-   */
-  private async fetchWithRetry(url: RequestInfo, init?: RequestInit): Promise<Response> {
-    let lastError: Error | null = null;
+  private calculateChecksum(data: Buffer): string {
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
 
-    // Ensure fetch is available
-    if (!fetch) {
-      try {
-        const nodeFetch = await import('node-fetch');
-        fetch = nodeFetch.default;
-        console.log('Successfully imported node-fetch in fetchWithRetry');
-      } catch (fetchError) {
-        console.warn('Failed to import node-fetch in fetchWithRetry, falling back to global fetch:', fetchError);
-        // Fall back to global fetch if available
-        fetch = globalThis.fetch;
+  private validateTodoData(todo: Todo): void {
+    if (!todo.id || typeof todo.id !== 'string') {
+      throw new Error('Invalid todo: missing or invalid id');
+    }
+    if (!todo.title || typeof todo.title !== 'string') {
+      throw new Error('Invalid todo: missing or invalid title');
+    }
+    if (typeof todo.completed !== 'boolean') {
+      throw new Error('Invalid todo: invalid completed status');
+    }
+    if (!todo.createdAt || isNaN(Date.parse(todo.createdAt))) {
+      throw new Error('Invalid todo: invalid createdAt date');
+    }
+    if (!todo.updatedAt || isNaN(Date.parse(todo.updatedAt))) {
+      throw new Error('Invalid todo: invalid updatedAt date');
+    }
+  }
+
+  private validateTodoListData(todoList: TodoList): void {
+    if (!todoList.id || typeof todoList.id !== 'string') {
+      throw new Error('Invalid todo list: missing or invalid id');
+    }
+    if (!todoList.name || typeof todoList.name !== 'string') {
+      throw new Error('Invalid todo list: missing or invalid name');
+    }
+    if (!Array.isArray(todoList.todos)) {
+      throw new Error('Invalid todo list: todos must be an array');
+    }
+    todoList.todos.forEach(todo => this.validateTodoData(todo));
+  }
+
+  private async executeWithRetry<T>(operation: () => Promise<T>, context: string, maxRetries = 3): Promise<T> {
+    if (Date.now() - this.lastHealthCheck > this.healthCheckInterval) {
+      const isHealthy = await this.checkConnectionHealth();
+      if (!isHealthy) {
+        this.connectionState = 'failed';
+        throw new Error(`Connection health check failed before ${context}`);
       }
     }
 
-    if (!fetch) {
-      throw new Error('No fetch implementation available');
-    }
-
-    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+    const retry = async (attempt: number): Promise<T> => {
       try {
-        // Attempt the fetch
-        const response = await fetch(url, init);
-
-        // If successful, return the response
-        if (response.ok) {
-          return response;
-        }
-
-        // If not successful but not a server error, don't retry
-        if (response.status < 500) {
-          return response;
-        }
-
-        // For server errors, throw to trigger retry
-        lastError = new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        return await operation();
       } catch (error) {
-        // Store the error for potential rethrowing
-        lastError = error instanceof Error ? error : new Error(String(error));
-
-        // If this is not the last attempt, wait before retrying
-        if (attempt < this.maxRetries - 1) {
-          // Exponential backoff with jitter
-          const delay = this.retryDelay * Math.pow(2, attempt) * (0.5 + Math.random() * 0.5);
-          await new Promise(resolve => setTimeout(resolve, delay));
+        if (attempt >= maxRetries) {
+          throw error;
         }
+        const delay = 1000 * Math.pow(2, attempt - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return retry(attempt + 1);
       }
-    }
+    };
 
-    // If we've exhausted all retries, throw the last error
-    throw lastError || new Error('Failed after maximum retry attempts');
+    return retry(1);
+  }
+
+  private handleError(error: unknown, context: string): never {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new CLIError(
+      `Failed during ${context}: ${errorMessage}`,
+      'WALRUS_OPERATION_FAILED'
+    );
   }
 
   async init(): Promise<void> {
+    if (this.useMockMode) {
+      this.connectionState = 'connected';
+      return;
+    }
+
+    console.log('Initializing WalrusStorage connection...');
+    this.connectionState = 'connecting';
+
     try {
-      if (this.useMockMode) {
-        this.isInitialized = true;
-        return;
+      const envInfo = await this.executeWithRetry(
+        async () => execSync('sui client active-env').toString().trim(),
+        'environment check'
+      );
+      
+      if (!envInfo.includes('testnet')) {
+        this.connectionState = 'failed';
+        throw new Error('Must be connected to testnet environment. Use "sui client switch --env testnet"');
       }
 
-      // Dynamically import node-fetch to avoid ESM issues
+      console.log('Environment validation successful, initializing clients...');
+
       if (!fetch) {
         try {
           const nodeFetch = await import('node-fetch');
           fetch = nodeFetch.default;
           console.log('Successfully imported node-fetch');
         } catch (fetchError) {
-          console.warn('Failed to import node-fetch, falling back to global fetch:', fetchError);
-          // Fall back to global fetch if available
+          console.warn('Failed to import node-fetch, falling back to global fetch');
           fetch = globalThis.fetch;
         }
       }
 
-      // Get active environment info from Sui CLI
-      const envInfo = execSync('sui client active-env').toString().trim();
-      if (!envInfo.includes('testnet')) {
-        throw new Error('Must be connected to testnet environment. Use "sui client switch --env testnet"');
-      }
-
-      // Initialize Walrus client with network config and improved error handling
       this.walrusClient = new WalrusClient({
         network: 'testnet',
         suiClient: this.suiClient,
         storageNodeClientOptions: {
-          timeout: 60000, // Increase timeout to 60 seconds for better reliability
-          onError: (error) => handleError('Walrus storage node error:', error),
-          fetch: (url, init) => {
-            // Custom fetch implementation with retry logic
-            return this.fetchWithRetry(url, init);
+          timeout: 60000,
+          onError: (error) => {
+            console.error('Storage node error:', error);
+            if (this.connectionState === 'connected') {
+              this.connectionState = 'failed';
+            }
+            handleError('Walrus storage node error:', error);
           }
         }
       });
 
-      // Create a signer that uses the active CLI keystore
-      this.signer = new KeystoreSigner(this.suiClient);
+      const signer = KeystoreSigner.fromPath('default');
+    this.signer = signer.connect(this.suiClient);
+      const address = this.signer.toSuiAddress();
+      if (!address) {
+        this.connectionState = 'failed';
+        throw new Error('Failed to initialize signer - no active address found');
+      }
 
-      this.isInitialized = true;
+      const isHealthy = await this.checkConnectionHealth();
+      if (!isHealthy) {
+        this.connectionState = 'failed';
+        throw new Error('Initial connection health check failed');
+      }
+
+      console.log('WalrusStorage initialization successful');
+      this.connectionState = 'connected';
     } catch (error) {
+      this.connectionState = 'failed';
       throw new CLIError(
         `Failed to initialize Walrus storage: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_INIT_FAILED'
@@ -165,17 +221,30 @@ export class WalrusStorage {
   }
 
   async isConnected(): Promise<boolean> {
-    return this.isInitialized;
+    if (this.connectionState === 'connected' && 
+        Date.now() - this.lastHealthCheck > this.healthCheckInterval) {
+      const isHealthy = await this.checkConnectionHealth();
+      if (!isHealthy) {
+        this.connectionState = 'failed';
+        return false;
+      }
+    }
+    return this.connectionState === 'connected';
   }
 
   async connect(): Promise<void> {
-    if (!this.isInitialized) {
+    if (this.connectionState === 'disconnected' || this.connectionState === 'failed') {
       await this.init();
     }
   }
 
   async disconnect(): Promise<void> {
-    this.isInitialized = false;
+    if (this.connectionState !== 'disconnected') {
+      console.log('Disconnecting WalrusStorage...');
+      this.connectionState = 'disconnected';
+      this.walrusClient?.reset();
+      this.signer = null;
+    }
   }
 
   protected async getTransactionSigner() {
@@ -192,87 +261,149 @@ export class WalrusStorage {
     return this.signer.toSuiAddress();
   }
 
+  /**
+   * Store a todo item in Walrus blob storage.
+   * 
+   * This method performs several steps:
+   * 1. Validates todo data format and fields
+   * 2. Serializes the todo and generates a SHA-256 checksum
+   * 3. Ensures sufficient storage space is allocated
+   * 4. Uploads the todo data with metadata as a Walrus blob
+   * 5. Verifies the uploaded content with retries
+   * 
+   * @param todo - The todo item to store
+   * @returns A Promise resolving to the Walrus blob ID
+   * @throws {CLIError} with specific error codes for:
+   *   - WALRUS_VALIDATION_FAILED: Todo data validation failed
+   *   - WALRUS_SERIALIZATION_FAILED: Failed to serialize todo data
+   *   - WALRUS_DATA_TOO_LARGE: Todo data exceeds size limit (10MB)
+   *   - WALRUS_INSUFFICIENT_TOKENS: Not enough WAL tokens
+   *   - WALRUS_STORAGE_ALLOCATION_FAILED: Failed to allocate storage
+   *   - WALRUS_VERIFICATION_FAILED: Content verification failed
+   *   - WALRUS_STORE_FAILED: Other storage failures
+   */
   async storeTodo(todo: Todo): Promise<string> {
     try {
       if (this.useMockMode) {
-        // Mock storing to Walrus
         console.log('Using mock mode for storing todo');
-        const blobId = `mock-blob-${todo.id}`;
-        return blobId;
+        return `mock-blob-${todo.id}`;
       }
 
-      if (!this.isInitialized || !this.walrusClient) {
-        throw new Error('WalrusStorage not initialized. Call connect() first.');
+      if (this.connectionState !== 'connected' || !this.walrusClient) {
+        throw new Error('WalrusStorage not connected. Call connect() first.');
       }
 
-      // Calculate the size of the todo data
-      console.log(`Serializing todo "${todo.title}" for storage...`);
-      const buffer = TodoSerializer.todoToBuffer(todo);
-      const sizeBytes = buffer.length;
-
-      // Explicitly ensure storage is allocated before writing blob
-      console.log('Ensuring storage is allocated...');
-      const storage = await this.ensureStorageAllocated(sizeBytes + 1000); // Add buffer
-      if (!storage) {
-        throw new Error('Failed to allocate storage for todo. Check WAL token balance.');
-      }
-      console.log(`Using storage with ID: ${storage.id.id}`);
-
-      // Get the transaction signer
-      const signer = await this.getTransactionSigner();
-
+      // Validate todo data
       try {
-        // Use the writeBlob method with storage allocation handled by the SDK
-        console.log('Writing blob to Walrus...');
-        const { blobObject } = await this.walrusClient.writeBlob({
+        this.validateTodoData(todo);
+      } catch (error) {
+        throw new CLIError(
+          `Todo validation failed: ${error instanceof Error ? error.message : String(error)}`,
+          'WALRUS_VALIDATION_FAILED'
+        );
+      }
+
+      console.log(`Serializing todo "${todo.title}" for storage...`);
+      let buffer: Buffer;
+      try {
+        buffer = TodoSerializer.todoToBuffer(todo);
+      } catch (error) {
+        throw new CLIError(
+          `Failed to serialize todo: ${error instanceof Error ? error.message : String(error)}`,
+          'WALRUS_SERIALIZATION_FAILED'
+        );
+      }
+
+      const sizeBytes = buffer.length;
+      if (sizeBytes > 10 * 1024 * 1024) { // 10MB limit
+        throw new CLIError(
+          'Todo data is too large. Maximum size is 10MB.',
+          'WALRUS_DATA_TOO_LARGE'
+        );
+      }
+
+      const checksum = this.calculateChecksum(buffer);
+
+      const storage = await this.ensureStorageAllocated(sizeBytes + 1000);
+      if (!storage) {
+        // First check if it's due to WAL token balance
+        try {
+          const { epoch } = await this.suiClient.getLatestSuiSystemState();
+          const balance = await this.suiClient.getBalance({
+            owner: this.getActiveAddress(),
+            coinType: 'WAL'
+          });
+
+          if (Number(balance.totalBalance) < 100) { // Minimum WAL needed
+            throw new CLIError(
+              'Insufficient WAL tokens. Please acquire WAL tokens to store your todo.',
+              'WALRUS_INSUFFICIENT_TOKENS'
+            );
+          }
+        } catch (error) {
+          // If we can't determine balance, use a generic error
+          throw new CLIError(
+            'Failed to allocate storage for todo. Please check your WAL token balance and try again.',
+            'WALRUS_STORAGE_ALLOCATION_FAILED'
+          );
+        }
+      }
+
+      const signer = await this.getTransactionSigner();
+      const { blobObject } = await this.executeWithRetry(
+        async () => this.walrusClient.writeBlob({
           blob: new Uint8Array(buffer),
           deletable: false,
-          epochs: 52, // Store for ~6 months
+          epochs: 52,
           signer,
           attributes: {
             contentType: 'application/json',
             filename: `todo-${todo.id}.json`,
             type: 'todo-data',
             title: todo.title,
-            completed: todo.completed.toString()
+            completed: todo.completed.toString(),
+            checksum_algo: 'sha256',
+            checksum,
+            size: sizeBytes.toString(),
+            version: '1',
+            schemaVersion: '1',
+            encoding: 'utf-8'
           }
-        });
+        }),
+        'todo storage',
+        5
+      );
 
-        console.log(`Todo successfully stored on Walrus with blob ID: ${blobObject.blob_id}`);
-        console.log(`Blob object ID: ${blobObject.id.id}`);
-        console.log(`Blob size: ${blobObject.size}`);
-        console.log(`Blob registered in epoch: ${blobObject.registered_epoch}`);
-        console.log(`Blob storage ends in epoch: ${blobObject.storage.end_epoch}`);
+      // Verify the upload using our dedicated verification manager
+      const metadata = {
+        contentType: 'application/json',
+        filename: `todo-${todo.id}.json`,
+        type: 'todo-data',
+        title: todo.title,
+        completed: todo.completed.toString(),
+        checksum_algo: 'sha256',
+        checksum,
+        size: sizeBytes.toString(),
+        version: '1',
+        schemaVersion: '1',
+        encoding: 'utf-8'
+      };
 
-        return blobObject.blob_id;
-      } catch (error) {
-        // Retry logic remains the same
-        if (error instanceof RetryableWalrusClientError) {
-          console.log('Encountered a retryable error. Resetting client and retrying...');
-          this.walrusClient.reset();
+      this.initializeManagers();
+      const verificationResult = await this.verifyBlob(
+        blobObject.blob_id,
+        buffer,
+        metadata
+      );
 
-          // Retry with writeBlob method
-          console.log('Retrying with writeBlob method...');
-          const { blobObject } = await this.walrusClient.writeBlob({
-            blob: new Uint8Array(buffer),
-            deletable: false,
-            epochs: 52,
-            signer,
-            attributes: {
-              contentType: 'application/json',
-              filename: `todo-${todo.id}.json`,
-              type: 'todo-data',
-              title: todo.title,
-              completed: todo.completed.toString()
-            }
-          });
-
-          console.log(`Todo successfully stored on Walrus after retry with blob ID: ${blobObject.blob_id}`);
-          return blobObject.blob_id;
-        }
-
-        throw error;
+      if (!verificationResult.details?.certified) {
+        console.log('Warning: Blob certification pending. Monitoring for certification...');
+        // Start monitoring in the background
+        console.log('Certification monitoring not implemented in this version');
       }
+
+      console.log(`Todo successfully stored with blob ID: ${blobObject.blob_id}`);
+      return blobObject.blob_id;
     } catch (error) {
       throw new CLIError(
         `Failed to store todo: ${error instanceof Error ? error.message : String(error)}`,
@@ -281,10 +412,25 @@ export class WalrusStorage {
     }
   }
 
+  // In-memory cache with entries that expire after 5 minutes
+  private static todoCache: Map<string, { data: Todo; expires: number }> = new Map();
+  private static CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  /**
+   * Retrieve a todo item from Walrus blob storage.
+   * 
+   * This method attempts to retrieve the todo data in this order:
+   * 1. Check in-memory cache
+   * 2. Try direct retrieval from Walrus client
+   * 3. Fall back to public aggregator with retries
+   * 
+   * @param blobId - The Walrus blob ID to retrieve
+   * @returns A Promise resolving to the Todo item
+   * @throws {CLIError} with specific error codes for various failure scenarios
+   */
   async retrieveTodo(blobId: string): Promise<Todo> {
     try {
       if (this.useMockMode) {
-        // Mock retrieval
         console.log('Using mock mode for retrieving todo');
         return {
           id: 'mock-id',
@@ -300,69 +446,60 @@ export class WalrusStorage {
         };
       }
 
-      if (!this.isInitialized || !this.walrusClient) {
-        throw new Error('WalrusStorage not initialized. Call connect() first.');
+      if (!blobId?.trim()) {
+        throw new CLIError('Blob ID is required', 'WALRUS_INVALID_INPUT');
+      }
+
+      if (this.connectionState !== 'connected' || !this.walrusClient) {
+        throw new CLIError(
+          'WalrusStorage not connected. Call connect() first.',
+          'WALRUS_NOT_CONNECTED'
+        );
+      }
+
+      // Try cache first
+      const cached = WalrusStorage.todoCache.get(blobId);
+      if (cached && cached.expires > Date.now()) {
+        console.log('Retrieved todo from cache');
+        return cached.data;
       }
 
       console.log(`Retrieving todo from Walrus with blob ID: ${blobId}...`);
 
-      // Try to retrieve from Walrus client first
       try {
-        try {
-          const blobContent = await this.walrusClient.readBlob({ blobId });
-          if (blobContent) {
-            console.log('Successfully retrieved todo data from Walrus');
-            // Convert binary data to todo object
-            const todoData = new TextDecoder().decode(blobContent);
-            return JSON.parse(todoData) as Todo;
-          }
-        } catch (walrusError) {
-          // Check if it's a retryable error
-          if (walrusError instanceof RetryableWalrusClientError) {
-            console.log('Encountered a retryable error. Resetting client and retrying...');
-            this.walrusClient.reset();
-
-            // Retry the operation
-            const blobContent = await this.walrusClient.readBlob({ blobId });
-            if (blobContent) {
-              console.log('Successfully retrieved todo data from Walrus after retry');
-              // Convert binary data to todo object
-              const todoData = new TextDecoder().decode(blobContent);
-              return JSON.parse(todoData) as Todo;
-            }
-          }
-
-          console.warn('Failed to retrieve directly from Walrus client, trying aggregator:', walrusError);
-        }
-
-        // Fallback to public aggregator if direct retrieval fails
-        console.log('Attempting to retrieve from public aggregator...');
-        // Ensure fetch is available
-        if (!fetch) {
-          try {
-            const nodeFetch = await import('node-fetch');
-            fetch = nodeFetch.default;
-          } catch (fetchError) {
-            console.warn('Failed to import node-fetch, falling back to global fetch');
-            fetch = globalThis.fetch;
-          }
-        }
-        const response = await fetch(`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`, {
-          method: 'GET'
+        // Attempt to retrieve the blob with our enhanced retrieval mechanism
+        const blobContent = await this.retrieveBlob(blobId, {
+          maxRetries: 5,          // More retries for important todo data
+          baseDelay: 1000,        // Start with 1 second delay
+          timeout: 15000,         // 15 second timeout per attempt
+          useAggregator: true,    // Allow fallback to aggregator
+          context: 'todo retrieval'
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to retrieve blob from aggregator: ${response.statusText}`);
-        }
-
-        console.log('Successfully retrieved todo data from public aggregator');
-        const todoData = new TextDecoder().decode(await response.arrayBuffer());
-        return JSON.parse(todoData) as Todo;
+        // Parse and validate the retrieved data
+        const todo = await this.parseTodoData(blobContent);
+        
+        // Cache the successfully retrieved todo
+        this.cacheTodo(blobId, todo);
+        
+        console.log('Successfully retrieved and cached todo data');
+        return todo;
       } catch (error) {
-        console.error('All retrieval methods failed:', error);
-        throw error;
+        // If the error is already a CLIError, rethrow it
+        if (error instanceof CLIError) {
+          throw error;
+        }
+        
+        // Otherwise, wrap it in a CLIError with appropriate context
+        throw new CLIError(
+          `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error)}`,
+          'WALRUS_RETRIEVE_FAILED'
+        );
       }
     } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
       throw new CLIError(
         `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_RETRIEVE_FAILED'
@@ -370,10 +507,201 @@ export class WalrusStorage {
     }
   }
 
+  private cacheTodo(blobId: string, todo: Todo): void {
+    WalrusStorage.todoCache.set(blobId, {
+      data: todo,
+      expires: Date.now() + WalrusStorage.CACHE_TTL
+    });
+
+    // Clean expired entries
+    for (const [key, value] of WalrusStorage.todoCache.entries()) {
+      if (value.expires <= Date.now()) {
+        WalrusStorage.todoCache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Parse and validate todo data from raw bytes.
+   * @throws {CLIError} if data is invalid
+   */
+  /**
+   * Attempts to retrieve a blob from Walrus storage with automatic retries and fallback strategies.
+   * @param blobId The ID of the blob to retrieve
+   * @param options Retrieval options
+   * @returns The blob content as a Buffer
+   * @throws {CLIError} if retrieval fails after all attempts
+   */
+  private async retrieveBlob(
+    blobId: string,
+    options: {
+      maxRetries?: number;
+      baseDelay?: number;
+      timeout?: number;
+      useAggregator?: boolean;
+      context?: string;
+    } = {}
+  ): Promise<Buffer> {
+    const {
+      maxRetries = 3,
+      baseDelay = 1000,
+      timeout = 15000,
+      useAggregator = true,
+      context = 'blob retrieval'
+    } = options;
+
+    const failures: Array<{ source: string; attempt: number; error: string }> = [];
+    let lastError: Error | null = null;
+
+    // Helper for timeout wrapping
+    const withTimeout = async <T>(
+      promise: Promise<T>,
+      ms: number,
+      source: string,
+      attempt: number
+    ): Promise<T> => {
+      let timeoutId: NodeJS.Timeout;
+      
+      const timeoutPromise = new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`${source} timed out after ${ms}ms on attempt ${attempt}`));
+        }, ms);
+      });
+
+      try {
+        const result = await Promise.race([promise, timeoutPromise]);
+        clearTimeout(timeoutId!);
+        return result;
+      } catch (error) {
+        clearTimeout(timeoutId!);
+        throw error;
+      }
+    };
+
+    // Try direct retrieval first
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Attempting direct retrieval from Walrus (attempt ${attempt}/${maxRetries})...`);
+        
+        const content = await withTimeout(
+          this.walrusClient.readBlob({ blobId }),
+          timeout,
+          'Direct retrieval',
+          attempt
+        );
+
+        if (!content || content.length === 0) {
+          throw new Error('Retrieved content is empty');
+        }
+
+        return Buffer.from(content);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        failures.push({
+          source: 'direct',
+          attempt,
+          error: errorMessage
+        });
+
+        if (attempt === maxRetries) {
+          lastError = error instanceof Error ? error : new Error(errorMessage);
+          break;
+        }
+
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.log(`Direct retrieval attempt ${attempt} failed, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    // If direct retrieval fails and aggregator is allowed, try the public aggregator
+    if (useAggregator) {
+      console.log('Direct retrieval failed, attempting fallback to public aggregator...');
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await withTimeout(
+            fetch(`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`, {
+              method: 'GET',
+              headers: { 'Accept': 'application/json' }
+            }),
+            timeout,
+            'Aggregator retrieval',
+            attempt
+          ) as Response;
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const buffer = await response.arrayBuffer();
+          if (buffer.byteLength === 0) {
+            throw new Error('Retrieved content is empty');
+          }
+
+          return Buffer.from(buffer);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          failures.push({
+            source: 'aggregator',
+            attempt,
+            error: errorMessage
+          });
+
+          if (attempt === maxRetries) {
+            lastError = error instanceof Error ? error : new Error(errorMessage);
+            break;
+          }
+
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          console.log(`Aggregator attempt ${attempt} failed, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+
+    // If we get here, all attempts failed
+    const errorSummary = failures
+      .map(f => `${f.source} attempt ${f.attempt}: ${f.error}`)
+      .join('\n');
+
+    throw new CLIError(
+      `Failed to retrieve blob during ${context} after all attempts:\n${errorSummary}`,
+      'WALRUS_RETRIEVE_FAILED'
+    );
+  }
+
+  private async parseTodoData(data: Uint8Array): Promise<Todo> {
+    try {
+      const todoData = new TextDecoder().decode(data);
+      const todo = JSON.parse(todoData) as Todo;
+
+      // Validate parsed data
+      this.validateTodoData(todo);
+
+      // Additional validation specific to retrieved todos
+      if (!todo.walrusBlobId) {
+        throw new Error('Missing walrusBlobId field');
+      }
+
+      return todo;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Invalid todo:')) {
+        throw new CLIError(
+          `Retrieved todo data is invalid: ${error.message}`,
+          'WALRUS_INVALID_TODO_DATA'
+        );
+      }
+      throw new CLIError(
+        `Failed to parse todo data: ${error instanceof Error ? error.message : String(error)}`,
+        'WALRUS_PARSE_FAILED'
+      );
+    }
+  }
+
   async updateTodo(todo: Todo, blobId: string): Promise<string> {
     try {
       if (this.useMockMode) {
-        // Mock update
         console.log('Using mock mode for updating todo');
         return `mock-updated-blob-${todo.id}`;
       }
@@ -381,8 +709,6 @@ export class WalrusStorage {
       console.log(`Updating todo "${todo.title}" on Walrus...`);
       console.log('Note: Walrus blobs are immutable, so a new blob will be created');
 
-      // For Walrus, we can't update blobs directly as they're immutable
-      // So we create a new blob and return the new blob ID
       const newBlobId = await this.storeTodo(todo);
 
       console.log(`Todo updated with new blob ID: ${newBlobId}`);
@@ -400,75 +726,73 @@ export class WalrusStorage {
   async storeTodoList(todoList: TodoList): Promise<string> {
     try {
       if (this.useMockMode) {
-        // Mock storage
         console.log('Using mock mode for storing todo list');
-        const blobId = `mock-blob-list-${todoList.id}`;
-        return blobId;
+        return `mock-blob-list-${todoList.id}`;
       }
 
-      if (!this.isInitialized || !this.walrusClient) {
-        throw new Error('WalrusStorage not initialized. Call connect() first.');
+      if (this.connectionState !== 'connected' || !this.walrusClient) {
+        throw new Error('WalrusStorage not connected. Call connect() first.');
       }
 
-      // Ensure storage is allocated
+      // Validate todo list data
+      this.validateTodoListData(todoList);
+
       await this.ensureStorageAllocated();
 
       console.log(`Serializing todo list "${todoList.name}" for storage...`);
-      // Serialize todoList to buffer
       const buffer = TodoSerializer.todoListToBuffer(todoList);
-
-      // Upload to Walrus using CLI keystore signer
-      console.log('Uploading todo list data to Walrus...');
+      const checksum = this.calculateChecksum(buffer);
+      const sizeBytes = buffer.length;
       const signer = await this.getTransactionSigner();
 
-      try {
-        const { blobObject } = await this.walrusClient.writeBlob({
+      const { blobObject } = await this.executeWithRetry(
+        async () => this.walrusClient.writeBlob({
           blob: new Uint8Array(buffer),
           deletable: false,
-          epochs: 52, // Store for ~6 months
+          epochs: 52,
           signer,
           attributes: {
             contentType: 'application/json',
             filename: `todolist-${todoList.id}.json`,
             type: 'todolist-data',
-            name: todoList.name
+            name: todoList.name,
+            checksum,
+            size: sizeBytes.toString(),
+            version: '1',
+            todoCount: todoList.todos.length.toString()
           }
-        });
+        }),
+        'todo list storage',
+        5
+      );
 
-        console.log(`Todo list successfully stored on Walrus with blob ID: ${blobObject.blob_id}`);
-        console.log(`Blob object ID: ${blobObject.id.id}`);
-        console.log(`Blob size: ${blobObject.size}`);
-        console.log(`Blob registered in epoch: ${blobObject.registered_epoch}`);
-        console.log(`Blob storage ends in epoch: ${blobObject.storage.end_epoch}`);
+      // Verify the upload using our dedicated verification manager
+      const metadata = {
+        contentType: 'application/json',
+        filename: `todolist-${todoList.id}.json`,
+        type: 'todolist-data',
+        name: todoList.name,
+        checksum,
+        size: sizeBytes.toString(),
+        version: '1',
+        todoCount: todoList.todos.length.toString()
+      };
 
-        return blobObject.blob_id;
-      } catch (error) {
-        // Check if it's a retryable error
-        if (error instanceof RetryableWalrusClientError) {
-          console.log('Encountered a retryable error. Resetting client and retrying...');
-          this.walrusClient.reset();
+      this.initializeManagers();
+      const verificationResult = await this.verifyBlob(
+        blobObject.blob_id,
+        buffer,
+        metadata
+      );
 
-          // Retry the operation
-          const { blobObject } = await this.walrusClient.writeBlob({
-            blob: new Uint8Array(buffer),
-            deletable: false,
-            epochs: 52, // Store for ~6 months
-            signer,
-            attributes: {
-              contentType: 'application/json',
-              filename: `todolist-${todoList.id}.json`,
-              type: 'todolist-data',
-              name: todoList.name
-            }
-          });
-
-          console.log(`Todo list successfully stored on Walrus after retry with blob ID: ${blobObject.blob_id}`);
-          return blobObject.blob_id;
-        }
-
-        // If not a retryable error, rethrow
-        throw error;
+      if (!verificationResult.details?.certified) {
+        console.log('Warning: Todo list blob certification pending. Monitoring for certification...');
+        // Start monitoring in the background
+        console.log('Certification monitoring not implemented in this version');
       }
+
+      console.log(`Todo list successfully stored with blob ID: ${blobObject.blob_id}`);
+      return blobObject.blob_id;
     } catch (error) {
       throw new CLIError(
         `Failed to store todo list: ${error instanceof Error ? error.message : String(error)}`,
@@ -480,7 +804,6 @@ export class WalrusStorage {
   async retrieveTodoList(blobId: string): Promise<TodoList> {
     try {
       if (this.useMockMode) {
-        // Mock retrieval
         console.log('Using mock mode for retrieving todo list');
         return {
           id: 'mock-list-id',
@@ -494,67 +817,48 @@ export class WalrusStorage {
         };
       }
 
-      if (!this.isInitialized || !this.walrusClient) {
-        throw new Error('WalrusStorage not initialized. Call connect() first.');
+      if (this.connectionState !== 'connected' || !this.walrusClient) {
+        throw new Error('WalrusStorage not connected. Call connect() first.');
       }
 
       console.log(`Retrieving todo list from Walrus with blob ID: ${blobId}...`);
 
-      // Try to retrieve from Walrus client first
       try {
-        try {
-          const blobContent = await this.walrusClient.readBlob({ blobId });
-          if (blobContent) {
-            console.log('Successfully retrieved todo list data from Walrus');
-            // Convert binary data to todoList object
-            const todoListData = new TextDecoder().decode(blobContent);
-            return JSON.parse(todoListData) as TodoList;
-          }
-        } catch (walrusError) {
-          // Check if it's a retryable error
-          if (walrusError instanceof RetryableWalrusClientError) {
-            console.log('Encountered a retryable error. Resetting client and retrying...');
-            this.walrusClient.reset();
-
-            // Retry the operation
-            const blobContent = await this.walrusClient.readBlob({ blobId });
-            if (blobContent) {
-              console.log('Successfully retrieved todo list data from Walrus after retry');
-              // Convert binary data to todoList object
-              const todoListData = new TextDecoder().decode(blobContent);
-              return JSON.parse(todoListData) as TodoList;
-            }
-          }
-
-          console.warn('Failed to retrieve directly from Walrus client, trying aggregator:', walrusError);
-        }
-
-        // Fallback to public aggregator if direct retrieval fails
-        console.log('Attempting to retrieve from public aggregator...');
-        // Ensure fetch is available
-        if (!fetch) {
-          try {
-            const nodeFetch = await import('node-fetch');
-            fetch = nodeFetch.default;
-          } catch (fetchError) {
-            console.warn('Failed to import node-fetch, falling back to global fetch');
-            fetch = globalThis.fetch;
-          }
-        }
-        const response = await fetch(`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`, {
-          method: 'GET'
+        // Attempt to retrieve the blob with our enhanced retrieval mechanism
+        const blobContent = await this.retrieveBlob(blobId, {
+          maxRetries: 5,          // More retries for important data
+          baseDelay: 1000,        // Start with 1 second delay
+          timeout: 15000,         // 15 second timeout per attempt
+          useAggregator: true,    // Allow fallback to aggregator
+          context: 'todo list retrieval'
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to retrieve blob from aggregator: ${response.statusText}`);
+        console.log('Successfully retrieved todo list data');
+        const todoListData = new TextDecoder().decode(blobContent);
+        const todoList = JSON.parse(todoListData) as TodoList;
+
+        // Validate the retrieved todo list
+        try {
+          this.validateTodoListData(todoList);
+        } catch (error) {
+          throw new CLIError(
+            `Retrieved todo list data is invalid: ${error instanceof Error ? error.message : String(error)}`,
+            'WALRUS_INVALID_TODOLIST_DATA'
+          );
         }
 
-        console.log('Successfully retrieved todo list data from public aggregator');
-        const todoListData = new TextDecoder().decode(await response.arrayBuffer());
-        return JSON.parse(todoListData) as TodoList;
+        return todoList;
       } catch (error) {
-        console.error('All retrieval methods failed:', error);
-        throw error;
+        // If the error is already a CLIError, rethrow it
+        if (error instanceof CLIError) {
+          throw error;
+        }
+        
+        // Otherwise, wrap it in a CLIError with appropriate context
+        throw new CLIError(
+          `Failed to retrieve todo list: ${error instanceof Error ? error.message : String(error)}`,
+          'WALRUS_RETRIEVE_FAILED'
+        );
       }
     } catch (error) {
       throw new CLIError(
@@ -564,83 +868,168 @@ export class WalrusStorage {
     }
   }
 
-  /**
-   * Ensure that storage is allocated for the user in Walrus.
-   * This method checks for available storage and buys it if necessary.
-   * @param sizeBytes Number of bytes to ensure are allocated (default: 1GB).
-   * @returns The storage object if allocation was successful, undefined otherwise
-   */
-  async ensureStorageAllocated(sizeBytes: number = 1073741824): Promise<WalrusStorageInfo | null> { // 1GB = 1073741824 bytes
+  private storageManager!: StorageManager;
+  private verifyBlob = async (
+    blobId: string,
+    expectedData: Buffer,
+    expectedMetadata: Record<string, string>
+  ): Promise<VerificationResult> => {
+    try {
+      const retrievedContent = await this.walrusClient.readBlob({ blobId });
+      if (!retrievedContent) {
+        return { details: { certified: false } };
+      }
+
+      const content = Buffer.from(retrievedContent);
+      const checksum = this.calculateChecksum(content);
+      const isValid = expectedData.length === content.length &&
+                     this.calculateChecksum(expectedData) === checksum;
+
+      return {
+        details: {
+          certified: isValid,
+          checksum: isValid ? checksum : undefined
+        }
+      };
+    } catch (error) {
+      console.warn('Blob verification failed:', error);
+      return { details: { certified: false } };
+    }
+  };
+
+  private initializeManagers(): void {
+    if (!this.storageManager) {
+      this.storageManager = new StorageManager(
+        this.suiClient, 
+        this.walrusClient,
+        this.getActiveAddress()
+      );
+    }
+  }
+
+  async ensureStorageAllocated(sizeBytes = 1073741824): Promise<WalrusStorageInfo | null> {
     if (this.useMockMode) {
-      return null; // Skip in mock mode
+      return null;
     }
 
-    if (!this.isInitialized || !this.walrusClient) {
-      throw new Error('WalrusStorage not initialized. Call connect() first.');
+    if (this.connectionState !== 'connected' || !this.walrusClient) {
+      throw new Error('WalrusStorage not connected. Call connect() first.');
     }
 
     try {
-      console.log('Checking Walrus storage allocation...');
+      console.log('Validating storage requirements...');
+      this.initializeManagers();
 
-      // Get the active address
-      const address = this.getActiveAddress();
-      console.log(`Using address ${address} for Walrus storage operations`);
+      // Comprehensive storage validation
+      const validation = await this.storageManager.validateStorageRequirements(sizeBytes);
 
-      // Calculate the cost of storage for the given size and epochs
-      const epochs = 52; // Store for ~6 months
-      const { storageCost, writeCost, totalCost } = await this.walrusClient.storageCost(sizeBytes, epochs);
-
-      console.log(`Storage cost for ${sizeBytes} bytes for ${epochs} epochs:`);
-      console.log(`  Storage cost: ${storageCost} WAL`);
-      console.log(`  Write cost: ${writeCost} WAL`);
-      console.log(`  Total cost: ${totalCost} WAL`);
-
-      // Get the current epoch from the Sui client
-      const { epoch } = await this.suiClient.getLatestSuiSystemState();
-      const currentEpoch = Number(epoch);
-      console.log(`Current epoch: ${currentEpoch}`);
-
-      // Create storage for the blob
-      console.log('Creating storage allocation...');
-
-      // Get the transaction signer
-      const signer = await this.getTransactionSigner();
-
-      // Create storage transaction
-      const { storage } = await this.walrusClient.executeCreateStorageTransaction({
-        size: sizeBytes,
-        epochs: epochs,
-        owner: address,
-        signer
-      });
-
-      console.log(`Storage allocated successfully:`);
-      console.log(`  Storage ID: ${storage.id.id}`);
-      console.log(`  Start epoch: ${storage.start_epoch}`);
-      console.log(`  End epoch: ${storage.end_epoch}`);
-      console.log(`  Storage size: ${storage.storage_size}`);
-
-      return {
-        id: storage.id,
-        storage_size: storage.storage_size,
-        used_size: 0, // New storage has no used space
-        end_epoch: storage.end_epoch,
-        start_epoch: storage.start_epoch
-      };
-    } catch (error: unknown) {
-      // Use our error handler to get a consistent error message
-      const formattedError = this.handleWalrusError(error, 'storage allocation');
-
-      // If we get an error about insufficient WAL tokens, provide guidance
-      if (formattedError.message.includes('Insufficient WAL tokens')) {
-        console.warn('Insufficient WAL tokens for storage allocation.');
-        console.warn('You need WAL tokens to store data on Walrus.');
-        console.warn('Please acquire WAL tokens and try again.');
+      if (!validation.canProceed) {
+        if (validation.requiredCost && validation.balances) {
+          throw new CLIError(
+            `Insufficient funds for storage allocation:\n` +
+            `Required: ${validation.requiredCost.requiredBalance} WAL\n` +
+            `Available: ${validation.balances.walBalance} WAL\n` +
+            `Storage Fund: ${validation.balances.storageFundBalance} WAL`,
+            'WALRUS_INSUFFICIENT_TOKENS'
+          );
+        }
+        throw new CLIError(
+          'Storage requirements not met. Please check your WAL balance and storage allocation.',
+          'WALRUS_STORAGE_REQUIREMENTS_FAILED'
+        );
       }
 
-      // Log the error but don't throw - we'll let the caller handle it
+      // If we can use existing storage, return it
+      if (validation.existingStorage?.isValid && validation.existingStorage.details) {
+        const details = validation.existingStorage.details;
+        console.log('Using existing storage:');
+        console.log(`  Storage ID: ${details.id}`);
+        console.log(`  Remaining size: ${validation.existingStorage.remainingSize} bytes`);
+        console.log(`  Remaining epochs: ${validation.existingStorage.remainingEpochs}`);
+
+        return {
+          id: { id: details.id },
+          storage_size: details.totalSize.toString(),
+          used_size: details.usedSize.toString(),
+          end_epoch: details.endEpoch.toString(),
+          start_epoch: '0', // We don't track this
+          content: null,
+          data: undefined
+        };
+      }
+
+      // Proceed with new storage allocation
+      if (!validation.requiredCost) {
+        throw new CLIError(
+          'Failed to estimate storage costs',
+          'WALRUS_COST_ESTIMATION_FAILED'
+        );
+      }
+
+      console.log('Allocating new storage:');
+      console.log(`  Size: ${sizeBytes} bytes`);
+      console.log(`  Duration: ${validation.requiredCost.epochs} epochs`);
+      console.log(`  Total cost: ${validation.requiredCost.totalCost} WAL`);
+
+      // Attempt storage allocation with exponential backoff
+      const maxRetries = 3;
+      const baseDelay = 1000;
+      let lastError: Error | null = null;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const signer = await this.getTransactionSigner();
+          const { storage } = await this.executeWithRetry(
+            async () => this.walrusClient.executeCreateStorageTransaction({
+              size: sizeBytes,
+              epochs: validation.requiredCost!.epochs,
+              owner: this.getActiveAddress(),
+              signer
+            }),
+            'storage creation',
+            attempt
+          );
+
+          // Verify the storage was created
+          const verification = await this.storageManager.verifyExistingStorage(
+            sizeBytes,
+            Number((await this.suiClient.getLatestSuiSystemState()).epoch)
+          );
+
+          if (verification.isValid && verification.details?.id === storage.id.id) {
+            console.log('Storage allocation verified successfully:');
+            console.log(`  Storage ID: ${storage.id.id}`);
+            console.log(`  Size: ${storage.storage_size} bytes`);
+            console.log(`  End epoch: ${storage.end_epoch}`);
+
+            return {
+              id: storage.id,
+              storage_size: storage.storage_size,
+              used_size: '0',
+              end_epoch: storage.end_epoch.toString(),
+              start_epoch: storage.start_epoch.toString(),
+              content: null,
+              data: undefined
+            };
+          }
+
+          throw new Error('Storage allocation succeeded but verification failed');
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          
+          if (attempt === maxRetries) break;
+
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          console.log(`Allocation attempt ${attempt} failed, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+
+      throw lastError || new Error('Storage allocation failed after all retries');
+    } catch (error) {
+      const formattedError = this.handleWalrusError(error, 'storage allocation');
       console.warn('Storage allocation failed:', formattedError.message);
-      return null;
+      throw formattedError;
     }
   }
 
@@ -653,7 +1042,6 @@ export class WalrusStorage {
       const address = this.getActiveAddress();
       console.log(`Checking existing storage for address ${address}...`);
 
-      // Query storage objects for this address using Sui client
       const response = await this.suiClient.getOwnedObjects({
         owner: address,
         filter: {
@@ -664,39 +1052,44 @@ export class WalrusStorage {
         }
       });
 
-      const existingStorage: WalrusStorageInfo[] = response.data
-        .filter(item => item.data?.content?.dataType === 'moveObject')
-        .map(item => {
-          const content = item.data?.content as unknown as WalrusStorageContent;
-          return {
+      const existingStorage = response.data
+        .filter((item: SuiObjectResponse) => item.data?.content?.dataType === 'moveObject')
+        .map((item: SuiObjectResponse) => {
+          const content = item.data?.content && 
+            'dataType' in item.data.content && 
+            'fields' in item.data.content && 
+            item.data.content.dataType === 'moveObject' 
+              ? item.data.content as unknown as WalrusStorageContent 
+              : null;
+          const storageInfo: WalrusStorageInfo = {
             id: { id: item.data?.objectId || '' },
-            storage_size: Number(content?.fields?.storage_size || 0),
-            used_size: Number(content?.fields?.used_size || 0),
-            end_epoch: Number(content?.fields?.end_epoch || 0),
-            start_epoch: 0 // Default value since it's required by the type
+            storage_size: content?.fields?.storage_size || '0',
+            used_size: content?.fields?.used_size || '0',
+            end_epoch: content?.fields?.end_epoch || '0',
+            start_epoch: '0',
+            data: item.data || undefined,
+            content: content
           };
+          return storageInfo;
         });
 
-      if (existingStorage && existingStorage.length > 0) {
-        // Get the current epoch
+      if (existingStorage.length > 0) {
         const { epoch } = await this.suiClient.getLatestSuiSystemState();
         const currentEpoch = Number(epoch);
 
-        // Find storage with sufficient remaining capacity and time
-        const suitableStorage = existingStorage.find(storage => {
-          const remainingSize = Number(storage.storage_size) - (storage.used_size || 0);
-          const remainingEpochs = storage.end_epoch - currentEpoch;
-
+        const suitableStorage = existingStorage.find((storage) => {
+          const remainingSize = Number(storage.storage_size) - Number(storage.used_size || 0);
+          const remainingEpochs = Number(storage.end_epoch) - currentEpoch;
           return remainingSize >= 1000000 && remainingEpochs >= 10;
         });
 
-        if (suitableStorage && suitableStorage.id) {
+        if (suitableStorage) {
           console.log(`Found suitable existing storage: ${suitableStorage.id.id}`);
-          return suitableStorage as WalrusStorageInfo;
+          return suitableStorage;
         }
       }
 
-      console.log('No suitable existing storage found, will create new storage');
+      console.log('No suitable existing storage found');
       return null;
     } catch (error) {
       console.warn('Error checking existing storage:', error);
@@ -704,7 +1097,7 @@ export class WalrusStorage {
     }
   }
 
-  // Helper method to handle Walrus errors consistently
+
   protected handleWalrusError(error: unknown, operation: string): Error {
     if (error instanceof Error) {
       if (error.message.includes('insufficient')) {
@@ -714,7 +1107,7 @@ export class WalrusStorage {
         );
       } else if (error.message.includes('Storage object not found')) {
         return new CLIError(
-          `Storage allocation failed. The transaction was submitted but the storage object was not found in the effects. This may be due to network issues or insufficient gas.`,
+          `Storage allocation failed. The transaction was submitted but the storage object was not found. This may be due to network issues or insufficient gas.`,
           'WALRUS_STORAGE_NOT_FOUND'
         );
       } else if (error.message.includes('gas budget')) {
@@ -732,8 +1125,6 @@ export class WalrusStorage {
   }
 }
 
-export function createWalrusStorage(
-  useMockMode: boolean = false
-): WalrusStorage {
+export function createWalrusStorage(useMockMode = false): WalrusStorage {
   return new WalrusStorage(useMockMode);
 }

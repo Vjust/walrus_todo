@@ -1,5 +1,5 @@
 import { Args, Command, Flags } from '@oclif/core';
-import * as chalk from 'chalk';
+import chalk from 'chalk';  // Changed from import * as chalk
 import { TodoService } from '../services/todoService';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
@@ -51,9 +51,14 @@ export default class AddCommand extends Command {
     }),
     storage: Flags.string({
       char: 's',
-      description: 'Where to store the todo (local, blockchain, both)',
+      description: `Storage location for the todo:
+        local: Store only in local JSON files
+        blockchain: Store on Walrus/Sui blockchain (data will be publicly accessible)
+        both: Keep both local copy and blockchain storage
+      NOTE: Blockchain storage uses Walrus for data and can be publicly accessed.`,
       options: ['local', 'blockchain', 'both'],
-      default: 'local'
+      default: 'local',
+      helpGroup: 'Storage Options'
     })
   };
 
@@ -124,39 +129,70 @@ export default class AddCommand extends Command {
 
       // If storage is blockchain or both, store on blockchain
       if (storageLocation === 'blockchain' || storageLocation === 'both') {
+        // Warn about public access
+        this.log(chalk.yellow('⚠') + ' Note: Blockchain storage will make the todo data publicly accessible');
         this.log(chalk.blue('ℹ') + ' Storing todo on blockchain...');
 
         try {
           // Initialize Walrus storage
-          await this.walrusStorage.connect();
+          try {
+            await this.walrusStorage.connect();
+          } catch (error) {
+            throw new CLIError(
+              `Failed to connect to blockchain storage: ${error instanceof Error ? error.message : String(error)}`,
+              'BLOCKCHAIN_CONNECTION_FAILED'
+            );
+          }
 
-          // Store todo on Walrus
-          const blobId = await this.walrusStorage.storeTodo(addedTodo);
+          let blobId: string;
+          try {
+            // Store todo on Walrus
+            blobId = await this.walrusStorage.storeTodo(addedTodo);
+          } catch (error) {
+            throw new CLIError(
+              `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
+              'BLOCKCHAIN_STORE_FAILED'
+            );
+          }
 
           // Update local todo with Walrus blob ID if we're keeping a local copy
           if (storageLocation === 'both') {
-            await this.todoService.updateTodo(listName, addedTodo.id, {
-              walrusBlobId: blobId,
-              updatedAt: new Date().toISOString()
-            });
+            try {
+              await this.todoService.updateTodo(listName, addedTodo.id, {
+                walrusBlobId: blobId,
+                updatedAt: new Date().toISOString()
+              });
+            } catch (error) {
+              this.log(chalk.yellow('⚠') + ' Warning: Successfully stored on blockchain but failed to update local copy');
+            }
           }
 
           // If storage is blockchain only, remove from local storage
           if (storageLocation === 'blockchain') {
-            await this.todoService.deleteTodo(listName, addedTodo.id);
+            try {
+              await this.todoService.deleteTodo(listName, addedTodo.id);
+            } catch (error) {
+              this.log(chalk.yellow('⚠') + ' Warning: Failed to remove local copy after blockchain storage');
+            }
           }
 
           this.log(chalk.green('✓') + ' Todo stored on blockchain with blob ID: ' + chalk.dim(blobId));
+          this.log(chalk.dim('  Public URL: https://testnet.wal.app/blob/' + blobId));
 
           // Cleanup
           await this.walrusStorage.disconnect();
         } catch (error) {
-          this.log(chalk.red('✗') + ' Failed to store todo on blockchain: ' + chalk.red(error instanceof Error ? error.message : String(error)));
+          if (error instanceof CLIError) throw error;
 
           // If blockchain-only storage failed, keep it locally
           if (storageLocation === 'blockchain') {
-            this.log(chalk.yellow('⚠') + ' Keeping todo locally due to blockchain storage failure');
+            this.log(chalk.yellow('⚠') + ' Storage failed - keeping todo locally instead');
             todo.storageLocation = 'local';
+          } else {
+            throw new CLIError(
+              `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
+              'BLOCKCHAIN_STORE_FAILED'
+            );
           }
         }
       }
