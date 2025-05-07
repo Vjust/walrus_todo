@@ -58,6 +58,22 @@ export class TodoService {
     return list.todos.find(t => t.id === todoId) || null;
   }
 
+  async getTodoByTitle(title: string, listName: string = 'default'): Promise<Todo | null> {
+    const list = await this.getList(listName);
+    if (!list) return null;
+    // Find todo with exact title match (case-insensitive)
+    return list.todos.find(t => t.title.toLowerCase() === title.toLowerCase()) || null;
+  }
+
+  async getTodoByTitleOrId(titleOrId: string, listName: string = 'default'): Promise<Todo | null> {
+    // First try to find by ID (for backward compatibility)
+    const todoById = await this.getTodo(titleOrId, listName);
+    if (todoById) return todoById;
+    
+    // If not found by ID, try to find by title
+    return this.getTodoByTitle(titleOrId, listName);
+  }
+
   async addTodo(listName: string, todo: Partial<Todo>): Promise<Todo> {
     const list = await this.getList(listName);
     if (!list) {

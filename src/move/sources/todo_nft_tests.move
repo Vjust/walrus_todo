@@ -19,7 +19,7 @@ module todo_app::todo_nft_tests {
                 b"Test Todo",
                 b"A test todo description",
                 b"test-walrus-blob-id-123",
-                b"https://placehold.co/400x400/orange/white?text=Test+Todo",
+                false, // is_private
                 ctx
             );
         };
@@ -29,10 +29,14 @@ module todo_app::todo_nft_tests {
         {
             let todo = test_scenario::take_from_sender<TodoNFT>(&scenario);
             
-            assert!(todo_nft::title(&todo) == &string::utf8(b"Test Todo"), 0);
-            assert!(todo_nft::description(&todo) == &string::utf8(b"A test todo description"), 1);
-            assert!(todo_nft::walrus_blob_id(&todo) == &string::utf8(b"test-walrus-blob-id-123"), 2);
-            assert!(!todo_nft::is_completed(&todo), 3);
+            let todo_id = object::id_address(&todo);
+            let ctx_sender = tx_context::sender(test_scenario::ctx(&mut scenario));
+            
+            assert!(todo_id == ctx_sender, 0);
+            assert!(todo_nft::title(&todo) == &string::utf8(b"Test Todo"), 1);
+            assert!(todo_nft::description(&todo) == &string::utf8(b"A test todo description"), 2);
+            assert!(todo_nft::walrus_blob_id(&todo) == &string::utf8(b"test-walrus-blob-id-123"), 3);
+            assert!(!todo_nft::is_completed(&todo), 4);
             
             test_scenario::return_to_sender(&scenario, todo);
         };
@@ -51,7 +55,7 @@ module todo_app::todo_nft_tests {
                 b"Test Todo",
                 b"A test todo description",
                 b"test-walrus-blob-id-123",
-                b"https://placehold.co/400x400/orange/white?text=Test+Todo",
+                false, // is_private
                 ctx
             );
         };

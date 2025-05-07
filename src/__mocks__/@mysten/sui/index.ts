@@ -1,4 +1,8 @@
-import { TransactionBlock } from '@mysten/sui.js';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import type { SuiSystemStateResponse, PaginatedObjectsResponse } from '@mysten/sui.js/client';
+// Export the BCS implementation
+import { BCS, bcs } from './bcs';
+export { BCS, bcs };
 
 export type SuiObjectResponse = {
   data: {

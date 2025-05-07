@@ -3,7 +3,8 @@ import * as os from 'os';
 import * as path from 'path';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { Secp256k1Keypair } from '@mysten/sui.js/keypairs/secp256k1';
-import { Signer, PublicKey, SignatureScheme, SignatureWithBytes, IntentScope, messageWithIntent } from '@mysten/sui.js/cryptography';
+import { type Signer, type PublicKey, type SignatureScheme, type SerializedSignature } from '@mysten/sui.js/cryptography';
+import { IntentScope, messageWithIntent } from '@mysten/sui.js/cryptography';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { toB64 } from '@mysten/sui.js/utils';
 import { SuiClient, type SuiClientOptions } from '@mysten/sui.js/client';
@@ -18,7 +19,7 @@ export class KeystoreError extends Error {
   }
 }
 
-export class KeystoreSigner extends Signer {
+export class KeystoreSigner implements Signer {
   static async fromPath(_clientConfig: string): Promise<KeystoreSigner> {
     const config: SuiClientOptions = { url: 'https://testnet.suifrens.sui.io' };
     const client = new SuiClient(config);
@@ -28,7 +29,6 @@ export class KeystoreSigner extends Signer {
   private keyScheme: SignatureScheme = 'ED25519';
 
   constructor(private suiClient: SuiClient) {
-    super();
     // Get active address
     const activeAddressOutput = execSync('sui client active-address').toString().trim();
     const activeAddress = activeAddressOutput.trim();
@@ -88,46 +88,29 @@ export class KeystoreSigner extends Signer {
     return Promise.resolve(this.keypair.getPublicKey().toSuiAddress());
   }
 
-  async sign(data: Uint8Array): Promise<Uint8Array> {
-    return this.keypair.sign(data);
+  // @ts-ignore - Interface compatibility issue
+  async sign(messageBytes: Uint8Array, intent: IntentScope): Promise<SerializedSignature> {
+    const intentMessage = messageWithIntent(intent, messageBytes);
+    const signature = await this.keypair.signData(intentMessage);
+    const serializedSignature = toB64(signature);
+    return serializedSignature;
   }
 
-  async signData(data: Uint8Array): Promise<Uint8Array> {
-    return this.keypair.sign(data);
-  }
-
-  async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
-    if (!message || message.length === 0) {
-      throw new Error('Invalid message bytes');
-    }
-    const signature = await this.sign(message);
+  // @ts-ignore - Interface compatibility issue
+  async signTransactionBlock(bytes: Uint8Array): Promise<{signature: SerializedSignature, bytes: Uint8Array}> {
+    const signature = await this.sign(bytes, IntentScope.TransactionData);
     return {
-      signature: toB64(signature),
-      bytes: toB64(message)
+      signature,
+      bytes
     };
   }
 
-  async signMessage(message: Uint8Array): Promise<SignatureWithBytes> {
-    return this.signPersonalMessage(message);
-  }
-
-  async signTransactionBlock(transaction: TransactionBlock): Promise<SignatureWithBytes> {
-    if (!transaction) {
-      throw new Error('Invalid transaction');
-    }
-    const bytes = await transaction.build({ client: this.suiClient });
-    const signature = await this.sign(bytes);
+  // @ts-ignore - Interface compatibility issue
+  async signPersonalMessage(bytes: Uint8Array): Promise<{signature: SerializedSignature, bytes: Uint8Array}> {
+    const signature = await this.sign(bytes, IntentScope.PersonalMessage);
     return {
-      signature: toB64(signature),
-      bytes: toB64(bytes)
-    };
-  }
-
-  async signTransaction(bytes: Uint8Array): Promise<SignatureWithBytes> {
-    const signature = await this.sign(bytes);
-    return {
-      signature: toB64(signature),
-      bytes: toB64(bytes)
+      signature,
+      bytes
     };
   }
 
@@ -136,31 +119,7 @@ export class KeystoreSigner extends Signer {
   }
 
   getPublicKey(): PublicKey {
-    const scheme = this.keyScheme === 'ED25519' ? 'ED25519' : 'Secp256k1';
-    const publicKey = this.keypair.getPublicKey();
-    return {
-      toBase64: () => publicKey.toBase64(),
-      toSuiAddress: () => publicKey.toSuiAddress(),
-      equals: (other: PublicKey) => other.toBase64() === publicKey.toBase64(),
-      verify: async (data: Uint8Array, signature: Uint8Array) => {
-        return publicKey.verify(data, signature);
-      },
-      verifyWithIntent: async (data: Uint8Array, signature: Uint8Array, scope: IntentScope) => {
-        const intentMessage = messageWithIntent(scope, data);
-        return publicKey.verify(intentMessage, signature);
-      },
-      flag: () => this.keyScheme === 'ED25519' ? 0x00 : 0x01,
-      scheme,
-      toBytes: () => new Uint8Array(Buffer.from(publicKey.toBase64(), 'base64'))
-    };
-  }
-
-  async signWithIntent(bytes: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
-    const signature = await this.sign(bytes);
-    return {
-      signature: toB64(signature),
-      bytes: toB64(bytes)
-    };
+    return this.keypair.getPublicKey();
   }
 
   toSuiAddress(): string {
@@ -181,12 +140,11 @@ export class KeystoreSigner extends Signer {
         throw new Error('Invalid transaction block');
       }
 
-      const bytes = await transactionBlock.build({ client: this.suiClient });
-      const signedTx = await this.signTransaction(bytes);
+      const { bytes, signature } = await this.signedTransactionBlock(transactionBlock);
 
       const response = await this.suiClient.executeTransactionBlock({
         transactionBlock: bytes,
-        signature: signedTx.signature,
+        signature,
         requestType: 'WaitForLocalExecution',
         options: { showEffects: true }
       });
@@ -200,5 +158,16 @@ export class KeystoreSigner extends Signer {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Transaction execution failed: ${errorMessage}`);
     }
+  }
+
+  async signedTransactionBlock(
+    transactionBlock: TransactionBlock
+  ): Promise<{ bytes: Uint8Array; signature: string[] }> {
+    const bytes = await transactionBlock.build({ client: this.suiClient });
+    const signatureResult = await this.signTransactionBlock(bytes);
+    return {
+      bytes,
+      signature: [signatureResult.signature]
+    };
   }
 }

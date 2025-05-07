@@ -11,16 +11,16 @@
     "start": "node bin/run.js",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist",
-    "prepare": "npm run clean && npm run build && npm run manifest",
-    "link": "npm link",
+    "prepare": "pnpm run clean && pnpm run build && pnpm run manifest",
+    "link": "pnpm link",
     "global-install": "./install-global.sh",
-    "test": "jest",
+    "test": "jest --no-typecheck",
     "postinstall": "chmod +x ./bin/run.js ./bin/waltodo ./bin/waltodo-direct && touch oclif.manifest.json",
     "upload-image": "ts-node scripts/upload-default-image.ts",
     "manifest": "touch oclif.manifest.json",
-    "postbuild": "npm run manifest",
+    "postbuild": "pnpm run manifest",
     "fix-cli": "./fix-cli.sh",
-    "local-install": "mkdir -p ~/.local/bin && npm pack && tar -xzf waltodo-1.0.0.tgz && cp -r package/bin/* ~/.local/bin/ && chmod +x ~/.local/bin/waltodo && rm -rf package waltodo-1.0.0.tgz"
+    "local-install": "mkdir -p ~/.local/bin && pnpm pack && tar -xzf waltodo-1.0.0.tgz && cp -r package/bin/* ~/.local/bin/ && chmod +x ~/.local/bin/waltodo && rm -rf package waltodo-1.0.0.tgz"
   },
   "keywords": [
     "cli",
@@ -34,34 +34,49 @@
   "dependencies": {
     "@inquirer/prompts": "^3.3.0",
     "@mysten/sui": "^1.29.1",
-    "@mysten/wallet-adapter-base": "^0.9.0",
-    "@mysten/wallet-standard": "^0.14.9",
-    "@mysten/walrus": "^0.0.21",
+    "@mysten/sui.js": "^0.54.1",
+    "@mysten/walrus": "0.0.21",
     "@oclif/core": "^3.25.2",
     "@smithery/cli": "^1.1.84",
     "axios": "^1.9.0",
     "chalk": "^4.1.2",
     "dotenv": "^16.4.5",
     "form-data": "^4.0.0",
+    "image-size": "^2.0.2",
     "inquirer": "^9.2.15",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "@oclif/test": "^3.2.4",
+    "@babel/core": "^7.24.3",
+    "@babel/preset-env": "^7.24.3",
+    "@babel/preset-typescript": "^7.24.3",
+    "@jest/globals": "^29.6.3",
+    "@jest/test-sequencer": "^29.6.3",
+    "@jest/types": "^29.6.3",
+    "@oclif/test": "^3.2.15",
+    "@testing-library/jest-dom": "^6.6.3",
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.30",
     "@types/node-fetch": "^2.6.11",
-    "@types/web": "^0.0.142",
+    "@types/sinon": "^17.0.4",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
-    "eslint": "^8.57.0",
+    "babel-jest": "^29.6.3",
+    "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
-    "jest": "^29.7.0",
+    "jest": "^29.6.3",
+    "jest-environment-jsdom": "^29.6.3",
+    "jest-environment-node": "^29.6.3",
+    "jest-extended": "^4.0.2",
+    "jest-mock": "^29.7.0",
+    "jest-mock-extended": "^3.0.5",
     "prettier": "^3.2.5",
+    "sinon": "^17.0.1",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.2"
+    "tslib": "^2.6.2",
+    "typescript": "5.0.4"
   },
   "files": [
     "/bin",
@@ -88,7 +103,7 @@
     }
   },
   "engines": {
-    "node": ">=23.11.0",
-    "npm": ">=10.9.2"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   }
 }

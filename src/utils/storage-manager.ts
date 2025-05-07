@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError } from '../types/error';
 import { execSync } from 'child_process';

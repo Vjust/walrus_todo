@@ -1,7 +1,7 @@
 import type { StorageWithSizeOptions, ReadBlobOptions, WriteBlobOptions, WalrusClientConfig } from '@mysten/walrus';
-import type { TransactionBlock } from '@mysten/sui/transactions';
-import type { Ed25519Keypair } from '@mysten/sui/keypairs';
-import type { SuiClient } from '@mysten/sui/client';
+import type { TransactionBlock } from '@mysten/sui.js/transactions';
+import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import type { SuiClient } from '@mysten/sui.js/client';
 
 export type EncodingType = { RedStuff: true; $kind: 'RedStuff' };
 export type DigestHash = {
@@ -38,6 +38,7 @@ export interface BlobInfo {
   registered_epoch: number;
   encoding_type: EncodingType;
   unencoded_length: string;
+  size: string;
   hashes: BlobHashPair[];
   metadata: {
     V1: {
@@ -76,7 +77,31 @@ export interface BaseWalrusClientConfig {
   network: "testnet" | "mainnet";
   suiClient?: SuiClient;
   suiRpcUrl?: string;
+  onError?: (error: Error) => void;
+  signal?: AbortSignal;
+  timeoutMs?: number;
 }
+
+export class WalrusClientError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly details?: unknown
+  ) {
+    super(message);
+    this.name = 'WalrusClientError';
+  }
+}
+
+export const WalrusErrorCodes = {
+  INVALID_PARAMS: 'INVALID_PARAMS',
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  TIMEOUT: 'TIMEOUT',
+  STORAGE_ERROR: 'STORAGE_ERROR',
+  AUTH_ERROR: 'AUTH_ERROR',
+  VERIFICATION_ERROR: 'VERIFICATION_ERROR',
+  UNKNOWN_ERROR: 'UNKNOWN_ERROR'
+} as const;
 
 export interface WalrusClient {
   executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: TransactionBlock; signer: Ed25519Keypair }): Promise<{ digest: string; storage: { id: { id: string }; start_epoch: number; end_epoch: number; storage_size: string; } }>;

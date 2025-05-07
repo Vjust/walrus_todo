@@ -1,10 +1,17 @@
-import { PublicKey, SerializedSignature, SignatureWithBytes, IntentScope, KeyPair } from '@mysten/sui.js/cryptography';
+import type { PublicKey, IntentScope } from '@mysten/sui.js/cryptography';
 
 export class MockPublicKey implements PublicKey {
   private bytes: Uint8Array;
+  flag(): number {
+    return 0;
+  }
 
   constructor() {
     this.bytes = new Uint8Array(32).fill(1);
+  }
+
+  toSuiPublicKey(): string {
+    return this.toBase64();
   }
 
   toBase64(): string {
@@ -19,20 +26,20 @@ export class MockPublicKey implements PublicKey {
     return this.toBase64() === other.toBase64();
   }
 
-  async verify(data: Uint8Array, signature: SignatureWithBytes): Promise<boolean> {
+  async verify(data: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
     return true;
   }
 
-  async verifyWithIntent(
-    data: Uint8Array, 
-    signature: SignatureWithBytes | SerializedSignature,
-    intent: IntentScope = 'TransactionData'
-  ): Promise<boolean> {
+  async verifyWithIntent(bytes: Uint8Array, signature: string | Uint8Array, intent: IntentScope): Promise<boolean> {
     return true;
   }
 
-  toString(): string {
-    return `MockPublicKey(${this.toBase64()})`;
+  async verifyTransactionBlock(message: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+    return true;
+  }
+
+  async verifyPersonalMessage(message: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+    return true;
   }
 
   toRawBytes(): Uint8Array {
@@ -42,9 +49,13 @@ export class MockPublicKey implements PublicKey {
   toSuiBytes(): Uint8Array {
     return new Uint8Array([0, ...this.bytes]);
   }
+
+  toString(): never {
+    throw new Error('toString() should not be called');
+  }
 }
 
-export class MockKeypair implements KeyPair {
+export class MockKeypair {
   #publicKey: MockPublicKey;
   #secretKey: Uint8Array;
 
@@ -57,16 +68,40 @@ export class MockKeypair implements KeyPair {
     return this.#publicKey;
   }
 
-  async sign(data: Uint8Array): Promise<SignatureWithBytes> {
-    const signature = new Uint8Array(64).fill(2);
-    return { signature, signatureScheme: 'ED25519', publicKey: this.getPublicKey() };
+  async sign(data: Uint8Array): Promise<Uint8Array> {
+    return new Uint8Array(64).fill(2);
   }
 
-  async signWithIntent(
-    data: Uint8Array,
-    intent: IntentScope = 'TransactionData'
-  ): Promise<SignatureWithBytes> {
-    return this.sign(data);
+  async signData(data: Uint8Array): Promise<{ signature: string; bytes: string }> {
+    return {
+      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
+      bytes: Buffer.from(data).toString('base64')
+    };
+  }
+  
+  async signTransaction(transaction: any): Promise<{ signature: string; bytes: string }> {
+    return {
+      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
+      bytes: 'mock-serialized-tx-bytes'
+    };
+  }
+  
+  async signPersonalMessage(message: Uint8Array): Promise<{ signature: string; bytes: string }> {
+    return {
+      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
+      bytes: Buffer.from(message).toString('base64')
+    };
+  }
+  
+  async signWithIntent(message: Uint8Array, intent: string): Promise<{ signature: string; bytes: string }> {
+    return {
+      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
+      bytes: Buffer.from(message).toString('base64')
+    };
+  }
+  
+  getKeyScheme(): 'ED25519' | 'Secp256k1' {
+    return 'ED25519';
   }
 
   export(): { publicKey: Uint8Array; secretKey: Uint8Array } {

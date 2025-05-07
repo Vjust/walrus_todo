@@ -170,6 +170,8 @@ export class StorageError extends WalrusError {
  * Validation-related errors
  */
 export class ValidationError extends WalrusError {
+  public readonly recoverable: boolean;
+  
   constructor(
     message: string,
     options: Partial<ValidationErrorOptions> = {}
@@ -178,6 +180,7 @@ export class ValidationError extends WalrusError {
       field,
       value,
       constraint,
+      recoverable = false,
       ...rest
     } = options;
 
@@ -189,9 +192,11 @@ export class ValidationError extends WalrusError {
     super(message, {
       code: 'VALIDATION_ERROR',
       publicMessage,
-      shouldRetry: false,
+      shouldRetry: recoverable,
       ...rest
     });
+
+    this.recoverable = recoverable;
 
     // Hide validation details from stack trace
     Object.defineProperties(this, {
@@ -274,11 +279,72 @@ interface ValidationErrorOptions {
   field?: string;
   value?: unknown;
   constraint?: string;
+  recoverable?: boolean;
   cause?: Error;
+  operation?: string;
+  attempt?: number;
+}
+
+export enum WalrusErrorCode {
+  WALRUS_NOT_CONNECTED = 'WALRUS_NOT_CONNECTED',
+  WALRUS_INIT_FAILED = 'WALRUS_INIT_FAILED',
+  WALRUS_OPERATION_FAILED = 'WALRUS_OPERATION_FAILED',
+  WALRUS_VALIDATION_FAILED = 'WALRUS_VALIDATION_FAILED',
+  WALRUS_SERIALIZATION_FAILED = 'WALRUS_SERIALIZATION_FAILED',
+  WALRUS_DATA_TOO_LARGE = 'WALRUS_DATA_TOO_LARGE',
+  WALRUS_INSUFFICIENT_TOKENS = 'WALRUS_INSUFFICIENT_TOKENS',
+  WALRUS_STORAGE_ALLOCATION_FAILED = 'WALRUS_STORAGE_ALLOCATION_FAILED',
+  WALRUS_VERIFICATION_FAILED = 'WALRUS_VERIFICATION_FAILED',
+  WALRUS_STORE_FAILED = 'WALRUS_STORE_FAILED',
+  WALRUS_INVALID_INPUT = 'WALRUS_INVALID_INPUT',
+  WALRUS_RETRIEVE_FAILED = 'WALRUS_RETRIEVE_FAILED',
+  WALRUS_PARSE_FAILED = 'WALRUS_PARSE_FAILED',
+  WALRUS_INVALID_TODO_DATA = 'WALRUS_INVALID_TODO_DATA',
+  WALRUS_UPDATE_FAILED = 'WALRUS_UPDATE_FAILED'
 }
 
 interface AuthErrorOptions {
   operation: string;
   resource?: string;
+  cause?: Error;
+}
+
+/**
+ * Transaction-related errors
+ */
+export class TransactionError extends WalrusError {
+  public readonly transactionId?: string;
+  public readonly recoverable: boolean;
+
+  constructor(
+    message: string,
+    options: Partial<TransactionErrorOptions> = {}
+  ) {
+    const {
+      operation = 'unknown',
+      transactionId,
+      recoverable = false,
+      ...rest
+    } = options;
+
+    super(message, {
+      code: `TRANSACTION_${operation.toUpperCase()}_ERROR`,
+      publicMessage: 'A transaction operation failed',
+      shouldRetry: recoverable,
+      ...rest
+    });
+
+    this.recoverable = recoverable;
+
+    if (transactionId) {
+      this.transactionId = transactionId;
+    }
+  }
+}
+
+interface TransactionErrorOptions {
+  operation: string;
+  transactionId?: string;
+  recoverable: boolean;
   cause?: Error;
 }

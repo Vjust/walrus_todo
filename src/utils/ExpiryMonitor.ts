@@ -1,7 +1,7 @@
 import type { WalrusClientExt } from '../types/client';
 import type { BlobObject, DigestHash } from '../types/walrus';
-import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import type { Signer } from '@mysten/sui/cryptography';
+import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import type { Signer } from '@mysten/sui.js/cryptography';
 import { execSync } from 'child_process';
 import { VaultManager, BlobRecord } from './VaultManager';
 import { NetworkValidator, NetworkEnvironment } from './NetworkValidator';
@@ -161,11 +161,11 @@ export class ExpiryMonitor {
 
     // Verify on-chain blob object
     try {
-      const onChainObject = await this.walrusClient.getBlobObject({ blobId });
+      const onChainObject = await this.walrusClient.getBlobObject(blobId);
       result.onChain = !!onChainObject;
 
       if (result.onChain) {
-        const poaCertificate = await this.walrusClient.verifyPoA({ blobId });
+        const poaCertificate = await this.walrusClient.verifyPoA(blobId);
         result.hasValidPoA = poaCertificate;
       }
     } catch (error) {

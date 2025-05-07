@@ -1,0 +1,144 @@
+import { jest, expect, describe, test, beforeEach } from '@jest/globals';
+import { TodoService } from '../../services/todoService';
+import { WalrusStorage } from '../../utils/walrus-storage';
+import { SuiNftStorage } from '../../utils/sui-nft-storage';
+import { configService } from '../../services/config-service';
+import { SuiClient } from '@mysten/sui.js/client';
+import { CLIError } from '../../types/error';
+import { Todo, TodoList } from '../../types/todo';
+import { createMockTodo } from '../helpers/test-utils';
+import { createMockSystemStateResponse } from '../sui-test-types';
+import type { Config } from '../../types/config';
+
+// Mock services
+jest.mock('../../services/todoService');
+jest.mock('../../utils/walrus-storage');
+jest.mock('../../utils/sui-nft-storage');
+jest.mock('../../services/config-service');
+jest.mock('@mysten/sui.js/client');
+
+const mockTodoService = TodoService as unknown as jest.Mocked<typeof TodoService>;
+const mockWalrusStorage = WalrusStorage as unknown as jest.Mocked<typeof WalrusStorage>;
+const mockSuiNftStorage = SuiNftStorage as unknown as jest.Mocked<typeof SuiNftStorage>;
+const mockSuiClient = SuiClient as unknown as jest.Mocked<typeof SuiClient>;
+
+// Mock getConfig with correct type for the mock config
+type MockConfig = Config & {
+  lastDeployment?: {
+    packageId: string;
+  } | null;
+};
+
+const mockConfig: MockConfig = {
+  network: 'testnet',
+  walletAddress: 'mock-address',
+  encryptedStorage: false,
+  lastDeployment: {
+    packageId: 'test-package-id'
+  }
+};
+
+// Create getter function with proper type
+const getConfigMock = jest.fn<() => Promise<MockConfig>>();
+getConfigMock.mockResolvedValue(mockConfig);
+jest.spyOn(configService, 'getConfig').mockImplementation(getConfigMock);
+
+describe('complete', () => {
+  const defaultTodo = createMockTodo({
+    id: 'todo123'
+  });
+
+  const defaultList: TodoList = {
+    id: 'default',
+    name: 'default',
+    owner: 'default-owner',
+    todos: [],
+    version: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Setup default mocks
+    mockTodoService.prototype.getList.mockResolvedValue(defaultList);
+    mockTodoService.prototype.getTodo.mockResolvedValue(defaultTodo);
+    mockTodoService.prototype.toggleItemStatus.mockImplementation(async () => {});
+
+    mockSuiClient.prototype.getLatestSuiSystemState.mockResolvedValue({
+      activeValidators: [],
+      safeMode: false,
+      epoch: '0',
+      referenceGasPrice: '1000',
+      protocolVersion: '1',
+      systemStateVersion: '1',
+      maxValidatorCount: '100',
+      minValidatorCount: '4',
+      validatorCandidatesSize: '0',
+      atRiskValidators: [],
+      storageFundTotalObjectStorageRebates: '0',
+      storageFundNonRefundableBalance: '1000000',
+      stakeSubsidyCurrentDistributionAmount: '0',
+      totalStake: '1000000'
+    });
+  });
+
+  test('completes a local todo', async () => {
+    await mockTodoService.prototype.toggleItemStatus('default', 'todo123', true);
+    
+    expect(mockTodoService.prototype.toggleItemStatus).toHaveBeenCalledWith('default', 'todo123', true);
+    expect(mockSuiNftStorage.prototype.updateTodoNftCompletionStatus).not.toHaveBeenCalled();
+  });
+
+  test('completes a blockchain todo', async () => {
+    const todoWithNft = {
+      ...defaultTodo,
+      nftObjectId: 'test-nft-id'
+    };
+
+    mockTodoService.prototype.getTodo.mockResolvedValue(todoWithNft);
+
+    await mockTodoService.prototype.toggleItemStatus('default', 'todo123', true);
+
+    expect(mockTodoService.prototype.toggleItemStatus).toHaveBeenCalledWith('default', 'todo123', true);
+    expect(mockSuiNftStorage.prototype.updateTodoNftCompletionStatus).toHaveBeenCalledWith('test-nft-id');
+  });
+
+  test('handles blockchain todo completion failure', async () => {
+    const todoWithNft = {
+      ...defaultTodo,
+      nftObjectId: 'test-nft-id'
+    };
+
+    mockTodoService.prototype.getTodo.mockResolvedValue(todoWithNft);
+    mockSuiNftStorage.prototype.updateTodoNftCompletionStatus.mockRejectedValue(new Error('Failed to update NFT'));
+
+    await expect(mockTodoService.prototype.toggleItemStatus('default', 'todo123', true))
+      .rejects.toThrow('Failed to update NFT');
+  });
+
+  test('handles network validation errors', async () => {
+    getConfigMock.mockResolvedValueOnce({
+      network: 'testnet',
+      walletAddress: 'mock-address',
+      encryptedStorage: false,
+      lastDeployment: null
+    });
+
+    await expect(mockTodoService.prototype.toggleItemStatus('default', 'todo123', true))
+      .rejects.toThrow('Contract not deployed');
+  });
+
+  test('handles already completed todo', async () => {
+    const completedTodo = {
+      ...defaultTodo,
+      completed: true
+    };
+
+    mockTodoService.prototype.getTodo.mockResolvedValue(completedTodo);
+
+    await expect(mockTodoService.prototype.toggleItemStatus('default', 'todo123', true))
+      .rejects.toThrow('Todo is already completed');
+  });
+});

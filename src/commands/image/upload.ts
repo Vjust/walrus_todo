@@ -3,7 +3,7 @@ import { CLIError } from '../../utils/error-handler';
 import { TodoService } from '../../services/todoService';
 import { createWalrusImageStorage, WalrusImageStorage } from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
 import { NETWORK_URLS } from '../../constants';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 // Removed unused chalk import
 import * as path from 'path';
 import { configService } from '../../services/config-service';
