@@ -6,6 +6,17 @@ const chalk = require('chalk');
 import { SuiClient } from '@mysten/sui.js/client';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 
+/**
+ * @class StorageCommand
+ * @description This command manages and analyzes Walrus storage allocations for todos.
+ * It provides options to view a summary of storage usage, detailed information about storage objects,
+ * and an efficiency analysis with recommendations for optimizing storage usage and costs.
+ * The command interacts with the Sui blockchain to retrieve current storage data and offers insights into storage expiration and usage patterns.
+ *
+ * @param {boolean} [summary=false] - If true, displays a summary of storage allocation and usage. This is the default view if no other display flags are set. (Optional flag: -s, --summary)
+ * @param {boolean} [detail=false] - If true, shows detailed information about each storage object owned by the user. (Optional flag: -d, --detail)
+ * @param {boolean} [analyze=false] - If true, performs an analysis of storage efficiency and provides recommendations for different data sizes. (Optional flag: -a, --analyze)
+ */
 export default class StorageCommand extends BaseCommand {
   static description = 'Manage Walrus storage for todos';
 

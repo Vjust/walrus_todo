@@ -10,6 +10,18 @@ import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 // Removed unused chalk import
 import * as path from 'path';
 
+/**
+ * @class ImageCommand
+ * @description This command manages images associated with todo items, facilitating upload to Walrus storage and NFT creation on the Sui blockchain.
+ * It supports three actions: uploading an image for a todo, creating an NFT from a todo with an image, and listing todos with associated images.
+ * The command integrates with Walrus for image storage and Sui for NFT minting, ensuring seamless handling of multimedia todos.
+ *
+ * @param {string} action - The action to perform: 'upload' for image upload, 'create-nft' for NFT creation, or 'list' to view todos with images. (Required argument)
+ * @param {string} [todo] - The ID of the todo item to associate an image with or create an NFT for. Required for 'upload' and 'create-nft' actions. (Optional flag: -t, --todo)
+ * @param {string} [list] - The name of the todo list containing the specified todo. Required for 'upload' and 'create-nft' actions. (Optional flag: -l, --list)
+ * @param {string} [image] - Path to a custom image file to upload for the todo. If not provided, a default image is used. (Optional flag: -i, --image)
+ * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
+ */
 export default class ImageCommand extends Command {
   static description = 'Manage todo images for storage on Walrus and NFT creation';
 

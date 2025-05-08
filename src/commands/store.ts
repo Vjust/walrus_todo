@@ -12,6 +12,18 @@ import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * @class StoreCommand
+ * @description This command stores a todo item on the blockchain using Walrus storage and creates an associated NFT on the Sui blockchain.
+ * It handles uploading todo data and images to Walrus, creating or updating NFTs, and provides detailed feedback on the storage process.
+ * The command supports mock mode for testing and includes robust error handling with rollback mechanisms to maintain data consistency.
+ *
+ * @param {boolean} [mock=false] - If true, uses mock mode for testing without real blockchain interactions. (Optional flag: --mock)
+ * @param {string} todo - The ID or title of the todo item to store on the blockchain. (Required flag: -t, --todo)
+ * @param {string} [list='default'] - The name of the todo list containing the todo item. (Optional flag: -l, --list)
+ * @param {string} [image] - Path to a custom image file for the NFT. If not provided, a default image is used. (Optional flag: -i, --image)
+ * @param {string} [network] - The blockchain network to use ('localnet', 'devnet', 'testnet', 'mainnet'). Defaults to the configured network. (Optional flag: -n, --network)
+ */
 export default class StoreCommand extends Command {
   static description = 'Store a todo on blockchain with Walrus storage and create an NFT';
 

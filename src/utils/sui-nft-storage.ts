@@ -26,6 +26,22 @@ interface TodoNftContent {
   };
 }
 
+/**
+ * SuiNftStorage - A utility class for managing Todo NFTs on the Sui blockchain.
+ * 
+ * This class provides methods to create, retrieve, and update Todo Non-Fungible Tokens (NFTs)
+ * that are linked to data stored on the Walrus decentralized storage platform. It serves as a
+ * bridge between on-chain NFT metadata and off-chain Todo data, ensuring secure and reliable
+ * interactions with the Sui network. Key features include creating NFTs for Todos with associated
+ * Walrus blob IDs, fetching NFT details, and updating completion status with retry mechanisms
+ * to handle network issues gracefully.
+ * 
+ * @class SuiNftStorage
+ * @param {SuiClient} client - The Sui client instance for blockchain interactions.
+ * @param {Ed25519Keypair} signer - The cryptographic keypair used for signing transactions.
+ * @param {SuiNFTStorageConfig} config - Configuration object containing the address, package ID,
+ *                                      and optional collection ID for NFT operations.
+ */
 export class SuiNftStorage {
   private readonly client: SuiClient;
   private readonly signer: Ed25519Keypair;

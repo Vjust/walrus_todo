@@ -1,3 +1,26 @@
+// Copyright (c) 2025, Walrus Todo Team
+// SPDX-License-Identifier: MIT
+//
+// Module: todo_app::todo
+//
+// Description:
+// This smart contract module is part of the Walrus Todo application and is designed to manage TODO lists and items on the Sui blockchain.
+// It provides a secure and transparent way to create, track, and complete tasks, ensuring that all actions are recorded immutably on the blockchain.
+// This module is essential for users who want to organize their tasks with the added benefits of blockchain technology, such as data integrity and ownership verification.
+//
+// Key Features:
+// - **Todo List Creation**: Users can create a new TODO list, which is uniquely owned by the creator and shared on the blockchain for accessibility.
+// - **Adding Tasks**: Allows the list owner to add new tasks to their TODO list, each with a unique identifier and creation timestamp.
+// - **Completing Tasks**: Enables marking tasks as completed, providing a clear status update visible to anyone with access to the list.
+// - **Ownership and Access Control**: Ensures that only the list owner can modify the list, protecting against unauthorized changes.
+// - **Transparency**: All TODO list actions are recorded on the Sui blockchain, making the history of tasks verifiable and tamper-proof.
+//
+// Key Components:
+// - **Todo Struct**: Represents an individual task with properties like task description, completion status, and creation time.
+// - **TodoList Struct**: Represents a collection of tasks owned by a specific user, tracking the last task ID and creation time.
+// - **Functions**: Includes operations to create lists, add tasks, mark tasks as complete, and retrieve list information like ownership and task count.
+//
+// This module integrates with other components of the Walrus Todo application to provide a seamless experience for managing tasks with blockchain-backed storage.
 module todo_app::todo {
     use sui::object::{Self, UID};
     use sui::transfer;

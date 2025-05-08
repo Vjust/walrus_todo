@@ -9,6 +9,17 @@ import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 
+/**
+ * @class CreateCommand
+ * @description This command enables users to create a new todo item as an NFT on the Sui blockchain.
+ * It uploads an associated image to Walrus storage (either a custom image or a default one) and then creates the NFT with the provided title and description.
+ * The command handles the blockchain transaction to mint the NFT and provides a link to view it on the Sui Explorer.
+ *
+ * @param {string} title - The title of the todo item to be created as an NFT. (Required flag: -t, --title)
+ * @param {string} description - A brief description of the todo item. (Required flag: -d, --description)
+ * @param {string} [image] - Path to a custom image file for the todo item. If not provided, a default image is used. (Optional flag: -i, --image)
+ * @param {boolean} [private=false] - If true, the todo is marked as private and will appear as "Untitled" in wallets. (Optional flag: -p, --private)
+ */
 export default class CreateCommand extends Command {
   static description = 'Create a new todo item as an NFT on the Sui blockchain';
 

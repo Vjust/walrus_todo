@@ -1,28 +1,91 @@
-import { type WalrusClient } from '@mysten/walrus';
-import { type TransactionBlock } from '@mysten/sui.js/transactions';
-import { type Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { type Signer } from '@mysten/sui.js/cryptography';
-import { type BlobObject, type BlobInfo, type BlobMetadataShape, type StorageWithSizeOptions } from './walrus';
-import { type SuiClient } from '@mysten/sui.js/client';
+import type { TransactionBlock } from '@mysten/sui.js/transactions';
+import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import type { Signer } from '@mysten/sui.js/cryptography';
+import type { BlobObject, WalrusClient, ReadBlobOptions, BlobInfo, BlobMetadataShape, StorageWithSizeOptions, CertifyBlobOptions, WriteBlobAttributesOptions, DeleteBlobOptions, RegisterBlobOptions, GetStorageConfirmationOptions, StorageConfirmation } from './walrus';
+import type { SignerAdapter } from '../utils/adapters/signer-adapter';
+import type { TransactionBlockAdapter } from '../utils/adapters/transaction-adapter';
 
+/**
+ * Extended WalrusClient interface with additional methods
+ * This interface adds functionality beyond the standard WalrusClient
+ */
 export interface WalrusClientExt {
-  experimental?: {
-    getBlobData: () => Promise<any>;
-  };
+  // Original WalrusClient methods (copied from the WalrusClient interface)
   getConfig(): Promise<{ network: string; version: string; maxSize: number }>;
   getWalBalance(): Promise<string>;
   getStorageUsage(): Promise<{ used: string; total: string }>;
-  getBlobObject(params: { blobId: string }): Promise<BlobObject>;
   getBlobInfo(blobId: string): Promise<BlobInfo>;
-  createStorageBlock(size: number, epochs: number): Promise<TransactionBlock>;
-  writeBlob(params: { blob: Uint8Array; signer: Signer; deletable?: boolean; epochs?: number; attributes?: Record<string, string>; transaction?: TransactionBlock }): Promise<{ blobObject: { blob_id: string } }>;
-  getBlobSize(blobId: string): Promise<number>;
-  readBlob(params: { blobId: string; signal?: AbortSignal }): Promise<Uint8Array>;
-  getBlobMetadata(params: { blobId: string; signal?: AbortSignal }): Promise<BlobMetadataShape>;
-  getStorageProviders(params: { blobId: string }): Promise<string[]>;
+  getBlobObject(params: { blobId: string }): Promise<BlobObject>;
   verifyPoA(params: { blobId: string }): Promise<boolean>;
-  executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: TransactionBlock; signer: Signer }): Promise<{ digest: string; storage: { id: { id: string }; start_epoch: number; end_epoch: number; storage_size: string } }>;
+  readBlob(params: ReadBlobOptions): Promise<Uint8Array>;
+  getBlobMetadata(params: ReadBlobOptions): Promise<BlobMetadataShape>;
+  storageCost(size: number, epochs: number): Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>;
+  executeCreateStorageTransaction(
+    options: StorageWithSizeOptions & { 
+      transaction?: TransactionBlock; 
+      signer: Signer | Ed25519Keypair;
+    }
+  ): Promise<{ digest: string; storage: { id: { id: string }; start_epoch: number; end_epoch: number; storage_size: string; } }>;
+  executeCertifyBlobTransaction(
+    options: CertifyBlobOptions & { 
+      transaction?: TransactionBlock;
+      signer?: Signer | Ed25519Keypair;
+    }
+  ): Promise<{ digest: string }>;
+  executeWriteBlobAttributesTransaction(
+    options: WriteBlobAttributesOptions & { 
+      transaction?: TransactionBlock;
+      signer?: Signer | Ed25519Keypair;
+    }
+  ): Promise<{ digest: string }>;
+  deleteBlob(options: DeleteBlobOptions): (tx: TransactionBlock) => Promise<{ digest: string }>;
+  executeRegisterBlobTransaction(
+    options: RegisterBlobOptions & { 
+      transaction?: TransactionBlock;
+      signer?: Signer | Ed25519Keypair;
+    }
+  ): Promise<{ blob: BlobObject; digest: string; }>;
+  getStorageConfirmationFromNode(
+    options: GetStorageConfirmationOptions
+  ): Promise<StorageConfirmation>;
+  createStorageBlock(size: number, epochs: number): Promise<TransactionBlock>;
+  createStorage(options: StorageWithSizeOptions): (tx: TransactionBlock) => Promise<{
+    digest: string;
+    storage: {
+      id: { id: string };
+      start_epoch: number;
+      end_epoch: number;
+      storage_size: string;
+    }
+  }>;
+  
+  // Extension methods
+  getBlobSize(blobId: string): Promise<number>;
+  getStorageProviders(params: { blobId: string }): Promise<string[]>;
+  
+  // Enhanced blob writing with additional options
+  writeBlob(params: { 
+    blob: Uint8Array; 
+    signer: Signer | Ed25519Keypair | SignerAdapter; 
+    deletable?: boolean; 
+    epochs?: number; 
+    attributes?: Record<string, string>; 
+    transaction?: TransactionBlock | TransactionBlockAdapter;
+  }): Promise<{
+    blobId?: string;
+    blobObject: BlobObject | { blob_id: string }
+  }>;
+  
+  // Utility methods
   reset(): void;
+  
+  // Experimental API for newer features
+  experimental?: {
+    getBlobData: () => Promise<any>;
+  };
 }
 
+/**
+ * Combined WalrusClient type that implements both interfaces
+ */
 export type WalrusClientWithExt = WalrusClient & WalrusClientExt;

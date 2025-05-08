@@ -1,7 +1,8 @@
 import type { WalrusClientExt } from '../types/client';
-import type { BlobObject, DigestHash } from '../types/walrus';
+import type { BlobObject } from '../types/walrus';
 import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import type { Signer } from '@mysten/sui.js/cryptography';
+import type { Transaction } from '@mysten/sui.js/transactions';
 import { execSync } from 'child_process';
 import { VaultManager, BlobRecord } from './VaultManager';
 import { NetworkValidator, NetworkEnvironment } from './NetworkValidator';
@@ -37,6 +38,7 @@ type StorageOptions = {
   epochs: number;
   owner: string;
   signer: Signer;
+  transaction?: TransactionBlock;
 };
 
 interface BlobVerification {
@@ -161,11 +163,11 @@ export class ExpiryMonitor {
 
     // Verify on-chain blob object
     try {
-      const onChainObject = await this.walrusClient.getBlobObject(blobId);
+      const onChainObject = await this.walrusClient.getBlobObject({ blobId });
       result.onChain = !!onChainObject;
 
       if (result.onChain) {
-        const poaCertificate = await this.walrusClient.verifyPoA(blobId);
+        const poaCertificate = await this.walrusClient.verifyPoA({ blobId });
         result.hasValidPoA = poaCertificate;
       }
     } catch (error) {
@@ -349,7 +351,6 @@ export class ExpiryMonitor {
           () => this.walrusClient.executeCreateStorageTransaction({
             size: Math.ceil(this.config.renewalPeriod / (24 * 60 * 60)),
             epochs: Math.ceil(this.config.renewalPeriod / (24 * 60 * 60)),
-            owner: blob.vaultId,
             signer: signer
           }),
           `renew blob ${blob.blobId}`

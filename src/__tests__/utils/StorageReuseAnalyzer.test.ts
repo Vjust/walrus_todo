@@ -202,16 +202,16 @@ describe('StorageReuseAnalyzer', () => {
       
       // Mock the storageCost method for our test
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: '5000',
-        writeCost: '1000',
-        totalCost: '6000'
+        storageCost: BigInt(5000),
+        writeCost: BigInt(1000),
+        totalCost: BigInt(6000)
       });
       
       const result = await storageReuseAnalyzer.analyzeStorageEfficiency(100000);
       
       expect(result.analysisResult.recommendation).toBe('use-existing');
-      expect(result.costComparison.newStorageCost).toBe(6000n);
-      expect(result.costComparison.reuseExistingSavings).toBe(5000n);
+      expect(result.costComparison.newStorageCost).toBe(BigInt(6000));
+      expect(result.costComparison.reuseExistingSavings).toBe(BigInt(5000));
       expect(result.costComparison.reuseExistingPercentSaved).toBe(83);
       expect(result.detailedRecommendation).toContain('Reuse existing storage');
       expect(result.detailedRecommendation).toContain('storage-1');
@@ -233,7 +233,7 @@ describe('StorageReuseAnalyzer', () => {
       const result = await storageReuseAnalyzer.analyzeStorageEfficiency(100000);
       
       expect(result.analysisResult.recommendation).toBe('allocate-new');
-      expect(result.costComparison.reuseExistingSavings).toBe(0n);
+      expect(result.costComparison.reuseExistingSavings).toBe(BigInt(0));
       expect(result.costComparison.reuseExistingPercentSaved).toBe(0);
       expect(result.detailedRecommendation).toContain('Allocate new storage');
     });

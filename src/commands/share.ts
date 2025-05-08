@@ -3,6 +3,16 @@ import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
 
+/**
+ * @class ShareCommand
+ * @description This command enables users to share a specific todo list with another user by adding them as a collaborator.
+ * It checks if the list exists and if the recipient is already a collaborator before updating the list's sharing settings.
+ * The command provides feedback on the successful sharing of the list with the specified user.
+ *
+ * @param {string} [listName] - The name of the todo list to share. Can also be provided via the --list flag. (Optional argument)
+ * @param {string} [list] - The name of the todo list to share. Alternative to providing it as an argument. (Optional flag: -l, --list)
+ * @param {string} recipient - The username of the person to share the list with. (Required flag: -r, --recipient)
+ */
 export default class ShareCommand extends Command {
   static description = 'Share a todo list with another user';
 

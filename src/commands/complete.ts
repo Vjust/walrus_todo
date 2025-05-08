@@ -11,6 +11,24 @@ import { configService } from '../services/config-service';
 import chalk from 'chalk';
 import { withRetry } from '../utils/error-handler';
 
+/**
+ * @class CompleteCommand
+ * @description Marks a todo item as completed. This command handles updates for todos stored locally,
+ * on the Walrus blockchain, and as NFTs on the Sui blockchain.
+ *
+ * Key functionalities:
+ * - Marks a local todo item as complete.
+ * - If the todo has an associated Sui NFT, it updates the NFT's 'completed' status on-chain.
+ *   This requires the smart contract to be deployed and may incur gas fees.
+ * - If the todo has an associated Walrus blob ID, it updates the blob on Walrus storage.
+ * - Provides feedback on the success of local, NFT, and Walrus updates.
+ * - Includes retries and error handling for blockchain operations.
+ *
+ * @param {string} [list='default'] - The name of the todo list. (Argument)
+ * @param {string} id - The ID or title of the todo item to mark as complete. (Required flag: -i, --id)
+ * @param {string} [network] - The blockchain network to use (e.g., 'localnet', 'devnet', 'testnet', 'mainnet').
+ *                             Defaults to the network configured globally or 'testnet'. (Optional flag: -n, --network)
+ */
 export default class CompleteCommand extends Command {
   static description = `Mark a todo as completed.
   If the todo has an associated NFT or Walrus blob, updates blockchain storage as well.

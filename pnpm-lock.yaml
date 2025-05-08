@@ -135,9 +135,15 @@ importers:
       tslib:
         specifier: ^2.6.2
         version: 2.8.1
+      ttypescript:
+        specifier: ^1.5.15
+        version: 1.5.15(ts-node@10.9.2(@types/node@20.17.44)(typescript@5.0.4))(typescript@5.0.4)
       typescript:
         specifier: 5.0.4
         version: 5.0.4
+      typescript-transform-paths:
+        specifier: ^3.5.5
+        version: 3.5.5(typescript@5.0.4)
 
 packages:
 
@@ -3185,6 +3191,13 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+  ttypescript@1.5.15:
+    resolution: {integrity: sha512-48ykDNHzFnPMnv4hYX1P8Q84TvCZyL1QlFxeuxsuZ48X2+ameBgPenvmCkHJtoOSxpoWTWi8NcgNrRnVDOmfSg==}
+    hasBin: true
+    peerDependencies:
+      ts-node: '>=8.0.2'
+      typescript: '>=3.2.2'
+
   tweetnacl@1.0.3:
     resolution: {integrity: sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw==}
 
@@ -3215,6 +3228,11 @@ packages:
   type-is@2.0.1:
     resolution: {integrity: sha512-OZs6gsjF4vMp32qrCbiVSkrFmXtG/AZhY3t0iAMrMBiAZyV9oALtXO8hsrHbMXF9x6L3grlFuwW2oAz7cav+Gw==}
     engines: {node: '>= 0.6'}
+
+  typescript-transform-paths@3.5.5:
+    resolution: {integrity: sha512-RMK86wKe/4+ad+3kMT9SKAs3K0tUHLe7hF+MLbD6VpC9VUmFuKorhf3pHz+qO5GdS4mUp2ncNUo14j6ws9UvBQ==}
+    peerDependencies:
+      typescript: '>=3.6.5'
 
   typescript@5.0.4:
     resolution: {integrity: sha512-cW9T5W9xY37cc+jfEnaUvX91foxtHkza3Nw3wkoF4sSlKn0MONdkdEndig/qPBWXNkmplh3NzayQzCiHM4/hqw==}
@@ -7166,6 +7184,12 @@ snapshots:
 
   tslib@2.8.1: {}
 
+  ttypescript@1.5.15(ts-node@10.9.2(@types/node@20.17.44)(typescript@5.0.4))(typescript@5.0.4):
+    dependencies:
+      resolve: 1.22.10
+      ts-node: 10.9.2(@types/node@20.17.44)(typescript@5.0.4)
+      typescript: 5.0.4
+
   tweetnacl@1.0.3: {}
 
   type-check@0.4.0:
@@ -7187,6 +7211,11 @@ snapshots:
       content-type: 1.0.5
       media-typer: 1.1.0
       mime-types: 3.0.1
+
+  typescript-transform-paths@3.5.5(typescript@5.0.4):
+    dependencies:
+      minimatch: 9.0.5
+      typescript: 5.0.4
 
   typescript@5.0.4: {}
 

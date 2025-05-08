@@ -4,6 +4,21 @@ import { CLIError } from '../types/error';
 // Removed unused Todo import
 import chalk from 'chalk';
 
+/**
+ * @class SimpleCommand
+ * @description This command provides a simplified interface for managing todos with basic operations.
+ * It supports creating lists, adding todos, listing todos with filtering and sorting options, and marking todos as complete.
+ * The command is designed for quick and straightforward interactions with the todo system without advanced features.
+ *
+ * @param {string} action - The action to perform: 'create' a new list, 'add' a todo, 'list' todos, or 'complete' a todo. (Required argument)
+ * @param {string} list - The name of the todo list to operate on. (Required argument)
+ * @param {string} [title] - The title of the todo item to add. Required for 'add' action. (Optional argument)
+ * @param {string} [priority='medium'] - The priority level of the todo item ('high', 'medium', 'low'). Used with 'add' action. (Optional flag: -p, --priority)
+ * @param {string} [tags] - Comma-separated tags to associate with the todo item. Used with 'add' action. (Optional flag: -t, --tags)
+ * @param {string} [id] - The ID of the todo item to mark as complete. Required for 'complete' action. (Optional flag: -i, --id)
+ * @param {string} [sort] - Sort the listed todos by 'priority' or 'title'. Used with 'list' action. (Optional flag: -s, --sort)
+ * @param {string} [filter] - Filter the listed todos by status ('completed' or 'incomplete'). Used with 'list' action. (Optional flag: -f, --filter)
+ */
 export default class SimpleCommand extends Command {
   static description = 'Manage todos with simplified commands for basic operations';
 

@@ -5,6 +5,20 @@ import { validateDate, validatePriority } from '../utils';
 import { Todo } from '../types/todo';
 import { CLIError } from '../utils/error-handler';
 
+/**
+ * @class UpdateCommand
+ * @description This command allows users to update various properties of an existing todo item within a specified list.
+ * It supports updating the title, priority, due date, tags, and privacy status of the todo.
+ * The command ensures that the list and todo exist before applying changes and provides feedback on the updates made.
+ *
+ * @param {string} listName - The name of the todo list containing the item to update. (Required argument)
+ * @param {string} id - The ID or title of the todo item to update. (Required flag: -i, --id)
+ * @param {string} [task] - The new title or description for the todo item. (Optional flag: -t, --task)
+ * @param {string} [priority] - The new priority level for the todo ('high', 'medium', 'low'). (Optional flag: -p, --priority)
+ * @param {string} [due] - The new due date for the todo in YYYY-MM-DD format. (Optional flag: -d, --due)
+ * @param {string} [tags] - New comma-separated tags to assign to the todo. (Optional flag: -g, --tags)
+ * @param {boolean} [private] - If provided, sets the privacy status of the todo. (Optional flag: --private)
+ */
 export default class UpdateCommand extends Command {
   static description = 'Update properties of an existing todo item';
 

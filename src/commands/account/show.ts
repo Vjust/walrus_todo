@@ -2,6 +2,11 @@ import { Command } from '@oclif/core';
 import { CLIError } from '../../utils/error-handler';
 import { configService } from '../../services/config-service';
 
+/**
+ * @class AccountShowCommand
+ * @description This command displays the current active Sui wallet address configured for the CLI.
+ * It retrieves the address from the configuration settings and provides feedback if no address is set.
+ */
 export default class AccountShowCommand extends Command {
   static description = 'Show current active Sui address';
 

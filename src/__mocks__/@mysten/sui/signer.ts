@@ -6,6 +6,7 @@ import { SignerAdapter } from '../../../utils/adapters/signer-adapter';
 import { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
 
 // Define a mock implementation that implements the SignerAdapter interface
+// Ensure SignatureWithBytes uses Uint8Array for both signature and bytes properties
 export class SignerWithProvider implements SignerAdapter {
   #publicKey: Ed25519PublicKey;
   // Add reference to client for connect() method
@@ -32,23 +33,26 @@ export class SignerWithProvider implements SignerAdapter {
       ? transaction 
       : (transaction as TransactionBlockAdapter).getUnderlyingBlock();
       
+    // Use string format as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]), 
-      bytes: new Uint8Array([6, 7, 8, 9])
+      signature: "mock-signature",
+      bytes: "mock-bytes"
     };
   }
 
   async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
+    // Use string format as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]), 
-      bytes: new Uint8Array([6, 7, 8, 9])
+      signature: "mock-signature",
+      bytes: "mock-bytes"
     };
   }
 
   async signWithIntent(message: Uint8Array, intent: IntentScope | string): Promise<SignatureWithBytes> {
+    // Use string format as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]), 
-      bytes: new Uint8Array([6, 7, 8, 9])
+      signature: "mock-signature",
+      bytes: "mock-bytes"
     };
   }
 
@@ -73,9 +77,10 @@ export class SignerWithProvider implements SignerAdapter {
   
   // Implementation matching extended expectations with correct signature
   async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
+    // Use string format as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]), 
-      bytes: new Uint8Array([6, 7, 8, 9])
+      signature: "mock-signature",
+      bytes: "mock-bytes"
     };
   }
 

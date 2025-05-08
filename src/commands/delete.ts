@@ -4,6 +4,17 @@ import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
 
+/**
+ * @class DeleteCommand
+ * @description This command allows users to delete either a specific todo item or an entire todo list from local storage.
+ * It provides options to bypass confirmation prompts and handles user input for selecting items to delete if not specified.
+ * The command offers a safety mechanism with confirmation prompts to prevent accidental deletions unless the force option is used.
+ *
+ * @param {string} listName - The name of the todo list to delete from or delete entirely. (Required argument)
+ * @param {string} [id] - The ID or title of the specific todo item to delete. (Optional flag: -i, --id)
+ * @param {boolean} [all=false] - If true, deletes the entire list instead of a specific item. (Optional flag: -a, --all)
+ * @param {boolean} [force=false] - If true, skips the confirmation prompt before deletion. (Optional flag: -f, --force)
+ */
 export default class DeleteCommand extends Command {
   static description = 'Delete a specific todo item or an entire list';
 

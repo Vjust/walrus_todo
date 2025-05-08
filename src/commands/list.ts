@@ -11,6 +11,17 @@ const priorityColors: Record<string, (text: string) => string> = {
   low: chalk.blue
 };
 
+/**
+ * @class ListCommand
+ * @description This command displays todo items within a specified list or shows all available todo lists if no list is specified.
+ * It offers filtering options to show only completed or pending todos and sorting capabilities based on priority or due date.
+ * The output is formatted with color-coded status indicators for better readability.
+ *
+ * @param {string} [listName] - The name of the specific todo list to display. If not provided, all available lists are shown. (Optional argument)
+ * @param {boolean} [completed=false] - If true, displays only completed todo items in the specified list. (Optional flag: --completed)
+ * @param {boolean} [pending=false] - If true, displays only pending (not completed) todo items in the specified list. (Optional flag: --pending)
+ * @param {string} [sort] - Sorts the todo items by the specified field ('priority' or 'dueDate'). (Optional flag: --sort)
+ */
 export default class ListCommand extends BaseCommand {
   static description = 'Display todo items or available todo lists';
 

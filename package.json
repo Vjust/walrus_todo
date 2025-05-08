@@ -9,11 +9,12 @@
     "prestart": "chmod +x ./bin/run.js ./bin/waltodo ./bin/waltodo-direct",
     "build": "tsc --skipLibCheck --noEmitOnError",
     "build-force": "tsc --skipLibCheck --noEmitOnError false",
-    "build-transpile-only": "ts-node --transpileOnly -p tsconfig.json scripts/build-helper.ts",
+    "build-transpile-only": "ts-node --transpileOnly scripts/build-helper.ts",
+    "build-compatible": "ts-node --transpileOnly scripts/build-helper.ts",
     "start": "node bin/run.js",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist",
-    "prepare": "pnpm run clean && pnpm run build && pnpm run manifest",
+    "prepare": "pnpm run clean && pnpm run build-compatible && pnpm run manifest",
     "link": "pnpm link",
     "global-install": "./install-global.sh",
     "test": "jest --no-typecheck",
@@ -22,7 +23,8 @@
     "manifest": "touch oclif.manifest.json",
     "postbuild": "pnpm run manifest",
     "fix-cli": "./fix-cli.sh",
-    "local-install": "mkdir -p ~/.local/bin && pnpm pack && tar -xzf waltodo-1.0.0.tgz && cp -r package/bin/* ~/.local/bin/ && chmod +x ~/.local/bin/waltodo && rm -rf package waltodo-1.0.0.tgz"
+    "local-install": "mkdir -p ~/.local/bin && pnpm pack && tar -xzf waltodo-1.0.0.tgz && cp -r package/bin/* ~/.local/bin/ && chmod +x ~/.local/bin/waltodo && rm -rf package waltodo-1.0.0.tgz",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "cli",
@@ -78,7 +80,9 @@
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "tslib": "^2.6.2",
-    "typescript": "5.0.4"
+    "ttypescript": "^1.5.15",
+    "typescript": "5.0.4",
+    "typescript-transform-paths": "^3.5.5"
   },
   "files": [
     "/bin",

@@ -138,6 +138,7 @@ export interface WalrusClientAdapter {
 export class WalrusClientAdapterImpl implements WalrusClientAdapter {
   private client: OriginalWalrusClient | WalrusClient | WalrusClientExt;
   private clientType: 'original' | 'custom' | 'extended';
+  private _experimental: { getBlobData: () => Promise<any> };
 
   constructor(client: OriginalWalrusClient | WalrusClient | WalrusClientExt) {
     this.client = client;
@@ -145,10 +146,22 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     // Determine the type of client we're working with
     if ('getBlobSize' in client && typeof client.getBlobSize === 'function') {
       this.clientType = 'extended';
-    } else if ('experimental' in client && client.experimental) {
+    } else if (client && 'experimental' in client && client.experimental) {
       this.clientType = 'extended';
     } else {
       this.clientType = 'original';
+    }
+
+    // Initialize the experimental property safely
+    this._experimental = {
+      getBlobData: async (): Promise<any> => {
+        throw new Error('Experimental API not supported by this client');
+      }
+    };
+
+    // Only set the experimental property if it exists on the client
+    if (client && 'experimental' in client && client.experimental) {
+      this._experimental = client.experimental;
     }
   }
 
@@ -170,6 +183,10 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       storage_size: string; 
     } 
   }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
     // Convert any provided adapters to their underlying implementations
     const adaptedOptions = {
       ...options,
@@ -187,26 +204,44 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
   }
 
   async getConfig(): Promise<{ network: string; version: string; maxSize: number }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.getConfig();
   }
 
   async getWalBalance(): Promise<string> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.getWalBalance();
   }
 
   async getStorageUsage(): Promise<{ used: string; total: string }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.getStorageUsage();
   }
 
   async getBlobInfo(blobId: string): Promise<BlobInfo> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.getBlobInfo(blobId);
   }
 
   async getBlobObject(params: { blobId: string }): Promise<BlobObject> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.getBlobObject(params);
   }
 
   async verifyPoA(params: { blobId: string }): Promise<boolean> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.verifyPoA(params);
   }
 
@@ -221,6 +256,10 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     blobId?: string;
     blobObject: BlobObject | { blob_id: string }
   }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
     // Check which interface of writeBlob we're dealing with
     if ('blob' in params && 'signer' in params) {
       // Extended interface, handle adapters
@@ -238,7 +277,11 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       
       // If we have the extended client, use it directly
       if (this.clientType === 'extended') {
-        return (this.client as WalrusClientExt).writeBlob(adaptedParams);
+        return (this.client as WalrusClientExt).writeBlob(adaptedParams)
+          .then(result => ({
+            blobObject: result.blobObject,
+            blobId: result.blobObject.blob_id
+          }));
       }
       
       // Otherwise, adapt the response format
@@ -274,10 +317,16 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
   }
 
   async readBlob(options: ReadBlobOptions): Promise<Uint8Array> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.readBlob(options);
   }
 
   async getBlobMetadata(options: ReadBlobOptions): Promise<BlobMetadataShape> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
     return this.client.getBlobMetadata(options);
   }
 
@@ -286,29 +335,55 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     writeCost: bigint;
     totalCost: bigint;
   }> {
-    return this.client.storageCost(size, epochs);
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if ('storageCost' in this.client && typeof this.client.storageCost === 'function') {
+      return this.client.storageCost(size, epochs);
+    }
+    
+    // Fallback implementation if the method is not available
+    throw new Error('storageCost method not available on the current client');
   }
 
   // Optional methods from WalrusClientExt
   async getBlobSize(blobId: string): Promise<number> {
-    if (this.clientType === 'extended' && 'getBlobSize' in this.client) {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (this.clientType === 'extended' && 'getBlobSize' in this.client && 
+        typeof this.client.getBlobSize === 'function') {
       return (this.client as WalrusClientExt).getBlobSize(blobId);
     }
+    
     // Fallback implementation if client doesn't have this method
     const blobInfo = await this.client.getBlobInfo(blobId);
     return Number(blobInfo.size || 0);
   }
 
   async getStorageProviders(params: { blobId: string }): Promise<string[]> {
-    if (this.clientType === 'extended' && 'getStorageProviders' in this.client) {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (this.clientType === 'extended' && 'getStorageProviders' in this.client && 
+        typeof this.client.getStorageProviders === 'function') {
       return (this.client as WalrusClientExt).getStorageProviders(params);
     }
+    
     // Return empty array as fallback
     return [];
   }
 
   reset(): void {
-    if (this.clientType === 'extended' && 'reset' in this.client) {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (this.clientType === 'extended' && 'reset' in this.client && 
+        typeof this.client.reset === 'function') {
       (this.client as WalrusClientExt).reset();
     }
     // Do nothing if the client doesn't have this method
@@ -320,6 +395,15 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (!('executeCertifyBlobTransaction' in this.client) || 
+        typeof this.client.executeCertifyBlobTransaction !== 'function') {
+      throw new Error('executeCertifyBlobTransaction method not available on the current client');
+    }
+
     // Convert adapters to underlying implementations
     const adaptedOptions = {
       ...options,
@@ -342,6 +426,15 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (!('executeWriteBlobAttributesTransaction' in this.client) || 
+        typeof this.client.executeWriteBlobAttributesTransaction !== 'function') {
+      throw new Error('executeWriteBlobAttributesTransaction method not available on the current client');
+    }
+
     // Convert adapters to underlying implementations
     const adaptedOptions = {
       ...options,
@@ -359,6 +452,14 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
   }
 
   deleteBlob(options: DeleteBlobOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{ digest: string }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (!('deleteBlob' in this.client) || typeof this.client.deleteBlob !== 'function') {
+      throw new Error('deleteBlob method not available on the current client');
+    }
+
     const originalFn = this.client.deleteBlob(options);
     
     // Return a wrapped function that handles the adapter
@@ -380,6 +481,15 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     blob: BlobObject;
     digest: string; 
   }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (!('executeRegisterBlobTransaction' in this.client) || 
+        typeof this.client.executeRegisterBlobTransaction !== 'function') {
+      throw new Error('executeRegisterBlobTransaction method not available on the current client');
+    }
+
     // Convert adapters to underlying implementations
     const adaptedOptions = {
       ...options,
@@ -399,10 +509,28 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
   async getStorageConfirmationFromNode(
     options: GetStorageConfirmationOptions
   ): Promise<{ confirmed: boolean; serializedMessage: string; signature: string }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (!('getStorageConfirmationFromNode' in this.client) || 
+        typeof this.client.getStorageConfirmationFromNode !== 'function') {
+      throw new Error('getStorageConfirmationFromNode method not available on the current client');
+    }
+
     return this.client.getStorageConfirmationFromNode(options);
   }
 
   async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock | TransactionBlockAdapter> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (!('createStorageBlock' in this.client) || 
+        typeof this.client.createStorageBlock !== 'function') {
+      throw new Error('createStorageBlock method not available on the current client');
+    }
+
     const txBlock = await this.client.createStorageBlock(size, epochs);
     // Wrap in our adapter
     return createTransactionBlockAdapter(txBlock);
@@ -419,6 +547,14 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       storage_size: string;
     }
   }> {
+    if (!this.client) {
+      throw new Error('WalrusClient not initialized');
+    }
+
+    if (!('createStorage' in this.client) || typeof this.client.createStorage !== 'function') {
+      throw new Error('createStorage method not available on the current client');
+    }
+
     const originalFn = this.client.createStorage(options);
     
     // Return a wrapped function that handles the adapter
@@ -431,12 +567,10 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     };
   }
 
-  // Handle experimental methods
-  experimental = this.client.experimental || {
-    getBlobData: async (): Promise<any> => {
-      throw new Error('Experimental API not supported by this client');
-    }
-  };
+  // Handle experimental methods safely
+  get experimental() {
+    return this._experimental;
+  }
 }
 
 /**

@@ -8,6 +8,17 @@ import { SuiClient } from '@mysten/sui.js/client';
 import * as path from 'path';
 import { configService } from '../../services/config-service';
 
+/**
+ * @class UploadCommand
+ * @description This command uploads a custom image for a specified todo item to Walrus storage.
+ * It ensures the todo exists before uploading the image and updates the todo with the new image URL.
+ * The command provides feedback on the upload process and the resulting image URL and blob ID.
+ *
+ * @param {string} todo - The ID of the todo item to upload an image for. (Required flag: -t, --todo)
+ * @param {string} list - The name of the todo list containing the specified todo item. (Required flag: -l, --list)
+ * @param {string} image - Path to the custom image file to upload. (Required flag: -i, --image)
+ * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
+ */
 export default class UploadCommand extends Command {
   static description = 'Upload a custom image for a todo to Walrus storage';
 
