@@ -595,7 +595,7 @@ Key features of the contract:
 
 7. **TypeScript build errors**:
    - Run `./fix-typescript-errors.sh` to resolve SDK compatibility issues
-   - Or use `pnpm run build-transpile-only` to bypass type checking
+   - Or use `pnpm run build-compatible` to bypass type checking
    - These errors are expected due to version mismatches between Sui and Walrus SDKs
    - The CLI will still work correctly despite these TypeScript errors
 
@@ -894,11 +894,12 @@ The codebase currently has some TypeScript compatibility issues that are address
 
 - `pnpm run build` - Standard build with type checking (will skip emitting on errors)
 - `pnpm run build-force` - Build with type checking but emit files even with errors
-- `pnpm run build-transpile-only` - Bypasses type checking completely to generate JavaScript files
+- `pnpm run build-compatible` - Build with transpile-only mode to skip type checking entirely
+- `pnpm run typecheck` - Run TypeScript type checking without emitting JavaScript
 - `./fix-typescript-errors.sh` - Automatically fix TypeScript build issues with the optimal approach
 
 The project includes a special helper script `fix-typescript-errors.sh` that resolves TypeScript compatibility issues with Sui and Walrus SDK dependencies. Use this script to get a successful build even when TypeScript reports errors related to blockchain SDK interfaces.
 
-When updating dependencies or refactoring code, prefer to use `pnpm run build-force` to see all type errors while still generating the output files. For deployment or testing where you just need a working build, use `./fix-typescript-errors.sh` to bypass type checking completely.
+When updating dependencies or refactoring code, prefer to use `pnpm run build-force` to see all type errors while still generating the output files. For deployment or testing where you just need a working build, use `pnpm run build-compatible` to bypass type checking completely with transpile-only mode.
 
 For a comprehensive guide on TypeScript compatibility, see [TypeScript Compatibility Guide](docs/typescript-compatibility.md).

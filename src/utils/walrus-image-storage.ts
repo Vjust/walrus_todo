@@ -1,6 +1,12 @@
 import { SuiClient } from '@mysten/sui.js/client';
-import { type Signer, type SignatureWithBytes } from '@mysten/sui.js/cryptography';
-import { Transaction } from '@mysten/sui.js/transactions';
+import { type Signer } from '@mysten/sui.js/cryptography';
+
+// Define compatible SignatureWithBytes interface for local usage
+interface SignatureWithBytes {
+  signature: string;
+  bytes: string;
+}
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { WalrusClient, type ReadBlobOptions } from '@mysten/walrus';
 import type { WalrusClientExt, WalrusClientWithExt } from '../types/client';
 import * as fs from 'fs';
@@ -12,7 +18,7 @@ import { KeystoreSigner } from './sui-keystore';
 import * as crypto from 'crypto';
 import { CLIError } from '../types/error';
 import sizeOf from 'image-size';
-import { MockWalrusClient } from './MockWalrusClient';
+import { MockWalrusClient, createMockWalrusClient } from './MockWalrusClient';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 import { SignerAdapter, createSignerAdapter } from './adapters/signer-adapter';
 import { WalrusClientAdapter, createWalrusClientAdapter } from './adapters/walrus-client-adapter';
@@ -76,7 +82,7 @@ interface ImageUploadOptions {
   type: 'todo-nft-image' | 'todo-nft-default-image';
   metadata?: {
     title?: string;
-    completed?: boolean;
+    completed?: boolean | string; // Support both boolean and string formats
     [key: string]: any;
   };
 }
@@ -121,10 +127,7 @@ export class WalrusImageStorage {
         console.log('Using mock mode for Walrus image storage');
         // Use the factory function to create a properly configured MockWalrusClient
         // that implements the WalrusClientAdapter interface
-        const mockClient = new MockWalrusClient();
-        // MockWalrusClient already implements WalrusClientAdapter but we wrap it
-        // to ensure interface consistency
-        this.walrusClient = mockClient;
+        this.walrusClient = createMockWalrusClient();
         this.isInitialized = true;
         return;
       }
@@ -155,7 +158,8 @@ export class WalrusImageStorage {
       // Note: We need to use the adapter to ensure type compatibility
       // KeystoreSigner implements a compatible but slightly different Signer interface
       // The adapter bridges these differences ensuring consistent behavior
-      this.signer = createSignerAdapter(keystoreSigner);
+      // Use type assertion to tell TypeScript that KeystoreSigner is compatible with Signer
+      this.signer = createSignerAdapter(keystoreSigner as unknown as Signer);
       this.isInitialized = true;
     } catch (error) {
       if (error instanceof Error) {
@@ -222,8 +226,10 @@ export class WalrusImageStorage {
       })
     };
     
-    // Create an adapter from our minimal client implementation
-    this.walrusClient = createWalrusClientAdapter(minimalClient as WalrusClient);
+    // Use type assertion to satisfy the compiler
+    // This is safe because createWalrusClientAdapter will handle any missing methods
+    // by providing default implementations
+    this.walrusClient = createWalrusClientAdapter(minimalClient as unknown as WalrusClient);
     
     // Clean up signer reference
     this.signer = null;
@@ -242,8 +248,9 @@ export class WalrusImageStorage {
     // All signers should already be wrapped in an adapter during connect(),
     // but we ensure it here for type safety.
     // The 'getUnderlyingSigner' property is a reliable way to identify a SignerAdapter instance
-    if (!('getUnderlyingSigner' in this.signer)) {
+    if (this.signer && !('getUnderlyingSigner' in this.signer)) {
       // If it's not already a SignerAdapter, create one from the base Signer
+      // Use type assertion to tell TypeScript that this.signer is compatible with Signer
       return createSignerAdapter(this.signer as unknown as Signer);
     }
     
@@ -309,7 +316,7 @@ export class WalrusImageStorage {
         blobId = result.blobId;
       } else if (result.blobObject) {
         // Need to extract from blobObject based on its structure
-        if (typeof result.blobObject === 'object') {
+        if (result.blobObject && typeof result.blobObject === 'object') {
           if ('blob_id' in result.blobObject && typeof result.blobObject.blob_id === 'string') {
             blobId = result.blobObject.blob_id;
           } else if ('id' in result.blobObject && 
@@ -535,7 +542,7 @@ export class WalrusImageStorage {
             blobId = result.blobId;
           } else if (result.blobObject) {
             // Need to extract from blobObject based on its structure
-            if (typeof result.blobObject === 'object') {
+            if (result.blobObject && typeof result.blobObject === 'object') {
               if ('blob_id' in result.blobObject && typeof result.blobObject.blob_id === 'string') {
                 blobId = result.blobObject.blob_id;
               } else if ('id' in result.blobObject && 
@@ -581,9 +588,14 @@ export class WalrusImageStorage {
               ]);
               
               // Check if the result indicates failure
-              if (!('success' in uploadResult) || !uploadResult.success) {
-                const error = 'error' in uploadResult ? uploadResult.error : new Error('Unknown verification error');
+              if (!uploadResult || !('success' in uploadResult) || !uploadResult.success) {
+                const error = uploadResult && 'error' in uploadResult ? uploadResult.error : new Error('Unknown verification error');
                 throw error instanceof Error ? error : new Error(String(error));
+              }
+              
+              // Type guard to safely access data property
+              if (!('data' in uploadResult)) {
+                throw new Error('Upload result does not contain expected data');
               }
               
               const uploadedContent = uploadResult.data;
