@@ -5,7 +5,7 @@
 # It handles the 'add' command with spaces in the title correctly
 
 # Use the actual project root directory
-PROJECT_ROOT="/Users/angle/Documents/Projects/walrus_todo"
+PROJECT_ROOT="/Users/angle/Projects/walrus_todo"
 
 # Create the todos directory if it doesn't exist
 mkdir -p "$PROJECT_ROOT/todos"

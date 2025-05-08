@@ -4,7 +4,7 @@
 # It handles the 'add' command with spaces in the title correctly
 
 # Get the path to the original waltodo executable
-ORIGINAL_WALTODO="/Users/angle/Documents/Projects/walrus_todo/bin/waltodo"
+ORIGINAL_WALTODO="/Users/angle/Projects/walrus_todo/bin/waltodo"
 
 # Check if at least one argument is provided
 if [ $# -eq 0 ]; then

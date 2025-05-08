@@ -598,6 +598,7 @@ Key features of the contract:
    - Or use `pnpm run build-compatible` to bypass type checking
    - These errors are expected due to version mismatches between Sui and Walrus SDKs
    - The CLI will still work correctly despite these TypeScript errors
+   - If path issues occur, ensure the PROJECT_ROOT in bin/waltodo and bin/waltodo-bash is correctly set to your actual project path
 
 ### Getting Help
 
@@ -652,6 +653,9 @@ When making changes to the CLI, use the following scripts:
 # Test all CLI commands
 ./test-all-commands.sh
 ```
+
+**Important Note on Project Paths:**
+The CLI scripts in `bin/waltodo` and `bin/waltodo-bash` contain a hardcoded `PROJECT_ROOT` variable. If you're encountering path-related errors, ensure this path is correctly set to your actual project location. After cloning the repository to a different location, you may need to update this path manually or run `./update-cli.sh` to fix it.
 
 ### Testing Infrastructure
 
