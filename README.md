@@ -599,6 +599,7 @@ Key features of the contract:
    - These errors are expected due to version mismatches between Sui and Walrus SDKs
    - The CLI will still work correctly despite these TypeScript errors
    - If path issues occur, ensure the PROJECT_ROOT in bin/waltodo and bin/waltodo-bash is correctly set to your actual project path
+   - For details on the compatibility approach, see [TypeScript Compatibility Guide](TYPESCRIPT_COMPATIBILITY.md)
 
 ### Getting Help
 
@@ -667,7 +668,7 @@ WalTodo has a comprehensive testing infrastructure:
 - **Fuzz Tests**: Test with random inputs to find unexpected issues
 - **Command Tests**: Test CLI commands end-to-end
 
-The test files are organized in the `src/__tests__/` directory, mirroring the structure of the source code. We use Jest as our testing framework.
+The test files are organized in the `tests/` directory, categorized by test type (unit, integration, etc.). We use Jest as our testing framework.
 
 ```bash
 # Run all tests
@@ -677,7 +678,7 @@ pnpm test
 pnpm test -- --coverage
 
 # Run specific test files
-pnpm test -- src/__tests__/commands/add.test.ts
+pnpm test -- tests/commands/add.test.ts
 
 # Run tests matching a pattern
 pnpm test -- -t "should add a todo"
@@ -716,14 +717,6 @@ walrus_todo/
 ├── scripts/              # Utility scripts
 ├── src/
 │   ├── __mocks__/        # Mock implementations for testing
-│   ├── __tests__/        # Test files
-│   │   ├── commands/     # Command tests
-│   │   ├── edge-cases/   # Edge case tests
-│   │   ├── fuzz/         # Fuzz testing
-│   │   ├── helpers/      # Test helpers
-│   │   ├── integration/  # Integration tests
-│   │   ├── types/        # Type tests
-│   │   └── utils/        # Utility tests
 │   ├── commands/         # Command implementations
 │   │   ├── account/      # Account management commands
 │   │   │   ├── show.ts   # Show account details
@@ -808,6 +801,15 @@ walrus_todo/
 │   ├── manage-lists.ts   # List management
 │   ├── manage-todos.ts   # Todo management
 │   └── update-todo.ts    # Todo update logic
+├── tests/                # Test files
+│   ├── commands/         # Command tests
+│   ├── edge-cases/       # Edge case tests
+│   ├── fuzz/             # Fuzz testing
+│   ├── helpers/          # Test helpers
+│   ├── integration/      # Integration tests
+│   ├── types/            # Type tests
+│   ├── unit/             # Unit tests
+│   └── utils/            # Utility tests
 ├── todos/                # Local todo storage directory
 ├── CLI-COMMANDS.md       # Command reference
 ├── CLI-USAGE.md          # Usage guide
