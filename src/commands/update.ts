@@ -6,7 +6,7 @@ import { Todo } from '../types/todo';
 import { CLIError } from '../utils/error-handler';
 
 export default class UpdateCommand extends Command {
-  static description = 'Update an existing todo item';
+  static description = 'Update properties of an existing todo item';
 
   static examples = [
     '<%= config.bin %> update my-list -i task-123 -t "Updated task"',

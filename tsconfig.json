@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2022",
-    "lib": ["es2022", "dom", "DOM.Iterable"],
+    "target": "es2019",
+    "lib": ["es2019", "dom", "DOM.Iterable"],
     "module": "commonjs",
     "rootDir": ".",
     "moduleResolution": "node",
@@ -37,10 +37,12 @@
     "strictNullChecks": false,
     "strictFunctionTypes": false,
     "strictBindCallApply": false,
-    "strictPropertyInitialization": false,  
-    "ignoreDeprecations": "5.0",
+    "strictPropertyInitialization": false,
     "downlevelIteration": true,
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "useUnknownInCatchVariables": false,
+    "noErrorTruncation": false,
+    "skipDefaultLibCheck": true
   },
   "ts-node": {
     "transpileOnly": true

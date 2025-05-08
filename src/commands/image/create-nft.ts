@@ -9,7 +9,7 @@ import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { configService } from '../../services/config-service';
 
 export default class CreateNftCommand extends Command {
-  static description = 'Create an NFT for a todo item with an existing image';
+  static description = 'Create an NFT on Sui blockchain for a todo with an existing image';
 
   static examples = [
     '<%= config.bin %> image create-nft --todo 123 --list my-todos',

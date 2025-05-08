@@ -1,35 +1,69 @@
-import { type WalrusClient, type WriteBlobOptions, type StorageWithSizeOptions, type RegisterBlobOptions, type DeleteBlobOptions, type CertifyBlobOptions, type WriteBlobAttributesOptions, type GetStorageConfirmationOptions, type WriteSliversToNodeOptions, type WriteEncodedBlobToNodesOptions, type WriteEncodedBlobOptions, type WalrusClientConfig } from '@mysten/walrus';
+import { 
+  type WalrusClient, 
+  type WriteBlobOptions, 
+  type StorageWithSizeOptions, 
+  type RegisterBlobOptions, 
+  type DeleteBlobOptions, 
+  type CertifyBlobOptions, 
+  type WriteBlobAttributesOptions, 
+  type GetStorageConfirmationOptions, 
+  type WriteSliversToNodeOptions, 
+  type WriteEncodedBlobToNodesOptions, 
+  type WriteEncodedBlobOptions, 
+  type WalrusClientConfig,
+  type ReadBlobOptions 
+} from '@mysten/walrus';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { type BlobObject, type BlobInfo, type BlobMetadataShape } from '../types/walrus';
 import { type Signer } from '@mysten/sui.js/cryptography';
 import { type WalrusClientExt, type WalrusClientWithExt } from '../types/client';
 import { type Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { 
+  WalrusClientAdapter, 
+  createWalrusClientAdapter 
+} from './adapters/walrus-client-adapter';
+import { 
+  TransactionBlockAdapter, 
+  createTransactionBlockAdapter 
+} from './adapters/transaction-adapter';
+import { SignerAdapter } from './adapters/signer-adapter';
 
+/**
+ * Storage confirmation type for encoding operations
+ */
 interface StorageConfirmation {
   confirmed: boolean;
   proofs: Array<{ node: string; signature: Uint8Array }>;
 }
 
-interface TransactionResult {
-  $kind: "Result";
-  Result: number;
-}
+/**
+ * MockWalrusClient implements the WalrusClientAdapter interface for clean
+ * interoperability between different interface variants.
+ */
+export class MockWalrusClient implements WalrusClientAdapter {
+  private readonly mockBlobId = 'test-blob-id';
+  private readonly mockStorageId = 'test-storage-id';
+  private readonly mockDigest = 'mock-digest';
+  
+  constructor(config?: WalrusClientConfig) {
+    // No initialization needed for mock
+  }
 
-interface Transaction extends TransactionBlock {
-  readonly #private: symbol;
-}
+  // Access to the underlying client
+  getUnderlyingClient(): WalrusClient | WalrusClientWithExt {
+    return this as unknown as WalrusClientWithExt;
+  }
 
-export class MockWalrusClient implements WalrusClientWithExt {
-  private mockBlobId = 'test-blob-id';
-  private mockStorageId = 'test-storage-id';
-  private mockDigest = 'mock-digest';
-  readonly #private = {};
-  experimental?: { getBlobData: () => Promise<any> };
-
-  constructor(config?: WalrusClientConfig) {}
-
-  // @ts-ignore - Compatible with both Signer and Ed25519Keypair
-  async executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: TransactionBlock; signer: Signer | Ed25519Keypair }): Promise<{
+  /**
+   * Create storage on the blockchain
+   * Handles both interface variants with Signer | Ed25519Keypair | SignerAdapter
+   */
+  async executeCreateStorageTransaction(
+    options: StorageWithSizeOptions & { 
+      transaction?: TransactionBlock | TransactionBlockAdapter; 
+      signer: Signer | Ed25519Keypair | SignerAdapter 
+    }
+  ): Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -49,6 +83,9 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
+  /**
+   * Get configuration information about the current Walrus network
+   */
   async getConfig(): Promise<{ network: string; version: string; maxSize: number }> {
     return {
       network: 'testnet',
@@ -57,10 +94,16 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
+  /**
+   * Get WAL token balance for the connected account
+   */
   async getWalBalance(): Promise<string> {
     return '1000000';
   }
 
+  /**
+   * Get storage usage statistics for the connected account
+   */
   async getStorageUsage(): Promise<{ used: string; total: string }> {
     return {
       used: '500000',
@@ -68,10 +111,14 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
+  /**
+   * Get information about a blob by its ID
+   */
   async getBlobInfo(blobId: string): Promise<BlobInfo> {
-    return {
+    const info = {
       blob_id: blobId,
       registered_epoch: 1,
+      certified_epoch: 1,
       encoding_type: { RedStuff: true, $kind: 'RedStuff' },
       unencoded_length: '1000',
       size: '1000',
@@ -91,8 +138,13 @@ export class MockWalrusClient implements WalrusClientWithExt {
         }
       }
     };
+    
+    return info;
   }
 
+  /**
+   * Get a blob object by its ID
+   */
   async getBlobObject(params: { blobId: string }): Promise<BlobObject> {
     return {
       id: { id: params.blobId },
@@ -112,39 +164,79 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
+  /**
+   * Verify proof of access for a blob
+   */
   async verifyPoA(params: { blobId: string }): Promise<boolean> {
     return true;
   }
 
+  /**
+   * Get the list of storage providers for a blob
+   */
   async getStorageProviders(params: { blobId: string }): Promise<string[]> {
     return ['mock-storage-provider-1', 'mock-storage-provider-2'];
   }
 
+  /**
+   * Get the size of a blob in bytes
+   */
   async getBlobSize(blobId: string): Promise<number> {
     return 1000;
   }
 
+  /**
+   * Reset the client state
+   */
   reset(): void {
     // Reset the mock client state
     console.log('MockWalrusClient reset called');
   }
 
-  // @ts-ignore - Return type compatibility with interfaces
-  async writeBlob({ blob, deletable, epochs, signer, attributes }: WriteBlobOptions): Promise<{ blobId: string; blobObject: BlobObject }> {
+  /**
+   * Write a blob to Walrus storage
+   * This implementation handles both WalrusClient and WalrusClientExt interface variants
+   */
+  async writeBlob(params: WriteBlobOptions | { 
+    blob: Uint8Array; 
+    signer: Signer | Ed25519Keypair | SignerAdapter; 
+    deletable?: boolean; 
+    epochs?: number; 
+    attributes?: Record<string, string>; 
+    transaction?: TransactionBlock | TransactionBlockAdapter 
+  }): Promise<{
+    blobId?: string;
+    blobObject: BlobObject | { blob_id: string };
+  }> {
     const blobObject = await this.getBlobObject({ blobId: this.mockBlobId });
+    
+    // For WalrusClientExt interface
+    if ('blob' in params && 'signer' in params) {
+      return {
+        blobObject: { blob_id: this.mockBlobId }
+      };
+    }
+    
+    // For WalrusClient interface
     return {
       blobId: this.mockBlobId,
       blobObject
     };
   }
 
-  async readBlob({ blobId, signal }: { blobId: string; signal?: AbortSignal }): Promise<Uint8Array> {
+  /**
+   * Read a blob's content
+   */
+  async readBlob(options: ReadBlobOptions): Promise<Uint8Array> {
     return new Uint8Array([1, 2, 3, 4, 5]);
   }
 
-  async getBlobMetadata({ blobId, signal }: { blobId: string; signal?: AbortSignal }): Promise<BlobMetadataShape> {
+  /**
+   * Get metadata for a blob
+   */
+  async getBlobMetadata(options: ReadBlobOptions): Promise<BlobMetadataShape> {
     return {
-      blob_id: blobId,
+      blob_id: options.blobId,
       metadata: {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
@@ -160,6 +252,9 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
+  /**
+   * Calculate storage cost for a given size and duration
+   */
   async storageCost(size: number, epochs: number): Promise<{
     storageCost: bigint;
     writeCost: bigint;
@@ -172,7 +267,37 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
-  async encodeBlob(blob: Uint8Array): Promise<{ blobId: string; metadata: { V1: { encoding_type: "RedStuff"; unencoded_length: string; hashes: Array<{ primary_hash: { Empty: false; Digest: Uint8Array }; secondary_hash: { Empty: false; Digest: Uint8Array } }> } }; rootHash: Uint8Array; sliversByNode: Array<{ primary: Array<{ sliverIndex: number; sliverPairIndex: number; shardIndex: number; sliver: Uint8Array }>; secondary: Array<{ sliverIndex: number; sliverPairIndex: number; shardIndex: number; sliver: Uint8Array }> }> }> {
+  /**
+   * Encode a raw blob for storage
+   */
+  async encodeBlob(blob: Uint8Array): Promise<{ 
+    blobId: string; 
+    metadata: { 
+      V1: { 
+        encoding_type: "RedStuff"; 
+        unencoded_length: string; 
+        hashes: Array<{ 
+          primary_hash: { Empty: false; Digest: Uint8Array }; 
+          secondary_hash: { Empty: false; Digest: Uint8Array } 
+        }> 
+      } 
+    }; 
+    rootHash: Uint8Array; 
+    sliversByNode: Array<{ 
+      primary: Array<{ 
+        sliverIndex: number; 
+        sliverPairIndex: number; 
+        shardIndex: number; 
+        sliver: Uint8Array 
+      }>; 
+      secondary: Array<{ 
+        sliverIndex: number; 
+        sliverPairIndex: number; 
+        shardIndex: number; 
+        sliver: Uint8Array 
+      }> 
+    }> 
+  }> {
     return {
       blobId: this.mockBlobId,
       metadata: {
@@ -203,16 +328,17 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
-  async writeSliversToNode({ slivers }: WriteSliversToNodeOptions): Promise<void> {
-    // Mock writing slivers to node storage
-    // Verify slivers format and simulate storage
-    if (!Array.isArray(slivers) || slivers.some(s => !(s instanceof Uint8Array))) {
-      throw new Error('Invalid slivers format');
-    }
+  /**
+   * Write slivers to a storage node
+   */
+  async writeSliversToNode(options: WriteSliversToNodeOptions): Promise<void> {
     return Promise.resolve();
   }
 
-  async writeEncodedBlobToNodes({ blobId, metadata, sliversByNode, signal }: WriteEncodedBlobToNodesOptions): Promise<StorageConfirmation[]> {
+  /**
+   * Write encoded blob to multiple nodes
+   */
+  async writeEncodedBlobToNodes(options: WriteEncodedBlobToNodesOptions): Promise<StorageConfirmation[]> {
     return [{
       confirmed: true,
       proofs: [{
@@ -222,7 +348,10 @@ export class MockWalrusClient implements WalrusClientWithExt {
     }];
   }
 
-  async writeEncodedBlobToNode({ nodeIndex, blobId, metadata, slivers, signal }: WriteEncodedBlobOptions): Promise<StorageConfirmation> {
+  /**
+   * Write encoded blob to a specific node
+   */
+  async writeEncodedBlobToNode(options: WriteEncodedBlobOptions): Promise<StorageConfirmation> {
     return {
       confirmed: true,
       proofs: [{
@@ -232,18 +361,39 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
-  // @ts-ignore - Parameter compatibility with both interfaces
-  executeCertifyBlobTransaction(options: CertifyBlobOptions & { transaction?: TransactionBlock; signer: Signer | Ed25519Keypair }): Promise<{ digest: string }> {
-    return Promise.resolve({ digest: this.mockDigest });
+  /**
+   * Execute a certify blob transaction
+   */
+  async executeCertifyBlobTransaction(
+    options: CertifyBlobOptions & { 
+      transaction?: TransactionBlock | TransactionBlockAdapter; 
+      signer?: Signer | Ed25519Keypair | SignerAdapter 
+    }
+  ): Promise<{ digest: string }> {
+    return { digest: this.mockDigest };
   }
 
-  // @ts-ignore - Parameter compatibility with both interfaces
-  executeWriteBlobAttributesTransaction(options: WriteBlobAttributesOptions & { signer: Signer | Ed25519Keypair; transaction?: TransactionBlock }): Promise<{ digest: string }> {
-    return Promise.resolve({ digest: this.mockDigest });
+  /**
+   * Execute a write blob attributes transaction
+   */
+  async executeWriteBlobAttributesTransaction(
+    options: WriteBlobAttributesOptions & { 
+      transaction?: TransactionBlock | TransactionBlockAdapter;
+      signer?: Signer | Ed25519Keypair | SignerAdapter 
+    }
+  ): Promise<{ digest: string }> {
+    return { digest: this.mockDigest };
   }
 
-  // @ts-ignore - Parameter compatibility with both interfaces
-  async executeRegisterBlobTransaction(options: RegisterBlobOptions & { transaction?: TransactionBlock; signer: Signer | Ed25519Keypair }): Promise<{ blob: BlobObject; digest: string }> {
+  /**
+   * Execute a register blob transaction
+   */
+  async executeRegisterBlobTransaction(
+    options: RegisterBlobOptions & { 
+      transaction?: TransactionBlock | TransactionBlockAdapter; 
+      signer?: Signer | Ed25519Keypair | SignerAdapter 
+    }
+  ): Promise<{ blob: BlobObject; digest: string }> {
     const blobObject = await this.getBlobObject({ blobId: this.mockBlobId });
     return {
       blob: blobObject,
@@ -251,16 +401,21 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
-  // @ts-ignore - Method signature compatibility with interface
-  deleteBlob({ blobObjectId }: DeleteBlobOptions): (tx: any) => Promise<any> {
-    return (tx: any) => Promise.resolve({
-      digest: this.mockDigest,
-      $kind: "Result",
-      Result: 42
+  /**
+   * Delete a blob - returns a function that accepts a transaction block
+   */
+  deleteBlob(options: DeleteBlobOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{ digest: string }> {
+    return (tx: TransactionBlock | TransactionBlockAdapter) => Promise.resolve({
+      digest: this.mockDigest
     });
   }
 
-  async getStorageConfirmationFromNode({ nodeIndex, blobId, deletable, objectId, signal }: GetStorageConfirmationOptions): Promise<{ confirmed: boolean; serializedMessage: string; signature: string }> {
+  /**
+   * Get storage confirmation from a node
+   */
+  async getStorageConfirmationFromNode(
+    options: GetStorageConfirmationOptions
+  ): Promise<{ confirmed: boolean; serializedMessage: string; signature: string }> {
     return {
       confirmed: true,
       serializedMessage: 'mock-message',
@@ -268,23 +423,54 @@ export class MockWalrusClient implements WalrusClientWithExt {
     };
   }
 
-  async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock> {
+  /**
+   * Create a transaction block for storage allocation
+   */
+  async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock | TransactionBlockAdapter> {
     const txb = new TransactionBlock();
-    return txb;
+    return createTransactionBlockAdapter(txb);
   }
 
-  // @ts-ignore - Method signature compatibility with interface
-  createStorage({ size, epochs, walCoin, owner }: StorageWithSizeOptions): (tx: any) => Promise<any> {
-    return (tx: any) => Promise.resolve({
+  /**
+   * Create storage - returns a function that accepts a transaction block
+   */
+  createStorage(
+    options: StorageWithSizeOptions
+  ): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{ 
+    digest: string; 
+    storage: { 
+      id: { id: string }; 
+      start_epoch: number; 
+      end_epoch: number; 
+      storage_size: string; 
+    } 
+  }> {
+    return (tx: TransactionBlock | TransactionBlockAdapter) => Promise.resolve({
       digest: this.mockDigest,
       storage: {
         id: { id: this.mockStorageId },
         start_epoch: 1,
         end_epoch: 100,
-        storage_size: String(size || 1000000)
-      },
-      $kind: "Result",
-      Result: 42
+        storage_size: String(options.size || 1000000)
+      }
     });
   }
+
+  /**
+   * Experimental API implementation
+   */
+  experimental = {
+    getBlobData: async (): Promise<{ data: string }> => {
+      return {
+        data: 'mock-data'
+      };
+    }
+  };
+}
+
+/**
+ * Factory function to create a MockWalrusClient wrapped in the adapter
+ */
+export function createMockWalrusClient(): WalrusClientAdapter {
+  return createWalrusClientAdapter(new MockWalrusClient());
 }

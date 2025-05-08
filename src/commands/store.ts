@@ -13,7 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export default class StoreCommand extends Command {
-  static description = 'Store todos on blockchain and Walrus (always creates an NFT)';
+  static description = 'Store a todo on blockchain with Walrus storage and create an NFT';
 
   static examples = [
     '<%= config.bin %> store --todo 123 --list my-todos',

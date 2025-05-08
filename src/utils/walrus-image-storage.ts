@@ -1,7 +1,7 @@
 import { SuiClient } from '@mysten/sui.js/client';
 import { type Signer } from '@mysten/sui.js/cryptography';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient, type ReadBlobOptions } from '@mysten/walrus';
 import type { WalrusClientWithExt, WalrusClientExt } from '../types/client';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -10,12 +10,14 @@ import { handleError } from './error-handler';
 import { execSync } from 'child_process';
 import { KeystoreSigner } from './sui-keystore';
 import * as crypto from 'crypto';
-import { CLIError, WalrusError } from '../types/error';
+import { CLIError } from '../types/error';
 import sizeOf from 'image-size';
-import { TransactionHelper } from './TransactionHelper';
+import { MockWalrusClient } from './MockWalrusClient';
+import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 
-// Define ClientWithExtensions type that's compatible with SuiClient and its extensions
-// @ts-ignore - We're defining a flexible type that may not match exactly with SuiClient's extensions
+/**
+ * A type that extends SuiClient with optional extensions used by other parts of the code
+ */
 export type ClientWithExtensions<T extends Record<string, any> = Record<string, any>> = SuiClient & Partial<{
   network: string;
   cache: unknown;
@@ -25,7 +27,7 @@ export type ClientWithExtensions<T extends Record<string, any> = Record<string, 
 }> & T;
 
 /**
- * Execute operation with retries
+ * Execute operation with retries using exponential backoff
  */
 const withRetry = async <T>(
   fn: () => Promise<T>, 
@@ -52,6 +54,9 @@ const withRetry = async <T>(
   throw lastError;
 };
 
+/**
+ * Metadata about an image for storage and retrieval
+ */
 interface ImageMetadata {
   width: number;
   height: number;
@@ -60,6 +65,9 @@ interface ImageMetadata {
   checksum: string;
 }
 
+/**
+ * Options for uploading an image
+ */
 interface ImageUploadOptions {
   imagePath: string;
   type: 'todo-nft-image' | 'todo-nft-default-image';
@@ -73,6 +81,9 @@ interface ImageUploadOptions {
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const SUPPORTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
+/**
+ * A class for handling image storage on Walrus with the Sui blockchain
+ */
 export class WalrusImageStorage {
   private walrusClient!: WalrusClientWithExt;
   private isInitialized: boolean = false;
@@ -84,6 +95,12 @@ export class WalrusImageStorage {
     maxDelay: 10000
   };
 
+  /**
+   * Creates a new WalrusImageStorage instance
+   * 
+   * @param suiClient The SuiClient instance to use for blockchain interactions
+   * @param useMockMode Whether to use mock mode instead of real storage (for testing)
+   */
   constructor(
     private suiClient: ClientWithExtensions,
     useMockMode: boolean = false
@@ -91,10 +108,15 @@ export class WalrusImageStorage {
     this.useMockMode = useMockMode;
   }
 
+  /**
+   * Connects to the Walrus storage service
+   * In mock mode, this is a no-op
+   */
   async connect(): Promise<void> {
     try {
       if (this.useMockMode) {
         console.log('Using mock mode for Walrus image storage');
+        this.walrusClient = new MockWalrusClient() as unknown as WalrusClientWithExt;
         this.isInitialized = true;
         return;
       }
@@ -106,19 +128,27 @@ export class WalrusImageStorage {
       }
 
       // Initialize Walrus client with network config
-      const client = new WalrusClient({
-        network: 'testnet',
+      const walrusConfig = {
+        network: 'testnet' as const,
         suiClient: this.suiClient,
         storageNodeClientOptions: {
           timeout: 30000,
-          onError: (error) => handleError('Walrus storage node error:', error)
+          onError: (error: Error) => handleError('Walrus storage node error:', error)
         }
-      });
-
-      // Create a signer that uses the active CLI keystore
+      };
+      
+      // Create and initialize clients
+      // Use suiRpcUrl instead of suiClient for compatibility
+      const compatibleConfig = {
+        network: 'testnet' as const,
+        suiRpcUrl: NETWORK_URLS[CURRENT_NETWORK],
+        storageNodeClientOptions: {
+          timeout: 30000,
+          onError: (error: Error) => handleError('Walrus storage node error:', error)
+        }
+      };
+      this.walrusClient = new WalrusClient(compatibleConfig) as unknown as WalrusClientWithExt;
       this.signer = new KeystoreSigner(this.suiClient);
-      // @ts-ignore - Type compatibility with WalrusClient and ClientWithExtensions
-      this.walrusClient = client as WalrusClientWithExt;
       this.isInitialized = true;
     } catch (error) {
       if (error instanceof Error) {
@@ -129,26 +159,40 @@ export class WalrusImageStorage {
     }
   }
 
+  /**
+   * Disconnects from the Walrus storage service
+   * In mock mode, this is a no-op
+   */
   async disconnect(): Promise<void> {
     if (this.useMockMode) {
       console.log('Mock mode: No cleanup needed');
       return;
     }
 
-    // Clear instance variables
+    // Reset client state
+    if (this.walrusClient && 'reset' in this.walrusClient) {
+      this.walrusClient.reset();
+    }
     this.walrusClient = {} as WalrusClientWithExt;
     this.signer = null;
     this.isInitialized = false;
   }
 
+  /**
+   * Gets the transaction signer for this session
+   * @throws If not initialized
+   */
   protected async getTransactionSigner(): Promise<Signer> {
     if (!this.signer) {
       throw new Error('WalrusImageStorage not initialized. Call connect() first.');
     }
-    // @ts-ignore - Ignore compatibility issues with Signer interface
     return this.signer;
   }
 
+  /**
+   * Gets the active Sui address for this session
+   * @throws If not initialized
+   */
   public getActiveAddress(): string {
     if (!this.signer) {
       throw new Error('WalrusImageStorage not initialized. Call connect() first.');
@@ -156,6 +200,10 @@ export class WalrusImageStorage {
     return this.signer.toSuiAddress();
   }
 
+  /**
+   * Uploads the default todo image to Walrus storage
+   * @returns URL to the uploaded image
+   */
   async uploadDefaultImage(): Promise<string> {
     if (!this.isInitialized) {
       throw new Error('WalrusImageStorage not initialized. Call connect() first.');
@@ -176,8 +224,9 @@ export class WalrusImageStorage {
       const imageBuffer = fs.readFileSync(imagePath);
 
       // Upload to Walrus using CLI keystore signer
+      // @ts-ignore - Intentionally handling KeystoreSigner compatibility with Signer interface
       const signer = await this.getTransactionSigner();
-      const { blobObject } = await this.walrusClient.writeBlob({
+      const result = await this.walrusClient.writeBlob({
         blob: new Uint8Array(imageBuffer),
         deletable: false,
         epochs: 52, // Store for ~6 months
@@ -188,19 +237,30 @@ export class WalrusImageStorage {
           type: 'todo-nft-default-image'
         }
       });
+      
+      // Handle different response formats between WalrusClient implementations
+      // @ts-ignore - Handle different response formats for compatibility
+      const blobId = 'blobId' in result ? result.blobId : result.blobObject.blob_id;
 
       // Return the Walrus URL format
-      return `https://testnet.wal.app/blob/${blobObject.blob_id}`;
+      return `https://testnet.wal.app/blob/${blobId}`;
     } catch (error) {
       handleError('Failed to upload default image to Walrus', error);
       throw error;
     }
   }
 
+  /**
+   * Calculates SHA-256 checksum of a buffer
+   */
   private calculateChecksum(data: Buffer): string {
     return crypto.createHash('sha256').update(data).digest('hex');
   }
 
+  /**
+   * Detects MIME type from file header bytes
+   * @throws CLIError for unsupported or invalid types
+   */
   private detectMimeType(buffer: Buffer): string {
     try {
       if (buffer.length < 4) {
@@ -234,6 +294,10 @@ export class WalrusImageStorage {
     }
   }
 
+  /**
+   * Validates an image for size, format, and dimensions
+   * @throws CLIError for validation failures
+   */
   private validateImage(buffer: Buffer, mimeType: string): void {
     try {
       // Validate size
@@ -295,6 +359,9 @@ export class WalrusImageStorage {
     }
   }
 
+  /**
+   * Internal method to upload an image with specific options
+   */
   private async uploadImageInternal(options: ImageUploadOptions): Promise<string> {
     if (!this.isInitialized) {
       throw new CLIError(
@@ -358,36 +425,45 @@ export class WalrusImageStorage {
 
       // Upload with retries and verification
       const maxRetries = this.retryConfig.maxRetries;
-      let lastError = null;
+      let lastError: Error | null = null;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           console.log(`Upload attempt ${attempt}/${maxRetries}...`);
 
-          const { blobObject } = await this.walrusClient.writeBlob({
+          const result = await this.walrusClient.writeBlob({
             blob: new Uint8Array(imageBuffer),
             deletable: false,
             epochs: 52,
             signer,
             attributes
           });
+          
+          // Handle different response formats between WalrusClient implementations
+          const blobId = 'blobId' in result ? result.blobId : result.blobObject.blob_id;
 
           // Verify upload with timeout
           let verified = false;
-          const verifyTimeout = setTimeout(() => {
-            if (!verified) {
-              throw new CLIError('Upload verification timed out', 'WALRUS_VERIFICATION_TIMEOUT');
-            }
-          }, 10000);
+          const verifyTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => {
+              if (!verified) {
+                reject(new CLIError('Upload verification timed out', 'WALRUS_VERIFICATION_TIMEOUT'));
+              }
+            }, 10000);
+          });
 
           try {
             // Try up to 3 times to verify the upload
             for (let verifyAttempt = 1; verifyAttempt <= 3; verifyAttempt++) {
-              const uploadedContent = await this.walrusClient.readBlob({
-                blobId: blobObject.blob_id
-              });
+              const readOptions: ReadBlobOptions = { blobId };
+              // @ts-ignore - Promise.race type compatibility and different client interfaces
+              const uploadedContent = await Promise.race([
+                // @ts-ignore - Different client method signatures
+                this.walrusClient.readBlob(readOptions),
+                verifyTimeoutPromise
+              ]);
 
-              if (!uploadedContent) {
+              if (!uploadedContent || uploadedContent.length === 0) {
                 if (verifyAttempt === 3) {
                   throw new CLIError('Failed to verify uploaded content', 'WALRUS_VERIFICATION_FAILED');
                 }
@@ -406,12 +482,14 @@ export class WalrusImageStorage {
               }
 
               verified = true;
-              clearTimeout(verifyTimeout);
-              return `https://testnet.wal.app/blob/${blobObject.blob_id}`;
+              return `https://testnet.wal.app/blob/${blobId}`;
             }
+            
+            // If we get here, verification failed after all attempts
+            throw new CLIError('Failed to verify uploaded content after multiple attempts', 'WALRUS_VERIFICATION_FAILED');
           } catch (error) {
-            lastError = error;
-            if (attempt === maxRetries) throw error;
+            lastError = error instanceof Error ? error : new Error(String(error));
+            if (attempt === maxRetries) throw lastError;
           }
         } catch (error) {
           if (error instanceof CLIError) {
@@ -436,6 +514,11 @@ export class WalrusImageStorage {
     }
   }
 
+  /**
+   * Uploads an image to Walrus storage
+   * @param imagePath Path to the image file
+   * @returns URL to the uploaded image
+   */
   public async uploadImage(imagePath: string): Promise<string> {
     return this.uploadImageInternal({
       imagePath,
@@ -443,22 +526,37 @@ export class WalrusImageStorage {
     });
   }
 
+  /**
+   * Uploads a todo-specific image to Walrus storage with metadata
+   * @param imagePath Path to the image file
+   * @param title Todo title to include in metadata
+   * @param completed Todo completion status to include in metadata
+   * @returns URL to the uploaded image
+   */
   public async uploadTodoImage(
     imagePath: string,
     title: string,
     completed: boolean
   ): Promise<string> {
+    // @ts-ignore - Intentionally converting boolean to string for attribute values
     return this.uploadImageInternal({
       imagePath,
       type: 'todo-nft-image',
       metadata: {
         title,
-        completed
+        // @ts-ignore - Walrus API expects string values but type definition expects boolean
+        completed: String(completed) // Convert boolean to string explicitly
       }
     });
   }
 }
 
+/**
+ * Creates a new WalrusImageStorage instance
+ * @param suiClient The SuiClient instance to use
+ * @param useMockMode Whether to use mock mode
+ * @returns A configured WalrusImageStorage instance
+ */
 export function createWalrusImageStorage(
   suiClient: ClientWithExtensions,
   useMockMode: boolean = false

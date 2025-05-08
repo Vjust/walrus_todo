@@ -10,7 +10,7 @@ import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 
 export default class CreateCommand extends Command {
-  static description = 'Create a new todo item as an NFT';
+  static description = 'Create a new todo item as an NFT on the Sui blockchain';
 
   static examples = [
     '<%= config.bin %> create --title "My first todo" --description "A test todo item" --image ./todo.png',

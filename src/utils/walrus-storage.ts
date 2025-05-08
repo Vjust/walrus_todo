@@ -15,6 +15,7 @@ import { execSync } from 'child_process';
 import { handleError } from './error-handler';
 import crypto from 'crypto';
 import { StorageManager } from './storage-manager';
+import { StorageReuseAnalyzer } from './storage-reuse-analyzer';
 
 interface VerificationResult {
   details?: {
@@ -66,6 +67,7 @@ export class WalrusStorage {
   private useMockMode: boolean;
   private lastHealthCheck: number = 0;
   private healthCheckInterval: number = 30000; // 30 seconds
+  private storageReuseAnalyzer: StorageReuseAnalyzer | null = null;
 
   constructor(useMockMode = false) {
     this.useMockMode = useMockMode;
@@ -341,8 +343,7 @@ export class WalrusStorage {
         );
       }
 
-      // Get accurate size measurement with our new calculator
-      import { TodoSizeCalculator } from './todo-size-calculator';
+      // Get accurate size measurement with our calculator
       const exactSize = buffer.length;
       const calculatedSize = TodoSizeCalculator.calculateTodoSize(todo);
       
@@ -384,7 +385,7 @@ export class WalrusStorage {
       }
 
       const signer = await this.getTransactionSigner();
-      const { blobObject } = await this.executeWithRetry(
+      const result = await this.executeWithRetry(
         async () => this.walrusClient.writeBlob({
           blob: new Uint8Array(buffer),
           deletable: false,
@@ -398,7 +399,7 @@ export class WalrusStorage {
             completed: todo.completed.toString(),
             checksum_algo: 'sha256',
             checksum,
-            size: sizeBytes.toString(),
+            size: exactSize.toString(),
             version: '1',
             schemaVersion: '1',
             encoding: 'utf-8'
@@ -407,6 +408,10 @@ export class WalrusStorage {
         'todo storage',
         5
       );
+      
+      // Handle different response formats between WalrusClient implementations
+      // @ts-ignore - Handle different response formats for compatibility
+      const blobObject = 'blobObject' in result ? result.blobObject : { blob_id: result.blobId };
 
       // Verify the upload using our dedicated verification manager
       const metadata = {
@@ -417,7 +422,7 @@ export class WalrusStorage {
         completed: todo.completed.toString(),
         checksum_algo: 'sha256',
         checksum,
-        size: sizeBytes.toString(),
+        size: exactSize.toString(),
         version: '1',
         schemaVersion: '1',
         encoding: 'utf-8'
@@ -817,7 +822,7 @@ export class WalrusStorage {
             type: 'todolist-data',
             name: todoList.name,
             checksum,
-            size: sizeBytes.toString(),
+            size: exactSize.toString(),
             version: '1',
             todoCount: todoList.todos.length.toString()
           }
@@ -833,7 +838,7 @@ export class WalrusStorage {
         type: 'todolist-data',
         name: todoList.name,
         checksum,
-        size: sizeBytes.toString(),
+        size: exactSize.toString(),
         version: '1',
         todoCount: todoList.todos.length.toString()
       };
@@ -965,12 +970,20 @@ export class WalrusStorage {
         this.getActiveAddress()
       );
     }
+    
+    if (!this.storageReuseAnalyzer) {
+      this.storageReuseAnalyzer = new StorageReuseAnalyzer(
+        this.suiClient,
+        this.walrusClient,
+        this.getActiveAddress()
+      );
+    }
   }
 
   /**
    * Ensures sufficient storage is allocated for the given size requirements
    * Uses smart optimization to either reuse existing storage or allocate new storage
-   * based on precise size calculations
+   * based on precise size calculations and storage reuse analysis
    * 
    * @param sizeBytes The required storage size in bytes
    * @returns Storage information if successfully allocated, null for mock mode
@@ -987,46 +1000,48 @@ export class WalrusStorage {
     try {
       console.log(`Validating storage requirements for ${sizeBytes} bytes...`);
       this.initializeManagers();
-
-      // Check existing storage first
-      const { epoch } = await this.suiClient.getLatestSuiSystemState();
-      const currentEpoch = Number(epoch);
-      const existingStorage = await this.storageManager.verifyExistingStorage(sizeBytes, currentEpoch);
-
-      if (existingStorage.isValid && existingStorage.details) {
-        // Analyze if existing storage is sufficient
-        const analysis = TodoSizeCalculator.analyzeStorageRequirements(
-          sizeBytes, 
-          existingStorage.remainingSize,
-          { minimumBuffer: 1024 * 1024 } // 1MB buffer
-        );
-
-        if (analysis.isStorageSufficient) {
-          const details = existingStorage.details;
-          console.log('Using existing storage:');
-          console.log(`  Storage ID: ${details.id}`);
-          console.log(`  Remaining size: ${existingStorage.remainingSize} bytes (${analysis.remainingPercentage.toFixed(2)}% after this operation)`);
-          console.log(`  Remaining epochs: ${existingStorage.remainingEpochs}`);
-
-          return {
-            id: { id: details.id },
-            storage_size: details.totalSize.toString(),
-            used_size: details.usedSize.toString(),
-            end_epoch: details.endEpoch.toString(),
-            start_epoch: '0', // We don't track this
-            content: null,
-            data: undefined
-          };
-        }
+      
+      // First, use our enhanced storage reuse analyzer to find the best storage to reuse
+      const storageAnalysis = await this.storageReuseAnalyzer!.analyzeStorageEfficiency(sizeBytes);
+      console.log('Storage analysis completed:');
+      console.log(`  Total storage: ${storageAnalysis.analysisResult.totalStorage} bytes`);
+      console.log(`  Used storage: ${storageAnalysis.analysisResult.usedStorage} bytes`);
+      console.log(`  Available: ${storageAnalysis.analysisResult.availableStorage} bytes`);
+      console.log(`  Active storage objects: ${storageAnalysis.analysisResult.activeStorageCount}`);
+      console.log(`  Recommendation: ${storageAnalysis.detailedRecommendation}`);
+      
+      // If we have viable storage to reuse, use it
+      if (storageAnalysis.analysisResult.hasViableStorage && storageAnalysis.analysisResult.bestMatch) {
+        const bestMatch = storageAnalysis.analysisResult.bestMatch;
+        console.log('Reusing existing storage:');
+        console.log(`  Storage ID: ${bestMatch.id}`);
+        console.log(`  Total size: ${bestMatch.totalSize} bytes`);
+        console.log(`  Used size: ${bestMatch.usedSize} bytes`);
+        console.log(`  Remaining: ${bestMatch.remaining} bytes`);
+        console.log(`  Remaining after operation: ${bestMatch.remaining - sizeBytes} bytes`);
+        console.log(`  WAL tokens saved: ${storageAnalysis.costComparison.reuseExistingSavings}`);
+        console.log(`  Percentage saved: ${storageAnalysis.costComparison.reuseExistingPercentSaved}%`);
         
-        console.log('Existing storage is insufficient:');
-        console.log(`  Required: ${sizeBytes} bytes`);
-        console.log(`  Available: ${existingStorage.remainingSize} bytes`);
-        console.log(`  Remaining after operation: ${analysis.remainingBytes} bytes`);
-        console.log(`  Recommendation: ${analysis.recommendation}`);
+        return {
+          id: { id: bestMatch.id },
+          storage_size: bestMatch.totalSize.toString(),
+          used_size: bestMatch.usedSize.toString(),
+          end_epoch: bestMatch.endEpoch.toString(),
+          start_epoch: bestMatch.startEpoch.toString(),
+          content: null,
+          data: undefined
+        };
+      }
+      
+      // If recommendation is to extend existing storage, we need to implement extension logic
+      // Since Walrus blobs are immutable, we can't actually extend, so we'll create new storage
+      // but will show a message about the recommendation
+      if (storageAnalysis.analysisResult.recommendation === 'extend-existing') {
+        console.log('Note: Extending existing storage is recommended but not implemented.');
+        console.log('Creating new storage instead.');
       }
 
-      // Fallback to comprehensive storage validation
+      // Fallback to comprehensive storage validation 
       const validation = await this.storageManager.validateStorageRequirements(sizeBytes);
 
       if (!validation.canProceed) {
@@ -1064,7 +1079,7 @@ export class WalrusStorage {
         };
       }
 
-      // Proceed with new storage allocation
+      // Proceed with new storage allocation if we get here
       if (!validation.requiredCost) {
         throw new CLIError(
           'Failed to estimate storage costs',
@@ -1146,6 +1161,10 @@ export class WalrusStorage {
     }
   }
 
+  /**
+   * Enhanced method to check existing storage and provide detailed analytics
+   * @returns Detailed storage information or null if not available
+   */
   async checkExistingStorage(): Promise<WalrusStorageInfo | null> {
     try {
       if (this.useMockMode) {
@@ -1154,7 +1173,48 @@ export class WalrusStorage {
 
       const address = this.getActiveAddress();
       console.log(`Checking existing storage for address ${address}...`);
-
+      this.initializeManagers();
+      
+      // Use our enhanced storage analyzer to get comprehensive details
+      const storageAnalysis = await this.storageReuseAnalyzer!.findBestStorageForReuse(0); // 0 size just to get inventory
+      
+      console.log('Storage inventory:');
+      console.log(`  Total storage allocation: ${storageAnalysis.totalStorage} bytes`);
+      console.log(`  Total used storage: ${storageAnalysis.usedStorage} bytes`);
+      console.log(`  Total available storage: ${storageAnalysis.availableStorage} bytes`);
+      console.log(`  Active storage objects: ${storageAnalysis.activeStorageCount}`);
+      console.log(`  Inactive/expired storage objects: ${storageAnalysis.inactiveStorageCount}`);
+      
+      if (storageAnalysis.activeStorageCount === 0) {
+        console.log('No active storage objects found');
+        return null;
+      }
+      
+      // Find the best storage object to return
+      if (storageAnalysis.bestMatch) {
+        const bestMatch = storageAnalysis.bestMatch;
+        console.log('Best existing storage for reuse:');
+        console.log(`  Storage ID: ${bestMatch.id}`);
+        console.log(`  Total size: ${bestMatch.totalSize} bytes`);
+        console.log(`  Used size: ${bestMatch.usedSize} bytes`);
+        console.log(`  Remaining: ${bestMatch.remaining} bytes`);
+        
+        const { epoch } = await this.suiClient.getLatestSuiSystemState();
+        const currentEpoch = Number(epoch);
+        console.log(`  Remaining epochs: ${bestMatch.endEpoch - currentEpoch}`);
+        
+        return {
+          id: { id: bestMatch.id },
+          storage_size: bestMatch.totalSize.toString(),
+          used_size: bestMatch.usedSize.toString(),
+          end_epoch: bestMatch.endEpoch.toString(),
+          start_epoch: bestMatch.startEpoch.toString(),
+          content: null,
+          data: undefined
+        };
+      }
+      
+      // Fallback to traditional method if needed
       const response = await this.suiClient.getOwnedObjects({
         owner: address,
         filter: {

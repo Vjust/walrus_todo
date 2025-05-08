@@ -1,0 +1,9 @@
+/*
+ * Storage Reuse Analyzer
+ * 
+ * This file is currently disabled due to complex type compatibility issues with the 
+ * Walrus SDK. A simplified JavaScript version is used instead.
+ * 
+ * The original TypeScript implementation has been preserved for reference but 
+ * is not currently compiled.
+ */

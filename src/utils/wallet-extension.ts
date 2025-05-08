@@ -43,8 +43,10 @@ export class WalletExtensionSigner extends Signer {
         return signature.length === 64 && blake2b(data).length > 0;
       },
       toRawBytes: () => new Uint8Array(32),
-      // Using any return type to avoid the string-never type mismatch
-      toString: (): any => '[MockPublicKey]',
+      // Implementation of toString with never return type
+      toString: (): never => {
+        throw new Error('toString() should not be called');
+      },
       // @ts-ignore - Ignore TypeScript errors for method signature compatibility
       async verifyTransactionBlock(message: Uint8Array, signature: string): Promise<boolean> {
         const signatureBytes = Buffer.from(signature, 'base64');

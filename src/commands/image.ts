@@ -11,7 +11,7 @@ import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import * as path from 'path';
 
 export default class ImageCommand extends Command {
-  static description = 'Manage images for todos and NFTs';
+  static description = 'Manage todo images for storage on Walrus and NFT creation';
 
   static examples = [
     '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png',

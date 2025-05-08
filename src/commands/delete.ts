@@ -5,7 +5,7 @@ import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
 
 export default class DeleteCommand extends Command {
-  static description = 'Delete a todo item or list';
+  static description = 'Delete a specific todo item or an entire list';
 
   static examples = [
     '<%= config.bin %> delete my-list -i task-123',

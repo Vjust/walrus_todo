@@ -10,7 +10,7 @@ import { configService } from '../services/config-service';
 import chalk from 'chalk';
 
 export default class FetchCommand extends Command {
-  static description = 'Fetch todos from blockchain or Walrus storage';
+  static description = 'Fetch todos directly from blockchain or Walrus storage using IDs';
 
   static examples = [
     '<%= config.bin %> fetch --blob-id QmXyz --list my-todos',

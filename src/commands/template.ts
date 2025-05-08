@@ -9,6 +9,7 @@ import { Command, Flags } from '@oclif/core';
 import { CLIError } from '../utils/error-handler';
 
 export default class SomeCommand extends Command {  // Removed placeholder comments for cleanliness, as they are not standard code
+  static description = 'Template for creating new CLI commands - not for end users';
 
   static examples = [
     '<%=config.bin%> command',

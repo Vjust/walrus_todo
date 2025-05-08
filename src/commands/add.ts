@@ -7,7 +7,7 @@ import { createWalrusStorage } from '../utils/walrus-storage';
 // Removed unused configService import
 
 export default class AddCommand extends Command {
-  static description = 'Add new todo items to a list';
+  static description = 'Add a new todo item to a specified list';
 
   static examples = [
     '<%= config.bin %> add "Buy groceries"',

@@ -6,7 +6,7 @@ import { configService } from '../services/config-service';
 import { CLIError } from '../types/error';
 
 export default class ConfigureCommand extends Command {
-  static description = 'Configure CLI settings';
+  static description = 'Configure CLI network and wallet settings';
 
   static examples = [
     '<%= config.bin %> configure',

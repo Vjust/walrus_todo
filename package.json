@@ -7,7 +7,9 @@
   "bin": "bin/waltodo-direct",
   "scripts": {
     "prestart": "chmod +x ./bin/run.js ./bin/waltodo ./bin/waltodo-direct",
-    "build": "tsc --skipLibCheck --noEmitOnError false",
+    "build": "tsc --skipLibCheck --noEmitOnError",
+    "build-force": "tsc --skipLibCheck --noEmitOnError false",
+    "build-transpile-only": "ts-node --transpileOnly -p tsconfig.json scripts/build-helper.ts",
     "start": "node bin/run.js",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist",
@@ -99,6 +101,9 @@
       },
       "simple": {
         "description": "Simple todo management commands"
+      },
+      "storage": {
+        "description": "Manage Walrus storage for todos"
       }
     }
   },

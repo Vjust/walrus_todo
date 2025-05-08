@@ -10,7 +10,7 @@ import { configService } from '../services/config-service';
 import chalk from 'chalk';
 
 export default class RetrieveCommand extends Command {
-  static description = 'Retrieve todos from blockchain or Walrus storage';
+  static description = 'Retrieve stored todos from blockchain or Walrus storage';
 
   static examples = [
     '<%= config.bin %> retrieve --todo "Buy groceries" --list my-todos',
