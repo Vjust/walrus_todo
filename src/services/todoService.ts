@@ -6,6 +6,17 @@ import { STORAGE_CONFIG } from '../constants';
 import { generateId } from '../utils/id-generator';
 import { CLIError } from '../types/error';
 
+/**
+ * TodoService - A service class for managing Todo lists and items locally.
+ * 
+ * This class provides a comprehensive set of methods to handle Todo data, including creating and
+ * managing Todo lists, adding, updating, and deleting individual Todo items. It uses the local
+ * file system to store Todo data persistently, making it suitable for a CLI-based Todo management
+ * application. Key features include list and item retrieval by various criteria, status toggling,
+ * and error handling for common scenarios like missing lists or items.
+ * 
+ * @class TodoService
+ */
 export class TodoService {
   private readonly todosDir: string = path.join(process.cwd(), STORAGE_CONFIG.TODOS_DIR);
 

@@ -5,6 +5,16 @@ import chalk from 'chalk';
 import { configService } from '../services/config-service';
 import { CLIError } from '../types/error';
 
+/**
+ * @class ConfigureCommand
+ * @description This command allows users to configure the CLI settings for network and wallet preferences.
+ * It supports interactive prompts for selecting network type and entering wallet addresses, as well as resetting all settings to default values.
+ * The configuration is crucial for blockchain interactions, ensuring the CLI connects to the correct network and uses the appropriate wallet.
+ *
+ * @param {boolean} [reset=false] - If true, resets all configuration settings to their default values. (Optional flag: -r, --reset)
+ * @param {string} [network] - Specifies the blockchain network to use ('mainnet', 'testnet', 'devnet', 'local'). If not provided, the user will be prompted to select one. (Optional flag: --network)
+ * @param {string} [walletAddress] - Specifies the wallet address to be used for blockchain operations. If not provided, the user will be prompted to enter one. (Optional flag: --walletAddress)
+ */
 export default class ConfigureCommand extends Command {
   static description = 'Configure CLI network and wallet settings';
 

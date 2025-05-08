@@ -13,6 +13,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+/**
+ * @class CheckCommand
+ * @description This command toggles the completion status of a specific todo item within a given list.
+ * Users can mark a todo as complete or incomplete using its ID.
+ * It primarily interacts with the local JSON storage for todos.
+ *
+ * @param {string} listName - The name of the list containing the todo item. (Required argument)
+ * @param {string} id - The ID of the todo item to be checked or unchecked. (Required flag: -i, --id)
+ * @param {boolean} [uncheck=false] - If true, marks the todo as incomplete; otherwise, marks it as complete. (Optional flag: -u, --uncheck)
+ */
 export default class CheckCommand extends Command {
   static description = 'Toggle completion status of a todo item';
 

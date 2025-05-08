@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2019",
-    "lib": ["es2019", "dom", "DOM.Iterable"],
+    "target": "es2020",
+    "lib": ["es2020", "dom", "DOM.Iterable"],
     "module": "commonjs",
     "rootDir": ".",
     "moduleResolution": "node",
@@ -42,7 +42,15 @@
     "useDefineForClassFields": true,
     "useUnknownInCatchVariables": false,
     "noErrorTruncation": false,
-    "skipDefaultLibCheck": true
+    "skipDefaultLibCheck": true,
+    
+    /* Build compatibility options */
+    "allowJs": true,
+    
+    /* ttypescript plugin configuration */
+    "plugins": [
+      { "transform": "typescript-transform-paths" }
+    ]
   },
   "ts-node": {
     "transpileOnly": true

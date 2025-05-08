@@ -6,6 +6,14 @@ import { CLIError } from '../types/error';
 import { createWalrusStorage } from '../utils/walrus-storage';
 // Removed unused configService import
 
+/**
+ * @class AddCommand
+ * @description This command allows users to add new todo items to a specified list.
+ * It supports various options such as setting priority, due date, tags, and storage location (local, blockchain, or both).
+ * If the specified list does not exist, it will be created automatically.
+ * When 'blockchain' or 'both' storage is selected, the todo item is stored on the Walrus/Sui blockchain,
+ * making the data publicly accessible.
+ */
 export default class AddCommand extends Command {
   static description = 'Add a new todo item to a specified list';
 

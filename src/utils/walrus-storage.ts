@@ -5,7 +5,7 @@ import { TodoSerializer } from './todo-serializer';
 import { TodoSizeCalculator } from './todo-size-calculator';
 import { CLIError } from '../types/error';
 import { SuiClient, SuiObjectData, SuiObjectResponse, type MoveStruct } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { Transaction } from '@mysten/sui.js/transactions';
 import { WalrusClient } from '@mysten/walrus';
 import { MockWalrusClient } from './MockWalrusClient';
 import type { WalrusClientExt, WalrusClientWithExt } from '../types/client';
@@ -59,6 +59,20 @@ interface OldWalrusStorageContent {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let fetch: any;
 
+/**
+ * WalrusStorage - A utility class for managing Todo data storage on the Walrus decentralized platform.
+ * 
+ * This class handles the storage and retrieval of Todo items and Todo lists using the Walrus storage
+ * system, integrated with the Sui blockchain for secure transactions. It provides methods to store,
+ * retrieve, and update Todo data, ensuring data integrity through checksum validation and robust
+ * error handling. Key features include automatic retry mechanisms for network issues, storage
+ * allocation optimization, and caching for efficient data access. It serves as a critical component
+ * for persisting Todo information in a decentralized environment.
+ * 
+ * @class WalrusStorage
+ * @param {boolean} [useMockMode=false] - Flag to enable mock mode for testing purposes, bypassing
+ *                                       actual blockchain and storage operations.
+ */
 export class WalrusStorage {
   private connectionState: 'disconnected' | 'connecting' | 'connected' | 'failed' = 'disconnected';
   private walrusClient!: WalrusClientWithExt;
@@ -211,15 +225,17 @@ export class WalrusStorage {
         }
       }
 
-      // @ts-ignore - Ignore type compatibility issues
+      // Use safe instantiation with proper types
       this.walrusClient = this.useMockMode 
         ? (new MockWalrusClient() as unknown as WalrusClientWithExt)
         : (new WalrusClient({ 
-            // @ts-ignore - Ignore incompatible parameter types
             network: 'testnet',
-            // @ts-ignore - Ignore incompatible client type
-            suiClient: this.suiClient
-            // Removed fetchOptions which is causing type errors
+            fullnode: NETWORK_URLS[CURRENT_NETWORK],
+            // Use custom options for better compatibility
+            fetchOptions: { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            }
           }) as unknown as WalrusClientWithExt);
 
       // @ts-ignore - Ignore type compatibility issues with Signer implementations
@@ -1106,7 +1122,7 @@ export class WalrusStorage {
               return this.walrusClient.executeCreateStorageTransaction({
                 size: sizeBytes,
                 epochs: validation.requiredCost!.epochs,
-                owner: this.getActiveAddress(),
+                // Remove owner property as it's not in the interface
                 signer
               });
             },

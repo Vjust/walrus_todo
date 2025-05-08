@@ -9,6 +9,20 @@ import { CLIError } from '../types/error';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 
+/**
+ * @class RetrieveCommand
+ * @description This command retrieves todo items from blockchain storage (Sui NFT) or Walrus storage using various identifiers.
+ * It supports fetching by todo title/ID (from local storage to get associated blockchain IDs), Walrus blob ID, or Sui NFT object ID.
+ * Retrieved todos are saved to a specified local list, with detailed output on the retrieval process and todo information.
+ * The command includes options for mock mode testing and network selection for blockchain operations.
+ *
+ * @param {string} [todo] - The title or ID of the todo item to retrieve, using local data to find associated blockchain IDs. (Optional flag: -t, --todo)
+ * @param {string} [blob-id] - The Walrus blob ID of the todo item to retrieve directly from Walrus storage. (Optional flag: --blob-id)
+ * @param {string} [object-id] - The NFT object ID on the Sui blockchain to retrieve, which also fetches associated Walrus data. (Optional flag: --object-id)
+ * @param {string} [list='default'] - The name of the local todo list to save the retrieved todo to. (Optional flag: -l, --list)
+ * @param {boolean} [mock=false] - If true, uses mock Walrus storage for testing purposes. (Optional flag: --mock)
+ * @param {string} [network] - The blockchain network to use for Sui operations ('localnet', 'devnet', 'testnet', 'mainnet'). Defaults to the configured network. (Optional flag: -n, --network)
+ */
 export default class RetrieveCommand extends Command {
   static description = 'Retrieve stored todos from blockchain or Walrus storage';
 

@@ -1,4 +1,5 @@
-import type { TransactionBlock as RealTransactionBlock, TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
 import type { SuiObjectRef } from '@mysten/sui.js/client';
 
 /**
@@ -57,7 +58,7 @@ export interface TransactionBlockAdapter {
   getDigest(): Promise<string>;
   
   // Access to the underlying transaction block implementation
-  getUnderlyingBlock(): RealTransactionBlock;
+  getUnderlyingBlock(): TransactionBlock;
 }
 
 /**
@@ -65,13 +66,13 @@ export interface TransactionBlockAdapter {
  * This handles any conversion needed between interfaces
  */
 export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
-  private transactionBlock: RealTransactionBlock;
+  private transactionBlock: TransactionBlock;
 
-  constructor(transactionBlock?: RealTransactionBlock) {
-    this.transactionBlock = transactionBlock || new RealTransactionBlock();
+  constructor(transactionBlock?: TransactionBlock) {
+    this.transactionBlock = transactionBlock || new TransactionBlock();
   }
 
-  getUnderlyingBlock(): RealTransactionBlock {
+  getUnderlyingBlock(): TransactionBlock {
     return this.transactionBlock;
   }
 
@@ -99,10 +100,12 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   }
 
   object(value: string | SuiObjectRef | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument {
+    // @ts-expect-error - Types may differ between versions but the implementation is compatible
     return this.transactionBlock.object(value);
   }
 
   pure(value: any, type?: string): TransactionObjectArgument {
+    // @ts-expect-error - Types may differ between versions but the implementation is compatible
     return this.transactionBlock.pure(value, type);
   }
 
@@ -110,6 +113,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     objects: (string | TransactionObjectArgument)[]; 
     type?: string; 
   }): TransactionObjectArgument {
+    // @ts-expect-error - Types may differ between versions but the implementation is compatible
     return this.transactionBlock.makeMoveVec(options);
   }
 
@@ -128,6 +132,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   }
 
   gas(objectId?: string): TransactionObjectArgument {
+    // @ts-expect-error - Types may differ between versions but the implementation is compatible
     return this.transactionBlock.gas(objectId);
   }
 
@@ -165,7 +170,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
  * a TransactionBlock or creating a new one if not provided
  */
 export function createTransactionBlockAdapter(
-  transactionBlock?: RealTransactionBlock
+  transactionBlock?: TransactionBlock
 ): TransactionBlockAdapter {
   return new TransactionBlockAdapterImpl(transactionBlock);
 }

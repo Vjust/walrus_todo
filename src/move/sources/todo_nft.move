@@ -1,3 +1,28 @@
+// Copyright (c) 2025, Walrus Todo Team
+// SPDX-License-Identifier: MIT
+//
+// Module: todo_app::todo_nft
+//
+// Description:
+// This smart contract module is part of the Walrus Todo application and enables the creation and management of TODO items as Non-Fungible Tokens (NFTs) on the Sui blockchain.
+// By representing TODOs as NFTs, users can own unique digital assets that symbolize their tasks, which can be shared, displayed, or even traded if desired.
+// This module integrates with Walrus storage to link TODO NFTs with images or other digital content, enhancing the visual and functional appeal of task management.
+//
+// Key Features:
+// - **TODO NFT Creation**: Users can create unique TODO NFTs, each representing a specific task with a title, description, and associated digital content (like an image) stored on Walrus.
+// - **Completion Tracking**: Allows marking a TODO NFT as completed, visually updating its status for the owner and others viewing it on the blockchain.
+// - **Privacy Options**: Supports setting TODOs as private, hiding sensitive details like the title from public view while still maintaining blockchain transparency.
+// - **Content Updates**: Enables updating the title, description, or associated digital content of a TODO NFT, ensuring flexibility as tasks evolve.
+// - **Visual Display**: Configures how TODO NFTs appear in wallets and explorers with metadata like name, description, and image, making them easily recognizable.
+// - **Event Notifications**: Emits events when TODOs are created or completed, allowing applications to notify users or update interfaces in real-time.
+//
+// Key Components:
+// - **TodoNFT Struct**: Defines the properties of a TODO NFT, including title, description, completion status, privacy setting, and a link to content stored on Walrus.
+// - **Display Setup**: Configures how TODO NFT metadata is shown in Sui-compatible wallets or explorers, enhancing user experience.
+// - **Event Structs**: Includes structures for events like TODO creation and completion, facilitating integration with external systems or user interfaces.
+// - **Functions**: Provides operations to create TODO NFTs, mark them as complete, update their details, and retrieve information for display or verification.
+//
+// This module works alongside other components of the Walrus Todo application to offer a unique blend of task management and digital ownership through blockchain technology.
 module todo_app::todo_nft {
     use sui::object::{Self, UID};
     use sui::tx_context::{Self, TxContext};

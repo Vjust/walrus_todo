@@ -4,6 +4,17 @@ import { Config, Todo, TodoList } from '../types';
 import { CLI_CONFIG } from '../constants';
 import { CLIError } from '../types/error';
 
+/**
+ * ConfigService - A service class for managing application configuration and local Todo data storage.
+ * 
+ * This class handles the loading and saving of configuration settings for the Todo application,
+ * such as network preferences and wallet information. Additionally, it manages the local storage
+ * of Todo lists and items in the file system, providing methods to create, retrieve, update, and
+ * delete Todo data. It ensures that the necessary directories are created and handles errors
+ * gracefully, making it a central component for configuration and data persistence in the CLI tool.
+ * 
+ * @class ConfigService
+ */
 export class ConfigService {
   private configPath: string;
   private todosPath: string;

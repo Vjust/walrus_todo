@@ -8,6 +8,15 @@ import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 // Removed unused chalk import
 import { configService } from '../../services/config-service';
 
+/**
+ * @class CreateNftCommand
+ * @description This command creates an NFT on the Sui blockchain for a specified todo item that already has an associated image.
+ * It ensures the todo exists and has an image URL before minting the NFT, linking it to the Walrus blob ID of the image.
+ * The command provides feedback on the transaction and NFT details upon successful creation.
+ *
+ * @param {string} todo - The ID of the todo item for which to create an NFT. (Required flag: -t, --todo)
+ * @param {string} list - The name of the todo list containing the specified todo item. (Required flag: -l, --list)
+ */
 export default class CreateNftCommand extends Command {
   static description = 'Create an NFT on Sui blockchain for a todo with an existing image';
 

@@ -32,51 +32,27 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-// Get all source files from the file system
-const getSourceFiles = (dir: string, fileList: string[] = []): string[] => {
-  const files = fs.readdirSync(dir);
-  
-  files.forEach(file => {
-    const filePath = path.join(dir, file);
-    
-    if (fs.statSync(filePath).isDirectory()) {
-      // Skip node_modules
-      if (file === 'node_modules' || file === 'dist' || file === '.git') {
-        return;
-      }
-      fileList = getSourceFiles(filePath, fileList);
-    } else if ((file.endsWith('.ts') || file.endsWith('.tsx')) && !file.endsWith('.d.ts')) {
-      fileList.push(filePath);
-    }
-  });
-  
-  return fileList;
-};
-
-// Get all TypeScript files in src directory
-const sourceFiles = getSourceFiles(path.join(root, 'src'));
-console.log(`Transpiling ${sourceFiles.length} files...`);
+// Get the list of files to transpile
+const sourceFileNames = parsedConfig.fileNames;
+console.log(`Transpiling ${sourceFileNames.length} files...`);
 
 // Keep track of files processed and errors
 let filesProcessed = 0;
 let errors = 0;
 
 // Process each source file
-sourceFiles.forEach(fileName => {
+sourceFileNames.forEach(fileName => {
   try {
     // Read the file
     const sourceText = fs.readFileSync(fileName, 'utf8');
     
     // Transpile the file (no type checking)
-    const { outputText } = ts.transpileModule(sourceText, {
+    const { outputText, diagnostics } = ts.transpileModule(sourceText, {
       compilerOptions: {
         ...parsedConfig.options,
         noEmitOnError: false,
         declaration: false,
         skipLibCheck: true,
-        target: ts.ScriptTarget.ES2019,
-        module: ts.ModuleKind.CommonJS,
-        esModuleInterop: true,
       },
       fileName,
       reportDiagnostics: false,
@@ -84,7 +60,7 @@ sourceFiles.forEach(fileName => {
 
     // Calculate output path
     let outputPath = fileName
-      .replace(path.resolve(root, 'src'), path.join(outDir, 'src'))
+      .replace(path.resolve(root), outDir)
       .replace(/\.tsx?$/, '.js');
     
     // Create output directory if it doesn't exist

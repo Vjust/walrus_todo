@@ -16,7 +16,7 @@ import {
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { type BlobObject, type BlobInfo, type BlobMetadataShape } from '../types/walrus';
 import { type Signer } from '@mysten/sui.js/cryptography';
-import { type WalrusClientExt, type WalrusClientWithExt } from '../types/client';
+import { type WalrusClientExt } from '../types/client';
 import { type Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { 
   WalrusClientAdapter, 
@@ -50,8 +50,8 @@ export class MockWalrusClient implements WalrusClientAdapter {
   }
 
   // Access to the underlying client
-  getUnderlyingClient(): WalrusClient | WalrusClientWithExt {
-    return this as unknown as WalrusClientWithExt;
+  getUnderlyingClient(): WalrusClient | WalrusClientExt {
+    return this as unknown as WalrusClient;
   }
 
   /**
@@ -115,7 +115,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
    * Get information about a blob by its ID
    */
   async getBlobInfo(blobId: string): Promise<BlobInfo> {
-    const info = {
+    const info: BlobInfo = {
       blob_id: blobId,
       registered_epoch: 1,
       certified_epoch: 1,
@@ -135,7 +135,8 @@ export class MockWalrusClient implements WalrusClientAdapter {
             secondary_hash: { Digest: new Uint8Array([4,5,6]), $kind: 'Digest' }
           }],
           $kind: 'V1'
-        }
+        },
+        $kind: 'V1'
       }
     };
     
@@ -472,5 +473,6 @@ export class MockWalrusClient implements WalrusClientAdapter {
  * Factory function to create a MockWalrusClient wrapped in the adapter
  */
 export function createMockWalrusClient(): WalrusClientAdapter {
-  return createWalrusClientAdapter(new MockWalrusClient());
+  // Cast to WalrusClient to satisfy the type requirement for createWalrusClientAdapter
+  return createWalrusClientAdapter(new MockWalrusClient() as unknown as WalrusClient);
 }

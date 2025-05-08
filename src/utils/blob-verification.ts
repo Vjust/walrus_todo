@@ -22,6 +22,9 @@ interface VerificationResult {
     attributes?: Record<string, any>;
   };
   attempts: number;
+  poaComplete: boolean;
+  providers: number;
+  metadata: BlobMetadata;
 }
 
 interface VerificationOptions {
@@ -99,10 +102,7 @@ export class BlobVerificationManager {
       const blobInfo = await this.walrusClient.getBlobInfo(blobId);
       
       if (!blobInfo) {
-        throw new CLIError('Failed to retrieve blob information', {
-          code: 'WALRUS_INFO_ERROR',
-          recoverable: true
-        });
+        throw new CLIError('Failed to retrieve blob information', 'WALRUS_INFO_ERROR');
       }
 
       // Get storage providers and availability proof
@@ -167,10 +167,7 @@ export class BlobVerificationManager {
     try {
       const response = await this.walrusClient.getBlobMetadata({ blobId });
       if (!response || !response.metadata) {
-        throw new CLIError('Failed to retrieve blob metadata', {
-          code: 'WALRUS_METADATA_ERROR',
-          recoverable: true
-        });
+        throw new CLIError('Failed to retrieve blob metadata', 'WALRUS_METADATA_ERROR');
       }
 
       const metadata = response.metadata;
@@ -345,6 +342,23 @@ export class BlobVerificationManager {
         }
 
         // All verifications passed
+        // Ensure we include all required properties with proper fallbacks
+        const contractVerificationComplete = {
+          ...contractVerification,
+          poaComplete: 'poaComplete' in contractVerification ? contractVerification.poaComplete : false,
+          providers: 'providers' in contractVerification ? contractVerification.providers : 0
+        };
+
+        const defaultMetadata = { 
+          V1: { 
+            $kind: 'V1', 
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' }, 
+            unencoded_length: '0', 
+            hashes: [] 
+          },
+          $kind: 'V1'
+        };
+
         return {
           success: true,
           details: {
@@ -356,7 +370,10 @@ export class BlobVerificationManager {
             registeredEpoch: contractVerification.registeredEpoch,
             attributes: metadataVerification.actualAttributes
           },
-          attempts
+          attempts,
+          poaComplete: contractVerificationComplete.poaComplete,
+          providers: contractVerificationComplete.providers,
+          metadata: metadataVerification.metadata || defaultMetadata
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));

@@ -5,8 +5,8 @@ import { TransactionBlockAdapter } from '../../../utils/adapters/transaction-ada
 // Define TypeTagSerializer locally to avoid import issues
 type TypeTagSerializer = any;
 
-// Transaction result interface
-interface TransactionResult {
+// Transaction result interface that matches the TransactionObjectArgument
+interface TransactionResult extends TransactionObjectArgument {
   kind: 'Result';
   index: number;
   digest?: string;
@@ -182,23 +182,23 @@ export class TransactionBlock implements TransactionBlockAdapter {
     return createTransactionResult(this.transactions.length - 1);
   }
 
-  moveCall({ target, arguments: args = [], typeArguments = [] }: { 
+  moveCall(options: { 
     target: `${string}::${string}::${string}`; 
     arguments?: TransactionArgument[];
     typeArguments?: string[];
-  }): TransactionResult {
+  }): TransactionObjectArgument {
     return this.add({
       kind: 'MoveCall',
-      target,
-      arguments: args || [],
-      typeArguments: typeArguments || []
+      target: options.target,
+      arguments: options.arguments || [],
+      typeArguments: options.typeArguments || []
     });
   }
 
   transferObjects(
     objects: (string | TransactionObjectArgument)[],
     address: string | TransactionObjectArgument
-  ): TransactionResult {
+  ): TransactionObjectArgument {
     const objectArgs = objects.map(obj => 
       typeof obj === 'string' ? this.object(obj) : obj
     );
@@ -211,27 +211,27 @@ export class TransactionBlock implements TransactionBlockAdapter {
     });
   }
 
-  object(value: string | SuiObjectRef | TransactionObjectInput): TransactionArgument {
+  object(value: string | SuiObjectRef | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument {
     const input = { 
       kind: 'Input' as const,
       type: 'object' as const,
       index: this.inputs.length,
       value
-    };
+    } as TransactionObjectArgument;
     this.inputs.push(input);
-    this.blockData.inputs.push(input);
+    this.blockData.inputs.push(input as TransactionInput);
     return input;
   }
 
-  pure(value: any, type?: string): TransactionArgument {
+  pure(value: any, type?: string): TransactionObjectArgument {
     const input = { 
       kind: 'Input' as const,
       type: 'pure' as const,
       index: this.inputs.length,
       value 
-    };
+    } as TransactionObjectArgument;
     this.inputs.push(input);
-    this.blockData.inputs.push(input);
+    this.blockData.inputs.push(input as TransactionInput);
     return input;
   }
 
@@ -262,28 +262,40 @@ export class TransactionBlock implements TransactionBlockAdapter {
     return '0x1234567890abcdef';
   }
 
-  makeMoveVec({ objects, type }: { objects: (string | TransactionObjectArgument)[]; type?: string; }): TransactionResult {
+  makeMoveVec(options: { 
+    objects: (string | TransactionObjectArgument)[]; 
+    type?: string; 
+  }): TransactionObjectArgument {
+    const objectsArray = options.objects.map(obj => 
+      typeof obj === 'string' ? this.object(obj) : obj
+    );
+    
     const input = {
       kind: 'Input' as const,
       type: 'pure' as const,
-      value: objects || [],
+      value: objectsArray,
       index: this.inputs.length
-    };
+    } as TransactionObjectArgument;
+    
     this.inputs.push(input);
-    this.blockData.inputs.push(input);
-    return createTransactionResult(this.inputs.length - 1);
+    this.blockData.inputs.push(input as TransactionInput);
+    return input;
   }
 
   splitCoins(
     coin: string | TransactionObjectArgument, 
-    amounts: (string | number | bigint | SerializedBcs<any, any> | TransactionArgument)[]
-  ): TransactionResult {
+    amounts: (string | number | bigint | any | TransactionArgument)[]
+  ): TransactionObjectArgument {
     const coinArg = typeof coin === 'string' ? this.object(coin) : coin;
     const amountArgs = amounts.map(amt => {
       if (typeof amt === 'string' || typeof amt === 'number' || typeof amt === 'bigint') {
         return this.pure(amt);
       }
-      return amt;
+      if (amt && typeof amt === 'object' && 'bytes' in amt && amt.bytes instanceof Uint8Array) {
+        // Handle SerializedBcs type
+        return this.pure(amt.bytes);
+      }
+      return amt as TransactionArgument;
     });
     
     return this.add({
@@ -296,7 +308,7 @@ export class TransactionBlock implements TransactionBlockAdapter {
   mergeCoins(
     destination: string | TransactionObjectArgument, 
     sources: (string | TransactionObjectArgument)[]
-  ): TransactionResult {
+  ): TransactionObjectArgument {
     const destArg = typeof destination === 'string' ? this.object(destination) : destination;
     const sourceArgs = sources.map(src => 
       typeof src === 'string' ? this.object(src) : src
@@ -313,14 +325,17 @@ export class TransactionBlock implements TransactionBlockAdapter {
     const gasInput = { 
       kind: 'GasCoin' as const,
       index: this.inputs.length
-    };
-    this.blockData.inputs.push(gasInput);
-    return gasInput as TransactionObjectArgument;
+    } as TransactionObjectArgument;
+    this.blockData.inputs.push(gasInput as TransactionInput);
+    return gasInput;
   }
   
-  publish({ modules, dependencies }: { modules: string[] | number[][]; dependencies: string[]; }): TransactionResult {
+  publish(options: { 
+    modules: string[] | number[][]; 
+    dependencies: string[]; 
+  }): TransactionObjectArgument {
     // Convert any string modules to Uint8Array
-    const moduleArrays = (modules as any[]).map(mod => {
+    const moduleArrays = (options.modules as any[]).map(mod => {
       if (typeof mod === 'string') {
         // Convert string to Uint8Array
         return new TextEncoder().encode(mod);
@@ -332,31 +347,31 @@ export class TransactionBlock implements TransactionBlockAdapter {
     return this.add({
       kind: 'Publish',
       modules: moduleArrays,
-      dependencies
+      dependencies: options.dependencies
     });
   }
   
-  upgrade({ modules, dependencies, packageId, ticket }: { 
+  upgrade(options: { 
     modules: string[] | number[][]; 
     dependencies: string[]; 
     packageId: string; 
     ticket: string | TransactionObjectArgument;
-  }): TransactionResult {
+  }): TransactionObjectArgument {
     // Convert any string modules to Uint8Array
-    const moduleArrays = (modules as any[]).map(mod => {
+    const moduleArrays = (options.modules as any[]).map(mod => {
       if (typeof mod === 'string') {
         return new TextEncoder().encode(mod);
       }
       return new Uint8Array(mod);
     });
     
-    const ticketArg = typeof ticket === 'string' ? this.object(ticket) : ticket;
+    const ticketArg = typeof options.ticket === 'string' ? this.object(options.ticket) : options.ticket;
     
     return this.add({
       kind: 'Upgrade',
       modules: moduleArrays,
-      dependencies,
-      packageId,
+      dependencies: options.dependencies,
+      packageId: options.packageId,
       ticket: ticketArg
     });
   }

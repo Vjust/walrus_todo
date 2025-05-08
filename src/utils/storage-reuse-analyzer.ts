@@ -214,7 +214,7 @@ export class StorageReuseAnalyzer {
       if (analysisResult.hasViableStorage) {
         // Only pay for write cost when reusing
         reuseExistingSavings = BigInt(storageCost);
-        reuseExistingPercentSaved = Number(BigInt(100) * reuseExistingSavings / newStorageCost);
+        reuseExistingPercentSaved = Number((BigInt(100) * reuseExistingSavings) / newStorageCost);
       }
       
       // Create detailed recommendation

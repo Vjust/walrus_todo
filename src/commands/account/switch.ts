@@ -2,6 +2,13 @@ import { Command, Args } from '@oclif/core';
 import { CLIError } from '../../utils/error-handler';
 import { execSync } from 'child_process';
 
+/**
+ * @class AccountSwitchCommand
+ * @description This command allows users to switch to a different Sui wallet address for blockchain operations.
+ * It uses the Sui CLI to perform the switch, updating the active address for subsequent commands.
+ *
+ * @param {string} address - The Sui wallet address to switch to. (Required argument)
+ */
 export default class AccountSwitchCommand extends Command {
   static description = 'Switch to a different Sui address';
 

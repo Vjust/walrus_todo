@@ -18,6 +18,16 @@ interface DeploymentInfo {
   timestamp: string;
 }
 
+/**
+ * @class DeployCommand
+ * @description This command deploys the Todo NFT smart contract to the Sui blockchain on a specified network.
+ * It handles the preparation of contract files, executes the deployment using the Sui CLI, and saves the deployment information for future use.
+ * The command requires the Sui CLI to be installed and a wallet address to be configured or provided.
+ *
+ * @param {string} network - The blockchain network to deploy the contract to ('localnet', 'devnet', 'testnet', 'mainnet'). (Required flag: -n, --network)
+ * @param {string} [address] - The Sui wallet address to use for deployment. If not provided, it attempts to use the active address from Sui CLI or saved configuration. (Optional flag: -a, --address)
+ * @param {string} [gas-budget='100000000'] - The gas budget for the deployment transaction. (Optional flag: --gas-budget)
+ */
 export default class DeployCommand extends Command {
   static description = 'Deploy the Todo NFT smart contract to the Sui blockchain';
 

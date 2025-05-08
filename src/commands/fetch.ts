@@ -9,6 +9,16 @@ import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 
+/**
+ * @class FetchCommand
+ * @description This command retrieves todo items directly from blockchain storage (Sui NFT) or Walrus storage using their respective IDs.
+ * It allows users to fetch todos that may not be in their local storage and save them to a specified list.
+ * The command handles the connection to Walrus for blob data and Sui blockchain for NFT data, ensuring the todo is properly reconstructed and stored locally.
+ *
+ * @param {string} [blob-id] - The Walrus blob ID of the todo item to retrieve. (Optional flag: --blob-id)
+ * @param {string} [object-id] - The NFT object ID on the Sui blockchain to retrieve. (Optional flag: --object-id)
+ * @param {string} [list='default'] - The name of the local todo list to save the retrieved todo to. (Optional flag: -l, --list)
+ */
 export default class FetchCommand extends Command {
   static description = 'Fetch todos directly from blockchain or Walrus storage using IDs';
 
