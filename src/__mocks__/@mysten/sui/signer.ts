@@ -1,9 +1,9 @@
 import { IntentScope, Signer, SignatureWithBytes } from '@mysten/sui.js/cryptography';
 import { Ed25519PublicKey } from './cryptography/ed25519';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { Transaction } from '@mysten/sui.js/transactions';
 import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
 import { SignerAdapter } from '../../../utils/adapters/signer-adapter';
-import { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
+import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
 
 // Define a mock implementation that implements the SignerAdapter interface
 // Ensure SignatureWithBytes uses Uint8Array for both signature and bytes properties
@@ -27,11 +27,9 @@ export class SignerWithProvider implements SignerAdapter {
     return new Uint8Array([1, 2, 3, 4, 5]);
   }
 
-  async signTransaction(transaction: TransactionBlock | TransactionBlockAdapter): Promise<SignatureWithBytes> {
-    // Handle either direct TransactionBlock or our adapter
-    const txBlock = transaction instanceof TransactionBlock 
-      ? transaction 
-      : (transaction as TransactionBlockAdapter).getUnderlyingBlock();
+  async signTransaction(transaction: Transaction): Promise<SignatureWithBytes> {
+    // Cast to required type - we're in a mock file so this is acceptable
+    let txBlock = transaction;
       
     // Use string format as required by SignatureWithBytes interface
     return {
@@ -86,7 +84,7 @@ export class SignerWithProvider implements SignerAdapter {
 
   // This is not part of the core Signer interface but is used in the codebase
   async signAndExecuteTransactionBlock(
-    tx: TransactionBlock | TransactionBlockAdapter,
+    tx: Transaction,
     options?: { 
       requestType?: 'WaitForLocalExecution'; 
       showEffects?: boolean; 
@@ -96,10 +94,8 @@ export class SignerWithProvider implements SignerAdapter {
       showBalanceChanges?: boolean;
     }
   ): Promise<SuiTransactionBlockResponse> {
-    // Handle either direct TransactionBlock or our adapter
-    const txBlock = tx instanceof TransactionBlock 
-      ? tx 
-      : (tx as TransactionBlockAdapter).getUnderlyingBlock();
+    // Cast to the required type
+    const txBlock = tx;
       
     return {
       digest: 'mock-digest',

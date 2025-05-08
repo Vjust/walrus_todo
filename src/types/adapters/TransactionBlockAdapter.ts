@@ -9,125 +9,101 @@
  */
 
 import { TransactionBlock as TransactionBlockSui } from '@mysten/sui.js/transactions';
-import { TransactionBlock as TransactionBlockCore } from '@mysten/sui/transactions';
-import { SerializedBcs } from '@mysten/sui.js/bcs';
+// Import Transaction from our type definition to avoid direct import errors
+import { Transaction } from '../transaction';
+import type { SuiObjectRef } from '@mysten/sui.js/client';
+import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
 
-// Define a unified TransactionArgument type that works with both implementations
-export type UnifiedTransactionArgument = 
-  | { index: number; kind: "Input"; value?: any; type?: "object" | string; }
-  | { index: number; kind: "Input"; type: "pure"; value?: any; }
-  | { kind: "GasCoin"; }
-  | { index: number; kind: "Result"; }
-  | { index: number; resultIndex: number; kind: "NestedResult"; };
-
-// Define a unified TransactionObjectArgument type
-export type UnifiedTransactionObjectArgument = 
-  | { index: number; kind: "Input"; value?: any; type?: "object"; }
-  | { index: number; kind: "Input"; type: "pure"; value?: any; }
-  | { kind: "GasCoin"; }
-  | { index: number; kind: "Result"; }
-  | { index: number; resultIndex: number; kind: "NestedResult"; }
-  | string;
-
-// Define a unified TransactionResult type
-export type UnifiedTransactionResult = 
-  | { index: number; kind: "Result"; }
-  | UnifiedTransactionArgument[];
+// Define a unified TransactionResult type that can handle different return types
+export type TransactionResult = TransactionObjectArgument;
 
 /**
  * The UnifiedTransactionBlock interface defines a standardized interface
  * that works with both library versions
  */
 export interface UnifiedTransactionBlock {
-  // Core properties
-  blockData: {
-    version: 1;
-    inputs: any[];
-    transactions: any[];
-    gasConfig: {
-      budget?: bigint;
-      price?: bigint;
-      payment?: {
-        digest: string;
-        objectId: string;
-        version: string | number | bigint;
-      }[];
-    }
-  };
-
-  // Core transaction methods
+  // Core methods
+  setGasBudget(budget: bigint | number): void;
+  setGasPrice(price: bigint | number): void;
   moveCall(params: {
     target: `${string}::${string}::${string}`;
-    arguments?: UnifiedTransactionArgument[];
+    arguments?: TransactionArgument[];
     typeArguments?: string[];
-  }): UnifiedTransactionResult;
+  }): TransactionResult;
 
   transferObjects(
-    objects: UnifiedTransactionObjectArgument[],
-    address: string | UnifiedTransactionObjectArgument
-  ): UnifiedTransactionResult;
+    objects: (string | TransactionObjectArgument)[],
+    address: string | TransactionObjectArgument
+  ): TransactionResult;
 
   /**
    * Creates a reference to a transaction object
    */
-  object(value: string | UnifiedTransactionObjectArgument): UnifiedTransactionObjectArgument;
+  object(value: string | SuiObjectRef | { objectId: string; digest?: string; version?: string | number | bigint }): TransactionObjectArgument;
 
   /**
    * Creates a reference to a pure value
    */
-  pure(value: any, type?: string): UnifiedTransactionArgument;
+  pure(value: any, type?: string): TransactionObjectArgument;
 
   /**
    * Creates a vector of objects or values
    */
   makeMoveVec(params: {
-    objects: (string | UnifiedTransactionObjectArgument)[];
+    objects: (string | TransactionObjectArgument)[];
     type?: string;
-  }): UnifiedTransactionResult;
+  }): TransactionResult;
 
   /**
    * Creates multiple coins of the specified amount
    */
   splitCoins(
-    coin: string | UnifiedTransactionObjectArgument,
-    amounts: (string | number | bigint | UnifiedTransactionArgument)[]
-  ): UnifiedTransactionResult;
+    coin: string | TransactionObjectArgument,
+    amounts: (string | number | bigint | TransactionArgument)[]
+  ): TransactionResult;
 
   /**
    * Merges multiple coins into one
    */
   mergeCoins(
-    destination: string | UnifiedTransactionObjectArgument,
-    sources: (string | UnifiedTransactionObjectArgument)[]
+    destination: string | TransactionObjectArgument,
+    sources: (string | TransactionObjectArgument)[]
   ): void;
 
   // Utility methods
   setGasBudget(budget: bigint | number): void;
   setGasPrice(price: bigint | number): void;
   setSender(sender: string): void;
-  setExpiration(expiration: number): void;
+  
+  // Added to match utils/adapters/transaction-adapter.ts
+  build(options?: any): Promise<Uint8Array>;
+  serialize(): string;
+  getDigest(): Promise<string>;
+  getTransactionBlock(): Transaction | TransactionBlockSui;
 }
 
 /**
  * TransactionBlockAdapter implements the UnifiedTransactionBlock interface
- * and wraps either a TransactionBlockSui or TransactionBlockCore instance
+ * and wraps a Transaction or TransactionBlockSui instance
  */
 export class TransactionBlockAdapter implements UnifiedTransactionBlock {
-  private suiTransactionBlock: TransactionBlockSui | TransactionBlockCore;
+  private transactionBlock: Transaction | TransactionBlockSui;
 
-  constructor(transactionBlock?: TransactionBlockSui | TransactionBlockCore) {
-    this.suiTransactionBlock = transactionBlock || new TransactionBlockSui();
+  constructor(transactionBlock?: Transaction | TransactionBlockSui) {
+    // Use type guard to handle instantiation properly
+    if (transactionBlock) {
+      this.transactionBlock = transactionBlock;
+    } else {
+      // Create a new instance using the TransactionBlockSui constructor
+      this.transactionBlock = new TransactionBlockSui();
+    }
   }
 
   /**
    * Gets the underlying transaction block implementation
    */
-  public getTransactionBlock(): TransactionBlockSui | TransactionBlockCore {
-    return this.suiTransactionBlock;
-  }
-
-  get blockData() {
-    return this.suiTransactionBlock.blockData;
+  getTransactionBlock(): Transaction | TransactionBlockSui {
+    return this.transactionBlock;
   }
 
   /**
@@ -135,98 +111,122 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock {
    */
   moveCall(params: {
     target: `${string}::${string}::${string}`;
-    arguments?: UnifiedTransactionArgument[];
+    arguments?: TransactionArgument[];
     typeArguments?: string[];
-  }): UnifiedTransactionResult {
-    return this.suiTransactionBlock.moveCall(params);
+  }): TransactionResult {
+    return this.transactionBlock.moveCall(params);
   }
 
   /**
    * Transfers objects to an address
    */
   transferObjects(
-    objects: UnifiedTransactionObjectArgument[],
-    address: string | UnifiedTransactionObjectArgument
-  ): UnifiedTransactionResult {
-    return this.suiTransactionBlock.transferObjects(objects, address);
+    objects: (string | TransactionObjectArgument)[],
+    address: string | TransactionObjectArgument
+  ): TransactionResult {
+    const result = this.transactionBlock.transferObjects(objects as any, address as any);
+    return result as unknown as TransactionResult;
   }
 
   /**
    * Creates a reference to a transaction object
    */
-  object(value: string | UnifiedTransactionObjectArgument): UnifiedTransactionObjectArgument {
-    return this.suiTransactionBlock.object(value);
+  object(value: string | SuiObjectRef | { objectId: string; digest?: string; version?: string | number | bigint }): TransactionObjectArgument {
+    return this.transactionBlock.object(value as any);
   }
 
   /**
    * Creates a reference to a pure value
    */
-  pure(value: any, type?: string): UnifiedTransactionArgument {
-    return this.suiTransactionBlock.pure(value, type);
+  pure(value: any, type?: string): TransactionObjectArgument {
+    const result = this.transactionBlock.pure(value, type as any);
+    return result as unknown as TransactionObjectArgument;
   }
 
   /**
    * Creates a vector of objects or values
    */
   makeMoveVec(params: {
-    objects: (string | UnifiedTransactionObjectArgument)[];
+    objects: (string | TransactionObjectArgument)[];
     type?: string;
-  }): UnifiedTransactionResult {
-    return this.suiTransactionBlock.makeMoveVec(params);
+  }): TransactionResult {
+    const result = this.transactionBlock.makeMoveVec(params as any);
+    return result as unknown as TransactionResult;
   }
 
   /**
    * Creates multiple coins of the specified amount
    */
   splitCoins(
-    coin: string | UnifiedTransactionObjectArgument,
-    amounts: (string | number | bigint | UnifiedTransactionArgument)[]
-  ): UnifiedTransactionResult {
-    return this.suiTransactionBlock.splitCoins(coin, amounts);
+    coin: string | TransactionObjectArgument,
+    amounts: (string | number | bigint | TransactionArgument)[]
+  ): TransactionResult {
+    return this.transactionBlock.splitCoins(coin as any, amounts as any);
   }
 
   /**
    * Merges multiple coins into one
    */
   mergeCoins(
-    destination: string | UnifiedTransactionObjectArgument,
-    sources: (string | UnifiedTransactionObjectArgument)[]
+    destination: string | TransactionObjectArgument,
+    sources: (string | TransactionObjectArgument)[]
   ): void {
-    this.suiTransactionBlock.mergeCoins(destination, sources);
+    this.transactionBlock.mergeCoins(destination as any, sources as any);
   }
 
   /**
    * Sets the gas budget for the transaction
    */
   setGasBudget(budget: bigint | number): void {
-    this.suiTransactionBlock.setGasBudget(budget);
+    this.transactionBlock.setGasBudget(budget);
   }
 
   /**
    * Sets the gas price for the transaction
    */
   setGasPrice(price: bigint | number): void {
-    this.suiTransactionBlock.setGasPrice(price);
+    this.transactionBlock.setGasPrice(price);
   }
 
   /**
    * Sets the sender for the transaction
    */
   setSender(sender: string): void {
-    this.suiTransactionBlock.setSender(sender);
+    if ('setSender' in this.transactionBlock) {
+      (this.transactionBlock as TransactionBlockSui).setSender(sender);
+    } else {
+      console.warn('setSender not available on this transaction implementation');
+    }
   }
-
+  
   /**
-   * Sets the expiration for the transaction
+   * Builds the transaction
    */
-  setExpiration(expiration: number): void {
-    this.suiTransactionBlock.setExpiration(expiration);
+  async build(options?: any): Promise<Uint8Array> {
+    return this.transactionBlock.build(options);
+  }
+  
+  /**
+   * Serializes the transaction
+   */
+  serialize(): string {
+    const serialized = this.transactionBlock.serialize();
+    return typeof serialized === 'string' ? serialized : JSON.stringify(serialized);
+  }
+  
+  /**
+   * Gets the transaction digest
+   */
+  async getDigest(): Promise<string> {
+    const result = await this.transactionBlock.getDigest();
+    // Handle both Promise<string> and string returns
+    return typeof result === 'string' ? result : await result;
   }
 
   /**
    * Creates a new TransactionBlockAdapter from an existing TransactionBlock
    */
-  static from(transactionBlock: TransactionBlockSui | TransactionBlockCore): TransactionBlockAdapter {
+  static from(transactionBlock: TransactionBlockSui | Transaction): TransactionBlockAdapter {
     return new TransactionBlockAdapter(transactionBlock);
   }
 }

@@ -1,6 +1,6 @@
-import type { TransactionBlock as RealTransactionBlock, TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
+import type { Transaction as RealTransaction, TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
 import type { SuiObjectRef } from '@mysten/sui.js/client';
-import { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
+import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
 
 // Define TypeTagSerializer locally to avoid import issues
 type TypeTagSerializer = any;
@@ -56,7 +56,8 @@ interface UpgradeTransaction {
   ticket: TransactionArgument;
 }
 
-type Transaction = 
+// Renamed to avoid conflict with Transaction class below
+type TransactionOperation = 
   | MoveCallTransaction 
   | TransferObjectsTransaction 
   | SplitCoinsTransaction 
@@ -97,10 +98,9 @@ interface SerializedBcs<T, E> {
   readonly extraType: E;
 }
 
-// Implement TransactionBlock as a class implementing the adapter interface
-// This allows us to have a clean implementation that works with our adapter pattern
-export class TransactionBlock implements TransactionBlockAdapter {
-  private transactions: Transaction[] = [];
+// Implement Transaction as a class directly (not as an adapter)
+export class Transaction {
+  private transactions: TransactionOperation[] = [];
   private inputs: TransactionArgument[] = [];
   private sharedObjectRefs: Set<string> = new Set();
   
@@ -124,10 +124,7 @@ export class TransactionBlock implements TransactionBlockAdapter {
     this.blockData.transactions = [];
   }
 
-  // Implementation of the adapter interface
-  getUnderlyingBlock(): RealTransactionBlock {
-    return this as unknown as RealTransactionBlock;
-  }
+  // No adapter pattern needed anymore
 
   setGasBudget(budget: bigint | number): void {
     this.blockData.gasConfig.budget = BigInt(budget);
@@ -138,7 +135,7 @@ export class TransactionBlock implements TransactionBlockAdapter {
   }
 
   // Helper method to add a transaction to our internal representation
-  private add(transaction: Transaction): TransactionResult {
+  private add(transaction: TransactionOperation): TransactionResult {
     this.transactions.push(transaction);
     if (transaction.kind === 'MoveCall') {
       this.blockData.transactions.push({

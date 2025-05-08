@@ -1,5 +1,6 @@
 /**
  * Module declarations for third-party libraries
+ * Enhanced for compatibility between different library versions
  */
 
 // Declare the SerializedMessage from keystore
@@ -9,52 +10,219 @@ declare module '@mysten/sui.js/cryptography/keystore' {
   }
 }
 
-// Declare missing types from walrus client
+// Enhanced TransactionBlock and Transaction types
+declare module '@mysten/sui.js/transactions' {
+  import { Signer } from '@mysten/sui.js/cryptography';
+  import { SuiObjectRef, SuiTransactionBlockResponse, SuiTransactionBlockResponseOptions } from '@mysten/sui.js/client';
+
+  export type TransactionArgument = TransactionObjectArgument | TransactionPureArgument;
+
+  export interface TransactionObjectArgument {
+    kind: string;
+    index: number;
+    value?: any;
+    type?: string;
+  }
+
+  export interface TransactionPureArgument {
+    kind: string;
+    value: any;
+    type?: string;
+  }
+
+  // Unified Transaction interface compatible with both old and new APIs
+  export interface Transaction {
+    // Core methods for serialization and building
+    serialize(): Promise<string> | string;
+    build(options?: { client?: any }): Promise<Uint8Array>;
+    getDigest(): Promise<string>;
+    
+    // Core TransactionBlock methods
+    pure(value: unknown, type?: string): TransactionArgument;
+    object(value: string | SuiObjectRef | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument;
+    makeMoveVec(params: { objects: (string | TransactionObjectArgument)[], type?: string }): TransactionObjectArgument;
+    moveCall(params: {
+      target: `${string}::${string}::${string}`;
+      arguments?: TransactionArgument[];
+      typeArguments?: string[];
+    }): TransactionObjectArgument;
+    transferObjects(objects: (string | TransactionObjectArgument)[], address: string | TransactionObjectArgument): TransactionObjectArgument;
+    setGasBudget(budget: bigint | number): void;
+    setGasPrice(price: bigint | number): void;
+    setGasOwner(owner: string): void;
+    setSender(sender: string): void;
+    setSenderIfNotSet?(sender: string): void;
+    
+    // Coin handling methods
+    splitCoins(
+      coin: string | TransactionObjectArgument,
+      amounts: (string | number | bigint | TransactionArgument)[]
+    ): TransactionObjectArgument;
+    mergeCoins(
+      destination: string | TransactionObjectArgument,
+      sources: (string | TransactionObjectArgument)[]
+    ): void;
+    gas(objectId?: string): TransactionObjectArgument;
+    
+    // Package management methods
+    publish(options: { 
+      modules: string[] | number[][]; 
+      dependencies: string[] 
+    }): TransactionObjectArgument;
+    upgrade(options: { 
+      modules: string[] | number[][]; 
+      dependencies: string[]; 
+      packageId: string; 
+      ticket: string | TransactionObjectArgument 
+    }): TransactionObjectArgument;
+  }
+  
+  // Define constructors for both Transaction and TransactionBlock
+  export const Transaction: {
+    new(): Transaction;
+  };
+
+  export type TransactionBlock = Transaction;
+  
+  export const TransactionBlock: {
+    new(): TransactionBlock;
+  };
+}
+
+// Enhanced Walrus types with better compatibility support
 declare module '@mysten/walrus' {
-  import { Transaction } from '@mysten/sui.js/transactions';
+  import { Transaction, TransactionBlock } from '@mysten/sui.js/transactions';
   import { Signer } from '@mysten/sui.js/cryptography';
   import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 
-  // Make WalrusClient both a type and a constructor
+  // BlobObject structure with optional fields to accommodate all versions
+  export interface BlobObject {
+    blob_id: string;
+    id?: { id: string };
+    registered_epoch?: number;
+    storage_cost?: { value: string };
+    storage_rebate?: { value: string };
+    size?: string;
+    deletable?: boolean;
+    cert_epoch?: number;
+    metadata?: any;
+    provider_count?: number;
+    slivers?: number;
+    attributes?: Record<string, string>;
+    checksum?: { primary: string; secondary?: string };
+  }
+
+  // Complete WalrusClient interface with flexible return types
   export interface WalrusClient {
+    // Core info methods
     getConfig(): Promise<{ network: string; version: string; maxSize: number }>;
     getWalBalance(): Promise<string>;
     getStorageUsage(): Promise<{ used: string; total: string }>;
-    getBlobInfo(blobId: string): Promise<any>;
-    getBlobObject(params: { blobId: string }): Promise<any>;
+    
+    // Blob management methods
+    getBlobInfo(blobId: string): Promise<BlobObject>;
+    getBlobObject(params: { blobId: string }): Promise<BlobObject>;
     verifyPoA(params: { blobId: string }): Promise<boolean>;
-    writeBlob(params: WriteBlobOptions): Promise<{ blobId: string; blobObject: { blob_id: string } }>;
+    
+    // Flexible writeBlob return type to handle different implementations
+    writeBlob(params: WriteBlobOptions): Promise<{ 
+      blobId?: string; // Could be optional in some implementations
+      blob_id?: string; // Alternative field name in other implementations
+      blobObject?: BlobObject;
+      digest?: string;
+    }>;
+    
     readBlob(params: ReadBlobOptions): Promise<Uint8Array>;
-    getBlobMetadata(params: { blobId: string }): Promise<any>;
-    storageCost(size: number, epochs: number): Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>;
-    executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: Transaction; signer: Signer | Ed25519Keypair }): Promise<any>;
-    executeCertifyBlobTransaction(options: CertifyBlobOptions & { transaction?: Transaction; signer: Signer | Ed25519Keypair }): Promise<any>;
-    executeWriteBlobAttributesTransaction(options: WriteBlobAttributesOptions & { transaction?: Transaction; signer: Signer | Ed25519Keypair }): Promise<any>;
-    deleteBlob(options: DeleteBlobOptions & { transaction?: Transaction; signer: Signer | Ed25519Keypair }): Promise<any>;
-    executeRegisterBlobTransaction(options: RegisterBlobOptions & { transaction?: Transaction; signer: Signer | Ed25519Keypair }): Promise<any>;
-    getStorageConfirmationFromNode(options: GetStorageConfirmationOptions): Promise<any>;
-    createStorageBlock(size: number, epochs: number): Promise<Transaction>;
-    createStorage(options: StorageWithSizeOptions): (tx: Transaction) => Promise<any>;
+    getBlobMetadata(params: { blobId: string } | ReadBlobOptions): Promise<any>;
+    
+    // Cost calculation with bigint return type
+    storageCost(size: number, epochs: number): Promise<{ 
+      storageCost: bigint; 
+      writeCost: bigint; 
+      totalCost: bigint 
+    }>;
+    
+    // Transaction methods with flexible parameter types
+    executeCreateStorageTransaction(options: StorageWithSizeOptions & { 
+      transaction?: Transaction | TransactionBlock; 
+      signer: Signer | Ed25519Keypair;
+    }): Promise<{
+      digest: string;
+      storage: {
+        id: { id: string };
+        start_epoch: number;
+        end_epoch: number;
+        storage_size: string;
+      }
+    }>;
+    
+    executeCertifyBlobTransaction(options: CertifyBlobOptions & { 
+      transaction?: Transaction | TransactionBlock; 
+      signer?: Signer | Ed25519Keypair;
+    }): Promise<{ digest: string }>;
+    
+    executeWriteBlobAttributesTransaction(options: WriteBlobAttributesOptions & { 
+      transaction?: Transaction | TransactionBlock; 
+      signer?: Signer | Ed25519Keypair;
+    }): Promise<{ digest: string }>;
+    
+    // More flexible deleteBlob method that can handle multiple signature patterns
+    deleteBlob(options: DeleteBlobOptions): 
+      ((tx: Transaction | TransactionBlock) => Promise<{ digest: string }>) | 
+      Promise<{ digest: string }>;
+    
+    executeRegisterBlobTransaction(options: RegisterBlobOptions & { 
+      transaction?: Transaction | TransactionBlock; 
+      signer?: Signer | Ed25519Keypair;
+    }): Promise<{ blob: BlobObject; digest: string }>;
+    
+    getStorageConfirmationFromNode(options: GetStorageConfirmationOptions): Promise<{
+      confirmed: boolean;
+      serializedMessage?: string;
+      signature?: string;
+    }>;
+    
+    // Storage block creation methods
+    createStorageBlock(size: number, epochs: number): Promise<Transaction | TransactionBlock>;
+    createStorage(options: StorageWithSizeOptions): 
+      (tx: Transaction | TransactionBlock) => Promise<{
+        digest: string;
+        storage: {
+          id: { id: string };
+          start_epoch: number;
+          end_epoch: number;
+          storage_size: string;
+        }
+      }>;
+    
+    // Optional experimental methods
+    experimental?: {
+      getBlobData?: () => Promise<any>;
+      [key: string]: any;
+    };
   }
 
-  // Add the constructor function signature
+  // Constructor for WalrusClient
   export const WalrusClient: {
     new(config?: WalrusClientConfig): WalrusClient;
   };
 
+  // Comprehensive options interfaces
   export interface WriteBlobOptions {
     blob: Uint8Array;
     signer: Signer | Ed25519Keypair;
     deletable?: boolean;
     epochs?: number;
     attributes?: Record<string, string>;
-    transaction?: Transaction;
+    transaction?: Transaction | TransactionBlock;
     signal?: AbortSignal;
+    timeout?: number;
   }
 
   export interface ReadBlobOptions {
     blobId: string;
     signal?: AbortSignal;
+    timeout?: number;
   }
 
   export interface StorageWithSizeOptions {
@@ -90,6 +258,7 @@ declare module '@mysten/walrus' {
     blobId: string;
     nodeIndex: number;
     nodeUrl?: string;
+    timeout?: number;
   }
 
   export interface WalrusClientConfig {
@@ -97,9 +266,9 @@ declare module '@mysten/walrus' {
     network?: string;
     customRpcUrl?: string;
     fetchOptions?: RequestInit;
+    timeoutMs?: number;
   }
 
-  // Add missing options types
   export interface WriteSliversToNodeOptions {
     nodeUrl: string;
     blobId: string;
@@ -108,6 +277,7 @@ declare module '@mysten/walrus' {
     totalSize: number;
     partSize: number;
     signal?: AbortSignal;
+    timeout?: number;
   }
 
   export interface WriteEncodedBlobToNodesOptions {
@@ -118,61 +288,6 @@ declare module '@mysten/walrus' {
     totalSize: number;
     encodingType: { RedStuff: true };
     signal?: AbortSignal;
+    timeout?: number;
   }
-
-  export interface WriteBlobOptions {
-    blob: Uint8Array;
-    signer: Signer | Ed25519Keypair;
-    deletable?: boolean;
-    epochs?: number;
-    attributes?: Record<string, string>;
-    transaction?: Transaction;
-    signal?: AbortSignal;
-  }
-}
-
-// Declare consistent Transaction interfaces (replacement for TransactionBlock)
-declare module '@mysten/sui.js/transactions' {
-  import { Signer } from '@mysten/sui.js/cryptography';
-  import { SuiObjectRef } from '@mysten/sui.js/client';
-
-  export type TransactionArgument = TransactionObjectArgument | TransactionPureArgument;
-
-  export interface TransactionObjectArgument {
-    kind: string;
-    index: number;
-    value?: any;
-    type?: string;
-  }
-
-  export interface TransactionPureArgument {
-    kind: string;
-    value: any;
-    type?: string;
-  }
-
-  // Transaction type from older package versions, enhanced to match TransactionBlock
-  export interface Transaction {
-    serialize(): Promise<string>;
-    build(): Promise<Uint8Array>;
-    getDigest(): Promise<string>;
-    
-    // Methods from TransactionBlock that need to be available
-    pure(value: unknown, type?: string): TransactionArgument;
-    object(value: string | SuiObjectRef | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument;
-    makeMoveVec(elements: TransactionArgument[], type?: string): TransactionArgument;
-    moveCall({ target, arguments: args, typeArguments }: {
-      target: string;
-      arguments?: TransactionArgument[];
-      typeArguments?: string[];
-    }): TransactionObjectArgument;
-    transferObjects(objects: TransactionObjectArgument[], recipient: TransactionArgument): void;
-    setGasBudget(amount: number): void;
-    setGasPrice(price: number): void;
-    setGasOwner(owner: string): void;
-    setSender(sender: string): void;
-  }
-
-  // Alias TransactionBlock to Transaction for compatibility
-  export type TransactionBlock = Transaction;
 }

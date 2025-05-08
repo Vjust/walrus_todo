@@ -1,7 +1,7 @@
-import { Signer, SignatureScheme, toSerializedSignature, IntentScope, SignatureWithBytes, PublicKey } from '@mysten/sui.js/cryptography';
+import { Signer, SignatureScheme, IntentScope, SignatureWithBytes, PublicKey } from '@mysten/sui.js/cryptography';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { SuiClient } from '@mysten/sui.js/client';
-import { Transaction } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 
 // Define SerializedMessage interface locally to avoid dependency issues
 interface SerializedMessage {
@@ -34,39 +34,44 @@ export class MockKeystoreSigner implements Signer {
     return 'mock-sui-address';
   }
 
-  async signData(data: Uint8Array): Promise<Uint8Array> {
-    // Return a mock signature
+  signData(data: Uint8Array): Uint8Array {
+    // Return a mock signature without async
     return new Uint8Array(64).fill(1);
   }
 
-  // Implement both versions of sign for compatibility
-  async sign(bytesOrTransaction: Uint8Array | Transaction): Promise<Uint8Array | SignatureWithBytes> {
-    if (bytesOrTransaction instanceof Uint8Array) {
-      // Standard Signer interface expects Uint8Array
-      return this.signData(bytesOrTransaction);
-    } else {
-      // TransactionBlock version
-      const bytes = await bytesOrTransaction.serialize();
-      const signature = await this.signData(new Uint8Array(bytes));
-      return {
-        signature: Buffer.from(signature).toString('base64'),
-        bytes: Buffer.from(bytes).toString('base64')
-      };
-    }
+  // Implement core Signer interface with synchronous return type
+  sign(bytes: Uint8Array): Promise<Uint8Array> {
+    // Return a Promise that resolves to a Uint8Array
+    return Promise.resolve(this.signData(bytes));
+  }
+  
+  // Add signTransaction as an extension method for TransactionBlock objects
+  async signTransaction(transaction: TransactionBlock): Promise<SignatureWithBytes> {
+    const bytes = await transaction.serialize();
+    const signature = this.signData(new Uint8Array(Buffer.from(bytes, 'base64')));
+    return {
+      signature: Buffer.from(signature).toString('base64'),
+      bytes: bytes
+    };
   }
 
   getPublicKey(): PublicKey {
-    return {
-      toSuiAddress: () => 'mock-sui-address',
-      equals: () => false,
-      flag: 0 as number,
-      toBytes: () => new Uint8Array(32).fill(1),
-      toBase64: () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
-      toString: () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
-      verify: async (_data: Uint8Array, _signature: Uint8Array | string): Promise<boolean> => true,
-      verifyWithIntent: async (_data: Uint8Array, _signature: Uint8Array | string, _intent: IntentScope): Promise<boolean> => true,
-      toSuiPublicKey: () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE='
+    // Create a function that returns a proper PublicKey implementation
+    const createPublicKey = (): PublicKey => {
+      return {
+        toSuiAddress: () => 'mock-sui-address',
+        equals: (other: PublicKey) => false,
+        flag: () => 0, // Function that returns number
+        toBytes: () => new Uint8Array(32).fill(1),
+        toString: () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
+        verify: async (data: Uint8Array, signature: Uint8Array | string): Promise<boolean> => true,
+        verifyWithIntent: async (data: Uint8Array, signature: Uint8Array | string, intent: IntentScope): Promise<boolean> => true,
+        // Fix property not assignable to type 'never'
+        toSuiPublicKey: (): string => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE='
+      };
     };
+    
+    return createPublicKey();
   }
 
   async signMessage(message: SerializedMessage): Promise<SignatureWithBytes> {
@@ -93,8 +98,17 @@ export class MockKeystoreSigner implements Signer {
     };
   }
 
+  // Add signTransactionBlock method to match current Signer interface expectations
+  async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
+    const signature = await this.signData(bytes);
+    return {
+      signature: Buffer.from(signature).toString('base64'),
+      bytes: Buffer.from(bytes).toString('base64')
+    };
+  }
+
   getKeyScheme(): SignatureScheme {
-    return 'ED25519';
+    return 'ED25519' as SignatureScheme;
   }
 
   connect(client: SuiClient): this & { client: SuiClient } {

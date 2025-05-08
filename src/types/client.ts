@@ -1,9 +1,25 @@
+/**
+ * Extended WalrusClient interfaces with additional functionality
+ */
+
 import type { TransactionBlock } from '@mysten/sui.js/transactions';
 import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import type { Signer } from '@mysten/sui.js/cryptography';
-import type { BlobObject, WalrusClient, ReadBlobOptions, BlobInfo, BlobMetadataShape, StorageWithSizeOptions, CertifyBlobOptions, WriteBlobAttributesOptions, DeleteBlobOptions, RegisterBlobOptions, GetStorageConfirmationOptions, StorageConfirmation } from './walrus';
-import type { SignerAdapter } from '../utils/adapters/signer-adapter';
-import type { TransactionBlockAdapter } from '../utils/adapters/transaction-adapter';
+import type { 
+  BlobObject, 
+  BlobInfo, 
+  BlobMetadataShape, 
+  ReadBlobOptions, 
+  StorageWithSizeOptions, 
+  CertifyBlobOptions, 
+  WriteBlobAttributesOptions, 
+  DeleteBlobOptions, 
+  RegisterBlobOptions, 
+  GetStorageConfirmationOptions, 
+  StorageConfirmation 
+} from './walrus';
+import type { SignerAdapter } from './adapters/SignerAdapter';
+import type { TransactionBlockAdapter } from './adapters/TransactionBlockAdapter';
 
 /**
  * Extended WalrusClient interface with additional methods
@@ -72,7 +88,7 @@ export interface WalrusClientExt {
     attributes?: Record<string, string>; 
     transaction?: TransactionBlock | TransactionBlockAdapter;
   }): Promise<{
-    blobId?: string;
+    blobId: string; // Changed from optional to required
     blobObject: BlobObject | { blob_id: string }
   }>;
   
@@ -83,6 +99,19 @@ export interface WalrusClientExt {
   experimental?: {
     getBlobData: () => Promise<any>;
   };
+}
+
+/**
+ * Minimal WalrusClient interface to support combination
+ */
+export interface WalrusClient {
+  // Most basic WalrusClient methods used throughout the codebase
+  getConfig(): Promise<{ network: string; version: string; maxSize: number }>;
+  getWalBalance(): Promise<string>;
+  readBlob(params: ReadBlobOptions): Promise<Uint8Array>;
+  writeBlob(options: any): Promise<any>;
+  getBlobInfo(blobId: string): Promise<any>;
+  getStorageUsage(): Promise<{ used: string; total: string }>;
 }
 
 /**

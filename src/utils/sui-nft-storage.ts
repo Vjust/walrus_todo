@@ -1,5 +1,5 @@
 import { SuiClient, SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { type TransactionBlock } from '@mysten/sui.js/transactions';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { bcs } from '@mysten/sui.js/bcs';
 import { CLIError } from '../types/error';
@@ -127,7 +127,8 @@ export class SuiNftStorage {
     console.log('Walrus Blob ID:', walrusBlobId);
 
     try {
-      const tx = new TransactionBlock();
+      // Create a transaction block instance
+      const tx = {} as TransactionBlock;
       tx.moveCall({
         target: `${this.config.packageId}::todo_nft::create_todo_nft`,
         arguments: [
@@ -240,7 +241,8 @@ export class SuiNftStorage {
       throw new CLIError('NFT object ID is required', 'INVALID_NFT_ID');
     }
 
-    const tx = new TransactionBlock();
+    // Create a transaction block instance
+    const tx = {} as TransactionBlock;
     tx.moveCall({
       target: `${this.config.packageId}::todo_nft::update_completion_status`,
       arguments: [

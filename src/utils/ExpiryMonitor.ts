@@ -36,9 +36,9 @@ type ExpiryHandler = (blobs: BlobRecord[]) => Promise<void>;
 type StorageOptions = {
   size: number;
   epochs: number;
-  owner: string;
+  owner?: string; // Make owner optional since we removed it from other interfaces
   signer: Signer;
-  transaction?: TransactionBlock;
+  transaction?: Transaction;
 };
 
 interface BlobVerification {
