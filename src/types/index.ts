@@ -1,5 +1,6 @@
 /**
- * Configuration interface
+ * Basic Configuration interface
+ * @deprecated Use the more detailed types from './config' instead
  */
 export interface Config {
   network: string;
@@ -12,3 +13,9 @@ export interface Config {
 
 export * from './todo';
 export * from './error';
+export * from './config';
+export * from './walrus';
+export * from './transaction';
+export * from './client';
+export * from './adapters';
+export * from './network';

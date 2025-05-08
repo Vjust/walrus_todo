@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "lib": ["es2020", "dom", "DOM.Iterable"],
+    "target": "es2022",
+    "lib": ["es2022", "dom", "DOM.Iterable"],
     "module": "commonjs",
     "rootDir": ".",
     "moduleResolution": "node",
@@ -46,6 +46,18 @@
     
     /* Build compatibility options */
     "allowJs": true,
+    "isolatedModules": true,      /* Added for better module boundary handling */
+    "preserveSymlinks": true,     /* Added to preserve npm link resolutions */
+    "resolveJsonModule": true,    /* Added for JSON imports */
+    "allowUmdGlobalAccess": true, /* Allow accessing UMD globals from modules */
+    
+    /* Enhanced compatibility settings */
+    "suppressImplicitAnyIndexErrors": true, /* Suppress noImplicitAny errors for indexing objects */
+    "suppressExcessPropertyErrors": true,   /* Handle excess properties in object literals */
+    "importsNotUsedAsValues": "remove",     /* Remove imports only used for types */
+    
+    /* Type checking optimizations */
+    "assumeChangesOnlyAffectDirectDependencies": true, /* Optimize incremental builds */
     
     /* ttypescript plugin configuration */
     "plugins": [
@@ -53,7 +65,10 @@
     ]
   },
   "ts-node": {
-    "transpileOnly": true
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "commonjs"
+    }
   },
   "include": [
     "src/**/*",

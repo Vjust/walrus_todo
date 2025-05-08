@@ -90,7 +90,7 @@ export class WalletExtensionSigner extends Signer {
   async signTransactionBlock(transaction: TransactionBlock): Promise<SignatureWithBytes> {
     // @ts-ignore - Build options compatibility
     const bytes = await transaction.build({ 
-      onlyTransactionKind: true 
+      client: undefined 
     });
     const intentMessage = messageWithIntent(IntentScope.TransactionData, bytes);
     const signature = this.generateSignature(intentMessage);

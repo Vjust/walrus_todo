@@ -1,11 +1,11 @@
 import { SuiClient } from '@mysten/sui.js/client';
 import type { WalrusClientExt } from '../types/client';
-import type { BlobInfo, BlobMetadata } from '../types/walrus';
+import type { BlobInfo, BlobMetadata, BlobMetadataShape } from '../types/walrus';
 import { CLIError } from '../types/error';
 import { handleError } from './error-handler';
 import { RetryManager, NetworkNode } from './retry-manager';
 import type { TransactionSigner } from '../types/signer';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 // Using BlobInfo from types/walrus.ts
 
@@ -61,6 +61,30 @@ export class BlobVerificationManager {
       throw new Error('No signer available. Initialize with a signer first.');
     }
     return this.signer;
+  }
+
+  /**
+   * Creates a default metadata object that conforms to BlobMetadata type
+   */
+  private createDefaultMetadata(): BlobMetadata {
+    return {
+      V1: { 
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' }, 
+        unencoded_length: '0', 
+        hashes: [{
+          primary_hash: {
+            Digest: new Uint8Array(),
+            $kind: 'Digest'
+          },
+          secondary_hash: {
+            Sha256: new Uint8Array(),
+            $kind: 'Sha256'
+          }
+        }], 
+        $kind: 'V1' 
+      }, 
+      $kind: 'V1' 
+    };
   }
 
   /**
@@ -166,11 +190,12 @@ export class BlobVerificationManager {
   }> {
     try {
       const response = await this.walrusClient.getBlobMetadata({ blobId });
-      if (!response || !response.metadata) {
+      if (!response) {
         throw new CLIError('Failed to retrieve blob metadata', 'WALRUS_METADATA_ERROR');
       }
-
-      const metadata = response.metadata;
+      
+      // Cast the response to BlobMetadata to ensure it has the required structure
+      const metadata = response as unknown as BlobMetadata;
       const actualAttributes = (metadata.V1 || {}) as Record<string, any>;
       const mismatches: Array<{ key: string; expected: any; actual: any }> = [];
 
@@ -199,11 +224,13 @@ export class BlobVerificationManager {
       };
     } catch (error) {
       handleError('Metadata verification failed', error);
+      // Use helper method to create properly typed default metadata
+      const defaultMetadata = this.createDefaultMetadata();
       return {
         valid: false,
         actualAttributes: {},
         mismatches: [],
-        metadata: { V1: { encoding_type: { RedStuff: true, $kind: 'RedStuff' }, unencoded_length: '0', hashes: [], $kind: 'V1' }, $kind: 'V1' }
+        metadata: defaultMetadata
       };
     }
   }
@@ -250,11 +277,7 @@ export class BlobVerificationManager {
     expectedData: Buffer,
     expectedAttributes: Record<string, any>,
     options: VerificationOptions = {}
-  ): Promise<VerificationResult & {
-    poaComplete: boolean;
-    providers: number;
-    metadata: BlobMetadata;
-  }> {
+  ): Promise<VerificationResult> {
     const {
       maxRetries,
       baseDelay,
@@ -301,10 +324,16 @@ export class BlobVerificationManager {
         }
 
         // 4. Verify smart contract certification if requested
-        let contractVerification = {
+        let contractVerification: {
+          certified: boolean;
+          certificateEpoch: number | undefined;
+          registeredEpoch: number | undefined;
+          poaComplete?: boolean;
+          providers?: number;
+        } = {
           certified: false,
-          certificateEpoch: undefined as number | undefined,
-          registeredEpoch: undefined as number | undefined
+          certificateEpoch: undefined,
+          registeredEpoch: undefined
         };
         
         if (verifySmartContract) {
@@ -342,22 +371,16 @@ export class BlobVerificationManager {
         }
 
         // All verifications passed
-        // Ensure we include all required properties with proper fallbacks
+        // Ensure we include all required properties with proper type-safe fallbacks
         const contractVerificationComplete = {
           ...contractVerification,
-          poaComplete: 'poaComplete' in contractVerification ? contractVerification.poaComplete : false,
-          providers: 'providers' in contractVerification ? contractVerification.providers : 0
+          poaComplete: 'poaComplete' in contractVerification ? 
+            (contractVerification as { poaComplete: boolean }).poaComplete : false,
+          providers: 'providers' in contractVerification ? 
+            (contractVerification as { providers: number }).providers : 0
         };
 
-        const defaultMetadata = { 
-          V1: { 
-            $kind: 'V1', 
-            encoding_type: { RedStuff: true, $kind: 'RedStuff' }, 
-            unencoded_length: '0', 
-            hashes: [] 
-          },
-          $kind: 'V1'
-        };
+        const defaultMetadata = this.createDefaultMetadata();
 
         return {
           success: true,
@@ -373,7 +396,8 @@ export class BlobVerificationManager {
           attempts,
           poaComplete: contractVerificationComplete.poaComplete,
           providers: contractVerificationComplete.providers,
-          metadata: metadataVerification.metadata || defaultMetadata
+          metadata: 'metadata' in metadataVerification && metadataVerification.metadata ? 
+            metadataVerification.metadata : defaultMetadata
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));

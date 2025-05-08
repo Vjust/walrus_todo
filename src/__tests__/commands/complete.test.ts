@@ -17,10 +17,10 @@ jest.mock('../../utils/sui-nft-storage');
 jest.mock('../../services/config-service');
 jest.mock('@mysten/sui.js/client');
 
-const mockTodoService = TodoService as unknown as jest.Mocked<typeof TodoService>;
-const mockWalrusStorage = WalrusStorage as unknown as jest.Mocked<typeof WalrusStorage>;
-const mockSuiNftStorage = SuiNftStorage as unknown as jest.Mocked<typeof SuiNftStorage>;
-const mockSuiClient = SuiClient as unknown as jest.Mocked<typeof SuiClient>;
+const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
+const mockWalrusStorage = WalrusStorage as jest.MockedClass<typeof WalrusStorage>;
+const mockSuiNftStorage = SuiNftStorage as jest.MockedClass<typeof SuiNftStorage>;
+const mockSuiClient = SuiClient as jest.MockedClass<typeof SuiClient>;
 
 // Mock getConfig with correct type for the mock config
 type MockConfig = Config & {

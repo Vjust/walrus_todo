@@ -11,8 +11,8 @@ describe('ExpiryMonitor', () => {
   let monitor: ExpiryMonitor;
   let mockVaultManager: jest.Mocked<VaultManager>;
   let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
-  let mockWarningHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
-  let mockRenewalHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
+  let mockWarningHandler: jest.Mock;
+  let mockRenewalHandler: jest.Mock;
   let mockDate: Date;
   let mockSigner: Ed25519Keypair;
 
@@ -22,18 +22,17 @@ describe('ExpiryMonitor', () => {
     autoRenewThreshold: 3,
     renewalPeriod: 30,
     signer: {
-      sign: jest.fn().mockResolvedValue(new Uint8Array([1,2,3,4])),
       signPersonalMessage: jest.fn().mockResolvedValue({
-        signature: 'base64sig',
-        bytes: 'base64msg'
+        signature: new Uint8Array([1,2,3,4]),
+        bytes: new Uint8Array([1,2,3,4])
       }),
-      signTransaction: jest.fn().mockResolvedValue({
-        signature: 'base64sig',
-        bytes: 'base64msg'
+      signTransactionBlock: jest.fn().mockResolvedValue({
+        signature: new Uint8Array([1,2,3,4]),
+        bytes: new Uint8Array([1,2,3,4])
       }),
       signWithIntent: jest.fn().mockResolvedValue({
-        signature: 'base64sig',
-        bytes: 'base64msg'
+        signature: new Uint8Array([1,2,3,4]),
+        bytes: new Uint8Array([1,2,3,4])
       }),
       signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({
         digest: 'mock-digest'
@@ -47,10 +46,11 @@ describe('ExpiryMonitor', () => {
         verifyWithIntent: async () => true,
         equals: () => true,
         flag: () => 0,
-        schemeType: () => 'ED25519'
+        scheme: 'ED25519'
       }),
       toSuiAddress: jest.fn().mockReturnValue('mockAddress'),
-      getKeyScheme: jest.fn().mockReturnValue('ED25519')
+      getKeyScheme: jest.fn().mockReturnValue('ED25519'),
+      connect: jest.fn().mockResolvedValue(undefined)
     },
     network: {
       environment: 'testnet' as const,
@@ -76,7 +76,7 @@ describe('ExpiryMonitor', () => {
       getBlobObject: jest.fn().mockResolvedValue({ content: 'test', metadata: {} }),
       verifyPoA: jest.fn().mockResolvedValue(true),
       writeBlob: jest.fn().mockResolvedValue({ blobId: 'blob1', blobObject: {} }),
-      readBlob: jest.fn().mockResolvedValue({ content: 'test', metadata: {} }),
+      readBlob: jest.fn().mockResolvedValue(new Uint8Array()),
       getBlobMetadata: jest.fn().mockResolvedValue({ 
         size: 1024,
         type: 'text/plain',
@@ -101,6 +101,8 @@ describe('ExpiryMonitor', () => {
       }),
       getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2']),
       getSuiBalance: jest.fn().mockResolvedValue('1000'),
+      getBlobSize: jest.fn().mockResolvedValue(1024),
+      reset: jest.fn(),
       allocateStorage: jest.fn().mockResolvedValue({
         digest: 'mock-storage-tx',
         storage: {

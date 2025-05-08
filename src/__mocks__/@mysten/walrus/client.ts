@@ -10,18 +10,16 @@ import type {
   DeleteBlobOptions,
   GetStorageConfirmationOptions
 } from '@mysten/walrus';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { Transaction } from '@mysten/sui.js/transactions';
 import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import type { Signer } from '@mysten/sui.js/cryptography';
 import type { 
   BlobObject, 
   BlobInfo, 
   BlobMetadataShape, 
-  BlobMetadata, 
-  BlobHashPair, 
-  EncodingType
-} from '../../types/walrus';
-import type { WalrusClientExt } from '../../types/client';
+  BlobMetadata
+} from '../../../types/walrus';
+import type { WalrusClientExt } from '../../../types/client';
 import { WalrusClientAdapter } from '../../../utils/adapters/walrus-client-adapter';
 import { SignerAdapter } from '../../../utils/adapters/signer-adapter';
 import { TransactionBlockAdapter, createTransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
@@ -46,7 +44,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
 
   async executeCreateStorageTransaction(
     options: StorageWithSizeOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter; 
+      transaction?: Transaction | TransactionBlockAdapter; 
       signer: Signer | Ed25519Keypair | SignerAdapter 
     }
   ): Promise<{ 
@@ -97,16 +95,16 @@ export class MockWalrusClient implements WalrusClientAdapter {
       unencoded_length: '1000',
       size: '1000',
       hashes: [{
-        primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
-        secondary_hash: { Digest: new Uint8Array([4,5,6]), $kind: 'Digest' }
+        primary_hash: { Sha256: new Uint8Array([1,2,3]), $kind: 'Sha256' },
+        secondary_hash: { Sha256: new Uint8Array([4,5,6]), $kind: 'Sha256' }
       }],
       metadata: {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
           hashes: [{
-            primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
-            secondary_hash: { Digest: new Uint8Array([4,5,6]), $kind: 'Digest' }
+            primary_hash: { Sha256: new Uint8Array([1,2,3]), $kind: 'Sha256' },
+            secondary_hash: { Sha256: new Uint8Array([4,5,6]), $kind: 'Sha256' }
           }],
           $kind: 'V1'
         }
@@ -120,7 +118,6 @@ export class MockWalrusClient implements WalrusClientAdapter {
       registered_epoch: 1,
       blob_id: params.blobId,
       size: '1000',
-      encoding_type: 1,
       certified_epoch: 1,
       storage: {
         id: { id: this.mockStorageId },
@@ -143,15 +140,16 @@ export class MockWalrusClient implements WalrusClientAdapter {
     deletable?: boolean; 
     epochs?: number; 
     attributes?: Record<string, string>; 
-    transaction?: TransactionBlock | TransactionBlockAdapter 
+    transaction?: Transaction | TransactionBlockAdapter 
   }): Promise<{
-    blobId?: string;
+    blobId: string; // Changed from optional to required
     blobObject: BlobObject | { blob_id: string }
   }> {
     // Check which interface is being used based on parameters
     if ('blob' in params && 'signer' in params) {
       // WalrusClientExt interface
       return {
+        blobId: this.mockBlobId, // Always return blobId
         blobObject: {
           blob_id: this.mockBlobId
         }
@@ -178,8 +176,8 @@ export class MockWalrusClient implements WalrusClientAdapter {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
           hashes: [{
-            primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
-            secondary_hash: { Digest: new Uint8Array([4,5,6]), $kind: 'Digest' }
+            primary_hash: { Sha256: new Uint8Array([1,2,3]), $kind: 'Sha256' },
+            secondary_hash: { Sha256: new Uint8Array([4,5,6]), $kind: 'Sha256' }
           }],
           $kind: 'V1'
         },
@@ -202,7 +200,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
 
   async executeCertifyBlobTransaction(
     options: CertifyBlobOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: Transaction | TransactionBlockAdapter;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
@@ -211,20 +209,20 @@ export class MockWalrusClient implements WalrusClientAdapter {
 
   async executeWriteBlobAttributesTransaction(
     options: WriteBlobAttributesOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: Transaction | TransactionBlockAdapter;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
     return { digest: this.mockDigest };
   }
 
-  deleteBlob({ blobObjectId }: DeleteBlobOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{ digest: string }> {
-    return (tx: TransactionBlock | TransactionBlockAdapter) => Promise.resolve({ digest: this.mockDigest });
+  deleteBlob({ blobObjectId }: DeleteBlobOptions): (tx: Transaction | TransactionBlockAdapter) => Promise<{ digest: string }> {
+    return (tx: Transaction | TransactionBlockAdapter) => Promise.resolve({ digest: this.mockDigest });
   }
 
   async executeRegisterBlobTransaction(
     options: RegisterBlobOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: Transaction | TransactionBlockAdapter;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ 
@@ -248,9 +246,11 @@ export class MockWalrusClient implements WalrusClientAdapter {
     };
   }
 
-  async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock | TransactionBlockAdapter> {
-    const txb = new TransactionBlock();
-    return createTransactionBlockAdapter(txb);
+  async createStorageBlock(size: number, epochs: number): Promise<Transaction | TransactionBlockAdapter> {
+    // Use the instantiation pattern defined in module-declarations.d.ts
+    const tx = Object.create(Transaction.prototype);
+    // Return the transaction directly instead of using the adapter
+    return tx;
   }
 
   // WalrusClientExt methods
@@ -276,7 +276,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   };
 
   // Helper method to create storage that's used in some implementations
-  createStorage(options: StorageWithSizeOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{
+  createStorage(options: StorageWithSizeOptions): (tx: Transaction | TransactionBlockAdapter) => Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -285,7 +285,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
       storage_size: string;
     }
   }> {
-    return (tx: TransactionBlock | TransactionBlockAdapter) => Promise.resolve({
+    return (tx: Transaction | TransactionBlockAdapter) => Promise.resolve({
       digest: this.mockDigest,
       storage: {
         id: { id: this.mockStorageId },

@@ -8,12 +8,11 @@ import {
   type WriteBlobAttributesOptions, 
   type GetStorageConfirmationOptions, 
   type WriteSliversToNodeOptions, 
-  type WriteEncodedBlobToNodesOptions, 
-  type WriteEncodedBlobOptions, 
+  type WriteEncodedBlobToNodesOptions,
   type WalrusClientConfig,
   type ReadBlobOptions 
 } from '@mysten/walrus';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import type { TransactionBlock } from '@mysten/sui.js/transactions';
 import { type BlobObject, type BlobInfo, type BlobMetadataShape } from '../types/walrus';
 import { type Signer } from '@mysten/sui.js/cryptography';
 import { type WalrusClientExt } from '../types/client';
@@ -119,20 +118,14 @@ export class MockWalrusClient implements WalrusClientAdapter {
       blob_id: blobId,
       registered_epoch: 1,
       certified_epoch: 1,
-      encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-      unencoded_length: '1000',
       size: '1000',
-      hashes: [{
-        primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
-        secondary_hash: { Digest: new Uint8Array([4,5,6]), $kind: 'Digest' }
-      }],
       metadata: {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
           hashes: [{
             primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
-            secondary_hash: { Digest: new Uint8Array([4,5,6]), $kind: 'Digest' }
+            secondary_hash: { Sha256: new Uint8Array([4,5,6]), $kind: 'Sha256' }
           }],
           $kind: 'V1'
         },
@@ -152,16 +145,20 @@ export class MockWalrusClient implements WalrusClientAdapter {
       registered_epoch: 1,
       blob_id: params.blobId,
       size: '1000',
-      encoding_type: 1,
-      certified_epoch: 1,
-      storage: {
-        id: { id: this.mockStorageId },
-        storage_size: '1000000',
-        used_size: '1000',
-        end_epoch: 100,
-        start_epoch: 1
-      },
-      deletable: false
+      deletable: false,
+      // Remove non-interface properties and add the correct ones
+      metadata: {
+        V1: {
+          $kind: 'V1',
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+          unencoded_length: '1000',
+          hashes: [{
+            primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
+            secondary_hash: { Sha256: new Uint8Array([4,5,6]), $kind: 'Sha256' }
+          }]
+        },
+        $kind: 'V1'
+      }
     };
   }
 
@@ -206,7 +203,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
     attributes?: Record<string, string>; 
     transaction?: TransactionBlock | TransactionBlockAdapter 
   }): Promise<{
-    blobId?: string;
+    blobId: string; // Not optional anymore
     blobObject: BlobObject | { blob_id: string };
   }> {
     const blobObject = await this.getBlobObject({ blobId: this.mockBlobId });
@@ -214,14 +211,15 @@ export class MockWalrusClient implements WalrusClientAdapter {
     // For WalrusClientExt interface
     if ('blob' in params && 'signer' in params) {
       return {
-        blobObject: { blob_id: this.mockBlobId }
+        blobId: this.mockBlobId, // Always include blobId
+        blobObject: { blob_id: this.mockBlobId } // Minimal valid BlobObject
       };
     }
     
     // For WalrusClient interface
     return {
-      blobId: this.mockBlobId,
-      blobObject
+      blobId: this.mockBlobId, // Always non-optional
+      blobObject: blobObject
     };
   }
 
@@ -237,19 +235,16 @@ export class MockWalrusClient implements WalrusClientAdapter {
    */
   async getBlobMetadata(options: ReadBlobOptions): Promise<BlobMetadataShape> {
     return {
-      blob_id: options.blobId,
-      metadata: {
-        V1: {
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: '1000',
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
-            secondary_hash: { Digest: new Uint8Array([4,5,6]), $kind: 'Digest' }
-          }],
-          $kind: 'V1'
-        },
-        $kind: 'V1'
-      }
+      V1: {
+        $kind: 'V1',
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        unencoded_length: '1000',
+        hashes: [{
+          primary_hash: { Digest: new Uint8Array([1,2,3]), $kind: 'Digest' },
+          secondary_hash: { Sha256: new Uint8Array([4,5,6]), $kind: 'Sha256' }
+        }]
+      },
+      $kind: 'V1'
     };
   }
 
@@ -352,7 +347,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Write encoded blob to a specific node
    */
-  async writeEncodedBlobToNode(options: WriteEncodedBlobOptions): Promise<StorageConfirmation> {
+  async writeEncodedBlobToNode(options: WriteBlobOptions): Promise<StorageConfirmation> {
     return {
       confirmed: true,
       proofs: [{
@@ -428,8 +423,8 @@ export class MockWalrusClient implements WalrusClientAdapter {
    * Create a transaction block for storage allocation
    */
   async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock | TransactionBlockAdapter> {
-    const txb = new TransactionBlock();
-    return createTransactionBlockAdapter(txb);
+    // Return a mock transaction adapter
+    return createTransactionBlockAdapter({} as TransactionBlock);
   }
 
   /**

@@ -12,15 +12,16 @@ const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
 // Mock WalrusStorage
 const mockStorageError = new Error('Storage failed');
 const mockStorageMethods = {
-  connect: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<() => Promise<void>>,
-  disconnect: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<() => Promise<void>>,
-  storeTodo: jest.fn().mockRejectedValue(mockStorageError) as jest.MockedFunction<(todo: Todo) => Promise<string>>,
-  write: jest.fn().mockResolvedValue({ blobId: 'test-blob-id' }) as jest.MockedFunction<(todo: Todo) => Promise<{ blobId: string }>>,
-  read: jest.fn() as jest.MockedFunction<(id: string) => Promise<Todo>>,
-  verify: jest.fn().mockResolvedValue(true) as jest.MockedFunction<(todo: Todo, id: string) => Promise<boolean>>,
-  delete: jest.fn() as jest.MockedFunction<(id: string) => Promise<void>>
+  connect: jest.fn().mockResolvedValue(undefined),
+  disconnect: jest.fn().mockResolvedValue(undefined),
+  storeTodo: jest.fn().mockRejectedValue(mockStorageError),
+  write: jest.fn().mockResolvedValue({ blobId: 'test-blob-id' }),
+  read: jest.fn(),
+  verify: jest.fn().mockResolvedValue(true),
+  delete: jest.fn()
 };
 
+// TypeScript needs the correct mock return type here
 jest.mock('../../utils/walrus-storage', () => ({
   __esModule: true,
   createWalrusStorage: jest.fn().mockReturnValue(mockStorageMethods)

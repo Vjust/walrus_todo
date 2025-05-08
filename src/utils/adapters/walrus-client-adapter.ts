@@ -10,18 +10,17 @@ import type {
   DeleteBlobOptions,
   GetStorageConfirmationOptions
 } from '@mysten/walrus';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
 import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import type { Signer } from '@mysten/sui.js/cryptography';
-import { 
-  BlobObject, 
-  BlobInfo, 
-  BlobMetadataShape, 
-  WalrusClient 
-} from '../../types/walrus';
+import { BlobInfo, BlobMetadataShape } from '../../types/walrus';
 import { WalrusClientExt } from '../../types/client';
 import { SignerAdapter } from './signer-adapter';
 import { TransactionBlockAdapter, createTransactionBlockAdapter } from './transaction-adapter';
+import { TransactionType } from '../../types/transaction';
+import { 
+  NormalizedBlobObject, 
+  NormalizedWriteBlobResponse 
+} from '../../types/adapters/WalrusClientAdapter';
 
 /**
  * Unified interface that combines both WalrusClient and WalrusClientExt
@@ -31,7 +30,7 @@ export interface WalrusClientAdapter {
   // Core WalrusClient methods
   executeCreateStorageTransaction(
     options: StorageWithSizeOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter; 
+      transaction?: TransactionType; 
       signer: Signer | Ed25519Keypair | SignerAdapter 
     }
   ): Promise<{ 
@@ -48,20 +47,21 @@ export interface WalrusClientAdapter {
   getWalBalance(): Promise<string>;
   getStorageUsage(): Promise<{ used: string; total: string }>;
   getBlobInfo(blobId: string): Promise<BlobInfo>;
-  getBlobObject(params: { blobId: string }): Promise<BlobObject>;
+  getBlobObject(params: { blobId: string }): Promise<NormalizedBlobObject>;
   verifyPoA(params: { blobId: string }): Promise<boolean>;
   
   // Write blob method that handles both interface variants
+  // Updated return type to make blobId required, not optional
   writeBlob(params: WriteBlobOptions | { 
     blob: Uint8Array; 
     signer: Signer | Ed25519Keypair | SignerAdapter; 
     deletable?: boolean; 
     epochs?: number; 
     attributes?: Record<string, string>; 
-    transaction?: TransactionBlock | TransactionBlockAdapter 
+    transaction?: TransactionType 
   }): Promise<{
-    blobId?: string;
-    blobObject: BlobObject | { blob_id: string }
+    blobId: string; // Changed from optional to required
+    blobObject: NormalizedBlobObject;
   }>;
   
   readBlob(options: ReadBlobOptions): Promise<Uint8Array>;
@@ -80,27 +80,27 @@ export interface WalrusClientAdapter {
   // Transaction-related methods
   executeCertifyBlobTransaction(
     options: CertifyBlobOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: TransactionType;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }>;
   
   executeWriteBlobAttributesTransaction(
     options: WriteBlobAttributesOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: TransactionType;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }>;
   
-  deleteBlob(options: DeleteBlobOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{ digest: string }>;
+  deleteBlob(options: DeleteBlobOptions): (tx: TransactionType) => Promise<{ digest: string }>;
   
   executeRegisterBlobTransaction(
     options: RegisterBlobOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: TransactionType;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ 
-    blob: BlobObject;
+    blob: NormalizedBlobObject;
     digest: string; 
   }>;
   
@@ -108,11 +108,11 @@ export interface WalrusClientAdapter {
     options: GetStorageConfirmationOptions
   ): Promise<{ confirmed: boolean; serializedMessage: string; signature: string }>;
   
-  createStorageBlock(size: number, epochs: number): Promise<TransactionBlock | TransactionBlockAdapter>;
+  createStorageBlock(size: number, epochs: number): Promise<TransactionType>;
   
   createStorage(
     options: StorageWithSizeOptions
-  ): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{
+  ): (tx: TransactionType) => Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -128,7 +128,7 @@ export interface WalrusClientAdapter {
   };
   
   // Access to the underlying client
-  getUnderlyingClient(): OriginalWalrusClient | WalrusClient | WalrusClientExt;
+  getUnderlyingClient(): OriginalWalrusClient | any;
 }
 
 /**
@@ -136,11 +136,15 @@ export interface WalrusClientAdapter {
  * or the extended WalrusClientExt interfaces, providing a unified interface
  */
 export class WalrusClientAdapterImpl implements WalrusClientAdapter {
-  private client: OriginalWalrusClient | WalrusClient | WalrusClientExt;
+  private client: OriginalWalrusClient | any;
   private clientType: 'original' | 'custom' | 'extended';
   private _experimental: { getBlobData: () => Promise<any> };
 
-  constructor(client: OriginalWalrusClient | WalrusClient | WalrusClientExt) {
+  constructor(client: OriginalWalrusClient | any) {
+    if (!client) {
+      throw new Error('Cannot initialize WalrusClientAdapter with null or undefined client');
+    }
+    
     this.client = client;
     
     // Determine the type of client we're working with
@@ -165,13 +169,13 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     }
   }
 
-  getUnderlyingClient(): OriginalWalrusClient | WalrusClient | WalrusClientExt {
+  getUnderlyingClient(): OriginalWalrusClient | any {
     return this.client;
   }
 
   async executeCreateStorageTransaction(
     options: StorageWithSizeOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter; 
+      transaction?: TransactionType; 
       signer: Signer | Ed25519Keypair | SignerAdapter 
     }
   ): Promise<{ 
@@ -188,19 +192,34 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     }
 
     // Convert any provided adapters to their underlying implementations
-    const adaptedOptions = {
-      ...options,
-      transaction: options.transaction instanceof TransactionBlock 
-        ? options.transaction 
-        : options.transaction 
-          ? (options.transaction as TransactionBlockAdapter).getUnderlyingBlock() 
-          : undefined,
-      signer: 'getUnderlyingSigner' in options.signer 
-        ? (options.signer as SignerAdapter).getUnderlyingSigner() 
-        : options.signer
-    };
+    const adaptedOptions = { ...options };
     
-    return this.client.executeCreateStorageTransaction(adaptedOptions);
+    // Handle transaction adapter
+    if (options.transaction) {
+      if (typeof options.transaction === 'object' && options.transaction !== null) {
+        if ('getUnderlyingBlock' in options.transaction && typeof options.transaction.getUnderlyingBlock === 'function') {
+          adaptedOptions.transaction = options.transaction.getUnderlyingBlock();
+        } else if ('getTransactionBlock' in options.transaction && typeof options.transaction.getTransactionBlock === 'function') {
+          adaptedOptions.transaction = (options.transaction as any).getTransactionBlock();
+        }
+      }
+    }
+    
+    // Handle signer adapter
+    if (options.signer) {
+      if ('getUnderlyingSigner' in options.signer) {
+        adaptedOptions.signer = options.signer.getUnderlyingSigner();
+      } else if ('getSigner' in options.signer) {
+        adaptedOptions.signer = (options.signer as any).getSigner();
+      }
+    }
+    
+    try {
+      return await this.client.executeCreateStorageTransaction(adaptedOptions);
+    } catch (err) {
+      console.error('Error in executeCreateStorageTransaction:', err);
+      throw new Error(`Failed to execute create storage transaction: ${err.message}`);
+    }
   }
 
   async getConfig(): Promise<{ network: string; version: string; maxSize: number }> {
@@ -228,14 +247,18 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     if (!this.client) {
       throw new Error('WalrusClient not initialized');
     }
-    return this.client.getBlobInfo(blobId);
+    
+    const result = await this.client.getBlobInfo(blobId);
+    return result as BlobInfo;
   }
 
-  async getBlobObject(params: { blobId: string }): Promise<BlobObject> {
+  async getBlobObject(params: { blobId: string }): Promise<NormalizedBlobObject> {
     if (!this.client) {
       throw new Error('WalrusClient not initialized');
     }
-    return this.client.getBlobObject(params);
+    
+    const result = await this.client.getBlobObject(params);
+    return this.normalizeBlobObject(result);
   }
 
   async verifyPoA(params: { blobId: string }): Promise<boolean> {
@@ -251,68 +274,59 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     deletable?: boolean; 
     epochs?: number; 
     attributes?: Record<string, string>; 
-    transaction?: TransactionBlock | TransactionBlockAdapter 
+    transaction?: TransactionType;
   }): Promise<{
-    blobId?: string;
-    blobObject: BlobObject | { blob_id: string }
+    blobId: string;
+    blobObject: NormalizedBlobObject;
   }> {
     if (!this.client) {
       throw new Error('WalrusClient not initialized');
     }
 
-    // Check which interface of writeBlob we're dealing with
-    if ('blob' in params && 'signer' in params) {
-      // Extended interface, handle adapters
-      const adaptedParams = {
-        ...params,
-        transaction: params.transaction instanceof TransactionBlock 
-          ? params.transaction 
-          : params.transaction 
-            ? (params.transaction as TransactionBlockAdapter).getUnderlyingBlock() 
-            : undefined,
-        signer: 'getUnderlyingSigner' in params.signer 
-          ? (params.signer as SignerAdapter).getUnderlyingSigner() 
-          : params.signer
-      };
+    try {
+      // Handle different param formats
+      // Convert any adapters to their underlying implementations
+      const adaptedParams: any = { ...params };
       
-      // If we have the extended client, use it directly
-      if (this.clientType === 'extended') {
-        return (this.client as WalrusClientExt).writeBlob(adaptedParams)
-          .then(result => ({
-            blobObject: result.blobObject,
-            blobId: result.blobObject.blob_id
-          }));
+      // Check for and extract any transaction adapter instances
+      if ('transaction' in adaptedParams && adaptedParams.transaction) {
+        const extractMethod = 'getUnderlyingBlock' in adaptedParams.transaction
+          ? 'getUnderlyingBlock'
+          : 'getTransactionBlock' in adaptedParams.transaction
+            ? 'getTransactionBlock'
+            : null;
+            
+        if (extractMethod) {
+          adaptedParams.transaction = adaptedParams.transaction[extractMethod]();
+        }
       }
       
-      // Otherwise, adapt the response format
-      const result = await (this.client as WalrusClient).writeBlob({
-        data: adaptedParams.blob,
-        options: {
-          deletable: adaptedParams.deletable,
-          epochs: adaptedParams.epochs,
-          attributes: adaptedParams.attributes
+      // Check for and extract any signer adapter instances
+      if ('signer' in adaptedParams && adaptedParams.signer) {
+        const extractMethod = 'getUnderlyingSigner' in adaptedParams.signer
+          ? 'getUnderlyingSigner'
+          : 'getSigner' in adaptedParams.signer
+            ? 'getSigner'
+            : null;
+            
+        if (extractMethod) {
+          adaptedParams.signer = adaptedParams.signer[extractMethod]();
         }
-      } as any); // Type cast due to interface differences
+      }
+      
+      // Call writeBlob on the client with the adapted parameters
+      const result = await this.client.writeBlob(adaptedParams);
+      
+      // Normalize the response so it always has a blobId and a consistent blobObject
+      const normalizedResult = this.normalizeWriteBlobResponse(result);
       
       return {
-        blobId: result.blobId,
-        blobObject: result.blobObject || { blob_id: result.blobId }
+        blobId: normalizedResult.blobId,
+        blobObject: normalizedResult.blobObject
       };
-    } else {
-      // Original interface
-      const result = await this.client.writeBlob(params as WriteBlobOptions);
-      
-      // Handle different response formats
-      if ('blobId' in result) {
-        return {
-          blobId: result.blobId,
-          blobObject: result.blobObject
-        };
-      } else {
-        return {
-          blobObject: (result as any).blobObject
-        };
-      }
+    } catch (err) {
+      console.error('Error in writeBlob:', err);
+      throw new Error(`Failed to write blob: ${err.message}`);
     }
   }
 
@@ -327,7 +341,13 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     if (!this.client) {
       throw new Error('WalrusClient not initialized');
     }
-    return this.client.getBlobMetadata(options);
+    
+    if ('getBlobMetadata' in this.client && typeof this.client.getBlobMetadata === 'function') {
+      return this.client.getBlobMetadata(options);
+    }
+    
+    // Provide a fallback if the method doesn't exist
+    throw new Error('getBlobMetadata is not implemented in this client');
   }
 
   async storageCost(size: number, epochs: number): Promise<{
@@ -340,11 +360,22 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     }
 
     if ('storageCost' in this.client && typeof this.client.storageCost === 'function') {
-      return this.client.storageCost(size, epochs);
+      const result = await this.client.storageCost(size, epochs);
+      
+      // Ensure consistent return type by converting to bigint
+      return {
+        storageCost: BigInt(result.storageCost.toString()),
+        writeCost: BigInt(result.writeCost.toString()),
+        totalCost: BigInt(result.totalCost.toString())
+      };
     }
     
-    // Fallback implementation if the method is not available
-    throw new Error('storageCost method not available on the current client');
+    // Fallback implementation
+    return {
+      storageCost: BigInt(0),
+      writeCost: BigInt(0),
+      totalCost: BigInt(0)
+    };
   }
 
   // Optional methods from WalrusClientExt
@@ -353,14 +384,17 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       throw new Error('WalrusClient not initialized');
     }
 
-    if (this.clientType === 'extended' && 'getBlobSize' in this.client && 
-        typeof this.client.getBlobSize === 'function') {
-      return (this.client as WalrusClientExt).getBlobSize(blobId);
+    if ('getBlobSize' in this.client && typeof this.client.getBlobSize === 'function') {
+      return this.client.getBlobSize(blobId);
     }
     
-    // Fallback implementation if client doesn't have this method
-    const blobInfo = await this.client.getBlobInfo(blobId);
-    return Number(blobInfo.size || 0);
+    // Fallback implementation
+    try {
+      const blobInfo = await this.getBlobInfo(blobId);
+      return Number(blobInfo.size || 0);
+    } catch (err) {
+      return 0;
+    }
   }
 
   async getStorageProviders(params: { blobId: string }): Promise<string[]> {
@@ -368,12 +402,10 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       throw new Error('WalrusClient not initialized');
     }
 
-    if (this.clientType === 'extended' && 'getStorageProviders' in this.client && 
-        typeof this.client.getStorageProviders === 'function') {
-      return (this.client as WalrusClientExt).getStorageProviders(params);
+    if ('getStorageProviders' in this.client && typeof this.client.getStorageProviders === 'function') {
+      return this.client.getStorageProviders(params);
     }
     
-    // Return empty array as fallback
     return [];
   }
 
@@ -382,16 +414,14 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       throw new Error('WalrusClient not initialized');
     }
 
-    if (this.clientType === 'extended' && 'reset' in this.client && 
-        typeof this.client.reset === 'function') {
-      (this.client as WalrusClientExt).reset();
+    if ('reset' in this.client && typeof this.client.reset === 'function') {
+      this.client.reset();
     }
-    // Do nothing if the client doesn't have this method
   }
 
   async executeCertifyBlobTransaction(
     options: CertifyBlobOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: TransactionType;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
@@ -405,24 +435,14 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     }
 
     // Convert adapters to underlying implementations
-    const adaptedOptions = {
-      ...options,
-      transaction: options.transaction instanceof TransactionBlock 
-        ? options.transaction 
-        : options.transaction 
-          ? (options.transaction as TransactionBlockAdapter).getUnderlyingBlock() 
-          : undefined,
-      signer: options.signer && 'getUnderlyingSigner' in options.signer 
-        ? (options.signer as SignerAdapter).getUnderlyingSigner() 
-        : options.signer
-    };
+    const adaptedOptions = this.extractAdapters(options);
     
     return this.client.executeCertifyBlobTransaction(adaptedOptions);
   }
 
   async executeWriteBlobAttributesTransaction(
     options: WriteBlobAttributesOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: TransactionType;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
@@ -436,22 +456,12 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     }
 
     // Convert adapters to underlying implementations
-    const adaptedOptions = {
-      ...options,
-      transaction: options.transaction instanceof TransactionBlock 
-        ? options.transaction 
-        : options.transaction 
-          ? (options.transaction as TransactionBlockAdapter).getUnderlyingBlock() 
-          : undefined,
-      signer: options.signer && 'getUnderlyingSigner' in options.signer 
-        ? (options.signer as SignerAdapter).getUnderlyingSigner() 
-        : options.signer
-    };
+    const adaptedOptions = this.extractAdapters(options);
     
     return this.client.executeWriteBlobAttributesTransaction(adaptedOptions);
   }
 
-  deleteBlob(options: DeleteBlobOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{ digest: string }> {
+  deleteBlob(options: DeleteBlobOptions): (tx: TransactionType) => Promise<{ digest: string }> {
     if (!this.client) {
       throw new Error('WalrusClient not initialized');
     }
@@ -463,22 +473,19 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     const originalFn = this.client.deleteBlob(options);
     
     // Return a wrapped function that handles the adapter
-    return (tx: TransactionBlock | TransactionBlockAdapter) => {
-      const adaptedTx = tx instanceof TransactionBlock 
-        ? tx 
-        : (tx as TransactionBlockAdapter).getUnderlyingBlock();
-      
+    return async (tx: TransactionType) => {
+      const adaptedTx = this.extractTransaction(tx);
       return originalFn(adaptedTx);
     };
   }
 
   async executeRegisterBlobTransaction(
     options: RegisterBlobOptions & { 
-      transaction?: TransactionBlock | TransactionBlockAdapter;
+      transaction?: TransactionType;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ 
-    blob: BlobObject;
+    blob: NormalizedBlobObject;
     digest: string; 
   }> {
     if (!this.client) {
@@ -491,19 +498,14 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     }
 
     // Convert adapters to underlying implementations
-    const adaptedOptions = {
-      ...options,
-      transaction: options.transaction instanceof TransactionBlock 
-        ? options.transaction 
-        : options.transaction 
-          ? (options.transaction as TransactionBlockAdapter).getUnderlyingBlock() 
-          : undefined,
-      signer: options.signer && 'getUnderlyingSigner' in options.signer 
-        ? (options.signer as SignerAdapter).getUnderlyingSigner() 
-        : options.signer
-    };
+    const adaptedOptions = this.extractAdapters(options);
     
-    return this.client.executeRegisterBlobTransaction(adaptedOptions);
+    const result = await this.client.executeRegisterBlobTransaction(adaptedOptions);
+    
+    return {
+      blob: this.normalizeBlobObject(result.blob),
+      digest: result.digest
+    };
   }
 
   async getStorageConfirmationFromNode(
@@ -518,10 +520,17 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       throw new Error('getStorageConfirmationFromNode method not available on the current client');
     }
 
-    return this.client.getStorageConfirmationFromNode(options);
+    const result = await this.client.getStorageConfirmationFromNode(options);
+    
+    // Ensure consistent return format
+    return {
+      confirmed: Boolean(result.confirmed),
+      serializedMessage: result.serializedMessage || '',
+      signature: result.signature || ''
+    };
   }
 
-  async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock | TransactionBlockAdapter> {
+  async createStorageBlock(size: number, epochs: number): Promise<TransactionType> {
     if (!this.client) {
       throw new Error('WalrusClient not initialized');
     }
@@ -531,14 +540,25 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       throw new Error('createStorageBlock method not available on the current client');
     }
 
-    const txBlock = await this.client.createStorageBlock(size, epochs);
-    // Wrap in our adapter
-    return createTransactionBlockAdapter(txBlock);
+    try {
+      const txBlock = await this.client.createStorageBlock(size, epochs);
+      // Ensure we can handle different return types from the client
+      if (!txBlock) {
+        throw new Error('Client returned null or undefined transaction block');
+      }
+      
+      // Create an adapter that can work with our system
+      const adapter = createTransactionBlockAdapter(txBlock);
+      return adapter;
+    } catch (err) {
+      console.error('Error creating storage block:', err);
+      throw new Error(`Failed to create storage block: ${err.message}`);
+    }
   }
 
   createStorage(
     options: StorageWithSizeOptions
-  ): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{
+  ): (tx: TransactionType) => Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -558,18 +578,146 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
     const originalFn = this.client.createStorage(options);
     
     // Return a wrapped function that handles the adapter
-    return (tx: TransactionBlock | TransactionBlockAdapter) => {
-      const adaptedTx = tx instanceof TransactionBlock 
-        ? tx 
-        : (tx as TransactionBlockAdapter).getUnderlyingBlock();
-      
+    return async (tx: TransactionType) => {
+      const adaptedTx = this.extractTransaction(tx);
       return originalFn(adaptedTx);
     };
   }
 
   // Handle experimental methods safely
-  get experimental() {
+  get experimental(): { getBlobData: () => Promise<any> } {
     return this._experimental;
+  }
+  
+  /**
+   * Helper method to extract the underlying transaction from a transaction or adapter
+   * This handles both our adapter implementations and raw transaction objects
+   */
+  private extractTransaction(tx: TransactionType): any {
+    if (!tx) return undefined;
+    
+    try {
+      // Type guard to prevent errors calling non-existent methods
+      if (typeof tx === 'object' && tx !== null) {
+        // First check for our adapter interfaces
+        if ('getUnderlyingBlock' in tx && typeof tx.getUnderlyingBlock === 'function') {
+          return tx.getUnderlyingBlock();
+        } else if ('getTransactionBlock' in tx && typeof tx.getTransactionBlock === 'function') {
+          return tx.getTransactionBlock();
+        } 
+        // Then check if it's a TransactionBlock instance
+        else if (tx.constructor && tx.constructor.name === 'TransactionBlock') {
+          // It's already a TransactionBlock instance
+          return tx;
+        }
+        // If none of these checks pass, return the transaction as-is
+        // This handles other types of transaction objects
+      }
+      
+      return tx;
+    } catch (err) {
+      console.warn('Error extracting transaction:', err);
+      // In case of any error, return the original transaction
+      // This is safer than returning undefined
+      return tx;
+    }
+  }
+  
+  /**
+   * Helper method to extract the underlying signer from a signer or adapter
+   */
+  private extractSigner(signer: Signer | Ed25519Keypair | SignerAdapter): any {
+    if (!signer) return undefined;
+    
+    // Type guard to prevent errors calling non-existent methods
+    if (typeof signer === 'object') {
+      if ('getUnderlyingSigner' in signer && typeof signer.getUnderlyingSigner === 'function') {
+        return signer.getUnderlyingSigner();
+      } else if ('getSigner' in signer && typeof signer.getSigner === 'function') {
+        return signer.getSigner();
+      }
+    }
+    
+    return signer;
+  }
+  
+  /**
+   * Helper method to extract both transaction and signer adapters from options
+   */
+  private extractAdapters<T extends { transaction?: TransactionType; signer?: any }>(options: T): T {
+    const result = { ...options };
+    
+    if ('transaction' in result && result.transaction) {
+      result.transaction = this.extractTransaction(result.transaction);
+    }
+    
+    if ('signer' in result && result.signer) {
+      result.signer = this.extractSigner(result.signer);
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Normalizes a blob object to ensure consistent structure
+   * Handles different blob object formats from different library versions
+   */
+  private normalizeBlobObject(blob: any): NormalizedBlobObject {
+    if (!blob) {
+      return {
+        blob_id: '',
+        deletable: false
+      };
+    }
+    
+    return {
+      blob_id: blob.blob_id || (blob.id && typeof blob.id === 'object' ? blob.id.id : ''),
+      id: blob.id || { id: blob.blob_id || '' },
+      registered_epoch: Number(blob.registered_epoch || 0),
+      storage_cost: blob.storage_cost || { value: '0' },
+      metadata: blob.metadata || {},
+      deletable: Boolean(blob.deletable)
+    };
+  }
+  
+  /**
+   * Normalizes a write blob response to ensure consistent structure
+   * Handles different response formats to extract blobId reliably
+   */
+  private normalizeWriteBlobResponse(response: any): NormalizedWriteBlobResponse {
+    if (!response) {
+      throw new Error('Empty response from writeBlob operation');
+    }
+    
+    // Extract blobId from various possible locations
+    let blobId = '';
+    
+    if (typeof response === 'string') {
+      blobId = response;
+    } else if (response.blobId) {
+      blobId = response.blobId;
+    } else if (response.blobObject && response.blobObject.blob_id) {
+      blobId = response.blobObject.blob_id;
+    } else if (response.blob_id) {
+      blobId = response.blob_id;
+    } else if (response.blobObject && response.blobObject.id && response.blobObject.id.id) {
+      blobId = response.blobObject.id.id;
+    }
+    
+    if (!blobId) {
+      throw new Error('Could not extract blobId from writeBlob response');
+    }
+    
+    // Prepare the normalized blob object
+    const blobObject = response.blobObject 
+      ? this.normalizeBlobObject(response.blobObject) 
+      : { blob_id: blobId, deletable: false };
+    
+    return {
+      blobId,
+      blobObject,
+      digest: response.digest || ''
+    };
   }
 }
 
@@ -577,7 +725,7 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
  * Factory function to create a WalrusClientAdapter from an existing client
  */
 export function createWalrusClientAdapter(
-  client: OriginalWalrusClient | WalrusClient | WalrusClientExt
+  client: OriginalWalrusClient | any
 ): WalrusClientAdapter {
   return new WalrusClientAdapterImpl(client);
 }

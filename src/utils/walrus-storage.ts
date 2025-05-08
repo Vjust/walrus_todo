@@ -5,17 +5,21 @@ import { TodoSerializer } from './todo-serializer';
 import { TodoSizeCalculator } from './todo-size-calculator';
 import { CLIError } from '../types/error';
 import { SuiClient, SuiObjectData, SuiObjectResponse, type MoveStruct } from '@mysten/sui.js/client';
-import { Transaction } from '@mysten/sui.js/transactions';
 import { WalrusClient } from '@mysten/walrus';
 import { MockWalrusClient } from './MockWalrusClient';
 import type { WalrusClientExt, WalrusClientWithExt } from '../types/client';
+import { createWalrusClientAdapter, WalrusClientAdapter } from './adapters/walrus-client-adapter';
 import { KeystoreSigner } from './sui-keystore';
 import type { TransactionSigner } from '../types/signer';
 import { execSync } from 'child_process';
 import { handleError } from './error-handler';
 import crypto from 'crypto';
 import { StorageManager } from './storage-manager';
-import { StorageReuseAnalyzer } from './storage-reuse-analyzer';
+// Import the storage reuse analyzer as a type to avoid direct dependency
+import type { StorageReuseAnalyzer } from './storage-reuse-analyzer';
+// Import the Transaction type
+import { Transaction, createTransaction } from '../types/transaction';
+import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
 
 interface VerificationResult {
   details?: {
@@ -75,7 +79,7 @@ let fetch: any;
  */
 export class WalrusStorage {
   private connectionState: 'disconnected' | 'connecting' | 'connected' | 'failed' = 'disconnected';
-  private walrusClient!: WalrusClientWithExt;
+  private walrusClient!: WalrusClientAdapter;
   private suiClient: SuiClient;
   private signer: TransactionSigner | null = null;
   private useMockMode: boolean;
@@ -127,23 +131,33 @@ export class WalrusStorage {
       throw new Error('WalrusStorage not initialized');
     }
 
-    const blobInfo = await this.walrusClient.getBlobInfo(blobId);
-    return Number(blobInfo.size || 0);
+    // Use proper error handling for potential undefined properties
+    try {
+      const blobInfo = await this.walrusClient.getBlobInfo(blobId);
+      // Safely handle the size which might be undefined or a string
+      return typeof blobInfo.size === 'string' ? Number(blobInfo.size) : 0;
+    } catch (error) {
+      console.error('Error getting blob size:', error);
+      return 0;
+    }
   }
 
-  // Add proper typing for transaction block
-  private async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock> {
-    const txb = new TransactionBlock();
-    const walStorageCoin = txb.splitCoins(txb.gas, [txb.pure(100)]);
-    txb.moveCall({
+  // Proper typing for transaction block with adapter compatibility
+  private async createStorageBlock(size: number, epochs: number): Promise<Transaction> {
+    // Use the factory function from transaction.ts to create a proper Transaction object
+    const tx = createTransaction();
+    
+    // Use the methods defined in the Transaction interface
+    tx.moveCall({
       target: '0x2::storage::create_storage',
       arguments: [
-        walStorageCoin,
-        txb.pure(size.toString()),
-        txb.pure(epochs.toString())
-      ],
+        tx.pure(size),
+        tx.pure(epochs),
+        tx.object('0x6') // Use explicit gas object reference instead of tx.gas
+      ]
     });
-    return txb;
+    
+    return tx;
   }
 
   private validateTodoListData(todoList: TodoList): void {
@@ -225,18 +239,22 @@ export class WalrusStorage {
         }
       }
 
-      // Use safe instantiation with proper types
-      this.walrusClient = this.useMockMode 
-        ? (new MockWalrusClient() as unknown as WalrusClientWithExt)
-        : (new WalrusClient({ 
-            network: 'testnet',
-            fullnode: NETWORK_URLS[CURRENT_NETWORK],
-            // Use custom options for better compatibility
-            fetchOptions: { 
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' }
-            }
-          }) as unknown as WalrusClientWithExt);
+      // Use adapter pattern for client compatibility with proper type safety
+      if (this.useMockMode) {
+        const mockClient = new MockWalrusClient() as unknown as WalrusClient;
+        this.walrusClient = createWalrusClientAdapter(mockClient);
+      } else {
+        const walrusClient = new WalrusClient({ 
+          network: 'testnet',
+          fullnode: NETWORK_URLS[CURRENT_NETWORK],
+          // Use custom options for better compatibility
+          fetchOptions: { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          }
+        });
+        this.walrusClient = createWalrusClientAdapter(walrusClient);
+      }
 
       // @ts-ignore - Ignore type compatibility issues with Signer implementations
       const signer = await KeystoreSigner.fromPath('default');
@@ -292,7 +310,7 @@ export class WalrusStorage {
     }
   }
 
-  protected async getTransactionSigner() {
+  protected async getTransactionSigner(): Promise<TransactionSigner> {
     if (!this.signer) {
       throw new Error('WalrusStorage not initialized. Call connect() first.');
     }
@@ -425,9 +443,8 @@ export class WalrusStorage {
         5
       );
       
-      // Handle different response formats between WalrusClient implementations
-      // @ts-ignore - Handle different response formats for compatibility
-      const blobObject = 'blobObject' in result ? result.blobObject : { blob_id: result.blobId };
+      // Safely extract blob information with proper type checking
+      const blobObject = result.blobObject || { blob_id: result.blobId || '' };
 
       // Verify the upload using our dedicated verification manager
       const metadata = {
@@ -445,20 +462,37 @@ export class WalrusStorage {
       };
 
       this.initializeManagers();
+      // Ensure we have a valid blob ID with proper type checking
+      let blobId = '';
+      // Use type guards to safely access properties
+      if (blobObject && typeof blobObject === 'object') {
+        if ('blob_id' in blobObject && typeof blobObject.blob_id === 'string') {
+          blobId = blobObject.blob_id;
+        } else if ('id' in blobObject && blobObject.id && 
+                 typeof blobObject.id === 'object' && 
+                 'id' in blobObject.id && 
+                 typeof blobObject.id.id === 'string') {
+          blobId = blobObject.id.id;
+        }
+      }
+      
+      if (!blobId) {
+        throw new Error('Failed to extract valid blob ID from response');
+      }
       const verificationResult = await this.verifyBlob(
-        blobObject.blob_id,
+        blobId,
         buffer,
         metadata
       );
 
-      if (!verificationResult.details?.certified) {
+      if (!verificationResult?.details?.certified) {
         console.log('Warning: Blob certification pending. Monitoring for certification...');
         // Start monitoring in the background
         console.log('Certification monitoring not implemented in this version');
       }
 
-      console.log(`Todo successfully stored with blob ID: ${blobObject.blob_id}`);
-      return blobObject.blob_id;
+      console.log(`Todo successfully stored with blob ID: ${blobId}`);
+      return blobId;
     } catch (error) {
       throw new CLIError(
         `Failed to store todo: ${error instanceof Error ? error.message : String(error)}`,
@@ -660,7 +694,7 @@ export class WalrusStorage {
         });
         
         const downloadedHash = crypto.createHash('sha256').update(content).digest();
-        if (metadata.metadata.V1.hashes[0]?.primary_hash?.Digest) {
+        if (metadata?.metadata?.V1?.hashes?.[0]?.primary_hash?.Digest) {
           const storedHash = metadata.metadata.V1.hashes[0].primary_hash.Digest;
           if (!Buffer.from(downloadedHash).equals(Buffer.from(storedHash))) {
             throw new Error('Content hash verification failed');
@@ -826,7 +860,7 @@ export class WalrusStorage {
       const checksum = this.calculateChecksum(buffer);
       const signer = await this.getTransactionSigner();
 
-      const { blobObject } = await this.executeWithRetry(
+      const result = await this.executeWithRetry(
         async () => this.walrusClient.writeBlob({
           blob: new Uint8Array(buffer),
           deletable: false,
@@ -846,6 +880,9 @@ export class WalrusStorage {
         'todo list storage',
         5
       );
+      
+      // Safely extract blob information with proper type checking
+      const blobObject = result.blobObject || { blob_id: result.blobId || '' };
 
       // Verify the upload using our dedicated verification manager
       const metadata = {
@@ -860,20 +897,37 @@ export class WalrusStorage {
       };
 
       this.initializeManagers();
+      // Ensure we have a valid blob ID with proper type checking
+      let blobId = '';
+      // Use type guards to safely access properties
+      if (blobObject && typeof blobObject === 'object') {
+        if ('blob_id' in blobObject && typeof blobObject.blob_id === 'string') {
+          blobId = blobObject.blob_id;
+        } else if ('id' in blobObject && blobObject.id && 
+                 typeof blobObject.id === 'object' && 
+                 'id' in blobObject.id && 
+                 typeof blobObject.id.id === 'string') {
+          blobId = blobObject.id.id;
+        }
+      }
+      
+      if (!blobId) {
+        throw new Error('Failed to extract valid blob ID from response');
+      }
       const verificationResult = await this.verifyBlob(
-        blobObject.blob_id,
+        blobId,
         buffer,
         metadata
       );
 
-      if (!verificationResult.details?.certified) {
+      if (!verificationResult?.details?.certified) {
         console.log('Warning: Todo list blob certification pending. Monitoring for certification...');
         // Start monitoring in the background
         console.log('Certification monitoring not implemented in this version');
       }
 
-      console.log(`Todo list successfully stored with blob ID: ${blobObject.blob_id}`);
-      return blobObject.blob_id;
+      console.log(`Todo list successfully stored with blob ID: ${blobId}`);
+      return blobId;
     } catch (error) {
       throw new CLIError(
         `Failed to store todo list: ${error instanceof Error ? error.message : String(error)}`,
@@ -988,6 +1042,8 @@ export class WalrusStorage {
     }
     
     if (!this.storageReuseAnalyzer) {
+      // Use dynamic import to avoid direct dependency
+      const { StorageReuseAnalyzer } = require('./storage-reuse-analyzer');
       this.storageReuseAnalyzer = new StorageReuseAnalyzer(
         this.suiClient,
         this.walrusClient,
@@ -1118,12 +1174,13 @@ export class WalrusStorage {
           const signer = await this.getTransactionSigner();
           const { storage } = await this.executeWithRetry(
             async () => {
+              // Use proper transaction creation with compatible typing
               const txb = await this.walrusClient.createStorageBlock(sizeBytes, validation.requiredCost!.epochs);
               return this.walrusClient.executeCreateStorageTransaction({
-                size: sizeBytes,
+                size: sizeBytes, 
                 epochs: validation.requiredCost!.epochs,
-                // Remove owner property as it's not in the interface
-                signer
+                transaction: txb, // Include the transaction
+                signer: signer // Use the properly typed signer
               });
             },
             'storage creation',
