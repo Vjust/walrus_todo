@@ -5,7 +5,7 @@ import { CLIError } from '../types/error';
 import chalk from 'chalk';
 
 export default class SimpleCommand extends Command {
-  static description = 'Simple todo management';
+  static description = 'Manage todos with simplified commands for basic operations';
 
   static examples = [
     'waltodo simple create shopping-list',

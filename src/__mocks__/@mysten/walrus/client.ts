@@ -1,5 +1,5 @@
 import type { 
-  WalrusClient, 
+  WalrusClient as OriginalWalrusClient,
   WalrusClientConfig, 
   StorageWithSizeOptions, 
   WriteBlobOptions, 
@@ -19,15 +19,18 @@ import type {
   BlobMetadataShape, 
   BlobMetadata, 
   BlobHashPair, 
-  EncodingType 
-} from '../../../types/walrus';
-import type { WalrusClientExt } from '../../../types/client';
+  EncodingType
+} from '../../types/walrus';
+import type { WalrusClientExt } from '../../types/client';
+import { WalrusClientAdapter } from '../../../utils/adapters/walrus-client-adapter';
+import { SignerAdapter } from '../../../utils/adapters/signer-adapter';
+import { TransactionBlockAdapter, createTransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
 
 /**
- * MockWalrusClient implements both WalrusClient and WalrusClientExt interfaces
- * for use in tests. It provides fixed responses for all methods.
+ * MockWalrusClient implements the WalrusClientAdapter interface for testing
+ * This provides a clean implementation without type coercion
  */
-export class MockWalrusClient implements WalrusClient, WalrusClientExt {
+export class MockWalrusClient implements WalrusClientAdapter {
   private readonly mockBlobId: string = 'test-blob-id';
   private readonly mockStorageId: string = 'test-storage-id';
   private readonly mockDigest: string = 'mock-digest';
@@ -35,12 +38,16 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
   constructor(config?: WalrusClientConfig) {
     // Nothing needed for mock constructor
   }
+  
+  // Adapter interface implementation to get the underlying client
+  getUnderlyingClient(): OriginalWalrusClient | any {
+    return this;
+  }
 
-  // Implementation compatible with both interface signatures
   async executeCreateStorageTransaction(
     options: StorageWithSizeOptions & { 
-      transaction?: TransactionBlock; 
-      signer: Signer | Ed25519Keypair 
+      transaction?: TransactionBlock | TransactionBlockAdapter; 
+      signer: Signer | Ed25519Keypair | SignerAdapter 
     }
   ): Promise<{ 
     digest: string; 
@@ -130,16 +137,33 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
     return true;
   }
 
-  // Implementation that fulfills both interfaces
-  async writeBlob(params: WriteBlobOptions): Promise<{
-    blobId: string;
-    blobObject: BlobObject;
+  async writeBlob(params: WriteBlobOptions | { 
+    blob: Uint8Array; 
+    signer: Signer | Ed25519Keypair | SignerAdapter; 
+    deletable?: boolean; 
+    epochs?: number; 
+    attributes?: Record<string, string>; 
+    transaction?: TransactionBlock | TransactionBlockAdapter 
+  }): Promise<{
+    blobId?: string;
+    blobObject: BlobObject | { blob_id: string }
   }> {
-    const blob = await this.getBlobObject({ blobId: this.mockBlobId });
-    return {
-      blobId: this.mockBlobId,
-      blobObject: blob
-    };
+    // Check which interface is being used based on parameters
+    if ('blob' in params && 'signer' in params) {
+      // WalrusClientExt interface
+      return {
+        blobObject: {
+          blob_id: this.mockBlobId
+        }
+      };
+    } else {
+      // WalrusClient interface - original implementation
+      const blob = await this.getBlobObject({ blobId: this.mockBlobId });
+      return {
+        blobId: this.mockBlobId,
+        blobObject: blob
+      };
+    }
   }
 
   async readBlob({ blobId, signal }: ReadBlobOptions): Promise<Uint8Array> {
@@ -176,36 +200,32 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
     };
   }
 
-  // Implementation compatible with both interface signatures
   async executeCertifyBlobTransaction(
     options: CertifyBlobOptions & { 
-      transaction?: TransactionBlock;
-      signer?: Signer | Ed25519Keypair;
+      transaction?: TransactionBlock | TransactionBlockAdapter;
+      signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
     return { digest: this.mockDigest };
   }
 
-  // Implementation compatible with both interface signatures
   async executeWriteBlobAttributesTransaction(
     options: WriteBlobAttributesOptions & { 
-      transaction?: TransactionBlock;
-      signer?: Signer | Ed25519Keypair;
+      transaction?: TransactionBlock | TransactionBlockAdapter;
+      signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ digest: string }> {
     return { digest: this.mockDigest };
   }
 
-  // Mock implementation that works with any TransactionBlock
-  deleteBlob({ blobObjectId }: DeleteBlobOptions): (tx: TransactionBlock) => Promise<{ digest: string }> {
-    return (tx: TransactionBlock) => Promise.resolve({ digest: this.mockDigest });
+  deleteBlob({ blobObjectId }: DeleteBlobOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{ digest: string }> {
+    return (tx: TransactionBlock | TransactionBlockAdapter) => Promise.resolve({ digest: this.mockDigest });
   }
 
-  // Implementation compatible with both interface signatures
   async executeRegisterBlobTransaction(
     options: RegisterBlobOptions & { 
-      transaction?: TransactionBlock;
-      signer?: Signer | Ed25519Keypair;
+      transaction?: TransactionBlock | TransactionBlockAdapter;
+      signer?: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{ 
     blob: BlobObject;
@@ -228,9 +248,9 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
     };
   }
 
-  async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock> {
+  async createStorageBlock(size: number, epochs: number): Promise<TransactionBlock | TransactionBlockAdapter> {
     const txb = new TransactionBlock();
-    return txb;
+    return createTransactionBlockAdapter(txb);
   }
 
   // WalrusClientExt methods
@@ -256,7 +276,7 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
   };
 
   // Helper method to create storage that's used in some implementations
-  createStorage(options: StorageWithSizeOptions): (tx: TransactionBlock) => Promise<{
+  createStorage(options: StorageWithSizeOptions): (tx: TransactionBlock | TransactionBlockAdapter) => Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -265,7 +285,7 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
       storage_size: string;
     }
   }> {
-    return (tx: TransactionBlock) => Promise.resolve({
+    return (tx: TransactionBlock | TransactionBlockAdapter) => Promise.resolve({
       digest: this.mockDigest,
       storage: {
         id: { id: this.mockStorageId },
@@ -277,5 +297,6 @@ export class MockWalrusClient implements WalrusClient, WalrusClientExt {
   }
 }
 
+// Export an instance of the client as the default export
 const mockClient = new MockWalrusClient();
 export default mockClient;

@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default class CheckCommand extends Command {
-  static description = 'Mark a todo item as complete/incomplete';
+  static description = 'Toggle completion status of a todo item';
 
   static examples = [
     '<%= config.bin %> check my-list -i task-123',

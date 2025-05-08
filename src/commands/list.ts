@@ -12,7 +12,7 @@ const priorityColors: Record<string, (text: string) => string> = {
 };
 
 export default class ListCommand extends BaseCommand {
-  static description = 'List todos or todo lists';
+  static description = 'Display todo items or available todo lists';
 
   static examples = [
     '<%= config.bin %> list',

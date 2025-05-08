@@ -36,6 +36,7 @@ The WalTodo CLI provides a comprehensive set of commands for managing todos:
 - **`store`**: Store todos on blockchain and Walrus
 - **`retrieve`**: Retrieve todos from blockchain or Walrus storage
 - **`deploy`**: Deploy the Todo NFT smart contract to the Sui blockchain
+- **`storage`**: Manage and analyze Walrus storage efficiency and token usage
 
 ### Intuitive Command Syntax
 
@@ -61,10 +62,10 @@ git clone https://github.com/Vjust/walrus_todo.git
 cd walrus_todo
 
 # Install dependencies
-npm install
+pnpm install
 
 # Install CLI globally
-npm run global-install
+pnpm run global-install
 ```
 
 After installation, you can use the `waltodo` command from anywhere without needing to modify your PATH.
@@ -77,7 +78,7 @@ git clone https://github.com/Vjust/walrus_todo.git
 cd walrus_todo
 
 # Install dependencies
-npm install
+pnpm install
 
 # Install CLI locally
 ./fix-cli.sh
@@ -93,7 +94,7 @@ Get up and running with WalTodo in minutes:
 
 ```bash
 # Install the CLI
-npm run global-install
+pnpm run global-install
 
 # Add your first todo
 waltodo add "My first todo task"
@@ -129,23 +130,27 @@ waltodo store --todo 123 --list default
 ### Setting Up Your Environment
 
 1. **Install Dependencies**:
-   Make sure you have Node.js v18+ and npm v8+ installed:
+   Make sure you have Node.js v18+ and pnpm v8+ installed:
    ```bash
    node --version
-   npm --version
+   pnpm --version
+   ```
+   If you don't have pnpm installed, you can install it with:
+   ```bash
+   npm install -g pnpm
    ```
 
 2. **Clone and Install**:
    ```bash
    git clone https://github.com/Vjust/walrus_todo.git
    cd walrus_todo
-   npm install
+   pnpm install
    ```
 
 3. **Install the CLI**:
    ```bash
    # Option 1: Global installation
-   npm run global-install
+   pnpm run global-install
 
    # Option 2: Local installation
    ./fix-cli.sh
@@ -220,7 +225,7 @@ waltodo store --todo 123 --list default
 ### System Requirements
 
 - **Node.js**: v18.0.0 or higher
-- **npm**: v8.0.0 or higher (or pnpm)
+- **pnpm**: v8.0.0 or higher
 - **Operating Systems**: macOS, Linux, or Windows with WSL
 
 ### For Local Usage Only
@@ -461,7 +466,20 @@ waltodo list blockchain-tasks
 waltodo store --todo TODO_ID --list blockchain-tasks
 ```
 
-### 3. Retrieve and Manage Todos
+### 3. Analyze and Optimize Storage
+
+```bash
+# View storage summary and allocation statistics
+waltodo storage --summary
+
+# Identify opportunities for storage reuse and WAL token savings
+waltodo storage --analyze
+
+# Get detailed information about all storage allocations
+waltodo storage --detail
+```
+
+### 4. Retrieve and Manage Todos
 
 ```bash
 # Retrieve a todo by NFT ID
@@ -474,7 +492,7 @@ waltodo complete --list blockchain-tasks --id TODO_ID
 waltodo list blockchain-tasks
 ```
 
-### 4. Share Todos with Others
+### 5. Share Todos with Others
 
 ```bash
 # Transfer a todo NFT to another address
@@ -505,6 +523,37 @@ The application uses a hybrid storage model:
 3. **Updates**: Changes sync to both Walrus and blockchain
 4. **Transfer**: Transfer NFT to move ownership
 5. **Images**: Todo images are stored on Walrus with references in the NFT
+
+### Storage Optimization
+The CLI now includes advanced storage optimization features to maximize efficiency and reduce costs:
+
+1. **Precise Size Calculation**: The `TodoSizeCalculator` precisely measures the exact storage requirements for todos, preventing over-allocation.
+2. **Storage Reuse**: The `StorageReuseAnalyzer` implements a best-fit algorithm to find and reuse existing storage allocations, maximizing WAL token efficiency.
+3. **Smart Allocation**: Automatically calculates the most cost-effective storage approach between creating new storage or reusing existing capacity.
+4. **Token Savings Analysis**: Provides detailed analytics on WAL token savings when reusing storage vs. creating new allocations.
+5. **Storage Management**: The new `storage` command provides comprehensive monitoring and analytics for Walrus storage usage.
+
+```bash
+# Show storage summary (active allocations and total capacity)
+waltodo storage --summary
+
+# Show detailed storage information (size, epochs, blob counts)
+waltodo storage --detail
+
+# Analyze storage efficiency and token savings
+waltodo storage --analyze
+```
+
+The storage optimization system considers:
+- Current storage utilization and capacity
+- Remaining epochs for each storage allocation
+- Cost comparison between new and reused storage
+- Minimum buffer requirements for future expansion
+- Optimal allocation size based on todo requirements
+
+For comprehensive documentation, see:
+- [Storage Optimization Guide](docs/storage-optimization.md)
+- [Storage Command Usage](docs/storage-command-usage.md)
 
 ## Smart Contract Details
 
@@ -540,7 +589,13 @@ Key features of the contract:
    - Check that the image file exists and is a valid JPG or PNG
    - Ensure you have WAL tokens for storage
 
-5. **CLI command not found**:
+5. **"Insufficient storage" or "Storage allocation failed" error**:
+   - Run `waltodo storage --analyze` to check available storage
+   - Ensure you have enough WAL tokens for new storage allocation
+   - Consider optimizing by reusing existing storage with sufficient capacity
+   - Reduce the size of todo data if possible
+
+6. **CLI command not found**:
    - Reinstall the CLI: `npm run global-install`
    - Or run directly: `~/.local/bin/waltodo`
 
@@ -557,25 +612,25 @@ For more detailed troubleshooting:
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build
-npm run build
+pnpm run build
 
 # Fix and install CLI locally
 ./fix-cli.sh
 
 # Run tests
-npm test
+pnpm test
 
 # Run specific tests
-npm test -- -t "test name pattern"
+pnpm test -- -t "test name pattern"
 
 # Run tests with coverage
-npm test -- --coverage
+pnpm test -- --coverage
 
 # Run in dev mode
-npm run dev
+pnpm run dev
 ```
 
 ### CLI Development
@@ -604,19 +659,19 @@ The test files are organized in the `src/__tests__/` directory, mirroring the st
 
 ```bash
 # Run all tests
-npm test
+pnpm test
 
 # Run tests with coverage report
-npm test -- --coverage
+pnpm test -- --coverage
 
 # Run specific test files
-npm test -- src/__tests__/commands/add.test.ts
+pnpm test -- src/__tests__/commands/add.test.ts
 
 # Run tests matching a pattern
-npm test -- -t "should add a todo"
+pnpm test -- -t "should add a todo"
 
 # Run tests in watch mode (re-run on file changes)
-npm test -- --watch
+pnpm test -- --watch
 ```
 
 Mock implementations for external dependencies are provided in the `src/__mocks__/` directory, allowing tests to run without external services like Sui blockchain or Walrus storage.
@@ -722,7 +777,8 @@ walrus_todo/
 │   │   ├── sui-keystore.ts       # Sui keystore
 │   │   ├── sui-nft-storage.ts    # NFT storage on Sui
 │   │   ├── todo-serializer.ts    # Serialize todos
-│   │   ├── todo-size-calculator.ts # Calculate todo size
+│   │   ├── todo-size-calculator.ts # Calculate exact todo storage requirements
+│   │   ├── storage-reuse-analyzer.js # Analyze and optimize storage usage
 │   │   ├── TransactionHelper.ts  # Transaction helpers
 │   │   ├── VaultManager.ts       # Manage secure storage
 │   │   ├── wallet-extension.ts   # Wallet extensions
@@ -824,3 +880,36 @@ If you find a bug or have a feature request, please open an issue on GitHub with
 ## License
 
 This project is licensed under the ISC License.
+
+## TypeScript Compatibility
+
+The codebase has been updated for TypeScript compatibility with the following considerations:
+
+1. Interface alignment between different versions of the `@mysten/sui` and `@mysten/walrus` libraries
+2. Method signature compatibility between mock implementations and library interfaces
+3. Handling different return types from WalrusClient implementations
+4. Support for method overloading in key client implementations
+
+When maintaining the codebase, be aware of the following compatibility considerations:
+
+- The `src/__mocks__/@mysten/sui/signer.ts` file provides a compatible mock implementation of the Signer interface
+- The `src/__mocks__/@mysten/sui/transactions.ts` file includes proper TransactionBlock method signatures
+- The `src/__mocks__/@mysten/walrus/client.ts` and `src/utils/MockWalrusClient.ts` handle both the original and extended client interfaces
+- Image and blob handling in `src/utils/walrus-image-storage.ts` and `src/utils/walrus-storage.ts` handle different client response formats
+
+### Known TypeScript Compatibility Issues
+
+The codebase currently has some TypeScript compatibility issues that are addressed with `@ts-ignore` comments in specific locations. These are intentional and necessary to allow the codebase to build while reconciling different versions of dependencies:
+
+1. **Signer Interface Differences**: The Signer interface from `@mysten/sui.js/cryptography` has different method signatures than our implementation
+2. **TransactionBlock Implementation**: Methods like `add`, `moveCall`, and others have compatibility issues with the base TransactionBlock interface
+3. **WalrusClient Interface**: The WalrusClient interface has method signature differences between interface versions
+4. **Response Type Handling**: Different response types are handled with type assertions and conditional checks
+
+### Build Commands
+
+- `pnpm run build` - Standard build with type checking (will skip emitting on errors)
+- `pnpm run build-force` - Build with type checking but emit files even with errors
+- `pnpm run build-transpile-only` - Bypasses type checking completely to generate JavaScript files
+
+When updating dependencies or refactoring code, prefer to use `pnpm run build-force` to see all type errors while still generating the output files.

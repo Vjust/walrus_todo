@@ -9,7 +9,7 @@ import * as path from 'path';
 import { configService } from '../../services/config-service';
 
 export default class UploadCommand extends Command {
-  static description = 'Upload an image for a todo item';
+  static description = 'Upload a custom image for a todo to Walrus storage';
 
   static examples = [
     '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png',
