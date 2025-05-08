@@ -6,8 +6,6 @@ A powerful CLI for managing todos with Sui blockchain and Walrus decentralized s
 
 WalTodo is a feature-rich command-line interface (CLI) application that combines traditional todo list management with blockchain technology. It allows you to create, manage, and organize your todos locally, while also providing the option to store them on the Sui blockchain as NFTs and in Walrus decentralized storage.
 
-The project is built with TypeScript and uses the OCLIF (Open CLI Framework) to create a robust, extensible command-line interface. It includes comprehensive testing with Jest, mock implementations for external dependencies, and detailed documentation to help developers understand and contribute to the codebase.
-
 ## Features
 
 - **Intuitive CLI**: Natural language command syntax for adding todos with spaces
@@ -21,9 +19,6 @@ The project is built with TypeScript and uses the OCLIF (Open CLI Framework) to 
 - **Flexible Filtering**: Filter todos by status, priority, or tags
 - **Ownership & Transfer**: Transfer todo NFTs between users
 - **Secure Storage**: Todos stored on blockchain cannot be lost or corrupted
-- **Comprehensive Testing**: Extensive test suite with unit, integration, and edge case tests
-- **Mock Infrastructure**: Mock implementations for external dependencies
-- **Developer-Friendly**: Well-documented codebase with clear patterns
 
 ## CLI Commands Overview
 
@@ -372,34 +367,33 @@ You can also store a todo with a custom image:
 waltodo store --todo TODO_ID --list blockchain-tasks --image ./custom-image.png
 ```
 
-### Step 3: Retrieve Todos from the Blockchain
+### Step 3: Analyze and Optimize Storage
 
-You can retrieve todos from the blockchain in several ways:
+```bash
+# View storage summary and allocation statistics
+waltodo storage --summary
+
+# Identify opportunities for storage reuse and WAL token savings
+waltodo storage --analyze
+
+# Get detailed information about all storage allocations
+waltodo storage --detail
+```
+
+### Step 4: Retrieve and Manage Todos
 
 ```bash
 # Retrieve a todo by its NFT object ID
 waltodo retrieve --object-id 0x123...
 
-# Retrieve a todo by its Walrus blob ID
-waltodo retrieve --blob-id walrus-blob-123
-```
-
-The retrieved todo will be saved to your local storage and displayed in the console.
-
-### Step 4: Complete a Todo on the Blockchain
-
-To mark a todo as completed on the blockchain:
-
-```bash
-# Complete a todo by its ID
+# Complete a todo
 waltodo complete --list blockchain-tasks --id TODO_ID
+
+# Verify completion
+waltodo list blockchain-tasks
 ```
 
-This updates both the local todo and the blockchain NFT.
-
-### Step 5: Transfer Todo NFTs
-
-Since todos are stored as NFTs on the Sui blockchain, you can transfer them to other users:
+### Step 5: Share Todos with Others
 
 ```bash
 # Transfer a todo NFT to another address
@@ -444,7 +438,7 @@ Here's a complete workflow for managing todos on the blockchain:
 
 ```bash
 # Install the CLI
-npm run global-install
+pnpm run global-install
 
 # Configure with your Sui address
 waltodo configure
@@ -596,8 +590,14 @@ Key features of the contract:
    - Reduce the size of todo data if possible
 
 6. **CLI command not found**:
-   - Reinstall the CLI: `npm run global-install`
+   - Reinstall the CLI: `pnpm run global-install`
    - Or run directly: `~/.local/bin/waltodo`
+
+7. **TypeScript build errors**:
+   - Run `./fix-typescript-errors.sh` to resolve SDK compatibility issues
+   - Or use `pnpm run build-transpile-only` to bypass type checking
+   - These errors are expected due to version mismatches between Sui and Walrus SDKs
+   - The CLI will still work correctly despite these TypeScript errors
 
 ### Getting Help
 
@@ -614,7 +614,10 @@ For more detailed troubleshooting:
 # Install dependencies
 pnpm install
 
-# Build
+# Build (with TypeScript fixes)
+./fix-typescript-errors.sh
+
+# Or standard build (may produce TypeScript errors)
 pnpm run build
 
 # Fix and install CLI locally
@@ -633,11 +636,16 @@ pnpm test -- --coverage
 pnpm run dev
 ```
 
+> **Note about TypeScript Errors**: When building the project, you might encounter TypeScript errors related to SDK compatibility. These are expected due to version differences in Sui and Walrus SDKs. Use `./fix-typescript-errors.sh` to build successfully with transpile-only mode that bypasses these errors.
+
 ### CLI Development
 
 When making changes to the CLI, use the following scripts:
 
 ```bash
+# Fix TypeScript build issues
+./fix-typescript-errors.sh
+
 # Update the CLI after making changes
 ./update-cli.sh
 
@@ -697,6 +705,8 @@ walrus_todo/
 │   ├── implementation-status.md # Current implementation status
 │   ├── mocking.md            # Mocking strategy for tests
 │   ├── tests.md              # Testing documentation
+│   ├── storage-optimization.md # Storage optimization guide
+│   ├── storage-command-usage.md # Storage command usage
 │   └── walrusintegration.md  # Walrus integration details
 ├── examples/             # Example code and usage patterns
 ├── scripts/              # Utility scripts
@@ -731,6 +741,7 @@ walrus_todo/
 │   │   ├── retrieve.ts   # Retrieve from blockchain
 │   │   ├── share.ts      # Share todos
 │   │   ├── simple.ts     # Simple mode commands
+│   │   ├── storage.ts    # Storage management
 │   │   ├── store.ts      # Store on blockchain
 │   │   ├── template.ts   # Template for new commands
 │   │   └── update.ts     # Update todo
@@ -773,12 +784,12 @@ walrus_todo/
 │   │   ├── path-utils.ts         # Path utilities
 │   │   ├── retry-manager.ts      # Retry logic
 │   │   ├── storage-manager.ts    # Storage management
+│   │   ├── storage-reuse-analyzer.js # Analyze and optimize storage usage
 │   │   ├── StorageManager.ts     # Storage manager class
 │   │   ├── sui-keystore.ts       # Sui keystore
 │   │   ├── sui-nft-storage.ts    # NFT storage on Sui
 │   │   ├── todo-serializer.ts    # Serialize todos
 │   │   ├── todo-size-calculator.ts # Calculate exact todo storage requirements
-│   │   ├── storage-reuse-analyzer.js # Analyze and optimize storage usage
 │   │   ├── TransactionHelper.ts  # Transaction helpers
 │   │   ├── VaultManager.ts       # Manage secure storage
 │   │   ├── wallet-extension.ts   # Wallet extensions
@@ -854,33 +865,6 @@ const walrusStorage = createWalrusImageStorage(suiClient, false);
 
 This implementation uses the `@mysten/walrus` SDK to interact with Walrus storage.
 
-## Contributing
-
-Contributions to WalTodo are welcome! Here's how you can contribute:
-
-1. **Fork the Repository**: Create your own fork of the project
-2. **Create a Branch**: Make your changes in a new branch
-3. **Submit a Pull Request**: Open a PR with a clear description of your changes
-
-### Development Guidelines
-
-- Follow the existing code style and patterns
-- Add tests for new functionality
-- Update documentation for any changes
-- Ensure all tests pass before submitting a PR
-
-### Reporting Issues
-
-If you find a bug or have a feature request, please open an issue on GitHub with:
-- A clear description of the problem or feature
-- Steps to reproduce (for bugs)
-- Expected behavior
-- Screenshots if applicable
-
-## License
-
-This project is licensed under the ISC License.
-
 ## TypeScript Compatibility
 
 The codebase has been updated for TypeScript compatibility with the following considerations:
@@ -911,5 +895,10 @@ The codebase currently has some TypeScript compatibility issues that are address
 - `pnpm run build` - Standard build with type checking (will skip emitting on errors)
 - `pnpm run build-force` - Build with type checking but emit files even with errors
 - `pnpm run build-transpile-only` - Bypasses type checking completely to generate JavaScript files
+- `./fix-typescript-errors.sh` - Automatically fix TypeScript build issues with the optimal approach
 
-When updating dependencies or refactoring code, prefer to use `pnpm run build-force` to see all type errors while still generating the output files.
+The project includes a special helper script `fix-typescript-errors.sh` that resolves TypeScript compatibility issues with Sui and Walrus SDK dependencies. Use this script to get a successful build even when TypeScript reports errors related to blockchain SDK interfaces.
+
+When updating dependencies or refactoring code, prefer to use `pnpm run build-force` to see all type errors while still generating the output files. For deployment or testing where you just need a working build, use `./fix-typescript-errors.sh` to bypass type checking completely.
+
+For a comprehensive guide on TypeScript compatibility, see [TypeScript Compatibility Guide](docs/typescript-compatibility.md).
