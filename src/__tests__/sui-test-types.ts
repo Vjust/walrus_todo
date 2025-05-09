@@ -102,7 +102,7 @@ export const createMockSystemStateResponse = (options: { epoch?: string | number
   stakeSubsidyBalance: '0',
   stakeSubsidyCurrentDistributionAmount: '0',
   stakeSubsidyPeriodLength: '0',
-  stakeSubsidyDecreaseRate: 0,
+  stakeSubsidyDecreaseRate: '0',
   totalStake: '1000000',
   activeValidators: [
     {

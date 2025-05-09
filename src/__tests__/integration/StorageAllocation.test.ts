@@ -77,9 +77,9 @@ describe('Storage Allocation Integration', () => {
         created: new Date().toISOString()
       }),
       storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500)
+        storageCost: '1000',
+        writeCost: '500',
+        totalCost: '1500'
       }),
       getBlobInfo: jest.fn().mockResolvedValue({
         id: 'blob1',

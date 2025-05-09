@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient, type CoinBalance } from '@mysten/sui.js/client';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../../src/utils/storage-manager';
 import { CLIError } from '../../../src/types/error';
@@ -38,16 +38,16 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: walBalance,
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-coin-object-id'
-        })
+          lockedBalance: { number: BigInt(0) }
+          // Using type assertion to add coinObjectId in the mock
+        } as unknown as { coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: any; coinObjectId: string })
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: storageBalance,
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-storage-coin-id'
-        });
+          lockedBalance: { number: BigInt(0) }
+          // Using type assertion to add coinObjectId in the mock
+        } as unknown as { coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: any; coinObjectId: string });
 
       const result = await storageManager.checkBalances();
       expect(result.walBalance.toString()).toBe(walBalance.toString());
@@ -62,8 +62,9 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: BigInt(50),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-coin-object-id'
-        });
+          coinObjectId: 'mock-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string });
 
       await expect(storageManager.checkBalances())
         .rejects
@@ -103,15 +104,15 @@ describe('StorageManager - Allocation Tests', () => {
         validatorVeryLowStakeThreshold: '500',
         validatorVeryLowStakeGracePeriod: '5',
         systemStateVersion: '1',
-        maxValidatorCount: 100,
-        minValidatorCount: 10,
+        maxValidatorCount: '100',
+        minValidatorCount: '10',
         validatorLowStakeThresholdMetadata: {},
         stakeSubsidyStartEpoch: '0',
         stakeSubsidyBalance: '1000',
         stakeSubsidyDistributionCounter: '0',
         stakeSubsidyCurrentDistributionAmount: '100',
         stakeSubsidyPeriodLength: '10',
-        stakeSubsidyDecreaseRate: '10',
+        stakeSubsidyDecreaseRate: 10,
         totalGasFeesCollected: '1000',
         totalStakeRewardsDistributed: '100',
         totalStakeSubsidiesDistributed: '100',
@@ -129,20 +130,22 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: BigInt(1000),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-coin-object-id'
-        }) // WAL balance
+          coinObjectId: 'mock-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: BigInt(500),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-storage-coin-id'
-        }); // Storage balance
+          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }); // Storage balance
 
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(100),
-        writeCost: BigInt(50),
-        totalCost: BigInt(150)
+        storageCost: BigInt(100).toString(),
+        writeCost: BigInt(50).toString(),
+        totalCost: BigInt(150).toString()
       });
     });
 
@@ -172,15 +175,17 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: BigInt(10),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-coin-object-id'
-        }) // WAL balance
+          coinObjectId: 'mock-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: BigInt(5),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-storage-coin-id'
-        }); // Storage balance
+          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }); // Storage balance
 
       // No existing storage
       mockSuiClient.getOwnedObjects.mockResolvedValue({
@@ -191,9 +196,9 @@ describe('StorageManager - Allocation Tests', () => {
 
       // Storage cost higher than balance
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500)
+        storageCost: BigInt(1000).toString(),
+        writeCost: BigInt(500).toString(),
+        totalCost: BigInt(1500).toString()
       });
 
       await expect(storageManager.validateStorageRequirements(1024))
@@ -212,14 +217,14 @@ describe('StorageManager - Allocation Tests', () => {
               fields: {
                 storage_size: '20480',
                 used_size: '1024',
-                end_epoch: '200'
+                end_epoch: 200
               }
             }
           }
         }],
         nextCursor: null
       };
-      
+
       mockSuiClient.getOwnedObjects.mockResolvedValue(mockStorage);
 
       const result = await storageManager.validateStorageRequirements(1024);

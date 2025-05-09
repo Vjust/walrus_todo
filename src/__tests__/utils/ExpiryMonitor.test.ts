@@ -116,9 +116,9 @@ describe('ExpiryMonitor', () => {
       }),
       getBlobMetadata: jest.fn().mockResolvedValue({}),
       storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(100),
-        writeCost: BigInt(50),
-        totalCost: BigInt(150)
+        storageCost: '100',
+        writeCost: '50',
+        totalCost: '150'
       }),
       executeCertifyBlobTransaction: jest.fn().mockResolvedValue({ digest: 'tx1' }),
       executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({ digest: 'tx1' }),

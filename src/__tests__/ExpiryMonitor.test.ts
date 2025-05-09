@@ -83,7 +83,7 @@ describe('ExpiryMonitor', () => {
         type: 'text/plain',
         created: new Date().toISOString()
       }),
-      storageCost: jest.fn().mockResolvedValue({ storageCost: BigInt(1000), writeCost: BigInt(500), totalCost: BigInt(1500) }),
+      storageCost: jest.fn().mockResolvedValue({ storageCost: '1000', writeCost: '500', totalCost: '1500' }),
       executeCreateStorageTransaction: jest.fn().mockResolvedValue({
         digest: 'mock-storage-tx',
         storage: {

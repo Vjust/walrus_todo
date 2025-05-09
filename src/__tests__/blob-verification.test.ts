@@ -65,7 +65,7 @@ describe('BlobVerificationManager', () => {
       }),
       readBlob: jest.fn(),
       getBlobMetadata: jest.fn(),
-      storageCost: jest.fn().mockResolvedValue({ storageCost: BigInt(1000), writeCost: BigInt(500), totalCost: BigInt(1500) }),
+      storageCost: jest.fn().mockResolvedValue({ storageCost: '1000', writeCost: '500', totalCost: '1500' }),
       executeCreateStorageTransaction: jest.fn().mockResolvedValue({
         digest: 'test-digest', 
         storage: {
