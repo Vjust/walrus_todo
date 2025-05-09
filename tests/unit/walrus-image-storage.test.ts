@@ -138,7 +138,33 @@ describe('WalrusImageStorage', () => {
         getPublicKey: jest.fn().mockReturnValue({
           toSuiAddress: () => '0xtest-address',
           scheme: 'ED25519'
-        })
+        }),
+        sign: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+        signData: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
+        signDataAsync: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+        signDataWithBytes: jest.fn().mockImplementation(() => ({
+          signature: new Uint8Array([0, 1, 2, 3, 4]),
+          bytes: new Uint8Array([0, 1, 2, 3, 4])
+        })),
+        signWithIntent: jest.fn().mockResolvedValue({
+          signature: 'mock-signature',
+          bytes: 'mock-bytes'
+        }),
+        signTransactionBlock: jest.fn().mockResolvedValue({
+          signature: 'mock-signature',
+          bytes: 'mock-bytes'
+        }),
+        signTransaction: jest.fn().mockResolvedValue({
+          signature: 'mock-signature',
+          bytes: 'mock-bytes'
+        }),
+        signPersonalMessage: jest.fn().mockResolvedValue({
+          signature: 'mock-signature',
+          bytes: 'mock-bytes'
+        }),
+        getKeyScheme: jest.fn().mockReturnValue('ED25519'),
+        toSuiAddress: jest.fn().mockReturnValue('0xtest-address'),
+        keyScheme: 'ED25519'
       })
     } as unknown as jest.Mocked<typeof KeystoreSigner>;
 

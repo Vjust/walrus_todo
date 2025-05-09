@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient, type CoinBalance } from '@mysten/sui.js/client';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../utils/storage-manager';
 import { CLIError } from '../../types/error';
@@ -39,15 +39,17 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: walBalance.toString(),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-object-id'
-        })
+          coinObjectId: 'mock-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string })
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: storageBalance.toString(),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-storage-coin-id'
-        });
+          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string });
 
       const result = await storageManager.checkBalances();
       expect(result.walBalance).toBe(walBalance.toString());
@@ -62,8 +64,9 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: BigInt(50).toString(),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-object-id'
-        });
+          coinObjectId: 'mock-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string });
 
       await expect(storageManager.checkBalances())
         .rejects
@@ -91,20 +94,20 @@ describe('StorageManager - Allocation Tests', () => {
         storageFund: '10000',
         activeValidators: [],
         atRiskValidators: [],
-        pendingActiveValidatorsSize: 0,
+        pendingActiveValidatorsSize: '0',
         pendingRemovals: [],
-        stakingPoolMappingsSize: 0,
-        inactivePoolsSize: 0,
+        stakingPoolMappingsSize: '0',
+        inactivePoolsSize: '0',
         validatorReportRecords: [],
-        atRiskValidatorSize: 0,
-        validatorCandidatesSize: 0,
+        atRiskValidatorSize: '0',
+        validatorCandidatesSize: '0',
         validatorLowStakeThreshold: '1000',
         validatorLowStakeGracePeriod: '10',
         validatorVeryLowStakeThreshold: '500',
         validatorVeryLowStakeGracePeriod: '5',
         systemStateVersion: '1',
-        maxValidatorCount: 100,
-        minValidatorCount: 10,
+        maxValidatorCount: '100',
+        minValidatorCount: '10',
         validatorLowStakeThresholdMetadata: {},
         stakeSubsidyStartEpoch: '0',
         stakeSubsidyBalance: '1000',
@@ -115,12 +118,12 @@ describe('StorageManager - Allocation Tests', () => {
         totalGasFeesCollected: '1000',
         totalStakeRewardsDistributed: '100',
         totalStakeSubsidiesDistributed: '100',
-        validatorReportRecordsSize: 0,
+        validatorReportRecordsSize: '0',
         systemParameters: {},
         systemStakeSubsidy: {},
         satInCirculation: '1000000',
-        epochDurationMs: 86400000
-      });
+        epochDurationMs: '86400000'
+      } as any);
 
       // Mock successful balance check
       mockSuiClient.getBalance
@@ -129,20 +132,22 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: BigInt(1000).toString(),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-object-id'
-        }) // WAL balance
+          coinObjectId: 'mock-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: BigInt(500).toString(),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-storage-coin-id'
-        }); // Storage balance
+          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }); // Storage balance
 
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(100).toString(),
-        writeCost: BigInt(50).toString(),
-        totalCost: BigInt(150).toString()
+        storageCost: BigInt(100),
+        writeCost: BigInt(50),
+        totalCost: BigInt(150)
       });
     });
 
@@ -172,15 +177,17 @@ describe('StorageManager - Allocation Tests', () => {
           totalBalance: BigInt(10).toString(),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-object-id'
-        }) // WAL balance
+          coinObjectId: 'mock-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: BigInt(5).toString(),
           coinObjectCount: 1,
           lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-storage-coin-id'
-        }); // Storage balance
+          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
+          // Type assertion to handle the coin object ID in tests
+        } as unknown as CoinBalance & { coinObjectId: string }); // Storage balance
 
       // No existing storage
       mockSuiClient.getOwnedObjects.mockResolvedValue({
@@ -191,9 +198,9 @@ describe('StorageManager - Allocation Tests', () => {
 
       // Storage cost higher than balance
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(1000).toString(),
-        writeCost: BigInt(500).toString(),
-        totalCost: BigInt(1500).toString()
+        storageCost: BigInt(1000),
+        writeCost: BigInt(500),
+        totalCost: BigInt(1500)
       });
 
       await expect(storageManager.validateStorageRequirements(1024))
@@ -221,12 +228,10 @@ describe('StorageManager - Allocation Tests', () => {
                 end_epoch: '200'
               }
             }
-          },
-          previousTransaction: '0x123456',
-          storageRebate: '0',
+          }
         }],
         nextCursor: null
-      };
+      } as any;
       
       mockSuiClient.getOwnedObjects.mockResolvedValue(mockStorage);
 

@@ -1,12 +1,15 @@
 import { type SuiObjectResponse, type SuiTransactionBlockResponse, type TransactionEffects } from '@mysten/sui.js/client';
 import { type TransactionBlock } from '@mysten/sui.js/transactions';
 
+// This interface matches the sui.js definition with an additional coinObjectId property
+// needed for our tests
 interface CoinBalance {
   coinType: string;
   totalBalance: bigint;
   coinObjectCount: number;
   lockedBalance: { number: bigint };
-  coinObjectId: string;
+  // Note: coinObjectId is not part of the original CoinBalance interface in sui.js
+  // but we need it in our tests, so we'll use type assertions to handle this
 }
 
 export interface SuiSystemStateResponse {
@@ -73,9 +76,9 @@ export const SuiClient = jest.fn().mockImplementation(() => ({
     coinType: 'WAL',
     totalBalance: BigInt(1000),
     coinObjectCount: 1,
-    lockedBalance: { number: BigInt(0) },
-    coinObjectId: 'mock-coin-object-id'
-  })),
+    lockedBalance: { number: BigInt(0) }
+    // coinObjectId property removed to match the actual CoinBalance interface
+  } as unknown as CoinBalance & { coinObjectId: string })),
 
   getOwnedObjects: jest.fn().mockImplementation(async (): Promise<PaginatedObjectsResponse> => ({
     data: [{

@@ -173,7 +173,7 @@ describe('WalrusImageStorage', () => {
     // Set up KeystoreSigner mock
     mockKeystoreSigner = KeystoreSigner as jest.MockedClass<typeof KeystoreSigner>;
     
-    // Mock the constructor
+    // Mock the constructor with proper implementation without accessing private properties
     mockKeystoreSigner.mockImplementation(() => ({
       connect: jest.fn().mockReturnThis(),
       getAddress: jest.fn().mockResolvedValue('0xtest-address'),
@@ -184,22 +184,37 @@ describe('WalrusImageStorage', () => {
       sign: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
       signData: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
       signDataAsync: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
-      signDataWithBytes: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
-      signWithIntent: jest.fn(),
-      signTransactionBlock: jest.fn(),
-      signTransaction: jest.fn(),
-      signPersonalMessage: jest.fn(),
+      signDataWithBytes: jest.fn().mockImplementation(() => ({
+        signature: new Uint8Array([0, 1, 2, 3, 4]),
+        bytes: new Uint8Array([0, 1, 2, 3, 4])
+      })),
+      signWithIntent: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
+      signTransactionBlock: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
+      signTransaction: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
+      signPersonalMessage: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
       getKeyScheme: jest.fn().mockReturnValue('ED25519'),
       toSuiAddress: jest.fn().mockReturnValue('0xtest-address'),
       signAndExecuteTransactionBlock: jest.fn(),
       signedTransactionBlock: jest.fn(),
-      // Just use an empty object for the keypair and cast it - we're not directly testing its functionality
-      keypair: {} as any,
       keyScheme: 'ED25519',
-      suiClient: mockSuiClient as unknown as SuiClient
-    }));
+      suiClient: mockSuiClient as unknown as SuiClient,
+      // Add keypair property to satisfy the type checker
+      keypair: {} as any
+    } as any));
     
-    // Mock the static method
+    // Mock the static method with proper implementation without accessing private properties
     mockKeystoreSigner.fromPath = jest.fn().mockImplementation(async () => ({
       connect: jest.fn().mockReturnThis(),
       getAddress: jest.fn().mockResolvedValue('0xtest-address'),
@@ -210,20 +225,35 @@ describe('WalrusImageStorage', () => {
       sign: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
       signData: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
       signDataAsync: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
-      signDataWithBytes: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
-      signWithIntent: jest.fn(),
-      signTransactionBlock: jest.fn(),
-      signTransaction: jest.fn(),
-      signPersonalMessage: jest.fn(),
+      signDataWithBytes: jest.fn().mockImplementation(() => ({
+        signature: new Uint8Array([0, 1, 2, 3, 4]),
+        bytes: new Uint8Array([0, 1, 2, 3, 4])
+      })),
+      signWithIntent: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
+      signTransactionBlock: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
+      signTransaction: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
+      signPersonalMessage: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'mock-bytes'
+      }),
       getKeyScheme: jest.fn().mockReturnValue('ED25519'),
       toSuiAddress: jest.fn().mockReturnValue('0xtest-address'),
       signAndExecuteTransactionBlock: jest.fn(),
       signedTransactionBlock: jest.fn(),
-      // Just use an empty object for the keypair and cast it - we're not directly testing its functionality
-      keypair: {} as any,
       keyScheme: 'ED25519',
-      suiClient: mockSuiClient as unknown as SuiClient
-    }));
+      suiClient: mockSuiClient as unknown as SuiClient,
+      // Add keypair property to satisfy the type checker
+      keypair: {} as any
+    } as any));
 
     // Create storage instance with mockSuiClient
     const SuiClientConstructor = SuiClient as jest.MockedClass<typeof SuiClient>;

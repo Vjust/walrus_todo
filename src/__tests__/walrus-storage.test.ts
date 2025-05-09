@@ -12,7 +12,7 @@ import { Todo } from '../types/todo';
 interface MockedWalrusClient {
   readBlob: jest.Mock<Promise<Uint8Array>, [string | { blobId: string; signal?: AbortSignal }]>;
   writeBlob: jest.Mock<Promise<{ blobId: string; blobObject: BlobObject }>, [{ blob: Uint8Array; deletable: boolean; epochs: number; attributes: Record<string, string> }]>;
-  storageCost: jest.Mock<Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>, [number, number]>;
+  storageCost: jest.Mock<Promise<{ storageCost: string; writeCost: string; totalCost: string }>, [number, number]>;
   executeCreateStorageTransaction: jest.Mock<Promise<{ storage: { id: { id: string }; storage_size: number; end_epoch: number; start_epoch: number } }>, [{ storageSize: number; epochs: number }]>;
   connect: jest.Mock<Promise<void>, []>;
   getConfig: jest.Mock<Promise<{ network: string; version: string; maxSize: number }>, []>;
@@ -75,11 +75,11 @@ describe('WalrusStorage', () => {
       readBlob: jest.fn<Promise<Uint8Array>, [string | { blobId: string; signal?: AbortSignal }]>().mockResolvedValue(new Uint8Array()),
       writeBlob: jest.fn<Promise<{ blobId: string; blobObject: BlobObject }>, [{ blob: Uint8Array; deletable: boolean; epochs: number; attributes: Record<string, string> }]>()
         .mockResolvedValue({ blobId: '', blobObject: {} as BlobObject }),
-      storageCost: jest.fn<Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>, [number, number]>()
+      storageCost: jest.fn<Promise<{ storageCost: string; writeCost: string; totalCost: string }>, [number, number]>()
         .mockResolvedValue({
-          storageCost: BigInt(100),
-          writeCost: BigInt(50),
-          totalCost: BigInt(150)
+          storageCost: '100',
+          writeCost: '50',
+          totalCost: '150'
         }),
       executeCreateStorageTransaction: jest.fn<Promise<{ storage: { id: { id: string }; storage_size: number; end_epoch: number; start_epoch: number } }>, [{ storageSize: number; epochs: number }]>()
         .mockResolvedValue({

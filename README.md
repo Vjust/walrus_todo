@@ -94,11 +94,14 @@ cd walrus_todo
 # Install dependencies
 pnpm install
 
-# Install CLI locally
-./fix-cli.sh
+# Build the project
+pnpm run build
+
+# Create symbolic links to make the CLI available locally
+npm link
 ```
 
-The local installation will make the `waltodo` command available in your `~/.local/bin` directory.
+The local installation will make the `waltodo` command available in your system.
 
 For detailed CLI usage instructions, see [CLI-USAGE.md](CLI-USAGE.md).
 
@@ -173,7 +176,7 @@ waltodo store --todo 123 --list default
    pnpm run global-install
 
    # Option 2: Local installation
-   ./fix-cli.sh
+   npm link
    ```
 
 4. **Verify Installation**:
@@ -768,11 +771,9 @@ Key features of the contract:
    - Or run directly: `~/.local/bin/waltodo`
 
 7. **TypeScript build errors**:
-   - Run `./fix-typescript-errors.sh` to resolve SDK compatibility issues
-   - Or use `pnpm run build-compatible` to bypass type checking
+   - Run `pnpm run build` to build the project
    - These errors are expected due to version mismatches between Sui and Walrus SDKs
    - The CLI will still work correctly despite these TypeScript errors
-   - If path issues occur, ensure the PROJECT_ROOT in bin/waltodo and bin/waltodo-bash is correctly set to your actual project path
    - For details on the compatibility approach, see [TypeScript Compatibility Guide](TYPESCRIPT_COMPATIBILITY.md)
 
 ### Getting Help
@@ -790,14 +791,11 @@ For more detailed troubleshooting:
 # Install dependencies
 pnpm install
 
-# Build (with TypeScript fixes)
-./fix-typescript-errors.sh
-
-# Or standard build (may produce TypeScript errors)
+# Build the project
 pnpm run build
 
-# Fix and install CLI locally
-./fix-cli.sh
+# Install CLI locally
+npm link
 
 # Run tests
 pnpm test
@@ -812,15 +810,15 @@ pnpm test -- --coverage
 pnpm run dev
 ```
 
-> **Note about TypeScript Errors**: When building the project, you might encounter TypeScript errors related to SDK compatibility. These are expected due to version differences in Sui and Walrus SDKs. Use `./fix-typescript-errors.sh` to build successfully with transpile-only mode that bypasses these errors.
+> **Note about TypeScript Errors**: When building the project, you might encounter TypeScript errors related to SDK compatibility. These are expected due to version differences in Sui and Walrus SDKs but won't affect functionality.
 
 ### CLI Development
 
 When making changes to the CLI, use the following scripts:
 
 ```bash
-# Fix TypeScript build issues
-./fix-typescript-errors.sh
+# Build the project
+pnpm run build
 
 # Update the CLI after making changes
 ./update-cli.sh
@@ -828,9 +826,6 @@ When making changes to the CLI, use the following scripts:
 # Test all CLI commands
 ./test-all-commands.sh
 ```
-
-**Important Note on Project Paths:**
-The CLI scripts in `bin/waltodo` and `bin/waltodo-bash` contain a hardcoded `PROJECT_ROOT` variable. If you're encountering path-related errors, ensure this path is correctly set to your actual project location. After cloning the repository to a different location, you may need to update this path manually or run `./update-cli.sh` to fix it.
 
 ### Testing Infrastructure
 
@@ -1072,14 +1067,9 @@ The codebase currently has some TypeScript compatibility issues that are address
 
 ### Build Commands
 
-- `pnpm run build` - Standard build with type checking (will skip emitting on errors)
-- `pnpm run build-force` - Build with type checking but emit files even with errors
-- `pnpm run build-compatible` - Build with transpile-only mode to skip type checking entirely
+- `pnpm run build` - Standard build command that handles type compatibility issues
 - `pnpm run typecheck` - Run TypeScript type checking without emitting JavaScript
-- `./fix-typescript-errors.sh` - Automatically fix TypeScript build issues with the optimal approach
 
-The project includes a special helper script `fix-typescript-errors.sh` that resolves TypeScript compatibility issues with Sui and Walrus SDK dependencies. Use this script to get a successful build even when TypeScript reports errors related to blockchain SDK interfaces.
-
-When updating dependencies or refactoring code, prefer to use `pnpm run build-force` to see all type errors while still generating the output files. For deployment or testing where you just need a working build, use `pnpm run build-compatible` to bypass type checking completely with transpile-only mode.
+The project includes build commands to handle TypeScript compatibility issues with Sui and Walrus SDK dependencies. The standard `pnpm run build` command will properly build the project even with type compatibility differences between dependencies.
 
 For a comprehensive guide on TypeScript compatibility, see [TypeScript Compatibility Guide](docs/typescript-compatibility.md).

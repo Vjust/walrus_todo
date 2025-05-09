@@ -61,8 +61,8 @@ describe('Storage Allocation Integration', () => {
         digest: 'test',
         storage: {
           id: { id: 'test' },
-          start_epoch: 0,
-          end_epoch: 52,
+          start_epoch: '0',
+          end_epoch: '52',
           storage_size: '1000'
         }
       }),
@@ -71,32 +71,32 @@ describe('Storage Allocation Integration', () => {
       writeBlob: jest.fn().mockResolvedValue({ blobId: 'test-blob', blobObject: {} }),
       readBlob: jest.fn().mockResolvedValue(new Uint8Array()),
       getBlobMetadata: jest.fn().mockResolvedValue({
-        size: 1024,
+        size: '1024',
         type: 'text/plain',
         created: new Date().toISOString()
       }),
       storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500)
+        storageCost: BigInt(1000).toString(),
+        writeCost: BigInt(500).toString(),
+        totalCost: BigInt(1500).toString()
       }),
       getBlobInfo: jest.fn().mockResolvedValue({
         id: 'blob1',
-        size: 1024,
+        size: '1024',
         type: 'text/plain',
         created: new Date().toISOString(),
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
       }),
       getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2']),
       getSuiBalance: jest.fn().mockResolvedValue('1000'),
-      getBlobSize: jest.fn().mockResolvedValue(1024),
+      getBlobSize: jest.fn().mockResolvedValue('1024'),
       reset: jest.fn(),
       allocateStorage: jest.fn().mockResolvedValue({
         digest: 'test',
         storage: {
           id: { id: 'test' },
-          start_epoch: 0,
-          end_epoch: 52,
+          start_epoch: '0',
+          end_epoch: '52',
           storage_size: '1000'
         }
       })
