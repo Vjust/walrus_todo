@@ -32,7 +32,7 @@ declare namespace jest {
   }
 
   // Console-specific SpyInstance
-  export interface SpyInstance<void, [message?: any, ...args: any[]], any> extends SpyInstance<(...args: any[]) => void> {
+  export interface ConsoleSpyInstance extends SpyInstance<(...args: any[]) => void> {
     mockImplementation(fn?: (...args: any[]) => void): this;
   }
 }

@@ -3,6 +3,28 @@
 # This script is a wrapper for the waltodo CLI
 # It handles the 'add' command with spaces in the title correctly
 
+# Load environment variables from .env file if it exists
+if [ -f "$(dirname "$0")/../.env" ]; then
+  # Use a temporary file to store the exported variables
+  TEMP_ENV_FILE=$(mktemp)
+  
+  # Convert .env file content to export statements
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Skip comments and empty lines
+    [[ $line =~ ^#.*$ || -z $line ]] && continue
+    # Export the variable
+    echo "export $line" >> "$TEMP_ENV_FILE"
+  done < "$(dirname "$0")/../.env"
+  
+  # Source the temporary file
+  source "$TEMP_ENV_FILE"
+  
+  # Clean up
+  rm "$TEMP_ENV_FILE"
+  
+  echo "Loaded environment variables from .env file"
+fi
+
 # Check if at least one argument is provided
 if [ $# -eq 0 ]; then
   # Just run the original waltodo with no arguments
@@ -80,6 +102,84 @@ if [ "$1" = "add" ]; then
     fi
     exit $?
   fi
+fi
+
+# Special handling for AI command
+if [ "$1" = "ai" ]; then
+  # Get operation (required)
+  if [ $# -lt 2 ]; then
+    echo "Error: AI operation is required. Options: summarize, categorize, prioritize, suggest, analyze"
+    exit 1
+  fi
+  
+  OPERATION="$2"
+  shift 2
+  
+  # Default list to 'default' if not specified
+  LIST_NAME="default"
+  
+  # Check for API key
+  if [ -z "$XAI_API_KEY" ]; then
+    # Check for API key in arguments
+    API_KEY_FLAG=""
+    API_KEY_VALUE=""
+    
+    for ARG in "$@"; do
+      if [ "$API_KEY_FLAG" = "expecting_value" ]; then
+        API_KEY_VALUE="$ARG"
+        API_KEY_FLAG="found"
+      elif [ "$ARG" = "--apiKey" ] || [ "$ARG" = "-k" ]; then
+        API_KEY_FLAG="expecting_value"
+      fi
+    done
+    
+    if [ "$API_KEY_FLAG" != "found" ]; then
+      echo "Error: XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag."
+      exit 1
+    fi
+    
+    # Set the API key from the argument
+    export XAI_API_KEY="$API_KEY_VALUE"
+  fi
+  
+  # Force colors
+  export FORCE_COLOR=1
+  
+  # Parse flags
+  ARGS=()
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -l|--list)
+        if [ $# -gt 1 ]; then
+          LIST_NAME="$2"
+          shift 2
+        else
+          echo "Error: List name is required after -l/--list flag"
+          exit 1
+        fi
+        ;;
+      *)
+        ARGS+=("$1")
+        shift
+        ;;
+    esac
+  done
+  
+  # Debug what we're doing
+  echo "Running AI operation: $OPERATION on list: $LIST_NAME"
+  
+  # Build command with environment variable explicitly set
+  CMD="cd \"$(dirname "$0")/..\" && FORCE_COLOR=1 XAI_API_KEY=\"$XAI_API_KEY\" node ./bin/run.js ai $OPERATION --list \"$LIST_NAME\""
+  
+  # Add any other arguments
+  for ARG in "${ARGS[@]}"; do
+    CMD="$CMD $ARG"
+  done
+  
+  # Execute the AI command
+  echo "Executing AI command..."
+  eval $CMD
+  exit $?
 fi
 
 # For all other commands, just pass through to the original waltodo

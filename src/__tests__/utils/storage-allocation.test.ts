@@ -34,18 +34,36 @@ describe('StorageManager - Allocation Tests', () => {
       const storageBalance = BigInt(500);
 
       mockSuiClient.getBalance
-        .mockResolvedValueOnce({ totalBalance: walBalance })
-        .mockResolvedValueOnce({ totalBalance: storageBalance });
+        .mockResolvedValueOnce({
+          coinType: 'WAL',
+          totalBalance: walBalance.toString(),
+          coinObjectCount: 1,
+          lockedBalance: { number: BigInt(0).toString() },
+          coinObjectId: 'mock-coin-object-id'
+        })
+        .mockResolvedValueOnce({
+          coinType: 'STORAGE',
+          totalBalance: storageBalance.toString(),
+          coinObjectCount: 1,
+          lockedBalance: { number: BigInt(0).toString() },
+          coinObjectId: 'mock-storage-coin-id'
+        });
 
       const result = await storageManager.checkBalances();
-      expect(result.walBalance).toBe(walBalance);
-      expect(result.storageFundBalance).toBe(storageBalance);
+      expect(result.walBalance).toBe(walBalance.toString());
+      expect(result.storageFundBalance).toBe(storageBalance.toString());
       expect(result.isStorageFundSufficient).toBe(true);
     });
 
     it('should throw error on insufficient WAL balance', async () => {
       mockSuiClient.getBalance
-        .mockResolvedValueOnce({ totalBalance: BigInt(50) });
+        .mockResolvedValueOnce({
+          coinType: 'WAL',
+          totalBalance: BigInt(50).toString(),
+          coinObjectCount: 1,
+          lockedBalance: { number: BigInt(0).toString() },
+          coinObjectId: 'mock-coin-object-id'
+        });
 
       await expect(storageManager.checkBalances())
         .rejects
@@ -65,17 +83,66 @@ describe('StorageManager - Allocation Tests', () => {
     beforeEach(() => {
       // Mock successful network environment check
       (execSync as jest.Mock).mockReturnValue(Buffer.from('testnet'));
-      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: BigInt(100) });
+      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({
+        epoch: '100',
+        protocolVersion: '1',
+        referenceGasPrice: '1000',
+        totalStake: '1000000',
+        storageFund: '10000',
+        activeValidators: [],
+        atRiskValidators: [],
+        pendingActiveValidatorsSize: 0,
+        pendingRemovals: [],
+        stakingPoolMappingsSize: 0,
+        inactivePoolsSize: 0,
+        validatorReportRecords: [],
+        atRiskValidatorSize: 0,
+        validatorCandidatesSize: 0,
+        validatorLowStakeThreshold: '1000',
+        validatorLowStakeGracePeriod: '10',
+        validatorVeryLowStakeThreshold: '500',
+        validatorVeryLowStakeGracePeriod: '5',
+        systemStateVersion: '1',
+        maxValidatorCount: 100,
+        minValidatorCount: 10,
+        validatorLowStakeThresholdMetadata: {},
+        stakeSubsidyStartEpoch: '0',
+        stakeSubsidyBalance: '1000',
+        stakeSubsidyDistributionCounter: '0',
+        stakeSubsidyCurrentDistributionAmount: '100',
+        stakeSubsidyPeriodLength: '10',
+        stakeSubsidyDecreaseRate: '10',
+        totalGasFeesCollected: '1000',
+        totalStakeRewardsDistributed: '100',
+        totalStakeSubsidiesDistributed: '100',
+        validatorReportRecordsSize: 0,
+        systemParameters: {},
+        systemStakeSubsidy: {},
+        satInCirculation: '1000000',
+        epochDurationMs: 86400000
+      });
 
       // Mock successful balance check
       mockSuiClient.getBalance
-        .mockResolvedValueOnce({ totalBalance: BigInt(1000) }) // WAL balance
-        .mockResolvedValueOnce({ totalBalance: BigInt(500) }); // Storage balance
+        .mockResolvedValueOnce({
+          coinType: 'WAL',
+          totalBalance: BigInt(1000).toString(),
+          coinObjectCount: 1,
+          lockedBalance: { number: BigInt(0).toString() },
+          coinObjectId: 'mock-coin-object-id'
+        }) // WAL balance
+        .mockResolvedValueOnce({
+          coinType: 'STORAGE',
+          totalBalance: BigInt(500).toString(),
+          coinObjectCount: 1,
+          lockedBalance: { number: BigInt(0).toString() },
+          coinObjectId: 'mock-storage-coin-id'
+        }); // Storage balance
 
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(100),
-        writeCost: BigInt(50),
-        totalCost: BigInt(150)
+        storageCost: BigInt(100).toString(),
+        writeCost: BigInt(50).toString(),
+        totalCost: BigInt(150).toString()
       });
     });
 
@@ -92,16 +159,28 @@ describe('StorageManager - Allocation Tests', () => {
 
       const result = await storageManager.validateStorageRequirements(1024);
       expect(result.canProceed).toBe(true);
-      expect(result.requiredCost?.totalCost).toBe(BigInt(150));
-      expect(result.balances?.walBalance).toBe(BigInt(1000));
+      expect(result.requiredCost?.totalCost).toBe(BigInt(150).toString());
+      expect(result.balances?.walBalance).toBe(BigInt(1000).toString());
     });
 
     it('should indicate insufficient balance for storage', async () => {
       // Mock low WAL balance
       mockSuiClient.getBalance
         .mockReset()
-        .mockResolvedValueOnce({ totalBalance: BigInt(10) }) // WAL balance
-        .mockResolvedValueOnce({ totalBalance: BigInt(5) }); // Storage balance
+        .mockResolvedValueOnce({
+          coinType: 'WAL',
+          totalBalance: BigInt(10).toString(),
+          coinObjectCount: 1,
+          lockedBalance: { number: BigInt(0).toString() },
+          coinObjectId: 'mock-coin-object-id'
+        }) // WAL balance
+        .mockResolvedValueOnce({
+          coinType: 'STORAGE',
+          totalBalance: BigInt(5).toString(),
+          coinObjectCount: 1,
+          lockedBalance: { number: BigInt(0).toString() },
+          coinObjectId: 'mock-storage-coin-id'
+        }); // Storage balance
 
       // No existing storage
       mockSuiClient.getOwnedObjects.mockResolvedValue({
@@ -112,9 +191,9 @@ describe('StorageManager - Allocation Tests', () => {
 
       // Storage cost higher than balance
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500)
+        storageCost: BigInt(1000).toString(),
+        writeCost: BigInt(500).toString(),
+        totalCost: BigInt(1500).toString()
       });
 
       await expect(storageManager.validateStorageRequirements(1024))
@@ -128,15 +207,23 @@ describe('StorageManager - Allocation Tests', () => {
         data: [{
           data: {
             objectId: '0xstorage',
+            digest: '0xdigest123',
+            version: '1',
+            type: '0x2::storage::Storage',
+            owner: { AddressOwner: '0xtest' },
             content: {
               dataType: 'moveObject',
+              type: '0x2::storage::Storage',
+              hasPublicTransfer: true,
               fields: {
                 storage_size: '20480',
                 used_size: '1024',
                 end_epoch: '200'
               }
             }
-          }
+          },
+          previousTransaction: '0x123456',
+          storageRebate: '0',
         }],
         nextCursor: null
       };

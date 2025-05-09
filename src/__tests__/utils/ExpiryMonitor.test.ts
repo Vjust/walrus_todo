@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach, afterEach, SpyInstance } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { ExpiryMonitor } from '../../utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../utils/VaultManager';
@@ -6,6 +6,7 @@ import { WalrusError, StorageError } from '../../types/errors';
 import { Signer } from '@mysten/sui.js/cryptography';
 import { execSync } from 'child_process';
 import { Logger } from '../../utils/Logger';
+import { WalrusClientExt } from '../../types/client';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
@@ -15,11 +16,11 @@ jest.mock('../../utils/Logger');
 describe('ExpiryMonitor', () => {
   let monitor: ExpiryMonitor;
   let mockVaultManager: jest.Mocked<VaultManager>;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
-  let mockWarningHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
-  let mockRenewalHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
+  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
+  let mockWarningHandler: jest.Mock;
+  let mockRenewalHandler: jest.Mock;
   let mockSigner: jest.Mocked<Signer>;
-  let mockExecSync: jest.SpyInstance;
+  let mockExecSync: jest.SpyInstance<Buffer, [command: string, options?: any]>;
   let mockLogger: jest.Mocked<Logger>;
   
   beforeEach(() => {
@@ -27,8 +28,8 @@ describe('ExpiryMonitor', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-    mockExecSync = jest.spyOn(require('child_process'), 'execSync')
-      .mockReturnValue(Buffer.from('testnet\n'));
+    mockExecSync = jest.spyOn(require('child_process'), 'execSync') as jest.SpyInstance<Buffer, [command: string, options?: any]>;
+    mockExecSync.mockReturnValue(Buffer.from('testnet\n'));
   });
 
   const testConfig = {
@@ -77,8 +78,7 @@ describe('ExpiryMonitor', () => {
         blob_id: 'mock-blob-id',
         registered_epoch: 1,
         size: '1024',
-        encoding_type: 1,
-        certified_epoch: 1,
+        cert_epoch: 1,
         storage: {
           id: { id: 'mock-storage-id' },
           storage_size: '1000',
@@ -97,8 +97,45 @@ describe('ExpiryMonitor', () => {
           end_epoch: 52,
           storage_size: '1000000'
         }
-      })
-    } as unknown as jest.Mocked<WalrusClient>;
+      }),
+      // Required WalrusClientExt methods
+      getBlobSize: jest.fn().mockResolvedValue(1024),
+      getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2']),
+      reset: jest.fn(),
+      // Other required methods
+      getBlobInfo: jest.fn().mockResolvedValue({
+        blob_id: 'mock-blob-id',
+        registered_epoch: 1,
+        cert_epoch: 1,
+        size: '1024'
+      }),
+      readBlob: jest.fn().mockResolvedValue(new Uint8Array(1024)),
+      writeBlob: jest.fn().mockResolvedValue({
+        blobId: 'mock-blob-id',
+        blobObject: { blob_id: 'mock-blob-id' }
+      }),
+      getBlobMetadata: jest.fn().mockResolvedValue({}),
+      storageCost: jest.fn().mockResolvedValue({
+        storageCost: BigInt(100),
+        writeCost: BigInt(50),
+        totalCost: BigInt(150)
+      }),
+      executeCertifyBlobTransaction: jest.fn().mockResolvedValue({ digest: 'tx1' }),
+      executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({ digest: 'tx1' }),
+      deleteBlob: jest.fn().mockReturnValue(() => Promise.resolve({ digest: 'tx1' })),
+      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({ blob: {}, digest: 'tx1' }),
+      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({ confirmed: true }),
+      createStorageBlock: jest.fn().mockResolvedValue({}),
+      createStorage: jest.fn().mockReturnValue(() => Promise.resolve({
+        digest: 'tx1',
+        storage: {
+          id: { id: 'storage1' },
+          start_epoch: 40,
+          end_epoch: 52,
+          storage_size: '1000000'
+        }
+      }))
+    } as unknown as jest.Mocked<WalrusClientExt>;
 
     mockSigner = {
       signData: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
@@ -186,15 +223,15 @@ describe('ExpiryMonitor', () => {
         id: { id: testBlob.blobId },
         blob_id: testBlob.blobId,
         registered_epoch: 1,
-        certified_epoch: 1,
+        cert_epoch: 1,
         size: '1024',
-        encoding_type: 1,
-        storage: {
-          id: { id: 'mock-storage-id' },
-          storage_size: '1000',
-          used_size: '100',
-          end_epoch: 100,
-          start_epoch: 1
+        // Storage info is now in attributes to avoid type errors
+        attributes: {
+          'storage.id': 'mock-storage-id',
+          'storage.storage_size': '1000',
+          'storage.used_size': '100',
+          'storage.end_epoch': '100',
+          'storage.start_epoch': '1'
         },
         deletable: false
       });
@@ -292,14 +329,14 @@ describe('ExpiryMonitor', () => {
         blob_id: blob.blobId,
         size: '1024',
         registered_epoch: 1,
-        certified_epoch: 1,
-        encoding_type: 1,
-        storage: {
-          id: { id: 'mock-storage-id' },
-          storage_size: '1000',
-          used_size: '100',
-          end_epoch: 100,
-          start_epoch: 1
+        cert_epoch: 1,
+        // Storage info is now in attributes to avoid type errors
+        attributes: {
+          'storage.id': 'mock-storage-id',
+          'storage.storage_size': '1000',
+          'storage.used_size': '100',
+          'storage.end_epoch': '100',
+          'storage.start_epoch': '1'
         },
         deletable: false
       });
@@ -375,7 +412,7 @@ describe('ExpiryMonitor', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to check blob expiry',
         expect.any(Error),
-        expect.objectContaining({ config: mockConfig })
+        expect.objectContaining({ config: testConfig })
       );
     });
   });

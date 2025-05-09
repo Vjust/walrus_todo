@@ -22,6 +22,7 @@ describe('ExpiryMonitor', () => {
     autoRenewThreshold: 3,
     renewalPeriod: 30,
     signer: {
+      sign: jest.fn().mockResolvedValue(new Uint8Array([1,2,3,4])),
       signPersonalMessage: jest.fn().mockResolvedValue({
         signature: new Uint8Array([1,2,3,4]),
         bytes: new Uint8Array([1,2,3,4])
@@ -84,10 +85,10 @@ describe('ExpiryMonitor', () => {
       }),
       storageCost: jest.fn().mockResolvedValue({ storageCost: BigInt(1000), writeCost: BigInt(500), totalCost: BigInt(1500) }),
       executeCreateStorageTransaction: jest.fn().mockResolvedValue({
-        digest: 'tx1',
+        digest: 'mock-storage-tx',
         storage: {
-          id: { id: 'storage1' },
-          start_epoch: 40,
+          id: { id: 'mock-storage-id' },
+          start_epoch: 42,
           end_epoch: 52,
           storage_size: '1000000'
         }
@@ -102,20 +103,15 @@ describe('ExpiryMonitor', () => {
       getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2']),
       getSuiBalance: jest.fn().mockResolvedValue('1000'),
       getBlobSize: jest.fn().mockResolvedValue(1024),
-      reset: jest.fn(),
-      allocateStorage: jest.fn().mockResolvedValue({
-        digest: 'mock-storage-tx',
-        storage: {
-          id: { id: 'mock-storage-id' },
-          start_epoch: 42,
-          end_epoch: 52,
-          storage_size: '1000000'
-        }
-      })
+      reset: jest.fn()
     } as unknown as jest.MockedObject<WalrusClientExt>;
 
-    mockWarningHandler = jest.fn().mockResolvedValue(undefined);
-    mockRenewalHandler = jest.fn().mockResolvedValue(undefined);
+    mockWarningHandler = jest.fn().mockImplementation(async (blobs: BlobRecord[]): Promise<void> => {
+      return Promise.resolve();
+    });
+    mockRenewalHandler = jest.fn().mockImplementation(async (blobs: BlobRecord[]): Promise<void> => {
+      return Promise.resolve();
+    });
 
     monitor = new ExpiryMonitor(
       mockVaultManager,

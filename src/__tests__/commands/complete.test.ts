@@ -8,7 +8,7 @@ import { CLIError } from '../../types/error';
 import { Todo, TodoList } from '../../types/todo';
 import { createMockTodo } from '../helpers/test-utils';
 import { createMockSystemStateResponse } from '../sui-test-types';
-import type { Config } from '../../types/config';
+import type { Config } from '../../types';
 
 // Mock services
 jest.mock('../../services/todoService');
@@ -38,9 +38,9 @@ const mockConfig: MockConfig = {
   }
 };
 
-// Create getter function with proper type
-const getConfigMock = jest.fn<() => Promise<MockConfig>>();
-getConfigMock.mockResolvedValue(mockConfig);
+// Create non-async getter function for config
+const getConfigMock = jest.fn().mockReturnValue(mockConfig);
+// Mock configService's getConfig method to use our mock
 jest.spyOn(configService, 'getConfig').mockImplementation(getConfigMock);
 
 describe('complete', () => {
@@ -66,22 +66,12 @@ describe('complete', () => {
     mockTodoService.prototype.getTodo.mockResolvedValue(defaultTodo);
     mockTodoService.prototype.toggleItemStatus.mockImplementation(async () => {});
 
-    mockSuiClient.prototype.getLatestSuiSystemState.mockResolvedValue({
-      activeValidators: [],
-      safeMode: false,
-      epoch: '0',
-      referenceGasPrice: '1000',
-      protocolVersion: '1',
-      systemStateVersion: '1',
-      maxValidatorCount: '100',
-      minValidatorCount: '4',
-      validatorCandidatesSize: '0',
-      atRiskValidators: [],
-      storageFundTotalObjectStorageRebates: '0',
-      storageFundNonRefundableBalance: '1000000',
-      stakeSubsidyCurrentDistributionAmount: '0',
-      totalStake: '1000000'
-    });
+    mockSuiClient.prototype.getLatestSuiSystemState.mockResolvedValue(
+      createMockSystemStateResponse({
+        epoch: '0',
+        protocolVersion: '1'
+      })
+    );
   });
 
   test('completes a local todo', async () => {

@@ -61,7 +61,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should respect maximum retry attempts', async () => {
-      const operation = jest.fn<Promise<never>, []>()
+      const operation = jest.fn()
         .mockRejectedValue(new Error('Persistent error'));
 
       helper = new TransactionHelper(mockSigner, {
@@ -78,7 +78,7 @@ describe('TransactionHelper', () => {
 
     it('should implement exponential backoff', async () => {
       const delays: number[] = [];
-      const operation = jest.fn<Promise<never>, []>()
+      const operation = jest.fn()
         .mockRejectedValue(new Error('Network error'));
 
       // Override setTimeout to capture delays
@@ -196,7 +196,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should include operation name in errors', async () => {
-      const operation = jest.fn<Promise<never>>()
+      const operation = jest.fn()
         .mockRejectedValue(new Error('Test error'));
 
       try {
@@ -239,7 +239,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should merge retry configurations', async () => {
-      const operation = jest.fn<Promise<never>>()
+      const operation = jest.fn()
         .mockRejectedValue(new Error('Test error'));
 
       helper = new TransactionHelper(mockSigner, {
@@ -262,8 +262,8 @@ describe('TransactionHelper', () => {
 
   describe('Integration Tests', () => {
     it('should handle concurrent operations', async () => {
-      const successOperation = jest.fn<Promise<string>, []>().mockResolvedValue('success');
-      const failOperation = jest.fn<Promise<never>, []>()
+      const successOperation = jest.fn().mockResolvedValue('success');
+      const failOperation = jest.fn()
         .mockRejectedValue(new Error('Test error'));
 
       const results = await Promise.allSettled([
@@ -278,7 +278,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should handle retry with validation', async () => {
-      const operation = jest.fn<() => Promise<string>>()
+      const operation = jest.fn()
         .mockRejectedValueOnce(new Error('network error'))
         .mockResolvedValueOnce('success');
 
@@ -292,7 +292,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should log retry attempts with context', async () => {
-      const operation = jest.fn<() => Promise<string>>()
+      const operation = jest.fn()
         .mockRejectedValueOnce(new Error('Test error'))
         .mockResolvedValueOnce('success');
 

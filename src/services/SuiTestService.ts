@@ -1,12 +1,16 @@
 import crypto from "crypto";
 import { SuiClient } from '@mysten/sui.js/client';
 import { getFullnodeUrl } from '@mysten/sui.js/client';
-import { SUI_DECIMALS, SuiObjectResponse } from '@mysten/sui.js/client';
+import { SuiObjectResponse } from '@mysten/sui.js/client';
 import { PaginatedObjectsResponse } from '@mysten/sui.js/client';
 import { NETWORK_URLS } from '../constants';
 import { Config } from '../types';
 import { NetworkType } from '../types/network';
 import { CLIError } from '../types/error';
+
+// Define SUI_DECIMALS constant locally as it's no longer exported from @mysten/sui.js/client
+// Standard value for SUI decimals is 9 (1 SUI = 10^9 MIST)
+const SUI_DECIMALS = 9;
 
 type TodoItem = {
   id: string;
@@ -99,7 +103,9 @@ export class SuiTestService implements ISuiService {
       };
     }
 
-    this.client = new SuiClient({ url: getFullnodeUrl(this.config.network as NetworkType) });
+    // Convert 'local' to 'localnet' for compatibility with getFullnodeUrl
+    const networkType = this.config.network === 'local' ? 'localnet' : this.config.network;
+    this.client = new SuiClient({ url: getFullnodeUrl(networkType as 'mainnet' | 'testnet' | 'devnet' | 'localnet') });
     this.walletAddress =
       this.config.walletAddress ??
       `0x${crypto.randomBytes(20).toString("hex").toLowerCase()}`;

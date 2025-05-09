@@ -1,24 +1,54 @@
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach, SpyInstance } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { execSync } from 'child_process';
 import { NetworkValidator, NetworkEnvironment } from '../../utils/NetworkValidator';
 import { WalrusError } from '../../types/error';
+import { WalrusClientExt } from '../../types/client';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
 
 describe('NetworkValidator', () => {
   let validator: NetworkValidator;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
-  let mockExecSync: jest.SpyInstance;
+  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
+  let mockExecSync: jest.SpyInstance<Buffer | string>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockExecSync = jest.spyOn(require('child_process'), 'execSync');
     
     mockWalrusClient = {
-      getConfig: jest.fn().mockResolvedValue({ network: 'testnet' })
-    } as unknown as jest.Mocked<WalrusClient>;
+      getConfig: jest.fn().mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000
+      }),
+      // Core WalrusClient methods
+      readBlob: jest.fn(),
+      writeBlob: jest.fn().mockResolvedValue({ blobId: 'mock-blob-id', blobObject: { blob_id: 'mock-blob-id' } }),
+      getBlobInfo: jest.fn(),
+      getStorageUsage: jest.fn(),
+      getWalBalance: jest.fn(),
+      // WalrusClientExt methods
+      getBlobObject: jest.fn(),
+      verifyPoA: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      storageCost: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      executeCertifyBlobTransaction: jest.fn(),
+      executeWriteBlobAttributesTransaction: jest.fn(),
+      deleteBlob: jest.fn(),
+      executeRegisterBlobTransaction: jest.fn(),
+      getStorageConfirmationFromNode: jest.fn(),
+      createStorageBlock: jest.fn(),
+      createStorage: jest.fn(),
+      getBlobSize: jest.fn(),
+      getStorageProviders: jest.fn(),
+      reset: jest.fn(),
+      experimental: {
+        getBlobData: jest.fn().mockResolvedValue({})
+      }
+    } as jest.Mocked<WalrusClientExt>;
 
     validator = new NetworkValidator({
       expectedEnvironment: 'testnet',
@@ -29,7 +59,11 @@ describe('NetworkValidator', () => {
   describe('Environment Validation', () => {
     it('should validate matching environments', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ network: 'testnet' });
+      mockWalrusClient.getConfig.mockResolvedValue({ 
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000
+      });
 
       await expect(validator.validateEnvironment(mockWalrusClient))
         .resolves.not.toThrow();
@@ -37,7 +71,11 @@ describe('NetworkValidator', () => {
 
     it('should throw on Sui environment mismatch without auto-switch', async () => {
       mockExecSync.mockReturnValue('devnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ network: 'testnet' });
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000
+      });
 
       await expect(validator.validateEnvironment(mockWalrusClient))
         .rejects
@@ -61,7 +99,11 @@ describe('NetworkValidator', () => {
 
     it('should throw on Walrus environment mismatch', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ network: 'devnet' });
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'devnet',
+        version: '1.0.0',
+        maxSize: 1000000
+      });
 
       await expect(validator.validateEnvironment(mockWalrusClient))
         .rejects
@@ -78,7 +120,11 @@ describe('NetworkValidator', () => {
 
     it('should throw on invalid Walrus environment', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ network: 'invalid-env' });
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'invalid-env',
+        version: '1.0.0',
+        maxSize: 1000000
+      });
 
       await expect(validator.validateEnvironment(mockWalrusClient))
         .rejects
@@ -108,7 +154,11 @@ describe('NetworkValidator', () => {
   describe('Network Status', () => {
     it('should return correct network status when valid', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ network: 'testnet' });
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000
+      });
 
       const status = await validator.getNetworkStatus(mockWalrusClient);
 
@@ -121,7 +171,11 @@ describe('NetworkValidator', () => {
 
     it('should return invalid status on environment mismatch', async () => {
       mockExecSync.mockReturnValue('devnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ network: 'testnet' });
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000
+      });
 
       const status = await validator.getNetworkStatus(mockWalrusClient);
 

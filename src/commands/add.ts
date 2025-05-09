@@ -1,6 +1,7 @@
 import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';  // Changed from import * as chalk
 import { TodoService } from '../services/todoService';
+import { AiService } from '../services/ai';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
 import { createWalrusStorage } from '../utils/walrus-storage';
@@ -24,7 +25,9 @@ export default class AddCommand extends Command {
     '<%= config.bin %> add my-list -t "Buy groceries"',
     '<%= config.bin %> add -t "Task 1" -t "Task 2"',
     '<%= config.bin %> add "Blockchain task" -s blockchain',
-    '<%= config.bin %> add "Hybrid task" -s both'
+    '<%= config.bin %> add "Hybrid task" -s both',
+    '<%= config.bin %> add "Plan project" --ai',
+    '<%= config.bin %> add "Fix bug in login" --ai --apiKey YOUR_XAI_API_KEY'
   ];
 
   static flags = {
@@ -67,6 +70,17 @@ export default class AddCommand extends Command {
       options: ['local', 'blockchain', 'both'],
       default: 'local',
       helpGroup: 'Storage Options'
+    }),
+    // AI-related flags
+    ai: Flags.boolean({
+      description: 'Use AI to suggest tags and priority',
+      default: false,
+      helpGroup: 'AI Options'
+    }),
+    apiKey: Flags.string({
+      description: 'XAI API key (defaults to XAI_API_KEY environment variable)',
+      required: false,
+      helpGroup: 'AI Options'
     })
   };
 
@@ -80,6 +94,7 @@ export default class AddCommand extends Command {
 
   private todoService = new TodoService();
   private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
+  private aiService: AiService | null = null;
 
   private validateDate(date: string): boolean {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -91,7 +106,12 @@ export default class AddCommand extends Command {
 
   async run(): Promise<void> {
     try {
+      console.log("Running add command...");
+      process.stdout.write("Starting add command...\n");
+      
       const { args, flags } = await this.parse(AddCommand);
+      console.log("Parsed arguments:", args);
+      console.log("Parsed flags:", flags);
 
       if (flags.due && !this.validateDate(flags.due)) {
         throw new CLIError("Invalid date format. Use YYYY-MM-DD", 'INVALID_DATE');  // No change, already fixed
@@ -114,6 +134,7 @@ export default class AddCommand extends Command {
 
       const storageLocation = flags.storage as StorageLocation;
 
+      // Initialize todo object
       const todo: Partial<Todo> = {
         title: todoTitle,
         priority: flags.priority as 'high' | 'medium' | 'low',
@@ -122,6 +143,62 @@ export default class AddCommand extends Command {
         private: flags.private,
         storageLocation: storageLocation
       };
+
+      // Use AI if requested
+      if (flags.ai) {
+        try {
+          console.log('AI flag detected in add command');
+          console.log('API Key from flag:', flags.apiKey ? '[provided]' : '[not provided]');
+          console.log('Environment XAI_API_KEY:', process.env.XAI_API_KEY ? '[found]' : '[not found]');
+          
+          this.aiService = new AiService(flags.apiKey);
+          console.log('AiService created successfully');
+          
+          // Create a temporary todo object for AI processing
+          const tempTodo: Todo = {
+            id: 'temp-id',
+            title: todoTitle,
+            description: '',
+            completed: false,
+            priority: todo.priority || 'medium',
+            tags: todo.tags || [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            private: todo.private !== undefined ? todo.private : true,
+            storageLocation: todo.storageLocation || 'local'
+          };
+
+          this.log(chalk.blue('🧠') + ' Using AI to enhance your todo...');
+          console.log('Calling suggestTags and suggestPriority...');
+          
+          // Get AI suggestions in parallel
+          const [suggestedTags, suggestedPriority] = await Promise.all([
+            this.aiService.suggestTags(tempTodo),
+            this.aiService.suggestPriority(tempTodo)
+          ]);
+          
+          console.log('Received AI suggestions:', suggestedTags, suggestedPriority);
+          
+          // Merge existing and suggested tags
+          const existingTags = todo.tags || [];
+          const allTags = [...new Set([...existingTags, ...suggestedTags])];
+          
+          this.log(chalk.blue('🏷️') + ' AI suggested tags: ' + chalk.cyan(suggestedTags.join(', ')));
+          this.log(chalk.blue('🔄') + ' AI suggested priority: ' + chalk.cyan(suggestedPriority));
+          
+          // Update todo with AI suggestions
+          todo.tags = allTags;
+          todo.priority = suggestedPriority;
+          
+          console.log('Todo updated with AI suggestions');
+          
+        } catch (aiError) {
+          // If AI fails, just log a warning and continue with user-provided values
+          console.error('AI error:', aiError);
+          this.log(chalk.yellow('⚠') + ' AI enhancement failed: ' + chalk.dim(aiError instanceof Error ? aiError.message : String(aiError)));
+          this.log(chalk.yellow('⚠') + ' Continuing with provided values');
+        }
+      }
 
       // Check if list exists first
       const listExists = await this.todoService.getList(listName);
@@ -133,7 +210,9 @@ export default class AddCommand extends Command {
       }
 
       // Add todo to the list
+      console.log('Adding todo to list:', listName, todo);
       const addedTodo = await this.todoService.addTodo(listName, todo as Todo);
+      console.log('Todo added:', addedTodo);
 
       // If storage is blockchain or both, store on blockchain
       if (storageLocation === 'blockchain' || storageLocation === 'both') {
@@ -233,7 +312,13 @@ export default class AddCommand extends Command {
       }
       outputLines.push(`  🔒 Private: ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`);
       outputLines.push(`  ${storageInfo.icon} Storage: ${storageInfo.color(storageInfo.text)}`);
-      this.log(outputLines.join('\n'));
+      
+      const output = outputLines.join('\n');
+      console.log("Output:", output);
+      this.log(output);
+      
+      // Also write directly to stdout to ensure output is shown
+      process.stdout.write(output + '\n');
 
     } catch (error) {
       if (error instanceof CLIError) {

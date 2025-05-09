@@ -2,6 +2,17 @@
 
 import { Command, Flags } from '@oclif/core';
 import * as Commands from './commands';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
+
+// Configure environment for AI operations
+process.env.FORCE_COLOR = '1';
+
+// Force chalk to use colors even in CI/non-TTY environments
+const chalk = require('chalk');
+chalk.level > 0 || (chalk.level = 1);
 
 export default class WalTodo extends Command {
   static description = 'A CLI for managing todos with Sui blockchain and Walrus storage';
@@ -114,8 +125,43 @@ export const run = async () => {
         return;
       }
     }
+    
+    // Special handling for AI commands to ensure proper error handling and output
+    if (commandName === 'ai') {
+      try {
+        // Ensure environment variables are loaded
+        if (!process.env.XAI_API_KEY) {
+          // Try to find API key in args
+          const apiKeyIndex = args.findIndex(arg => arg === '--apiKey' || arg === '-k');
+          if (apiKeyIndex === -1 || apiKeyIndex === args.length - 1) {
+            console.error(chalk.red('Error: XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'));
+            process.exit(1);
+          }
+        }
+        
+        // Force output to be colored
+        process.env.FORCE_COLOR = '1';
+        
+        // Find the AI command
+        const AiCommandClass = Object.entries(Commands).find(([name, _]) => 
+          name.toLowerCase() === 'aicommand'
+        )?.[1];
+        
+        if (!AiCommandClass) {
+          console.error(chalk.red('Error: AI command not found in exports.'));
+          process.exit(1);
+        }
+        
+        // Run the AI command with the remaining arguments
+        await AiCommandClass.run(args.slice(1));
+        return;
+      } catch (error) {
+        console.error(chalk.red(`AI command error: ${error instanceof Error ? error.message : String(error)}`));
+        process.exit(1);
+      }
+    }
 
-    // Find the command class
+    // Find the command class for other commands
     const CommandClass = Object.entries(Commands).find(([name, _]) => {
       return name.toLowerCase().replace('command', '') === commandName.toLowerCase();
     })?.[1];

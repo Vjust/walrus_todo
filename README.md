@@ -12,6 +12,12 @@ WalTodo is a feature-rich command-line interface (CLI) application that combines
 - **Local Storage**: Quick todo management with file system storage
 - **Blockchain Integration**: Store todos on the Sui blockchain as NFTs
 - **Decentralized Storage**: Use Walrus for efficient, decentralized data storage
+- **AI-powered Features**: 
+  - Summarize todo lists with key insights
+  - Get intelligent tag and priority suggestions
+  - Analyze productivity patterns
+  - Generate related task recommendations
+  - AI-enhanced todo creation
 - **Multi-list Support**: Organize todos in different lists
 - **Automatic Image Generation**: Generate images for todo NFTs
 - **Seamless Sync**: Sync todos between CLI, blockchain and decentralized storage
@@ -25,6 +31,7 @@ WalTodo is a feature-rich command-line interface (CLI) application that combines
 The WalTodo CLI provides a comprehensive set of commands for managing todos:
 
 - **`add`**: Add new todo items to a list (creates the list if it doesn't exist)
+  - Add AI capabilities with `--ai` flag for smart tag and priority suggestions
 - **`list`**: List todos or todo lists
 - **`account`**: Manage Sui account for todos
 - **`configure`**: Configure CLI settings
@@ -32,6 +39,12 @@ The WalTodo CLI provides a comprehensive set of commands for managing todos:
 - **`retrieve`**: Retrieve todos from blockchain or Walrus storage
 - **`deploy`**: Deploy the Todo NFT smart contract to the Sui blockchain
 - **`storage`**: Manage and analyze Walrus storage efficiency and token usage
+- **`ai`**: AI-powered todo operations:
+  - `summarize`: Get concise todo list overviews
+  - `categorize`: Suggest tags for todos
+  - `prioritize`: Suggest priority levels
+  - `suggest`: Generate related task suggestions
+  - `analyze`: Analyze productivity patterns
 
 ### Intuitive Command Syntax
 
@@ -43,6 +56,12 @@ waltodo add "Buy groceries for dinner"
 
 # The command automatically handles spaces in todo titles
 waltodo add "Call John about the project" -p high
+
+# Use AI to enhance your todos
+waltodo add "Prepare presentation for client meeting" --ai
+
+# Get AI insights about your todos
+waltodo ai summarize
 ```
 
 For a comprehensive reference of all CLI commands, see [CLI-COMMANDS.md](CLI-COMMANDS.md).
@@ -105,6 +124,12 @@ waltodo add "Shopping item" -l shopping
 
 # Mark a todo as complete (replace 123 with your todo ID)
 waltodo complete --id 123
+
+# Use AI to suggest related tasks
+waltodo ai suggest --apply
+
+# Get a summary of your todo list
+waltodo ai summarize
 ```
 
 For blockchain integration:
@@ -294,6 +319,155 @@ Add a todo with due date, priority, and tags:
 # Add a todo with all options
 waltodo add "Important meeting" -l work -p high -d 2024-05-15 -g "work,urgent"
 ```
+
+## AI-Powered Todo Management
+
+WalTodo integrates with XAI (Grok) via LangChain to provide intelligent insights and suggestions for your todos. These powerful AI capabilities help you better organize, understand, and manage your tasks.
+
+### AI Command Integration
+
+The AI features are fully integrated into the standard CLI and can be accessed through the `ai` command:
+
+```bash
+# Basic syntax
+waltodo ai <operation> [options]
+```
+
+### Available AI Operations
+
+The AI command supports five main operations:
+
+#### 1. Summarize your todo lists
+
+Get an overview of your todos, including completion rates, key themes, and high-priority items:
+
+```bash
+# Summarize the default list
+waltodo ai summarize
+
+# Summarize a specific list
+waltodo ai summarize -l work
+```
+
+#### 2. Categorize todos with AI-suggested tags
+
+Let AI suggest relevant tags based on task content:
+
+```bash
+# Get tag suggestions for a specific todo (by ID or title)
+waltodo ai categorize -i "Prepare presentation slides"
+
+# Apply the suggested tags automatically
+waltodo ai categorize -i "Prepare presentation slides" --apply
+```
+
+#### 3. Prioritize todos intelligently
+
+Get AI suggestions for appropriate priority levels:
+
+```bash
+# Get priority suggestion for a todo
+waltodo ai prioritize -i "Fix critical security bug"
+
+# Apply the suggested priority automatically
+waltodo ai prioritize -i "Fix critical security bug" --apply
+```
+
+#### 4. Generate related task suggestions
+
+Get AI recommendations for new related tasks:
+
+```bash
+# Get 3 task suggestions (default)
+waltodo ai suggest
+
+# Get 5 task suggestions for a specific list
+waltodo ai suggest -l projects -c 5
+
+# Add the suggested tasks automatically
+waltodo ai suggest --apply
+```
+
+#### 5. Analyze productivity patterns
+
+Get insights on your task completion patterns and productivity:
+
+```bash
+# Analyze the default list
+waltodo ai analyze
+
+# Analyze a specific list
+waltodo ai analyze -l personal
+```
+
+### AI-Enhanced Todo Creation
+
+When adding new todos, you can use AI to suggest tags and priority:
+
+```bash
+# Add a todo with AI suggestions
+waltodo add "Prepare quarterly report" --ai
+
+# Specify your XAI API key if not set in environment
+waltodo add "Review code PR" --ai --apiKey YOUR_XAI_API_KEY
+```
+
+### AI Features and Benefits
+
+- **Intelligent Tag Suggestions**: AI analyzes todo content to suggest relevant and consistent tags
+- **Smart Priority Assignment**: Determines appropriate priority level based on task content and urgency
+- **Task Analysis**: Provides productivity insights, completion patterns, and suggestions for improvement
+- **Related Task Suggestions**: Recommends complementary tasks based on your current todos and project goals
+- **Summarization**: Creates concise, structured summaries of your entire todo list for better understanding
+- **Consistency**: Helps maintain consistent tagging and prioritization across your tasks
+
+### Setting Up AI Features
+
+To use the AI features, you'll need an XAI API key. There are multiple ways to provide it:
+
+1. Environment variable in your `.env` file (recommended for security):
+   ```bash
+   # .env file
+   XAI_API_KEY=your-api-key
+   ```
+
+2. Command-line flag with each command:
+   ```bash
+   waltodo ai summarize --apiKey your-api-key
+   ```
+
+3. Global configuration (coming soon)
+
+### Command Options
+
+The AI command supports these common options:
+
+| Option | Description |
+|--------|-------------|
+| `--list`, `-l` | Specify the todo list (defaults to "default") |
+| `--id`, `-i` | Todo ID or title for operations that work on a specific todo |
+| `--count`, `-c` | Number of suggestions to generate (for `suggest` operation) |
+| `--apply`, `-a` | Apply AI suggestions automatically |
+| `--apiKey`, `-k` | XAI API key (if not set in environment) |
+
+### Implementation Details
+
+The AI features are implemented using:
+- **LangChain**: Framework for building LLM applications with advanced prompt engineering
+- **XAI (Grok)**: Powerful language model for natural language understanding and generation
+- **Structured Communication**: Using HumanMessage format for reliable API interaction
+- **Response Parsing**: Robust parsing of JSON and text responses from the AI
+
+For detailed technical documentation, see [AI Integration Guide](docs/ai-integration-guide.md).
+
+### Troubleshooting
+
+If you encounter issues:
+
+- Ensure your XAI API key is valid and correctly set
+- Check your internet connection (required for API calls)
+- Try using the `--verbose` flag for detailed output
+- Verify the todo or list exists before running AI operations on it
 
 Add multiple todos at once:
 

@@ -103,15 +103,28 @@ export interface WalrusClientExt {
 
 /**
  * Minimal WalrusClient interface to support combination
+ * This interface ensures all methods required by adapters are defined
  */
 export interface WalrusClient {
-  // Most basic WalrusClient methods used throughout the codebase
+  // Basic WalrusClient methods
   getConfig(): Promise<{ network: string; version: string; maxSize: number }>;
   getWalBalance(): Promise<string>;
+  getStorageUsage(): Promise<{ used: string; total: string }>;
+  
+  // Blob operations
   readBlob(params: ReadBlobOptions): Promise<Uint8Array>;
   writeBlob(options: any): Promise<any>;
   getBlobInfo(blobId: string): Promise<any>;
-  getStorageUsage(): Promise<{ used: string; total: string }>;
+  getBlobObject(params: { blobId: string }): Promise<any>;
+  getBlobMetadata(params: ReadBlobOptions): Promise<any>;
+  verifyPoA(params: { blobId: string }): Promise<boolean>;
+  
+  // Storage cost calculation
+  storageCost(size: number, epochs: number): Promise<{
+    storageCost: bigint;
+    writeCost: bigint;
+    totalCost: bigint;
+  }>;
 }
 
 /**

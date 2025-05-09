@@ -1,60 +1,87 @@
-import { SuiClient } from '@mysten/sui.js';
-import { TransactionBlock } from '@mysten/sui.js';
-import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
-import { createWalrusImageStorage } from '../utils/walrus-image-storage';
+import { SuiClient } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { WalrusClient } from '@mysten/walrus';
+import type { BlobObject } from '../types/walrus';
+import { createWalrusImageStorage, type ClientWithExtensions } from '../utils/walrus-image-storage';
 import { CLIError } from '../types/error';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { MockWalrusClient } from '../utils/MockWalrusClient';
 
-interface MockedWalrusClient extends Partial<WalrusClient> {
-  readBlob: jest.MockedFunction<(params: { blobId: string, signal?: AbortSignal }) => Promise<Uint8Array>>;
-  writeBlob: jest.MockedFunction<(params: { 
+interface MockedWalrusClient {
+  readBlob: jest.MockedFunction<(options: { blobId: string, signal?: AbortSignal }) => Promise<Uint8Array>>;
+  writeBlob: jest.MockedFunction<(options: {
     blob: Uint8Array;
-    deletable: boolean; 
+    deletable?: boolean;
     epochs: number;
     signer: any;
-    attributes: Record<string, string | boolean | number>;
+    signal?: AbortSignal;
+    owner?: string;
+    attributes?: Record<string, string>;
   }) => Promise<{ blobId: string; blobObject: BlobObject }>>;
   getBlobObject: jest.MockedFunction<(params: { blobId: string }) => Promise<BlobObject>>;
   verifyPoA: jest.MockedFunction<(params: { blobId: string }) => Promise<boolean>>;
 }
 
-interface MockedSuiClient extends Partial<SuiClient> {
+interface MockedSuiClient {
   connect: jest.MockedFunction<() => Promise<void>>;
-  getBalance: jest.MockedFunction<(address: string) => Promise<{ coinType: string; totalBalance: string; coinObjectCount: number; lockedBalance: { number: string } }>>;
+  getBalance: jest.MockedFunction<(params: { owner: string; coinType: string }) => Promise<{ coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: { number: bigint }; coinObjectId: string }>>;
   getLatestSuiSystemState: jest.MockedFunction<() => Promise<{ epoch: string }>>;
-  getOwnedObjects: jest.MockedFunction<(params: { owner: string }) => Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null }>>;
+  getOwnedObjects: jest.MockedFunction<(params: { owner: string }) => Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null; pageNumber: number }>>;
   signAndExecuteTransactionBlock: jest.MockedFunction<(tx: TransactionBlock) => Promise<{ digest: string; effects: { status: { status: string }; created?: { reference: { objectId: string } }[] } }>>;
   executeTransactionBlock: jest.MockedFunction<(tx: TransactionBlock) => Promise<{ digest: string; effects: { status: { status: string } } }>>;
 }
 
 jest.mock('child_process');
-jest.mock('@mysten/sui/client');
+jest.mock('@mysten/sui.js/client');
 jest.mock('@mysten/walrus');
 jest.mock('../utils/sui-keystore');
 jest.mock('fs');
 jest.mock('path');
+jest.mock('../utils/MockWalrusClient', () => {
+  return {
+    MockWalrusClient: jest.fn().mockImplementation(() => ({
+      readBlob: jest.fn(),
+      writeBlob: jest.fn(),
+      getBlobObject: jest.fn(),
+      verifyPoA: jest.fn(),
+      getUnderlyingClient: jest.fn()
+    })),
+    createMockWalrusClient: jest.fn().mockImplementation(() => ({
+      readBlob: jest.fn(),
+      writeBlob: jest.fn(),
+      getBlobObject: jest.fn(),
+      verifyPoA: jest.fn(),
+      getUnderlyingClient: jest.fn()
+    }))
+  };
+});
 
 describe('WalrusImageStorage', () => {
+  // Properly initialize variables to be used throughout tests
   let mockSuiClient: MockedSuiClient;
   let mockWalrusClient: MockedWalrusClient;
   let mockKeystoreSigner: jest.MockedClass<typeof KeystoreSigner>;
   let storage: ReturnType<typeof createWalrusImageStorage>;
   
+  // Define constants for image data
   const mockImagePath = '/path/to/image.jpg';
   const mockImageBuffer = Buffer.from('mock image data');
   const mockJpegHeader = Buffer.from([0xFF, 0xD8]); // JPEG magic numbers
 
   beforeEach(async () => {
+    // Set up SuiClient mock
     mockSuiClient = {
-      getBalance: jest.fn().mockResolvedValue({
-        coinType: 'WAL',
-        totalBalance: '1000',
+      connect: jest.fn().mockResolvedValue(undefined),
+      getBalance: jest.fn().mockImplementation(({ owner, coinType }) => Promise.resolve({
+        coinType: coinType || 'WAL',
+        totalBalance: BigInt(1000),
         coinObjectCount: 1,
-        lockedBalance: { number: '0' }
-      }),
+        lockedBalance: { number: BigInt(0) },
+        coinObjectId: 'mock-coin-object-id'
+      })),
       getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '1' }),
       getOwnedObjects: jest.fn().mockResolvedValue({
         data: [{
@@ -77,73 +104,137 @@ describe('WalrusImageStorage', () => {
                 deletable: true
               }
             }
-          }
+          },
+          digest: '0xdigest123',
+          version: '1',
+          type: '0x2::storage::Storage',
+          owner: { AddressOwner: 'owner' },
+          previousTransaction: '0x123456',
+          storageRebate: '0',
+          display: null
         }],
         hasNextPage: false,
-        nextCursor: null
+        nextCursor: null,
+        pageNumber: 1
       }),
       signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({ digest: 'test-digest', effects: { status: { status: 'success' } } }),
       executeTransactionBlock: jest.fn().mockResolvedValue({ digest: 'test-digest', effects: { status: { status: 'success' } } })
-    } as MockedSuiClient;
+    };
 
+    // Define mockWalrusClient before using it, to fix the undefined variable issue
     mockWalrusClient = {
-      readBlob: jest.fn(),
+      readBlob: jest.fn().mockResolvedValue(new Uint8Array(Buffer.concat([mockJpegHeader, mockImageBuffer]))),
       writeBlob: jest.fn().mockResolvedValue({
         blobId: 'test-blob-id',
         blobObject: {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
-          size: BigInt(1024),
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          storage: {
-            id: { id: 'storage1' },
-            start_epoch: 100,
-            end_epoch: 200,
-            storage_size: BigInt(2048),
-            used_size: BigInt(1024)
+          cert_epoch: 150,
+          size: '1024',
+          storage_cost: {
+            value: BigInt(2048).toString()
+          },
+          storage_rebate: {
+            value: '0'
           },
           deletable: true
         }
       }),
-      getBlobObject: jest.fn().mockResolvedValue({
-        id: { id: 'test-blob-id' },
-        blob_id: 'test-blob-id',
+      getBlobObject: jest.fn().mockImplementation((params) => Promise.resolve({
+        id: { id: params.blobId || 'test-blob-id' },
+        blob_id: params.blobId || 'test-blob-id',
         registered_epoch: 100,
-        certified_epoch: 150,
-        size: BigInt(1024),
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-        storage: {
-          id: { id: 'storage1' },
-          start_epoch: 100,
-          end_epoch: 200,
-          storage_size: BigInt(2048),
-          used_size: BigInt(1024)
+        cert_epoch: 150,
+        size: '1024',
+        storage_cost: {
+          value: BigInt(2048).toString()
+        },
+        storage_rebate: {
+          value: '0'
         },
         deletable: true
-      }),
-      verifyPoA: jest.fn().mockResolvedValue(true)
+      })),
+      verifyPoA: jest.fn().mockImplementation((params) => Promise.resolve(true))
     } as MockedWalrusClient;
 
+    // Set up WalrusClient mock
+    const WalrusClientConstructor = WalrusClient as jest.MockedClass<typeof WalrusClient>;
+    WalrusClientConstructor.mockImplementation(() => {
+      return mockWalrusClient as unknown as WalrusClient;
+    });
+
+    // Set up fs and path mocks
     (fs.existsSync as jest.Mock).mockReturnValue(true);
     (fs.readFileSync as jest.Mock).mockReturnValue(Buffer.concat([mockJpegHeader, mockImageBuffer]));
     (path.basename as jest.Mock).mockReturnValue('image.jpg');
+    (execSync as jest.Mock).mockReturnValue(Buffer.from('testnet', 'utf-8'));
 
-    mockKeystoreSigner = {
-      fromPath: jest.fn().mockResolvedValue({
-        connect: jest.fn().mockReturnThis(),
-        getAddress: jest.fn().mockResolvedValue('0xtest-address'),
-        getPublicKey: jest.fn().mockReturnValue({
-          toSuiAddress: () => '0xtest-address',
-          scheme: 'ED25519'
-        })
-      })
-    } as unknown as jest.Mocked<typeof KeystoreSigner>;
+    // Set up KeystoreSigner mock
+    mockKeystoreSigner = KeystoreSigner as jest.MockedClass<typeof KeystoreSigner>;
+    
+    // Mock the constructor
+    mockKeystoreSigner.mockImplementation(() => ({
+      connect: jest.fn().mockReturnThis(),
+      getAddress: jest.fn().mockResolvedValue('0xtest-address'),
+      getPublicKey: jest.fn().mockReturnValue({
+        toSuiAddress: () => '0xtest-address',
+        scheme: 'ED25519'
+      }),
+      sign: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+      signData: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
+      signDataAsync: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+      signDataWithBytes: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
+      signWithIntent: jest.fn(),
+      signTransactionBlock: jest.fn(),
+      signTransaction: jest.fn(),
+      signPersonalMessage: jest.fn(),
+      getKeyScheme: jest.fn().mockReturnValue('ED25519'),
+      toSuiAddress: jest.fn().mockReturnValue('0xtest-address'),
+      signAndExecuteTransactionBlock: jest.fn(),
+      signedTransactionBlock: jest.fn(),
+      // Just use an empty object for the keypair and cast it - we're not directly testing its functionality
+      keypair: {} as any,
+      keyScheme: 'ED25519',
+      suiClient: mockSuiClient as unknown as SuiClient
+    }));
+    
+    // Mock the static method
+    mockKeystoreSigner.fromPath = jest.fn().mockImplementation(async () => ({
+      connect: jest.fn().mockReturnThis(),
+      getAddress: jest.fn().mockResolvedValue('0xtest-address'),
+      getPublicKey: jest.fn().mockReturnValue({
+        toSuiAddress: () => '0xtest-address',
+        scheme: 'ED25519'
+      }),
+      sign: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+      signData: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
+      signDataAsync: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+      signDataWithBytes: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
+      signWithIntent: jest.fn(),
+      signTransactionBlock: jest.fn(),
+      signTransaction: jest.fn(),
+      signPersonalMessage: jest.fn(),
+      getKeyScheme: jest.fn().mockReturnValue('ED25519'),
+      toSuiAddress: jest.fn().mockReturnValue('0xtest-address'),
+      signAndExecuteTransactionBlock: jest.fn(),
+      signedTransactionBlock: jest.fn(),
+      // Just use an empty object for the keypair and cast it - we're not directly testing its functionality
+      keypair: {} as any,
+      keyScheme: 'ED25519',
+      suiClient: mockSuiClient as unknown as SuiClient
+    }));
 
-    (KeystoreSigner as unknown as jest.Mock).mockImplementation(() => mockKeystoreSigner);
-    storage = createWalrusImageStorage();
-    await storage.init();
+    // Create storage instance with mockSuiClient
+    const SuiClientConstructor = SuiClient as jest.MockedClass<typeof SuiClient>;
+    SuiClientConstructor.mockImplementation(() => mockSuiClient as unknown as SuiClient);
+    
+    // Initialize storage with the mock client
+    storage = createWalrusImageStorage(
+      mockSuiClient as unknown as SuiClient, 
+      true  // Use mock mode for testing
+    );
+    await storage.connect();
   });
 
   describe('uploadImage', () => {
@@ -185,20 +276,20 @@ describe('WalrusImageStorage', () => {
             id: { id: 'test-blob-id' },
             blob_id: 'test-blob-id',
             registered_epoch: 100,
-            certified_epoch: 150,
+            cert_epoch: 150,
             size: '1024',
-            encoding_type: 1,
-            storage: {
-              id: { id: 'storage1' },
-              start_epoch: 100,
-              end_epoch: 200,
-              storage_size: '2048'
+            // Using storage_cost and storage_rebate as per BlobObject interface
+            storage_cost: {
+              value: BigInt(2048).toString()
+            },
+            storage_rebate: {
+              value: '0'
             },
             deletable: true
           }
         });
 
-      mockWalrusClient.readBlob.mockResolvedValueOnce(Buffer.concat([mockJpegHeader, mockImageBuffer]));
+      mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array(Buffer.concat([mockJpegHeader, mockImageBuffer])));
 
       const result = await storage.uploadImage(mockImagePath);
       expect(result).toBe('https://testnet.wal.app/blob/test-blob-id');
@@ -213,21 +304,21 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
-          encoding_type: 1,
-          storage: {
-            id: { id: 'storage1' },
-            start_epoch: 100,
-            end_epoch: 200,
-            storage_size: '2048'
+          // Using storage_cost and storage_rebate properties from BlobObject interface
+          storage_cost: {
+            value: BigInt(2048).toString()
+          },
+          storage_rebate: {
+            value: '0'
           },
           deletable: true
         }
       });
 
       // Mock verification returning different content
-      mockWalrusClient.readBlob.mockResolvedValueOnce(Buffer.from('different content'));
+      mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array(Buffer.from('different content')));
 
       await expect(storage.uploadImage(mockImagePath))
         .rejects.toThrow(/Content integrity check failed/);
@@ -240,14 +331,14 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
-          encoding_type: 1,
-          storage: {
-            id: { id: 'storage1' },
-            start_epoch: 100,
-            end_epoch: 200,
-            storage_size: '2048'
+          // Using storage_cost and storage_rebate properties from BlobObject interface
+          storage_cost: {
+            value: BigInt(2048).toString()
+          },
+          storage_rebate: {
+            value: '0'
           },
           deletable: true
         }
@@ -270,20 +361,20 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
-          encoding_type: 1,
-          storage: {
-            id: { id: 'storage1' },
-            start_epoch: 100,
-            end_epoch: 200,
-            storage_size: '2048'
+          // Using storage_cost and storage_rebate properties from BlobObject interface
+          storage_cost: {
+            value: BigInt(2048).toString()
+          },
+          storage_rebate: {
+            value: '0'
           },
           deletable: true
         }
       });
 
-      mockWalrusClient.readBlob.mockResolvedValueOnce(imageBuffer);
+      mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array(imageBuffer));
 
       const result = await storage.uploadTodoImage(mockImagePath, 'Test Todo', true);
       expect(result).toBe('https://testnet.wal.app/blob/test-blob-id');
@@ -297,7 +388,7 @@ describe('WalrusImageStorage', () => {
           signer: expect.anything(),
           attributes: expect.objectContaining({
             title: 'Test Todo',
-            completed: true,
+            completed: 'true', // Changed to string as per the updated interface
             contentType: 'image/jpeg',
             filename: 'image.jpg',
             type: 'todo-nft-image',

@@ -1,8 +1,11 @@
 import { SuiClient } from '@mysten/sui.js/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError } from '../types/error';
+import { StorageError, ValidationError, BlockchainError } from '../types/errors';
 import { execSync } from 'child_process';
 import { handleError } from './error-handler';
+import { WalrusClientAdapter } from './adapters/walrus-client-adapter';
+import { Logger } from './Logger';
 
 interface MoveStruct {
   [key: string]: any;
@@ -47,8 +50,12 @@ export class StorageManager {
 
   constructor(
     private suiClient: SuiClient,
-    private walrusClient: WalrusClient,
-    private address: string
+    private walrusClient: WalrusClient | WalrusClientAdapter,
+    private address: string,
+    private config?: {
+      minAllocation?: bigint;
+      checkThreshold?: number;
+    }
   ) {}
 
   /**
@@ -409,5 +416,123 @@ export class StorageManager {
         storage_size: size
       }
     };
+  }
+
+  /**
+   * Ensures sufficient storage is allocated for the given size
+   * @param requiredStorage Size of storage needed in bytes (as BigInt)
+   * @throws {StorageError} if insufficient storage is available
+   * @throws {ValidationError} if balance data is missing or invalid
+   * @throws {BlockchainError} if client errors occur
+   */
+  async ensureStorageAllocated(requiredStorage: bigint): Promise<void> {
+    try {
+      const walBalance = await this.walrusClient.getWalBalance();
+      if (!walBalance) {
+        throw new ValidationError('Unable to fetch WAL balance');
+      }
+
+      const minAllocation = this.config?.minAllocation || BigInt(1000);
+      if (BigInt(walBalance) < minAllocation) {
+        throw new StorageError(`Insufficient WAL tokens. Minimum ${minAllocation} WAL required, but only ${walBalance} WAL available.`);
+      }
+
+      const storageUsage = await this.walrusClient.getStorageUsage();
+      if (!storageUsage) {
+        throw new ValidationError('Unable to fetch storage usage');
+      }
+
+      const usedStorage = BigInt(storageUsage.used);
+      const totalStorage = BigInt(storageUsage.total);
+      const availableStorage = totalStorage - usedStorage;
+
+      if (availableStorage < requiredStorage) {
+        throw new StorageError(`Insufficient storage. Required: ${requiredStorage}, Available: ${availableStorage}`);
+      }
+
+      // Check if storage is below threshold
+      const checkThreshold = this.config?.checkThreshold || 20;
+      const usagePercentage = Number((usedStorage * BigInt(100)) / totalStorage);
+      
+      if (usagePercentage > (100 - checkThreshold)) {
+        const logger = Logger.getInstance();
+        logger.warn('Storage allocation running low', {
+          used: usedStorage.toString(),
+          total: totalStorage.toString(),
+          usagePercentage
+        });
+      }
+    } catch (error) {
+      if (error instanceof StorageError || error instanceof ValidationError) {
+        throw error;
+      }
+      
+      if ((error as Error).message.includes('balance')) {
+        throw new ValidationError(`${(error as Error).message}`);
+      }
+      
+      throw new BlockchainError(`${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Calculates the amount of storage required for a file
+   * @param sizeBytes File size in bytes
+   * @param days Number of days to store
+   * @returns Required storage tokens as BigInt
+   * @throws {ValidationError} for invalid inputs
+   */
+  calculateRequiredStorage(sizeBytes: number, days: number): bigint {
+    if (sizeBytes <= 0) {
+      throw new ValidationError('File size must be greater than zero');
+    }
+
+    if (days <= 0) {
+      throw new ValidationError('Storage duration must be greater than zero');
+    }
+
+    // Basic calculation: 1 WAL per MB per day + safety margin
+    const mbSize = sizeBytes / (1024 * 1024);
+    const requiredWal = Math.ceil(mbSize * days);
+    
+    // Add 1 WAL as safety margin
+    return BigInt(requiredWal + 1);
+  }
+
+  /**
+   * Get current storage allocation status
+   * @returns Storage allocation information
+   */
+  async getStorageAllocation(): Promise<{
+    allocated: bigint;
+    used: bigint;
+    available: bigint;
+    minRequired: bigint;
+  }> {
+    try {
+      const walBalance = await this.walrusClient.getWalBalance();
+      const storageUsage = await this.walrusClient.getStorageUsage();
+
+      if (!storageUsage) {
+        throw new ValidationError('Unable to fetch storage usage');
+      }
+
+      const allocated = BigInt(storageUsage.total);
+      const used = BigInt(storageUsage.used);
+      const available = allocated - used;
+      const minRequired = this.config?.minAllocation || BigInt(1000);
+
+      return {
+        allocated,
+        used,
+        available,
+        minRequired
+      };
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+      throw new BlockchainError(`Failed to get storage allocation: ${(error as Error).message}`);
+    }
   }
 }

@@ -19,7 +19,7 @@ import {
   type GetStorageConfirmationOptions,
   type ReadBlobOptions
 } from '@mysten/walrus';
-import { type WalrusClientExt } from '../client';
+import { type WalrusClient, type WalrusClientExt } from '../client';
 import { Transaction, TransactionType } from '../transaction';
 import { Signer } from '@mysten/sui.js/cryptography';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
@@ -124,16 +124,23 @@ export interface UnifiedWalrusClient {
  * and adapts different WalrusClient implementations
  */
 export class WalrusClientAdapter implements UnifiedWalrusClient {
-  private walrusClient: OriginalWalrusClient | Partial<WalrusClientExt>;
+  private walrusClient: OriginalWalrusClient | WalrusClient | Partial<WalrusClientExt>;
   
-  constructor(walrusClient: OriginalWalrusClient | Partial<WalrusClientExt>) {
+  constructor(walrusClient: OriginalWalrusClient | WalrusClient | Partial<WalrusClientExt>) {
     this.walrusClient = walrusClient;
   }
   
   /**
    * Gets the underlying WalrusClient implementation
    */
-  public getWalrusClient(): OriginalWalrusClient | Partial<WalrusClientExt> {
+  public getWalrusClient(): OriginalWalrusClient | WalrusClient | Partial<WalrusClientExt> {
+    return this.walrusClient;
+  }
+  
+  /**
+   * Gets the underlying client (alias for getWalrusClient for compatibility)
+   */
+  public getUnderlyingClient(): OriginalWalrusClient | WalrusClient | Partial<WalrusClientExt> {
     return this.walrusClient;
   }
   

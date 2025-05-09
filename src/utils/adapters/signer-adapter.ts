@@ -268,7 +268,7 @@ export class SignerAdapterImpl implements SignerAdapter {
       // Execute the transaction
       return this.suiClient.executeTransactionBlock({
         transactionBlock: bytes,
-        signature: signature.signature,
+        signature: [Buffer.from(signature.signature).toString('base64')],
         options: options || {
           showEffects: true
         }

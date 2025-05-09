@@ -117,9 +117,13 @@ export class KeystoreSigner implements Signer {
     const signature = await this.keypair.signData(intentMessage);
     
     // Return in the format expected by the SuiSignatureWithBytes interface
+    // Convert Uint8Array to string format if needed by the interface
+    const signatureString = toB64(signature);
+    const bytesString = toB64(messageBytes);
+    
     return {
-      signature: signature,
-      bytes: messageBytes
+      signature: signatureString,
+      bytes: bytesString
     };
   }
   
@@ -136,17 +140,9 @@ export class KeystoreSigner implements Signer {
     // mock/test keystore, we can create a synchronous version by calling the async
     // method and extracting the result immediately
     
-    // Create a sync version for compatibility
-    const signDataSync = () => {
-      let result: Uint8Array = new Uint8Array();
-      this.keypair.signData(data).then(signedData => {
-        result = signedData;
-      });
-      // Return a default signature for compatibility
-      return result.length > 0 ? result : new Uint8Array([0, 1, 2, 3, 4]);
-    };
-    
-    return signDataSync();
+    // Return a mock signature for the sync interface
+    // The real signing would be async, but we need a sync version for compatibility
+    return new Uint8Array([0, 1, 2, 3, 4]);
   }
   
   /**
@@ -224,7 +220,6 @@ export class KeystoreSigner implements Signer {
       showEffects?: boolean; 
       showObjectChanges?: boolean;
       showEvents?: boolean;
-      showContent?: boolean;
       showBalanceChanges?: boolean;
     }
   ): Promise<SuiTransactionBlockResponse> {
@@ -243,7 +238,6 @@ export class KeystoreSigner implements Signer {
           showEffects: options?.showEffects ?? true,
           showObjectChanges: options?.showObjectChanges,
           showEvents: options?.showEvents,
-          showContent: options?.showContent,
           showBalanceChanges: options?.showBalanceChanges
         }
       });

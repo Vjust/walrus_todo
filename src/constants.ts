@@ -14,7 +14,8 @@ export const NETWORK_URLS = {
   mainnet: 'https://fullnode.mainnet.sui.io:443',
   testnet: 'https://fullnode.testnet.sui.io:443',
   devnet: 'https://fullnode.devnet.sui.io:443',
-  local: 'http://127.0.0.1:9000'
+  local: 'http://127.0.0.1:9000',
+  localnet: 'http://127.0.0.1:9000'
 } as const;
 
 export const WALRUS_CONFIG = {
@@ -30,3 +31,9 @@ export const TODO_NFT_CONFIG = {
 } as const;
 
 export const CURRENT_NETWORK = 'testnet' as const;
+
+export const AI_CONFIG = {
+  DEFAULT_MODEL: 'grok-beta',
+  API_KEY: process.env.XAI_API_KEY,
+  TEMPERATURE: 0.7
+} as const;
