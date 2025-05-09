@@ -72,31 +72,31 @@ export class MockKeypair {
     return new Uint8Array(64).fill(2);
   }
 
-  async signData(data: Uint8Array): Promise<{ signature: string; bytes: string }> {
+  async signData(data: Uint8Array): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
     return {
-      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
-      bytes: Buffer.from(data).toString('base64')
+      signature: new Uint8Array(64).fill(2),
+      bytes: data
     };
   }
   
-  async signTransaction(transaction: any): Promise<{ signature: string; bytes: string }> {
+  async signTransaction(transaction: any): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
     return {
-      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
-      bytes: 'mock-serialized-tx-bytes'
+      signature: new Uint8Array(64).fill(2),
+      bytes: new Uint8Array([1, 2, 3, 4, 5]) // Mock transaction bytes
     };
   }
   
-  async signPersonalMessage(message: Uint8Array): Promise<{ signature: string; bytes: string }> {
+  async signPersonalMessage(message: Uint8Array): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
     return {
-      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
-      bytes: Buffer.from(message).toString('base64')
+      signature: new Uint8Array(64).fill(2),
+      bytes: message
     };
   }
   
-  async signWithIntent(message: Uint8Array, intent: string): Promise<{ signature: string; bytes: string }> {
+  async signWithIntent(message: Uint8Array, intent: string): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
     return {
-      signature: Buffer.from(new Uint8Array(64).fill(2)).toString('base64'),
-      bytes: Buffer.from(message).toString('base64')
+      signature: new Uint8Array(64).fill(2),
+      bytes: message
     };
   }
   

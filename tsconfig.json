@@ -17,7 +17,7 @@
       "./node_modules/@types",
       "./src/types"
     ],
-    "types": ["node", "jest", "@testing-library/jest-dom"],
+    "types": ["node", "jest", "@testing-library/jest-dom", "./src/types/jest-extended"],
     "resolveJsonModule": true,
     "outDir": "./dist",
     "importHelpers": true,
@@ -52,8 +52,7 @@
     "allowUmdGlobalAccess": true, /* Allow accessing UMD globals from modules */
     
     /* Enhanced compatibility settings */
-    "suppressImplicitAnyIndexErrors": true, /* Suppress noImplicitAny errors for indexing objects */
-    "suppressExcessPropertyErrors": true,   /* Handle excess properties in object literals */
+    /* Removed deprecated options suppressImplicitAnyIndexErrors and suppressExcessPropertyErrors */
     "importsNotUsedAsValues": "remove",     /* Remove imports only used for types */
     
     /* Type checking optimizations */

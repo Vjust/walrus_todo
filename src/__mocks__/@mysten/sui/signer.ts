@@ -1,9 +1,11 @@
-import { IntentScope, Signer, SignatureWithBytes } from '@mysten/sui.js/cryptography';
+import { IntentScope, Signer } from '@mysten/sui.js/cryptography';
 import { Ed25519PublicKey } from './cryptography/ed25519';
 import { Transaction } from '@mysten/sui.js/transactions';
 import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
 import { SignerAdapter } from '../../../utils/adapters/signer-adapter';
+import type { SignatureWithBytes } from '../../../types/adapters/SignerAdapter';
 import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
+import { TransactionType } from '../../../types/transaction';
 
 // Define a mock implementation that implements the SignerAdapter interface
 // Ensure SignatureWithBytes uses Uint8Array for both signature and bytes properties
@@ -27,30 +29,30 @@ export class SignerWithProvider implements SignerAdapter {
     return new Uint8Array([1, 2, 3, 4, 5]);
   }
 
-  async signTransaction(transaction: Transaction): Promise<SignatureWithBytes> {
+  async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
     // Cast to required type - we're in a mock file so this is acceptable
     let txBlock = transaction;
       
-    // Use string format as required by SignatureWithBytes interface
+    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
-      signature: "mock-signature",
-      bytes: "mock-bytes"
+      signature: new Uint8Array([1, 2, 3, 4, 5]),
+      bytes: new Uint8Array([6, 7, 8, 9, 10])
     };
   }
 
   async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
-    // Use string format as required by SignatureWithBytes interface
+    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
-      signature: "mock-signature",
-      bytes: "mock-bytes"
+      signature: new Uint8Array([1, 2, 3, 4, 5]),
+      bytes: new Uint8Array([6, 7, 8, 9, 10])
     };
   }
 
-  async signWithIntent(message: Uint8Array, intent: IntentScope | string): Promise<SignatureWithBytes> {
-    // Use string format as required by SignatureWithBytes interface
+  async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
+    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
-      signature: "mock-signature",
-      bytes: "mock-bytes"
+      signature: new Uint8Array([1, 2, 3, 4, 5]),
+      bytes: new Uint8Array([6, 7, 8, 9, 10])
     };
   }
 
@@ -75,10 +77,10 @@ export class SignerWithProvider implements SignerAdapter {
   
   // Implementation matching extended expectations with correct signature
   async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
-    // Use string format as required by SignatureWithBytes interface
+    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
-      signature: "mock-signature",
-      bytes: "mock-bytes"
+      signature: new Uint8Array([1, 2, 3, 4, 5]),
+      bytes: new Uint8Array([6, 7, 8, 9, 10])
     };
   }
 
