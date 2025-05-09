@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { Signer } from '@mysten/sui.js/cryptography';
+import { SuiClient } from '@mysten/sui.js/client';
 import { ExpiryMonitor } from '../../utils/ExpiryMonitor';
 import { StorageManager } from '../../utils/StorageManager';
 import { VaultManager, BlobRecord } from '../../utils/VaultManager';
@@ -117,15 +118,21 @@ describe('Storage Allocation Integration', () => {
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
-    storageManager = new StorageManager(mockWalrusClient, {
-      minAllocation: '1000',
-      checkThreshold: 20,
-      signer: mockSigner
-    });
+    // Create a mock adapter that implements the required getUnderlyingClient method
+    const mockWalrusClientAdapter = {
+      ...mockWalrusClient,
+      getUnderlyingClient: jest.fn().mockReturnValue(mockWalrusClient)
+    };
+
+    storageManager = new StorageManager(
+      {} as SuiClient, // Mock SuiClient
+      mockWalrusClientAdapter as any,
+      'mock-address' // Mock address
+    );
 
     monitor = new ExpiryMonitor(
       mockVaultManager,
-      mockWalrusClient,
+      mockWalrusClientAdapter as any,
       jest.fn().mockResolvedValue(undefined),
       jest.fn().mockResolvedValue(undefined),
       {

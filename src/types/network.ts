@@ -1,1 +1,1 @@
-export type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'local';
+export type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'local' | 'localnet';

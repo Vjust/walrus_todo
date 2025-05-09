@@ -19,7 +19,7 @@ interface MockedWalrusClient extends WalrusClient {
 
 interface MockedSuiClient extends SuiClient {
   connect: jest.Mock<Promise<void>, []>;
-  getBalance: jest.Mock<Promise<{ coinType: string; totalBalance: string; coinObjectCount: number; lockedBalance: { number: string } }>, [string]>;
+  getBalance: jest.Mock<Promise<{ coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: { number: bigint }; coinObjectId: string }>, [string]>;
   getLatestSuiSystemState: jest.Mock<Promise<{ epoch: string }>, []>;
   getOwnedObjects: jest.Mock<Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null }>, [{ owner: string }]>;
   signAndExecuteTransactionBlock: jest.Mock<Promise<{ digest: string; effects: { status: { status: string }; created?: { reference: { objectId: string } }[] } }>, [TransactionBlock]>;
@@ -39,12 +39,13 @@ describe('WalrusStorage', () => {
 
   beforeEach(() => {
     mockSuiClient = {
-      getBalance: jest.fn<Promise<{ coinType: string; totalBalance: string; coinObjectCount: number; lockedBalance: { number: string } }>, [string]>()
+      getBalance: jest.fn<Promise<{ coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: { number: bigint }; coinObjectId: string }>, [string]>()
         .mockResolvedValue({
           coinType: 'WAL',
-          totalBalance: '1000',
+          totalBalance: BigInt(1000),
           coinObjectCount: 1,
-          lockedBalance: { number: '0' }
+          lockedBalance: { number: BigInt(0) },
+          coinObjectId: 'mock-coin-object-id'
         }),
       getLatestSuiSystemState: jest.fn<Promise<{ epoch: string }>, []>()
         .mockResolvedValue({ epoch: '1' }),
@@ -402,9 +403,10 @@ describe('WalrusStorage', () => {
       // Mock low WAL balance
       mockSuiClient.getBalance.mockResolvedValueOnce({
         coinType: 'WAL',
-        totalBalance: '50', // Below minimum required
+        totalBalance: BigInt(50), // Below minimum required
         coinObjectCount: 1,
-        lockedBalance: { number: '0' }
+        lockedBalance: { number: BigInt(0) },
+        coinObjectId: 'mock-coin-object-id'
       });
 
       await expect(storage.storeTodo(mockTodo))
@@ -419,9 +421,10 @@ describe('WalrusStorage', () => {
       // Mock sufficient WAL balance to test other errors
       mockSuiClient.getBalance.mockResolvedValueOnce({
         coinType: 'WAL',
-        totalBalance: '1000',
+        totalBalance: BigInt(1000),
         coinObjectCount: 1,
-        lockedBalance: { number: '0' }
+        lockedBalance: { number: BigInt(0) },
+        coinObjectId: 'mock-coin-object-id'
       });
 
       await expect(storage.storeTodo(mockTodo))

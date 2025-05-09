@@ -19,7 +19,7 @@ interface LogEntry {
 
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance<typeof console.log>[];
+  let mockConsole: jest.SpyInstance<void, any, any>[];
   let mockHandler: jest.Mock;
 
   beforeEach(() => {
@@ -28,9 +28,12 @@ describe('Logger', () => {
     logger.clearHandlers();
 
     // Mock console methods
-    mockConsole = ['debug', 'info', 'warn', 'error'].map(level =>
-      jest.spyOn(console, level).mockImplementation()
-    );
+    mockConsole = [
+      jest.spyOn(console, 'debug').mockImplementation(),
+      jest.spyOn(console, 'info').mockImplementation(),
+      jest.spyOn(console, 'warn').mockImplementation(),
+      jest.spyOn(console, 'error').mockImplementation()
+    ];
 
     // Create mock handler
     mockHandler = jest.fn();

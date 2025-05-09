@@ -194,8 +194,41 @@ export class BlobVerificationManager {
         throw new CLIError('Failed to retrieve blob metadata', 'WALRUS_METADATA_ERROR');
       }
       
-      // Cast the response to BlobMetadata to ensure it has the required structure
-      const metadata = response as unknown as BlobMetadata;
+      // Cast the response to BlobMetadata and ensure it has the required structure
+      let metadata: BlobMetadata;
+      
+      // Check if response has the required structure
+      if (response && typeof response === 'object') {
+        if (!('V1' in response) || !('$kind' in response)) {
+          // Add the required properties if missing
+          const responseObj = response as Record<string, any>;
+          metadata = {
+            ...(responseObj as object),
+            V1: 'V1' in responseObj ? responseObj.V1 : {
+              encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+              unencoded_length: '0',
+              hashes: [{
+                primary_hash: {
+                  Digest: new Uint8Array(),
+                  $kind: 'Digest'
+                },
+                secondary_hash: {
+                  Sha256: new Uint8Array(),
+                  $kind: 'Sha256'
+                }
+              }],
+              $kind: 'V1'
+            },
+            $kind: 'V1'
+          } as BlobMetadata;
+        } else {
+          metadata = response as BlobMetadata;
+        }
+      } else {
+        // If response is null or not an object, use default metadata
+        metadata = this.createDefaultMetadata();
+      }
+      
       const actualAttributes = (metadata.V1 || {}) as Record<string, any>;
       const mismatches: Array<{ key: string; expected: any; actual: any }> = [];
 
@@ -355,7 +388,8 @@ export class BlobVerificationManager {
         let metadataVerification = {
           valid: true,
           actualAttributes: {} as Record<string, any>,
-          mismatches: [] as Array<{ key: string; expected: any; actual: any }>
+          mismatches: [] as Array<{ key: string; expected: any; actual: any }>,
+          metadata: this.createDefaultMetadata()
         };
         if (verifyAttributes) {
           const result = await this.verifyMetadata(blobId, expectedAttributes);
@@ -396,8 +430,7 @@ export class BlobVerificationManager {
           attempts,
           poaComplete: contractVerificationComplete.poaComplete,
           providers: contractVerificationComplete.providers,
-          metadata: 'metadata' in metadataVerification && metadataVerification.metadata ? 
-            metadataVerification.metadata : defaultMetadata
+          metadata: metadataVerification.metadata || this.createDefaultMetadata()
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));

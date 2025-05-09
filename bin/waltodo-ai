@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# This script is a special wrapper for AI operations
+# with waltodo that ensures proper color output and environment variables
+
+# Determine the project root directory dynamically
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." &> /dev/null && pwd )"
+
+# Load environment variables from .env file if it exists
+if [ -f "$PROJECT_ROOT/.env" ]; then
+  # Use a temporary file to store the exported variables
+  TEMP_ENV_FILE=$(mktemp)
+  
+  # Convert .env file content to export statements
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Skip comments and empty lines
+    [[ $line =~ ^#.*$ || -z $line ]] && continue
+    # Export the variable
+    echo "export $line" >> "$TEMP_ENV_FILE"
+  done < "$PROJECT_ROOT/.env"
+  
+  # Source the temporary file
+  source "$TEMP_ENV_FILE"
+  
+  # Clean up
+  rm "$TEMP_ENV_FILE"
+  
+  echo "Loaded environment variables from .env file"
+fi
+
+# Check if XAI_API_KEY is set
+if [ -z "$XAI_API_KEY" ]; then
+  echo "Error: XAI_API_KEY environment variable is not set."
+  echo "Please set it in your .env file or provide it with --apiKey flag."
+  exit 1
+fi
+
+# Check if at least one argument is provided
+if [ $# -eq 0 ]; then
+  echo "Error: AI operation is required."
+  echo "Usage: waltodo-ai <operation> [options]"
+  echo "Operations: summarize, categorize, prioritize, suggest, analyze"
+  exit 1
+fi
+
+# Get operation
+OPERATION="$1"
+shift
+
+# Default list name
+LIST_NAME="default"
+
+# Parse arguments
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -l|--list)
+      if [ $# -gt 1 ]; then
+        LIST_NAME="$2"
+        shift 2
+      else
+        echo "Error: List name is required after -l/--list flag"
+        exit 1
+      fi
+      ;;
+    *)
+      # Pass through other arguments
+      ARGS+=" $1"
+      shift
+      ;;
+  esac
+done
+
+echo "Running AI operation: $OPERATION on list: $LIST_NAME"
+
+# Force colors in terminal
+export FORCE_COLOR=true
+
+# Run the command with node directly to bypass intermediate wrappers
+echo "Debug: Running command with these parameters:"
+echo "  Operation: $OPERATION"
+echo "  List: $LIST_NAME"
+echo "  Args: $ARGS"
+echo "  API Key: [${XAI_API_KEY:0:5}...]"
+echo "  Command: node dist/src/commands/ai.js $OPERATION --list $LIST_NAME $ARGS"
+
+# Use env to pass API key
+cd "$PROJECT_ROOT" && FORCE_COLOR=1 node dist/src/commands/ai.js "$OPERATION" --list "$LIST_NAME" $ARGS
+
+exit $?

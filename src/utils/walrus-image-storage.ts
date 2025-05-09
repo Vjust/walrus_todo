@@ -147,6 +147,12 @@ export class WalrusImageStorage {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           timeout: 30000
+        },
+        // Add the required packageConfig property for newer versions of WalrusClient
+        packageConfig: {
+          packageId: '', // Will be auto-discovered by WalrusClient
+          storage: '', // Will be auto-discovered by WalrusClient
+          blob: '' // Will be auto-discovered by WalrusClient
         }
       };
       const walrusClient = new WalrusClient(compatibleConfig);

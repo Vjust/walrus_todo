@@ -1,5 +1,6 @@
-// Use require for chalk since it's an ESM module
-import chalk from 'chalk';
+// Fix import for chalk with esModuleInterop
+import * as chalkModule from 'chalk';
+const chalk = chalkModule.default || chalkModule;
 import { isErrorWithMessage, getErrorMessage } from '../types/error';
 
 /**

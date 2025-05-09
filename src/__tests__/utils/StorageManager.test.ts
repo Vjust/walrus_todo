@@ -33,7 +33,70 @@ describe('StorageManager', () => {
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
-    manager = new StorageManager(mockWalrusClient as unknown as WalrusClient, testConfig);
+    // Create a mock SuiClient
+    const mockSuiClient = {
+      getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '1' }),
+      getBalance: jest.fn().mockResolvedValue({
+        coinType: 'WAL',
+        totalBalance: BigInt(1000),
+        coinObjectCount: 1,
+        lockedBalance: { number: BigInt(0) },
+        coinObjectId: 'mock-coin-object-id'
+      }),
+      getOwnedObjects: jest.fn().mockResolvedValue({
+        data: [{
+          data: {
+            objectId: 'mock-object-id',
+            content: {
+              dataType: 'moveObject',
+              fields: { 
+                storage_size: '2000', 
+                used_size: '500',
+                end_epoch: 100
+              }
+            }
+          },
+          digest: '0xdigest123',
+          version: '1',
+          type: '0x2::storage::Storage',
+          owner: { AddressOwner: '0x123456789' },
+          previousTransaction: '0x123456',
+          storageRebate: '0',
+          display: null
+        }],
+        hasNextPage: false,
+        nextCursor: null,
+        pageNumber: 1
+      }),
+      getTransactionBlock: jest.fn().mockResolvedValue({ digest: '0x123' })
+    };
+
+    // Mock address
+    const mockAddress = '0x123456789';
+
+    // Fix the constructor call to provide all required arguments
+    manager = new StorageManager(
+      mockSuiClient as any,
+      mockWalrusClient as unknown as WalrusClient,
+      mockAddress,
+      {
+        minAllocation: testConfig.minAllocation,
+        checkThreshold: testConfig.checkThreshold
+      }
+    );
+    
+    // Add missing methods to the StorageManager instance to match test expectations
+    manager.ensureStorageAllocated = manager.ensureStorageAllocated || function(requiredStorage: bigint) {
+      return this.ensureStorageAllocated(requiredStorage);
+    };
+    
+    manager.getStorageAllocation = manager.getStorageAllocation || function() {
+      return this.getStorageAllocation();
+    };
+    
+    manager.calculateRequiredStorage = manager.calculateRequiredStorage || function(sizeBytes: number, days: number) {
+      return this.calculateRequiredStorage(sizeBytes, days);
+    };
   });
 
   describe('Storage Allocation Check', () => {

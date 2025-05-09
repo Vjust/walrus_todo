@@ -13,7 +13,7 @@ import type {
 import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import type { Signer } from '@mysten/sui.js/cryptography';
 import { BlobInfo, BlobMetadataShape } from '../../types/walrus';
-import { WalrusClientExt } from '../../types/client';
+import { WalrusClient, WalrusClientExt } from '../../types/client';
 import { SignerAdapter } from './signer-adapter';
 import { TransactionBlockAdapter, createTransactionBlockAdapter } from './transaction-adapter';
 import { TransactionType } from '../../types/transaction';
@@ -140,7 +140,7 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
   private clientType: 'original' | 'custom' | 'extended';
   private _experimental: { getBlobData: () => Promise<any> };
 
-  constructor(client: OriginalWalrusClient | any) {
+  constructor(client: OriginalWalrusClient | WalrusClient | WalrusClientExt | any) {
     if (!client) {
       throw new Error('Cannot initialize WalrusClientAdapter with null or undefined client');
     }
@@ -152,6 +152,9 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
       this.clientType = 'extended';
     } else if (client && 'experimental' in client && client.experimental) {
       this.clientType = 'extended';
+    } else if ('getBlobObject' in client && typeof client.getBlobObject === 'function' &&
+               'verifyPoA' in client && typeof client.verifyPoA === 'function') {
+      this.clientType = 'custom'; // Our custom WalrusClient implementation
     } else {
       this.clientType = 'original';
     }
@@ -547,9 +550,8 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
         throw new Error('Client returned null or undefined transaction block');
       }
       
-      // Create an adapter that can work with our system
-      const adapter = createTransactionBlockAdapter(txBlock);
-      return adapter;
+      // Return the transaction block directly, which is compatible with TransactionType
+      return txBlock;
     } catch (err) {
       console.error('Error creating storage block:', err);
       throw new Error(`Failed to create storage block: ${err.message}`);
@@ -725,7 +727,7 @@ export class WalrusClientAdapterImpl implements WalrusClientAdapter {
  * Factory function to create a WalrusClientAdapter from an existing client
  */
 export function createWalrusClientAdapter(
-  client: OriginalWalrusClient | any
+  client: OriginalWalrusClient | WalrusClient | WalrusClientExt | any
 ): WalrusClientAdapter {
   return new WalrusClientAdapterImpl(client);
 }

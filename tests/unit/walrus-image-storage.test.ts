@@ -23,7 +23,7 @@ interface MockedWalrusClient extends Partial<WalrusClient> {
 
 interface MockedSuiClient extends Partial<SuiClient> {
   connect: jest.MockedFunction<() => Promise<void>>;
-  getBalance: jest.MockedFunction<(address: string) => Promise<{ coinType: string; totalBalance: string; coinObjectCount: number; lockedBalance: { number: string } }>>;
+  getBalance: jest.MockedFunction<(address: string) => Promise<{ coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: { number: bigint }; coinObjectId: string }>>;
   getLatestSuiSystemState: jest.MockedFunction<() => Promise<{ epoch: string }>>;
   getOwnedObjects: jest.MockedFunction<(params: { owner: string }) => Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null }>>;
   signAndExecuteTransactionBlock: jest.MockedFunction<(tx: TransactionBlock) => Promise<{ digest: string; effects: { status: { status: string }; created?: { reference: { objectId: string } }[] } }>>;
@@ -51,9 +51,10 @@ describe('WalrusImageStorage', () => {
     mockSuiClient = {
       getBalance: jest.fn().mockResolvedValue({
         coinType: 'WAL',
-        totalBalance: '1000',
+        totalBalance: BigInt(1000),
         coinObjectCount: 1,
-        lockedBalance: { number: '0' }
+        lockedBalance: { number: BigInt(0) },
+        coinObjectId: 'mock-coin-object-id'
       }),
       getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '1' }),
       getOwnedObjects: jest.fn().mockResolvedValue({

@@ -18,8 +18,9 @@ import { StorageManager } from './storage-manager';
 // Import the storage reuse analyzer as a type to avoid direct dependency
 import type { StorageReuseAnalyzer } from './storage-reuse-analyzer';
 // Import the Transaction type
-import { Transaction, createTransaction } from '../types/transaction';
+import { Transaction, createTransaction, TransactionType } from '../types/transaction';
 import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
+import { createTransactionBlockAdapter } from './adapters/transaction-adapter';
 
 interface VerificationResult {
   details?: {
@@ -143,21 +144,33 @@ export class WalrusStorage {
   }
 
   // Proper typing for transaction block with adapter compatibility
-  private async createStorageBlock(size: number, epochs: number): Promise<Transaction> {
-    // Use the factory function from transaction.ts to create a proper Transaction object
-    const tx = createTransaction();
-    
-    // Use the methods defined in the Transaction interface
-    tx.moveCall({
-      target: '0x2::storage::create_storage',
-      arguments: [
-        tx.pure(size),
-        tx.pure(epochs),
-        tx.object('0x6') // Use explicit gas object reference instead of tx.gas
-      ]
-    });
-    
-    return tx;
+  private async createStorageBlock(size: number, epochs: number): Promise<TransactionType> {
+    try {
+      // Try to use the WalrusClient's createStorageBlock implementation first
+      if (this.walrusClient && 'createStorageBlock' in this.walrusClient) {
+        return await this.walrusClient.createStorageBlock(size, epochs);
+      }
+      
+      // If that fails or doesn't exist, create our own transaction block
+      // Use the factory function from transaction.ts to create a proper Transaction object
+      const tx = createTransaction();
+      
+      // Use the methods defined in the Transaction interface
+      tx.moveCall({
+        target: '0x2::storage::create_storage',
+        arguments: [
+          tx.pure(size),
+          tx.pure(epochs),
+          tx.object('0x6') // Use explicit gas object reference instead of tx.gas
+        ]
+      });
+      
+      // Return the transaction block directly
+      return tx;
+    } catch (error) {
+      console.error('Error creating storage transaction block:', error);
+      throw new Error(`Failed to create storage block: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private validateTodoListData(todoList: TodoList): void {
@@ -1034,9 +1047,11 @@ export class WalrusStorage {
 
   private initializeManagers(): void {
     if (!this.storageManager) {
+      // Pass the WalrusClientAdapter's underlying client to match the StorageManager's expected type
+      const walrusClient = this.walrusClient.getUnderlyingClient();
       this.storageManager = new StorageManager(
         this.suiClient, 
-        this.walrusClient,
+        walrusClient,
         this.getActiveAddress()
       );
     }
@@ -1044,9 +1059,12 @@ export class WalrusStorage {
     if (!this.storageReuseAnalyzer) {
       // Use dynamic import to avoid direct dependency
       const { StorageReuseAnalyzer } = require('./storage-reuse-analyzer');
+      
+      // Pass the underlying client to match the analyzer's expected type
+      const walrusClient = this.walrusClient.getUnderlyingClient();
       this.storageReuseAnalyzer = new StorageReuseAnalyzer(
         this.suiClient,
-        this.walrusClient,
+        walrusClient,
         this.getActiveAddress()
       );
     }

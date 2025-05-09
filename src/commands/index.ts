@@ -2,6 +2,7 @@
 import AccountShowCommand from './account/show';
 import AccountSwitchCommand from './account/switch';
 import AddCommand from './add';
+import AiCommand from './ai';
 import CheckCommand from './check';
 import CompleteCommand from './complete';
 import ConfigureCommand from './configure';
@@ -20,13 +21,14 @@ export {
   AccountShowCommand,
   AccountSwitchCommand,
   AddCommand,
+  AiCommand,
   CheckCommand,
   CompleteCommand,
   ConfigureCommand,
   CreateCommand,
   DeleteCommand,
   DeployCommand,
-  ListCommand, // Added missing export
+  ListCommand,
   RetrieveCommand,
   ShareCommand,
   SimpleCommand,
