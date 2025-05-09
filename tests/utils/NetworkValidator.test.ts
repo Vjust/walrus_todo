@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { execSync } from 'child_process';
 import { NetworkValidator, NetworkEnvironment } from '../../../src/utils/NetworkValidator';
@@ -10,7 +10,7 @@ jest.mock('@mysten/walrus');
 describe('NetworkValidator', () => {
   let validator: NetworkValidator;
   let mockWalrusClient: jest.Mocked<WalrusClient>;
-  let mockExecSync: jest.SpyInstance;
+  let mockExecSync: jest.SpyInstance<typeof execSync>;
 
   beforeEach(() => {
     jest.clearAllMocks();
