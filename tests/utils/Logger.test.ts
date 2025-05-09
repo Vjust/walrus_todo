@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { Logger, LogLevel } from '../../../src/utils/Logger';
 import {
   WalrusError,
@@ -10,7 +10,7 @@ import {
 
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance<void, [message?: any, ...args: any[]], any>[];
+  let mockConsole: jest.SpyInstance<(message?: any, ...args: any[]) => void>[];
   let mockHandler: jest.Mock<void, [{ level: LogLevel; message: string; context?: any; error?: any }]>;
 
   beforeEach(() => {

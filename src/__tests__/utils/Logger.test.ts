@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { Logger, LogLevel } from '../../utils/Logger';
 import {
   WalrusError,
@@ -8,10 +8,19 @@ import {
   NetworkError
 } from '../../types/errors';
 
+// Define the LogEntry interface based on Logger implementation
+interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  error?: Error;
+  context?: Record<string, any>;
+}
+
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance<void, [message?: any, ...args: any[]], any>[];
-  let mockHandler: jest.Mock<void, [{ level: LogLevel; message: string; context?: any; error?: any }]>;
+  let mockConsole: jest.SpyInstance<typeof console.log>[];
+  let mockHandler: jest.Mock;
 
   beforeEach(() => {
     // Reset logger instance
@@ -46,14 +55,14 @@ describe('Logger', () => {
 
       // Verify log level and message content
       const calls = mockHandler.mock.calls;
-      expect(calls[0][0].level).toBe(LogLevel.DEBUG);
-      expect(calls[1][0].level).toBe(LogLevel.INFO);
-      expect(calls[2][0].level).toBe(LogLevel.WARN);
-      expect(calls[3][0].level).toBe(LogLevel.ERROR);
+      expect((calls[0][0] as LogEntry).level).toBe(LogLevel.DEBUG);
+      expect((calls[1][0] as LogEntry).level).toBe(LogLevel.INFO);
+      expect((calls[2][0] as LogEntry).level).toBe(LogLevel.WARN);
+      expect((calls[3][0] as LogEntry).level).toBe(LogLevel.ERROR);
 
       // Verify context is included
       calls.forEach(call => {
-        expect(call[0].context).toEqual(testContext);
+        expect((call[0] as LogEntry).context).toEqual(testContext);
       });
     });
 
@@ -144,7 +153,7 @@ describe('Logger', () => {
 
       logger.info('Test message', sensitiveContext);
 
-      const call = mockHandler.mock.calls[0][0];
+      const call = mockHandler.mock.calls[0][0] as LogEntry;
       expect(call.context).toEqual({
         password: '[REDACTED]',
         apiKey: '[REDACTED]',
@@ -172,7 +181,7 @@ describe('Logger', () => {
 
       logger.info('Test message', nestedContext);
 
-      expect(mockHandler.mock.calls[0][0].context).toEqual({
+      expect((mockHandler.mock.calls[0][0] as LogEntry).context).toEqual({
         data: {
           user: {
             password: '[REDACTED]',

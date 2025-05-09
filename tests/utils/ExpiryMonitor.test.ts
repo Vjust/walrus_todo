@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { ExpiryMonitor } from '../../../src/utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../../src/utils/VaultManager';
@@ -19,7 +19,7 @@ describe('ExpiryMonitor', () => {
   let mockWarningHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockRenewalHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockSigner: jest.Mocked<Signer>;
-  let mockExecSync: jest.SpyInstance;
+  let mockExecSync: jest.SpyInstance<typeof execSync>;
   let mockLogger: jest.Mocked<Logger>;
   
   beforeEach(() => {
@@ -78,7 +78,7 @@ describe('ExpiryMonitor', () => {
         registered_epoch: 1,
         size: '1024',
         encoding_type: 1,
-        certified_epoch: 1,
+        cert_epoch: 1,
         storage: {
           id: { id: 'mock-storage-id' },
           storage_size: '1000',
@@ -186,7 +186,7 @@ describe('ExpiryMonitor', () => {
         id: { id: testBlob.blobId },
         blob_id: testBlob.blobId,
         registered_epoch: 1,
-        certified_epoch: 1,
+        cert_epoch: 1,
         size: '1024',
         encoding_type: 1,
         storage: {
@@ -292,7 +292,7 @@ describe('ExpiryMonitor', () => {
         blob_id: blob.blobId,
         size: '1024',
         registered_epoch: 1,
-        certified_epoch: 1,
+        cert_epoch: 1,
         encoding_type: 1,
         storage: {
           id: { id: 'mock-storage-id' },
