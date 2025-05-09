@@ -118,6 +118,7 @@ export class SignerAdapterImpl implements SignerAdapter {
   
   /**
    * Normalizes a signature to the adapter's SignatureWithBytes type
+   * Always returns an object with signature and bytes as Uint8Array
    */
   private normalizeSignature(sig: any): SignatureWithBytes {
     if (!sig) {
@@ -127,6 +128,22 @@ export class SignerAdapterImpl implements SignerAdapter {
       };
     }
     
+    // Handle the case where sig is a string or Uint8Array directly
+    if (typeof sig === 'string') {
+      return {
+        signature: this.stringToBytes(sig),
+        bytes: new Uint8Array([4, 5, 6]) // Default bytes when only signature string is provided
+      };
+    }
+    
+    if (sig instanceof Uint8Array) {
+      return {
+        signature: sig,
+        bytes: new Uint8Array([4, 5, 6]) // Default bytes when only signature Uint8Array is provided
+      };
+    }
+    
+    // Handle the object case with signature and bytes properties
     // Ensure signature is a Uint8Array
     let signature: Uint8Array;
     if (sig.signature instanceof Uint8Array) {

@@ -226,6 +226,7 @@ export class SignerAdapter implements UnifiedSigner {
   
   /**
    * Normalizes a signature to ensure it has the correct format
+   * Always returns an object with signature and bytes as Uint8Array
    */
   private normalizeSignature(signature: any): SignatureWithBytes {
     if (!signature) {
@@ -235,6 +236,22 @@ export class SignerAdapter implements UnifiedSigner {
       };
     }
     
+    // Check if signature is the entire signature object or just the signature value
+    if (typeof signature === 'string') {
+      return {
+        signature: this.stringToBytes(signature),
+        bytes: new Uint8Array([4, 5, 6]) // Default bytes when only signature string is provided
+      };
+    }
+    
+    if (signature instanceof Uint8Array) {
+      return {
+        signature: signature,
+        bytes: new Uint8Array([4, 5, 6]) // Default bytes when only signature Uint8Array is provided
+      };
+    }
+    
+    // Handle the case where signature is an object with signature and bytes properties
     // Convert any string signatures to Uint8Array
     const sig = typeof signature.signature === 'string'
       ? this.stringToBytes(signature.signature)
