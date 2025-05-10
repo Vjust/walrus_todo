@@ -9,6 +9,8 @@ export interface Config {
   lastDeployment?: {
     packageId: string;
   };
+  packageId?: string;
+  registryId?: string;
 }
 
 export * from './todo';

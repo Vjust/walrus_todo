@@ -1,309 +1,423 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Flags, Args } from '@oclif/core';
+import BaseCommand from '../base-command';
+import { aiService, secureCredentialService } from '../services/ai';
+import { AIProvider } from '../types/adapters/AIModelAdapter';
 import chalk from 'chalk';
-import { TodoService } from '../services/todoService';
-import { AiService, TodoAIOperation } from '../services/ai/aiService';
-import { CLIError } from '../types/error';
-import { Todo } from '../types/todo';
+import { 
+  requireEnvironment, 
+  aiFlags, 
+  setEnvFromFlags 
+} from '../utils/CommandValidationMiddleware';
+import { getEnv, hasEnv } from '../utils/environment-config';
 
 /**
- * @class AiCommand
- * @description Command for AI-powered todo operations.
- * Provides AI capabilities for todo management including:
- * - Summarizing todo lists
- * - Categorizing todos by adding tags
- * - Suggesting priority levels
- * - Recommending new tasks based on existing ones
- * - Analyzing completion patterns and productivity insights
+ * AI commands for todo management
  */
-export default class AiCommand extends Command {
-  static description = 'Apply AI to your todos for insights and suggestions';
+export default class AI extends BaseCommand {
+  static description = 'AI operations for todo management';
 
   static examples = [
-    '<%= config.bin %> ai summarize',
-    '<%= config.bin %> ai categorize -i todo123',
-    '<%= config.bin %> ai prioritize -i "Buy groceries"',
-    '<%= config.bin %> ai suggest -l work',
-    '<%= config.bin %> ai analyze -l personal'
+    '$ walrus_todo ai suggest',
+    '$ walrus_todo ai analyze',
+    '$ walrus_todo ai summarize',
+    '$ walrus_todo ai categorize',
+    '$ walrus_todo ai prioritize',
+    '$ walrus_todo ai credentials add xai --key YOUR_KEY',
   ];
 
   static flags = {
+    ...BaseCommand.flags,
+    ...aiFlags,
     list: Flags.string({
       char: 'l',
-      description: 'Name of the todo list',
-      default: 'default'
+      description: 'List name to analyze',
+      required: false,
     }),
-    id: Flags.string({
-      char: 'i',
-      description: 'Todo ID or title to apply AI operations on',
-      required: false
+    verify: Flags.boolean({
+      char: 'v',
+      description: 'Verify AI operations on blockchain',
+      required: false,
+      default: false,
     }),
-    count: Flags.integer({
-      char: 'c',
-      description: 'Number of items to generate (for suggestions)',
-      default: 3
+    json: Flags.boolean({
+      description: 'Output as JSON',
+      required: false,
+      default: false,
     }),
-    apiKey: Flags.string({
-      char: 'k',
-      description: 'XAI API key (defaults to XAI_API_KEY environment variable)',
-      required: false
-    }),
-    apply: Flags.boolean({
-      char: 'a',
-      description: 'Apply AI suggestions automatically',
-      default: false
-    })
   };
 
   static args = {
     operation: Args.string({
       name: 'operation',
       description: 'AI operation to perform',
-      required: true,
-      options: ['summarize', 'categorize', 'prioritize', 'suggest', 'analyze']
+      required: false,
+      default: 'status',
+      options: ['status', 'help', 'summarize', 'categorize', 'prioritize', 'suggest', 'analyze'],
     })
   };
 
-  private todoService = new TodoService();
-  private aiService: AiService | null = null;
+  async run() {
+    const { args, flags } = await this.parse(AI);
 
-  async run(): Promise<void> {
-    // Ensure environment is properly configured
-    process.env.FORCE_COLOR = '1'; 
-    
+    // Set environment variables from flags
+    setEnvFromFlags(flags, {
+      apiKey: `${typeof flags.provider === 'string' ? flags.provider.toUpperCase() : 'XAI'}_API_KEY`,
+      provider: 'AI_DEFAULT_PROVIDER',
+      model: 'AI_DEFAULT_MODEL',
+      temperature: 'AI_TEMPERATURE',
+    });
+
+    // Handle special status operation
+    if (args.operation === 'status') {
+      return this.showStatus(flags);
+    }
+
+    // Handle help operation
+    if (args.operation === 'help') {
+      return this.showHelp(flags);
+    }
+
+    // Configure AI provider from environment
     try {
-      const { args, flags } = await this.parse(AiCommand);
+      const provider = getEnv('AI_DEFAULT_PROVIDER') as AIProvider;
+      const model = getEnv('AI_DEFAULT_MODEL');
+      const temperature = getEnv('AI_TEMPERATURE');
       
-      // Initialize AI service with better error handling
-      try {
-        const apiKey = flags.apiKey || process.env.XAI_API_KEY;
-        if (!apiKey) {
-          console.error(chalk.red('XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'));
-          this.error(chalk.red('XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'));
-          return;
+      await aiService.setProvider(
+        provider,
+        model,
+        {
+          temperature: temperature,
         }
-        
-        this.aiService = new AiService(apiKey);
-      } catch (error) {
-        if (error instanceof CLIError && error.code === 'MISSING_API_KEY') {
-          console.error(chalk.red('XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'));
-          this.error(chalk.red('XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'));
-          return;
-        }
-        throw error;
-      }
-      
-      const operation = args.operation as TodoAIOperation;
-      const listName = flags.list;
-      const todoId = flags.id;
-
-      // Check if the list exists
-      const list = await this.todoService.getList(listName);
-      if (!list) {
-        console.error(chalk.red(`List "${listName}" not found`));
-        throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
-      }
-
-      // Ensure output is visible through multiple channels
-      const messageText = `Applying AI (${operation}) to your todos...`;
-      console.log(chalk.blue(messageText));
-      process.stdout.write(chalk.blue(messageText + '\n'));
-      this.log(chalk.blue(messageText));
-
-      switch (operation) {
-        case 'summarize':
-          await this.runSummarize(list.name);
-          break;
-        case 'categorize':
-          if (!todoId) {
-            console.error(chalk.red('Todo ID or title is required for categorize operation'));
-            throw new CLIError('Todo ID or title is required for categorize operation', 'MISSING_TODO_ID');
-          }
-          await this.runCategorize(list.name, todoId, flags.apply);
-          break;
-        case 'prioritize':
-          if (!todoId) {
-            console.error(chalk.red('Todo ID or title is required for prioritize operation'));
-            throw new CLIError('Todo ID or title is required for prioritize operation', 'MISSING_TODO_ID');
-          }
-          await this.runPrioritize(list.name, todoId, flags.apply);
-          break;
-        case 'suggest':
-          await this.runSuggest(list.name, flags.count, flags.apply);
-          break;
-        case 'analyze':
-          await this.runAnalyze(list.name);
-          break;
-        default:
-          console.error(chalk.red(`Unknown operation: ${operation}`));
-          throw new CLIError(`Unknown operation: ${operation}`, 'INVALID_OPERATION');
-      }
-    } catch (error) {
-      // Enhanced error handling with multi-channel output
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      if (error instanceof CLIError) {
-        console.error(chalk.red(`Error: ${errorMessage}`));
-        throw error;
-      }
-      
-      console.error(chalk.red(`AI operation failed: ${errorMessage}`));
-      throw new CLIError(
-        `AI operation failed: ${errorMessage}`,
-        'AI_OPERATION_FAILED'
       );
+    } catch (error) {
+      this.error(`Failed to set AI provider: ${error.message}`, { exit: 1 });
+    }
+
+    // Use environment-based verification setting
+    flags.verify = flags.verify || getEnv('ENABLE_BLOCKCHAIN_VERIFICATION');
+
+    // Perform the requested operation
+    switch (args.operation) {
+      case 'summarize':
+        return this.summarizeTodos(flags);
+
+      case 'categorize':
+        return this.categorizeTodos(flags);
+
+      case 'prioritize':
+        return this.prioritizeTodos(flags);
+
+      case 'suggest':
+        return this.suggestTodos(flags);
+
+      case 'analyze':
+        return this.analyzeTodos(flags);
+
+      default:
+        this.error(`Unknown AI operation: ${args.operation}`);
     }
   }
 
-  private async runSummarize(listName: string): Promise<void> {
-    if (!this.aiService) return;
+  /**
+   * Show AI service status
+   */
+  private async showStatus(flags: any) {
+    // Check credential status
+    const credentials = await secureCredentialService.listCredentials();
     
-    const list = await this.todoService.getList(listName);
-    if (!list) {
-      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    // Get current provider info
+    const currentProvider = getEnv('AI_DEFAULT_PROVIDER');
+    const currentModel = getEnv('AI_DEFAULT_MODEL');
+    const verificationEnabled = getEnv('ENABLE_BLOCKCHAIN_VERIFICATION');
+
+    this.log(chalk.bold('AI Service Status:'));
+    this.log(`${chalk.green('Active provider:')} ${currentProvider}`);
+    this.log(`${chalk.green('Active model:')} ${currentModel}`);
+    this.log(`${chalk.green('Blockchain verification:')} ${verificationEnabled ? 'enabled' : 'disabled'}`);
+    
+    // Display API key status
+    this.log(chalk.bold('\nAPI Key Status:'));
+    const providers = ['XAI', 'OPENAI', 'ANTHROPIC', 'OLLAMA'];
+    
+    for (const provider of providers) {
+      const hasKey = hasEnv(`${provider}_API_KEY` as any);
+      const status = hasKey ? chalk.green('✓ available') : chalk.gray('not configured');
+      
+      this.log(`${chalk.cyan(provider.padEnd(10))} | ${status}`);
+    }
+    
+    // Display credential status
+    if (credentials.length > 0) {
+      this.log(chalk.bold('\nStored Credentials:'));
+      for (const cred of credentials) {
+        const expiry = cred.expiresAt ? `expires ${new Date(cred.expiresAt).toLocaleDateString()}` : 'no expiry';
+        const verified = cred.verified ? chalk.green('✓ verified') : chalk.gray('not verified');
+        
+        this.log(`${chalk.cyan(cred.provider.padEnd(10))} | ${verified.padEnd(15)} | ${chalk.blue(expiry)}`);
+        
+        if (cred.rotationDue) {
+          const now = new Date();
+          const rotationDate = new Date(cred.rotationDue);
+          const daysToRotation = Math.ceil((rotationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          
+          if (daysToRotation <= 0) {
+            this.log(`  ${chalk.red('⚠ Rotation overdue')}`);
+          } else if (daysToRotation < 7) {
+            this.log(`  ${chalk.yellow(`⚠ Rotation due in ${daysToRotation} days`)}`);
+          }
+        }
+      }
+    }
+    
+    this.log(chalk.bold('\nAvailable Commands:'));
+    this.log(`${chalk.cyan('walrus_todo ai summarize')}    - Generate a summary of your todos`);
+    this.log(`${chalk.cyan('walrus_todo ai categorize')}   - Organize todos into categories`);
+    this.log(`${chalk.cyan('walrus_todo ai prioritize')}   - Sort todos by priority`);
+    this.log(`${chalk.cyan('walrus_todo ai suggest')}      - Get suggestions for new todos`);
+    this.log(`${chalk.cyan('walrus_todo ai analyze')}      - Analyze todos for patterns and insights`);
+    this.log(`${chalk.cyan('walrus_todo ai credentials')}  - Manage AI provider credentials`);
+    
+    // Show configuration instructions
+    this.log(chalk.bold('\nConfiguration:'));
+    this.log(`Run ${chalk.cyan('walrus_todo configure --section ai')} to update AI settings`);
+    this.log(`Or set environment variables: ${chalk.gray('XAI_API_KEY, AI_DEFAULT_PROVIDER, etc.')}`);
+  }
+
+  /**
+   * Show help for AI commands
+   */
+  private showHelp(flags: any) {
+    this.log(chalk.bold('AI Command Help:'));
+    this.log(`${chalk.cyan('walrus_todo ai summarize')} - Generate a concise summary of your todos`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai summarize --list work`);
+    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
+    
+    this.log(`\n${chalk.cyan('walrus_todo ai categorize')} - Organize todos into logical categories`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai categorize --list personal`);
+    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
+    
+    this.log(`\n${chalk.cyan('walrus_todo ai prioritize')} - Assign priority scores to todos`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai prioritize --list work`);
+    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
+    
+    this.log(`\n${chalk.cyan('walrus_todo ai suggest')} - Get suggestions for new todos`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai suggest --list personal`);
+    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
+    
+    this.log(`\n${chalk.cyan('walrus_todo ai analyze')} - Get detailed analysis of todos`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai analyze --list work`);
+    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
+    
+    this.log(`\n${chalk.cyan('walrus_todo ai credentials')} - Manage AI provider credentials`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai credentials add xai --key YOUR_API_KEY`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai credentials list`);
+    this.log(`  ${chalk.gray('Example:')} walrus_todo ai credentials remove openai`);
+    
+    this.log(chalk.bold('\nGlobal Options:'));
+    this.log(`  ${chalk.cyan('--provider')} - AI provider to use (xai, openai, anthropic, ollama)`);
+    this.log(`  ${chalk.cyan('--model')} - Model name to use with the provider`);
+    this.log(`  ${chalk.cyan('--temperature')} - Control randomness (0.0-1.0, lower is more deterministic)`);
+    this.log(`  ${chalk.cyan('--verify')} - Enable blockchain verification of AI results`);
+    this.log(`  ${chalk.cyan('--json')} - Output results in JSON format`);
+    
+    this.log(chalk.bold('\nEnvironment Configuration:'));
+    this.log(`  ${chalk.cyan('XAI_API_KEY')}, ${chalk.cyan('OPENAI_API_KEY')}, etc. - API keys for providers`);
+    this.log(`  ${chalk.cyan('AI_DEFAULT_PROVIDER')} - Default provider (xai, openai, anthropic, ollama)`);
+    this.log(`  ${chalk.cyan('AI_DEFAULT_MODEL')} - Default model name`);
+    this.log(`  ${chalk.cyan('AI_TEMPERATURE')} - Default temperature setting (0.0-1.0)`);
+    this.log(`  ${chalk.cyan('ENABLE_BLOCKCHAIN_VERIFICATION')} - Enable verification by default`);
+  }
+
+  /**
+   * Get todo data for AI operations
+   */
+  private async getTodos(listName?: string) {
+    // Import TodoService here to avoid circular dependencies
+    const { TodoService } = require('../services/todoService');
+    const todoService = new TodoService();
+
+    const todos = await todoService.listTodos(listName);
+
+    if (todos.length === 0) {
+      this.error('No todos found. Add some todos first with "walrus_todo add"', { exit: 1 });
     }
 
-    console.log(chalk.dim('Generating summary...'));
-    process.stdout.write(chalk.dim('Generating summary...\n'));
-    this.log(chalk.dim('Generating summary...'));
+    return todos;
+  }
+
+  /**
+   * Summarize todos
+   */
+  private async summarizeTodos(flags: any) {
+    const todos = await this.getTodos(flags.list);
+    
+    this.log(chalk.bold('Generating AI summary...'));
     
     try {
-      const summary = await this.aiService.summarizeTodoList(list);
+      const summary = await aiService.summarize(todos);
       
-      const headerText = '\n📋 Todo List Summary';
-      const dividerText = '──────────────────────';
-      
-      // Use multiple output methods to ensure visibility
-      console.log(chalk.cyan(headerText));
-      console.log(dividerText);
-      console.log(summary);
-      
-      process.stdout.write(chalk.cyan(headerText) + '\n');
-      process.stdout.write(dividerText + '\n');
-      process.stdout.write(summary + '\n');
-      
-      this.log('\n' + chalk.cyan('📋 Todo List Summary'));
-      this.log('──────────────────────');
-      this.log(summary);
+      if (flags.json) {
+        this.log(JSON.stringify({ summary }, null, 2));
+      } else {
+        this.log('');
+        this.log(chalk.cyan('📝 Summary of your todos:'));
+        this.log(chalk.yellow(summary));
+      }
     } catch (error) {
-      console.error('Error generating summary:', error);
-      this.error(`Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`);
+      this.error(`AI summarization failed: ${error.message}`, { exit: 1 });
     }
   }
 
-  private async runCategorize(listName: string, todoId: string, apply: boolean): Promise<void> {
-    if (!this.aiService) return;
+  /**
+   * Categorize todos
+   */
+  private async categorizeTodos(flags: any) {
+    const todos = await this.getTodos(flags.list);
     
-    const todo = await this.todoService.getTodoByTitleOrId(todoId, listName);
-    if (!todo) {
-      throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
-    }
-
-    this.log(chalk.dim('Generating tag suggestions...'));
-    const suggestedTags = await this.aiService.suggestTags(todo);
+    this.log(chalk.bold('Categorizing todos...'));
     
-    this.log('\n' + chalk.cyan('🏷️  Suggested Tags'));
-    this.log('──────────────────────');
-    suggestedTags.forEach(tag => this.log(`- ${tag}`));
-
-    if (apply) {
-      // Merge existing and suggested tags, removing duplicates
-      const existingTags = todo.tags || [];
-      const allTags = [...new Set([...existingTags, ...suggestedTags])];
+    try {
+      const categories = await aiService.categorize(todos);
       
-      await this.todoService.updateTodo(listName, todo.id, {
-        tags: allTags,
-        updatedAt: new Date().toISOString()
-      });
-      
-      this.log(chalk.green('\n✓ Tags applied to todo'));
-    } else {
-      this.log(chalk.yellow('\nTags not applied. Use --apply flag to add these tags automatically.'));
-    }
-  }
-
-  private async runPrioritize(listName: string, todoId: string, apply: boolean): Promise<void> {
-    if (!this.aiService) return;
-    
-    const todo = await this.todoService.getTodoByTitleOrId(todoId, listName);
-    if (!todo) {
-      throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
-    }
-
-    this.log(chalk.dim('Generating priority suggestion...'));
-    const suggestedPriority = await this.aiService.suggestPriority(todo);
-    
-    // Color based on priority
-    const priorityColor = {
-      high: chalk.red,
-      medium: chalk.yellow,
-      low: chalk.green
-    }[suggestedPriority];
-
-    this.log('\n' + chalk.cyan('🔄 Suggested Priority'));
-    this.log('──────────────────────');
-    this.log(`${priorityColor(suggestedPriority)}`);
-
-    if (apply) {
-      await this.todoService.updateTodo(listName, todo.id, {
-        priority: suggestedPriority,
-        updatedAt: new Date().toISOString()
-      });
-      
-      this.log(chalk.green('\n✓ Priority applied to todo'));
-    } else {
-      this.log(chalk.yellow('\nPriority not applied. Use --apply flag to update priority automatically.'));
-    }
-  }
-
-  private async runSuggest(listName: string, count: number, apply: boolean): Promise<void> {
-    if (!this.aiService) return;
-    
-    const list = await this.todoService.getList(listName);
-    if (!list) {
-      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
-    }
-
-    this.log(chalk.dim(`Generating ${count} task suggestions...`));
-    const suggestedTasks = await this.aiService.suggestRelatedTasks(list, count);
-    
-    this.log('\n' + chalk.cyan('✨ Suggested Tasks'));
-    this.log('──────────────────────');
-    suggestedTasks.forEach((task, i) => this.log(`${i + 1}. ${task}`));
-
-    if (apply) {
-      this.log(chalk.dim('\nAdding suggested tasks to list...'));
-      
-      const addedTodos: Todo[] = [];
-      for (const taskTitle of suggestedTasks) {
-        const newTodo = await this.todoService.addTodo(listName, {
-          title: taskTitle,
-          priority: 'medium',
-          tags: ['ai-suggested'],
-          private: true,
-          storageLocation: 'local'
-        });
-        addedTodos.push(newTodo);
+      if (flags.json) {
+        this.log(JSON.stringify({ categories }, null, 2));
+        return;
       }
       
-      this.log(chalk.green(`\n✓ Added ${addedTodos.length} new todos to list "${listName}"`));
-    } else {
-      this.log(chalk.yellow('\nSuggestions not added. Use --apply flag to add these tasks automatically.'));
+      this.log('');
+      this.log(chalk.cyan('📂 Todo Categories:'));
+      
+      for (const [category, todoIds] of Object.entries(categories)) {
+        this.log(chalk.yellow(`\n${category}:`));
+        
+        for (const todoId of todoIds) {
+          const todo = todos.find(t => t.id === todoId);
+          if (todo) {
+            this.log(`  - ${todo.title}`);
+          }
+        }
+      }
+    } catch (error) {
+      this.error(`AI categorization failed: ${error.message}`, { exit: 1 });
     }
   }
 
-  private async runAnalyze(listName: string): Promise<void> {
-    if (!this.aiService) return;
+  /**
+   * Prioritize todos
+   */
+  private async prioritizeTodos(flags: any) {
+    const todos = await this.getTodos(flags.list);
     
-    const list = await this.todoService.getList(listName);
-    if (!list) {
-      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    this.log(chalk.bold('Prioritizing todos...'));
+    
+    try {
+      const priorities = await aiService.prioritize(todos);
+      
+      if (flags.json) {
+        this.log(JSON.stringify({ priorities }, null, 2));
+        return;
+      }
+      
+      // Create array of [todo, priority] and sort by priority (descending)
+      const prioritizedTodos = todos
+        .map(todo => ({
+          todo,
+          priority: priorities[todo.id] || 0
+        }))
+        .sort((a, b) => b.priority - a.priority);
+      
+      this.log('');
+      this.log(chalk.cyan('🔢 Prioritized Todos:'));
+      
+      for (const { todo, priority } of prioritizedTodos) {
+        let priorityColor;
+        if (priority >= 8) priorityColor = chalk.red;
+        else if (priority >= 5) priorityColor = chalk.yellow;
+        else priorityColor = chalk.green;
+        
+        this.log(`${priorityColor(`[${priority}]`)} ${todo.title}`);
+      }
+    } catch (error) {
+      this.error(`AI prioritization failed: ${error.message}`, { exit: 1 });
     }
+  }
 
-    this.log(chalk.dim('Analyzing productivity patterns...'));
-    const analysis = await this.aiService.analyzeProductivity(list);
+  /**
+   * Suggest new todos
+   */
+  private async suggestTodos(flags: any) {
+    const todos = await this.getTodos(flags.list);
     
-    this.log('\n' + chalk.cyan('📊 Productivity Analysis'));
-    this.log('──────────────────────');
-    this.log(analysis);
+    this.log(chalk.bold('Generating todo suggestions...'));
+    
+    try {
+      const suggestions = await aiService.suggest(todos);
+      
+      if (flags.json) {
+        this.log(JSON.stringify({ suggestions }, null, 2));
+        return;
+      }
+      
+      this.log('');
+      this.log(chalk.cyan('💡 Suggested Todos:'));
+      
+      suggestions.forEach((suggestion, i) => {
+        this.log(`${i + 1}. ${suggestion}`);
+      });
+      
+      this.log('');
+      this.log(`To add a suggested todo: ${chalk.cyan('walrus_todo add "Suggested Todo Title"')}`);
+    } catch (error) {
+      this.error(`AI suggestion failed: ${error.message}`, { exit: 1 });
+    }
+  }
+
+  /**
+   * Analyze todos
+   */
+  private async analyzeTodos(flags: any) {
+    const todos = await this.getTodos(flags.list);
+    
+    this.log(chalk.bold('Analyzing todos...'));
+    
+    try {
+      const analysis = await aiService.analyze(todos);
+      
+      if (flags.json) {
+        this.log(JSON.stringify({ analysis }, null, 2));
+        return;
+      }
+      
+      this.log('');
+      this.log(chalk.cyan('🔍 Todo Analysis:'));
+      
+      for (const [category, details] of Object.entries(analysis)) {
+        this.log(chalk.yellow(`\n${category}:`));
+        
+        if (Array.isArray(details)) {
+          details.forEach(item => {
+            this.log(`  - ${item}`);
+          });
+        } else if (typeof details === 'object') {
+          for (const [key, value] of Object.entries(details)) {
+            this.log(`  ${key}: ${value}`);
+          }
+        } else {
+          this.log(`  ${details}`);
+        }
+      }
+    } catch (error) {
+      this.error(`AI analysis failed: ${error.message}`, { exit: 1 });
+    }
   }
 }
+
+// Register environment variable requirements
+requireEnvironment(AI, [
+  {
+    variable: 'XAI_API_KEY',
+    message: 'XAI API key is required for AI operations with the XAI provider',
+    alternativeFlag: 'apiKey'
+  }
+]);

@@ -21,6 +21,21 @@ import type { StorageReuseAnalyzer } from './storage-reuse-analyzer';
 import { Transaction, createTransaction, TransactionType } from '../types/transaction';
 import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
 import { createTransactionBlockAdapter } from './adapters/transaction-adapter';
+// Import error handling helpers
+import { 
+  AsyncOperationHandler, 
+  AsyncOperationOptions, 
+  categorizeWalrusError, 
+  mapToWalrusError, 
+  ErrorCategory 
+} from './walrus-error-handler';
+import {
+  NetworkError,
+  StorageError,
+  BlockchainError,
+  TransactionError
+} from '../types/errors';
+import { ValidationError } from '../types/errors/ValidationError';
 
 interface VerificationResult {
   details?: {
@@ -42,13 +57,25 @@ interface WalrusStorageContent {
 }
 
 interface WalrusStorageInfo {
-  id: { id: string };
-  storage_size: string | number;
-  used_size: string | number;
-  end_epoch: string | number;
-  start_epoch: string | number;
-  data?: SuiObjectData;
+  id: { id: string } | null;
+  storage_size: string | number | null;
+  used_size: string | number | null;
+  end_epoch: string | number | null;
+  start_epoch: string | number | null;
+  data?: SuiObjectData | null;
   content: WalrusStorageContent | null;
+}
+
+/**
+ * Safely converts various types to a number with a fallback value
+ * @param value The value to convert
+ * @param fallback The fallback value to use if conversion fails
+ * @returns The converted number or fallback
+ */
+function safeToNumber(value: string | number | null | undefined, fallback: number = 0): number {
+  if (value === null || value === undefined) return fallback;
+  const num = Number(value);
+  return isNaN(num) ? fallback : num;
 }
 
 interface OldWalrusStorageContent {
@@ -80,24 +107,55 @@ let fetch: any;
  */
 export class WalrusStorage {
   private connectionState: 'disconnected' | 'connecting' | 'connected' | 'failed' = 'disconnected';
-  private walrusClient!: WalrusClientAdapter;
-  private suiClient: SuiClient;
+  private walrusClient: WalrusClientAdapter | null = null;
+  private suiClient: SuiClient | null = null;
   private signer: TransactionSigner | null = null;
   private useMockMode: boolean;
   private lastHealthCheck: number = 0;
   private healthCheckInterval: number = 30000; // 30 seconds
   private storageReuseAnalyzer: StorageReuseAnalyzer | null = null;
+  // AbortController for cancelable operations
+  private abortController: AbortController = new AbortController();
 
   constructor(useMockMode = false) {
     this.useMockMode = useMockMode;
-    this.suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
+    try {
+      this.suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
+    } catch (error) {
+      console.warn('Failed to initialize SuiClient:', error);
+      this.suiClient = null;
+    }
   }
 
+  /**
+   * Checks connection health with proper error handling
+   * @returns Promise resolving to boolean indicating if connection is healthy
+   */
   private async checkConnectionHealth(): Promise<boolean> {
     try {
-      await this.suiClient.getLatestSuiSystemState();
-      this.lastHealthCheck = Date.now();
-      return true;
+      // Check if suiClient is initialized
+      if (!this.suiClient) {
+        console.warn('Connection health check failed: SuiClient is not initialized');
+        return false;
+      }
+
+      const result = await AsyncOperationHandler.execute(
+        () => this.suiClient?.getLatestSuiSystemState() ?? Promise.reject(new Error('SuiClient is not initialized')),
+        {
+          operation: 'connection health check',
+          maxRetries: 1,
+          timeout: 5000,
+          throwErrors: false
+        }
+      );
+
+      if (result.success) {
+        this.lastHealthCheck = Date.now();
+        return true;
+      } else {
+        console.warn('Connection health check failed:', result.error?.message);
+        return false;
+      }
     } catch (error) {
       console.warn('Connection health check failed:', error);
       return false;
@@ -108,117 +166,164 @@ export class WalrusStorage {
     return crypto.createHash('sha256').update(data).digest('hex');
   }
 
+  /**
+   * Validates todo data with clear validation errors
+   * @throws ValidationError with specific details
+   */
   private validateTodoData(todo: Todo): void {
     if (!todo.id || typeof todo.id !== 'string') {
-      throw new Error('Invalid todo: missing or invalid id');
+      throw new ValidationError('Invalid todo: missing or invalid id', {
+        field: 'id',
+        recoverable: false,
+        operation: 'data validation'
+      });
     }
     if (!todo.title || typeof todo.title !== 'string') {
-      throw new Error('Invalid todo: missing or invalid title');
+      throw new ValidationError('Invalid todo: missing or invalid title', {
+        field: 'title',
+        recoverable: false,
+        operation: 'data validation'
+      });
     }
     if (typeof todo.completed !== 'boolean') {
-      throw new Error('Invalid todo: invalid completed status');
+      throw new ValidationError('Invalid todo: invalid completed status', {
+        field: 'completed',
+        recoverable: false,
+        operation: 'data validation'
+      });
     }
     if (!todo.createdAt || isNaN(Date.parse(todo.createdAt))) {
-      throw new Error('Invalid todo: invalid createdAt date');
+      throw new ValidationError('Invalid todo: invalid createdAt date', {
+        field: 'createdAt',
+        recoverable: false,
+        operation: 'data validation'
+      });
     }
     if (!todo.updatedAt || isNaN(Date.parse(todo.updatedAt))) {
-      throw new Error('Invalid todo: invalid updatedAt date');
-    }
-  }
-
-  // Added storage management type safety
-  public async getBlobSize(blobId: string): Promise<number> {
-    if (!this.walrusClient) {
-      throw new Error('WalrusStorage not initialized');
-    }
-
-    // Use proper error handling for potential undefined properties
-    try {
-      const blobInfo = await this.walrusClient.getBlobInfo(blobId);
-      // Safely handle the size which might be undefined or a string
-      return typeof blobInfo.size === 'string' ? Number(blobInfo.size) : 0;
-    } catch (error) {
-      console.error('Error getting blob size:', error);
-      return 0;
-    }
-  }
-
-  // Proper typing for transaction block with adapter compatibility
-  private async createStorageBlock(size: number, epochs: number): Promise<TransactionType> {
-    try {
-      // Try to use the WalrusClient's createStorageBlock implementation first
-      if (this.walrusClient && 'createStorageBlock' in this.walrusClient) {
-        return await this.walrusClient.createStorageBlock(size, epochs);
-      }
-      
-      // If that fails or doesn't exist, create our own transaction block
-      // Use the factory function from transaction.ts to create a proper Transaction object
-      const tx = createTransaction();
-      
-      // Use the methods defined in the Transaction interface
-      tx.moveCall({
-        target: '0x2::storage::create_storage',
-        arguments: [
-          tx.pure(size),
-          tx.pure(epochs),
-          tx.object('0x6') // Use explicit gas object reference instead of tx.gas
-        ]
+      throw new ValidationError('Invalid todo: invalid updatedAt date', {
+        field: 'updatedAt',
+        recoverable: false,
+        operation: 'data validation'
       });
-      
-      // Return the transaction block directly
-      return tx;
-    } catch (error) {
-      console.error('Error creating storage transaction block:', error);
-      throw new Error(`Failed to create storage block: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
+  /**
+   * Gets blob size with proper error handling
+   * @param blobId The blob ID to check
+   * @returns The size of the blob in bytes
+   */
+  public async getBlobSize(blobId: string): Promise<number> {
+    return AsyncOperationHandler.execute(
+      async () => {
+        if (!this.walrusClient) {
+          throw new StorageError('WalrusStorage not initialized', {
+            operation: 'get blob size'
+          });
+        }
+
+        if (!this.walrusClient) {
+          throw new StorageError('WalrusStorage not initialized', {
+            operation: 'get blob size'
+          });
+        }
+
+        const blobInfo = await this.walrusClient.getBlobInfo(blobId);
+        return typeof blobInfo?.size === 'string' ? Number(blobInfo.size) : 0;
+      },
+      {
+        operation: 'get blob size',
+        maxRetries: 3,
+        throwErrors: false,
+        signal: this.abortController.signal
+      }
+    ).then(result => result.success ? (result.data || 0) : 0);
+  }
+
+  /**
+   * Creates a storage transaction block with adapter compatibility
+   * @param size Size in bytes
+   * @param epochs Duration in epochs
+   */
+  private async createStorageBlock(size: number, epochs: number): Promise<TransactionType> {
+    return AsyncOperationHandler.execute(
+      async () => {
+        // Try to use the WalrusClient's createStorageBlock implementation first
+        if (this.walrusClient && 'createStorageBlock' in this.walrusClient) {
+          return await this.walrusClient.createStorageBlock(size, epochs);
+        }
+
+        // If that fails or doesn't exist, create our own transaction block
+        const tx = createTransaction();
+
+        tx.moveCall({
+          target: '0x2::storage::create_storage',
+          arguments: [
+            tx.pure(size),
+            tx.pure(epochs),
+            tx.object('0x6') // Use explicit gas object reference
+          ]
+        });
+
+        return tx;
+      },
+      {
+        operation: 'create storage transaction',
+        maxRetries: 2,
+        signal: this.abortController.signal
+      }
+    ).then(result => result.success ? result.data : Promise.reject(result.error));
+  }
+
+  /**
+   * Validates todo list data with clear errors
+   * @throws ValidationError with specific details
+   */
   private validateTodoListData(todoList: TodoList): void {
     if (!todoList.id || typeof todoList.id !== 'string') {
-      throw new Error('Invalid todo list: missing or invalid id');
+      throw new ValidationError('Invalid todo list: missing or invalid id', {
+        field: 'id',
+        recoverable: false,
+        operation: 'data validation'
+      });
     }
     if (!todoList.name || typeof todoList.name !== 'string') {
-      throw new Error('Invalid todo list: missing or invalid name');
+      throw new ValidationError('Invalid todo list: missing or invalid name', {
+        field: 'name',
+        recoverable: false,
+        operation: 'data validation'
+      });
     }
     if (!Array.isArray(todoList.todos)) {
-      throw new Error('Invalid todo list: todos must be an array');
+      throw new ValidationError('Invalid todo list: todos must be an array', {
+        field: 'todos',
+        recoverable: false,
+        operation: 'data validation'
+      });
     }
-    todoList.todos.forEach(todo => this.validateTodoData(todo));
-  }
-
-  private async executeWithRetry<T>(operation: () => Promise<T>, context: string, maxRetries = 3): Promise<T> {
-    if (Date.now() - this.lastHealthCheck > this.healthCheckInterval) {
-      const isHealthy = await this.checkConnectionHealth();
-      if (!isHealthy) {
-        this.connectionState = 'failed';
-        throw new Error(`Connection health check failed before ${context}`);
+    
+    // Validate each todo in the list
+    try {
+      todoList.todos.forEach(todo => this.validateTodoData(todo));
+    } catch (error) {
+      // Wrap the error with list context
+      if (error instanceof ValidationError) {
+        throw new ValidationError(`Invalid todo in list: ${error.message}`, {
+          field: error.field,
+          recoverable: false,
+          operation: 'list validation',
+          cause: error
+        });
       }
+      throw error;
     }
-
-    const retry = async (attempt: number): Promise<T> => {
-      try {
-        return await operation();
-      } catch (error) {
-        if (attempt >= maxRetries) {
-          throw error;
-        }
-        const delay = 1000 * Math.pow(2, attempt - 1);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return retry(attempt + 1);
-      }
-    };
-
-    return retry(1);
   }
 
-  private handleError(error: unknown, context: string): never {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new CLIError(
-      `Failed during ${context}: ${errorMessage}`,
-      'WALRUS_OPERATION_FAILED'
-    );
-  }
-
+  /**
+   * Initialize the WalrusStorage connection
+   * @returns Promise that resolves when initialization is complete
+   * @throws Properly categorized errors
+   */
   async init(): Promise<void> {
     if (this.useMockMode) {
       this.connectionState = 'connected';
@@ -228,19 +333,31 @@ export class WalrusStorage {
     console.log('Initializing WalrusStorage connection...');
     this.connectionState = 'connecting';
 
+    // Create a fresh abort controller for this initialization
+    this.abortController = new AbortController();
+
     try {
-      const envInfo = await this.executeWithRetry(
+      // Check environment
+      const envInfo = await AsyncOperationHandler.execute(
         async () => execSync('sui client active-env').toString().trim(),
-        'environment check'
+        {
+          operation: 'environment check',
+          maxRetries: 2,
+          signal: this.abortController.signal
+        }
       );
       
-      if (!envInfo.includes('testnet')) {
+      if (!envInfo.data?.includes('testnet')) {
         this.connectionState = 'failed';
-        throw new Error('Must be connected to testnet environment. Use "sui client switch --env testnet"');
+        throw new ValidationError(
+          'Must be connected to testnet environment. Use "sui client switch --env testnet"', 
+          { operation: 'environment validation' }
+        );
       }
 
       console.log('Environment validation successful, initializing clients...');
 
+      // Import fetch if needed
       if (!fetch) {
         try {
           const nodeFetch = await import('node-fetch');
@@ -252,50 +369,81 @@ export class WalrusStorage {
         }
       }
 
-      // Use adapter pattern for client compatibility with proper type safety
+      // Initialize client with proper error handling
       if (this.useMockMode) {
         const mockClient = new MockWalrusClient() as unknown as WalrusClient;
         this.walrusClient = createWalrusClientAdapter(mockClient);
       } else {
-        const walrusClient = new WalrusClient({ 
-          network: 'testnet',
-          fullnode: NETWORK_URLS[CURRENT_NETWORK],
-          // Use custom options for better compatibility
-          fetchOptions: { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+        await AsyncOperationHandler.execute(
+          async () => {
+            const walrusClient = new WalrusClient({ 
+              network: 'testnet',
+              fullnode: NETWORK_URLS[CURRENT_NETWORK],
+              fetchOptions: { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+              }
+            });
+            this.walrusClient = createWalrusClientAdapter(walrusClient);
+          },
+          {
+            operation: 'client initialization',
+            maxRetries: 3,
+            baseDelay: 1000,
+            signal: this.abortController.signal
           }
-        });
-        this.walrusClient = createWalrusClientAdapter(walrusClient);
+        );
       }
 
-      // @ts-ignore - Ignore type compatibility issues with Signer implementations
-      const signer = await KeystoreSigner.fromPath('default');
-      // @ts-ignore - Force type compatibility for the signer
-      this.signer = signer;
-      const address = this.signer.toSuiAddress();
-      if (!address) {
+      // Initialize signer
+      try {
+        // @ts-ignore - Ignore type compatibility issues with Signer implementations
+        const signer = await KeystoreSigner.fromPath('default');
+        // @ts-ignore - Force type compatibility for the signer
+        this.signer = signer;
+        const address = this.signer.toSuiAddress();
+        if (!address) {
+          this.connectionState = 'failed';
+          throw new ValidationError('Failed to initialize signer - no active address found', {
+            operation: 'signer initialization'
+          });
+        }
+      } catch (error) {
         this.connectionState = 'failed';
-        throw new Error('Failed to initialize signer - no active address found');
+        throw new BlockchainError(
+          `Failed to initialize signer: ${error instanceof Error ? error.message : String(error)}`,
+          { operation: 'signer initialization' }
+        );
       }
 
+      // Perform final health check
       const isHealthy = await this.checkConnectionHealth();
       if (!isHealthy) {
         this.connectionState = 'failed';
-        throw new Error('Initial connection health check failed');
+        throw new NetworkError('Initial connection health check failed', {
+          operation: 'connection validation',
+          recoverable: true
+        });
       }
 
       console.log('WalrusStorage initialization successful');
       this.connectionState = 'connected';
     } catch (error) {
       this.connectionState = 'failed';
-      throw new CLIError(
-        `Failed to initialize Walrus storage: ${error instanceof Error ? error.message : String(error)}`,
-        'WALRUS_INIT_FAILED'
-      );
+      
+      // Categorize and map the error
+      const category = categorizeWalrusError(error);
+      const mappedError = mapToWalrusError(error, category, 'initialization');
+      
+      // Rethrow the properly mapped error
+      throw mappedError;
     }
   }
 
+  /**
+   * Check if the storage is connected with a health check
+   * @returns Promise resolving to boolean
+   */
   async isConnected(): Promise<boolean> {
     if (this.connectionState === 'connected' && 
         Date.now() - this.lastHealthCheck > this.healthCheckInterval) {
@@ -308,33 +456,66 @@ export class WalrusStorage {
     return this.connectionState === 'connected';
   }
 
+  /**
+   * Connect to the storage service if not already connected
+   */
   async connect(): Promise<void> {
     if (this.connectionState === 'disconnected' || this.connectionState === 'failed') {
       await this.init();
     }
   }
 
+  /**
+   * Disconnect from the storage service
+   */
   async disconnect(): Promise<void> {
     if (this.connectionState !== 'disconnected') {
       console.log('Disconnecting WalrusStorage...');
+      
+      // Cancel any pending operations
+      this.abortController.abort('Disconnecting');
+      
+      // Reset connections
       this.connectionState = 'disconnected';
       this.walrusClient?.reset();
       this.signer = null;
     }
   }
 
+  /**
+   * Get the transaction signer with proper error handling
+   * @throws Properly categorized error if signer is not initialized
+   */
   protected async getTransactionSigner(): Promise<TransactionSigner> {
     if (!this.signer) {
-      throw new Error('WalrusStorage not initialized. Call connect() first.');
+      throw new ValidationError('WalrusStorage not initialized. Call connect() first.', {
+        operation: 'get transaction signer'
+      });
     }
     return this.signer;
   }
 
+  /**
+   * Get the active wallet address
+   * @returns The active wallet address
+   * @throws Properly categorized error if not initialized
+   */
   public getActiveAddress(): string {
     if (!this.signer) {
-      throw new Error('WalrusStorage not initialized. Call connect() first.');
+      throw new ValidationError('WalrusStorage not initialized. Call connect() first.', {
+        operation: 'get active address'
+      });
     }
-    return this.signer.toSuiAddress();
+
+    // Add null check with fallback for signer address
+    const address = this.signer.toSuiAddress();
+    if (!address) {
+      throw new ValidationError('Failed to get active address from signer', {
+        operation: 'get active address'
+      });
+    }
+
+    return address;
   }
 
   /**
@@ -349,14 +530,7 @@ export class WalrusStorage {
    * 
    * @param todo - The todo item to store
    * @returns A Promise resolving to the Walrus blob ID
-   * @throws {CLIError} with specific error codes for:
-   *   - WALRUS_VALIDATION_FAILED: Todo data validation failed
-   *   - WALRUS_SERIALIZATION_FAILED: Failed to serialize todo data
-   *   - WALRUS_DATA_TOO_LARGE: Todo data exceeds size limit (10MB)
-   *   - WALRUS_INSUFFICIENT_TOKENS: Not enough WAL tokens
-   *   - WALRUS_STORAGE_ALLOCATION_FAILED: Failed to allocate storage
-   *   - WALRUS_VERIFICATION_FAILED: Content verification failed
-   *   - WALRUS_STORE_FAILED: Other storage failures
+   * @throws Properly categorized errors for different failure scenarios
    */
   async storeTodo(todo: Todo): Promise<string> {
     try {
@@ -366,27 +540,35 @@ export class WalrusStorage {
       }
 
       if (this.connectionState !== 'connected' || !this.walrusClient) {
-        throw new Error('WalrusStorage not connected. Call connect() first.');
+        throw new ValidationError('WalrusStorage not connected. Call connect() first.', {
+          operation: 'store todo'
+        });
       }
 
       // Validate todo data
       try {
         this.validateTodoData(todo);
       } catch (error) {
-        throw new CLIError(
+        // Re-throw validation errors with proper context
+        if (error instanceof ValidationError) {
+          throw error;
+        }
+        throw new ValidationError(
           `Todo validation failed: ${error instanceof Error ? error.message : String(error)}`,
-          'WALRUS_VALIDATION_FAILED'
+          { operation: 'todo validation' }
         );
       }
 
       console.log(`Serializing todo "${todo.title}" for storage...`);
+      
+      // Serialize todo with proper error handling
       let buffer: Buffer;
       try {
         buffer = TodoSerializer.todoToBuffer(todo);
       } catch (error) {
-        throw new CLIError(
+        throw new ValidationError(
           `Failed to serialize todo: ${error instanceof Error ? error.message : String(error)}`,
-          'WALRUS_SERIALIZATION_FAILED'
+          { operation: 'todo serialization' }
         );
       }
 
@@ -397,10 +579,11 @@ export class WalrusStorage {
       console.log(`Todo size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`);
 
       if (exactSize > 10 * 1024 * 1024) { // 10MB limit
-        throw new CLIError(
-          'Todo data is too large. Maximum size is 10MB.',
-          'WALRUS_DATA_TOO_LARGE'
-        );
+        throw new ValidationError('Todo data is too large. Maximum size is 10MB.', {
+          operation: 'size validation',
+          field: 'size',
+          value: exactSize
+        });
       }
 
       const checksum = this.calculateChecksum(buffer);
@@ -410,29 +593,85 @@ export class WalrusStorage {
       if (!storage) {
         // First check if it's due to WAL token balance
         try {
-          const { epoch } = await this.suiClient.getLatestSuiSystemState();
-          const balance = await this.suiClient.getBalance({
-            owner: this.getActiveAddress(),
-            coinType: 'WAL'
-          });
+          // Verify if it's a balance issue with proper error handling
+          const systemStateResult = await AsyncOperationHandler.execute(
+            () => this.suiClient?.getLatestSuiSystemState() ?? Promise.reject(new Error('SuiClient is not initialized')),
+            {
+              operation: 'get system state',
+              maxRetries: 2,
+              signal: this.abortController.signal
+            }
+          );
+          
+          if (!systemStateResult.success) {
+            throw new NetworkError('Failed to get system state', {
+              operation: 'system state check',
+              recoverable: true,
+              cause: systemStateResult.error
+            });
+          }
 
-          if (Number(balance.totalBalance) < 100) { // Minimum WAL needed
-            throw new CLIError(
-              'Insufficient WAL tokens. Please acquire WAL tokens to store your todo.',
-              'WALRUS_INSUFFICIENT_TOKENS'
+          const systemState = systemStateResult.data;
+          const epoch = systemState?.epoch ?? '0';
+
+          // Get balance with proper error handling
+          try {
+            const activeAddress = this.getActiveAddress();
+            const balanceResult = await AsyncOperationHandler.execute(
+              () => this.suiClient?.getBalance({
+                owner: activeAddress,
+                coinType: 'WAL'
+              }) ?? Promise.reject(new Error('SuiClient is not initialized')),
+              {
+                operation: 'check WAL balance',
+                maxRetries: 2,
+                signal: this.abortController.signal
+              }
+            );
+
+            if (!balanceResult.success) {
+              throw new BlockchainError('Failed to check WAL balance', {
+                operation: 'balance check',
+                recoverable: true,
+                cause: balanceResult.error
+              });
+            }
+
+            const balance = balanceResult.data;
+            if (safeToNumber(balance?.totalBalance, 0) < 100) { // Minimum WAL needed
+              throw new TransactionError('Insufficient WAL tokens. Please acquire WAL tokens to store your todo.', {
+                operation: 'storage allocation',
+                recoverable: false
+              });
+            }
+          } catch (addressError) {
+            if (addressError instanceof ValidationError) {
+              throw addressError;
+            }
+            throw new ValidationError(
+              `Failed to verify wallet address: ${addressError instanceof Error ? addressError.message : String(addressError)}`,
+              { operation: 'address validation' }
             );
           }
         } catch (error) {
-          // If we can't determine balance, use a generic error
-          throw new CLIError(
-            'Failed to allocate storage for todo. Please check your WAL token balance and try again.',
-            'WALRUS_STORAGE_ALLOCATION_FAILED'
+          if (error instanceof TransactionError || 
+              error instanceof ValidationError || 
+              error instanceof BlockchainError) {
+            throw error;
+          }
+          
+          throw new StorageError(
+            `Failed to allocate storage for todo. Please check your WAL token balance and try again. Error: ${error instanceof Error ? error.message : String(error)}`,
+            { operation: 'storage allocation' }
           );
         }
       }
 
+      // Get signer and prepare for upload
       const signer = await this.getTransactionSigner();
-      const result = await this.executeWithRetry(
+      
+      // Upload with proper error handling
+      const uploadResult = await AsyncOperationHandler.execute(
         async () => this.walrusClient.writeBlob({
           blob: new Uint8Array(buffer),
           deletable: false,
@@ -452,53 +691,99 @@ export class WalrusStorage {
             encoding: 'utf-8'
           }
         }),
-        'todo storage',
-        5
+        {
+          operation: 'todo upload',
+          maxRetries: 5,
+          baseDelay: 1000,
+          signal: this.abortController.signal
+        }
       );
-      
-      // Safely extract blob information with proper type checking
-      const blobObject = result.blobObject || { blob_id: result.blobId || '' };
 
-      // Verify the upload using our dedicated verification manager
+      if (!uploadResult.success) {
+        throw new StorageError('Failed to upload todo data', {
+          operation: 'blob upload',
+          cause: uploadResult.error
+        });
+      }
+
+      const result = uploadResult.data;
+      
+      // Safely extract blob information with proper type checking and fallbacks for null values
+      const blobObject = result?.blobObject ?? (result?.blobId ? { blob_id: result.blobId } : null);
+
+      // Prepare metadata for verification
       const metadata = {
         contentType: 'application/json',
-        filename: `todo-${todo.id}.json`,
+        filename: `todo-${todo?.id ?? 'unknown'}.json`,
         type: 'todo-data',
-        title: todo.title,
-        completed: todo.completed.toString(),
+        title: todo?.title ?? 'Untitled Todo',
+        completed: (todo?.completed ?? false).toString(),
         checksum_algo: 'sha256',
-        checksum,
-        size: exactSize.toString(),
+        checksum: checksum ?? '',
+        size: exactSize?.toString() ?? '0',
         version: '1',
         schemaVersion: '1',
         encoding: 'utf-8'
       };
 
+      // Initialize storage managers if needed
       this.initializeManagers();
+
       // Ensure we have a valid blob ID with proper type checking
       let blobId = '';
-      // Use type guards to safely access properties
+      
+      // Use type guards to safely access properties with null checks and optional chaining
       if (blobObject && typeof blobObject === 'object') {
+        // Option 1: Get blob_id directly if it exists
         if ('blob_id' in blobObject && typeof blobObject.blob_id === 'string') {
           blobId = blobObject.blob_id;
-        } else if ('id' in blobObject && blobObject.id && 
-                 typeof blobObject.id === 'object' && 
-                 'id' in blobObject.id && 
-                 typeof blobObject.id.id === 'string') {
-          blobId = blobObject.id.id;
         }
+        // Option 2: Use nested id property with multiple null checks
+        else if ('id' in blobObject && blobObject.id) {
+          // Handle both string id and object with id property
+          if (typeof blobObject.id === 'string') {
+            blobId = blobObject.id;
+          }
+          else if (typeof blobObject.id === 'object' && blobObject.id !== null) {
+            // Access nested id property with optional chaining
+            const nestedId = blobObject.id?.id;
+            if (typeof nestedId === 'string') {
+              blobId = nestedId;
+            }
+          }
+        }
+        // Option 3: Extract from blobId if present
+        else if ('blobId' in blobObject && typeof blobObject.blobId === 'string') {
+          blobId = blobObject.blobId;
+        }
+      }
+
+      // Last resort: try to directly use result.blobId if blobObject didn't yield a valid ID
+      if (!blobId && result?.blobId && typeof result.blobId === 'string') {
+        blobId = result.blobId;
       }
       
       if (!blobId) {
-        throw new Error('Failed to extract valid blob ID from response');
+        throw new ValidationError('Failed to extract valid blob ID from response', {
+          operation: 'blob ID extraction'
+        });
       }
-      const verificationResult = await this.verifyBlob(
-        blobId,
-        buffer,
-        metadata
+      
+      // Verify the upload with proper error handling
+      const verificationResult = await AsyncOperationHandler.execute(
+        () => this.verifyBlob(blobId, buffer, metadata),
+        {
+          operation: 'verify blob',
+          maxRetries: 3,
+          signal: this.abortController.signal,
+          throwErrors: false
+        }
       );
 
-      if (!verificationResult?.details?.certified) {
+      // Check if verification was successful
+      if (verificationResult.success && verificationResult.data?.details?.certified) {
+        console.log(`Todo successfully verified and stored with blob ID: ${blobId}`);
+      } else {
         console.log('Warning: Blob certification pending. Monitoring for certification...');
         // Start monitoring in the background
         console.log('Certification monitoring not implemented in this version');
@@ -507,10 +792,9 @@ export class WalrusStorage {
       console.log(`Todo successfully stored with blob ID: ${blobId}`);
       return blobId;
     } catch (error) {
-      throw new CLIError(
-        `Failed to store todo: ${error instanceof Error ? error.message : String(error)}`,
-        'WALRUS_STORE_FAILED'
-      );
+      // Categorize and properly throw the error
+      const category = categorizeWalrusError(error);
+      throw mapToWalrusError(error, category, 'store todo');
     }
   }
 
@@ -528,7 +812,7 @@ export class WalrusStorage {
    * 
    * @param blobId - The Walrus blob ID to retrieve
    * @returns A Promise resolving to the Todo item
-   * @throws {CLIError} with specific error codes for various failure scenarios
+   * @throws Properly categorized errors for various failure scenarios
    */
   async retrieveTodo(blobId: string): Promise<Todo> {
     try {
@@ -549,14 +833,16 @@ export class WalrusStorage {
       }
 
       if (!blobId?.trim()) {
-        throw new CLIError('Blob ID is required', 'WALRUS_INVALID_INPUT');
+        throw new ValidationError('Blob ID is required', {
+          operation: 'retrieve todo',
+          field: 'blobId'
+        });
       }
 
       if (this.connectionState !== 'connected' || !this.walrusClient) {
-        throw new CLIError(
-          'WalrusStorage not connected. Call connect() first.',
-          'WALRUS_NOT_CONNECTED'
-        );
+        throw new ValidationError('WalrusStorage not connected. Call connect() first.', {
+          operation: 'retrieve todo'
+        });
       }
 
       // Try cache first
@@ -568,15 +854,36 @@ export class WalrusStorage {
 
       console.log(`Retrieving todo from Walrus with blob ID: ${blobId}...`);
 
+      // Create a fresh abort controller for this operation
+      const retrievalAbortController = new AbortController();
+      
       try {
         // Attempt to retrieve the blob with our enhanced retrieval mechanism
-        const blobContent = await this.retrieveBlob(blobId, {
-          maxRetries: 5,          // More retries for important todo data
-          baseDelay: 1000,        // Start with 1 second delay
-          timeout: 15000,         // 15 second timeout per attempt
-          useAggregator: true,    // Allow fallback to aggregator
-          context: 'todo retrieval'
-        });
+        const blobContentResult = await AsyncOperationHandler.execute(
+          () => this.retrieveBlob(blobId, {
+            maxRetries: 5,
+            baseDelay: 1000,
+            timeout: 15000,
+            useAggregator: true,
+            context: 'todo retrieval',
+            signal: retrievalAbortController.signal
+          }),
+          {
+            operation: 'retrieve blob',
+            signal: retrievalAbortController.signal
+          }
+        );
+
+        if (!blobContentResult.success) {
+          throw new StorageError(`Failed to retrieve blob content: ${blobContentResult.error?.message}`, {
+            operation: 'blob retrieval',
+            blobId,
+            recoverable: true,
+            cause: blobContentResult.error
+          });
+        }
+
+        const blobContent = blobContentResult.data ?? new Uint8Array();
 
         // Parse and validate the retrieved data
         const todo = await this.parseTodoData(blobContent);
@@ -587,28 +894,23 @@ export class WalrusStorage {
         console.log('Successfully retrieved and cached todo data');
         return todo;
       } catch (error) {
-        // If the error is already a CLIError, rethrow it
-        if (error instanceof CLIError) {
-          throw error;
-        }
+        // Cancel the retrieval if something goes wrong
+        retrievalAbortController.abort();
         
-        // Otherwise, wrap it in a CLIError with appropriate context
-        throw new CLIError(
-          `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error)}`,
-          'WALRUS_RETRIEVE_FAILED'
-        );
+        // Categorize the error
+        const category = categorizeWalrusError(error);
+        throw mapToWalrusError(error, category, 'retrieve todo');
       }
     } catch (error) {
-      if (error instanceof CLIError) {
-        throw error;
-      }
-      throw new CLIError(
-        `Failed to retrieve todo: ${error instanceof Error ? error.message : String(error)}`,
-        'WALRUS_RETRIEVE_FAILED'
-      );
+      // Categorize and properly throw the error
+      const category = categorizeWalrusError(error);
+      throw mapToWalrusError(error, category, 'retrieve todo');
     }
   }
 
+  /**
+   * Cache a todo for faster retrieval
+   */
   private cacheTodo(blobId: string, todo: Todo): void {
     WalrusStorage.todoCache.set(blobId, {
       data: todo,
@@ -624,15 +926,11 @@ export class WalrusStorage {
   }
 
   /**
-   * Parse and validate todo data from raw bytes.
-   * @throws {CLIError} if data is invalid
-   */
-  /**
    * Attempts to retrieve a blob from Walrus storage with automatic retries and fallback strategies.
    * @param blobId The ID of the blob to retrieve
    * @param options Retrieval options
    * @returns The blob content as a Buffer
-   * @throws {CLIError} if retrieval fails after all attempts
+   * @throws Properly categorized errors for retrieval failures
    */
   private async retrieveBlob(
     blobId: string,
@@ -650,7 +948,8 @@ export class WalrusStorage {
       baseDelay = 1000,
       timeout = 15000,
       useAggregator = true,
-      context = 'blob retrieval'
+      context = 'blob retrieval',
+      signal
     } = options;
 
     const failures: Array<{ source: string; attempt: number; error: string }> = [];
@@ -661,18 +960,36 @@ export class WalrusStorage {
       promise: Promise<T>,
       ms: number,
       source: string,
-      attempt: number
+      attempt: number,
+      signal?: AbortSignal
     ): Promise<T> => {
       let timeoutId: NodeJS.Timeout;
       
+      // Create a promise that rejects after the timeout
       const timeoutPromise = new Promise<T>((_, reject) => {
         timeoutId = setTimeout(() => {
-          reject(new Error(`${source} timed out after ${ms}ms on attempt ${attempt}`));
+          reject(new NetworkError(`${source} timed out after ${ms}ms on attempt ${attempt}`, {
+            operation: context,
+            recoverable: true
+          }));
         }, ms);
       });
 
+      // Create a promise that rejects if the signal is aborted
+      const abortPromise = new Promise<T>((_, reject) => {
+        if (signal) {
+          if (signal.aborted) {
+            reject(new Error(`Operation was canceled`));
+          }
+          signal.addEventListener('abort', () => {
+            reject(new Error(`Operation was canceled`));
+          }, { once: true });
+        }
+      });
+
       try {
-        const result = await Promise.race([promise, timeoutPromise]);
+        // Race the promises
+        const result = await Promise.race([promise, timeoutPromise, abortPromise]);
         clearTimeout(timeoutId!);
         return result;
       } catch (error) {
@@ -683,39 +1000,66 @@ export class WalrusStorage {
 
     // Try direct retrieval first
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      // Check if operation was canceled
+      if (signal?.aborted) {
+        throw new Error('Blob retrieval operation was canceled');
+      }
+
       try {
         console.log(`Attempting direct retrieval from Walrus (attempt ${attempt}/${maxRetries})...`);
         
+        // Retrieve content with timeout
         const content = await withTimeout(
           this.walrusClient.readBlob({ 
             blobId,
-            signal: options.signal
+            signal
           }),
           timeout,
           'Direct retrieval',
-          attempt
+          attempt,
+          signal
         );
 
         if (!content || content.length === 0) {
-          throw new Error('Retrieved content is empty');
+          throw new StorageError('Retrieved content is empty', {
+            operation: context,
+            blobId,
+            recoverable: true
+          });
         }
 
         // Verify the blob's integrity using metadata
-        const metadata = await this.walrusClient.getBlobMetadata({ 
+        const metadata = await this.walrusClient.getBlobMetadata({
           blobId,
-          signal: options.signal 
+          signal
         });
-        
+
+        // Calculate content hash
         const downloadedHash = crypto.createHash('sha256').update(content).digest();
-        if (metadata?.metadata?.V1?.hashes?.[0]?.primary_hash?.Digest) {
-          const storedHash = metadata.metadata.V1.hashes[0].primary_hash.Digest;
-          if (!Buffer.from(downloadedHash).equals(Buffer.from(storedHash))) {
-            throw new Error('Content hash verification failed');
+
+        // Use proper null checking and optional chaining for deeply nested properties
+        const storedHash = metadata?.metadata?.V1?.hashes?.[0]?.primary_hash?.Digest ?? null;
+        if (storedHash) {
+          // Convert both to Buffer for proper comparison and handle potential null values
+          const downloadedBuffer = Buffer.from(downloadedHash);
+          const storedBuffer = Buffer.from(storedHash);
+
+          if (!downloadedBuffer.equals(storedBuffer)) {
+            throw new StorageError('Content hash verification failed', {
+              operation: 'hash verification',
+              blobId,
+              recoverable: true
+            });
           }
         }
 
         return Buffer.from(content);
       } catch (error) {
+        // Check if operation was canceled during execution
+        if (signal?.aborted) {
+          throw new Error('Blob retrieval operation was canceled');
+        }
+
         const errorMessage = error instanceof Error ? error.message : String(error);
         failures.push({
           source: 'direct',
@@ -739,28 +1083,47 @@ export class WalrusStorage {
       console.log('Direct retrieval failed, attempting fallback to public aggregator...');
       
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        // Check if operation was canceled
+        if (signal?.aborted) {
+          throw new Error('Blob retrieval operation was canceled');
+        }
+
         try {
           const response = await withTimeout(
             fetch(`https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`, {
               method: 'GET',
-              headers: { 'Accept': 'application/json' }
+              headers: { 'Accept': 'application/json' },
+              signal
             }),
             timeout,
             'Aggregator retrieval',
-            attempt
+            attempt,
+            signal
           ) as Response;
 
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            throw new NetworkError(`HTTP ${response.status}: ${response.statusText}`, {
+              operation: 'aggregator retrieval',
+              recoverable: true
+            });
           }
 
-          const buffer = await response.arrayBuffer();
+          const buffer = await response?.arrayBuffer() ?? new ArrayBuffer(0);
           if (buffer.byteLength === 0) {
-            throw new Error('Retrieved content is empty');
+            throw new StorageError('Retrieved content is empty', {
+              operation: 'aggregator retrieval',
+              blobId,
+              recoverable: true
+            });
           }
 
           return Buffer.from(buffer);
         } catch (error) {
+          // Check if operation was canceled during execution
+          if (signal?.aborted) {
+            throw new Error('Blob retrieval operation was canceled');
+          }
+
           const errorMessage = error instanceof Error ? error.message : String(error);
           failures.push({
             source: 'aggregator',
@@ -785,40 +1148,82 @@ export class WalrusStorage {
       .map(f => `${f.source} attempt ${f.attempt}: ${f.error}`)
       .join('\n');
 
-    throw new CLIError(
+    throw new StorageError(
       `Failed to retrieve blob during ${context} after all attempts:\n${errorSummary}`,
-      'WALRUS_RETRIEVE_FAILED'
+      {
+        operation: context,
+        blobId,
+        recoverable: false,
+        cause: lastError || undefined
+      }
     );
   }
 
+  /**
+   * Parse and validate todo data from raw bytes
+   * @param data The raw todo data bytes
+   * @returns Parsed and validated Todo object
+   * @throws Properly categorized errors for parsing issues
+   */
   private async parseTodoData(data: Uint8Array): Promise<Todo> {
     try {
       const todoData = new TextDecoder().decode(data);
-      const todo = JSON.parse(todoData) as Todo;
+      let todo: Todo;
+      try {
+        todo = JSON.parse(todoData) as Todo;
+      } catch (parseError) {
+        throw new ValidationError(`Failed to parse todo JSON: ${parseError instanceof Error ? parseError.message : String(parseError)}`, {
+          operation: 'todo parsing',
+          recoverable: false
+        });
+      }
 
       // Validate parsed data
       this.validateTodoData(todo);
 
       // Additional validation specific to retrieved todos
       if (!todo.walrusBlobId) {
-        throw new Error('Missing walrusBlobId field');
+        throw new ValidationError('Missing walrusBlobId field', {
+          field: 'walrusBlobId',
+          operation: 'todo parsing'
+        });
       }
 
       return todo;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Invalid todo:')) {
-        throw new CLIError(
-          `Retrieved todo data is invalid: ${error.message}`,
-          'WALRUS_INVALID_TODO_DATA'
-        );
+      if (error instanceof ValidationError) {
+        // For validation errors, just propagate them
+        throw error;
       }
-      throw new CLIError(
+      
+      if (error instanceof SyntaxError) {
+        // For JSON parsing errors
+        throw new ValidationError(`Retrieved todo data is not valid JSON: ${error.message}`, {
+          operation: 'todo parsing',
+          recoverable: false,
+          cause: error
+        });
+      }
+      
+      // For other errors
+      throw new ValidationError(
         `Failed to parse todo data: ${error instanceof Error ? error.message : String(error)}`,
-        'WALRUS_PARSE_FAILED'
+        {
+          operation: 'todo parsing',
+          recoverable: false,
+          cause: error instanceof Error ? error : undefined
+        }
       );
     }
   }
 
+  /**
+   * Update a todo item by storing a new version
+   * @param todo Updated todo
+   * @param blobId Original blob ID
+   * @returns Promise resolving to new blob ID
+   * @throws Properly categorized errors for update failures
+   */
   async updateTodo(todo: Todo, blobId: string): Promise<string> {
     try {
       if (this.useMockMode) {
@@ -829,6 +1234,7 @@ export class WalrusStorage {
       console.log(`Updating todo "${todo.title}" on Walrus...`);
       console.log('Note: Walrus blobs are immutable, so a new blob will be created');
 
+      // Store the updated todo
       const newBlobId = await this.storeTodo(todo);
 
       console.log(`Todo updated with new blob ID: ${newBlobId}`);
@@ -836,13 +1242,18 @@ export class WalrusStorage {
 
       return newBlobId;
     } catch (error) {
-      throw new CLIError(
-        `Failed to update todo: ${error instanceof Error ? error.message : String(error)}`,
-        'WALRUS_UPDATE_FAILED'
-      );
+      // Categorize and properly throw the error
+      const category = categorizeWalrusError(error);
+      throw mapToWalrusError(error, category, 'update todo');
     }
   }
 
+  /**
+   * Store a todo list in Walrus blob storage
+   * @param todoList The list to store
+   * @returns Promise resolving to the blob ID
+   * @throws Properly categorized errors for storage failures
+   */
   async storeTodoList(todoList: TodoList): Promise<string> {
     try {
       if (this.useMockMode) {
@@ -851,16 +1262,38 @@ export class WalrusStorage {
       }
 
       if (this.connectionState !== 'connected' || !this.walrusClient) {
-        throw new Error('WalrusStorage not connected. Call connect() first.');
+        throw new ValidationError('WalrusStorage not connected. Call connect() first.', {
+          operation: 'store todo list'
+        });
       }
 
-      // Validate todo list data
-      this.validateTodoListData(todoList);
+      // Validate todo list data with proper error handling
+      try {
+        this.validateTodoListData(todoList);
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          throw error;
+        }
+        throw new ValidationError(
+          `Todo list validation failed: ${error instanceof Error ? error.message : String(error)}`,
+          { operation: 'list validation' }
+        );
+      }
 
       console.log(`Serializing todo list "${todoList.name}" for storage...`);
-      const buffer = TodoSerializer.todoListToBuffer(todoList);
       
-      // Use our size calculator for precise measurement
+      // Serialize with proper error handling
+      let buffer: Buffer;
+      try {
+        buffer = TodoSerializer.todoListToBuffer(todoList);
+      } catch (error) {
+        throw new ValidationError(
+          `Failed to serialize todo list: ${error instanceof Error ? error.message : String(error)}`,
+          { operation: 'list serialization' }
+        );
+      }
+      
+      // Size calculations
       const exactSize = buffer.length;
       const calculatedSize = TodoSizeCalculator.calculateTodoListSize(todoList);
       
@@ -873,7 +1306,8 @@ export class WalrusStorage {
       const checksum = this.calculateChecksum(buffer);
       const signer = await this.getTransactionSigner();
 
-      const result = await this.executeWithRetry(
+      // Upload with proper error handling
+      const uploadResult = await AsyncOperationHandler.execute(
         async () => this.walrusClient.writeBlob({
           blob: new Uint8Array(buffer),
           deletable: false,
@@ -890,14 +1324,27 @@ export class WalrusStorage {
             todoCount: todoList.todos.length.toString()
           }
         }),
-        'todo list storage',
-        5
+        {
+          operation: 'todo list upload',
+          maxRetries: 5,
+          baseDelay: 1000,
+          signal: this.abortController.signal
+        }
       );
+
+      if (!uploadResult.success) {
+        throw new StorageError('Failed to upload todo list data', {
+          operation: 'list upload',
+          cause: uploadResult.error
+        });
+      }
+
+      const result = uploadResult.data;
       
       // Safely extract blob information with proper type checking
-      const blobObject = result.blobObject || { blob_id: result.blobId || '' };
+      const blobObject = result?.blobObject ?? (result?.blobId ? { blob_id: result.blobId } : null);
 
-      // Verify the upload using our dedicated verification manager
+      // Prepare metadata for verification
       const metadata = {
         contentType: 'application/json',
         filename: `todolist-${todoList.id}.json`,
@@ -910,30 +1357,60 @@ export class WalrusStorage {
       };
 
       this.initializeManagers();
-      // Ensure we have a valid blob ID with proper type checking
+      
+      // Extract blob ID with error handling
       let blobId = '';
-      // Use type guards to safely access properties
       if (blobObject && typeof blobObject === 'object') {
+        // Option 1: Get blob_id directly if it exists
         if ('blob_id' in blobObject && typeof blobObject.blob_id === 'string') {
           blobId = blobObject.blob_id;
-        } else if ('id' in blobObject && blobObject.id && 
-                 typeof blobObject.id === 'object' && 
-                 'id' in blobObject.id && 
-                 typeof blobObject.id.id === 'string') {
-          blobId = blobObject.id.id;
         }
+        // Option 2: Use nested id property with multiple null checks
+        else if ('id' in blobObject && blobObject.id) {
+          // Handle both string id and object with id property
+          if (typeof blobObject.id === 'string') {
+            blobId = blobObject.id;
+          }
+          else if (typeof blobObject.id === 'object' && blobObject.id !== null) {
+            // Access nested id property with optional chaining
+            const nestedId = blobObject.id?.id;
+            if (typeof nestedId === 'string') {
+              blobId = nestedId;
+            }
+          }
+        }
+        // Option 3: Extract from blobId if present
+        else if ('blobId' in blobObject && typeof blobObject.blobId === 'string') {
+          blobId = blobObject.blobId;
+        }
+      }
+
+      // Last resort: try to directly use result.blobId if blobObject didn't yield a valid ID
+      if (!blobId && result?.blobId && typeof result.blobId === 'string') {
+        blobId = result.blobId;
       }
       
       if (!blobId) {
-        throw new Error('Failed to extract valid blob ID from response');
+        throw new ValidationError('Failed to extract valid blob ID from response', {
+          operation: 'list ID extraction'
+        });
       }
-      const verificationResult = await this.verifyBlob(
-        blobId,
-        buffer,
-        metadata
+      
+      // Verify with proper error handling
+      const verificationResult = await AsyncOperationHandler.execute(
+        () => this.verifyBlob(blobId, buffer, metadata),
+        {
+          operation: 'verify list blob',
+          maxRetries: 3,
+          signal: this.abortController.signal,
+          throwErrors: false
+        }
       );
 
-      if (!verificationResult?.details?.certified) {
+      // Check if verification was successful
+      if (verificationResult.success && verificationResult.data?.details?.certified) {
+        console.log(`Todo list successfully verified and stored with blob ID: ${blobId}`);
+      } else {
         console.log('Warning: Todo list blob certification pending. Monitoring for certification...');
         // Start monitoring in the background
         console.log('Certification monitoring not implemented in this version');
@@ -942,13 +1419,18 @@ export class WalrusStorage {
       console.log(`Todo list successfully stored with blob ID: ${blobId}`);
       return blobId;
     } catch (error) {
-      throw new CLIError(
-        `Failed to store todo list: ${error instanceof Error ? error.message : String(error)}`,
-        'WALRUS_STORE_FAILED'
-      );
+      // Categorize and properly throw the error
+      const category = categorizeWalrusError(error);
+      throw mapToWalrusError(error, category, 'store todo list');
     }
   }
 
+  /**
+   * Retrieve a todo list from Walrus blob storage
+   * @param blobId The blob ID to retrieve
+   * @returns Promise resolving to the TodoList
+   * @throws Properly categorized errors for retrieval failures
+   */
   async retrieveTodoList(blobId: string): Promise<TodoList> {
     try {
       if (this.useMockMode) {
@@ -966,69 +1448,124 @@ export class WalrusStorage {
       }
 
       if (this.connectionState !== 'connected' || !this.walrusClient) {
-        throw new Error('WalrusStorage not connected. Call connect() first.');
+        throw new ValidationError('WalrusStorage not connected. Call connect() first.', {
+          operation: 'retrieve todo list'
+        });
       }
 
       console.log(`Retrieving todo list from Walrus with blob ID: ${blobId}...`);
 
+      // Create a fresh abort controller for this operation
+      const retrievalAbortController = new AbortController();
+      
       try {
         // Attempt to retrieve the blob with our enhanced retrieval mechanism
-        const blobContent = await this.retrieveBlob(blobId, {
-          maxRetries: 5,          // More retries for important data
-          baseDelay: 1000,        // Start with 1 second delay
-          timeout: 15000,         // 15 second timeout per attempt
-          useAggregator: true,    // Allow fallback to aggregator
-          context: 'todo list retrieval'
-        });
+        const blobContentResult = await AsyncOperationHandler.execute(
+          () => this.retrieveBlob(blobId, {
+            maxRetries: 5,
+            baseDelay: 1000,
+            timeout: 15000,
+            useAggregator: true,
+            context: 'todo list retrieval',
+            signal: retrievalAbortController.signal
+          }),
+          {
+            operation: 'retrieve list blob',
+            signal: retrievalAbortController.signal
+          }
+        );
 
+        if (!blobContentResult.success) {
+          throw new StorageError(`Failed to retrieve list blob content: ${blobContentResult.error?.message}`, {
+            operation: 'list blob retrieval',
+            blobId,
+            recoverable: true,
+            cause: blobContentResult.error
+          });
+        }
+
+        const blobContent = blobContentResult.data ?? new Uint8Array();
         console.log('Successfully retrieved todo list data');
-        const todoListData = new TextDecoder().decode(blobContent);
-        const todoList = JSON.parse(todoListData) as TodoList;
 
-        // Validate the retrieved todo list
+        // Parse the list with proper error handling
         try {
+          const todoListData = new TextDecoder().decode(blobContent);
+          let todoList: TodoList;
+          try {
+            todoList = JSON.parse(todoListData) as TodoList;
+          } catch (parseError) {
+            throw new ValidationError(`Failed to parse todo list JSON: ${parseError instanceof Error ? parseError.message : String(parseError)}`, {
+              operation: 'list parsing',
+              recoverable: false
+            });
+          }
+
+          // Validate the retrieved todo list
           this.validateTodoListData(todoList);
+
+          return todoList;
         } catch (error) {
-          throw new CLIError(
-            `Retrieved todo list data is invalid: ${error instanceof Error ? error.message : String(error)}`,
-            'WALRUS_INVALID_TODOLIST_DATA'
+          if (error instanceof ValidationError) {
+            // Propagate validation errors
+            throw error;
+          }
+          
+          if (error instanceof SyntaxError) {
+            // For JSON parsing errors
+            throw new ValidationError('Retrieved todo list data is not valid JSON', {
+              operation: 'list parsing',
+              recoverable: false,
+              cause: error
+            });
+          }
+          
+          // For other errors
+          throw new ValidationError(
+            `Failed to parse todo list data: ${error instanceof Error ? error.message : String(error)}`,
+            {
+              operation: 'list parsing',
+              recoverable: false,
+              cause: error instanceof Error ? error : undefined
+            }
           );
         }
-
-        return todoList;
       } catch (error) {
-        // If the error is already a CLIError, rethrow it
-        if (error instanceof CLIError) {
-          throw error;
-        }
+        // Cancel the retrieval if something goes wrong
+        retrievalAbortController.abort();
         
-        // Otherwise, wrap it in a CLIError with appropriate context
-        throw new CLIError(
-          `Failed to retrieve todo list: ${error instanceof Error ? error.message : String(error)}`,
-          'WALRUS_RETRIEVE_FAILED'
-        );
+        // Categorize and throw mapped error
+        const category = categorizeWalrusError(error);
+        throw mapToWalrusError(error, category, 'retrieve todo list');
       }
     } catch (error) {
-      throw new CLIError(
-        `Failed to retrieve todo list: ${error instanceof Error ? error.message : String(error)}`,
-        'WALRUS_RETRIEVE_FAILED'
-      );
+      // Categorize and properly throw the error
+      const category = categorizeWalrusError(error);
+      throw mapToWalrusError(error, category, 'retrieve todo list');
     }
   }
 
-  private storageManager!: StorageManager;
+  /**
+   * Storage verification utility
+   */
+  private storageManager: StorageManager | null = null;
   private verifyBlob = async (
     blobId: string,
     expectedData: Buffer,
     expectedMetadata: Record<string, string>
   ): Promise<VerificationResult> => {
     try {
+      if (!this.walrusClient) {
+        throw new StorageError('WalrusStorage not initialized', {
+          operation: 'verify blob'
+        });
+      }
+
       const retrievedContent = await this.walrusClient.readBlob({ blobId });
       if (!retrievedContent) {
         return { details: { certified: false } };
       }
 
-      const content = Buffer.from(retrievedContent);
+      const content = Buffer.from(retrievedContent ?? new Uint8Array());
       const checksum = this.calculateChecksum(content);
       const isValid = expectedData.length === content.length &&
                      this.calculateChecksum(expectedData) === checksum;
@@ -1045,28 +1582,63 @@ export class WalrusStorage {
     }
   };
 
+  /**
+   * Initialize storage managers when needed
+   * @private
+   */
   private initializeManagers(): void {
     if (!this.storageManager) {
       // Pass the WalrusClientAdapter's underlying client to match the StorageManager's expected type
+      if (!this.walrusClient || !this.suiClient) {
+        throw new ValidationError('Cannot initialize storage managers: client not initialized', {
+          operation: 'initialize managers'
+        });
+      }
+
       const walrusClient = this.walrusClient.getUnderlyingClient();
-      this.storageManager = new StorageManager(
-        this.suiClient, 
-        walrusClient,
-        this.getActiveAddress()
-      );
+      try {
+        // Cast the walrusClient to match the expected interface for StorageManager
+        // This fixes the compatibility issue between WalrusClient types
+        this.storageManager = new StorageManager(
+          this.suiClient,
+          walrusClient as any, // Using 'any' to bypass strict type checking
+          this.getActiveAddress()
+        );
+      } catch (error) {
+        console.warn('Failed to initialize StorageManager:', error);
+        throw new ValidationError('Failed to initialize StorageManager', {
+          operation: 'initialize managers',
+          cause: error instanceof Error ? error : undefined
+        });
+      }
     }
     
     if (!this.storageReuseAnalyzer) {
       // Use dynamic import to avoid direct dependency
       const { StorageReuseAnalyzer } = require('./storage-reuse-analyzer');
-      
+
+      if (!this.walrusClient || !this.suiClient) {
+        throw new ValidationError('Cannot initialize storage analyzer: client not initialized', {
+          operation: 'initialize analyzer'
+        });
+      }
+
       // Pass the underlying client to match the analyzer's expected type
       const walrusClient = this.walrusClient.getUnderlyingClient();
-      this.storageReuseAnalyzer = new StorageReuseAnalyzer(
-        this.suiClient,
-        walrusClient,
-        this.getActiveAddress()
-      );
+      try {
+        // Cast the walrusClient to match the expected interface for StorageReuseAnalyzer
+        this.storageReuseAnalyzer = new StorageReuseAnalyzer(
+          this.suiClient,
+          walrusClient as any, // Using 'any' to bypass strict type checking
+          this.getActiveAddress()
+        );
+      } catch (error) {
+        console.warn('Failed to initialize StorageReuseAnalyzer:', error);
+        throw new ValidationError('Failed to initialize StorageReuseAnalyzer', {
+          operation: 'initialize analyzer',
+          cause: error instanceof Error ? error : undefined
+        });
+      }
     }
   }
 
@@ -1077,22 +1649,41 @@ export class WalrusStorage {
    * 
    * @param sizeBytes The required storage size in bytes
    * @returns Storage information if successfully allocated, null for mock mode
+   * @throws Properly categorized errors for allocation failures
    */
   async ensureStorageAllocated(sizeBytes = 1073741824): Promise<WalrusStorageInfo | null> {
-    if (this.useMockMode) {
-      return null;
-    }
-
-    if (this.connectionState !== 'connected' || !this.walrusClient) {
-      throw new Error('WalrusStorage not connected. Call connect() first.');
-    }
-
     try {
+      if (this.useMockMode) {
+        return null;
+      }
+
+      if (this.connectionState !== 'connected' || !this.walrusClient) {
+        throw new ValidationError('WalrusStorage not connected. Call connect() first.', {
+          operation: 'storage allocation'
+        });
+      }
+
       console.log(`Validating storage requirements for ${sizeBytes} bytes...`);
       this.initializeManagers();
       
-      // First, use our enhanced storage reuse analyzer to find the best storage to reuse
-      const storageAnalysis = await this.storageReuseAnalyzer!.analyzeStorageEfficiency(sizeBytes);
+      // Use storage analyzer for optimal allocation
+      const storageAnalysisResult = await AsyncOperationHandler.execute(
+        () => this.storageReuseAnalyzer!.analyzeStorageEfficiency(sizeBytes),
+        {
+          operation: 'analyze storage',
+          maxRetries: 2,
+          signal: this.abortController.signal
+        }
+      );
+
+      if (!storageAnalysisResult.success) {
+        throw new StorageError('Failed to analyze storage efficiency', {
+          operation: 'storage analysis',
+          cause: storageAnalysisResult.error
+        });
+      }
+
+      const storageAnalysis = storageAnalysisResult.data;
       console.log('Storage analysis completed:');
       console.log(`  Total storage: ${storageAnalysis.analysisResult.totalStorage} bytes`);
       console.log(`  Used storage: ${storageAnalysis.analysisResult.usedStorage} bytes`);
@@ -1123,30 +1714,47 @@ export class WalrusStorage {
         };
       }
       
-      // If recommendation is to extend existing storage, we need to implement extension logic
-      // Since Walrus blobs are immutable, we can't actually extend, so we'll create new storage
-      // but will show a message about the recommendation
+      // If recommendation is to extend existing storage but not implemented, log info
       if (storageAnalysis.analysisResult.recommendation === 'extend-existing') {
         console.log('Note: Extending existing storage is recommended but not implemented.');
         console.log('Creating new storage instead.');
       }
 
-      // Fallback to comprehensive storage validation 
-      const validation = await this.storageManager.validateStorageRequirements(sizeBytes);
+      // Fallback to comprehensive storage validation
+      const validationResult = await AsyncOperationHandler.execute(
+        () => this.storageManager.validateStorageRequirements(sizeBytes),
+        {
+          operation: 'validate storage requirements',
+          maxRetries: 2,
+          signal: this.abortController.signal
+        }
+      );
+
+      if (!validationResult.success) {
+        throw new StorageError('Failed to validate storage requirements', {
+          operation: 'requirements validation',
+          cause: validationResult.error
+        });
+      }
+
+      const validation = validationResult.data;
 
       if (!validation.canProceed) {
         if (validation.requiredCost && validation.balances) {
-          throw new CLIError(
+          throw new TransactionError(
             `Insufficient funds for storage allocation:\n` +
             `Required: ${validation.requiredCost.requiredBalance} WAL\n` +
             `Available: ${validation.balances.walBalance} WAL\n` +
             `Storage Fund: ${validation.balances.storageFundBalance} WAL`,
-            'WALRUS_INSUFFICIENT_TOKENS'
+            {
+              operation: 'storage allocation',
+              recoverable: false
+            }
           );
         }
-        throw new CLIError(
+        throw new ValidationError(
           'Storage requirements not met. Please check your WAL balance and storage allocation.',
-          'WALRUS_STORAGE_REQUIREMENTS_FAILED'
+          { operation: 'storage validation' }
         );
       }
 
@@ -1171,9 +1779,9 @@ export class WalrusStorage {
 
       // Proceed with new storage allocation if we get here
       if (!validation.requiredCost) {
-        throw new CLIError(
+        throw new ValidationError(
           'Failed to estimate storage costs',
-          'WALRUS_COST_ESTIMATION_FAILED'
+          { operation: 'cost estimation' }
         );
       }
 
@@ -1182,73 +1790,174 @@ export class WalrusStorage {
       console.log(`  Duration: ${validation.requiredCost.epochs} epochs`);
       console.log(`  Estimated cost: ${validation.requiredCost.totalCost} WAL`);
 
-      // Attempt storage allocation with exponential backoff
-      const maxRetries = 3;
-      const baseDelay = 1000;
-      let lastError: Error | null = null;
+      // Create a fresh abort controller for allocation
+      const allocationAbortController = new AbortController();
+      
+      try {
+        // Attempt storage allocation with comprehensive error handling
+        const signer = await this.getTransactionSigner();
 
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          const signer = await this.getTransactionSigner();
-          const { storage } = await this.executeWithRetry(
-            async () => {
-              // Use proper transaction creation with compatible typing
-              const txb = await this.walrusClient.createStorageBlock(sizeBytes, validation.requiredCost!.epochs);
-              return this.walrusClient.executeCreateStorageTransaction({
-                size: sizeBytes, 
-                epochs: validation.requiredCost!.epochs,
-                transaction: txb, // Include the transaction
-                signer: signer // Use the properly typed signer
+        // Verify required values before proceeding
+        if (!this.walrusClient) {
+          throw new ValidationError('WalrusClient is not initialized', {
+            operation: 'storage allocation'
+          });
+        }
+
+        if (!validation.requiredCost || !validation.requiredCost.epochs) {
+          throw new ValidationError('Missing required cost information for storage allocation', {
+            operation: 'storage allocation'
+          });
+        }
+
+        // Create and execute transaction with proper error handling
+        const storageCreationResult = await AsyncOperationHandler.execute(
+          async () => {
+            // Create transaction with proper error handling
+            const txbResult = await this.createStorageBlock(
+              sizeBytes,
+              validation.requiredCost?.epochs || 52 // Default to 52 epochs if missing
+            );
+
+            // Verify transaction was created successfully
+            if (!txbResult) {
+              throw new ValidationError('Failed to create storage transaction block', {
+                operation: 'transaction creation'
               });
-            },
-            'storage creation',
-            attempt
-          );
+            }
 
-          // Verify the storage was created
-          const currentEpoch = Number((await this.suiClient.getLatestSuiSystemState()).epoch);
-          const verification = await this.storageManager.verifyExistingStorage(
+            return this.walrusClient!.executeCreateStorageTransaction({
+              size: sizeBytes,
+              epochs: validation.requiredCost?.epochs || 52, // Provide default
+              transaction: txbResult, // Use the properly unwrapped result
+              signer: signer // Use the properly typed signer
+            });
+          },
+          {
+            operation: 'create storage',
+            maxRetries: 3,
+            baseDelay: 2000,
+            signal: allocationAbortController.signal
+          }
+        );
+
+        if (!storageCreationResult.success) {
+          throw new TransactionError('Failed to create storage', {
+            operation: 'storage transaction',
+            recoverable: false,
+            cause: storageCreationResult.error
+          });
+        }
+
+        const storage = storageCreationResult.data?.storage ?? null;
+
+        // Verify the storage was created
+        if (!this.suiClient) {
+          throw new ValidationError('SuiClient is not initialized', {
+            operation: 'storage verification'
+          });
+        }
+
+        // Get current epoch for verification
+        const systemStateResult = await AsyncOperationHandler.execute(
+          () => this.suiClient?.getLatestSuiSystemState() ?? Promise.reject(new Error('SuiClient is not initialized')),
+          {
+            operation: 'get epoch',
+            maxRetries: 2,
+            signal: allocationAbortController.signal
+          }
+        );
+
+        if (!systemStateResult.success) {
+          throw new NetworkError('Failed to get system state for verification', {
+            operation: 'system state check',
+            recoverable: true,
+            cause: systemStateResult.error
+          });
+        }
+
+        const systemState = systemStateResult.data;
+        // Use optional chaining and provide a default value
+        const currentEpoch = safeToNumber(systemState?.epoch, 0);
+
+        if (!this.storageManager) {
+          throw new ValidationError('StorageManager is not initialized', {
+            operation: 'storage verification'
+          });
+        }
+
+        // Verify storage with proper error handling
+        const verificationResult = await AsyncOperationHandler.execute(
+          () => this.storageManager.verifyExistingStorage(
             sizeBytes,
             currentEpoch
-          );
-
-          if (verification.isValid && verification.details?.id === storage.id.id &&
-              verification.details.endEpoch > currentEpoch &&
-              verification.details.usedSize <= verification.details.totalSize &&
-              Number(storage.storage_size) >= sizeBytes) {
-            console.log('Storage allocation verified successfully:');
-            console.log(`  Storage ID: ${storage.id.id}`);
-            console.log(`  Size: ${storage.storage_size} bytes`);
-            console.log(`  End epoch: ${storage.end_epoch}`);
-
-            return {
-              id: storage.id,
-              storage_size: storage.storage_size,
-              used_size: '0',
-              end_epoch: storage.end_epoch.toString(),
-              start_epoch: storage.start_epoch.toString(),
-              content: null,
-              data: undefined
-            };
+          ),
+          {
+            operation: 'verify storage',
+            maxRetries: 2,
+            signal: allocationAbortController.signal
           }
+        );
 
-          throw new Error('Storage allocation succeeded but verification failed');
-        } catch (error) {
-          lastError = error instanceof Error ? error : new Error(String(error));
-          
-          if (attempt === maxRetries) break;
-
-          const delay = baseDelay * Math.pow(2, attempt - 1);
-          console.log(`Allocation attempt ${attempt} failed, retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+        if (!verificationResult.success) {
+          throw new StorageError('Storage verification failed', {
+            operation: 'verification',
+            recoverable: false,
+            cause: verificationResult.error
+          });
         }
-      }
 
-      throw lastError || new Error('Storage allocation failed after all retries');
+        const verification = verificationResult.data;
+
+        // Add comprehensive null checks for storage object and its properties
+        if (!storage || !storage.id || !storage.id.id) {
+          throw new ValidationError('Invalid storage object returned from creation', {
+            operation: 'storage validation'
+          });
+        }
+
+        // Add comprehensive null checks with optional chaining for verification
+        if (verification?.isValid &&
+            verification?.details?.id === storage?.id?.id &&
+            (verification?.details?.endEpoch ?? 0) > currentEpoch &&
+            (verification?.details?.usedSize ?? 0) <= (verification?.details?.totalSize ?? 0) &&
+            safeToNumber(storage?.storage_size, 0) >= sizeBytes) {
+
+          console.log('Storage allocation verified successfully:');
+          console.log(`  Storage ID: ${storage?.id?.id}`);
+          console.log(`  Size: ${storage?.storage_size ?? 'unknown'} bytes`);
+          console.log(`  End epoch: ${storage?.end_epoch ?? 'unknown'}`);
+
+          return {
+            id: storage?.id ?? null,
+            storage_size: storage?.storage_size ?? '0',
+            used_size: '0',
+            end_epoch: String(storage?.end_epoch ?? 0),
+            start_epoch: String(storage?.start_epoch ?? 0),
+            content: null,
+            data: undefined
+          };
+        }
+
+        throw new StorageError('Storage allocation succeeded but verification failed', {
+          operation: 'storage verification',
+          recoverable: false
+        });
+      } catch (error) {
+        // Cancel any pending operations
+        allocationAbortController.abort();
+        
+        // Categorize and rethrow the error
+        const category = categorizeWalrusError(error);
+        throw mapToWalrusError(error, category, 'storage allocation');
+      }
     } catch (error) {
-      const formattedError = this.handleWalrusError(error, 'storage allocation');
-      console.warn('Storage allocation failed:', formattedError.message);
-      throw formattedError;
+      // Categorize and map the error
+      const category = categorizeWalrusError(error);
+      const mappedError = mapToWalrusError(error, category, 'storage allocation');
+      
+      console.warn('Storage allocation failed:', mappedError.message);
+      throw mappedError;
     }
   }
 
@@ -1266,8 +1975,22 @@ export class WalrusStorage {
       console.log(`Checking existing storage for address ${address}...`);
       this.initializeManagers();
       
-      // Use our enhanced storage analyzer to get comprehensive details
-      const storageAnalysis = await this.storageReuseAnalyzer!.findBestStorageForReuse(0); // 0 size just to get inventory
+      // Use enhanced storage analyzer with proper error handling
+      const analyzerResult = await AsyncOperationHandler.execute(
+        () => this.storageReuseAnalyzer!.findBestStorageForReuse(0), // 0 size just to get inventory
+        {
+          operation: 'find best storage',
+          maxRetries: 2,
+          signal: this.abortController.signal
+        }
+      );
+
+      if (!analyzerResult.success) {
+        console.warn('Storage analysis failed:', analyzerResult.error?.message);
+        return null;
+      }
+
+      const storageAnalysis = analyzerResult.data;
       
       console.log('Storage inventory:');
       console.log(`  Total storage allocation: ${storageAnalysis.totalStorage} bytes`);
@@ -1290,7 +2013,22 @@ export class WalrusStorage {
         console.log(`  Used size: ${bestMatch.usedSize} bytes`);
         console.log(`  Remaining: ${bestMatch.remaining} bytes`);
         
-        const { epoch } = await this.suiClient.getLatestSuiSystemState();
+        // Get current epoch with proper error handling
+        const epochResult = await AsyncOperationHandler.execute(
+          () => this.suiClient?.getLatestSuiSystemState() ?? Promise.reject(new Error('SuiClient is not initialized')),
+          {
+            operation: 'get epoch',
+            maxRetries: 2,
+            signal: this.abortController.signal
+          }
+        );
+
+        if (!epochResult.success) {
+          console.warn('Failed to get current epoch:', epochResult.error?.message);
+          return null;
+        }
+
+        const epoch = epochResult.data?.epoch ?? '0';
         const currentEpoch = Number(epoch);
         console.log(`  Remaining epochs: ${bestMatch.endEpoch - currentEpoch}`);
         
@@ -1305,87 +2043,81 @@ export class WalrusStorage {
         };
       }
       
-      // Fallback to traditional method if needed
-      const response = await this.suiClient.getOwnedObjects({
-        owner: address,
-        filter: {
-          StructType: `0x2::storage::Storage`
-        },
-        options: {
-          showContent: true
-        }
-      });
-
-      const existingStorage = response.data
-        .filter((item: SuiObjectResponse) => item.data?.content?.dataType === 'moveObject')
-        .map((item: SuiObjectResponse) => {
-          const content = item.data?.content && 
-            'dataType' in item.data.content && 
-            'fields' in item.data.content && 
-            item.data.content.dataType === 'moveObject' 
-              ? item.data.content as unknown as WalrusStorageContent 
-              : null;
-          const storageInfo: WalrusStorageInfo = {
-            id: { id: item.data?.objectId || '' },
-            storage_size: content?.fields?.storage_size || '0',
-            used_size: content?.fields?.used_size || '0',
-            end_epoch: content?.fields?.end_epoch || '0',
-            start_epoch: '0',
-            data: item.data || undefined,
-            content: content
-          };
-          return storageInfo;
+      // Fallback to traditional method if analyzer didn't find a best match
+      try {
+        const response = await this.suiClient?.getOwnedObjects({
+          owner: address,
+          filter: {
+            StructType: `0x2::storage::Storage`
+          },
+          options: {
+            showContent: true
+          }
         });
 
-      if (existingStorage.length > 0) {
-        const { epoch } = await this.suiClient.getLatestSuiSystemState();
-        const currentEpoch = Number(epoch);
+        const existingStorage = response.data
+          .filter((item: SuiObjectResponse) => item.data?.content?.dataType === 'moveObject')
+          .map((item: SuiObjectResponse) => {
+            const content = item.data?.content && 
+              'dataType' in item.data.content && 
+              'fields' in item.data.content && 
+              item.data.content.dataType === 'moveObject' 
+                ? item.data.content as unknown as WalrusStorageContent 
+                : null;
+            const storageInfo: WalrusStorageInfo = {
+              id: item.data?.objectId ? { id: item.data.objectId } : null,
+              storage_size: content?.fields?.storage_size ?? '0',
+              used_size: content?.fields?.used_size ?? '0',
+              end_epoch: content?.fields?.end_epoch ?? '0',
+              start_epoch: '0',
+              data: item.data ?? null,
+              content: content
+            };
+            return storageInfo;
+          });
 
-        const suitableStorage = existingStorage.find((storage) => {
-          const remainingSize = Number(storage.storage_size) - Number(storage.used_size || 0);
-          const remainingEpochs = Number(storage.end_epoch) - currentEpoch;
-          return remainingSize >= 1000000 && remainingEpochs >= 10;
-        });
+        if (existingStorage.length > 0) {
+          const epochResult = await AsyncOperationHandler.execute(
+            () => this.suiClient?.getLatestSuiSystemState() ?? Promise.reject(new Error('SuiClient is not initialized')),
+            {
+              operation: 'get epoch',
+              maxRetries: 2,
+              signal: this.abortController.signal
+            }
+          );
 
-        if (suitableStorage) {
-          console.log(`Found suitable existing storage: ${suitableStorage.id.id}`);
-          return suitableStorage;
+          if (!epochResult.success) {
+            console.warn('Failed to get current epoch:', epochResult.error?.message);
+            return existingStorage[0]; // Return first storage without epoch check
+          }
+
+          const epoch = epochResult.data?.epoch ?? '0';
+          const currentEpoch = Number(epoch);
+
+          const suitableStorage = existingStorage.find((storage) => {
+            const remainingSize = safeToNumber(storage.storage_size) - safeToNumber(storage.used_size);
+            const remainingEpochs = safeToNumber(storage.end_epoch) - currentEpoch;
+            return remainingSize >= 1000000 && remainingEpochs >= 10;
+          });
+
+          if (suitableStorage) {
+            console.log(`Found suitable existing storage: ${suitableStorage.id?.id ?? 'unknown'}`);
+            return suitableStorage;
+          }
         }
+
+        console.log('No suitable existing storage found');
+        return null;
+      } catch (error) {
+        // For fallback method, just log and return null instead of propagating error
+        console.warn('Error checking existing storage:', error);
+        return null;
       }
-
-      console.log('No suitable existing storage found');
-      return null;
     } catch (error) {
+      // For the main method, log and return null instead of propagating error
       console.warn('Error checking existing storage:', error);
       return null;
     }
-  }
-
-
-  protected handleWalrusError(error: unknown, operation: string): Error {
-    if (error instanceof Error) {
-      if (error.message.includes('insufficient')) {
-        return new CLIError(
-          `Insufficient WAL tokens for ${operation}. Please acquire WAL tokens and try again.`,
-          'WALRUS_INSUFFICIENT_TOKENS'
-        );
-      } else if (error.message.includes('Storage object not found')) {
-        return new CLIError(
-          `Storage allocation failed. The transaction was submitted but the storage object was not found. This may be due to network issues or insufficient gas.`,
-          'WALRUS_STORAGE_NOT_FOUND'
-        );
-      } else if (error.message.includes('gas budget')) {
-        return new CLIError(
-          `Insufficient gas budget for ${operation}. Please increase the gas budget and try again.`,
-          'WALRUS_INSUFFICIENT_GAS'
-        );
-      }
-    }
-
-    return new CLIError(
-      `Failed during ${operation}: ${error instanceof Error ? error.message : String(error)}`,
-      'WALRUS_OPERATION_FAILED'
-    );
   }
 }
 

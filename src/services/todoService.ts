@@ -31,6 +31,24 @@ export class TodoService {
       .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
   }
 
+  /**
+   * List all todos from all lists
+   * @returns Array of todos from all lists
+   */
+  async listTodos(): Promise<Todo[]> {
+    const lists = await this.getAllLists();
+    const allTodos: Todo[] = [];
+
+    for (const listName of lists) {
+      const list = await this.getList(listName);
+      if (list && list.todos && Array.isArray(list.todos)) {
+        allTodos.push(...list.todos);
+      }
+    }
+
+    return allTodos;
+  }
+
   async createList(name: string, owner: string): Promise<TodoList> {
     const existingList = await this.getList(name);
     if (existingList) {

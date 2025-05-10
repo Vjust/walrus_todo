@@ -1,12 +1,12 @@
-import type { 
+import type {
   WalrusClient as OriginalWalrusClient,
-  WalrusClientConfig, 
-  StorageWithSizeOptions, 
-  WriteBlobOptions, 
-  ReadBlobOptions, 
-  RegisterBlobOptions, 
-  CertifyBlobOptions, 
-  WriteBlobAttributesOptions, 
+  WalrusClientConfig,
+  StorageWithSizeOptions,
+  WriteBlobOptions,
+  ReadBlobOptions,
+  RegisterBlobOptions,
+  CertifyBlobOptions,
+  WriteBlobAttributesOptions,
   DeleteBlobOptions,
   GetStorageConfirmationOptions
 } from '@mysten/walrus';
@@ -14,16 +14,17 @@ import { Transaction } from '@mysten/sui.js/transactions';
 import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import type { Signer } from '@mysten/sui.js/cryptography';
 import { TransactionType } from '../../../types/transaction';
-import type { 
-  BlobObject, 
-  BlobInfo, 
-  BlobMetadataShape, 
+import type {
+  BlobObject,
+  BlobInfo,
+  BlobMetadataShape,
   BlobMetadata
 } from '../../../types/walrus';
 import type { WalrusClientExt } from '../../../types/client';
 import { WalrusClientAdapter } from '../../../utils/adapters/walrus-client-adapter';
-import { SignerAdapter } from '../../../utils/adapters/signer-adapter';
+import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
 import { TransactionBlockAdapter, createTransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
+import { WalrusClientVersion } from '../../../types/adapters/WalrusClientAdapter';
 
 /**
  * MockWalrusClient implements the WalrusClientAdapter interface for testing
@@ -253,10 +254,12 @@ export class MockWalrusClient implements WalrusClientAdapter {
 
   async getStorageConfirmationFromNode(
     options: GetStorageConfirmationOptions
-  ): Promise<{ confirmed: boolean; serializedMessage: string; signature: string }> {
+  ): Promise<{ primary_verification: boolean; secondary_verification?: boolean; provider: string; signature?: string }> {
+    // Return a structure that matches the StorageConfirmation interface in walrus.ts
     return {
-      confirmed: true,
-      serializedMessage: 'mock-message',
+      primary_verification: true,
+      secondary_verification: true,
+      provider: 'mock-provider',
       signature: 'mock-signature'
     };
   }
@@ -289,6 +292,11 @@ export class MockWalrusClient implements WalrusClientAdapter {
       };
     }
   };
+
+  // Implement the getClientVersion method
+  getClientVersion(): WalrusClientVersion {
+    return WalrusClientVersion.EXTENDED;
+  }
 
   // Helper method to create storage that's used in some implementations
   createStorage(options: StorageWithSizeOptions): (tx: TransactionType) => Promise<{

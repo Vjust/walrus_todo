@@ -3,10 +3,10 @@ import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { Logger } from './Logger';
 import {
-  ValidationError,
   BlockchainError,
   TransactionError
 } from '../types/errors';
+import { ValidationError } from '../types/errors/ValidationError';
 
 export interface RetryConfig {
   attempts: number;

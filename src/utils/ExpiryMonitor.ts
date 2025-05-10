@@ -11,9 +11,9 @@ import {
   WalrusError,
   StorageError,
   BlockchainError,
-  ValidationError,
   NetworkError
 } from '../types/errors';
+import { ValidationError } from '../types/errors/ValidationError';
 
 // ExpiryMonitor config
 
@@ -140,6 +140,26 @@ export class ExpiryMonitor {
   }
 
   /**
+   * Releases all resources held by the expiry monitor
+   * Should be called when the monitor is no longer needed
+   */
+  async cleanup(): Promise<void> {
+    // Stop scheduled checks
+    this.stop();
+
+    // Log final status
+    try {
+      const status = await this.getNetworkStatus();
+      this.logger.info('Expiry monitor cleanup - final status', { status });
+    } catch (error) {
+      this.logger.warn('Failed to get network status during cleanup', { error });
+    }
+
+    // Additional cleanup could be added here if needed
+    this.logger.info('Expiry monitor resources released');
+  }
+
+  /**
    * Verify blob existence across storage layers
    */
   public async verifyBlobExistence(blobId: string): Promise<BlobVerification> {
@@ -221,6 +241,14 @@ export class ExpiryMonitor {
   }
 
   private async checkExpiry(): Promise<void> {
+    // Skip if monitor has been stopped
+    if (!this.checkTimer) {
+      this.logger.debug('Skipping expiry check - monitor stopped');
+      return;
+    }
+
+    let pendingOperations: Promise<any>[] = [];
+
     try {
       const warningBlobs = this.vaultManager.getExpiringBlobs(
         this.config.warningThreshold
@@ -235,13 +263,45 @@ export class ExpiryMonitor {
         threshold: this.config.warningThreshold
       });
 
-      // Verify existence of all blobs
-      const verificationResults = await Promise.all(
-        warningBlobs.map(blob => this.verifyBlobExistence(blob.blobId))
-      );
+      // Verify existence of all blobs with added error handling
+      let verificationResults: BlobVerification[];
+      try {
+        verificationResults = await Promise.all(
+          warningBlobs.map(blob =>
+            this.verifyBlobExistence(blob.blobId)
+              .catch(error => {
+                // Return a failed verification result on error
+                this.logger.error(
+                  `Blob verification failed for ${blob.blobId}`,
+                  error as Error,
+                  { operation: 'verifyBlobExistence' }
+                );
+                return {
+                  exists: false,
+                  onChain: false,
+                  hasValidPoA: false,
+                  error: error instanceof Error ? error.message : String(error)
+                };
+              })
+          )
+        );
+      } catch (allError) {
+        // This should rarely happen since individual promises have catch handlers
+        this.logger.error(
+          'Critical failure during blob verification batch',
+          allError as Error,
+          { blobCount: warningBlobs.length }
+        );
+        verificationResults = warningBlobs.map(() => ({
+          exists: false,
+          onChain: false,
+          hasValidPoA: false,
+          error: 'Batch verification failed'
+        }));
+      }
 
       // Filter out blobs that failed verification
-      const validBlobs = warningBlobs.filter((_, index) => 
+      const validBlobs = warningBlobs.filter((_, index) =>
         verificationResults[index].exists && verificationResults[index].onChain
       );
 
@@ -268,27 +328,82 @@ export class ExpiryMonitor {
         return daysUntilExpiry <= this.config.autoRenewThreshold;
       });
 
-      // Handle warnings first
+      // Schedule handlers asynchronously but track them
       if (validBlobs.length > 0) {
-        await this.onWarning(validBlobs);
-        this.logger.info('Warning handler executed', {
-          blobCount: validBlobs.length
-        });
+        pendingOperations.push(
+          this.onWarning(validBlobs).then(() => {
+            this.logger.info('Warning handler executed', {
+              blobCount: validBlobs.length
+            });
+          }).catch(error => {
+            this.logger.error('Warning handler failed', error, {
+              blobCount: validBlobs.length,
+              operation: 'onWarning'
+            });
+          })
+        );
       }
 
-      // Then handle renewals
+      // Handle renewals
       if (renewalBlobs.length > 0) {
-        await this.renewBlobs(renewalBlobs);
-        this.logger.info('Renewal handler executed', {
-          blobCount: renewalBlobs.length
-        });
+        pendingOperations.push(
+          this.renewBlobs(renewalBlobs).then(() => {
+            this.logger.info('Renewal handler executed', {
+              blobCount: renewalBlobs.length
+            });
+          }).catch(error => {
+            this.logger.error('Renewal handler failed', error, {
+              blobCount: renewalBlobs.length,
+              operation: 'renewBlobs'
+            });
+          })
+        );
       }
+
+      // Wait for all pending operations to complete with tracking
+      const results = await Promise.allSettled(pendingOperations);
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          // This should not happen since each promise has its own catch handler,
+          // but we handle it just in case
+          this.logger.error(
+            `Operation ${index} failed after internal catch handler`,
+            result.reason instanceof Error ? result.reason : new Error(String(result.reason)),
+            { operationType: index < validBlobs.length ? 'warning' : 'renewal' }
+          );
+        }
+      });
     } catch (error) {
       this.logger.error(
         'Failed to check blob expiry',
         error as Error,
-        { config: this.config }
+        { config: this.config, operation: 'checkExpiry' }
       );
+    } finally {
+      // Ensure any unfinished operations complete
+      if (pendingOperations.length > 0) {
+        try {
+          const results = await Promise.allSettled(pendingOperations);
+          const pendingErrors = results
+            .filter(r => r.status === 'rejected')
+            .map(r => r.status === 'rejected' ? r.reason : null)
+            .filter(Boolean);
+
+          if (pendingErrors.length > 0) {
+            this.logger.error(
+              `${pendingErrors.length} operations failed during cleanup`,
+              pendingErrors[0] as Error,
+              { errorCount: pendingErrors.length }
+            );
+          }
+        } catch (finalError) {
+          this.logger.error(
+            'Error during final cleanup of pending operations',
+            finalError as Error,
+            { operation: 'cleanup' }
+          );
+        }
+      }
     }
   }
 
@@ -323,67 +438,126 @@ export class ExpiryMonitor {
 
     let hasFailures = false;
     const successfulBlobs: BlobRecord[] = [];
+    const errors: { blobId: string; error: Error }[] = [];
 
     for (const blob of blobs) {
       try {
-        const verification = await this.verifyBlobExistence(blob.blobId);
-        if (!verification.exists || !verification.onChain) {
+        // Verify blob existence with improved error handling
+        let verification: BlobVerification;
+        try {
+          verification = await this.verifyBlobExistence(blob.blobId);
+        } catch (verifyError) {
+          const error = verifyError instanceof Error ? verifyError : new Error(String(verifyError));
+          errors.push({ blobId: blob.blobId, error });
+          this.logger.error(
+            `Failed to verify blob ${blob.blobId} for renewal`,
+            error,
+            { operation: 'verifyBlobExistence' }
+          );
           hasFailures = true;
           continue;
         }
 
-        // Check storage availability
-        const storageUsage = await this.walrusClient.getStorageUsage();
+        if (!verification.exists || !verification.onChain) {
+          hasFailures = true;
+          const error = new Error(verification.error || 'Blob verification failed');
+          errors.push({ blobId: blob.blobId, error });
+          continue;
+        }
+
+        // Check storage availability with timeout protection
+        let storageUsage;
+        try {
+          const storagePromise = this.walrusClient.getStorageUsage();
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            const timeoutId = setTimeout(() => {
+              clearTimeout(timeoutId);
+              reject(new Error('Storage usage check timed out after 10 seconds'));
+            }, 10000);
+          });
+
+          storageUsage = await Promise.race([storagePromise, timeoutPromise]);
+        } catch (storageError) {
+          const error = storageError instanceof Error ? storageError : new Error(String(storageError));
+          errors.push({ blobId: blob.blobId, error });
+          this.logger.error(
+            'Failed to check storage availability',
+            error,
+            { operation: 'getStorageUsage', blobId: blob.blobId }
+          );
+          hasFailures = true;
+          continue;
+        }
+
         const usedPercentage = (Number(storageUsage.used) / Number(storageUsage.total)) * 100;
         if (usedPercentage > 80) {
-          this.logger.error('Insufficient storage for renewal', new Error('Storage capacity exceeded'), { usedPercentage });
+          const capacityError = new Error(`Storage capacity exceeded (${usedPercentage.toFixed(2)}%)`);
+          errors.push({ blobId: blob.blobId, error: capacityError });
+          this.logger.error('Insufficient storage for renewal', capacityError, { usedPercentage });
           return;
         }
 
         const signer = this.config.signer;
         if (!signer) {
-          throw new ValidationError('Signer required for storage transactions', {
-            field: 'signer'
+          const signerError = new ValidationError('Signer required for storage transactions', {
+            field: 'signer',
+            operation: 'renewBlobs'
           });
+          errors.push({ blobId: blob.blobId, error: signerError });
+          throw signerError;
         }
 
-        await this.retryOperation(
-          () => this.walrusClient.executeCreateStorageTransaction({
-            size: Math.ceil(this.config.renewalPeriod / (24 * 60 * 60)),
-            epochs: Math.ceil(this.config.renewalPeriod / (24 * 60 * 60)),
-            signer: signer
-          }),
-          `renew blob ${blob.blobId}`
-        );
+        try {
+          await this.retryOperation(
+            () => this.walrusClient.executeCreateStorageTransaction({
+              size: Math.ceil(this.config.renewalPeriod / (24 * 60 * 60)),
+              epochs: Math.ceil(this.config.renewalPeriod / (24 * 60 * 60)),
+              signer: signer
+            }),
+            `renew blob ${blob.blobId}`
+          );
 
-        this.vaultManager.updateBlobExpiry(
-          blob.blobId,
-          blob.vaultId,
-          renewalDate.toISOString()
-        );
+          // Update expiry date in vault manager
+          this.vaultManager.updateBlobExpiry(
+            blob.blobId,
+            blob.vaultId,
+            renewalDate.toISOString()
+          );
 
-        successfulBlobs.push(blob);
+          successfulBlobs.push(blob);
 
-        this.logger.info('Blob renewed successfully', {
-          blobId: blob.blobId,
-          newExpiry: renewalDate.toISOString()
-        });
+          this.logger.info('Blob renewed successfully', {
+            blobId: blob.blobId,
+            newExpiry: renewalDate.toISOString()
+          });
+        } catch (renewError) {
+          const error = renewError instanceof Error ? renewError : new Error(String(renewError));
+          errors.push({ blobId: blob.blobId, error });
+          hasFailures = true;
+          this.logger.error(
+            `Failed to execute renewal transaction for blob ${blob.blobId}`,
+            error,
+            { operation: 'executeCreateStorageTransaction' }
+          );
+        }
       } catch (error) {
+        const typedError = error instanceof Error ? error : new Error(String(error));
         hasFailures = true;
+        errors.push({ blobId: blob.blobId, error: typedError });
         this.logger.error(
           `Failed to renew blob ${blob.blobId}`,
-          error as Error,
-          { blob }
+          typedError,
+          { blob, operation: 'renewBlobs' }
         );
 
         if (blobs.length === 1) {
           throw new StorageError(
-            `Failed to renew blob ${blob.blobId}`,
+            `Failed to renew blob ${blob.blobId}: ${typedError.message}`,
             {
               operation: 'renew',
               blobId: blob.blobId,
               recoverable: true,
-              cause: error as Error
+              cause: typedError
             }
           );
         }
@@ -391,7 +565,26 @@ export class ExpiryMonitor {
     }
 
     if (successfulBlobs.length > 0) {
-      await this.onRenewal(successfulBlobs);
+      try {
+        await this.onRenewal(successfulBlobs);
+      } catch (renewalHandlerError) {
+        this.logger.error(
+          'Renewal handler failed after blob renewal',
+          renewalHandlerError instanceof Error ? renewalHandlerError : new Error(String(renewalHandlerError)),
+          { blobCount: successfulBlobs.length, operation: 'onRenewal' }
+        );
+        // Don't re-throw since we've already renewed the blobs
+      }
+    }
+
+    // Summarize errors if there were any
+    if (errors.length > 0) {
+      this.logger.warn('Renewal operation completed with errors', {
+        totalBlobs: blobs.length,
+        successful: successfulBlobs.length,
+        failed: errors.length,
+        errorSummary: errors.map(e => `${e.blobId}: ${e.error.message}`).join('; ')
+      });
     }
   }
 

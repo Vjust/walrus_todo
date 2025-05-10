@@ -113,10 +113,15 @@ try {
     // If we can't load the command module, fall back to the run.js script
     try {
       // Execute the command using the run.js script
+      // SECURITY FIX: Don't use string interpolation with bash -c
+      // Instead, pass arguments directly to node
       const { spawnSync } = require('child_process');
-      const command = `cd "${projectRoot}" && NODE_NO_WARNINGS=1 node ./bin/run.js ${args.join(' ')}`;
 
-      const result = spawnSync('bash', ['-c', command], {
+      // First change to the project root directory
+      process.chdir(projectRoot);
+
+      // Then execute node with the run.js script and pass the arguments directly
+      const result = spawnSync('node', ['./bin/run.js', ...args], {
         stdio: 'inherit',
         env: {
           ...process.env,

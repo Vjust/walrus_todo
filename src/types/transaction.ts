@@ -4,10 +4,25 @@ import type { Signer } from '@mysten/sui.js/cryptography';
 import type { TransactionBlockAdapter } from './adapters/TransactionBlockAdapter';
 
 /**
- * Alias for TransactionBlock from '@mysten/sui.js/transactions'
- * This maintains backward compatibility while avoiding extension issues
+ * We define Transaction to support both legacy and modern approaches.
+ * This avoids errors when the type system expects transaction.blockData etc.
  */
-export type Transaction = TransactionBlock;
+export interface Transaction extends TransactionBlock {
+  // Legacy properties for compatibility
+  [key: string]: any;
+}
+
+export function asTransactionBlock(tx: any): TransactionBlock {
+  return tx as unknown as TransactionBlock;
+}
+
+export function asUint8ArrayOrTransactionBlock(tx: any): Uint8Array | TransactionBlock {
+  return tx as unknown as Uint8Array | TransactionBlock;
+}
+
+export function asStringUint8ArrayOrTransactionBlock(tx: any): string | Uint8Array | TransactionBlock {
+  return tx as unknown as string | Uint8Array | TransactionBlock;
+}
 
 /**
  * Factory function to create a new TransactionBlock instance

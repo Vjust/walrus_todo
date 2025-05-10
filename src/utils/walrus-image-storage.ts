@@ -20,7 +20,8 @@ import { CLIError } from '../types/error';
 import sizeOf from 'image-size';
 import { MockWalrusClient, createMockWalrusClient } from './MockWalrusClient';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
-import { SignerAdapter, createSignerAdapter } from './adapters/signer-adapter';
+import { SignerAdapter } from '../types/adapters/SignerAdapter';
+import { createSignerAdapter } from './adapters/signer-adapter';
 import { WalrusClientAdapter, createWalrusClientAdapter } from './adapters/walrus-client-adapter';
 import { TransactionBlockAdapter, createTransactionBlockAdapter } from './adapters/transaction-adapter';
 
@@ -195,6 +196,22 @@ export class WalrusImageStorage {
         console.error('Error resetting Walrus client:', error);
       }
     }
+
+    // Release any pending promises or connections
+    try {
+      // Cancel any in-flight requests if supported
+      if (typeof this.walrusClient?.abort === 'function') {
+        await this.walrusClient.abort();
+      }
+
+      // For the Sui client, clean up any listeners or open connections
+      if (this.suiClient && typeof this.suiClient.close === 'function') {
+        await this.suiClient.close();
+      }
+    } catch (cleanupError) {
+      // Just log errors during cleanup, don't throw
+      console.error('Error during connection cleanup:', cleanupError);
+    }
     
     // Create a minimal WalrusClientAdapter with a functional getUnderlyingClient method
     // This ensures proper typing for the minimal client
@@ -284,6 +301,8 @@ export class WalrusImageStorage {
       throw new Error('WalrusImageStorage not initialized. Call connect() first.');
     }
 
+    let fileBuffer: Buffer | null = null;
+
     try {
       if (this.useMockMode) {
         console.log('Using mock mode for default image upload');
@@ -295,12 +314,15 @@ export class WalrusImageStorage {
         throw new Error(`Default image not found at ${imagePath}`);
       }
 
-      // Read image file as buffer
-      const imageBuffer = fs.readFileSync(imagePath);
+      // Read image file as buffer with proper resource handling
+      fileBuffer = fs.readFileSync(imagePath);
 
       // Get signer adapter to ensure compatibility with the WalrusClient interface
       const signerAdapter = await this.getTransactionSigner();
       
+      // Create a clean copy of the buffer for uploading
+      const imageBuffer = Buffer.from(fileBuffer);
+
       // Use the adapter-compliant method signature for writeBlob
       const result = await this.walrusClient.writeBlob({
         blob: new Uint8Array(imageBuffer),
@@ -346,6 +368,9 @@ export class WalrusImageStorage {
     } catch (error) {
       handleError('Failed to upload default image to Walrus', error);
       throw error;
+    } finally {
+      // Explicitly null out any large buffers to help garbage collection
+      fileBuffer = null;
     }
   }
 
@@ -462,6 +487,7 @@ export class WalrusImageStorage {
    * Internal method to upload an image with specific options
    */
   private async uploadImageInternal(options: ImageUploadOptions): Promise<string> {
+    let fileBuffer: Buffer | null = null;
     if (!this.isInitialized) {
       throw new CLIError(
         'WalrusImageStorage not initialized. Call connect() first.',
@@ -487,7 +513,8 @@ export class WalrusImageStorage {
         );
       }
 
-      const imageBuffer = fs.readFileSync(options.imagePath);
+      fileBuffer = fs.readFileSync(options.imagePath);
+      const imageBuffer = Buffer.from(fileBuffer);
       const mimeType = this.detectMimeType(imageBuffer);
       this.validateImage(imageBuffer, mimeType);
 
@@ -654,6 +681,9 @@ export class WalrusImageStorage {
         `Failed to upload image: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_UPLOAD_FAILED'
       );
+    } finally {
+      // Explicitly null out any large buffers to help garbage collection
+      fileBuffer = null;
     }
   }
 

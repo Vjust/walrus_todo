@@ -151,9 +151,10 @@ export interface LibraryVersionConfig {
 }
 
 /**
- * AdapterOptions for configuring library compatibility adapters
+ * LibraryAdapterOptions for configuring library compatibility adapters
+ * Note: Renamed from AdapterOptions to avoid naming conflicts with other modules
  */
-export interface AdapterOptions {
+export interface LibraryAdapterOptions {
   useMockImplementations?: boolean;
   strictTypeChecking?: boolean;
   adapterFactory?: {

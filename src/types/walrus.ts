@@ -123,6 +123,8 @@ export interface StorageConfirmation {
   secondary_verification?: boolean;
   provider: string;
   signature?: string;
+  confirmed?: boolean;  // Added for compatibility
+  serializedMessage?: string;
 }
 
 // Options for various Walrus client operations

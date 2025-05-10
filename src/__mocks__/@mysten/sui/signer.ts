@@ -2,37 +2,47 @@ import { IntentScope, Signer } from '@mysten/sui.js/cryptography';
 import { Ed25519PublicKey } from './cryptography/ed25519';
 import { Transaction } from '@mysten/sui.js/transactions';
 import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
-import { SignerAdapter } from '../../../utils/adapters/signer-adapter';
-import type { SignatureWithBytes } from '../../../types/adapters/SignerAdapter';
+import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
+import { SignatureWithBytes } from '../../../types/adapters/SignerAdapter';
+import { SuiSDKVersion } from '../../../types/adapters/SignerAdapter';
 import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
 import { TransactionType } from '../../../types/transaction';
 
 // Define a mock implementation that implements the SignerAdapter interface
 // Ensure SignatureWithBytes uses Uint8Array for both signature and bytes properties
-export class SignerWithProvider implements SignerAdapter {
+export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'getAddress'> {
   #publicKey: Ed25519PublicKey;
   // Add reference to client for connect() method
   private client: SuiClient | null = null;
+  private _isDisposed = false;
 
   constructor() {
     this.#publicKey = new Ed25519PublicKey(new Uint8Array([1, 2, 3, 4]));
   }
 
   // Implement the adapter interface to access the underlying signer
-  getUnderlyingSigner(): Signer {
+  getUnderlyingImplementation(): Signer {
+    this.checkDisposed();
     return this as unknown as Signer;
+  }
+
+  // Alias for backward compatibility
+  getUnderlyingSigner(): Signer {
+    return this.getUnderlyingImplementation();
   }
 
   // Implementation matching Signer interface with correct return type
   async signData(data: Uint8Array): Promise<Uint8Array> {
+    this.checkDisposed();
     // Mock implementation returns a fixed signature array
     return new Uint8Array([1, 2, 3, 4, 5]);
   }
 
   async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
+    this.checkDisposed();
     // Cast to required type - we're in a mock file so this is acceptable
     let txBlock = transaction;
-      
+
     // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
       signature: new Uint8Array([1, 2, 3, 4, 5]),
@@ -41,6 +51,7 @@ export class SignerWithProvider implements SignerAdapter {
   }
 
   async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
+    this.checkDisposed();
     // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
       signature: new Uint8Array([1, 2, 3, 4, 5]),
@@ -49,6 +60,7 @@ export class SignerWithProvider implements SignerAdapter {
   }
 
   async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
+    this.checkDisposed();
     // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
       signature: new Uint8Array([1, 2, 3, 4, 5]),
@@ -56,27 +68,44 @@ export class SignerWithProvider implements SignerAdapter {
     };
   }
 
-  getKeyScheme(): 'ED25519' | 'Secp256k1' {
+  getKeyScheme(): 'ED25519' | 'Secp256k1' | 'Secp256r1' | 'MultiSig' | 'ZkLogin' | 'Passkey' {
+    this.checkDisposed();
     return 'ED25519';
   }
 
   toSuiAddress(): string {
+    this.checkDisposed();
     // Return consistent mock address format matching Sui standards
     return '0x1234567890abcdef1234567890abcdef12345678';
   }
 
   getPublicKey(): Ed25519PublicKey {
+    this.checkDisposed();
     return this.#publicKey;
   }
 
   // Improved connect method with proper typing
-  connect(client: SuiClient): SignerAdapter {
+  connect(client: SuiClient): any {
+    this.checkDisposed();
     this.client = client;
     return this;
   }
-  
+
+  // Add missing methods required by the interface
+  getClient(): SuiClient {
+    if (!this.client) {
+      throw new Error('No client connected');
+    }
+    return this.client;
+  }
+
+  async getAddress(): Promise<string> {
+    return this.toSuiAddress();
+  }
+
   // Implementation matching extended expectations with correct signature
   async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
+    this.checkDisposed();
     // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
     return {
       signature: new Uint8Array([1, 2, 3, 4, 5]),
@@ -87,18 +116,19 @@ export class SignerWithProvider implements SignerAdapter {
   // This is not part of the core Signer interface but is used in the codebase
   async signAndExecuteTransactionBlock(
     tx: Transaction,
-    options?: { 
-      requestType?: 'WaitForLocalExecution'; 
-      showEffects?: boolean; 
+    options?: {
+      requestType?: 'WaitForLocalExecution';
+      showEffects?: boolean;
       showObjectChanges?: boolean;
       showEvents?: boolean;
       showContent?: boolean;
       showBalanceChanges?: boolean;
     }
   ): Promise<SuiTransactionBlockResponse> {
+    this.checkDisposed();
     // Cast to the required type
     const txBlock = tx;
-      
+
     return {
       digest: 'mock-digest',
       effects: {
@@ -106,7 +136,7 @@ export class SignerWithProvider implements SignerAdapter {
         status: { status: 'success' },
         executedEpoch: '0',
         transactionDigest: 'mock-digest',
-        created: [{ 
+        created: [{
           owner: { AddressOwner: 'mock-address' },
           reference: {
             objectId: 'mock-object-id',
@@ -114,7 +144,7 @@ export class SignerWithProvider implements SignerAdapter {
             version: '1'
           }
         }],
-        gasObject: { 
+        gasObject: {
           owner: { AddressOwner: 'mock-address' },
           reference: {
             objectId: 'mock-object-id',
@@ -143,5 +173,36 @@ export class SignerWithProvider implements SignerAdapter {
       objectChanges: [],
       balanceChanges: []
     };
+  }
+
+  // Get the SDK version
+  getSDKVersion(): SuiSDKVersion {
+    this.checkDisposed();
+    return SuiSDKVersion.VERSION_3; // Mock as the latest version
+  }
+
+  // Dispose resources
+  async dispose(): Promise<void> {
+    if (this._isDisposed) return;
+
+    try {
+      // Release any connections
+      this.client = null;
+      this._isDisposed = true;
+    } catch (error) {
+      console.error("Error disposing SignerWithProvider:", error);
+    }
+  }
+
+  // Check if disposed
+  isDisposed(): boolean {
+    return this._isDisposed;
+  }
+
+  // Utility to check if disposed and throw if needed
+  private checkDisposed(): void {
+    if (this._isDisposed) {
+      throw new Error('Cannot perform operations on a disposed adapter');
+    }
   }
 }

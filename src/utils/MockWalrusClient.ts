@@ -18,20 +18,22 @@ import { type Signer } from '@mysten/sui.js/cryptography';
 import { type WalrusClientExt } from '../types/client';
 import { type Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
 import { TransactionType } from '../types/transaction';
-import { 
-  WalrusClientAdapter, 
-  createWalrusClientAdapter 
+import {
+  WalrusClientAdapter,
+  createWalrusClientAdapter
 } from './adapters/walrus-client-adapter';
-import { 
-  TransactionBlockAdapter, 
-  createTransactionBlockAdapter 
+import { WalrusClientVersion } from '../types/adapters/WalrusClientAdapter';
+import {
+  TransactionBlockAdapter,
+  createTransactionBlockAdapter
 } from './adapters/transaction-adapter';
-import { SignerAdapter } from './adapters/signer-adapter';
+import { SignerAdapter } from '../types/adapters/SignerAdapter';
 
 /**
  * Storage confirmation type for encoding operations
+ * This is separate from the StorageConfirmation interface in walrus.ts that's used for getStorageConfirmationFromNode
  */
-interface StorageConfirmation {
+interface EncodingStorageConfirmation {
   confirmed: boolean;
   proofs: Array<{ node: string; signature: Uint8Array }>;
 }
@@ -53,10 +55,15 @@ export class MockWalrusClient implements WalrusClientAdapter {
   getUnderlyingClient(): WalrusClient | WalrusClientExt {
     return this as unknown as WalrusClient;
   }
-  
+
   // Compatibility with WalrusClientAdapter interface
   getWalrusClient(): WalrusClient | WalrusClientExt {
     return this as unknown as WalrusClient;
+  }
+
+  // Implementation of getClientVersion required by WalrusClientAdapter interface
+  getClientVersion(): WalrusClientVersion {
+    return WalrusClientVersion.EXTENDED;
   }
 
   /**
@@ -340,7 +347,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Write encoded blob to multiple nodes
    */
-  async writeEncodedBlobToNodes(options: WriteEncodedBlobToNodesOptions): Promise<StorageConfirmation[]> {
+  async writeEncodedBlobToNodes(options: WriteEncodedBlobToNodesOptions): Promise<EncodingStorageConfirmation[]> {
     return [{
       confirmed: true,
       proofs: [{
@@ -353,7 +360,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Write encoded blob to a specific node
    */
-  async writeEncodedBlobToNode(options: WriteBlobOptions): Promise<StorageConfirmation> {
+  async writeEncodedBlobToNode(options: WriteBlobOptions): Promise<EncodingStorageConfirmation> {
     return {
       confirmed: true,
       proofs: [{
@@ -414,13 +421,17 @@ export class MockWalrusClient implements WalrusClientAdapter {
 
   /**
    * Get storage confirmation from a node
+   * This method adapts the return type to match the StorageConfirmation interface in the walrus.ts file
+   * rather than returning confirmed/serializedMessage/signature structure
    */
   async getStorageConfirmationFromNode(
     options: GetStorageConfirmationOptions
-  ): Promise<{ confirmed: boolean; serializedMessage: string; signature: string }> {
+  ): Promise<{ primary_verification: boolean; secondary_verification?: boolean; provider: string; signature?: string }> {
+    // Return a structure that matches the StorageConfirmation interface in walrus.ts
     return {
-      confirmed: true,
-      serializedMessage: 'mock-message',
+      primary_verification: true,
+      secondary_verification: true,
+      provider: 'mock-provider',
       signature: 'mock-signature'
     };
   }
