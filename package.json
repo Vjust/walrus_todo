@@ -5,7 +5,7 @@
   "main": "dist/src/index.js",
   "type": "commonjs",
   "bin": {
-    "waltodo": "bin/waltodo-direct"
+    "waltodo": "bin/waltodo"
   },
   "scripts": {
     "prestart": "node scripts/fix-permissions.js",
@@ -21,8 +21,8 @@
     "clean": "node scripts/enhanced-run-build.js --mode=clean",
     "prepare": "node scripts/enhanced-run-build.js --clean",
     "link": "pnpm link",
-    "install:global": "node scripts/install-global.js",
-    "update:cli": "node scripts/update-cli.js",
+    "install:global": "bash scripts/install-global.sh",
+    "update:cli": "bash scripts/update-cli.sh",
     "fix:permissions": "node scripts/fix-permissions.js",
     "test": "jest --no-typecheck",
     "test:unit": "jest --no-typecheck tests/unit",
@@ -82,7 +82,8 @@
     "jsonwebtoken": "^9.0.2",
     "langchain": "^0.3.24",
     "node-fetch": "^3.3.2",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "waltodo": "link:"
   },
   "devDependencies": {
     "@babel/core": "^7.24.3",

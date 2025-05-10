@@ -197,19 +197,44 @@ function fixPermissions() {
 // Create or update the OCLIF manifest file
 function updateManifest() {
   print('blue', 'Updating OCLIF manifest...');
-  
+
   const manifestPath = path.join(path.resolve(__dirname, '..'), buildConfig.paths.manifest);
-  
+  const generateScript = path.join(path.resolve(__dirname, '..'), 'scripts/generate-manifest.js');
+
   try {
-    // Create an empty manifest file if it doesn't exist
-    if (!fs.existsSync(manifestPath)) {
-      fs.writeFileSync(manifestPath, '{}', 'utf8');
+    if (fs.existsSync(generateScript)) {
+      // Run the improved manifest generator script
+      print('blue', 'Running improved manifest generator...');
+
+      const result = spawnSync('node', [generateScript], {
+        stdio: 'inherit',
+        shell: true,
+        cwd: path.resolve(__dirname, '..')
+      });
+
+      if (result.status !== 0) {
+        print('yellow', 'Warning: Manifest generator script failed, using fallback method');
+        // Create an empty manifest file if it doesn't exist
+        if (!fs.existsSync(manifestPath)) {
+          fs.writeFileSync(manifestPath, '{}', 'utf8');
+        } else {
+          // Touch the file (update timestamp) if it already exists
+          const now = new Date();
+          fs.utimesSync(manifestPath, now, now);
+        }
+      }
     } else {
-      // Touch the file (update timestamp) if it already exists
-      const now = new Date();
-      fs.utimesSync(manifestPath, now, now);
+      print('yellow', 'Warning: Improved manifest generator not found, using fallback method');
+      // Create an empty manifest file if it doesn't exist
+      if (!fs.existsSync(manifestPath)) {
+        fs.writeFileSync(manifestPath, '{}', 'utf8');
+      } else {
+        // Touch the file (update timestamp) if it already exists
+        const now = new Date();
+        fs.utimesSync(manifestPath, now, now);
+      }
     }
-    
+
     print('green', 'Manifest file updated successfully');
     return true;
   } catch (error) {

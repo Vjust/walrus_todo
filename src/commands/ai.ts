@@ -1,12 +1,13 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { aiService, secureCredentialService } from '../services/ai';
+import { AIProviderFactory } from '../services/ai/AIProviderFactory';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import chalk from 'chalk';
-import { 
-  requireEnvironment, 
-  aiFlags, 
-  setEnvFromFlags 
+import {
+  requireEnvironment,
+  aiFlags,
+  setEnvFromFlags
 } from '../utils/CommandValidationMiddleware';
 import { getEnv, hasEnv } from '../utils/environment-config';
 
@@ -58,6 +59,9 @@ export default class AI extends BaseCommand {
 
   async run() {
     const { args, flags } = await this.parse(AI);
+
+    // Always set AI features flag for AI command
+    AIProviderFactory.setAIFeatureRequested(true);
 
     // Set environment variables from flags
     setEnvFromFlags(flags, {

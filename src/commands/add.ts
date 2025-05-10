@@ -2,10 +2,11 @@ import { Args, Flags, Hook } from '@oclif/core';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { aiService } from '../services/ai';
+import { AIProviderFactory } from '../services/ai/AIProviderFactory';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
 import { createWalrusStorage } from '../utils/walrus-storage';
-import BaseCommand from '../base-command';
+import BaseCommand, { ICONS, PRIORITY, STORAGE } from '../base-command';
 import { InputValidator } from '../utils/InputValidator';
 import { CommandSanitizer } from '../utils/CommandSanitizer';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
@@ -14,24 +15,24 @@ import { addCommandValidation, validateAIApiKey, validateBlockchainConfig } from
 /**
  * @class AddCommand
  * @description This command allows users to add new todo items to a specified list.
- * It supports various options such as setting priority, due date, tags, and storage location (local, blockchain, or both).
+ * It supports various options such as setting priority, due date, tags, and storage location.
  * If the specified list does not exist, it will be created automatically.
- * When 'blockchain' or 'both' storage is selected, the todo item is stored on the Walrus/Sui blockchain,
- * making the data publicly accessible.
+ * AI features can suggest appropriate tags and priority levels based on todo content.
  */
 export default class AddCommand extends BaseCommand {
-  static description = 'Add a new todo item to a specified list';
+  static description = 'Add one or more todo items to a specified list';
 
   static examples = [
-    '<%= config.bin %> add "Buy groceries"',
-    '<%= config.bin %> add "Important task" -p high',
-    '<%= config.bin %> add "Meeting" --due 2024-05-01',
-    '<%= config.bin %> add my-list -t "Buy groceries"',
-    '<%= config.bin %> add -t "Task 1" -t "Task 2"',
-    '<%= config.bin %> add "Blockchain task" -s blockchain',
-    '<%= config.bin %> add "Hybrid task" -s both',
-    '<%= config.bin %> add "Plan project" --ai',
-    '<%= config.bin %> add "Fix bug in login" --ai --apiKey YOUR_XAI_API_KEY'
+    `<%= config.bin %> add "Buy groceries"                                # Add a single todo to the default list`,
+    `<%= config.bin %> add "Important task" -p high                       # Add with high priority`,
+    `<%= config.bin %> add "Meeting" --due 2024-05-01                     # Add with due date`,
+    `<%= config.bin %> add my-list -t "Buy groceries"                     # Add to a specific list`,
+    `<%= config.bin %> add -t "Task 1" -t "Task 2"                        # Add multiple todos`,
+    `<%= config.bin %> add -t "High priority" -p high -t "Low" -p low     # Add multiple todos with different priorities`,
+    `<%= config.bin %> add -t "Due soon" -d 2023-05-15 -t "Later" -d 2023-06-15  # Add with different due dates`,
+    `<%= config.bin %> add -t "Work" -g "job,urgent" -t "Home" -g "personal"     # Add with different tags`,
+    `<%= config.bin %> add "Plan project" --ai                            # Use AI to suggest tags/priority`,
+    `<%= config.bin %> add -t "Task 1" -t "Task 2" -p high                # Multiple todos with same priority`
   ];
 
   static flags = {
@@ -44,17 +45,19 @@ export default class AddCommand extends BaseCommand {
     }),
     priority: Flags.string({
       char: 'p',
-      description: 'Task priority (high, medium, low)',
+      description: 'Task priority (high, medium, low) - can be specified multiple times for multiple todos',
       options: ['high', 'medium', 'low'],
-      default: 'medium'
+      multiple: true
     }),
     due: Flags.string({
       char: 'd',
-      description: 'Due date (YYYY-MM-DD)'
+      description: 'Due date (YYYY-MM-DD) - can be specified multiple times for multiple todos',
+      multiple: true
     }),
     tags: Flags.string({
       char: 'g',
-      description: 'Comma-separated tags'
+      description: 'Comma-separated tags (e.g., "work,urgent") - can be specified multiple times for multiple todos',
+      multiple: true
     }),
     private: Flags.boolean({
       description: 'Mark todo as private',
@@ -67,11 +70,7 @@ export default class AddCommand extends BaseCommand {
     }),
     storage: Flags.string({
       char: 's',
-      description: `Storage location for the todo:
-        local: Store only in local JSON files
-        blockchain: Store on Walrus/Sui blockchain (data will be publicly accessible)
-        both: Keep both local copy and blockchain storage
-      NOTE: Blockchain storage uses Walrus for data and can be publicly accessed.`,
+      description: 'Storage location (local, blockchain, both)',
       options: ['local', 'blockchain', 'both'],
       default: 'local',
       helpGroup: 'Storage Options'
@@ -90,9 +89,9 @@ export default class AddCommand extends BaseCommand {
   };
 
   static args = {
-    title: Args.string({
-      name: 'title',
-      description: 'Todo title (alternative to -t flag)',
+    listOrTitle: Args.string({
+      name: 'listOrTitle',
+      description: 'List name or todo title (if list flag is provided, this is treated as the title)',
       required: false
     })
   };
@@ -115,107 +114,99 @@ export default class AddCommand extends BaseCommand {
       this.debugLog("Parsed and validated arguments:", args);
       this.debugLog("Parsed and validated flags:", flags);
 
+      // If JSON output is requested, handle it separately
+      if (await this.isJson()) {
+        return this.handleJsonOutput(args, flags);
+      }
+
       // Additional conditional validations
-      validateAIApiKey(flags);
+      // Only validate AI key when AI features are being used
+      if (flags.ai) {
+        // Set flag to indicate AI features are requested
+        AIProviderFactory.setAIFeatureRequested(true);
+        validateAIApiKey(flags);
+      } else {
+        // Make sure to reset flag when AI features are not requested
+        AIProviderFactory.setAIFeatureRequested(false);
+      }
       validateBlockchainConfig(flags);
 
-      // Determine the list name - either from the list flag or default
-      const listName = CommandSanitizer.sanitizeString(flags.list || 'default');
+      // Determine the list name and titles based on arguments and flags
+      let listName: string;
+      let todoTitles: string[] = [];
 
-      // Determine the todo title - either from the title argument or task flag
-      let todoTitle: string;
-      if (args.title) {
-        // Use the title argument directly
-        todoTitle = CommandSanitizer.sanitizeString(args.title);
-      } else if (flags.task && flags.task.length > 0) {
-        // Use the task flag(s) - sanitize each task before joining
-        todoTitle = flags.task.map(t => CommandSanitizer.sanitizeString(t)).join(' ');
-      } else {
-        throw new CLIError('Todo title is required. Provide it as an argument or with -t flag', 'MISSING_TITLE');
+      // Check if there's an argument and task flags
+      if (args.listOrTitle && flags.task && flags.task.length > 0) {
+        // First argument is treated as the list name when tasks are provided with -t
+        listName = CommandSanitizer.sanitizeString(args.listOrTitle);
+        todoTitles = flags.task.map(t => CommandSanitizer.sanitizeString(t));
+      }
+      // Check if there's an argument but no task flags
+      else if (args.listOrTitle && (!flags.task || flags.task.length === 0)) {
+        // If the list flag is explicitly provided, the argument is the title
+        if (flags.list) {
+          listName = CommandSanitizer.sanitizeString(flags.list);
+          todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
+        }
+        // Otherwise, the argument is the title and list is default
+        else {
+          listName = 'default';
+          todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
+        }
+      }
+      // Check if there are only task flags but no argument
+      else if (flags.task && flags.task.length > 0) {
+        // Use the list flag if provided, otherwise default
+        listName = CommandSanitizer.sanitizeString(flags.list || 'default');
+        todoTitles = flags.task.map(t => CommandSanitizer.sanitizeString(t));
+      }
+      // No title provided in any form
+      else {
+        this.errorWithHelp(
+          'Missing title',
+          'Todo title is required',
+          'Provide a title as an argument or with the -t flag:\n' +
+          `${this.config.bin} add "Buy groceries"\n` +
+          `${this.config.bin} add -t "Buy groceries"\n` +
+          `${this.config.bin} add "list-name" -t "Buy groceries"`
+        );
       }
 
-      // Validate title length
-      InputValidator.validate(todoTitle, [
-        {
-          test: (value) => value.length <= 100,
-          message: 'Todo title must be 100 characters or less',
-          code: 'TITLE_TOO_LONG'
-        }
-      ]);
-
-      const storageLocation = flags.storage as StorageLocation;
-
-      // Initialize todo object with sanitized inputs
-      const todo: Partial<Todo> = {
-        title: todoTitle,
-        priority: flags.priority as 'high' | 'medium' | 'low',
-        dueDate: flags.due ? CommandSanitizer.sanitizeDate(flags.due) : undefined,
-        tags: flags.tags ? CommandSanitizer.sanitizeTags(flags.tags) : [],
-        private: flags.private,
-        storageLocation: storageLocation
-      };
-
-      // Use AI if requested
-      if (flags.ai) {
-        try {
-          this.debugLog('AI flag detected in add command');
-          this.debugLog('API Key from flag:', flags.apiKey ? '[provided]' : '[not provided]');
-          this.debugLog('Environment XAI_API_KEY:', process.env.XAI_API_KEY ? '[found]' : '[not found]');
-
-          // Sanitize API key before using
-          const sanitizedApiKey = flags.apiKey ? CommandSanitizer.sanitizeApiKey(flags.apiKey) : undefined;
-          if (sanitizedApiKey) {
-            // Instead of passing apiKey directly in options, set it in the environment
-            process.env.XAI_API_KEY = sanitizedApiKey;
-            await this.aiServiceInstance.setProvider(AIProvider.XAI);
+      // Validate title lengths
+      for (const title of todoTitles) {
+        InputValidator.validate(title, [
+          {
+            test: (value) => value.length <= 100,
+            message: 'Todo title must be 100 characters or less',
+            code: 'TITLE_TOO_LONG'
           }
-          this.debugLog('AiService configured successfully');
+        ]);
+      }
 
-          // Create a temporary todo object for AI processing
-          const tempTodo: Todo = {
-            id: 'temp-id',
-            title: todoTitle,
-            description: '',
-            completed: false,
-            priority: todo.priority || 'medium',
-            tags: todo.tags || [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            private: todo.private !== undefined ? todo.private : true,
-            storageLocation: todo.storageLocation || 'local'
-          };
+      // Get attribute arrays
+      const storageLocation = flags.storage as StorageLocation;
+      const priorities = flags.priority || ['medium'];
+      const dueDates = flags.due || [];
+      const tagSets = flags.tags || [];
 
-          this.log(chalk.blue('🧠') + ' Using AI to enhance your todo...');
-          this.debugLog('Calling suggestTags and suggestPriority...');
+      // Create warning messages for attribute mismatches
+      if (todoTitles.length > 1) {
+        // Warn if there's a mismatch between number of titles and other attributes
+        if (priorities.length > 1 && priorities.length < todoTitles.length) {
+          this.warning(`You provided ${todoTitles.length} todos but only ${priorities.length} priorities. The last priority will be used for the remaining todos.`);
+        }
 
-          // Get AI suggestions in parallel
-          const [suggestedTags, suggestedPriority] = await Promise.all([
-            this.aiServiceInstance.suggestTags(tempTodo),
-            this.aiServiceInstance.suggestPriority(tempTodo)
-          ]);
+        if (dueDates.length > 1 && dueDates.length < todoTitles.length) {
+          this.warning(`You provided ${todoTitles.length} todos but only ${dueDates.length} due dates. The remaining todos will have no due date.`);
+        }
 
-          this.debugLog('Received AI suggestions:', { tags: suggestedTags, priority: suggestedPriority });
-
-          // Merge existing and suggested tags
-          const existingTags = todo.tags || [];
-          const allTags = [...new Set([...existingTags, ...suggestedTags])];
-
-          this.log(chalk.blue('🏷️') + ' AI suggested tags: ' + chalk.cyan(suggestedTags.join(', ')));
-          this.log(chalk.blue('🔄') + ' AI suggested priority: ' + chalk.cyan(suggestedPriority));
-
-          // Update todo with AI suggestions
-          todo.tags = allTags;
-          todo.priority = suggestedPriority;
-
-          this.debugLog('Todo updated with AI suggestions');
-
-        } catch (aiError) {
-          // If AI fails, just log a warning and continue with user-provided values
-          this.debugLog('AI error:', aiError);
-          this.log(chalk.yellow('⚠') + ' AI enhancement failed: ' + chalk.dim(aiError instanceof Error ? aiError.message : String(aiError)));
-          this.log(chalk.yellow('⚠') + ' Continuing with provided values');
+        if (tagSets.length > 1 && tagSets.length < todoTitles.length) {
+          this.warning(`You provided ${todoTitles.length} todos but only ${tagSets.length} tag sets. The remaining todos will have no tags.`);
         }
       }
+
+      // Create spinner for list creation/check
+      const spinner = this.startSpinner(`Processing todo${todoTitles.length > 1 ? 's' : ''} for list "${listName}"...`);
 
       // Check if list exists first
       const listExists = await this.todoService.getList(listName);
@@ -223,125 +214,401 @@ export default class AddCommand extends BaseCommand {
       // If list doesn't exist, create it
       if (!listExists) {
         await this.todoService.createList(listName, 'default-owner');
-        this.log(chalk.blue('ℹ') + ' Created new list: ' + chalk.cyan(listName));
+        this.stopSpinnerSuccess(spinner, `Created new list: ${chalk.cyan(listName)}`);
+      } else {
+        this.stopSpinnerSuccess(spinner, `Found list: ${chalk.cyan(listName)}`);
       }
 
-      // Add todo to the list
-      this.debugLog('Adding todo to list:', { listName, todo });
-      const addedTodo = await this.todoService.addTodo(listName, todo as Todo);
-      this.debugLog('Todo added:', addedTodo);
+      const addedTodos: Todo[] = [];
 
-      // If storage is blockchain or both, store on blockchain
-      if (storageLocation === 'blockchain' || storageLocation === 'both') {
-        // Warn about public access
-        this.log(chalk.yellow('⚠') + ' Note: Blockchain storage will make the todo data publicly accessible');
-        this.log(chalk.blue('ℹ') + ' Storing todo on blockchain...');
+      // Process each todo
+      for (let i = 0; i < todoTitles.length; i++) {
+        const todoTitle = todoTitles[i];
 
-        try {
-          // Initialize Walrus storage
-          try {
-            await this.walrusStorage.connect();
-          } catch (error) {
-            throw new CLIError(
-              `Failed to connect to blockchain storage: ${error instanceof Error ? error.message : String(error)}`,
-              'BLOCKCHAIN_CONNECTION_FAILED'
-            );
-          }
+        // Map attributes to this todo
+        // Get from the corresponding index, or use the last one as default
+        const priority = priorities[i] !== undefined ? priorities[i] : priorities[priorities.length - 1];
+        const dueDate = dueDates[i] !== undefined ? CommandSanitizer.sanitizeDate(dueDates[i]) : undefined;
+        const tags = tagSets[i] !== undefined ? CommandSanitizer.sanitizeTags(tagSets[i]) : [];
 
-          let blobId: string;
-          try {
-            // Store todo on Walrus
-            blobId = await this.walrusStorage.storeTodo(addedTodo);
-          } catch (error) {
-            throw new CLIError(
-              `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
-              'BLOCKCHAIN_STORE_FAILED'
-            );
-          }
+        // Initialize todo object with sanitized inputs
+        const todo: Partial<Todo> = {
+          title: todoTitle,
+          priority: priority as 'high' | 'medium' | 'low',
+          dueDate: dueDate,
+          tags: tags,
+          private: flags.private,
+          storageLocation: storageLocation
+        };
 
-          // Update local todo with Walrus blob ID if we're keeping a local copy
-          if (storageLocation === 'both') {
-            try {
-              await this.todoService.updateTodo(listName, addedTodo.id, {
-                walrusBlobId: blobId,
-                updatedAt: new Date().toISOString()
-              });
-            } catch (error) {
-              this.log(chalk.yellow('⚠') + ' Warning: Successfully stored on blockchain but failed to update local copy');
-            }
-          }
-
-          // If storage is blockchain only, remove from local storage
-          if (storageLocation === 'blockchain') {
-            try {
-              await this.todoService.deleteTodo(listName, addedTodo.id);
-            } catch (error) {
-              this.log(chalk.yellow('⚠') + ' Warning: Failed to remove local copy after blockchain storage');
-            }
-          }
-
-          this.log(chalk.green('✓') + ' Todo stored on blockchain with blob ID: ' + chalk.dim(blobId));
-          this.log(chalk.dim('  Public URL: https://testnet.wal.app/blob/' + blobId));
-
-          // Cleanup
-          await this.walrusStorage.disconnect();
-        } catch (error) {
-          if (error instanceof CLIError) throw error;
-
-          // If blockchain-only storage failed, keep it locally
-          if (storageLocation === 'blockchain') {
-            this.log(chalk.yellow('⚠') + ' Storage failed - keeping todo locally instead');
-            todo.storageLocation = 'local';
-          } else {
-            throw new CLIError(
-              `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
-              'BLOCKCHAIN_STORE_FAILED'
-            );
-          }
+        // Use AI if requested
+        if (flags.ai) {
+          await this.enhanceWithAI(todo, todoTitle, flags);
         }
+
+        // Add todo to the list
+        this.debugLog('Adding todo to list:', { listName, todo });
+        const addedTodo = await this.todoService.addTodo(listName, todo as Todo);
+        this.debugLog('Todo added:', addedTodo);
+        addedTodos.push(addedTodo);
+
+        // If storage is blockchain or both, store on blockchain
+        if (storageLocation === 'blockchain' || storageLocation === 'both') {
+          await this.storeOnBlockchain(addedTodo, listName, storageLocation);
+        }
+
+        // Display success information in a nicely formatted box
+        await this.displaySuccessInfo(addedTodo, listName);
       }
-
-      // Get priority color
-      const priorityColor = {
-        high: chalk.red,
-        medium: chalk.yellow,
-        low: chalk.green
-      }[todo.priority || 'medium'];
-
-      // Get storage location color and icon
-      const storageInfo = {
-        local: { color: chalk.green, icon: '💻', text: 'Local only' },
-        blockchain: { color: chalk.blue, icon: '🔗', text: 'Blockchain only' },
-        both: { color: chalk.magenta, icon: '🔄', text: 'Local & Blockchain' }
-      }[addedTodo.storageLocation || 'local'];
-
-      // Build output
-      const outputLines = [
-        chalk.green('✓') + ' Added todo: ' + chalk.bold(todoTitle),
-        `  📋 List: ${chalk.cyan(listName)}`,
-        `  🔄 Priority: ${priorityColor(todo.priority || 'medium')}`,
-      ];
-      if (todo.dueDate) {
-        outputLines.push(`  📅 Due: ${chalk.blue(todo.dueDate)}`);
-      }
-      if (todo.tags && todo.tags.length > 0) {
-        outputLines.push(`  🏷️  Tags: ${todo.tags.join(', ')}`);
-      }
-      outputLines.push(`  🔒 Private: ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`);
-      outputLines.push(`  ${storageInfo.icon} Storage: ${storageInfo.color(storageInfo.text)}`);
-
-      const output = outputLines.join('\n');
-      this.debugLog("Output:", output);
-      this.log(output);
 
     } catch (error) {
+      this.debugLog(`Error: ${error}`);
+
+      // Handle specific error types with helpful messages
+      if (error instanceof CLIError && error.code === 'TITLE_TOO_LONG') {
+        this.errorWithHelp(
+          'Invalid title',
+          'Todo title must be 100 characters or less',
+          'Please provide a shorter title'
+        );
+      }
+
+      if (error instanceof CLIError && error.code === 'MISSING_TITLE') {
+        this.errorWithHelp(
+          'Missing title',
+          'Todo title is required',
+          'Provide a title as an argument or with the -t flag:\n' +
+          `${this.config.bin} add "Buy groceries"\n` +
+          `${this.config.bin} add -t "Buy groceries"`
+        );
+      }
+
+      if (error instanceof CLIError && error.code === 'BLOCKCHAIN_CONNECTION_FAILED') {
+        this.detailedError(
+          'Blockchain connection failed',
+          'Failed to connect to the blockchain storage service',
+          [
+            'Verify your network connection is working properly',
+            'Check if the blockchain service is available',
+            'Verify your environment configuration with `waltodo config`',
+            'Try using local storage instead with `-s local` flag'
+          ]
+        );
+      }
+
+      // Handle multi-flag specific errors
+      if (error instanceof Error && error.message && error.message.includes('Flag --priority can only be specified once')) {
+        this.errorWithHelp(
+          'Flag usage error',
+          'This version of the CLI now supports multiple flag instances',
+          'You can now use multiple instances of -t, -p, -d, and -g flags to create multiple todos:\n' +
+          `${this.config.bin} add -t "Task 1" -p high -t "Task 2" -p low\n` +
+          `This will create two todos with different priorities.`
+        );
+      }
+
+      if (error instanceof Error && error.message && error.message.includes('Flag --due can only be specified once')) {
+        this.errorWithHelp(
+          'Flag usage error',
+          'This version of the CLI now supports multiple flag instances',
+          'You can now use multiple instances of -t, -p, -d, and -g flags to create multiple todos:\n' +
+          `${this.config.bin} add -t "Task 1" -d 2023-01-01 -t "Task 2" -d 2023-02-01\n` +
+          `This will create two todos with different due dates.`
+        );
+      }
+
+      if (error instanceof Error && error.message && error.message.includes('Flag --tags can only be specified once')) {
+        this.errorWithHelp(
+          'Flag usage error',
+          'This version of the CLI now supports multiple flag instances',
+          'You can now use multiple instances of -t, -p, -d, and -g flags to create multiple todos:\n' +
+          `${this.config.bin} add -t "Task 1" -g "work,urgent" -t "Task 2" -g "home,later"\n` +
+          `This will create two todos with different tag sets.`
+        );
+      }
+
       if (error instanceof CLIError) {
         throw error;
       }
+
       throw new CLIError(
         `Failed to add todo: ${error instanceof Error ? error.message : String(error)}`,
         'ADD_FAILED'
       );
     }
+  }
+
+  /**
+   * Handle JSON output format
+   */
+  private async handleJsonOutput(args: any, flags: any): Promise<void> {
+    // Determine the list name and titles based on arguments and flags
+    let todoTitles: string[] = [];
+    let listName: string;
+
+    // Check if there's an argument and task flags
+    if (args.listOrTitle && flags.task && flags.task.length > 0) {
+      // First argument is the list name
+      listName = CommandSanitizer.sanitizeString(args.listOrTitle);
+      todoTitles = flags.task.map((t: string) => CommandSanitizer.sanitizeString(t));
+    }
+    // Check if there's an argument but no task flags
+    else if (args.listOrTitle && (!flags.task || flags.task.length === 0)) {
+      if (flags.list) {
+        // Explicit list flag, argument is title
+        listName = CommandSanitizer.sanitizeString(flags.list);
+        todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
+      } else {
+        // No list flag, argument is title
+        listName = 'default';
+        todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
+      }
+    }
+    // Only task flags
+    else if (flags.task && flags.task.length > 0) {
+      listName = CommandSanitizer.sanitizeString(flags.list || 'default');
+      todoTitles = flags.task.map((t: string) => CommandSanitizer.sanitizeString(t));
+    }
+    // Nothing provided
+    else {
+      throw new CLIError('Todo title is required. Provide it as an argument or with -t flag', 'MISSING_TITLE');
+    }
+
+    // Get attribute arrays
+    const priorities = flags.priority || ['medium'];
+    const dueDates = flags.due || [];
+    const tagSets = flags.tags || [];
+    const storageLocation = flags.storage as StorageLocation;
+
+    // Create list if it doesn't exist
+    const listExists = await this.todoService.getList(listName);
+    if (!listExists) {
+      await this.todoService.createList(listName, 'default-owner');
+    }
+
+    const addedTodos: Todo[] = [];
+
+    // Process each todo
+    for (let i = 0; i < todoTitles.length; i++) {
+      const todoTitle = todoTitles[i];
+
+      // Map attributes to this todo
+      const priority = priorities[i] !== undefined ? priorities[i] : priorities[priorities.length - 1];
+      const dueDate = dueDates[i] !== undefined ? CommandSanitizer.sanitizeDate(dueDates[i]) : undefined;
+      const tags = tagSets[i] !== undefined ? CommandSanitizer.sanitizeTags(tagSets[i]) : [];
+
+      // Prepare the todo object
+      const todo: Partial<Todo> = {
+        title: todoTitle,
+        priority: priority as 'high' | 'medium' | 'low',
+        dueDate: dueDate,
+        tags: tags,
+        private: flags.private,
+        storageLocation: storageLocation
+      };
+
+      // Add todo to the list
+      const addedTodo = await this.todoService.addTodo(listName, todo as Todo);
+      addedTodos.push(addedTodo);
+    }
+
+    // Output as JSON
+    await this.jsonOutput({
+      success: true,
+      message: todoTitles.length === 1 ? 'Todo added successfully' : `${todoTitles.length} todos added successfully`,
+      todos: addedTodos,
+      list: listName,
+      count: addedTodos.length
+    });
+  }
+
+  /**
+   * Enhance todo with AI suggestions
+   */
+  private async enhanceWithAI(todo: Partial<Todo>, todoTitle: string, flags: any): Promise<void> {
+    try {
+      this.debugLog('AI flag detected in add command');
+
+      // Start AI spinner
+      const aiSpinner = this.startSpinner(`Using AI to enhance your todo...`);
+
+      // Sanitize API key before using
+      const sanitizedApiKey = flags.apiKey ? CommandSanitizer.sanitizeApiKey(flags.apiKey) : undefined;
+      if (sanitizedApiKey) {
+        process.env.XAI_API_KEY = sanitizedApiKey;
+        await this.aiServiceInstance.setProvider(AIProvider.XAI);
+      }
+      this.debugLog('AiService configured successfully');
+
+      // Create a temporary todo object for AI processing
+      const tempTodo: Todo = {
+        id: 'temp-id',
+        title: todoTitle,
+        description: '',
+        completed: false,
+        priority: todo.priority || 'medium',
+        tags: todo.tags || [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        private: todo.private !== undefined ? todo.private : true,
+        storageLocation: todo.storageLocation || 'local'
+      };
+
+      // Get AI suggestions in parallel
+      const [suggestedTags, suggestedPriority] = await Promise.all([
+        this.aiServiceInstance.suggestTags(tempTodo),
+        this.aiServiceInstance.suggestPriority(tempTodo)
+      ]);
+
+      this.debugLog('Received AI suggestions:', { tags: suggestedTags, priority: suggestedPriority });
+
+      // Stop spinner with success
+      this.stopSpinnerSuccess(aiSpinner, `AI enhancement complete`);
+
+      // Display enhanced information
+      this.section('AI Suggestions', [
+        `${ICONS.TAG} ${chalk.bold('Suggested Tags:')} ${chalk.cyan(suggestedTags.join(', ') || 'None')}`,
+        `${ICONS.PRIORITY} ${chalk.bold('Suggested Priority:')} ${PRIORITY[suggestedPriority as keyof typeof PRIORITY].color(suggestedPriority)}`
+      ].join('\n'));
+
+      // Merge existing and suggested tags
+      const existingTags = todo.tags || [];
+      const allTags = [...new Set([...existingTags, ...suggestedTags])];
+
+      // Update todo with AI suggestions
+      todo.tags = allTags;
+      todo.priority = suggestedPriority;
+
+      this.debugLog('Todo updated with AI suggestions');
+
+    } catch (aiError) {
+      // If AI fails, log a warning and continue with user-provided values
+      this.debugLog('AI error:', aiError);
+      this.warning(`AI enhancement failed: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
+      this.info(`Continuing with provided values`);
+    }
+  }
+
+  /**
+   * Store todo on blockchain
+   */
+  private async storeOnBlockchain(todo: Todo, listName: string, storageLocation: StorageLocation): Promise<void> {
+    // Show blockchain storage warning
+    this.section('Blockchain Storage', [
+      `${chalk.yellow(ICONS.WARNING)} ${chalk.yellow('Public Access Warning')}`,
+      `Blockchain storage will make the todo data publicly accessible.`,
+      `This cannot be undone once the data is stored on the blockchain.`
+    ].join('\n'));
+
+    // Start blockchain storage spinner
+    const blockchainSpinner = this.startSpinner('Connecting to blockchain storage...');
+
+    try {
+      // Initialize Walrus storage
+      try {
+        await this.walrusStorage.connect();
+        this.stopSpinnerSuccess(blockchainSpinner, 'Connected to blockchain storage');
+      } catch (error) {
+        throw new CLIError(
+          `Failed to connect to blockchain storage: ${error instanceof Error ? error.message : String(error)}`,
+          'BLOCKCHAIN_CONNECTION_FAILED'
+        );
+      }
+
+      // Start storage spinner
+      const storeSpinner = this.startSpinner('Storing todo on blockchain...');
+
+      let blobId: string;
+      try {
+        // Store todo on Walrus
+        blobId = await this.walrusStorage.storeTodo(todo);
+        this.stopSpinnerSuccess(storeSpinner, 'Todo stored on blockchain');
+      } catch (error) {
+        throw new CLIError(
+          `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
+          'BLOCKCHAIN_STORE_FAILED'
+        );
+      }
+
+      // Update local todo with Walrus blob ID if we're keeping a local copy
+      if (storageLocation === 'both') {
+        const updateSpinner = this.startSpinner('Updating local copy with blockchain reference...');
+        try {
+          await this.todoService.updateTodo(listName, todo.id, {
+            walrusBlobId: blobId,
+            updatedAt: new Date().toISOString()
+          });
+          this.stopSpinnerSuccess(updateSpinner, 'Local copy updated with blockchain reference');
+        } catch (error) {
+          this.warning('Successfully stored on blockchain but failed to update local copy');
+        }
+      }
+
+      // If storage is blockchain only, remove from local storage
+      if (storageLocation === 'blockchain') {
+        const cleanupSpinner = this.startSpinner('Removing local copy...');
+        try {
+          await this.todoService.deleteTodo(listName, todo.id);
+          this.stopSpinnerSuccess(cleanupSpinner, 'Local copy removed');
+        } catch (error) {
+          this.warning('Failed to remove local copy after blockchain storage');
+        }
+      }
+
+      // Display blockchain information
+      this.section('Blockchain Storage Info', [
+        `${ICONS.BLOCKCHAIN} ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`,
+        `${ICONS.ARROW} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet.wal.app/blob/${blobId}`)}`
+      ].join('\n'));
+
+      // Cleanup connection
+      await this.walrusStorage.disconnect();
+
+    } catch (error) {
+      if (error instanceof CLIError) throw error;
+
+      // If blockchain-only storage failed, keep it locally
+      if (storageLocation === 'blockchain') {
+        this.warning('Storage failed - keeping todo locally instead');
+        todo.storageLocation = 'local';
+      } else {
+        throw new CLIError(
+          `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
+          'BLOCKCHAIN_STORE_FAILED'
+        );
+      }
+    }
+  }
+
+  /**
+   * Display success information after adding a todo
+   */
+  private async displaySuccessInfo(todo: Todo, listName: string): Promise<void> {
+    const storage = STORAGE[todo.storageLocation as keyof typeof STORAGE] || STORAGE.local;
+    const priority = PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
+
+    // Build todo details
+    const details = [
+      `${ICONS.LIST} ${chalk.bold('List:')} ${chalk.cyan(listName)}`,
+      `${ICONS.PRIORITY} ${chalk.bold('Priority:')} ${priority.color(priority.label)}`,
+      todo.dueDate && `${ICONS.DATE} ${chalk.bold('Due:')} ${chalk.blue(todo.dueDate)}`,
+      todo.tags && todo.tags.length > 0 && `${ICONS.TAG} ${chalk.bold('Tags:')} ${chalk.cyan(todo.tags.join(', '))}`,
+      `${todo.private ? ICONS.SECURE : ICONS.INSECURE} ${chalk.bold('Private:')} ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`,
+      `${storage.icon} ${chalk.bold('Storage:')} ${storage.color(storage.label)}`
+    ].filter(Boolean).join('\n');
+
+    // Create a header with todo title
+    const headerContent = chalk.bold(todo.title);
+
+    // Display box with todo information
+    this.section(`${ICONS.SUCCESS} New Todo Created`, `${headerContent}\n\n${details}`);
+
+    // Provide helpful next steps
+    const nextSteps = [
+      `${chalk.cyan(`${this.config.bin} list ${listName}`)} - View all todos in this list`,
+      `${chalk.cyan(`${this.config.bin} complete --id ${todo.id.slice(-6)}`)} - Mark this todo as completed`
+    ];
+
+    this.simpleList('Next Steps', nextSteps);
   }
 }

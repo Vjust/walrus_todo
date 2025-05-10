@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "commands": {},
+  "topics": {
+    "account": {
+      "description": "Manage Sui accounts"
+    },
+    "ai": {
+      "description": "AI-powered todo management features"
+    },
+    "image": {
+      "description": "Manage todo images for storage on Walrus and NFT creation"
+    },
+    "system": {
+      "description": "Manage and view security audit logs"
+    },
+    "simple": {
+      "description": "Simple todo management commands"
+    }
+  }
+}

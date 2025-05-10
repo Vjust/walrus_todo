@@ -85,6 +85,33 @@ waltodo add "Prepare presentation for client meeting" --ai
 waltodo ai summarize
 ```
 
+#### Enhanced Multi-Todo Command Syntax
+
+The CLI now supports an even more natural way to add multiple todos to a list:
+
+```bash
+# Add multiple todos to a list with different priorities
+waltodo add "my-list" -t "High priority task" -p high -t "Low priority task" -p low
+
+# Add multiple todos with different tags
+waltodo add "work-list" -t "Task with tags" -g "work,urgent" -t "Another task" -g "home,relax"
+
+# Add multiple todos with different due dates
+waltodo add "personal" -t "Task with due date" -d 2023-05-15 -t "Later task" -d 2023-12-31
+
+# Add multiple todos with mixed attributes
+waltodo add "project" -t "Important meeting" -p high -d 2023-06-01 -g "work,meeting" -t "Follow-up email" -p medium -g "work,email"
+```
+
+In this syntax, the first argument is interpreted as the list name when multiple task flags (`-t`) are provided. Each task can have its own set of attributes (priority, due date, tags) specified with the corresponding flags.
+
+If there are fewer attribute flags than tasks, the last attribute will be used for the remaining tasks:
+
+```bash
+# Both tasks will have high priority
+waltodo add "my-list" -t "Task 1" -t "Task 2" -p high
+```
+
 For a comprehensive reference of all CLI commands, see [CLI-COMMANDS.md](CLI-COMMANDS.md).
 
 ## Installation
@@ -194,6 +221,15 @@ waltodo add "Important task" -p high -g "work,urgent"
 # Create a new list and add a todo to it
 waltodo add "Shopping item" -l shopping
 
+# Add multiple todos to a list at once
+waltodo add "shopping" -t "Milk" -t "Eggs" -t "Bread"
+
+# Add multiple todos with different priorities
+waltodo add "work" -t "Urgent bug fix" -p high -t "Feature implementation" -p medium
+
+# Add multiple todos with different attributes
+waltodo add "project" -t "Team meeting" -g "work,meeting" -d 2023-06-01 -t "Documentation" -g "work,docs" -d 2023-06-15
+
 # Mark a todo as complete (replace 123 with your todo ID)
 waltodo complete --id 123
 
@@ -253,7 +289,11 @@ waltodo store --todo 123 --list default
 
 4. **Verify Installation**:
    ```bash
+   # Option 1: Check version
    waltodo --version
+
+   # Option 2: Run the verification script to check everything
+   chmod +x verify-install.js && ./verify-install.js
    ```
 
 ### Basic Todo Management
@@ -662,8 +702,17 @@ If you encounter issues:
 Add multiple todos at once:
 
 ```bash
-# Add multiple todos to a list
+# Add multiple todos to a list (traditional method)
 waltodo add -l shopping -t "Milk" -t "Eggs" -t "Bread"
+
+# Add multiple todos to a list (new natural syntax)
+waltodo add "shopping" -t "Milk" -t "Eggs" -t "Bread"
+
+# Add multiple todos with different properties
+waltodo add "work" -t "Urgent task" -p high -t "Normal task" -p medium -t "Low priority task" -p low
+
+# Add todos with mixed attributes
+waltodo add "project" -t "Meeting" -g "work,meeting" -d 2023-06-01 -t "Documentation" -g "work,docs" -d 2023-06-15
 ```
 
 List all todo lists:
@@ -1008,6 +1057,43 @@ For detailed documentation, see:
 - [Security Testing Guide](docs/security-testing-guide.md)
 - [AI Security Guide](docs/ai-security-guide.md)
 - [Blockchain Verification Guide](docs/ai-blockchain-verification.md)
+
+## Direct CLI Usage Scripts
+
+For environments where the standard CLI wrapper might have issues, we've provided standalone scripts that directly access the TodoService without using the OCLIF framework:
+
+```bash
+# Initialize todo lists (creates default, shopping, and work lists)
+node initialize-lists.js
+
+# List all todos with detailed output
+node test-direct.js
+
+# View todos with more detailed formatting
+node test-list.js
+
+# Add a new todo to a list
+node test-add.js "Todo title" "Description" ["list-name"]
+
+# Complete a todo
+node test-complete.js "Todo title or ID" ["list-name"]
+
+# Delete a todo
+node test-delete.js "Todo title or ID" ["list-name"]
+
+# Run a complete workflow test
+node test-todos.js
+
+# Verify installation and setup
+node verify-install.js
+
+# Run CLI commands with verbose output
+node run-cli.js [command and arguments]
+```
+
+These scripts provide a reliable alternative when troubleshooting issues with the main CLI interface. The run-cli.js wrapper script is particularly useful for diagnosing CLI command issues, as it runs waltodo commands with the verbose flag and captures all output.
+
+The workflow test script (test-todos.js) runs through all basic operations and validates them, making it an excellent way to verify that core functionality is working correctly.
 
 ## Troubleshooting
 

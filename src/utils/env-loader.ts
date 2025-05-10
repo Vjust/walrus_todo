@@ -13,6 +13,14 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { envConfig } from './environment-config';
 
+// Ensure NODE_ENV is set to production by default
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'production';
+}
+
+// Make sure output is shown by default
+process.env.SHOW_OUTPUT = process.env.SHOW_OUTPUT || 'true';
+
 interface EnvLoaderOptions {
   envFile?: string;
   configFile?: string;

@@ -116,7 +116,7 @@ export class PermissionService {
     DEFAULT_ROLES.forEach(role => {
       this.roles.set(role.name, role);
     });
-    this.logger.info('Permission roles initialized', { rolesCount: this.roles.size });
+    this.logger.debug('Permission roles initialized', { rolesCount: this.roles.size });
   }
   
   /**
