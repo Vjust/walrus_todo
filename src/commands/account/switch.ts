@@ -1,6 +1,7 @@
 import { Command, Args } from '@oclif/core';
 import { CLIError } from '../../utils/error-handler';
-import { execSync } from 'child_process';
+import { switchSuiAddress } from '../../utils/command-executor';
+import { ValidationRules, validateInput } from '../../utils/input-validator';
 
 /**
  * @class AccountSwitchCommand
@@ -15,7 +16,7 @@ export default class AccountSwitchCommand extends Command {
   static args = {
     address: Args.string({
       name: 'address',
-      description: 'Address to switch to',
+      description: 'Address to switch to (must be a valid 0x-prefixed hex address)',
       required: true,
     }),
   };
@@ -23,7 +24,12 @@ export default class AccountSwitchCommand extends Command {
   async run(): Promise<void> {
     const { args } = await this.parse(AccountSwitchCommand);
     try {
-      execSync(`sui client switch --address ${args.address}`, { encoding: 'utf8' });
+      // Validate the address format first
+      validateInput(args.address, ValidationRules.SuiAddress, 'address');
+
+      // Use the safe command execution utility to switch the address
+      switchSuiAddress(args.address);
+
       this.log(`✅ Switched to address: ${args.address}`);
     } catch (error) {
       if (error instanceof CLIError) {

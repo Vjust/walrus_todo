@@ -63,7 +63,7 @@ export interface WalrusClientExt {
   ): Promise<{ blob: BlobObject; digest: string; }>;
   getStorageConfirmationFromNode(
     options: GetStorageConfirmationOptions
-  ): Promise<StorageConfirmation>;
+  ): Promise<{ primary_verification: boolean; secondary_verification?: boolean; provider: string; signature?: string }>;
   createStorageBlock(size: number, epochs: number): Promise<TransactionBlock>;
   createStorage(options: StorageWithSizeOptions): (tx: TransactionBlock) => Promise<{
     digest: string;
@@ -118,6 +118,7 @@ export interface WalrusClient {
   getBlobObject(params: { blobId: string }): Promise<any>;
   getBlobMetadata(params: ReadBlobOptions): Promise<any>;
   verifyPoA(params: { blobId: string }): Promise<boolean>;
+  getBlobSize(blobId: string): Promise<number>;
   
   // Storage cost calculation
   storageCost(size: number, epochs: number): Promise<{

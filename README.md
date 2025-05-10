@@ -12,12 +12,23 @@ WalTodo is a feature-rich command-line interface (CLI) application that combines
 - **Local Storage**: Quick todo management with file system storage
 - **Blockchain Integration**: Store todos on the Sui blockchain as NFTs
 - **Decentralized Storage**: Use Walrus for efficient, decentralized data storage
-- **AI-powered Features**: 
+- **Robust Network Handling**:
+  - Configurable timeouts with AbortController for cancellation
+  - Automatic retries with exponential backoff
+  - Proper resource cleanup for all operations
+  - Detailed error categorization and handling
+- **Comprehensive Input Validation**: Schema-based validation and sanitization for all commands
+- **Enhanced AI Features**:
+  - Multi-provider support (XAI/Grok, OpenAI, Anthropic)
   - Summarize todo lists with key insights
   - Get intelligent tag and priority suggestions
   - Analyze productivity patterns
-  - Generate related task recommendations
-  - AI-enhanced todo creation
+  - Advanced task suggestion system with dependency detection
+  - Blockchain-verified AI operations
+  - Secure credential management
+  - Privacy-preserving AI interactions
+  - Performance-optimized with caching and batching
+  - Cancellable AI operations with timeout management
 - **Multi-list Support**: Organize todos in different lists
 - **Automatic Image Generation**: Generate images for todo NFTs
 - **Seamless Sync**: Sync todos between CLI, blockchain and decentralized storage
@@ -45,6 +56,16 @@ The WalTodo CLI provides a comprehensive set of commands for managing todos:
   - `prioritize`: Suggest priority levels
   - `suggest`: Generate related task suggestions
   - `analyze`: Analyze productivity patterns
+  - `credentials`: Manage AI provider credentials securely
+  - `verify`: Verify AI operations on blockchain
+- **`suggest`**: Enhanced intelligent task suggestion system:
+  - Smart next-step recommendations
+  - Context-aware related tasks
+  - Dependency detection and analysis
+  - Effort estimation with reasoning
+  - Relevance scoring with confidence
+  - Blockchain verification integration
+  - Multi-provider support with fallback
 
 ### Intuitive Command Syntax
 
@@ -105,6 +126,54 @@ The local installation will make the `waltodo` command available in your system.
 
 For detailed CLI usage instructions, see [CLI-USAGE.md](CLI-USAGE.md).
 
+## Environment Configuration
+
+The application uses a centralized environment configuration system that loads configuration from multiple sources:
+
+1. Environment variables
+2. `.env` files (including environment-specific ones like `.env.development`)
+3. Configuration files (`.waltodo.json`)
+4. Default hardcoded values
+
+To get started with environment configuration:
+
+```bash
+# Copy the example env file
+cp .env.example .env
+
+# Edit with your settings
+nano .env
+
+# Or use environment-specific configurations
+cp .env.development .env.local  # For local development
+```
+
+The configuration system provides:
+- Type validation and conversion
+- Default values with fallbacks
+- Environment-specific configurations
+- Required variable validation with clear error messages
+- Custom validation rules for specific variables
+
+You can view and manage your configuration using the built-in config command:
+
+```bash
+# Show current configuration
+waltodo config
+
+# Validate configuration values
+waltodo config --validate
+
+# Show only AI configuration
+waltodo config --section=ai
+
+# Output in different formats
+waltodo config --format=json
+waltodo config --format=env
+```
+
+For detailed documentation on all available environment variables and configuration options, see [Environment Configuration Guide](docs/environment-configuration-guide.md).
+
 ## Quick Start
 
 Get up and running with WalTodo in minutes:
@@ -128,8 +197,11 @@ waltodo add "Shopping item" -l shopping
 # Mark a todo as complete (replace 123 with your todo ID)
 waltodo complete --id 123
 
-# Use AI to suggest related tasks
+# Use AI to suggest related tasks (legacy command)
 waltodo ai suggest --apply
+
+# Use the new intelligent task suggestion system
+waltodo suggest --type=next_step --minScore=70
 
 # Get a summary of your todo list
 waltodo ai summarize
@@ -325,20 +397,41 @@ waltodo add "Important meeting" -l work -p high -d 2024-05-15 -g "work,urgent"
 
 ## AI-Powered Todo Management
 
-WalTodo integrates with XAI (Grok) via LangChain to provide intelligent insights and suggestions for your todos. These powerful AI capabilities help you better organize, understand, and manage your tasks.
+WalTodo now features a robust multi-provider AI integration that works with XAI (Grok), OpenAI, and Anthropic language models. The system uses a provider abstraction layer for flexibility and includes blockchain verification for AI operations.
 
-### AI Command Integration
+### Multi-Provider AI Architecture
 
-The AI features are fully integrated into the standard CLI and can be accessed through the `ai` command:
+The AI integration uses a flexible adapter pattern that supports multiple AI providers:
 
 ```bash
-# Basic syntax
-waltodo ai <operation> [options]
+# Use default provider (XAI/Grok)
+waltodo ai summarize
+
+# Specify a different provider
+waltodo ai summarize --provider openai
+
+# Add blockchain verification
+waltodo ai summarize --verify
+```
+
+### Blockchain-Verified AI Operations
+
+All AI operations can be verified on the Sui blockchain for auditability and trust:
+
+```bash
+# Generate and verify a task suggestion
+waltodo suggest --type=next_step --verify
+
+# Check verification status
+waltodo ai verify check --id VERIFICATION_ID
+
+# List verifications for a todo
+waltodo ai verify list --todo TODO_ID
 ```
 
 ### Available AI Operations
 
-The AI command supports five main operations:
+The AI command supports seven main operations:
 
 #### 1. Summarize your todo lists
 
@@ -403,6 +496,57 @@ waltodo ai analyze
 waltodo ai analyze -l personal
 ```
 
+#### 6. Manage AI provider credentials
+
+Securely store and manage API keys for different AI providers:
+
+```bash
+# Store API key for a provider
+waltodo ai credentials add openai --key YOUR_API_KEY
+
+# List stored credentials
+waltodo ai credentials list
+
+# Verify credential on blockchain
+waltodo ai credentials add anthropic --key YOUR_API_KEY --verify
+
+# Remove stored credential
+waltodo ai credentials remove xai
+```
+
+#### 7. Verify AI operations on blockchain
+
+Manage and check blockchain verification records for AI operations:
+
+```bash
+# Check a verification record
+waltodo ai verify check --id VERIFICATION_ID
+
+# List verifications for a todo
+waltodo ai verify list --todo TODO_ID
+
+# Verify a specific operation on a todo
+waltodo ai verify verify --todo TODO_ID --operation summarize
+```
+
+### Enhanced Todo Suggestion System
+
+The `suggest` command provides intelligent task suggestions with advanced features:
+
+```bash
+# Get next-step recommendations
+waltodo suggest --type=next_step
+
+# Find dependent tasks
+waltodo suggest --type=dependency --minScore=70
+
+# Estimate effort for upcoming tasks
+waltodo suggest --type=effort --count=5
+
+# Generate suggestions with blockchain verification
+waltodo suggest --type=related --verify
+```
+
 ### AI-Enhanced Todo Creation
 
 When adding new todos, you can use AI to suggest tags and priority:
@@ -411,35 +555,57 @@ When adding new todos, you can use AI to suggest tags and priority:
 # Add a todo with AI suggestions
 waltodo add "Prepare quarterly report" --ai
 
-# Specify your XAI API key if not set in environment
-waltodo add "Review code PR" --ai --apiKey YOUR_XAI_API_KEY
+# Specify provider
+waltodo add "Review code PR" --ai --provider openai
+
+# Add with verification
+waltodo add "Implement new feature" --ai --verify
 ```
 
 ### AI Features and Benefits
 
+- **Multi-Provider Support**: Use XAI/Grok, OpenAI, or Anthropic models with the same interface
 - **Intelligent Tag Suggestions**: AI analyzes todo content to suggest relevant and consistent tags
 - **Smart Priority Assignment**: Determines appropriate priority level based on task content and urgency
 - **Task Analysis**: Provides productivity insights, completion patterns, and suggestions for improvement
 - **Related Task Suggestions**: Recommends complementary tasks based on your current todos and project goals
 - **Summarization**: Creates concise, structured summaries of your entire todo list for better understanding
-- **Consistency**: Helps maintain consistent tagging and prioritization across your tasks
+- **Blockchain Verification**: Verify AI operations on the Sui blockchain for auditability and trust
+- **Secure Credential Storage**: Encrypted storage of API keys with blockchain verification
+- **Privacy Controls**: Control what data is shared with AI providers and what is stored on-chain
+- **Performance Optimization**: Caching and batching for efficient AI operations
+- **Dependency Detection**: Identify prerequisite and dependent tasks in your workflow
+- **Effort Estimation**: Get intelligent estimates for task completion time and complexity
 
 ### Setting Up AI Features
 
-To use the AI features, you'll need an XAI API key. There are multiple ways to provide it:
+To use the AI features, you'll need API keys for your preferred providers. There are multiple ways to manage credentials:
 
-1. Environment variable in your `.env` file (recommended for security):
+1. Using the credential management system (recommended for security):
+   ```bash
+   # Store credentials securely
+   waltodo ai credentials add xai --key YOUR_XAI_API_KEY
+   waltodo ai credentials add openai --key YOUR_OPENAI_API_KEY
+   ```
+
+2. Environment variables in your `.env` file:
    ```bash
    # .env file
-   XAI_API_KEY=your-api-key
+   XAI_API_KEY=your-xai-api-key
+   OPENAI_API_KEY=your-openai-api-key
+   ANTHROPIC_API_KEY=your-anthropic-api-key
    ```
 
-2. Command-line flag with each command:
+3. Command-line flag with each command:
    ```bash
-   waltodo ai summarize --apiKey your-api-key
+   waltodo ai summarize --apiKey your-api-key --provider xai
    ```
 
-3. Global configuration (coming soon)
+4. Blockchain-verified credentials (for enhanced security):
+   ```bash
+   # Store with blockchain verification
+   waltodo ai credentials add xai --key YOUR_XAI_API_KEY --verify
+   ```
 
 ### Command Options
 
@@ -451,26 +617,47 @@ The AI command supports these common options:
 | `--id`, `-i` | Todo ID or title for operations that work on a specific todo |
 | `--count`, `-c` | Number of suggestions to generate (for `suggest` operation) |
 | `--apply`, `-a` | Apply AI suggestions automatically |
-| `--apiKey`, `-k` | XAI API key (if not set in environment) |
+| `--apiKey`, `-k` | API key (if not set in environment or credential store) |
+| `--provider`, `-p` | AI provider to use (xai, openai, anthropic, custom) |
+| `--verify`, `-v` | Verify operation on blockchain |
+| `--privacy`, | Privacy level for blockchain verification (hash, full, none) |
+| `--type` | Suggestion type for suggest command (next_step, related, dependency, effort) |
+| `--minScore` | Minimum relevance score for suggestions (0-100) |
 
 ### Implementation Details
 
 The AI features are implemented using:
-- **LangChain**: Framework for building LLM applications with advanced prompt engineering
-- **XAI (Grok)**: Powerful language model for natural language understanding and generation
-- **Structured Communication**: Using HumanMessage format for reliable API interaction
-- **Response Parsing**: Robust parsing of JSON and text responses from the AI
 
-For detailed technical documentation, see [AI Integration Guide](docs/ai-integration-guide.md).
+- **Network Resilience**: [Robust timeout and retry handling](./docs/network-timeout-handling.md) for all API communications
+- **Request Cancellation**: All network operations support cancellation with proper resource cleanup
+- **Provider Abstraction Layer**: Adapter pattern for supporting multiple AI providers
+- **LangChain**: Framework for building LLM applications with advanced prompt engineering
+- **Multiple AI Providers**: Support for XAI (Grok), OpenAI, and Anthropic models
+- **Blockchain Verification**: Integration with Sui blockchain for verifiable AI operations
+- **Secure Credential Management**: Encrypted storage with optional blockchain verification
+- **Structured Communication**: Using standardized message format for reliable API interaction
+- **Response Parsing**: Robust parsing of JSON and text responses from AI providers
+- **Performance Optimization**: Caching and batching for efficient AI operations
+- **Privacy Controls**: Different verification levels to control on-chain data exposure
+
+For detailed technical documentation, see:
+- [AI Integration Guide](docs/ai-integration-guide.md)
+- [Security Best Practices](docs/ai-security-guide.md)
+- [Multi-Provider Setup](docs/ai-provider-guide.md)
+- [Blockchain Verification](docs/ai-blockchain-verification.md)
 
 ### Troubleshooting
 
 If you encounter issues:
 
-- Ensure your XAI API key is valid and correctly set
+- Ensure your API keys are valid and correctly set using `waltodo ai credentials list`
 - Check your internet connection (required for API calls)
 - Try using the `--verbose` flag for detailed output
+- If a provider fails, try a different one with `--provider openai` or `--provider anthropic`
+- For blockchain verification issues, check network connectivity with `waltodo storage --summary`
 - Verify the todo or list exists before running AI operations on it
+- Check credential permissions with `waltodo ai credentials check`
+- For verification errors, use `waltodo ai verify check --id VERIFICATION_ID` to diagnose
 
 Add multiple todos at once:
 
@@ -741,6 +928,87 @@ Key features of the contract:
 - The contract emits events when todos are created or completed
 - NFTs can be transferred between users
 
+## Security Features
+
+WalTodo implements comprehensive security features to protect user data, API credentials, and blockchain interactions:
+
+### Security Architecture
+
+1. **Secure Credential Management**
+   - Encryption at rest for all API keys and credentials
+   - Secure file permissions (0o600) for credential storage
+   - Rotation and expiration controls for credentials
+   - Support for blockchain verification of credentials
+   - Protection against API key exposure in logs and errors
+
+2. **Input Validation and Sanitization**
+   - Comprehensive validation of all user inputs
+   - Protection against XSS, SQL injection, and command injection
+   - Input size limits to prevent DoS attacks
+   - Structured validation with schema enforcement
+   - Prompt injection detection for AI operations
+
+3. **Permission System**
+   - Fine-grained permission levels (READ_ONLY, STANDARD, ADVANCED, ADMIN)
+   - Operation-specific permission enforcement
+   - Cross-provider permission isolation
+   - Blockchain verification of permissions
+   - Prevention of privilege escalation
+
+4. **Blockchain Verification**
+   - Content integrity verification with cryptographic hashing
+   - Digital signatures for all blockchain operations
+   - Tamper detection for verified content
+   - Time-based protection against replay attacks
+   - Privacy controls with different verification levels
+
+5. **API Security**
+   - Enforced HTTPS for all external communications
+   - Secure TLS configuration requirements
+   - Rate limiting and abuse prevention
+   - Secure header configuration
+   - Prevention of SSRF attacks
+
+6. **Audit Logging**
+   - Tamper-evident logging with hash chaining
+   - Sanitization of sensitive information in logs
+   - Comprehensive event recording
+   - Secure log storage with proper permissions
+   - Support for log verification
+
+7. **Data Privacy**
+   - PII detection and anonymization
+   - Differential privacy for aggregation operations
+   - Data minimization principles
+   - Support for data subject rights
+   - Privacy-preserving blockchain verification
+
+### Security Testing
+
+The codebase includes a comprehensive security testing framework:
+
+```bash
+# Run all security tests
+pnpm run test:security
+
+# Run specific security test categories
+pnpm run test:security:credential  # Credential security tests
+pnpm run test:security:input       # Input validation tests
+pnpm run test:security:permission  # Permission system tests
+pnpm run test:security:audit       # Audit logging tests
+pnpm run test:security:blockchain  # Blockchain verification tests
+pnpm run test:security:api         # API security tests
+pnpm run test:security:privacy     # Data privacy tests
+
+# Run full security audit with coverage report
+pnpm run security-audit:full
+```
+
+For detailed documentation, see:
+- [Security Testing Guide](docs/security-testing-guide.md)
+- [AI Security Guide](docs/ai-security-guide.md)
+- [Blockchain Verification Guide](docs/ai-blockchain-verification.md)
+
 ## Troubleshooting
 
 ### Common Issues
@@ -776,6 +1044,12 @@ Key features of the contract:
    - The CLI will still work correctly despite these TypeScript errors
    - For details on the compatibility approach, see [TypeScript Compatibility Guide](TYPESCRIPT_COMPATIBILITY.md)
 
+8. **Security-related issues**:
+   - For credential issues, check permissions with `waltodo ai credentials check`
+   - For blockchain verification errors, use `waltodo ai verify check --id VERIFICATION_ID`
+   - Run `pnpm run test:security` to verify security functionality
+   - Check audit logs for suspicious activity
+
 ### Getting Help
 
 For more detailed troubleshooting:
@@ -791,8 +1065,11 @@ For more detailed troubleshooting:
 # Install dependencies
 pnpm install
 
-# Build the project
-pnpm run build
+# Production build (with full type checking)
+pnpm build
+
+# Fast development build (skips type checking)
+pnpm build:dev
 
 # Install CLI locally
 npm link
@@ -810,14 +1087,40 @@ pnpm test -- --coverage
 pnpm run dev
 ```
 
-> **Note about TypeScript Errors**: When building the project, you might encounter TypeScript errors related to SDK compatibility. These are expected due to version differences in Sui and Walrus SDKs but won't affect functionality.
+### Build System
+
+The project features an enhanced build system with various options:
+
+```bash
+# Standard build (transpile-only for speed)
+pnpm build
+
+# Fast development build (skips type checks)
+pnpm build:dev
+
+# Production build with full type checking
+pnpm build:prod
+
+# Full clean production build
+pnpm build:full
+
+# Incremental build (only rebuilds changed files)
+pnpm build:incremental
+
+# Clean the dist directory
+pnpm clean
+```
+
+For detailed information on the build system, see [Build Process Guide](docs/build-process.md).
+
+> **Note about TypeScript Errors**: When building the project, you might encounter TypeScript errors related to SDK compatibility. These are expected due to version differences in Sui and Walrus SDKs but won't affect functionality. Use `pnpm build:dev` to bypass type checking.
 
 ### CLI Development
 
 When making changes to the CLI, use the following scripts:
 
 ```bash
-# Build the project
+# Build the project with full type checking
 pnpm run build
 
 # Update the CLI after making changes
@@ -1070,6 +1373,6 @@ The codebase currently has some TypeScript compatibility issues that are address
 - `pnpm run build` - Standard build command that handles type compatibility issues
 - `pnpm run typecheck` - Run TypeScript type checking without emitting JavaScript
 
-The project includes build commands to handle TypeScript compatibility issues with Sui and Walrus SDK dependencies. The standard `pnpm run build` command will properly build the project even with type compatibility differences between dependencies.
+The project enforces strict TypeScript compatibility to ensure code quality and reliability. All builds undergo full type checking, and TypeScript errors must be addressed rather than bypassed. This ensures that production code meets high quality standards and prevents potential runtime errors.
 
 For a comprehensive guide on TypeScript compatibility, see [TypeScript Compatibility Guide](docs/typescript-compatibility.md).

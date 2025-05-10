@@ -1,11 +1,15 @@
-import { Args, Command, Flags } from '@oclif/core';
-import chalk from 'chalk';  // Changed from import * as chalk
+import { Args, Flags, Hook } from '@oclif/core';
+import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
-import { AiService } from '../services/ai';
+import { aiService } from '../services/ai';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
 import { createWalrusStorage } from '../utils/walrus-storage';
-// Removed unused configService import
+import BaseCommand from '../base-command';
+import { InputValidator } from '../utils/InputValidator';
+import { CommandSanitizer } from '../utils/CommandSanitizer';
+import { AIProvider } from '../types/adapters/AIModelAdapter';
+import { addCommandValidation, validateAIApiKey, validateBlockchainConfig } from '../utils/CommandValidationMiddleware';
 
 /**
  * @class AddCommand
@@ -15,7 +19,7 @@ import { createWalrusStorage } from '../utils/walrus-storage';
  * When 'blockchain' or 'both' storage is selected, the todo item is stored on the Walrus/Sui blockchain,
  * making the data publicly accessible.
  */
-export default class AddCommand extends Command {
+export default class AddCommand extends BaseCommand {
   static description = 'Add a new todo item to a specified list';
 
   static examples = [
@@ -31,6 +35,7 @@ export default class AddCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     task: Flags.string({
       char: 't',
       description: 'Task description (can be used multiple times)',
@@ -92,54 +97,60 @@ export default class AddCommand extends Command {
     })
   };
 
+  // Register the validation middleware
+  static hooks = {
+    prerun: [addCommandValidation],
+  } as const;
+
   private todoService = new TodoService();
   private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
-  private aiService: AiService | null = null;
-
-  private validateDate(date: string): boolean {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(date)) return false;
-
-    const d = new Date(date);
-    return d instanceof Date && !isNaN(d.getTime());
-  }
+  private aiServiceInstance = aiService;
 
   async run(): Promise<void> {
     try {
-      console.log("Running add command...");
-      process.stdout.write("Starting add command...\n");
-      
-      const { args, flags } = await this.parse(AddCommand);
-      console.log("Parsed arguments:", args);
-      console.log("Parsed flags:", flags);
+      this.debugLog("Running add command...");
 
-      if (flags.due && !this.validateDate(flags.due)) {
-        throw new CLIError("Invalid date format. Use YYYY-MM-DD", 'INVALID_DATE');  // No change, already fixed
-      }
+      // Parse and validate input
+      const { args, flags } = await this.parse(AddCommand);
+      this.debugLog("Parsed and validated arguments:", args);
+      this.debugLog("Parsed and validated flags:", flags);
+
+      // Additional conditional validations
+      validateAIApiKey(flags);
+      validateBlockchainConfig(flags);
 
       // Determine the list name - either from the list flag or default
-      const listName = flags.list || 'default';
+      const listName = CommandSanitizer.sanitizeString(flags.list || 'default');
 
       // Determine the todo title - either from the title argument or task flag
       let todoTitle: string;
       if (args.title) {
         // Use the title argument directly
-        todoTitle = args.title;
+        todoTitle = CommandSanitizer.sanitizeString(args.title);
       } else if (flags.task && flags.task.length > 0) {
-        // Use the task flag(s)
-        todoTitle = flags.task.join(' ');
+        // Use the task flag(s) - sanitize each task before joining
+        todoTitle = flags.task.map(t => CommandSanitizer.sanitizeString(t)).join(' ');
       } else {
         throw new CLIError('Todo title is required. Provide it as an argument or with -t flag', 'MISSING_TITLE');
       }
 
+      // Validate title length
+      InputValidator.validate(todoTitle, [
+        {
+          test: (value) => value.length <= 100,
+          message: 'Todo title must be 100 characters or less',
+          code: 'TITLE_TOO_LONG'
+        }
+      ]);
+
       const storageLocation = flags.storage as StorageLocation;
 
-      // Initialize todo object
+      // Initialize todo object with sanitized inputs
       const todo: Partial<Todo> = {
         title: todoTitle,
         priority: flags.priority as 'high' | 'medium' | 'low',
-        dueDate: flags.due,
-        tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
+        dueDate: flags.due ? CommandSanitizer.sanitizeDate(flags.due) : undefined,
+        tags: flags.tags ? CommandSanitizer.sanitizeTags(flags.tags) : [],
         private: flags.private,
         storageLocation: storageLocation
       };
@@ -147,13 +158,19 @@ export default class AddCommand extends Command {
       // Use AI if requested
       if (flags.ai) {
         try {
-          console.log('AI flag detected in add command');
-          console.log('API Key from flag:', flags.apiKey ? '[provided]' : '[not provided]');
-          console.log('Environment XAI_API_KEY:', process.env.XAI_API_KEY ? '[found]' : '[not found]');
-          
-          this.aiService = new AiService(flags.apiKey);
-          console.log('AiService created successfully');
-          
+          this.debugLog('AI flag detected in add command');
+          this.debugLog('API Key from flag:', flags.apiKey ? '[provided]' : '[not provided]');
+          this.debugLog('Environment XAI_API_KEY:', process.env.XAI_API_KEY ? '[found]' : '[not found]');
+
+          // Sanitize API key before using
+          const sanitizedApiKey = flags.apiKey ? CommandSanitizer.sanitizeApiKey(flags.apiKey) : undefined;
+          if (sanitizedApiKey) {
+            // Instead of passing apiKey directly in options, set it in the environment
+            process.env.XAI_API_KEY = sanitizedApiKey;
+            await this.aiServiceInstance.setProvider(AIProvider.XAI);
+          }
+          this.debugLog('AiService configured successfully');
+
           // Create a temporary todo object for AI processing
           const tempTodo: Todo = {
             id: 'temp-id',
@@ -169,32 +186,32 @@ export default class AddCommand extends Command {
           };
 
           this.log(chalk.blue('🧠') + ' Using AI to enhance your todo...');
-          console.log('Calling suggestTags and suggestPriority...');
-          
+          this.debugLog('Calling suggestTags and suggestPriority...');
+
           // Get AI suggestions in parallel
           const [suggestedTags, suggestedPriority] = await Promise.all([
-            this.aiService.suggestTags(tempTodo),
-            this.aiService.suggestPriority(tempTodo)
+            this.aiServiceInstance.suggestTags(tempTodo),
+            this.aiServiceInstance.suggestPriority(tempTodo)
           ]);
-          
-          console.log('Received AI suggestions:', suggestedTags, suggestedPriority);
-          
+
+          this.debugLog('Received AI suggestions:', { tags: suggestedTags, priority: suggestedPriority });
+
           // Merge existing and suggested tags
           const existingTags = todo.tags || [];
           const allTags = [...new Set([...existingTags, ...suggestedTags])];
-          
+
           this.log(chalk.blue('🏷️') + ' AI suggested tags: ' + chalk.cyan(suggestedTags.join(', ')));
           this.log(chalk.blue('🔄') + ' AI suggested priority: ' + chalk.cyan(suggestedPriority));
-          
+
           // Update todo with AI suggestions
           todo.tags = allTags;
           todo.priority = suggestedPriority;
-          
-          console.log('Todo updated with AI suggestions');
-          
+
+          this.debugLog('Todo updated with AI suggestions');
+
         } catch (aiError) {
           // If AI fails, just log a warning and continue with user-provided values
-          console.error('AI error:', aiError);
+          this.debugLog('AI error:', aiError);
           this.log(chalk.yellow('⚠') + ' AI enhancement failed: ' + chalk.dim(aiError instanceof Error ? aiError.message : String(aiError)));
           this.log(chalk.yellow('⚠') + ' Continuing with provided values');
         }
@@ -210,9 +227,9 @@ export default class AddCommand extends Command {
       }
 
       // Add todo to the list
-      console.log('Adding todo to list:', listName, todo);
+      this.debugLog('Adding todo to list:', { listName, todo });
       const addedTodo = await this.todoService.addTodo(listName, todo as Todo);
-      console.log('Todo added:', addedTodo);
+      this.debugLog('Todo added:', addedTodo);
 
       // If storage is blockchain or both, store on blockchain
       if (storageLocation === 'blockchain' || storageLocation === 'both') {
@@ -312,13 +329,10 @@ export default class AddCommand extends Command {
       }
       outputLines.push(`  🔒 Private: ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`);
       outputLines.push(`  ${storageInfo.icon} Storage: ${storageInfo.color(storageInfo.text)}`);
-      
+
       const output = outputLines.join('\n');
-      console.log("Output:", output);
+      this.debugLog("Output:", output);
       this.log(output);
-      
-      // Also write directly to stdout to ensure output is shown
-      process.stdout.write(output + '\n');
 
     } catch (error) {
       if (error instanceof CLIError) {

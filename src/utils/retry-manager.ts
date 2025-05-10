@@ -428,31 +428,37 @@ export class RetryManager {
 
         const startTime = Date.now();
         let timeoutId: NodeJS.Timeout;
-        
+
         // Execute with timeout and network quality monitoring
-        const result = await Promise.race([
-          operation(node),
-          // Timeout promise
-          new Promise<never>((_, reject) => {
-            timeoutId = setTimeout(() => {
-              const timeoutError = new Error(
-                `Operation timed out after ${options.timeout}ms`
-              );
-              this.updateNodeHealth(node.url, false, options.timeout);
-              reject(timeoutError);
-            }, options.timeout);
-          })
-        ]);
+        try {
+          const result = await Promise.race([
+            operation(node),
+            // Timeout promise
+            new Promise<never>((_, reject) => {
+              timeoutId = setTimeout(() => {
+                const timeoutError = new Error(
+                  `Operation timed out after ${options.timeout}ms during ${context} on node ${node.url}`
+                );
+                this.updateNodeHealth(node.url, false, options.timeout);
+                reject(timeoutError);
+              }, options.timeout);
+            })
+          ]);
 
-        // Operation succeeded
-        clearTimeout(timeoutId!);
-        const responseTime = Date.now() - startTime;
+          // Operation succeeded
+          clearTimeout(timeoutId!);
+          const responseTime = Date.now() - startTime;
 
-        // Update node health and circuit breaker
-        this.updateNodeHealth(node.url, true, responseTime);
-        this.updateCircuitBreaker(node, true);
+          // Update node health and circuit breaker
+          this.updateNodeHealth(node.url, true, responseTime);
+          this.updateCircuitBreaker(node, true);
 
-        return result;
+          return result;
+        } catch (error) {
+          // Always clear timeout to prevent memory leaks
+          clearTimeout(timeoutId!);
+          throw error;
+        }
       } catch (error) {
         const errorObj = error instanceof Error ? error : new Error(String(error));
         const node = lastNode!;
@@ -474,7 +480,7 @@ export class RetryManager {
         // Check if error is retryable
         if (!this.isRetryableError(error)) {
           throw new CLIError(
-            `Non-retryable error during ${context}: ${errorObj.message}`,
+            `Non-retryable error during ${context} with node ${node.url}: ${errorObj.message}`,
             'RETRY_NON_RETRYABLE'
           );
         }
@@ -531,8 +537,17 @@ export class RetryManager {
    * Gets a summary of retry attempts and errors
    */
   getErrorSummary(context: RetryContext): string {
+    if (!context.errors.length) {
+      return 'No errors recorded';
+    }
+
     return context.errors
-      .map(e => `Attempt ${e.attempt} failed at ${new Date(e.timestamp).toISOString()}: ${e.error.message}`)
+      .map(e => {
+        // Format timestamps consistently and include error type if available
+        const timestamp = new Date(e.timestamp).toISOString();
+        const errorType = e.error.name || this.categorizeError(e.error);
+        return `Attempt ${e.attempt} failed at ${timestamp}: [${errorType}] ${e.error.message}`;
+      })
       .join('\n');
   }
 

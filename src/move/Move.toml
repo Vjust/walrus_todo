@@ -1,10 +1,13 @@
 [package]
-name = "todo_app"
+name = "walrus_todo"
 version = "0.1.0"
+published-at = "0x0"
+authors = ["Walrus Todo Team"]
+license = "MIT"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
 
 [addresses]
-todo_app = "0x0"
-sui = "0000000000000000000000000000000000000000000000000000000000000002"
+sui = "0x2"
+walrus_todo = "0x0"

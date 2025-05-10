@@ -82,3 +82,8 @@ sui.keystore
 **/.claude/
 CLAUDE.md
 node_modules
+
+# Environment configuration
+.env
+.env.*
+!.env.example

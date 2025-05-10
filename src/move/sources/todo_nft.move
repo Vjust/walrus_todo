@@ -1,210 +1,232 @@
-// Copyright (c) 2025, Walrus Todo Team
-// SPDX-License-Identifier: MIT
-//
-// Module: todo_app::todo_nft
-//
-// Description:
-// This smart contract module is part of the Walrus Todo application and enables the creation and management of TODO items as Non-Fungible Tokens (NFTs) on the Sui blockchain.
-// By representing TODOs as NFTs, users can own unique digital assets that symbolize their tasks, which can be shared, displayed, or even traded if desired.
-// This module integrates with Walrus storage to link TODO NFTs with images or other digital content, enhancing the visual and functional appeal of task management.
-//
-// Key Features:
-// - **TODO NFT Creation**: Users can create unique TODO NFTs, each representing a specific task with a title, description, and associated digital content (like an image) stored on Walrus.
-// - **Completion Tracking**: Allows marking a TODO NFT as completed, visually updating its status for the owner and others viewing it on the blockchain.
-// - **Privacy Options**: Supports setting TODOs as private, hiding sensitive details like the title from public view while still maintaining blockchain transparency.
-// - **Content Updates**: Enables updating the title, description, or associated digital content of a TODO NFT, ensuring flexibility as tasks evolve.
-// - **Visual Display**: Configures how TODO NFTs appear in wallets and explorers with metadata like name, description, and image, making them easily recognizable.
-// - **Event Notifications**: Emits events when TODOs are created or completed, allowing applications to notify users or update interfaces in real-time.
-//
-// Key Components:
-// - **TodoNFT Struct**: Defines the properties of a TODO NFT, including title, description, completion status, privacy setting, and a link to content stored on Walrus.
-// - **Display Setup**: Configures how TODO NFT metadata is shown in Sui-compatible wallets or explorers, enhancing user experience.
-// - **Event Structs**: Includes structures for events like TODO creation and completion, facilitating integration with external systems or user interfaces.
-// - **Functions**: Provides operations to create TODO NFTs, mark them as complete, update their details, and retrieve information for display or verification.
-//
-// This module works alongside other components of the Walrus Todo application to offer a unique blend of task management and digital ownership through blockchain technology.
-module todo_app::todo_nft {
+/// Module implementing NFT functionality for todos in the Walrus Todo application
+module walrus_todo::todo_nft {
+    use std::string::{Self, String};
+    use std::option::{Self, Option};
     use sui::object::{Self, UID};
-    use sui::tx_context::{Self, TxContext};
     use sui::transfer;
-    use sui::event;
+    use sui::tx_context::{Self, TxContext};
+    use sui::url::{Self, Url};
     use sui::display;
     use sui::package;
-    use std::string::{Self, String};
-    use sui::url::{Self, Url};
-
-    // Walrus image URL format: https://blobid.walrus/
+    use sui::event;
 
     // Error codes
-    const EINVALID_BLOB_ID: u64 = 1;
+    const E_NOT_OWNER: u64 = 1;
+    const E_INVALID_METADATA: u64 = 2;
+    const E_INVALID_STATE: u64 = 3;
+    const E_ALREADY_COMPLETED: u64 = 4;
 
     // One-time witness for the module
     struct TODO_NFT has drop {}
 
-    // The Todo NFT structure
+    /// Represents a todo as an NFT
     struct TodoNFT has key, store {
         id: UID,
         title: String,
-        description: String, 
-        walrus_blob_id: String,
-        completed: bool,
+        description: String,
         image_url: Url,
+        completed: bool,
+        created_at: u64,
+        completed_at: Option<u64>,
+        owner: address,
+        metadata: String,
         is_private: bool
     }
 
-    // Events
-    struct TodoCreated has copy, drop {
-        id: address,
+    /// Event emitted when a new todo NFT is created
+    struct TodoNFTCreated has copy, drop {
+        todo_id: address,
         title: String,
-        walrus_blob_id: String
+        owner: address,
+        timestamp: u64
     }
 
-    struct TodoCompleted has copy, drop {
-        id: address,
-        title: String
+    /// Event emitted when a todo NFT is completed
+    struct TodoNFTCompleted has copy, drop {
+        todo_id: address,
+        timestamp: u64
     }
 
-    // Initialize the module with NFT display
+    /// Event emitted when a todo NFT's metadata is updated
+    struct TodoNFTUpdated has copy, drop {
+        todo_id: address,
+        timestamp: u64
+    }
+
+    /// Initialize the module with NFT display configuration
     fun init(witness: TODO_NFT, ctx: &mut TxContext) {
-        // Define display properties for the NFT
-        let keys = vector[
-            string::utf8(b"name"),
-            string::utf8(b"description"),
-            string::utf8(b"image_url"),
-            string::utf8(b"status"),
-            string::utf8(b"privacy"),
-            string::utf8(b"external_url"),
-            string::utf8(b"project_url")
-        ];
-        
-        let values = vector[
-            string::utf8(b"{title}"),
-            string::utf8(b"{description}"),
-            string::utf8(b"{image_url}"),
-            string::utf8(b"Status: {completed}"),
-            string::utf8(b"Private: {is_private}"),
-            string::utf8(b"https://explorer.sui.io/object/{id}"),
-            string::utf8(b"https://wal.app/")
-        ];
-        
-        // Create the Publisher for display
         let publisher = package::claim(witness, ctx);
-        
-        // Create the Display
-        let display = display::new_with_fields<TodoNFT>(
-            &publisher, keys, values, ctx
+        let display = display::new_with_fields(
+            &publisher,
+            vector[
+                string::utf8(b"name"),
+                string::utf8(b"description"),
+                string::utf8(b"image_url"),
+                string::utf8(b"status"),
+                string::utf8(b"created_at"),
+                string::utf8(b"completed_at"),
+            ],
+            vector[
+                string::utf8(b"{title}"),
+                string::utf8(b"{description}"),
+                string::utf8(b"{image_url}"),
+                string::utf8(b"{completed}"),
+                string::utf8(b"{created_at}"),
+                string::utf8(b"{completed_at}"),
+            ],
+            ctx
         );
-        
-        // Set display version
         display::update_version(&mut display);
-        
-        // Transfer objects to the transaction sender
         transfer::public_transfer(publisher, tx_context::sender(ctx));
         transfer::public_transfer(display, tx_context::sender(ctx));
     }
 
-    // Create a new Todo NFT
-    public entry fun create_todo(
-        title: vector<u8>,
-        description: vector<u8>,
-        walrus_blob_id: vector<u8>,
+    /// Creates a new todo NFT
+    public entry fun create_todo_nft(
+        title: String,
+        description: String,
+        image_url: vector<u8>,
+        metadata: String,
         is_private: bool,
         ctx: &mut TxContext
     ) {
-        let title_str = if (is_private) {
-            string::utf8(b"Untitled")
-        } else {
-            string::utf8(title)
-        };
-        let description_str = string::utf8(description);
-        let walrus_blob_id_str = string::utf8(walrus_blob_id);
-        
-        // Validate blob ID is not empty
-        assert!(std::vector::length(&walrus_blob_id) > 0, EINVALID_BLOB_ID);
-        
-        // Construct image URL from Walrus blob ID using the correct aggregator URL
-        let image_url_bytes = std::vector::empty<u8>();
-        std::vector::append(&mut image_url_bytes, b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/");
-        std::vector::append(&mut image_url_bytes, walrus_blob_id);
-        let image_url_str = url::new_unsafe_from_bytes(image_url_bytes);
-        
         let todo = TodoNFT {
             id: object::new(ctx),
-            title: title_str,
-            description: description_str,
-            walrus_blob_id: walrus_blob_id_str,
+            title,
+            description,
+            image_url: url::new_unsafe_from_bytes(image_url),
             completed: false,
-            image_url: image_url_str,
-            is_private: is_private
+            created_at: tx_context::epoch_timestamp_ms(ctx),
+            completed_at: option::none(),
+            owner: tx_context::sender(ctx),
+            metadata,
+            is_private
         };
 
-        // Emit creation event
-        event::emit(TodoCreated {
-            id: object::uid_to_address(&todo.id),
-            title: title_str,
-            walrus_blob_id: walrus_blob_id_str
+        event::emit(TodoNFTCreated {
+            todo_id: object::uid_to_address(&todo.id),
+            title: todo.title,
+            owner: todo.owner,
+            timestamp: todo.created_at
         });
 
-        // Transfer to transaction sender
-        transfer::public_transfer(todo, tx_context::sender(ctx));
+        transfer::transfer(todo, tx_context::sender(ctx));
     }
 
-    // Mark a Todo as complete
-    public entry fun complete_todo(todo: &mut TodoNFT, _ctx: &mut TxContext) {
+    /// Marks a todo NFT as completed
+    public entry fun complete_todo_nft(
+        todo: &mut TodoNFT,
+        ctx: &mut TxContext
+    ) {
+        assert!(tx_context::sender(ctx) == todo.owner, E_NOT_OWNER);
+        assert!(!todo.completed, E_ALREADY_COMPLETED);
+
         todo.completed = true;
-        
-        // Emit completion event
-        event::emit(TodoCompleted {
-            id: object::uid_to_address(&todo.id),
-            title: todo.title
+        todo.completed_at = option::some(tx_context::epoch_timestamp_ms(ctx));
+
+        event::emit(TodoNFTCompleted {
+            todo_id: object::uid_to_address(&todo.id),
+            timestamp: tx_context::epoch_timestamp_ms(ctx)
         });
     }
 
-    // Accessors
-    public fun title(todo: &TodoNFT): &String {
-        &todo.title
+    /// Updates a todo NFT's metadata
+    public entry fun update_todo_nft(
+        todo: &mut TodoNFT,
+        title: Option<String>,
+        description: Option<String>,
+        image_url: Option<vector<u8>>,
+        metadata: Option<String>,
+        is_private: Option<bool>,
+        ctx: &mut TxContext
+    ) {
+        assert!(tx_context::sender(ctx) == todo.owner, E_NOT_OWNER);
+
+        if (option::is_some(&title)) {
+            todo.title = option::extract(&mut title);
+        };
+        if (option::is_some(&description)) {
+            todo.description = option::extract(&mut description);
+        };
+        if (option::is_some(&image_url)) {
+            todo.image_url = url::new_unsafe_from_bytes(option::extract(&mut image_url));
+        };
+        if (option::is_some(&metadata)) {
+            todo.metadata = option::extract(&mut metadata);
+        };
+        if (option::is_some(&is_private)) {
+            todo.is_private = option::extract(&mut is_private);
+        };
+
+        event::emit(TodoNFTUpdated {
+            todo_id: object::uid_to_address(&todo.id),
+            timestamp: tx_context::epoch_timestamp_ms(ctx)
+        });
     }
 
-    public fun description(todo: &TodoNFT): &String {
-        &todo.description
+    /// Transfers ownership of a todo NFT
+    public entry fun transfer_todo_nft(
+        todo: TodoNFT,
+        recipient: address,
+        _ctx: &mut TxContext
+    ) {
+        transfer::transfer(todo, recipient);
     }
 
-    public fun walrus_blob_id(todo: &TodoNFT): &String {
-        &todo.walrus_blob_id
+    /// Burns (deletes) a todo NFT
+    public entry fun burn_todo_nft(
+        todo: TodoNFT,
+        ctx: &mut TxContext
+    ) {
+        assert!(tx_context::sender(ctx) == todo.owner, E_NOT_OWNER);
+        let TodoNFT { id, title: _, description: _, image_url: _, completed: _,
+                     created_at: _, completed_at: _, owner: _, metadata: _,
+                     is_private: _ } = todo;
+        object::delete(id);
     }
 
+    // === Accessor Functions ===
+
+    /// Returns whether the todo NFT is completed
     public fun is_completed(todo: &TodoNFT): bool {
         todo.completed
     }
-    
-    public fun image_url(todo: &TodoNFT): &Url {
-        &todo.image_url
+
+    /// Returns whether the todo NFT is private
+    public fun is_private(todo: &TodoNFT): bool {
+        todo.is_private
     }
 
-    // Update todo title
-    public entry fun update_todo_title(todo: &mut TodoNFT, new_title: vector<u8>, ctx: &mut TxContext) {
-        let new_title_str = string::utf8(new_title);
-        todo.title = new_title_str;
+    /// Returns the owner of the todo NFT
+    public fun get_owner(todo: &TodoNFT): address {
+        todo.owner
     }
 
-    // Update todo description
-    public entry fun update_todo_description(todo: &mut TodoNFT, new_description: vector<u8>, ctx: &mut TxContext) {
-        let new_description_str = string::utf8(new_description);
-        todo.description = new_description_str;
+    /// Returns the creation timestamp of the todo NFT
+    public fun get_created_at(todo: &TodoNFT): u64 {
+        todo.created_at
     }
 
-    // Update todo image URL
-    public entry fun update_todo_image_url(todo: &mut TodoNFT, new_walrus_blob_id: vector<u8>, ctx: &mut TxContext) {
-        // Validate new blob ID
-        assert!(std::vector::length(&new_walrus_blob_id) > 0, EINVALID_BLOB_ID);
-        
-        // Update walrus blob ID
-        todo.walrus_blob_id = string::utf8(new_walrus_blob_id);
-        
-        // Update image URL
-        let image_url_bytes = std::vector::empty<u8>();
-        std::vector::append(&mut image_url_bytes, b"https://aggregator.walrus-testnet.walrus.space/v1/blobs/");
-        std::vector::append(&mut image_url_bytes, new_walrus_blob_id);
-        todo.image_url = url::new_unsafe_from_bytes(image_url_bytes);
+    /// Returns the completion timestamp of the todo NFT if completed
+    public fun get_completed_at(todo: &TodoNFT): Option<u64> {
+        todo.completed_at
+    }
+
+    /// Returns the title of the todo NFT (only if public or called by owner)
+    public fun get_title(todo: &TodoNFT, ctx: &TxContext): String {
+        assert!(!todo.is_private || tx_context::sender(ctx) == todo.owner, E_NOT_OWNER);
+        todo.title
+    }
+
+    /// Returns the description of the todo NFT (only if public or called by owner)
+    public fun get_description(todo: &TodoNFT, ctx: &TxContext): String {
+        assert!(!todo.is_private || tx_context::sender(ctx) == todo.owner, E_NOT_OWNER);
+        todo.description
+    }
+
+    /// Returns the metadata of the todo NFT (only if public or called by owner)
+    public fun get_metadata(todo: &TodoNFT, ctx: &TxContext): String {
+        assert!(!todo.is_private || tx_context::sender(ctx) == todo.owner, E_NOT_OWNER);
+        todo.metadata
     }
 }

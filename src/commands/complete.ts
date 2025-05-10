@@ -248,16 +248,38 @@ export default class CompleteCommand extends Command {
           this.log(chalk.green('\u2713 Todo NFT updated on blockchain'));
           this.log(chalk.dim(`Transaction: ${txDigest}`));
           
-          // Verify NFT update
+          // Verify NFT update with proper error handling
           await withRetry(async () => {
-            const result = await suiClient!.getObject({
-              id: todo.nftObjectId!,
-              options: { showContent: true }
-            });
-            
-            const content = result.data?.content as { fields?: { completed?: boolean } };
-            if (!content?.fields?.completed) {
-              throw new Error('NFT update verification failed');
+            try {
+              // Add timeout for verification to prevent hanging
+              let timeoutId: NodeJS.Timeout;
+              const verificationPromise = suiClient!.getObject({
+                id: todo.nftObjectId!,
+                options: { showContent: true }
+              });
+
+              const timeoutPromise = new Promise<never>((_, reject) => {
+                timeoutId = setTimeout(() => {
+                  reject(new Error('NFT verification timed out after 10 seconds'));
+                }, 10000);
+              });
+
+              const result = await Promise.race([verificationPromise, timeoutPromise]);
+              clearTimeout(timeoutId);
+
+              const content = result.data?.content as { fields?: { completed?: boolean } };
+              if (!content?.fields?.completed) {
+                throw new Error('NFT update verification failed: completed flag not set');
+              }
+            } catch (verifyError) {
+              const error = verifyError instanceof Error
+                ? verifyError
+                : new Error(String(verifyError));
+
+              throw new Error(
+                `NFT verification error: ${error.message}`,
+                { cause: error }
+              );
             }
           }, 3, 2000);
         } catch (blockchainError) {
@@ -274,9 +296,12 @@ export default class CompleteCommand extends Command {
             this.log(chalk.blue('Connecting to Walrus storage...'));
             await this.walrusStorage.connect();
 
-            // Add timeout for Walrus operations
-            const timeout = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Walrus operation timed out')), 30000);
+            // Add proper timeout handling for Walrus operations with cleanup
+            let timeoutId: NodeJS.Timeout;
+            const timeout = new Promise<never>((_, reject) => {
+              timeoutId = setTimeout(() => {
+                reject(new Error('Walrus operation timed out after 30 seconds'));
+              }, 30000);
             });
 
             // Update todo on Walrus with retries
@@ -294,10 +319,18 @@ export default class CompleteCommand extends Command {
 
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
               try {
-                const newBlobId = await Promise.race([
-                  this.walrusStorage.updateTodo(updatedTodo, todo.walrusBlobId),
-                  timeout
-                ]) as string | undefined;
+                // Use Promise.race with proper cleanup in both success and error cases
+                let newBlobId: string | undefined;
+                try {
+                  newBlobId = await Promise.race([
+                    this.walrusStorage.updateTodo(updatedTodo, todo.walrusBlobId),
+                    timeout
+                  ]) as string | undefined;
+                  clearTimeout(timeoutId); // Clear timeout on success
+                } catch (raceError) {
+                  clearTimeout(timeoutId); // Always clear timeout
+                  throw raceError; // Re-throw for outer catch to handle
+                }
 
                 if (typeof newBlobId === 'string') {
                   // Update local todo with new blob ID

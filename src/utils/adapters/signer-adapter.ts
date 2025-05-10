@@ -1,288 +1,554 @@
-import { 
-  IntentScope, 
-  Signer
+/**
+ * Signer Adapter Implementation
+ *
+ * This module provides a concrete implementation of the SignerAdapter
+ * interface for the @mysten/sui.js library. It handles the complexities of
+ * working with different Sui SDK versions in a type-safe manner.
+ *
+ * Key features:
+ * - Strong type-checking with custom type guards
+ * - Consistent error handling with specific error types
+ * - Protection against API changes in underlying libraries
+ * - Robust fallback mechanisms for version compatibility
+ * - Proper detection of SDK versions for optimized method selection
+ * - Resource management with proper cleanup
+ */
+
+import {
+  IntentScope,
+  Signer,
+  PublicKey
 } from '@mysten/sui.js/cryptography';
-// Import our own SignatureWithBytes to avoid conflicts with library types
-import type { SignatureWithBytes } from '../../types/adapters/SignerAdapter';
+// Import from the type definition file
+import {
+  SignatureWithBytes,
+  hasSignTransactionBlock,
+  hasSignTransaction,
+  hasGetPublicKey,
+  hasSignAndExecuteTransactionBlock,
+  hasSignData,
+  hasSignPersonalMessage,
+  hasConnect,
+  SignerAdapterError,
+  isValidSigner,
+  detectSDKVersion,
+  normalizeSignature,
+  stringToBytes,
+  isSignerAdapter,
+  SuiSDKVersion
+} from '../../types/adapters/SignerAdapter';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { 
-  SuiClient, 
-  SuiTransactionBlockResponse, 
-  SuiTransactionBlockResponseOptions 
+import {
+  SuiClient,
+  SuiTransactionBlockResponse,
+  SuiTransactionBlockResponseOptions
 } from '@mysten/sui.js/client';
-import { TransactionBlockAdapter, createTransactionBlockAdapter } from './transaction-adapter';
 import { TransactionType } from '../../types/transaction';
+import {
+  isTransactionBlockSui
+} from '../../types/adapters/TransactionBlockAdapter';
+import { BaseAdapter } from '../../types/adapters/BaseAdapter';
+import { SignerAdapter } from '../../types/adapters/SignerAdapter';
 
 /**
- * Adapter interface that defines the required methods for a signer
- * This ensures compatibility across different underlying implementations
+ * Extract the actual TransactionBlock from different possible input types
  */
-export interface SignerAdapter {
-  // Core Signer methods
-  signData(data: Uint8Array): Promise<Uint8Array | SignatureWithBytes>;
-  signTransaction(transaction: TransactionType): Promise<SignatureWithBytes>;
-  signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes>;
-  signWithIntent(message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes>;
-  getKeyScheme(): 'ED25519' | 'Secp256k1' | 'Secp256r1' | 'MultiSig' | 'ZkLogin' | 'Passkey';
-  toSuiAddress(): string;
-  
-  // Extended methods for convenience
-  connect(client: SuiClient): SignerAdapter;
-  signAndExecuteTransactionBlock(
-    tx: TransactionType,
-    options?: SuiTransactionBlockResponseOptions
-  ): Promise<SuiTransactionBlockResponse>;
-  
-  // Access to the underlying signer
-  getUnderlyingSigner(): Signer;
+function extractTransactionBlock(tx: TransactionType): TransactionBlock {
+  if (isTransactionBlockSui(tx)) {
+    return tx;
+  } else if (tx && typeof tx === 'object' && 'getUnderlyingImplementation' in tx &&
+            typeof (tx as any).getUnderlyingImplementation === 'function') {
+    try {
+      const block = (tx as any).getUnderlyingImplementation();
+      if (isTransactionBlockSui(block)) {
+        return block;
+      }
+    } catch (error) {
+      throw new SignerAdapterError(
+        `Failed to extract a valid TransactionBlock from adapter: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+  throw new SignerAdapterError(`Unsupported transaction type: ${typeof tx}`);
 }
 
 /**
  * Implementation of the SignerAdapter that wraps a real Signer
- * This handles any necessary conversions between interfaces
  */
 export class SignerAdapterImpl implements SignerAdapter {
   private signer: Signer;
   private suiClient: SuiClient | null = null;
+  private sdkVersion: SuiSDKVersion;
+  private _isDisposed = false;
 
   constructor(signer: Signer) {
+    if (!isValidSigner(signer)) {
+      throw new SignerAdapterError('Invalid signer provided to SignerAdapter');
+    }
     this.signer = signer;
+    this.sdkVersion = detectSDKVersion(signer);
   }
 
-  getUnderlyingSigner(): Signer {
+  /**
+   * Gets the detected SDK version
+   * @throws SignerAdapterError if the adapter has been disposed
+   */
+  getSDKVersion(): SuiSDKVersion {
+    this.checkDisposed();
+    return this.sdkVersion;
+  }
+
+  /**
+   * Returns the underlying signer implementation
+   * @throws SignerAdapterError if the adapter has been disposed
+   */
+  getUnderlyingImplementation(): Signer {
+    this.checkDisposed();
     return this.signer;
   }
-
-  async signData(data: Uint8Array): Promise<Uint8Array | SignatureWithBytes> {
-    // Handle the case where signData might return different types in different versions
-    try {
-      const result = await this.signer.signData(data);
-      // Return the result as-is if it's a Uint8Array (most common case)
-      if (result instanceof Uint8Array) {
-        return result;
-      }
-      // Otherwise convert it to our SignatureWithBytes type
-      return this.normalizeSignature(result);
-    } catch (err) {
-      // If signData isn't available or fails, try to use signTransactionBlock
-      if ('signTransactionBlock' in this.signer) {
-        const result = await this.signer.signTransactionBlock(data);
-        return this.normalizeSignature(result);
-      }
-      throw err;
-    }
+  
+  /**
+   * Alias for getUnderlyingImplementation to maintain backward compatibility
+   * @deprecated Use getUnderlyingImplementation() instead
+   */
+  getUnderlyingSigner(): Signer {
+    return this.getUnderlyingImplementation();
+  }
+  
+  /**
+   * Checks if the adapter has been disposed
+   * @returns true if the adapter has been disposed
+   */
+  isDisposed(): boolean {
+    return this._isDisposed;
   }
 
-  async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
+  /**
+   * Disposes the adapter, releasing any resources
+   * This method is idempotent and can be called multiple times
+   */
+  async dispose(): Promise<void> {
+    if (this._isDisposed) return;
+    
     try {
-      // Handle either direct TransactionBlock or our adapter
-      let txBlock;
-      if (transaction instanceof TransactionBlock) {
-        txBlock = transaction;
-      } else if (typeof transaction === 'object' && transaction !== null) {
-        if ('getUnderlyingBlock' in transaction && typeof transaction.getUnderlyingBlock === 'function') {
-          txBlock = transaction.getUnderlyingBlock();
-        } else {
-          txBlock = transaction;
+      // Release any connections or clean up resources
+      this.suiClient = null;
+      
+      // Any signer-specific cleanup
+      if (typeof (this.signer as any).disconnect === 'function') {
+        try {
+          await (this.signer as any).disconnect();
+        } catch (error) {
+          console.warn('Error during signer disconnect:', error);
         }
-      } else {
-        txBlock = transaction;
       }
       
-      // Try to use signTransaction if it exists
-      if ('signTransaction' in this.signer && typeof this.signer.signTransaction === 'function') {
-        const result = await this.signer.signTransaction(txBlock);
-        // Convert the library SignatureWithBytes to our own interface
-        return this.normalizeSignature(result);
-      } 
-      // Fall back to signTransactionBlock
-      else if ('signTransactionBlock' in this.signer) {
-        const bytes = await txBlock.build();
-        const result = await this.signer.signTransactionBlock(bytes);
-        // Convert the library SignatureWithBytes to our own interface
-        return this.normalizeSignature(result);
+      this._isDisposed = true;
+    } catch (error) {
+      throw new SignerAdapterError(
+        `Failed to dispose SignerAdapter: ${error instanceof Error ? error.message : String(error)}`, 
+        error instanceof Error ? error : undefined
+      );
+    }
+  }
+
+  /**
+   * Utility method to check if the adapter is disposed and throw if it is
+   * @throws SignerAdapterError if the adapter has been disposed
+   */
+  private checkDisposed(): void {
+    if (this._isDisposed) {
+      throw new SignerAdapterError('Cannot perform operations on a disposed adapter');
+    }
+  }
+
+  /**
+   * Signs data with the appropriate method based on the detected SDK version
+   * @throws SignerAdapterError if the adapter has been disposed or signing fails
+   */
+  async signData(data: Uint8Array): Promise<Uint8Array> {
+    this.checkDisposed();
+    
+    if (hasSignData(this.signer)) {
+      try {
+        const result = await this.signer.signData(data);
+        
+        // Handle different return types based on SDK version
+        if (result instanceof Uint8Array) {
+          return result;
+        }
+        
+        // If it returned an object with signature information, extract the signature
+        const normalized = normalizeSignature(result);
+        return normalized.signature;
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        
+        // Try alternative signing methods as fallback
+        if (hasSignTransactionBlock(this.signer)) {
+          console.warn('Falling back to signTransactionBlock for data signing');
+          try {
+            const result = await this.signer.signTransactionBlock(data);
+            return normalizeSignature(result).signature;
+          } catch (fallbackErr) {
+            throw new SignerAdapterError(
+              `Fallback signing also failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
+              fallbackErr instanceof Error ? fallbackErr : undefined
+            );
+          }
+        }
+        
+        throw new SignerAdapterError(`Failed to sign data: ${error.message}`, error);
+      }
+    } else if (hasSignPersonalMessage(this.signer)) {
+      // Fallback to signPersonalMessage if signData is not available
+      console.warn('signData not available, falling back to signPersonalMessage');
+      try {
+        const result = await this.signer.signPersonalMessage(data);
+        return normalizeSignature(result).signature;
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        throw new SignerAdapterError(`Failed to sign data using fallback method: ${error.message}`, error);
+      }
+    }
+    
+    throw new SignerAdapterError('signData method not available on this signer implementation');
+  }
+
+  /**
+   * Signs a transaction with the appropriate method based on the detected SDK version
+   * @throws SignerAdapterError if the adapter has been disposed or signing fails
+   */
+  async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
+    this.checkDisposed();
+
+    try {
+      // First extract the actual transaction block
+      let txBlock: TransactionBlock;
+
+      try {
+        txBlock = extractTransactionBlock(transaction);
+      } catch (err) {
+        throw new SignerAdapterError(
+          `Failed to extract transaction block: ${err instanceof Error ? err.message : String(err)}`,
+          err instanceof Error ? err : undefined
+        );
+      }
+
+      // Use the appropriate signing method based on SDK version
+      if (hasSignTransaction(this.signer)) {
+        try {
+          // Use conditional type checking to handle different versions safely
+          if (this.sdkVersion === SuiSDKVersion.VERSION_1) {
+            // In version 1, the API might be different
+            // Use explicit 'any' type casting for legacy code
+            const signFn = (this.signer as any).signTransaction;
+            const result = await signFn(txBlock);
+            return normalizeSignature(result);
+          } else {
+            // For version 2+ with a standardized API, use explicit type assertions
+            const signFn = this.signer.signTransaction as unknown as
+              (txBlock: TransactionBlock) => Promise<{ signature: Uint8Array; bytes?: Uint8Array }>;
+            const result = await signFn(txBlock);
+            return normalizeSignature(result);
+          }
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          throw new SignerAdapterError(`Failed to sign transaction: ${error.message}`, error);
+        }
+      } else if (hasSignTransactionBlock(this.signer)) {
+        // Try to build the transaction block and sign the bytes
+        try {
+          const bytes = await txBlock.build();
+          // Call the function directly without type assertion
+          const result = await this.signer.signTransactionBlock(bytes);
+          return normalizeSignature(result);
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          throw new SignerAdapterError(`Failed to sign transaction block: ${error.message}`, error);
+        }
       } else {
-        throw new Error('No suitable signature method available');
+        throw new SignerAdapterError('No suitable transaction signing method available');
       }
     } catch (err) {
-      // Handle errors gracefully
-      console.error('Error in signTransaction:', err);
-      throw new Error(`Failed to sign transaction: ${err.message}`);
+      if (err instanceof SignerAdapterError) {
+        throw err;
+      }
+      throw new SignerAdapterError(
+        `Error in signTransaction: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err : undefined
+      );
     }
   }
 
+  /**
+   * Signs a personal message
+   * @throws SignerAdapterError if the adapter has been disposed or signing fails
+   */
   async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
-    const result = await this.signer.signPersonalMessage(message);
-    return this.normalizeSignature(result);
+    this.checkDisposed();
+    
+    if (!hasSignPersonalMessage(this.signer)) {
+      throw new SignerAdapterError('signPersonalMessage not available on this signer implementation');
+    }
+    
+    try {
+      const result = await this.signer.signPersonalMessage(message);
+      return normalizeSignature(result);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      throw new SignerAdapterError(`Failed to sign personal message: ${error.message}`, error);
+    }
   }
   
   /**
-   * Normalizes a signature to the adapter's SignatureWithBytes type
-   * Always returns an object with signature and bytes as Uint8Array
+   * Signs a message with intent scope
+   * @throws SignerAdapterError if the adapter has been disposed or signing fails
    */
-  private normalizeSignature(sig: any): SignatureWithBytes {
-    if (!sig) {
-      return {
-        signature: new Uint8Array([1, 2, 3]),
-        bytes: new Uint8Array([4, 5, 6])
-      };
-    }
-    
-    // Handle the case where sig is a string or Uint8Array directly
-    if (typeof sig === 'string') {
-      return {
-        signature: this.stringToBytes(sig),
-        bytes: new Uint8Array([4, 5, 6]) // Default bytes when only signature string is provided
-      };
-    }
-    
-    if (sig instanceof Uint8Array) {
-      return {
-        signature: sig,
-        bytes: new Uint8Array([4, 5, 6]) // Default bytes when only signature Uint8Array is provided
-      };
-    }
-    
-    // Handle the object case with signature and bytes properties
-    // Ensure signature is a Uint8Array
-    let signature: Uint8Array;
-    if (sig.signature instanceof Uint8Array) {
-      signature = sig.signature;
-    } else if (typeof sig.signature === 'string') {
-      signature = this.stringToBytes(sig.signature);
-    } else {
-      signature = new Uint8Array([1, 2, 3]);
-    }
-    
-    // Ensure bytes is a Uint8Array
-    let bytes: Uint8Array;
-    if (sig.bytes instanceof Uint8Array) {
-      bytes = sig.bytes;
-    } else if (typeof sig.bytes === 'string') {
-      bytes = this.stringToBytes(sig.bytes);
-    } else {
-      bytes = new Uint8Array([4, 5, 6]);
-    }
-    
-    return {
-      signature,
-      bytes
-    };
-  }
-  
-  /**
-   * Converts a string to Uint8Array
-   */
-  private stringToBytes(str: string): Uint8Array {
-    const encoder = new TextEncoder();
-    return encoder.encode(str);
-  }
-
   async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
-    // Handle possible type differences between implementations
+    this.checkDisposed();
+    
+    if (!this.signer || typeof this.signer.signWithIntent !== 'function') {
+      throw new SignerAdapterError('signWithIntent not available on this signer implementation');
+    }
+    
     try {
       const result = await this.signer.signWithIntent(message, intent);
-      return this.normalizeSignature(result);
+      return normalizeSignature(result);
     } catch (err) {
-      console.error('Error signing with intent:', err);
-      
-      // Fallback to simple signature if signWithIntent fails
-      try {
-        if ('signPersonalMessage' in this.signer) {
+      // Try fallback to personal message signing
+      if (hasSignPersonalMessage(this.signer)) {
+        console.warn('Falling back to signPersonalMessage due to error:', err);
+        try {
           const result = await this.signer.signPersonalMessage(message);
-          return this.normalizeSignature(result);
+          return normalizeSignature(result);
+        } catch (fallbackErr) {
+          const error = fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr));
+          throw new SignerAdapterError(`Both signing methods failed: ${error.message}`, error);
         }
-      } catch (innerErr) {
-        console.error('Fallback signing also failed:', innerErr);
       }
       
-      // Return a mock signature as last resort
-      return {
-        signature: new Uint8Array([1, 2, 3]),
-        bytes: new Uint8Array([4, 5, 6])
-      };
+      const error = err instanceof Error ? err : new Error(String(err));
+      throw new SignerAdapterError(`Failed to sign with intent: ${error.message}`, error);
     }
   }
 
+  /**
+   * Gets the key scheme used by the signer
+   * @throws SignerAdapterError if the adapter has been disposed or the operation fails
+   */
   getKeyScheme(): 'ED25519' | 'Secp256k1' | 'Secp256r1' | 'MultiSig' | 'ZkLogin' | 'Passkey' {
-    return this.signer.getKeyScheme();
-  }
-
-  toSuiAddress(): string {
-    return this.signer.toSuiAddress();
-  }
-
-  connect(client: SuiClient): SignerAdapter {
-    this.suiClient = client;
-    // If the underlying signer has a connect method, call it
-    if ('connect' in this.signer && typeof (this.signer as any).connect === 'function') {
-      (this.signer as any).connect(client);
+    this.checkDisposed();
+    
+    if (!this.signer || typeof this.signer.getKeyScheme !== 'function') {
+      throw new SignerAdapterError('getKeyScheme not available on this signer implementation');
     }
+    
+    try {
+      return this.signer.getKeyScheme();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      throw new SignerAdapterError(`Failed to get key scheme: ${error.message}`, error);
+    }
+  }
+
+  /**
+   * Gets the Sui address associated with this signer
+   * @throws SignerAdapterError if the adapter has been disposed or the operation fails
+   */
+  toSuiAddress(): string {
+    this.checkDisposed();
+    
+    if (!this.signer || typeof this.signer.toSuiAddress !== 'function') {
+      throw new SignerAdapterError('toSuiAddress not available on this signer implementation');
+    }
+    
+    try {
+      return this.signer.toSuiAddress();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      throw new SignerAdapterError(`Failed to get Sui address: ${error.message}`, error);
+    }
+  }
+
+  /**
+   * Gets the public key if available
+   * @throws SignerAdapterError if the adapter has been disposed or the operation fails
+   */
+  getPublicKey(): PublicKey {
+    this.checkDisposed();
+    
+    if (hasGetPublicKey(this.signer)) {
+      try {
+        return this.signer.getPublicKey();
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        throw new SignerAdapterError(`Failed to get public key: ${error.message}`, error);
+      }
+    }
+    
+    // Fallback for signers without getPublicKey method
+    // This can happen in some SDK versions where the public key isn't directly accessible
+    throw new SignerAdapterError('getPublicKey not available on this signer implementation');
+  }
+
+  /**
+   * Connects the signer to a SuiClient for transaction execution
+   * @throws SignerAdapterError if the adapter has been disposed or the operation fails
+   */
+  connect(client: SuiClient): SignerAdapter {
+    this.checkDisposed();
+
+    if (!client) {
+      throw new SignerAdapterError('Invalid SuiClient provided to connect method');
+    }
+
+    this.suiClient = client;
+
+    // If the underlying signer has a connect method, call it
+    if (hasConnect(this.signer)) {
+      try {
+        this.signer.connect(client);
+      } catch (err) {
+        console.warn('Failed to connect underlying signer, but continuing:', err);
+      }
+    }
+
     return this;
   }
 
+  /**
+   * Get the Sui client associated with this signer
+   * @returns The SuiClient instance
+   * @throws SignerAdapterError if the adapter has been disposed
+   */
+  getClient(): SuiClient {
+    this.checkDisposed();
+
+    if (!this.suiClient) {
+      throw new SignerAdapterError('No SuiClient available - call connect() first');
+    }
+
+    return this.suiClient;
+  }
+
+  /**
+   * Get the address of this signer
+   * @returns A promise that resolves to the address as a string
+   * @throws SignerAdapterError if the adapter has been disposed
+   */
+  async getAddress(): Promise<string> {
+    this.checkDisposed();
+    return this.toSuiAddress();
+  }
+
+  /**
+   * Signs and executes a transaction using the appropriate method based on SDK version
+   * @throws SignerAdapterError if the adapter has been disposed or the operation fails
+   */
   async signAndExecuteTransactionBlock(
     tx: TransactionType,
     options?: SuiTransactionBlockResponseOptions
   ): Promise<SuiTransactionBlockResponse> {
+    this.checkDisposed();
+
     if (!this.suiClient) {
-      throw new Error('Signer is not connected to a SuiClient. Call connect() first.');
+      throw new SignerAdapterError('Signer is not connected to a SuiClient. Call connect() first.');
     }
 
     try {
-      // Handle either direct TransactionBlock or our adapter
-      let txBlock;
-      if (tx instanceof TransactionBlock) {
-        txBlock = tx;
-      } else if (typeof tx === 'object' && tx !== null) {
-        if ('getUnderlyingBlock' in tx && typeof tx.getUnderlyingBlock === 'function') {
-          txBlock = tx.getUnderlyingBlock();
+      // Extract the transaction block
+      let txBlock: TransactionBlock;
+
+      try {
+        txBlock = extractTransactionBlock(tx);
+      } catch (err) {
+        throw new SignerAdapterError(
+          `Failed to extract transaction block: ${err instanceof Error ? err.message : String(err)}`,
+          err instanceof Error ? err : undefined
+        );
+      }
+
+      // If the native method is available, use it directly
+      if (hasSignAndExecuteTransactionBlock(this.signer)) {
+        try {
+          // Handle different API versions safely
+          if (this.sdkVersion === SuiSDKVersion.VERSION_3) {
+            // Modern version with standard API
+            // Use explicit cast to the expected function signature
+            const signAndExecuteFn = this.signer.signAndExecuteTransactionBlock as unknown as
+              (txBlock: TransactionBlock, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse>;
+            return await signAndExecuteFn(txBlock, options);
+          } else {
+            // Older versions with different parameter types
+            return await (this.signer as any).signAndExecuteTransactionBlock(txBlock, options);
+          }
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          throw new SignerAdapterError(`Native signAndExecuteTransactionBlock failed: ${error.message}`, error);
+        }
+      }
+
+      // Otherwise implement it manually using available methods and SuiClient
+      try {
+        const bytes = await txBlock.build();
+
+        // Sign the transaction using the appropriate method
+        let signature: SignatureWithBytes;
+
+        if (hasSignTransaction(this.signer)) {
+          // Call the function directly without type assertion
+          const sigResult = await this.signer.signTransaction(txBlock);
+          signature = normalizeSignature(sigResult);
+        } else if (hasSignTransactionBlock(this.signer)) {
+          // Call the function directly without type assertion
+          const sigResult = await this.signer.signTransactionBlock(bytes);
+          signature = normalizeSignature(sigResult);
         } else {
-          txBlock = tx;
+          throw new SignerAdapterError('No suitable signature method available');
         }
-      } else {
-        txBlock = tx;
+
+        // Execute the transaction using the SuiClient
+        return await this.suiClient.executeTransactionBlock({
+          transactionBlock: bytes,
+          signature: Buffer.from(signature.signature).toString('base64'),
+          options: options || {
+            showEffects: true
+          }
+        });
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        throw new SignerAdapterError(`Manual sign and execute implementation failed: ${error.message}`, error);
       }
-      
-      // If the underlying signer has signAndExecuteTransactionBlock, use it directly
-      if ('signAndExecuteTransactionBlock' in this.signer && 
-          typeof (this.signer as any).signAndExecuteTransactionBlock === 'function') {
-        return (this.signer as any).signAndExecuteTransactionBlock(txBlock, options);
-      }
-      
-      // Otherwise, implement it with the available methods
-      const bytes = await txBlock.build();
-      let signature: SignatureWithBytes;
-      
-      // Try different signing methods based on what's available
-      if ('signTransaction' in this.signer && typeof this.signer.signTransaction === 'function') {
-        const sigResult = await this.signer.signTransaction(txBlock);
-        signature = this.normalizeSignature(sigResult);
-      } else if ('signTransactionBlock' in this.signer) {
-        const sigResult = await this.signer.signTransactionBlock(bytes);
-        signature = this.normalizeSignature(sigResult);
-      } else {
-        throw new Error('No suitable signature method available');
-      }
-      
-      // Execute the transaction
-      return this.suiClient.executeTransactionBlock({
-        transactionBlock: bytes,
-        signature: [Buffer.from(signature.signature).toString('base64')],
-        options: options || {
-          showEffects: true
-        }
-      });
     } catch (err) {
-      console.error('Error in signAndExecuteTransactionBlock:', err);
-      throw new Error(`Failed to sign and execute transaction: ${err.message}`);
+      if (err instanceof SignerAdapterError) {
+        throw err;
+      }
+      throw new SignerAdapterError(
+        `Error in signAndExecuteTransactionBlock: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err : undefined
+      );
     }
+  }
+  
+  /**
+   * Type guard to check if an object is a SignerAdapterImpl
+   * @param obj Object to check
+   * @returns true if the object is a SignerAdapterImpl
+   */
+  static isSignerAdapter(obj: unknown): obj is SignerAdapterImpl {
+    return isSignerAdapter(obj) && obj instanceof SignerAdapterImpl;
   }
 }
 
 /**
  * Factory function to create a SignerAdapter from an existing Signer
+ * @throws SignerAdapterError if the provided signer is invalid
  */
 export function createSignerAdapter(signer: Signer): SignerAdapter {
+  if (!isValidSigner(signer)) {
+    throw new SignerAdapterError('Invalid signer provided to createSignerAdapter()');
+  }
   return new SignerAdapterImpl(signer);
 }

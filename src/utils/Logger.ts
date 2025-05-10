@@ -1,4 +1,4 @@
-import { WalrusError } from '../types/errors';
+import { WalrusError } from '../types/error';
 
 export enum LogLevel {
   DEBUG = 'debug',
@@ -26,13 +26,17 @@ interface ErrorLogInfo {
 export class Logger {
   private static instance: Logger;
   private logHandlers: ((entry: LogEntry) => void)[] = [];
+  private componentName: string = '';
 
-  private constructor() {
+  // Constructor access set to public to fix TypeScript errors in existing code
+  public constructor(componentName: string = '') {
     // Add default console handler
+    this.componentName = componentName;
     this.addHandler((entry) => {
       const context = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
       const error = entry.error ? `\n${JSON.stringify(entry.error, null, 2)}` : '';
-      console[entry.level](`[${entry.timestamp}] ${entry.message}${context}${error}`);
+      const component = this.componentName ? `[${this.componentName}] ` : '';
+      console[entry.level](`[${entry.timestamp}] ${component}${entry.message}${context}${error}`);
     });
   }
 
@@ -79,16 +83,12 @@ export class Logger {
     };
 
     if (error) {
-      if (error instanceof WalrusError) {
-        entry.error = error.toLogEntry();
-      } else {
-        entry.error = {
-          name: error.name,
-          code: 'UNKNOWN_ERROR',
-          message: error.message,
-          stack: error.stack
-        };
-      }
+      entry.error = {
+        name: error.name,
+        code: error instanceof WalrusError ? error.code : 'UNKNOWN_ERROR',
+        message: error.message,
+        stack: error.stack
+      };
     }
 
     this.logHandlers.forEach(handler => handler(entry));

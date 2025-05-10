@@ -2,3 +2,4 @@
 export * from './transaction-adapter';
 export * from './signer-adapter';
 export * from './walrus-client-adapter';
+export * from './ai-provider-adapter';

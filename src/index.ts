@@ -2,10 +2,10 @@
 
 import { Command, Flags } from '@oclif/core';
 import * as Commands from './commands';
-import dotenv from 'dotenv';
+import { initializeConfig } from './utils/config-loader';
 
-// Load environment variables from .env file
-dotenv.config();
+// Initialize environment configuration
+initializeConfig();
 
 // Configure environment for AI operations
 process.env.FORCE_COLOR = '1';

@@ -1,11 +1,13 @@
 import { SuiClient } from '@mysten/sui.js/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError } from '../types/error';
-import { StorageError, ValidationError, BlockchainError } from '../types/errors';
+import { StorageError, BlockchainError } from '../types/errors';
+import { ValidationError } from '../types/errors/ValidationError';
 import { execSync } from 'child_process';
 import { handleError } from './error-handler';
 import { WalrusClientAdapter } from './adapters/walrus-client-adapter';
 import { Logger } from './Logger';
+import { WalrusClientExt } from '../types/client';
 
 interface MoveStruct {
   [key: string]: any;
@@ -50,7 +52,7 @@ export class StorageManager {
 
   constructor(
     private suiClient: SuiClient,
-    private walrusClient: WalrusClient | WalrusClientAdapter,
+    private walrusClient: WalrusClient | WalrusClientAdapter | WalrusClientExt,
     private address: string,
     private config?: {
       minAllocation?: bigint;

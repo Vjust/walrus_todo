@@ -2,10 +2,15 @@ import { Command, Flags } from '@oclif/core';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
+import {
+  publishSuiPackage,
+  getActiveSuiAddress,
+  safeExecFileSync
+} from '../utils/command-executor';
+import { validatePath } from '../utils/path-validator';
 
 interface NetworkInfo {
   [key: string]: string;
@@ -74,9 +79,9 @@ export default class DeployCommand extends Command {
     const { network, address, 'gas-budget': gasBudget } = flags;
 
     try {
-      // Check if sui client is installed
+      // Check if sui client is installed using the safe command executor
       try {
-        execSync('sui --version', { stdio: 'ignore' });
+        safeExecFileSync('sui', ['--version'], { stdio: 'ignore' });
       } catch (error) {
         throw new CLIError(
           'Sui CLI not found. Please install it first: cargo install --locked --git https://github.com/MystenLabs/sui.git sui',
@@ -90,14 +95,20 @@ export default class DeployCommand extends Command {
         try {
           deployAddress = (await configService.getConfig()).walletAddress;
           if (!deployAddress) {
-            // Try to get it from Sui CLI
-            const activeAddressOutput = execSync('sui client active-address', { encoding: 'utf8' }).trim();
-            if (activeAddressOutput && activeAddressOutput.startsWith('0x')) {
-              deployAddress = activeAddressOutput;
-              // Save it to config for future use
-              await configService.saveConfig({
-                walletAddress: deployAddress,
-              });
+            // Try to get it from Sui CLI using the safe command executor
+            try {
+              const activeAddressOutput = getActiveSuiAddress();
+              if (activeAddressOutput && activeAddressOutput.startsWith('0x')) {
+                deployAddress = activeAddressOutput;
+                // Save it to config for future use
+                await configService.saveConfig({
+                  walletAddress: deployAddress,
+                });
+              }
+            } catch (activeAddressError) {
+              // Use console.log for debug output since this class does not extend BaseCommand
+              console.log(`Failed to get active address: ${activeAddressError}`);
+              // Continue to the check below
             }
           }
         } catch (error) {
@@ -152,11 +163,18 @@ export default class DeployCommand extends Command {
       this.log(chalk.blue('\nPublishing package to the Sui blockchain...'));
       
       try {
-        // Publish package using Sui CLI
-        const publishCommand = `sui client publish --skip-dependency-verification --gas-budget ${gasBudget} --json ${tempDir}`;
-        this.log(chalk.dim(`Executing: ${publishCommand}`));
-        
-        const publishOutput = execSync(publishCommand, { encoding: 'utf8' });
+        // Validate the gas budget to prevent command injection
+        if (!/^[0-9]+$/.test(gasBudget)) {
+          throw new CLIError('Gas budget must be a positive number', 'VALIDATION_ERROR');
+        }
+
+        // Use the safe command execution utility to publish the package
+        this.log(chalk.dim(`Publishing package with gas budget ${gasBudget}...`));
+
+        const publishOutput = publishSuiPackage(tempDir, gasBudget, {
+          skipDependencyVerification: true,
+          json: true
+        });
         let publishResult;
         
         try {

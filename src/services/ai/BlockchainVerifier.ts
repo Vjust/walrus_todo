@@ -1,0 +1,241 @@
+import { SuiClient } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SignerAdapter } from '../../types/adapters/SignerAdapter';
+import { WalrusClientAdapter } from '../../types/adapters/WalrusClientAdapter';
+import { AIVerifierAdapter, VerificationParams, VerificationRecord } from '../../types/adapters/AIVerifierAdapter';
+import { AICredentialAdapter, CredentialVerificationParams, CredentialVerificationResult } from '../../types/adapters/AICredentialAdapter';
+import { createHash } from 'crypto';
+
+/**
+ * BlockchainVerifier - Service that handles blockchain verification for AI operations
+ * 
+ * This service manages the verification of AI operations and credentials on the
+ * blockchain, providing a tamper-proof record of AI activities and credentials.
+ */
+export class BlockchainVerifier {
+  private verifierAdapter: AIVerifierAdapter;
+  private credentialAdapter?: AICredentialAdapter;
+  private walrusAdapter?: WalrusClientAdapter;
+
+  constructor(
+    verifierAdapter: AIVerifierAdapter,
+    credentialAdapter?: AICredentialAdapter,
+    walrusAdapter?: WalrusClientAdapter
+  ) {
+    this.verifierAdapter = verifierAdapter;
+    this.credentialAdapter = credentialAdapter;
+    this.walrusAdapter = walrusAdapter;
+  }
+
+  /**
+   * Set the credential adapter
+   */
+  public setCredentialAdapter(adapter: AICredentialAdapter): void {
+    this.credentialAdapter = adapter;
+  }
+
+  /**
+   * Set the Walrus adapter for off-chain storage
+   */
+  public setWalrusAdapter(adapter: WalrusClientAdapter): void {
+    this.walrusAdapter = adapter;
+  }
+
+  /**
+   * Verify an AI operation and create a blockchain record
+   */
+  async verifyOperation(params: VerificationParams): Promise<VerificationRecord> {
+    // Calculate request and response hashes for efficient blockchain storage
+    const requestHash = this.hashData(params.request);
+    const responseHash = this.hashData(params.response);
+    
+    // If Walrus adapter is available, store the full request and response off-chain
+    if (this.walrusAdapter && params.privacyLevel !== 'public') {
+      try {
+        // Store request and response in Walrus storage
+        const requestBlob = new TextEncoder().encode(params.request);
+        const responseBlob = new TextEncoder().encode(params.response);
+        
+        // Get signer from verifier adapter
+        const signer = this.verifierAdapter.getSigner();
+        
+        // Store request and response blobs
+        const requestBlobResult = await this.walrusAdapter.writeBlob({
+          blob: requestBlob,
+          signer: signer
+        });
+        
+        const responseBlobResult = await this.walrusAdapter.writeBlob({
+          blob: responseBlob,
+          signer: signer
+        });
+        
+        // Add blob IDs to metadata
+        params.metadata = {
+          ...params.metadata,
+          requestBlobId: requestBlobResult.blobId,
+          responseBlobId: responseBlobResult.blobId,
+          storageType: 'walrus'
+        };
+      } catch (error) {
+        console.warn('Failed to store full data in Walrus:', error);
+        // Continue with only hashes if off-chain storage fails
+      }
+    }
+    
+    // Create verification on the blockchain
+    return this.verifierAdapter.createVerification(params);
+  }
+
+  /**
+   * Verify a credential and create a blockchain record
+   */
+  async verifyCredential(params: CredentialVerificationParams): Promise<CredentialVerificationResult> {
+    if (!this.credentialAdapter) {
+      throw new Error('Credential adapter not configured');
+    }
+    
+    // Verify credential on blockchain
+    return this.credentialAdapter.verifyCredential(params);
+  }
+
+  /**
+   * Verify a verification record against provided data
+   */
+  async verifyRecord(record: VerificationRecord, request: string, response: string): Promise<boolean> {
+    return this.verifierAdapter.verifyRecord(record, request, response);
+  }
+
+  /**
+   * Get a specific verification record
+   */
+  async getVerification(verificationId: string): Promise<VerificationRecord> {
+    return this.verifierAdapter.getVerification(verificationId);
+  }
+
+  /**
+   * List verifications for the current user
+   */
+  async listVerifications(userAddress?: string): Promise<VerificationRecord[]> {
+    return this.verifierAdapter.listVerifications(userAddress);
+  }
+
+  /**
+   * Retrieve the full data for a verification record
+   */
+  async retrieveVerificationData(record: VerificationRecord): Promise<{ request: string; response: string }> {
+    if (!record.metadata || !record.metadata.requestBlobId || !record.metadata.responseBlobId) {
+      throw new Error('Verification does not contain blob IDs for full data retrieval');
+    }
+    
+    if (!this.walrusAdapter) {
+      throw new Error('Walrus adapter not configured');
+    }
+    
+    try {
+      // Retrieve request and response blobs
+      const requestBlobId = record.metadata.requestBlobId;
+      const responseBlobId = record.metadata.responseBlobId;
+      
+      const requestBlob = await this.walrusAdapter.readBlob({ blobId: requestBlobId });
+      const responseBlob = await this.walrusAdapter.readBlob({ blobId: responseBlobId });
+      
+      // Convert Uint8Array to strings
+      const request = new TextDecoder().decode(requestBlob);
+      const response = new TextDecoder().decode(responseBlob);
+      
+      return { request, response };
+    } catch (error) {
+      throw new Error(`Failed to retrieve full data: ${error}`);
+    }
+  }
+
+  /**
+   * Generate a shareable proof of a verification
+   */
+  async generateVerificationProof(verificationId: string): Promise<string> {
+    // Get the verification record
+    const record = await this.verifierAdapter.getVerification(verificationId);
+    
+    // Create a JSON proof object with verification details
+    const proof = {
+      verificationId: record.id,
+      verifierAddress: this.verifierAdapter.getRegistryAddress(),
+      timestamp: record.timestamp,
+      requestHash: record.requestHash,
+      responseHash: record.responseHash,
+      metadata: record.metadata,
+      verificationType: record.verificationType,
+      chainInfo: {
+        network: 'sui',
+        objectId: verificationId,
+        registryId: await this.verifierAdapter.getRegistryAddress()
+      },
+      verificationUrl: `https://explorer.sui.io/objects/${verificationId}`
+    };
+    
+    // Convert the proof to a shareable string
+    return Buffer.from(JSON.stringify(proof)).toString('base64');
+  }
+
+  /**
+   * Retrieve and verify a proof
+   */
+  async verifyProof(proofString: string): Promise<{ isValid: boolean; record?: VerificationRecord }> {
+    try {
+      // Parse the proof
+      const proofJson = Buffer.from(proofString, 'base64').toString('utf8');
+      const proof = JSON.parse(proofJson);
+      
+      // Get the verification record from the blockchain
+      const record = await this.verifierAdapter.getVerification(proof.verificationId);
+      
+      // Check if verification record exists
+      if (!record) {
+        return { isValid: false };
+      }
+      
+      // Validate the proof by comparing hashes and metadata
+      const isValid = record.id === proof.verificationId &&
+                      record.requestHash === proof.requestHash &&
+                      record.responseHash === proof.responseHash &&
+                      record.timestamp === proof.timestamp;
+      
+      return { 
+        isValid, 
+        record: isValid ? record : undefined 
+      };
+    } catch (error) {
+      console.error('Failed to verify proof:', error);
+      return { isValid: false };
+    }
+  }
+
+  /**
+   * Generate a hash of data for blockchain storage
+   */
+  private hashData(data: string): string {
+    return createHash('sha256').update(data).digest('hex');
+  }
+
+  /**
+   * Get the underlying verifier adapter
+   */
+  getVerifierAdapter(): AIVerifierAdapter {
+    return this.verifierAdapter;
+  }
+
+  /**
+   * Get the underlying credential adapter
+   */
+  getCredentialAdapter(): AICredentialAdapter | undefined {
+    return this.credentialAdapter;
+  }
+
+  /**
+   * Get the signer used by the verifier adapter
+   */
+  getSigner(): SignerAdapter {
+    return this.verifierAdapter.getSigner();
+  }
+}
