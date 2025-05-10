@@ -14,6 +14,22 @@ import { getProviderString, getProviderEnum } from '../../utils/adapters';
 
 export class AIProviderFactory {
   private static readonly logger = Logger.getInstance();
+  private static isAIFeatureRequested = false;
+
+  /**
+   * Set the AI feature request flag
+   * This should be called when AI features are explicitly requested
+   */
+  public static setAIFeatureRequested(value: boolean = true): void {
+    this.isAIFeatureRequested = value;
+  }
+
+  /**
+   * Check if AI features were requested
+   */
+  public static isAIRequested(): boolean {
+    return this.isAIFeatureRequested;
+  }
 
   /**
    * Create a default adapter for initial setup
@@ -85,7 +101,12 @@ export class AIProviderFactory {
       const hasCredential = await credService.hasCredential(providerString as unknown as AIProviderEnum);
 
       if (!hasCredential) {
-        this.logger.warn(`No credentials found for ${providerString}. Using fallback provider.`);
+        // Only log warnings if AI features were explicitly requested
+        if (this.isAIFeatureRequested) {
+          this.logger.warn(`No credentials found for ${providerString}. Using fallback provider.`);
+        } else {
+          this.logger.debug(`No credentials found for ${providerString}.`);
+        }
         return this.createFallbackProvider(options);
       }
 
@@ -208,15 +229,26 @@ export class AIProviderFactory {
           // Add other provider adapters as needed
         }
       } catch (error) {
-        this.logger.warn(`Failed to use fallback provider ${fallbackProvider}: ${error.message}`);
+        // Only log debug messages if we actually requested AI features
+        if (this.isAIFeatureRequested) {
+          this.logger.debug(`Failed to use fallback provider ${fallbackProvider}: ${error.message}`);
+        }
         // Continue to next fallback
       }
     }
 
-    // If all fallbacks fail, throw an informative error
-    throw new Error(
-      'No valid AI provider credentials found. Please add API credentials using: ' +
-      'walrus_todo ai credentials add <provider> --key YOUR_API_KEY'
-    );
+    // Only log a warning if AI features were explicitly requested
+    if (this.isAIFeatureRequested) {
+      this.logger.warn(
+        'No valid AI provider credentials found. AI features will be limited. ' +
+        'Add API credentials using: walrus_todo ai credentials add <provider> --key YOUR_API_KEY'
+      );
+    } else {
+      // Otherwise, just log at debug level
+      this.logger.debug(
+        'No valid AI provider credentials found. AI features not available.'
+      );
+    }
+    return this.createFallbackAdapter();
   }
 }

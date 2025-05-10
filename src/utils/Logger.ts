@@ -33,6 +33,11 @@ export class Logger {
     // Add default console handler
     this.componentName = componentName;
     this.addHandler((entry) => {
+      // Skip debug messages unless NODE_ENV is development
+      if (entry.level === LogLevel.DEBUG && process.env.NODE_ENV !== 'development') {
+        return;
+      }
+
       const context = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
       const error = entry.error ? `\n${JSON.stringify(entry.error, null, 2)}` : '';
       const component = this.componentName ? `[${this.componentName}] ` : '';

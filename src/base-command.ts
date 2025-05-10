@@ -8,6 +8,100 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { ux } from '@oclif/core';
+import { CLIError } from './types/error';
+
+/**
+ * Icons used throughout the CLI for consistent appearance
+ */
+export const ICONS = {
+  // Status icons
+  SUCCESS: '✓',
+  ERROR: '✖',
+  WARNING: '⚠',
+  INFO: 'ℹ',
+  PENDING: '○',
+  ACTIVE: '●',
+  LOADING: '⏳',
+  DEBUG: '🔍',
+
+  // Object icons
+  TODO: '📝',
+  LIST: '📋',
+  LISTS: '📚',
+  TAG: '🏷️',
+  PRIORITY: '⚡',
+  DATE: '📅',
+  TIME: '⏱️',
+
+  // Feature icons
+  BLOCKCHAIN: '🔗',
+  WALRUS: '🧠',
+  LOCAL: '💻',
+  HYBRID: '🔄',
+  AI: '🤖',
+  STORAGE: '💾',
+  CONFIG: '⚙️',
+  USER: '👤',
+  SEARCH: '🔎',
+  SECURE: '🔒',
+  INSECURE: '🔓',
+
+  // UI elements
+  BULLET: '•',
+  ARROW: '→',
+  BOX_V: '│',
+  BOX_H: '─',
+  BOX_TL: '┌',
+  BOX_TR: '┐',
+  BOX_BL: '└',
+  BOX_BR: '┘',
+  LINE: '·'
+};
+
+/**
+ * Priority-related constants
+ */
+export const PRIORITY = {
+  high: {
+    color: chalk.red,
+    icon: ICONS.PRIORITY,
+    label: 'HIGH',
+    value: 3
+  },
+  medium: {
+    color: chalk.yellow,
+    icon: ICONS.PRIORITY,
+    label: 'MEDIUM',
+    value: 2
+  },
+  low: {
+    color: chalk.green,
+    icon: ICONS.PRIORITY,
+    label: 'LOW',
+    value: 1
+  }
+};
+
+/**
+ * Storage-related constants
+ */
+export const STORAGE = {
+  local: {
+    color: chalk.green,
+    icon: ICONS.LOCAL,
+    label: 'Local only'
+  },
+  blockchain: {
+    color: chalk.blue,
+    icon: ICONS.BLOCKCHAIN,
+    label: 'Blockchain only'
+  },
+  both: {
+    color: chalk.magenta,
+    icon: ICONS.HYBRID,
+    label: 'Local & Blockchain'
+  }
+};
 
 /**
  * Base class for all walrus todo commands
@@ -39,28 +133,44 @@ export default abstract class BaseCommand extends Command {
    */
   protected async authenticate(): Promise<any> {
     if (!fs.existsSync(this.tokenPath)) {
-      this.error('Not authenticated. Please login first with "walrus account:auth --login USERNAME"');
+      this.errorWithHelp(
+        'Authentication required',
+        'Not authenticated. Please login first with:',
+        `walrus account:auth --login YOUR_USERNAME`
+      );
       return null;
     }
-    
+
     try {
       const data = fs.readFileSync(this.tokenPath, 'utf-8');
       const authInfo = JSON.parse(data);
-      
+
       // Validate token
       const validation = await authenticationService.validateToken(authInfo.token);
       if (!validation.valid) {
         if (validation.expired) {
-          this.error('Your session has expired. Please login again.');
+          this.errorWithHelp(
+            'Session expired',
+            'Your session has expired. Please login again with:',
+            `walrus account:auth --login YOUR_USERNAME`
+          );
         } else {
-          this.error('Your session is invalid. Please login again.');
+          this.errorWithHelp(
+            'Invalid session',
+            'Your session is invalid. Please login again with:',
+            `walrus account:auth --login YOUR_USERNAME`
+          );
         }
         return null;
       }
-      
+
       return validation.user;
     } catch (error) {
-      this.error('Authentication failed. Please login again.');
+      this.errorWithHelp(
+        'Authentication failed',
+        'Authentication failed. Please login again with:',
+        `walrus account:auth --login YOUR_USERNAME`
+      );
       return null;
     }
   }
@@ -81,7 +191,7 @@ export default abstract class BaseCommand extends Command {
    */
   protected success(message: string): void {
     if (this.shouldSuppressOutput()) return;
-    this.log(chalk.green(`✓ ${message}`));
+    this.log(chalk.green(`${ICONS.SUCCESS} ${message}`));
   }
 
   /**
@@ -89,14 +199,50 @@ export default abstract class BaseCommand extends Command {
    */
   protected info(message: string): void {
     if (this.shouldSuppressOutput()) return;
-    this.log(chalk.blue(`ℹ ${message}`));
+    this.log(chalk.blue(`${ICONS.INFO} ${message}`));
   }
 
   /**
    * Display warning message
    */
   protected warning(message: string): void {
-    this.log(chalk.yellow(`⚠ ${message}`));
+    if (this.shouldSuppressOutput()) return;
+    this.log(chalk.yellow(`${ICONS.WARNING} ${message}`));
+  }
+
+  /**
+   * Display error message with possible solution
+   */
+  protected errorWithHelp(title: string, message: string, suggestion?: string): void {
+    // Build error message - always show this even in quiet mode
+    let output = `\n${chalk.bgRed.white(' ERROR ')} ${chalk.red.bold(title)}\n`;
+    output += `${chalk.red(ICONS.ERROR)} ${message}\n`;
+
+    if (suggestion) {
+      output += `\n${chalk.yellow(ICONS.INFO)} ${chalk.yellow('Suggestion:')}\n`;
+      output += `  ${chalk.cyan(suggestion)}\n`;
+    }
+
+    throw new CLIError(message, 'FORMATTED_ERROR');
+  }
+
+  /**
+   * Display detailed error message with troubleshooting steps
+   */
+  protected detailedError(title: string, message: string, troubleshooting: string[]): void {
+    // Build error message - always show this even in quiet mode
+    let output = `\n${chalk.bgRed.white(' ERROR ')} ${chalk.red.bold(title)}\n`;
+    output += `${chalk.red(ICONS.ERROR)} ${message}\n`;
+
+    // Add troubleshooting steps
+    if (troubleshooting.length > 0) {
+      output += `\n${chalk.yellow(ICONS.INFO)} ${chalk.yellow('Troubleshooting:')}\n`;
+      troubleshooting.forEach((step, i) => {
+        output += `  ${chalk.yellow(i + 1)}. ${step}\n`;
+      });
+    }
+
+    throw new CLIError(message, 'DETAILED_ERROR');
   }
 
   /**
@@ -106,10 +252,82 @@ export default abstract class BaseCommand extends Command {
   protected debugLog(message: string, data?: any): void {
     if (!this.isVerbose()) return;
 
-    this.log(chalk.dim(`🔍 ${message}`));
+    this.log(chalk.dim(`${ICONS.DEBUG} ${message}`));
     if (data) {
       this.log(chalk.dim(JSON.stringify(data, null, 2)));
     }
+  }
+
+  /**
+   * Draw a titled section with a box around it
+   */
+  protected section(title: string, content: string): void {
+    if (this.shouldSuppressOutput()) return;
+
+    const lines = content.split('\n');
+    const width = Math.max(...lines.map(line => this.stripAnsi(line).length), title.length + 4);
+
+    // Top border with title
+    this.log(`${ICONS.BOX_TL}${ICONS.BOX_H}[ ${chalk.bold(title)} ]${ICONS.BOX_H.repeat(width - title.length - 4)}${ICONS.BOX_TR}`);
+
+    // Content
+    lines.forEach(line => {
+      const rawLine = this.stripAnsi(line);
+      const padding = width - rawLine.length;
+      this.log(`${ICONS.BOX_V} ${line}${' '.repeat(padding)} ${ICONS.BOX_V}`);
+    });
+
+    // Bottom border
+    this.log(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`);
+  }
+
+  /**
+   * Create a simple formatted list with title
+   */
+  protected simpleList(title: string, items: string[]): void {
+    if (this.shouldSuppressOutput()) return;
+
+    this.log(chalk.bold(`\n${title}:`));
+    items.forEach(item => this.log(`  ${ICONS.BULLET} ${item}`));
+    this.log('');
+  }
+
+  /**
+   * Format a todo item for display
+   */
+  protected formatTodo(todo: any, showDetail: boolean = true): string {
+    const status = todo.completed
+      ? chalk.green(ICONS.SUCCESS)
+      : chalk.yellow(ICONS.PENDING);
+
+    const priority = PRIORITY[todo.priority as keyof typeof PRIORITY]
+      || PRIORITY.medium;
+
+    const priorityLabel = priority.color(priority.icon);
+
+    let output = `${status} ${priorityLabel} ${todo.title}`;
+
+    if (showDetail && (todo.dueDate || (todo.tags && todo.tags.length) || todo.private)) {
+      const details = [
+        todo.dueDate && `${ICONS.DATE} Due: ${todo.dueDate}`,
+        todo.tags?.length && `${ICONS.TAG} Tags: ${todo.tags.join(', ')}`,
+        todo.private && `${ICONS.SECURE} Private`
+      ].filter(Boolean);
+
+      if (details.length) {
+        output += `\n   ${chalk.dim(details.join(' | '))}`;
+      }
+    }
+
+    return output;
+  }
+
+  /**
+   * Format a storage icon and label
+   */
+  protected formatStorage(storageType: string): string {
+    const storage = STORAGE[storageType as keyof typeof STORAGE] || STORAGE.local;
+    return `${storage.icon} ${storage.color(storage.label)}`;
   }
 
   /**
@@ -174,6 +392,30 @@ export default abstract class BaseCommand extends Command {
   }
 
   /**
+   * Start a loading spinner with a message
+   */
+  protected startSpinner(message: string): any {
+    if (this.shouldSuppressOutput()) return null;
+    return ux.action.start(message);
+  }
+
+  /**
+   * Stop a loading spinner with a success message
+   */
+  protected stopSpinnerSuccess(spinner: any, message: string): void {
+    if (!spinner) return;
+    ux.action.stop(chalk.green(`${ICONS.SUCCESS} ${message}`));
+  }
+
+  /**
+   * Strip ANSI color codes from a string
+   */
+  private stripAnsi(text: string): string {
+    // Simple regex to remove ANSI escape codes
+    return text.replace(/\x1B[[(?);]{0,2}(;?\d)*./g, '');
+  }
+
+  /**
    * Initialize command
    */
   async init(): Promise<void> {
@@ -191,8 +433,27 @@ export default abstract class BaseCommand extends Command {
   async catch(error: Error): Promise<any> {
     // Log the error
     this.logger.error(`Command error: ${error.message}`, error);
-    
-    // Let the parent handle the display
+
+    // If this is a formatted error we've already handled, just let it propagate
+    if (error instanceof CLIError &&
+        (error.code === 'FORMATTED_ERROR' || error.code === 'DETAILED_ERROR')) {
+      return super.catch(error);
+    }
+
+    // For other errors, provide a more user-friendly format
+    if (error instanceof CLIError) {
+      console.error(`\n${chalk.bgRed.white(' ERROR ')} ${chalk.red.bold(error.code || 'Command Failed')}`);
+      console.error(`${chalk.red(ICONS.ERROR)} ${error.message}\n`);
+
+      // Don't display the full stack trace to users for cleaner output
+      // but still log it for troubleshooting
+      this.logger.error('Stack trace:', error);
+
+      // Exit with error code
+      process.exit(1);
+    }
+
+    // Let the parent handle the display for non-CLIErrors
     return super.catch(error);
   }
 
@@ -202,5 +463,15 @@ export default abstract class BaseCommand extends Command {
   async finally(error: Error | undefined): Promise<any> {
     // Any cleanup needed
     return super.finally(error);
+  }
+
+  /**
+   * Override log method to ensure output is always visible
+   * while avoiding duplicate console output
+   */
+  log(message: string, ...args: any[]): void {
+    // Call the original log method only - we don't need both super.log and console.log
+    // which creates duplicate output
+    super.log(message, ...args);
   }
 }
