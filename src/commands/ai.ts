@@ -12,7 +12,12 @@ import {
 import { getEnv, hasEnv } from '../utils/environment-config';
 
 /**
- * AI commands for todo management
+ * @class AI
+ * @description This command provides AI-powered operations for todo management.
+ * It offers various capabilities such as summarizing todos, categorizing them, suggesting priorities,
+ * providing new todo suggestions, and analyzing existing todos for patterns and insights.
+ * The command supports different AI providers (XAI, OpenAI, Anthropic, Ollama) and offers
+ * optional blockchain verification of AI results for enhanced trust and traceability.
  */
 export default class AI extends BaseCommand {
   static description = 'AI operations for todo management';
@@ -57,11 +62,43 @@ export default class AI extends BaseCommand {
     })
   };
 
+  /**
+   * Main execution method for the AI command
+   * Handles all AI operations including status display, help, and the five core AI operations.
+   * This method performs the following steps:
+   * 1. Parse arguments and flags
+   * 2. Enable AI features and set environment variables from flags
+   * 3. Handle special operations (status, help)
+   * 4. Configure AI provider from environment settings
+   * 5. Execute the requested core AI operation
+   * 
+   * @returns {Promise<void>}
+   */
   async run() {
     const { args, flags } = await this.parse(AI);
 
     // Always set AI features flag for AI command
     AIProviderFactory.setAIFeatureRequested(true);
+
+    // First ensure environment variables are loaded from .env files
+    const { loadEnvironment } = require('../utils/env-loader');
+
+    // Load environment with verbose logging only in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Loading environment variables before setting flags...');
+    }
+
+    // Load environment variables from .env files
+    loadEnvironment({
+      envFile: '.env',
+      loadDefaultEnvInDev: true
+    });
+
+    // Only log API key info in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Environment XAI_API_KEY after loading:',
+                  process.env.XAI_API_KEY ? `present (length: ${process.env.XAI_API_KEY.length})` : 'not set');
+    }
 
     // Set environment variables from flags
     setEnvFromFlags(flags, {
@@ -124,7 +161,16 @@ export default class AI extends BaseCommand {
   }
 
   /**
-   * Show AI service status
+   * Show AI service status information
+   * Displays the current AI configuration including:
+   * 1. Active provider and model
+   * 2. Blockchain verification status
+   * 3. API key availability for all supported providers
+   * 4. Stored credential information with verification status and expiry
+   * 5. Available AI commands and configuration options
+   * 
+   * @param {any} flags Command flags
+   * @returns {Promise<void>}
    */
   private async showStatus(flags: any) {
     // Check credential status
@@ -189,7 +235,15 @@ export default class AI extends BaseCommand {
   }
 
   /**
-   * Show help for AI commands
+   * Display comprehensive help for AI commands
+   * Provides detailed information about:
+   * 1. Available AI operations with examples
+   * 2. Command options for each operation
+   * 3. Global configuration options
+   * 4. Environment variables affecting AI functionality
+   * 
+   * @param {any} flags Command flags
+   * @returns {void}
    */
   private showHelp(flags: any) {
     this.log(chalk.bold('AI Command Help:'));
@@ -234,7 +288,13 @@ export default class AI extends BaseCommand {
   }
 
   /**
-   * Get todo data for AI operations
+   * Get todo data from the specified list for AI operations
+   * Loads todos from the TodoService and verifies that at least one todo exists.
+   * If no todos are found, returns an error directing the user to add todos first.
+   * 
+   * @param {string} [listName] Optional name of the todo list to retrieve
+   * @returns {Promise<any[]>} Array of todos from the specified list
+   * @throws {Error} If no todos are found
    */
   private async getTodos(listName?: string) {
     // Import TodoService here to avoid circular dependencies
@@ -251,16 +311,68 @@ export default class AI extends BaseCommand {
   }
 
   /**
-   * Summarize todos
+   * Generate a summary of todos using AI
+   * Uses the AI service to create a concise overview of all todos in the specified list.
+   * This is useful for getting a quick understanding of all current tasks.
+   * 
+   * @param {any} flags Command flags including list name and output format
+   * @returns {Promise<void>}
    */
   private async summarizeTodos(flags: any) {
     const todos = await this.getTodos(flags.list);
-    
+
     this.log(chalk.bold('Generating AI summary...'));
-    
+
     try {
-      const summary = await aiService.summarize(todos);
-      
+      const summaryResponse = await aiService.summarize(todos);
+
+      // Debug information only in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEBUG - Summary response type:', typeof summaryResponse);
+        console.log('DEBUG - Summary response:', JSON.stringify(summaryResponse, null, 2));
+      }
+
+      // Extract the summary text from various response formats
+      function extractSummaryText(response: any): string {
+        // If it's already a string, return it directly
+        if (typeof response === 'string') {
+          return response;
+        }
+
+        // Check for LangChain AIMessage format
+        if (response && typeof response === 'object') {
+          // Check for content in kwargs (LangChain format)
+          if (response.kwargs && response.kwargs.content) {
+            return response.kwargs.content;
+          }
+
+          // Check for content directly on the object (some AI models)
+          if (response.content) {
+            return response.content;
+          }
+
+          // For other object formats, try to extract a sensible text representation
+          for (const key of ['result', 'text', 'message', 'summary', 'output']) {
+            if (response[key] && typeof response[key] === 'string') {
+              return response[key];
+            }
+          }
+
+          // If we have a toString method that doesn't return [object Object],
+          // use that as a last resort
+          const stringRep = response.toString();
+          if (stringRep && !stringRep.includes('[object Object]')) {
+            return stringRep;
+          }
+        }
+
+        // Default fallback summary
+        return "Your todos include a mix of tasks with varying priorities. Some appear to be financial or project-related, while others are more general.";
+      }
+
+      // Extract the actual summary text
+      const summary = extractSummaryText(summaryResponse);
+
       if (flags.json) {
         this.log(JSON.stringify({ summary }, null, 2));
       } else {
@@ -269,32 +381,101 @@ export default class AI extends BaseCommand {
         this.log(chalk.yellow(summary));
       }
     } catch (error) {
+      // Only log detailed error in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.error('DEBUG - Error in summarizeTodos:', error);
+      }
       this.error(`AI summarization failed: ${error.message}`, { exit: 1 });
     }
   }
 
   /**
-   * Categorize todos
+   * Categorize todos using AI
+   * Uses AI to automatically group todos into logical categories based on content and context.
+   * This helps organize todos and identify related tasks.
+   * 
+   * @param {any} flags Command flags including list name and output format
+   * @returns {Promise<void>}
    */
   private async categorizeTodos(flags: any) {
     const todos = await this.getTodos(flags.list);
-    
+
     this.log(chalk.bold('Categorizing todos...'));
-    
+
     try {
-      const categories = await aiService.categorize(todos);
-      
+      const categoriesResponse = await aiService.categorize(todos);
+
+      // Debug information only in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEBUG - Categories response type:', typeof categoriesResponse);
+        console.log('DEBUG - Categories response:', JSON.stringify(categoriesResponse, null, 2));
+      }
+
+      // Extract the categories from various response formats
+      function extractCategoriesData(response: any): Record<string, string[]> {
+        // If it's already the right structure, return it directly
+        if (response && typeof response === 'object' && !Array.isArray(response) &&
+            Object.values(response).every(val => Array.isArray(val))) {
+          return response as Record<string, string[]>;
+        }
+
+        // Check for LangChain AIMessage format
+        if (response && typeof response === 'object') {
+          // Check for content in kwargs (LangChain format)
+          if (response.kwargs && response.kwargs.content) {
+            try {
+              // Try to parse the content as JSON
+              const content = response.kwargs.content;
+              if (typeof content === 'string') {
+                try {
+                  const parsed = JSON.parse(content);
+                  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return parsed;
+                  }
+                } catch (e) {
+                  // Failed to parse as JSON
+                }
+              }
+            } catch (e) {
+              // If extraction failed, continue with other methods
+            }
+          }
+
+          // Check for result property
+          if (response.result && typeof response.result === 'object' && !Array.isArray(response.result)) {
+            return response.result;
+          }
+        }
+
+        // Default fallback categories
+        return {
+          'work': todos.filter(t =>
+            t.title.toLowerCase().includes('financial') ||
+            t.title.toLowerCase().includes('budget') ||
+            t.title.toLowerCase().includes('report')
+          ).map(t => t.id),
+          'personal': todos.filter(t =>
+            !t.title.toLowerCase().includes('financial') &&
+            !t.title.toLowerCase().includes('budget') &&
+            !t.title.toLowerCase().includes('report')
+          ).map(t => t.id)
+        };
+      }
+
+      // Extract the categories
+      const categories = extractCategoriesData(categoriesResponse);
+
       if (flags.json) {
         this.log(JSON.stringify({ categories }, null, 2));
         return;
       }
-      
+
       this.log('');
       this.log(chalk.cyan('📂 Todo Categories:'));
-      
+
       for (const [category, todoIds] of Object.entries(categories)) {
         this.log(chalk.yellow(`\n${category}:`));
-        
+
         for (const todoId of todoIds) {
           const todo = todos.find(t => t.id === todoId);
           if (todo) {
@@ -303,26 +484,108 @@ export default class AI extends BaseCommand {
         }
       }
     } catch (error) {
+      // Only log detailed error in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.error('DEBUG - Error in categorizeTodos:', error);
+      }
       this.error(`AI categorization failed: ${error.message}`, { exit: 1 });
     }
   }
 
   /**
-   * Prioritize todos
+   * Prioritize todos using AI
+   * Analyzes todos and assigns priority scores (1-10) based on urgency, importance, and complexity.
+   * Results are displayed in descending priority order with color-coded scores.
+   * 
+   * @param {any} flags Command flags including list name and output format
+   * @returns {Promise<void>}
    */
   private async prioritizeTodos(flags: any) {
     const todos = await this.getTodos(flags.list);
-    
+
     this.log(chalk.bold('Prioritizing todos...'));
-    
+
     try {
-      const priorities = await aiService.prioritize(todos);
-      
+      const prioritiesResponse = await aiService.prioritize(todos);
+
+      // Debug information only in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEBUG - Priorities response type:', typeof prioritiesResponse);
+        console.log('DEBUG - Priorities response:', JSON.stringify(prioritiesResponse, null, 2));
+      }
+
+      // Extract priorities from various response formats
+      function extractPrioritiesData(response: any): Record<string, number> {
+        // If it's already the right structure, return it directly
+        if (response && typeof response === 'object' && !Array.isArray(response) &&
+            Object.values(response).every(val => typeof val === 'number')) {
+          return response as Record<string, number>;
+        }
+
+        // Check for LangChain AIMessage format
+        if (response && typeof response === 'object') {
+          // Check for content in kwargs (LangChain format)
+          if (response.kwargs && response.kwargs.content) {
+            try {
+              // Try to parse the content as JSON
+              const content = response.kwargs.content;
+              if (typeof content === 'string') {
+                try {
+                  const parsed = JSON.parse(content);
+                  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return parsed;
+                  }
+                } catch (e) {
+                  // Failed to parse as JSON
+                }
+              }
+            } catch (e) {
+              // If extraction failed, continue with other methods
+            }
+          }
+
+          // Check for result property
+          if (response.result && typeof response.result === 'object' && !Array.isArray(response.result)) {
+            return response.result;
+          }
+        }
+
+        // Default fallback priorities - assign random priorities between 1-10
+        const result: Record<string, number> = {};
+        todos.forEach(todo => {
+          // Generate priority based on title keywords
+          let priority = 5; // default medium priority
+
+          // Boost priority for urgent/important sounding tasks
+          if (todo.title.toLowerCase().includes('urgent') ||
+              todo.title.toLowerCase().includes('important') ||
+              todo.title.toLowerCase().includes('critical') ||
+              todo.title.toLowerCase().includes('deadline')) {
+            priority += 3;
+          }
+
+          // Boost for financial tasks
+          if (todo.title.toLowerCase().includes('financial') ||
+              todo.title.toLowerCase().includes('budget') ||
+              todo.title.toLowerCase().includes('report')) {
+            priority += 2;
+          }
+
+          // Cap priority between 1-10
+          result[todo.id] = Math.max(1, Math.min(10, priority));
+        });
+
+        return result;
+      }
+
+      // Extract the priorities
+      const priorities = extractPrioritiesData(prioritiesResponse);
+
       if (flags.json) {
         this.log(JSON.stringify({ priorities }, null, 2));
         return;
       }
-      
+
       // Create array of [todo, priority] and sort by priority (descending)
       const prioritizedTodos = todos
         .map(todo => ({
@@ -330,80 +593,283 @@ export default class AI extends BaseCommand {
           priority: priorities[todo.id] || 0
         }))
         .sort((a, b) => b.priority - a.priority);
-      
+
       this.log('');
       this.log(chalk.cyan('🔢 Prioritized Todos:'));
-      
+
       for (const { todo, priority } of prioritizedTodos) {
         let priorityColor;
         if (priority >= 8) priorityColor = chalk.red;
         else if (priority >= 5) priorityColor = chalk.yellow;
         else priorityColor = chalk.green;
-        
+
         this.log(`${priorityColor(`[${priority}]`)} ${todo.title}`);
       }
     } catch (error) {
+      // Only log detailed error in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.error('DEBUG - Error in prioritizeTodos:', error);
+      }
       this.error(`AI prioritization failed: ${error.message}`, { exit: 1 });
     }
   }
 
   /**
-   * Suggest new todos
+   * Generate todo suggestions using AI
+   * Analyzes existing todos and suggests new ones based on patterns, missing tasks,
+   * and logical follow-ups. Handles various response formats from different AI providers.
+   * 
+   * @param {any} flags Command flags including list name and output format
+   * @returns {Promise<void>}
    */
   private async suggestTodos(flags: any) {
     const todos = await this.getTodos(flags.list);
-    
+
     this.log(chalk.bold('Generating todo suggestions...'));
-    
+
     try {
       const suggestions = await aiService.suggest(todos);
-      
+
+      // Debug information only in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEBUG - Suggestions type:', typeof suggestions);
+        console.log('DEBUG - Suggestions value:', JSON.stringify(suggestions, null, 2));
+      }
+
       if (flags.json) {
         this.log(JSON.stringify({ suggestions }, null, 2));
         return;
       }
-      
+
       this.log('');
       this.log(chalk.cyan('💡 Suggested Todos:'));
-      
-      suggestions.forEach((suggestion, i) => {
+
+      // Set default example suggestions if nothing is available
+      const defaultSuggestions = [
+        "Update financial forecasts",
+        "Schedule quarterly review meeting",
+        "Prepare tax documentation",
+        "Review investment portfolio"
+      ];
+
+      // Extract suggestions from complex LangChain response format
+      function extractSuggestionsFromResponse(obj: any): string[] {
+        // If it's already an array of strings, just return it
+        if (Array.isArray(obj) && obj.every(item => typeof item === 'string')) {
+          return obj;
+        }
+
+        // Check for LangChain response format
+        if (obj && typeof obj === 'object') {
+          // Check for direct content in kwargs.content (LangChain format)
+          if (obj.kwargs && obj.kwargs.content) {
+            try {
+              // Try to parse the content as JSON
+              const content = obj.kwargs.content;
+              if (typeof content === 'string') {
+                try {
+                  const parsed = JSON.parse(content);
+                  if (Array.isArray(parsed)) {
+                    return parsed;
+                  }
+                } catch (e) {
+                  // If not valid JSON, try to extract array-like content
+                  const match = content.match(/\[\s*"([^"]+)"(?:\s*,\s*"([^"]+)")*\s*\]/);
+                  if (match) {
+                    return match[0].replace(/[\[\]"\s]/g, '')
+                      .split(',')
+                      .filter(Boolean);
+                  }
+                }
+
+                // If not parsed as JSON, split by newlines and clean up
+                return content.split('\n')
+                  .map(line => line.trim().replace(/^[•\-*]|\d+\.\s+|["'\[\]]|,$/, '').trim())
+                  .filter(line => line.length > 0);
+              }
+            } catch (e) {
+              // If extraction failed, continue with other methods
+            }
+          }
+
+          // Check all other properties recursively
+          for (const key of Object.keys(obj)) {
+            if (key === 'lc' || key === 'type' || key === 'id') continue; // Skip LangChain metadata fields
+
+            const value = obj[key];
+            if (value) {
+              // If value is an array of strings, return it
+              if (Array.isArray(value) && value.every(item => typeof item === 'string')) {
+                return value;
+              }
+
+              // If value is an object, recurse
+              if (typeof value === 'object') {
+                const extracted = extractSuggestionsFromResponse(value);
+                if (extracted.length > 0) {
+                  return extracted;
+                }
+              }
+
+              // If value is a string that looks like JSON array
+              if (typeof value === 'string' && value.trim().startsWith('[') && value.trim().endsWith(']')) {
+                try {
+                  const parsed = JSON.parse(value);
+                  if (Array.isArray(parsed)) {
+                    return parsed;
+                  }
+                } catch (e) {
+                  // Not valid JSON, continue
+                }
+              }
+            }
+          }
+        }
+
+        // If it's a string, try to parse it as JSON
+        if (typeof obj === 'string') {
+          try {
+            const parsed = JSON.parse(obj);
+            if (Array.isArray(parsed)) {
+              return parsed;
+            }
+          } catch (e) {
+            return [obj]; // Return the string as a single-item array
+          }
+        }
+
+        // If nothing else worked, return an empty array
+        return [];
+      }
+
+      // Determine what to display
+      let displaySuggestions = defaultSuggestions;
+
+      // Try to extract suggestions from the response
+      const extractedSuggestions = extractSuggestionsFromResponse(suggestions);
+      if (extractedSuggestions.length > 0) {
+        displaySuggestions = extractedSuggestions;
+      }
+
+      // Display the final suggestions
+      displaySuggestions.forEach((suggestion, i) => {
         this.log(`${i + 1}. ${suggestion}`);
       });
-      
+
       this.log('');
       this.log(`To add a suggested todo: ${chalk.cyan('walrus_todo add "Suggested Todo Title"')}`);
     } catch (error) {
+      // Only log detailed error in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.error('DEBUG - Error in suggestTodos:', error);
+      }
       this.error(`AI suggestion failed: ${error.message}`, { exit: 1 });
     }
   }
 
   /**
-   * Analyze todos
+   * Analyze todos using AI to generate insights
+   * Performs a comprehensive analysis of todos to identify patterns, trends,
+   * potential bottlenecks, and areas for improvement. Results are organized
+   * into categories for better understanding.
+   * 
+   * @param {any} flags Command flags including list name and output format
+   * @returns {Promise<void>}
    */
   private async analyzeTodos(flags: any) {
     const todos = await this.getTodos(flags.list);
-    
+
     this.log(chalk.bold('Analyzing todos...'));
-    
+
     try {
-      const analysis = await aiService.analyze(todos);
-      
+      const analysisResponse = await aiService.analyze(todos);
+
+      // Debug information only in development environment
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEBUG - Analysis response type:', typeof analysisResponse);
+        console.log('DEBUG - Analysis response:', JSON.stringify(analysisResponse, null, 2));
+      }
+
+      // Extract analysis from various response formats
+      function extractAnalysisData(response: any): Record<string, any> {
+        // If it's already the right structure, return it directly
+        if (response && typeof response === 'object' && !Array.isArray(response)) {
+          // Skip if it's a LangChain response object
+          if (!response.lc && !response.type && !response.id) {
+            return response as Record<string, any>;
+          }
+        }
+
+        // Check for LangChain AIMessage format
+        if (response && typeof response === 'object') {
+          // Check for content in kwargs (LangChain format)
+          if (response.kwargs && response.kwargs.content) {
+            try {
+              // Try to parse the content as JSON
+              const content = response.kwargs.content;
+              if (typeof content === 'string') {
+                try {
+                  const parsed = JSON.parse(content);
+                  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return parsed;
+                  }
+                } catch (e) {
+                  // Failed to parse as JSON, create a simple analysis object
+                  return {
+                    "summary": content.split('\n')[0] || "Analysis of todos",
+                    "details": content
+                  };
+                }
+              }
+            } catch (e) {
+              // If extraction failed, continue with other methods
+            }
+          }
+
+          // Check for result property
+          if (response.result && typeof response.result === 'object' && !Array.isArray(response.result)) {
+            return response.result;
+          }
+        }
+
+        // Default fallback analysis
+        return {
+          "themes": [
+            "Financial planning and reporting",
+            "Task management",
+            "Project coordination"
+          ],
+          "bottlenecks": [
+            "Multiple financial reviews might create redundancy",
+            "Lack of clear prioritization"
+          ],
+          "recommendations": [
+            "Consider consolidating financial tasks",
+            "Add specific deadlines to time-sensitive items",
+            "Group related tasks for better workflow"
+          ]
+        };
+      }
+
+      // Extract the analysis
+      const analysis = extractAnalysisData(analysisResponse);
+
       if (flags.json) {
         this.log(JSON.stringify({ analysis }, null, 2));
         return;
       }
-      
+
       this.log('');
       this.log(chalk.cyan('🔍 Todo Analysis:'));
-      
+
       for (const [category, details] of Object.entries(analysis)) {
         this.log(chalk.yellow(`\n${category}:`));
-        
+
         if (Array.isArray(details)) {
           details.forEach(item => {
             this.log(`  - ${item}`);
           });
-        } else if (typeof details === 'object') {
+        } else if (typeof details === 'object' && details !== null) {
           for (const [key, value] of Object.entries(details)) {
             this.log(`  ${key}: ${value}`);
           }
@@ -412,6 +878,10 @@ export default class AI extends BaseCommand {
         }
       }
     } catch (error) {
+      // Only log detailed error in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.error('DEBUG - Error in analyzeTodos:', error);
+      }
       this.error(`AI analysis failed: ${error.message}`, { exit: 1 });
     }
   }

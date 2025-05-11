@@ -112,6 +112,47 @@ If there are fewer attribute flags than tasks, the last attribute will be used f
 waltodo add "my-list" -t "Task 1" -t "Task 2" -p high
 ```
 
+#### User-Friendly Output Format
+
+The CLI now provides clean, concise output that's easy to read and use:
+
+```
+✓ New List Created: First task in new list
+  📋 List: brand-new-list | ⚡ Priority: HIGH | 💻 Storage: Local only
+  Next: waltodo list brand-new-list - View all tasks | waltodo complete --id 173048 - Mark as completed
+```
+
+The output clearly indicates whether you're creating a new list or adding a task to an existing list, and provides all relevant information in a compact format with next steps.
+
+#### Compact View by Default
+
+The list command now uses a space-efficient compact view by default:
+
+```
+# Compact view (default)
+waltodo list my-list
+
+# Output:
+┌────────────────────────────────────────┐
+│ 📋 my-list
+0/3 completed (0%)                       │
+│ ░░░░░░░░░░░░░░░░░░░░ │
+└────────────────────────────────────────┘
+
+○ [173048] HIGH First task in new list
+○ [250704] LOW Task with tags
+○ [731010] LOW Another task
+```
+
+For more detailed information, you can use the `--detailed` flag:
+
+```
+# Detailed view
+waltodo list my-list --detailed
+
+# Output includes tags, due dates, and other details
+```
+
 For a comprehensive reference of all CLI commands, see [CLI-COMMANDS.md](CLI-COMMANDS.md).
 
 ## Installation
@@ -715,18 +756,18 @@ waltodo add "work" -t "Urgent task" -p high -t "Normal task" -p medium -t "Low p
 waltodo add "project" -t "Meeting" -g "work,meeting" -d 2023-06-01 -t "Documentation" -g "work,docs" -d 2023-06-15
 ```
 
-List all todo lists:
+List all todo lists and view tasks:
 ```bash
+# List all available lists
 waltodo list
-```
 
-List todos in a specific list:
-```bash
+# View todos in a specific list (compact view by default)
 waltodo list my-list
-```
 
-List only completed or pending todos:
-```bash
+# View todos with detailed information
+waltodo list my-list --detailed
+
+# Filter todos by completion status
 waltodo list my-list --completed
 waltodo list my-list --pending
 ```

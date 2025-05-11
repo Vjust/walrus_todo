@@ -12,11 +12,12 @@ import { CLIError } from '../types/error';
  * The output is formatted with color-coded status indicators for better readability.
  */
 export default class ListCommand extends BaseCommand {
-  static description = 'Display todo items or available todo lists';
+  static description = 'Display todo items or available todo lists (compact view by default)';
 
   static examples = [
     `<%= config.bin %> list                     # Show all available lists`,
-    `<%= config.bin %> list my-list             # Show todos in "my-list"`,
+    `<%= config.bin %> list my-list             # Show todos in "my-list" (compact view by default)`,
+    `<%= config.bin %> list my-list --detailed  # Show todos with full details`,
     `<%= config.bin %> list my-list --completed # Show only completed todos`,
     `<%= config.bin %> list my-list --pending   # Show only pending todos`,
     `<%= config.bin %> list my-list --sort priority # Sort todos by priority`
@@ -37,8 +38,14 @@ export default class ListCommand extends BaseCommand {
       options: ['priority', 'dueDate']
     }),
     compact: Flags.boolean({
-      description: 'Display in compact format without details',
-      char: 'c'
+      description: 'Display in compact format without details (default)',
+      char: 'c',
+      default: true
+    }),
+    detailed: Flags.boolean({
+      description: 'Display in detailed format with full information',
+      char: 'd',
+      exclusive: ['compact']
     })
   };
 
@@ -144,6 +151,18 @@ export default class ListCommand extends BaseCommand {
   /**
    * Show a specific todo list
    */
+  /**
+   * Display a specific todo list with its items
+   * This method handles the following:
+   * 1. Retrieval of the specified list
+   * 2. Creation of a formatted header with completion statistics
+   * 3. Filtering todos based on completion status (--completed/--pending flags)
+   * 4. Sorting todos based on priority or due date (--sort flag)
+   * 5. Displaying todos in either compact or detailed view
+   *
+   * @param listName Name of the list to display
+   * @param flags Command flags affecting display format and filtering
+   */
   private async showSpecificList(listName: string, flags: any): Promise<void> {
     this.debugLog(`Getting list: ${listName}`);
     const list = await this.todoService.getList(listName);
@@ -163,17 +182,21 @@ export default class ListCommand extends BaseCommand {
     const filledCount = Math.round((percent / 100) * progressBarWidth);
     const progressBar = chalk.green('█'.repeat(filledCount)) + chalk.gray('░'.repeat(progressBarWidth - filledCount));
 
-    // Header with box formatting
+    // Construct a formatted box header with list name and completion statistics
+    // The header includes:
+    // 1. List name in bold
+    // 2. Completion ratio (completed/total) with percentage
+    // 3. A visual progress bar representing completion percentage
     const headerContent = [
       `${chalk.bold(listName)}`,
       `${chalk.blue(`${completed}/${total} completed`)} ${chalk.dim(`(${percent}%)`)}`
     ].join('\n');
 
     const headerBox = [
-      `${ICONS.BOX_TL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_TR}`,
-      `${ICONS.BOX_V} ${ICONS.LIST} ${headerContent}${' '.repeat(35 - listName.length)}${ICONS.BOX_V}`,
-      `${ICONS.BOX_V} ${progressBar} ${ICONS.BOX_V}`,
-      `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_BR}`
+      `${ICONS.BOX_TL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_TR}`, // Top border
+      `${ICONS.BOX_V} ${ICONS.LIST} ${headerContent}${' '.repeat(35 - listName.length)}${ICONS.BOX_V}`, // Content with padding
+      `${ICONS.BOX_V} ${progressBar} ${ICONS.BOX_V}`, // Progress bar
+      `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_BR}` // Bottom border
     ].join('\n');
 
     this.log('\n' + headerBox + '\n');
@@ -199,8 +222,12 @@ export default class ListCommand extends BaseCommand {
         this.log(chalk.dim(`\nTip: Add your first todo with '${this.config.bin} add "${listName}" -t "Your todo title"'`));
       }
     } else {
-      // Display column headers for better organization
-      if (!flags.compact) {
+      // Determine display mode: detailed provides comprehensive information,
+      // while compact mode (default) shows minimal info for better screen utilization
+      const useDetailedView = flags.detailed === true;
+
+      // Display column headers in detailed view for better visual organization
+      if (useDetailedView) {
         this.log(chalk.dim(`${' '.repeat(4)}ID${' '.repeat(10)}STATUS${' '.repeat(6)}PRIORITY${' '.repeat(4)}TITLE`));
         this.log(chalk.dim(`${' '.repeat(4)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(8)}${' '.repeat(2)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(30)}`));
       }
@@ -240,8 +267,8 @@ export default class ListCommand extends BaseCommand {
           ? chalk.yellow(`${ICONS.SECURE} Private`)
           : '';
 
-        // Compact display mode
-        if (flags.compact) {
+        // Choose between compact and detailed view
+        if (!useDetailedView) {
           this.log(`${status} [${chalk.dim(shortId)}] ${priorityDisplay} ${todo.title}`);
         } else {
           // Full display with details
@@ -261,15 +288,23 @@ export default class ListCommand extends BaseCommand {
       });
 
       // Add helpful tips
-      if (!flags.compact) {
+      if (useDetailedView) {
         this.log('');
-        this.log(chalk.dim(`Tip: For a compact view, use '${this.config.bin} list ${listName} --compact'`));
+        this.log(chalk.dim(`Tip: Compact view is default. To disable use --no-compact`));
       }
     }
   }
 
   /**
-   * Show all available todo lists
+   * Show all available todo lists with summary statistics
+   * This method displays:
+   * 1. A formatted list of all available todo lists
+   * 2. Completion statistics for each list (total, completed, percentage)
+   * 3. Priority distribution for each list (counts of high/medium/low priority todos)
+   * 4. A mini progress bar for each list
+   * 5. Helpful usage tips
+   *
+   * If no lists exist, displays a quick start guide for creating lists
    */
   private async showAllLists(): Promise<void> {
     this.debugLog("Getting all lists");
@@ -379,7 +414,12 @@ export default class ListCommand extends BaseCommand {
   }
 
   /**
-   * Apply sorting to a list of todos
+   * Apply sorting to a list of todos based on specified criteria
+   * 1. priority - Sorts by priority level (high → medium → low)
+   * 2. dueDate - Sorts by due date (earliest first, todos without due dates at the end)
+   *
+   * @param todos Array of todos to sort (sorted in-place)
+   * @param sortBy Sorting criteria ('priority' or 'dueDate')
    */
   private applySorting(todos: Todo[], sortBy?: string): void {
     if (!sortBy) return;

@@ -214,6 +214,9 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
 
   /**
    * Parse a string prompt or apply a LangChain prompt template
+   * @param promptInput - The prompt string or PromptTemplate
+   * @param input - Input values to format the template with
+   * @returns Formatted prompt string
    */
   protected async resolvePrompt(
     promptInput: string | PromptTemplate,

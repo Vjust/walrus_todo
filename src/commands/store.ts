@@ -16,13 +16,8 @@ import * as path from 'path';
  * @class StoreCommand
  * @description This command stores a todo item on the blockchain using Walrus storage and creates an associated NFT on the Sui blockchain.
  * It handles uploading todo data and images to Walrus, creating or updating NFTs, and provides detailed feedback on the storage process.
+ * The todo data is secured on the blockchain while maintaining a reference in the local storage for easy access.
  * The command supports mock mode for testing and includes robust error handling with rollback mechanisms to maintain data consistency.
- *
- * @param {boolean} [mock=false] - If true, uses mock mode for testing without real blockchain interactions. (Optional flag: --mock)
- * @param {string} todo - The ID or title of the todo item to store on the blockchain. (Required flag: -t, --todo)
- * @param {string} [list='default'] - The name of the todo list containing the todo item. (Optional flag: -l, --list)
- * @param {string} [image] - Path to a custom image file for the NFT. If not provided, a default image is used. (Optional flag: -i, --image)
- * @param {string} [network] - The blockchain network to use ('localnet', 'devnet', 'testnet', 'mainnet'). Defaults to the configured network. (Optional flag: -n, --network)
  */
 export default class StoreCommand extends Command {
   static description = 'Store a todo on blockchain with Walrus storage and create an NFT';
@@ -61,10 +56,30 @@ export default class StoreCommand extends Command {
     }),
   };
 
+  /**
+   * Service for managing todo operations
+   * @private
+   */
   private todoService = new TodoService();
+  
+  /**
+   * Walrus storage client instance
+   * @private
+   */
   private walrusStorage = createWalrusStorage(false);
+  
+  /**
+   * Reference to the spinner object for displaying progress
+   * @private
+   */
   private spinner: { text: string } | null = null;
 
+  /**
+   * Start a spinner with the given text message
+   * Used to indicate ongoing operations to the user
+   * @param text The text to display alongside the spinner
+   * @private
+   */
   private startSpinner(text: string) {
     if (this.spinner) {
       this.spinner.text = text;
@@ -73,12 +88,31 @@ export default class StoreCommand extends Command {
     }
   }
 
+  /**
+   * Stop the current spinner and display a success or failure message
+   * @param success Whether the operation succeeded
+   * @param text Optional message to display
+   * @private
+   */
   private stopSpinner(success = true, text?: string) {
     if (text) {
       this.log(success ? chalk.green(`✓ ${text}`) : chalk.red(`✗ ${text}`));
     }
   }
 
+  /**
+   * Main command execution method
+   * Handles the entire workflow of storing a todo on the blockchain:
+   * 1. Configuration validation and network setup
+   * 2. Todo verification and retrieval from local storage
+   * 3. Blockchain storage of todo data via Walrus
+   * 4. Image preparation and upload (custom or default)
+   * 5. NFT creation or update on Sui blockchain
+   * 6. Local storage updates with blockchain references
+   * 
+   * Each step includes thorough error handling and rollback mechanisms
+   * to ensure data consistency between local and blockchain storage.
+   */
   async run(): Promise<void> {
     try {
       const { flags } = await this.parse(StoreCommand);
@@ -117,6 +151,10 @@ export default class StoreCommand extends Command {
         throw new CLIError(`Invalid network: ${network}`, 'INVALID_NETWORK');
       }
       
+      /**
+       * SUI client object for blockchain interactions
+       * In mock mode, this is a minimal mock implementation
+       */
       const suiClient = {
         url: networkUrl,
         core: {},

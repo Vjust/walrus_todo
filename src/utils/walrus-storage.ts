@@ -1,3 +1,25 @@
+/**
+ * @fileoverview Walrus Storage Interface - Manages Todo and TodoList data on Walrus decentralized storage platform
+ *
+ * This module provides a robust interface to interact with Walrus, a decentralized storage platform built on the
+ * Sui blockchain. It handles storage allocation, data verification, transaction management, and error handling
+ * for Todo and TodoList entities. Key features include:
+ *
+ * - Secure storage and retrieval of Todo data with checksum verification
+ * - Optimized storage allocation with reuse analysis to minimize costs
+ * - Automatic retry for network operations with proper error categorization
+ * - In-memory caching for frequently accessed items
+ * - Transaction management for blockchain operations
+ *
+ * The implementation handles various blockchain-specific edge cases such as transaction building,
+ * signature verification, and client compatibility between different versions of the Sui SDK.
+ *
+ * @module walrus-storage
+ * @requires @mysten/sui.js/client
+ * @requires @mysten/walrus
+ * @requires crypto
+ */
+
 import { Todo, TodoList } from '../types/todo';
 import { withRetry } from './error-handler';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
@@ -22,12 +44,12 @@ import { Transaction, createTransaction, TransactionType } from '../types/transa
 import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
 import { createTransactionBlockAdapter } from './adapters/transaction-adapter';
 // Import error handling helpers
-import { 
-  AsyncOperationHandler, 
-  AsyncOperationOptions, 
-  categorizeWalrusError, 
-  mapToWalrusError, 
-  ErrorCategory 
+import {
+  AsyncOperationHandler,
+  AsyncOperationOptions,
+  categorizeWalrusError,
+  mapToWalrusError,
+  ErrorCategory
 } from './walrus-error-handler';
 import {
   NetworkError,
@@ -37,6 +59,13 @@ import {
 } from '../types/errors';
 import { ValidationError } from '../types/errors/ValidationError';
 
+/**
+ * @interface VerificationResult
+ * @description Result of a blob verification operation, indicating whether content matches expected data
+ * @property {Object} [details] - Detailed verification information
+ * @property {boolean} [details.certified] - Whether the blob was certified as matching expected data
+ * @property {string} [details.checksum] - SHA-256 checksum of the blob if verification was successful
+ */
 interface VerificationResult {
   details?: {
     certified: boolean;
@@ -44,6 +73,17 @@ interface VerificationResult {
   };
 }
 
+/**
+ * @interface WalrusStorageContent
+ * @description Represents the content of a Walrus storage object as returned by the Sui blockchain
+ * @property {string} dataType - Type of the data ('moveObject' for storage objects)
+ * @property {Object} fields - Fields of the storage object
+ * @property {string} fields.storage_size - Total allocated storage size in bytes
+ * @property {string} fields.used_size - Currently used storage in bytes
+ * @property {string} fields.end_epoch - Expiration epoch number
+ * @property {boolean} hasPublicTransfer - Whether the object can be transferred
+ * @property {string} type - Type identifier for the Move object
+ */
 interface WalrusStorageContent {
   dataType: 'moveObject';
   fields: {
@@ -56,6 +96,17 @@ interface WalrusStorageContent {
   type: string;
 }
 
+/**
+ * @interface WalrusStorageInfo
+ * @description Comprehensive information about a Walrus storage object with metadata
+ * @property {{ id: string } | null} id - Unique identifier for the storage object or null if not available
+ * @property {string | number | null} storage_size - Total allocated storage size in bytes
+ * @property {string | number | null} used_size - Currently used storage in bytes
+ * @property {string | number | null} end_epoch - Expiration epoch number
+ * @property {string | number | null} start_epoch - Starting epoch number
+ * @property {SuiObjectData | null} [data] - Raw Sui object data if available
+ * @property {WalrusStorageContent | null} content - Structured content of the storage object
+ */
 interface WalrusStorageInfo {
   id: { id: string } | null;
   storage_size: string | number | null;
@@ -68,9 +119,18 @@ interface WalrusStorageInfo {
 
 /**
  * Safely converts various types to a number with a fallback value
- * @param value The value to convert
- * @param fallback The fallback value to use if conversion fails
- * @returns The converted number or fallback
+ * @param {string | number | null | undefined} value - The value to convert to a number
+ * @param {number} [fallback=0] - The fallback value to use if conversion fails
+ * @returns {number} The converted number or fallback value if conversion is not possible
+ * @example
+ * // Returns 123
+ * safeToNumber('123', 0);
+ *
+ * // Returns 0 (fallback value)
+ * safeToNumber(null, 0);
+ *
+ * // Returns 10 (fallback value)
+ * safeToNumber('abc', 10);
  */
 function safeToNumber(value: string | number | null | undefined, fallback: number = 0): number {
   if (value === null || value === undefined) return fallback;
@@ -78,6 +138,15 @@ function safeToNumber(value: string | number | null | undefined, fallback: numbe
   return isNaN(num) ? fallback : num;
 }
 
+/**
+ * @interface OldWalrusStorageContent
+ * @description Legacy format for Walrus storage content from older API versions
+ * @property {string} dataType - Type of the data ('moveObject' for storage objects)
+ * @property {Object} fields - Essential fields of the storage object
+ * @property {string} fields.storage_size - Total allocated storage size in bytes
+ * @property {string} fields.used_size - Currently used storage in bytes
+ * @property {string} fields.end_epoch - Expiration epoch number
+ */
 interface OldWalrusStorageContent {
   dataType: 'moveObject';
   fields: {
@@ -92,19 +161,39 @@ interface OldWalrusStorageContent {
 let fetch: any;
 
 /**
- * WalrusStorage - A utility class for managing Todo data storage on the Walrus decentralized platform.
- * 
+ * A utility class for managing Todo data storage on the Walrus decentralized platform
+ *
  * This class handles the storage and retrieval of Todo items and Todo lists using the Walrus storage
  * system, integrated with the Sui blockchain for secure transactions. It provides methods to store,
  * retrieve, and update Todo data, ensuring data integrity through checksum validation and robust
- * error handling. Key features include automatic retry mechanisms for network issues, storage
- * allocation optimization, and caching for efficient data access. It serves as a critical component
- * for persisting Todo information in a decentralized environment.
- * 
+ * error handling.
+ *
+ * Key features include:
+ * - Secure blockchain-based persistence of todo data
+ * - Automatic retry mechanisms for network operations
+ * - Smart storage allocation with efficiency analysis
+ * - Content verification with SHA-256 checksums
+ * - In-memory caching for improved performance
+ * - Comprehensive error handling with detailed error categories
+ *
+ * The implementation handles various Sui and Walrus API versions through adapters
+ * and provides fallback mechanisms for different types of failures.
+ *
  * @class WalrusStorage
- * @param {boolean} [useMockMode=false] - Flag to enable mock mode for testing purposes, bypassing
- *                                       actual blockchain and storage operations.
+ * @example
+ * // Create a storage instance
+ * const storage = new WalrusStorage();
+ *
+ * // Connect to the Walrus network
+ * await storage.connect();
+ *
+ * // Store a todo
+ * const blobId = await storage.storeTodo(myTodo);
+ *
+ * // Retrieve a todo later
+ * const retrievedTodo = await storage.retrieveTodo(blobId);
  */
+
 export class WalrusStorage {
   private connectionState: 'disconnected' | 'connecting' | 'connected' | 'failed' = 'disconnected';
   private walrusClient: WalrusClientAdapter | null = null;
@@ -117,6 +206,12 @@ export class WalrusStorage {
   // AbortController for cancelable operations
   private abortController: AbortController = new AbortController();
 
+  /**
+   * Creates a new WalrusStorage instance
+   *
+   * @param {boolean} [useMockMode=false] - Flag to enable mock mode for testing purposes,
+   *                                        bypassing actual blockchain and storage operations
+   */
   constructor(useMockMode = false) {
     this.useMockMode = useMockMode;
     try {
@@ -128,9 +223,16 @@ export class WalrusStorage {
   }
 
   /**
-   * Checks connection health with proper error handling
-   * @returns Promise resolving to boolean indicating if connection is healthy
+   * Checks the health of the connection to the Sui blockchain
+   *
+   * Performs a lightweight query to verify network connectivity and client initialization.
+   * Uses AsyncOperationHandler for proper timeout handling and error categorization.
+   * Updates the lastHealthCheck timestamp on success for throttling future checks.
+   *
+   * @private
+   * @returns {Promise<boolean>} Promise resolving to boolean indicating if connection is healthy
    */
+
   private async checkConnectionHealth(): Promise<boolean> {
     try {
       // Check if suiClient is initialized
@@ -162,14 +264,35 @@ export class WalrusStorage {
     }
   }
 
+  /**
+   * Calculates a SHA-256 checksum for the provided data buffer
+   *
+   * Used for data integrity verification when storing and retrieving todos.
+   * The checksum is stored with the blob metadata and verified upon retrieval.
+   *
+   * @private
+   * @param {Buffer} data - The data buffer to calculate a checksum for
+   * @returns {string} Hexadecimal representation of the SHA-256 hash
+   */
   private calculateChecksum(data: Buffer): string {
     return crypto.createHash('sha256').update(data).digest('hex');
   }
 
   /**
-   * Validates todo data with clear validation errors
-   * @throws ValidationError with specific details
+   * Validates todo data structure and fields with detailed validation errors
+   *
+   * Checks that all required fields exist and have the correct types:
+   * - id: must be a non-empty string
+   * - title: must be a non-empty string
+   * - completed: must be a boolean
+   * - createdAt: must be a valid date string
+   * - updatedAt: must be a valid date string
+   *
+   * @private
+   * @param {Todo} todo - The todo object to validate
+   * @throws {ValidationError} Throws a structured validation error with field and operation details
    */
+
   private validateTodoData(todo: Todo): void {
     if (!todo.id || typeof todo.id !== 'string') {
       throw new ValidationError('Invalid todo: missing or invalid id', {
@@ -209,10 +332,17 @@ export class WalrusStorage {
   }
 
   /**
-   * Gets blob size with proper error handling
-   * @param blobId The blob ID to check
-   * @returns The size of the blob in bytes
+   * Gets the size of a stored blob with proper error handling
+   *
+   * Retrieves metadata about a stored blob to determine its size.
+   * Uses AsyncOperationHandler for automatic retries and error handling.
+   * Returns 0 if the blob cannot be found or if retrieval fails.
+   *
+   * @param {string} blobId - The unique identifier of the blob to check
+   * @returns {Promise<number>} The size of the blob in bytes, or 0 if retrieval fails
+   * @throws {StorageError} If the WalrusStorage is not initialized
    */
+
   public async getBlobSize(blobId: string): Promise<number> {
     return AsyncOperationHandler.execute(
       async () => {
@@ -241,10 +371,19 @@ export class WalrusStorage {
   }
 
   /**
-   * Creates a storage transaction block with adapter compatibility
-   * @param size Size in bytes
-   * @param epochs Duration in epochs
+   * Creates a storage transaction block with adapter compatibility across Sui SDK versions
+   *
+   * This method handles compatibility between different versions of the Sui SDK and the
+   * Walrus client by first attempting to use the client's built-in implementation, then
+   * falling back to a manual implementation if needed.
+   *
+   * @private
+   * @param {number} size - Requested storage size in bytes
+   * @param {number} epochs - Duration in epochs for the storage allocation
+   * @returns {Promise<TransactionType>} A transaction object that can be executed to allocate storage
+   * @throws {ValidationError} If transaction creation fails
    */
+
   private async createStorageBlock(size: number, epochs: number): Promise<TransactionType> {
     return AsyncOperationHandler.execute(
       async () => {
@@ -276,9 +415,21 @@ export class WalrusStorage {
   }
 
   /**
-   * Validates todo list data with clear errors
-   * @throws ValidationError with specific details
+   * Validates todo list data structure and fields with detailed validation errors
+   *
+   * Validates the todo list itself and all contained todos:
+   * - id: must be a non-empty string
+   * - name: must be a non-empty string
+   * - todos: must be an array
+   *
+   * Additionally validates each todo in the list by calling validateTodoData()
+   * for each element, providing context about which todo in the list failed.
+   *
+   * @private
+   * @param {TodoList} todoList - The todo list object to validate
+   * @throws {ValidationError} Throws a structured validation error with field and operation details
    */
+
   private validateTodoListData(todoList: TodoList): void {
     if (!todoList.id || typeof todoList.id !== 'string') {
       throw new ValidationError('Invalid todo list: missing or invalid id', {
@@ -320,10 +471,24 @@ export class WalrusStorage {
   }
 
   /**
-   * Initialize the WalrusStorage connection
-   * @returns Promise that resolves when initialization is complete
-   * @throws Properly categorized errors
+   * Initializes the WalrusStorage connection to the Walrus network
+   *
+   * This method performs the following initialization steps:
+   * 1. Creates a fresh abort controller for cancellation support
+   * 2. Verifies environment is set to testnet (required for Walrus)
+   * 3. Loads the node-fetch library dynamically if needed
+   * 4. Initializes the Walrus client with proper network settings
+   * 5. Initializes the signer from the Sui keystore
+   * 6. Verifies connection health with a final check
+   *
+   * All errors are categorized and mapped to specific error types for easier handling.
+   *
+   * @returns {Promise<void>} Promise that resolves when initialization is complete
+   * @throws {ValidationError} If environment validation fails
+   * @throws {BlockchainError} If signer initialization fails
+   * @throws {NetworkError} If connection validation fails
    */
+
   async init(): Promise<void> {
     if (this.useMockMode) {
       this.connectionState = 'connected';
@@ -441,9 +606,15 @@ export class WalrusStorage {
   }
 
   /**
-   * Check if the storage is connected with a health check
-   * @returns Promise resolving to boolean
+   * Checks if the storage is connected with an optional health check
+   *
+   * If the connection is marked as connected but the last health check is older
+   * than the healthCheckInterval, performs a new health check. This approach
+   * balances responsiveness with minimizing network requests.
+   *
+   * @returns {Promise<boolean>} Promise resolving to boolean indicating connection status
    */
+
   async isConnected(): Promise<boolean> {
     if (this.connectionState === 'connected' && 
         Date.now() - this.lastHealthCheck > this.healthCheckInterval) {
@@ -457,8 +628,16 @@ export class WalrusStorage {
   }
 
   /**
-   * Connect to the storage service if not already connected
+   * Connects to the storage service if not already connected
+   *
+   * Public method to establish connection to the Walrus storage service.
+   * If already connected, this is a no-op. Otherwise, calls init() to
+   * perform full initialization sequence.
+   *
+   * @returns {Promise<void>} Promise that resolves when connection is established
+   * @throws Various errors from init() if connection fails
    */
+
   async connect(): Promise<void> {
     if (this.connectionState === 'disconnected' || this.connectionState === 'failed') {
       await this.init();
@@ -466,8 +645,17 @@ export class WalrusStorage {
   }
 
   /**
-   * Disconnect from the storage service
+   * Disconnects from the storage service
+   *
+   * Performs a clean shutdown of the Walrus storage connection:
+   * 1. Cancels any pending operations via the abort controller
+   * 2. Resets the Walrus client if present
+   * 3. Nullifies the signer to prevent further transactions
+   * 4. Updates connection state to disconnected
+   *
+   * @returns {Promise<void>} Promise that resolves when disconnection is complete
    */
+
   async disconnect(): Promise<void> {
     if (this.connectionState !== 'disconnected') {
       console.log('Disconnecting WalrusStorage...');
@@ -483,9 +671,16 @@ export class WalrusStorage {
   }
 
   /**
-   * Get the transaction signer with proper error handling
-   * @throws Properly categorized error if signer is not initialized
+   * Gets the transaction signer with proper error handling
+   *
+   * Retrieves the previously initialized signer for transaction operations.
+   * The signer is required for all write operations to the blockchain.
+   *
+   * @protected
+   * @returns {Promise<TransactionSigner>} The initialized transaction signer
+   * @throws {ValidationError} If signer is not initialized (connection required first)
    */
+
   protected async getTransactionSigner(): Promise<TransactionSigner> {
     if (!this.signer) {
       throw new ValidationError('WalrusStorage not initialized. Call connect() first.', {
@@ -496,10 +691,17 @@ export class WalrusStorage {
   }
 
   /**
-   * Get the active wallet address
-   * @returns The active wallet address
-   * @throws Properly categorized error if not initialized
+   * Gets the active wallet address for the connected signer
+   *
+   * Retrieves the blockchain address associated with the current signer.
+   * This address is used for various operations including storage allocation,
+   * transaction signing, and ownership verification.
+   *
+   * @public
+   * @returns {string} The active wallet address in Sui format
+   * @throws {ValidationError} If storage is not initialized or address cannot be retrieved
    */
+
   public getActiveAddress(): string {
     if (!this.signer) {
       throw new ValidationError('WalrusStorage not initialized. Call connect() first.', {
@@ -519,19 +721,30 @@ export class WalrusStorage {
   }
 
   /**
-   * Store a todo item in Walrus blob storage.
-   * 
-   * This method performs several steps:
+   * Stores a todo item in Walrus blob storage
+   *
+   * This method performs a complete storage operation with validation, integrity protection,
+   * and verification:
+   *
    * 1. Validates todo data format and fields
-   * 2. Serializes the todo and generates a SHA-256 checksum
-   * 3. Ensures sufficient storage space is allocated
-   * 4. Uploads the todo data with metadata as a Walrus blob
-   * 5. Verifies the uploaded content with retries
-   * 
-   * @param todo - The todo item to store
-   * @returns A Promise resolving to the Walrus blob ID
-   * @throws Properly categorized errors for different failure scenarios
+   * 2. Serializes the todo using TodoSerializer and generates a SHA-256 checksum
+   * 3. Ensures sufficient storage space is allocated using storage optimization
+   * 4. Uploads the todo data with comprehensive metadata as a Walrus blob
+   * 5. Verifies the uploaded content integrity with retries
+   * 6. In case of failure, provides detailed error information with recovery options
+   *
+   * The method includes special handling for WAL token balance verification and
+   * storage allocation optimization to minimize costs.
+   *
+   * @param {Todo} todo - The todo item to store
+   * @returns {Promise<string>} A Promise resolving to the Walrus blob ID for future retrieval
+   * @throws {ValidationError} If todo validation fails or storage is not connected
+   * @throws {StorageError} If blob storage operations fail
+   * @throws {TransactionError} If blockchain transaction fails (e.g., insufficient WAL tokens)
+   * @throws {NetworkError} If network communication fails
+   * @throws {BlockchainError} If blockchain interaction fails
    */
+
   async storeTodo(todo: Todo): Promise<string> {
     try {
       if (this.useMockMode) {
@@ -803,17 +1016,26 @@ export class WalrusStorage {
   private static CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   /**
-   * Retrieve a todo item from Walrus blob storage.
-   * 
-   * This method attempts to retrieve the todo data in this order:
-   * 1. Check in-memory cache
-   * 2. Try direct retrieval from Walrus client
-   * 3. Fall back to public aggregator with retries
-   * 
-   * @param blobId - The Walrus blob ID to retrieve
-   * @returns A Promise resolving to the Todo item
-   * @throws Properly categorized errors for various failure scenarios
+   * Retrieves a todo item from Walrus blob storage
+   *
+   * This method implements a multi-stage retrieval strategy with caching:
+   *
+   * 1. Check in-memory cache first (avoids network requests for recently accessed todos)
+   * 2. Try direct retrieval from Walrus client with multiple retries
+   * 3. Fall back to public aggregator service with exponential backoff
+   * 4. Parse and validate the retrieved data
+   * 5. Cache successfully retrieved todos for faster future access
+   *
+   * The implementation includes extensive error handling with proper categorization,
+   * enabling robust recovery strategies and clear error messages for users.
+   *
+   * @param {string} blobId - The Walrus blob ID for the todo to retrieve
+   * @returns {Promise<Todo>} A Promise resolving to the retrieved Todo item
+   * @throws {ValidationError} If blobId is invalid or storage is not connected
+   * @throws {StorageError} If blob retrieval fails
+   * @throws {NetworkError} If network communication fails
    */
+
   async retrieveTodo(blobId: string): Promise<Todo> {
     try {
       if (this.useMockMode) {
@@ -909,8 +1131,18 @@ export class WalrusStorage {
   }
 
   /**
-   * Cache a todo for faster retrieval
+   * Caches a todo for faster retrieval and cleans expired entries
+   *
+   * Stores the retrieved todo in an in-memory cache with an expiration time.
+   * Also performs cache maintenance by removing any entries that have already expired.
+   * This improves performance for frequently accessed todos without requiring
+   * network requests.
+   *
+   * @private
+   * @param {string} blobId - The blob ID used as the cache key
+   * @param {Todo} todo - The todo object to cache
    */
+
   private cacheTodo(blobId: string, todo: Todo): void {
     WalrusStorage.todoCache.set(blobId, {
       data: todo,
@@ -926,12 +1158,34 @@ export class WalrusStorage {
   }
 
   /**
-   * Attempts to retrieve a blob from Walrus storage with automatic retries and fallback strategies.
-   * @param blobId The ID of the blob to retrieve
-   * @param options Retrieval options
-   * @returns The blob content as a Buffer
-   * @throws Properly categorized errors for retrieval failures
+   * Attempts to retrieve a blob from Walrus storage with automatic retries and fallback strategies
+   *
+   * This is a comprehensive low-level blob retrieval implementation that provides:
+   * 1. Multiple retrieval strategies (direct and aggregator)
+   * 2. Automatic retries with exponential backoff
+   * 3. Timeout handling to prevent hanging operations
+   * 4. Abort signal support for cancellation
+   * 5. Content hash verification for integrity
+   * 6. Detailed failure tracking for diagnostics
+   *
+   * The method first attempts direct retrieval through the Walrus client.
+   * If that fails, it falls back to the public aggregator service if enabled.
+   * All failures are tracked with source and attempt information for better debugging.
+   *
+   * @private
+   * @param {string} blobId - The ID of the blob to retrieve
+   * @param {Object} [options] - Retrieval options
+   * @param {number} [options.maxRetries=3] - Maximum number of retries per strategy
+   * @param {number} [options.baseDelay=1000] - Base delay in ms for exponential backoff
+   * @param {number} [options.timeout=15000] - Timeout in ms for each retrieval attempt
+   * @param {boolean} [options.useAggregator=true] - Whether to try the public aggregator as fallback
+   * @param {string} [options.context='blob retrieval'] - Context description for error messages
+   * @param {AbortSignal} [options.signal] - AbortSignal for cancellation support
+   * @returns {Promise<Buffer>} The blob content as a Buffer
+   * @throws {StorageError} With detailed failure information if all retrieval attempts fail
+   * @throws {NetworkError} If network communication fails
    */
+
   private async retrieveBlob(
     blobId: string,
     options: {
@@ -1160,11 +1414,23 @@ export class WalrusStorage {
   }
 
   /**
-   * Parse and validate todo data from raw bytes
-   * @param data The raw todo data bytes
-   * @returns Parsed and validated Todo object
-   * @throws Properly categorized errors for parsing issues
+   * Parses and validates todo data from raw bytes
+   *
+   * Handles the conversion from raw blob data to a structured Todo object:
+   * 1. Decodes the binary data as UTF-8 text
+   * 2. Parses the JSON text into a Todo object
+   * 3. Validates the Todo structure and fields
+   * 4. Performs additional validation specific to retrieved todos
+   *
+   * Provides detailed error information for different failure scenarios,
+   * making it easier to diagnose data corruption or format issues.
+   *
+   * @private
+   * @param {Uint8Array} data - The raw todo data bytes
+   * @returns {Promise<Todo>} Parsed and validated Todo object
+   * @throws {ValidationError} If parsing fails or data is invalid
    */
+
   private async parseTodoData(data: Uint8Array): Promise<Todo> {
     try {
       const todoData = new TextDecoder().decode(data);
@@ -1218,12 +1484,22 @@ export class WalrusStorage {
   }
 
   /**
-   * Update a todo item by storing a new version
-   * @param todo Updated todo
-   * @param blobId Original blob ID
-   * @returns Promise resolving to new blob ID
-   * @throws Properly categorized errors for update failures
+   * Updates a todo item by storing a new version
+   *
+   * Because Walrus blobs are immutable, this method creates a new blob with
+   * the updated todo data. The original blob remains but can be ignored.
+   *
+   * This approach ensures data history is preserved on the blockchain while
+   * allowing logical updates to todos.
+   *
+   * @param {Todo} todo - Updated todo object
+   * @param {string} blobId - Original blob ID (for reference only)
+   * @returns {Promise<string>} Promise resolving to new blob ID for the updated version
+   * @throws {ValidationError} If todo validation fails
+   * @throws {StorageError} If storage operations fail
+   * @throws Various errors from storeTodo() method
    */
+
   async updateTodo(todo: Todo, blobId: string): Promise<string> {
     try {
       if (this.useMockMode) {
@@ -1249,11 +1525,26 @@ export class WalrusStorage {
   }
 
   /**
-   * Store a todo list in Walrus blob storage
-   * @param todoList The list to store
-   * @returns Promise resolving to the blob ID
-   * @throws Properly categorized errors for storage failures
+   * Stores a todo list in Walrus blob storage
+   *
+   * Similar to the storeTodo method but handles an entire collection of todos as a list:
+   * 1. Validates the todo list and all contained todos
+   * 2. Serializes the list with proper error handling
+   * 3. Calculates the exact size and ensures sufficient storage
+   * 4. Uploads with list-specific metadata (including todo count)
+   * 5. Verifies the uploaded content
+   *
+   * This method allows efficient storage of multiple related todos as a single entity,
+   * improving retrieval performance and maintaining logical grouping.
+   *
+   * @param {TodoList} todoList - The todo list to store
+   * @returns {Promise<string>} Promise resolving to the blob ID
+   * @throws {ValidationError} If list validation fails
+   * @throws {StorageError} If storage operations fail
+   * @throws {TransactionError} If blockchain transaction fails
+   * @throws Various other categorized errors
    */
+
   async storeTodoList(todoList: TodoList): Promise<string> {
     try {
       if (this.useMockMode) {
@@ -1426,11 +1717,24 @@ export class WalrusStorage {
   }
 
   /**
-   * Retrieve a todo list from Walrus blob storage
-   * @param blobId The blob ID to retrieve
-   * @returns Promise resolving to the TodoList
-   * @throws Properly categorized errors for retrieval failures
+   * Retrieves a todo list from Walrus blob storage
+   *
+   * Retrieves and reconstructs a TodoList from blob storage:
+   * 1. Uses the enhanced retrieveBlob method with retries and fallbacks
+   * 2. Parses and validates the entire list structure
+   * 3. Validates each todo in the list
+   *
+   * Unlike individual todos, lists aren't currently cached since they may be
+   * larger and less frequently accessed. The abortController allows cancellation
+   * of the operation if needed.
+   *
+   * @param {string} blobId - The blob ID for the todo list to retrieve
+   * @returns {Promise<TodoList>} Promise resolving to the TodoList
+   * @throws {ValidationError} If blobId is invalid or list parsing fails
+   * @throws {StorageError} If blob retrieval fails
+   * @throws {NetworkError} If network communication fails
    */
+
   async retrieveTodoList(blobId: string): Promise<TodoList> {
     try {
       if (this.useMockMode) {
@@ -1545,8 +1849,20 @@ export class WalrusStorage {
   }
 
   /**
-   * Storage verification utility
+   * Storage verification utility for content integrity checking
+   *
+   * Verifies that blob content matches expected data by:
+   * 1. Retrieving the content directly from storage
+   * 2. Comparing content length with expected data
+   * 3. Calculating and comparing SHA-256 checksums
+   *
+   * This verification step is critical for ensuring data integrity in the
+   * decentralized storage system, as it confirms successful storage operations.
+   *
+   * @private
+   * @type {Function} Verification function that accepts blobId, expected data, and metadata
    */
+
   private storageManager: StorageManager | null = null;
   private verifyBlob = async (
     blobId: string,
@@ -1583,9 +1899,19 @@ export class WalrusStorage {
   };
 
   /**
-   * Initialize storage managers when needed
+   * Initializes storage managers when needed
+   *
+   * Lazily initializes the StorageManager and StorageReuseAnalyzer classes
+   * to avoid unnecessary instantiation if they aren't used.
+   *
+   * This method handles compatibility challenges between different versions
+   * of the Walrus client by using type assertions where necessary. It also
+   * provides informative errors if initialization fails.
+   *
    * @private
+   * @throws {ValidationError} If client initialization is incomplete or initialization fails
    */
+
   private initializeManagers(): void {
     if (!this.storageManager) {
       // Pass the WalrusClientAdapter's underlying client to match the StorageManager's expected type
@@ -1644,13 +1970,25 @@ export class WalrusStorage {
 
   /**
    * Ensures sufficient storage is allocated for the given size requirements
-   * Uses smart optimization to either reuse existing storage or allocate new storage
-   * based on precise size calculations and storage reuse analysis
-   * 
-   * @param sizeBytes The required storage size in bytes
-   * @returns Storage information if successfully allocated, null for mock mode
-   * @throws Properly categorized errors for allocation failures
+   *
+   * This is a comprehensive storage allocation implementation that optimizes for cost efficiency:
+   * 1. Uses StorageReuseAnalyzer to find optimal existing storage when possible
+   * 2. Analyzes current storage inventory for reuse opportunities
+   * 3. Validates storage requirements including WAL token balance
+   * 4. Creates new storage only when necessary
+   * 5. Verifies storage creation success with blockchain confirmation
+   *
+   * The method prioritizes reusing existing storage to save WAL tokens and provides
+   * detailed analytics about storage efficiency for transparency.
+   *
+   * @param {number} [sizeBytes=1073741824] - The required storage size in bytes (default: 1GB)
+   * @returns {Promise<WalrusStorageInfo | null>} Storage information if successfully allocated, null for mock mode
+   * @throws {ValidationError} If validation fails
+   * @throws {StorageError} If storage operations fail
+   * @throws {TransactionError} If blockchain transaction fails (e.g., insufficient WAL)
+   * @throws {NetworkError} If network communication fails
    */
+
   async ensureStorageAllocated(sizeBytes = 1073741824): Promise<WalrusStorageInfo | null> {
     try {
       if (this.useMockMode) {
@@ -1963,8 +2301,20 @@ export class WalrusStorage {
 
   /**
    * Enhanced method to check existing storage and provide detailed analytics
-   * @returns Detailed storage information or null if not available
+   *
+   * This method provides comprehensive information about the user's current storage allocation:
+   * 1. Uses StorageReuseAnalyzer to gather inventory statistics
+   * 2. Provides metrics on total allocation, usage, and efficiency
+   * 3. Identifies and analyzes the best storage for reuse
+   * 4. Calculates remaining epochs before expiration
+   * 5. Falls back to traditional object queries if analyzer fails
+   *
+   * The method is designed to be non-critical, returning null instead of throwing
+   * errors since it's primarily used for informational purposes.
+   *
+   * @returns {Promise<WalrusStorageInfo | null>} Detailed storage information or null if not available
    */
+
   async checkExistingStorage(): Promise<WalrusStorageInfo | null> {
     try {
       if (this.useMockMode) {
@@ -2121,6 +2471,18 @@ export class WalrusStorage {
   }
 }
 
+/**
+ * Factory function to create a new WalrusStorage instance
+ *
+ * @param {boolean} [useMockMode=false] - Flag to enable mock mode for testing purposes
+ * @returns {WalrusStorage} A new WalrusStorage instance
+ * @example
+ * // Create a real storage instance
+ * const storage = createWalrusStorage();
+ *
+ * // Create a mock storage instance for testing
+ * const mockStorage = createWalrusStorage(true);
+ */
 export function createWalrusStorage(useMockMode = false): WalrusStorage {
   return new WalrusStorage(useMockMode);
 }

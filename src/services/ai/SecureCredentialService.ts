@@ -307,7 +307,7 @@ export class SecureCredentialService {
   
   /**
    * Check if a credential exists
-   * 
+   *
    * @param provider - AI provider name
    * @returns True if credential exists
    */
@@ -315,12 +315,20 @@ export class SecureCredentialService {
     // Check vault
     const hasInVault = await this.vault.hasSecret(`${provider}-api-key`);
     if (hasInVault) {
+      console.log(`Found credential for ${provider} in vault`);
       return true;
     }
-    
+
     // Check environment variable as fallback
     const envKey = `${provider.toUpperCase()}_API_KEY`;
-    return !!process.env[envKey];
+    const hasEnvKey = !!process.env[envKey];
+
+    console.log(`Checking for ${envKey} in environment: ${hasEnvKey ? 'FOUND' : 'NOT FOUND'}`);
+    if (hasEnvKey) {
+      console.log(`${envKey} value length: ${process.env[envKey]?.length || 0}`);
+    }
+
+    return hasEnvKey;
   }
   
   /**

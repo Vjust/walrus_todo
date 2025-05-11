@@ -18,10 +18,20 @@ import { loadConfigFile, saveConfigToFile } from '../utils/config-loader';
  * @class ConfigService
  */
 export class ConfigService {
+  /** Path to the configuration file */
   private configPath: string;
+  
+  /** Path to the directory where Todo lists are stored */
   private todosPath: string;
+  
+  /** The loaded configuration object */
   private config: Config;
 
+  /**
+   * Creates a new ConfigService instance.
+   * Initializes the configuration paths, loads the configuration,
+   * updates environment settings, and ensures the todos directory exists.
+   */
   constructor() {
     // Look for config file in current directory first, then in home directory
     const currentDirConfig = path.join(process.cwd(), CLI_CONFIG.CONFIG_FILE);
@@ -44,6 +54,14 @@ export class ConfigService {
     this.ensureTodosDirectory();
   }
 
+  /**
+   * Updates the environment configuration with values from the loaded config.
+   * This ensures that environment variables reflect the current configuration
+   * settings, which might come from the config file or environment variables.
+   * 
+   * @private
+   * @returns {void}
+   */
   private updateEnvironmentConfig(): void {
     // Update environment configuration with values from config file
     envConfig.updateConfig('NETWORK', this.config.network, 'config');
@@ -63,6 +81,14 @@ export class ConfigService {
     }
   }
 
+  /**
+   * Ensures that the todos directory exists.
+   * Creates the directory if it doesn't exist.
+   * 
+   * @private
+   * @throws {CLIError} If the directory cannot be created
+   * @returns {void}
+   */
   private ensureTodosDirectory(): void {
     try {
       if (!fs.existsSync(this.todosPath)) {
@@ -76,10 +102,26 @@ export class ConfigService {
     }
   }
 
+  /**
+   * Constructs the full path to a Todo list file.
+   * 
+   * @private
+   * @param {string} listName - The name of the Todo list
+   * @returns {string} The full path to the Todo list file
+   */
   private getListPath(listName: string): string {
     return path.join(this.todosPath, `${listName}${STORAGE_CONFIG.FILE_EXT}`);
   }
 
+  /**
+   * Loads the configuration from the config file.
+   * Falls back to environment variables and defaults if the file doesn't exist
+   * or if specific values are missing.
+   * 
+   * @private
+   * @throws {CLIError} If the configuration file exists but cannot be loaded
+   * @returns {Config} The loaded configuration object
+   */
   private loadConfig(): Config {
     try {
       if (fs.existsSync(this.configPath)) {
@@ -112,10 +154,26 @@ export class ConfigService {
     };
   }
 
+  /**
+   * Returns the current configuration.
+   * 
+   * @public
+   * @returns {Config} The current configuration object
+   */
   public getConfig(): Config {
     return this.config;
   }
 
+  /**
+   * Updates and saves the configuration.
+   * Merges the provided partial configuration with the existing configuration
+   * and saves it to the config file.
+   * 
+   * @public
+   * @param {Partial<Config>} config - The partial configuration to merge with the existing configuration
+   * @throws {CLIError} If the configuration cannot be saved
+   * @returns {Promise<void>}
+   */
   public async saveConfig(config: Partial<Config>): Promise<void> {
     this.config = { ...this.config, ...config };
 
@@ -133,6 +191,14 @@ export class ConfigService {
     }
   }
 
+  /**
+   * Loads the data for a specific Todo list.
+   * 
+   * @private
+   * @param {string} listName - The name of the Todo list to load
+   * @throws {CLIError} If the list exists but cannot be loaded
+   * @returns {Promise<TodoList | null>} The Todo list data, or null if the list doesn't exist
+   */
   private async loadListData(listName: string): Promise<TodoList | null> {
     const listPath = this.getListPath(listName);
     try {
@@ -149,6 +215,15 @@ export class ConfigService {
     return null;
   }
 
+  /**
+   * Saves a Todo list to the file system.
+   * 
+   * @public
+   * @param {string} listName - The name of the Todo list to save
+   * @param {TodoList} list - The Todo list data to save
+   * @throws {CLIError} If the list cannot be saved
+   * @returns {Promise<TodoList>} The saved Todo list
+   */
   public async saveListData(listName: string, list: TodoList): Promise<TodoList> {
     const listPath = this.getListPath(listName);
     try {
@@ -162,10 +237,24 @@ export class ConfigService {
     }
   }
 
+  /**
+   * Retrieves a Todo list from local storage.
+   * 
+   * @public
+   * @param {string} listName - The name of the Todo list to retrieve
+   * @returns {Promise<TodoList | null>} The Todo list, or null if it doesn't exist
+   */
   public async getLocalTodos(listName: string): Promise<TodoList | null> {
     return this.loadListData(listName);
   }
 
+  /**
+   * Gets the names of all Todo lists in local storage.
+   * 
+   * @public
+   * @throws {CLIError} If the Todo lists directory cannot be read
+   * @returns {Promise<string[]>} An array of Todo list names
+   */
   public async getAllLists(): Promise<string[]> {
     try {
       const files = await fs.promises.readdir(this.todosPath);
@@ -180,9 +269,19 @@ export class ConfigService {
     }
   }
 
+  /**
+   * Saves a new Todo to a list.
+   * Creates the list if it doesn't exist.
+   * 
+   * @public
+   * @param {string} listName - The name of the Todo list
+   * @param {Todo} todo - The Todo to save
+   * @returns {Promise<void>}
+   */
   public async saveLocalTodo(listName: string, todo: Todo): Promise<void> {
     let list = await this.loadListData(listName);
     if (!list) {
+      // Create a new list if it doesn't exist
       list = {
         id: listName,
         name: listName,
@@ -197,6 +296,15 @@ export class ConfigService {
     await this.saveListData(listName, list);
   }
 
+  /**
+   * Updates an existing Todo in a list.
+   * 
+   * @public
+   * @param {string} listName - The name of the Todo list
+   * @param {Todo} todo - The updated Todo
+   * @throws {CLIError} If the list or Todo doesn't exist
+   * @returns {Promise<void>}
+   */
   public async updateLocalTodo(listName: string, todo: Todo): Promise<void> {
     const list = await this.loadListData(listName);
     if (!list) {
@@ -213,6 +321,15 @@ export class ConfigService {
     await this.saveListData(listName, list);
   }
 
+  /**
+   * Deletes a Todo from a list.
+   * 
+   * @public
+   * @param {string} listName - The name of the Todo list
+   * @param {string} todoId - The ID of the Todo to delete
+   * @throws {CLIError} If the list or Todo doesn't exist
+   * @returns {Promise<void>}
+   */
   public async deleteLocalTodo(listName: string, todoId: string): Promise<void> {
     const list = await this.loadListData(listName);
     if (!list) {
@@ -229,6 +346,14 @@ export class ConfigService {
     await this.saveListData(listName, list);
   }
 
+  /**
+   * Deletes an entire Todo list.
+   * 
+   * @public
+   * @param {string} listName - The name of the Todo list to delete
+   * @throws {CLIError} If the list exists but cannot be deleted
+   * @returns {Promise<void>}
+   */
   public async deleteList(listName: string): Promise<void> {
     const listPath = this.getListPath(listName);
     try {
@@ -243,6 +368,13 @@ export class ConfigService {
     }
   }
 
+  /**
+   * Finds a Todo by its ID across all lists.
+   * 
+   * @public
+   * @param {string} todoId - The ID of the Todo to find
+   * @returns {Promise<Todo | null>} The found Todo, or null if it doesn't exist
+   */
   public async getLocalTodoById(todoId: string): Promise<Todo | null> {
     const lists = await this.getAllLists();
     for (const listName of lists) {
@@ -256,7 +388,12 @@ export class ConfigService {
   }
 
   /**
-   * Updates environment configuration from CLI configuration
+   * Updates local configuration based on environment variables.
+   * If environment variables have changed since the config was loaded,
+   * this method updates the config and saves it to the config file.
+   * 
+   * @public
+   * @returns {void}
    */
   public updateFromEnvironment(): void {
     // Load environment configuration
@@ -269,6 +406,7 @@ export class ConfigService {
     // Update local config if environment values are set
     let configChanged = false;
 
+    // Check each environment variable and update config if different
     if (envNetwork && this.config.network !== envNetwork) {
       this.config.network = envNetwork;
       configChanged = true;
@@ -301,4 +439,8 @@ export class ConfigService {
   }
 }
 
+/**
+ * Singleton instance of the ConfigService.
+ * This exported constant provides global access to a shared ConfigService instance.
+ */
 export const configService = new ConfigService();

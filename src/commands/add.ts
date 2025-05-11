@@ -104,6 +104,11 @@ export default class AddCommand extends BaseCommand {
   private todoService = new TodoService();
   private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
   private aiServiceInstance = aiService;
+  /**
+   * Tracks whether the command is creating a new list or adding to an existing one.
+   * Used to provide appropriate success messaging to the user.
+   */
+  private isNewList = false;
 
   async run(): Promise<void> {
     try {
@@ -135,32 +140,42 @@ export default class AddCommand extends BaseCommand {
       let listName: string;
       let todoTitles: string[] = [];
 
-      // Check if there's an argument and task flags
+      /**
+       * Logic to determine list name and todo titles based on argument patterns:
+       * 1. If there's an argument + task flags: argument is list name, tasks from flags
+       * 2. If there's an argument but no task flags:
+       *    a. With explicit list flag: argument is title, list from flag
+       *    b. Without list flag: argument is title, list is default
+       * 3. If only task flags: use list flag or default, tasks from flags
+       * 4. No title provided: error
+       */
+
+      // Pattern 1: argument + task flags = argument is list name
       if (args.listOrTitle && flags.task && flags.task.length > 0) {
         // First argument is treated as the list name when tasks are provided with -t
         listName = CommandSanitizer.sanitizeString(args.listOrTitle);
         todoTitles = flags.task.map(t => CommandSanitizer.sanitizeString(t));
       }
-      // Check if there's an argument but no task flags
+      // Pattern 2: argument but no task flags
       else if (args.listOrTitle && (!flags.task || flags.task.length === 0)) {
-        // If the list flag is explicitly provided, the argument is the title
+        // Pattern 2a: With explicit list flag - argument is title
         if (flags.list) {
           listName = CommandSanitizer.sanitizeString(flags.list);
           todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
         }
-        // Otherwise, the argument is the title and list is default
+        // Pattern 2b: No list flag - argument is title, list is default
         else {
           listName = 'default';
           todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
         }
       }
-      // Check if there are only task flags but no argument
+      // Pattern 3: Only task flags, no argument
       else if (flags.task && flags.task.length > 0) {
         // Use the list flag if provided, otherwise default
         listName = CommandSanitizer.sanitizeString(flags.list || 'default');
         todoTitles = flags.task.map(t => CommandSanitizer.sanitizeString(t));
       }
-      // No title provided in any form
+      // Pattern 4: No title provided in any form
       else {
         this.errorWithHelp(
           'Missing title',
@@ -183,9 +198,9 @@ export default class AddCommand extends BaseCommand {
         ]);
       }
 
-      // Get attribute arrays
+      // Extract attribute arrays for the todos
       const storageLocation = flags.storage as StorageLocation;
-      const priorities = flags.priority || ['medium'];
+      const priorities = flags.priority || ['medium']; // Default to medium priority if not specified
       const dueDates = flags.due || [];
       const tagSets = flags.tags || [];
 
@@ -211,22 +226,37 @@ export default class AddCommand extends BaseCommand {
       // Check if list exists first
       const listExists = await this.todoService.getList(listName);
 
-      // If list doesn't exist, create it
+      // If list doesn't exist, create it and set the flag
       if (!listExists) {
         await this.todoService.createList(listName, 'default-owner');
+        this.isNewList = true; // Set flag for new list creation
         this.stopSpinnerSuccess(spinner, `Created new list: ${chalk.cyan(listName)}`);
       } else {
+        this.isNewList = false; // Reset flag for existing list
         this.stopSpinnerSuccess(spinner, `Found list: ${chalk.cyan(listName)}`);
       }
 
       const addedTodos: Todo[] = [];
 
-      // Process each todo
+      /**
+       * Process each todo, mapping appropriate attributes to each.
+       * For multiple todos, we handle attribute distribution as follows:
+       * - If there are more todos than attributes, the last attribute value is reused
+       * - Only the first todo shows "New List Created" message when creating a new list
+       */
       for (let i = 0; i < todoTitles.length; i++) {
         const todoTitle = todoTitles[i];
 
-        // Map attributes to this todo
-        // Get from the corresponding index, or use the last one as default
+        // Only the first task gets "New List" text if a new list was created
+        // After the first task, always use "New Task Added" even if the list is new
+        if (i > 0) {
+          this.isNewList = false;
+        }
+
+        // Map attributes to this todo using intelligent distribution pattern:
+        // 1. Use attribute at same index as todo if available
+        // 2. Fall back to last attribute value if there are fewer attributes than todos (for priorities)
+        // 3. Fall back to empty/undefined for other attributes if no value at index
         const priority = priorities[i] !== undefined ? priorities[i] : priorities[priorities.length - 1];
         const dueDate = dueDates[i] !== undefined ? CommandSanitizer.sanitizeDate(dueDates[i]) : undefined;
         const tags = tagSets[i] !== undefined ? CommandSanitizer.sanitizeTags(tagSets[i]) : [];
@@ -339,7 +369,11 @@ export default class AddCommand extends BaseCommand {
   }
 
   /**
-   * Handle JSON output format
+   * Handle JSON output format for programmatic CLI usage
+   * Replicates the core functionality of the main run method,
+   * but returns structured JSON instead of formatted console output.
+   * @param args Command arguments
+   * @param flags Command flags
    */
   private async handleJsonOutput(args: any, flags: any): Promise<void> {
     // Determine the list name and titles based on arguments and flags
@@ -384,6 +418,9 @@ export default class AddCommand extends BaseCommand {
     const listExists = await this.todoService.getList(listName);
     if (!listExists) {
       await this.todoService.createList(listName, 'default-owner');
+      this.isNewList = true; // Set flag for new list creation
+    } else {
+      this.isNewList = false; // Reset flag for existing list
     }
 
     const addedTodos: Todo[] = [];
@@ -391,6 +428,12 @@ export default class AddCommand extends BaseCommand {
     // Process each todo
     for (let i = 0; i < todoTitles.length; i++) {
       const todoTitle = todoTitles[i];
+
+      // Only the first task gets "New List" text if a new list was created
+      // After the first task, always use "New Task Added" even if the list is new
+      if (i > 0) {
+        this.isNewList = false;
+      }
 
       // Map attributes to this todo
       const priority = priorities[i] !== undefined ? priorities[i] : priorities[priorities.length - 1];
@@ -423,7 +466,12 @@ export default class AddCommand extends BaseCommand {
   }
 
   /**
-   * Enhance todo with AI suggestions
+   * Enhance todo with AI suggestions for tags and priority
+   * Uses the configured AI service to analyze the todo content and provide intelligent suggestions.
+   * If AI enhancement fails, it will gracefully fall back to user-provided values.
+   * @param todo Partial todo object to enhance
+   * @param todoTitle Title of the todo for AI analysis
+   * @param flags Command flags including AI configuration options
    */
   private async enhanceWithAI(todo: Partial<Todo>, todoTitle: string, flags: any): Promise<void> {
     try {
@@ -490,7 +538,17 @@ export default class AddCommand extends BaseCommand {
   }
 
   /**
-   * Store todo on blockchain
+   * Store todo on blockchain using Walrus decentralized storage
+   * This process involves several steps:
+   * 1. Connect to blockchain storage
+   * 2. Store todo on Walrus to get a blob ID
+   * 3. Update local copy with blockchain reference (if using hybrid storage)
+   * 4. Remove local copy if using blockchain-only storage
+   * 5. Display blockchain storage information to the user
+   *
+   * @param todo The todo object to store
+   * @param listName Name of the list containing the todo
+   * @param storageLocation Storage strategy (local, blockchain, or both)
    */
   private async storeOnBlockchain(todo: Todo, listName: string, storageLocation: StorageLocation): Promise<void> {
     // Show blockchain storage warning
@@ -587,28 +645,32 @@ export default class AddCommand extends BaseCommand {
     const storage = STORAGE[todo.storageLocation as keyof typeof STORAGE] || STORAGE.local;
     const priority = PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
 
-    // Build todo details
-    const details = [
-      `${ICONS.LIST} ${chalk.bold('List:')} ${chalk.cyan(listName)}`,
-      `${ICONS.PRIORITY} ${chalk.bold('Priority:')} ${priority.color(priority.label)}`,
-      todo.dueDate && `${ICONS.DATE} ${chalk.bold('Due:')} ${chalk.blue(todo.dueDate)}`,
-      todo.tags && todo.tags.length > 0 && `${ICONS.TAG} ${chalk.bold('Tags:')} ${chalk.cyan(todo.tags.join(', '))}`,
-      `${todo.private ? ICONS.SECURE : ICONS.INSECURE} ${chalk.bold('Private:')} ${todo.private ? chalk.yellow('Yes') : chalk.green('No')}`,
-      `${storage.icon} ${chalk.bold('Storage:')} ${storage.color(storage.label)}`
-    ].filter(Boolean).join('\n');
+    // Choose appropriate header based on whether this is a new list or just a new task
+    const headerText = this.isNewList ? `New List Created` : `New Task Added`;
 
-    // Create a header with todo title
-    const headerContent = chalk.bold(todo.title);
+    // Create a more compact display format
+    this.log(`${chalk.green(ICONS.SUCCESS)} ${chalk.bold.green(headerText)}: ${chalk.bold(todo.title)}`);
 
-    // Display box with todo information
-    this.section(`${ICONS.SUCCESS} New Todo Created`, `${headerContent}\n\n${details}`);
+    // Display essential details in a compact single-line format
+    const compactDetails = [
+      `${ICONS.LIST} List: ${chalk.cyan(listName)}`,
+      `${ICONS.PRIORITY} Priority: ${priority.color(priority.label)}`,
+      todo.dueDate && `${ICONS.DATE} Due: ${chalk.blue(todo.dueDate)}`,
+      todo.tags && todo.tags.length > 0 && `${ICONS.TAG} Tags: ${chalk.cyan(todo.tags.join(', '))}`,
+      `${storage.icon} Storage: ${storage.color(storage.label)}`
+    ].filter(Boolean);
+
+    // Display compact details on a single line
+    this.log(`  ${compactDetails.join(' | ')}`);
 
     // Provide helpful next steps
     const nextSteps = [
-      `${chalk.cyan(`${this.config.bin} list ${listName}`)} - View all todos in this list`,
-      `${chalk.cyan(`${this.config.bin} complete --id ${todo.id.slice(-6)}`)} - Mark this todo as completed`
+      `${chalk.cyan(`${this.config.bin} list ${listName}`)} - View all tasks`,
+      `${chalk.cyan(`${this.config.bin} complete --id ${todo.id.slice(-6)}`)} - Mark as completed`
     ];
 
-    this.simpleList('Next Steps', nextSteps);
+    // Display next steps on same line
+    this.log(`  ${chalk.bold('Next:')} ${nextSteps.join(' | ')}`);
+    this.log(''); // Add an empty line for spacing
   }
 }
