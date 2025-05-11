@@ -73,7 +73,7 @@ function loadDotEnvFile(envFile: string, required: boolean, throwOnError: boolea
   try {
     // First check in current directory
     let envPath = path.resolve(process.cwd(), envFile);
-    
+
     if (!fs.existsSync(envPath)) {
       // Then check in user's home directory
       const homeDir = process.env.HOME || process.env.USERPROFILE;
@@ -81,18 +81,41 @@ function loadDotEnvFile(envFile: string, required: boolean, throwOnError: boolea
         envPath = path.resolve(homeDir, envFile);
       }
     }
-    
+
     if (fs.existsSync(envPath)) {
+      // Only log in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Loading environment variables from ${envPath}`);
+      }
+
       const envConfig = dotenv.parse(fs.readFileSync(envPath));
-      
-      // Set environment variables, but don't overwrite existing ones
+
+      // Set environment variables, allowing .env to take precedence
       Object.entries(envConfig).forEach(([key, value]) => {
-        if (!process.env[key]) {
+        // Only skip overwriting for certain system variables that should not be changed
+        const systemVars = ['NODE_ENV', 'PATH', 'HOME', 'USER', 'SHELL'];
+        if (!systemVars.includes(key)) {
+          // Only log in development mode
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Setting environment variable ${key}=${value.substring(0, 3)}***`);
+          }
+          process.env[key] = value;
+        } else if (!process.env[key]) {
+          // For system variables, only set if not already present
+          // Only log in development mode
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Setting system environment variable ${key}=${value.substring(0, 3)}***`);
+          }
           process.env[key] = value;
         }
       });
     } else if (required) {
+      // Always log errors for required files
+      console.log(`Required .env file not found: ${envFile}`);
       throw new Error(`Required .env file not found: ${envFile}`);
+    } else if (process.env.NODE_ENV === 'development') {
+      // Only log missing optional files in development mode
+      console.log(`.env file not found at ${envPath}`);
     }
   } catch (error) {
     if (throwOnError) {

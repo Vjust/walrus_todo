@@ -104,7 +104,18 @@ export const STORAGE = {
 };
 
 /**
- * Base class for all walrus todo commands
+ * Base command class that all WalTodo CLI commands extend
+ *
+ * This class provides common functionality used across all commands including:
+ * - Standardized flags (help, json, verbose, etc.)
+ * - Authentication handling
+ * - Permission checking
+ * - Consistent UI elements (success/error messages, spinners, formatted output)
+ * - JSON output support
+ * - Logging utilities
+ *
+ * Commands should extend this class to ensure a consistent user experience
+ * and avoid duplicating common functionality.
  */
 export default abstract class BaseCommand extends Command {
   static flags = {
@@ -260,6 +271,11 @@ export default abstract class BaseCommand extends Command {
 
   /**
    * Draw a titled section with a box around it
+   * Creates a visually distinct box with a title bar for structured content display.
+   * The box automatically adjusts width based on content.
+   *
+   * @param title Section title displayed in the box header
+   * @param content Content to display inside the box (can be multi-line)
    */
   protected section(title: string, content: string): void {
     if (this.shouldSuppressOutput()) return;
@@ -293,7 +309,16 @@ export default abstract class BaseCommand extends Command {
   }
 
   /**
-   * Format a todo item for display
+   * Format a todo item for display with consistent styling
+   * Creates a human-readable string representation of a todo item with:
+   * - Status indicator (completed/pending)
+   * - Priority indicator with appropriate color
+   * - Title
+   * - Optional details (due date, tags, privacy status)
+   *
+   * @param todo Todo item to format
+   * @param showDetail Whether to include detailed information (default: true)
+   * @returns Formatted string ready for display
    */
   protected formatTodo(todo: any, showDetail: boolean = true): string {
     const status = todo.completed
@@ -468,6 +493,12 @@ export default abstract class BaseCommand extends Command {
   /**
    * Override log method to ensure output is always visible
    * while avoiding duplicate console output
+   *
+   * This implementation resolves an issue with the base Command class
+   * where using both super.log and console.log would cause duplicate output.
+   *
+   * @param message Message to log
+   * @param args Additional arguments
    */
   log(message: string, ...args: any[]): void {
     // Call the original log method only - we don't need both super.log and console.log

@@ -21,50 +21,108 @@ import { Logger } from '../utils/Logger';
 import { auditLogger } from '../utils/AuditLogger';
 import { permissionService } from './permission-service';
 
-// Session configuration
+/**
+ * Default duration for access tokens in seconds (1 hour)
+ * Used to set expiration time when creating new authentication tokens
+ */
 const DEFAULT_TOKEN_EXPIRY = 3600; // 1 hour in seconds
+
+/**
+ * Default duration for refresh tokens in seconds (7 days)
+ * Used to determine how long a user can refresh their session without re-authenticating
+ */
 const DEFAULT_REFRESH_TOKEN_EXPIRY = 604800; // 7 days in seconds
+
+/**
+ * Secret key used for signing JWT tokens
+ * In production environments, this should be set via environment variable
+ */
 const JWT_SECRET = process.env.JWT_SECRET || 'walrus-todo-default-secret';
 
+/**
+ * Interface representing stored user credentials
+ * Contains password hash, salt, and associated user information
+ */
 interface StoredCredentials {
+  /** The hashed password using PBKDF2 with salt */
   passwordHash: string;
+  /** Unique salt used in password hashing to prevent rainbow table attacks */
   salt: string;
+  /** Associated user ID */
   userId: string;
+  /** Timestamp when credentials were last updated */
   lastUpdated: number;
 }
 
+/**
+ * Interface representing an API key associated with a user
+ * API keys provide an alternative authentication method for automation and integrations
+ */
 interface ApiKey {
+  /** The API key string itself */
   key: string;
+  /** The user ID associated with this API key */
   userId: string;
+  /** Human-readable name for the API key */
   name: string;
+  /** Optional expiration timestamp for the API key */
   expiresAt?: number;
+  /** Timestamp when the API key was created */
   createdAt: number;
 }
 
+/**
+ * Interface representing a user session
+ * Contains refresh token and session metadata
+ */
 interface Session {
+  /** Unique session identifier */
   id: string;
+  /** Associated user ID */
   userId: string;
+  /** Refresh token for obtaining new access tokens */
   refreshToken: string;
+  /** Timestamp when session expires */
   expiresAt: number;
+  /** Timestamp when session was created */
   createdAt: number;
+  /** Optional IP address that created the session */
   ipAddress?: string;
+  /** Optional user agent string of the client */
   userAgent?: string;
+  /** Timestamp of last session activity */
   lastActiveAt: number;
 }
 
+/**
+ * Service for handling authentication, user accounts, and session management
+ * Implements multiple authentication methods and secure token handling
+ */
 export class AuthenticationService {
+  /** Singleton instance of the AuthenticationService */
   private static instance: AuthenticationService;
+  /** Logger instance for recording authentication events and errors */
   private logger: Logger;
+  /** Map of username to stored credentials */
   private credentials: Map<string, StoredCredentials> = new Map();
+  /** Map of API key string to API key information */
   private apiKeys: Map<string, ApiKey> = new Map();
+  /** Map of session ID to session information */
   private sessions: Map<string, Session> = new Map();
   
+  /**
+   * Private constructor to enforce singleton pattern
+   * Initializes the logger instance
+   */
   private constructor() {
     this.logger = Logger.getInstance();
   }
   
   /**
    * Get singleton instance of AuthenticationService
+   * Creates a new instance if one doesn't exist yet
+   * 
+   * @returns The singleton AuthenticationService instance
    */
   public static getInstance(): AuthenticationService {
     if (!AuthenticationService.instance) {
@@ -74,21 +132,37 @@ export class AuthenticationService {
   }
   
   /**
-   * Generate a secure salt
+   * Generate a secure random salt for password hashing
+   * Uses cryptographically secure random number generator
+   * 
+   * @returns A hexadecimal string representing the salt
    */
   private generateSalt(): string {
     return crypto.randomBytes(16).toString('hex');
   }
   
   /**
-   * Hash a password with salt
+   * Hash a password with the provided salt using PBKDF2
+   * Uses 10,000 iterations of SHA-512 for security
+   * 
+   * @param password - The plaintext password to hash
+   * @param salt - The salt to use in the hashing process
+   * @returns The hexadecimal string of the hashed password
    */
   private hashPassword(password: string, salt: string): string {
     return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
   }
   
   /**
-   * Create a new user account with credentials
+   * Create a new user account with username/password credentials
+   * Also handles association with blockchain address if provided
+   * 
+   * @param username - Unique username for the new account
+   * @param password - Password for the new account
+   * @param address - Optional blockchain wallet address to associate
+   * @param roles - User roles to assign (defaults to basic USER role)
+   * @returns The newly created user object
+   * @throws CLIError if username already exists
    */
   public async createUserAccount(
     username: string,
@@ -136,7 +210,15 @@ export class AuthenticationService {
   }
   
   /**
-   * Change user password
+   * Change a user's password
+   * Requires verification of current password for security
+   * Invalidates all existing sessions when password is changed
+   * 
+   * @param userId - ID of the user whose password is being changed
+   * @param currentPassword - Current password for verification
+   * @param newPassword - New password to set
+   * @returns Boolean indicating success
+   * @throws CLIError if user not found, credentials not found, or current password is incorrect
    */
   public async changePassword(
     userId: string,
@@ -208,7 +290,15 @@ export class AuthenticationService {
   }
   
   /**
-   * Authenticate with username and password
+   * Authenticate a user with username and password
+   * Validates credentials and creates a new session if valid
+   * 
+   * @param username - Username to authenticate with
+   * @param password - Password to authenticate with
+   * @param ipAddress - Optional IP address for audit logging
+   * @param userAgent - Optional user agent string for audit logging
+   * @returns Authentication result containing user info and tokens
+   * @throws CLIError if credentials are invalid or user not found
    */
   public async authenticateWithCredentials(
     username: string,
@@ -292,7 +382,17 @@ export class AuthenticationService {
   }
   
   /**
-   * Authenticate with blockchain wallet signature
+   * Authenticate a user with a blockchain wallet signature
+   * Verifies the wallet's signature on a message and creates a session
+   * If the wallet address isn't associated with an existing user, creates a new user
+   * 
+   * @param address - Blockchain wallet address
+   * @param signature - Signature to verify
+   * @param message - Original message that was signed
+   * @param ipAddress - Optional IP address for audit logging
+   * @param userAgent - Optional user agent string for audit logging
+   * @returns Authentication result containing user info and tokens
+   * @throws CLIError if signature verification fails
    */
   public async authenticateWithWallet(
     address: string,
@@ -392,6 +492,13 @@ export class AuthenticationService {
   
   /**
    * Create a new API key for a user
+   * API keys provide long-lived authentication tokens for integrations and automation
+   * 
+   * @param userId - ID of the user to create API key for
+   * @param keyName - Human-readable name for the API key
+   * @param expiryDays - Optional number of days until the key expires
+   * @returns The generated API key string
+   * @throws CLIError if user not found
    */
   public async createApiKey(
     userId: string,
@@ -438,7 +545,14 @@ export class AuthenticationService {
   }
   
   /**
-   * Authenticate with API key
+   * Authenticate a user with an API key
+   * Validates the API key and creates a new session if valid
+   * 
+   * @param apiKey - API key to authenticate with
+   * @param ipAddress - Optional IP address for audit logging
+   * @param userAgent - Optional user agent string for audit logging
+   * @returns Authentication result containing user info and tokens
+   * @throws CLIError if API key is invalid or expired
    */
   public async authenticateWithApiKey(
     apiKey: string,
@@ -520,7 +634,13 @@ export class AuthenticationService {
   }
   
   /**
-   * Create a session and generate tokens
+   * Create a session and generate access and refresh tokens
+   * This is an internal method used by the various authentication methods
+   * 
+   * @param user - User object to create session for
+   * @param ipAddress - Optional IP address for session tracking
+   * @param userAgent - Optional user agent string for session tracking
+   * @returns Authentication result with tokens and user info
    */
   private async createSession(
     user: PermissionUser,
@@ -531,7 +651,7 @@ export class AuthenticationService {
     const expiresAt = Math.floor(Date.now() / 1000) + DEFAULT_TOKEN_EXPIRY;
     const refreshExpiresAt = Math.floor(Date.now() / 1000) + DEFAULT_REFRESH_TOKEN_EXPIRY;
     
-    // Create JWT token
+    // Create JWT token with user info and expiration
     const token = jwt.sign(
       {
         sub: user.id,
@@ -542,10 +662,10 @@ export class AuthenticationService {
       JWT_SECRET
     );
     
-    // Create refresh token
+    // Create cryptographically secure refresh token
     const refreshToken = crypto.randomBytes(40).toString('hex');
     
-    // Store session
+    // Store session with refresh token and metadata
     const sessionId = uuidv4();
     this.sessions.set(sessionId, {
       id: sessionId,
@@ -574,14 +694,18 @@ export class AuthenticationService {
   }
   
   /**
-   * Validate a token
+   * Validate a JWT token
+   * Verifies the token signature and expiration
+   * 
+   * @param token - JWT token to validate
+   * @returns Token validation result with user info if valid
    */
   public async validateToken(token: string): Promise<TokenValidationResult> {
     try {
-      // Verify JWT token
+      // Verify JWT token signature and expiration
       const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
       
-      // Get user
+      // Get user from the token subject claim
       const userId = decoded.sub as string;
       const user = await permissionService.getUser(userId);
       
@@ -592,13 +716,14 @@ export class AuthenticationService {
         };
       }
       
-      // Return validation result
+      // Return successful validation result with user info
       return {
         valid: true,
         expired: false,
         user
       };
     } catch (error) {
+      // Handle specific JWT verification errors
       if (error instanceof jwt.TokenExpiredError) {
         return {
           valid: false,
@@ -606,6 +731,7 @@ export class AuthenticationService {
         };
       }
       
+      // For any other error, token is invalid
       return {
         valid: false,
         expired: false
@@ -615,6 +741,13 @@ export class AuthenticationService {
   
   /**
    * Refresh a session using a refresh token
+   * Creates a new session and invalidates the old one
+   * 
+   * @param refreshToken - Refresh token from previous authentication
+   * @param ipAddress - Optional IP address for audit logging
+   * @param userAgent - Optional user agent string for audit logging
+   * @returns New authentication result with fresh tokens
+   * @throws CLIError if refresh token is invalid or expired
    */
   public async refreshSession(
     refreshToken: string,
@@ -662,10 +795,10 @@ export class AuthenticationService {
       throw new CLIError('User not found', 'USER_NOT_FOUND');
     }
     
-    // Remove old session
+    // Remove old session for security (one-time use refresh tokens)
     this.sessions.delete(session.id);
     
-    // Create new session
+    // Create new session with fresh tokens
     const authResult = await this.createSession(user, ipAddress, userAgent);
     
     // Log successful refresh
@@ -688,11 +821,14 @@ export class AuthenticationService {
   }
   
   /**
-   * Invalidate a session
+   * Invalidate a user's session based on their JWT token
+   * Used for logout functionality
+   * 
+   * @param token - JWT token identifying the session to invalidate
    */
   public async invalidateSession(token: string): Promise<void> {
     try {
-      // Verify JWT token
+      // Verify JWT token to get the user ID
       const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
       
       // Get user ID
@@ -727,7 +863,10 @@ export class AuthenticationService {
   }
   
   /**
-   * Invalidate all sessions for a user
+   * Invalidate all sessions for a specific user
+   * Used when changing password or for security lockouts
+   * 
+   * @param userId - ID of the user whose sessions should be invalidated
    */
   public async invalidateAllUserSessions(userId: string): Promise<void> {
     // Find all sessions for this user
@@ -756,6 +895,10 @@ export class AuthenticationService {
   
   /**
    * Revoke an API key
+   * Permanently removes the API key from the system
+   * 
+   * @param apiKey - The API key to revoke
+   * @throws CLIError if API key not found
    */
   public async revokeApiKey(apiKey: string): Promise<void> {
     // Get API key info

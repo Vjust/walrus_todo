@@ -13,18 +13,44 @@ export class ResponseParser {
    * @param defaultValue The default value to return if parsing fails
    * @returns The parsed object or default value
    */
-  public static parseJson<T>(jsonString: string, defaultValue: T): T {
+  public static parseJson<T>(jsonStringOrObject: string | any, defaultValue: T): T {
     try {
+      // If it's already an object (not a string), return it directly
+      if (typeof jsonStringOrObject !== 'string') {
+        // If it's already the correct type, return it
+        if (
+          // Arrays
+          (Array.isArray(defaultValue) && Array.isArray(jsonStringOrObject)) ||
+          // Objects
+          (typeof defaultValue === 'object' &&
+           defaultValue !== null &&
+           typeof jsonStringOrObject === 'object' &&
+           jsonStringOrObject !== null &&
+           !Array.isArray(jsonStringOrObject))
+        ) {
+          return jsonStringOrObject as T;
+        }
+
+        // String representation to help with debugging
+        console.log('Received non-string, non-matching type:', typeof jsonStringOrObject);
+        return defaultValue;
+      }
+
+      // Handle empty or whitespace-only strings
+      if (!jsonStringOrObject || !jsonStringOrObject.trim()) {
+        return defaultValue;
+      }
+
       // Handle cases where the AI might wrap the JSON in markdown code blocks
-      let processed = jsonString.trim();
-      
+      let processed = jsonStringOrObject.trim();
+
       // Remove markdown code blocks if present
       const codeBlockRegex = /^```(?:json)?\s*([\s\S]*?)```$/;
       const match = processed.match(codeBlockRegex);
       if (match && match[1]) {
         processed = match[1].trim();
       }
-      
+
       return JSON.parse(processed) as T;
     } catch (error) {
       console.error('Error parsing JSON response:', error);

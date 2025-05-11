@@ -18,12 +18,24 @@ import { CLIError } from '../types/error';
  * @class TodoService
  */
 export class TodoService {
+  /**
+   * Directory path where todo list files are stored
+   * @private
+   */
   private readonly todosDir: string = path.join(process.cwd(), STORAGE_CONFIG.TODOS_DIR);
 
+  /**
+   * Initializes a new instance of TodoService and ensures the todos directory exists
+   */
   constructor() {
     fsPromises.mkdir(this.todosDir, { recursive: true }).catch(() => {/* ignore */});
   }
 
+  /**
+   * Retrieves all available todo list names from the storage directory
+   * 
+   * @returns {Promise<string[]>} Array of todo list names without file extensions
+   */
   async getAllLists(): Promise<string[]> {
     const files = await fsPromises.readdir(this.todosDir).catch(() => []);
     return files
@@ -32,8 +44,9 @@ export class TodoService {
   }
 
   /**
-   * List all todos from all lists
-   * @returns Array of todos from all lists
+   * Lists all todos from all available todo lists
+   * 
+   * @returns {Promise<Todo[]>} Aggregated array of todos from all lists
    */
   async listTodos(): Promise<Todo[]> {
     const lists = await this.getAllLists();
@@ -49,12 +62,21 @@ export class TodoService {
     return allTodos;
   }
 
+  /**
+   * Creates a new todo list with the specified name and owner
+   * 
+   * @param {string} name - Name of the new todo list
+   * @param {string} owner - Owner identifier for the list
+   * @returns {Promise<TodoList>} The newly created todo list
+   * @throws {CLIError} If a list with the given name already exists
+   */
   async createList(name: string, owner: string): Promise<TodoList> {
     const existingList = await this.getList(name);
     if (existingList) {
       throw new CLIError(`List "${name}" already exists`, 'LIST_EXISTS');
     }
 
+    // Initialize new list with metadata
     const newList: TodoList = {
       id: generateId(),
       name,
@@ -69,6 +91,12 @@ export class TodoService {
     return newList;
   }
 
+  /**
+   * Retrieves a todo list by name
+   * 
+   * @param {string} listName - Name of the todo list to retrieve
+   * @returns {Promise<TodoList | null>} The todo list if found, null otherwise
+   */
   async getList(listName: string): Promise<TodoList | null> {
     try {
       const data = await fsPromises.readFile(
@@ -77,16 +105,31 @@ export class TodoService {
       );
       return JSON.parse(data) as TodoList;
     } catch (err) {
+      // Return null instead of throwing if list doesn't exist
       return null;
     }
   }
 
+  /**
+   * Gets a todo item by its ID from a specified list
+   * 
+   * @param {string} todoId - ID of the todo to retrieve
+   * @param {string} [listName='default'] - Name of the list containing the todo
+   * @returns {Promise<Todo | null>} The todo if found, null otherwise
+   */
   async getTodo(todoId: string, listName: string = 'default'): Promise<Todo | null> {
     const list = await this.getList(listName);
     if (!list) return null;
     return list.todos.find(t => t.id === todoId) || null;
   }
 
+  /**
+   * Gets a todo item by its title from a specified list (case-insensitive match)
+   * 
+   * @param {string} title - Title of the todo to retrieve
+   * @param {string} [listName='default'] - Name of the list containing the todo
+   * @returns {Promise<Todo | null>} The todo if found, null otherwise
+   */
   async getTodoByTitle(title: string, listName: string = 'default'): Promise<Todo | null> {
     const list = await this.getList(listName);
     if (!list) return null;
@@ -94,6 +137,14 @@ export class TodoService {
     return list.todos.find(t => t.title.toLowerCase() === title.toLowerCase()) || null;
   }
 
+  /**
+   * Gets a todo item by either its ID or title from a specified list
+   * Attempts to find by ID first, then falls back to finding by title
+   * 
+   * @param {string} titleOrId - ID or title of the todo to retrieve
+   * @param {string} [listName='default'] - Name of the list containing the todo
+   * @returns {Promise<Todo | null>} The todo if found, null otherwise
+   */
   async getTodoByTitleOrId(titleOrId: string, listName: string = 'default'): Promise<Todo | null> {
     // First try to find by ID (for backward compatibility)
     const todoById = await this.getTodo(titleOrId, listName);
@@ -103,12 +154,21 @@ export class TodoService {
     return this.getTodoByTitle(titleOrId, listName);
   }
 
+  /**
+   * Adds a new todo to a specified list
+   * 
+   * @param {string} listName - Name of the list to add the todo to
+   * @param {Partial<Todo>} todo - Todo data (partial, missing fields will be set to defaults)
+   * @returns {Promise<Todo>} The newly created todo with complete data
+   * @throws {CLIError} If the specified list doesn't exist
+   */
   async addTodo(listName: string, todo: Partial<Todo>): Promise<Todo> {
     const list = await this.getList(listName);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
 
+    // Create a complete todo from the partial input
     const newTodo: Todo = {
       id: generateId(),
       title: todo.title || '',
@@ -122,12 +182,22 @@ export class TodoService {
       storageLocation: todo.storageLocation || 'local'
     };
 
+    // Add to list and persist changes
     list.todos.push(newTodo);
     list.updatedAt = new Date().toISOString();
     await this.saveList(listName, list);
     return newTodo;
   }
 
+  /**
+   * Updates an existing todo in a specified list
+   * 
+   * @param {string} listName - Name of the list containing the todo
+   * @param {string} todoId - ID of the todo to update
+   * @param {Partial<Todo>} updates - Partial todo data with fields to update
+   * @returns {Promise<Todo>} The updated todo with complete data
+   * @throws {CLIError} If the list or todo doesn't exist
+   */
   async updateTodo(listName: string, todoId: string, updates: Partial<Todo>): Promise<Todo> {
     const list = await this.getList(listName);
     if (!list) {
@@ -139,6 +209,7 @@ export class TodoService {
       throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
     }
 
+    // Create updated todo by merging existing data with updates
     const todo = list.todos[todoIndex];
     const updatedTodo: Todo = {
       ...todo,
@@ -146,12 +217,21 @@ export class TodoService {
       updatedAt: new Date().toISOString()
     };
 
+    // Update in list and persist changes
     list.todos[todoIndex] = updatedTodo;
     list.updatedAt = new Date().toISOString();
     await this.saveList(listName, list);
     return updatedTodo;
   }
 
+  /**
+   * Toggles the completion status of a todo item
+   * 
+   * @param {string} listName - Name of the list containing the todo
+   * @param {string} itemId - ID of the todo to toggle status
+   * @param {boolean} checked - New completion status (true = completed, false = not completed)
+   * @returns {Promise<void>}
+   */
   async toggleItemStatus(listName: string, itemId: string, checked: boolean): Promise<void> {
     await this.updateTodo(listName, itemId, {
       completed: checked,
@@ -159,6 +239,14 @@ export class TodoService {
     });
   }
 
+  /**
+   * Deletes a todo from a specified list
+   * 
+   * @param {string} listName - Name of the list containing the todo
+   * @param {string} todoId - ID of the todo to delete
+   * @returns {Promise<void>}
+   * @throws {CLIError} If the list or todo doesn't exist
+   */
   async deleteTodo(listName: string, todoId: string): Promise<void> {
     const list = await this.getList(listName);
     if (!list) {
@@ -170,11 +258,20 @@ export class TodoService {
       throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
     }
 
+    // Remove todo from list and persist changes
     list.todos.splice(todoIndex, 1);
     list.updatedAt = new Date().toISOString();
     await this.saveList(listName, list);
   }
 
+  /**
+   * Saves a todo list to persistent storage
+   * 
+   * @param {string} listName - Name of the list to save
+   * @param {TodoList} list - Todo list data to save
+   * @returns {Promise<void>}
+   * @throws {CLIError} If saving fails due to file system errors
+   */
   async saveList(listName: string, list: TodoList): Promise<void> {
     const file = path.join(this.todosDir, `${listName}${STORAGE_CONFIG.FILE_EXT}`);
     try {
@@ -187,6 +284,13 @@ export class TodoService {
     }
   }
 
+  /**
+   * Deletes a todo list from persistent storage
+   * 
+   * @param {string} listName - Name of the list to delete
+   * @returns {Promise<void>}
+   * @throws {CLIError} If deletion fails due to file system errors
+   */
   async deleteList(listName: string): Promise<void> {
     const file = path.join(this.todosDir, `${listName}${STORAGE_CONFIG.FILE_EXT}`);
     try {

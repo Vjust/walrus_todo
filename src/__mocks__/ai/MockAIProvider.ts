@@ -1,7 +1,33 @@
 /**
  * MockAIProvider - Main class for mocking AI provider responses
- * This provides a flexible API for mocking different AI providers with
- * customizable response templates, error simulation, and latency control.
+ * 
+ * A comprehensive mocking system for AI providers that implements the AIModelAdapter interface.
+ * This class provides a flexible framework for testing AI-dependent functionality with:
+ * - Customizable response templates for different operations
+ * - Configurable error simulation with various failure scenarios
+ * - Network latency simulation with jitter and timeout capabilities
+ * - Request/response recording for playback in tests
+ * 
+ * Use this for unit and integration tests where real AI calls would be impractical,
+ * expensive, or introduce flakiness into test results.
+ * 
+ * @example
+ * ```typescript
+ * // Basic usage with default mock responses
+ * const mockAI = new MockAIProvider();
+ * const response = await mockAI.complete({ prompt: "Summarize these tasks" });
+ * 
+ * // Configure with custom responses and error simulation
+ * mockAI.configure({
+ *   templates: { 
+ *     summarize: { textResponse: "Custom summary response" }
+ *   },
+ *   errors: {
+ *     errorProbability: 0.2,
+ *     errorTypes: ['network', 'timeout']
+ *   }
+ * });
+ * ```
  */
 
 import { 
@@ -24,17 +50,38 @@ import { MockResponseRecorder } from './MockResponseRecorder';
 import { ResponseTemplateManager } from './ResponseTemplateManager';
 import { ErrorSimulator } from './ErrorSimulator';
 
+/**
+ * MockAIProvider implements the AIModelAdapter interface to provide
+ * a fully-featured mock for AI model interactions in testing environments.
+ * 
+ * It supports text completions, structured data responses, and prompt template
+ * processing with configurable response templates, latency simulation, and error injection.
+ * 
+ * @implements {AIModelAdapter}
+ */
 export class MockAIProvider implements AIModelAdapter {
+  /** The AI provider being mocked (XAI, OpenAI, etc.) */
   protected provider: AIProvider;
+  
+  /** The model name being used for mock responses */
   protected modelName: string;
+  
+  /** Configuration options for the mock AI model */
   protected options: AIModelOptions;
   
-  // Response control components
+  /** Manager for response templates that determine mock outputs */
   private responseTemplates: ResponseTemplateManager;
+  
+  /** Simulator for injecting errors into mock AI responses */
   private errorSimulator: ErrorSimulator;
+  
+  /** Optional recorder for capturing mock interactions */
   private recorder?: MockResponseRecorder;
   
-  // Latency simulation
+  /**
+   * Configuration for simulated network latency
+   * Controls response timing, jitter, and potential timeouts
+   */
   private latencyOptions: LatencyOptions = {
     enabled: false,
     minLatencyMs: 100,
@@ -44,9 +91,17 @@ export class MockAIProvider implements AIModelAdapter {
     timeoutAfterMs: 30000
   };
   
-  // Recording mode
+  /** Current recording mode for mock interactions */
   private recordingMode: RecordingMode = RecordingMode.DISABLED;
   
+  /**
+   * Creates a new MockAIProvider instance
+   * 
+   * @param provider - The AI provider to mock (defaults to XAI)
+   * @param modelName - The name to use for the mock model (defaults to 'mock-model')
+   * @param options - Model options like temperature and token limits
+   * @param mockResponses - Custom response templates (defaults to standard templates)
+   */
   constructor(
     provider: AIProvider = AIProvider.XAI,
     modelName: string = 'mock-model',
@@ -67,28 +122,42 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Get the name of the provider being mocked
+   * Gets the name of the AI provider being mocked
+   * 
+   * @returns The provider enum value (XAI, OPENAI, etc.)
    */
   public getProviderName(): AIProvider {
     return this.provider;
   }
   
   /**
-   * Get the name of the current model being mocked
+   * Gets the name of the current model being mocked
+   * 
+   * @returns The model name string
    */
   public getModelName(): string {
     return this.modelName;
   }
   
   /**
-   * Set the model name
+   * Sets the mock model name
+   * 
+   * @param modelName - The new model name to use
    */
   public setModelName(modelName: string): void {
     this.modelName = modelName;
   }
   
   /**
-   * Configure mock response behavior
+   * Configures the mock provider's behavior
+   * 
+   * This method allows comprehensive configuration of the mock's behavior including:
+   * - Custom response templates for different operations
+   * - Error simulation settings
+   * - Network latency simulation
+   * - Recording mode for capturing and replaying interactions
+   * 
+   * @param options - Configuration options for the mock provider
    */
   public configure(options: MockResponseOptions): void {
     if (options.templates) {
@@ -116,7 +185,17 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Generate a completion from the mocked AI model
+   * Generates a text completion from the mocked AI model
+   * 
+   * Simulates an AI completion call by:
+   * 1. Applying configured latency simulation
+   * 2. Potentially throwing errors based on error configuration
+   * 3. Recording the interaction if recording is enabled
+   * 4. Returning a template-based response with mock token usage stats
+   * 
+   * @param params - The completion parameters including prompt and metadata
+   * @returns A promise resolving to an AIResponse with the mock completion
+   * @throws Error if the error simulator is configured to fail this operation
    */
   public async complete(params: AICompletionParams): Promise<AIResponse> {
     await this.simulateLatency();
@@ -159,7 +238,16 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Generate a structured response from the mocked AI model
+   * Generates a structured response from the mocked AI model
+   * 
+   * Similar to the complete method, but returns a typed structured object
+   * instead of a plain text response. Useful for testing JSON or structured
+   * data expectations from AI operations.
+   * 
+   * @template T - The expected return structure type
+   * @param params - The completion parameters including prompt and metadata
+   * @returns A promise resolving to an AIResponse with structured data of type T
+   * @throws Error if the error simulator is configured to fail this operation
    */
   public async completeStructured<T>(params: AICompletionParams): Promise<AIResponse<T>> {
     await this.simulateLatency();
@@ -206,7 +294,16 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Process a prompt through a mocked LangChain chain
+   * Processes a prompt through a mocked LangChain template
+   * 
+   * Simulates using a LangChain PromptTemplate to format variables
+   * into a prompt and then generating a response. This allows testing
+   * of code that uses LangChain's templating without real AI calls.
+   * 
+   * @param promptTemplate - The LangChain prompt template to use
+   * @param input - Variables to inject into the template
+   * @returns A promise resolving to an AIResponse with the mock completion
+   * @throws Error if template formatting fails or if error simulation is triggered
    */
   public async processWithPromptTemplate(
     promptTemplate: PromptTemplate, 
@@ -258,14 +355,26 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Get the recorded interactions if recording is enabled
+   * Gets all recorded AI interactions
+   * 
+   * Retrieves the full history of recorded requests and responses if
+   * recording has been enabled. Useful for test assertions or debugging.
+   * 
+   * @returns Array of recorded interactions or empty array if recording is disabled
    */
   public getRecordedInteractions() {
     return this.recorder?.getRecordings() || [];
   }
   
   /**
-   * Save recorded interactions to a file
+   * Saves recorded interactions to a JSON file
+   * 
+   * Allows saving the history of requests and responses to a file
+   * for later replay or analysis. This is useful for creating
+   * reproducible test scenarios.
+   * 
+   * @param filePath - Optional path to save recordings (defaults to timestamp-based filename)
+   * @returns true if recordings were saved successfully, false otherwise
    */
   public saveRecordings(filePath?: string): boolean {
     if (this.recordingMode === RecordingMode.DISABLED || !this.recorder) {
@@ -276,7 +385,14 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Load recorded interactions from a file for replay
+   * Loads recorded interactions from a JSON file
+   * 
+   * Imports previously recorded AI interactions for replay in tests.
+   * When loaded, the mock will use these recorded interactions instead
+   * of generating new responses.
+   * 
+   * @param filePath - Path to the JSON file containing recorded interactions
+   * @returns true if recordings were loaded successfully, false otherwise
    */
   public loadRecordings(filePath: string): boolean {
     if (!this.recorder) {
@@ -292,7 +408,15 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Reset all mock configurations to defaults
+   * Resets all mock configurations to default values
+   * 
+   * Clears all custom configurations including:
+   * - Response templates (reverts to defaults)
+   * - Error simulation settings
+   * - Latency options
+   * - Recording mode and recorded interactions
+   * 
+   * Use this to ensure a clean state between tests.
    */
   public reset(): void {
     this.responseTemplates = new ResponseTemplateManager(DefaultMockResponses);
@@ -310,7 +434,16 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Generate random token usage stats for mocking
+   * Generates mock token usage statistics
+   * 
+   * Creates realistic-looking token usage estimates based on the
+   * length of the prompt and response strings. This is a rough
+   * approximation as real tokenization is more complex.
+   * 
+   * @param prompt - The input prompt string
+   * @param response - The output response string
+   * @returns Object containing prompt, completion, and total token counts
+   * @private
    */
   private generateMockTokenUsage(prompt: string, response: string): { prompt: number; completion: number; total: number } {
     // Very roughly estimate token counts based on string lengths
@@ -326,7 +459,16 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Simulate network latency in responses
+   * Simulates network latency in AI responses
+   * 
+   * Adds configurable delay before responses to simulate real-world
+   * network conditions. Can be configured with:
+   * - Fixed or random latency within a range
+   * - Jitter for more realistic variation
+   * - Random timeouts to simulate failed requests
+   * 
+   * @throws Error if timeout simulation is triggered
+   * @private
    */
   private async simulateLatency(): Promise<void> {
     if (!this.latencyOptions.enabled) {
@@ -353,7 +495,15 @@ export class MockAIProvider implements AIModelAdapter {
   }
   
   /**
-   * Infer the operation type from the prompt content
+   * Infers the operation type from prompt content
+   * 
+   * Analyzes the prompt text to determine what kind of operation
+   * is being requested (summarize, categorize, etc.). This helps
+   * in selecting the appropriate response template.
+   * 
+   * @param prompt - The prompt string to analyze
+   * @returns The inferred operation type as a string
+   * @private
    */
   private inferOperationType(prompt: string): string {
     const lowerPrompt = prompt.toLowerCase();

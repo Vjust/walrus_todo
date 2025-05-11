@@ -63,6 +63,14 @@ export default class CompleteCommand extends Command {
   private todoService = new TodoService();
   private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
 
+  /**
+   * Validates the specified network against allowed network options
+   * and retrieves the corresponding network URL.
+   * 
+   * @param network The network name to validate
+   * @returns The network URL for the specified network
+   * @throws CLIError if the network is invalid
+   */
   private validateNetwork(network: string): string {
     const validNetworks = ['localnet', 'devnet', 'testnet', 'mainnet'];
     if (!validNetworks.includes(network)) {
@@ -74,6 +82,13 @@ export default class CompleteCommand extends Command {
     return NETWORK_URLS[network as keyof typeof NETWORK_URLS] || '';
   }
 
+  /**
+   * Checks that the smart contract has been deployed to the specified network.
+   * This is required before we can interact with NFTs on the blockchain.
+   * 
+   * @param network The network to validate deployment on
+   * @throws CLIError if the contract is not deployed
+   */
   private async validateBlockchainConfig(network: string): Promise<void> {
     const config = await configService.getConfig();
     if (!config.lastDeployment?.packageId) {
@@ -84,6 +99,14 @@ export default class CompleteCommand extends Command {
     }
   }
 
+  /**
+   * Checks that we can connect to the specified network and retrieves
+   * the current protocol version for informational purposes.
+   * 
+   * @param suiClient Connected Sui client instance
+   * @returns Protocol version string
+   * @throws CLIError if connection fails
+   */
   private async getNetworkStatus(suiClient: SuiClient): Promise<string> {
     try {
       const state = await suiClient.getLatestSuiSystemState();
@@ -96,6 +119,17 @@ export default class CompleteCommand extends Command {
     }
   }
 
+  /**
+   * Validates that the NFT exists and is in a valid state for completion.
+   * Performs several checks:
+   * 1. Verifies the NFT exists and can be fetched
+   * 2. Confirms the NFT has the expected type/structure
+   * 3. Checks that the NFT is not already marked as completed
+   * 
+   * @param suiClient Connected Sui client instance
+   * @param nftObjectId ID of the NFT object to validate
+   * @throws CLIError for various NFT-related validation failures
+   */
   private async validateNftState(suiClient: SuiClient, nftObjectId: string): Promise<void> {
     try {
       const result = await suiClient.getObject({
@@ -144,6 +178,17 @@ export default class CompleteCommand extends Command {
     }
   }
 
+  /**
+   * Performs a dry run of the NFT completion transaction to estimate
+   * gas costs before actual execution. This allows users to see expected
+   * costs before proceeding with the transaction.
+   * 
+   * @param suiClient Connected Sui client instance
+   * @param nftObjectId ID of the NFT object to update
+   * @param packageId ID of the deployed smart contract package
+   * @returns Object containing computation and storage gas costs
+   * @throws CLIError if gas estimation fails
+   */
   private async estimateGasForNftUpdate(suiClient: SuiClient, nftObjectId: string, packageId: string): Promise<{ computationCost: string; storageCost: string; }> {
     try {
       const txb = new TransactionBlock();
@@ -168,6 +213,20 @@ export default class CompleteCommand extends Command {
     }
   }
 
+  /**
+   * Main command execution method. Handles the complete workflow for marking
+   * a todo as completed across all relevant storage systems.
+   * 
+   * Execution flow:
+   * 1. Parse and validate command arguments
+   * 2. Find the specified todo in the specified list
+   * 3. Check if the todo is already completed
+   * 4. For blockchain operations, validate network and NFT state
+   * 5. Update local storage first (atomic operation)
+   * 6. If NFT exists, update it on the blockchain with verification
+   * 7. If Walrus blob exists, update it with retry logic
+   * 8. Present summary information to the user
+   */
   async run(): Promise<void> {
     // Track non-blocking errors like Walrus blob update failure
     let lastWalrusError: Error | null = null;
