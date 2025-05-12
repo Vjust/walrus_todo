@@ -111,6 +111,16 @@
       "args": [],
       "path": "./dist/src/commands/fetch"
     },
+    "help": {
+      "id": "help",
+      "description": "help command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/help"
+    },
     "image": {
       "id": "image",
       "description": "Manage todo images for storage on Walrus and NFT creation",

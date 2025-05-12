@@ -50,7 +50,22 @@
     "stress-test:simulated": "ts-node tests/stress/run-stress-tests.ts --mode simulated",
     "stress-test:real": "ts-node tests/stress/run-stress-tests.ts --mode real",
     "stress-test:report": "ts-node tests/stress/run-stress-tests.ts --report-dir ./stress-test-reports",
-    "security-audit": "pnpm run test:security"
+    "security-audit": "pnpm run test:security",
+
+    "frontend": "cd frontend-demo && open index.html",
+    "frontend:dashboard": "cd frontend-demo && open dashboard.html",
+    "frontend:nft": "cd frontend-demo && open nft-todos.html",
+    "web": "cd frontend-demo && open index.html",
+    "web:dashboard": "cd frontend-demo && open dashboard.html",
+    "web:nft": "cd frontend-demo && open nft-todos.html",
+    "web:setup": "echo 'No setup needed for static HTML demo. Simply use pnpm run web'",
+
+    "nextjs": "cd packages/frontend-v2 && pnpm dev",
+    "nextjs:build": "cd packages/frontend-v2 && pnpm build",
+    "nextjs:start": "cd packages/frontend-v2 && pnpm start",
+    "nextjs:install": "cd packages/frontend-v2 && pnpm install",
+
+    "build:all": "pnpm run build && pnpm run nextjs:build"
   },
   "keywords": [
     "cli",
