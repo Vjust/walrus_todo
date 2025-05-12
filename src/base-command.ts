@@ -14,41 +14,41 @@ import { CLIError } from './types/error';
  * Icons used throughout the CLI for consistent appearance
  */
 export const ICONS = {
-  // Status icons
-  SUCCESS: '✓',
-  ERROR: '✖',
-  WARNING: '⚠',
-  INFO: 'ℹ',
-  PENDING: '○',
-  ACTIVE: '●',
-  LOADING: '⏳',
-  DEBUG: '🔍',
+  // Status icons - more playful and fun
+  SUCCESS: '🎉', // Celebration instead of checkmark
+  ERROR: '💥',   // Explosion instead of X
+  WARNING: '⚡️', // Lightning instead of warning
+  INFO: '💡',    // Lightbulb instead of info
+  PENDING: '🕐', // Clock instead of circle
+  ACTIVE: '🟢',  // Green circle
+  LOADING: '🔄', // Rotating arrows
+  DEBUG: '🔮',   // Crystal ball instead of magnifying glass
 
-  // Object icons
-  TODO: '📝',
-  LIST: '📋',
-  LISTS: '📚',
-  TAG: '🏷️',
-  PRIORITY: '⚡',
-  DATE: '📅',
-  TIME: '⏱️',
+  // Object icons - more vibrant
+  TODO: '✨',    // Sparkles for todos
+  LIST: '📋',    // Clipboard
+  LISTS: '📚',   // Books
+  TAG: '🏷️',     // Tag
+  PRIORITY: '🔥', // Fire instead of lightning
+  DATE: '📆',    // Calendar
+  TIME: '⏰',    // Alarm clock
 
-  // Feature icons
-  BLOCKCHAIN: '🔗',
-  WALRUS: '🧠',
-  LOCAL: '💻',
-  HYBRID: '🔄',
-  AI: '🤖',
-  STORAGE: '💾',
-  CONFIG: '⚙️',
-  USER: '👤',
-  SEARCH: '🔎',
-  SECURE: '🔒',
-  INSECURE: '🔓',
+  // Feature icons - playful alternatives
+  BLOCKCHAIN: '⛓️', // Chain
+  WALRUS: '🦭',    // Actual walrus emoji
+  LOCAL: '🏠',     // House instead of computer
+  HYBRID: '🧩',    // Puzzle piece instead of arrows
+  AI: '🧠',        // Brain instead of robot
+  STORAGE: '📦',   // Box instead of disk
+  CONFIG: '🛠️',    // Tools
+  USER: '😎',      // Cool face instead of user
+  SEARCH: '🔍',    // Magnifying glass
+  SECURE: '🔐',    // Locked with key
+  INSECURE: '🔓',  // Unlocked
 
-  // UI elements
+  // UI elements - more unique
   BULLET: '•',
-  ARROW: '→',
+  ARROW: '➜',      // Different arrow
   BOX_V: '│',
   BOX_H: '─',
   BOX_TL: '┌',
@@ -59,47 +59,47 @@ export const ICONS = {
 };
 
 /**
- * Priority-related constants
+ * Priority-related constants - with more fun styling
  */
 export const PRIORITY = {
   high: {
-    color: chalk.red,
-    icon: ICONS.PRIORITY,
-    label: 'HIGH',
+    color: chalk.red.bold,
+    icon: '🔥', // Fire for high priority
+    label: 'HOT!',
     value: 3
   },
   medium: {
-    color: chalk.yellow,
-    icon: ICONS.PRIORITY,
-    label: 'MEDIUM',
+    color: chalk.yellow.bold,
+    icon: '⚡', // Lightning for medium priority
+    label: 'SOON',
     value: 2
   },
   low: {
     color: chalk.green,
-    icon: ICONS.PRIORITY,
-    label: 'LOW',
+    icon: '🍃', // Leaf for low priority
+    label: 'CHILL',
     value: 1
   }
 };
 
 /**
- * Storage-related constants
+ * Storage-related constants - with playful labels
  */
 export const STORAGE = {
   local: {
-    color: chalk.green,
+    color: chalk.green.bold,
     icon: ICONS.LOCAL,
-    label: 'Local only'
+    label: 'Home Base'
   },
   blockchain: {
-    color: chalk.blue,
+    color: chalk.blue.bold,
     icon: ICONS.BLOCKCHAIN,
-    label: 'Blockchain only'
+    label: 'On Chain'
   },
   both: {
-    color: chalk.magenta,
+    color: chalk.magenta.bold,
     icon: ICONS.HYBRID,
-    label: 'Local & Blockchain'
+    label: 'Everywhere!'
   }
 };
 
@@ -198,81 +198,92 @@ export default abstract class BaseCommand extends Command {
   }
 
   /**
-   * Display success message
+   * Display success message with celebration flair
    */
   protected success(message: string): void {
     if (this.shouldSuppressOutput()) return;
-    this.log(chalk.green(`${ICONS.SUCCESS} ${message}`));
+    const sparkles = chalk.magenta('✨');
+    this.log(`${sparkles} ${chalk.green.bold(`${ICONS.SUCCESS} ${message}`)} ${sparkles}`);
   }
 
   /**
-   * Display info message
+   * Display info message with lightbulb insight
    */
   protected info(message: string): void {
     if (this.shouldSuppressOutput()) return;
-    this.log(chalk.blue(`${ICONS.INFO} ${message}`));
+    this.log(chalk.cyan.bold(`${ICONS.INFO} ${message}`));
   }
 
   /**
-   * Display warning message
+   * Display warning message with attention-grabbing style
    */
   protected warning(message: string): void {
     if (this.shouldSuppressOutput()) return;
-    this.log(chalk.yellow(`${ICONS.WARNING} ${message}`));
+    this.log(`${chalk.yellow.bold(`${ICONS.WARNING} ${message}`)}`);
   }
 
   /**
-   * Display error message with possible solution
+   * Display error message with possible solution - with more personality
    */
   protected errorWithHelp(title: string, message: string, suggestion?: string): void {
     // Build error message - always show this even in quiet mode
-    let output = `\n${chalk.bgRed.white(' ERROR ')} ${chalk.red.bold(title)}\n`;
+    let output = `\n${chalk.bgRed.white(' OOPS! ')} ${chalk.red.bold(title)}\n`;
     output += `${chalk.red(ICONS.ERROR)} ${message}\n`;
 
     if (suggestion) {
-      output += `\n${chalk.yellow(ICONS.INFO)} ${chalk.yellow('Suggestion:')}\n`;
+      output += `\n${chalk.yellow(ICONS.INFO)} ${chalk.yellow('Pro tip:')}\n`;
       output += `  ${chalk.cyan(suggestion)}\n`;
     }
 
+    // Log the output before throwing the error
+    console.error(output);
     throw new CLIError(message, 'FORMATTED_ERROR');
   }
 
   /**
-   * Display detailed error message with troubleshooting steps
+   * Display detailed error message with troubleshooting steps - with encouragement
    */
   protected detailedError(title: string, message: string, troubleshooting: string[]): void {
     // Build error message - always show this even in quiet mode
-    let output = `\n${chalk.bgRed.white(' ERROR ')} ${chalk.red.bold(title)}\n`;
+    let output = `\n${chalk.bgRed.white(' WHOOPS! ')} ${chalk.red.bold(title)}\n`;
     output += `${chalk.red(ICONS.ERROR)} ${message}\n`;
 
-    // Add troubleshooting steps
+    // Add troubleshooting steps with a more friendly intro
     if (troubleshooting.length > 0) {
-      output += `\n${chalk.yellow(ICONS.INFO)} ${chalk.yellow('Troubleshooting:')}\n`;
+      output += `\n${chalk.yellow(ICONS.INFO)} ${chalk.yellow('Let\'s fix this together:')}\n`;
       troubleshooting.forEach((step, i) => {
-        output += `  ${chalk.yellow(i + 1)}. ${step}\n`;
+        output += `  ${chalk.cyan(`${i + 1}.`)} ${chalk.white(step)}\n`;
       });
+
+      // Add an encouraging message at the end
+      output += `\n${chalk.green('You\'ve got this! 💪')}\n`;
     }
 
+    // Log the output before throwing the error
+    console.error(output);
     throw new CLIError(message, 'DETAILED_ERROR');
   }
 
   /**
-   * Display verbose output if verbose flag is set
+   * Display verbose output if verbose flag is set - with magical flair
    * (Named debugLog to avoid conflict with Command.debug property)
    */
   protected debugLog(message: string, data?: any): void {
     if (!this.isVerbose()) return;
 
-    this.log(chalk.dim(`${ICONS.DEBUG} ${message}`));
+    // A bit of magic and whimsy for debugging
+    this.log(chalk.magenta(`${ICONS.DEBUG} ✧ ${message} ✧`));
     if (data) {
-      this.log(chalk.dim(JSON.stringify(data, null, 2)));
+      // Add a fun prefix to JSON data
+      this.log(chalk.dim(`🔎 Peeking under the hood:`));
+      this.log(chalk.cyan(JSON.stringify(data, null, 2)));
     }
   }
 
   /**
-   * Draw a titled section with a box around it
-   * Creates a visually distinct box with a title bar for structured content display.
-   * The box automatically adjusts width based on content.
+   * Draw a fun titled section with a box around it
+   * Creates a vibrant box with a title bar for structured content display.
+   * The box automatically adjusts width based on content with playful styling.
    *
    * @param title Section title displayed in the box header
    * @param content Content to display inside the box (can be multi-line)
@@ -283,64 +294,96 @@ export default abstract class BaseCommand extends Command {
     const lines = content.split('\n');
     const width = Math.max(...lines.map(line => this.stripAnsi(line).length), title.length + 4);
 
-    // Top border with title
-    this.log(`${ICONS.BOX_TL}${ICONS.BOX_H}[ ${chalk.bold(title)} ]${ICONS.BOX_H.repeat(width - title.length - 4)}${ICONS.BOX_TR}`);
+    // Pick a random fun color for the box
+    const boxColors = [chalk.cyan, chalk.magenta, chalk.green, chalk.yellow, chalk.blue];
+    const boxColor = boxColors[Math.floor(Math.random() * boxColors.length)];
 
-    // Content
+    // Random decorative emoji for the section title
+    const decorations = ['✨', '🌟', '💫', '🚀', '💥', '🔮', '🧩', '🎯'];
+    const decoration = decorations[Math.floor(Math.random() * decorations.length)];
+
+    // Top border with title and decoration
+    this.log(boxColor(`${ICONS.BOX_TL}${ICONS.BOX_H}[ ${decoration} ${chalk.bold.white(title)} ${decoration} ]${ICONS.BOX_H.repeat(width - title.length - 8)}${ICONS.BOX_TR}`));
+
+    // Content with colorful borders
     lines.forEach(line => {
       const rawLine = this.stripAnsi(line);
       const padding = width - rawLine.length;
-      this.log(`${ICONS.BOX_V} ${line}${' '.repeat(padding)} ${ICONS.BOX_V}`);
+      this.log(`${boxColor(ICONS.BOX_V)} ${line}${' '.repeat(padding)} ${boxColor(ICONS.BOX_V)}`);
     });
 
     // Bottom border
-    this.log(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`);
+    this.log(boxColor(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`));
   }
 
   /**
-   * Create a simple formatted list with title
+   * Create a fun formatted list with title and varied bullet points
    */
   protected simpleList(title: string, items: string[]): void {
     if (this.shouldSuppressOutput()) return;
 
-    this.log(chalk.bold(`\n${title}:`));
-    items.forEach(item => this.log(`  ${ICONS.BULLET} ${item}`));
+    // Fun bullet point variations
+    const bullets = ['🔹', '🔸', '💠', '🔻', '🔶', '🔷', '🔸', '🔹'];
+
+    // Title with fun decorations
+    this.log(chalk.bold(`\n✧ ${chalk.underline(title)} ✧`));
+
+    // List items with alternating bullets and subtle coloring
+    items.forEach((item, index) => {
+      const bullet = bullets[index % bullets.length];
+      // Alternate text colors for adjacent items
+      const itemText = index % 2 === 0
+        ? chalk.cyan(item)
+        : chalk.white(item);
+      this.log(`  ${bullet} ${itemText}`);
+    });
+
     this.log('');
   }
 
   /**
-   * Format a todo item for display with consistent styling
-   * Creates a human-readable string representation of a todo item with:
-   * - Status indicator (completed/pending)
-   * - Priority indicator with appropriate color
-   * - Title
-   * - Optional details (due date, tags, privacy status)
+   * Format a todo item for display with playful styling
+   * Creates a fun, visually appealing representation of a todo item with:
+   * - Emoji status indicator (celebration for completed, clock for pending)
+   * - Cool priority indicator with fun labels
+   * - Title with subtle highlighting
+   * - Optional details with playful icons and formatting
    *
    * @param todo Todo item to format
    * @param showDetail Whether to include detailed information (default: true)
    * @returns Formatted string ready for display
    */
   protected formatTodo(todo: any, showDetail: boolean = true): string {
+    // Status indicators with more personality
     const status = todo.completed
-      ? chalk.green(ICONS.SUCCESS)
-      : chalk.yellow(ICONS.PENDING);
+      ? chalk.green.bold(`${ICONS.SUCCESS} `) // Celebration
+      : chalk.yellow(`${ICONS.PENDING} `);    // Clock
 
+    // Get priority with our new fun labels
     const priority = PRIORITY[todo.priority as keyof typeof PRIORITY]
       || PRIORITY.medium;
 
-    const priorityLabel = priority.color(priority.icon);
+    // Construct the priority badge with the icon and label
+    const priorityBadge = priority.color(`${priority.icon} ${priority.label}`);
 
-    let output = `${status} ${priorityLabel} ${todo.title}`;
+    // Make the title pop with subtle formatting (but not too much)
+    const titleFormatted = todo.completed
+      ? chalk.dim.strikethrough(todo.title) // Strikethrough for completed todos
+      : chalk.white.bold(todo.title);      // Bold for pending todos
 
+    // Start building a fun output
+    let output = `${status}${priorityBadge} ${titleFormatted}`;
+
+    // Add fun details with more personality
     if (showDetail && (todo.dueDate || (todo.tags && todo.tags.length) || todo.private)) {
       const details = [
-        todo.dueDate && `${ICONS.DATE} Due: ${todo.dueDate}`,
-        todo.tags?.length && `${ICONS.TAG} Tags: ${todo.tags.join(', ')}`,
-        todo.private && `${ICONS.SECURE} Private`
+        todo.dueDate && chalk.blue(`${ICONS.DATE} ${todo.dueDate}`),
+        todo.tags?.length && chalk.cyan(`${ICONS.TAG} ${todo.tags.join(', ')}`),
+        todo.private && chalk.yellow(`${ICONS.SECURE} Eyes only!`)
       ].filter(Boolean);
 
       if (details.length) {
-        output += `\n   ${chalk.dim(details.join(' | '))}`;
+        output += `\n   ${details.join(' │ ')}`;
       }
     }
 
@@ -348,11 +391,13 @@ export default abstract class BaseCommand extends Command {
   }
 
   /**
-   * Format a storage icon and label
+   * Format a storage icon and label with a fun twist
    */
   protected formatStorage(storageType: string): string {
     const storage = STORAGE[storageType as keyof typeof STORAGE] || STORAGE.local;
-    return `${storage.icon} ${storage.color(storage.label)}`;
+
+    // Add a playful animation-like effect with brackets
+    return `[${storage.icon}] ${storage.color.bold(storage.label)} [${storage.icon}]`;
   }
 
   /**
@@ -446,8 +491,13 @@ export default abstract class BaseCommand extends Command {
   async init(): Promise<void> {
     await super.init();
 
-    // Handle color disabling - use direct argv checking for initialization
-    if (this.isNoColor()) {
+    // Force colors to be enabled always, overriding any no-color flag
+    // This ensures our playful styling always appears
+    process.env.FORCE_COLOR = '1';
+    chalk.level > 0 || (chalk.level = 1);
+
+    // Only disable color if explicitly requested and in a non-demo environment
+    if (this.isNoColor() && process.env.DEMO_MODE !== 'true') {
       chalk.level = 0;
     }
   }

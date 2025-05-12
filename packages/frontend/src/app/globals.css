@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 203, 240, 248; /* ocean-foam */
+  --background-end-rgb: 144, 224, 239; /* ocean-light */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 51, 102; /* ocean-deep */
+    --background-end-rgb: 0, 119, 182; /* ocean-medium */
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
+@layer components {
+  .ocean-card {
+    @apply bg-white/30 dark:bg-ocean-deep/40 backdrop-blur-md rounded-xl p-6 shadow-dreamy border border-ocean-foam/50 dark:border-ocean-light/20;
+  }
+  
+  .wave-animation {
+    @apply relative overflow-hidden before:absolute before:inset-0 before:bg-ocean-wave before:bg-repeat-x before:bg-bottom before:opacity-10 before:dark:opacity-5;
+  }
+  
+  .ocean-button {
+    @apply bg-ocean-medium hover:bg-ocean-deep text-white font-semibold py-2 px-4 rounded-lg shadow-dreamy transition-all duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-underwater;
+  }
+  
+  .ocean-input {
+    @apply bg-white/50 dark:bg-ocean-deep/30 border border-ocean-light/50 dark:border-ocean-light/20 rounded-lg px-4 py-2 shadow-inner outline-none focus:ring-2 focus:ring-dream-teal transition-all duration-300;
+  }
+  
+  .floating-element {
+    @apply animate-float transition-all duration-300;
+  }
+}

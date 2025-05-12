@@ -1214,6 +1214,25 @@ pnpm test -- --coverage
 pnpm run dev
 ```
 
+### Frontend Demo
+
+The project now includes a responsive web frontend with an oceanic design theme:
+
+```bash
+# View the frontend demo
+pnpm run web
+
+# View the dashboard
+pnpm run web:dashboard
+
+# View the NFT todos page
+pnpm run web:nft
+```
+
+The frontend demo is built with HTML, CSS, and JavaScript and showcases the oceanic theme with floating animations, glass-morphism components, and a full todo management interface.
+
+See [FRONTEND-SETUP.md](FRONTEND-SETUP.md) for more details.
+
 ### Build System
 
 The project features an enhanced build system with various options:
