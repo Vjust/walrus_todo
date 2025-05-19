@@ -1,12 +1,13 @@
-import { IntentScope, Signer } from '@mysten/sui.js/cryptography';
+import { IntentScope, Signer } from '@mysten/sui/cryptography';
 import { Ed25519PublicKey } from './cryptography/ed25519';
-import { Transaction } from '@mysten/sui.js/transactions';
-import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
+import { Transaction } from '@mysten/sui/transactions';
+import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
 import { SignatureWithBytes } from '../../../types/adapters/SignerAdapter';
 import { SuiSDKVersion } from '../../../types/adapters/SignerAdapter';
 import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
 import { TransactionType } from '../../../types/transaction';
+import { toB64 } from '@mysten/sui/utils';
 
 // Define a mock implementation that implements the SignerAdapter interface
 // Ensure SignatureWithBytes uses Uint8Array for both signature and bytes properties
@@ -43,28 +44,28 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
     // Cast to required type - we're in a mock file so this is acceptable
     let txBlock = transaction;
 
-    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
+    // Convert to base64 strings as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]),
-      bytes: new Uint8Array([6, 7, 8, 9, 10])
+      signature: toB64(new Uint8Array([1, 2, 3, 4, 5])),
+      bytes: toB64(new Uint8Array([6, 7, 8, 9, 10]))
     };
   }
 
   async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
     this.checkDisposed();
-    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
+    // Convert to base64 strings as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]),
-      bytes: new Uint8Array([6, 7, 8, 9, 10])
+      signature: toB64(new Uint8Array([1, 2, 3, 4, 5])),
+      bytes: toB64(new Uint8Array([6, 7, 8, 9, 10]))
     };
   }
 
   async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
     this.checkDisposed();
-    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
+    // Convert to base64 strings as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]),
-      bytes: new Uint8Array([6, 7, 8, 9, 10])
+      signature: toB64(new Uint8Array([1, 2, 3, 4, 5])),
+      bytes: toB64(new Uint8Array([6, 7, 8, 9, 10]))
     };
   }
 
@@ -106,10 +107,10 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   // Implementation matching extended expectations with correct signature
   async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
     this.checkDisposed();
-    // Use Uint8Array format as required by SignatureWithBytes interface in the adapter
+    // Return base64 strings as required by SignatureWithBytes interface
     return {
-      signature: new Uint8Array([1, 2, 3, 4, 5]),
-      bytes: new Uint8Array([6, 7, 8, 9, 10])
+      signature: toB64(new Uint8Array([1, 2, 3, 4, 5])),
+      bytes: toB64(new Uint8Array([6, 7, 8, 9, 10]))
     };
   }
 

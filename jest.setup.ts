@@ -1,6 +1,19 @@
 /// <reference types="@testing-library/jest-dom" />
 import { jest, expect, describe, it, test, beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals';
 
+// AggregateError polyfill for ES2020 targets
+if (typeof AggregateError === 'undefined') {
+  (global as any).AggregateError = class AggregateError extends Error {
+    errors: Error[];
+    
+    constructor(errors: Iterable<any>, message?: string) {
+      super(message);
+      this.name = 'AggregateError';
+      this.errors = Array.from(errors);
+    }
+  };
+}
+
 // Add jest-dom matchers
 require('@testing-library/jest-dom');
 

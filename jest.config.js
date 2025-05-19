@@ -21,12 +21,13 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '@mysten/sui/(.*)': '<rootDir>/src/__mocks__/@mysten/sui/$1',
-    '@mysten/sui.js/transactions': '<rootDir>/src/__mocks__/@mysten/sui/transactions.ts',
+    '@mysten/sui': '<rootDir>/src/__mocks__/@mysten/sui',
     '@mysten/walrus': '<rootDir>/src/__mocks__/@mysten/walrus',
     'chalk': '<rootDir>/src/__mocks__/chalk.ts',
     '^@oclif/test$': '<rootDir>/node_modules/@oclif/test/lib/index.js',
     '^fancy-test$': '<rootDir>/node_modules/fancy-test/lib/index.js',
-    '^sinon$': '<rootDir>/node_modules/sinon/pkg/sinon.js'
+    '^sinon$': '<rootDir>/node_modules/sinon/pkg/sinon.js',
+    '^.*/utils/Logger$': '<rootDir>/src/__mocks__/utils/Logger.ts'
   },
   testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node', 'mts'],
@@ -37,5 +38,22 @@ module.exports = {
   maxWorkers: 1,
   testTimeout: 10000,
   collectCoverage: false,
+  coverageReporters: ['json', 'lcov', 'text', 'clover', 'json-summary'],
+  coverageDirectory: 'coverage',
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/__mocks__/**/*',
+    '!src/**/*.test.{js,jsx,ts,tsx}',
+    '!src/**/index.{js,ts}'
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  },
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/']
 }

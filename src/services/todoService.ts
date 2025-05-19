@@ -37,10 +37,46 @@ export class TodoService {
    * @returns {Promise<string[]>} Array of todo list names without file extensions
    */
   async getAllLists(): Promise<string[]> {
-    const files = await fsPromises.readdir(this.todosDir).catch(() => []);
-    return files
-      .filter(f => f.endsWith(STORAGE_CONFIG.FILE_EXT))
-      .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
+    try {
+      const files = await fsPromises.readdir(this.todosDir);
+      return files
+        .filter(f => f.endsWith(STORAGE_CONFIG.FILE_EXT))
+        .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
+    } catch (error) {
+      // If directory doesn't exist, return empty array but log the error
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return [];
+      }
+      // For other errors, throw them up
+      throw new CLIError(
+        `Failed to read todo lists: ${error instanceof Error ? error.message : String(error)}`,
+        'STORAGE_READ_ERROR'
+      );
+    }
+  }
+
+  /**
+   * Synchronously retrieves all available todo list names from the storage directory
+   * 
+   * @returns {string[]} Array of todo list names without file extensions
+   */
+  getAllListsSync(): string[] {
+    try {
+      const files = fs.readdirSync(this.todosDir);
+      return files
+        .filter(f => f.endsWith(STORAGE_CONFIG.FILE_EXT))
+        .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
+    } catch (error) {
+      // If directory doesn't exist, return empty array but log the error
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return [];
+      }
+      // For other errors, throw them up
+      throw new CLIError(
+        `Failed to read todo lists: ${error instanceof Error ? error.message : String(error)}`,
+        'STORAGE_READ_ERROR'
+      );
+    }
   }
 
   /**

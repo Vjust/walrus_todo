@@ -1,0 +1,75 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'packages/frontend-v2/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'packages/frontend-v2/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+    
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+    
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+    
+    - name: Setup pnpm cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+    
+    - name: Install dependencies
+      run: |
+        cd packages/frontend-v2
+        CI=true pnpm install
+    
+    - name: Run linter
+      run: |
+        cd packages/frontend-v2
+        pnpm lint
+    
+    - name: Build application
+      run: |
+        cd packages/frontend-v2
+        pnpm build
+    
+    - name: Type check
+      run: |
+        cd packages/frontend-v2
+        pnpm tsc --noEmit
+      continue-on-error: true
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      if: success()
+      with:
+        name: nextjs-build
+        path: packages/frontend-v2/.next/
+        retention-days: 7

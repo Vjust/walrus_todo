@@ -1,5 +1,5 @@
-import type { Transaction as RealTransaction, TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
-import type { SuiObjectRef } from '@mysten/sui.js/client';
+import type { Transaction as RealTransaction, TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
+import type { SuiObjectRef } from '@mysten/sui/client';
 import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
 
 // Define TypeTagSerializer locally to avoid import issues

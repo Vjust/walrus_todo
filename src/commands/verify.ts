@@ -2,7 +2,7 @@ import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { AIVerifierAdapter, VerificationRecord } from '../types/adapters/AIVerifierAdapter';
 import chalk from 'chalk';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import * as fs from 'fs';
 import * as path from 'path';
 import { configService } from '../services/config-service';

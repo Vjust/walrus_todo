@@ -1,4 +1,5 @@
-import { Command, Flags, Args } from '@oclif/core';
+import { Flags, Args } from '@oclif/core';
+import BaseCommand from '../base-command';
 import { CLIError } from '../types/error';
 import chalk from 'chalk';
 import { envConfig } from '../utils/environment-config';
@@ -13,7 +14,7 @@ import path from 'path';
  * This command provides utilities for environment variable management,
  * validation, and documentation generation.
  */
-export default class EnvironmentCommand extends Command {
+export default class EnvironmentCommand extends BaseCommand {
   static description = 'Manage environment variables and configuration';
 
   static examples = [
@@ -25,7 +26,7 @@ export default class EnvironmentCommand extends Command {
   ];
 
   static flags = {
-    help: Flags.help({ char: 'h' }),
+    ...BaseCommand.flags,
     format: Flags.string({
       char: 'f',
       description: 'Output format (json, table, env)',

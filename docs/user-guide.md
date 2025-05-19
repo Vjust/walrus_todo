@@ -33,9 +33,13 @@ The Walrus Todo CLI provides a comprehensive set of commands to manage your TODO
   - Share tasks with contacts for collaboration.
 
 - **Storage Management**:
-  - `walrus-todo storage`: Display a summary of your storage allocation, including total size, used space, and expiration details.
-  - `walrus-todo storage --detail`: Show detailed information about all storage objects, including status indicators (active, almost full, expiring soon, expired).
-  - `walrus-todo storage --analyze`: Analyze storage efficiency and receive recommendations for optimizing usage and reducing costs with WAL token savings.
+  - `walrus-todo store --todo <todo-id> --list <list-name>`: Store a todo on Walrus and get blob ID
+  - `walrus-todo store --todo <todo-id> --list <list-name> --epochs 10`: Store with custom duration
+  - `walrus-todo store --todo <todo-id> --list <list-name> --network mainnet`: Store on mainnet
+  - `walrus-todo store --todo <todo-id> --list <list-name> --mock`: Use mock mode for testing
+  - `walrus-todo storage`: Display a summary of your storage allocation
+  - `walrus-todo storage --detail`: Show detailed information about all storage objects
+  - `walrus-todo storage --analyze`: Analyze storage efficiency and receive optimization recommendations
 
 These commands are designed to be intuitive, allowing users to manage tasks and storage resources efficiently from the terminal.
 
@@ -45,7 +49,7 @@ Walrus Todo is supported by a robust backend that handles the interaction betwee
 
 - **Todo Service**: Manages the core functionality of TODO items, including creation, updates, deletion, and retrieval. It interfaces with both Sui for metadata and Walrus for data storage.
 - **Config Service**: Handles user configuration settings, such as wallet specifications and network preferences, ensuring seamless connectivity to the Sui Network.
-- **Storage Utilities**: Tools like `sui-nft-storage` and `walrus-storage` manage the interaction with blockchain storage, optimizing data placement and retrieval. Utilities also include smart storage reuse and best-fit algorithms to minimize costs.
+- **Storage Utilities**: The `walrus-storage` module now uses the Walrus CLI directly for all operations. It manages temporary files automatically and provides both real and mock modes for testing. The simple storage model stores data on Walrus and returns blob IDs for reference.
 - **Image and NFT Utilities**: Support for uploading images and creating NFTs associated with TODO items, adding a unique digital collectible aspect to task management.
 
 These services and utilities work behind the scenes to ensure data integrity, optimize storage costs, and provide a smooth user experience through the CLI.
@@ -68,6 +72,25 @@ Walrus Todo integrates with the Sui Network and Walrus protocol to provide decen
   - By default, data on Walrus is public, but sensitive TODOs can be encrypted using Seal, a threshold encryption system that allows on-chain access control policies for secure sharing.
 
 This integration ensures that your TODO data is both secure and accessible, with metadata immutably recorded on the blockchain and content stored decentrally for resilience against censorship and data loss.
+
+### Simple Storage Example
+
+```bash
+# Create a todo locally
+waltodo add "Important project deadline"
+
+# Store the todo on Walrus (requires Walrus CLI installed)
+waltodo store --todo "Important project deadline" --list default
+
+# The command returns:
+# - Blob ID: 5az7PBLQKMJHN-xTLI9x1gHtw9yJsjEFgW3I1gBezG8
+# - Storage cost: 0.049 WAL
+# - Network: testnet
+# - Epochs: 5
+
+# Store with custom duration on mainnet
+waltodo store --todo "Critical task" --list work --epochs 10 --network mainnet
+```
 
 ## How Components Work Together
 

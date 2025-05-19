@@ -1,6 +1,7 @@
-import { Command, Flags } from '@oclif/core';
-import { SuiClient } from '@mysten/sui.js/client';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { Flags } from '@oclif/core';
+import BaseCommand from '../base-command';
+import { SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
@@ -23,7 +24,7 @@ import chalk from 'chalk';
  * @param {boolean} [mock=false] - If true, uses mock Walrus storage for testing purposes. (Optional flag: --mock)
  * @param {string} [network] - The blockchain network to use for Sui operations ('localnet', 'devnet', 'testnet', 'mainnet'). Defaults to the configured network. (Optional flag: -n, --network)
  */
-export default class RetrieveCommand extends Command {
+export default class RetrieveCommand extends BaseCommand {
   static description = 'Retrieve stored todos from blockchain or Walrus storage';
 
   static examples = [
@@ -35,6 +36,7 @@ export default class RetrieveCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     todo: Flags.string({
       char: 't',
       description: 'Title or ID of the todo to retrieve',
@@ -167,7 +169,7 @@ export default class RetrieveCommand extends Command {
 
       // Initialize and connect to Walrus storage
       this.startSpinner('Connecting to Walrus storage...');
-      const walrusStorage = createWalrusStorage(mockMode);
+      const walrusStorage = createWalrusStorage('testnet', mockMode);
       try {
         await walrusStorage.connect();
         if (!mockMode && !(await walrusStorage.isConnected())) {

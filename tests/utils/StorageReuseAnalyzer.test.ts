@@ -1,9 +1,9 @@
 import { StorageReuseAnalyzer } from '../../../src/utils/storage-reuse-analyzer';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 
 // Mock the SuiClient and WalrusClient
-jest.mock('@mysten/sui.js/client');
+jest.mock('@mysten/sui/client');
 jest.mock('@mysten/walrus');
 
 describe('StorageReuseAnalyzer', () => {

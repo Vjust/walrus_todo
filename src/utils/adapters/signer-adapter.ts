@@ -2,7 +2,7 @@
  * Signer Adapter Implementation
  *
  * This module provides a concrete implementation of the SignerAdapter
- * interface for the @mysten/sui.js library. It handles the complexities of
+ * interface for the @mysten/sui library. It handles the complexities of
  * working with different Sui SDK versions in a type-safe manner.
  *
  * Key features:
@@ -18,7 +18,7 @@ import {
   IntentScope,
   Signer,
   PublicKey
-} from '@mysten/sui.js/cryptography';
+} from '@mysten/sui/cryptography';
 // Import from the type definition file
 import {
   SignatureWithBytes,
@@ -37,12 +37,12 @@ import {
   isSignerAdapter,
   SuiSDKVersion
 } from '../../types/adapters/SignerAdapter';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import {
   SuiClient,
   SuiTransactionBlockResponse,
   SuiTransactionBlockResponseOptions
-} from '@mysten/sui.js/client';
+} from '@mysten/sui/client';
 import { TransactionType } from '../../types/transaction';
 import {
   isTransactionBlockSui
@@ -181,7 +181,7 @@ export class SignerAdapterImpl implements SignerAdapter {
         
         // If it returned an object with signature information, extract the signature
         const normalized = normalizeSignature(result);
-        return normalized.signature;
+        return normalized.signature as unknown as Uint8Array;
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         
@@ -190,7 +190,7 @@ export class SignerAdapterImpl implements SignerAdapter {
           console.warn('Falling back to signTransactionBlock for data signing');
           try {
             const result = await this.signer.signTransactionBlock(data);
-            return normalizeSignature(result).signature;
+            return normalizeSignature(result).signature as unknown as Uint8Array;
           } catch (fallbackErr) {
             throw new SignerAdapterError(
               `Fallback signing also failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
@@ -206,7 +206,7 @@ export class SignerAdapterImpl implements SignerAdapter {
       console.warn('signData not available, falling back to signPersonalMessage');
       try {
         const result = await this.signer.signPersonalMessage(data);
-        return normalizeSignature(result).signature;
+        return normalizeSignature(result).signature as unknown as Uint8Array;
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
         throw new SignerAdapterError(`Failed to sign data using fallback method: ${error.message}`, error);
@@ -499,7 +499,8 @@ export class SignerAdapterImpl implements SignerAdapter {
 
         if (hasSignTransaction(this.signer)) {
           // Call the function directly without type assertion
-          const sigResult = await this.signer.signTransaction(txBlock);
+          // Use 'as any' to bridge the type mismatch between TransactionBlock and Transaction
+          const sigResult = await this.signer.signTransaction(txBlock as any);
           signature = normalizeSignature(sigResult);
         } else if (hasSignTransactionBlock(this.signer)) {
           // Call the function directly without type assertion

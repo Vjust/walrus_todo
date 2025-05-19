@@ -1,10 +1,10 @@
 import { CLIError } from '../../../types/error';
 import { AIProvider } from '../types';
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { asUint8ArrayOrTransactionBlock, asStringUint8ArrayOrTransactionBlock } from '../../../types/transaction';
-import { bcs } from '@mysten/sui.js/bcs';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { bcs } from '@mysten/sui/bcs';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { NetworkValidator } from '../../../utils/NetworkValidator';
 import { Logger } from '../../../utils/Logger';
 import { getAIVerifierAddress } from './module-address';
@@ -64,8 +64,8 @@ export class CredentialVerifier {
       
       // Execute transaction
       // Need to cast to any to bypass type checking issues
-      const result = await this.client.signAndExecuteTransactionBlock({
-        transactionBlock: tx as any,
+      const result = await this.client.signAndExecuteTransaction({
+        transaction: tx as any,
         signer: keypair,
       });
       
@@ -98,7 +98,7 @@ export class CredentialVerifier {
       if (result && result.results && result.results[0]) {
         const returnValue = result.results[0].returnValues[0][0];
         // BCS decode the return value (should be a boolean)
-        const isValid = bcs.de('bool', Uint8Array.from(returnValue));
+        const isValid = bcs.Bool.parse(Uint8Array.from(returnValue));
         return isValid;
       }
       
@@ -129,7 +129,7 @@ export class CredentialVerifier {
       
       if (result && result.results && result.results[0]) {
         const returnValue = result.results[0].returnValues[0][0];
-        return bcs.de('bool', Uint8Array.from(returnValue));
+        return bcs.Bool.parse(Uint8Array.from(returnValue));
       }
       
       return false;
@@ -154,9 +154,9 @@ export class CredentialVerifier {
         arguments: [tx.pure(provider)],
       });
       
-      await this.client.signAndExecuteTransactionBlock({
+      await this.client.signAndExecuteTransaction({
         signer: keypair,
-        transactionBlock: tx as any,
+        transaction: tx as any,
       });
       
       this.logger.info(`Credential for ${provider} revoked successfully`);

@@ -1,5 +1,5 @@
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient } from '@mysten/walrus';
 import type { BlobObject } from '../types/walrus';
 import { createWalrusImageStorage, type ClientWithExtensions } from '../utils/walrus-image-storage';
@@ -35,7 +35,7 @@ interface MockedSuiClient {
 }
 
 jest.mock('child_process');
-jest.mock('@mysten/sui.js/client');
+jest.mock('@mysten/sui/client');
 jest.mock('@mysten/walrus');
 jest.mock('../utils/sui-keystore');
 jest.mock('fs');

@@ -1,6 +1,6 @@
-import type { SuiClient, PaginatedObjectsResponse, GetOwnedObjectsParams, SuiTransactionBlockResponse, ExecuteTransactionBlockParams, TransactionEffects, SuiObjectResponse, GasCostSummary, GetObjectParams } from '@mysten/sui.js/client';
+import type { SuiClient, PaginatedObjectsResponse, GetOwnedObjectsParams, SuiTransactionBlockResponse, ExecuteTransactionBlockParams, TransactionEffects, SuiObjectResponse, GasCostSummary, GetObjectParams } from '@mysten/sui/client';
 import { mock } from 'jest-mock-extended';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 
 const ownedRef = {
   owner: { AddressOwner: 'mock-address' },

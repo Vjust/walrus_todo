@@ -1,6 +1,7 @@
 import { expect, jest, test, describe, beforeEach, afterEach } from '@jest/globals';
 import { TodoService } from '../../src/services/todoService';
 import { WalrusStorage } from '../../src/utils/walrus-storage';
+import type { WalrusStorage as WalrusStorageType } from '../../src/utils/walrus-storage';
 import { ConfigService } from '../../src/services/config-service';
 import type { Todo } from '../../src/types/todo';
 import type { Mock } from 'jest';
@@ -63,13 +64,13 @@ describe('store command', () => {
   });
 
   test('handles todo not found error', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mock<WalrusStorageType>;
     jest.spyOn(mockWalrusStorage, 'getTodo').mockRejectedValue(new Error('Todo "nonexistent-id" not found'));
     await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Todo "nonexistent-id" not found');
   });
 
   test('creates an NFT for the todo', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mock<WalrusStorageType>;
     const mockNft = { digest: 'mock-tx-digest' };
     jest.spyOn(mockWalrusStorage, 'createNFT').mockResolvedValue(mockNft);
 
@@ -83,13 +84,13 @@ describe('store command', () => {
   });
 
   test('validates connection before storing', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mock<WalrusStorageType>;
     const result = await mockWalrusStorage.storeTodo(createTestTodo());
     expect(result).toBe('mock-blob-id');
   });
 
   test('handles connection validation failure', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mock<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mock<WalrusStorageType>;
     jest.spyOn(mockWalrusStorage, 'init').mockRejectedValue(new Error('Connection failed'));
     await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Connection failed');
   });

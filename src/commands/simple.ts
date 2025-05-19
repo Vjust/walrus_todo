@@ -1,4 +1,5 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
 // Removed unused Todo import
@@ -19,7 +20,7 @@ import chalk from 'chalk';
  * @param {string} [sort] - Sort the listed todos by 'priority' or 'title'. Used with 'list' action. (Optional flag: -s, --sort)
  * @param {string} [filter] - Filter the listed todos by status ('completed' or 'incomplete'). Used with 'list' action. (Optional flag: -f, --filter)
  */
-export default class SimpleCommand extends Command {
+export default class SimpleCommand extends BaseCommand {
   static description = 'Manage todos with simplified commands for basic operations';
 
   static examples = [

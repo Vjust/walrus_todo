@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import { createSuiNftStorage } from './src/utils/sui-nft-storage';
 import { TodoService } from './src/services';
 import { TODO_NFT_CONFIG, NETWORK_URLS, CURRENT_NETWORK } from './src/constants';

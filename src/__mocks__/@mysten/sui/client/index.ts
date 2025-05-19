@@ -1,5 +1,5 @@
 // @ts-ignore - Ignore import compatibility issues
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 
 // Create local type definitions to avoid compatibility issues
 type SuiTransactionBlockResponse = any;

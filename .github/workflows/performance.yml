@@ -1,0 +1,95 @@
+name: Performance Benchmarking
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+    
+    - name: Install dependencies
+      run: pnpm install
+    
+    - name: Build project
+      run: pnpm run build
+    
+    - name: Run performance benchmarks
+      run: |
+        # Create benchmarks directory
+        mkdir -p benchmarks
+        
+        # Run performance tests
+        echo "Running performance benchmarks..."
+        
+        # Storage performance
+        echo "=== Storage Performance ===" >> benchmarks/results.txt
+        time pnpm exec walrus store --mock "Performance test todo" >> benchmarks/results.txt 2>&1
+        
+        # Command execution time
+        echo -e "\n=== Command Execution Time ===" >> benchmarks/results.txt
+        time pnpm exec walrus list --mock >> benchmarks/results.txt 2>&1
+        
+        # AI operations (if enabled)
+        echo -e "\n=== AI Operations Performance ===" >> benchmarks/results.txt
+        time pnpm exec walrus ai summarize --mock >> benchmarks/results.txt 2>&1
+        
+        # Bundle size analysis
+        echo -e "\n=== Bundle Size Analysis ===" >> benchmarks/results.txt
+        du -sh dist/ >> benchmarks/results.txt
+        find dist -name "*.js" -exec du -h {} \; | sort -hr | head -10 >> benchmarks/results.txt
+        
+        # Memory usage
+        echo -e "\n=== Memory Usage ===" >> benchmarks/results.txt
+        /usr/bin/time -v pnpm exec walrus list --mock 2>&1 | grep -E "Maximum resident set size" >> benchmarks/results.txt
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-benchmarks
+        path: benchmarks/
+    
+    - name: Comment PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const results = fs.readFileSync('benchmarks/results.txt', 'utf8');
+          
+          const comment = `## Performance Benchmark Results
+          
+          \`\`\`
+          ${results}
+          \`\`\`
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+    
+    - name: Compare with baseline
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        # This would compare with previous benchmarks if they exist
+        echo "Comparing with baseline performance..."
+        # Add comparison logic here when baseline is established

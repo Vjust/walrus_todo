@@ -4,9 +4,9 @@
  * Supports both local and Walrus-stored items
  */
 
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import { TodoService } from '../services/todoService';
-// Removed unused formatTodoOutput import
 import chalk from 'chalk';
 import { CLIError } from '../utils/error-handler';
 import dotenv from 'dotenv';
@@ -23,7 +23,7 @@ dotenv.config();
  * @param {string} id - The ID of the todo item to be checked or unchecked. (Required flag: -i, --id)
  * @param {boolean} [uncheck=false] - If true, marks the todo as incomplete; otherwise, marks it as complete. (Optional flag: -u, --uncheck)
  */
-export default class CheckCommand extends Command {
+export default class CheckCommand extends BaseCommand {
   static description = 'Toggle completion status of a todo item';
 
   static examples = [
@@ -32,6 +32,7 @@ export default class CheckCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     id: Flags.string({
       char: 'i',
       description: 'Todo ID',

@@ -1,5 +1,5 @@
-import type { SuiObjectResponse, SuiTransactionBlockResponse, SuiSystemStateSummary } from '@mysten/sui.js/client';
-import type { TransactionEffects } from '@mysten/sui.js/client';
+import type { SuiObjectResponse, SuiTransactionBlockResponse, SuiSystemStateSummary } from '@mysten/sui/client';
+import type { TransactionEffects } from '@mysten/sui/client';
 
 export const createMockSuiObjectResponse = (fields: Record<string, any>): SuiObjectResponse => ({
   data: {

@@ -1,0 +1,265 @@
+import { Args, Command, Flags } from '@oclif/core';
+import chalk from 'chalk';
+import { TodoService } from '../services/todoService';
+import { Todo, StorageLocation } from '../types/todo';
+import { CLIError } from '../types/error';
+import { createWalrusStorage } from '../utils/walrus-storage';
+import BaseCommand, { ICONS, STORAGE } from '../base-command';
+
+/**
+ * @class UpdateStorageCommand
+ * @description This command allows updating the storage location of existing todos.
+ * It handles validation, migration between storage locations, and ensures data integrity
+ * during the transition process.
+ */
+export default class UpdateStorageCommand extends BaseCommand {
+  static description = 'Update storage location for existing todos';
+
+  static examples = [
+    '<%= config.bin %> update-storage my-list --id task-123 --storage blockchain',
+    '<%= config.bin %> update-storage my-list --id "Buy groceries" --storage both',
+    '<%= config.bin %> update-storage my-list --all --storage local',
+  ];
+
+  static flags = {
+    ...BaseCommand.flags,
+    id: Flags.string({
+      char: 'i',
+      description: 'Todo ID or title to update',
+      exclusive: ['all']
+    }),
+    all: Flags.boolean({
+      char: 'a',
+      description: 'Update all todos in the list',
+      exclusive: ['id']
+    }),
+    storage: Flags.string({
+      char: 's',
+      description: 'New storage location',
+      options: ['local', 'blockchain', 'both'],
+      required: true
+    }),
+    force: Flags.boolean({
+      char: 'f',
+      description: 'Force storage update without confirmation',
+      default: false
+    }),
+  };
+
+  static args = {
+    listName: Args.string({
+      description: 'Name of the todo list',
+      required: true
+    })
+  };
+
+  private todoService = new TodoService();
+  private walrusStorage = createWalrusStorage('testnet', false);
+
+  async run(): Promise<void> {
+    const { args, flags } = await this.parse(UpdateStorageCommand);
+
+    try {
+      const list = await this.todoService.getList(args.listName);
+      if (!list) {
+        throw new CLIError(`List "${args.listName}" not found`, 'LIST_NOT_FOUND');
+      }
+
+      let todosToUpdate: Todo[] = [];
+
+      if (flags.all) {
+        todosToUpdate = list.todos;
+      } else if (flags.id) {
+        const todo = await this.todoService.findTodoByIdOrTitle(flags.id, args.listName);
+        if (!todo) {
+          throw new CLIError(`Todo "${flags.id}" not found`, 'TODO_NOT_FOUND');
+        }
+        todosToUpdate = [todo];
+      } else {
+        throw new CLIError('Either --id or --all flag is required', 'INVALID_FLAGS');
+      }
+
+      const newStorage = flags.storage as StorageLocation;
+      
+      // Validate storage transition for each todo
+      const validationResults = await this.validateStorageTransitions(todosToUpdate, newStorage);
+      
+      if (validationResults.errors.length > 0) {
+        this.displayValidationErrors(validationResults.errors);
+        if (!flags.force) {
+          throw new CLIError('Storage validation failed', 'VALIDATION_FAILED');
+        }
+        this.warning('Forcing storage update despite validation errors');
+      }
+
+      // Show confirmation unless forced
+      if (!flags.force && validationResults.warnings.length > 0) {
+        this.displayWarnings(validationResults.warnings);
+        const confirm = await this.confirm('Continue with storage update?');
+        if (!confirm) {
+          this.log(chalk.yellow('Storage update cancelled'));
+          return;
+        }
+      }
+
+      // Perform storage updates
+      await this.performStorageUpdates(todosToUpdate, newStorage, args.listName);
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to update storage: ${error instanceof Error ? error.message : String(error)}`,
+        'UPDATE_STORAGE_FAILED'
+      );
+    }
+  }
+
+  private async validateStorageTransitions(
+    todos: Todo[], 
+    newStorage: StorageLocation
+  ): Promise<{ warnings: string[], errors: string[] }> {
+    const warnings: string[] = [];
+    const errors: string[] = [];
+
+    for (const todo of todos) {
+      const currentStorage = todo.storageLocation;
+
+      // Check for invalid transitions
+      if (currentStorage === newStorage) {
+        warnings.push(`Todo "${todo.title}" is already in ${newStorage} storage`);
+        continue;
+      }
+
+      // Validate blockchain to local transition
+      if (currentStorage === 'blockchain' && newStorage === 'local') {
+        warnings.push(`Moving "${todo.title}" from blockchain to local will not remove blockchain data`);
+      }
+
+      // Validate blockchain storage requirements
+      if ((newStorage === 'blockchain' || newStorage === 'both') && 
+          !todo.walrusBlobId && currentStorage === 'local') {
+        // This is a new blockchain storage, check connectivity
+        try {
+          await this.walrusStorage.connect();
+          await this.walrusStorage.disconnect();
+        } catch (error) {
+          errors.push(`Cannot store "${todo.title}" on blockchain: ${error.message}`);
+        }
+      }
+
+      // Check for data integrity issues
+      if (todo.walrusBlobId && (newStorage === 'local' || newStorage === 'both')) {
+        try {
+          await this.walrusStorage.connect();
+          const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId);
+          if (blockchainTodo.updatedAt > todo.updatedAt) {
+            warnings.push(`Blockchain version of "${todo.title}" is newer than local version`);
+          }
+          await this.walrusStorage.disconnect();
+        } catch (error) {
+          errors.push(`Cannot verify blockchain data for "${todo.title}": ${error.message}`);
+        }
+      }
+    }
+
+    return { warnings, errors };
+  }
+
+  private displayValidationErrors(errors: string[]): void {
+    this.section('Validation Errors', errors.map(e => chalk.red(`${ICONS.ERROR} ${e}`)).join('\n'));
+  }
+
+  private displayWarnings(warnings: string[]): void {
+    this.section('Warnings', warnings.map(w => chalk.yellow(`${ICONS.WARNING} ${w}`)).join('\n'));
+  }
+
+  private async performStorageUpdates(
+    todos: Todo[], 
+    newStorage: StorageLocation,
+    listName: string
+  ): Promise<void> {
+    const spinner = this.startSpinner('Updating storage locations...');
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      // Connect to blockchain if needed
+      if (newStorage === 'blockchain' || newStorage === 'both') {
+        await this.walrusStorage.connect();
+      }
+
+      for (const todo of todos) {
+        try {
+          await this.updateTodoStorage(todo, newStorage, listName);
+          successCount++;
+        } catch (error) {
+          failCount++;
+          this.warning(`Failed to update storage for "${todo.title}": ${error.message}`);
+        }
+      }
+
+      this.stopSpinnerSuccess(
+        spinner, 
+        `Updated ${successCount} todo${successCount !== 1 ? 's' : ''}, ${failCount} failed`
+      );
+
+    } finally {
+      // Always disconnect
+      await this.walrusStorage.disconnect();
+    }
+
+    // Display summary
+    this.section('Storage Update Summary', [
+      `${ICONS.SUCCESS} Successfully updated: ${chalk.green(successCount)}`,
+      failCount > 0 ? `${ICONS.ERROR} Failed: ${chalk.red(failCount)}` : null,
+      `${ICONS.LIST} List: ${chalk.cyan(listName)}`,
+      `${STORAGE[newStorage].icon} New storage: ${STORAGE[newStorage].color(STORAGE[newStorage].label)}`
+    ].filter(Boolean).join('\n'));
+  }
+
+  private async updateTodoStorage(
+    todo: Todo, 
+    newStorage: StorageLocation,
+    listName: string
+  ): Promise<void> {
+    const currentStorage = todo.storageLocation;
+    
+    // Handle transitions
+    if (currentStorage === 'local' && (newStorage === 'blockchain' || newStorage === 'both')) {
+      // Store on blockchain
+      const blobId = await this.walrusStorage.storeTodo(todo);
+      await this.todoService.updateTodo(listName, todo.id, {
+        walrusBlobId: blobId,
+        storageLocation: newStorage
+      });
+    } 
+    else if (currentStorage === 'blockchain' && newStorage === 'local') {
+      // Remove blockchain reference (data remains on blockchain)
+      await this.todoService.updateTodo(listName, todo.id, {
+        storageLocation: newStorage
+      });
+    } 
+    else if (currentStorage === 'blockchain' && newStorage === 'both') {
+      // Retrieve from blockchain and store locally
+      const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId!);
+      await this.todoService.updateTodo(listName, todo.id, {
+        ...blockchainTodo,
+        storageLocation: newStorage
+      });
+    }
+    else if (currentStorage === 'both' && newStorage === 'local') {
+      // Keep local copy, update storage location
+      await this.todoService.updateTodo(listName, todo.id, {
+        storageLocation: newStorage
+      });
+    }
+    else if (currentStorage === 'both' && newStorage === 'blockchain') {
+      // Update blockchain with latest local data
+      await this.walrusStorage.updateTodo(todo.walrusBlobId!, todo);
+      // Remove from local storage
+      await this.todoService.deleteTodo(listName, todo.id);
+    }
+  }
+}

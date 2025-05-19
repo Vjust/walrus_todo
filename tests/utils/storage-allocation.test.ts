@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { SuiClient, type CoinBalance } from '@mysten/sui.js/client';
+import { SuiClient, type CoinBalance } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../../src/utils/storage-manager';
 import { CLIError } from '../../../src/types/error';

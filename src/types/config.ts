@@ -5,9 +5,9 @@
  * across library versions.
  */
 
-import type { Transaction, TransactionBlock } from '@mysten/sui.js/transactions';
-import type { Signer } from '@mysten/sui.js/cryptography';
-import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import type { Transaction, TransactionBlock } from '@mysten/sui/transactions';
+import type { Signer } from '@mysten/sui/cryptography';
+import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { SignerAdapter } from './adapters/SignerAdapter';
 import type { TransactionBlockAdapter } from './adapters/TransactionBlockAdapter';
 import type { WalrusClientAdapter } from './adapters/WalrusClientAdapter';
@@ -133,7 +133,7 @@ export interface ConfigOptions {
  * library versions and how they should interact.
  */
 export interface LibraryVersionConfig {
-  '@mysten/sui.js': {
+  '@mysten/sui': {
     version: string;
     compatibleWith: string[];
     adapterStrategy: 'direct' | 'wrapped';

@@ -2,9 +2,9 @@
  * Extended WalrusClient interfaces with additional functionality
  */
 
-import type { TransactionBlock } from '@mysten/sui.js/transactions';
-import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import type { Signer } from '@mysten/sui.js/cryptography';
+import type { TransactionBlock } from '@mysten/sui/transactions';
+import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import type { Signer } from '@mysten/sui/cryptography';
 import type { 
   BlobObject, 
   BlobInfo, 

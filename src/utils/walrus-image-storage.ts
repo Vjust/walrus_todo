@@ -1,12 +1,12 @@
-import { SuiClient } from '@mysten/sui.js/client';
-import { type Signer } from '@mysten/sui.js/cryptography';
+import { SuiClient } from '@mysten/sui/client';
+import { type Signer } from '@mysten/sui/cryptography';
 
 // Define compatible SignatureWithBytes interface for local usage
 interface SignatureWithBytes {
   signature: string;
   bytes: string;
 }
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient, type ReadBlobOptions } from '@mysten/walrus';
 import type { WalrusClientExt, WalrusClientWithExt } from '../types/client';
 import * as fs from 'fs';

@@ -1,6 +1,7 @@
 /**
  * Utility functions for better promise handling
  */
+import './polyfills/aggregate-error';
 import { CLIError } from '../types/error';
 
 /**

@@ -1,6 +1,7 @@
 import { BatchUploader } from '../../../src/utils/batch-uploader';
 import { TodoSizeCalculator } from '../../../src/utils/todo-size-calculator';
 import { WalrusStorage } from '../../../src/utils/walrus-storage';
+import type { WalrusStorage as WalrusStorageType } from '../../../src/utils/walrus-storage';
 import { Todo, TodoList } from '../../../src/types/todo';
 import { CLIError } from '../../../src/types/error';
 
@@ -56,12 +57,12 @@ describe('BatchUploader', () => {
   };
 
   // Mock implementation of WalrusStorage
-  let mockWalrusStorage: jest.Mocked<WalrusStorage>;
+  let mockWalrusStorage: jest.Mocked<WalrusStorageType>;
   let batchUploader: BatchUploader;
 
   beforeEach(() => {
     // Setup mock implementations
-    mockWalrusStorage = new WalrusStorage(true) as jest.Mocked<WalrusStorage>;
+    mockWalrusStorage = new WalrusStorage('testnet', true) as jest.Mocked<WalrusStorageType>;
     
     // Mock the storage methods
     mockWalrusStorage.ensureStorageAllocated = jest.fn().mockResolvedValue({
@@ -79,7 +80,7 @@ describe('BatchUploader', () => {
     mockWalrusStorage.storeTodoList = jest.fn().mockResolvedValue('mock-list-blob-id');
     
     // Create BatchUploader with the mock
-    batchUploader = new BatchUploader(mockWalrusStorage);
+    batchUploader = new BatchUploader(mockWalrusStorage as any);
 
     // Spy on TodoSizeCalculator methods
     jest.spyOn(TodoSizeCalculator, 'calculateOptimalStorageSize');

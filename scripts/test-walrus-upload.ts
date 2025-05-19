@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import { createWalrusImageStorage } from '../src/utils/walrus-image-storage';
 import { execSync } from 'child_process';
 import * as path from 'path';

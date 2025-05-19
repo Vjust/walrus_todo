@@ -1,4 +1,4 @@
-import type { TransactionBlock } from '@mysten/sui.js/transactions';
+import type { TransactionBlock } from '@mysten/sui/transactions';
 export * from './cryptography/ed25519';
 export * from './cryptography/index';
 

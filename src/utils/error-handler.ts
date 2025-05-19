@@ -1,20 +1,13 @@
 // Fix import for chalk with esModuleInterop
-import * as chalkModule from 'chalk';
-const chalk = chalkModule.default || chalkModule;
-import { isErrorWithMessage, getErrorMessage } from '../types/error';
+import chalkModule from 'chalk';
+const chalk = chalkModule;
+import { CLIError, isErrorWithMessage, getErrorMessage } from '../types/errors/consolidated';
+import { displayFriendlyError, getErrorContext } from './error-messages';
 
-/**
- * Custom CLI error class for application-specific errors
- */
-export class CLIError extends Error {
-  constructor(message: string, public code: string = 'GENERAL_ERROR') {
-    super(message);
-    this.name = 'CLIError';
-  }
-}
 
 /**
  * Centralized error handler for the application
+ * Now uses enhanced error messaging system for better UX
  */
 export function handleError(messageOrError: string | unknown, error?: unknown): void {
   // Handle the case where only one parameter is passed
@@ -25,28 +18,27 @@ export function handleError(messageOrError: string | unknown, error?: unknown): 
   
   const contextMessage = typeof messageOrError === 'string' ? messageOrError : '';
   
-  if (error instanceof CLIError) {
-    console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}CLI Error: ${error.message}`);
-    return;
-  }
-  
+  // Convert to proper error object if needed
+  let actualError: Error;
   if (error instanceof Error) {
-    console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}Error: ${error.message}`);
-    return;
+    actualError = error;
+  } else if (isErrorWithMessage(error)) {
+    actualError = new Error(error.message);
+  } else {
+    actualError = new Error(getErrorMessage(error));
   }
   
-  // Handle unknown error types with a message
-  if (isErrorWithMessage(error)) {
-    console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}Error: ${error.message}`);
-    return;
-  }
+  // Add context if provided
+  const context = contextMessage ? { operation: contextMessage } : undefined;
   
-  // Handle completely unknown error types
-  console.error(`\n❌ ${contextMessage ? contextMessage + ': ' : ''}Unknown error occurred: ${getErrorMessage(error)}`);
+  // Use enhanced error display
+  const friendlyError = displayFriendlyError(actualError, context);
+  console.error(friendlyError);
 }
 
 /**
  * Wraps an async function with retry logic for transient errors
+ * @deprecated Use BaseCommand.executeWithRetry for proper logging and error wrapping
  */
 export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDelay = 1000): Promise<T> {
   let lastError: Error;
@@ -63,7 +55,9 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDel
       }
       
       const delay = baseDelay * Math.pow(2, attempt - 1);
-      console.log(chalk.yellow(`Request failed, retrying (${attempt}/${maxRetries}) after ${delay}ms...`));
+      // Use console.error for retry notices since this is a low-level utility
+      // Commands should use BaseCommand.executeWithRetry for proper logging
+      console.error(chalk.yellow(`Request failed, retrying (${attempt}/${maxRetries}) after ${delay}ms...`));
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -91,3 +85,6 @@ export function assert(condition: boolean, message: string): asserts condition {
     throw new Error(message);
   }
 }
+
+// Re-export CLIError for backward compatibility
+export { CLIError };

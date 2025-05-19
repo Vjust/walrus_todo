@@ -1,4 +1,5 @@
 import { CLIError } from '../types/error';
+import { ValidationError } from '../types/errors';
 
 /**
  * Types of validation rules
@@ -7,6 +8,7 @@ export type ValidationRule<T> = {
   test: (value: T) => boolean;
   message: string;
   code: string;
+  field?: string;
 };
 
 /**
@@ -17,44 +19,146 @@ export interface ValidationSchema {
 }
 
 /**
- * Class for input validation
+ * Enhanced validation options
+ */
+export interface ValidationOptions {
+  throwOnFirstError?: boolean;
+  collectAllErrors?: boolean;
+  customErrorClass?: typeof Error;
+}
+
+/**
+ * Validation result
+ */
+export interface ValidationResult {
+  valid: boolean;
+  errors: Array<{
+    field: string;
+    message: string;
+    code: string;
+    value?: any;
+  }>;
+}
+
+/**
+ * Enhanced input validation class
  */
 export class InputValidator {
   /**
-   * Validate a single value against a set of rules
+   * Enhanced validation with better error handling
    * @param value The value to validate
    * @param rules Array of validation rules
    * @param fieldName Optional field name for error messages
-   * @throws {CLIError} if validation fails
+   * @param options Validation options
+   * @returns Validation result or throws error
    */
   static validate<T>(
     value: T,
     rules: ValidationRule<T>[],
-    fieldName: string = 'input'
-  ): void {
+    fieldName: string = 'input',
+    options: ValidationOptions = {}
+  ): ValidationResult {
+    const {
+      throwOnFirstError = true,
+      collectAllErrors = false,
+      customErrorClass = ValidationError
+    } = options;
+
+    const errors: ValidationResult['errors'] = [];
+
     for (const rule of rules) {
       if (!rule.test(value)) {
-        const message = fieldName ? `${fieldName}: ${rule.message}` : rule.message;
-        throw new CLIError(message, rule.code);
+        const errorField = rule.field || fieldName;
+        const errorMessage = fieldName ? `${fieldName}: ${rule.message}` : rule.message;
+        
+        const error = {
+          field: errorField,
+          message: errorMessage,
+          code: rule.code,
+          value
+        };
+
+        errors.push(error);
+
+        if (throwOnFirstError && !collectAllErrors) {
+          throw new customErrorClass(errorMessage, {
+            field: errorField,
+            value,
+            constraint: rule.code,
+            recoverable: false
+          });
+        }
       }
     }
+
+    const result: ValidationResult = {
+      valid: errors.length === 0,
+      errors
+    };
+
+    if (!result.valid && throwOnFirstError) {
+      const combinedMessage = errors.map(e => e.message).join(', ');
+      throw new customErrorClass(combinedMessage, {
+        field: fieldName,
+        value,
+        constraint: 'MULTIPLE_VIOLATIONS',
+        recoverable: false
+      });
+    }
+
+    return result;
   }
 
   /**
-   * Validate an object against a validation schema
+   * Enhanced object validation with better error collection
    * @param data Object to validate
    * @param schema Validation schema
-   * @throws {CLIError} if validation fails
+   * @param options Validation options (defaults: throwOnFirstError=false, collectAllErrors=true)
+   * @returns Validation result with valid boolean and errors array
+   * @throws ValidationError if throwOnFirstError is true and validation fails
+   * 
+   * @example
+   * const result = InputValidator.validateObject(userData, {
+   *   email: [CommonValidationRules.email],
+   *   age: [InputValidator.inRange(18, 100, 'Age must be between 18-100', 'INVALID_AGE')]
+   * });
    */
   static validateObject<T extends Record<string, any>>(
     data: T,
-    schema: ValidationSchema
-  ): void {
+    schema: ValidationSchema,
+    options: ValidationOptions = { throwOnFirstError: false, collectAllErrors: true }
+  ): ValidationResult {
+    const { collectAllErrors = true } = options;
+    const allErrors: ValidationResult['errors'] = [];
+
     for (const [field, rules] of Object.entries(schema)) {
       if (field in data) {
-        this.validate(data[field], rules, field);
+        const result = this.validate(data[field], rules, field, {
+          ...options,
+          throwOnFirstError: false,
+          collectAllErrors: true
+        });
+        
+        if (!result.valid) {
+          allErrors.push(...result.errors);
+        }
       }
     }
+
+    const result: ValidationResult = {
+      valid: allErrors.length === 0,
+      errors: allErrors
+    };
+
+    if (!result.valid && options.throwOnFirstError) {
+      const errorMessage = allErrors.map(e => `${e.field}: ${e.message}`).join('\n');
+      throw new ValidationError(errorMessage, {
+        constraint: 'OBJECT_VALIDATION_FAILED',
+        recoverable: false
+      });
+    }
+
+    return result;
   }
 
   /**
@@ -169,11 +273,150 @@ export class InputValidator {
    */
   static sanitizeString(input: string): string {
     if (!input) return '';
-    // Remove HTML/script tags, prevent command injection, etc.
-    return input
-      .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/[\\$'"]/g, '\\$&') // Escape shell metacharacters
-      .trim();
+    
+    // Remove potential HTML/script tags
+    let sanitized = input.replace(/<[^>]*>/g, '');
+    
+    // Escape shell metacharacters comprehensively
+    // This includes common shell special characters that could be used for injection
+    const shellMetaChars = /[\\$'"`;|&<>(){}[\]!#*?~]/g;
+    sanitized = sanitized.replace(shellMetaChars, '\\$&');
+    
+    // Remove null bytes and other control characters
+    sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
+    
+    // Normalize whitespace
+    sanitized = sanitized.replace(/\s+/g, ' ').trim();
+    
+    return sanitized;
+  }
+
+  /**
+   * Create a composite validation rule that combines multiple rules
+   * @param rules Rules to combine
+   * @returns Combined validation rule
+   */
+  static combineRules<T>(...rules: ValidationRule<T>[]): ValidationRule<T> {
+    return {
+      test: (value) => rules.every(rule => rule.test(value)),
+      message: 'Value must satisfy all constraints',
+      code: 'COMPOSITE_VALIDATION_FAILED'
+    };
+  }
+
+  /**
+   * Create conditional validation rule
+   * @param condition Condition to check
+   * @param rule Rule to apply if condition is true
+   * @returns Conditional validation rule
+   */
+  static conditionalRule<T>(
+    condition: (value: T) => boolean,
+    rule: ValidationRule<T>
+  ): ValidationRule<T> {
+    return {
+      test: (value) => !condition(value) || rule.test(value),
+      message: rule.message,
+      code: rule.code
+    };
+  }
+
+  /**
+   * Validate command flags with pre-execution checks
+   * @param flags Command flags
+   * @param requiredFlags Required flags
+   * @param mutuallyExclusive Mutually exclusive flag groups
+   * @throws ValidationError if validation fails
+   */
+  static validateCommandFlags(
+    flags: Record<string, any>,
+    requiredFlags: string[] = [],
+    mutuallyExclusive: string[][] = []
+  ): void {
+    // Check required flags - properly handle false values
+    const missingFlags = requiredFlags.filter(flag => flags[flag] === undefined);
+    if (missingFlags.length > 0) {
+      throw new ValidationError(
+        `Missing required flags: ${missingFlags.join(', ')}`,
+        {
+          constraint: 'MISSING_REQUIRED_FLAGS',
+          recoverable: false
+        }
+      );
+    }
+
+    // Check mutually exclusive flags - only consider defined values
+    for (const group of mutuallyExclusive) {
+      const presentFlags = group.filter(flag => flags[flag] !== undefined);
+      if (presentFlags.length > 1) {
+        throw new ValidationError(
+          `Cannot use these flags together: ${presentFlags.join(', ')}`,
+          {
+            constraint: 'MUTUALLY_EXCLUSIVE_FLAGS',
+            recoverable: false
+          }
+        );
+      }
+    }
+  }
+
+  /**
+   * Create a custom validation rule
+   * @param testFn Test function
+   * @param message Error message
+   * @param code Error code
+   * @returns Custom validation rule
+   */
+  static custom<T>(
+    testFn: (value: T) => boolean,
+    message: string,
+    code: string = 'CUSTOM_VALIDATION_FAILED'
+  ): ValidationRule<T> {
+    return {
+      test: testFn,
+      message,
+      code
+    };
+  }
+
+  /**
+   * Validate environment variables
+   * @param required Required environment variables
+   * @param optional Optional environment variables with defaults
+   * @returns Object with environment variable values
+   */
+  static validateEnvironment(
+    required: string[],
+    optional: Record<string, string> = {}
+  ): Record<string, string> {
+    const env: Record<string, string> = {};
+    const missing: string[] = [];
+
+    // Check required vars
+    for (const varName of required) {
+      if (!process.env[varName]) {
+        missing.push(varName);
+      } else {
+        env[varName] = process.env[varName]!;
+      }
+    }
+
+    if (missing.length > 0) {
+      throw new ValidationError(
+        `Missing required environment variables: ${missing.join(', ')}`,
+        {
+          constraint: 'MISSING_ENV_VARS',
+          recoverable: false
+        }
+      );
+    }
+
+    // Set optional vars with defaults
+    for (const [varName, defaultValue] of Object.entries(optional)) {
+      env[varName] = process.env[varName] || defaultValue;
+    }
+
+    return env;
   }
 }
 

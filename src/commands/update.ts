@@ -1,4 +1,5 @@
-import { Args,  Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { validateDate, validatePriority } from '../utils';
@@ -19,7 +20,7 @@ import { CLIError } from '../utils/error-handler';
  * @param {string} [tags] - New comma-separated tags to assign to the todo. (Optional flag: -g, --tags)
  * @param {boolean} [private] - If provided, sets the privacy status of the todo. (Optional flag: --private)
  */
-export default class UpdateCommand extends Command {
+export default class UpdateCommand extends BaseCommand {
   static description = 'Update properties of an existing todo item';
 
   static examples = [

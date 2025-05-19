@@ -3,8 +3,8 @@ import {
   IntentScope, 
   messageWithIntent,
   toSerializedSignature
-} from '@mysten/sui.js/cryptography';
-import { fromB64 } from '@mysten/sui.js/utils';
+} from '@mysten/sui/cryptography';
+import { fromB64 } from '@mysten/sui/utils';
 
 export class Ed25519PublicKey implements PublicKey {
   static scheme = 'ED25519';
@@ -33,6 +33,16 @@ export class Ed25519PublicKey implements PublicKey {
   async verify(data: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
     // Updated to handle both string and Uint8Array signatures
     return Promise.resolve(true);
+  }
+
+  async verifyTransaction(transaction: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+    // Mock implementation - in real code would verify the transaction signature
+    return Promise.resolve(true);
+  }
+
+  verifyAddress(address: string): boolean {
+    // Mock implementation - in real code would verify the address
+    return true;
   }
 
   toRawBytes(): Uint8Array {

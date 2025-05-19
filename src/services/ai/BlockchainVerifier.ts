@@ -1,5 +1,5 @@
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { SignerAdapter } from '../../types/adapters/SignerAdapter';
 import { WalrusClientAdapter } from '../../types/adapters/WalrusClientAdapter';
 import { AIVerifierAdapter, VerificationParams, VerificationRecord } from '../../types/adapters/AIVerifierAdapter';

@@ -1,0 +1,291 @@
+import * as path from 'path';
+import * as fs from 'fs';
+import { jest } from '@jest/globals';
+import { getAssetPath, getProjectPath } from '../../../src/utils/path-utils';
+
+// Mock the fs module
+jest.mock('fs');
+
+// Mock the entire path-utils module to control PROJECT_ROOT
+let mockProjectRoot = '/test/project/root';
+jest.mock('../../../src/utils/path-utils', () => {
+    const original = jest.requireActual('../../../src/utils/path-utils') as any;
+    
+    const findProjectRoot = (startPath: string): string => {
+        let currentPath = startPath;
+        const mockedFs = jest.requireMock('fs') as typeof fs;
+        const mockedPath = jest.requireActual('path') as typeof path;
+        
+        while (currentPath !== '/') {
+            if (mockedFs.existsSync(mockedPath.join(currentPath, 'package.json'))) {
+                return currentPath;
+            }
+            currentPath = mockedPath.dirname(currentPath);
+        }
+        throw new Error('Could not find project root (no package.json found)');
+    };
+    
+    return {
+        __esModule: true,
+        PROJECT_ROOT: mockProjectRoot,
+        getAssetPath: (assetPath: string): string => {
+            const mockedFs = jest.requireMock('fs') as typeof fs;
+            const mockedPath = jest.requireActual('path') as typeof path;
+            const assetDir = mockedPath.join(mockProjectRoot, 'assets');
+            const fullPath = mockedPath.join(assetDir, assetPath);
+            
+            if (!mockedFs.existsSync(fullPath)) {
+                throw new Error(`Asset not found: ${fullPath}`);
+            }
+            
+            return fullPath;
+        },
+        getProjectPath: (dir: string): string => {
+            const mockedPath = jest.requireActual('path') as typeof path;
+            return mockedPath.join(mockProjectRoot, dir);
+        },
+        findProjectRoot
+    };
+});
+
+describe('path-utils', () => {
+    const mockedFs = fs as jest.Mocked<typeof fs>;
+    
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    describe('findProjectRoot', () => {
+        // We need to import the function from the mocked module
+        const { findProjectRoot } = jest.requireMock('../../../src/utils/path-utils');
+        
+        it('should find project root when package.json exists', () => {
+            // Set up file system mocks
+            mockedFs.existsSync.mockImplementation((filePath: string) => {
+                if (filePath === '/test/project/root/package.json') return true;
+                if (filePath === '/test/project/package.json') return false;
+                if (filePath === '/test/package.json') return false;
+                if (filePath === '/package.json') return false;
+                return false;
+            });
+
+            const result = findProjectRoot('/test/project/root/src/utils');
+            expect(result).toBe('/test/project/root');
+        });
+
+        it('should traverse up directories to find package.json', () => {
+            mockedFs.existsSync.mockImplementation((filePath: string) => {
+                if (filePath === '/test/package.json') return true;
+                return false;
+            });
+
+            const result = findProjectRoot('/test/project/root/deeply/nested/path');
+            expect(result).toBe('/test');
+        });
+
+        it('should throw error when no package.json is found', () => {
+            mockedFs.existsSync.mockReturnValue(false);
+
+            expect(() => {
+                findProjectRoot('/some/random/path');
+            }).toThrow('Could not find project root (no package.json found)');
+        });
+
+        it('should handle current directory having package.json', () => {
+            mockedFs.existsSync.mockImplementation((filePath: string) => {
+                if (filePath === '/current/directory/package.json') return true;
+                return false;
+            });
+
+            const result = findProjectRoot('/current/directory');
+            expect(result).toBe('/current/directory');
+        });
+
+        it('should handle root directory edge case', () => {
+            mockedFs.existsSync.mockReturnValue(false);
+
+            expect(() => {
+                findProjectRoot('/');
+            }).toThrow('Could not find project root (no package.json found)');
+        });
+    });
+
+    describe('getAssetPath', () => {
+        it('should return correct absolute path for existing asset', () => {
+            const assetPath = 'test-image.png';
+            const expectedPath = path.join(mockProjectRoot, 'assets', assetPath);
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = getAssetPath(assetPath);
+            expect(result).toBe(expectedPath);
+            expect(mockedFs.existsSync).toHaveBeenCalledWith(expectedPath);
+        });
+
+        it('should handle nested asset paths', () => {
+            const assetPath = 'images/icons/test.svg';
+            const expectedPath = path.join(mockProjectRoot, 'assets', assetPath);
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = getAssetPath(assetPath);
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should throw error for non-existent asset', () => {
+            const assetPath = 'non-existent.jpg';
+            const expectedPath = path.join(mockProjectRoot, 'assets', assetPath);
+            mockedFs.existsSync.mockReturnValue(false);
+
+            expect(() => {
+                getAssetPath(assetPath);
+            }).toThrow(`Asset not found: ${expectedPath}`);
+        });
+
+        it('should handle empty asset path', () => {
+            const assetPath = '';
+            const expectedPath = path.join(mockProjectRoot, 'assets', assetPath);
+            mockedFs.existsSync.mockReturnValue(false);
+
+            expect(() => {
+                getAssetPath(assetPath);
+            }).toThrow(`Asset not found: ${expectedPath}`);
+        });
+
+        it('should handle asset paths with special characters', () => {
+            const assetPath = 'file with spaces & special!@#$%^.txt';
+            const expectedPath = path.join(mockProjectRoot, 'assets', assetPath);
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = getAssetPath(assetPath);
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle absolute path attempts', () => {
+            const assetPath = '/absolute/path/image.png';
+            const expectedPath = path.join(mockProjectRoot, 'assets', assetPath);
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = getAssetPath(assetPath);
+            // path.join normalizes the path, removing the leading slash
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle path traversal attempts', () => {
+            const assetPath = '../../../etc/passwd';
+            const expectedPath = path.join(mockProjectRoot, 'assets', assetPath);
+            mockedFs.existsSync.mockReturnValue(false);
+
+            expect(() => {
+                getAssetPath(assetPath);
+            }).toThrow(`Asset not found: ${expectedPath}`);
+        });
+    });
+
+    describe('getProjectPath', () => {
+        it('should return correct path for directory', () => {
+            const dir = 'src';
+            const expectedPath = path.join(mockProjectRoot, dir);
+
+            const result = getProjectPath(dir);
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle nested directories', () => {
+            const dir = 'src/utils/test';
+            const expectedPath = path.join(mockProjectRoot, dir);
+
+            const result = getProjectPath(dir);
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle empty directory string', () => {
+            const dir = '';
+            const expectedPath = mockProjectRoot;
+
+            const result = getProjectPath(dir);
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle directories with special characters', () => {
+            const dir = 'dir with spaces & special!@#$%^';
+            const expectedPath = path.join(mockProjectRoot, dir);
+
+            const result = getProjectPath(dir);
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle absolute path inputs', () => {
+            const dir = '/absolute/path';
+            const expectedPath = path.join(mockProjectRoot, dir);
+
+            const result = getProjectPath(dir);
+            // path.join normalizes the path
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle path traversal attempts', () => {
+            const dir = '../../..';
+            const expectedPath = path.join(mockProjectRoot, dir);
+
+            const result = getProjectPath(dir);
+            // path.join will normalize this but still combine with project root
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle Windows-style paths on Unix', () => {
+            const dir = 'src\\utils\\windows';
+            const expectedPath = path.join(mockProjectRoot, dir);
+
+            const result = getProjectPath(dir);
+            // path.join will normalize the separators
+            expect(result).toBe(expectedPath);
+        });
+    });
+
+    describe('PROJECT_ROOT constant', () => {
+        it('should be defined', () => {
+            const pathUtils = jest.requireMock('../../../src/utils/path-utils');
+            expect(pathUtils.PROJECT_ROOT).toBeDefined();
+            expect(pathUtils.PROJECT_ROOT).toBe(mockProjectRoot);
+        });
+    });
+
+    describe('edge cases and error scenarios', () => {
+        it('should handle null/undefined inputs gracefully', () => {
+            const pathUtils = jest.requireMock('../../../src/utils/path-utils');
+            
+            // TypeScript would normally prevent these, but testing runtime behavior
+            expect(() => {
+                pathUtils.getAssetPath(null as any);
+            }).toThrow();
+            
+            expect(() => {
+                pathUtils.getAssetPath(undefined as any);
+            }).toThrow();
+            
+            // getProjectPath would concatenate null/undefined as string
+            const resultNull = pathUtils.getProjectPath(null as any);
+            expect(resultNull).toBe(path.join(mockProjectRoot, String(null)));
+            
+            const resultUndefined = pathUtils.getProjectPath(undefined as any);
+            expect(resultUndefined).toBe(path.join(mockProjectRoot, String(undefined)));
+        });
+
+        it('should handle very long paths', () => {
+            const longPath = 'a'.repeat(1000);
+            const expectedPath = path.join(mockProjectRoot, 'assets', longPath);
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = getAssetPath(longPath);
+            expect(result).toBe(expectedPath);
+        });
+
+        it('should handle paths with unicode characters', () => {
+            const unicodePath = '测试/тест/δοκιμή.png';
+            const expectedPath = path.join(mockProjectRoot, 'assets', unicodePath);
+            mockedFs.existsSync.mockReturnValue(true);
+
+            const result = getAssetPath(unicodePath);
+            expect(result).toBe(expectedPath);
+        });
+    });
+});

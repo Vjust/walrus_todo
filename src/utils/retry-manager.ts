@@ -446,7 +446,7 @@ export class RetryManager {
           ]);
 
           // Operation succeeded
-          clearTimeout(timeoutId!);
+          clearTimeout(timeoutId! as unknown as NodeJS.Timeout);
           const responseTime = Date.now() - startTime;
 
           // Update node health and circuit breaker
@@ -456,7 +456,7 @@ export class RetryManager {
           return result;
         } catch (error) {
           // Always clear timeout to prevent memory leaks
-          clearTimeout(timeoutId!);
+          clearTimeout(timeoutId! as unknown as NodeJS.Timeout);
           throw error;
         }
       } catch (error) {

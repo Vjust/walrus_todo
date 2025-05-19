@@ -17,8 +17,8 @@ import type {
   DeleteBlobOptions,
   GetStorageConfirmationOptions
 } from '@mysten/walrus';
-import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import type { Signer } from '@mysten/sui.js/cryptography';
+import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import type { Signer } from '@mysten/sui/cryptography';
 import { BlobInfo, BlobMetadataShape } from '../../types/walrus';
 import { WalrusClient, WalrusClientExt } from '../../types/client';
 import { SignerAdapterImpl } from './signer-adapter';

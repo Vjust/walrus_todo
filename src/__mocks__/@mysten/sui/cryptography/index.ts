@@ -1,4 +1,4 @@
-import type { PublicKey, IntentScope } from '@mysten/sui.js/cryptography';
+import type { PublicKey, IntentScope } from '@mysten/sui/cryptography';
 
 export class MockPublicKey implements PublicKey {
   private bytes: Uint8Array;
@@ -39,6 +39,14 @@ export class MockPublicKey implements PublicKey {
   }
 
   async verifyPersonalMessage(message: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+    return true;
+  }
+
+  async verifyTransaction(transaction: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+    return true;
+  }
+
+  verifyAddress(address: string): boolean {
     return true;
   }
 

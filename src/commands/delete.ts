@@ -1,4 +1,5 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
+import BaseCommand from '../base-command';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
@@ -15,7 +16,7 @@ import { CLIError } from '../types/error';
  * @param {boolean} [all=false] - If true, deletes the entire list instead of a specific item. (Optional flag: -a, --all)
  * @param {boolean} [force=false] - If true, skips the confirmation prompt before deletion. (Optional flag: -f, --force)
  */
-export default class DeleteCommand extends Command {
+export default class DeleteCommand extends BaseCommand {
   static description = 'Delete a specific todo item or an entire list';
 
   static examples = [
@@ -26,6 +27,7 @@ export default class DeleteCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     id: Flags.string({
       char: 'i',
       description: 'Todo ID or title to delete',

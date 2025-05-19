@@ -2,6 +2,12 @@ export * from './error-handler';
 export * from './id-generator';
 export * from './todo-serializer';
 export * from './walrus-storage';
+export * from './performance-cache';
+export * from './batch-processor';
+export * from './lazy-loader';
+export * from './progress-indicators';
+export * from './interactive-mode';
+export * from './error-messages';
 
 export function validateDate(dateStr: string): boolean {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;

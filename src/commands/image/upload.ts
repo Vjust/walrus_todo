@@ -1,9 +1,10 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../utils/error-handler';
 import { TodoService } from '../../services/todoService';
 import { createWalrusImageStorage, WalrusImageStorage } from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
 import { NETWORK_URLS } from '../../constants';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 // Removed unused chalk import
 import * as path from 'path';
 import { configService } from '../../services/config-service';
@@ -19,7 +20,7 @@ import { configService } from '../../services/config-service';
  * @param {string} image - Path to the custom image file to upload. (Required flag: -i, --image)
  * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
  */
-export default class UploadCommand extends Command {
+export default class UploadCommand extends BaseCommand {
   static description = 'Upload a custom image for a todo to Walrus storage';
 
   static examples = [

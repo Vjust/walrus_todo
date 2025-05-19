@@ -1,16 +1,30 @@
 import crypto from "crypto";
-import { SuiClient } from '@mysten/sui.js/client';
-import { getFullnodeUrl } from '@mysten/sui.js/client';
-import { SuiObjectResponse } from '@mysten/sui.js/client';
-import { PaginatedObjectsResponse } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
+import { getFullnodeUrl } from '@mysten/sui/client';
+import { SuiObjectResponse } from '@mysten/sui/client';
+import { PaginatedObjectsResponse } from '@mysten/sui/client';
+import { SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { NETWORK_URLS } from '../constants';
 import { Config } from '../types';
 import { NetworkType } from '../types/network';
 import { CLIError } from '../types/error';
 
-// Define SUI_DECIMALS constant locally as it's no longer exported from @mysten/sui.js/client
+// Define SUI_DECIMALS constant locally as it's no longer exported from @mysten/sui/client
 // Standard value for SUI decimals is 9 (1 SUI = 10^9 MIST)
 const SUI_DECIMALS = 9;
+
+// Security and retry configuration
+const SECURITY_CONFIG = {
+  ENABLE_BLOCKCHAIN_VERIFICATION: true,
+  TRANSACTION_VERIFICATION: {
+    MAX_RETRIES: 3,
+    RETRY_DELAY_MS: 2000
+  }
+};
+
+const RETRY_CONFIG = {
+  TIMEOUT_MS: 30000
+};
 
 type TodoItem = {
   id: string;
@@ -40,315 +54,211 @@ export interface ISuiService {
   deleteTodoList(listId: string): Promise<void>;
 }
 
-/**
- * Interface for account information returned by the service
- */
-export interface AccountInfo {
-  address: string;
-  balance: string;
-  objects?: Array<{
-    objectId: string;
-    type: string;
-  }>;
-}
-
-/**
- * Test implementation of SUI service for development and testing.
- * Simulates blockchain behavior without network calls.
- */
-interface MockTransaction {
-  id: string;
-  sender: string;
-  type: 'create' | 'update' | 'delete';
-  timestamp: number;
-  status: 'pending' | 'success' | 'failed';
-  gasUsed?: number;
-  error?: string;
-}
-
-interface MockObject {
-  id: string;
-  owner: string;
-  type: string;
-  version: number;
-  content: any;
-  digest: string;
-  createdAt: number;
-  updatedAt: number;
-}
-
 export class SuiTestService implements ISuiService {
-  private walletAddress: string;
-  private lists = new Map<string, TodoList>();
-  private objects = new Map<string, MockObject>();
-  private transactions = new Map<string, MockTransaction>();
   private client: SuiClient;
-  private config: Config;
-  private networkLatency = 500; // Simulated network delay in ms
+  private walletAddress?: string;
+  
+  // In-memory state management
+  private todoLists: Map<string, TodoList> = new Map();
+  private counter = 0;
 
-  constructor(config?: Config | string) {
-    if (typeof config === 'string') {
-      this.config = {
-        network: 'testnet' as NetworkType,
-        walletAddress: config,
-        encryptedStorage: false
-      };
-    } else if (config) {
-      this.config = config;
-    } else {
-      this.config = {
-        network: 'testnet' as NetworkType,
-        walletAddress: '',
-        encryptedStorage: false
-      };
-    }
-
-    // Convert 'local' to 'localnet' for compatibility with getFullnodeUrl
-    const networkType = this.config.network === 'local' ? 'localnet' : this.config.network;
-    this.client = new SuiClient({ url: getFullnodeUrl(networkType as 'mainnet' | 'testnet' | 'devnet' | 'localnet') });
-    this.walletAddress =
-      this.config.walletAddress ??
-      `0x${crypto.randomBytes(20).toString("hex").toLowerCase()}`;
-  }
-
-  async getWalletAddress(): Promise<string> {
-    return this.walletAddress;
-  }
-
-  private async simulateTransaction(type: MockTransaction['type'], action: () => void): Promise<string> {
-    const txId = crypto.randomBytes(32).toString('hex');
-    const timestamp = Date.now();
+  constructor(private config: Config) {
+    const network = config.network as NetworkType;
+    const url = NETWORK_URLS[network];
     
-    // Create pending transaction
-    this.transactions.set(txId, {
-      id: txId,
-      sender: this.walletAddress,
-      type,
-      timestamp,
-      status: 'pending'
-    });
+    if (!url) {
+      throw new CLIError(
+        `Invalid network type: ${network}`,
+        'INVALID_NETWORK'
+      );
+    }
+    
+    this.client = new SuiClient({ url });
+  }
 
-    // Simulate network latency
-    await new Promise(resolve => setTimeout(resolve, this.networkLatency));
-
+  /**
+   * Initialize the service
+   */
+  async init(): Promise<void> {
     try {
-      // Random failure simulation (5% chance)
-      if (Math.random() < 0.05) {
-        throw new Error('Transaction failed: network congestion');
-      }
-
-      // Execute the action
-      action();
-
-      // Update transaction status
-      this.transactions.set(txId, {
-        ...this.transactions.get(txId)!,
-        status: 'success',
-        gasUsed: Math.floor(Math.random() * 1000) + 500
-      });
-
-      return txId;
+      this.walletAddress = await this.getWalletAddress();
     } catch (error) {
-      // Record failure
-      this.transactions.set(txId, {
-        ...this.transactions.get(txId)!,
-        status: 'failed',
-        error: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
+      throw new CLIError(
+        `Failed to initialize Sui service: ${error instanceof Error ? error.message : String(error)}`,
+        'INIT_FAILED'
+      );
     }
   }
 
+  /**
+   * Get wallet address from environment
+   */
+  async getWalletAddress(): Promise<string> {
+    if (this.walletAddress) {
+      return this.walletAddress;
+    }
+
+    const address = process.env.WALLET_ADDRESS;
+    if (!address) {
+      throw new CLIError(
+        'Wallet address not found in environment',
+        'WALLET_NOT_FOUND'
+      );
+    }
+
+    this.walletAddress = address;
+    return address;
+  }
+
+  /**
+   * Create a new todo list
+   */
   async createTodoList(): Promise<string> {
-    const id = this.generateId("list");
-    const now = Date.now();
+    const id = this.generateId();
+    const owner = await this.getWalletAddress();
     
-    await this.simulateTransaction('create', () => {
-      // Create list object
-      const listObject: MockObject = {
-        id,
-        owner: this.walletAddress,
-        type: 'TodoList',
-        version: 1,
-        content: {
-          items: new Map(),
-          createdAt: now,
-          updatedAt: now
-        },
-        digest: crypto.createHash('sha256').update(id + now).digest('hex'),
-        createdAt: now,
-        updatedAt: now
-      };
-      
-      this.objects.set(id, listObject);
-      this.lists.set(id, {
-        id,
-        owner: this.walletAddress,
-        items: new Map(),
-        createdAt: now,
-        updatedAt: now,
-      });
-    });
-
+    const todoList: TodoList = {
+      id,
+      owner,
+      items: new Map(),
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    
+    this.todoLists.set(id, todoList);
     return id;
   }
 
+  /**
+   * Add a todo item to a list
+   */
   async addTodo(listId: string, text: string): Promise<string> {
-    const list = this.assertList(listId);
-    const id = this.generateId("todo");
-    const now = Date.now();
+    const list = this.todoLists.get(listId);
+    if (!list) {
+      throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
+    }
+
+    const itemId = this.generateId();
+    const item: TodoItem = {
+      id: itemId,
+      text,
+      completed: false,
+      updatedAt: Date.now()
+    };
+
+    list.items.set(itemId, item);
+    list.updatedAt = Date.now();
     
-    await this.simulateTransaction('update', () => {
-      // Create todo item object
-      const todoObject: MockObject = {
-        id,
-        owner: this.walletAddress,
-        type: 'TodoItem',
-        version: 1,
-        content: {
-          text,
-          completed: false,
-          updatedAt: now
-        },
-        digest: crypto.createHash('sha256').update(id + text + now).digest('hex'),
-        createdAt: now,
-        updatedAt: now
-      };
-      
-      // Update list object
-      const listObject = this.objects.get(listId)!;
-      listObject.version += 1;
-      listObject.updatedAt = now;
-      listObject.digest = crypto.createHash('sha256')
-        .update(listObject.digest + todoObject.digest)
-        .digest('hex');
-      
-      // Update storage
-      this.objects.set(id, todoObject);
-      const item: TodoItem = {
-        id,
-        text,
-        completed: false,
-        updatedAt: now,
-      };
-      list.items.set(id, item);
-      list.updatedAt = now;
-    });
-
-    return id;
+    return itemId;
   }
 
+  /**
+   * Get all todos from a list
+   */
   async getTodos(listId: string): Promise<TodoItem[]> {
-    return Array.from(this.assertList(listId).items.values());
+    const list = this.todoLists.get(listId);
+    if (!list) {
+      throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
+    }
+
+    return Array.from(list.items.values());
   }
 
+  /**
+   * Update a todo item
+   */
   async updateTodo(
     listId: string,
     itemId: string,
     changes: Partial<Omit<TodoItem, "id">>
   ): Promise<void> {
-    const list = this.assertList(listId);
+    const list = this.todoLists.get(listId);
+    if (!list) {
+      throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
+    }
+
     const item = list.items.get(itemId);
     if (!item) {
-      throw new CLIError(`Todo "${itemId}" not found in list "${listId}"`, 'TODO_NOT_FOUND');
+      throw new CLIError('Todo item not found', 'ITEM_NOT_FOUND');
     }
 
-    const now = Date.now();
-    await this.simulateTransaction('update', () => {
-      // Update todo object
-      const todoObject = this.objects.get(itemId)!;
-      todoObject.version += 1;
-      todoObject.updatedAt = now;
-      todoObject.content = {
-        ...todoObject.content,
-        ...changes,
-        updatedAt: now
-      };
-      todoObject.digest = crypto.createHash('sha256')
-        .update(todoObject.digest + JSON.stringify(changes))
-        .digest('hex');
-
-      // Update list object
-      const listObject = this.objects.get(listId)!;
-      listObject.version += 1;
-      listObject.updatedAt = now;
-      listObject.digest = crypto.createHash('sha256')
-        .update(listObject.digest + todoObject.digest)
-        .digest('hex');
-
-      // Update storage
-      Object.assign(item, changes, { updatedAt: now });
-      list.updatedAt = now;
-    });
+    Object.assign(item, changes, { updatedAt: Date.now() });
+    list.updatedAt = Date.now();
   }
 
+  /**
+   * Delete a todo list
+   */
   async deleteTodoList(listId: string): Promise<void> {
-    const list = this.lists.get(listId);
-    if (!list) {
-      throw new CLIError(`Todo list "${listId}" does not exist`, 'LIST_NOT_FOUND');
+    if (!this.todoLists.has(listId)) {
+      throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
     }
 
-    await this.simulateTransaction('delete', () => {
-      // Delete todo items
-      for (const itemId of list.items.keys()) {
-        this.objects.delete(itemId);
-      }
-
-      // Delete list object
-      this.objects.delete(listId);
-      this.lists.delete(listId);
-    });
+    this.todoLists.delete(listId);
   }
 
-  public async getAccountInfo(): Promise<AccountInfo> {
-    try {
-      if (!this.config.walletAddress) {
-        throw new CLIError('Wallet address not configured', 'NO_WALLET_ADDRESS');
-      }
-
-      const balanceResponse = await this.client.getBalance({
-        owner: this.config.walletAddress,
-        coinType: '0x2::sui::SUI'
-      });
-
-      const objectsResponse = await this.client.getOwnedObjects({
-        owner: this.config.walletAddress,
-        options: { showType: true },
-        limit: 5
-      }) as PaginatedObjectsResponse;
-
-      const objects = objectsResponse.data.map((obj: SuiObjectResponse) => {
-        return {
-          objectId: obj.data?.objectId || 'unknown',
-          type: obj.data?.type || 'unknown'
-        };
-      });
-
-      return {
-        address: this.config.walletAddress,
-        balance: balanceResponse.totalBalance,
-        objects
-      };
-    } catch (error) {
+  /**
+   * Verify transaction execution and effects
+   */
+  private async verifyTransaction(result: SuiTransactionBlockResponse): Promise<void> {
+    if (!result.effects?.status?.status || result.effects.status.status !== 'success') {
       throw new CLIError(
-        `Failed to get account info: ${error instanceof Error ? error.message : String(error)}`,
-        'ACCOUNT_INFO_FAILED'
+        `Transaction failed: ${result.effects?.status?.error || 'Unknown error'}`,
+        'TRANSACTION_FAILED'
       );
     }
+
+    if (SECURITY_CONFIG.ENABLE_BLOCKCHAIN_VERIFICATION) {
+      let retries = 0;
+      while (retries < SECURITY_CONFIG.TRANSACTION_VERIFICATION.MAX_RETRIES) {
+        try {
+          // Wait for transaction finality
+          await this.client.waitForTransaction({
+            digest: result.digest,
+            timeout: RETRY_CONFIG.TIMEOUT_MS,
+            options: {
+              showEffects: true,
+              showEvents: true,
+            }
+          });
+
+          // Verify effects match expected changes
+          const effects = await this.client.getTransactionBlock({
+            digest: result.digest,
+            options: {
+              showEffects: true,
+              showEvents: true,
+            }
+          });
+
+          if (effects.effects?.status?.status !== 'success') {
+            throw new CLIError(
+              'Transaction verification failed: effects do not match expected state',
+              'VERIFICATION_FAILED'
+            );
+          }
+
+          return;
+        } catch (error) {
+          retries++;
+          if (retries >= SECURITY_CONFIG.TRANSACTION_VERIFICATION.MAX_RETRIES) {
+            throw new CLIError(
+              `Transaction verification failed after ${retries} attempts: ${error instanceof Error ? error.message : String(error)}`,
+              'VERIFICATION_FAILED'
+            );
+          }
+          await new Promise(resolve => 
+            setTimeout(resolve, SECURITY_CONFIG.TRANSACTION_VERIFICATION.RETRY_DELAY_MS)
+          );
+        }
+      }
+    }
   }
 
-  private assertList(listId: string): TodoList {
-    const list = this.lists.get(listId);
-    if (!list) {
-      throw new CLIError(`Todo list "${listId}" not found`, 'LIST_NOT_FOUND');
-    }
-    if (list.owner !== this.walletAddress) {
-      throw new CLIError('Unauthorized access to todo list', 'UNAUTHORIZED');
-    }
-    return list;
-  }
-
-  private generateId(prefix: string): string {
-    return `${prefix}_${crypto.randomBytes(6).toString("hex")}`;
+  /**
+   * Generate a unique ID
+   */
+  private generateId(): string {
+    return `${Date.now()}-${this.counter++}`;
   }
 }

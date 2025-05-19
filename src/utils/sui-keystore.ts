@@ -1,27 +1,22 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { Secp256k1Keypair } from '@mysten/sui.js/keypairs/secp256k1';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { Secp256k1Keypair } from '@mysten/sui/keypairs/secp256k1';
 import { 
   type Signer, 
   type PublicKey, 
-  type SignatureScheme, 
-  type SerializedSignature,
-  type SignatureWithBytes as SuiSignatureWithBytes,
-  IntentScope, 
+  type SignatureScheme,
+  type IntentScope, 
   messageWithIntent 
-} from '@mysten/sui.js/cryptography';
-import { fromB64, toB64 } from '@mysten/sui.js/utils';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { SuiClient, type SuiClientOptions, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
+} from '@mysten/sui/cryptography';
+import { fromB64, toB64 } from '@mysten/sui/utils';
+import { TransactionBlock, Transaction } from '@mysten/sui/transactions';
+import { SuiClient, type SuiClientOptions, SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { execSync } from 'child_process';
-
-// Define compatible interface for SignatureWithBytes that works with string or Uint8Array
-interface SignatureWithBytes {
-  signature: string | Uint8Array;
-  bytes: string | Uint8Array;
-}
+import { SignerAdapter, SuiSDKVersion, SignatureWithBytes } from '../types/adapters/SignerAdapter';
+import { TransactionType } from '../types/transaction';
+import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
 
 export type KeyType = SignatureScheme;
 
@@ -32,7 +27,7 @@ export class KeystoreError extends Error {
   }
 }
 
-export class KeystoreSigner implements Signer {
+export class KeystoreSigner implements SignerAdapter {
   static async fromPath(_clientConfig: string): Promise<KeystoreSigner> {
     const config: SuiClientOptions = { url: 'https://testnet.suifrens.sui.io' };
     const client = new SuiClient(config);
@@ -40,6 +35,24 @@ export class KeystoreSigner implements Signer {
   }
   private keypair!: Ed25519Keypair | Secp256k1Keypair;
   private keyScheme: SignatureScheme = 'ED25519';
+
+  private _disposed: boolean = false;
+  public getClient(): SuiClient {
+    return this.suiClient;
+  }
+  public getUnderlyingImplementation(): Signer {
+    return this.keypair;
+  }
+  public dispose(): Promise<void> {
+    this._disposed = true;
+    return Promise.resolve();
+  }
+  public isDisposed(): boolean {
+    return this._disposed;
+  }
+  public getSDKVersion(): SuiSDKVersion {
+    return SuiSDKVersion.UNKNOWN;
+  }
 
   constructor(private suiClient: SuiClient) {
     // Get active address
@@ -103,7 +116,7 @@ export class KeystoreSigner implements Signer {
 
   // Implement required Signer interface method
   async sign(messageBytes: Uint8Array): Promise<Uint8Array> {
-    return await this.keypair.signData(messageBytes);
+    return await this.signData(messageBytes);
   }
   
   /**
@@ -112,66 +125,39 @@ export class KeystoreSigner implements Signer {
    * @param intent The intent scope for the signature
    * @returns A Promise resolving to a SignatureWithBytes object
    */
-  async signWithIntent(messageBytes: Uint8Array, intent: IntentScope): Promise<SuiSignatureWithBytes> {
+  async signWithIntent(messageBytes: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
     const intentMessage = messageWithIntent(intent, messageBytes);
-    const signature = await this.keypair.signData(intentMessage);
+    const signature = await this.signData(intentMessage);
     
-    // Return in the format expected by the SuiSignatureWithBytes interface
-    // Convert Uint8Array to string format if needed by the interface
-    const signatureString = toB64(signature);
-    const bytesString = toB64(messageBytes);
-    
+    // Return in the format expected by the SignatureWithBytes interface
     return {
-      signature: signatureString,
-      bytes: bytesString
+      signature: toB64(signature),
+      bytes: toB64(messageBytes)
     };
   }
   
   /**
    * Signs data and returns a signature
    * @param data The data to sign
-   * @returns The signature for the given data
+   * @returns A Promise resolving to the signature for the given data
    */
-  signData(data: Uint8Array): Uint8Array {
-    // For compatibility with the Signer interface which requires a sync method,
-    // we use a workaround by getting the keypair's sync signData method result
-    
-    // In a real implementation, we'd need to handle this properly, but for our
-    // mock/test keystore, we can create a synchronous version by calling the async
-    // method and extracting the result immediately
-    
-    // Return a mock signature for the sync interface
-    // The real signing would be async, but we need a sync version for compatibility
-    return new Uint8Array([0, 1, 2, 3, 4]);
+  async signData(data: Uint8Array): Promise<Uint8Array> {
+    if ('signData' in this.keypair && typeof this.keypair.signData === 'function') {
+      return await this.keypair.signData(data);
+    }
+    // Fallback for keypairs that don't have signData
+    const signature = await this.keypair.sign(data);
+    return signature;
   }
   
-  /**
-   * Async version of signData for internal use
-   * This provides the expected async behavior
-   */
-  async signDataAsync(data: Uint8Array): Promise<Uint8Array> {
-    return await this.keypair.signData(data);
-  }
-  
-  /**
-   * Wrapper version that returns bytes in the expected format for certain implementations
-   * @internal Used by adapter implementations
-   */
-  async signDataWithBytes(data: Uint8Array): Promise<SignatureWithBytes> {
-    const signature = await this.keypair.signData(data);
-    return {
-      signature: signature,
-      bytes: data
-    };
-  }
 
   /**
    * Signs a transaction block
    * @param bytes The transaction bytes to sign
    * @returns A Promise resolving to a SignatureWithBytes object
    */
-  async signTransactionBlock(bytes: Uint8Array): Promise<SuiSignatureWithBytes> {
-    return this.signWithIntent(bytes, IntentScope.TransactionData);
+  async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
+    return this.signWithIntent(bytes, 'TransactionData' as IntentScope);
   }
 
   /**
@@ -179,8 +165,20 @@ export class KeystoreSigner implements Signer {
    * @param transaction The transaction to sign
    * @returns A Promise resolving to a SignatureWithBytes object
    */
-  async signTransaction(transaction: TransactionBlock): Promise<SuiSignatureWithBytes> {
-    const bytes = await transaction.build({ client: this.suiClient });
+  async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
+    // Serialize the transaction and sign the bytes
+    let bytes: Uint8Array;
+    if (transaction instanceof TransactionBlock) {
+      const serialized = await transaction.serialize();
+      bytes = new Uint8Array(Buffer.from(serialized, 'base64'));
+    } else if ((transaction as any).serialize && typeof (transaction as any).serialize === 'function') {
+      // TransactionBlockAdapter type
+      const serialized = await (transaction as any).serialize();
+      bytes = new Uint8Array(Buffer.from(serialized, 'base64'));
+    } else {
+      throw new KeystoreError('Unknown transaction type', 'INVALID_TRANSACTION_TYPE');
+    }
+    
     return this.signTransactionBlock(bytes);
   }
 
@@ -189,8 +187,8 @@ export class KeystoreSigner implements Signer {
    * @param bytes The message bytes to sign
    * @returns A Promise resolving to a SignatureWithBytes object
    */
-  async signPersonalMessage(bytes: Uint8Array): Promise<SuiSignatureWithBytes> {
-    return this.signWithIntent(bytes, IntentScope.PersonalMessage);
+  async signPersonalMessage(bytes: Uint8Array): Promise<SignatureWithBytes> {
+    return this.signWithIntent(bytes, 'PersonalMessage' as IntentScope);
   }
 
   getKeyScheme(): KeyType {
@@ -205,16 +203,13 @@ export class KeystoreSigner implements Signer {
     return this.keypair.getPublicKey().toSuiAddress();
   }
 
-  connect(client: SuiClient): Signer & { client: SuiClient } {
-    return Object.assign(
-      Object.create(Object.getPrototypeOf(this)),
-      this,
-      { client }
-    ) as Signer & { client: SuiClient };
+  connect(client: SuiClient): SignerAdapter {
+    this.suiClient = client;
+    return this;
   }
 
   async signAndExecuteTransactionBlock(
-    transactionBlock: TransactionBlock,
+    transactionBlock: TransactionBlock | Transaction,
     options?: { 
       requestType?: 'WaitForLocalExecution'; 
       showEffects?: boolean; 
@@ -259,20 +254,30 @@ export class KeystoreSigner implements Signer {
    * @returns The bytes and signature array
    */
   async signedTransactionBlock(
-    transactionBlock: TransactionBlock
+    transactionBlock: TransactionBlock | Transaction
   ): Promise<{ bytes: Uint8Array; signature: string[] }> {
-    const bytes = await transactionBlock.build({ client: this.suiClient });
+    let bytes: Uint8Array;
+    if (transactionBlock instanceof TransactionBlock) {
+      bytes = await transactionBlock.build({ client: this.suiClient });
+    } else {
+      // Handle modern Transaction type
+      bytes = await (transactionBlock as any).build({ client: this.suiClient });
+    }
     const signatureResult = await this.signTransactionBlock(bytes);
     
     // Convert the signature to base64 string for serialization
-    // Handle both string and Uint8Array signatures
-    const signatureBase64 = typeof signatureResult.signature === 'string' 
-      ? signatureResult.signature 
-      : toB64(signatureResult.signature);
+    const signatureBase64 = toB64(signatureResult.signature as Uint8Array);
     
     return {
       bytes,
       signature: [signatureBase64]
     };
+  }
+
+  /**
+   * Returns the signer that can be used for compatibility with older SDK versions
+   */
+  getSigner(): Signer {
+    return this.keypair;
   }
 }

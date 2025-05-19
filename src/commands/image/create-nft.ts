@@ -1,10 +1,11 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../utils/error-handler';
 import { TodoService } from '../../services/todoService';
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../../constants';
-import { SuiClient } from '@mysten/sui.js/client';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // Removed unused chalk import
 import { configService } from '../../services/config-service';
 
@@ -17,7 +18,7 @@ import { configService } from '../../services/config-service';
  * @param {string} todo - The ID of the todo item for which to create an NFT. (Required flag: -t, --todo)
  * @param {string} list - The name of the todo list containing the specified todo item. (Required flag: -l, --list)
  */
-export default class CreateNftCommand extends Command {
+export default class CreateNftCommand extends BaseCommand {
   static description = 'Create an NFT on Sui blockchain for a todo with an existing image';
 
   static examples = [

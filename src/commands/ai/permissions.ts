@@ -6,6 +6,8 @@ import { SuiAIVerifierAdapter } from '../../services/ai/adapters/SuiAIVerifierAd
 import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
 import { AIPermissionManager, initializePermissionManager } from '../../services/ai/AIPermissionManager';
 import chalk from 'chalk';
+import { KeystoreSigner } from '../../utils/sui-keystore';
+import { createInterface } from 'readline';
 
 export default class AiPermissions extends BaseCommand {
   static description = 'Manage permissions for AI operations';
@@ -16,7 +18,6 @@ export default class AiPermissions extends BaseCommand {
    */
   private async getSuiSigner() {
     try {
-      const { KeystoreSigner } = require('../../utils/sui-keystore');
       return await KeystoreSigner.fromPath('');
     } catch (error) {
       this.error(`Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`);
@@ -526,8 +527,7 @@ export default class AiPermissions extends BaseCommand {
 
   private async confirm(message: string): Promise<boolean> {
     // Simple confirmation prompt
-    const readline = require('readline');
-    const rl = readline.createInterface({
+    const rl = createInterface({
       input: process.stdin,
       output: process.stdout
     });

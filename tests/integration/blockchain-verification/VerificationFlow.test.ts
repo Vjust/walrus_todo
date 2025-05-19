@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { createMockWalrusClient } from '../../../src/utils/MockWalrusClient';
-import { SuiClient } from '@mysten/sui.js/client';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { SignatureWithBytes, IntentScope } from '@mysten/sui.js/cryptography';
+import { SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { CLIError } from '../../../src/types/error';
 
 // Mock Verification Flow Controller

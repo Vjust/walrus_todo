@@ -5,7 +5,8 @@
  * [Any important implementation details]
  */
 
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import { CLIError } from '../utils/error-handler';
 
 /**
@@ -13,7 +14,7 @@ import { CLIError } from '../utils/error-handler';
  * @description This is a template class for creating new CLI commands in the walrus_todo project.
  * It serves as a starting point for developers to build new functionality and is not intended for end-user interaction.
  */
-export default class SomeCommand extends Command {  // Removed placeholder comments for cleanliness, as they are not standard code
+export default class SomeCommand extends BaseCommand {  // Removed placeholder comments for cleanliness, as they are not standard code
   static description = 'Template for creating new CLI commands - not for end users';
 
   static examples = [

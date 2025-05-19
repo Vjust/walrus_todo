@@ -2,9 +2,9 @@
  * Type definitions for Walrus client interfaces and responses
  */
 
-import { Signer } from '@mysten/sui.js/cryptography';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { Signer } from '@mysten/sui/cryptography';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { Transaction } from './transaction';
 
 // Walrus blob object structure

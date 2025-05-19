@@ -1,1 +1,1 @@
-{"name":"walrus-todo-demo","private":true,"scripts":{"dev":"npx next dev"},"type":"module"}
+{"name":"walrus-todo-demo","private":true,"scripts":{"dev":"npx next dev"},"type":"module","dependencies":{"@mysten/sui":"^1.29.1","@suiet/wallet-kit":"^0.4.1"}}

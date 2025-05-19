@@ -12,7 +12,7 @@ jest.setTimeout(10000);
 jest.mock('@mysten/sui/dist/cjs/client');
 jest.mock('@mysten/sui/dist/cjs/cryptography');
 jest.mock('@mysten/sui/dist/cjs/keypairs/ed25519');
-jest.mock('@mysten/sui.js/transactions');
+jest.mock('@mysten/sui/transactions');
 
 // Reset all mocks before each test
 beforeEach(() => {

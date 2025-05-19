@@ -10,6 +10,7 @@ import {
   setEnvFromFlags
 } from '../utils/CommandValidationMiddleware';
 import { getEnv, hasEnv } from '../utils/environment-config';
+import { TodoService } from '../services/todoService';
 
 /**
  * @class AI
@@ -81,7 +82,7 @@ export default class AI extends BaseCommand {
     AIProviderFactory.setAIFeatureRequested(true);
 
     // First ensure environment variables are loaded from .env files
-    const { loadEnvironment } = require('../utils/env-loader');
+    const { loadEnvironment } = await import('../utils/env-loader');
 
     // Load environment with verbose logging only in development mode
     if (process.env.NODE_ENV === 'development') {
@@ -298,10 +299,9 @@ export default class AI extends BaseCommand {
    */
   private async getTodos(listName?: string) {
     // Import TodoService here to avoid circular dependencies
-    const { TodoService } = require('../services/todoService');
     const todoService = new TodoService();
 
-    const todos = await todoService.listTodos(listName);
+    const todos = await todoService.listTodos();
 
     if (todos.length === 0) {
       this.error('No todos found. Add some todos first with "walrus_todo add"', { exit: 1 });

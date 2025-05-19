@@ -1,5 +1,5 @@
-import { SuiClient } from '@mysten/sui.js';
-import { TransactionBlock } from '@mysten/sui.js';
+import { SuiClient } from '@mysten/sui';
+import { TransactionBlock } from '@mysten/sui';
 import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
 import { createWalrusImageStorage } from '../../src/utils/walrus-image-storage';
 import { CLIError } from '../../src/types/error';

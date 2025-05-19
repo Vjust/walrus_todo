@@ -1,6 +1,6 @@
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { SuiClient } from '@mysten/sui.js/client';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { TransactionBlock } from '@mysten/sui/transactions';
+import { SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoAIOperation, VerificationResult, AIProvider } from '../../services/ai/types';
 import { Logger } from '../../utils/Logger';
 import { CLIError } from '../error';

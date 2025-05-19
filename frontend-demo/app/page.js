@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ConnectButton } from "@suiet/wallet-kit";
 
 export default function Home() {
   const [isConnecting, setIsConnecting] = useState(false)
@@ -57,13 +58,7 @@ export default function Home() {
       </div>
       
       <div style={{ textAlign: 'center', marginTop: '40px' }}>
-        <button 
-          className="button"
-          onClick={handleConnect}
-          disabled={isConnecting}
-        >
-          {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-        </button>
+        <ConnectButton />
       </div>
     </div>
   )

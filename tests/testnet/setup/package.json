@@ -1,0 +1,35 @@
+{
+  "name": "@waltodo/testnet-setup",
+  "version": "1.0.0",
+  "description": "Automated Sui testnet setup utilities for WalTodo testing",
+  "main": "sui-setup.js",
+  "types": "sui-setup.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "setup": "ts-node sui-setup.ts",
+    "quick-setup": "ts-node -e \"require('./sui-setup').quickSetup().then(console.log).catch(console.error)\""
+  },
+  "keywords": [
+    "sui",
+    "testnet",
+    "wallet",
+    "setup",
+    "testing",
+    "blockchain"
+  ],
+  "dependencies": {
+    "@mysten/sui.js": "^0.50.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "sui-setup.js",
+    "sui-setup.d.ts",
+    "README.md"
+  ]
+}
