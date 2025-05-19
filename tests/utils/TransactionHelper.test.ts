@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import type { Mocked } from 'jest-mock';
 import { TransactionHelper } from '../../../src/utils/TransactionHelper';
-import { Signer } from '@mysten/sui.js/cryptography';
+import { Signer } from '@mysten/sui/cryptography';
 import { Logger } from '../../../src/utils/Logger';
 import {
   ValidationError,

@@ -3,17 +3,33 @@
  * Enhanced for compatibility between different library versions
  */
 
+// AggregateError polyfill declaration for ES2020 targets
+// AggregateError was introduced in ES2021 but we target ES2020
+declare global {
+  interface AggregateError extends Error {
+    errors: Error[];
+  }
+
+  interface AggregateErrorConstructor {
+    new(errors: Iterable<any>, message?: string): AggregateError;
+    (errors: Iterable<any>, message?: string): AggregateError;
+    readonly prototype: AggregateError;
+  }
+
+  const AggregateError: AggregateErrorConstructor;
+}
+
 // Declare the SerializedMessage from keystore
-declare module '@mysten/sui.js/cryptography/keystore' {
+declare module '@mysten/sui/cryptography/keystore' {
   export interface SerializedMessage {
     messageBytes: Uint8Array;
   }
 }
 
 // Enhanced TransactionBlock and Transaction types
-declare module '@mysten/sui.js/transactions' {
-  import { Signer } from '@mysten/sui.js/cryptography';
-  import { SuiObjectRef, SuiTransactionBlockResponse, SuiTransactionBlockResponseOptions } from '@mysten/sui.js/client';
+declare module '@mysten/sui/transactions' {
+  import { Signer } from '@mysten/sui/cryptography';
+  import { SuiObjectRef, SuiTransactionBlockResponse, SuiTransactionBlockResponseOptions } from '@mysten/sui/client';
 
   export type TransactionArgument = TransactionObjectArgument | TransactionPureArgument;
 
@@ -91,9 +107,9 @@ declare module '@mysten/sui.js/transactions' {
 
 // Enhanced Walrus types with better compatibility support
 declare module '@mysten/walrus' {
-  import { Transaction, TransactionBlock } from '@mysten/sui.js/transactions';
-  import { Signer } from '@mysten/sui.js/cryptography';
-  import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+  import { Transaction, TransactionBlock } from '@mysten/sui/transactions';
+  import { Signer } from '@mysten/sui/cryptography';
+  import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
   // BlobObject structure with optional fields to accommodate all versions
   export interface BlobObject {

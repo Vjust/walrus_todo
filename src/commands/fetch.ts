@@ -1,13 +1,15 @@
-import { Command, Flags } from '@oclif/core';
-import { SuiClient } from '@mysten/sui.js/client';
+import { Flags } from '@oclif/core';
+import BaseCommand from '../base-command';
+import { SuiClient } from '@mysten/sui/client';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../constants';
 import { CLIError } from '../types/error';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
+import { RetryManager } from '../utils/retry-manager';
 
 /**
  * @class FetchCommand
@@ -19,7 +21,7 @@ import chalk from 'chalk';
  * @param {string} [object-id] - The NFT object ID on the Sui blockchain to retrieve. (Optional flag: --object-id)
  * @param {string} [list='default'] - The name of the local todo list to save the retrieved todo to. (Optional flag: -l, --list)
  */
-export default class FetchCommand extends Command {
+export default class FetchCommand extends BaseCommand {
   static description = 'Fetch todos directly from blockchain or Walrus storage using IDs';
 
   static examples = [
@@ -28,6 +30,7 @@ export default class FetchCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     'blob-id': Flags.string({
       description: 'Walrus blob ID to retrieve',
       exclusive: ['object-id'],
@@ -44,7 +47,7 @@ export default class FetchCommand extends Command {
   };
 
   private todoService = new TodoService();
-  private walrusStorage = createWalrusStorage(true); // Use mock mode for testing
+  private walrusStorage = createWalrusStorage('testnet', true); // Use mock mode for testing
 
   async run(): Promise<void> {
     try {
@@ -66,9 +69,18 @@ export default class FetchCommand extends Command {
         // Initialize Walrus storage
         await this.walrusStorage.connect();
 
-        // Retrieve todo from Walrus
+        // Retrieve todo from Walrus with retry
         this.log(chalk.blue(`Retrieving todo from Walrus (blob ID: ${flags['blob-id']})...`));
-        const todo = await this.walrusStorage.retrieveTodo(flags['blob-id']);
+        const todo = await RetryManager.withRetry(
+          () => this.walrusStorage.retrieveTodo(flags['blob-id']),
+          {
+            maxRetries: 3,
+            retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
+            onRetry: (error, attempt, delay) => {
+              this.log(chalk.yellow(`Retry attempt ${attempt} after ${delay}ms: ${error.message}`));
+            }
+          }
+        );
 
         // Save to local list
         await this.todoService.addTodo(flags.list, todo); // Removed unused savedTodo variable

@@ -2,8 +2,8 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { WalrusStorage } from '../utils/walrus-storage';
 import { StorageReuseAnalyzer } from '../utils/storage-reuse-analyzer';
-const chalk = require('chalk');
-import { SuiClient } from '@mysten/sui.js/client';
+import chalk from 'chalk';
+import { SuiClient } from '@mysten/sui/client';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 
 /**
@@ -47,21 +47,29 @@ export default class StorageCommand extends BaseCommand {
 
   async run() {
     const { flags } = await this.parse(StorageCommand);
-    this.log(`${chalk.bold('Walrus Storage Manager')}`);
+    this.log.info(this.format.highlight('Walrus Storage Manager'));
     
-    const walrusStorage = new WalrusStorage();
-    await walrusStorage.connect();
+    const spinner = this.startUnifiedSpinner('Connecting to storage...');
     
-    if (flags.summary || (!flags.detail && !flags.analyze)) {
-      await this.showStorageSummary(walrusStorage);
-    }
-    
-    if (flags.detail) {
-      await this.showStorageDetails(walrusStorage);
-    }
-    
-    if (flags.analyze) {
-      await this.analyzeStorageEfficiency(walrusStorage);
+    try {
+      const walrusStorage = new WalrusStorage();
+      await walrusStorage.connect();
+      spinner.succeed('Connected to Walrus storage');
+      
+      if (flags.summary || (!flags.detail && !flags.analyze)) {
+        await this.showStorageSummary(walrusStorage);
+      }
+      
+      if (flags.detail) {
+        await this.showStorageDetails(walrusStorage);
+      }
+      
+      if (flags.analyze) {
+        await this.analyzeStorageEfficiency(walrusStorage);
+      }
+    } catch (error) {
+      spinner.fail('Failed to connect to storage');
+      this.handleError(error, 'Storage connection failed');
     }
   }
   

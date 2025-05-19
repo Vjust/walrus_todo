@@ -1,5 +1,5 @@
 import { BlobVerificationManager } from '../../src/utils/blob-verification';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../../src/types/client';
 import type { BlobMetadataShape, BlobInfo } from '../../src/types/walrus';
 import type { HashType, DigestType } from '../../src/types/walrus';

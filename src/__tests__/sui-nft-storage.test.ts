@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import type { SuiTransactionBlockResponse, SuiObjectResponse } from '@mysten/sui.js/client';
-import { IntentScope, SignatureWithBytes } from '@mysten/sui.js/cryptography';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import type { SuiTransactionBlockResponse, SuiObjectResponse } from '@mysten/sui/client';
+import { IntentScope, SignatureWithBytes } from '@mysten/sui/cryptography';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { CLIError } from '../types/error';
 import { Todo } from '../types/todo';

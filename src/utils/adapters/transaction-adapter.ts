@@ -2,7 +2,7 @@
  * Transaction Adapter Implementation
  *
  * This module provides a concrete implementation of the TransactionBlockAdapter
- * interface for the @mysten/sui.js library. It handles the complexities of
+ * interface for the @mysten/sui library. It handles the complexities of
  * working with Sui's transaction blocks in a type-safe manner.
  *
  * Key features:
@@ -32,9 +32,9 @@
  * ```
  */
 
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
-import type { SuiObjectRef } from '@mysten/sui.js/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
+import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
+import type { SuiObjectRef } from '@mysten/sui/client';
 import {
   TransactionBlockAdapter as TypedTransactionBlockAdapter,
   TransactionResult,
@@ -51,7 +51,7 @@ import { BaseAdapter, isBaseAdapter } from '../../types/adapters/BaseAdapter';
  * This provides a standardized interface regardless of the underlying implementation
  *
  * Note: This adapter is used to maintain compatibility between different versions
- * of the TransactionBlock interface in @mysten/sui.js and other libraries.
+ * of the TransactionBlock interface in @mysten/sui and other libraries.
  */
 export interface TransactionBlockAdapter extends BaseAdapter<TransactionBlock> {
   // Core methods that both interfaces must implement

@@ -50,6 +50,13 @@ In a full implementation, this frontend would connect to:
 3. Walrus decentralized storage
 4. Blockchain operations for NFT todos
 
+## Wallet Integration
+
+To enable Sui wallet connections in the React/Next.js version:
+1. Install dependencies: `npm install`.
+2. Wrap your app with `<WalletProvider>` in `app/layout.js`.
+3. Add `<ConnectButton />` in your header or desired component.
+4. Import wallet styles in `styles/globals.css`: `@import "@suiet/wallet-kit/style.css"`.
 ## Commands
 
 From the project root, you can use:

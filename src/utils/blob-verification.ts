@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../types/client';
 import type { BlobInfo, BlobMetadata, BlobMetadataShape } from '../types/walrus';
 import { CLIError } from '../types/error';

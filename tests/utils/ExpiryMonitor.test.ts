@@ -3,7 +3,7 @@ import { WalrusClient } from '@mysten/walrus';
 import { ExpiryMonitor } from '../../../src/utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../../src/utils/VaultManager';
 import { WalrusError, StorageError } from '../../../src/types/errors';
-import { Signer } from '@mysten/sui.js/cryptography';
+import { Signer } from '@mysten/sui/cryptography';
 import { execSync } from 'child_process';
 import { Logger } from '../../../src/utils/Logger';
 

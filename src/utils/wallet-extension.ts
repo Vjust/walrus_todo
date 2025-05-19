@@ -1,19 +1,19 @@
 // @ts-ignore - Ignore type errors from sui.js compatibility issues
 import {
   Signer,
-  IntentScope,
+  type IntentScope,
   type SignatureScheme,
   type PublicKey,
   messageWithIntent,
   toSerializedSignature,
   SignatureWithBytes
-} from '@mysten/sui.js/cryptography';
+} from '@mysten/sui/cryptography';
 // @ts-ignore - Ignore type errors from sui.js compatibility issues
-import { type TransactionBlock } from '@mysten/sui.js/transactions';
+import { type TransactionBlock } from '@mysten/sui/transactions';
 // @ts-ignore - Ignore type errors from sui.js compatibility issues
-import { toB64 } from '@mysten/sui.js/utils';
+import { toB64 } from '@mysten/sui/utils';
 // @ts-ignore - Ignore type errors from sui.js compatibility issues
-import { blake2b } from '@mysten/sui.js/cryptography/utils';
+import { blake2b } from '@mysten/sui/cryptography/utils';
 
 /**
  * A simplified wallet extension signer that satisfies the Signer interface
@@ -50,13 +50,13 @@ export class WalletExtensionSigner extends Signer {
       // @ts-ignore - Ignore TypeScript errors for method signature compatibility
       async verifyTransactionBlock(message: Uint8Array, signature: string): Promise<boolean> {
         const signatureBytes = Buffer.from(signature, 'base64');
-        const intentMessage = messageWithIntent(IntentScope.TransactionData, message);
+        const intentMessage = messageWithIntent('TransactionData' as IntentScope, message);
         return this.verify(intentMessage, signatureBytes);
       },
       // @ts-ignore - Ignore TypeScript errors for method signature compatibility
       async verifyPersonalMessage(message: Uint8Array, signature: string): Promise<boolean> {
         const signatureBytes = Buffer.from(signature, 'base64');
-        const intentMessage = messageWithIntent(IntentScope.PersonalMessage, message);
+        const intentMessage = messageWithIntent('PersonalMessage' as IntentScope, message);
         return this.verify(intentMessage, signatureBytes);
       }
     };
@@ -92,7 +92,7 @@ export class WalletExtensionSigner extends Signer {
     const bytes = await transaction.build({ 
       client: undefined 
     });
-    const intentMessage = messageWithIntent(IntentScope.TransactionData, bytes);
+    const intentMessage = messageWithIntent('TransactionData' as IntentScope, bytes);
     const signature = this.generateSignature(intentMessage);
     // @ts-ignore - Return type compatibility
     return {
@@ -104,7 +104,7 @@ export class WalletExtensionSigner extends Signer {
   // @ts-ignore - Ignore TypeScript errors for method signature compatibility
   // @ts-ignore - Interface compatibility issue
   async signMessage(message: Uint8Array): Promise<SignatureWithBytes> {
-    const intentMessage = messageWithIntent(IntentScope.PersonalMessage, message);
+    const intentMessage = messageWithIntent('PersonalMessage' as IntentScope, message);
     const signature = this.generateSignature(intentMessage);
     // @ts-ignore - Return type compatibility
     return {

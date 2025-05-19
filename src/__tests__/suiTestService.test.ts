@@ -1,11 +1,18 @@
 import { describe, it, expect } from "@jest/globals";
 import { SuiTestService } from "../services/SuiTestService";
+import { Config } from "../types";
 
 describe("SuiTestService (in‑memory)", () => {
-  const service = new SuiTestService();
+  const mockConfig: Config = {
+    network: 'testnet',
+    walletAddress: '0xabc',
+    encryptedStorage: false
+  };
+  
+  const service = new SuiTestService(mockConfig);
   
   it("returns the provided wallet address", async () => {
-    const testService = new SuiTestService("0xabc");
+    const testService = new SuiTestService(mockConfig);
     expect(await testService.getWalletAddress()).toBe("0xabc");
   });
 

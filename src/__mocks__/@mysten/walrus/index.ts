@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
 import { type WalrusClientConfig } from '@mysten/walrus';
-import { type Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { type Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { type BlobObject, type BlobInfo, type BlobMetadataShape } from '../../../types/walrus';
-import { Transaction } from '@mysten/sui.js/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 
 export class MockWalrusClient {
   #network: string;

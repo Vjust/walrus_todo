@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Import polyfills first
+import './utils/polyfills/aggregate-error';
+
 import { Command, Flags } from '@oclif/core';
 import * as Commands from './commands';
 import { initializeConfig } from './utils/config-loader';
@@ -11,8 +14,8 @@ initializeConfig();
 process.env.FORCE_COLOR = '1';
 
 // Force chalk to use colors even in CI/non-TTY environments
-const chalk = require('chalk');
-chalk.level > 0 || (chalk.level = 1);
+import chalk from 'chalk';
+chalk.level = chalk.level > 0 ? chalk.level : 1;
 
 export default class WalTodo extends Command {
   static description = 'A CLI for managing todos with Sui blockchain and Walrus storage';
@@ -41,51 +44,15 @@ export default class WalTodo extends Command {
     .filter(Boolean);
 
   async run(): Promise<void> {
-    try {
-      const { flags } = await this.parse(WalTodo);
+    const { flags } = await this.parse(WalTodo);
 
-      // Enable verbose logging if requested
-      if (flags.verbose) {
-        process.env.DEBUG = '*';
-      }
-
-      // Print help information
-      console.log(WalTodo.description);
-
-      if (flags.help) {
-        // Show more detailed help
-        console.log('\nCommands:');
-        const commandNames = Object.keys(Commands).sort();
-        for (const name of commandNames) {
-          console.log(`  ${name.padEnd(12)} ${name} command`);
-        }
-
-        console.log('\nFlags:');
-        console.log('  -v, --verbose  Show verbose output');
-        console.log('  -h, --help     Show help information');
-      }
-
-      console.log('\nUsage:');
-      console.log(WalTodo.examples.join('\n'));
-    } catch (error) {
-      // Handle parsing errors gracefully
-      console.log(WalTodo.description);
-      console.log('\nUsage:');
-      console.log(WalTodo.examples.join('\n'));
-
-      if (process.argv.includes('--help') || process.argv.includes('-h')) {
-        // Show help if --help flag is present
-        console.log('\nCommands:');
-        const commandNames = Object.keys(Commands).sort();
-        for (const name of commandNames) {
-          console.log(`  ${name.padEnd(12)} ${name} command`);
-        }
-
-        console.log('\nFlags:');
-        console.log('  -v, --verbose  Show verbose output');
-        console.log('  -h, --help     Show help information');
-      }
+    // Enable verbose logging if requested
+    if (flags.verbose) {
+      process.env.DEBUG = '*';
     }
+
+    // Show help by default
+    await this.showHelp();
   }
 }
 
@@ -144,7 +111,7 @@ export const run = async () => {
         
         // Find the AI command
         const AiCommandClass = Object.entries(Commands).find(([name, _]) => 
-          name.toLowerCase() === 'aicommand'
+          name === 'AiCommand'
         )?.[1];
         
         if (!AiCommandClass) {

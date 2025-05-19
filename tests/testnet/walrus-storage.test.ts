@@ -1,0 +1,244 @@
+/**
+ * Real Walrus Testnet Integration Tests
+ * 
+ * These tests interact with the actual Walrus testnet.
+ * Prerequisites:
+ * - Walrus CLI installed and configured
+ * - WAL tokens in testnet wallet
+ * - Environment variable WALRUS_TEST_ENABLE_TESTNET=true
+ * 
+ * Run with: WALRUS_TEST_ENABLE_TESTNET=true pnpm test tests/testnet/walrus-storage.test.ts
+ */
+
+import { TodoStorage } from '../../src/utils/storage/implementations/TodoStorage';
+import { StorageClient } from '../../src/utils/storage/core/StorageClient';
+import { ImageStorage } from '../../src/utils/storage/implementations/ImageStorage';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+describe('Walrus Testnet Integration', () => {
+  const isTestnetEnabled = process.env.WALRUS_TEST_ENABLE_TESTNET === 'true';
+  const skipIfNotEnabled = isTestnetEnabled ? describe : describe.skip;
+
+  skipIfNotEnabled('TodoStorage on Testnet', () => {
+    let todoStorage: TodoStorage;
+
+    beforeAll(() => {
+      if (!isTestnetEnabled) {
+        console.log('Testnet tests are disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.');
+        return;
+      }
+      // Use real Walrus CLI (not mock)
+      const previousMockSetting = process.env.WALRUS_USE_MOCK;
+      process.env.WALRUS_USE_MOCK = 'false';
+      todoStorage = new TodoStorage();
+      
+      // Restore after test
+      afterAll(() => {
+        process.env.WALRUS_USE_MOCK = previousMockSetting;
+      });
+    });
+
+    it('should store a todo on Walrus testnet', async () => {
+      const todo = {
+        id: '1',
+        title: 'Test Todo on Walrus Testnet',
+        description: 'This todo is stored on the real Walrus testnet',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        tags: ['test', 'walrus', 'integration'],
+        priority: 'high'
+      };
+
+      console.log('Storing todo on Walrus testnet...');
+      const walrusBlobId = await todoStorage.store(JSON.stringify(todo));
+      
+      expect(walrusBlobId).toBeDefined();
+      expect(walrusBlobId).not.toBe('mock_blob_id');
+      expect(walrusBlobId.length).toBeGreaterThan(20); // Real Walrus blob IDs are longer
+      
+      console.log(`✓ Todo stored successfully. Blob ID: ${walrusBlobId}`);
+    }, 30000); // Extended timeout for network operations
+
+    it('should retrieve a todo from Walrus testnet', async () => {
+      // First store a todo
+      const todo = {
+        id: '2',
+        title: 'Test Retrieval from Walrus',
+        description: 'This todo tests retrieval from the real Walrus network',
+        completed: false,
+        createdAt: new Date().toISOString(),
+        tags: ['retrieval', 'test'],
+        priority: 'medium'
+      };
+
+      console.log('Storing todo for retrieval test...');
+      const walrusBlobId = await todoStorage.store(JSON.stringify(todo));
+      console.log(`✓ Todo stored with blob ID: ${walrusBlobId}`);
+
+      // Now retrieve it
+      console.log('Retrieving todo from Walrus testnet...');
+      const retrieved = await todoStorage.retrieve(walrusBlobId);
+      console.log('✓ Todo retrieved successfully');
+
+      const retrievedTodo = JSON.parse(retrieved);
+      expect(retrievedTodo.id).toBe(todo.id);
+      expect(retrievedTodo.title).toBe(todo.title);
+      expect(retrievedTodo.description).toBe(todo.description);
+      expect(retrievedTodo.tags).toEqual(todo.tags);
+    }, 45000); // Extended timeout for store + retrieve
+
+    it('should handle storage errors gracefully', async () => {
+      // Test with invalid data
+      const invalidData = new Array(200 * 1024 * 1024).join('x'); // 200MB+ exceeds typical limits
+      
+      await expect(todoStorage.store(invalidData)).rejects.toThrow();
+    }, 30000);
+  });
+
+  skipIfNotEnabled('ImageStorage on Testnet', () => {
+    let imageStorage: ImageStorage;
+    const testImagePath = join(__dirname, '../../test-image.jpeg');
+
+    beforeAll(() => {
+      if (!isTestnetEnabled) {
+        return;
+      }
+      process.env.WALRUS_USE_MOCK = 'false';
+      imageStorage = new ImageStorage();
+    });
+
+    it('should store an image on Walrus testnet', async () => {
+      const imageData = readFileSync(testImagePath);
+      
+      console.log('Storing image on Walrus testnet...');
+      const walrusBlobId = await imageStorage.store(imageData.toString('base64'));
+      
+      expect(walrusBlobId).toBeDefined();
+      expect(walrusBlobId).not.toBe('mock_blob_id');
+      
+      console.log(`✓ Image stored successfully. Blob ID: ${walrusBlobId}`);
+    }, 60000); // Images may take longer
+
+    it('should retrieve an image from Walrus testnet', async () => {
+      const imageData = readFileSync(testImagePath);
+      const base64Image = imageData.toString('base64');
+      
+      console.log('Storing image for retrieval test...');
+      const walrusBlobId = await imageStorage.store(base64Image);
+      console.log(`✓ Image stored with blob ID: ${walrusBlobId}`);
+
+      console.log('Retrieving image from Walrus testnet...');
+      const retrieved = await imageStorage.retrieve(walrusBlobId);
+      console.log('✓ Image retrieved successfully');
+
+      // Verify the image data matches
+      expect(retrieved).toBe(base64Image);
+    }, 90000); // Extended timeout for image operations
+  });
+
+  skipIfNotEnabled('Batch operations on Testnet', () => {
+    let storageClient: StorageClient;
+
+    beforeAll(() => {
+      if (!isTestnetEnabled) {
+        return;
+      }
+      process.env.WALRUS_USE_MOCK = 'false';
+      storageClient = new StorageClient();
+    });
+
+    it('should store multiple todos in batch', async () => {
+      const todos = [
+        {
+          id: '3',
+          title: 'Batch Todo 1',
+          description: 'First todo in batch operation',
+          completed: false,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '4',
+          title: 'Batch Todo 2',
+          description: 'Second todo in batch operation',
+          completed: true,
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '5',
+          title: 'Batch Todo 3',
+          description: 'Third todo in batch operation',
+          completed: false,
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      console.log(`Storing ${todos.length} todos in batch...`);
+      const startTime = Date.now();
+      
+      const blobIds = await Promise.all(
+        todos.map(todo => storageClient.storeTodo(JSON.stringify(todo)))
+      );
+      
+      const endTime = Date.now();
+      const duration = (endTime - startTime) / 1000;
+      
+      expect(blobIds).toHaveLength(todos.length);
+      blobIds.forEach(blobId => {
+        expect(blobId).toBeDefined();
+        expect(blobId).not.toBe('mock_blob_id');
+      });
+      
+      console.log(`✓ Batch storage completed in ${duration}s`);
+      console.log('Blob IDs:', blobIds);
+    }, 90000); // Extended timeout for batch operations
+  });
+
+  skipIfNotEnabled('Network error handling', () => {
+    let todoStorage: TodoStorage;
+
+    beforeAll(() => {
+      if (!isTestnetEnabled) {
+        return;
+      }
+      process.env.WALRUS_USE_MOCK = 'false';
+      todoStorage = new TodoStorage();
+    });
+
+    it('should handle network timeouts', async () => {
+      // Create a large todo that might timeout
+      const largeTodo = {
+        id: '6',
+        title: 'Large Todo',
+        description: new Array(10 * 1024 * 1024).join('x'), // 10MB
+        completed: false,
+        createdAt: new Date().toISOString()
+      };
+
+      // This might fail due to size or timeout
+      try {
+        await todoStorage.store(JSON.stringify(largeTodo));
+      } catch (error) {
+        expect(error).toBeDefined();
+        console.log('Expected error for large upload:', error.message);
+      }
+    }, 60000);
+
+    it('should handle invalid blob IDs gracefully', async () => {
+      const invalidBlobId = 'invalid_blob_id_12345';
+      
+      await expect(todoStorage.retrieve(invalidBlobId))
+        .rejects
+        .toThrow();
+    }, 30000);
+  });
+
+  // Add a summary of test status
+  if (!isTestnetEnabled) {
+    test('Testnet tests are skipped', () => {
+      console.log('\n⚠️  Walrus testnet tests are disabled.');
+      console.log('To run these tests, set WALRUS_TEST_ENABLE_TESTNET=true');
+      console.log('Example: WALRUS_TEST_ENABLE_TESTNET=true pnpm test tests/testnet/walrus-storage.test.ts\n');
+    });
+  }
+});

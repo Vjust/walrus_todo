@@ -1,269 +1,170 @@
-import { Command, Help, Config, Args } from '@oclif/core';
+import { Args } from '@oclif/core';
+import BaseCommand from '../base-command';
+import { commandRegistry } from '../utils/CommandRegistry';
+import { CommandShortcuts, formatShortcutsTable } from '../utils/command-shortcuts';
 import chalk from 'chalk';
-import { ICONS, PRIORITY, STORAGE } from '../base-command';
 
 /**
- * Custom help command that makes the CLI output more fun and engaging
- * with colorful formatting and playful elements
+ * Enhanced help command with command groups and suggestions
  */
-export default class HelpCommand extends Command {
-  static description = 'Display fun and engaging help information for WalTodo CLI';
+export default class HelpCommand extends BaseCommand {
+  static description = 'Display help for WalTodo';
+
+  static examples = [
+    '<%= config.bin %> help',
+    '<%= config.bin %> help add',
+    '<%= config.bin %> help todos',
+  ];
 
   static args = {
     command: Args.string({
-      description: 'Command to show help for',
-      required: false
-    })
+      required: false,
+      description: 'Command or topic to show help for',
+    }),
   };
 
-  private icons = {
-    command: '🪄',
-    topic: '📚',
-    flag: '🚩',
-    usage: '🔍',
-    version: '📌',
-    example: '💡',
+  static flags = {
+    ...BaseCommand.flags,
+    shortcuts: {
+      description: 'Show all available command shortcuts',
+      char: 's',
+      type: 'boolean' as const,
+      required: false,
+    },
   };
 
-  /**
-   * Generate a random decorative element for section titles
-   */
-  private getRandomDecoration(): string {
-    const decorations = ['✨', '🌟', '💫', '🚀', '💥', '🔮', '🧩', '🎯'];
-    return decorations[Math.floor(Math.random() * decorations.length)];
-  }
-
-  /**
-   * Generate a random color function for sections
-   */
-  private getRandomColor(): chalk.ChalkFunction {
-    const colors = [chalk.cyan, chalk.magenta, chalk.green, chalk.yellow, chalk.blue];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-
-  /**
-   * Format a section title with fun decorations
-   */
-  private formatTitle(title: string): string {
-    const decoration = this.getRandomDecoration();
-    const color = this.getRandomColor();
-    return color(`\n${decoration} ${chalk.bold(title.toUpperCase())} ${decoration}`);
-  }
-
-  /**
-   * Format a command name and description in a fun way
-   */
-  private formatCommand(name: string, description: string): string {
-    const nameColor = chalk.cyan.bold;
-    const descColor = chalk.white;
-    return `  ${this.icons.command} ${nameColor(name.padEnd(18))} ${descColor(description)}`;
-  }
-
-  /**
-   * Format a topic name and description in a fun way
-   */
-  private formatTopic(name: string, description: string): string {
-    const nameColor = chalk.yellow.bold;
-    const descColor = chalk.white;
-    return `  ${this.icons.topic} ${nameColor(name.padEnd(18))} ${descColor(description)}`;
-  }
-
-  /**
-   * Format a flag in a fun way
-   */
-  private formatFlag(flag: string, description: string): string {
-    const flagColor = chalk.green.bold;
-    const descColor = chalk.dim;
-    return `  ${this.icons.flag} ${flagColor(flag.padEnd(20))} ${descColor(description)}`;
-  }
-
-  /**
-   * Format an example in a fun way
-   */
-  private formatExample(example: string): string {
-    return `  ${this.icons.example} ${chalk.cyan(example)}`;
-  }
-
-  /**
-   * Create a fun border
-   */
-  private createBorder(width: number = 60): string {
-    const color = this.getRandomColor();
-    return color('╭' + '─'.repeat(width - 2) + '╮\n' +
-                 '│' + ' '.repeat(width - 2) + '│\n' +
-                 '╰' + '─'.repeat(width - 2) + '╯');
-  }
+  static aliases = ['h', '?'];
 
   async run(): Promise<void> {
-    try {
-      const { args } = await this.parse(HelpCommand);
+    const { args, flags } = await this.parse(HelpCommand);
 
-      // For command-specific help, style it ourselves
-      if (args.command) {
-        await this.showCommandHelp(args.command);
-        return;
-      }
-
-      // Show our custom fun general help
-      this.showFunHelp();
-    } catch (error) {
-      // In case of error, fall back to our custom general help
-      this.showFunHelp();
-    }
-  }
-
-  /**
-   * Show styled help for a specific command
-   */
-  private async showCommandHelp(commandId: string): Promise<void> {
-    // Find the command
-    const cmd = this.config.findCommand(commandId);
-    if (!cmd) {
-      console.log(chalk.red(`${ICONS.ERROR} Command ${chalk.bold(commandId)} not found`));
+    // Show shortcuts if flag is set
+    if (flags.shortcuts) {
+      this.showShortcuts();
       return;
     }
 
-    // Get a fun decoration and color
-    const deco = this.getRandomDecoration();
-    const color = this.getRandomColor();
-
-    // Build a styled header
-    console.log('\n' + color('╭' + '─'.repeat(60) + '╮'));
-    console.log(color('│') + ' '.repeat(28 - Math.floor(commandId.length/2)) +
-                chalk.bold.white(`${deco} ${commandId} ${deco}`) +
-                ' '.repeat(28 - Math.floor(commandId.length/2)) + color('│'));
-    console.log(color('╰' + '─'.repeat(60) + '╯'));
-
-    // Description with emoji
-    console.log(`\n${chalk.bold.cyan('WHAT IT DOES:')} ${ICONS.INFO} ${cmd.description}`);
-
-    // Usage with emoji
-    console.log(`\n${chalk.bold.green('HOW TO USE:')} ${this.icons.command}`);
-    console.log(chalk.cyan(`  $ waltodo ${commandId} ${cmd.argsHelp || ''}`));
-
-    // Examples with emoji if available
-    if (cmd.examples && cmd.examples.length > 0) {
-      console.log(`\n${chalk.bold.yellow('TRY THESE:')} ⭐`);
-      cmd.examples.forEach(example => {
-        if (typeof example === 'string') {
-          console.log(chalk.green(`  ${this.icons.example} ${example.replace(/\\S+/g, '')}`));
+    if (args.command) {
+      // First try to expand shortcut
+      const expandedCommand = CommandShortcuts.expand(args.command);
+      
+      // Show help for specific command
+      const command = commandRegistry.resolveAlias(expandedCommand);
+      const metadata = commandRegistry.getCommand(command);
+      
+      if (metadata) {
+        this.showCommandHelp(metadata);
+      } else {
+        // Suggest commands if not found
+        const suggestions = commandRegistry.suggestCommands(args.command);
+        if (suggestions.length > 0) {
+          this.error(
+            `Command '${args.command}' not found. Did you mean: ${
+              suggestions.map(s => chalk.cyan(s.name)).join(', ')
+            }?`
+          );
         } else {
-          console.log(chalk.green(`  ${this.icons.example} ${String(example)}`));
+          this.error(`Command '${args.command}' not found`);
         }
-      });
+      }
+    } else {
+      // Show general help with groups
+      this.showGeneralHelp();
     }
-
-    // Arguments if available
-    if (cmd.args && Object.keys(cmd.args).length > 0) {
-      console.log(`\n${chalk.bold.magenta('ARGUMENTS:')} ➜`);
-      Object.entries(cmd.args).forEach(([name, arg]: [string, any]) => {
-        const required = arg.required ? chalk.red(' (required)') : '';
-        console.log(`  ${chalk.yellow(name.padEnd(15))} ${arg.description}${required}`);
-      });
-    }
-
-    // Flags if available
-    if (Object.keys(cmd.flags || {}).length > 0) {
-      console.log(`\n${chalk.bold.blue('OPTIONS:')} ${ICONS.CONFIG}`);
-      Object.entries(cmd.flags || {}).forEach(([name, flag]: [string, any]) => {
-        if (name === 'help') return; // Skip help flag
-        const alias = flag.char ? `, -${flag.char}` : '';
-        const required = flag.required ? chalk.red(' (required)') : '';
-        console.log(`  ${chalk.green(`--${name}${alias}`.padEnd(20))} ${flag.description}${required}`);
-      });
-    }
-
-    // Fun footer
-    console.log('\n' + chalk.dim('───────────────────────────────────────────────────────'));
-    console.log(`${chalk.dim('Need general help? Run')} ${chalk.cyan('waltodo help')}`);
   }
 
-  private showFunHelp(): void {
-    const config = this.config;
-    const commandIDs = config.commandIDs;
-    const commands = commandIDs.map(id => config.findCommand(id))
-                               .filter(Boolean) as any[];
-    
-    // Create a fun welcome box
-    const welcomeText = `${ICONS.WALRUS} WELCOME TO WALTODO CLI ${ICONS.WALRUS}`;
-    const boxWidth = welcomeText.length + 10;
-    const colorFn = this.getRandomColor();
-    
-    console.log('\n' + colorFn('╭' + '─'.repeat(boxWidth - 2) + '╮'));
-    console.log(colorFn('│') + ' '.repeat((boxWidth - welcomeText.length) / 2) + 
-                chalk.bold.white(welcomeText) + 
-                ' '.repeat((boxWidth - welcomeText.length) / 2) + colorFn('│'));
-    console.log(colorFn('╰' + '─'.repeat(boxWidth - 2) + '╯'));
-    
-    // Add a fun description
-    console.log(`\n${chalk.bold('A playful todo app with blockchain superpowers!')} ${ICONS.BLOCKCHAIN}`);
-    
-    // Version with emoji
-    console.log(`\n${this.icons.version} ${chalk.dim('Version:')} ${chalk.cyan.bold(config.version)}`);
-    
-    // Usage section
-    console.log(this.formatTitle('How to Use'));
-    console.log(`  ${this.icons.usage} ${chalk.white('$')} ${chalk.green('waltodo')} ${chalk.yellow('[command]')}`);
+  private showGeneralHelp(): void {
+    this.log(`
+${chalk.bold('WalTodo - A powerful CLI for managing todos with blockchain integration')}
 
-    // Commands section
-    console.log(this.formatTitle('Magic Commands'));
-    
-    // Get topics for better grouping
-    const topics = config.topics;
-    
-    // If we have topics, use them for grouping
-    if (Object.keys(topics).length > 0) {
-      console.log(`\n${chalk.bold.yellow('Command Categories:')}`);
-      
-      // Get only the proper topics
-      const mainTopics = ['account', 'simple', 'storage', 'ai'];
-      mainTopics.forEach(name => {
-        const topic = topics[name];
-        if (topic && typeof topic === 'object' && 'description' in topic) {
-          console.log(this.formatTopic(name, String(topic.description) || 'No description'));
-        }
-      });
-    }
-    
-    // List main commands only (without subtopics)
-    console.log(`\n${chalk.bold.cyan('Available Commands:')}`);
-    
-    // Group by common tasks for easier understanding
-    const commandCategories = {
-      'Todo Management': ['add', 'list', 'complete', 'check', 'update', 'delete'],
-      'Blockchain Features': ['create', 'store', 'retrieve', 'deploy', 'verify'],
-      'Smart Features': ['ai', 'suggest', 'image'],
-      'Settings & Config': ['config', 'configure', 'env'],
-    };
-    
-    // Display commands by category
-    Object.entries(commandCategories).forEach(([category, cmdNames]) => {
-      console.log(`\n  ${chalk.yellow.bold(category)}`);
-      
-      cmdNames.forEach(name => {
-        const cmd = commands.find(c => c.id === name);
-        if (cmd) {
-          console.log(this.formatCommand(cmd.id, cmd.description || 'No description'));
-        }
-      });
-    });
-    
-    // Global flags section
-    console.log(this.formatTitle('Useful Flags'));
-    console.log(this.formatFlag('--help, -h', 'Show this fabulous help menu'));
-    console.log(this.formatFlag('--verbose, -v', 'Show more details (for the curious minds)'));
-    console.log(this.formatFlag('--json', 'Output in JSON format (for the serious folks)'));
+${chalk.bold('Usage')}
+  $ ${this.config.bin} COMMAND
 
-    // Examples section
-    console.log(this.formatTitle('Examples to Try'));
-    console.log(this.formatExample('waltodo list'));
-    console.log(this.formatExample('waltodo add my-list -t "Make something awesome" -p high'));
-    console.log(this.formatExample('waltodo complete my-list -i "Make something awesome"'));
+${chalk.bold('Command Groups')}
+${commandRegistry.generateGroupHelp()}
+
+${chalk.bold('Common Commands')}
+  add [title]     Add a new todo
+  list            List todos
+  complete        Mark todo as complete
+  
+${chalk.bold('Getting Started')}
+  $ ${this.config.bin} add "My first todo"
+  $ ${this.config.bin} list
+  $ ${this.config.bin} complete --id 123
+
+${chalk.bold('Options')}
+  -h, --help      Show help
+  -v, --version   Show version
+  --json          Format output as json
+  --verbose       Show detailed output
+
+${chalk.bold('Command Shortcuts')}
+  Single-letter: a (add), l (list), c (complete), d (delete)
+  Smart: todo (add), done (complete), nft (create NFT)
+  Unix-style: ls (list), rm (delete)
+  
+  ${chalk.dim('Run')} ${chalk.cyan(`${this.config.bin} help --shortcuts`)} ${chalk.dim('to see all available shortcuts.')}
+
+${chalk.bold('Examples')}
+  ${chalk.dim('# Add a todo with priority')}
+  $ ${this.config.bin} add "Important task" -p high
+  
+  ${chalk.dim('# Using shortcuts')}
+  $ ${this.config.bin} a "Quick todo"      ${chalk.dim('# Same as: add')}
+  $ ${this.config.bin} l                   ${chalk.dim('# Same as: list')}
+  $ ${this.config.bin} c --id 456          ${chalk.dim('# Same as: complete')}
+  
+  ${chalk.dim('# Smart shortcuts')}
+  $ ${this.config.bin} todo "Get groceries" ${chalk.dim('# Natural way to add')}
+  $ ${this.config.bin} done 123            ${chalk.dim('# Natural way to complete')}
+
+${chalk.dim('Run')} ${chalk.cyan(`${this.config.bin} help COMMAND`)} ${chalk.dim('for more information on a specific command.')}
+`);
+  }
+
+  private showCommandHelp(command: CommandMetadata): void {
+    const shortcuts = CommandShortcuts.getShortcutsForCommand(command.name);
     
-    // Fun footer
-    console.log('\n' + chalk.dim('───────────────────────────────────────────────────────'));
-    console.log(`${ICONS.SUCCESS} ${chalk.green.bold('Happy')} ${chalk.yellow.bold('task')} ${chalk.blue.bold('management!')} ${ICONS.SUCCESS}`);
-    console.log(`${chalk.dim('Need more details? Try')} ${chalk.cyan('waltodo [command] --help')}`);
-    console.log('\n');
+    this.log(`
+${chalk.bold(command.name)} - ${command.description}
+
+${chalk.bold('Usage')}
+  $ ${this.config.bin} ${command.name} ${command.usage?.join(' ') || ''}
+
+${command.aliases?.length ? `${chalk.bold('Aliases')}\n  ${command.aliases.join(', ')}\n` : ''}
+${shortcuts.length ? `${chalk.bold('Shortcuts')}\n  ${shortcuts.join(', ')}\n` : ''}
+
+${command.examples?.length ? `${chalk.bold('Examples')}\n${command.examples.map(ex => `  ${ex}`).join('\n')}` : ''}
+`);
+  }
+
+  private showShortcuts(): void {
+    this.log(`
+${chalk.bold('WalTodo Command Shortcuts')}
+
+${chalk.bold('How to use shortcuts')}
+  Instead of typing the full command, you can use these shorter versions:
+  
+  $ waltodo a "Buy milk"     ${chalk.dim('# Same as: waltodo add "Buy milk"')}
+  $ waltodo l                ${chalk.dim('# Same as: waltodo list')}
+  $ waltodo done 123         ${chalk.dim('# Same as: waltodo complete 123')}
+
+${formatShortcutsTable()}
+
+${chalk.bold('Smart Shortcuts')}
+  todo     → add       ${chalk.dim('Natural language for adding todos')}
+  done     → complete  ${chalk.dim('Mark todo as complete')}
+  all      → list      ${chalk.dim('Show all todos')}
+  upload   → store     ${chalk.dim('Upload to storage')}
+  download → retrieve  ${chalk.dim('Download from storage')}
+  nft      → image:create-nft  ${chalk.dim('Create NFT directly')}
+
+${chalk.bold('Tips')}
+  • Single-letter shortcuts are great for frequently used commands
+  • Smart shortcuts make the CLI feel more natural
+  • Unix-style shortcuts (ls, rm) are familiar to terminal users
+  • Use ${chalk.cyan('waltodo help <shortcut>')} to see help for the full command
+`);
   }
 }

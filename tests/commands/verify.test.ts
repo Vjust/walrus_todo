@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as sinon from 'sinon';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import { BlobVerificationManager } from '../../src/utils/blob-verification';
 import { createMockWalrusClient } from '../../src/utils/MockWalrusClient';
 
@@ -24,7 +24,7 @@ const mockBaseConfig = {
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'walrus-verify-test-'));
 
 // Mock the SuiClient initialization
-jest.mock('@mysten/sui.js/client', () => {
+jest.mock('@mysten/sui/client', () => {
   return {
     SuiClient: jest.fn().mockImplementation(() => ({
       getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '42' }),

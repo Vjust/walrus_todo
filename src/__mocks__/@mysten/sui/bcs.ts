@@ -1,5 +1,5 @@
 // Mock BCS implementation
-// In the actual code, the import is 'import { bcs } from '@mysten/sui.js/bcs'
+// In the actual code, the import is 'import { bcs } from '@mysten/sui/bcs'
 // rather than capitalizing BCS
 
 // Create a more complete serializer mock

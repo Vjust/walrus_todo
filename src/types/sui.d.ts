@@ -1,8 +1,8 @@
-import type { SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
+import type { SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui/client';
 
-import { Signer } from '@mysten/sui.js/cryptography';
+import { Signer } from '@mysten/sui/cryptography';
 
-declare module '@mysten/sui.js/client' {
+declare module '@mysten/sui/client' {
   interface SuiClient {
     instanceId: string;
     address: string;

@@ -6,6 +6,7 @@ module walrus_todo::todo_ai_extension {
     use sui::table::{Self, Table};
     use sui::event;
     use sui::dynamic_field as df;
+    use std::vector; // Add this line
 
     use walrus_todo::ai_operation_verifier::{Self, VerificationRegistry};
 
@@ -70,7 +71,7 @@ module walrus_todo::todo_ai_extension {
         assert!(string::length(&todo_id) > 0, E_INVALID_TODO_ID);
         assert!(string::length(&verification_id) > 0, E_INVALID_VERIFICATION_ID);
         
-        // Create inner table if it doesn't exist
+        // Create inner table if it does not exist
         if (!table::contains(&registry.todo_verifications, todo_id)) {
             table::add(
                 &mut registry.todo_verifications, 
@@ -125,10 +126,10 @@ module walrus_todo::todo_ai_extension {
         // Iterate through verification links to find matching operation
         let i = 0;
         let size = table::length(inner_table);
-        let keys = table::keys(inner_table);
+        let keys = table::keys_vector(inner_table); // Use keys_vector
         
         while (i < size) {
-            let verification_id = *std::vector::borrow(&keys, i);
+            let verification_id = *vector::borrow(&keys, i);
             let link = table::borrow(inner_table, verification_id);
             
             if (link.operation == operation) {
@@ -145,8 +146,8 @@ module walrus_todo::todo_ai_extension {
     public fun get_verifications_for_todo(
         registry: &TodoAIRegistry,
         todo_id: String
-    ): std::vector::Vector<String> {
-        let result = std::vector::empty<String>();
+    ): vector<String> { // Use vector<String>
+        let result = vector::empty<String>();
         
         // Check if todo exists in registry
         if (!table::contains(&registry.todo_verifications, todo_id)) {
@@ -160,7 +161,7 @@ module walrus_todo::todo_ai_extension {
         );
         
         // Return all verification IDs
-        table::keys(inner_table)
+        table::keys_vector(inner_table) // Use keys_vector
     }
 
     /// Verify that a specific todo has a valid AI verification for an operation
@@ -184,10 +185,10 @@ module walrus_todo::todo_ai_extension {
         // Iterate through verification links to find matching operation
         let i = 0;
         let size = table::length(inner_table);
-        let keys = table::keys(inner_table);
+        let keys = table::keys_vector(inner_table); // Use keys_vector
         
         while (i < size) {
-            let verification_id = *std::vector::borrow(&keys, i);
+            let verification_id = *vector::borrow(&keys, i);
             let link = table::borrow(inner_table, verification_id);
             
             if (link.operation == operation) {
@@ -207,34 +208,35 @@ module walrus_todo::todo_ai_extension {
     // === Helper Functions ===
 
     /// Add a verification field to a todo object
-    public fun add_verification_to_todo<T: key>(
+    public fun add_verification_to_todo<T: key + store>( // Add store ability
         todo: &mut T,
         verification_id: String
     ) {
-        // Add or update the verification ID as a dynamic field
-        if (df::exists_(todo, AIVerificationKey {})) {
-            let current_verifications = df::borrow_mut<AIVerificationKey, std::vector::Vector<String>>(
-                todo, 
+        let uid = object::uid_mut(todo); // Get UID from todo
+        if (df::exists_<AIVerificationKey>(uid)) { // Use UID
+            let current_verifications = df::borrow_mut<AIVerificationKey, vector<String>>( // Use vector<String>
+                uid, 
                 AIVerificationKey {}
             );
-            std::vector::push_back(current_verifications, verification_id);
+            vector::push_back(current_verifications, verification_id);
         } else {
-            let verifications = std::vector::singleton(verification_id);
-            df::add(todo, AIVerificationKey {}, verifications);
+            let verifications = vector::singleton(verification_id);
+            df::add(uid, AIVerificationKey {}, verifications); // Use UID
         }
     }
 
     /// Get verifications for a todo object
     public fun get_todo_verifications<T: key>(
         todo: &T
-    ): std::vector::Vector<String> {
-        if (df::exists_(todo, AIVerificationKey {})) {
-            *df::borrow<AIVerificationKey, std::vector::Vector<String>>(
-                todo, 
+    ): vector<String> { // Use vector<String>
+        let uid = object::uid_as_inner(todo); // Get UID from todo
+        if (df::exists_<AIVerificationKey>(uid)) { // Use UID
+            *df::borrow<AIVerificationKey, vector<String>>( // Use vector<String>
+                uid, 
                 AIVerificationKey {}
             )
         } else {
-            std::vector::empty<String>()
+            vector::empty<String>()
         }
     }
 }

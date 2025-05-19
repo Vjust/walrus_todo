@@ -31,10 +31,10 @@ If you still want to try the React version:
 
 ```bash
 # First, setup the frontend (install dependencies)
-pnpm run frontend:setup
+npm install
 
 # Then start the development server
-pnpm run frontend:dev
+npm run dev
 ```
 
 Then open [http://localhost:3000](http://localhost:3000) in your browser.

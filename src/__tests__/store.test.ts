@@ -57,20 +57,20 @@ describe('store command', () => {
   });
 
   test('stores a todo on Walrus successfully', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mocked<InstanceType<typeof WalrusStorage>>;
     const result = await mockWalrusStorage.storeTodo(createTestTodo());
     expect(result).toBe('mock-blob-id');
   });
 
   test('handles todo not found error', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mocked<InstanceType<typeof WalrusStorage>>;
     // Use retrieveTodo instead of getTodo which doesn't exist in the class
     jest.spyOn(mockWalrusStorage, 'retrieveTodo').mockRejectedValue(new Error('Todo "nonexistent-id" not found'));
     await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Todo "nonexistent-id" not found');
   });
 
   test('handles todo storage', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mocked<InstanceType<typeof WalrusStorage>>;
     
     // Mock the storeTodo method instead of createNFT which doesn't exist
     const todo = createTestTodo();
@@ -79,19 +79,19 @@ describe('store command', () => {
   });
 
   test('validates connection before storing', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mocked<InstanceType<typeof WalrusStorage>>;
     const result = await mockWalrusStorage.storeTodo(createTestTodo());
     expect(result).toBe('mock-blob-id');
   });
 
   test('handles connection validation failure', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage('testnet', true) as Mocked<InstanceType<typeof WalrusStorage>>;
     jest.spyOn(mockWalrusStorage, 'init').mockRejectedValue(new Error('Connection failed'));
     await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Connection failed');
   });
 
   test('retries failed storage operation', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage() as Mocked<InstanceType<typeof WalrusStorage>>;
     let attempts = 0;
     jest.spyOn(mockWalrusStorage, 'storeTodo').mockImplementation(async () => {
       attempts++;
@@ -105,13 +105,13 @@ describe('store command', () => {
   });
 
   test('fails after max retries', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage() as Mocked<InstanceType<typeof WalrusStorage>>;
     jest.spyOn(mockWalrusStorage, 'storeTodo').mockRejectedValue(new Error('Persistent failure'));
     await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Persistent failure');
   });
 
   test('handles storage cleanup', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage() as Mocked<InstanceType<typeof WalrusStorage>>;
 
     // Create a mock disposeResources method since cleanup doesn't exist
     const disposeResources = jest.fn();
@@ -122,7 +122,7 @@ describe('store command', () => {
   });
 
   test('handles failed storage gracefully', async () => {
-    const mockWalrusStorage = new WalrusStorage() as Mocked<WalrusStorage>;
+    const mockWalrusStorage = new WalrusStorage() as Mocked<InstanceType<typeof WalrusStorage>>;
     jest.spyOn(mockWalrusStorage, 'storeTodo').mockRejectedValue(new Error('Storage failed'));
 
     await expect(mockWalrusStorage.storeTodo(createTestTodo())).rejects.toThrow('Storage failed');

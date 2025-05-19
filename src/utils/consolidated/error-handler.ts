@@ -1,0 +1,193 @@
+/**
+ * @file Centralized error handling utilities
+ * Provides consistent error handling, logging, and display throughout the application.
+ */
+
+import * as chalkModule from 'chalk';
+import { BaseError, CLIError, isErrorWithMessage, getErrorMessage, toBaseError, isTransientError } from '../../types/errors/consolidated';
+
+// Use default export if available, otherwise use the module itself
+const chalk = chalkModule.default || chalkModule;
+
+/**
+ * Options for centralized error handling
+ */
+interface ErrorHandlerOptions {
+  /** Whether to exit the process */
+  exit?: boolean;
+  
+  /** Exit code to use when exiting (defaults to 1) */
+  exitCode?: number;
+  
+  /** Whether to log the error stack trace (defaults to false) */
+  logStack?: boolean;
+  
+  /** Custom prefix for the error message */
+  prefix?: string;
+  
+  /** Context to include with the error */
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Handle an error consistently across the application
+ * @param error Error to handle
+ * @param contextOrOptions Context string or error handler options
+ * @param options Error handler options if context is a string
+ */
+export function handleError(
+  error: unknown,
+  contextOrOptions: string | ErrorHandlerOptions = {},
+  options: ErrorHandlerOptions = {}
+): void {
+  // Handle function overloads
+  let context = '';
+  let handlerOptions: ErrorHandlerOptions;
+  
+  if (typeof contextOrOptions === 'string') {
+    context = contextOrOptions;
+    handlerOptions = options;
+  } else {
+    handlerOptions = contextOrOptions;
+  }
+  
+  const {
+    exit = false,
+    exitCode: configuredExitCode,
+    logStack = false,
+    prefix = '',
+    context: additionalContext = {}
+  } = handlerOptions;
+  
+  // Normalize the error
+  const baseError = toBaseError(error);
+  
+  // Get exit code (CLI errors have their own exit code)
+  const exitCode = configuredExitCode ?? (error instanceof CLIError ? error.exitCode : 1);
+  
+  // Format the context string
+  const contextPrefix = context ? `${context}: ` : '';
+  
+  // Format the error prefix
+  const errorPrefix = prefix || '❌';
+  
+  // Display the error
+  console.error(`\n${errorPrefix} ${contextPrefix}${chalk.red(baseError.message)}`);
+  
+  // Display additional information for BaseError instances
+  if (baseError instanceof BaseError) {
+    console.error(`${chalk.dim('Error Code:')} ${chalk.yellow(baseError.code)}`);
+    
+    // Display cause if available and requested
+    if (baseError.cause && logStack) {
+      console.error(`${chalk.dim('Caused by:')} ${chalk.red(baseError.cause.message)}`);
+    }
+    
+    // Display context if available and requested
+    if (baseError.context && Object.keys(baseError.context).length > 0) {
+      console.error(`${chalk.dim('Context:')}`, baseError.context);
+    }
+    
+    // Display recovery information
+    if (baseError.recoverable) {
+      console.error(`${chalk.green('This error is recoverable.')}${baseError.shouldRetry ? ' You can retry the operation.' : ''}`);
+    }
+  }
+  
+  // Display stack trace if requested
+  if (logStack && baseError.stack) {
+    console.error(`\n${chalk.dim('Stack trace:')}\n${chalk.dim(baseError.stack)}`);
+  }
+  
+  // Exit if requested
+  if (exit) {
+    process.exit(exitCode);
+  }
+}
+
+/**
+ * Assert a condition and throw an error if it fails
+ * @param condition Condition to assert
+ * @param message Error message if assertion fails
+ * @param code Error code if assertion fails
+ */
+export function assert(
+  condition: boolean,
+  message: string,
+  code = 'ASSERTION_ERROR'
+): asserts condition {
+  if (!condition) {
+    throw new BaseError({
+      message,
+      code
+    });
+  }
+}
+
+/**
+ * Wrap an async function with retry logic
+ * @param fn Function to wrap
+ * @param options Retry options
+ * @returns Promise resolving to the function result
+ */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: {
+    maxRetries?: number;
+    baseDelay?: number;
+    maxDelay?: number;
+    retryIf?: (error: unknown) => boolean;
+    onRetry?: (error: unknown, attempt: number, delay: number) => void;
+  } = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    baseDelay = 1000,
+    maxDelay = 30000,
+    retryIf = isTransientError,
+    onRetry = defaultOnRetry
+  } = options;
+  
+  let lastError: unknown;
+  
+  for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      
+      // Don't retry on the last attempt
+      if (attempt > maxRetries || !retryIf(error)) {
+        throw error;
+      }
+      
+      // Calculate delay with exponential backoff and jitter
+      const delay = Math.min(
+        baseDelay * Math.pow(2, attempt - 1) * (0.5 + Math.random()),
+        maxDelay
+      );
+      
+      // Call the onRetry callback
+      onRetry(error, attempt, delay);
+      
+      // Wait for the delay
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  // This should never happen due to the throw in the catch block
+  throw lastError;
+}
+
+/**
+ * Default retry callback
+ * @param error Error that occurred
+ * @param attempt Current attempt number
+ * @param delay Delay before next attempt
+ */
+function defaultOnRetry(error: unknown, attempt: number, delay: number): void {
+  console.log(
+    chalk.yellow(`Operation failed, retrying (${attempt}/${delay})...`),
+    isErrorWithMessage(error) ? error.message : String(error)
+  );
+}

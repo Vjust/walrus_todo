@@ -1,7 +1,8 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
@@ -29,7 +30,7 @@ import { withRetry } from '../utils/error-handler';
  * @param {string} [network] - The blockchain network to use (e.g., 'localnet', 'devnet', 'testnet', 'mainnet').
  *                             Defaults to the network configured globally or 'testnet'. (Optional flag: -n, --network)
  */
-export default class CompleteCommand extends Command {
+export default class CompleteCommand extends BaseCommand {
   static description = `Mark a todo as completed.
   If the todo has an associated NFT or Walrus blob, updates blockchain storage as well.
   NFT updates may require gas tokens on the configured network.`;
@@ -40,6 +41,7 @@ export default class CompleteCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     id: Flags.string({
       char: 'i',
       description: 'Todo ID or title to mark as completed',
@@ -61,7 +63,7 @@ export default class CompleteCommand extends Command {
   };
 
   private todoService = new TodoService();
-  private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
+  private walrusStorage = createWalrusStorage('testnet', false); // Use real Walrus storage
 
   /**
    * Validates the specified network against allowed network options
@@ -336,8 +338,7 @@ export default class CompleteCommand extends Command {
                 : new Error(String(verifyError));
 
               throw new Error(
-                `NFT verification error: ${error.message}`,
-                { cause: error }
+                `NFT verification error: ${error.message}`
               );
             }
           }, 3, 2000);
@@ -382,7 +383,7 @@ export default class CompleteCommand extends Command {
                 let newBlobId: string | undefined;
                 try {
                   newBlobId = await Promise.race([
-                    this.walrusStorage.updateTodo(updatedTodo, todo.walrusBlobId),
+                    this.walrusStorage.updateTodo(todo.walrusBlobId || '', updatedTodo),
                     timeout
                   ]) as string | undefined;
                   clearTimeout(timeoutId); // Clear timeout on success

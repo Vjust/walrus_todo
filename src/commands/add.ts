@@ -7,10 +7,11 @@ import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import BaseCommand, { ICONS, PRIORITY, STORAGE } from '../base-command';
-import { InputValidator } from '../utils/InputValidator';
+import { InputValidator, CommonValidationRules } from '../utils/InputValidator';
 import { CommandSanitizer } from '../utils/CommandSanitizer';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import { addCommandValidation, validateAIApiKey, validateBlockchainConfig } from '../utils/CommandValidationMiddleware';
+import { NetworkError, ValidationError, TransactionError } from '../types/errors';
 
 /**
  * @class AddCommand
@@ -102,7 +103,7 @@ export default class AddCommand extends BaseCommand {
   } as const;
 
   private todoService = new TodoService();
-  private walrusStorage = createWalrusStorage(false); // Use real Walrus storage
+  private walrusStorage = createWalrusStorage('testnet', false); // Use real Walrus storage
   private aiServiceInstance = aiService;
   /**
    * Tracks whether the command is creating a new list or adding to an existing one.
@@ -113,14 +114,20 @@ export default class AddCommand extends BaseCommand {
   async run(): Promise<void> {
     try {
       this.debugLog("Running add command...");
+      const spinner = this.startUnifiedSpinner('Processing add command...');
 
       // Parse and validate input
       const { args, flags } = await this.parse(AddCommand);
+      
+      // Enhanced input validation using unified validators
+      this.performPreExecutionValidation(args, flags);
+      
       this.debugLog("Parsed and validated arguments:", args);
       this.debugLog("Parsed and validated flags:", flags);
 
       // If JSON output is requested, handle it separately
       if (await this.isJson()) {
+        spinner.stop();
         return this.handleJsonOutput(args, flags);
       }
 
@@ -221,7 +228,7 @@ export default class AddCommand extends BaseCommand {
       }
 
       // Create spinner for list creation/check
-      const spinner = this.startSpinner(`Processing todo${todoTitles.length > 1 ? 's' : ''} for list "${listName}"...`);
+      const listSpinner = this.startSpinner(`Processing todo${todoTitles.length > 1 ? 's' : ''} for list "${listName}"...`);
 
       // Check if list exists first
       const listExists = await this.todoService.getList(listName);
@@ -230,10 +237,10 @@ export default class AddCommand extends BaseCommand {
       if (!listExists) {
         await this.todoService.createList(listName, 'default-owner');
         this.isNewList = true; // Set flag for new list creation
-        this.stopSpinnerSuccess(spinner, `Created new list: ${chalk.cyan(listName)}`);
+        this.stopSpinnerSuccess(listSpinner, `Created new list: ${chalk.cyan(listName)}`);
       } else {
         this.isNewList = false; // Reset flag for existing list
-        this.stopSpinnerSuccess(spinner, `Found list: ${chalk.cyan(listName)}`);
+        this.stopSpinnerSuccess(listSpinner, `Found list: ${chalk.cyan(listName)}`);
       }
 
       const addedTodos: Todo[] = [];
@@ -502,11 +509,19 @@ export default class AddCommand extends BaseCommand {
         storageLocation: todo.storageLocation || 'local'
       };
 
-      // Get AI suggestions in parallel
-      const [suggestedTags, suggestedPriority] = await Promise.all([
-        this.aiServiceInstance.suggestTags(tempTodo),
-        this.aiServiceInstance.suggestPriority(tempTodo)
-      ]);
+      // Get AI suggestions with retry for network errors
+      const [suggestedTags, suggestedPriority] = await this.executeWithRetry(
+        async () => Promise.all([
+          this.aiServiceInstance.suggestTags(tempTodo),
+          this.aiServiceInstance.suggestPriority(tempTodo)
+        ]),
+        {
+          maxRetries: 2,
+          baseDelay: 1000,
+          retryMessage: 'Retrying AI enhancement...',
+          operationName: 'ai_suggest'
+        }
+      );
 
       this.debugLog('Received AI suggestions:', { tags: suggestedTags, priority: suggestedPriority });
 
@@ -530,9 +545,13 @@ export default class AddCommand extends BaseCommand {
       this.debugLog('Todo updated with AI suggestions');
 
     } catch (aiError) {
-      // If AI fails, log a warning and continue with user-provided values
-      this.debugLog('AI error:', aiError);
-      this.warning(`AI enhancement failed: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
+      // Handle different error types appropriately
+      if (aiError instanceof NetworkError) {
+        this.warning(`AI service temporarily unavailable - continuing without enhancement`);
+      } else {
+        this.debugLog('AI error:', aiError);
+        this.warning(`AI enhancement failed: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
+      }
       this.info(`Continuing with provided values`);
     }
   }
@@ -562,31 +581,48 @@ export default class AddCommand extends BaseCommand {
     const blockchainSpinner = this.startSpinner('Connecting to blockchain storage...');
 
     try {
-      // Initialize Walrus storage
-      try {
-        await this.walrusStorage.connect();
-        this.stopSpinnerSuccess(blockchainSpinner, 'Connected to blockchain storage');
-      } catch (error) {
-        throw new CLIError(
-          `Failed to connect to blockchain storage: ${error instanceof Error ? error.message : String(error)}`,
-          'BLOCKCHAIN_CONNECTION_FAILED'
-        );
-      }
+      // Initialize Walrus storage with retry
+      await this.executeWithRetry(
+        async () => {
+          await this.walrusStorage.connect();
+          this.stopSpinnerSuccess(blockchainSpinner, 'Connected to blockchain storage');
+        },
+        {
+          maxRetries: 3,
+          baseDelay: 2000,
+          retryMessage: 'Retrying blockchain connection...',
+          operationName: 'walrus_connect'
+        }
+      );
 
       // Start storage spinner
       const storeSpinner = this.startSpinner('Storing todo on blockchain...');
 
       let blobId: string;
-      try {
-        // Store todo on Walrus
-        blobId = await this.walrusStorage.storeTodo(todo);
-        this.stopSpinnerSuccess(storeSpinner, 'Todo stored on blockchain');
-      } catch (error) {
-        throw new CLIError(
-          `Failed to store todo on blockchain: ${error instanceof Error ? error.message : String(error)}`,
-          'BLOCKCHAIN_STORE_FAILED'
-        );
-      }
+      
+      // Store todo on Walrus with retry and transaction handling
+      blobId = await this.executeTransaction(
+        async () => {
+          return await this.executeWithRetry(
+            async () => this.walrusStorage.storeTodo(todo),
+            {
+              maxRetries: 3,
+              baseDelay: 1000,
+              retryMessage: 'Retrying blockchain storage...',
+              operationName: 'walrus_store_todo'
+            }
+          );
+        },
+        {
+          operation: 'store-todo',
+          rollbackFn: async () => {
+            // If storage fails, we might need to clean up any partial state
+            this.debugLog('Rolling back blockchain storage attempt');
+          }
+        }
+      );
+      
+      this.stopSpinnerSuccess(storeSpinner, 'Todo stored on blockchain');
 
       // Update local todo with Walrus blob ID if we're keeping a local copy
       if (storageLocation === 'both') {
@@ -672,5 +708,116 @@ export default class AddCommand extends BaseCommand {
     // Display next steps on same line
     this.log(`  ${chalk.bold('Next:')} ${nextSteps.join(' | ')}`);
     this.log(''); // Add an empty line for spacing
+  }
+
+  /**
+   * Perform enhanced pre-execution validation
+   * @param args Command arguments
+   * @param flags Command flags
+   * @throws ValidationError if validation fails
+   */
+  private performPreExecutionValidation(args: any, flags: any): void {
+    // Validate mutually exclusive flags
+    if (flags.task && args.listOrTitle) {
+      const hasMultipleTasks = Array.isArray(flags.task) && flags.task.length > 1;
+      if (!hasMultipleTasks && !flags.list) {
+        // If single task flag and argument, but no explicit list - it's ambiguous
+        throw new ValidationError(
+          'Ambiguous input: use --list flag to specify list name when using both argument and --task flag',
+          {
+            constraint: 'AMBIGUOUS_INPUT',
+            recoverable: false
+          }
+        );
+      }
+    }
+
+    // Validate task titles using unified validators
+    if (flags.task) {
+      const tasks = Array.isArray(flags.task) ? flags.task : [flags.task];
+      tasks.forEach((task: string) => {
+        this.validateFlag.nonEmpty(task, 'Task title');
+      });
+    }
+
+    // Validate priority using unified validators
+    if (flags.priority) {
+      const priorities = Array.isArray(flags.priority) ? flags.priority : [flags.priority];
+      priorities.forEach((priority: string) => {
+        this.validateFlag.enum(priority, ['high', 'medium', 'low'], 'priority');
+      });
+    }
+
+    // Validate AI provider using unified validators
+    if (flags.provider) {
+      this.validateFlag.enum(
+        flags.provider, 
+        ['xai', 'openai', 'anthropic', 'ollama'], 
+        'provider'
+      );
+    }
+
+    // Validate list name if provided
+    if (flags.list) {
+      this.validateFlag.nonEmpty(flags.list, 'list');
+    }
+
+    // Validate list name
+    if (flags.list) {
+      InputValidator.validate(flags.list, [
+        InputValidator.requiredRule('List name'),
+        InputValidator.custom(
+          (value: string) => /^[a-zA-Z0-9-_]+$/.test(value),
+          'List name can only contain letters, numbers, hyphens, and underscores',
+          'INVALID_LIST_NAME'
+        )
+      ], 'List name');
+    }
+
+    // Validate priority values
+    if (flags.priority) {
+      const priorities = Array.isArray(flags.priority) ? flags.priority : [flags.priority];
+      priorities.forEach((priority: string, index: number) => {
+        InputValidator.validate(priority, [
+          CommonValidationRules.priority
+        ], `Priority ${index + 1}`);
+      });
+    }
+
+    // Validate due dates
+    if (flags.due) {
+      const dueDates = Array.isArray(flags.due) ? flags.due : [flags.due];
+      dueDates.forEach((dueDate: string, index: number) => {
+        InputValidator.validate(dueDate, [
+          CommonValidationRules.dateFormat
+        ], `Due date ${index + 1}`);
+      });
+    }
+
+    // Validate tags
+    if (flags.tags) {
+      const tagSets = Array.isArray(flags.tags) ? flags.tags : [flags.tags];
+      tagSets.forEach((tagSet: string, index: number) => {
+        InputValidator.validate(tagSet, [
+          {
+            test: (value: string) => value.split(',').every(tag => tag.trim().length > 0),
+            message: 'Tags cannot be empty',
+            code: 'EMPTY_TAG'
+          },
+          {
+            test: (value: string) => value.split(',').every(tag => tag.length <= 50),
+            message: 'Tag too long (max 50 characters)',
+            code: 'TAG_TOO_LONG'
+          }
+        ], `Tag set ${index + 1}`);
+      });
+    }
+
+    // Validate storage location
+    if (flags.storage) {
+      InputValidator.validate(flags.storage, [
+        CommonValidationRules.storageLocation
+      ], 'Storage location');
+    }
   }
 }

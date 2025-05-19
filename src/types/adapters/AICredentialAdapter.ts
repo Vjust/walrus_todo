@@ -5,7 +5,7 @@
  * which provides secure and blockchain-verified access to AI providers.
  */
 
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import { SignerAdapter } from './SignerAdapter';
 import { WalrusClientAdapter } from './WalrusClientAdapter';
 

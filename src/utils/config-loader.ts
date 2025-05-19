@@ -16,6 +16,7 @@ import { CLI_CONFIG } from '../constants';
 let dotenv: any;
 try {
   // Try to load dotenv if available
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   dotenv = require('dotenv');
 } catch (error) {
   // dotenv is not installed, will fall back to manual parsing

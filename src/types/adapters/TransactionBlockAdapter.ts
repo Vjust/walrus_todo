@@ -2,7 +2,7 @@
  * TransactionBlockAdapter
  *
  * This adapter reconciles differences between different versions of TransactionBlock
- * interfaces in the @mysten/sui.js and @mysten/sui libraries.
+ * interfaces in the @mysten/sui and @mysten/sui libraries.
  *
  * It provides a consistent interface that both mock implementations and actual
  * code can use without worrying about version-specific differences.
@@ -38,11 +38,11 @@
  * TransactionBlock classes.
  */
 
-import { TransactionBlock as TransactionBlockSui } from '@mysten/sui.js/transactions';
+import { TransactionBlock as TransactionBlockSui } from '@mysten/sui/transactions';
 // Import Transaction from our type definition to avoid direct import errors
 import { Transaction } from '../transaction';
-import type { SuiObjectRef } from '@mysten/sui.js/client';
-import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui.js/transactions';
+import type { SuiObjectRef } from '@mysten/sui/client';
+import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
 import { BaseAdapter, isBaseAdapter } from './BaseAdapter';
 import { BaseError } from '../errors/BaseError';
 

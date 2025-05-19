@@ -1,8 +1,8 @@
 import type { WalrusClientExt } from '../types/client';
 import type { BlobObject } from '../types/walrus';
-import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import type { Signer } from '@mysten/sui.js/cryptography';
-import type { Transaction } from '@mysten/sui.js/transactions';
+import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import type { Signer } from '@mysten/sui/cryptography';
+import type { Transaction } from '@mysten/sui/transactions';
 import { execSync } from 'child_process';
 import { VaultManager, BlobRecord } from './VaultManager';
 import { NetworkValidator, NetworkEnvironment } from './NetworkValidator';

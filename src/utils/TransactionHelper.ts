@@ -1,6 +1,6 @@
-import { Signer } from '@mysten/sui.js/cryptography';
-import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { Signer } from '@mysten/sui/cryptography';
+import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { Logger } from './Logger';
 import {
   BlockchainError,

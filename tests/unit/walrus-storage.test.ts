@@ -1,8 +1,9 @@
-import { SuiClient } from '@mysten/sui.js';
-import { TransactionBlock } from '@mysten/sui.js';
+import { SuiClient } from '@mysten/sui';
+import { TransactionBlock } from '@mysten/sui';
 import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
 import type { Mocked } from 'jest-mock';
 import { createWalrusStorage } from '../../src/utils/walrus-storage';
+import type { WalrusStorage } from '../../src/utils/walrus-storage';
 import { KeystoreSigner } from '../../src/utils/sui-keystore';
 import { CLIError } from '../../src/types/error';
 import { execSync } from 'child_process';
@@ -34,7 +35,7 @@ jest.mock('../../src/utils/sui-keystore');
 describe('WalrusStorage', () => {
   let mockSuiClient: MockedSuiClient;
   let mockWalrusClient: MockedWalrusClient;
-  let storage: ReturnType<typeof createWalrusStorage>;
+  let storage: WalrusStorage;
   let mockTodo: Todo;
 
   beforeEach(() => {

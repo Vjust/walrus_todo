@@ -35,6 +35,10 @@ describe('ExpiryMonitor', () => {
         signature: new Uint8Array([1,2,3,4]),
         bytes: new Uint8Array([1,2,3,4])
       }),
+      signTransaction: jest.fn().mockResolvedValue({
+        signature: new Uint8Array([1,2,3,4]),
+        bytes: new Uint8Array([1,2,3,4])
+      }),
       signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({
         digest: 'mock-digest'
       }),

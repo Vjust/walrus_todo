@@ -1,4 +1,5 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/error';
@@ -13,7 +14,7 @@ import { CLIError } from '../types/error';
  * @param {string} [list] - The name of the todo list to share. Alternative to providing it as an argument. (Optional flag: -l, --list)
  * @param {string} recipient - The username of the person to share the list with. (Required flag: -r, --recipient)
  */
-export default class ShareCommand extends Command {
+export default class ShareCommand extends BaseCommand {
   static description = 'Share a todo list with another user';
 
   static examples = [

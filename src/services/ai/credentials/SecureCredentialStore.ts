@@ -640,9 +640,24 @@ export class SecureCredentialStore {
       throw new CLIError('Master key not initialized', 'ENCRYPTION_KEY_ERROR');
     }
     
+    // Validate input
+    if (!value || typeof value !== 'string') {
+      throw new CLIError('Invalid value to encrypt', 'INVALID_CRYPTO_INPUT');
+    }
+    
+    if (value.length === 0) {
+      throw new CLIError('Cannot encrypt empty value', 'INVALID_CRYPTO_INPUT');
+    }
+    
     try {
       // Generate salt and derive key
       const salt = crypto.randomBytes(AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE);
+      
+      // Validate generated salt
+      if (salt.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.SALT_SIZE) {
+        throw new CLIError('Failed to generate valid salt', 'CRYPTO_OPERATION_ERROR');
+      }
+      
       const key = crypto.pbkdf2Sync(
         this.masterKey,
         salt,
@@ -653,6 +668,11 @@ export class SecureCredentialStore {
       
       // Generate IV
       const iv = crypto.randomBytes(AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE);
+      
+      // Validate generated IV
+      if (iv.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE) {
+        throw new CLIError('Failed to generate valid IV', 'CRYPTO_OPERATION_ERROR');
+      }
       
       // Create cipher
       const cipher = crypto.createCipheriv(
@@ -727,12 +747,28 @@ export class SecureCredentialStore {
       throw new CLIError('Master key not initialized', 'ENCRYPTION_KEY_ERROR');
     }
     
+    // Validate input
+    if (!encryptedValue || !Buffer.isBuffer(encryptedValue)) {
+      throw new CLIError('Invalid encrypted value', 'INVALID_CRYPTO_INPUT');
+    }
+    
+    if (encryptedValue.length < 10) { // Minimum size check
+      throw new CLIError('Encrypted value too short', 'INVALID_CRYPTO_INPUT');
+    }
+    
     try {
       let offset = 0;
       
       // Salt
+      if (offset >= encryptedValue.length) {
+        throw new CLIError('Invalid encrypted data format', 'INVALID_CRYPTO_INPUT');
+      }
       const saltSize = encryptedValue.readUInt8(offset);
       offset += 1;
+      
+      if (offset + saltSize > encryptedValue.length) {
+        throw new CLIError('Invalid salt size in encrypted data', 'INVALID_CRYPTO_INPUT');
+      }
       const salt = encryptedValue.subarray(offset, offset + saltSize);
       offset += saltSize;
       
@@ -811,6 +847,11 @@ export class SecureCredentialStore {
       
       // Generate IV
       const iv = crypto.randomBytes(AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE);
+      
+      // Validate generated IV
+      if (iv.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.IV_SIZE) {
+        throw new CLIError('Failed to generate valid IV', 'CRYPTO_OPERATION_ERROR');
+      }
       
       // Create cipher
       const cipher = crypto.createCipheriv(

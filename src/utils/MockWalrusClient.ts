@@ -12,11 +12,11 @@ import {
   type WalrusClientConfig,
   type ReadBlobOptions 
 } from '@mysten/walrus';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { type BlobObject, type BlobInfo, type BlobMetadataShape } from '../types/walrus';
-import { type Signer } from '@mysten/sui.js/cryptography';
+import { type Signer } from '@mysten/sui/cryptography';
 import { type WalrusClientExt } from '../types/client';
-import { type Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { type Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TransactionType } from '../types/transaction';
 import {
   WalrusClientAdapter,

@@ -9,7 +9,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { CLIError } from '../types/error';
 import { 
   PermissionUser, 
@@ -138,7 +138,14 @@ export class AuthenticationService {
    * @returns A hexadecimal string representing the salt
    */
   private generateSalt(): string {
-    return crypto.randomBytes(16).toString('hex');
+    const saltBuffer = crypto.randomBytes(16);
+    
+    // Validate generated salt
+    if (saltBuffer.length !== 16) {
+      throw new CLIError('Failed to generate valid salt', 'CRYPTO_OPERATION_ERROR');
+    }
+    
+    return saltBuffer.toString('hex');
   }
   
   /**
@@ -150,7 +157,31 @@ export class AuthenticationService {
    * @returns The hexadecimal string of the hashed password
    */
   private hashPassword(password: string, salt: string): string {
-    return crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+    // Validate inputs
+    if (!password || typeof password !== 'string') {
+      throw new CLIError('Invalid password for hashing', 'INVALID_CRYPTO_INPUT');
+    }
+    
+    if (!salt || typeof salt !== 'string') {
+      throw new CLIError('Invalid salt for hashing', 'INVALID_CRYPTO_INPUT');
+    }
+    
+    if (password.length === 0) {
+      throw new CLIError('Password cannot be empty', 'INVALID_CRYPTO_INPUT');
+    }
+    
+    if (salt.length < 16) { // Minimum salt length check
+      throw new CLIError('Salt too short for secure hashing', 'INVALID_CRYPTO_INPUT');
+    }
+    
+    const hash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512');
+    
+    // Validate result
+    if (hash.length !== 64) {
+      throw new CLIError('Invalid hash generated', 'CRYPTO_OPERATION_ERROR');
+    }
+    
+    return hash.toString('hex');
   }
   
   /**

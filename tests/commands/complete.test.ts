@@ -3,7 +3,7 @@ import { TodoService } from '../../../src/services/todoService';
 import { WalrusStorage } from '../../../src/utils/walrus-storage';
 import { SuiNftStorage } from '../../../src/utils/sui-nft-storage';
 import { configService } from '../../../src/services/config-service';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import { CLIError } from '../../../src/types/error';
 import { Todo, TodoList } from '../../../src/types/todo';
 import { createMockTodo } from '../helpers/test-utils';
@@ -15,7 +15,7 @@ jest.mock('../../../src/services/todoService');
 jest.mock('../../../src/utils/walrus-storage');
 jest.mock('../../../src/utils/sui-nft-storage');
 jest.mock('../../../src/services/config-service');
-jest.mock('@mysten/sui.js/client');
+jest.mock('@mysten/sui/client');
 
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
 const mockWalrusStorage = WalrusStorage as jest.MockedClass<typeof WalrusStorage>;

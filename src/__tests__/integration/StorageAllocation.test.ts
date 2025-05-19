@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
-import { Signer } from '@mysten/sui.js/cryptography';
-import { SuiClient } from '@mysten/sui.js/client';
+import { Signer } from '@mysten/sui/cryptography';
+import { SuiClient } from '@mysten/sui/client';
 import { ExpiryMonitor } from '../../utils/ExpiryMonitor';
 import { StorageManager } from '../../utils/StorageManager';
 import { VaultManager, BlobRecord } from '../../utils/VaultManager';

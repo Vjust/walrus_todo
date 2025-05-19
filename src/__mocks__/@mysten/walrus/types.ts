@@ -1,5 +1,5 @@
-import type { TransactionBlock } from '@mysten/sui.js/transactions';
-import type { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import type { TransactionBlock } from '@mysten/sui/transactions';
+import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 export type EnumOutputShapeWithKeys<T extends Record<string, true>, K extends keyof T> = {
   [P in K]: T[P];

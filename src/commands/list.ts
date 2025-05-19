@@ -5,6 +5,9 @@ import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/error';
 
+// Add debug logging for cache hits/misses
+const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
+
 /**
  * @class ListCommand
  * @description This command displays todo items within a specified list or shows all available todo lists if no list is specified.
@@ -106,7 +109,7 @@ export default class ListCommand extends BaseCommand {
   /**
    * Handle JSON output format
    */
-  private async handleJsonOutput(args: any, flags: any): Promise<void> {
+  private async handleJsonOutput(args: { listName?: string }, flags: { json?: boolean; completed?: boolean; pending?: boolean; priority?: string; tags?: string[]; sort?: string; compact?: boolean; detailed?: boolean }): Promise<void> {
     if (args.listName) {
       const list = await this.todoService.getList(args.listName);
       if (!list) {
@@ -308,7 +311,19 @@ export default class ListCommand extends BaseCommand {
    */
   private async showAllLists(): Promise<void> {
     this.debugLog("Getting all lists");
-    const lists = await this.todoService.getAllLists();
+    
+    // Check cache for all lists first
+    const cacheKey = 'lists:all';
+    let lists = await this.getCachedTodos(cacheKey);
+    
+    if (lists) {
+      if (CACHE_DEBUG) this.debugLog('Cache hit for all lists');
+    } else {
+      if (CACHE_DEBUG) this.debugLog('Cache miss for all lists');
+      lists = await this.todoService.getAllLists();
+      // Cache the lists for 2 minutes
+      await this.setCachedTodos(cacheKey, lists);
+    }
     this.debugLog(`Found ${lists.length} lists`);
 
     if (lists.length === 0) {

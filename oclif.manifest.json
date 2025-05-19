@@ -81,6 +81,16 @@
       "args": [],
       "path": "./dist/src/commands/delete"
     },
+    "demo-progress": {
+      "id": "demo-progress",
+      "description": "demo-progress command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/demo-progress"
+    },
     "deploy": {
       "id": "deploy",
       "description": "Deploy the Todo NFT smart contract to the Sui blockchain",
@@ -121,6 +131,16 @@
       "args": [],
       "path": "./dist/src/commands/help"
     },
+    "history": {
+      "id": "history",
+      "description": "history command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/history"
+    },
     "image": {
       "id": "image",
       "description": "Manage todo images for storage on Walrus and NFT creation",
@@ -130,6 +150,16 @@
       "flags": {},
       "args": [],
       "path": "./dist/src/commands/image"
+    },
+    "interactive": {
+      "id": "interactive",
+      "description": "interactive command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/interactive"
     },
     "list": {
       "id": "list",
@@ -191,6 +221,36 @@
       "args": [],
       "path": "./dist/src/commands/storage"
     },
+    "store-file": {
+      "id": "store-file",
+      "description": "store-file command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store-file"
+    },
+    "store-list": {
+      "id": "store-list",
+      "description": "store-list command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store-list"
+    },
+    "store-simple": {
+      "id": "store-simple",
+      "description": "store-simple command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store-simple"
+    },
     "store": {
       "id": "store",
       "description": "Store a todo on blockchain with Walrus storage and create an NFT",
@@ -211,6 +271,16 @@
       "args": [],
       "path": "./dist/src/commands/suggest"
     },
+    "sync": {
+      "id": "sync",
+      "description": "sync command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/sync"
+    },
     "template": {
       "id": "template",
       "description": "Template for creating new CLI commands - not for end users",
@@ -220,6 +290,16 @@
       "flags": {},
       "args": [],
       "path": "./dist/src/commands/template"
+    },
+    "update-storage": {
+      "id": "update-storage",
+      "description": "update-storage command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/update-storage"
     },
     "update": {
       "id": "update",
@@ -360,6 +440,16 @@
       "flags": {},
       "args": [],
       "path": "./dist/src/commands/system/audit"
+    },
+    "todos": {
+      "id": "todos",
+      "description": "todos command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/todos/index"
     }
   },
   "topics": {
@@ -377,6 +467,9 @@
     },
     "simple": {
       "description": "Simple todo management commands"
+    },
+    "todos": {
+      "description": "Todos management commands"
     }
   }
 }

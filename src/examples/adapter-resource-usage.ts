@@ -2,7 +2,7 @@
  * Example demonstrating how to use the ResourceManager with Adapters
  */
 
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
 import { 
   getResourceManager, 

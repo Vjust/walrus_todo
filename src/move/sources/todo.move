@@ -41,23 +41,22 @@ module walrus_todo::todo {
         updated_at: u64,
         todos: Table<ID, Todo>
     }
-
+    
     /// Event emitted when a new todo is created
-    struct TodoCreated has copy, drop {
+    public struct TodoCreated has copy, drop {
         todo_id: ID,
         title: String,
         owner: address,
         timestamp: u64
     }
 
-    /// Event emitted when a todo's status is updated
-    struct TodoStatusUpdated has copy, drop {
+    /// Event emitted when a todo is marked as completed
+    public struct TodoCompleted has copy, drop {
         todo_id: ID,
-        old_status: u8,
-        new_status: u8,
+        owner: address,
         timestamp: u64
     }
-
+    
     /// Creates a new todo list
     public entry fun create_list(
         name: String,
@@ -73,7 +72,7 @@ module walrus_todo::todo {
         };
         transfer::share_object(list);
     }
-
+    
     /// Creates a new todo item in a list
     public entry fun create_todo(
         list: &mut TodoList,
@@ -132,12 +131,13 @@ module walrus_todo::todo {
         todo.updated_at = tx_context::epoch_timestamp_ms(ctx);
         list.updated_at = tx_context::epoch_timestamp_ms(ctx);
 
-        event::emit(TodoStatusUpdated {
-            todo_id,
-            old_status,
-            new_status,
-            timestamp: tx_context::epoch_timestamp_ms(ctx)
-        });
+        if (new_status == STATUS_COMPLETED) {
+            event::emit(TodoCompleted {
+                todo_id,
+                owner: todo.owner,
+                timestamp: tx_context::epoch_timestamp_ms(ctx)
+            });
+        };
     }
 
     /// Returns whether a todo exists in a list

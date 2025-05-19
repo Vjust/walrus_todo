@@ -1,4 +1,5 @@
-import { Command, Args } from '@oclif/core';
+import { Args } from '@oclif/core';
+import { BaseCommand } from '../../base-command';
 import { CLIError } from '../../utils/error-handler';
 import { switchSuiAddress } from '../../utils/command-executor';
 import { ValidationRules, validateInput } from '../../utils/input-validator';
@@ -10,7 +11,7 @@ import { ValidationRules, validateInput } from '../../utils/input-validator';
  *
  * @param {string} address - The Sui wallet address to switch to. (Required argument)
  */
-export default class AccountSwitchCommand extends Command {
+export default class AccountSwitchCommand extends BaseCommand {
   static description = 'Switch to a different Sui address';
 
   static args = {

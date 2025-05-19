@@ -1,7 +1,10 @@
-import { Signer, SignatureScheme, IntentScope, PublicKey, SignatureWithBytes } from '@mysten/sui.js/cryptography';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { Signer, SignatureScheme, IntentScope, PublicKey } from '@mysten/sui/cryptography';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
+import { toB64 } from '@mysten/sui/utils';
+import type { SignatureWithBytes } from '../types/adapters/SignerAdapter';
 
 // Define SerializedMessage interface locally to avoid dependency issues
 interface SerializedMessage {
@@ -34,29 +37,23 @@ export class MockKeystoreSigner implements Signer {
     return 'mock-sui-address';
   }
 
-  // Synchronous helper method for internal use
-  private _signData(data: Uint8Array): Uint8Array {
-    // Return a mock signature without async
-    return new Uint8Array(64).fill(1);
-  }
-
   // Implement standard Signer interface methods
-  signData(data: Uint8Array): Uint8Array {
-    return this._signData(data);
+  async signData(data: Uint8Array): Promise<Uint8Array> {
+    // Return a mock signature
+    return new Uint8Array(64).fill(1);
   }
 
   // Core signing method
   async sign(bytes: Uint8Array): Promise<Uint8Array> {
-    return this._signData(bytes);
+    return this.signData(bytes);
   }
   
   // Add signTransaction method compatible with the Signer interface
-  async signTransaction(transaction: TransactionBlock): Promise<SignatureWithBytes> {
-    const bytes = await transaction.serialize();
-    const signature = await this.sign(new Uint8Array(Buffer.from(bytes, 'base64')));
+  async signTransaction(bytes: Uint8Array): Promise<SignatureWithBytes> {
+    const signature = await this.sign(bytes);
     return {
-      signature: Buffer.from(signature).toString('base64'),
-      bytes: bytes
+      signature: toB64(signature),
+      bytes: toB64(bytes)
     };
   }
 
@@ -83,24 +80,24 @@ export class MockKeystoreSigner implements Signer {
   async signMessage(message: SerializedMessage): Promise<SignatureWithBytes> {
     const signature = await this.sign(message.messageBytes);
     return {
-      signature: Buffer.from(signature).toString('base64'),
-      bytes: Buffer.from(message.messageBytes).toString('base64')
+      signature: toB64(signature),
+      bytes: toB64(message.messageBytes)
     };
   }
 
   async signPersonalMessage(bytes: Uint8Array): Promise<SignatureWithBytes> {
     const signature = await this.sign(bytes);
     return {
-      signature: Buffer.from(signature).toString('base64'),
-      bytes: Buffer.from(bytes).toString('base64')
+      signature: toB64(signature),
+      bytes: toB64(bytes)
     };
   }
 
   async signWithIntent(bytes: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
     const signature = await this.sign(bytes);
     return {
-      signature: Buffer.from(signature).toString('base64'),
-      bytes: Buffer.from(bytes).toString('base64')
+      signature: toB64(signature),
+      bytes: toB64(bytes)
     };
   }
 
@@ -108,8 +105,8 @@ export class MockKeystoreSigner implements Signer {
   async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
     const signature = await this.sign(bytes);
     return {
-      signature: Buffer.from(signature).toString('base64'),
-      bytes: Buffer.from(bytes).toString('base64')
+      signature: toB64(signature),
+      bytes: toB64(bytes)
     };
   }
 
@@ -117,9 +114,9 @@ export class MockKeystoreSigner implements Signer {
     return 'ED25519' as SignatureScheme;
   }
 
-  connect(client: SuiClient): this & { client: SuiClient } {
+  connect(client: SuiClient): MockKeystoreSigner {
     this._client = client;
-    return this as this & { client: SuiClient };
+    return this;
   }
 
   static fromPath(path: string): MockKeystoreSigner {

@@ -1,4 +1,4 @@
-import type { Keypair, Signer } from '@mysten/sui.js/cryptography';
+import type { Keypair, Signer } from '@mysten/sui/cryptography';
 
 export type ExpiryHandler = (expiringBlobs: BlobRecord[]) => Promise<void>;
 

@@ -63,8 +63,8 @@ import { Transaction, TransactionType } from '../transaction';
  * Import cryptography and signing interfaces from Sui SDK.
  * These are essential for authenticating blockchain operations.
  */
-import { Signer } from '@mysten/sui.js/cryptography';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { Signer } from '@mysten/sui/cryptography';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 /**
  * Import adapter interfaces for transactions and signers.

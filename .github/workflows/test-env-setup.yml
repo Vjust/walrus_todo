@@ -1,0 +1,107 @@
+name: Test Environment Setup
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  setup-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+    
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+    
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+    
+    - name: Setup pnpm cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+    
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+    
+    - name: Install global dependencies
+      run: |
+        pnpm add -g @oclif/cli
+        pnpm add -g typescript
+    
+    - name: Setup Sui CLI
+      run: |
+        curl -sSfL https://get.sui.io | sh -s -- --yes
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+    
+    - name: Setup Walrus CLI
+      run: |
+        curl -sSf https://docs.wal.app/setup/walrus-install.sh | sh
+        echo "$HOME/.walrus/bin" >> $GITHUB_PATH
+    
+    - name: Create test configuration
+      run: |
+        mkdir -p ~/.config/walrus
+        echo 'api_endpoint: "https://walrus-testnet.walrus.app/"' > ~/.config/walrus/client_config.yaml
+        echo 'context: "testnet"' >> ~/.config/walrus/client_config.yaml
+    
+    - name: Build project
+      run: pnpm run build
+    
+    - name: Run unit tests
+      run: pnpm test:unit
+      env:
+        WALRUS_USE_MOCK: true
+        NODE_ENV: test
+    
+    - name: Run command tests
+      run: pnpm test:commands
+      env:
+        WALRUS_USE_MOCK: true
+        NODE_ENV: test
+    
+    - name: Run integration tests
+      run: pnpm test:integration
+      env:
+        WALRUS_USE_MOCK: true
+        NODE_ENV: test
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.node-version }}
+        path: |
+          coverage/
+          test-results/
+    
+    - name: Cache build artifacts
+      uses: actions/cache@v3
+      with:
+        path: |
+          dist/
+          .oclif/
+        key: ${{ runner.os }}-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-build-

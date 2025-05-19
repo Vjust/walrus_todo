@@ -1,8 +1,10 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
+import BaseCommand from '../base-command';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import chalk from 'chalk';
+import findUp from 'find-up';
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
 import {
@@ -33,7 +35,36 @@ interface DeploymentInfo {
  * @param {string} [address] - The Sui wallet address to use for deployment. If not provided, it attempts to use the active address from Sui CLI or saved configuration. (Optional flag: -a, --address)
  * @param {string} [gas-budget='100000000'] - The gas budget for the deployment transaction. (Optional flag: --gas-budget)
  */
-export default class DeployCommand extends Command {
+export default class DeployCommand extends BaseCommand {
+  private getMoveFilesPath(): { moveToml: string; sourcesDir: string } {
+    const searchPaths = [
+      // When installed as a package
+      path.join(__dirname, '../../src/move'),
+      // When running from source
+      path.join(process.cwd(), 'src/move')
+    ];
+
+    // Add package root path if findable
+    const pkgPath = findUp.sync('package.json');
+    if (pkgPath) {
+      searchPaths.push(path.join(path.dirname(pkgPath), 'src/move'));
+    }
+
+    // Try each possible path
+    for (const basePath of searchPaths) {
+      const moveToml = path.join(basePath, 'Move.toml');
+      const sourcesDir = path.join(basePath, 'sources');
+      
+      if (fs.existsSync(moveToml) && fs.existsSync(sourcesDir)) {
+        return { moveToml, sourcesDir };
+      }
+    }
+
+    throw new CLIError(
+      'Move files not found. Please ensure the CLI is properly installed.',
+      'MOVE_FILES_NOT_FOUND'
+    );
+  }
   static description = 'Deploy the Todo NFT smart contract to the Sui blockchain';
 
   static examples = [
@@ -42,6 +73,7 @@ export default class DeployCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     network: Flags.string({
       char: 'n',
       description: 'Network to deploy to (localnet, devnet, testnet, mainnet)',
@@ -77,6 +109,11 @@ export default class DeployCommand extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(DeployCommand);
     const { network, address, 'gas-budget': gasBudget } = flags;
+
+    // First verify the exact absolute path of Move.toml
+    const absoluteProjectPath = process.cwd();
+    const absoluteMoveTomlPath = path.join(absoluteProjectPath, 'src', 'move', 'Move.toml');
+    const absoluteSourcesPath = path.join(absoluteProjectPath, 'src', 'move', 'sources');
 
     try {
       // Check if sui client is installed using the safe command executor
@@ -128,36 +165,65 @@ export default class DeployCommand extends Command {
       // Get and log network URL
       const networkUrl = this.getNetworkUrl(network);
       this.log(chalk.dim(`Network URL: ${networkUrl}`));
-      
-      // Create temporary directory for deployment
-      const tempDir = fs.mkdtempSync(path.join(path.resolve(os.tmpdir()), 'todo_nft_deploy_'));
-      this.log(chalk.dim(`Created temporary directory for deployment: ${tempDir}`));
-      
-      // Set up contract directory structure
-      const sourcesDir = path.join(tempDir, 'sources');
-      fs.mkdirSync(sourcesDir, { recursive: true });
-      
-      // Copy Move.toml to temp directory with existence check
-      const moveTomlSource = path.resolve(__dirname, '../../src/move/Move.toml');
-      const moveTomlDest = path.join(tempDir, 'Move.toml');
-      if (!fs.existsSync(moveTomlSource)) {
-        throw new CLIError('Move.toml not found in src/move. Ensure the file exists.', 'FILE_NOT_FOUND');
+
+      // Verify files exist before proceeding
+      if (!fs.existsSync(absoluteMoveTomlPath)) {
+          this.log(chalk.red(`Move.toml not found at: ${absoluteMoveTomlPath}`));
+          throw new CLIError(
+              `Move.toml not found at expected path: ${absoluteMoveTomlPath}`,
+              'MOVE_TOML_NOT_FOUND'
+          );
       }
-      fs.copyFileSync(moveTomlSource, moveTomlDest);
-      this.log(chalk.dim('Copied Move.toml to temporary directory'));
-      
-      // Copy contract files
-      const contractFiles = ['todo_nft.move'];
-      for (const file of contractFiles) {
-        const sourcePath = path.resolve(__dirname, `../../src/move/sources/${file}`);
-        const destPath = path.join(sourcesDir, file);
-        
-        if (!fs.existsSync(sourcePath)) {
-          throw new CLIError(`Contract file ${file} not found in src/move/sources. Ensure the file exists.`, 'FILE_NOT_FOUND');
-        }
-        
-        fs.copyFileSync(sourcePath, destPath);
-        this.log(chalk.dim(`Copied ${file} to temporary directory`));
+
+      if (!fs.existsSync(absoluteSourcesPath)) {
+          this.log(chalk.red(`Sources directory not found at: ${absoluteSourcesPath}`));
+          throw new CLIError(
+              `Sources directory not found at expected path: ${absoluteSourcesPath}`,
+              'SOURCES_DIR_NOT_FOUND'
+          );
+      }
+
+      // Log the paths we're using
+      this.log(chalk.dim(`Using Move.toml at: ${absoluteMoveTomlPath}`));
+      this.log(chalk.dim(`Using sources directory at: ${absoluteSourcesPath}`));
+
+      // Create temporary directory with explicit error handling
+      let tempDir;
+      try {
+          tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'todo_nft_deploy_'));
+          this.log(chalk.dim(`Created temporary directory: ${tempDir}`));
+      } catch (error) {
+          throw new CLIError(
+              `Failed to create temporary directory: ${error instanceof Error ? error.message : String(error)}`,
+              'TEMP_DIR_CREATION_FAILED'
+          );
+      }
+
+      // Create sources directory in temp location
+      const tempSourcesDir = path.join(tempDir, 'sources');
+      fs.mkdirSync(tempSourcesDir, { recursive: true });
+
+      // Copy files with explicit error handling
+      try {
+          // Copy Move.toml
+          fs.copyFileSync(absoluteMoveTomlPath, path.join(tempDir, 'Move.toml'));
+          this.log(chalk.dim('Copied Move.toml successfully'));
+
+          // Copy all .move files
+          const sourceFiles = fs.readdirSync(absoluteSourcesPath);
+          for (const file of sourceFiles) {
+              if (file.endsWith('.move')) {
+                  const sourcePath = path.join(absoluteSourcesPath, file);
+                  const destPath = path.join(tempSourcesDir, file);
+                  fs.copyFileSync(sourcePath, destPath);
+                  this.log(chalk.dim(`Copied ${file} successfully`));
+              }
+          }
+      } catch (error) {
+          throw new CLIError(
+              `Failed to copy contract files: ${error instanceof Error ? error.message : String(error)}`,
+              'FILE_COPY_FAILED'
+          );
       }
 
       this.log(chalk.blue('\nPublishing package to the Sui blockchain...'));

@@ -1,0 +1,37 @@
+{
+  "name": "@walrus-todo/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix"
+  },
+  "dependencies": {
+    "next": "15.3.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@heroicons/react": "^2.0.18",
+    "@mysten/dapp-kit": "^0.16.2",
+    "@mysten/sui": "^1.29.1",
+    "@tanstack/react-query": "^5.0.0",
+    "@solana/wallet-adapter-react": "^0.15.0",
+    "@solana/wallet-adapter-phantom": "^0.9.0",
+    "@solana/web3.js": "^1.95.0",
+    "encoding": "^0.1.13"
+  },
+  "devDependencies": {
+    "@types/node": "22.0.0",
+    "@types/react": "18.3.1",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.8.3",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "15.3.2",
+    "tailwindcss": "3.4.0",
+    "postcss": "8.4.30",
+    "autoprefixer": "10.4.20",
+    "sinon": "^19.0.0"
+  }
+}

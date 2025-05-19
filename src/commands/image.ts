@@ -1,12 +1,13 @@
-import { Command, Flags, Args } from '@oclif/core';  // Added Args to import
+import { Flags, Args } from '@oclif/core';
+import { BaseCommand } from '../base-command';
 import { CLIError } from '../utils/error-handler';
 import { TodoService } from '../services/todoService';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 import { NETWORK_URLS } from '../constants';
-import { SuiClient } from '@mysten/sui.js/client';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
+import { SuiClient } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // Removed unused chalk import
 import * as path from 'path';
 
@@ -22,7 +23,7 @@ import * as path from 'path';
  * @param {string} [image] - Path to a custom image file to upload for the todo. If not provided, a default image is used. (Optional flag: -i, --image)
  * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
  */
-export default class ImageCommand extends Command {
+export default class ImageCommand extends BaseCommand {
   static description = 'Manage todo images for storage on Walrus and NFT creation';
 
   static examples = [

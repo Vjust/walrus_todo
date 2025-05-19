@@ -4,7 +4,9 @@
 # This script provides robust error handling and proper initialization
 
 # Get the absolute path of the installation directory
-PROJECT_DIR="/Users/angel/Documents/Projects/walrus_todo"
+# Use the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Environment variables for the CLI
 export NODE_OPTIONS="--no-warnings"  # Suppress Node.js warnings
@@ -20,8 +22,64 @@ fi
 # Function to check if node is installed
 check_node() {
   if ! command -v node > /dev/null; then
-    echo "Error: Node.js is not installed. Please install Node.js first."
-    exit 1
+    # Check for common Node.js installation paths
+    for node_path in \
+      "$HOME/.nvm/versions/node/*/bin/node" \
+      "$HOME/.nodenv/shims/node" \
+      "$HOME/.volta/bin/node" \
+      "/usr/local/bin/node" \
+      "/usr/local/opt/node/bin/node" \
+      "/opt/homebrew/bin/node" \
+      "/usr/bin/node"
+    do
+      if [ -x "$(echo $node_path)" ]; then
+        # Found Node.js, use it
+        NODE_PATH="$(echo $node_path)"
+        echo "Found Node.js at $NODE_PATH"
+        return 0
+      fi
+    done
+
+    echo "Warning: Node.js is not installed or not in PATH."
+    echo "Using simplified shell implementation with limited functionality."
+    echo "For full functionality, please install Node.js (version 18+)."
+    echo "Visit https://nodejs.org/en/download/ for installation instructions."
+
+    # Use the shell fallback
+    if [ -x "$SCRIPT_DIR/waltodo-shell" ]; then
+      # Pass all arguments to the shell fallback
+      exec "$SCRIPT_DIR/waltodo-shell" "$@"
+    else
+      echo "Error: Shell fallback not found or not executable."
+      exit 1
+    fi
+  fi
+}
+
+# Function to check if pnpm is installed
+check_pnpm() {
+  if ! command -v pnpm > /dev/null; then
+    # Check for common pnpm installation paths
+    for pnpm_path in \
+      "$HOME/.pnpm/pnpm" \
+      "$HOME/.npm/pnpm/bin/pnpm" \
+      "$HOME/.npm-global/bin/pnpm" \
+      "/usr/local/bin/pnpm" \
+      "/usr/local/opt/pnpm/bin/pnpm" \
+      "/opt/homebrew/bin/pnpm" \
+      "/usr/bin/pnpm"
+    do
+      if [ -x "$(echo $pnpm_path)" ]; then
+        # Found pnpm, use it
+        PNPM_PATH="$(echo $pnpm_path)"
+        echo "Found pnpm at $PNPM_PATH"
+        return 0
+      fi
+    done
+
+    echo "Warning: pnpm is not installed or not in PATH. Using node directly."
+    echo "For best results, install pnpm: npm install -g pnpm"
+    return 1
   fi
 }
 
@@ -36,10 +94,48 @@ check_enhanced_runner() {
 
 # Main execution
 check_node
+check_pnpm
 
-# Direct call to the enhanced CLI runner which handles errors properly
-if check_enhanced_runner; then
-  node "$PROJECT_DIR/bin/run-enhanced.js" "$@"
+# If we need to build the project first
+if [ ! -d "$PROJECT_DIR/dist" ] || [ ! -f "$PROJECT_DIR/dist/src/index.js" ]; then
+  echo "Building project..."
+  BUILD_SUCCESS=false
+
+  if [ -n "$PNPM_PATH" ]; then
+    "$PNPM_PATH" run build && BUILD_SUCCESS=true
+  elif command -v pnpm > /dev/null; then
+    pnpm run build && BUILD_SUCCESS=true
+  elif command -v npm > /dev/null; then
+    npm run build && BUILD_SUCCESS=true
+  else
+    echo "Error: Cannot build project. Neither pnpm nor npm is available."
+  fi
+
+  if [ "$BUILD_SUCCESS" = false ]; then
+    echo "Warning: Build failed. Using simplified shell implementation."
+    if [ -x "$SCRIPT_DIR/waltodo-shell" ]; then
+      # Pass all arguments to the shell fallback
+      exec "$SCRIPT_DIR/waltodo-shell" "$@"
+    else
+      echo "Error: Shell fallback not found or not executable."
+      exit 1
+    fi
+  fi
+fi
+
+# Set NODE_PATH if we found it in a non-standard location
+if [ -n "$NODE_PATH" ]; then
+  # Direct call to the enhanced CLI runner which handles errors properly
+  if check_enhanced_runner; then
+    "$NODE_PATH" "$PROJECT_DIR/bin/run-enhanced.js" "$@"
+  else
+    "$NODE_PATH" "$PROJECT_DIR/bin/run.js" "$@"
+  fi
 else
-  node "$PROJECT_DIR/bin/run.js" "$@"
+  # Use the node in PATH
+  if check_enhanced_runner; then
+    node "$PROJECT_DIR/bin/run-enhanced.js" "$@"
+  else
+    node "$PROJECT_DIR/bin/run.js" "$@"
+  fi
 fi

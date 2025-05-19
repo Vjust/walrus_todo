@@ -3,6 +3,7 @@
  * Ensures resources are properly disposed even in error scenarios
  */
 
+import './polyfills/aggregate-error';
 import { BaseAdapter, isBaseAdapter } from '../types/adapters/BaseAdapter';
 import { ResourceManagerError } from '../types/errors/ResourceManagerError';
 

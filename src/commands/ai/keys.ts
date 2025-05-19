@@ -1,4 +1,5 @@
-import { Command, Flags, Args } from '@oclif/core';
+import { Flags, Args } from '@oclif/core';
+import { BaseCommand } from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import * as chalk from 'chalk';
 import { CLIError } from '../../types/error';
@@ -11,7 +12,7 @@ import { CLIError } from '../../types/error';
  * - Validation: Check encryption key integrity
  * - Backup: List, create, and restore from key backups
  */
-export default class AIKeysCommand extends Command {
+export default class AIKeysCommand extends BaseCommand {
   static description = 'Manage AI credential encryption keys';
 
   static examples = [
@@ -23,7 +24,7 @@ export default class AIKeysCommand extends Command {
   ];
 
   static flags = {
-    help: Flags.help({ char: 'h' }),
+    ...BaseCommand.flags,
     'backup-id': Flags.string({
       description: 'ID of the backup to restore',
       required: false,

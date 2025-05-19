@@ -2,7 +2,7 @@
  * SignerAdapter
  *
  * This adapter reconciles differences between the Signer interfaces
- * in different versions of @mysten/sui.js and @mysten/sui libraries.
+ * in different versions of @mysten/sui and @mysten/sui libraries.
  *
  * It provides a consistent interface that both mock implementations and actual
  * code can use without worrying about version-specific differences.
@@ -12,9 +12,9 @@ import {
   Signer as SignerSuiJs,
   IntentScope,
   PublicKey
-} from '@mysten/sui.js/cryptography';
+} from '@mysten/sui/cryptography';
 import { Transaction, TransactionType } from '../transaction';
-import { SuiTransactionBlockResponse, type SuiTransactionBlockResponseOptions, SuiClient } from '@mysten/sui.js/client';
+import { SuiTransactionBlockResponse, type SuiTransactionBlockResponseOptions, SuiClient } from '@mysten/sui/client';
 import { BaseAdapter, isBaseAdapter } from './BaseAdapter';
 import { BaseError } from '../errors/BaseError';
 
@@ -46,10 +46,10 @@ export interface SignerAdapter extends BaseAdapter<SignerSuiJs> {
   getSDKVersion(): SuiSDKVersion;
 }
 
-// Define our own SignatureWithBytes interface to avoid compatibility issues
+// Define our own SignatureWithBytes interface to match Sui SDK
 export interface SignatureWithBytes {
-  signature: Uint8Array;
-  bytes: Uint8Array;
+  signature: string;
+  bytes: string;
 }
 
 /**

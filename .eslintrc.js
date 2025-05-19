@@ -1,22 +1,36 @@
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
-  plugins: [
-    '@typescript-eslint',
-  ],
+  plugins: ['@typescript-eslint', 'jest'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'prettier', // Add prettier to avoid conflicts if used
+    'plugin:jest/recommended'
   ],
   env: {
     node: true,
-    jest: true, // Assuming Jest is used based on package.json
+    jest: true,
+    es2021: true
+  },
+  parserOptions: {
+    ecmaVersion: 2021,
+    sourceType: 'module',
+    project: './tsconfig.json'
   },
   rules: {
-    // Add any project-specific rules here if needed
-    '@typescript-eslint/no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }], // Warn about unused vars, ignore if prefixed with _
-    '@typescript-eslint/no-explicit-any': 'warn', // Warn about using 'any' type
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'warn',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'jest/no-disabled-tests': 'warn',
+    'jest/no-focused-tests': 'error',
+    'jest/valid-expect': 'error'
   },
-  ignorePatterns: ["dist/", "node_modules/", "*.js"], // Ignore build output, dependencies, and JS files if primarily TS
+  ignorePatterns: [
+    'dist/',
+    'node_modules/',
+    'coverage/',
+    '*.js'
+  ]
 };

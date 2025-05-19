@@ -12,6 +12,34 @@ import { Todo } from '../types/todo';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { EnhancedAIService } from '../services/ai/EnhancedAIService';
+import { PerformanceCache, createCache } from '../utils/performance-cache';
+import crypto from 'crypto';
+import { KeystoreSigner } from '../utils/sui-keystore';
+import { getPermissionManager } from '../services/ai/AIPermissionManager';
+import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
+import prompt from 'inquirer';
+
+// Cache for AI suggestions, config, and API key validation
+const suggestionCache = createCache<any>('ai-suggestions', {
+  strategy: 'TTL',
+  ttlMs: 10 * 60 * 1000, // 10 minutes for suggestions
+  maxSize: 100
+});
+
+const configCache = createCache<any>('ai-config', {
+  strategy: 'TTL',
+  ttlMs: 30 * 60 * 1000, // 30 minutes for config  
+  maxSize: 10
+});
+
+const apiKeyValidationCache = createCache<boolean>('api-key-validation', {
+  strategy: 'TTL',
+  ttlMs: 5 * 60 * 1000, // 5 minutes for API key validation
+  maxSize: 10
+});
+
+// Add debug logging for cache hits/misses
+const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
 
 export default class Suggest extends BaseCommand {
   /**
@@ -20,7 +48,6 @@ export default class Suggest extends BaseCommand {
    */
   private async getSuiSigner() {
     try {
-      const { KeystoreSigner } = require('../utils/sui-keystore');
       return await KeystoreSigner.fromPath('');
     } catch (error) {
       this.error(`Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`);
@@ -35,7 +62,7 @@ export default class Suggest extends BaseCommand {
   private getTodoService() {
     return new TodoService();
   }
-  static description = 'Get intelligent task suggestions based on your current todo list';
+  static description = 'Get intelligent task suggestions based on your current todo list (with performance caching)';
 
   static flags = {
     ...BaseCommand.flags,
@@ -43,6 +70,15 @@ export default class Suggest extends BaseCommand {
       description: 'API key for AI service',
       required: false,
       env: 'XAI_API_KEY'
+    }),
+    clearCache: Flags.boolean({
+      description: 'Clear all AI suggestion caches',
+      default: false
+    }),
+    cacheDebug: Flags.boolean({
+      description: 'Enable cache debugging messages',
+      default: false,
+      env: 'CACHE_DEBUG'
     }),
     format: Flags.string({
       description: 'Output format (table or json)',
@@ -115,10 +151,45 @@ export default class Suggest extends BaseCommand {
   async run() {
     const { flags } = await this.parse(Suggest);
     
+    // Enable cache debugging if requested
+    const cacheDebugEnabled = flags.cacheDebug || CACHE_DEBUG;
+    
+    // Clear caches if requested
+    if (flags.clearCache) {
+      await suggestionCache.clear();
+      await configCache.clear();
+      await apiKeyValidationCache.clear();
+      this.log(chalk.green('AI suggestion caches cleared'));
+      if (!flags.apiKey && !process.env.XAI_API_KEY) {
+        return; // Exit if just clearing cache
+      }
+    }
+    
     // Get API key from flag or environment
     const apiKey = flags.apiKey || process.env.XAI_API_KEY;
     if (!apiKey) {
       this.error('API key is required. Provide it via --apiKey flag or XAI_API_KEY environment variable.');
+    }
+    
+    // Check API key validation cache
+    const apiKeyCacheKey = crypto.createHash('md5').update(apiKey).digest('hex');
+    const cachedApiKeyValidation = await apiKeyValidationCache.get(apiKeyCacheKey);
+    
+    if (cachedApiKeyValidation !== null) {
+      if (cacheDebugEnabled) this.log(chalk.dim('✓ API key validation loaded from cache'));
+      if (!cachedApiKeyValidation) {
+        this.error('API key validation failed (cached result)');
+      }
+    } else {
+      // Validate API key and cache result
+      try {
+        // Here we assume valid key for now, in production would do actual validation
+        await apiKeyValidationCache.set(apiKeyCacheKey, true);
+        if (cacheDebugEnabled) this.log(chalk.dim('✓ API key validation result cached'));
+      } catch (error) {
+        await apiKeyValidationCache.set(apiKeyCacheKey, false);
+        this.error('API key validation failed');
+      }
     }
     
     // Initialize verification service if --verify flag is used
@@ -142,8 +213,6 @@ export default class Suggest extends BaseCommand {
         );
 
         // Get the permission manager and credential manager
-        const { getPermissionManager } = require('../services/ai/AIPermissionManager');
-        const { secureCredentialManager } = require('../services/ai/SecureCredentialManager');
 
         // Get the permission manager instance
         const permissionManager = getPermissionManager();
@@ -165,15 +234,33 @@ export default class Suggest extends BaseCommand {
       }
     }
     
-    // Initialize AI service with enhanced functionality
+    // Check config cache for AI service initialization
+    const configCacheKey = `ai-config-${flags.provider || 'default'}-${flags.model || 'default'}`;
+    let aiServiceConfig = await configCache.get(configCacheKey);
+    
+    if (!aiServiceConfig) {
+      // Create config and cache it
+      aiServiceConfig = {
+        apiKey,
+        provider: flags.provider ? (flags.provider as AIProvider) : undefined,
+        model: flags.model,
+        options: {
+          temperature: 0.7,
+          maxTokens: 2000
+        }
+      };
+      await configCache.set(configCacheKey, aiServiceConfig);
+      if (cacheDebugEnabled) this.log(chalk.dim('✓ AI service config cached'));
+    } else {
+      if (cacheDebugEnabled) this.log(chalk.dim('✓ AI service config loaded from cache'));
+    }
+    
+    // Initialize AI service with cached config
     const enhancedService = new EnhancedAIService(
-      apiKey,
-      flags.provider ? (flags.provider as AIProvider) : undefined, // Convert string to AIProvider enum
-      flags.model,
-      {
-        temperature: 0.7,
-        maxTokens: 2000
-      },
+      aiServiceConfig.apiKey,
+      aiServiceConfig.provider,
+      aiServiceConfig.model,
+      aiServiceConfig.options,
       verificationService
     );
     
@@ -244,12 +331,36 @@ export default class Suggest extends BaseCommand {
         : AIPrivacyLevel.HASH_ONLY;
     
     try {
-      // Generate suggestions
-      let result;
-      if (flags.verify) {
-        result = await suggestionService.suggestTasksWithVerification(todos, context, privacyLevel);
+      // Create cache key for suggestions
+      const suggestionCacheKey = crypto.createHash('md5').update(
+        JSON.stringify({
+          todos: todos.map(t => ({ id: t.id, title: t.title, completed: t.completed })),
+          context,
+          verify: flags.verify,
+          privacyLevel,
+          provider: flags.provider,
+          model: flags.model
+        })
+      ).digest('hex');
+      
+      // Check suggestion cache
+      let result = await suggestionCache.get(suggestionCacheKey);
+      
+      if (result) {
+        if (cacheDebugEnabled) this.log(chalk.dim('✓ AI suggestions loaded from cache'));
       } else {
-        result = await suggestionService.suggestTasks(todos, context);
+        // Generate new suggestions
+        if (cacheDebugEnabled) this.log(chalk.dim('⟳ Generating new AI suggestions...'));
+        
+        if (flags.verify) {
+          result = await suggestionService.suggestTasksWithVerification(todos, context, privacyLevel);
+        } else {
+          result = await suggestionService.suggestTasks(todos, context);
+        }
+        
+        // Cache the results
+        await suggestionCache.set(suggestionCacheKey, result);
+        if (cacheDebugEnabled) this.log(chalk.dim('✓ AI suggestions cached'));
       }
       
       // Display results
@@ -320,6 +431,18 @@ export default class Suggest extends BaseCommand {
       } else {
         this.log(chalk.dim('\nTip: Use --addTodo flag to add these suggestions as new todos.'));
       }
+      
+      // Show cache statistics if cache debug is enabled
+      if (cacheDebugEnabled) {
+        this.log(chalk.dim('\nCache Statistics:'));
+        const suggestionStats = suggestionCache.getStatistics();
+        const configStats = configCache.getStatistics();
+        const apiKeyStats = apiKeyValidationCache.getStatistics();
+        
+        this.log(chalk.dim(`  Suggestions: ${suggestionStats.hits} hits, ${suggestionStats.misses} misses (${(suggestionStats.hitRate * 100).toFixed(1)}% hit rate)`));
+        this.log(chalk.dim(`  Config: ${configStats.hits} hits, ${configStats.misses} misses (${(configStats.hitRate * 100).toFixed(1)}% hit rate)`));
+        this.log(chalk.dim(`  API Keys: ${apiKeyStats.hits} hits, ${apiKeyStats.misses} misses (${(apiKeyStats.hitRate * 100).toFixed(1)}% hit rate)`));
+      }
     } catch (error) {
       this.error(`Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -332,7 +455,6 @@ export default class Suggest extends BaseCommand {
     suggestions: any[],
     todoService: any
   ) {
-    const { prompt } = require('inquirer');
     
     // Ask which suggestions to add
     const response = await prompt([

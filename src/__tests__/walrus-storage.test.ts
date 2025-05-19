@@ -1,9 +1,10 @@
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient } from '@mysten/walrus';
 import type { BlobObject } from '../types/walrus';
 import type { Mocked } from 'jest-mock';
 import { createWalrusStorage } from '../utils/walrus-storage';
+import type { WalrusStorage } from '../utils/walrus-storage';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import { CLIError } from '../types/error';
 import { execSync } from 'child_process';
@@ -47,7 +48,7 @@ jest.mock('../utils/sui-keystore');
 describe('WalrusStorage', () => {
   let mockSuiClient: MockedSuiClient;
   let mockWalrusClient: MockedWalrusClient;
-  let storage: ReturnType<typeof createWalrusStorage>;
+  let storage: WalrusStorage;
   let mockTodo: Todo;
 
   beforeEach(() => {
@@ -531,7 +532,7 @@ describe('WalrusStorage', () => {
     });
 
     it('should handle mock mode correctly', async () => {
-      const mockStorage = createWalrusStorage(true);
+      const mockStorage = createWalrusStorage('testnet', true);
       const blobId = await mockStorage.storeTodo(mockTodo);
       expect(blobId).toMatch(/^mock-blob-/);
       expect(mockWalrusClient.writeBlob).not.toHaveBeenCalled();
@@ -547,7 +548,7 @@ describe('WalrusStorage', () => {
     it('should allocate new storage if none exists', async () => {
       mockSuiClient.getOwnedObjects.mockResolvedValueOnce({ data: [], hasNextPage: false, nextCursor: null });
       
-      const result = await storage.ensureStorageAllocated();
+      const result = await storage.ensureStorageAllocated(1000000, 5);
       expect(result).toBeTruthy();
       expect(mockWalrusClient.executeCreateStorageTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -587,7 +588,7 @@ describe('WalrusStorage', () => {
         nextCursor: null
       });
 
-      const result = await storage.ensureStorageAllocated();
+      const result = await storage.ensureStorageAllocated(1000000, 5);
       expect(result).toBeTruthy();
       expect(mockWalrusClient.executeCreateStorageTransaction).not.toHaveBeenCalled();
     });
@@ -596,7 +597,7 @@ describe('WalrusStorage', () => {
       mockWalrusClient.executeCreateStorageTransaction
         .mockRejectedValueOnce(new Error('insufficient WAL tokens'));
 
-      const result = await storage.ensureStorageAllocated();
+      const result = await storage.ensureStorageAllocated(1000000, 5);
       expect(result).toBeFalsy();
     });
 

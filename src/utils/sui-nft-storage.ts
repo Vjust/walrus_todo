@@ -1,7 +1,7 @@
-import { SuiClient, SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui.js/client';
-import { type TransactionBlock } from '@mysten/sui.js/transactions';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { bcs } from '@mysten/sui.js/bcs';
+import { SuiClient, SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui/client';
+import { type TransactionBlock } from '@mysten/sui/transactions';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { bcs } from '@mysten/sui/bcs';
 import { CLIError } from '../types/error';
 import { Todo } from '../types/todo';
 

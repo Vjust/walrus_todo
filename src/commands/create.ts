@@ -1,7 +1,8 @@
-import { Command, Flags } from '@oclif/core';
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
-import { bcs } from '@mysten/sui.js/bcs';
+import { Flags } from '@oclif/core';
+import BaseCommand from '../base-command';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
+import { bcs } from '@mysten/sui/bcs';
 import * as fs from 'fs';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import chalk from 'chalk';
@@ -20,7 +21,7 @@ import { WalrusImageStorage } from '../utils/walrus-image-storage';
  * @param {string} [image] - Path to a custom image file for the todo item. If not provided, a default image is used. (Optional flag: -i, --image)
  * @param {boolean} [private=false] - If true, the todo is marked as private and will appear as "Untitled" in wallets. (Optional flag: -p, --private)
  */
-export default class CreateCommand extends Command {
+export default class CreateCommand extends BaseCommand {
   static description = 'Create a new todo item as an NFT on the Sui blockchain';
 
   static examples = [
@@ -29,6 +30,7 @@ export default class CreateCommand extends Command {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     title: Flags.string({
       char: 't',
       description: 'Title of the todo item',

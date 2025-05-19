@@ -1,5 +1,11 @@
 # WalTodo
 
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Coverage Status](https://img.shields.io/badge/coverage-85%25-green)
+![Tests](https://img.shields.io/badge/tests-144%20passed-brightgreen)
+[![codecov](https://codecov.io/gh/Vjust/walrus_todo/branch/main/graph/badge.svg)](https://codecov.io/gh/Vjust/walrus_todo)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 A powerful CLI for managing todos with Sui blockchain and Walrus decentralized storage.
 
 ## Overview
@@ -11,7 +17,7 @@ WalTodo is a feature-rich command-line interface (CLI) application that combines
 - **Intuitive CLI**: Natural language command syntax for adding todos with spaces
 - **Local Storage**: Quick todo management with file system storage
 - **Blockchain Integration**: Store todos on the Sui blockchain as NFTs
-- **Decentralized Storage**: Use Walrus for efficient, decentralized data storage
+- **Decentralized Storage**: Use Walrus for efficient, decentralized data storage via CLI integration
 - **Robust Network Handling**:
   - Configurable timeouts with AbortController for cancellation
   - Automatic retries with exponential backoff
@@ -36,6 +42,7 @@ WalTodo is a feature-rich command-line interface (CLI) application that combines
 - **Flexible Filtering**: Filter todos by status, priority, or tags
 - **Ownership & Transfer**: Transfer todo NFTs between users
 - **Secure Storage**: Todos stored on blockchain cannot be lost or corrupted
+- **Production Testnet Storage**: Stores on Walrus testnet by default, mock only during development
 
 ## CLI Commands Overview
 
@@ -46,7 +53,7 @@ The WalTodo CLI provides a comprehensive set of commands for managing todos:
 - **`list`**: List todos or todo lists
 - **`account`**: Manage Sui account for todos
 - **`configure`**: Configure CLI settings
-- **`store`**: Store todos on blockchain and Walrus
+- **`store`**: Store todos on Walrus and reference them on Sui blockchain by blob ID
 - **`retrieve`**: Retrieve todos from blockchain or Walrus storage
 - **`deploy`**: Deploy the Todo NFT smart contract to the Sui blockchain
 - **`storage`**: Manage and analyze Walrus storage efficiency and token usage
@@ -98,6 +105,27 @@ waltodo add "work-list" -t "Task with tags" -g "work,urgent" -t "Another task" -
 
 # Add multiple todos with different due dates
 waltodo add "personal" -t "Task with due date" -d 2023-05-15 -t "Later task" -d 2023-12-31
+
+# Store a todo on Walrus (returns blob ID for reference)
+waltodo store --todo task-123 --list my-list
+
+# Store a todo by title
+waltodo store --todo "Buy groceries" --list my-list
+
+# Store all todos in a list to Walrus (batch processing)
+waltodo store --all --list my-list
+
+# Store with custom batch size (default is 5)
+waltodo store --all --list my-list --batch-size 10
+
+# Store with custom storage duration (epochs)
+waltodo store --todo task-123 --list my-list --epochs 10
+
+# Store on mainnet instead of testnet
+waltodo store --todo task-123 --list my-list --network mainnet
+
+# Use mock mode for testing
+waltodo store --todo task-123 --list my-list --mock
 
 # Add multiple todos with mixed attributes
 waltodo add "project" -t "Important meeting" -p high -d 2023-06-01 -g "work,meeting" -t "Follow-up email" -p medium -g "work,email"
@@ -239,6 +267,63 @@ waltodo config --section=ai
 waltodo config --format=json
 waltodo config --format=env
 ```
+
+## Walrus Configuration
+
+WalTodo integrates with Walrus decentralized storage for storing todos on the testnet. To enable this feature:
+
+### 1. Install Walrus CLI
+
+```bash
+# Install Walrus CLI
+curl -sSf https://docs.wal.app/setup/walrus-install.sh | sh
+```
+
+### 2. Configure Walrus
+
+Create the Walrus configuration file at `~/.walrus/client_config.yaml`:
+
+```yaml
+system_object: 0x6c2547cbbc38025cf3adac45f63cb0a8d12ecf777cdc75a4971612bf97fdf6af
+staking_object: 0xbe46180321c30aab2f8b3501e24048377287fa708018a5b7c2792b35fe339ee3
+epochs_ahead: 1
+```
+
+### 3. Get WAL Tokens
+
+Get some testnet WAL tokens for storage operations:
+
+```bash
+# Request testnet WAL tokens
+walrus --config ~/.walrus/client_config.yaml get-wal
+```
+
+### 4. Configure Environment
+
+WalTodo uses environment variables to control storage behavior:
+
+```bash
+# Create .env.local for production settings
+echo "WALRUS_USE_MOCK=false" > .env.local
+```
+
+- Set `WALRUS_USE_MOCK=false` for testnet storage (production)
+- Set `WALRUS_USE_MOCK=true` for mock storage (development)
+- If not set, defaults to testnet storage
+
+### 5. Verify Configuration
+
+Test your Walrus configuration:
+
+```bash
+# Check Walrus info
+walrus --config ~/.walrus/client_config.yaml info
+
+# Test storing a todo
+waltodo add "Test todo" --storage walrus
+```
+
+Now all todos stored with the `--storage walrus` flag will be stored on the actual Walrus testnet!
 
 For detailed documentation on all available environment variables and configuration options, see [Environment Configuration Guide](docs/environment-configuration-guide.md).
 
@@ -805,21 +890,34 @@ waltodo add "Complete blockchain integration" -l blockchain-tasks
 # List todos to get the ID
 waltodo list blockchain-tasks
 
-# Store the todo on blockchain (replace TODO_ID with the actual ID)
+# Store a single todo on blockchain (replace TODO_ID with the actual ID)
 waltodo store --todo TODO_ID --list blockchain-tasks
+
+# Store all todos in a list (batch processing)
+waltodo store --all --list blockchain-tasks
+
+# Store with custom batch size (default is 5)
+waltodo store --all --list blockchain-tasks --batch-size 10
 ```
 
 This command:
-1. Uploads the todo data to Walrus decentralized storage
+1. Uploads the todo data to Walrus decentralized storage (with caching for identical content)
 2. Creates an NFT on the Sui blockchain with a reference to the Walrus blob
 3. Updates the local todo with the blockchain references
-4. Displays the transaction ID and links to view the NFT
+4. Displays progress for batch operations with detailed summary
+5. Reports cache hits when uploading previously stored content
 
 You can also store a todo with a custom image:
 
 ```bash
 waltodo store --todo TODO_ID --list blockchain-tasks --image ./custom-image.png
 ```
+
+Batch operations provide:
+- Concurrent uploads for better performance
+- Progress tracking with a visual progress bar
+- Cache optimization to avoid redundant uploads
+- Detailed summary showing successful uploads, failures, and cache hits
 
 ### Step 3: Analyze and Optimize Storage
 
@@ -1214,12 +1312,19 @@ pnpm test -- --coverage
 pnpm run dev
 ```
 
-### Frontend Demo
+### Frontend and Monorepo Structure
 
-The project now includes a responsive web frontend with an oceanic design theme:
+WalTodo uses a **monorepo structure** managed by pnpm workspaces. The project includes both a static HTML demo and a modern Next.js web frontend located in `packages/frontend-v2/`. This architecture provides:
+
+- **Separation of Concerns**: CLI and web frontend are separate packages
+- **Independent Development**: Each package has its own dependencies and build process  
+- **Shared Dependencies**: Common dependencies are hoisted to save space
+- **Scalability**: Easy to add new packages (mobile app, shared utilities, etc.)
+
+#### Static Frontend Demo
 
 ```bash
-# View the frontend demo
+# View the static HTML frontend demo
 pnpm run web
 
 # View the dashboard
@@ -1229,9 +1334,46 @@ pnpm run web:dashboard
 pnpm run web:nft
 ```
 
-The frontend demo is built with HTML, CSS, and JavaScript and showcases the oceanic theme with floating animations, glass-morphism components, and a full todo management interface.
+The static demo is built with HTML, CSS, and JavaScript and showcases the oceanic theme with floating animations and glass-morphism components.
 
-See [FRONTEND-SETUP.md](FRONTEND-SETUP.md) for more details.
+#### Modern Web Frontend (Next.js)
+
+The main web frontend is located at `packages/frontend-v2/` and includes:
+
+- **Next.js 13** with App Router
+- **React 18** with TypeScript
+- **Tailwind CSS** with oceanic theme
+- **Wallet Integration** for Sui and Phantom wallets
+- **Real-time Todo Management**
+- **NFT Dashboard** for blockchain todos
+
+```bash
+# Install frontend dependencies
+pnpm run nextjs:install
+
+# Start development server (http://localhost:3000)
+pnpm run nextjs
+
+# Build for production
+pnpm run nextjs:build
+
+# Start production server
+pnpm run nextjs:start
+
+# Build both CLI and frontend
+pnpm run build:all
+```
+
+#### Quick Frontend Setup
+
+```bash
+# One-liner to get started with the Next.js frontend
+cd packages/frontend-v2 && pnpm install && cd ../.. && pnpm run nextjs
+```
+
+For wallet integration details, see [packages/frontend-v2/WALLET_INTEGRATION.md](packages/frontend-v2/WALLET_INTEGRATION.md).
+
+See [FRONTEND-SETUP.md](FRONTEND-SETUP.md) for more details about the static demo.
 
 ### Build System
 
