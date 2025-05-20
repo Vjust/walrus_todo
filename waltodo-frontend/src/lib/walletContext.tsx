@@ -7,7 +7,8 @@ import {
   WalletProvider as SuiWalletProvider,
   useCurrentAccount,
   useConnectWallet,
-  useWallets
+  useWallets,
+  StashedWalletAdapter
 } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,6 +26,7 @@ import {
   WalletNotInstalledError,
   categorizeWalletError 
 } from './wallet-errors';
+import { SlushAccount } from '@/types/wallet';
 
 // Configure networks for Sui
 const { networkConfig } = createNetworkConfig({
@@ -32,8 +34,8 @@ const { networkConfig } = createNetworkConfig({
   mainnet: { url: getFullnodeUrl('mainnet') },
 });
 
-// Define wallet types
-type WalletType = 'sui' | 'phantom' | null;
+// Import WalletType from types/wallet.ts
+import { WalletType } from '@/types/wallet';
 
 interface WalletContextValue {
   // Common
@@ -43,6 +45,7 @@ interface WalletContextValue {
   publicKey: string | null;
   walletType: WalletType;
   error: Error | null;
+  setError: (error: Error | null) => void;
   
   // Sui specific
   suiConnect: () => Promise<void>;
@@ -51,6 +54,10 @@ interface WalletContextValue {
   // Phantom specific
   phantomConnect: () => Promise<void>;
   phantomPublicKey: PublicKey | null;
+  
+  // Slush specific
+  slushConnect: () => Promise<void>;
+  slushAccount: SlushAccount | null;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
@@ -60,6 +67,8 @@ function WalletContextInner({ children }: { children: ReactNode }) {
   const [walletType, setWalletType] = useState<WalletType>(null);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [slushAccount, setSlushAccount] = useState<SlushAccount | null>(null);
+  const [slushAdapter, setSlushAdapter] = useState<StashedWalletAdapter | null>(null);
 
   // Sui wallet hooks
   const suiAccount = useCurrentAccount();
@@ -73,15 +82,30 @@ function WalletContextInner({ children }: { children: ReactNode }) {
   // Solana wallet hooks  
   const { connect: solanaConnect, disconnect: solanaDisconnect, connected: solanaConnected, publicKey: solanaPublicKey } = useSolanaWallet();
   
+  // Initialize Slush adapter if needed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !slushAdapter) {
+      try {
+        setSlushAdapter(new StashedWalletAdapter());
+      } catch (error) {
+        console.error('Failed to initialize Slush wallet adapter:', error);
+      }
+    }
+  }, [slushAdapter]);
+  
   // Combined connected state
-  const connected = walletType === 'sui' ? !!suiAccount : walletType === 'phantom' ? solanaConnected : false;
+  const connected = 
+    walletType === 'sui' ? !!suiAccount : 
+    walletType === 'phantom' ? solanaConnected : 
+    walletType === 'slush' ? !!slushAccount : 
+    false;
   
   // Combined public key
-  const publicKey = walletType === 'sui' 
-    ? suiAccount?.address || null
-    : walletType === 'phantom' 
-    ? solanaPublicKey?.toBase58() || null
-    : null;
+  const publicKey = 
+    walletType === 'sui' ? suiAccount?.address || null :
+    walletType === 'phantom' ? solanaPublicKey?.toBase58() || null :
+    walletType === 'slush' ? slushAccount?.address || null :
+    null;
 
   // Auto-detect persisted connections
   useEffect(() => {
@@ -89,15 +113,16 @@ function WalletContextInner({ children }: { children: ReactNode }) {
     if (!error) {
       if (suiConnected && walletType !== 'sui') setWalletType('sui');
       else if (solanaConnected && walletType !== 'phantom') setWalletType('phantom');
+      else if (slushAccount && walletType !== 'slush') setWalletType('slush');
     }
-  }, [suiConnected, solanaConnected, walletType, error]);
+  }, [suiConnected, solanaConnected, slushAccount, walletType, error]);
 
   // Consolidated connect logic with enhanced error handling
   const handleConnect = useCallback(async (type: WalletType) => {
     if (!type) {
       const error = new WalletNotSelectedError();
       setError(error);
-      throw error;
+      return Promise.reject(error);
     }
     
     setConnecting(true);
@@ -107,27 +132,64 @@ function WalletContextInner({ children }: { children: ReactNode }) {
       // Check for specific wallet type
       if (type === 'sui') {
         if (!wallet) {
-          throw new WalletNotInstalledError('Sui');
+          const error = new WalletNotInstalledError('Sui');
+          setError(error);
+          return Promise.reject(error);
         }
-        await connectWallet({ wallet });
+        
+        try {
+          await connectWallet({ wallet });
+        } catch (connErr) {
+          const walletError = categorizeWalletError(connErr);
+          setError(walletError);
+          console.error(`Sui wallet connection error:`, walletError);
+          return Promise.reject(walletError);
+        }
       } else if (type === 'phantom') {
         if (typeof window === 'undefined' || !window.solana?.isPhantom) {
-          throw new WalletNotInstalledError('Phantom');
+          const error = new WalletNotInstalledError('Phantom');
+          setError(error);
+          return Promise.reject(error);
         }
-        await solanaConnect();
+        
+        try {
+          await solanaConnect();
+        } catch (connErr) {
+          const walletError = categorizeWalletError(connErr);
+          setError(walletError);
+          console.error(`Phantom wallet connection error:`, walletError);
+          return Promise.reject(walletError);
+        }
+      } else if (type === 'slush') {
+        if (!slushAdapter) {
+          const error = new WalletNotInstalledError('Slush');
+          setError(error);
+          return Promise.reject(error);
+        }
+        
+        try {
+          const account = await slushAdapter.connect();
+          setSlushAccount(account as SlushAccount);
+        } catch (connErr) {
+          const walletError = categorizeWalletError(connErr);
+          setError(walletError);
+          console.error(`Slush wallet connection error:`, walletError);
+          return Promise.reject(walletError);
+        }
       }
       
       setWalletType(type);
+      return Promise.resolve();
     } catch (error) {
       // Categorize and standardize wallet errors
       const walletError = categorizeWalletError(error);
       setError(walletError);
       console.error(`${type} wallet connection error:`, walletError);
-      throw walletError;
+      return Promise.reject(walletError);
     } finally {
       setConnecting(false);
     }
-  }, [connectWallet, solanaConnect, wallet]);
+  }, [connectWallet, solanaConnect, slushAdapter, wallet]);
 
   // Wallet-specific connect methods with error pre-checks
   const suiConnect = useCallback(async () => {
@@ -139,7 +201,12 @@ function WalletContextInner({ children }: { children: ReactNode }) {
         return Promise.reject(error);
       }
       
-      return await handleConnect('sui');
+      try {
+        return await handleConnect('sui');
+      } catch (err) {
+        // handleConnect already handles errors, this just ensures we don't throw
+        return Promise.reject(err);
+      }
     } catch (error) {
       // This catch ensures errors are properly categorized
       const walletError = categorizeWalletError(error);
@@ -150,6 +217,7 @@ function WalletContextInner({ children }: { children: ReactNode }) {
         return Promise.reject(betterError);
       }
       
+      // Always return a rejection rather than letting it propagate
       return Promise.reject(walletError);
     }
   }, [handleConnect, wallet]);
@@ -163,7 +231,17 @@ function WalletContextInner({ children }: { children: ReactNode }) {
         return Promise.reject(error);
       }
       
-      return await handleConnect('phantom');
+      // Direct implementation using solanaConnect instead of handleConnect for Phantom
+      try {
+        await solanaConnect();
+        setWalletType('phantom');
+        return Promise.resolve();
+      } catch (connErr) {
+        const walletError = categorizeWalletError(connErr);
+        setError(walletError);
+        console.error(`Phantom wallet connection error:`, walletError);
+        return Promise.reject(walletError);
+      }
     } catch (error) {
       // Special handling for WalletNotSelectedError
       const walletError = categorizeWalletError(error);
@@ -174,9 +252,40 @@ function WalletContextInner({ children }: { children: ReactNode }) {
         return Promise.reject(betterError);
       }
       
+      // Always return a rejection rather than letting it propagate
       return Promise.reject(walletError);
     }
-  }, [handleConnect]);
+  }, [solanaConnect, setError]);
+
+  // Slush wallet connect method
+  const slushConnect = useCallback(async () => {
+    try {
+      // Check wallet availability first
+      if (!slushAdapter) {
+        const error = new WalletNotInstalledError('Slush');
+        setError(error);
+        return Promise.reject(error);
+      }
+      
+      try {
+        return await handleConnect('slush');
+      } catch (err) {
+        // handleConnect already handles errors, this just ensures we don't throw
+        return Promise.reject(err);
+      }
+    } catch (error) {
+      // Special handling for WalletNotSelectedError
+      const walletError = categorizeWalletError(error);
+      if (walletError instanceof WalletNotSelectedError) {
+        const betterError = new WalletNotSelectedError();
+        setError(betterError);
+        return Promise.reject(betterError);
+      }
+      
+      // Always return a rejection rather than letting it propagate
+      return Promise.reject(walletError);
+    }
+  }, [handleConnect, slushAdapter]);
 
   // Universal disconnect
   const disconnect = useCallback(async () => {
@@ -187,16 +296,33 @@ function WalletContextInner({ children }: { children: ReactNode }) {
         // Sui dapp-kit handles disconnection automatically
         // We just need to clear our state
       } else if (walletType === 'phantom') {
-        await solanaDisconnect();
+        try {
+          await solanaDisconnect();
+        } catch (discErr) {
+          console.error('Error disconnecting Phantom wallet:', discErr);
+          // We'll still clear the wallet type even if disconnect fails
+        }
+      } else if (walletType === 'slush') {
+        try {
+          if (slushAdapter) {
+            await slushAdapter.disconnect();
+          }
+          setSlushAccount(null);
+        } catch (discErr) {
+          console.error('Error disconnecting Slush wallet:', discErr);
+          // We'll still clear the wallet type even if disconnect fails
+        }
       }
       setWalletType(null);
+      return Promise.resolve();
     } catch (error) {
       const walletError = error instanceof Error ? error : new Error('Wallet disconnect failed');
       setError(walletError);
       console.error('Wallet disconnect error:', error);
-      throw walletError;
+      // Return rejection instead of throwing directly
+      return Promise.reject(walletError);
     }
-  }, [walletType, solanaDisconnect]);
+  }, [walletType, solanaDisconnect, slushAdapter]);
 
   const contextValue = useMemo<WalletContextValue>(() => ({
     connected,
@@ -205,10 +331,13 @@ function WalletContextInner({ children }: { children: ReactNode }) {
     publicKey,
     walletType,
     error,
+    setError,
     suiConnect,
     suiAccount,
     phantomConnect,
     phantomPublicKey: solanaPublicKey,
+    slushConnect,
+    slushAccount,
   }), [
     connected, 
     connecting, 
@@ -216,10 +345,13 @@ function WalletContextInner({ children }: { children: ReactNode }) {
     publicKey, 
     walletType,
     error,
+    setError,
     suiConnect,
     suiAccount, 
     phantomConnect,
-    solanaPublicKey
+    solanaPublicKey,
+    slushConnect,
+    slushAccount
   ]);
 
   return (
@@ -230,7 +362,25 @@ function WalletContextInner({ children }: { children: ReactNode }) {
 }
 
 // Main context provider
+// Global error handler for unhandled promise rejections
+const setupGlobalErrorHandlers = () => {
+  if (typeof window !== 'undefined') {
+    // This will help us debug unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('UNHANDLED PROMISE REJECTION:', event.reason);
+      
+      // Prevent the default browser handling of the error
+      event.preventDefault();
+    });
+  }
+};
+
 export function WalletContextProvider({ children }: { children: ReactNode }) {
+  // Set up global error handlers when the context mounts
+  useEffect(() => {
+    setupGlobalErrorHandlers();
+  }, []);
+
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -240,22 +390,27 @@ export function WalletContextProvider({ children }: { children: ReactNode }) {
     },
   }));
   
-  // Only create the Phantom adapter if it's not already registered
-  // This prevents the "Phantom was registered as a Standard Wallet" warning
+  // Create the Phantom adapter with error prevention
   const [phantomAdapter] = useState(() => {
-    // Check if Phantom is already registered or not available
-    if (typeof window === 'undefined' || !window.solana?.isPhantom) {
-      // Create an adapter but don't initialize it to avoid registration conflicts
+    try {
+      // Check if Phantom is already registered or not available
+      if (typeof window === 'undefined' || !window.solana?.isPhantom) {
+        // Skip adapter creation if Phantom isn't available
+        return null;
+      }
+      
+      // Create the adapter with error handling
+      return new PhantomWalletAdapter();
+    } catch (error) {
+      console.error('Error creating PhantomWalletAdapter:', error);
       return null;
     }
-    
-    // Only create adapter when Phantom is available and not already initialized
-    return new PhantomWalletAdapter();
   });
   
   const solanaEndpoint = clusterApiUrl('devnet');
   
   // Create a safe wallets array that won't cause duplicate registrations
+  // Always provide an array, even if empty, to avoid errors
   const wallets = phantomAdapter ? [phantomAdapter] : [];
 
   return (

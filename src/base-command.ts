@@ -770,6 +770,42 @@ export default abstract class BaseCommand extends Command {
    * @param errorMessage Error message if validation fails
    * @throws ValidationError if validation fails
    */
+  /**
+   * Centralized file write method that can be mocked in tests
+   * This provides a consistent interface for all file operations
+   * and allows test code to mock file operations by replacing this method
+   * 
+   * @param filePath Path to the file to write
+   * @param data Data to write to the file
+   * @param options Write options
+   */
+  protected writeFileSafe(filePath: string, data: string, options?: fs.WriteFileOptions): void {
+    // Create directory if it doesn't exist
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Write file with proper error handling
+    try {
+      fs.writeFileSync(filePath, data, options);
+    } catch (error) {
+      this.warning(`Failed to write file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get the base configuration directory for storing WalTodo's settings and data
+   * This location can be customized via the WALRUS_TODO_CONFIG_DIR environment variable
+   * The default location is ~/.waltodo
+   * 
+   * @returns Absolute path to the configuration directory
+   */
+  protected getConfigDir(): string {
+    return process.env.WALRUS_TODO_CONFIG_DIR || path.join(os.homedir(), '.waltodo');
+  }
+  
   protected validateInput<T>(
     validator: (value: T) => boolean,
     value: T,

@@ -5,14 +5,18 @@
 export class CommandSanitizer {
   /**
    * Sanitize string inputs to prevent injection attacks
+   * Enhanced to better handle special characters and Unicode
    * @param input String to sanitize
    * @returns Sanitized string
    */
   static sanitizeString(input: string | undefined | null): string {
     if (!input) return '';
+    
     return input
       .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/[\\$'"]/g, '\\$&') // Escape shell metacharacters
+      .replace(/[\\$'"`;(){}[\]|&*?~<>]/g, '\\$&') // Escape shell and special metacharacters
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+      .replace(/\r\n|\r|\n/g, ' ') // Normalize line breaks
       .trim();
   }
 

@@ -26,6 +26,9 @@ export class AIService {
   
   /** Configuration options for the AI model */
   private options: AIModelOptions;
+  
+  /** Current operation type for consent management */
+  private operationType?: string;
 
   /**
    * Creates a new instance of the AIService with the specified provider and configuration.
@@ -125,6 +128,35 @@ export class AIService {
       this.modelAdapter.cancelAllRequests(reason);
     }
   }
+  
+  /**
+   * Sets the current operation type for consent management
+   * 
+   * This method allows the AI service to track which operation type is being performed
+   * so that it can enforce user consent requirements for different types of AI operations.
+   * Each operation type (e.g., summarize, categorize, analyze) may have different consent
+   * requirements or privacy implications.
+   * 
+   * @param operationType - The type of operation being performed (e.g., 'summarize', 'categorize')
+   * @throws Error if the user has not consented to this operation type
+   */
+  public setOperationType(operationType: string): void {
+    this.operationType = operationType;
+    
+    // Check if this adapter has consent checking capabilities
+    if (this.modelAdapter && typeof this.modelAdapter.checkConsentFor === 'function') {
+      const hasConsent = this.modelAdapter.checkConsentFor(operationType);
+      if (!hasConsent) {
+        throw new Error(`User has not provided consent for operation type: ${operationType}`);
+      }
+    }
+    
+    // Update options with the operation type for potential provider-specific handling
+    this.options = {
+      ...this.options,
+      operation: operationType
+    };
+  }
 
   /**
    * Changes the active AI provider and model.
@@ -167,20 +199,132 @@ export class AIService {
    * @throws Error if summarization fails
    */
   async summarize(todos: Todo[]): Promise<string> {
+    // Set operation type for consent management
+    this.setOperationType('summarize');
+    
+    // Input validation: check for empty todos
+    if (!todos || !Array.isArray(todos) || todos.length === 0) {
+      throw new Error('Cannot summarize empty todo list');
+    }
+    
+    // Input validation: check for maximum input size to prevent DoS
+    if (todos.length > 500) {
+      throw new Error('Input exceeds maximum allowed size for summarization');
+    }
+    
     const prompt = PromptTemplate.fromTemplate(
       `Summarize the following todos in 2-3 sentences, focusing on key themes and priorities:\n\n{todos}`
     );
 
-    // Format todos for the prompt
-    const todoStr = todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
+    // Format todos with minimal required fields and sanitize data
+    const sanitizedTodos = todos.map(t => this.sanitizeTodo(t));
+    const todoStr = sanitizedTodos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr });
+      // Apply differential privacy if enabled in options
+      const privacyEnabled = this.options.differentialPrivacy === true;
+      const privacyOptions = privacyEnabled ? {
+        ...this.options,
+        noiseFactor: this.options.epsilon || 0.5,
+      } : this.options;
+      
+      const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr }, privacyOptions);
       return response.result;
     } catch (error) {
+      // Ensure no sensitive data in error message
       const typedError = error instanceof Error ? error : new Error(String(error));
-      throw new Error(`Failed to summarize todos: ${typedError.message}`, { cause: typedError });
+      const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
+      throw new Error(`Failed to summarize todos: ${sanitizedMessage}`, { cause: typedError });
     }
+  }
+  
+  /**
+   * Sanitizes a todo object for privacy by removing sensitive or unnecessary fields
+   * and detecting/anonymizing PII in content fields
+   * 
+   * @param todo - The todo object to sanitize
+   * @returns A sanitized copy of the todo with minimal required fields
+   */
+  private sanitizeTodo(todo: Todo): Partial<Todo> {
+    // Extract only the fields we need
+    const sanitized: Partial<Todo> = {
+      id: todo.id,
+      title: this.anonymizePII(todo.title),
+      completed: todo.completed
+    };
+    
+    // Only include description if present
+    if (todo.description) {
+      sanitized.description = this.anonymizePII(todo.description);
+    }
+    
+    // Only include priority if present
+    if (todo.priority) {
+      sanitized.priority = todo.priority;
+    }
+    
+    // Only include tags if present (but as a new array to prevent reference issues)
+    if (todo.tags && Array.isArray(todo.tags)) {
+      sanitized.tags = [...todo.tags];
+    }
+    
+    return sanitized;
+  }
+  
+  /**
+   * Detects and anonymizes personally identifiable information (PII) in text
+   * 
+   * @param text - The text to anonymize
+   * @returns Anonymized text with PII replaced
+   */
+  private anonymizePII(text: string): string {
+    if (!text) return text;
+    
+    // Common PII patterns
+    const piiPatterns: Array<{pattern: RegExp, replacement: string}> = [
+      // Email addresses
+      {pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, replacement: '[EMAIL]'},
+      // Phone numbers
+      {pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, replacement: '[PHONE]'},
+      // Social security numbers
+      {pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '[SSN]'},
+      // Credit card numbers
+      {pattern: /\b(?:\d[ -]*?){13,16}\b/g, replacement: '[CREDIT_CARD]'},
+      // Physical addresses (simplified)
+      {pattern: /\b\d+\s+[A-Z][a-z]+\s+(?:St|Street|Ave|Avenue|Blvd|Boulevard|Rd|Road|Drive|Dr)\b/g, replacement: '[ADDRESS]'},
+      // Likely names (simplified pattern)
+      {pattern: /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, replacement: '[NAME]'}
+    ];
+    
+    // Apply each pattern
+    let anonymized = text;
+    for (const {pattern, replacement} of piiPatterns) {
+      anonymized = anonymized.replace(pattern, replacement);
+    }
+    
+    return anonymized;
+  }
+  
+  /**
+   * Sanitizes error messages to remove any potentially sensitive information
+   * 
+   * @param message - The error message to sanitize
+   * @returns Sanitized error message
+   */
+  private sanitizeErrorMessage(message: string): string {
+    // Redact API keys
+    const apiKeyPattern = /(?:api[-_]?key|token|secret|password|credential)[^\w\n]*?\w+[-._=]*?([a-zA-Z0-9]{5,})/gi;
+    let sanitized = message.replace(apiKeyPattern, (m, key) => {
+      return m.replace(key, '[REDACTED]');
+    });
+    
+    // Redact PII
+    sanitized = this.anonymizePII(sanitized);
+    
+    // Remove detailed paths
+    sanitized = sanitized.replace(/(?:\/[\w.-]+){3,}/g, '[PATH]');
+    
+    return sanitized;
   }
   
   /**
@@ -213,21 +357,73 @@ export class AIService {
    * @returns Promise resolving to a map of category names to arrays of todo IDs
    */
   async categorize(todos: Todo[]): Promise<Record<string, string[]>> {
+    // Set operation type for consent management
+    this.setOperationType('categorize');
+    
+    // Input validation: check for empty todos
+    if (!todos || !Array.isArray(todos) || todos.length === 0) {
+      throw new Error('Cannot categorize empty todo list');
+    }
+    
+    // Input validation: check for maximum input size to prevent DoS
+    if (todos.length > 500) {
+      throw new Error('Input exceeds maximum allowed size for categorization');
+    }
+    
     const prompt = PromptTemplate.fromTemplate(
       `Categorize the following todos into logical groups. Return the result as a JSON object where keys are category names and values are arrays of todo IDs.\n\n{todos}`
     );
 
-    // Format todos with IDs for categorization
-    const todoStr = todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`).join('\n');
+    // Format todos with minimal required fields and sanitize data
+    const sanitizedTodos = todos.map(t => this.sanitizeTodo(t));
+    const todoStr = sanitizedTodos.map(t => 
+      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
+    ).join('\n');
 
-    const response = await this.modelAdapter.completeStructured<Record<string, string[]>>({
-      prompt,
-      input: { todos: todoStr },
-      options: { ...this.options, temperature: 0.5 },
-      metadata: { operation: 'categorize' }
-    });
+    try {
+      // Apply differential privacy if enabled in options
+      const privacyEnabled = this.options.differentialPrivacy === true;
+      const privacyOptions = privacyEnabled ? {
+        ...this.options,
+        noiseFactor: this.options.epsilon || 0.5,
+        temperature: 0.5
+      } : { 
+        ...this.options, 
+        temperature: 0.5 
+      };
+      
+      const response = await this.modelAdapter.completeStructured<Record<string, string[]>>({
+        prompt,
+        input: { todos: todoStr },
+        options: privacyOptions,
+        metadata: { operation: 'categorize' }
+      });
+      
+      // Validate response structure to prevent prototype pollution or invalid data
+      const result = response.result || {};
+      const sanitizedResult: Record<string, string[]> = {};
+      
+      // Ensure valid structure in the response
+      Object.keys(result).forEach(category => {
+        // Guard against prototype pollution or malformed response
+        if (category === '__proto__' || category === 'constructor' || category === 'prototype') {
+          return;
+        }
+        
+        // Ensure values are arrays of strings
+        const ids = result[category];
+        if (Array.isArray(ids)) {
+          sanitizedResult[category] = ids.filter(id => typeof id === 'string');
+        }
+      });
 
-    return response.result || {};
+      return sanitizedResult;
+    } catch (error) {
+      // Ensure no sensitive data in error message
+      const typedError = error instanceof Error ? error : new Error(String(error));
+      const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
+      throw new Error(`Failed to categorize todos: ${sanitizedMessage}`, { cause: typedError });
+    }
   }
   
   /**

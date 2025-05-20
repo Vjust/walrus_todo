@@ -268,24 +268,31 @@ export class InputValidator {
 
   /**
    * Sanitize a string to prevent injection attacks
+   * Escapes HTML tags and shell metacharacters
    * @param input String to sanitize
    * @returns Sanitized string
    */
   static sanitizeString(input: string): string {
     if (!input) return '';
     
-    // Remove potential HTML/script tags
-    let sanitized = input.replace(/<[^>]*>/g, '');
+    // Escape HTML entities first
+    let sanitized = input
+      .replace(/&/g, '&amp;')     // & -> &amp;
+      .replace(/</g, '&lt;')      // < -> &lt;
+      .replace(/>/g, '&gt;')      // > -> &gt;
+      .replace(/"/g, '&quot;')    // " -> &quot;
+      .replace(/'/g, '&#x27;');   // ' -> &#x27;
     
     // Escape shell metacharacters comprehensively
-    // This includes common shell special characters that could be used for injection
-    const shellMetaChars = /[\\$'"`;|&<>(){}[\]!#*?~]/g;
-    sanitized = sanitized.replace(shellMetaChars, '\\$&');
+    // This includes all shell special characters that could be used for injection
+    // Now also includes backticks, dollar signs, and other shell expansion characters
+    const shellMetaChars = /([\\$'"`;|&<>(){}[\]!#*?~^])/g;
+    sanitized = sanitized.replace(shellMetaChars, '\\$1');
     
     // Remove null bytes and other control characters
     sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
     
-    // Normalize whitespace
+    // Normalize whitespace but preserve intentional spacing
     sanitized = sanitized.replace(/\s+/g, ' ').trim();
     
     return sanitized;

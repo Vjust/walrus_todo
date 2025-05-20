@@ -133,22 +133,42 @@ export class BaseError extends Error {
    * @param context Context object to sanitize
    * @returns Sanitized context or undefined
    */
-  private sanitizeContext(context?: Record<string, unknown>): Record<string, unknown> | undefined {
+  protected sanitizeContext(context?: Record<string, unknown>): Record<string, unknown> | undefined {
     if (!context) return undefined;
     
     const sanitized: Record<string, unknown> = {};
+    const sensitivePatterns = [
+      /\b(password)\b/i,
+      /\b(secret)\b/i,
+      /\b(privateKey|apiKey|secretKey|encryptionKey)\b/i,
+      /\b(token|accessToken|refreshToken)\b/i,
+      /\b(authToken|authorization)\b/i,
+      /\b(credential)\b/i,
+      /\b(signature)\b/i,
+      /\b(seed|seedPhrase)\b/i,
+      /\b(mnemonic)\b/i,
+      /\b(phrase|recoveryPhrase)\b/i
+    ];
+    
+    // Additional blockchain-specific patterns
+    const blockchainPatterns = [
+      { pattern: /address/i, redactPartial: true },
+      { pattern: /hash/i, redactPartial: true },
+      { pattern: /transaction(?:Id|Hash)/i, redactPartial: true }
+    ];
     
     // Sanitize each property
     for (const [key, value] of Object.entries(context)) {
-      // Skip sensitive keys
-      if (
-        key.toLowerCase().includes('password') ||
-        key.toLowerCase().includes('secret') ||
-        key.toLowerCase().includes('token') ||
-        key.toLowerCase().includes('key') ||
-        key.toLowerCase().includes('auth')
-      ) {
+      // Check for sensitive keys
+      if (sensitivePatterns.some(pattern => pattern.test(key))) {
         sanitized[key] = '[REDACTED]';
+        continue;
+      }
+      
+      // Check for blockchain identifiers that need partial redaction
+      const blockchainMatch = blockchainPatterns.find(item => item.pattern.test(key));
+      if (blockchainMatch && typeof value === 'string') {
+        sanitized[key] = this.redactIdentifier(value);
         continue;
       }
       
@@ -161,6 +181,20 @@ export class BaseError extends Error {
     }
     
     return sanitized;
+  }
+  
+  /**
+   * Redacts part of an identifier (like an address or transaction hash)
+   * keeping only the first and last few characters
+   * @param identifier The string to redact
+   * @returns Partially redacted string
+   */
+  protected redactIdentifier(identifier: string): string {
+    if (!identifier || identifier.length <= 8) return identifier;
+    
+    const firstChars = identifier.slice(0, 6);
+    const lastChars = identifier.slice(-4);
+    return `${firstChars}...${lastChars}`;
   }
 }
 

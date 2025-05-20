@@ -1,3 +1,4 @@
+// Import statements with CommonJS compatibility
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../types/client';
 import type { BlobInfo, BlobMetadata, BlobMetadataShape } from '../types/walrus';
@@ -6,6 +7,45 @@ import { handleError } from './error-handler';
 import { RetryManager, NetworkNode } from './retry-manager';
 import type { TransactionSigner } from '../types/signer';
 import * as crypto from 'crypto';
+
+// We need to handle both ESM and CommonJS imports for ora and cli-progress
+// in way that's compatible with Jest tests and the production environment
+let oraImport;
+let cliProgressImport;
+
+try {
+  // Try importing as ESM modules
+  oraImport = require('ora');
+  cliProgressImport = require('cli-progress');
+} catch (error) {
+  // Fallback to CommonJS imports if ESM fails
+  console.warn('ESM imports failed, falling back to CommonJS imports');
+  try {
+    oraImport = require('ora').default;
+    cliProgressImport = require('cli-progress');
+  } catch (fallbackError) {
+    console.error('Failed to import ora or cli-progress:', fallbackError);
+    // Provide mock implementations for testing environments
+    oraImport = () => ({
+      start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
+      stop: () => {},
+      succeed: () => {},
+      fail: () => {}
+    });
+    cliProgressImport = {
+      SingleBar: class MockSingleBar {
+        start() { return this; }
+        update() { return this; }
+        stop() { return this; }
+      },
+      MultiBar: class MockMultiBar {
+        create() { return new cliProgressImport.SingleBar(); }
+        remove() {}
+        stop() {}
+      }
+    };
+  }
+}
 
 // Using BlobInfo from types/walrus.ts
 

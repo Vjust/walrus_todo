@@ -152,4 +152,48 @@ export class TransactionError extends BaseError {
       }
     );
   }
+  
+  /**
+   * Override sanitizeContext to handle transaction-specific sensitive data
+   * @param context Context object to sanitize
+   * @returns Sanitized context or undefined
+   */
+  protected override sanitizeContext(context?: Record<string, unknown>): Record<string, unknown> | undefined {
+    if (!context) return undefined;
+    
+    // First apply base sanitization
+    const sanitized = super.sanitizeContext(context) || {};
+    
+    // Additional transaction-specific sanitization
+    const txSpecificKeys = [
+      'transactionHash', 
+      'contractAddress', 
+      'fromAddress', 
+      'toAddress',
+      'senderAddress',
+      'receiverAddress',
+      'walletAddress'
+    ];
+    
+    for (const key of txSpecificKeys) {
+      if (key in sanitized && typeof sanitized[key] === 'string') {
+        sanitized[key] = this.redactIdentifier(sanitized[key] as string);
+      }
+    }
+    
+    // Check for any string that looks like an address or transaction hash
+    for (const [key, value] of Object.entries(sanitized)) {
+      if (typeof value === 'string') {
+        // Look for Sui, Ethereum, or blockchain address patterns
+        const addressRegex = /^(0x[a-fA-F0-9]{40,64})$/;
+        const txHashRegex = /^(0x[a-fA-F0-9]{64,66})$/;
+        
+        if (addressRegex.test(value as string) || txHashRegex.test(value as string)) {
+          sanitized[key] = this.redactIdentifier(value as string);
+        }
+      }
+    }
+    
+    return sanitized;
+  }
 }

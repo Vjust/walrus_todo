@@ -63,8 +63,33 @@ export function StorageContextWarning() {
   
   useEffect(() => {
     // Only run on client
-    setContext(detectContext());
-    setUsingFallback(isUsingFallbackStorage());
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // Safely detect context with error handling
+      let detectedContext: StorageContext = 'unknown';
+      try {
+        detectedContext = detectContext();
+      } catch (error) {
+        console.warn('Error detecting storage context:', error);
+        detectedContext = 'unknown';
+      }
+      setContext(detectedContext);
+      
+      // Safely check if using fallback storage
+      let fallbackStatus = true; // Default to true for safety
+      try {
+        fallbackStatus = isUsingFallbackStorage();
+      } catch (error) {
+        console.warn('Error checking fallback storage status:', error);
+      }
+      setUsingFallback(fallbackStatus);
+    } catch (e) {
+      console.error('Error in StorageContextWarning useEffect:', e);
+      // Set safe defaults
+      setContext('unknown');
+      setUsingFallback(true);
+    }
   }, []);
   
   if (!showWarning || typeof window === 'undefined') {

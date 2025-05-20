@@ -22,11 +22,15 @@ export function WalletConnectButton() {
     error,
     suiConnect,
     phantomConnect,
+    setError
   } = useWalletContext();
 
   const [hasSuiWallet, setHasSuiWallet] = useState(false);
   const [hasPhantomWallet, setHasPhantomWallet] = useState(false);
   const [walletSelected, setWalletSelected] = useState<'sui' | 'phantom' | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const [clipboardError, setClipboardError] = useState<ClipboardError | null>(null);
   
   // Function to handle wallet button clicks with pre-selection
   const handleWalletSelection = (type: 'sui' | 'phantom') => {
@@ -71,10 +75,6 @@ export function WalletConnectButton() {
 
   // If connected, show address and disconnect button
   if (connected && publicKey) {
-    const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
-    const [copyError, setCopyError] = useState<string | null>(null);
-    const [clipboardError, setClipboardError] = useState<ClipboardError | null>(null);
-    
     const handleCopyAddress = async () => {
       setCopyStatus('idle');
       setCopyError(null);
@@ -275,27 +275,5 @@ export function WalletConnectButton() {
         onTryAlternative={handleManualCopy}
       />
     </>
-  );
-}
-
-// Optional: Export a wallet status component
-export function WalletStatus() {
-  const { connected, publicKey, walletType } = useWalletContext();
-
-  if (!connected || !publicKey) {
-    return null;
-  }
-
-  return (
-    <div className="inline-flex items-center gap-2 px-3 py-1 bg-ocean-deep/10 dark:bg-ocean-foam/10 rounded-full">
-      <div 
-        className={`w-2 h-2 rounded-full ${
-          walletType === 'sui' ? 'bg-blue-500' : 'bg-purple-500'
-        }`}
-      />
-      <span className="text-sm text-ocean-deep dark:text-ocean-foam">
-        {walletType === 'sui' ? 'Sui' : 'Phantom'}
-      </span>
-    </div>
   );
 }

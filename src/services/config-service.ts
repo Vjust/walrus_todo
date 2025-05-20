@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Config, Todo, TodoList } from '../types';
 import { CLI_CONFIG, STORAGE_CONFIG } from '../constants';
@@ -33,13 +34,21 @@ export class ConfigService {
    * updates environment settings, and ensures the todos directory exists.
    */
   constructor() {
-    // Look for config file in current directory first, then in home directory
-    const currentDirConfig = path.join(process.cwd(), CLI_CONFIG.CONFIG_FILE);
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const homeDirConfig = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
+    // Check for config directory from environment variable
+    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR');
+    
+    if (configDir) {
+      // If environment variable is set, use it directly
+      this.configPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
+    } else {
+      // Otherwise look for config file in current directory first, then in home directory
+      const currentDirConfig = path.join(process.cwd(), CLI_CONFIG.CONFIG_FILE);
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      const homeDirConfig = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
 
-    // Use current directory config if it exists, otherwise use home directory
-    this.configPath = fs.existsSync(currentDirConfig) ? currentDirConfig : homeDirConfig;
+      // Use current directory config if it exists, otherwise use home directory
+      this.configPath = fs.existsSync(currentDirConfig) ? currentDirConfig : homeDirConfig;
+    }
 
     // Get storage path from environment configuration or use default
     this.todosPath = path.resolve(process.cwd(), getEnv('STORAGE_PATH') || 'Todos');
@@ -50,8 +59,12 @@ export class ConfigService {
     // Update environment configuration with loaded values
     this.updateEnvironmentConfig();
 
-    // Ensure the todos directory exists
-    this.ensureTodosDirectory();
+    // Ensure the todos directory exists - calling async function from constructor
+    // We need to handle this properly
+    this.ensureTodosDirectory().catch(error => {
+      console.error(`Error creating todos directory: ${error.message}`);
+      // Not throwing here as constructor can't be async
+    });
   }
 
   /**
@@ -89,10 +102,14 @@ export class ConfigService {
    * @throws {CLIError} If the directory cannot be created
    * @returns {void}
    */
-  private ensureTodosDirectory(): void {
+  private async ensureTodosDirectory(): Promise<void> {
     try {
-      if (!fs.existsSync(this.todosPath)) {
-        fs.mkdirSync(this.todosPath, { recursive: true });
+      // Use fsPromises instead of fs synchronous methods
+      try {
+        await fsPromises.access(this.todosPath);
+      } catch {
+        // If directory doesn't exist, create it
+        await fsPromises.mkdir(this.todosPath, { recursive: true });
       }
     } catch (error) {
       throw new CLIError(
@@ -124,6 +141,8 @@ export class ConfigService {
    */
   private loadConfig(): Config {
     try {
+      // Check if config file exists using fs.existsSync since this is sync
+      // We can't use async fsPromises.access here since loadConfig is synchronous
       if (fs.existsSync(this.configPath)) {
         // Use our config loader utility
         const loadedConfig = loadConfigFile(this.configPath);
@@ -163,6 +182,26 @@ export class ConfigService {
   public getConfig(): Config {
     return this.config;
   }
+  
+  /**
+   * Returns the path to the todos directory.
+   * 
+   * @public
+   * @returns {string} The path to the todos directory
+   */
+  public getTodosDirectory(): string {
+    return this.todosPath;
+  }
+  
+  /**
+   * Returns the path to the configuration file.
+   * 
+   * @public
+   * @returns {string} The path to the configuration file
+   */
+  public getConfigPath(): string {
+    return this.configPath;
+  }
 
   /**
    * Updates and saves the configuration.
@@ -190,6 +229,60 @@ export class ConfigService {
       );
     }
   }
+  
+  /**
+   * Merges and saves the configuration to the appropriate config path.
+   * Uses WALRUS_TODO_CONFIG_DIR environment variable to determine config path if set,
+   * otherwise follows the default path resolution rules.
+   * 
+   * @public
+   * @param {Partial<Config>} config - The partial configuration to merge with the existing configuration
+   * @throws {CLIError} If the configuration cannot be saved
+   * @returns {Promise<void>}
+   */
+  public async mergeAndSaveConfig(config: Partial<Config>): Promise<void> {
+    // Get the configured directory path from environment
+    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR');
+    
+    // Determine the target path for saving
+    let targetConfigPath = this.configPath;
+    
+    if (configDir) {
+      // Ensure the directory exists
+      try {
+        try {
+          await fsPromises.access(configDir);
+        } catch {
+          await fsPromises.mkdir(configDir, { recursive: true });
+        }
+        targetConfigPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
+        
+        // IMPORTANT: Update the configPath for future saves
+        this.configPath = targetConfigPath;
+      } catch (error) {
+        throw new CLIError(
+          `Failed to create config directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'CONFIG_DIR_CREATE_FAILED'
+        );
+      }
+    }
+    
+    // Merge the config
+    this.config = { ...this.config, ...config };
+    
+    try {
+      // Save to the determined path
+      saveConfigToFile(this.config, targetConfigPath);
+      
+      // Update environment configuration with new values
+      this.updateEnvironmentConfig();
+    } catch (error) {
+      throw new CLIError(
+        `Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'CONFIG_SAVE_FAILED'
+      );
+    }
+  }
 
   /**
    * Loads the data for a specific Todo list.
@@ -203,7 +296,7 @@ export class ConfigService {
     const listPath = this.getListPath(listName);
     try {
       if (fs.existsSync(listPath)) {
-        const data = await fs.promises.readFile(listPath, 'utf-8');
+        const data = await fsPromises.readFile(listPath, 'utf-8');
         return JSON.parse(data);
       }
     } catch (error) {
@@ -227,7 +320,7 @@ export class ConfigService {
   public async saveListData(listName: string, list: TodoList): Promise<TodoList> {
     const listPath = this.getListPath(listName);
     try {
-      await fs.promises.writeFile(listPath, JSON.stringify(list, null, 2));
+      await fsPromises.writeFile(listPath, JSON.stringify(list, null, 2));
       return list;
     } catch (error) {
       throw new CLIError(
@@ -257,7 +350,7 @@ export class ConfigService {
    */
   public async getAllLists(): Promise<string[]> {
     try {
-      const files = await fs.promises.readdir(this.todosPath);
+      const files = await fsPromises.readdir(this.todosPath);
       return files
         .filter(file => file.endsWith(STORAGE_CONFIG.FILE_EXT))
         .map(file => file.replace(STORAGE_CONFIG.FILE_EXT, ''));
@@ -357,8 +450,9 @@ export class ConfigService {
   public async deleteList(listName: string): Promise<void> {
     const listPath = this.getListPath(listName);
     try {
-      if (fs.existsSync(listPath)) {
-        await fs.promises.unlink(listPath);
+      try {
+        await fsPromises.access(listPath);
+        await fsPromises.unlink(listPath);
       }
     } catch (error) {
       throw new CLIError(
