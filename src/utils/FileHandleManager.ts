@@ -48,6 +48,8 @@ export class FileHandleManager {
   private logger: Logger;
   private defaultMode: number;
   private autoCreateDirs: boolean;
+  /** Track all opened file handles for cleanup */
+  private openHandles: Array<number> = [];
   
   /**
    * Create a new FileHandleManager instance
@@ -61,6 +63,41 @@ export class FileHandleManager {
     this.logger = options.logger || Logger.getInstance();
     this.defaultMode = options.defaultMode || 0o666;
     this.autoCreateDirs = options.autoCreateDirs !== undefined ? options.autoCreateDirs : true;
+  }
+  
+  /**
+   * Close all open file handles
+   * 
+   * Ensures all tracked file handles are properly closed
+   * Used for cleanup in tests and resource management
+   * 
+   * @returns Promise that resolves when all handles are closed
+   */
+  async closeAll(): Promise<void> {
+    if (this.openHandles.length === 0) {
+      return;
+    }
+    
+    const errors: Error[] = [];
+    
+    for (const fd of this.openHandles.slice()) {
+      try {
+        await close(fd);
+        const index = this.openHandles.indexOf(fd);
+        if (index !== -1) {
+          this.openHandles.splice(index, 1);
+        }
+        this.logger.debug(`Closed file descriptor ${fd}`);
+      } catch (error) {
+        const errorObj = error instanceof Error ? error : new Error(String(error));
+        this.logger.error(`Error closing file descriptor ${fd}`, errorObj);
+        errors.push(errorObj);
+      }
+    }
+    
+    if (errors.length > 0 && this.throwErrors) {
+      throw new Error(`Failed to close ${errors.length} file handles: ${errors.map(e => e.message).join(', ')}`);
+    }
   }
   
   /**
@@ -107,6 +144,9 @@ export class FileHandleManager {
       }
       
       fd = await open(resolvedPath, flags);
+      // Track the open file handle
+      this.openHandles.push(fd);
+      
       return await operation(fd);
     } catch (error) {
       const errorObj = error instanceof Error ? error : new Error(String(error));
@@ -119,6 +159,11 @@ export class FileHandleManager {
       if (fd !== null) {
         try {
           await close(fd);
+          // Remove the file handle from tracking
+          const index = this.openHandles.indexOf(fd);
+          if (index !== -1) {
+            this.openHandles.splice(index, 1);
+          }
           this.logger.debug(`Closed file descriptor for ${resolvedPath}`);
         } catch (closeError) {
           // Log but don't throw - we're already in cleanup
@@ -396,6 +441,7 @@ export const safeReadFile = defaultManager.safeReadFile.bind(defaultManager);
 export const safeWriteFile = defaultManager.safeWriteFile.bind(defaultManager);
 export const createSafeReadStream = defaultManager.createSafeReadStream.bind(defaultManager);
 export const createSafeWriteStream = defaultManager.createSafeWriteStream.bind(defaultManager);
+export const closeAll = defaultManager.closeAll.bind(defaultManager);
 
 // Export default instance for direct usage
 export default FileHandleManager;

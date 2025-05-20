@@ -38,11 +38,46 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     credentialManager: SecureCredentialManager,
     defaultProvider: string = 'default_provider'
   ) {
-    // Initialize with empty adapter as we're replacing functionality
-    super({} as any);
+    // Defensive check for null or undefined blockchainVerifier
+    if (!blockchainVerifier) {
+      throw new CLIError(
+        'BlockchainVerifier is required for blockchain AI verification service',
+        'AI_SERVICE_INITIALIZATION_ERROR'
+      );
+    }
+
+    // Initialize with an adapter to ensure it's properly bound
+    // Use blockchainVerifier as the verifier adapter if it implements
+    // the required interface, otherwise create a fallback adapter
+    const verifierAdapter = blockchainVerifier.createVerification 
+      ? blockchainVerifier 
+      : {
+          createVerification: (params: any) => 
+            blockchainVerifier.verifyOperation(params),
+          getVerification: (id: string) => 
+            blockchainVerifier.getVerification(id)
+        };
+    
+    // Defensive check for required methods on verifier
+    if (!blockchainVerifier.verifyOperation || typeof blockchainVerifier.verifyOperation !== 'function') {
+      throw new CLIError(
+        'BlockchainVerifier must implement verifyOperation method',
+        'AI_SERVICE_INITIALIZATION_ERROR'
+      );
+    }
+
+    if (!blockchainVerifier.getVerification || typeof blockchainVerifier.getVerification !== 'function') {
+      throw new CLIError(
+        'BlockchainVerifier must implement getVerification method',
+        'AI_SERVICE_INITIALIZATION_ERROR'
+      );
+    }
+    
+    // Pass the adapter to the parent constructor
+    super(verifierAdapter);
     
     this.blockchainVerifier = blockchainVerifier;
-    this.permissionManager = permissionManager;
+    this.permissionManager = permissionManager || getPermissionManager(); // Fallback to default permission manager
     this.credentialManager = credentialManager;
     this.defaultProvider = defaultProvider;
     

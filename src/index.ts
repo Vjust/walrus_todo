@@ -3,8 +3,9 @@
 // Import polyfills first
 import './utils/polyfills/aggregate-error';
 
+// Import core dependencies with CommonJS compatibility
 import { Command, Flags } from '@oclif/core';
-import * as Commands from './commands';
+import * as Commands from './commands/index.js';
 import { initializeConfig } from './utils/config-loader';
 
 // Initialize environment configuration
@@ -169,7 +170,9 @@ export const run = async () => {
 };
 
 // Run the CLI if this file is executed directly
-if (require.main === module) {
+// Use ESM-compatible method to detect if this is the main module
+const isMainModule = import.meta.url === `file://${process.argv[1]}` || require.main === module;
+if (isMainModule) {
   run().catch((error) => {
     console.error('Unhandled error:', error);
     process.exit(1);

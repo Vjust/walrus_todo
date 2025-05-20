@@ -78,6 +78,12 @@ export function isStorageAvailable(): boolean {
   if (!isBrowser()) return false;
 
   try {
+    // First check if we're in a context that blocks storage APIs
+    // Common in SSR, cross-origin iframes, or when "Block all cookies" is enabled
+    if (window.localStorage === undefined || window.sessionStorage === undefined) {
+      return false;
+    }
+    
     const testKey = '__storage_test__';
     window.localStorage.setItem(testKey, testKey);
     window.localStorage.removeItem(testKey);

@@ -19,7 +19,7 @@ import { CLI_CONFIG } from '../../src/constants';
 jest.mock('@langchain/core/prompts');
 jest.mock('@langchain/xai');
 jest.mock('../../src/services/ai/AIProviderFactory');
-jest.mock('../../src/services/ai/aiVerificationService');
+jest.mock('../../src/services/ai/AIVerificationService');
 jest.mock('../../src/services/ai/BlockchainAIVerificationService');
 jest.mock('../../src/services/ai/AIPermissionManager');
 jest.mock('../../src/services/ai/SecureCredentialManager', () => {
