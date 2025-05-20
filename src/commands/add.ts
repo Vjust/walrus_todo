@@ -12,6 +12,9 @@ import { CommandSanitizer } from '../utils/CommandSanitizer';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import { addCommandValidation, validateAIApiKey, validateBlockchainConfig } from '../utils/CommandValidationMiddleware';
 import { NetworkError, ValidationError, TransactionError } from '../types/errors';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 /**
  * @class AddCommand
@@ -516,7 +519,7 @@ export default class AddCommand extends BaseCommand {
           this.aiServiceInstance.suggestPriority(tempTodo)
         ]),
         {
-          maxRetries: 2,
+          maxRetries: 3,
           baseDelay: 1000,
           retryMessage: 'Retrying AI enhancement...',
           operationName: 'ai_suggest'
@@ -570,6 +573,7 @@ export default class AddCommand extends BaseCommand {
    * @param storageLocation Storage strategy (local, blockchain, or both)
    */
   private async storeOnBlockchain(todo: Todo, listName: string, storageLocation: StorageLocation): Promise<void> {
+    let blobId: string = '';
     // Show blockchain storage warning
     this.section('Blockchain Storage', [
       `${chalk.yellow(ICONS.WARNING)} ${chalk.yellow('Public Access Warning')}`,
@@ -588,7 +592,7 @@ export default class AddCommand extends BaseCommand {
           this.stopSpinnerSuccess(blockchainSpinner, 'Connected to blockchain storage');
         },
         {
-          maxRetries: 3,
+          maxRetries: 5,
           baseDelay: 2000,
           retryMessage: 'Retrying blockchain connection...',
           operationName: 'walrus_connect'
@@ -598,7 +602,7 @@ export default class AddCommand extends BaseCommand {
       // Start storage spinner
       const storeSpinner = this.startSpinner('Storing todo on blockchain...');
 
-      let blobId: string;
+      // Variable already declared at method level
       
       // Store todo on Walrus with retry and transaction handling
       blobId = await this.executeTransaction(
@@ -606,8 +610,8 @@ export default class AddCommand extends BaseCommand {
           return await this.executeWithRetry(
             async () => this.walrusStorage.storeTodo(todo),
             {
-              maxRetries: 3,
-              baseDelay: 1000,
+              maxRetries: 5,
+              baseDelay: 2000,
               retryMessage: 'Retrying blockchain storage...',
               operationName: 'walrus_store_todo'
             }
@@ -654,6 +658,9 @@ export default class AddCommand extends BaseCommand {
         `${ICONS.BLOCKCHAIN} ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`,
         `${ICONS.ARROW} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet.wal.app/blob/${blobId}`)}`
       ].join('\n'));
+      
+      // Save the blob mapping
+      this.saveBlobMapping(todo.id, blobId);
 
       // Cleanup connection
       await this.walrusStorage.disconnect();
@@ -671,6 +678,45 @@ export default class AddCommand extends BaseCommand {
           'BLOCKCHAIN_STORE_FAILED'
         );
       }
+    }
+  }
+  
+  /**
+   * Save a mapping between todo ID and blob ID
+   * @param todoId Todo ID
+   * @param blobId Blob ID
+   */
+  private saveBlobMapping(todoId: string, blobId: string): void {
+    try {
+      // Use the centralized getConfigDir method from BaseCommand
+      const configDir = this.getConfigDir();
+      const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true });
+      }
+      
+      // Read existing mappings or create empty object
+      let mappings: Record<string, string> = {};
+      if (fs.existsSync(blobMappingsFile)) {
+        try {
+          const content = fs.readFileSync(blobMappingsFile, 'utf8');
+          mappings = JSON.parse(content);
+        } catch (error) {
+          this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
+          // Continue with empty mappings
+        }
+      }
+      
+      // Add or update mapping
+      mappings[todoId] = blobId;
+      
+      // Write mappings back to file using centralized method
+      this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
+      this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
+    } catch (error) {
+      this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

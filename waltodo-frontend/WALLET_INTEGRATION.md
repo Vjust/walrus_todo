@@ -2,7 +2,7 @@
 
 ## Overview
 
-The WalTodo frontend supports wallet integration for both **Sui** and **Phantom** wallets, enabling users to connect their Web3 wallets and interact with the blockchain features of the application.
+The WalTodo frontend supports wallet integration for **Sui**, **Phantom**, and **Slush** (formerly Stashed) wallets, enabling users to connect their Web3 wallets and interact with the blockchain features of the application.
 
 ## Architecture
 
@@ -11,11 +11,12 @@ The WalTodo frontend supports wallet integration for both **Sui** and **Phantom*
 The core of our wallet integration, providing a unified interface for both Sui and Solana wallets.
 
 **Key Features:**
-- Multi-wallet support (Sui and Phantom)
+- Multi-wallet support (Sui, Phantom, and Slush)
 - Unified API for different wallet types
 - Automatic connection persistence
 - Error handling and state management
 - Provider hierarchy setup
+- Flexible adapter pattern for wallet integrations
 
 **Main Components:**
 - `WalletContextProvider`: Wraps the app with necessary providers
@@ -32,6 +33,7 @@ interface WalletContextValue {
   publicKey: string | null;
   walletType: WalletType;
   error: Error | null;
+  setError: (error: Error | null) => void;
   
   // Sui specific
   suiConnect: () => Promise<void>;
@@ -40,6 +42,10 @@ interface WalletContextValue {
   // Phantom specific
   phantomConnect: () => Promise<void>;
   phantomPublicKey: PublicKey | null;
+  
+  // Slush specific
+  slushConnect: () => Promise<void>;
+  slushAccount: SlushAccount | null;
 }
 ```
 
@@ -51,8 +57,9 @@ UI component for wallet connection functionality.
 - Auto-detects installed wallet extensions
 - Shows different states (connecting, connected, disconnected)
 - Displays truncated wallet address when connected
-- Separate buttons for Sui and Phantom wallets
-- Error display
+- Separate buttons for Sui, Phantom, and Slush wallets
+- Error display with recovery options
+- Copy address functionality
 - Responsive design with oceanic theme
 
 ### 3. Integration Points
@@ -84,7 +91,7 @@ The following packages need to be installed in `packages/frontend-v2/`:
 ### Installation Command
 
 ```bash
-cd packages/frontend-v2
+cd waltodo-frontend
 pnpm add @mysten/dapp-kit @mysten/sui @tanstack/react-query @solana/wallet-adapter-react @solana/wallet-adapter-phantom @solana/web3.js
 ```
 
@@ -150,6 +157,7 @@ export function MyComponent() {
     walletType,
     suiConnect,
     phantomConnect,
+    slushConnect,
     disconnect,
     error
   } = useWalletContext();
@@ -160,6 +168,7 @@ export function MyComponent() {
       <div>
         <button onClick={suiConnect}>Connect Sui Wallet</button>
         <button onClick={phantomConnect}>Connect Phantom</button>
+        <button onClick={slushConnect}>Connect Slush Wallet</button>
       </div>
     );
   }
@@ -180,7 +189,7 @@ import { useWalletContext } from '@/lib/walletContext';
 import { storeTodoOnBlockchain } from '@/lib/todo-service';
 
 export function BlockchainTodo() {
-  const { connected, walletType, suiAccount, phantomPublicKey } = useWalletContext();
+  const { connected, walletType, suiAccount, phantomPublicKey, slushAccount } = useWalletContext();
 
   const handleStore = async (listName: string, todoId: string) => {
     if (!connected) {
@@ -189,9 +198,14 @@ export function BlockchainTodo() {
     }
 
     // Create signer based on wallet type
-    const signer = walletType === 'sui' 
-      ? { address: suiAccount?.address, /* ... */ }
-      : { publicKey: phantomPublicKey, /* ... */ };
+    let signer;
+    if (walletType === 'sui') {
+      signer = { address: suiAccount?.address, /* ... */ };
+    } else if (walletType === 'phantom') {
+      signer = { publicKey: phantomPublicKey, /* ... */ };
+    } else if (walletType === 'slush') {
+      signer = { address: slushAccount?.address, /* ... */ };
+    }
 
     const objectId = await storeTodoOnBlockchain(listName, todoId, signer);
     console.log('Stored with ID:', objectId);
@@ -207,6 +221,7 @@ export function BlockchainTodo() {
 
 - Install a Sui wallet (Sui Wallet, Suiet, or Martian)
 - Install Phantom wallet for Solana/cross-chain functionality
+- Install Slush wallet (formerly Stashed) for additional Sui wallet support
 - Ensure you have testnet tokens
 
 ### Test Steps
@@ -224,6 +239,7 @@ export function BlockchainTodo() {
 - Sui Wallet (official)
 - Suiet
 - Martian (Sui mode)
+- Slush (formerly Stashed)
 
 ### Solana Wallets
 - Phantom
@@ -231,22 +247,24 @@ export function BlockchainTodo() {
 ## Features
 
 ### Current Features
-- ✅ Multi-wallet support (Sui + Phantom)
+- ✅ Multi-wallet support (Sui, Phantom, and Slush)
 - ✅ Auto-detection of installed wallets
 - ✅ Connection persistence
 - ✅ Wallet switching
-- ✅ Error handling
+- ✅ Error handling with recovery options
 - ✅ Responsive UI
-- ✅ Truncated address display
+- ✅ Truncated address display with copy functionality
 - ✅ Connection status indicators
+- ✅ DApp Kit integration
 
 ### Planned Features
 - [ ] Additional wallet support (MetaMask via Sui compatibility)
 - [ ] Transaction signing UI
 - [ ] Balance display
-- [ ] Network switching
+- [ ] Network switching (testnet/mainnet)
 - [ ] Wallet connect modal
 - [ ] Mobile wallet support
+- [ ] Multi-chain asset display
 
 ## Troubleshooting
 
@@ -282,10 +300,12 @@ console.log('Wallet context:', walletContext);
 
 ### Why Multiple Wallet Support?
 
-We support both Sui and Phantom wallets to:
+We support Sui, Phantom, and Slush wallets to:
 - Provide flexibility for users with different wallet preferences
 - Enable cross-chain functionality (future feature)
 - Increase adoption by supporting popular wallets
+- Improve user experience with choice of interfaces
+- Support various security models preferred by different user segments
 
 ### Provider Hierarchy
 
@@ -314,4 +334,6 @@ When adding new wallet integrations:
 - [Sui Wallet Documentation](https://docs.mysten.io/dapp-kit)
 - [Phantom Wallet Docs](https://docs.phantom.app)
 - [Solana Wallet Adapter](https://github.com/solana-labs/wallet-adapter)
+- [Mysten DApp Kit](https://docs.sui.io/guides/developer/integration-guides/dapp-kit)
+- [Stashed/Slush Wallet](https://www.slushwallet.xyz/)
 - [Next.js Documentation](https://nextjs.org/docs)

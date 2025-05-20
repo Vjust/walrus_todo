@@ -159,6 +159,18 @@ export class PromptManager {
   }
   
   /**
+   * Static factory method to create a prompt template from a template string
+   * This is a convenience method that exposes the PromptTemplate.fromTemplate
+   * factory method at the class level
+   * 
+   * @param template - The template string to use
+   * @returns A new PromptTemplate instance
+   */
+  public static fromTemplate(template: string): PromptTemplate {
+    return PromptTemplate.fromTemplate(template);
+  }
+  
+  /**
    * Get a prompt template for a specific operation
    */
   public getPromptTemplate(
@@ -185,6 +197,18 @@ export class PromptManager {
     }
     
     return PromptTemplate.fromTemplate(promptText);
+  }
+  
+  /**
+   * Create a new prompt template from a template string
+   * This is a convenience method that exposes the PromptTemplate.fromTemplate
+   * factory method directly from the PromptManager
+   * 
+   * @param template - The template string to use
+   * @returns A new PromptTemplate instance
+   */
+  public fromTemplate(template: string): PromptTemplate {
+    return PromptTemplate.fromTemplate(template);
   }
   
   /**

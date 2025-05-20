@@ -145,7 +145,25 @@ export const run = async () => {
     // Run the command with the remaining arguments
     await CommandClass.run(args.slice(1));
   } catch (error) {
-    console.error('Error running command:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Handle common network errors with better messaging
+    if (errorMessage.includes('network') || 
+        errorMessage.includes('timeout') || 
+        errorMessage.includes('connection') ||
+        errorMessage.includes('ECONNREFUSED') ||
+        errorMessage.includes('ETIMEDOUT')) {
+      console.error(chalk.red(`Network error: ${errorMessage}`));
+      console.error(chalk.yellow('Please check your internet connection and try again.'));
+    } else {
+      console.error(chalk.red('Error running command:'), errorMessage);
+    }
+    
+    // Provide debug info if verbose mode is enabled
+    if (process.env.DEBUG) {
+      console.error(chalk.gray('Debug info:'), error);
+    }
+    
     process.exit(1);
   }
 };

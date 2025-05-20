@@ -1,7 +1,54 @@
 import chalk from 'chalk';
-import ora, { Ora, Options as OraOptions } from 'ora';
-import * as cliProgress from 'cli-progress';
 import { ICONS } from '../base-command';
+
+// Handle imports in a way that's compatible with both ESM and CommonJS
+let ora;
+let cliProgress;
+let Ora;
+let OraOptions;
+
+// Dynamic imports with fallbacks for both ESM and CommonJS environments
+try {
+  // Try importing as ESM modules
+  const oraModule = require('ora');
+  ora = oraModule.default || oraModule;
+  Ora = ora().constructor;
+  OraOptions = {}; // Type definition only, not needed at runtime
+  
+  cliProgress = require('cli-progress');
+} catch (error) {
+  console.warn('ESM imports failed, falling back to CommonJS imports');
+  try {
+    // Fallback to CommonJS imports
+    ora = require('ora');
+    Ora = ora().constructor;
+    OraOptions = {}; // Type definition only, not needed at runtime
+    
+    cliProgress = require('cli-progress');
+  } catch (fallbackError) {
+    console.error('Failed to import ora or cli-progress:', fallbackError);
+    // Provide mock implementations for testing environments
+    ora = () => ({
+      start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
+      stop: () => {},
+      succeed: () => {},
+      fail: () => {}
+    });
+    
+    cliProgress = {
+      SingleBar: class MockSingleBar {
+        start() { return this; }
+        update() { return this; }
+        stop() { return this; }
+      },
+      MultiBar: class MockMultiBar {
+        create() { return new cliProgress.SingleBar(); }
+        remove() {}
+        stop() {}
+      }
+    };
+  }
+}
 
 type SpinnerName = string;
 

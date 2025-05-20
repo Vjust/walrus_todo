@@ -11,6 +11,10 @@ import { CLIError } from '../types/error';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 import { withRetry } from '../utils/error-handler';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { Todo } from '../types/todo';
 
 /**
  * @class CompleteCommand
@@ -216,6 +220,143 @@ export default class CompleteCommand extends BaseCommand {
   }
 
   /**
+   * Updates configuration with information about completed todos.
+   * Tracks completion statistics for reporting and analytics purposes.
+   * 
+   * @param todo The todo item being marked as completed
+   * @returns Promise that resolves when config update is complete
+   */
+  private async updateConfigWithCompletion(todo: Todo): Promise<void> {
+    try {
+      const config = await configService.getConfig();
+      
+      // Initialize completed todos tracking if not exists
+      if (!config.completedTodos) {
+        config.completedTodos = {
+          count: 0,
+          lastCompleted: null,
+          history: [],
+          byCategory: {}
+        };
+      }
+      
+      // Update statistics
+      config.completedTodos.count++;
+      config.completedTodos.lastCompleted = new Date().toISOString();
+      
+      // Add to history with proper metadata for tracking
+      config.completedTodos.history = config.completedTodos.history || [];
+      config.completedTodos.history.push({
+        id: todo.id,
+        title: todo.title,
+        completedAt: new Date().toISOString(),
+        listName: todo.listName || 'default'
+      });
+      
+      // Limit history size to prevent config file growth
+      if (config.completedTodos.history.length > 100) {
+        config.completedTodos.history = config.completedTodos.history.slice(-100);
+      }
+      
+      // Track by category if available
+      if (todo.category) {
+        config.completedTodos.byCategory[todo.category] = 
+          (config.completedTodos.byCategory[todo.category] || 0) + 1;
+      }
+      
+      // Add tags tracking if available
+      if (todo.tags && todo.tags.length > 0) {
+        config.completedTodos.byTag = config.completedTodos.byTag || {};
+        for (const tag of todo.tags) {
+          config.completedTodos.byTag[tag] = (config.completedTodos.byTag[tag] || 0) + 1;
+        }
+      }
+      
+      // Write the config, using our custom wrapper to allow mocking in tests
+      await this.writeConfigSafe(config);
+    } catch (error) {
+      // Non-blocking error - log but don't fail the command
+      this.warning(`Failed to update completion statistics: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
+   * Write configuration safely with ability to mock in tests
+   * This allows test code to count the number of calls to fs.writeFileSync
+   * 
+   * @param config Configuration to write
+   */
+  private async writeConfigSafe(config: any): Promise<void> {
+    try {
+      // First try the standard config service method
+      if (typeof configService.saveConfig === 'function') {
+        await configService.saveConfig(config);
+        return;
+      }
+      
+      // Fallback to direct file writing with wrapper
+      const configDir = this.getConfigDir();
+      const configPath = path.join(configDir, 'config.json');
+      
+      // Write config using our wrapper that can be mocked
+      // ALWAYS use writeFileSafe to ensure consistent behavior
+      this.writeFileSafe(configPath, JSON.stringify(config, null, 2), 'utf8');
+    } catch (error) {
+      throw new Error(`Failed to save config: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  
+  /**
+   * Wrapper for fs.writeFileSync that can be mocked in tests
+   * Always delegates to writeFileSafe method for consistent behavior and testability
+   * 
+   * @param filePath Path to file
+   * @param data Data to write
+   * @param options Write options
+   */
+  private writeFileSyncWrapper(filePath: string, data: string, options: any): void {
+    // Only use the centralized writeFileSafe method from BaseCommand
+    // DO NOT call fs.writeFileSync directly to allow proper mocking in tests
+    this.writeFileSafe(filePath, data, options);
+  }
+  
+  /**
+   * Save a mapping between todo ID and blob ID
+   * This method uses the writeFileSafe method for consistent behavior
+   * @param todoId Todo ID
+   * @param blobId Blob ID
+   */
+  private saveBlobMapping(todoId: string, blobId: string): void {
+    try {
+      // Use the centralized getConfigDir method from BaseCommand
+      const configDir = this.getConfigDir();
+      const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
+      
+      // Read existing mappings or create empty object
+      let mappings: Record<string, string> = {};
+      if (fs.existsSync(blobMappingsFile)) {
+        try {
+          const content = fs.readFileSync(blobMappingsFile, 'utf8');
+          mappings = JSON.parse(content);
+        } catch (error) {
+          this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
+          // Continue with empty mappings
+        }
+      }
+      
+      // Add or update mapping
+      mappings[todoId] = blobId;
+      
+      // Write mappings back to file using our centralized method
+      // This ensures directory creation and consistent error handling
+      this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
+      this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
+    } catch (error) {
+      this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
    * Main command execution method. Handles the complete workflow for marking
    * a todo as completed across all relevant storage systems.
    * 
@@ -296,6 +437,9 @@ export default class CompleteCommand extends BaseCommand {
       this.log(chalk.blue(`Marking todo "${todo.title}" as completed...`));
       await this.todoService.toggleItemStatus(args.list, todo.id, true);
       this.log(chalk.green('\u2713 Local update successful'));
+      
+      // Update configuration to record completion
+      await this.updateConfigWithCompletion(todo);
 
       // Update NFT if exists
       if (todo.nftObjectId && suiNftStorage) {
@@ -399,6 +543,9 @@ export default class CompleteCommand extends BaseCommand {
                     completedAt: updatedTodo.completedAt,
                     updatedAt: updatedTodo.updatedAt
                   });
+                  
+                  // Save blob mapping for future reference
+                  this.saveBlobMapping(todo.id, newBlobId);
 
                   this.log(chalk.green('\u2713 Todo updated on Walrus'));
                   this.log(chalk.dim(`New blob ID: ${newBlobId}`));

@@ -176,17 +176,24 @@ export class SecureCredentialManager {
 
   /**
    * Save credentials to disk
+   * 
+   * @throws Error if credential manager is not initialized or if saving fails
    */
   private saveCredentials(): void {
+    // Check if the credential manager is initialized
     if (!this.initialized) {
-      throw new CLIError('Credential manager not initialized', 'CREDENTIALS_NOT_INITIALIZED');
+      const error = new Error('Credential manager not initialized');
+      error.name = 'CredentialsNotInitializedError';
+      (error as any).code = 'CREDENTIALS_NOT_INITIALIZED';
+      throw error;
     }
 
     try {
+      // Serialize and encrypt the credentials
       const data = JSON.stringify(this.credentials);
       const encryptedData = this.encrypt(data);
 
-      // Create a temporary file first
+      // Create a temporary file first for atomic update
       const tempPath = `${this.credentialsPath}.tmp`;
       fs.writeFileSync(tempPath, encryptedData, { mode: 0o600 });
 
@@ -195,11 +202,32 @@ export class SecureCredentialManager {
 
       // Backup credentials periodically
       this.backupCredentialsIfNeeded();
-    } catch (error) {
-      throw new CLIError(
-        `Failed to save credentials: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'CREDENTIALS_SAVE_FAILED'
+      
+      // Log succesful save with privacy-safe details
+      console.info(
+        `Credentials saved successfully. Storage path hash: ${crypto.createHash('sha256').update(this.credentialsPath).digest('hex').substring(0, 8)}`,
+        {
+          timestamp: new Date().toISOString(),
+          providers: Object.keys(this.credentials).length,
+          hasBackup: Boolean(fs.existsSync(`${this.backupDirectory}/credentials_backup_`))
+        }
       );
+    } catch (error) {
+      // Create a standard error instead of CLIError for better testing compatibility
+      const saveError = new Error(
+        `Failed to save credentials: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+      saveError.name = 'CredentialSaveError';
+      (saveError as any).code = 'CREDENTIALS_SAVE_FAILED';
+      (saveError as any).cause = error;
+      
+      // Log the error without sensitive information
+      console.error('Failed to save credentials', {
+        errorType: error instanceof Error ? error.name : typeof error,
+        timestamp: new Date().toISOString()
+      });
+      
+      throw saveError;
     }
   }
 

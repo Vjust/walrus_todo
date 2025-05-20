@@ -12,6 +12,8 @@ import {
   ProviderInfo
 } from '../../../types/adapters/AIVerifierAdapter';
 import { createHash } from 'crypto';
+import { stringify } from 'csv-stringify/sync';
+import { CLIError } from '../../../types/error';
 
 /**
  * SuiAIVerifierAdapter - Blockchain adapter for AI verification
@@ -358,5 +360,249 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     }
     
     return created[0].reference.objectId;
+  }
+
+  /**
+   * Generate a cryptographic proof for a verification record
+   * 
+   * Creates a cryptographically signed proof of an AI verification that can be
+   * independently verified and shared
+   */
+  async generateProof(verificationId: string): Promise<string> {
+    try {
+      // Get the verification record
+      const record = await this.getVerification(verificationId);
+      
+      // Create proof data structure
+      const proofData = {
+        id: createHash('sha256').update(`${verificationId}:${Date.now()}`).digest('hex'),
+        verificationId: record.id,
+        requestHash: record.requestHash,
+        responseHash: record.responseHash,
+        timestamp: record.timestamp,
+        user: record.user,
+        provider: record.provider,
+        verificationType: record.verificationType,
+        metadata: record.metadata,
+        chainInfo: {
+          network: 'sui',
+          packageId: this.packageId,
+          registryId: this.registryId,
+          verificationObjectId: verificationId
+        }
+      };
+      
+      // Sign the proof data with the signer's key
+      const dataToSign = JSON.stringify(proofData);
+      const signatureBytes = await this.signer.signPersonalMessage(
+        new TextEncoder().encode(dataToSign)
+      );
+      
+      // Add signature to the proof
+      const signedProof = {
+        ...proofData,
+        signature: {
+          signature: Buffer.from(signatureBytes.signature).toString('base64'),
+          publicKey: this.signer.getPublicKey().toBase64()
+        }
+      };
+      
+      // Return the proof as a base64-encoded string
+      return Buffer.from(JSON.stringify(signedProof)).toString('base64');
+    } catch (error) {
+      console.error('Failed to generate proof:', error);
+      throw new CLIError(
+        `Failed to generate proof: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'PROOF_GENERATION_FAILED'
+      );
+    }
+  }
+  
+  /**
+   * Export user verification records in the specified format
+   * 
+   * Retrieves all verification records for a user and exports them in the
+   * requested format (JSON or CSV)
+   */
+  async exportVerifications(userAddress: string, format: 'json' | 'csv' = 'json'): Promise<string> {
+    try {
+      // Get all verifications for the user
+      const verifications = await this.listVerifications(userAddress);
+      
+      if (verifications.length === 0) {
+        return format === 'json' ? '[]' : '';
+      }
+      
+      if (format === 'json') {
+        // Return as formatted JSON
+        return JSON.stringify(verifications, null, 2);
+      } else if (format === 'csv') {
+        // Convert to CSV format
+        // Extract relevant fields for CSV
+        const records = verifications.map(v => ({
+          id: v.id,
+          timestamp: new Date(v.timestamp).toISOString(),
+          provider: v.provider,
+          verificationType: AIActionType[v.verificationType] || v.verificationType,
+          requestHash: v.requestHash,
+          responseHash: v.responseHash,
+          ...v.metadata // Include metadata fields
+        }));
+        
+        // Generate CSV
+        return stringify(records, { header: true });
+      } else {
+        throw new CLIError(`Unsupported export format: ${format}`, 'UNSUPPORTED_EXPORT_FORMAT');
+      }
+    } catch (error) {
+      console.error('Failed to export verifications:', error);
+      throw new CLIError(
+        `Failed to export verifications: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'EXPORT_FAILED'
+      );
+    }
+  }
+  
+  /**
+   * Enforce data retention policy
+   * 
+   * Deletes verification records that are older than the specified retention period
+   * Returns the number of records deleted
+   */
+  async enforceRetentionPolicy(retentionDays: number = 30): Promise<number> {
+    try {
+      // Calculate the retention threshold timestamp
+      const now = Date.now();
+      const retentionThreshold = now - (retentionDays * 24 * 60 * 60 * 1000);
+      
+      // Get all verifications for the current user
+      const userAddress = this.signer.toSuiAddress();
+      const verifications = await this.listVerifications(userAddress);
+      
+      // Filter for records older than the retention threshold
+      const expiredRecords = verifications.filter(record => record.timestamp < retentionThreshold);
+      
+      if (expiredRecords.length === 0) {
+        return 0; // No records to delete
+      }
+      
+      // Create a transaction block for batch deletion
+      const tx = new TransactionBlock();
+      
+      // Add move calls to delete each expired record
+      for (const record of expiredRecords) {
+        tx.moveCall({
+          target: `${this.packageId}::ai_verifier::delete_verification`,
+          arguments: [
+            tx.object(this.registryId), // registry
+            tx.object(record.id),       // verification ID
+          ]
+        });
+      }
+      
+      // Execute the transaction
+      await this.signer.signAndExecuteTransactionBlock(tx);
+      
+      return expiredRecords.length;
+    } catch (error) {
+      console.error('Failed to enforce retention policy:', error);
+      throw new CLIError(
+        `Failed to enforce retention policy: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'RETENTION_POLICY_FAILED'
+      );
+    }
+  }
+  
+  /**
+   * Securely destroy data
+   * 
+   * Permanently deletes a verification record and associated data in a secure manner
+   */
+  async securelyDestroyData(verificationId: string): Promise<boolean> {
+    try {
+      // Get the verification record to check ownership
+      const record = await this.getVerification(verificationId);
+      
+      // Verify the current signer is the owner of the verification
+      const userAddress = this.signer.toSuiAddress();
+      if (record.user !== userAddress) {
+        throw new CLIError(
+          'Only the owner can destroy their verification data',
+          'UNAUTHORIZED_DESTRUCTION'
+        );
+      }
+      
+      // Check if there's associated data in Walrus storage
+      if (record.metadata.requestBlobId && record.metadata.responseBlobId && this.walrusAdapter) {
+        // Delete the associated blobs from Walrus
+        try {
+          await this.deleteWalrusBlob(record.metadata.requestBlobId);
+          await this.deleteWalrusBlob(record.metadata.responseBlobId);
+        } catch (error) {
+          console.warn('Failed to delete Walrus blobs:', error);
+          // Continue with blockchain deletion even if blob deletion fails
+        }
+      }
+      
+      // Create a transaction to delete the verification from blockchain
+      const tx = new TransactionBlock();
+      
+      // Call the delete_verification function
+      tx.moveCall({
+        target: `${this.packageId}::ai_verifier::delete_verification`,
+        arguments: [
+          tx.object(this.registryId), // registry
+          tx.object(verificationId),  // verification ID
+        ]
+      });
+      
+      // Execute the transaction
+      await this.signer.signAndExecuteTransactionBlock(tx);
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to securely destroy data:', error);
+      throw new CLIError(
+        `Failed to securely destroy data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'SECURE_DESTRUCTION_FAILED'
+      );
+    }
+  }
+  
+  /**
+   * Helper method to delete a blob from Walrus storage
+   */
+  private async deleteWalrusBlob(blobId: string): Promise<boolean> {
+    if (!this.walrusAdapter) {
+      throw new CLIError('Walrus adapter not configured', 'WALRUS_ADAPTER_MISSING');
+    }
+    
+    try {
+      // Create transaction for deletion
+      const tx = new TransactionBlock();
+      
+      // Use the deleteBlob method if it exists
+      if (typeof this.walrusAdapter.deleteBlob === 'function') {
+        const deleteFunction = this.walrusAdapter.deleteBlob({ blobId });
+        await deleteFunction(tx);
+      } else {
+        // Fallback to direct transaction call if method doesn't exist
+        tx.moveCall({
+          target: 'walrus::storage::delete_blob',
+          arguments: [tx.pure(blobId)]
+        });
+      }
+      
+      // Execute the transaction
+      await this.signer.signAndExecuteTransactionBlock(tx);
+      
+      return true;
+    } catch (error) {
+      console.error(`Failed to delete blob ${blobId}:`, error);
+      throw new CLIError(
+        `Failed to delete blob: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'BLOB_DELETION_FAILED'
+      );
+    }
   }
 }

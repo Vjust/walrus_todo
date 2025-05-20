@@ -79,10 +79,10 @@
     "web:dashboard": "cd frontend-demo && open dashboard.html",
     "web:nft": "cd frontend-demo && open nft-todos.html",
     "web:setup": "echo 'No setup needed for static HTML demo. Simply use pnpm run web'",
-    "nextjs": "cd packages/frontend-v2 && pnpm dev",
-    "nextjs:build": "cd packages/frontend-v2 && pnpm build",
-    "nextjs:start": "cd packages/frontend-v2 && pnpm start",
-    "nextjs:install": "cd packages/frontend-v2 && pnpm install",
+    "nextjs": "cd waltodo-frontend && pnpm dev",
+    "nextjs:build": "cd waltodo-frontend && pnpm build",
+    "nextjs:start": "cd waltodo-frontend && pnpm start",
+    "nextjs:install": "cd waltodo-frontend && pnpm install",
     "build:all": "pnpm run build && pnpm run nextjs:build"
   },
   "keywords": [

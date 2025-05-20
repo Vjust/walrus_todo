@@ -7,25 +7,55 @@ export function ContextWarning() {
   const [warnings, setWarnings] = useState<string[]>([]);
 
   useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined') return;
+
     const detectedWarnings: string[] = [];
 
-    // Check if storage is blocked
+    // Check if storage is blocked - using safer approach
     try {
       const testKey = '__test__';
-      localStorage.setItem(testKey, testKey);
-      localStorage.removeItem(testKey);
-    } catch (e) {
+      // Try-catch each storage operation individually
+      try {
+        localStorage.setItem(testKey, testKey);
+        try {
+          localStorage.removeItem(testKey);
+        } catch (removeErr) {
+          console.warn('Error removing test key from localStorage:', removeErr);
+        }
+      } catch (e) {
+        detectedWarnings.push('Storage access is restricted. Some features may not work properly.');
+      }
+    } catch (outerErr) {
+      // Catch any errors from accessing localStorage itself
+      console.warn('Error accessing localStorage:', outerErr);
       detectedWarnings.push('Storage access is restricted. Some features may not work properly.');
     }
 
-    // Check if in secure context
-    if (typeof window !== 'undefined' && !window.isSecureContext) {
-      detectedWarnings.push('This app is not running in a secure context (HTTPS). Some features like clipboard access may be limited.');
+    // Check if in secure context - using safer approach
+    try {
+      if (!window.isSecureContext) {
+        detectedWarnings.push('This app is not running in a secure context (HTTPS). Some features like clipboard access may be limited.');
+      }
+    } catch (e) {
+      console.warn('Error checking for secure context:', e);
     }
 
-    // Check if in iframe
-    if (typeof window !== 'undefined' && window.self !== window.top) {
-      detectedWarnings.push('This app is running in an iframe. Some features may be restricted.');
+    // Check if in iframe - using safer approach
+    try {
+      let isInIframe = false;
+      try {
+        isInIframe = window.self !== window.top;
+      } catch (frameErr) {
+        // If this errors, we're probably in a cross-origin iframe
+        isInIframe = true;
+      }
+      
+      if (isInIframe) {
+        detectedWarnings.push('This app is running in an iframe. Some features may be restricted.');
+      }
+    } catch (e) {
+      console.warn('Error checking for iframe context:', e);
     }
 
     if (detectedWarnings.length > 0) {

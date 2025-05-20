@@ -227,19 +227,37 @@ export class AIPermissionManager {
   }
 }
 
-// Singleton instance factory
+// Singleton instance
 let permissionManager: AIPermissionManager | null = null;
 
-export function initializePermissionManager(
+/**
+ * Initialize and return the permission manager singleton
+ * 
+ * This function is designed to be mockable in tests while maintaining
+ * singleton behavior in production. The export of the implementation
+ * rather than just the function signature allows jest.mock to properly
+ * replace it during testing.
+ * 
+ * @param credentialManager - The credential manager to use
+ * @param blockchainVerifier - The blockchain verifier to use
+ * @returns The initialized permission manager instance
+ */
+export const initializePermissionManager = (
   credentialManager: SecureCredentialManager,
   blockchainVerifier: BlockchainVerifier
-): AIPermissionManager {
+): AIPermissionManager => {
   if (!permissionManager) {
     permissionManager = new AIPermissionManager(credentialManager, blockchainVerifier);
   }
   return permissionManager;
-}
+};
 
+/**
+ * Get the already initialized permission manager singleton
+ * 
+ * @returns The permission manager instance
+ * @throws Error if the permission manager is not initialized
+ */
 export function getPermissionManager(): AIPermissionManager {
   if (!permissionManager) {
     throw new Error('Permission manager not initialized');

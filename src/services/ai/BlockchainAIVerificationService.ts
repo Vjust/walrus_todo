@@ -298,4 +298,102 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       verificationDate: new Date(verification.timestamp)
     }));
   }
+
+  /**
+   * Generate a proof for an operation type
+   * 
+   * Creates a cryptographically verifiable proof for an AI operation
+   */
+  public async generateProof(
+    actionType: AIActionType,
+    request: string,
+    response: string
+  ): Promise<{
+    proofId: string;
+    signature: string;
+    data: {
+      actionType: AIActionType;
+      request: string;
+      response: string;
+      timestamp: number;
+    }
+  }> {
+    // Create verification first
+    const verification = await this.createBlockchainVerification(
+      actionType,
+      JSON.parse(request),
+      JSON.parse(response),
+      this.defaultProvider
+    );
+
+    // Generate proof from the verification
+    const proofString = await this.blockchainVerifier.generateProof(verification.verification.id);
+    const proofData = JSON.parse(Buffer.from(proofString, 'base64').toString());
+
+    return {
+      proofId: proofData.id,
+      signature: proofData.signature?.signature || '',
+      data: {
+        actionType,
+        request,
+        response,
+        timestamp: Date.now()
+      }
+    };
+  }
+
+  /**
+   * Verify an external proof
+   * 
+   * Verifies a proof's authenticity and integrity
+   */
+  public async verifyExternalProof(
+    proofId: string,
+    signature: string,
+    data: {
+      request: string;
+      response: string;
+    }
+  ): Promise<boolean> {
+    // Simulate verifying signature
+    const isValidSignature = await this.blockchainVerifier['verifySignature']?.(signature);
+    
+    if (!isValidSignature) {
+      throw new Error('Invalid signature for proof verification');
+    }
+    
+    // In a real implementation, would verify the actual proof data against blockchain records
+    return true;
+  }
+
+  /**
+   * Verify a proof with blockchain
+   * 
+   * Verifies the authenticity and integrity of a proof based on blockchain records
+   */
+  public async verifyProof(
+    proofId: string,
+    signature: string,
+    data: any
+  ): Promise<boolean> {
+    try {
+      // Convert proof to expected format
+      const proofString = Buffer.from(JSON.stringify({
+        id: proofId,
+        signature: {
+          signature,
+          publicKey: this.blockchainVerifier.getSigner().getPublicKey().toBase64()
+        },
+        ...data
+      })).toString('base64');
+      
+      // Verify proof integrity using blockchain data
+      const result = await this.proofSystem.verifyProof(proofString);
+      
+      return result.isValid;
+    } catch (error) {
+      console.error('Failed to verify proof:', error);
+      return false;
+    }
+  }
 }

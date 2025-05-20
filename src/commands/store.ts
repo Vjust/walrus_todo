@@ -9,6 +9,9 @@ import { BatchProcessor } from '../utils/batch-processor';
 import { createCache } from '../utils/performance-cache';
 import { Todo } from '../types/todo';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 /**
  * @class StoreCommand
@@ -186,7 +189,7 @@ export default class StoreCommand extends BaseCommand {
           return await RetryManager.withRetry(
             () => this.uploadTodoWithCache(todo, walrusStorage, flags),
             {
-              maxRetries: 3,
+              maxRetries: 5,
               retryableErrors: [/NETWORK_ERROR/, /TIMEOUT/, /Connection timed out/],
               onRetry: (error, attempt, delay) => {
                 this.warning(`Retry attempt ${attempt} after ${delay}ms: ${error.message}`);
@@ -202,6 +205,9 @@ export default class StoreCommand extends BaseCommand {
 
     // Update local todo with blob ID
     await this.updateLocalTodo(todo, flags.list, blobId);
+    
+    // Save blob mapping for future reference
+    this.saveBlobMapping(todo.id, blobId);
 
     // Display success information
     this.displaySuccessInfo(todo, blobId, flags);
@@ -250,6 +256,9 @@ export default class StoreCommand extends BaseCommand {
             storageLocation: 'blockchain',
             updatedAt: new Date().toISOString()
           });
+          
+          // Save blob mapping for future reference
+          this.saveBlobMapping(todo.id, blobId);
           
           bar.update(100, { status: 'Complete' });
           return { todo, blobId, cached: false };
@@ -380,5 +389,44 @@ export default class StoreCommand extends BaseCommand {
       );
     }
     throw error;
+  }
+  
+  /**
+   * Save a mapping between todo ID and blob ID
+   * @param todoId Todo ID
+   * @param blobId Blob ID
+   */
+  private saveBlobMapping(todoId: string, blobId: string): void {
+    try {
+      // Use the centralized getConfigDir method from BaseCommand
+      const configDir = this.getConfigDir();
+      const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true });
+      }
+      
+      // Read existing mappings or create empty object
+      let mappings: Record<string, string> = {};
+      if (fs.existsSync(blobMappingsFile)) {
+        try {
+          const content = fs.readFileSync(blobMappingsFile, 'utf8');
+          mappings = JSON.parse(content);
+        } catch (error) {
+          this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
+          // Continue with empty mappings
+        }
+      }
+      
+      // Add or update mapping
+      mappings[todoId] = blobId;
+      
+      // Write mappings back to file using centralized method
+      this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
+      this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
+    } catch (error) {
+      this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 }

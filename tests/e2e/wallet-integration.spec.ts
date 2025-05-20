@@ -1,12 +1,16 @@
 import { test, expect } from '@playwright/test';
 
+/**
+ * General wallet integration tests for the WalTodo frontend
+ * For specific Slush wallet tests, see slush-wallet-integration.spec.ts
+ */
 test.describe('Wallet Integration', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('http://localhost:3000');
   });
 
-  test('should display wallet connect button', async ({ page }) => {
-    const connectButton = await page.getByText(/Connect Sui Wallet|Connect Phantom/);
+  test('should display wallet connect buttons', async ({ page }) => {
+    const connectButton = await page.getByText(/Connect Sui Wallet|Connect Phantom|Connect Slush Wallet/);
     await expect(connectButton).toBeVisible();
   });
 
@@ -16,7 +20,7 @@ test.describe('Wallet Integration', () => {
     
     // In a real test environment, this might show the "No wallets" message
     // or actual wallet buttons depending on the test setup
-    const hasButton = await page.getByText(/Connect Sui Wallet|Connect Phantom|No wallets detected/).isVisible();
+    const hasButton = await page.getByText(/Connect Sui Wallet|Connect Phantom|Connect Slush Wallet|No wallets detected/).isVisible();
     expect(hasButton).toBe(true);
   });
 
@@ -71,6 +75,16 @@ test.describe('Wallet Context Provider', () => {
     // Navigate to blockchain page
     await page.goto('http://localhost:3000/blockchain');
     await expect(page.locator('nav')).toBeVisible();
+  });
+  
+  test('should support multiple wallet providers', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+    
+    // Detect if multiple wallet buttons are available (may depend on test environment)
+    const walletButtonCount = await page.getByText(/Connect Sui Wallet|Connect Phantom|Connect Slush Wallet/).count();
+    
+    // The application should support at least one wallet type
+    expect(walletButtonCount).toBeGreaterThan(0);
   });
 });
 
