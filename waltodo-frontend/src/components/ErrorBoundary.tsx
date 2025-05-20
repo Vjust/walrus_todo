@@ -12,9 +12,27 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // Only run in the browser
+    if (typeof window === 'undefined') return;
+    
     // Set up global error handler for uncaught errors
     const errorHandler = (event: ErrorEvent) => {
       console.error('[ErrorBoundary] Caught error:', event.error);
+      
+      // Special handling for storage access errors
+      if (event.error?.message?.includes('Access to storage is not allowed') || 
+          event.error?.message?.includes('localStorage') ||
+          event.error?.message?.includes('sessionStorage')) {
+        
+        console.warn('[ErrorBoundary] Storage access error caught. Using in-memory fallback.');
+        // Don't set error state for these specific errors
+        // They'll be handled by the storage utility's fallback
+        
+        // Still prevent default to stop error propagation
+        event.preventDefault();
+        return;
+      }
+      
       setError(event.error instanceof Error ? event.error : new Error(String(event.error)));
       setHasError(true);
       
@@ -25,6 +43,21 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
     // Set up handler for unhandled promise rejections
     const rejectionHandler = (event: PromiseRejectionEvent) => {
       console.error('[ErrorBoundary] Unhandled rejection:', event.reason);
+      
+      // Special handling for storage access rejections
+      const rejectionString = String(event.reason);
+      if (rejectionString.includes('Access to storage is not allowed') || 
+          rejectionString.includes('localStorage') ||
+          rejectionString.includes('sessionStorage')) {
+        
+        console.warn('[ErrorBoundary] Storage access rejection caught. Using in-memory fallback.');
+        // Don't set error state for these specific errors
+        
+        // Still prevent default to stop error propagation
+        event.preventDefault();
+        return;
+      }
+      
       setError(event.reason instanceof Error ? event.reason : new Error(String(event.reason)));
       setHasError(true);
       

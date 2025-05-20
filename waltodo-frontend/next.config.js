@@ -2,9 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', '192.168.8.204'],
   },
-  webpack: (config, { isServer }) => {
+  // Disable chunking for development to fix MIME type issues
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  
+  // Increase timeout for static generation
+  staticPageGenerationTimeout: 180,
+  
+  webpack: (config, { isServer, dev }) => {
     // Fix for node-fetch encoding issue
     if (!isServer) {
       config.resolve.fallback = {
@@ -15,41 +21,73 @@ const nextConfig = {
         encoding: false,
       };
       
-      // Ensure all chunks are properly included
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Important: Create a main chunk for core functionality
-          commons: {
-            name: 'commons',
-            test: /[\\/]node_modules[\\/]/,
-            chunks: 'all',
-            priority: 10,
+      // For development mode, completely disable code splitting
+      // This prevents MIME type issues with chunked files
+      if (dev) {
+        config.optimization.splitChunks = false;
+        config.optimization.runtimeChunk = false;
+        
+        // Simplify CSS handling to prevent MIME type issues
+        // Safer approach that doesn't rely on complex find operations
+        config.module.rules.forEach(rule => {
+          if (rule.oneOf) {
+            rule.oneOf.forEach(r => {
+              if (r.test && r.test.toString().includes('css')) {
+                // For CSS modules, ensure they're handled by style-loader
+                if (r.use && Array.isArray(r.use)) {
+                  for (let i = 0; i < r.use.length; i++) {
+                    const loader = r.use[i];
+                    if (typeof loader === 'object' && 
+                        loader.loader && 
+                        loader.loader.includes('mini-css-extract-plugin')) {
+                      // Replace mini-css-extract-plugin with style-loader
+                      r.use[i] = {
+                        loader: require.resolve('style-loader')
+                      };
+                    }
+                  }
+                }
+              }
+            });
+          }
+        });
+      } else {
+        // More sophisticated chunking for production
+        config.optimization.splitChunks = {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            commons: {
+              name: 'commons',
+              test: /[\\/]node_modules[\\/]/,
+              chunks: 'all',
+              priority: 10,
+            },
+            framework: {
+              name: 'framework',
+              test: /[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
+              chunks: 'all',
+              priority: 20,
+            },
           },
-          // Put react and related packages in a dedicated chunk
-          framework: {
-            name: 'framework',
-            test: /[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
-            chunks: 'all',
-            priority: 20,
-          },
-        },
-      };
+        };
+      }
     }
     
     return config;
   },
   
-  // IMPORTANT: Configure runtime to handle client-side operations correctly
-  // This helps prevent the "Access to storage is not allowed from this context" errors
+  // Configure runtime to handle client-side operations correctly
   experimental: {
     // Configure server actions
     serverActions: {
-      // Ensure server actions are working properly
       bodySizeLimit: '2mb',
     },
+    // Force full page rendering
+    workerThreads: false,
+    // Use simple compiler options
+    optimizeCss: false,
   },
   
   // Define custom headers to help with caching and security
@@ -60,7 +98,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=3600, must-revalidate',
+            value: 'no-cache, no-store, must-revalidate',
           },
           {
             key: 'X-Content-Type-Options',
@@ -73,6 +111,13 @@ const nextConfig = {
         ],
       },
     ];
+  },
+
+  // Fix for development server restarts
+  onDemandEntries: {
+    // Keep pages in memory for longer
+    maxInactiveAge: 60 * 60 * 1000, // 1 hour
+    pagesBufferLength: 5,
   },
 }
 

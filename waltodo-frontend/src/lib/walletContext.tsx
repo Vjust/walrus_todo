@@ -7,8 +7,7 @@ import {
   WalletProvider as SuiWalletProvider,
   useCurrentAccount,
   useConnectWallet,
-  useWallets,
-  StashedWalletAdapter
+  useWallets
 } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -68,7 +67,7 @@ function WalletContextInner({ children }: { children: ReactNode }) {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [slushAccount, setSlushAccount] = useState<SlushAccount | null>(null);
-  const [slushAdapter, setSlushAdapter] = useState<StashedWalletAdapter | null>(null);
+  const [slushAdapter, setSlushAdapter] = useState<any | null>(null);
 
   // Sui wallet hooks
   const suiAccount = useCurrentAccount();
@@ -86,7 +85,9 @@ function WalletContextInner({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window !== 'undefined' && !slushAdapter) {
       try {
-        setSlushAdapter(new StashedWalletAdapter());
+        // Removed StashedWalletAdapter initialization as it's no longer available
+        // Consider using WalletProvider configuration for wallet integration
+        console.log('Slush wallet adapter initialization skipped - needs new implementation');
       } catch (error) {
         console.error('Failed to initialize Slush wallet adapter:', error);
       }
@@ -161,6 +162,14 @@ function WalletContextInner({ children }: { children: ReactNode }) {
           return Promise.reject(walletError);
         }
       } else if (type === 'slush') {
+        // Slush wallet integration temporarily disabled
+        // Needs to be reimplemented using the current wallet API
+        const error = new WalletNotInstalledError('Slush - temporarily unavailable');
+        setError(error);
+        console.warn('Slush wallet functionality is temporarily disabled and needs to be updated.');
+        return Promise.reject(error);
+        
+        /* Original implementation that needs updating:
         if (!slushAdapter) {
           const error = new WalletNotInstalledError('Slush');
           setError(error);
@@ -175,7 +184,8 @@ function WalletContextInner({ children }: { children: ReactNode }) {
           setError(walletError);
           console.error(`Slush wallet connection error:`, walletError);
           return Promise.reject(walletError);
-        }
+        }*/
+      }
       }
       
       setWalletType(type);
@@ -259,6 +269,13 @@ function WalletContextInner({ children }: { children: ReactNode }) {
 
   // Slush wallet connect method
   const slushConnect = useCallback(async () => {
+    // Slush wallet connection temporarily disabled
+    const error = new WalletNotInstalledError('Slush - temporarily unavailable');
+    setError(error);
+    console.warn('Slush wallet functionality is temporarily disabled and needs to be reimplemented.');
+    return Promise.reject(error);
+    
+    /* Original implementation that needs updating:
     try {
       // Check wallet availability first
       if (!slushAdapter) {
@@ -285,7 +302,8 @@ function WalletContextInner({ children }: { children: ReactNode }) {
       // Always return a rejection rather than letting it propagate
       return Promise.reject(walletError);
     }
-  }, [handleConnect, slushAdapter]);
+    */
+  }, [setError]);
 
   // Universal disconnect
   const disconnect = useCallback(async () => {
@@ -303,6 +321,11 @@ function WalletContextInner({ children }: { children: ReactNode }) {
           // We'll still clear the wallet type even if disconnect fails
         }
       } else if (walletType === 'slush') {
+        // Slush wallet disconnection temporarily disabled
+        // Will be reimplemented with updated wallet API
+        console.warn('Slush wallet disconnect functionality temporarily disabled.');
+        setSlushAccount(null);
+        /* Original implementation that needs updating:
         try {
           if (slushAdapter) {
             await slushAdapter.disconnect();
@@ -311,7 +334,8 @@ function WalletContextInner({ children }: { children: ReactNode }) {
         } catch (discErr) {
           console.error('Error disconnecting Slush wallet:', discErr);
           // We'll still clear the wallet type even if disconnect fails
-        }
+        }*/
+      }
       }
       setWalletType(null);
       return Promise.resolve();

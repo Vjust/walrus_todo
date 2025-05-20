@@ -65,22 +65,14 @@ module.exports = {
   // Setup files run after the test framework is installed
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   transformIgnorePatterns: [
-    '/node_modules/(?!(@oclif|fancy-test|@mysten|ora|cli-progress)/.*)'
+    '/node_modules/(?!(@oclif|fancy-test|@mysten|ora|cli-progress|@langchain)/.*)'
   ],
   // Support module mocking for ESM
   modulePaths: ['<rootDir>/src'],
-  // Specific configuration for ESM usage
-  globals: {
-    'ts-jest': {
-      // Allow ESModule interop for importing CommonJS
-      useESM: true,
-      // Allow non-standard imports with .js extension
-      allowSyntheticDefaultImports: true
-    }
-  },
   maxWorkers: 1,
   testTimeout: 10000,
-  collectCoverage: false,
+  // Conditionally enable coverage collection for CI environments
+  collectCoverage: process.env.CI === 'true' || false,
   coverageReporters: ['json', 'lcov', 'text', 'clover', 'json-summary'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: [

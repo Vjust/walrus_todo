@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useWalletContext } from '@/lib/walletContext';
+import React, { useState } from 'react';
+import { useWalletContext } from '@/contexts/SimpleWalletContext';
 import { 
   copyToClipboard, 
   getClipboardCapabilities,
@@ -10,116 +10,27 @@ import {
 import { WalletErrorModal } from './WalletErrorModal';
 import { ClipboardErrorModal } from './ClipboardErrorModal';
 import { WalletError } from '@/lib/wallet-errors';
+import { ErrorBoundary } from './ErrorBoundary';
 
 export function WalletConnectButton() {
   const {
     connected,
     connecting,
     disconnect,
-    publicKey,
-    walletType,
+    connect,
+    address,
+    name: walletName,
+    chainId,
     error,
-    suiConnect,
-    phantomConnect,
-    slushConnect,
-    slushAccount,
-    setError
+    setError,
+    switchNetwork
   } = useWalletContext();
 
-  const [hasSuiWallet, setHasSuiWallet] = useState(false);
-  const [hasPhantomWallet, setHasPhantomWallet] = useState(false);
-  const [hasSlushWallet, setHasSlushWallet] = useState(false);
-  const [walletSelected, setWalletSelected] = useState<'sui' | 'phantom' | 'slush' | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [copyError, setCopyError] = useState<string | null>(null);
   const [clipboardError, setClipboardError] = useState<ClipboardError | null>(null);
-  
-  // Function to handle wallet button clicks with enhanced error handling
-  const handleWalletSelection = async (type: 'sui' | 'phantom' | 'slush') => {
-    setWalletSelected(type);
-    try {
-      // Use async/await to properly handle rejected promises
-      if (type === 'sui') {
-        try {
-          await suiConnect();
-        } catch (error) {
-          console.error('Failed to connect Sui wallet:', error);
-          setWalletSelected(null);
-          // Error already handled by context
-        }
-      } else if (type === 'phantom') {
-        try {
-          await phantomConnect();
-        } catch (error) {
-          console.error('Failed to connect Phantom wallet:', error);
-          setWalletSelected(null);
-          // Error already handled by context
-        }
-      } else if (type === 'slush') {
-        try {
-          await slushConnect();
-        } catch (error) {
-          console.error('Failed to connect Slush wallet:', error);
-          setWalletSelected(null);
-          // Error already handled by context
-        }
-      }
-    } catch (error) {
-      console.error('Unexpected error in wallet selection:', error);
-      setWalletSelected(null);
-      // Handle synchronous errors too
-      if (setError && error instanceof Error) {
-        setError(error);
-      }
-    }
-  };
-
-  // Check for wallet availability
-  useEffect(() => {
-    const checkWallets = () => {
-      try {
-        // Check for Sui wallet (based on @mysten/dapp-kit standard)
-        const suiWalletAvailable = typeof window !== 'undefined' && (
-          window.suiWallet ||
-          window.ethereum?.isSuiWallet || 
-          window.martian?.sui ||
-          window.suiet
-        );
-        setHasSuiWallet(!!suiWalletAvailable);
-
-        // Check for Phantom wallet
-        const phantomAvailable = typeof window !== 'undefined' && 
-          window.solana?.isPhantom;
-        setHasPhantomWallet(!!phantomAvailable);
-        
-        // Check for Slush wallet (formerly Stashed)
-        // Detection pattern based on StashedWalletAdapter
-        const slushAvailable = typeof window !== 'undefined' && (
-          window.stashedProvider || 
-          window.slushProvider ||
-          window.stashed
-        );
-        setHasSlushWallet(!!slushAvailable);
-      } catch (error) {
-        console.error('Error checking wallet availability:', error);
-        // Ensure we don't break the component if there's an error
-        setHasSuiWallet(false);
-        setHasPhantomWallet(false);
-        setHasSlushWallet(false);
-      }
-    };
-
-    try {
-      checkWallets();
-      
-      // Check again after a delay in case wallets inject late
-      const timer = setTimeout(checkWallets, 100);
-      return () => clearTimeout(timer);
-    } catch (error) {
-      console.error('Error in wallet detection effect:', error);
-      return undefined;
-    }
-  }, []);
+  const [showNetworkOptions, setShowNetworkOptions] = useState(false);
+  const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
 
   // Helper function to truncate address
   const truncateAddress = (address: string) => {
@@ -129,9 +40,9 @@ export function WalletConnectButton() {
 
   // Handle copying address to clipboard
   const handleCopyAddress = async () => {
-    // Prevent function execution if no publicKey exists
-    if (!publicKey) {
-      console.warn('Attempted to copy address but no public key is available');
+    // Prevent function execution if no address exists
+    if (!address) {
+      console.warn('Attempted to copy address but no address is available');
       setCopyStatus('error');
       setCopyError('No wallet address available');
       return;
@@ -142,16 +53,12 @@ export function WalletConnectButton() {
     setClipboardError(null);
     
     try {
-      const result = await copyToClipboard(publicKey || '');
+      const result = await copyToClipboard(address || '');
       
       if (result.success) {
         setCopyStatus('success');
         // Reset success status after 2 seconds
-        const timer = setTimeout(() => {
-          setCopyStatus('idle');
-        }, 2000);
-        // Note: we can't return a cleanup function from an async function 
-        // The cleanup needs to happen in a useEffect if needed
+        setTimeout(() => setCopyStatus('idle'), 2000);
       } else {
         setCopyStatus('error');
         setCopyError(result.error?.message || 'Unknown error');
@@ -180,15 +87,15 @@ export function WalletConnectButton() {
   // Add clipboard manual fallback option
   const handleManualCopy = () => {
     try {
-      // Prevent function execution if no publicKey exists
-      if (!publicKey) {
-        console.warn('Attempted manual copy but no public key is available');
+      // Prevent function execution if no address exists
+      if (!address) {
+        console.warn('Attempted manual copy but no address is available');
         return;
       }
 
       // Create a temporary input element to display the address for manual copying
       const tempInput = document.createElement('textarea');
-      tempInput.value = publicKey || '';
+      tempInput.value = address || '';
       tempInput.setAttribute('readonly', '');
       tempInput.style.position = 'fixed';
       tempInput.style.top = '0';
@@ -200,7 +107,7 @@ export function WalletConnectButton() {
         tempInput.focus();
         tempInput.select();
         
-        // Show instructions (in real app, you might want a modal with better UX)
+        // Show instructions
         alert('Please use keyboard shortcut to copy:\n' + 
               '• Windows/Linux: Press Ctrl+C\n' + 
               '• Mac: Press Command+C\n\n' +
@@ -218,9 +125,43 @@ export function WalletConnectButton() {
     }
   };
 
+  // Handle network switching
+  const handleNetworkSwitch = async (network: 'mainnet' | 'testnet' | 'devnet') => {
+    if (isNetworkSwitching) return; // Prevent multiple clicks
+    
+    setIsNetworkSwitching(true);
+    
+    try {
+      await switchNetwork(network);
+      setShowNetworkOptions(false);
+    } catch (error) {
+      console.error(`Failed to switch to ${network}:`, error);
+      if (setError && error instanceof Error) {
+        setError(error);
+      }
+    } finally {
+      setIsNetworkSwitching(false);
+    }
+  };
+
+  // Convert network string to display name
+  const getNetworkDisplayName = (networkId: number | null) => {
+    if (networkId === null) return 'Unknown';
+    
+    // Convert network ID to readable name as needed
+    const networkMap: Record<string, string> = {
+      'mainnet': 'Mainnet',
+      'testnet': 'Testnet',
+      'devnet': 'Devnet'
+    };
+    
+    // Return formatted name or the original if not in our map
+    return networkMap[String(networkId)] || String(networkId);
+  };
+
   // Render the connected wallet UI
   const renderConnectedUI = () => {
-    if (!connected || !publicKey) return null;
+    if (!connected || !address) return null;
     
     // Get clipboard capabilities to determine what UI to show
     const clipboardCapabilities = getClipboardCapabilities();
@@ -229,9 +170,74 @@ export function WalletConnectButton() {
     return (
       <div className="flex items-center gap-4">
         <div className="px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg flex items-center gap-2 relative">
-          <p className="text-sm text-ocean-deep dark:text-ocean-foam">
-            {walletType === 'sui' ? 'Sui' : walletType === 'phantom' ? 'Phantom' : 'Slush'}: {truncateAddress(publicKey)}
-          </p>
+          <div className="flex flex-col">
+            <p className="text-sm text-ocean-deep dark:text-ocean-foam">
+              {walletName || 'Wallet'}: {truncateAddress(address)}
+            </p>
+            <p className="text-xs text-ocean-medium dark:text-ocean-light">
+              {getNetworkDisplayName(chainId)}
+              {!isNetworkSwitching ? (
+                <button 
+                  onClick={() => setShowNetworkOptions(!showNetworkOptions)}
+                  className="ml-2 text-xs text-ocean-medium hover:text-ocean-deep dark:text-ocean-light dark:hover:text-ocean-foam"
+                  disabled={isNetworkSwitching}
+                >
+                  (change)
+                </button>
+              ) : (
+                <span className="ml-2 text-xs text-yellow-500 animate-pulse">
+                  (switching...)
+                </span>
+              )}
+            </p>
+            
+            {/* Network selection dropdown */}
+            {showNetworkOptions && !isNetworkSwitching && (
+              <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg z-10 w-full min-w-[150px]">
+                <div className="flex flex-col gap-2">
+                  <button 
+                    onClick={() => handleNetworkSwitch('mainnet')}
+                    disabled={isNetworkSwitching || chainId === 'mainnet'}
+                    className={`text-sm px-3 py-1 rounded-md ${
+                      chainId === 'mainnet' 
+                        ? 'bg-ocean-deep text-white' 
+                        : isNetworkSwitching
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'hover:bg-ocean-light/20'
+                    }`}
+                  >
+                    Mainnet
+                  </button>
+                  <button 
+                    onClick={() => handleNetworkSwitch('testnet')}
+                    disabled={isNetworkSwitching || chainId === 'testnet'}
+                    className={`text-sm px-3 py-1 rounded-md ${
+                      chainId === 'testnet' 
+                        ? 'bg-ocean-deep text-white' 
+                        : isNetworkSwitching
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'hover:bg-ocean-light/20'
+                    }`}
+                  >
+                    Testnet
+                  </button>
+                  <button 
+                    onClick={() => handleNetworkSwitch('devnet')}
+                    disabled={isNetworkSwitching || chainId === 'devnet'}
+                    className={`text-sm px-3 py-1 rounded-md ${
+                      chainId === 'devnet' 
+                        ? 'bg-ocean-deep text-white' 
+                        : isNetworkSwitching
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'hover:bg-ocean-light/20'
+                    }`}
+                  >
+                    Devnet
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           
           {showClipboardButton && (
             <button
@@ -277,8 +283,7 @@ export function WalletConnectButton() {
           )}
         </div>
         <button
-          onClick={(e) => {
-            e.preventDefault();
+          onClick={() => {
             try {
               disconnect().catch(err => {
                 console.error('Error disconnecting wallet:', err);
@@ -293,7 +298,8 @@ export function WalletConnectButton() {
               }
             }
           }}
-          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          disabled={isNetworkSwitching}
+          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:bg-red-300 disabled:cursor-not-allowed"
         >
           Disconnect
         </button>
@@ -307,93 +313,59 @@ export function WalletConnectButton() {
     
     return (
       <div className="px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg">
-        <p className="text-sm text-ocean-deep dark:text-ocean-foam">
+        <p className="text-sm text-ocean-deep dark:text-ocean-foam flex items-center">
+          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-ocean-deep dark:text-ocean-foam" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
           Connecting...
         </p>
       </div>
     );
   };
 
-  // Render the wallet selection UI
-  const renderWalletSelectionUI = () => {
+  // Render the connect button UI
+  const renderConnectUI = () => {
     if (connected || connecting) return null;
     
     return (
-      <div className="space-y-2">
-        <div className="flex gap-4 flex-wrap">
-          {hasSuiWallet && (
-            <button
-              onClick={() => handleWalletSelection('sui')}
-              disabled={connecting || walletSelected !== null}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                walletSelected === 'sui' 
-                  ? 'bg-green-500 text-white' 
-                  : 'bg-ocean-deep text-white hover:bg-ocean-deep/80'
-              } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-            >
-              {walletSelected === 'sui' && connecting ? 'Connecting...' : 'Connect Sui Wallet'}
-            </button>
-          )}
-          
-          {hasPhantomWallet && (
-            <button
-              onClick={() => handleWalletSelection('phantom')}
-              disabled={connecting || walletSelected !== null}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                walletSelected === 'phantom'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
-              } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-            >
-              {walletSelected === 'phantom' && connecting ? 'Connecting...' : 'Connect Phantom'}
-            </button>
-          )}
-          
-          {hasSlushWallet && (
-            <button
-              onClick={() => handleWalletSelection('slush')}
-              disabled={connecting || walletSelected !== null}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                walletSelected === 'slush'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-blue-500 text-white hover:bg-blue-600'
-              } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-            >
-              {walletSelected === 'slush' && connecting ? 'Connecting...' : 'Connect Slush Wallet'}
-            </button>
-          )}
-          
-          {!hasSuiWallet && !hasPhantomWallet && !hasSlushWallet && (
-            <div className="px-4 py-2 bg-gray-500 text-white rounded-lg">
-              No wallets detected
-            </div>
-          )}
-        </div>
-      
-        {/* Show wallet selection error message inline */}
-        {error && (
-          <div className="text-red-500 text-sm mt-2">
-            {error.message}
-          </div>
-        )}
-      </div>
+      <button
+        onClick={() => {
+          try {
+            connect().catch(err => {
+              console.error('Error connecting wallet:', err);
+              // Error is already handled by the context
+            });
+          } catch (error) {
+            console.error('Error in connect handler:', error);
+            if (setError && error instanceof Error) {
+              setError(error);
+            }
+          }
+        }}
+        className="px-4 py-2 bg-ocean-deep text-white rounded-lg hover:bg-ocean-deep/80 transition-colors"
+      >
+        Connect Wallet
+      </button>
     );
   };
 
-  // Main render function
+  // Wrap the entire component in an ErrorBoundary
   return (
-    <>
-      {renderConnectedUI() || renderConnectingUI() || renderWalletSelectionUI()}
-      
-      <WalletErrorModal 
-        error={error instanceof WalletError ? error : null} 
-        onDismiss={() => setError(null)} 
-      />
-      <ClipboardErrorModal
-        error={clipboardError}
-        onDismiss={() => setClipboardError(null)}
-        onTryAlternative={handleManualCopy}
-      />
-    </>
+    <ErrorBoundary>
+      <>
+        {renderConnectedUI() || renderConnectingUI() || renderConnectUI()}
+        
+        <WalletErrorModal 
+          error={error instanceof WalletError ? error : null} 
+          onDismiss={() => setError(null)} 
+        />
+        <ClipboardErrorModal
+          error={clipboardError}
+          onDismiss={() => setClipboardError(null)}
+          onTryAlternative={handleManualCopy}
+        />
+      </>
+    </ErrorBoundary>
   );
 }

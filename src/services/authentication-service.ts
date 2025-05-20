@@ -738,9 +738,20 @@ export class AuthenticationService {
       
       // Get user from the token subject claim
       const userId = decoded.sub as string;
+      
+      // Verify userId exists before proceeding
+      if (!userId) {
+        this.logger.error('Token validation failed: Missing subject/userId in token');
+        return {
+          valid: false,
+          expired: false
+        };
+      }
+      
       const user = await permissionService.getUser(userId);
       
       if (!user) {
+        this.logger.warn(`Token validation: User not found for userId ${userId}`);
         return {
           valid: false,
           expired: false
@@ -763,6 +774,7 @@ export class AuthenticationService {
       }
       
       // For any other error, token is invalid
+      this.logger.error('Token validation failed', error);
       return {
         valid: false,
         expired: false

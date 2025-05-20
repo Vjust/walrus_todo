@@ -60,37 +60,53 @@ export function StorageContextWarning() {
   const [context, setContext] = useState<StorageContext>('unknown');
   const [usingFallback, setUsingFallback] = useState(false);
   const [showWarning, setShowWarning] = useState(true);
+  const [mounted, setMounted] = useState(false);
   
+  // Use two-phase mounting to ensure complete client-side initialization
   useEffect(() => {
-    // Only run on client
-    if (typeof window === 'undefined') return;
+    // First phase - mark component as mounted
+    setMounted(true);
     
-    try {
-      // Safely detect context with error handling
-      let detectedContext: StorageContext = 'unknown';
-      try {
-        detectedContext = detectContext();
-      } catch (error) {
-        console.warn('Error detecting storage context:', error);
-        detectedContext = 'unknown';
-      }
-      setContext(detectedContext);
-      
-      // Safely check if using fallback storage
-      let fallbackStatus = true; // Default to true for safety
-      try {
-        fallbackStatus = isUsingFallbackStorage();
-      } catch (error) {
-        console.warn('Error checking fallback storage status:', error);
-      }
-      setUsingFallback(fallbackStatus);
-    } catch (e) {
-      console.error('Error in StorageContextWarning useEffect:', e);
-      // Set safe defaults
-      setContext('unknown');
-      setUsingFallback(true);
-    }
+    // Cleanup function to handle component unmounting
+    return () => setMounted(false);
   }, []);
+  
+  // Second phase - only run detection logic after initial mount
+  useEffect(() => {
+    // Skip if not mounted or not in browser
+    if (!mounted || typeof window === 'undefined') return;
+    
+    // Use setTimeout to ensure this runs after Next.js hydration is complete
+    const timer = setTimeout(() => {
+      try {
+        // Safely detect context with error handling
+        let detectedContext: StorageContext = 'unknown';
+        try {
+          detectedContext = detectContext();
+        } catch (error) {
+          console.warn('Error detecting storage context:', error);
+          detectedContext = 'unknown';
+        }
+        setContext(detectedContext);
+        
+        // Safely check if using fallback storage
+        let fallbackStatus = true; // Default to true for safety
+        try {
+          fallbackStatus = isUsingFallbackStorage();
+        } catch (error) {
+          console.warn('Error checking fallback storage status:', error);
+        }
+        setUsingFallback(fallbackStatus);
+      } catch (e) {
+        console.error('Error in StorageContextWarning useEffect:', e);
+        // Set safe defaults
+        setContext('unknown');
+        setUsingFallback(true);
+      }
+    }, 100); // Short delay to ensure hydration is complete
+    
+    return () => clearTimeout(timer);
+  }, [mounted]);
   
   if (!showWarning || typeof window === 'undefined') {
     return null;

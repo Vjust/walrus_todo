@@ -453,6 +453,11 @@ export class ConfigService {
       try {
         await fsPromises.access(listPath);
         await fsPromises.unlink(listPath);
+      } catch (error) {
+        // If file doesn't exist, that's fine - nothing to delete
+        if (error && 'code' in error && error.code !== 'ENOENT') {
+          throw error;
+        }
       }
     } catch (error) {
       throw new CLIError(

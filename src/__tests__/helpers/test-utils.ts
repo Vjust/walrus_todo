@@ -35,6 +35,8 @@ export interface CommandResult {
   error?: Error;
 }
 
+// Functions are already exported below, so no need for this line
+
 /**
  * Execute a CLI command directly from the src/index.ts implementation
  * This allows E2E tests to run commands without spawning a child process
@@ -93,12 +95,28 @@ export async function runCommand(
     };
   }
   
-  // Mock process.exit to prevent test from exiting
+  // Mock process.exit to prevent test from exiting but execute cleanup first
   let exitCode = 0;
-  process.exit = ((code: number = 0) => {
+  // Create a custom exit handler that will be called when process.exit is invoked
+  const handleExit = (code: number = 0) => {
     exitCode = code;
-    throw new Error(`EXIT_CODE_${code}`);
-  }) as any;
+    
+    // Restore all original methods immediately to ensure cleanup hooks run
+    if (mockStdout) console.log = originalConsoleLog;
+    if (mockStderr) console.error = originalConsoleError;
+    
+    // Allow any cleanup or finally blocks to execute before throwing
+    // By delaying the error throw via setTimeout, we ensure the current execution
+    // context completes, allowing cleanup handlers to run
+    setTimeout(() => {
+      throw new Error(`EXIT_CODE_${code}`);
+    }, 0);
+    
+    // Return a never-resolving promise to prevent further code execution
+    return new Promise<never>(() => {});
+  };
+  
+  process.exit = handleExit as any;
   
   let error: Error | undefined;
   
@@ -135,9 +153,7 @@ export async function runCommand(
       }
     });
     
-    // Restore console and process.exit
-    if (mockStdout) console.log = originalConsoleLog;
-    if (mockStderr) console.error = originalConsoleError;
+    // Ensure process.exit is restored
     process.exit = originalProcessExit;
   }
   
