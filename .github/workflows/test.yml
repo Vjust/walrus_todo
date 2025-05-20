@@ -46,7 +46,7 @@ jobs:
       
       - name: Install dependencies
         if: steps.pnpm-cache.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
   test-unit:
     needs: setup

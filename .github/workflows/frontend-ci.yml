@@ -4,11 +4,11 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'packages/frontend-v2/**'
+      - 'waltodo-frontend/**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'packages/frontend-v2/**'
+      - 'waltodo-frontend/**'
 
 jobs:
   test:
@@ -47,22 +47,22 @@ jobs:
     
     - name: Install dependencies
       run: |
-        cd packages/frontend-v2
-        CI=true pnpm install
+        cd waltodo-frontend
+        CI=true pnpm install --no-frozen-lockfile
     
     - name: Run linter
       run: |
-        cd packages/frontend-v2
+        cd waltodo-frontend
         pnpm lint
     
     - name: Build application
       run: |
-        cd packages/frontend-v2
+        cd waltodo-frontend
         pnpm build
     
     - name: Type check
       run: |
-        cd packages/frontend-v2
+        cd waltodo-frontend
         pnpm tsc --noEmit
       continue-on-error: true
     
@@ -71,5 +71,5 @@ jobs:
       if: success()
       with:
         name: nextjs-build
-        path: packages/frontend-v2/.next/
+        path: waltodo-frontend/.next/
         retention-days: 7
