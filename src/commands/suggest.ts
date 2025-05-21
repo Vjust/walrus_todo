@@ -17,7 +17,7 @@ import crypto from 'crypto';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import { getPermissionManager } from '../services/ai/AIPermissionManager';
 import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
-import prompt from 'inquirer';
+import { checkbox } from '@inquirer/prompts';
 
 // Cache for AI suggestions, config, and API key validation
 const suggestionCache = createCache<any>('ai-suggestions', {
@@ -457,25 +457,21 @@ export default class Suggest extends BaseCommand {
   ) {
     
     // Ask which suggestions to add
-    const response = await prompt([
-      {
-        type: 'checkbox',
-        name: 'selectedSuggestions',
-        message: 'Select suggestions to add as todos:',
-        choices: suggestions.map((suggestion, index) => ({
-          name: `${index + 1}. ${suggestion.title} (${suggestion.priority || 'medium'} priority)`,
-          value: index
-        }))
-      }
-    ]);
+    const selectedSuggestions = await checkbox({
+      message: 'Select suggestions to add as todos:',
+      choices: suggestions.map((suggestion, index) => ({
+        name: `${index + 1}. ${suggestion.title} (${suggestion.priority || 'medium'} priority)`,
+        value: index
+      }))
+    });
     
-    if (response.selectedSuggestions.length === 0) {
+    if (selectedSuggestions.length === 0) {
       this.log('No suggestions selected.');
       return;
     }
     
     // Add selected suggestions as todos
-    for (const index of response.selectedSuggestions) {
+    for (const index of selectedSuggestions) {
       const suggestion = suggestions[index];
       
       try {
@@ -492,7 +488,7 @@ export default class Suggest extends BaseCommand {
       }
     }
     
-    this.log(chalk.green(`\nSuccessfully added ${response.selectedSuggestions.length} todos!`));
+    this.log(chalk.green(`\nSuccessfully added ${selectedSuggestions.length} todos!`));
   }
   
   /**

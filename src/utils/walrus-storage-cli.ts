@@ -395,6 +395,47 @@ export class WalrusStorage {
       start_epoch: '1'
     };
   }
+
+  /**
+   * Check for existing storage allocations
+   * @returns {Promise<object|null>} Storage information or null
+   */
+  async checkExistingStorage(): Promise<any> {
+    await this.connect();
+    
+    if (this.useMock) {
+      return {
+        id: { id: 'mock-storage-id' },
+        storage_size: '1000000',
+        used_size: '500000',
+        end_epoch: '100',
+        start_epoch: '50'
+      };
+    }
+
+    // For now, return null as we would need to implement
+    // storage object discovery via Sui client
+    return null;
+  }
+
+  /**
+   * Get the active wallet address
+   * @returns {Promise<string>} The active wallet address
+   */
+  async getActiveAddress(): Promise<string> {
+    await this.connect();
+    
+    if (this.useMock) {
+      return 'mock-sui-address';
+    }
+
+    try {
+      const { stdout } = await execAsync('sui client active-address');
+      return stdout.trim();
+    } catch (error) {
+      throw new CLIError('Failed to get active address', 'ADDRESS_ERROR');
+    }
+  }
 }
 
 /**

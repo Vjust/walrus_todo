@@ -1,5 +1,7 @@
 import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
+import { confirm } from '@inquirer/prompts';
+import { select } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/error';
@@ -128,10 +130,11 @@ export default class SyncCommand extends BaseCommand {
 
       // Confirm sync if not forced
       if (!flags.force && needsSync.length > 0) {
-        const confirm = await this.confirm(
-          `Sync ${needsSync.length} todo${needsSync.length !== 1 ? 's' : ''}?`
-        );
-        if (!confirm) {
+        const shouldSync = await confirm({
+          message: `Sync ${needsSync.length} todo${needsSync.length !== 1 ? 's' : ''}?`,
+          default: false
+        });
+        if (!shouldSync) {
           this.log(chalk.yellow('Sync cancelled'));
           return;
         }
@@ -242,9 +245,10 @@ export default class SyncCommand extends BaseCommand {
         
         // Determine resolution strategy
         if (resolveStrategy === 'ask') {
-          this.stopSpinner(spinner);
+          spinner && this.stopSpinnerSuccess(spinner, '');
           resolution = await this.askResolution(todo, localNewer!, blockchainNewer!);
-          this.startSpinner('Continuing sync...');
+          // @ts-ignore - startSpinner may return undefined in tests
+          spinner = this.startSpinner('Continuing sync...');
         } else if (resolveStrategy === 'newest') {
           resolution = localNewer ? 'local' : 'blockchain';
         } else if (resolveStrategy === 'oldest') {
@@ -299,13 +303,11 @@ export default class SyncCommand extends BaseCommand {
     ];
 
     this.log(`\nConflict detected for "${chalk.bold(todo.title)}"`);
-    const answer = await this.prompt([{
-      type: 'list',
-      name: 'resolution',
+    const resolution = await select({
       message: 'Which version should be used?',
       choices
-    }]);
+    });
 
-    return answer.resolution;
+    return resolution;
   }
 }

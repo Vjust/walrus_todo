@@ -136,7 +136,7 @@ export class BlockchainError extends BaseError {
   static transactionFailed(
     transactionId: string,
     reason: string,
-    options: Omit<BlockchainErrorOptions, 'transactionId' | 'operation'> = {}
+    options: Omit<BlockchainErrorOptions, 'transactionId' | 'operation' | 'message'> = {}
   ): BlockchainError {
     return new BlockchainError(`Transaction failed: ${reason}`, {
       ...options,
@@ -154,7 +154,7 @@ export class BlockchainError extends BaseError {
    */
   static insufficientFunds(
     address: string,
-    options: Omit<BlockchainErrorOptions, 'address' | 'operation'> = {}
+    options: Omit<BlockchainErrorOptions, 'address' | 'operation' | 'message'> = {}
   ): BlockchainError {
     return new BlockchainError(`Insufficient funds for wallet: ${address.substring(0, 8)}...`, {
       ...options,
@@ -173,7 +173,7 @@ export class BlockchainError extends BaseError {
    */
   static walletConnectionFailed(
     reason: string,
-    options: Omit<BlockchainErrorOptions, 'operation'> = {}
+    options: Omit<BlockchainErrorOptions, 'operation' | 'message'> = {}
   ): BlockchainError {
     return new BlockchainError(`Wallet connection failed: ${reason}`, {
       ...options,

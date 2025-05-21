@@ -47,7 +47,7 @@ export default class StorageCommand extends BaseCommand {
 
   async run() {
     const { flags } = await this.parse(StorageCommand);
-    this.log.info(this.format.highlight('Walrus Storage Manager'));
+    this.log(this.format.highlight('Walrus Storage Manager'));
     
     const spinner = this.startUnifiedSpinner('Connecting to storage...');
     
@@ -127,7 +127,7 @@ export default class StorageCommand extends BaseCommand {
       const suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
       const { epoch } = await suiClient.getLatestSuiSystemState();
       const currentEpoch = Number(epoch);
-      const address = walrusStorage.getActiveAddress();
+      const address = await walrusStorage.getActiveAddress();
       
       // Get all storage objects
       const response = await suiClient.getOwnedObjects({
@@ -215,7 +215,7 @@ export default class StorageCommand extends BaseCommand {
     try {
       // Initialize clients
       const suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
-      const address = walrusStorage.getActiveAddress();
+      const address = await walrusStorage.getActiveAddress();
       
       // Check WAL balance
       const walBalance = await suiClient.getBalance({

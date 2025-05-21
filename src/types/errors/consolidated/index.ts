@@ -30,6 +30,10 @@ export type { TransactionErrorOptions } from './TransactionError';
 export { AuthorizationError } from './AuthorizationError';
 export type { AuthorizationErrorOptions } from './AuthorizationError';
 
+// Import all error classes at the top level for use in utilities
+import { NetworkError } from './NetworkError';
+import { BlockchainError } from './BlockchainError';
+
 // Error utilities
 
 /**
@@ -55,16 +59,21 @@ export { BaseError as WalrusError } from './BaseError';
  * Check if an error is a transient error that can be retried
  */
 export function isRetryableError(error: unknown): boolean {
-  // Check if NetworkError is imported
-  if (typeof NetworkError !== 'undefined' && error instanceof NetworkError) {
+  // Check if error is a NetworkError
+  if (error instanceof NetworkError) {
     return error.recoverable === true;
   }
   
-  // Check if BlockchainError is imported
-  if (typeof BlockchainError !== 'undefined' && error instanceof BlockchainError) {
+  // Check if error is a BlockchainError
+  if (error instanceof BlockchainError) {
     return ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT'].includes(
-      typeof error.code === 'string' ? error.code : ''
+      error.code || ''
     );
+  }
+  
+  // Check if it's a BaseError with shouldRetry flag
+  if (error instanceof BaseError) {
+    return error.shouldRetry === true;
   }
   
   if (isErrorWithMessage(error)) {

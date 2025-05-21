@@ -104,7 +104,7 @@ export class AuthorizationError extends BaseError {
    */
   static unauthenticated(
     resource?: string,
-    options: Omit<AuthorizationErrorOptions, 'isLoginRequired'> = {}
+    options: Omit<AuthorizationErrorOptions, 'isLoginRequired' | 'message'> = {}
   ): AuthorizationError {
     return new AuthorizationError(
       'Authentication required',
@@ -127,7 +127,7 @@ export class AuthorizationError extends BaseError {
   static forbidden(
     action: string,
     resource: string,
-    options: Omit<AuthorizationErrorOptions, 'action' | 'resource'> = {}
+    options: Omit<AuthorizationErrorOptions, 'action' | 'resource' | 'message'> = {}
   ): AuthorizationError {
     return new AuthorizationError(
       `Permission denied: cannot ${action} ${resource}`,
@@ -146,7 +146,7 @@ export class AuthorizationError extends BaseError {
    * @returns New AuthorizationError instance
    */
   static sessionExpired(
-    options: Omit<AuthorizationErrorOptions, 'isLoginRequired'> = {}
+    options: Omit<AuthorizationErrorOptions, 'isLoginRequired' | 'message'> = {}
   ): AuthorizationError {
     return new AuthorizationError(
       'Session has expired',
@@ -164,7 +164,7 @@ export class AuthorizationError extends BaseError {
    * @returns New AuthorizationError instance
    */
   static invalidCredentials(
-    options: AuthorizationErrorOptions = {}
+    options: Omit<AuthorizationErrorOptions, 'message'> = {}
   ): AuthorizationError {
     return new AuthorizationError(
       'Invalid credentials',

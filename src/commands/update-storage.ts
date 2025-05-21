@@ -1,5 +1,6 @@
 import { Args, Command, Flags } from '@oclif/core';
 import chalk from 'chalk';
+import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
@@ -95,8 +96,11 @@ export default class UpdateStorageCommand extends BaseCommand {
       // Show confirmation unless forced
       if (!flags.force && validationResults.warnings.length > 0) {
         this.displayWarnings(validationResults.warnings);
-        const confirm = await this.confirm('Continue with storage update?');
-        if (!confirm) {
+        const shouldContinue = await confirm({
+          message: 'Continue with storage update?',
+          default: false
+        });
+        if (!shouldContinue) {
           this.log(chalk.yellow('Storage update cancelled'));
           return;
         }

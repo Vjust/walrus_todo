@@ -77,7 +77,7 @@ export default class SimpleCommand extends BaseCommand {
   private todoService = new TodoService();
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse<typeof SimpleCommand>(SimpleCommand);
+    const { args, flags } = await this.parse(SimpleCommand);
 
     try {
       switch (args.action) {

@@ -71,6 +71,20 @@ interface EnvironmentConfig {
   // Security configurations
   REQUIRE_SIGNATURE_VERIFICATION: EnvVariable<boolean>;
   ENABLE_BLOCKCHAIN_VERIFICATION: EnvVariable<boolean>;
+
+  // Additional retry and connection configs
+  MAX_RETRY_DELAY_MS: EnvVariable<number>;
+  MAX_RETRY_DURATION: EnvVariable<number>;
+  CONNECTION_TIMEOUT_MS: EnvVariable<number>;
+  CONNECTION_KEEP_ALIVE: EnvVariable<boolean>;
+  CONNECTION_MAX_IDLE_TIME_MS: EnvVariable<number>;
+  CONNECTION_AUTO_RECONNECT: EnvVariable<boolean>;
+  CONNECTION_MAX_RETRIES: EnvVariable<number>;
+  CONNECTION_BASE_DELAY_MS: EnvVariable<number>;
+  CONNECTION_MAX_DELAY_MS: EnvVariable<number>;
+
+  // Additional environment variable for config directory
+  WALRUS_TODO_CONFIG_DIR: EnvVariable<string>;
 }
 
 /**
@@ -466,6 +480,111 @@ export class EnvironmentConfigManager {
         source: process.env.ENABLE_BLOCKCHAIN_VERIFICATION ? 'environment' : 'default',
         description: 'Enable blockchain verification for AI operations',
         example: 'false'
+      },
+
+      // Additional retry and connection configurations
+      MAX_RETRY_DELAY_MS: {
+        name: 'MAX_RETRY_DELAY_MS',
+        value: getNumberValue(process.env.MAX_RETRY_DELAY_MS, 60000),
+        required: false,
+        source: process.env.MAX_RETRY_DELAY_MS ? 'environment' : 'default',
+        description: 'Maximum delay between retries in milliseconds',
+        example: '60000',
+        validationFn: (val) => Number(val) > 0,
+        validationError: 'MAX_RETRY_DELAY_MS must be a positive number'
+      },
+
+      MAX_RETRY_DURATION: {
+        name: 'MAX_RETRY_DURATION',
+        value: getNumberValue(process.env.MAX_RETRY_DURATION, 300000),
+        required: false,
+        source: process.env.MAX_RETRY_DURATION ? 'environment' : 'default',
+        description: 'Maximum duration for retry attempts in milliseconds',
+        example: '300000',
+        validationFn: (val) => Number(val) > 0,
+        validationError: 'MAX_RETRY_DURATION must be a positive number'
+      },
+
+      CONNECTION_TIMEOUT_MS: {
+        name: 'CONNECTION_TIMEOUT_MS',
+        value: getNumberValue(process.env.CONNECTION_TIMEOUT_MS, 30000),
+        required: false,
+        source: process.env.CONNECTION_TIMEOUT_MS ? 'environment' : 'default',
+        description: 'Timeout for connection operations in milliseconds',
+        example: '30000',
+        validationFn: (val) => Number(val) > 0,
+        validationError: 'CONNECTION_TIMEOUT_MS must be a positive number'
+      },
+
+      CONNECTION_KEEP_ALIVE: {
+        name: 'CONNECTION_KEEP_ALIVE',
+        value: getBooleanValue(process.env.CONNECTION_KEEP_ALIVE, false),
+        required: false,
+        source: process.env.CONNECTION_KEEP_ALIVE ? 'environment' : 'default',
+        description: 'Enable keep-alive for connections',
+        example: 'false'
+      },
+
+      CONNECTION_MAX_IDLE_TIME_MS: {
+        name: 'CONNECTION_MAX_IDLE_TIME_MS',
+        value: getNumberValue(process.env.CONNECTION_MAX_IDLE_TIME_MS, 60000),
+        required: false,
+        source: process.env.CONNECTION_MAX_IDLE_TIME_MS ? 'environment' : 'default',
+        description: 'Maximum idle time for connections in milliseconds',
+        example: '60000',
+        validationFn: (val) => Number(val) > 0,
+        validationError: 'CONNECTION_MAX_IDLE_TIME_MS must be a positive number'
+      },
+
+      CONNECTION_AUTO_RECONNECT: {
+        name: 'CONNECTION_AUTO_RECONNECT',
+        value: getBooleanValue(process.env.CONNECTION_AUTO_RECONNECT, true),
+        required: false,
+        source: process.env.CONNECTION_AUTO_RECONNECT ? 'environment' : 'default',
+        description: 'Enable automatic reconnection',
+        example: 'true'
+      },
+
+      CONNECTION_MAX_RETRIES: {
+        name: 'CONNECTION_MAX_RETRIES',
+        value: getNumberValue(process.env.CONNECTION_MAX_RETRIES, 3),
+        required: false,
+        source: process.env.CONNECTION_MAX_RETRIES ? 'environment' : 'default',
+        description: 'Maximum connection retry attempts',
+        example: '3',
+        validationFn: (val) => Number(val) >= 0,
+        validationError: 'CONNECTION_MAX_RETRIES must be a non-negative number'
+      },
+
+      CONNECTION_BASE_DELAY_MS: {
+        name: 'CONNECTION_BASE_DELAY_MS',
+        value: getNumberValue(process.env.CONNECTION_BASE_DELAY_MS, 1000),
+        required: false,
+        source: process.env.CONNECTION_BASE_DELAY_MS ? 'environment' : 'default',
+        description: 'Base delay for connection retries in milliseconds',
+        example: '1000',
+        validationFn: (val) => Number(val) > 0,
+        validationError: 'CONNECTION_BASE_DELAY_MS must be a positive number'
+      },
+
+      CONNECTION_MAX_DELAY_MS: {
+        name: 'CONNECTION_MAX_DELAY_MS',
+        value: getNumberValue(process.env.CONNECTION_MAX_DELAY_MS, 10000),
+        required: false,
+        source: process.env.CONNECTION_MAX_DELAY_MS ? 'environment' : 'default',
+        description: 'Maximum delay for connection retries in milliseconds',
+        example: '10000',
+        validationFn: (val) => Number(val) > 0,
+        validationError: 'CONNECTION_MAX_DELAY_MS must be a positive number'
+      },
+
+      WALRUS_TODO_CONFIG_DIR: {
+        name: 'WALRUS_TODO_CONFIG_DIR',
+        value: process.env.WALRUS_TODO_CONFIG_DIR || '',
+        required: false,
+        source: process.env.WALRUS_TODO_CONFIG_DIR ? 'environment' : 'default',
+        description: 'Custom configuration directory for Walrus Todo',
+        example: '/path/to/config'
       }
     };
   }

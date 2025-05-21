@@ -340,4 +340,25 @@ export class TodoService {
       );
     }
   }
+
+  /**
+   * Finds a todo by ID or title in a specified list
+   * 
+   * @param {string} listName - Name of the list to search
+   * @param {string} idOrTitle - ID or title of the todo to find
+   * @returns {Promise<Todo | null>} The found todo or null if not found
+   * @throws {CLIError} If the list doesn't exist
+   */
+  async findTodoByIdOrTitle(listName: string, idOrTitle: string): Promise<Todo | null> {
+    const list = await this.getList(listName);
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    }
+
+    // Try to find by ID first, then by title
+    const todo = list.todos.find(t => t.id === idOrTitle) || 
+                  list.todos.find(t => t.title.toLowerCase() === idOrTitle.toLowerCase());
+    
+    return todo || null;
+  }
 }

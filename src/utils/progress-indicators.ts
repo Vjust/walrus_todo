@@ -29,7 +29,7 @@ if (!cliProgress) {
       stop() { return this; }
     },
     MultiBar: class MockMultiBar {
-      create() { return new cliProgress.SingleBar(); }
+      create() { return new cliProgress.SingleBar({}); }
       remove() {}
       stop() {}
     }

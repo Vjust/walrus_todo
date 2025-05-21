@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { ux } from '@oclif/core';
 import { CLIError } from './types/error';
-import { WalrusError, NetworkError, ValidationError, TransactionError } from './types/errors';
+import { WalrusError, NetworkError, ValidationError, TransactionError } from './types/errors/consolidated';
 import { withRetry } from './utils/error-handler';
 import { commandRegistry, CommandMetadata } from './utils/CommandRegistry';
 import { BatchProcessor } from './utils/batch-processor';

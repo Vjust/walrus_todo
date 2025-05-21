@@ -16,6 +16,8 @@ export interface Config {
 
 export * from './todo';
 export * from './error';
+export * from './errors/consolidated';
+export * from './errors/compatibility';
 export * from './config';
 export * from './walrus';
 export * from './transaction';

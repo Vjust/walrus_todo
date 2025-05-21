@@ -12,10 +12,7 @@ import {
   BlockchainError,
   CLIError,
   TransactionError,
-  AuthorizationError
-} from './consolidated';
-
-import {
+  AuthorizationError,
   isRetryableError,
   getErrorMessage as consolidatedGetErrorMessage,
   toBaseError

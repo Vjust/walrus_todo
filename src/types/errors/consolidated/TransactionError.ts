@@ -105,7 +105,7 @@ export class TransactionError extends BaseError {
    */
   static gasLimitExceeded(
     gasLimit: number,
-    options: Omit<TransactionErrorOptions, 'gasLimit'> = {}
+    options: Omit<TransactionErrorOptions, 'gasLimit' | 'message'> = {}
   ): TransactionError {
     return new TransactionError(
       `Transaction failed: gas limit exceeded (${gasLimit})`,
@@ -123,7 +123,7 @@ export class TransactionError extends BaseError {
    * @returns New TransactionError instance
    */
   static insufficientFunds(
-    options: TransactionErrorOptions = {}
+    options: Omit<TransactionErrorOptions, 'message'> = {}
   ): TransactionError {
     return new TransactionError(
       'Transaction failed: insufficient funds',
@@ -142,7 +142,7 @@ export class TransactionError extends BaseError {
    */
   static reverted(
     reason?: string,
-    options: TransactionErrorOptions = {}
+    options: Omit<TransactionErrorOptions, 'message'> = {}
   ): TransactionError {
     return new TransactionError(
       reason ? `Transaction reverted: ${reason}` : 'Transaction reverted',

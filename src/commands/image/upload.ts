@@ -28,21 +28,7 @@ export default class UploadCommand extends BaseCommand {
   ];
 
   static flags = {
-    help: Flags.boolean({
-      description: 'Show help information',
-    }),
-    json: Flags.boolean({
-      description: 'Format output as json',
-    }),
-    'no-color': Flags.boolean({
-      description: 'Disable colors in output',
-    }),
-    quiet: Flags.boolean({
-      description: 'Suppress all output',
-    }),
-    verbose: Flags.boolean({
-      description: 'Show verbose output',
-    }),
+    ...BaseCommand.flags,
     todo: Flags.string({
       char: 't',
       description: 'ID of the todo to upload image for',
