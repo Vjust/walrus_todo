@@ -155,7 +155,8 @@ export default class StoreCommand extends BaseCommand {
    */
   private async connectToWalrus(walrusStorage: any, network: string): Promise<void> {
     try {
-      await RetryManager.withRetry(
+      const retryManager = new RetryManager();
+      await retryManager.retry(
         () => walrusStorage.connect(),
         {
           maxRetries: 3,
@@ -186,7 +187,8 @@ export default class StoreCommand extends BaseCommand {
       blobId = await this.withSpinner(
         `Storing todo "${todo.title}" on Walrus${flags.mock ? ' (mock mode)' : ''}...`,
         async () => {
-          return await RetryManager.withRetry(
+          const retryManager = new RetryManager();
+          return await retryManager.retry(
             () => this.uploadTodoWithCache(todo, walrusStorage, flags),
             {
               maxRetries: 5,

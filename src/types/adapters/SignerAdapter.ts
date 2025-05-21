@@ -37,7 +37,7 @@ export interface SignerAdapter extends BaseAdapter<SignerSuiJs> {
   connect(client: SuiClient): SignerAdapter;
   getClient(): SuiClient;
   getAddress(): Promise<string>;
-  signAndExecuteTransactionBlock(
+  signAndExecuteTransaction(
     tx: TransactionType,
     options?: SuiTransactionBlockResponseOptions
   ): Promise<SuiTransactionBlockResponse>;
@@ -127,9 +127,9 @@ export interface UnifiedSigner extends BaseSigner {
   getPublicKey?(): PublicKey;
   
   /**
-   * Signs and executes a transaction block
+   * Signs and executes a transaction
    */
-  signAndExecuteTransactionBlock?(
+  signAndExecuteTransaction?(
     tx: TransactionType,
     options?: SuiTransactionBlockResponseOptions
   ): Promise<SuiTransactionBlockResponse>;
@@ -189,12 +189,12 @@ export function hasGetPublicKey(signer: unknown): signer is BaseSigner & { getPu
 }
 
 /**
- * Checks if the signer has signAndExecuteTransactionBlock method
+ * Checks if the signer has signAndExecuteTransaction method
  */
-export function hasSignAndExecuteTransactionBlock(signer: unknown): signer is BaseSigner & { signAndExecuteTransactionBlock: Function } {
+export function hasSignAndExecuteTransaction(signer: unknown): signer is BaseSigner & { signAndExecuteTransaction: Function } {
   return isValidBaseSigner(signer) && 
-         'signAndExecuteTransactionBlock' in signer && 
-         typeof (signer as any).signAndExecuteTransactionBlock === 'function';
+         'signAndExecuteTransaction' in signer && 
+         typeof (signer as any).signAndExecuteTransaction === 'function';
 }
 
 /**
@@ -232,7 +232,7 @@ export interface SignerFeatures {
   hasSignTransaction: boolean;
   hasSignData: boolean;
   hasGetPublicKey: boolean;
-  hasSignAndExecuteTransactionBlock: boolean;
+  hasSignAndExecuteTransaction: boolean;
   hasConnect: boolean;
 }
 
@@ -249,7 +249,7 @@ export function detectSignerFeatures(signer: unknown): SignerFeatures | null {
     hasSignTransaction: hasSignTransaction(signer),
     hasSignData: hasSignData(signer),
     hasGetPublicKey: hasGetPublicKey(signer),
-    hasSignAndExecuteTransactionBlock: hasSignAndExecuteTransactionBlock(signer),
+    hasSignAndExecuteTransaction: hasSignAndExecuteTransaction(signer),
     hasConnect: hasConnect(signer)
   };
 }
@@ -268,11 +268,11 @@ export function detectSDKVersion(signer: unknown): SuiSDKVersion {
   const {
     hasSignTransactionBlock,
     hasSignTransaction,
-    hasSignAndExecuteTransactionBlock
+    hasSignAndExecuteTransaction
   } = features;
   
   // Version detection based on feature combinations
-  if (hasSignTransactionBlock && hasSignTransaction && hasSignAndExecuteTransactionBlock) {
+  if (hasSignTransactionBlock && hasSignTransaction && hasSignAndExecuteTransaction) {
     return SuiSDKVersion.VERSION_3;
   } else if (hasSignTransactionBlock && hasSignTransaction) {
     return SuiSDKVersion.VERSION_2_5;
@@ -295,17 +295,19 @@ export function normalizeSignature(signature: unknown): SignatureWithBytes {
   
   // Handle string signatures (base64 or hex)
   if (typeof signature === 'string') {
+    // Convert Uint8Array to base64 string to match the return type expected
     return {
-      signature: stringToBytes(signature),
-      bytes: new Uint8Array() // Empty bytes when only signature string is provided
+      signature: signature,
+      bytes: "" // Empty bytes when only signature string is provided
     };
   }
   
   // Handle direct Uint8Array signatures
   if (signature instanceof Uint8Array) {
+    // Convert Uint8Array to base64 string to match the return type expected
     return {
-      signature: signature,
-      bytes: new Uint8Array() // Empty bytes when only signature Uint8Array is provided
+      signature: Buffer.from(signature).toString('base64'),
+      bytes: "" // Empty bytes when only signature Uint8Array is provided
     };
   }
   
@@ -315,21 +317,20 @@ export function normalizeSignature(signature: unknown): SignatureWithBytes {
       throw new SignerAdapterError('Invalid signature object: missing signature property');
     }
     
-    let signatureBytes: Uint8Array;
-    let messageBytes: Uint8Array = new Uint8Array();
-    
     // Extract signature
     const sigProp = signature.signature;
+    let signatureResult: string;
+    
     if (typeof sigProp === 'string') {
-      signatureBytes = stringToBytes(sigProp);
+      signatureResult = sigProp;
     } else if (sigProp instanceof Uint8Array) {
-      signatureBytes = sigProp;
+      signatureResult = Buffer.from(sigProp).toString('base64');
     } else if (sigProp && typeof sigProp === 'object' && 'data' in sigProp) {
       const data = sigProp.data;
       if (data instanceof Uint8Array) {
-        signatureBytes = data;
+        signatureResult = Buffer.from(data).toString('base64');
       } else if (typeof data === 'string') {
-        signatureBytes = stringToBytes(data);
+        signatureResult = data;
       } else {
         throw new SignerAdapterError(`Invalid signature data format: ${JSON.stringify(sigProp)}`);
       }
@@ -338,23 +339,24 @@ export function normalizeSignature(signature: unknown): SignatureWithBytes {
     }
     
     // Extract bytes if present
+    let bytesResult: string = "";
     if ('bytes' in signature) {
       const bytesProp = signature.bytes;
       if (typeof bytesProp === 'string') {
-        messageBytes = stringToBytes(bytesProp);
+        bytesResult = bytesProp;
       } else if (bytesProp instanceof Uint8Array) {
-        messageBytes = bytesProp;
+        bytesResult = Buffer.from(bytesProp).toString('base64');
       } else if (bytesProp && typeof bytesProp === 'object' && 'data' in bytesProp) {
         const data = bytesProp.data;
         if (data instanceof Uint8Array) {
-          messageBytes = data;
+          bytesResult = Buffer.from(data).toString('base64');
         } else if (typeof data === 'string') {
-          messageBytes = stringToBytes(data);
+          bytesResult = data;
         }
       }
     }
     
-    return { signature: signatureBytes, bytes: messageBytes };
+    return { signature: signatureResult, bytes: bytesResult };
   }
   
   throw new SignerAdapterError(`Unsupported signature format: ${typeof signature}`);

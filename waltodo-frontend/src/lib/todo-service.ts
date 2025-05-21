@@ -7,12 +7,7 @@ import { Todo, TodoList } from './sui-client';
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { PublicKey } from '@solana/web3.js';
-import { 
-  safeGetItem, 
-  safeSetItem, 
-  isUsingFallbackStorage, 
-  detectContext 
-} from './storage-utils';
+import safeStorage, { isUsingFallbackStorage } from './safe-storage';
 
 // Define wallet-aware service types
 export interface WalletSigner {
@@ -22,8 +17,8 @@ export interface WalletSigner {
   publicKey?: PublicKey | string | null;
 }
 
-// Mock data store - would be replaced with actual local storage or API calls
-let todoLists: Record<string, TodoList> = {
+// Default data used when no data exists in storage
+const defaultTodoLists: Record<string, TodoList> = {
   default: {
     name: 'Default',
     todos: [
@@ -78,22 +73,27 @@ let todoLists: Record<string, TodoList> = {
   },
 };
 
+// Create a typed storage helper for todo lists
+const todoListStorage = safeStorage.createTyped<Record<string, TodoList>>(
+  'walrusTodoLists', 
+  defaultTodoLists
+);
+
+// Current in-memory reference to todo lists
+let todoLists: Record<string, TodoList> = { ...defaultTodoLists };
+
 /**
  * Try to load todo lists from storage
  */
 function loadTodoLists(): void {
   try {
-    const storedLists = safeGetItem('walrusTodoLists');
-    if (storedLists) {
-      const parsed = JSON.parse(storedLists);
-      if (parsed && typeof parsed === 'object') {
-        todoLists = parsed;
-      }
+    const storedLists = todoListStorage.get();
+    if (storedLists && typeof storedLists === 'object') {
+      todoLists = storedLists;
     }
     
     if (isUsingFallbackStorage()) {
-      const context = detectContext();
-      console.info(`Using memory storage in ${context} context. Data will not persist between sessions.`);
+      console.info(`Using memory storage. Data will not persist between sessions.`);
     }
   } catch (e) {
     console.warn('Failed to load todo lists from storage:', e);
@@ -105,10 +105,7 @@ function loadTodoLists(): void {
  */
 function saveTodoLists(): void {
   try {
-    const success = safeSetItem('walrusTodoLists', JSON.stringify(todoLists));
-    if (!success && !isUsingFallbackStorage()) {
-      console.warn('Failed to save to persistent storage, falling back to memory storage.');
-    }
+    todoListStorage.set(todoLists);
   } catch (e) {
     console.warn('Failed to save todo lists to storage:', e);
   }

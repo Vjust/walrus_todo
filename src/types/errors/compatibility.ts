@@ -12,8 +12,11 @@ import {
   BlockchainError,
   CLIError,
   TransactionError,
-  AuthorizationError,
-  isErrorWithMessage as consolidatedIsErrorWithMessage,
+  AuthorizationError
+} from './consolidated';
+
+import {
+  isRetryableError,
   getErrorMessage as consolidatedGetErrorMessage,
   toBaseError
 } from './consolidated';
@@ -29,7 +32,7 @@ export {
   TransactionError,
   AuthorizationError,
   // Re-export utility functions
-  consolidatedIsErrorWithMessage as isErrorWithMessage,
+  isRetryableError,
   consolidatedGetErrorMessage as getErrorMessage,
   toBaseError
 };
@@ -164,7 +167,12 @@ export class WalrusError extends BaseError {
  * @deprecated Use the consolidated toBaseError function instead
  */
 export function toErrorWithMessage(maybeError: unknown): { message: string } {
-  if (isErrorWithMessage(maybeError)) return maybeError;
+  if (typeof maybeError === 'object' && 
+      maybeError !== null && 
+      'message' in maybeError && 
+      typeof (maybeError as any).message === 'string') {
+    return maybeError as { message: string };
+  }
   try {
     return new Error(JSON.stringify(maybeError));
   } catch {

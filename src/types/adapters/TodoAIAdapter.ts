@@ -61,7 +61,7 @@ export class TodoAIAdapter {
       });
 
       // Cast to Uint8Array | TransactionBlock to match the expected type
-      const result = await this.client.signAndExecuteTransactionBlock({
+      const result = await this.client.signAndExecuteTransaction({
         signer: keypair,
         transactionBlock: tx as any,
       });
@@ -256,7 +256,7 @@ export class TodoAIAdapter {
 
       // Execute the transaction
       // Cast to Uint8Array | TransactionBlock to match the expected type
-      const result = await this.client.signAndExecuteTransactionBlock({
+      const result = await this.client.signAndExecuteTransaction({
         signer: keypair,
         transactionBlock: tx as any,
       });

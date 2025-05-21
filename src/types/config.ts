@@ -112,6 +112,18 @@ export interface AppConfig {
     file?: string;
     console: boolean;
   };
+  completedTodos?: {
+    count: number;
+    lastCompleted: string | null;
+    history: Array<{
+      id: string;
+      title: string;
+      completedAt: string;
+      listName?: string;
+      category?: string;
+    }>;
+    byCategory: Record<string, number>;
+  };
 }
 
 /**
@@ -133,11 +145,6 @@ export interface ConfigOptions {
  * library versions and how they should interact.
  */
 export interface LibraryVersionConfig {
-  '@mysten/sui': {
-    version: string;
-    compatibleWith: string[];
-    adapterStrategy: 'direct' | 'wrapped';
-  };
   '@mysten/sui': {
     version: string;
     compatibleWith: string[];

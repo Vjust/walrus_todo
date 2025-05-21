@@ -149,17 +149,24 @@ cd packages/frontend-v2 && pnpm install && cd ../.. && pnpm run nextjs
 
 ```typescript
 import { useWalletContext } from '@/lib/walletContext';
+import { TransactionHistory } from '@/components/TransactionHistory';
 
 export function MyComponent() {
   const {
     connected,
+    connecting,
     publicKey,
     walletType,
+    currentNetwork,
+    isSwitchingNetwork,
+    switchNetwork,
     suiConnect,
     phantomConnect,
     slushConnect,
+    backpackConnect,
     disconnect,
-    error
+    error,
+    transactions
   } = useWalletContext();
 
   // Use wallet functionality
@@ -169,13 +176,55 @@ export function MyComponent() {
         <button onClick={suiConnect}>Connect Sui Wallet</button>
         <button onClick={phantomConnect}>Connect Phantom</button>
         <button onClick={slushConnect}>Connect Slush Wallet</button>
+        <button onClick={backpackConnect}>Connect Backpack</button>
       </div>
     );
   }
 
+  // Network switching component
+  const handleNetworkChange = (network: 'mainnet' | 'testnet' | 'devnet') => {
+    if (isSwitchingNetwork) return;
+    switchNetwork(network);
+  };
+
   return (
     <div>
       <p>Connected with {walletType}: {publicKey}</p>
+      
+      {/* Network selection */}
+      <div>
+        <p>Current Network: {currentNetwork}</p>
+        <div className="network-selector">
+          <button 
+            onClick={() => handleNetworkChange('mainnet')}
+            disabled={isSwitchingNetwork || currentNetwork === 'mainnet'}
+            className={currentNetwork === 'mainnet' ? 'active' : ''}
+          >
+            Mainnet
+          </button>
+          <button 
+            onClick={() => handleNetworkChange('testnet')}
+            disabled={isSwitchingNetwork || currentNetwork === 'testnet'}
+            className={currentNetwork === 'testnet' ? 'active' : ''}
+          >
+            Testnet
+          </button>
+          <button 
+            onClick={() => handleNetworkChange('devnet')}
+            disabled={isSwitchingNetwork || currentNetwork === 'devnet'}
+            className={currentNetwork === 'devnet' ? 'active' : ''}
+          >
+            Devnet
+          </button>
+        </div>
+      </div>
+      
+      {/* Transaction history */}
+      <div className="transaction-history">
+        <h3>Recent Transactions</h3>
+        <TransactionHistory maxItems={5} />
+      </div>
+      
       <button onClick={disconnect}>Disconnect</button>
     </div>
   );
@@ -187,9 +236,20 @@ export function MyComponent() {
 ```typescript
 import { useWalletContext } from '@/lib/walletContext';
 import { storeTodoOnBlockchain } from '@/lib/todo-service';
+import { TransactionHistory } from '@/components/TransactionHistory';
+import { SessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
 
 export function BlockchainTodo() {
-  const { connected, walletType, suiAccount, phantomPublicKey, slushAccount } = useWalletContext();
+  const { 
+    connected, 
+    walletType, 
+    currentNetwork,
+    suiAccount, 
+    phantomPublicKey, 
+    slushAccount,
+    backpackAccount,
+    trackTransaction
+  } = useWalletContext();
 
   const handleStore = async (listName: string, todoId: string) => {
     if (!connected) {
@@ -200,18 +260,42 @@ export function BlockchainTodo() {
     // Create signer based on wallet type
     let signer;
     if (walletType === 'sui') {
-      signer = { address: suiAccount?.address, /* ... */ };
+      signer = { address: suiAccount?.address, network: currentNetwork, /* ... */ };
     } else if (walletType === 'phantom') {
-      signer = { publicKey: phantomPublicKey, /* ... */ };
+      signer = { publicKey: phantomPublicKey, network: currentNetwork, /* ... */ };
     } else if (walletType === 'slush') {
-      signer = { address: slushAccount?.address, /* ... */ };
+      signer = { address: slushAccount?.address, network: currentNetwork, /* ... */ };
+    } else if (walletType === 'backpack') {
+      signer = { address: backpackAccount?.address, network: currentNetwork, /* ... */ };
     }
 
-    const objectId = await storeTodoOnBlockchain(listName, todoId, signer);
-    console.log('Stored with ID:', objectId);
+    try {
+      // Track the transaction using the trackTransaction utility
+      const transactionPromise = storeTodoOnBlockchain(listName, todoId, signer);
+      const result = await trackTransaction(transactionPromise, 'Store Todo');
+      
+      console.log('Stored with ID:', result.objectId);
+      return result;
+    } catch (error) {
+      console.error('Failed to store todo:', error);
+      throw error;
+    }
   };
 
-  // Component implementation...
+  return (
+    <div>
+      {/* Component implementation */}
+      
+      {/* Always include the timeout warning for wallet sessions */}
+      <SessionTimeoutWarning />
+      
+      {/* Show transaction history */}
+      <div className="blockchain-transactions">
+        <h3>Transaction History</h3>
+        <TransactionHistory maxItems={10} />
+      </div>
+    </div>
+  );
 }
 ```
 
@@ -243,11 +327,13 @@ export function BlockchainTodo() {
 
 ### Solana Wallets
 - Phantom
+- Solflare
+- Backpack (multi-chain)
 
 ## Features
 
 ### Current Features
-- ✅ Multi-wallet support (Sui, Phantom, and Slush)
+- ✅ Multi-wallet support (Sui, Phantom, Slush, and Backpack)
 - ✅ Auto-detection of installed wallets
 - ✅ Connection persistence
 - ✅ Wallet switching
@@ -256,15 +342,19 @@ export function BlockchainTodo() {
 - ✅ Truncated address display with copy functionality
 - ✅ Connection status indicators
 - ✅ DApp Kit integration
+- ✅ Network switching (mainnet/testnet/devnet)
+- ✅ Session timeout warnings
+- ✅ Transaction history tracking
+- ✅ Enhanced type definitions for all supported wallets
 
 ### Planned Features
 - [ ] Additional wallet support (MetaMask via Sui compatibility)
 - [ ] Transaction signing UI
 - [ ] Balance display
-- [ ] Network switching (testnet/mainnet)
-- [ ] Wallet connect modal
+- [ ] Wallet connect modal with QR code
 - [ ] Mobile wallet support
 - [ ] Multi-chain asset display
+- [ ] Transaction history export
 
 ## Troubleshooting
 

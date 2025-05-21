@@ -35,10 +35,20 @@ import {
   ErrorHandler,
   FlagValidator,
   RetryManager,
-  RetryOptions,
   Logger as CLILogger,
   Formatter
 } from './utils/cli-helpers';
+
+/**
+ * Options for retry operations
+ */
+interface RetryOptions {
+  maxRetries?: number;
+  initialDelay?: number;
+  maxDelay?: number;
+  retryableErrors?: Array<string | RegExp>;
+  onRetry?: (attempt: number, error: Error) => void;
+}
 
 /**
  * Icons used throughout the CLI for consistent appearance
@@ -1251,18 +1261,20 @@ export default abstract class BaseCommand extends Command {
     options?: RetryOptions
   ): Promise<T> {
     try {
-      const retryManager = new RetryManager(['testnet'], {
-        ...options,
-        onRetry: (error: Error, attempt: number, delay: number) => {
-          this.warning(`${context}: Retry attempt ${attempt} after error: ${error.message}`);
-          if (options?.onRetry) {
-            (options.onRetry as any)(error, attempt, delay);
+      // Use the static retry method for now since it's a simple operation
+      // This avoids having to create a fake NetworkNode just for compatibility
+      return await RetryManager.retry(
+        operation,
+        {
+          ...options,
+          onRetry: (attempt: number, error: Error) => {
+            this.warning(`${context}: Retry attempt ${attempt} after error: ${error.message}`);
+            if (options?.onRetry) {
+              // Forward the callback with the same parameters to preserve compatibility
+              (options.onRetry as unknown as (attempt: number, error: Error) => void)(attempt, error);
+            }
           }
         }
-      });
-      return await retryManager.execute(
-        async (node: any) => operation(),
-        context
       );
     } catch (error) {
       ErrorHandler.handle(error, context);  // This throws, so function always returns

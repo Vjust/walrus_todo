@@ -59,9 +59,9 @@ export default class StoreListCommand extends BaseCommand {
   /**
    * Start a spinner with the given text message
    * @param text The text to display alongside the spinner
-   * @private
+   * @protected
    */
-  private startSpinner(text: string) {
+  protected startSpinner(text: string) {
     this.log(chalk.blue(text));
   }
 
@@ -69,9 +69,9 @@ export default class StoreListCommand extends BaseCommand {
    * Stop the current spinner and display a success or failure message
    * @param success Whether the operation succeeded
    * @param text Optional message to display
-   * @private
+   * @protected
    */
-  private stopSpinner(success = true, text?: string) {
+  protected stopSpinner(success = true, text?: string) {
     if (text) {
       this.log(success ? chalk.green(`✓ ${text}`) : chalk.red(`✗ ${text}`));
     }
@@ -164,7 +164,7 @@ export default class StoreListCommand extends BaseCommand {
       // Initialize and validate Walrus storage connection
       this.startSpinner('Connecting to Walrus storage...');
       await this.walrusStorage.connect();
-      const isConnected = await this.walrusStorage.isConnected();
+      const isConnected = this.walrusStorage.getConnectionStatus();
       if (!isConnected) {
         throw new CLIError('Failed to establish connection with Walrus storage', 'WALRUS_CONNECTION_FAILED');
       }

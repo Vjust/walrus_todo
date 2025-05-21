@@ -1,7 +1,33 @@
 // Fix import for chalk with esModuleInterop
 import chalkModule from 'chalk';
 const chalk = chalkModule;
-import { CLIError, isErrorWithMessage, getErrorMessage } from '../types/errors/consolidated';
+import { CLIError } from '../types/errors/consolidated/CLIError';
+// Define utility functions directly to avoid import issues
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  try {
+    return String(error);
+  } catch {
+    return 'Unknown error';
+  }
+};
+
+const isRetryableError = (error: unknown): boolean => {
+  // Check if it's a network-related error based on the message
+  if (error instanceof Error) {
+    const errorMessage = error.message.toLowerCase();
+    return (
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('network') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('retry') ||
+      errorMessage.includes('unavailable')
+    );
+  }
+  return false;
+};
 import { displayFriendlyError, getErrorContext } from './error-messages';
 
 
@@ -22,8 +48,8 @@ export function handleError(messageOrError: string | unknown, error?: unknown): 
   let actualError: Error;
   if (error instanceof Error) {
     actualError = error;
-  } else if (isErrorWithMessage(error)) {
-    actualError = new Error(error.message);
+  } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
+    actualError = new Error((error as any).message);
   } else {
     actualError = new Error(getErrorMessage(error));
   }
@@ -50,7 +76,7 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDel
       lastError = error as Error;
       
       // Only retry on network errors or specific transient errors
-      if (!isTransientError(error) || attempt >= maxRetries) {
+      if (!isRetryableError(error) || attempt >= maxRetries) {
         throw error;
       }
       
@@ -65,20 +91,7 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDel
   throw lastError!;
 }
 
-/**
- * Determines if an error is likely transient and can be retried
- */
-function isTransientError(error: unknown): boolean {
-  const message = (error as Error)?.message?.toLowerCase() || '';
-  return (
-    message.includes('network') ||
-    message.includes('timeout') ||
-    message.includes('connection') ||
-    message.includes('econnrefused') ||
-    message.includes('econnreset') ||
-    message.includes('429')
-  );
-}
+// Using isRetryableError from consolidated types now
 
 export function assert(condition: boolean, message: string): asserts condition {
   if (!condition) {

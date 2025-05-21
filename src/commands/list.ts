@@ -109,7 +109,7 @@ export default class ListCommand extends BaseCommand {
   /**
    * Handle JSON output format
    */
-  private async handleJsonOutput(args: { listName?: string }, flags: { json?: boolean; completed?: boolean; pending?: boolean; priority?: string; tags?: string[]; sort?: string; compact?: boolean; detailed?: boolean }): Promise<void> {
+  private async handleJsonOutput(args: { listName?: string }, flags: any): Promise<void> {
     if (args.listName) {
       const list = await this.todoService.getList(args.listName);
       if (!list) {
@@ -314,15 +314,14 @@ export default class ListCommand extends BaseCommand {
     
     // Check cache for all lists first
     const cacheKey = 'lists:all';
-    let lists = await this.getCachedTodos(cacheKey);
+    let lists = await this.getCachedTodos(cacheKey, async () => this.todoService.getAllLists()) as string[] | null;
     
-    if (lists) {
-      if (CACHE_DEBUG) this.debugLog('Cache hit for all lists');
-    } else {
-      if (CACHE_DEBUG) this.debugLog('Cache miss for all lists');
-      lists = await this.todoService.getAllLists();
-      // Cache the lists for 2 minutes
-      await this.setCachedTodos(cacheKey, lists);
+    if (CACHE_DEBUG) {
+      if (lists) {
+        this.debugLog('Cache hit for all lists');
+      } else {
+        this.debugLog('Cache miss for all lists');
+      }
     }
     this.debugLog(`Found ${lists.length} lists`);
 
@@ -353,7 +352,7 @@ export default class ListCommand extends BaseCommand {
 
     // Process all lists to get more detailed information
     const listDetails = await Promise.all(
-      lists.map(async (listName) => {
+      (lists as string[]).map(async (listName) => {
         const list = await this.todoService.getList(listName);
         if (!list) return null;
 

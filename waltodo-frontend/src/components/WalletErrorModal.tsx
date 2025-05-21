@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { WalletError, getWalletErrorMessage } from '@/lib/wallet-errors';
+import { WalletError, getWalletErrorMessage, WalletNotInstalledError } from '@/lib/wallet-errors';
 
 interface WalletErrorModalProps {
   error: WalletError | null;
@@ -90,6 +90,45 @@ export function WalletErrorModal({ error, onDismiss }: WalletErrorModalProps) {
                   {suggestion}
                 </p>
               </div>
+              
+              {/* Installation links for wallet not installed errors */}
+              {error instanceof WalletNotInstalledError && (
+                <div className="mt-3">
+                  {error.walletName.includes('Phantom') && (
+                    <a 
+                      href="https://phantom.app/download" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 text-sm text-white bg-purple-600 rounded-md hover:bg-purple-700"
+                    >
+                      Install Phantom
+                    </a>
+                  )}
+                  
+                  {(error.walletName.includes('Sui') || error.walletName.includes('Slush')) && (
+                    <a 
+                      href="https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                    >
+                      Install Sui/Slush
+                    </a>
+                  )}
+                  
+                  {error.walletName.includes('Backpack') && (
+                    <a 
+                      href="https://www.backpack.app/download" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 text-sm text-white bg-orange-600 rounded-md hover:bg-orange-700"
+                    >
+                      Install Backpack
+                    </a>
+                  )}
+                </div>
+              )}
+              
               <div className="mt-4 flex justify-end">
                 <button
                   type="button"

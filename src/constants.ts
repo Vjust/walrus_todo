@@ -76,9 +76,58 @@ export const AI_CONFIG = {
 } as const;
 
 export const RETRY_CONFIG = {
-  ATTEMPTS: getEnv('RETRY_ATTEMPTS'),
-  DELAY_MS: getEnv('RETRY_DELAY_MS'),
-  TIMEOUT_MS: getEnv('TIMEOUT_MS')
+  ATTEMPTS: getEnv('RETRY_ATTEMPTS') || 5,
+  DELAY_MS: getEnv('RETRY_DELAY_MS') || 500,
+  MAX_DELAY_MS: getEnv('MAX_RETRY_DELAY_MS') || 60000,
+  TIMEOUT_MS: getEnv('TIMEOUT_MS') || 15000,
+  MAX_DURATION_MS: getEnv('MAX_RETRY_DURATION') || 300000,
+  RETRYABLE_ERRORS: [
+    'ETIMEDOUT',
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'EPIPE',
+    'network',
+    'timeout',
+    'connection',
+    /^5\d{2}$/,         // 5xx errors
+    '408',              // Request Timeout
+    '429',              // Too Many Requests
+    'insufficient storage',  // Walrus-specific errors
+    'blob not found',
+    'certification pending',
+    'storage allocation',
+  ],
+  RETRYABLE_STATUSES: [
+    408,  // Request Timeout
+    429,  // Too Many Requests
+    500,  // Internal Server Error
+    502,  // Bad Gateway
+    503,  // Service Unavailable
+    504,  // Gateway Timeout
+    449,  // Retry after storage allocation
+    460,  // Temporary blob unavailable
+  ],
+  // Node health configuration
+  MIN_NODES: 1,
+  HEALTH_THRESHOLD: 0.3,
+  ADAPTIVE_DELAY: true,
+  CIRCUIT_BREAKER: {
+    FAILURE_THRESHOLD: 5,
+    RESET_TIMEOUT_MS: 30000
+  },
+  LOAD_BALANCING: 'health' as 'health' | 'round-robin' | 'priority'
+} as const;
+
+export const CONNECTION_CONFIG = {
+  TIMEOUT_MS: getEnv('CONNECTION_TIMEOUT_MS') || 30000,
+  KEEP_ALIVE: getEnv('CONNECTION_KEEP_ALIVE') || false,
+  MAX_IDLE_TIME_MS: getEnv('CONNECTION_MAX_IDLE_TIME_MS') || 60000,
+  AUTO_RECONNECT: getEnv('CONNECTION_AUTO_RECONNECT') || true,
+  RETRY_CONFIG: {
+    MAX_RETRIES: getEnv('CONNECTION_MAX_RETRIES') || 3,
+    BASE_DELAY_MS: getEnv('CONNECTION_BASE_DELAY_MS') || 1000,
+    MAX_DELAY_MS: getEnv('CONNECTION_MAX_DELAY_MS') || 10000
+  }
 } as const;
 
 export const SECURITY_CONFIG = {

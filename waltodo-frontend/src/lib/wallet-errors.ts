@@ -84,6 +84,17 @@ export function categorizeWalletError(error: unknown): WalletError {
     return new WalletNotInstalledError(walletName);
   }
   
+  // Check for Backpack-specific errors
+  if (lowerMessage.includes('backpack') || lowerMessage.includes('xnft')) {
+    if (lowerMessage.includes('not installed') || lowerMessage.includes('not found') || lowerMessage.includes('undefined')) {
+      return new WalletNotInstalledError('Backpack');
+    }
+    
+    if (lowerMessage.includes('rejected') || lowerMessage.includes('denied') || lowerMessage.includes('declined')) {
+      return new WalletConnectionRejectedError();
+    }
+  }
+  
   // If we can't categorize, return a generic WalletError
   return new WalletError(
     error instanceof Error ? error.message : 'Unknown wallet error occurred'
@@ -103,9 +114,26 @@ export function getWalletErrorMessage(error: WalletError): {
   }
   
   if (error instanceof WalletNotInstalledError) {
+    // Provide wallet-specific installation instructions
+    const walletName = error.walletName;
+    let installUrl = '';
+    let suggestion = `Please install the ${walletName} browser extension first`;
+    
+    // Provide specific installation URLs based on wallet type
+    if (walletName.includes('Phantom')) {
+      installUrl = 'https://phantom.app/download';
+      suggestion = `Please install the Phantom browser extension from ${installUrl}`;
+    } else if (walletName.includes('Sui') || walletName.includes('Slush')) {
+      installUrl = 'https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil';
+      suggestion = `Please install the Sui/Slush browser extension from the Chrome Web Store`;
+    } else if (walletName.includes('Backpack')) {
+      installUrl = 'https://www.backpack.app/download';
+      suggestion = `Please install the Backpack browser extension from ${installUrl}`;
+    }
+    
     return {
-      message: `${error.walletName} wallet not installed`,
-      suggestion: `Please install the ${error.walletName} browser extension first`
+      message: `${walletName} wallet not installed`,
+      suggestion: suggestion
     };
   }
   

@@ -31,6 +31,7 @@ export default class SimpleCommand extends BaseCommand {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     priority: Flags.string({
       char: 'p',
       description: 'Priority (high, medium, low)',
@@ -76,7 +77,7 @@ export default class SimpleCommand extends BaseCommand {
   private todoService = new TodoService();
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parse(SimpleCommand);
+    const { args, flags } = await this.parse<typeof SimpleCommand>(SimpleCommand);
 
     try {
       switch (args.action) {

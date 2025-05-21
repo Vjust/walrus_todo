@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import safeStorage, { isBrowser, isUsingFallbackStorage } from '@/lib/safe-storage';
 
 export function ContextWarning() {
   const [showWarning, setShowWarning] = useState(false);
@@ -8,27 +9,12 @@ export function ContextWarning() {
 
   useEffect(() => {
     // Only run in browser environment
-    if (typeof window === 'undefined') return;
+    if (!isBrowser()) return;
 
     const detectedWarnings: string[] = [];
 
-    // Check if storage is blocked - using safer approach
-    try {
-      const testKey = '__test__';
-      // Try-catch each storage operation individually
-      try {
-        localStorage.setItem(testKey, testKey);
-        try {
-          localStorage.removeItem(testKey);
-        } catch (removeErr) {
-          console.warn('Error removing test key from localStorage:', removeErr);
-        }
-      } catch (e) {
-        detectedWarnings.push('Storage access is restricted. Some features may not work properly.');
-      }
-    } catch (outerErr) {
-      // Catch any errors from accessing localStorage itself
-      console.warn('Error accessing localStorage:', outerErr);
+    // Check if storage is restricted
+    if (isUsingFallbackStorage()) {
       detectedWarnings.push('Storage access is restricted. Some features may not work properly.');
     }
 
@@ -64,7 +50,8 @@ export function ContextWarning() {
     }
   }, []);
 
-  if (!showWarning || warnings.length === 0) return null;
+  // Return null during SSR and initial client-side render
+  if (!showWarning || warnings.length === 0 || !isBrowser()) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-yellow-50 dark:bg-yellow-900 border-b border-yellow-200 dark:border-yellow-700">

@@ -115,7 +115,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   }
 
   // This is not part of the core Signer interface but is used in the codebase
-  async signAndExecuteTransactionBlock(
+  async signAndExecuteTransaction(
     tx: Transaction,
     options?: {
       requestType?: 'WaitForLocalExecution';

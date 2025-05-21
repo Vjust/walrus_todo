@@ -43,6 +43,8 @@ export type StorageLocation = 'local' | 'blockchain' | 'both';
  * @property {string} [walrusBlobId] - Walrus blob ID for decentralized storage
  * @property {string} [nftObjectId] - Sui NFT object ID referencing this todo
  * @property {string} [imageUrl] - URL to the todo image stored on Walrus
+ * @property {string} [category] - Category of the todo item
+ * @property {string} [listName] - Name of the list the todo belongs to
  */
 export interface Todo {
   /** Unique identifier for the todo */
@@ -75,6 +77,10 @@ export interface Todo {
   nftObjectId?: string;
   /** URL to the todo image stored on Walrus */
   imageUrl?: string;
+  /** Category of the todo item */
+  category?: string;
+  /** Name of the list the todo belongs to */
+  listName?: string;
 }
 
 /**
