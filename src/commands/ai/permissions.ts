@@ -1,4 +1,4 @@
-import { Command, Flags, Args } from '@oclif/core';
+import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import { BlockchainVerifier } from '../../services/ai/BlockchainVerifier';

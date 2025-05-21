@@ -2,13 +2,11 @@ import { TodoService } from '../../../src/services/todoService';
 import { Todo, TodoList } from '../../../src/types/todo';
 import { CLIError } from '../../../src/types/error';
 import { STORAGE_CONFIG } from '../../../src/constants';
-import fs from 'fs';
-import fsPromises from 'fs/promises';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 
 // Mock file system modules
 jest.mock('fs');
-jest.mock('fs/promises');
 
 // Mock generateId to return predictable IDs
 jest.mock('../../../src/utils/id-generator', () => ({

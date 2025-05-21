@@ -16,7 +16,10 @@ process.env.FORCE_COLOR = '1';
 
 // Force chalk to use colors even in CI/non-TTY environments
 import chalk from 'chalk';
+import { Logger } from './utils/Logger';
 chalk.level = chalk.level > 0 ? chalk.level : 1;
+
+const logger = new Logger('CLI');
 
 export default class WalTodo extends Command {
   static description = 'A CLI for managing todos with Sui blockchain and Walrus storage';
@@ -102,7 +105,7 @@ export const run = async () => {
           // Try to find API key in args
           const apiKeyIndex = args.findIndex(arg => arg === '--apiKey' || arg === '-k');
           if (apiKeyIndex === -1 || apiKeyIndex === args.length - 1) {
-            console.error(chalk.red('Error: XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'));
+            logger.error('XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.');
             process.exit(1);
           }
         }
@@ -116,7 +119,7 @@ export const run = async () => {
         )?.[1];
         
         if (!AiCommandClass) {
-          console.error(chalk.red('Error: AI command not found in exports.'));
+          logger.error('AI command not found in exports.');
           process.exit(1);
         }
         
@@ -124,7 +127,7 @@ export const run = async () => {
         await AiCommandClass.run(args.slice(1));
         return;
       } catch (error) {
-        console.error(chalk.red(`AI command error: ${error instanceof Error ? error.message : String(error)}`));
+        logger.error('AI command error', error instanceof Error ? error : new Error(String(error)));
         process.exit(1);
       }
     }
@@ -135,10 +138,10 @@ export const run = async () => {
     })?.[1];
 
     if (!CommandClass) {
-      console.log(`Command not found: ${commandName}`);
-      console.log('Available commands:');
+      logger.info(`Command not found: ${commandName}`);
+      logger.info('Available commands:');
       Object.keys(Commands).forEach(name => {
-        console.log(`  ${name.replace('Command', '')}`);
+        logger.info(`  ${name.replace('Command', '')}`);
       });
       process.exit(1);
     }
@@ -154,15 +157,15 @@ export const run = async () => {
         errorMessage.includes('connection') ||
         errorMessage.includes('ECONNREFUSED') ||
         errorMessage.includes('ETIMEDOUT')) {
-      console.error(chalk.red(`Network error: ${errorMessage}`));
-      console.error(chalk.yellow('Please check your internet connection and try again.'));
+      logger.error(`Network error: ${errorMessage}`);
+      logger.warn('Please check your internet connection and try again.');
     } else {
-      console.error(chalk.red('Error running command:'), errorMessage);
+      logger.error('Error running command', error instanceof Error ? error : new Error(errorMessage));
     }
     
     // Provide debug info if verbose mode is enabled
     if (process.env.DEBUG) {
-      console.error(chalk.gray('Debug info:'), error);
+      logger.debug('Debug info', { error });
     }
     
     process.exit(1);
@@ -174,7 +177,7 @@ export const run = async () => {
 const isMainModule = require.main === module;
 if (isMainModule) {
   run().catch((error) => {
-    console.error('Unhandled error:', error);
+    logger.error('Unhandled error', error instanceof Error ? error : new Error(String(error)));
     process.exit(1);
   });
 }

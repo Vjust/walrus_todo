@@ -41,6 +41,7 @@ export class Logger {
       const context = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
       const error = entry.error ? `\n${JSON.stringify(entry.error, null, 2)}` : '';
       const component = this.componentName ? `[${this.componentName}] ` : '';
+      // eslint-disable-next-line no-console
       console[entry.level](`[${entry.timestamp}] ${component}${entry.message}${context}${error}`);
     });
   }

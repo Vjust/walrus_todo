@@ -109,7 +109,7 @@ export default class ListCommand extends BaseCommand {
   /**
    * Handle JSON output format
    */
-  private async handleJsonOutput(args: { listName?: string }, flags: any): Promise<void> {
+  private async handleJsonOutput(args: { listName?: string }, flags: Record<string, unknown>): Promise<void> {
     if (args.listName) {
       const list = await this.todoService.getList(args.listName);
       if (!list) {
@@ -166,7 +166,7 @@ export default class ListCommand extends BaseCommand {
    * @param listName Name of the list to display
    * @param flags Command flags affecting display format and filtering
    */
-  private async showSpecificList(listName: string, flags: any): Promise<void> {
+  private async showSpecificList(listName: string, flags: Record<string, unknown>): Promise<void> {
     this.debugLog(`Getting list: ${listName}`);
     const list = await this.todoService.getList(listName);
 
@@ -314,7 +314,7 @@ export default class ListCommand extends BaseCommand {
     
     // Check cache for all lists first
     const cacheKey = 'lists:all';
-    const lists = await this.getCachedTodos(cacheKey, async () => this.todoService.getAllLists()) as string[] | null;
+    const lists = await this.getCachedTodos(cacheKey, async () => this.todoService.getAllLists()) as string[];
     
     if (CACHE_DEBUG) {
       if (lists) {
@@ -387,7 +387,7 @@ export default class ListCommand extends BaseCommand {
     );
 
     // Filter out any null results
-    const validLists = listDetails.filter(list => list !== null) as any[];
+    const validLists = listDetails.filter((list): list is NonNullable<typeof list> => list !== null);
 
     // Sort lists by most recently updated
     validLists.sort((a, b) => {

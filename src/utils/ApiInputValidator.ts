@@ -1,5 +1,5 @@
 import { CLIError } from '../types/error';
-import { SchemaValidator, Schemas } from './SchemaValidator';
+import { SchemaValidator } from './SchemaValidator';
 import { CommandSanitizer } from './CommandSanitizer';
 
 /**

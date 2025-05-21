@@ -60,12 +60,16 @@ describe('Config Fuzzer Tests', () => {
           loadConfigFile(testConfigPath);
         }).toThrow(CLIError);
         
+        // Separate test for error object validation
+        let thrownError: CLIError | null = null;
         try {
           loadConfigFile(testConfigPath);
         } catch (error) {
-          expect(error).toBeInstanceOf(CLIError);
-          expect((error as CLIError).code).toBe('CONFIG_FILE_LOAD_FAILED');
+          thrownError = error as CLIError;
         }
+        
+        expect(thrownError).toBeInstanceOf(CLIError);
+        expect(thrownError?.code).toBe('CONFIG_FILE_LOAD_FAILED');
       });
     });
 

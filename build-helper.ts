@@ -2,14 +2,14 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 
-console.log('Running TypeScript build in transpile-only mode...');
+process.stdout.write('Running TypeScript build in transpile-only mode...\n');
 
 // Root directory of the project
 const root = process.cwd();
 
 // Load tsconfig.json
 const configPath = path.join(root, 'tsconfig.json');
-console.log(`Using tsconfig: ${configPath}`);
+process.stdout.write(`Using tsconfig: ${configPath}\n`);
 
 // Parse the tsconfig.json
 const configFile = ts.readConfigFile(configPath, ts.sys.readFile);

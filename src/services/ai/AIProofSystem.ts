@@ -182,7 +182,7 @@ export class AIProofSystem {
         try {
           // Verification logic would go here
           // For now, we just acknowledge that the signature exists
-          console.log('Signature verification not yet implemented');
+          // Signature verification not yet implemented - TODO: Add implementation
         } catch (error) {
           return { 
             isValid: false,

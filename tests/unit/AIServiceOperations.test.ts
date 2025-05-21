@@ -13,13 +13,22 @@ import {
 
 // Mock the AIProviderFactory
 jest.mock('../../src/services/ai/AIProviderFactory', () => {
+  const mockAdapter = {
+    getProviderName: () => 'XAI',
+    getModelName: () => 'grok-beta',
+    generateCompletion: jest.fn().mockResolvedValue('Mock AI response'),
+    isAvailable: () => Promise.resolve(true)
+  };
+  
   return {
     AIProviderFactory: {
-      createProvider: jest.fn().mockImplementation(() => createMockAIModelAdapter()),
-      getDefaultProvider: jest.fn().mockImplementation(() => ({
-        provider: AIProvider.XAI,
+      createProvider: jest.fn().mockResolvedValue(mockAdapter),
+      createDefaultAdapter: jest.fn().mockReturnValue(mockAdapter),
+      createFallbackAdapter: jest.fn().mockReturnValue(mockAdapter),
+      getDefaultProvider: jest.fn().mockReturnValue({
+        provider: 'XAI',
         modelName: 'grok-beta'
-      }))
+      })
     }
   };
 });

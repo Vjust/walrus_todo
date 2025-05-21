@@ -5,7 +5,6 @@ import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
 import { SignatureWithBytes } from '../../../types/adapters/SignerAdapter';
 import { SuiSDKVersion } from '../../../types/adapters/SignerAdapter';
-import type { TransactionBlockAdapter } from '@utils/adapters/transaction-adapter';
 import { TransactionType } from '../../../types/transaction';
 import { toB64 } from '@mysten/sui/utils';
 
@@ -33,16 +32,15 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   }
 
   // Implementation matching Signer interface with correct return type
-  async signData(data: Uint8Array): Promise<Uint8Array> {
+  async signData(_data: Uint8Array): Promise<Uint8Array> {
     this.checkDisposed();
     // Mock implementation returns a fixed signature array
     return new Uint8Array([1, 2, 3, 4, 5]);
   }
 
-  async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
+  async signTransaction(_transaction: TransactionType): Promise<SignatureWithBytes> {
     this.checkDisposed();
     // Cast to required type - we're in a mock file so this is acceptable
-    const txBlock = transaction;
 
     // Convert to base64 strings as required by SignatureWithBytes interface
     return {
@@ -51,7 +49,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
     };
   }
 
-  async signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes> {
+  async signPersonalMessage(_message: Uint8Array): Promise<SignatureWithBytes> {
     this.checkDisposed();
     // Convert to base64 strings as required by SignatureWithBytes interface
     return {
@@ -60,7 +58,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
     };
   }
 
-  async signWithIntent(message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
+  async signWithIntent(_message: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> {
     this.checkDisposed();
     // Convert to base64 strings as required by SignatureWithBytes interface
     return {
@@ -86,7 +84,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   }
 
   // Improved connect method with proper typing
-  connect(client: SuiClient): any {
+  connect(client: SuiClient): unknown {
     this.checkDisposed();
     this.client = client;
     return this;
@@ -105,7 +103,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   }
 
   // Implementation matching extended expectations with correct signature
-  async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
+  async signTransactionBlock(_bytes: Uint8Array): Promise<SignatureWithBytes> {
     this.checkDisposed();
     // Return base64 strings as required by SignatureWithBytes interface
     return {
@@ -116,8 +114,8 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
 
   // This is not part of the core Signer interface but is used in the codebase
   async signAndExecuteTransaction(
-    tx: Transaction,
-    options?: {
+    _tx: Transaction,
+    _options?: {
       requestType?: 'WaitForLocalExecution';
       showEffects?: boolean;
       showObjectChanges?: boolean;
@@ -128,7 +126,6 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   ): Promise<SuiTransactionBlockResponse> {
     this.checkDisposed();
     // Cast to the required type
-    const txBlock = tx;
 
     return {
       digest: 'mock-digest',
@@ -191,7 +188,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
       this.client = null;
       this._isDisposed = true;
     } catch (error) {
-      console.error("Error disposing SignerWithProvider:", error);
+      process.stderr.write(`Error disposing SignerWithProvider: ${error}\n`);
     }
   }
 

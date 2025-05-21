@@ -54,40 +54,40 @@ function analyzeSingleTodoSizes(): void {
   const tinyTodo = generateTodo('tiny', 5, 10, 1);
   const tinySize = TodoSizeCalculator.calculateTodoSize(tinyTodo, { includeBuffer: false });
   const tinyWithBuffer = TodoSizeCalculator.calculateTodoSize(tinyTodo);
-  process.stdout.write(`Tiny todo     | ${tinySize.toString().padStart(8)} | ${tinyWithBuffer.toString().padStart(11)} | ${((tinyWithBuffer/tinySize - 1) * 100).toFixed(2)}%\n`);
+  console.log(`Tiny todo     | ${tinySize.toString().padStart(8)} | ${tinyWithBuffer.toString().padStart(11)} | ${((tinyWithBuffer/tinySize - 1) * 100).toFixed(2)}%`);
   
   // Test small todo
   const smallTodo = generateTodo('small', 15, 50, 2);
   const smallSize = TodoSizeCalculator.calculateTodoSize(smallTodo, { includeBuffer: false });
   const smallWithBuffer = TodoSizeCalculator.calculateTodoSize(smallTodo);
-  process.stdout.write(`Small todo    | ${smallSize.toString().padStart(8)} | ${smallWithBuffer.toString().padStart(11)} | ${((smallWithBuffer/smallSize - 1) * 100).toFixed(2)}%\n`);
+  console.log(`Small todo    | ${smallSize.toString().padStart(8)} | ${smallWithBuffer.toString().padStart(11)} | ${((smallWithBuffer/smallSize - 1) * 100).toFixed(2)}%`);
   
   // Test medium todo
   const mediumTodo = generateTodo('medium', 30, 200, 5);
   const mediumSize = TodoSizeCalculator.calculateTodoSize(mediumTodo, { includeBuffer: false });
   const mediumWithBuffer = TodoSizeCalculator.calculateTodoSize(mediumTodo);
-  process.stdout.write(`Medium todo   | ${mediumSize.toString().padStart(8)} | ${mediumWithBuffer.toString().padStart(11)} | ${((mediumWithBuffer/mediumSize - 1) * 100).toFixed(2)}%\n`);
+  console.log(`Medium todo   | ${mediumSize.toString().padStart(8)} | ${mediumWithBuffer.toString().padStart(11)} | ${((mediumWithBuffer/mediumSize - 1) * 100).toFixed(2)}%`);
   
   // Test large todo
   const largeTodo = generateTodo('large', 50, 500, 10);
   const largeSize = TodoSizeCalculator.calculateTodoSize(largeTodo, { includeBuffer: false });
   const largeWithBuffer = TodoSizeCalculator.calculateTodoSize(largeTodo);
-  process.stdout.write(`Large todo    | ${largeSize.toString().padStart(8)} | ${largeWithBuffer.toString().padStart(11)} | ${((largeWithBuffer/largeSize - 1) * 100).toFixed(2)}%\n`);
+  console.log(`Large todo    | ${largeSize.toString().padStart(8)} | ${largeWithBuffer.toString().padStart(11)} | ${((largeWithBuffer/largeSize - 1) * 100).toFixed(2)}%`);
   
   // Test huge todo
   const hugeTodo = generateTodo('huge', 100, 2000, 20);
   const hugeSize = TodoSizeCalculator.calculateTodoSize(hugeTodo, { includeBuffer: false });
   const hugeWithBuffer = TodoSizeCalculator.calculateTodoSize(hugeTodo);
-  process.stdout.write(`Huge todo     | ${hugeSize.toString().padStart(8)} | ${hugeWithBuffer.toString().padStart(11)} | ${((hugeWithBuffer/hugeSize - 1) * 100).toFixed(2)}%\n`);
+  console.log(`Huge todo     | ${hugeSize.toString().padStart(8)} | ${hugeWithBuffer.toString().padStart(11)} | ${((hugeWithBuffer/hugeSize - 1) * 100).toFixed(2)}%`);
   
-  process.stdout.write('\n');
+  console.log('\n');
 }
 
 // Test batch upload optimization for different sets of todos
 function analyzeBatchSizes(): void {
-  process.stdout.write('=== Batch Upload Optimization Analysis ===\n');
-  process.stdout.write('Format: Scenario | Total Raw Size | Optimized Size | Saved Bytes | Saved %\n');
-  process.stdout.write('----------------------------------------------------------------------\n');
+  console.log('=== Batch Upload Optimization Analysis ===');
+  console.log('Format: Scenario | Total Raw Size | Optimized Size | Saved Bytes | Saved %');
+  console.log('----------------------------------------------------------------------');
   
   // Test scenarios with different numbers of todos
   const scenarios = [
@@ -156,18 +156,18 @@ function analyzeBatchSizes(): void {
     const unoptimizedSize = Math.max(1024 * 1024, totalRawSize) * todos.length;
     const walSaved = Math.floor((unoptimizedSize - optimizedSize) / 1024);
     
-    process.stdout.write(`${scenario.name.padEnd(15)} | ${totalRawSize.toString().padStart(13)} | ${optimizedSize.toString().padStart(14)} | ${savedBytes.toString().padStart(11)} | ${savedPercent.toFixed(2).padStart(7)}%\n`);
-    process.stdout.write(`  - Would require ${(unoptimizedSize / (1024 * 1024)).toFixed(2)} MB without batching, saves ~${walSaved} WAL tokens\n`);
+    console.log(`${scenario.name.padEnd(15)} | ${totalRawSize.toString().padStart(13)} | ${optimizedSize.toString().padStart(14)} | ${savedBytes.toString().padStart(11)} | ${savedPercent.toFixed(2).padStart(7)}%`);
+    console.log(`  - Would require ${(unoptimizedSize / (1024 * 1024)).toFixed(2)} MB without batching, saves ~${walSaved} WAL tokens`);
   }
   
-  process.stdout.write('\n');
+  console.log('\n');
 }
 
 // Test storage analysis for existing storage
 function analyzeStorageRequirements(): void {
-  process.stdout.write('=== Storage Requirements Analysis ===\n');
-  process.stdout.write('Format: Scenario | Required | Available | Result | Remaining %\n');
-  process.stdout.write('--------------------------------------------------------------\n');
+  console.log('=== Storage Requirements Analysis ===');
+  console.log('Format: Scenario | Required | Available | Result | Remaining %');
+  console.log('--------------------------------------------------------------');
   
   const scenarios = [
     { name: 'Plenty of space', required: 100 * 1024, available: 10 * 1024 * 1024 },
@@ -187,25 +187,25 @@ function analyzeStorageRequirements(): void {
     const availableStr = `${(scenario.available / 1024).toFixed(2)} KB`;
     const remainingPercent = analysis.remainingPercentage.toFixed(2);
     
-    process.stdout.write(`${scenario.name.padEnd(16)} | ${requiredStr.padStart(9)} | ${availableStr.padStart(10)} | ${analysis.recommendation.padEnd(9)} | ${remainingPercent.padStart(6)}%\n`);
+    console.log(`${scenario.name.padEnd(16)} | ${requiredStr.padStart(9)} | ${availableStr.padStart(10)} | ${analysis.recommendation.padEnd(9)} | ${remainingPercent.padStart(6)}%`);
   }
   
-  process.stdout.write('\n');
+  console.log('\n');
 }
 
 // Run all the analysis functions
 function main(): void {
-  process.stdout.write('\n==================================================\n');
-  process.stdout.write('  WALRUS TODO STORAGE OPTIMIZATION ANALYSIS\n');
-  process.stdout.write('==================================================\n\n');
+  console.log('\n==================================================');
+  console.log('  WALRUS TODO STORAGE OPTIMIZATION ANALYSIS');
+  console.log('==================================================\n');
   
   analyzeSingleTodoSizes();
   analyzeBatchSizes();
   analyzeStorageRequirements();
   
-  process.stdout.write('Analysis complete. These results show how storage optimizations\n');
-  process.stdout.write('can save significant amounts of WAL tokens when storing todos,\n');
-  process.stdout.write('especially when using batch uploads for multiple todos.\n\n');
+  console.log('Analysis complete. These results show how storage optimizations');
+  console.log('can save significant amounts of WAL tokens when storing todos,');
+  console.log('especially when using batch uploads for multiple todos.\n');
 }
 
 // Run the main function

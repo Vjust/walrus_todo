@@ -1,4 +1,4 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { select } from '@inquirer/prompts';

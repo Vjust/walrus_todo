@@ -92,15 +92,15 @@ const STORAGE = {
  */
 function showSuccess(message: string): void {
   const sparkles = chalk.magenta('✨');
-  console.log(`${sparkles} ${chalk.green.bold(`${ICONS.SUCCESS} ${message}`)} ${sparkles}`);
+  process.stdout.write(`${sparkles} ${chalk.green.bold(`${ICONS.SUCCESS} ${message}`)} ${sparkles}\n`);
 }
 
 function showInfo(message: string): void {
-  console.log(chalk.cyan.bold(`${ICONS.INFO} ${message}`));
+  process.stdout.write(chalk.cyan.bold(`${ICONS.INFO} ${message}`) + '\n');
 }
 
 function showWarning(message: string): void {
-  console.log(chalk.yellow.bold(`${ICONS.WARNING} ${message}`));
+  process.stdout.write(chalk.yellow.bold(`${ICONS.WARNING} ${message}`) + '\n');
 }
 
 function showError(title: string, message: string, suggestion?: string): void {
@@ -112,7 +112,7 @@ function showError(title: string, message: string, suggestion?: string): void {
     output += `  ${chalk.cyan(suggestion)}\n`;
   }
   
-  console.log(output);
+  process.stdout.write(output);
 }
 
 function showSection(title: string, content: string): void {
@@ -128,16 +128,16 @@ function showSection(title: string, content: string): void {
   const decoration = decorations[Math.floor(Math.random() * decorations.length)];
 
   // Top border with title and decoration
-  console.log(boxColor(`${ICONS.BOX_TL}${ICONS.BOX_H}[ ${decoration} ${chalk.bold.white(title)} ${decoration} ]${ICONS.BOX_H.repeat(width - title.length - 8)}${ICONS.BOX_TR}`));
+  process.stdout.write(boxColor(`${ICONS.BOX_TL}${ICONS.BOX_H}[ ${decoration} ${chalk.bold.white(title)} ${decoration} ]${ICONS.BOX_H.repeat(width - title.length - 8)}${ICONS.BOX_TR}`) + '\n');
 
   // Content with colorful borders
   lines.forEach(line => {
     const padding = width - line.length;
-    console.log(`${boxColor(ICONS.BOX_V)} ${line}${' '.repeat(padding)} ${boxColor(ICONS.BOX_V)}`);
+    process.stdout.write(`${boxColor(ICONS.BOX_V)} ${line}${' '.repeat(padding)} ${boxColor(ICONS.BOX_V)}\n`);
   });
 
   // Bottom border
-  console.log(boxColor(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`));
+  process.stdout.write(boxColor(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`) + '\n');
 }
 
 function showSimpleList(title: string, items: string[]): void {
@@ -145,7 +145,7 @@ function showSimpleList(title: string, items: string[]): void {
   const bullets = ['🔹', '🔸', '💠', '🔻', '🔶', '🔷', '🔸', '🔹'];
   
   // Title with fun decorations
-  console.log(chalk.bold(`\n✧ ${chalk.underline(title)} ✧`));
+  process.stdout.write(chalk.bold(`\n✧ ${chalk.underline(title)} ✧`) + '\n');
   
   // List items with alternating bullets and subtle coloring
   items.forEach((item, index) => {
@@ -154,10 +154,10 @@ function showSimpleList(title: string, items: string[]): void {
     const itemText = index % 2 === 0 
       ? chalk.cyan(item) 
       : chalk.white(item);
-    console.log(`  ${bullet} ${itemText}`);
+    process.stdout.write(`  ${bullet} ${itemText}\n`);
   });
   
-  console.log('');
+  process.stdout.write('\n');
 }
 
 function formatTodo(todo: any): string {
@@ -208,10 +208,10 @@ function formatStorage(storageType: string): string {
  * Run the demo
  */
 function runDemo() {
-  console.log('\n🎨 WALRUS TODO CLI STYLE SHOWCASE 🎨\n');
+  process.stdout.write('\n🎨 WALRUS TODO CLI STYLE SHOWCASE 🎨\n\n');
 
   // Demo the different status messages
-  console.log(chalk.bold.underline('Status Messages:'));
+  process.stdout.write(chalk.bold.underline('Status Messages:') + '\n');
   showSuccess('Task completed successfully!');
   showInfo('Here is some helpful information');
   showWarning('Be careful with this operation');
@@ -222,7 +222,7 @@ function runDemo() {
   );
 
   // Demo section boxes
-  console.log(chalk.bold.underline('\nFun Section Boxes:'));
+  process.stdout.write(chalk.bold.underline('\nFun Section Boxes:') + '\n');
   showSection('Quick Tips', 
     'Here are some helpful tips for using the CLI:\n' +
     '- Use "list" to see all your todos\n' +
@@ -231,7 +231,7 @@ function runDemo() {
   );
 
   // Demo the simple list
-  console.log(chalk.bold.underline('\nColored Lists with Fun Bullets:'));
+  process.stdout.write(chalk.bold.underline('\nColored Lists with Fun Bullets:') + '\n');
   showSimpleList('Available Commands', [
     'add - Create a new todo',
     'list - Show all todos',
@@ -241,7 +241,7 @@ function runDemo() {
   ]);
 
   // Demo todo formatting
-  console.log(chalk.bold.underline('\nTodo Formatting:'));
+  process.stdout.write(chalk.bold.underline('\nTodo Formatting:') + '\n');
   
   const todos = [
     { 
@@ -269,18 +269,18 @@ function runDemo() {
   ];
   
   todos.forEach(todo => {
-    console.log(formatTodo(todo));
-    console.log(''); // Add spacing
+    process.stdout.write(formatTodo(todo) + '\n');
+    process.stdout.write('\n'); // Add spacing
   });
 
   // Demo storage types
-  console.log(chalk.bold.underline('\nStorage Types:'));
-  console.log(`Local storage: ${formatStorage('local')}`);
-  console.log(`Blockchain storage: ${formatStorage('blockchain')}`);
-  console.log(`Hybrid storage: ${formatStorage('both')}`);
+  process.stdout.write(chalk.bold.underline('\nStorage Types:') + '\n');
+  process.stdout.write(`Local storage: ${formatStorage('local')}\n`);
+  process.stdout.write(`Blockchain storage: ${formatStorage('blockchain')}\n`);
+  process.stdout.write(`Hybrid storage: ${formatStorage('both')}\n`);
 
   // Demo all the icons
-  console.log(chalk.bold.underline('\nFun Icons:'));
+  process.stdout.write(chalk.bold.underline('\nFun Icons:') + '\n');
   
   // Group the icons by category
   const iconGroups = {
@@ -301,7 +301,7 @@ function runDemo() {
 
   // Display all icon groups
   Object.entries(iconGroups).forEach(([groupName, iconNames]) => {
-    console.log(chalk.yellow(`\n${groupName}:`));
+    process.stdout.write(chalk.yellow(`\n${groupName}:`) + '\n');
     
     let line = '';
     iconNames.forEach(name => {
@@ -310,15 +310,15 @@ function runDemo() {
       
       // Break into multiple lines for readability
       if (line.length > 50) {
-        console.log(line);
+        process.stdout.write(line + '\n');
         line = '';
       }
     });
     
-    if (line) console.log(line);
+    if (line) process.stdout.write(line + '\n');
   });
 
-  console.log('\n✨ End of Style Demo ✨\n');
+  process.stdout.write('\n✨ End of Style Demo ✨\n\n');
 }
 
 // Run the demo

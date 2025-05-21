@@ -13,7 +13,6 @@ import chalk from 'chalk';
 import { RetryManager } from '../utils/retry-manager';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { Todo } from '../types/todo';
 
 /**
@@ -450,7 +449,7 @@ export default class CompleteCommand extends BaseCommand {
             {
               maxRetries: 3,
               initialDelay: 1000,
-              onRetry: (error, attempt, delay) => {
+              onRetry: (error, attempt, _delay) => {
                 const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
               }
@@ -494,7 +493,7 @@ export default class CompleteCommand extends BaseCommand {
           }, {
             maxRetries: 3,
             initialDelay: 2000,
-            onRetry: (error, attempt, delay) => {
+            onRetry: (error, attempt, _delay) => {
               const errorMessage = error && typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error);
               this.log(chalk.yellow(`Verification retry ${attempt} after error: ${errorMessage}`));
             }

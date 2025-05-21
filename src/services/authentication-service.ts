@@ -9,7 +9,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { CLIError } from '../types/error';
 import { 
   PermissionUser, 

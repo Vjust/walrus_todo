@@ -105,7 +105,6 @@ export default class FetchCommand extends BaseCommand {
     try {
       const { flags } = await this.parse(FetchCommand);
       this.parsedFlags = flags;
-      // Removed unused configFetch variable
 
       // Validate input
       if (!flags['blob-id'] && !flags['object-id']) {

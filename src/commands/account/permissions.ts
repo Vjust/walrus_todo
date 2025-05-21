@@ -1,8 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { permissionService } from '../../services/permission-service';
-import { authenticationService } from '../../services/authentication-service';
-import { ResourceType, ActionType, UserRole } from '../../types/permissions';
+import { ActionType, UserRole } from '../../types/permissions';
 import { CLIError } from '../../types/error';
 import chalk from 'chalk';
 

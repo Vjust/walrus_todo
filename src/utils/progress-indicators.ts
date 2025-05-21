@@ -5,7 +5,6 @@ import * as cliProgress from 'cli-progress';
 
 // Define types
 type Ora = ReturnType<typeof ora>;
-interface OraOptions {}
 
 // Fallback for testing environments if imports fail
 if (!ora) {
@@ -36,7 +35,6 @@ if (!cliProgress) {
   };
 }
 
-type SpinnerName = string;
 
 /**
  * Configuration for spinner animation styles
@@ -110,9 +108,9 @@ export interface ProgressBarOptions {
   progressCharacter?: string;
   autopadding?: boolean;
   autopaddingChar?: string;
-  formatBar?: (progress: number, options: any) => string;
-  formatValue?: (value: number, options: any, type: string) => string;
-  formatTime?: (time: number, options: any, roundToMultipleOf?: number) => string;
+  formatBar?: (progress: number, options: ProgressBarOptions) => string;
+  formatValue?: (value: number, options: ProgressBarOptions, type: string) => string;
+  formatTime?: (time: number, options: ProgressBarOptions, roundToMultipleOf?: number) => string;
   barGlue?: string;
   stream?: NodeJS.WritableStream;
   align?: 'left' | 'center' | 'right';
@@ -139,8 +137,8 @@ export class SpinnerManager {
     
     this.spinner = ora({
       text: this.options.text,
-      color: this.options.color as any,
-      spinner: spinnerStyle as any,
+      color: this.options.color as 'black' | 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white' | 'gray',
+      spinner: spinnerStyle,
       prefixText: this.options.prefixText,
       indent: this.options.indent,
       discardStdin: this.options.discardStdin,
@@ -217,7 +215,7 @@ export class SpinnerManager {
    * Update spinner color
    */
   color(color: string): this {
-    this.spinner.color = color as any;
+    this.spinner.color = color as 'black' | 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white' | 'gray';
     return this;
   }
 
@@ -226,7 +224,7 @@ export class SpinnerManager {
    */
   style(style: keyof typeof SPINNER_STYLES): this {
     const spinnerStyle = SPINNER_STYLES[style];
-    this.spinner.spinner = spinnerStyle as any;
+    this.spinner.spinner = spinnerStyle;
     return this;
   }
 
@@ -337,7 +335,7 @@ export class ProgressBar {
   /**
    * Start the progress bar
    */
-  start(total: number, startValue: number = 0, payload?: any): void {
+  start(total: number, startValue: number = 0, payload?: Record<string, unknown>): void {
     this.startTime = Date.now();
     this.totalValue = total;
     this.currentValue = startValue;
@@ -347,7 +345,7 @@ export class ProgressBar {
   /**
    * Update progress
    */
-  update(value: number, payload?: any): void {
+  update(value: number, payload?: Record<string, unknown>): void {
     this.currentValue = value;
     this.bar.update(value, payload);
   }
@@ -355,7 +353,7 @@ export class ProgressBar {
   /**
    * Increment progress
    */
-  increment(delta: number = 1, payload?: any): void {
+  increment(delta: number = 1, payload?: Record<string, unknown>): void {
     this.currentValue += delta;
     this.bar.increment(delta, payload);
   }
@@ -390,7 +388,7 @@ export class ProgressBar {
   /**
    * Create gradient color bar based on progress
    */
-  private createGradientBar(progress: number, options: any): string {
+  private createGradientBar(progress: number, options: ProgressBarOptions): string {
     const barSize = options.barsize || 40;
     const completeSize = Math.round(progress * barSize);
     const incompleteSize = barSize - completeSize;
@@ -419,7 +417,8 @@ export class ProgressBar {
    */
   setFormat(format: string): void {
     if (this.bar) {
-      (this.bar as any).options.format = format;
+      // @ts-expect-error - accessing private options property
+      this.bar.options.format = format;
     }
   }
 }
@@ -454,7 +453,7 @@ export class MultiProgress {
   /**
    * Update a specific bar
    */
-  update(name: string, value: number, payload?: any): void {
+  update(name: string, value: number, payload?: Record<string, unknown>): void {
     const bar = this.bars.get(name);
     if (bar) {
       bar.update(value, payload);

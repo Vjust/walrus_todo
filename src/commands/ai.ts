@@ -4,6 +4,7 @@ import { aiService, secureCredentialService } from '../services/ai';
 import { AIProviderFactory } from '../services/ai/AIProviderFactory';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import chalk from 'chalk';
+import { Logger } from '../utils/Logger';
 import {
   requireEnvironment,
   aiFlags,
@@ -11,6 +12,8 @@ import {
 } from '../utils/CommandValidationMiddleware';
 import { getEnv, hasEnv } from '../utils/environment-config';
 import { TodoService } from '../services/todoService';
+
+const logger = new Logger('AI');
 
 /**
  * @class AI
@@ -86,7 +89,7 @@ export default class AI extends BaseCommand {
 
     // Load environment with verbose logging only in development mode
     if (process.env.NODE_ENV === 'development') {
-      console.log('Loading environment variables before setting flags...');
+      logger.debug('Loading environment variables before setting flags...');
     }
 
     // Load environment variables from .env files
@@ -97,8 +100,10 @@ export default class AI extends BaseCommand {
 
     // Only log API key info in development mode
     if (process.env.NODE_ENV === 'development') {
-      console.log('Environment XAI_API_KEY after loading:',
-                  process.env.XAI_API_KEY ? `present (length: ${process.env.XAI_API_KEY.length})` : 'not set');
+      logger.debug('Environment XAI_API_KEY after loading', {
+        apiKeyPresent: !!process.env.XAI_API_KEY,
+        keyLength: process.env.XAI_API_KEY?.length || 0
+      });
     }
 
     // Set environment variables from flags
@@ -170,10 +175,10 @@ export default class AI extends BaseCommand {
    * 4. Stored credential information with verification status and expiry
    * 5. Available AI commands and configuration options
    * 
-   * @param {any} flags Command flags
+   * @param {Record<string, unknown>} flags Command flags
    * @returns {Promise<void>}
    */
-  private async showStatus(flags: any) {
+  private async showStatus(_flags: Record<string, unknown>) {
     // Check credential status
     const credentials = await secureCredentialService.listCredentials();
     
@@ -192,7 +197,7 @@ export default class AI extends BaseCommand {
     const providers = ['XAI', 'OPENAI', 'ANTHROPIC', 'OLLAMA'];
     
     for (const provider of providers) {
-      const hasKey = hasEnv(`${provider}_API_KEY` as any);
+      const hasKey = hasEnv(`${provider}_API_KEY` as keyof typeof process.env);
       const status = hasKey ? chalk.green('✓ available') : chalk.gray('not configured');
       
       this.log(`${chalk.cyan(provider.padEnd(10))} | ${status}`);
@@ -243,10 +248,10 @@ export default class AI extends BaseCommand {
    * 3. Global configuration options
    * 4. Environment variables affecting AI functionality
    * 
-   * @param {any} flags Command flags
+   * @param {Record<string, unknown>} flags Command flags
    * @returns {void}
    */
-  private showHelp(flags: any) {
+  private showHelp(_flags: Record<string, unknown>) {
     this.log(chalk.bold('AI Command Help:'));
     this.log(`${chalk.cyan('walrus_todo ai summarize')} - Generate a concise summary of your todos`);
     this.log(`  ${chalk.gray('Example:')} walrus_todo ai summarize --list work`);
@@ -297,7 +302,7 @@ export default class AI extends BaseCommand {
    * @returns {Promise<any[]>} Array of todos from the specified list
    * @throws {Error} If no todos are found
    */
-  private async getTodos(listName?: string) {
+  private async getTodos(_listName?: string) {
     // Import TodoService here to avoid circular dependencies
     const todoService = new TodoService();
 
@@ -328,8 +333,8 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        console.log('DEBUG - Summary response type:', typeof summaryResponse);
-        console.log('DEBUG - Summary response:', JSON.stringify(summaryResponse, null, 2));
+        logger.debug('Summary response type', { type: typeof summaryResponse });
+        logger.debug('Summary response', { response: summaryResponse });
       }
 
       // Extract the summary text from various response formats
@@ -407,8 +412,8 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        console.log('DEBUG - Categories response type:', typeof categoriesResponse);
-        console.log('DEBUG - Categories response:', JSON.stringify(categoriesResponse, null, 2));
+        logger.debug('Categories response type', { type: typeof categoriesResponse });
+        logger.debug('Categories response', { response: categoriesResponse });
       }
 
       // Extract the categories from various response formats
@@ -510,8 +515,8 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        console.log('DEBUG - Priorities response type:', typeof prioritiesResponse);
-        console.log('DEBUG - Priorities response:', JSON.stringify(prioritiesResponse, null, 2));
+        logger.debug('Priorities response type', { type: typeof prioritiesResponse });
+        logger.debug('Priorities response', { response: prioritiesResponse });
       }
 
       // Extract priorities from various response formats
@@ -632,8 +637,8 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        console.log('DEBUG - Suggestions type:', typeof suggestions);
-        console.log('DEBUG - Suggestions value:', JSON.stringify(suggestions, null, 2));
+        logger.debug('Suggestions type', { type: typeof suggestions });
+        logger.debug('Suggestions value', { suggestions });
       }
 
       if (flags.json) {
@@ -786,8 +791,8 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        console.log('DEBUG - Analysis response type:', typeof analysisResponse);
-        console.log('DEBUG - Analysis response:', JSON.stringify(analysisResponse, null, 2));
+        logger.debug('Analysis response type', { type: typeof analysisResponse });
+        logger.debug('Analysis response', { response: analysisResponse });
       }
 
       // Extract analysis from various response formats

@@ -3,7 +3,6 @@ import { configService } from './config-service';
 import { generateId } from '../utils/id-generator';
 import { CLIError } from '../types/error';
 import * as fs from 'fs';
-import * as path from 'path';
 
 export class TodoService {
   private todosPath: string;

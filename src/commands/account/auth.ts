@@ -1,7 +1,6 @@
 import { Flags, ux } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { authenticationService } from '../../services/authentication-service';
-import { permissionService } from '../../services/permission-service';
 import { UserRole } from '../../types/permissions';
 import { CLIError } from '../../types/error';
 import chalk from 'chalk';
@@ -226,7 +225,7 @@ export default class AuthCommand extends BaseCommand {
         return;
       }
 
-      const user = validation.user!;
+      const user = validation.user;
       this.log(chalk.green(`Logged in as ${user.username}`));
       this.log(`User ID: ${user.id}`);
       this.log(`Roles: ${user.roles.join(', ')}`);
@@ -278,7 +277,7 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Change password
-      await authenticationService.changePassword(validation.user!.id, currentPassword, newPassword);
+      await authenticationService.changePassword(validation.user.id, currentPassword, newPassword);
 
       // Remove token since all sessions are invalidated
       fs.unlinkSync(this.authTokenFilePath);
@@ -317,7 +316,7 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Create API key
-      const apiKey = await authenticationService.createApiKey(validation.user!.id, name, expiryDays);
+      const apiKey = await authenticationService.createApiKey(validation.user.id, name, expiryDays);
 
       this.log(chalk.green(`API key created successfully`));
       this.log(`Key: ${apiKey}`);

@@ -26,27 +26,27 @@ export class MockPublicKey implements PublicKey {
     return this.toBase64() === other.toBase64();
   }
 
-  async verify(data: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verify(_data: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     return true;
   }
 
-  async verifyWithIntent(bytes: Uint8Array, signature: string | Uint8Array, intent: IntentScope): Promise<boolean> {
+  async verifyWithIntent(_bytes: Uint8Array, _signature: string | Uint8Array, _intent: IntentScope): Promise<boolean> {
     return true;
   }
 
-  async verifyTransactionBlock(message: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verifyTransactionBlock(_message: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     return true;
   }
 
-  async verifyPersonalMessage(message: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verifyPersonalMessage(_message: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     return true;
   }
 
-  async verifyTransaction(transaction: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verifyTransaction(_transaction: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     return true;
   }
 
-  verifyAddress(address: string): boolean {
+  verifyAddress(_address: string): boolean {
     return true;
   }
 
@@ -76,7 +76,7 @@ export class MockKeypair {
     return this.#publicKey;
   }
 
-  async sign(data: Uint8Array): Promise<Uint8Array> {
+  async sign(_data: Uint8Array): Promise<Uint8Array> {
     return new Uint8Array(64).fill(2);
   }
 
@@ -87,7 +87,7 @@ export class MockKeypair {
     };
   }
   
-  async signTransaction(transaction: any): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
+  async signTransaction(_transaction: any): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
     return {
       signature: new Uint8Array(64).fill(2),
       bytes: new Uint8Array([1, 2, 3, 4, 5]) // Mock transaction bytes
@@ -101,7 +101,7 @@ export class MockKeypair {
     };
   }
   
-  async signWithIntent(message: Uint8Array, intent: string): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
+  async signWithIntent(message: Uint8Array, _intent: string): Promise<{ signature: Uint8Array; bytes: Uint8Array }> {
     return {
       signature: new Uint8Array(64).fill(2),
       bytes: message

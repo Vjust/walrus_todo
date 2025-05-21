@@ -1,10 +1,10 @@
 import * as fs from 'fs';
-import * as fsp from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import { Args, Command, Flags } from '@oclif/core';
+import { Command, Flags } from '@oclif/core';
 import { ux } from '@oclif/core';
 import { CLIError, WalrusError } from './types/error';
+import { Todo } from './types/todo';
 import { NetworkError } from './types/errors/consolidated/NetworkError';
 import { ValidationError } from './types/errors/consolidated/ValidationError';
 import { TransactionError } from './types/errors/consolidated/TransactionError';
@@ -22,7 +22,23 @@ import {
 } from './utils/progress-indicators';
 
 // To avoid circular imports, declare chalk inline
-let chalk: any;
+interface ChalkInstance {
+  red: (text: string) => string;
+  yellow: (text: string) => string;
+  green: (text: string) => string;
+  blue: (text: string) => string;
+  gray: (text: string) => string;
+  bold: {
+    cyan: (text: string) => string;
+    green: (text: string) => string;
+    yellow: (text: string) => string;
+  };
+  cyan: (text: string) => string;
+  magenta: (text: string) => string;
+  dim: (text: string) => string;
+}
+
+let chalk: ChalkInstance;
 try {
   chalk = require('chalk');
 } catch (e) {
@@ -31,7 +47,15 @@ try {
     yellow: (s: string) => s, 
     green: (s: string) => s, 
     blue: (s: string) => s, 
-    gray: (s: string) => s 
+    gray: (s: string) => s,
+    bold: {
+      cyan: (s: string) => s,
+      green: (s: string) => s,
+      yellow: (s: string) => s
+    },
+    cyan: (s: string) => s,
+    magenta: (s: string) => s,
+    dim: (s: string) => s
   };
 }
 
@@ -431,7 +455,7 @@ export abstract class BaseCommand extends Command {
     
     const result = await ux.prompt(message, {
       required,
-      type: type as any,
+      type: type as 'normal' | 'mask' | 'hide',
       default: defaultValue
     });
     
@@ -441,7 +465,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Format output based on the requested format (json, yaml, text)
    */
-  protected formatOutput(data: any, format?: string): string {
+  protected formatOutput(data: unknown, format?: string): string {
     const outputFormat = format || this.flagsConfig.output || 'text';
     
     switch (outputFormat) {
@@ -459,7 +483,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Simple YAML-like formatting for output
    */
-  private toYamlLike(obj: any, indent: string = ''): string {
+  private toYamlLike(obj: unknown, indent: string = ''): string {
     if (typeof obj !== 'object' || obj === null) {
       return String(obj);
     }
@@ -476,7 +500,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Text formatting for output
    */
-  private toTextFormat(data: any): string {
+  private toTextFormat(data: unknown): string {
     if (typeof data === 'string') {
       return data;
     }
@@ -564,7 +588,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Format a todo object for display
    */
-  protected formatTodo(todo: any): string {
+  protected formatTodo(todo: Todo): string {
     const statusIcon = todo.completed ? ICONS.success : ICONS.pending;
     const priorityColor = todo.priority === 'high' ? chalk.red : 
                          todo.priority === 'medium' ? chalk.yellow : chalk.green;
@@ -618,7 +642,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Stop spinner with success message
    */
-  protected stopSpinnerSuccess(spinner: any, message: string): void {
+  protected stopSpinnerSuccess(spinner: unknown, message: string): void {
     this.log(chalk.green(`✓ ${message}`));
   }
 
@@ -643,7 +667,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Output data in JSON format
    */
-  protected async jsonOutput(data: any): Promise<void> {
+  protected async jsonOutput(data: unknown): Promise<void> {
     this.log(JSON.stringify(data, null, 2));
   }
 
@@ -837,7 +861,7 @@ export abstract class BaseCommand extends Command {
     operations: Array<{
       name: string;
       total: number;
-      operation: (bar: any) => Promise<T>;
+      operation: (bar: ProgressBar) => Promise<T>;
     }>
   ): Promise<(T | undefined)[]> {
     const multiProgress = this.createMultiProgress();
@@ -865,7 +889,7 @@ export abstract class BaseCommand extends Command {
     text: string, 
     type: 'walrus' | 'sparkle' | 'moon' | 'star' = 'walrus'
   ): SpinnerManager {
-    return createSpinner(text, { style: type as any });
+    return createSpinner(text, { style: type as SpinnerOptions['style'] });
   }
 
   /**
@@ -882,7 +906,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Generic error handler with operation context
    */
-  protected handleError(error: any, operation?: string): never {
+  protected handleError(error: unknown, operation?: string): never {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const contextMessage = operation ? `${operation}: ${errorMessage}` : errorMessage;
     

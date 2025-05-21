@@ -13,9 +13,9 @@ export type Transaction = SuiTransaction;
  * This avoids errors when the type system expects transaction.blockData etc.
  */
 export interface TransactionBlock extends SuiTransaction {
-  blockData?: any;
-  transactions?: any[];
-  inputs?: any[];
+  blockData?: unknown;
+  transactions?: unknown[];
+  inputs?: unknown[];
   sender?: string;
 }
 
@@ -27,11 +27,11 @@ export type TransactionType = SuiTransaction | TransactionBlockAdapter;
 /**
  * Utility functions for transaction handling
  */
-export function isTransactionBlock(obj: any): obj is TransactionBlock {
+export function isTransactionBlock(obj: unknown): obj is TransactionBlock {
   return obj && typeof obj === 'object' && ('blockData' in obj || 'transactions' in obj);
 }
 
-export function isSuiTransaction(obj: any): obj is SuiTransaction {
+export function isSuiTransaction(obj: unknown): obj is SuiTransaction {
   return obj && typeof obj === 'object' && typeof obj.serialize === 'function';
 }
 

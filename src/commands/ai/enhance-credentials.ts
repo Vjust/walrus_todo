@@ -3,9 +3,7 @@ import BaseCommand from '../../base-command';
 import { AIProvider } from '../../services/ai/types';
 import { credentialManager, ApiKeyValidator } from '../../services/ai/credentials';
 import { AIPermissionLevel, CredentialType } from '../../types/adapters/AICredentialAdapter';
-import { getProviderEnum, getProviderString, getProviderEnumFromString, isValidProvider } from '../../utils/adapters';
 import chalk from 'chalk';
-import { Logger, LogLevel } from '../../utils/Logger';
 
 export default class Credentials extends BaseCommand {
   static description = 'Manage AI provider credentials with enhanced security';

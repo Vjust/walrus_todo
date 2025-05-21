@@ -3,7 +3,6 @@ import BaseCommand from '../../base-command';
 import { AIVerificationService } from '../../services/ai/AIVerificationService';
 import { TodoAIAdapter } from '../../types/adapters/TodoAIAdapter';
 import { SuiClient } from '@mysten/sui/client';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { AIProvider, TodoAIOperation } from '../../services/ai/types';
 import chalk from 'chalk';
 import { getAIVerifierAddress } from '../../services/ai/credentials/module-address';

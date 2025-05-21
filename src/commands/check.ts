@@ -74,9 +74,9 @@ export default class CheckCommand extends BaseCommand {
       await todoService.saveList(args.listName, list);
 
       const status = todo.completed ? chalk.green('✓') : chalk.yellow('☐');
-      console.log(`${status} Todo ${chalk.bold(todo.title)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
-      console.log(chalk.dim("List: " + args.listName));  // Changed to double quotes for consistency
-      console.log(chalk.dim("ID: " + flags.id));  // Changed to double quotes for consistency
+      this.log(`${status} Todo ${chalk.bold(todo.title)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
+      this.log(chalk.dim("List: " + args.listName));  // Changed to double quotes for consistency
+      this.log(chalk.dim("ID: " + flags.id));  // Changed to double quotes for consistency
 
     } catch (error) {
       if (error instanceof CLIError) {

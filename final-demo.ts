@@ -3,7 +3,7 @@ import { WalrusStorage } from './src/utils/walrus-storage';
 
 async function createAndStoreTodoForAJ() {
   try {
-    console.log('=== Creating "todo for aj" and storing on Walrus Testnet ===\n');
+    process.stdout.write('=== Creating "todo for aj" and storing on Walrus Testnet ===\n\n');
     
     // Initialize services
     const todoService = new TodoService();
@@ -12,7 +12,7 @@ async function createAndStoreTodoForAJ() {
     const listName = 'default';
     let list = await todoService.getList(listName);
     if (!list) {
-      console.log('Creating default list...');
+      process.stdout.write('Creating default list...\n');
       list = await todoService.createList(listName, 'user');
     }
     
@@ -32,43 +32,43 @@ async function createAndStoreTodoForAJ() {
       description: `Main todo for fixing waltodo\n\nTasks:\n${tasks.map((t, i) => `${i+1}. ${t}`).join('\n')}`,
       priority: 'high'
     });
-    console.log('✓ Created main todo:', todo.title);
-    console.log(`✓ Added ${tasks.length} tasks`);
+    process.stdout.write(`✓ Created main todo: ${todo.title}\n`);
+    process.stdout.write(`✓ Added ${tasks.length} tasks\n`);
     
     // Store on actual testnet (not mock)
-    console.log('\nStoring on Walrus testnet...');
+    process.stdout.write('\nStoring on Walrus testnet...\n');
     
     // Initialize Walrus storage (forceMock = false)
     const storage = new WalrusStorage('testnet', false);
     
     // Store the todo on Walrus
     const blobId = await storage.storeTodo(todo);
-    console.log('✓ Stored on Walrus with blob ID:', blobId);
-    console.log(`View on Walrus scanner: https://walrus-testnet-explorer.com/blob/${blobId}`);
+    process.stdout.write(`✓ Stored on Walrus with blob ID: ${blobId}\n`);
+    process.stdout.write(`View on Walrus scanner: https://walrus-testnet-explorer.com/blob/${blobId}\n`);
     
     // Also store the entire list
     const updatedList = await todoService.getList(listName);
     if (updatedList) {
       const listBlobId = await storage.storeList(updatedList);
-      console.log('\n✓ Also stored entire list on Walrus with blob ID:', listBlobId);
-      console.log(`View list on Walrus scanner: https://walrus-testnet-explorer.com/blob/${listBlobId}`);
+      process.stdout.write(`\n✓ Also stored entire list on Walrus with blob ID: ${listBlobId}\n`);
+      process.stdout.write(`View list on Walrus scanner: https://walrus-testnet-explorer.com/blob/${listBlobId}\n`);
     }
     
-    console.log('\n=== Success! ===');
-    console.log('Todo "todo for aj" has been created and stored on Walrus testnet.');
-    console.log('You can view the stored blobs using the URLs above.');
-    console.log('\nNote: To view on Sui scanner, you would need to create an NFT with the blob ID.');
+    process.stdout.write('\n=== Success! ===\n');
+    process.stdout.write('Todo "todo for aj" has been created and stored on Walrus testnet.\n');
+    process.stdout.write('You can view the stored blobs using the URLs above.\n');
+    process.stdout.write('\nNote: To view on Sui scanner, you would need to create an NFT with the blob ID.\n');
     
     // Show the created todo
-    console.log('\n=== Created Todo Details ===');
-    console.log(`Title: ${todo.title}`);
-    console.log(`Priority: ${todo.priority}`);
-    console.log(`Created: ${todo.createdAt}`);
-    console.log('Description:');
-    console.log(todo.description.split('\n').map(line => `  ${line}`).join('\n'));
+    process.stdout.write('\n=== Created Todo Details ===\n');
+    process.stdout.write(`Title: ${todo.title}\n`);
+    process.stdout.write(`Priority: ${todo.priority}\n`);
+    process.stdout.write(`Created: ${todo.createdAt}\n`);
+    process.stdout.write('Description:\n');
+    process.stdout.write(todo.description.split('\n').map(line => `  ${line}`).join('\n') + '\n');
     
   } catch (error) {
-    console.error('Error:', error);
+    process.stderr.write(`Error: ${error}\n`);
     process.exit(1);
   }
 }

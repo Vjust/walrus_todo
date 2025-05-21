@@ -1,25 +1,25 @@
 // Load dotenv
 try {
   require('dotenv').config();
-  console.log('Dotenv loaded');
+  process.stdout.write('Dotenv loaded\n');
 } catch (error) {
-  console.error('Error loading dotenv:', error);
+  process.stderr.write('Error loading dotenv: ' + error + '\n');
 }
 
-console.log('Args:', process.argv);
-console.log('Environment before:', process.env.XAI_API_KEY ? 'API key found' : 'No API key');
+process.stdout.write('Args: ' + JSON.stringify(process.argv) + '\n');
+process.stdout.write('Environment before: ' + (process.env.XAI_API_KEY ? 'API key found' : 'No API key') + '\n');
 
 // Manually set it
 process.env.XAI_API_KEY = "xai-RsEhuzYfPAgw5U08JWLg5wnMfa4jSpORWyKo9uz7aUtMYRhFQgaETK1edPOXdPlg3i6m0yWrpXu2wf06";
-console.log('Environment after:', process.env.XAI_API_KEY ? 'API key found' : 'No API key');
+process.stdout.write('Environment after: ' + (process.env.XAI_API_KEY ? 'API key found' : 'No API key') + '\n');
 
 // Try to create AiService directly
 try {
   const AiService = require('./dist/src/services/ai/aiService').AiService;
-  console.log('AiService imported');
+  process.stdout.write('AiService imported\n');
   
   const aiService = new AiService();
-  console.log('AiService instance created');
+  process.stdout.write('AiService instance created\n');
   
   // Try to use it
   const testTodo = {

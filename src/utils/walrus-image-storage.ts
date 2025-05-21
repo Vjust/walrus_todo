@@ -28,7 +28,7 @@ import { TransactionBlockAdapter, createTransactionBlockAdapter } from './adapte
 /**
  * A type that extends SuiClient with optional extensions used by other parts of the code
  */
-export type ClientWithExtensions<T extends Record<string, any> = Record<string, any>> = SuiClient & Partial<{
+export type ClientWithExtensions<T extends Record<string, unknown> = Record<string, unknown>> = SuiClient & Partial<{
   network: string;
   cache: unknown;
   core: unknown;
@@ -84,7 +84,7 @@ interface ImageUploadOptions {
   metadata?: {
     title?: string;
     completed?: boolean | string; // Support both boolean and string formats
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

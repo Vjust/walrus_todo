@@ -42,9 +42,9 @@ import {
   isTransactionObjectArgument,
   TransactionAdapterError,
   isTransactionArgument
-} from '@types/adapters/TransactionBlockAdapter';
-import type { Transaction } from '@types/transaction';
-import { BaseAdapter, isBaseAdapter } from '@types/adapters/BaseAdapter';
+} from '../../types/adapters/TransactionBlockAdapter';
+import type { Transaction } from '../../types/transaction';
+import { BaseAdapter, isBaseAdapter } from '../../types/adapters/BaseAdapter';
 
 /**
  * Adapter interface to bridge different Transaction implementations

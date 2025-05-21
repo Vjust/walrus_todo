@@ -20,7 +20,7 @@ let manifest;
 try {
   manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 } catch (error) {
-  console.error(chalk.red(`Error loading manifest: ${error.message}`));
+  process.stderr.write(chalk.red(`Error loading manifest: ${error.message}`) + '\n');
   process.exit(1);
 }
 

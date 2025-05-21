@@ -12,25 +12,25 @@ const chalk = require('chalk');
 
 // Helper function to run CLI commands
 function runCommand(command) {
-  console.log(chalk.blue(`Running: ${command}`));
+  process.stdout.write(chalk.blue(`Running: ${command}`) + '\n');
   try {
     const output = execSync(command, { encoding: 'utf8', stdio: 'pipe' });
-    console.log(output);
+    process.stdout.write(output + '\n');
     return output;
   } catch (error) {
-    console.error(chalk.red(`Error: ${error.message}`));
-    if (error.stdout) console.log(error.stdout.toString());
-    if (error.stderr) console.log(error.stderr.toString());
+    process.stderr.write(chalk.red(`Error: ${error.message}`) + '\n');
+    if (error.stdout) process.stdout.write(error.stdout.toString());
+    if (error.stderr) process.stderr.write(error.stderr.toString());
     throw error;
   }
 }
 
 // Main demo function
 async function runBatchUploadDemo() {
-  console.log(chalk.green.bold('\n🚀 WalTodo Batch Upload Demo\n'));
+  process.stdout.write(chalk.green.bold('\n🚀 WalTodo Batch Upload Demo\n\n'));
 
   // Create a test list
-  console.log(chalk.yellow('Step 1: Creating a test list with multiple todos...'));
+  process.stdout.write(chalk.yellow('Step 1: Creating a test list with multiple todos...') + '\n');
   const listName = `batch-test-${Date.now()}`;
   
   // Add multiple todos
@@ -47,21 +47,21 @@ async function runBatchUploadDemo() {
     { title: 'Buy birthday gift', priority: 'medium', tags: 'personal,shopping' }
   ];
 
-  console.log(chalk.cyan(`Creating ${todos.length} todos in list "${listName}"...`));
+  process.stdout.write(chalk.cyan(`Creating ${todos.length} todos in list "${listName}"...`) + '\n');
   
   todos.forEach((todo, index) => {
     const cmd = `waltodo add "${todo.title}" -l ${listName} -p ${todo.priority} -g "${todo.tags}"`;
-    console.log(chalk.gray(`[${index + 1}/${todos.length}] Adding: ${todo.title}`));
+    process.stdout.write(chalk.gray(`[${index + 1}/${todos.length}] Adding: ${todo.title}`) + '\n');
     runCommand(cmd);
   });
 
   // List the todos
-  console.log(chalk.yellow('\nStep 2: Listing todos to verify creation...'));
+  process.stdout.write(chalk.yellow('\nStep 2: Listing todos to verify creation...') + '\n');
   runCommand(`waltodo list ${listName}`);
 
   // Batch upload all todos
-  console.log(chalk.yellow('\nStep 3: Batch uploading all todos to Walrus...'));
-  console.log(chalk.cyan('Using mock mode for demonstration (no real WAL tokens required)'));
+  process.stdout.write(chalk.yellow('\nStep 3: Batch uploading all todos to Walrus...') + '\n');
+  process.stdout.write(chalk.cyan('Using mock mode for demonstration (no real WAL tokens required)') + '\n');
   
   // Run batch upload with custom batch size
   const batchCmd = `waltodo store --all --list ${listName} --batch-size 3 --mock`;

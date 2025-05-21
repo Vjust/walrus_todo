@@ -65,66 +65,41 @@ describe('Transaction Fuzzing Tests', () => {
 
       const listId = await suiService.createTodoList();
 
-      for (const input of malformedInputs) {
-        try {
-          await suiService.addTodo(listId, input.text);
-        } catch (error) {
-          // Expect valid error handling
-          expect(error).toHaveProperty('message');
-        }
+      const results = await Promise.allSettled(
+        malformedInputs.map(input => suiService.addTodo(listId, input.text))
+      );
+
+      // Check that errors are properly handled
+      const rejectedResults = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[];
+      for (const rejectedResult of rejectedResults) {
+        expect(rejectedResult.reason).toHaveProperty('message');
       }
     });
 
     it('should handle boundary conditions', async () => {
       const listId = await suiService.createTodoList();
       
-      // Test empty strings
-      try {
-        await suiService.addTodo(listId, '');
-      } catch (error) {
-        expect(error).toHaveProperty('message');
-      }
+      const boundaryTestCases = [
+        { name: 'empty string', value: '' },
+        { name: 'extremely long string', value: 'a'.repeat(10000) },
+        { name: 'null value', value: null as any },
+        { name: 'undefined value', value: undefined as any },
+        { name: 'special characters', value: '🚀🌟\n\r\t\0\\u0000<script>alert("xss")</script>' }
+      ];
 
-      // Test extremely long strings
-      const longText = 'a'.repeat(10000);
-      try {
-        await suiService.addTodo(listId, longText);
-      } catch (error) {
-        expect(error).toHaveProperty('message');
-      }
-
-      // Test null and undefined values
-      try {
-        await suiService.addTodo(listId, null as any);
-      } catch (error) {
-        expect(error).toHaveProperty('message');
-      }
-
-      try {
-        await suiService.addTodo(listId, undefined as any);
-      } catch (error) {
-        expect(error).toHaveProperty('message');
-      }
-
-      // Test special characters and unicode
-      const specialChars = '🚀🌟\n\r\t\0\\u0000<script>alert("xss")</script>';
-      try {
-        await suiService.addTodo(listId, specialChars);
-      } catch (error) {
-        expect(error).toHaveProperty('message');
+      for (const testCase of boundaryTestCases) {
+        await expect(suiService.addTodo(listId, testCase.value))
+          .rejects.toHaveProperty('message');
       }
 
       // Test maximum number of todos in a list
       const maxTodos = 1000; // Adjust based on actual limits
-      try {
-        await Promise.all(
-          Array(maxTodos).fill(0).map((_, i) => 
-            suiService.addTodo(listId, `Todo ${i}`)
-          )
-        );
-      } catch (error) {
-        expect(error).toHaveProperty('message');
-      }
+      const todoPromises = Array(maxTodos).fill(0).map((_, i) => 
+        suiService.addTodo(listId, `Todo ${i}`)
+      );
+      
+      await expect(Promise.all(todoPromises))
+        .rejects.toHaveProperty('message');
     });
 
     it('should handle malformed transaction data', async () => {
@@ -142,11 +117,8 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const invalidId of invalidListIds) {
-        try {
-          await suiService.addTodo(invalidId as any, 'Test todo');
-        } catch (error) {
-          expect(error).toHaveProperty('message');
-        }
+        await expect(suiService.addTodo(invalidId as any, 'Test todo'))
+          .rejects.toHaveProperty('message');
       }
 
       // Test corrupted transaction objects
@@ -160,14 +132,16 @@ describe('Transaction Fuzzing Tests', () => {
       };
 
       // Test with corrupted blockchain objects
-      try {
-        const todos = await suiService.getTodos(listId);
-        if (todos.length > 0) {
-          // Attempt to update with malformed data
-          await suiService.updateTodo(listId, todos[0].id, corruptedTransaction as any);
-        }
-      } catch (error) {
-        expect(error).toHaveProperty('message');
+      const todos = await suiService.getTodos(listId);
+      if (todos.length > 0) {
+        // Attempt to update with malformed data
+        await expect(suiService.updateTodo(listId, todos[0].id, corruptedTransaction as any))
+          .rejects.toHaveProperty('message');
+      } else {
+        // Add a todo first, then test the update
+        const todoId = await suiService.addTodo(listId, 'Test todo');
+        await expect(suiService.updateTodo(listId, todoId, corruptedTransaction as any))
+          .rejects.toHaveProperty('message');
       }
     });
 
@@ -183,11 +157,11 @@ describe('Transaction Fuzzing Tests', () => {
         })
       );
 
-      try {
-        await Promise.all(updatePromises);
-      } catch (error) {
-        // Some updates might fail due to race conditions
-        expect(error).toHaveProperty('message');
+      const updateResults = await Promise.allSettled(updatePromises);
+      // Some updates might fail due to race conditions
+      const failedUpdates = updateResults.filter(result => result.status === 'rejected') as PromiseRejectedResult[];
+      for (const failedUpdate of failedUpdates) {
+        expect(failedUpdate.reason).toHaveProperty('message');
       }
 
       // Test concurrent deletions
@@ -195,11 +169,11 @@ describe('Transaction Fuzzing Tests', () => {
         suiService.deleteTodoList(listId)
       );
 
-      try {
-        await Promise.all(deletePromises);
-      } catch (error) {
-        // Only one deletion should succeed
-        expect(error).toHaveProperty('message');
+      const deleteResults = await Promise.allSettled(deletePromises);
+      // Only one deletion should succeed, others should fail
+      const failedDeletions = deleteResults.filter(result => result.status === 'rejected') as PromiseRejectedResult[];
+      for (const failedDeletion of failedDeletions) {
+        expect(failedDeletion.reason).toHaveProperty('message');
       }
     });
 
@@ -210,11 +184,8 @@ describe('Transaction Fuzzing Tests', () => {
       const circularData = { parent: null };
       circularData.parent = circularData; // Circular reference
       
-      try {
-        await suiService.addTodo(listId, JSON.stringify(circularData));
-      } catch (error) {
-        expect(error).toHaveProperty('message');
-      }
+      await expect(suiService.addTodo(listId, JSON.stringify(circularData)))
+        .rejects.toHaveProperty('message');
 
       // Test nested operations
       const nestedOperations = async (depth: number): Promise<void> => {
@@ -224,11 +195,8 @@ describe('Transaction Fuzzing Tests', () => {
         }
       };
 
-      try {
-        await nestedOperations(100); // Deep recursion
-      } catch (error) {
-        expect(error).toHaveProperty('message');
-      }
+      await expect(nestedOperations(100)) // Deep recursion
+        .rejects.toHaveProperty('message');
     });
   });
 
@@ -319,14 +287,10 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const metadata of boundaryMetadataTests) {
-        try {
-          await nftContract.entry_create_nft(
-            { sender: fuzzer.blockchainData().address() },
-            metadata
-          );
-        } catch (error) {
-          expect(error).toHaveProperty('message');
-        }
+        await expect(nftContract.entry_create_nft(
+          { sender: fuzzer.blockchainData().address() },
+          metadata
+        )).rejects.toHaveProperty('message');
       }
     });
 
@@ -351,15 +315,11 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const transfer of invalidTransfers) {
-        try {
-          await nftContract.entry_transfer_nft(
-            { sender: transfer.from },
-            transfer.nftId || nftId,
-            transfer.to
-          );
-        } catch (error) {
-          expect(error).toHaveProperty('message');
-        }
+        await expect(nftContract.entry_transfer_nft(
+          { sender: transfer.from },
+          transfer.nftId || nftId,
+          transfer.to
+        )).rejects.toHaveProperty('message');
       }
     });
   });
@@ -418,15 +378,12 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const { timeout, operation } of timeoutOperations) {
-        try {
-          const promise = operation();
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Operation timed out')), timeout)
-          );
-          await Promise.race([promise, timeoutPromise]);
-        } catch (error) {
-          expect(error).toHaveProperty('message');
-        }
+        const promise = operation();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Operation timed out')), timeout)
+        );
+        await expect(Promise.race([promise, timeoutPromise]))
+          .rejects.toHaveProperty('message');
       }
     });
 
@@ -447,19 +404,16 @@ describe('Transaction Fuzzing Tests', () => {
         connectionActive = isConnected;
         
         if (connectionActive) {
-          try {
-            await suiService.addTodo(listId, `Connected: ${Date.now()}`);
-          } catch (error) {
-            expect(error).toHaveProperty('message');
+          // When connected, operations might succeed or fail
+          const result = await suiService.addTodo(listId, `Connected: ${Date.now()}`)
+            .catch(error => ({ error }));
+          if ('error' in result) {
+            expect(result.error).toHaveProperty('message');
           }
         } else {
-          // Simulate connection error
-          try {
-            await suiService.addTodo(listId, `Disconnected: ${Date.now()}`);
-            throw new Error('Expected connection error');
-          } catch (error) {
-            expect(error.message).toBeTruthy();
-          }
+          // Simulate connection error - should always fail when disconnected
+          await expect(suiService.addTodo(listId, `Disconnected: ${Date.now()}`))
+            .rejects.toBeTruthy();
         }
         
         await new Promise(resolve => setTimeout(resolve, duration));
@@ -511,7 +465,7 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const { confirmations, delay } of confirmationScenarios) {
-        try {
+        const todoPromise = async () => {
           const todoId = await suiService.addTodo(listId, `Confirmation test: ${confirmations}`);
           
           // Simulate waiting for confirmations
@@ -524,8 +478,12 @@ describe('Transaction Fuzzing Tests', () => {
           if (!todo && confirmations > 0) {
             throw new Error(`Todo not found after ${confirmations} confirmations`);
           }
-        } catch (error) {
-          expect(error).toHaveProperty('message');
+          return todoId;
+        };
+
+        const result = await todoPromise().catch(error => ({ error }));
+        if ('error' in result) {
+          expect(result.error).toHaveProperty('message');
         }
       }
     });
@@ -565,12 +523,12 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const size of memorySizes) {
-        try {
-          const largeText = 'x'.repeat(size);
-          await suiService.addTodo(listId, largeText);
-        } catch (error) {
+        const largeText = 'x'.repeat(size);
+        const result = await suiService.addTodo(listId, largeText)
+          .catch(error => ({ error }));
+        if ('error' in result) {
           // Expect memory or size limit errors
-          expect(error).toHaveProperty('message');
+          expect(result.error).toHaveProperty('message');
         }
       }
     });
@@ -582,21 +540,21 @@ describe('Transaction Fuzzing Tests', () => {
 
       // Attempt to fill storage
       for (let i = 0; i < maxStorageAttempts; i++) {
-        try {
-          await suiService.addTodo(listId, `Storage test ${i}: ${fuzzer.string({ minLength: 1000, maxLength: 5000 })}`);
-        } catch (error) {
+        const result = await suiService.addTodo(listId, `Storage test ${i}: ${fuzzer.string({ minLength: 1000, maxLength: 5000 })}`)
+          .catch(error => ({ error }));
+        if ('error' in result) {
           storageExhausted = true;
-          expect(error).toHaveProperty('message');
+          expect(result.error).toHaveProperty('message');
           break;
         }
       }
 
       // Test behavior when storage is nearly full
       if (!storageExhausted) {
-        try {
-          await suiService.addTodo(listId, 'Final todo');
-        } catch (error) {
-          expect(error).toHaveProperty('message');
+        const result = await suiService.addTodo(listId, 'Final todo')
+          .catch(error => ({ error }));
+        if ('error' in result) {
+          expect(result.error).toHaveProperty('message');
         }
       }
     });
@@ -637,16 +595,18 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const payload of injectionPayloads) {
-        try {
-          await suiService.addTodo(listId, payload);
+        const result = await suiService.addTodo(listId, payload)
+          .catch(error => ({ error }));
+        
+        if ('error' in result) {
+          // Some payloads might be rejected, which is also acceptable
+          expect(result.error).toHaveProperty('message');
+        } else {
           // If it succeeds, verify the payload is properly escaped
           const todos = await suiService.getTodos(listId);
           const todo = todos.find(t => t.text === payload);
           expect(todo).toBeTruthy();
           expect(todo.text).toBe(payload); // Should be stored as-is, not executed
-        } catch (error) {
-          // Some payloads might be rejected, which is also acceptable
-          expect(error).toHaveProperty('message');
         }
       }
     });
@@ -671,11 +631,8 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const payload of overflowPayloads) {
-        try {
-          await suiService.addTodo(listId, payload);
-        } catch (error) {
-          expect(error).toHaveProperty('message');
-        }
+        await expect(suiService.addTodo(listId, payload))
+          .rejects.toHaveProperty('message');
       }
     });
   });
@@ -705,11 +662,8 @@ describe('Transaction Fuzzing Tests', () => {
       ];
 
       for (const transition of invalidTransitions) {
-        try {
-          await transition();
-        } catch (error) {
-          expect(error).toHaveProperty('message');
-        }
+        await expect(transition())
+          .rejects.toHaveProperty('message');
       }
     });
   });

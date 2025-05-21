@@ -88,7 +88,7 @@ export default class ConfigCommand extends BaseCommand {
   /**
    * Format a value for display
    */
-  private formatValue(value: any): string {
+  private formatValue(value: unknown): string {
     if (value === undefined || value === null) {
       return chalk.gray('(not set)');
     }
@@ -150,7 +150,7 @@ export default class ConfigCommand extends BaseCommand {
     this.log('');
     
     // Group by section
-    const sections: Record<string, Array<[string, any]>> = {};
+    const sections: Record<string, Array<[string, unknown]>> = {};
     
     for (const [key, value] of Object.entries(config)) {
       const section = this.getSection(key);
