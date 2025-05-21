@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync, chmodSync } from 'fs';
 import { join } from 'path';
 
 const execAsync = promisify(exec);
@@ -222,8 +222,7 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
       
       // Remove read permissions (Unix-like systems only)
       if (process.platform !== 'win32') {
-        const fs = require('fs');
-        fs.chmodSync(restrictedFile, 0o000);
+        chmodSync(restrictedFile, 0o000);
 
         try {
           await execAsync(
@@ -233,7 +232,7 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
           expect(error.message).toContain('Permission denied');
         } finally {
           // Restore permissions
-          fs.chmodSync(restrictedFile, 0o644);
+          chmodSync(restrictedFile, 0o644);
         }
       }
     });

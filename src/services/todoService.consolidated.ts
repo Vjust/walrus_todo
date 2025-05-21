@@ -362,7 +362,7 @@ export class TodoService {
     type LocalStorageLocation = typeof validLocations[number];
     
     // Map 'walrus' to 'blockchain' for compatibility
-    let mappedLocation = storageLocation === 'walrus' ? 'blockchain' : storageLocation;
+    const mappedLocation = storageLocation === 'walrus' ? 'blockchain' : storageLocation;
     
     const location = validLocations.includes(mappedLocation as LocalStorageLocation) 
       ? mappedLocation as LocalStorageLocation

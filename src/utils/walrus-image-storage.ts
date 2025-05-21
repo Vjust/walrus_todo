@@ -13,7 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getAssetPath } from './path-utils';
 import { handleError } from './error-handler';
-import { execSync } from 'child_process';
+import { execa } from 'execa';
 import { KeystoreSigner } from './sui-keystore';
 import * as crypto from 'crypto';
 import { CLIError } from '../types/error';
@@ -134,7 +134,7 @@ export class WalrusImageStorage {
       }
 
       // Get active environment info from Sui CLI
-      const envInfo = execSync('sui client active-env').toString().trim();
+      const envInfo = (await execa('sui', ['client', 'active-env'])).stdout.trim();
       if (!envInfo.includes('testnet')) {
         throw new CLIError('Must be connected to testnet environment. Use "sui client switch --env testnet"', 'INVALID_ENVIRONMENT');
       }

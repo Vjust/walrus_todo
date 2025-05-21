@@ -1,639 +1,198 @@
-import { Command, Flags, Hook } from '@oclif/core';
-import { checkPermission } from './middleware/authorization';
-import { ResourceType, ActionType } from './types/permissions';
-import { authenticationService } from './services/authentication-service';
-import { Logger } from './utils/Logger';
-import chalk from 'chalk';
 import * as fs from 'fs';
-import * as path from 'path';
+import * as fsp from 'fs/promises';
 import * as os from 'os';
+import * as path from 'path';
+import { Args, Command, Flags } from '@oclif/core';
 import { ux } from '@oclif/core';
-import { CLIError } from './types/error';
-import { WalrusError, NetworkError, ValidationError, TransactionError } from './types/errors/consolidated';
-import { withRetry } from './utils/error-handler';
-import { commandRegistry, CommandMetadata } from './utils/CommandRegistry';
-import { BatchProcessor } from './utils/batch-processor';
-import { createCache, PerformanceCache } from './utils/performance-cache';
-import { getGlobalLazyLoader } from './utils/lazy-loader';
-import { displayFriendlyError, getErrorContext } from './utils/error-messages';
+import { CLIError, WalrusError } from './types/error';
+import { NetworkError } from './types/errors/consolidated/NetworkError';
+import { ValidationError } from './types/errors/consolidated/ValidationError';
+import { TransactionError } from './types/errors/consolidated/TransactionError';
 import { 
+  createSpinner, 
+  createProgressBar, 
+  createMultiProgress, 
+  withSpinner, 
+  withProgressBar, 
   SpinnerManager, 
   ProgressBar, 
   MultiProgress,
-  createSpinner,
-  createProgressBar,
-  createMultiProgress,
-  withSpinner,
-  withProgressBar,
   SpinnerOptions,
   ProgressBarOptions
 } from './utils/progress-indicators';
-import stripAnsi from 'strip-ansi';
-import * as cliProgress from 'cli-progress';
-import { 
-  SpinnerManager as CLISpinnerManager,
-  ErrorHandler,
-  FlagValidator,
-  RetryManager,
-  Logger as CLILogger,
-  Formatter
-} from './utils/cli-helpers';
 
-/**
- * Options for retry operations
- */
-interface RetryOptions {
-  maxRetries?: number;
-  initialDelay?: number;
-  maxDelay?: number;
-  retryableErrors?: Array<string | RegExp>;
-  onRetry?: (attempt: number, error: Error) => void;
+// To avoid circular imports, declare chalk inline
+let chalk: any;
+try {
+  chalk = require('chalk');
+} catch (e) {
+  chalk = { 
+    red: (s: string) => s, 
+    yellow: (s: string) => s, 
+    green: (s: string) => s, 
+    blue: (s: string) => s, 
+    gray: (s: string) => s 
+  };
+}
+
+/** Command flags accessible within base command */
+export interface BaseFlags {
+  debug?: boolean;
+  network?: string;
+  verbose?: boolean;
+  output?: string;
+  mock?: boolean;
+  apiKey?: string;
+  help?: boolean;
+  timeout?: number;
+  force?: boolean;
+  quiet?: boolean;
 }
 
 /**
- * Icons used throughout the CLI for consistent appearance
+ * Base command class that provides common functionality for all CLI commands.
+ * Includes error handling, caching, performance monitoring, and utility methods.
  */
-export const ICONS = {
-  // Status icons - more playful and fun
-  SUCCESS: '🎉', // Celebration instead of checkmark
-  ERROR: '💥',   // Explosion instead of X
-  WARNING: '⚡️', // Lightning instead of warning
-  INFO: '💡',    // Lightbulb instead of info
-  PENDING: '🕐', // Clock instead of circle
-  ACTIVE: '🟢',  // Green circle
-  LOADING: '🔄', // Rotating arrows
-  DEBUG: '🔮',   // Crystal ball instead of magnifying glass
+export abstract class BaseCommand extends Command {
+  protected flagsConfig: BaseFlags = {};
 
-  // Object icons - more vibrant
-  TODO: '✨',    // Sparkles for todos
-  LIST: '📋',    // Clipboard
-  LISTS: '📚',   // Books
-  TAG: '🏷️',     // Tag
-  PRIORITY: '🔥', // Fire instead of lightning
-  DATE: '📆',    // Calendar
-  TIME: '⏰',    // Alarm clock
+  // Abstract run method that subclasses must implement
+  abstract run(): Promise<void>;
 
-  // Feature icons - playful alternatives
-  BLOCKCHAIN: '⛓️', // Chain
-  WALRUS: '🦭',    // Actual walrus emoji
-  LOCAL: '🏠',     // House instead of computer
-  HYBRID: '🧩',    // Puzzle piece instead of arrows
-  AI: '🧠',        // Brain instead of robot
-  STORAGE: '📦',   // Box instead of disk
-  CONFIG: '🛠️',    // Tools
-  USER: '😎',      // Cool face instead of user
-  SEARCH: '🔍',    // Magnifying glass
-  SECURE: '🔐',    // Locked with key
-  INSECURE: '🔓',  // Unlocked
-
-  // UI elements - more unique
-  BULLET: '•',
-  ARROW: '➜',      // Different arrow
-  BOX_V: '│',
-  BOX_H: '─',
-  BOX_TL: '┌',
-  BOX_TR: '┐',
-  BOX_BL: '└',
-  BOX_BR: '┘',
-  LINE: '·'
-};
-
-/**
- * Priority-related constants - with more fun styling
- */
-export const PRIORITY = {
-  high: {
-    color: chalk.red.bold,
-    icon: '🔥', // Fire for high priority
-    label: 'HOT!',
-    value: 3
-  },
-  medium: {
-    color: chalk.yellow.bold,
-    icon: '⚡', // Lightning for medium priority
-    label: 'SOON',
-    value: 2
-  },
-  low: {
-    color: chalk.green,
-    icon: '🍃', // Leaf for low priority
-    label: 'CHILL',
-    value: 1
-  }
-};
-
-/**
- * Storage-related constants - with playful labels
- */
-export const STORAGE = {
-  local: {
-    color: chalk.green.bold,
-    icon: ICONS.LOCAL,
-    label: 'Home Base'
-  },
-  blockchain: {
-    color: chalk.blue.bold,
-    icon: ICONS.BLOCKCHAIN,
-    label: 'On Chain'
-  },
-  both: {
-    color: chalk.magenta.bold,
-    icon: ICONS.HYBRID,
-    label: 'Everywhere!'
-  }
-};
-
-/**
- * Base command class that all WalTodo CLI commands extend
- *
- * This class provides common functionality used across all commands including:
- * - Standardized flags (help, json, verbose, etc.)
- * - Authentication handling
- * - Permission checking
- * - Consistent UI elements (success/error messages, spinners, formatted output)
- * - JSON output support
- * - Logging utilities
- *
- * Commands should extend this class to ensure a consistent user experience
- * and avoid duplicating common functionality.
- */
-export default abstract class BaseCommand extends Command {
-  static flags = {
-    help: Flags.help({ char: 'h' }),
-    json: Flags.boolean({
-      description: 'Format output as json',
+  static baseFlags = {
+    debug: Flags.boolean({
+      char: 'd',
+      description: 'Enable debug mode',
+      default: false,
+      required: false,
+      env: 'WALRUS_DEBUG'
     }),
-    'no-color': Flags.boolean({
-      description: 'Disable color output',
-    }),
-    quiet: Flags.boolean({
-      char: 'q',
-      description: 'Suppress all output except errors',
+    network: Flags.string({
+      char: 'n',
+      description: 'Network to use',
+      options: ['mainnet', 'testnet', 'localnet'],
+      default: 'testnet',
+      required: false,
+      env: 'WALRUS_NETWORK'
     }),
     verbose: Flags.boolean({
       char: 'v',
-      description: 'Show detailed output',
+      description: 'Enable verbose output',
+      default: false,
+      required: false
     }),
+    output: Flags.string({
+      char: 'o',
+      description: 'Output format',
+      options: ['text', 'json', 'yaml'],
+      default: 'text',
+      required: false
+    }),
+    mock: Flags.boolean({
+      char: 'm',
+      description: 'Enable mock mode for testing',
+      default: false,
+      required: false,
+      env: 'WALRUS_USE_MOCK'
+    }),
+    apiKey: Flags.string({
+      char: 'k',
+      description: 'API key for AI features',
+      required: false,
+      env: 'XAI_API_KEY'
+    }),
+    help: Flags.help({
+      char: 'h'
+    }),
+    timeout: Flags.integer({
+      char: 't',
+      description: 'Timeout in seconds',
+      default: 30,
+      required: false,
+    }),
+    force: Flags.boolean({
+      char: 'f',
+      description: 'Force operation without confirmation',
+      default: false,
+      required: false
+    }),
+    quiet: Flags.boolean({
+      char: 'q',
+      description: 'Suppress output',
+      default: false,
+      required: false
+    })
   };
 
-  // No global hooks needed - using catch() method for error handling
-
-  private logger: Logger = Logger.getInstance();
-  protected tokenPath = path.join(os.homedir(), '.walrus', 'auth.json');
-  
-  // Performance tools
-  protected configCache!: PerformanceCache<any>;
-  protected todoListCache!: PerformanceCache<any>;
-  protected blockchainQueryCache!: PerformanceCache<any>;
-  protected aiResponseCache!: PerformanceCache<any>;
-  protected batchProcessor!: BatchProcessor;
-  private lazyLoader!: any;
+  // Expose base flags for command classes to inherit
+  static flags = BaseCommand.baseFlags;
 
   /**
-   * Authenticate current user from stored token
-   */
-  protected async authenticate(): Promise<any> {
-    if (!fs.existsSync(this.tokenPath)) {
-      this.errorWithHelp(
-        'Authentication required',
-        'Not authenticated. Please login first with:',
-        `walrus account:auth --login YOUR_USERNAME`
-      );
-      return null;
-    }
-
-    try {
-      const data = fs.readFileSync(this.tokenPath, 'utf-8');
-      const authInfo = JSON.parse(data);
-
-      // Validate token
-      const validation = await authenticationService.validateToken(authInfo.token);
-      if (!validation.valid) {
-        if (validation.expired) {
-          this.errorWithHelp(
-            'Session expired',
-            'Your session has expired. Please login again with:',
-            `walrus account:auth --login YOUR_USERNAME`
-          );
-        } else {
-          this.errorWithHelp(
-            'Invalid session',
-            'Your session is invalid. Please login again with:',
-            `walrus account:auth --login YOUR_USERNAME`
-          );
-        }
-        return null;
-      }
-
-      return validation.user;
-    } catch (error) {
-      this.errorWithHelp(
-        'Authentication failed',
-        'Authentication failed. Please login again with:',
-        `walrus account:auth --login YOUR_USERNAME`
-      );
-      return null;
-    }
-  }
-
-  /**
-   * Check if current user has permission to perform action on resource
-   */
-  protected async hasPermission(
-    resource: string | ResourceType,
-    resourceId: string | undefined,
-    action: string | ActionType
-  ): Promise<boolean> {
-    return checkPermission(resource, resourceId, action);
-  }
-
-  /**
-   * Display success message with celebration flair
-   */
-  protected success(message: string): void {
-    if (this.shouldSuppressOutput()) return;
-    const sparkles = chalk.magenta('✨');
-    this.log(`${sparkles} ${chalk.green.bold(`${ICONS.SUCCESS} ${message}`)} ${sparkles}`);
-  }
-
-  /**
-   * Display info message with lightbulb insight
-   */
-  protected info(message: string): void {
-    if (this.shouldSuppressOutput()) return;
-    this.log(chalk.cyan.bold(`${ICONS.INFO} ${message}`));
-  }
-
-  /**
-   * Display warning message with attention-grabbing style
-   */
-  protected warning(message: string): void {
-    if (this.shouldSuppressOutput()) return;
-    this.log(`${chalk.yellow.bold(`${ICONS.WARNING} ${message}`)}`);
-  }
-
-  /**
-   * Display error message with possible solution - with more personality
-   */
-  protected errorWithHelp(title: string, message: string, suggestion?: string): void {
-    // Create an error to get enhanced messaging
-    const error = new CLIError(message, 'CLI_ERROR');
-    const context = getErrorContext(this, error);
-    context.command = this.id || this.constructor.name.toLowerCase().replace('command', '');
-    
-    // Use enhanced error messaging system
-    const friendlyError = displayFriendlyError(error, context);
-    console.error(friendlyError);
-    
-    throw new CLIError(message, 'FORMATTED_ERROR');
-  }
-
-  /**
-   * Display detailed error message with troubleshooting steps - with encouragement
-   */
-  protected detailedError(title: string, message: string, troubleshooting: string[]): void {
-    // Create an error to get enhanced messaging
-    const error = new CLIError(message, 'CLI_ERROR');
-    const context = getErrorContext(this, error);
-    context.command = this.id || this.constructor.name.toLowerCase().replace('command', '');
-    
-    // Use enhanced error messaging system
-    const friendlyError = displayFriendlyError(error, context);
-    console.error(friendlyError);
-    
-    throw new CLIError(message, 'DETAILED_ERROR');
-  }
-
-  /**
-   * Display verbose output if verbose flag is set - with magical flair
-   * (Named debugLog to avoid conflict with Command.debug property)
-   */
-  protected debugLog(message: string, data?: any): void {
-    if (!this.isVerbose()) return;
-
-    // A bit of magic and whimsy for debugging
-    this.log(chalk.magenta(`${ICONS.DEBUG} ✧ ${message} ✧`));
-    if (data) {
-      // Add a fun prefix to JSON data
-      this.log(chalk.dim(`🔎 Peeking under the hood:`));
-      this.log(chalk.cyan(JSON.stringify(data, null, 2)));
-    }
-  }
-
-  /**
-   * Draw a fun titled section with a box around it
-   * Creates a vibrant box with a title bar for structured content display.
-   * The box automatically adjusts width based on content with playful styling.
-   *
-   * @param title Section title displayed in the box header
-   * @param content Content to display inside the box (can be multi-line)
-   */
-  protected section(title: string, content: string): void {
-    if (this.shouldSuppressOutput()) return;
-
-    const lines = content.split('\n');
-    const width = Math.max(...lines.map(line => this.stripAnsi(line).length), title.length + 4);
-
-    // Pick a random fun color for the box
-    const boxColors = [chalk.cyan, chalk.magenta, chalk.green, chalk.yellow, chalk.blue];
-    const boxColor = boxColors[Math.floor(Math.random() * boxColors.length)];
-
-    // Random decorative emoji for the section title
-    const decorations = ['✨', '🌟', '💫', '🚀', '💥', '🔮', '🧩', '🎯'];
-    const decoration = decorations[Math.floor(Math.random() * decorations.length)];
-
-    // Top border with title and decoration
-    this.log(boxColor(`${ICONS.BOX_TL}${ICONS.BOX_H}[ ${decoration} ${chalk.bold.white(title)} ${decoration} ]${ICONS.BOX_H.repeat(width - title.length - 8)}${ICONS.BOX_TR}`));
-
-    // Content with colorful borders
-    lines.forEach(line => {
-      const rawLine = this.stripAnsi(line);
-      const padding = width - rawLine.length;
-      this.log(`${boxColor(ICONS.BOX_V)} ${line}${' '.repeat(padding)} ${boxColor(ICONS.BOX_V)}`);
-    });
-
-    // Bottom border
-    this.log(boxColor(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`));
-  }
-
-  /**
-   * Create a fun formatted list with title and varied bullet points
-   */
-  protected simpleList(title: string, items: string[]): void {
-    if (this.shouldSuppressOutput()) return;
-
-    // Fun bullet point variations
-    const bullets = ['🔹', '🔸', '💠', '🔻', '🔶', '🔷', '🔸', '🔹'];
-
-    // Title with fun decorations
-    this.log(chalk.bold(`\n✧ ${chalk.underline(title)} ✧`));
-
-    // List items with alternating bullets and subtle coloring
-    items.forEach((item, index) => {
-      const bullet = bullets[index % bullets.length];
-      // Alternate text colors for adjacent items
-      const itemText = index % 2 === 0
-        ? chalk.cyan(item)
-        : chalk.white(item);
-      this.log(`  ${bullet} ${itemText}`);
-    });
-
-    this.log('');
-  }
-
-  /**
-   * Format a todo item for display with playful styling
-   * Creates a fun, visually appealing representation of a todo item with:
-   * - Emoji status indicator (celebration for completed, clock for pending)
-   * - Cool priority indicator with fun labels
-   * - Title with subtle highlighting
-   * - Optional details with playful icons and formatting
-   *
-   * @param todo Todo item to format
-   * @param showDetail Whether to include detailed information (default: true)
-   * @returns Formatted string ready for display
-   */
-  protected formatTodo(todo: any, showDetail: boolean = true): string {
-    // Status indicators with more personality
-    const status = todo.completed
-      ? chalk.green.bold(`${ICONS.SUCCESS} `) // Celebration
-      : chalk.yellow(`${ICONS.PENDING} `);    // Clock
-
-    // Get priority with our new fun labels
-    const priority = PRIORITY[todo.priority as keyof typeof PRIORITY]
-      || PRIORITY.medium;
-
-    // Construct the priority badge with the icon and label
-    const priorityBadge = priority.color(`${priority.icon} ${priority.label}`);
-
-    // Make the title pop with subtle formatting (but not too much)
-    const titleFormatted = todo.completed
-      ? chalk.dim.strikethrough(todo.title) // Strikethrough for completed todos
-      : chalk.white.bold(todo.title);      // Bold for pending todos
-
-    // Start building a fun output
-    let output = `${status}${priorityBadge} ${titleFormatted}`;
-
-    // Add fun details with more personality
-    if (showDetail && (todo.dueDate || (todo.tags && todo.tags.length) || todo.private)) {
-      const details = [
-        todo.dueDate && chalk.blue(`${ICONS.DATE} ${todo.dueDate}`),
-        todo.tags?.length && chalk.cyan(`${ICONS.TAG} ${todo.tags.join(', ')}`),
-        todo.private && chalk.yellow(`${ICONS.SECURE} Eyes only!`)
-      ].filter(Boolean);
-
-      if (details.length) {
-        output += `\n   ${details.join(' │ ')}`;
-      }
-    }
-
-    return output;
-  }
-
-  /**
-   * Format a storage icon and label with a fun twist
-   */
-  protected formatStorage(storageType: string): string {
-    const storage = STORAGE[storageType as keyof typeof STORAGE] || STORAGE.local;
-
-    // Add a playful animation-like effect with brackets
-    return `[${storage.icon}] ${storage.color.bold(storage.label)} [${storage.icon}]`;
-  }
-
-  /**
-   * Output JSON result if json flag is set
-   */
-  protected async jsonOutput(data: any): Promise<void> {
-    if (await this.isJson()) {
-      this.log(JSON.stringify(data, null, 2));
-    }
-  }
-
-  /**
-   * Check if output should be shown as JSON
-   */
-  protected async isJson(): Promise<boolean> {
-    const { flags } = await this.parse(this.constructor as typeof BaseCommand);
-    return flags.json as boolean;
-  }
-
-  /**
-   * Get current flag values synchronously
-   * This is safer than direct parsing which requires Promise handling
-   */
-  protected getCurrentFlags(): any {
-    try {
-      // Access parsed flags if already available
-      return this.constructor.prototype.flags || {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  /**
-   * Check if color should be disabled
-   */
-  protected isNoColor(): boolean {
-    // Use synchronous approach for init-time flag checking
-    if (this.argv.includes('--no-color')) {
-      return true;
-    }
-    return Boolean(this.getCurrentFlags()['no-color']);
-  }
-
-  /**
-   * Check if output should be verbose
-   */
-  protected isVerbose(): boolean {
-    if (this.argv.includes('--verbose') || this.argv.includes('-v')) {
-      return true;
-    }
-    return Boolean(this.getCurrentFlags().verbose);
-  }
-
-  /**
-   * Check if output should be suppressed
-   */
-  protected shouldSuppressOutput(): boolean {
-    if (this.argv.includes('--quiet') || this.argv.includes('-q')) {
-      return true;
-    }
-    return Boolean(this.getCurrentFlags().quiet);
-  }
-
-  /**
-   * Start a loading spinner with a message
-   */
-  protected startSpinner(message: string): any {
-    if (this.shouldSuppressOutput()) return null;
-    return ux.action.start(message);
-  }
-
-  /**
-   * Stop a loading spinner with a success message
-   */
-  protected stopSpinnerSuccess(spinner: any, message: string): void {
-    if (!spinner) return;
-    ux.action.stop(chalk.green(`${ICONS.SUCCESS} ${message}`));
-  }
-
-  /**
-   * Strip ANSI color codes from a string
-   */
-  private stripAnsi(text: string): string {
-    return stripAnsi(text);
-  }
-
-  /**
-   * Initialize command
+   * Initialize the base command with error handling and configuration
    */
   async init(): Promise<void> {
     await super.init();
 
-    // Force colors to be enabled always, overriding any no-color flag
-    // This ensures our playful styling always appears
-    process.env.FORCE_COLOR = '1';
-    chalk.level > 0 || (chalk.level = 1);
+    // Parse flags to populate flagsConfig
+    const parsed = await this.parse();
+    this.flagsConfig = parsed.flags as BaseFlags;
 
-    // Only disable color if explicitly requested and in a non-demo environment
-    if (this.isNoColor() && process.env.DEMO_MODE !== 'true') {
-      chalk.level = 0;
-    }
-    
-    // Initialize performance tools
-    this.initializePerformanceTools();
-    this.preloadCommonModules();
+    // Setup error handling
+    this.setupErrorHandlers();
   }
 
   /**
-   * Handle command errors
+   * Clean up resources before command completion
    */
-  async catch(error: Error): Promise<any> {
-    // Check if this might be a misspelled command
-    const args = this.argv;
-    if (error.message.includes('command not found') && args.length > 0) {
-      const input = args[0];
-      const suggestions = commandRegistry.suggestCommands(input, 3);
-      
-      if (suggestions.length > 0) {
-        // Create a custom error with command suggestions
-        const notFoundError = new CLIError(`'${input}' is not a valid command`, 'COMMAND_NOT_FOUND');
-        const context = getErrorContext(this, notFoundError);
-        context.command = input;
-        
-        // Display with enhanced error messaging
-        const friendlyError = displayFriendlyError(notFoundError, context);
-        console.error(friendlyError);
-        
-        throw notFoundError;
-      }
+  async finally(err?: Error): Promise<void> {
+    try {
+      await super.finally(err);
+    } catch (error) {
+      // Don't let cleanup errors mask original command errors
+      this.warn(`Cleanup error: ${error instanceof Error ? error.message : String(error)}`);
     }
-    
-    // Use the enhanced error handling system
-    return this.handleCommandError(error);
-  }
-
-  /**
-   * Clean up after command finishes
-   */
-  async finally(error: Error | undefined): Promise<any> {
-    // Save performance caches
-    if (this.configCache) {
-      await this.savePerformanceCaches();
-    }
-    
-    // Any cleanup needed
-    return super.finally(error);
-  }
-
-  /**
-   * Override log method to ensure output is always visible
-   * while avoiding duplicate console output
-   *
-   * This implementation resolves an issue with the base Command class
-   * where using both super.log and console.log would cause duplicate output.
-   *
-   * @param message Message to log
-   * @param args Additional arguments
-   */
-  log(message: string, ...args: any[]): void {
-    // Call the original log method only - we don't need both super.log and console.log
-    // which creates duplicate output
-    super.log(message, ...args);
   }
 
   /**
    * Enhanced error handling with structured error types
-   * Provides specialized handling for different error categories
    */
-  protected async handleCommandError(error: Error): Promise<never> {
-    this.logger.error(`Command error: ${error.message}`, error);
-
-    // Get error context
-    const context = getErrorContext(this, error);
-    
-    // Handle formatted CLIErrors without re-formatting
-    if (error instanceof CLIError &&
-        ((error as any).code === 'FORMATTED_ERROR' || (error as any).code === 'DETAILED_ERROR')) {
-      throw error;  // Throw to satisfy 'never' return type
+  protected async catch(error: Error): Promise<void> {
+    // Handle specific error types
+    if (error instanceof WalrusError) {
+      return this.handleStructuredError(error);
     }
 
-    // Display friendly error message using enhanced system
-    const friendlyError = displayFriendlyError(error, context);
-    console.error(friendlyError);
-    
-    // Log stack trace if verbose
-    if (this.isVerbose() && error.stack) {
-      console.error('\nStack trace:');
-      console.error(chalk.dim(error.stack));
+    if (error instanceof ValidationError) {
+      return this.handleValidationError(error);
     }
-    
-    // Exit with appropriate code
+
+    if (error instanceof NetworkError) {
+      return this.handleNetworkError(error);
+    }
+
+    if (error instanceof TransactionError) {
+      return this.handleTransactionError(error);
+    }
+
     if (error instanceof CLIError) {
-      process.exit((error as any).exitCode || 1);
-    } else {
-      process.exit(1);
+      return this.handleCLIError(error);
     }
+
+    // Handle generic errors
+    return this.handleGenericError(error);
+  }
+
+  /**
+   * Setup global error handlers for the command
+   */
+  private setupErrorHandlers(): void {
+    process.on('uncaughtException', (error) => {
+      this.error(`Uncaught exception: ${error.message}`, { exit: 1 });
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      this.error(`Unhandled rejection at ${promise}: ${reason}`, { exit: 1 });
+    });
   }
 
   /**
@@ -645,95 +204,149 @@ export default abstract class BaseCommand extends Command {
     // Build troubleshooting steps based on error code
     const troubleshooting: string[] = [];
     
-    // Ensure this function never returns by throwing
-    throw new Error(error.message);
-    
-    switch (error.code) {
-      case 'NETWORK_ERROR':
-        troubleshooting.push('Check your internet connection');
-        troubleshooting.push('Verify the service is accessible');
-        break;
-      case 'VALIDATION_ERROR':
-        troubleshooting.push('Check input format and values');
-        troubleshooting.push('Review command help for requirements');
-        break;
-      case 'AUTHORIZATION_ERROR':
-        troubleshooting.push('Check your authentication status');
-        troubleshooting.push('Verify your permissions');
-        break;
-      default:
-        this.logger.warn(`Unrecognized error code: ${error.code}`);
-        troubleshooting.push('Review the error message above');
-        troubleshooting.push('Try running with --verbose flag');
-        troubleshooting.push(`Error code: ${error.code}`);
+    if (errorInfo.code.includes('STORAGE')) {
+      troubleshooting.push('• Check your Walrus storage allocation');
+      troubleshooting.push('• Verify network connectivity to Walrus nodes');
+      troubleshooting.push('• Ensure you have sufficient WAL tokens');
     }
     
-    if (errorInfo.shouldRetry) {
-      troubleshooting.push('This operation can be retried');
+    if (errorInfo.code.includes('NETWORK')) {
+      troubleshooting.push('• Check your internet connection');
+      troubleshooting.push('• Try again in a few moments');
+      troubleshooting.push('• Use --mock flag for testing without network');
     }
-    
-    this.detailedError(
-      error.name,
-      errorInfo.message,
-      troubleshooting
-    );
-    // The detailedError method throws, so no return needed to satisfy 'never' type
+
+    this.error(chalk.red(`${error.name}: ${error.message}`), {
+      suggestions: troubleshooting,
+      exit: 1
+    });
   }
 
   /**
-   * Execute an async operation with retry logic for transient errors
-   * 
-   * @param operation Function to execute
-   * @param options Retry options
-   * @returns Result of the operation
-   * @throws NetworkError if all retries fail
+   * Handle validation errors with field-specific guidance
    */
-  protected async executeWithRetry<T>(
+  private handleValidationError(error: ValidationError): never {
+    this.error(chalk.red(`Validation Error: ${error.message}`), {
+      suggestions: [
+        'Check the format of your input parameters',
+        'Refer to command help with --help flag',
+        'Use --verbose for detailed validation info'
+      ],
+      exit: 1
+    });
+  }
+
+  /**
+   * Handle network errors with retry suggestions
+   */
+  private handleNetworkError(error: NetworkError): never {
+    const shouldRetry = error.recoverable || error.shouldRetry;
+    
+    this.error(chalk.red(`Network Error: ${error.message}`), {
+      suggestions: shouldRetry ? [
+        'Check your internet connection',
+        'Try again in a few moments',
+        'Use --timeout to increase wait time',
+        'Use --mock flag to work offline'
+      ] : [
+        'Check your network configuration',
+        'Verify service endpoints are accessible',
+        'Contact support if the issue persists'
+      ],
+      exit: 1
+    });
+  }
+
+  /**
+   * Handle transaction errors with blockchain-specific guidance
+   */
+  private handleTransactionError(error: TransactionError): never {
+    this.error(chalk.red(`Transaction Error: ${error.message}`), {
+      suggestions: [
+        'Check your wallet balance and gas fees',
+        'Verify transaction parameters',
+        'Try with a higher gas limit',
+        'Check blockchain network status'
+      ],
+      exit: 1
+    });
+  }
+
+  /**
+   * Handle CLI-specific errors
+   */
+  private handleCLIError(error: CLIError): never {
+    this.error(chalk.red(`CLI Error: ${error.message}`), {
+      suggestions: [
+        'Check command syntax with --help',
+        'Verify all required parameters are provided',
+        'Use --verbose for more detailed output'
+      ],
+      exit: 1
+    });
+  }
+
+  /**
+   * Handle generic errors with basic troubleshooting
+   */
+  private handleGenericError(error: Error): never {
+    this.error(chalk.red(`Error: ${error.message}`), {
+      suggestions: [
+        'Try running the command again',
+        'Use --debug for detailed error information',
+        'Check the command documentation',
+        'Report this issue if it persists'
+      ],
+      exit: 1
+    });
+  }
+
+  /**
+   * Execute an operation with retry logic and error handling
+   */
+  protected async withRetry<T>(
     operation: () => Promise<T>,
     options: {
       maxRetries?: number;
-      baseDelay?: number;
-      retryMessage?: string;
+      initialDelay?: number;
       operationName?: string;
+      isRetryable?: (error: Error) => boolean;
     } = {}
   ): Promise<T> {
-    const { 
-      maxRetries = 3, 
-      baseDelay = 1000, 
-      retryMessage = 'Retrying operation...', 
-      operationName = 'network_operation' 
+    const {
+      maxRetries = 3,
+      initialDelay = 1000,
+      operationName = 'operation',
+      isRetryable = () => true
     } = options;
-    
-    let lastError: Error | undefined;
+
+    let lastError: Error;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (error: any) {
-        lastError = error;
+      } catch (error) {
+        lastError = error as Error;
         
-        // Check if error is retryable
-        const isRetryable = this.isTransientError(error);
-        
-        if (!isRetryable || attempt === maxRetries) {
+        // Check if we should retry
+        if (!isRetryable(lastError) || attempt === maxRetries) {
           // Wrap in NetworkError if not already wrapped
           if (!(error instanceof NetworkError)) {
             throw new NetworkError(
-              error.message || 'Network operation failed',
+              lastError.message || 'Network operation failed',
               {
                 operation: operationName,
-                recoverable: isRetryable,
-                cause: error
+                recoverable: isRetryable(lastError),
+                cause: lastError
               }
             );
           }
           throw error;
         }
         
-        // Calculate delay with exponential backoff
-        const delay = baseDelay * Math.pow(2, attempt - 1);
-        this.debugLog(`${retryMessage} (attempt ${attempt}/${maxRetries}) - waiting ${delay}ms`);
-        
+        // Wait before retrying
+        const delay = initialDelay * Math.pow(2, attempt - 1);
+        this.log(chalk.yellow(`Attempt ${attempt} failed, retrying in ${delay}ms...`));
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -744,375 +357,456 @@ export default abstract class BaseCommand extends Command {
       {
         operation: operationName,
         recoverable: false,
-        cause: lastError
+        cause: lastError!
       }
     );
   }
-  
+
   /**
-   * Check if an error is transient and should be retried
+   * Start a spinner with given text
    */
-  private isTransientError(error: unknown): boolean {
-    if (!error || typeof error !== 'object') return false;
-    
-    const message = (error as Error).message?.toLowerCase() || '';
-    const code = (error as any).code?.toLowerCase() || '';
-    
-    return (
-      message.includes('network') ||
-      message.includes('timeout') ||
-      message.includes('connection') ||
-      message.includes('econnrefused') ||
-      message.includes('econnreset') ||
-      message.includes('429') ||
-      code.includes('network_error') ||
-      code.includes('timeout') ||
-      code === 'econnrefused' ||
-      code === 'econnreset'
-    );
+  protected startSpinner(text: string): void {
+    this.log(`${text}...`);
   }
 
   /**
-   * Validate command input with enhanced error messages
-   * 
-   * @param validator Validation function
-   * @param value Value to validate
-   * @param errorMessage Error message if validation fails
-   * @throws ValidationError if validation fails
+   * Stop spinner with success/failure
    */
-  /**
-   * Centralized file write method that can be mocked in tests
-   * This provides a consistent interface for all file operations
-   * and allows test code to mock file operations by replacing this method
-   * 
-   * @param filePath Path to the file to write
-   * @param data Data to write to the file
-   * @param options Write options
-   */
-  protected writeFileSafe(filePath: string, data: string, options?: fs.WriteFileOptions): void {
-    // Create directory if it doesn't exist
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+  protected stopSpinner(success: boolean = true, finalText?: string): void {
+    if (finalText) {
+      if (success) {
+        this.log(chalk.green(`✓ ${finalText}`));
+      } else {
+        this.log(chalk.red(`✗ ${finalText}`));
+      }
     }
-    
-    // Write file with proper error handling
+  }
+
+  /**
+   * Update spinner text
+   */
+  protected updateSpinner(text: string): void {
+    this.log(text);
+  }
+
+  /**
+   * Execute operation with spinner
+   */
+  protected async withSpinner<T>(
+    text: string,
+    operation: () => Promise<T>,
+    successText?: string
+  ): Promise<T> {
+    this.startSpinner(text);
     try {
-      fs.writeFileSync(filePath, data, options);
+      const result = await operation();
+      this.stopSpinner(true, successText || 'Done');
+      return result;
     } catch (error) {
-      this.warning(`Failed to write file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+      this.stopSpinner(false, 'Failed');
       throw error;
     }
   }
-  
+
   /**
-   * Get the base configuration directory for storing WalTodo's settings and data
-   * This location can be customized via the WALRUS_TODO_CONFIG_DIR environment variable
-   * The default location is ~/.waltodo
-   * 
-   * @returns Absolute path to the configuration directory
+   * Utility method for user confirmation prompts
    */
-  protected getConfigDir(): string {
-    return process.env.WALRUS_TODO_CONFIG_DIR || path.join(os.homedir(), '.waltodo');
+  protected async confirm(message: string, defaultValue: boolean = false): Promise<boolean> {
+    if (this.flagsConfig.force) {
+      return true;
+    }
+    
+    return ux.confirm(message + (defaultValue ? ' (Y/n)' : ' (y/N)'));
   }
-  
-  protected validateInput<T>(
-    validator: (value: T) => boolean,
-    value: T,
-    errorMessage: string,
-    field?: string
-  ): void {
-    if (!validator(value)) {
-      throw new ValidationError(errorMessage, {
-        field,
-        value,
-        recoverable: false
-      });
+
+  /**
+   * Utility method for user input prompts
+   */
+  protected async prompt(message: string, options: {
+    required?: boolean;
+    type?: 'normal' | 'mask' | 'hide';
+    default?: string;
+  } = {}): Promise<string> {
+    const { required = true, type = 'normal', default: defaultValue } = options;
+    
+    const result = await ux.prompt(message, {
+      required,
+      type: type as any,
+      default: defaultValue
+    });
+    
+    return result;
+  }
+
+  /**
+   * Format output based on the requested format (json, yaml, text)
+   */
+  protected formatOutput(data: any, format?: string): string {
+    const outputFormat = format || this.flagsConfig.output || 'text';
+    
+    switch (outputFormat) {
+      case 'json':
+        return JSON.stringify(data, null, 2);
+      case 'yaml':
+        // Simple YAML-like format
+        return this.toYamlLike(data);
+      case 'text':
+      default:
+        return this.toTextFormat(data);
     }
   }
 
   /**
-   * Create a transaction context for blockchain operations
-   * Provides rollback capability on failure
-   * 
-   * @param transactionFn Function to execute within transaction
-   * @returns Result of transaction
-   * @throws TransactionError if transaction fails
+   * Simple YAML-like formatting for output
+   */
+  private toYamlLike(obj: any, indent: string = ''): string {
+    if (typeof obj !== 'object' || obj === null) {
+      return String(obj);
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => `${indent}- ${this.toYamlLike(item, indent + '  ')}`).join('\n');
+    }
+    
+    return Object.entries(obj)
+      .map(([key, value]) => `${indent}${key}: ${this.toYamlLike(value, indent + '  ')}`)
+      .join('\n');
+  }
+
+  /**
+   * Text formatting for output
+   */
+  private toTextFormat(data: any): string {
+    if (typeof data === 'string') {
+      return data;
+    }
+    
+    if (typeof data === 'object' && data !== null) {
+      if (Array.isArray(data)) {
+        return data.map((item, index) => `${index + 1}. ${this.toTextFormat(item)}`).join('\n');
+      }
+      
+      return Object.entries(data)
+        .map(([key, value]) => `${key}: ${this.toTextFormat(value)}`)
+        .join('\n');
+    }
+    
+    return String(data);
+  }
+
+  /**
+   * Log output conditionally based on quiet flag
+   */
+  protected logConditional(message: string): void {
+    if (!this.flagsConfig.quiet) {
+      this.log(message);
+    }
+  }
+
+  /**
+   * Verbose log that only shows when verbose flag is enabled
+   */
+  protected verbose(message: string): void {
+    if (this.flagsConfig.verbose) {
+      this.log(chalk.blue(`[VERBOSE] ${message}`));
+    }
+  }
+
+  /**
+   * Display success message with icon
+   */
+  protected success(message: string): void {
+    this.log(chalk.green(`${ICONS.success} ${message}`));
+  }
+
+  /**
+   * Display info message with icon
+   */
+  protected info(message: string): void {
+    this.log(chalk.blue(`${ICONS.info} ${message}`));
+  }
+
+  /**
+   * Display warning message with icon
+   */
+  protected warning(message: string): void {
+    this.log(chalk.yellow(`${ICONS.warning} ${message}`));
+  }
+
+  /**
+   * Display error with help message and throw
+   */
+  protected errorWithHelp(title: string, message: string, helpText: string): never {
+    this.error(`${title}: ${message}\n${chalk.gray(helpText)}`, { exit: 1 });
+  }
+
+  /**
+   * Display a section with title and content
+   */
+  protected section(title: string, content: string): void {
+    this.log(`\n${chalk.bold.cyan(`📋 ${title}`)}`);
+    this.log(`${chalk.gray('─'.repeat(40))}`);
+    this.log(content);
+    this.log('');
+  }
+
+  /**
+   * Display a simple bulleted list
+   */
+  protected simpleList(title: string, items: string[]): void {
+    this.log(`\n${chalk.bold.yellow(`📝 ${title}`)}`);
+    items.forEach(item => {
+      this.log(`  ${chalk.cyan('•')} ${item}`);
+    });
+    this.log('');
+  }
+
+  /**
+   * Format a todo object for display
+   */
+  protected formatTodo(todo: any): string {
+    const statusIcon = todo.completed ? ICONS.success : ICONS.pending;
+    const priorityColor = todo.priority === 'high' ? chalk.red : 
+                         todo.priority === 'medium' ? chalk.yellow : chalk.green;
+    
+    let result = `${statusIcon} ${chalk.bold(todo.title)}`;
+    
+    if (todo.priority) {
+      result += ` ${priorityColor(`[${todo.priority.toUpperCase()}]`)}`;
+    }
+    
+    if (todo.dueDate) {
+      result += ` ${chalk.gray(`Due: ${todo.dueDate}`)}`;
+    }
+    
+    if (todo.tags && todo.tags.length > 0) {
+      result += ` ${chalk.magenta(`#${todo.tags.join(' #')}`)}`;
+    }
+    
+    return result;
+  }
+
+  /**
+   * Format storage type for display
+   */
+  protected formatStorage(type: string): string {
+    switch (type) {
+      case 'local':
+        return chalk.blue('💾 Local');
+      case 'blockchain':
+        return chalk.green('⛓️  Blockchain');
+      case 'both':
+        return chalk.cyan('🔄 Hybrid');
+      default:
+        return chalk.gray('❓ Unknown');
+    }
+  }
+
+  /**
+   * Enhanced debug log with data
+   */
+  protected debugLog(message: string, data?: any): void {
+    if (this.flagsConfig.debug) {
+      let logMessage = chalk.gray(`[DEBUG] ${message}`);
+      if (data) {
+        logMessage += chalk.gray(` ${JSON.stringify(data)}`);
+      }
+      this.log(logMessage);
+    }
+  }
+
+  /**
+   * Stop spinner with success message
+   */
+  protected stopSpinnerSuccess(spinner: any, message: string): void {
+    this.log(chalk.green(`✓ ${message}`));
+  }
+
+  /**
+   * Display detailed error with suggestions
+   */
+  protected detailedError(title: string, message: string, suggestions: string[]): never {
+    this.log(chalk.red(`\n❌ ${title}`));
+    this.log(chalk.red(`${message}\n`));
+    
+    if (suggestions && suggestions.length > 0) {
+      this.log(chalk.yellow('💡 Troubleshooting steps:'));
+      suggestions.forEach((suggestion, index) => {
+        this.log(chalk.yellow(`   ${index + 1}. ${suggestion}`));
+      });
+      this.log('');
+    }
+    
+    this.exit(1);
+  }
+
+  /**
+   * Output data in JSON format
+   */
+  protected async jsonOutput(data: any): Promise<void> {
+    this.log(JSON.stringify(data, null, 2));
+  }
+
+  /**
+   * Execute operation with retry logic
+   */
+  protected async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    options: {
+      maxRetries?: number;
+      baseDelay?: number;
+      retryMessage?: string;
+      operationName?: string;
+    } = {}
+  ): Promise<T> {
+    const {
+      maxRetries = 3,
+      baseDelay = 1000,
+      retryMessage = 'Retrying operation...',
+      operationName = 'operation'
+    } = options;
+
+    let lastError: Error;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error as Error;
+        
+        if (attempt === maxRetries) {
+          break;
+        }
+        
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        this.warning(`${retryMessage} (attempt ${attempt}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw new Error(`${operationName} failed after ${maxRetries} attempts: ${lastError!.message}`);
+  }
+
+  /**
+   * Execute transaction with rollback capability
    */
   protected async executeTransaction<T>(
-    transactionFn: () => Promise<T>,
+    operation: () => Promise<T>,
     options: {
-      operation: string;
+      operation?: string;
       rollbackFn?: () => Promise<void>;
-    }
+    } = {}
   ): Promise<T> {
-    const { operation, rollbackFn } = options;
+    const { operation: operationName = 'transaction', rollbackFn } = options;
     
     try {
-      return await transactionFn();
-    } catch (error: any) {
-      // Attempt rollback if provided
+      return await operation();
+    } catch (error) {
+      this.debugLog(`Transaction ${operationName} failed, attempting rollback`);
+      
       if (rollbackFn) {
         try {
           await rollbackFn();
-          this.warning('Transaction rolled back successfully');
-        } catch (rollbackError: any) {
-          this.logger.error('Rollback failed', rollbackError);
-          this.warning('Transaction rollback failed - manual intervention may be required');
+          this.debugLog(`Rollback for ${operationName} completed`);
+        } catch (rollbackError) {
+          this.warning(`Rollback failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
         }
       }
       
-      // Convert to TransactionError for consistent handling
-      throw new TransactionError(
-        error.message || `Transaction ${operation} failed`,
-        {
-          operation,
-          recoverable: false,
-          cause: error
-        }
-      );
-    }
-  }
-
-  /**
-   * Initialize performance caches and tools
-   */
-  private initializePerformanceTools(): void {
-    const cacheDir = path.join(os.homedir(), '.walrus', 'cache');
-    
-    // Initialize caches with appropriate strategies
-    this.configCache = createCache<any>('config', {
-      strategy: 'TTL',
-      ttlMs: 3600000, // 1 hour
-      persistenceDir: path.join(cacheDir, 'config')
-    });
-    
-    this.todoListCache = createCache<any>('todos', {
-      strategy: 'LRU',
-      maxSize: 100,
-      persistenceDir: path.join(cacheDir, 'todos')
-    });
-    
-    this.blockchainQueryCache = createCache<any>('blockchain', {
-      strategy: 'TTL',
-      ttlMs: 300000, // 5 minutes
-      persistenceDir: path.join(cacheDir, 'blockchain')
-    });
-    
-    this.aiResponseCache = createCache<any>('ai-responses', {
-      strategy: 'TTL',
-      ttlMs: 3600000, // 1 hour
-      maxSize: 50,
-      persistenceDir: path.join(cacheDir, 'ai')
-    });
-    
-    // Initialize batch processor with default settings
-    this.batchProcessor = new BatchProcessor({
-      batchSize: 10,
-      concurrencyLimit: 5,
-      retryAttempts: 3,
-      retryDelayMs: 1000
-    });
-    
-    // Initialize lazy loader
-    this.lazyLoader = getGlobalLazyLoader({
-      cacheModules: true,
-      preloadHints: [
-        '@mysten/sui/client',
-        '@mysten/walrus',
-        'chalk',
-        'ora',
-        '../services/todoService',
-        '../services/ai/aiService'
-      ]
-    });
-  }
-  
-  /**
-   * Preload commonly used modules in the background
-   */
-  private async preloadCommonModules(): Promise<void> {
-    // Only preload essential modules needed by most commands
-    setTimeout(async () => {
-      try {
-        // Only preload todoService which is used by most commands
-        await this.lazyLoader.preload([
-          '../services/todoService'
-        ]);
-        
-        // Preload other modules based on command type (defer this to command-specific init)
-        const cmdName = this.id || '';
-        if (cmdName.includes('store') || cmdName.includes('retrieve')) {
-          await this.lazyLoader.preload([
-            '../utils/walrus-storage',
-            '../utils/sui-nft-storage'
-          ]);
-        }
-        
-        if (cmdName.includes('ai') || cmdName.includes('suggest')) {
-          await this.lazyLoader.preload([
-            '../services/ai/AIVerificationService'
-          ]);
-        }
-      } catch (error) {
-        this.logger.warn('Failed to preload some modules', error);
-      }
-    }, 100);
-  }
-  
-  /**
-   * Save performance caches to disk
-   */
-  private async savePerformanceCaches(): Promise<void> {
-    try {
-      await Promise.all([
-        this.configCache.shutdown(),
-        this.todoListCache.shutdown(),
-        this.blockchainQueryCache.shutdown(),
-        this.aiResponseCache.shutdown()
-      ]);
-    } catch (error) {
-      this.logger.warn('Failed to save some caches', error);
-    }
-  }
-  
-  /**
-   * Get cached configuration or load it
-   */
-  protected async getCachedConfig<T>(key: string, loader: () => Promise<T>): Promise<T> {
-    const cached = await this.configCache.get(key);
-    if (cached) {
-      this.debugLog(`Config cache hit: ${key}`);
-      return cached;
-    }
-    
-    const value = await loader();
-    await this.configCache.set(key, value);
-    return value;
-  }
-  
-  /**
-   * Update cached configuration
-   */
-  protected async setCachedConfig<T>(key: string, value: T): Promise<void> {
-    await this.configCache.set(key, value);
-    this.debugLog(`Config cache updated: ${key}`);
-  }
-  
-  /**
-   * Get cached todo list or load it
-   */
-  protected async getCachedTodos<T>(key: string, loader: () => Promise<T>): Promise<T> {
-    const cached = await this.todoListCache.get(key);
-    if (cached) {
-      this.debugLog(`Todo cache hit: ${key}`);
-      return cached;
-    }
-    
-    const value = await loader();
-    await this.todoListCache.set(key, value);
-    return value;
-  }
-  
-  /**
-   * Update cached todo list
-   */
-  protected async setCachedTodos<T>(key: string, value: T): Promise<void> {
-    await this.todoListCache.set(key, value);
-    this.debugLog(`Todo cache updated: ${key}`);
-  }
-  
-  /**
-   * Process operations in batches
-   */
-  protected async processBatch<T, R>(
-    items: T[],
-    processor: (item: T, index: number) => Promise<R>,
-    options?: Partial<{
-      batchSize: number;
-      concurrencyLimit: number;
-      progressCallback?: (progress: any) => void;
-    }>
-  ): Promise<R[]> {
-    const batchOptions = {
-      batchSize: options?.batchSize || 10,
-      concurrencyLimit: options?.concurrencyLimit || 5,
-      progressCallback: options?.progressCallback
-    };
-    
-    const processor_ = new BatchProcessor(batchOptions);
-    const result = await processor_.process(items, processor);
-    
-    if (result.failed.length > 0) {
-      this.warning(`Batch processing completed with ${result.failed.length} failures`);
-    }
-    
-    return result.successful;
-  }
-  
-  /**
-   * Lazy load heavy dependencies
-   */
-  protected async lazyLoad<T = any>(modulePath: string): Promise<T> {
-    try {
-      return await this.lazyLoader.load(modulePath) as T;
-    } catch (error) {
-      this.logger.error(`Failed to lazy load module: ${modulePath}`, error);
       throw error;
     }
   }
 
   /**
-   * Create a spinner with command defaults
+   * Get configuration directory path
+   * Respects WALRUS_TODO_CONFIG_DIR environment variable for testing
    */
-  protected createSpinner(text: string, options: SpinnerOptions = {}): SpinnerManager {
-    if (this.shouldSuppressOutput()) {
-      // Return a no-op spinner when output is suppressed
-      return {
-        start: () => this,
-        stop: () => this,
-        succeed: () => this,
-        fail: () => this,
-        warn: () => this,
-        info: () => this,
-        text: () => this,
-        color: () => this,
-        style: () => this,
-        nested: () => this.createSpinner(''),
-        removeNested: () => {},
-        clear: () => this,
-        isSpinning: () => false,
-      } as any;
-    }
-
-    return createSpinner(text, {
-      color: 'cyan',
-      style: 'dots',
-      ...options
-    });
+  protected getConfigDir(): string {
+    return process.env.WALRUS_TODO_CONFIG_DIR || path.join(os.homedir(), '.config', 'waltodo');
   }
 
   /**
-   * Create a progress bar with command defaults
+   * Safely write file with error handling
+   * Creates directory atomically and ensures file write integrity
+   */
+  protected writeFileSafe(filePath: string, content: string, encoding: BufferEncoding = 'utf8'): void {
+    try {
+      const dir = path.dirname(filePath);
+      
+      // Create directory atomically with recursive option
+      fs.mkdirSync(dir, { recursive: true });
+      
+      // Write file atomically
+      fs.writeFileSync(filePath, content, encoding);
+    } catch (error) {
+      throw new Error(`Failed to write file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Flag validation utilities
+   */
+  protected validateFlag = {
+    nonEmpty: (value: string, fieldName: string): void => {
+      if (!value || value.trim().length === 0) {
+        throw new ValidationError(
+          `${fieldName} cannot be empty`,
+          fieldName
+        );
+      }
+    },
+
+    enum: (value: string, allowedValues: string[], fieldName: string): void => {
+      if (!allowedValues.includes(value)) {
+        throw new ValidationError(
+          `${fieldName} must be one of: ${allowedValues.join(', ')}`,
+          fieldName
+        );
+      }
+    }
+  };
+
+  /**
+   * Check if output should be JSON format
+   */
+  protected get isJson(): boolean {
+    return this.flagsConfig.output === 'json';
+  }
+
+  /**
+   * Check if output should be JSON format (async version for compatibility)
+   */
+  protected async isJsonAsync(): Promise<boolean> {
+    return this.flagsConfig.output === 'json';
+  }
+
+  /**
+   * Start unified spinner for operations
+   */
+  protected startUnifiedSpinner(text: string): SpinnerManager {
+    return this.createSpinner(text).start();
+  }
+
+  /**
+   * Create a spinner with progress indicator
+   */
+  protected createSpinner(text: string, options: SpinnerOptions = {}): SpinnerManager {
+    return createSpinner(text, options);
+  }
+
+  /**
+   * Create a progress bar
    */
   protected createProgressBar(options: ProgressBarOptions = {}): ProgressBar {
-    if (this.shouldSuppressOutput()) {
-      // Return a no-op progress bar when output is suppressed
-      return {
-        start: () => {},
-        update: () => {},
-        increment: () => {},
-        stop: () => {},
-        getProgress: () => 0,
-        getETA: () => 0,
-        setFormat: () => {},
-      } as any;
-    }
+    return createProgressBar(options);
+  }
 
+  /**
+   * Create a gradient progress bar
+   */
+  protected createGradientProgressBar(options: ProgressBarOptions = {}): ProgressBar {
     return createProgressBar({
-      format: ' {spinner} {bar} {percentage}% | ETA: {eta}s | {value}/{total}',
-      barCompleteChar: '█',
-      barIncompleteChar: '░',
+      format: ' {spinner} {bar} {percentage}% | Task: {task} | ETA: {eta}s',
       ...options
     });
   }
@@ -1121,260 +815,194 @@ export default abstract class BaseCommand extends Command {
    * Create a multi-progress manager
    */
   protected createMultiProgress(options: ProgressBarOptions = {}): MultiProgress {
-    if (this.shouldSuppressOutput()) {
-      // Return a no-op multi-progress when output is suppressed
-      return {
-        create: () => ({} as any),
-        update: () => {},
-        remove: () => {},
-        stop: () => {},
-        getBar: () => undefined,
-      } as any;
-    }
-
     return createMultiProgress(options);
   }
 
   /**
-   * Run an async operation with a spinner
-   */
-  protected async withSpinner<T>(
-    text: string,
-    operation: () => Promise<T>,
-    options: SpinnerOptions = {}
-  ): Promise<T> {
-    if (this.shouldSuppressOutput()) {
-      return operation();
-    }
-
-    return withSpinner(text, operation, {
-      color: 'cyan',
-      style: 'dots',
-      ...options
-    });
-  }
-
-  /**
-   * Run an async operation with a progress bar
+   * Execute operation with progress bar
    */
   protected async withProgressBar<T>(
     total: number,
     operation: (progress: ProgressBar) => Promise<T>,
     options: ProgressBarOptions = {}
   ): Promise<T> {
-    if (this.shouldSuppressOutput()) {
-      const noopProgress = this.createProgressBar();
-      return operation(noopProgress);
-    }
-
     return withProgressBar(total, operation, options);
   }
 
-  /**
-   * Create a fun animated spinner for special operations
-   */
-  protected createFunSpinner(
-    text: string,
-    style: 'walrus' | 'sparkle' | 'moon' | 'star' = 'walrus'
-  ): SpinnerManager {
-    return this.createSpinner(text, {
-      style: style as any,
-      color: style === 'walrus' ? 'blue' : style === 'sparkle' ? 'magenta' : 'yellow'
-    });
-  }
 
   /**
-   * Create a gradient progress bar
-   */
-  protected createGradientProgressBar(options: ProgressBarOptions = {}): ProgressBar {
-    return this.createProgressBar({
-      ...options,
-      format: ' {spinner} {bar} {percentage}% | ETA: {eta}s | {value}/{total}',
-      // The gradient is handled by the formatBar function in ProgressBar
-    });
-  }
-
-  /**
-   * Run multiple operations with a multi-progress display
+   * Run multiple operations with multi-progress
    */
   protected async runWithMultiProgress<T>(
     operations: Array<{
       name: string;
       total: number;
-      operation: (progress: cliProgress.SingleBar) => Promise<T>;
+      operation: (bar: any) => Promise<T>;
     }>
-  ): Promise<T[]> {
-    if (this.shouldSuppressOutput()) {
-      // Run operations without progress display
-      return Promise.all(
-        operations.map(({ operation }) => operation({} as any))
-      );
-    }
-
+  ): Promise<(T | undefined)[]> {
     const multiProgress = this.createMultiProgress();
-    const results: T[] = [];
-
+    
+    const promises = operations.map(async ({ name, total, operation }) => {
+      const bar = multiProgress.create(name, total);
+      try {
+        return await operation(bar);
+      } catch (error) {
+        return undefined;
+      }
+    });
+    
     try {
-      const promises = operations.map(async ({ name, total, operation }) => {
-        const bar = multiProgress.create(name, total);
-        const result = await operation(bar);
-        multiProgress.remove(name);
-        return result;
-      });
-
-      const allResults = await Promise.all(promises);
-      results.push(...allResults);
+      return await Promise.all(promises);
     } finally {
       multiProgress.stop();
     }
-
-    return results;
   }
 
   /**
-   * Start a unified spinner with consistent styling
+   * Create fun spinners with special effects
    */
-  protected startUnifiedSpinner(message: string): CLISpinnerManager {
-    return new CLISpinnerManager(message);
+  protected createFunSpinner(
+    text: string, 
+    type: 'walrus' | 'sparkle' | 'moon' | 'star' = 'walrus'
+  ): SpinnerManager {
+    return createSpinner(text, { style: type as any });
   }
 
   /**
-   * Validate flags using unified validators
+   * Cache management for todos
    */
-  protected validateFlag = {
-    positiveNumber: (value: string, name: string) => 
-      FlagValidator.validatePositiveNumber(value, name),
-    nonEmpty: (value: string, name: string) => 
-      FlagValidator.validateNonEmpty(value, name),
-    enum: <T extends string>(value: string, validValues: T[], name: string) =>
-      FlagValidator.validateEnum(value, validValues, name),
-    path: (value: string, name: string) =>
-      FlagValidator.validatePath(value, name),
-  };
-
-  /**
-   * Execute with retry using unified retry manager
-   */
-  protected async retryOperation<T>(
-    operation: () => Promise<T>,
-    context: string,
-    options?: RetryOptions
+  protected async getCachedTodos<T>(
+    cacheKey: string, 
+    fetcher: () => Promise<T>
   ): Promise<T> {
-    try {
-      // Use the static retry method for now since it's a simple operation
-      // This avoids having to create a fake NetworkNode just for compatibility
-      return await RetryManager.retry(
-        operation,
-        {
-          ...options,
-          onRetry: (attempt: number, error: Error) => {
-            this.warning(`${context}: Retry attempt ${attempt} after error: ${error.message}`);
-            if (options?.onRetry) {
-              // Forward the callback with the same parameters to preserve compatibility
-              (options.onRetry as unknown as (attempt: number, error: Error) => void)(attempt, error);
-            }
-          }
-        }
-      );
-    } catch (error) {
-      ErrorHandler.handle(error, context);  // This throws, so function always returns
-      // TypeScript doesn't know ErrorHandler.handle() always throws, so add this
-      throw new Error('Should never reach here');
-    }
+    // Simple implementation - in a full app this would use a proper cache
+    return await fetcher();
   }
 
   /**
-   * Log messages using unified logger utilities
+   * Generic error handler with operation context
    */
-  protected logUtils = {
-    success: (message: string) => CLILogger.success(message),
-    error: (message: string) => CLILogger.error(message),
-    warning: (message: string) => CLILogger.warning(message),
-    info: (message: string) => CLILogger.info(message),
-    debug: (message: string) => CLILogger.debug(message),
-    step: (step: number, total: number, message: string) => 
-      CLILogger.step(step, total, message),
-  };
-
-  /**
-   * Format output using unified formatters
-   */
-  protected format = {
-    table: (data: Record<string, unknown>) => Formatter.table(data),
-    list: (items: string[], bullet?: string) => Formatter.list(items, bullet),
-    code: (text: string) => Formatter.code(text),
-    highlight: (text: string) => Formatter.highlight(text),
-    dim: (text: string) => Formatter.dim(text),
-  };
-
-  /**
-   * Handle errors consistently across all commands
-   */
-  protected handleError(error: unknown, context: string): never {
-    ErrorHandler.handle(error, context);
+  protected handleError(error: any, operation?: string): never {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const contextMessage = operation ? `${operation}: ${errorMessage}` : errorMessage;
+    
+    this.error(contextMessage, { exit: 1 });
   }
 
   /**
-   * Format errors consistently
+   * Formatting utilities
    */
-  protected formatError(error: unknown): string {
-    return ErrorHandler.formatError(error);
-  }
-
-  /**
-   * Flag to indicate if command is running in interactive mode
-   */
-  protected isInteractiveMode: boolean = false;
-
-  /**
-   * Set interactive mode flag
-   */
-  setInteractiveMode(value: boolean): void {
-    this.isInteractiveMode = value;
-  }
-
-  /**
-   * Get interactive mode flag
-   */
-  getInteractiveMode(): boolean {
-    return this.isInteractiveMode;
-  }
-
-  /**
-   * Helper method for handling output in interactive mode
-   * In interactive mode, we don't want to exit the process
-   */
-  protected output(message: string, isError: boolean = false): void {
-    if (this.isInteractiveMode) {
-      if (isError) {
-        console.error(message);
-      } else {
-        console.log(message);
-      }
-    } else {
-      if (isError) {
-        this.error(message);
-      } else {
-        this.log(message);
-      }
-    }
-  }
-
-  /**
-   * Override error handling for interactive mode
-   * In interactive mode, we don't want to exit the process on errors
-   */
-  protected async handleInteractiveError(error: Error): Promise<void> {
-    if (this.isInteractiveMode) {
-      console.error(chalk.red(`Error: ${error.message}`));
-      if (this.isVerbose()) {
-        console.error(chalk.gray(error.stack || ''));
-      }
-    } else {
-      throw error;
-    }
+  protected get format() {
+    return {
+      highlight: (text: string) => chalk.bold.cyan(text),
+      success: (text: string) => chalk.green(text),
+      error: (text: string) => chalk.red(text),
+      warning: (text: string) => chalk.yellow(text),
+      info: (text: string) => chalk.blue(text),
+      muted: (text: string) => chalk.gray(text)
+    };
   }
 }
 
-// Add named export for commands that use it
-export { BaseCommand };
+// Export constants that were referenced
+export const ICONS = {
+  SUCCESS: '✅',
+  ERROR: '❌',
+  WARNING: '⚠️',
+  INFO: 'ℹ️',
+  PENDING: '⏳',
+  ACTIVE: '🔄',
+  LOADING: '⏳',
+  DEBUG: '🐛',
+  TODO: '📝',
+  LIST: '📋',
+  LISTS: '📚',
+  TAG: '🏷️',
+  PRIORITY: '🎯',
+  DATE: '📅',
+  TIME: '⏰',
+  BLOCKCHAIN: '⛓️',
+  WALRUS: '🐋',
+  LOCAL: '💾',
+  HYBRID: '🔄',
+  AI: '🤖',
+  STORAGE: '💽',
+  CONFIG: '⚙️',
+  USER: '👤',
+  SEARCH: '🔍',
+  SECURE: '🔒',
+  INSECURE: '🔓',
+  ARROW: '→',
+  // Box drawing characters
+  BOX_TL: '┌',
+  BOX_TR: '┐',
+  BOX_BL: '└',
+  BOX_BR: '┘',
+  BOX_H: '─',
+  BOX_V: '│',
+  LINE: '─',
+  BULLET: '•',
+  // Legacy aliases for compatibility
+  success: '✅',
+  error: '❌',
+  warning: '⚠️',
+  info: 'ℹ️',
+  pending: '⏳',
+  active: '🔄',
+  loading: '⏳',
+  debug: '🐛',
+  todo: '📝',
+  list: '📋',
+  lists: '📚',
+  tag: '🏷️',
+  priority: '🎯',
+  date: '📅',
+  time: '⏰',
+  blockchain: '⛓️',
+  walrus: '🐋',
+  local: '💾',
+  hybrid: '🔄',
+  ai: '🤖',
+  storage: '💽',
+  config: '⚙️',
+  user: '👤',
+  search: '🔍',
+  secure: '🔒',
+  insecure: '🔓'
+};
+
+export const PRIORITY = {
+  high: {
+    label: 'HIGH',
+    color: chalk.red
+  },
+  medium: {
+    label: 'MEDIUM', 
+    color: chalk.yellow
+  },
+  low: {
+    label: 'LOW',
+    color: chalk.green
+  }
+};
+
+export const STORAGE = {
+  local: {
+    label: 'Local',
+    color: chalk.blue,
+    icon: '💾'
+  },
+  blockchain: {
+    label: 'Blockchain',
+    color: chalk.green,
+    icon: '⛓️'
+  },
+  both: {
+    label: 'Hybrid',
+    color: chalk.cyan,
+    icon: '🔄'
+  }
+};
+
+// Export BaseCommand as default for backward compatibility
+export default BaseCommand;

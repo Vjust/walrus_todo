@@ -1,4 +1,3 @@
-// @ts-ignore - Ignore import compatibility issues
 import { TransactionBlock } from '@mysten/sui/transactions';
 
 // Create local type definitions to avoid compatibility issues

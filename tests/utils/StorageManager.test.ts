@@ -1,12 +1,12 @@
 import { jest } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
-import { StorageManager } from '../../../src/utils/StorageManager';
-import { StorageError, ValidationError, BlockchainError } from '../../../src/types/errors';
-import { Logger } from '../../../src/utils/Logger';
-import { MockWalrusClient } from '../../__mocks__/@mysten/walrus/client';
+import { StorageManager } from '@/utils/StorageManager';
+import { StorageError, ValidationError, BlockchainError } from '@/types/errors/consolidated';
+import { Logger } from '@/utils/Logger';
+import { MockWalrusClient } from '@/__mocks__/@mysten/walrus/client';
 
 jest.mock('@mysten/walrus');
-jest.mock('../../../src/utils/Logger');
+jest.mock('@/utils/Logger');
 
 describe('StorageManager', () => {
   let manager: StorageManager;
@@ -44,7 +44,7 @@ describe('StorageManager', () => {
         total: '2000'
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(1000)))
+      await expect(manager.ensureStorageAllocated(1000n))
         .resolves
         .not.toThrow();
     });
@@ -56,7 +56,7 @@ describe('StorageManager', () => {
         total: '1500'
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(1000)))
+      await expect(manager.ensureStorageAllocated(1000n))
         .rejects
         .toThrow(StorageError);
     });
@@ -68,7 +68,7 @@ describe('StorageManager', () => {
         total: '2000'
       });
 
-      await manager.ensureStorageAllocated(BigInt(100));
+      await manager.ensureStorageAllocated(100n);
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         'Storage allocation running low',
@@ -83,7 +83,7 @@ describe('StorageManager', () => {
         total: '500'
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(100)))
+      await expect(manager.ensureStorageAllocated(100n))
         .rejects
         .toThrow('Insufficient WAL tokens');
     });
@@ -95,7 +95,7 @@ describe('StorageManager', () => {
         total: '1000'
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(100)))
+      await expect(manager.ensureStorageAllocated(100n))
         .rejects
         .toThrow(ValidationError);
     });
@@ -105,7 +105,7 @@ describe('StorageManager', () => {
         new Error('Network error')
       );
 
-      await expect(manager.ensureStorageAllocated(BigInt(100)))
+      await expect(manager.ensureStorageAllocated(100n))
         .rejects
         .toThrow(BlockchainError);
     });
@@ -122,10 +122,10 @@ describe('StorageManager', () => {
       const status = await manager.getStorageAllocation();
 
       expect(status).toEqual({
-        allocated: BigInt(2000),
-        used: BigInt(500),
-        available: BigInt(1500),
-        minRequired: BigInt(1000)
+        allocated: 2000n,
+        used: 500n,
+        available: 1500n,
+        minRequired: 1000n
       });
     });
 
@@ -138,7 +138,7 @@ describe('StorageManager', () => {
 
       const status = await manager.getStorageAllocation();
 
-      expect(status.available).toBe(BigInt(1000));
+      expect(status.available).toBe(1000n);
     });
 
     it('should handle maximum usage', async () => {
@@ -150,7 +150,7 @@ describe('StorageManager', () => {
 
       const status = await manager.getStorageAllocation();
 
-      expect(status.available).toBe(BigInt(0));
+      expect(status.available).toBe(0n);
     });
   });
 
@@ -162,7 +162,7 @@ describe('StorageManager', () => {
       const required = manager.calculateRequiredStorage(size, duration);
 
       // 2MB * 30 days = 60 WAL tokens + 1 safety margin
-      expect(required).toBe(BigInt(61));
+      expect(required).toBe(61n);
     });
 
     it('should handle small files', () => {
@@ -172,7 +172,7 @@ describe('StorageManager', () => {
       const required = manager.calculateRequiredStorage(size, duration);
 
       // Less than 1MB per day = 1 WAL token + 1 safety margin
-      expect(required).toBe(BigInt(2));
+      expect(required).toBe(2n);
     });
 
     it('should validate size', () => {

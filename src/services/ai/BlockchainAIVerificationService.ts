@@ -47,16 +47,17 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     }
 
     // Initialize with an adapter to ensure it's properly bound
-    // Use blockchainVerifier as the verifier adapter if it implements
-    // the required interface, otherwise create a fallback adapter
-    const verifierAdapter = blockchainVerifier.createVerification 
-      ? blockchainVerifier 
-      : {
-          createVerification: (params: any) => 
-            blockchainVerifier.verifyOperation(params),
-          getVerification: (id: string) => 
-            blockchainVerifier.getVerification(id)
-        };
+    // Get the verifier adapter from the BlockchainVerifier
+    // BlockchainVerifier wraps an AIVerifierAdapter, so we access that adapter
+    const verifierAdapter = blockchainVerifier.getVerifierAdapter ? 
+      blockchainVerifier.getVerifierAdapter() : null;
+      
+    if (!verifierAdapter) {
+      throw new CLIError(
+        'BlockchainVerifier must provide a valid AIVerifierAdapter',
+        'AI_SERVICE_INITIALIZATION_ERROR'
+      );
+    }
     
     // Defensive check for required methods on verifier
     if (!blockchainVerifier.verifyOperation || typeof blockchainVerifier.verifyOperation !== 'function') {
@@ -74,7 +75,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     }
     
     // Pass the adapter to the parent constructor
-    super(verifierAdapter);
+    super(blockchainVerifier.getVerifierAdapter ? blockchainVerifier.getVerifierAdapter() : verifierAdapter);
     
     this.blockchainVerifier = blockchainVerifier;
     this.permissionManager = permissionManager || getPermissionManager(); // Fallback to default permission manager

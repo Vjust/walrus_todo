@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import pRetry from 'p-retry';
 
 /**
  * @class StoreCommand
@@ -70,6 +71,11 @@ export default class StoreCommand extends BaseCommand {
       min: 1,
       max: 20
     }),
+    retry: Flags.boolean({
+      char: 'r',
+      description: 'Enable retry logic with exponential backoff',
+      default: false
+    }),
   };
 
   private todoService = new TodoService();
@@ -125,7 +131,7 @@ export default class StoreCommand extends BaseCommand {
         const storage = createWalrusStorage(flags.network, flags.mock);
         await this.connectToWalrus(storage, flags.network);
         return storage;
-      }, { style: 'walrus' });
+      });
 
       // Step 3: Store todos (single or batch)
       if (todosToStore.length === 1) {
@@ -155,7 +161,7 @@ export default class StoreCommand extends BaseCommand {
    */
   private async connectToWalrus(walrusStorage: any, network: string): Promise<void> {
     try {
-      const retryManager = new RetryManager();
+      const retryManager = new RetryManager(['https://walrus-testnet.nodes.guru:443']);
       await retryManager.retry(
         () => walrusStorage.connect(),
         {
@@ -182,24 +188,49 @@ export default class StoreCommand extends BaseCommand {
    */
   private async storeSingleTodo(todo: Todo, walrusStorage: any, flags: any): Promise<void> {
     let blobId: string;
+    let attemptCount = 0;
     
     try {
       blobId = await this.withSpinner(
         `Storing todo "${todo.title}" on Walrus${flags.mock ? ' (mock mode)' : ''}...`,
         async () => {
-          const retryManager = new RetryManager();
-          return await retryManager.retry(
-            () => this.uploadTodoWithCache(todo, walrusStorage, flags),
-            {
-              maxRetries: 5,
-              retryableErrors: [/NETWORK_ERROR/, /TIMEOUT/, /Connection timed out/],
-              onRetry: (error, attempt, delay) => {
-                this.warning(`Retry attempt ${attempt} after ${delay}ms: ${error.message}`);
+          if (flags.retry) {
+            // Use p-retry for exponential backoff retry strategy
+            return await pRetry(
+              async () => {
+                attemptCount++;
+                try {
+                  return await this.uploadTodoWithCache(todo, walrusStorage, flags);
+                } catch (error) {
+                  this.warning(`Retry attempt ${attemptCount}: ${error instanceof Error ? error.message : String(error)}`);
+                  throw error;
+                }
+              },
+              {
+                retries: 3,
+                factor: 2,
+                minTimeout: 1000,
+                maxTimeout: 5000,
+                onFailedAttempt: (error) => {
+                  this.warning(`Attempt ${error.attemptNumber} failed: ${error.message}`);
+                }
               }
-            }
-          );
-        },
-        { style: 'walrus' }
+            );
+          } else {
+            // Use legacy RetryManager for backward compatibility
+            const retryManager = new RetryManager(['https://walrus-testnet.nodes.guru:443']);
+            return await retryManager.retry(
+              () => this.uploadTodoWithCache(todo, walrusStorage, flags),
+              {
+                maxRetries: 5,
+                retryableErrors: [/NETWORK_ERROR/, /TIMEOUT/, /Connection timed out/],
+                onRetry: (error, attempt, delay) => {
+                  this.warning(`Retry attempt ${attempt} after ${delay}ms: ${error.message}`);
+                }
+              }
+            );
+          }
+        }
       );
     } catch (error) {
       this.handleStorageError(error, flags.network);
@@ -211,8 +242,8 @@ export default class StoreCommand extends BaseCommand {
     // Save blob mapping for future reference
     this.saveBlobMapping(todo.id, blobId);
 
-    // Display success information
-    this.displaySuccessInfo(todo, blobId, flags);
+    // Display success information (including retry message if used)
+    this.displaySuccessInfo(todo, blobId, flags, attemptCount);
   }
 
   /**
@@ -335,8 +366,14 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Display success information for single todo
    */
-  private displaySuccessInfo(todo: Todo, blobId: string, flags: any): void {
+  private displaySuccessInfo(todo: Todo, blobId: string, flags: any, attemptCount?: number): void {
     this.log('');
+    
+    // Display retry success message if retries were used
+    if (flags.retry && attemptCount && attemptCount > 1) {
+      this.log(chalk.green(`Storage successful after ${attemptCount} attempts`));
+    }
+    
     this.log(chalk.green.bold('✅ Todo stored successfully on Walrus!'));
     this.log('');
     this.log(chalk.white.bold('Storage Details:'));
@@ -400,14 +437,8 @@ export default class StoreCommand extends BaseCommand {
    */
   private saveBlobMapping(todoId: string, blobId: string): void {
     try {
-      // Use the centralized getConfigDir method from BaseCommand
       const configDir = this.getConfigDir();
       const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
-      
-      // Create directory if it doesn't exist
-      if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
-      }
       
       // Read existing mappings or create empty object
       let mappings: Record<string, string> = {};
@@ -424,7 +455,7 @@ export default class StoreCommand extends BaseCommand {
       // Add or update mapping
       mappings[todoId] = blobId;
       
-      // Write mappings back to file using centralized method
+      // Write mappings back to file using centralized method (handles directory creation)
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
     } catch (error) {

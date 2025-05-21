@@ -24,7 +24,7 @@ jest.mock('crypto', () => {
 
 // Mock fs for file operations
 jest.mock('fs', () => {
-  let mockFileData = {};
+  const mockFileData = {};
   return {
     existsSync: jest.fn().mockImplementation((path) => {
       return mockFileData[path] !== undefined;

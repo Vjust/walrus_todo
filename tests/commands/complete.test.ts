@@ -1,20 +1,20 @@
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
-import { TodoService } from '../../../src/services/todoService';
-import { WalrusStorage } from '../../../src/utils/walrus-storage';
-import { SuiNftStorage } from '../../../src/utils/sui-nft-storage';
-import { configService } from '../../../src/services/config-service';
+import { TodoService } from '@/services/todoService';
+import { WalrusStorage } from '@/utils/walrus-storage';
+import { SuiNftStorage } from '@/utils/sui-nft-storage';
+import { configService } from '@/services/config-service';
 import { SuiClient } from '@mysten/sui/client';
-import { CLIError } from '../../../src/types/error';
-import { Todo, TodoList } from '../../../src/types/todo';
+import { CLIError } from '@/types/errors';
+import { Todo, TodoList } from '@/types/todo';
 import { createMockTodo } from '../helpers/test-utils';
 import { createMockSystemStateResponse } from '../sui-test-types';
-import type { Config } from '../../../src/types/config';
+import type { Config } from '@/types/config';
 
 // Mock services
-jest.mock('../../../src/services/todoService');
-jest.mock('../../../src/utils/walrus-storage');
-jest.mock('../../../src/utils/sui-nft-storage');
-jest.mock('../../../src/services/config-service');
+jest.mock('@/services/todoService');
+jest.mock('@/utils/walrus-storage');
+jest.mock('@/utils/sui-nft-storage');
+jest.mock('@/services/config-service');
 jest.mock('@mysten/sui/client');
 
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;

@@ -76,7 +76,7 @@ export default class DemoProgress extends BaseCommand {
         async () => {
           await this.delay(1500);
         },
-        { style }
+'Complete'
       );
     }
 

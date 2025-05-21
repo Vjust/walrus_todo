@@ -1,12 +1,12 @@
-import { BatchUploader } from '../../../src/utils/batch-uploader';
-import { TodoSizeCalculator } from '../../../src/utils/todo-size-calculator';
-import { WalrusStorage } from '../../../src/utils/walrus-storage';
-import type { WalrusStorage as WalrusStorageType } from '../../../src/utils/walrus-storage';
-import { Todo, TodoList } from '../../../src/types/todo';
-import { CLIError } from '../../../src/types/error';
+import { BatchUploader } from '@/utils/batch-uploader';
+import { TodoSizeCalculator } from '@/utils/todo-size-calculator';
+import { WalrusStorage } from '@/utils/walrus-storage';
+import type { WalrusStorage as WalrusStorageType } from '@/utils/walrus-storage';
+import { Todo, TodoList } from '@/types/todo';
+import { CLIError } from '@/types/errors';
 
 // Mock the WalrusStorage class
-jest.mock('../../../src/utils/walrus-storage');
+jest.mock('@/utils/walrus-storage');
 
 describe('BatchUploader', () => {
   // Sample test data

@@ -120,16 +120,25 @@ export class TaskSuggestionService {
   /**
    * Creates a new TaskSuggestionService instance
    *
-   * @param aiService - The EnhancedAIService used for task analysis and generation
+   * @param aiService - The EnhancedAIService used for task analysis and generation, or API key string for backward compatibility
    * @param verificationService - Optional service for blockchain verification of suggestions
+   * @param logger - Optional Logger instance for Jest isolation (if not provided, creates new Logger)
    */
   constructor(
-    aiService: EnhancedAIService,
-    verificationService?: AIVerificationService
+    aiService: EnhancedAIService | string,
+    verificationService?: AIVerificationService,
+    logger?: Logger
   ) {
+    // Handle backward compatibility with API key string parameter
+    if (typeof aiService === 'string') {
+      // This path is for backward compatibility with tests that pass API key
+      // In practice, this would create a real EnhancedAIService instance
+      throw new Error('String API key parameter is deprecated. Please pass EnhancedAIService instance directly.');
+    }
+    
     this.aiService = aiService;
     this.verificationService = verificationService;
-    this.logger = new Logger('TaskSuggestionService');
+    this.logger = logger || new Logger('TaskSuggestionService');
   }
 
   /**

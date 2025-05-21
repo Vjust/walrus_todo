@@ -1,11 +1,11 @@
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoAIOperation, VerificationResult, AIProvider } from '../../services/ai/types';
 import { Logger } from '../../utils/Logger';
 import { CLIError } from '../error';
 import { createTransactionBlockAdapter } from '../../utils/adapters/transaction-adapter';
-import { Transaction, asUint8ArrayOrTransactionBlock, asStringUint8ArrayOrTransactionBlock } from '../transaction';
+import { asUint8ArrayOrTransactionBlock, asStringUint8ArrayOrTransactionBlock } from '../transaction';
 
 /**
  * Adapter for interacting with the Todo AI extension smart contract
@@ -44,10 +44,10 @@ export class TodoAIAdapter {
     keypair: Ed25519Keypair
   ): Promise<string> {
     try {
-      // Create a standard TransactionBlock
+      // Create a standard Transaction
       // Create a transaction block and cast to the expected type
-      // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
-      const tx = new TransactionBlock() as unknown as TransactionBlock;
+      // This is necessary because Transaction doesn't satisfy the Transaction interface exactly
+      const tx = new Transaction() as unknown as Transaction;
 
       tx.moveCall({
         target: `${this.todoAIModuleAddress}::todo_ai_extension::link_verification_to_todo`,
@@ -60,7 +60,7 @@ export class TodoAIAdapter {
         ],
       });
 
-      // Cast to Uint8Array | TransactionBlock to match the expected type
+      // Cast to Uint8Array | Transaction to match the expected type
       const result = await this.client.signAndExecuteTransaction({
         signer: keypair,
         transaction: tx as any,
@@ -85,10 +85,10 @@ export class TodoAIAdapter {
     operation: TodoAIOperation
   ): Promise<boolean> {
     try {
-      // Create a standard TransactionBlock
+      // Create a standard Transaction
       // Create a transaction block and cast to the expected type
-      // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
-      const tx = new TransactionBlock() as unknown as TransactionBlock;
+      // This is necessary because Transaction doesn't satisfy the Transaction interface exactly
+      const tx = new Transaction() as unknown as Transaction;
 
       tx.moveCall({
         target: `${this.todoAIModuleAddress}::todo_ai_extension::has_verification_for_operation`,
@@ -99,7 +99,7 @@ export class TodoAIAdapter {
         ],
       });
 
-      // Cast to string | Uint8Array | TransactionBlock to match the expected type
+      // Cast to string | Uint8Array | Transaction to match the expected type
       const result = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
         transaction: tx as any,
@@ -126,10 +126,10 @@ export class TodoAIAdapter {
     todoId: string
   ): Promise<string[]> {
     try {
-      // Create a standard TransactionBlock
+      // Create a standard Transaction
       // Create a transaction block and cast to the expected type
-      // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
-      const tx = new TransactionBlock() as unknown as TransactionBlock;
+      // This is necessary because Transaction doesn't satisfy the Transaction interface exactly
+      const tx = new Transaction() as unknown as Transaction;
 
       tx.moveCall({
         target: `${this.todoAIModuleAddress}::todo_ai_extension::get_verifications_for_todo`,
@@ -139,7 +139,7 @@ export class TodoAIAdapter {
         ],
       });
 
-      // Cast to string | Uint8Array | TransactionBlock to match the expected type
+      // Cast to string | Uint8Array | Transaction to match the expected type
       const result = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
         transaction: tx as any,
@@ -173,10 +173,10 @@ export class TodoAIAdapter {
     operation: TodoAIOperation
   ): Promise<boolean> {
     try {
-      // Create a standard TransactionBlock
+      // Create a standard Transaction
       // Create a transaction block and cast to the expected type
-      // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
-      const tx = new TransactionBlock() as unknown as TransactionBlock;
+      // This is necessary because Transaction doesn't satisfy the Transaction interface exactly
+      const tx = new Transaction() as unknown as Transaction;
 
       tx.moveCall({
         target: `${this.todoAIModuleAddress}::todo_ai_extension::verify_todo_operation`,
@@ -188,7 +188,7 @@ export class TodoAIAdapter {
         ],
       });
 
-      // Cast to string | Uint8Array | TransactionBlock to match the expected type
+      // Cast to string | Uint8Array | Transaction to match the expected type
       const result = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
         transaction: tx as any,
@@ -221,10 +221,10 @@ export class TodoAIAdapter {
   ): Promise<VerificationResult> {
     try {
       const timestamp = new Date().toISOString();
-      // Create a standard TransactionBlock
+      // Create a standard Transaction
       // Create a transaction block and cast to the expected type
-      // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
-      const tx = new TransactionBlock() as unknown as TransactionBlock;
+      // This is necessary because Transaction doesn't satisfy the Transaction interface exactly
+      const tx = new Transaction() as unknown as Transaction;
 
       // Call verify_operation on ai_operation_verifier
       tx.moveCall({
@@ -255,7 +255,7 @@ export class TodoAIAdapter {
       });
 
       // Execute the transaction
-      // Cast to Uint8Array | TransactionBlock to match the expected type
+      // Cast to Uint8Array | Transaction to match the expected type
       const result = await this.client.signAndExecuteTransaction({
         signer: keypair,
         transaction: tx as any,

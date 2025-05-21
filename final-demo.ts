@@ -1,14 +1,11 @@
 import { TodoService } from './src/services/todo-service';
-import { ConfigService } from './src/services/config-service';
 import { WalrusStorage } from './src/utils/walrus-storage';
-import { Todo } from './src/types';
 
 async function createAndStoreTodoForAJ() {
   try {
     console.log('=== Creating "todo for aj" and storing on Walrus Testnet ===\n');
     
     // Initialize services
-    const configService = new ConfigService();
     const todoService = new TodoService();
     
     // Create or get the default list

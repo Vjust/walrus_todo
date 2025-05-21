@@ -1,16 +1,17 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
-import { ExpiryMonitor } from '../../../src/utils/ExpiryMonitor';
-import { VaultManager, BlobRecord } from '../../../src/utils/VaultManager';
-import { WalrusError, StorageError } from '../../../src/types/errors';
+import { ExpiryMonitor } from '@/utils/ExpiryMonitor';
+import { VaultManager, BlobRecord } from '@/utils/VaultManager';
+import { WalrusError, StorageError } from '@/types/errors';
 import { Signer } from '@mysten/sui/cryptography';
 import { execSync } from 'child_process';
-import { Logger } from '../../../src/utils/Logger';
+import * as childProcess from 'child_process';
+import { Logger } from '@/utils/Logger';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
-jest.mock('../../../src/utils/VaultManager');
-jest.mock('../../../src/utils/Logger');
+jest.mock('@/utils/VaultManager');
+jest.mock('@/utils/Logger');
 
 describe('ExpiryMonitor', () => {
   let monitor: ExpiryMonitor;
@@ -27,7 +28,7 @@ describe('ExpiryMonitor', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-    mockExecSync = jest.spyOn(require('child_process'), 'execSync')
+    mockExecSync = jest.spyOn(childProcess, 'execSync')
       .mockReturnValue(Buffer.from('testnet\n'));
   });
 

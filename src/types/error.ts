@@ -7,18 +7,14 @@
  */
 
 /**
- * Interface for objects that have an error message and optional stdout/stderr.
- * This serves as the common error representation throughout the application.
+ * Interface for objects that have a message property.
+ * Used as the minimal requirement for error-like objects.
  * 
  * @interface ErrorWithMessage
- * @property {string} message - The main error message
- * @property {Buffer|string} [stderr] - Optional standard error output (useful for CLI commands)
- * @property {Buffer|string} [stdout] - Optional standard output (useful for context in CLI commands)
+ * @property {string} message - The error message
  */
 export interface ErrorWithMessage {
   message: string;
-  stderr?: Buffer | string;
-  stdout?: Buffer | string;
 }
 
 /**
@@ -103,14 +99,17 @@ export function getErrorMessage(error: unknown): string {
  * throw new CLIError('Failed to retrieve todos', 'TODO_FETCH_ERROR');
  */
 export class CLIError extends Error {
+  public code: string;
+
   /**
    * Creates a new CLIError instance.
    * 
    * @param {string} message - The error message
    * @param {string} [code='GENERAL_ERROR'] - An error code for categorization
    */
-  constructor(message: string, public code: string = 'GENERAL_ERROR') {
+  constructor(message: string, code: string = 'GENERAL_ERROR') {
     super(message);
+    this.code = code;
     this.name = 'CLIError';
   }
 }
@@ -136,5 +135,18 @@ export class WalrusError extends CLIError {
   constructor(message: string, code: string = 'WALRUS_ERROR') {
     super(message, code);
     this.name = 'WalrusError';
+  }
+
+  /**
+   * Get a safe error response suitable for client/user consumption
+   * @returns Public error information
+   */
+  toPublicError() {
+    return {
+      code: this.code,
+      message: this.message,
+      timestamp: new Date().toISOString(),
+      shouldRetry: false
+    };
   }
 }

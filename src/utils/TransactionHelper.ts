@@ -4,9 +4,9 @@ import { TransactionBlock } from '@mysten/sui/transactions';
 import { Logger } from './Logger';
 import {
   BlockchainError,
-  TransactionError
-} from '../types/errors';
-import { ValidationError } from '../types/errors/ValidationError';
+  TransactionError,
+  ValidationError
+} from '../types/errors/consolidated';
 
 export interface RetryConfig {
   attempts: number;

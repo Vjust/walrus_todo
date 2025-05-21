@@ -245,9 +245,11 @@ export default class SyncCommand extends BaseCommand {
         
         // Determine resolution strategy
         if (resolveStrategy === 'ask') {
-          spinner && this.stopSpinnerSuccess(spinner, '');
+          if (spinner) {
+            this.stopSpinnerSuccess(spinner, '');
+          }
           resolution = await this.askResolution(todo, localNewer!, blockchainNewer!);
-          // @ts-ignore - startSpinner may return undefined in tests
+          // @ts-expect-error - startSpinner may return undefined in tests
           spinner = this.startSpinner('Continuing sync...');
         } else if (resolveStrategy === 'newest') {
           resolution = localNewer ? 'local' : 'blockchain';
@@ -308,6 +310,6 @@ export default class SyncCommand extends BaseCommand {
       choices
     });
 
-    return resolution;
+    return resolution as 'local' | 'blockchain';
   }
 }

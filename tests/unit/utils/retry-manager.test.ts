@@ -469,14 +469,14 @@ describe('RetryManager', () => {
       mockRandom.mockReturnValueOnce(0);
       let delay = RetryManager.computeDelay(2, 1000, 60000);
       let baseDelay = 2000; // 1000 * 2^1
-      let minExpectedDelay = baseDelay - (baseDelay * 0.2); // -20% jitter
+      const minExpectedDelay = baseDelay - (baseDelay * 0.2); // -20% jitter
       expect(delay).toBeCloseTo(minExpectedDelay, 0);
       
       // Random value of 1 (maximum jitter)
       mockRandom.mockReturnValueOnce(1);
       delay = RetryManager.computeDelay(2, 1000, 60000);
       baseDelay = 2000; // 1000 * 2^1
-      let maxExpectedDelay = baseDelay + (baseDelay * 0.2); // +20% jitter
+      const maxExpectedDelay = baseDelay + (baseDelay * 0.2); // +20% jitter
       expect(delay).toBeCloseTo(maxExpectedDelay, 0);
       
       // Random value of 0.5 (middle jitter)

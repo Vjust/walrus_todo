@@ -1,15 +1,14 @@
 import { TodoService } from './src/services/todo-service';
 import { ConfigService } from './src/services/config-service';
 import { WalrusStorage } from './src/utils/walrus-storage';
-import { Todo } from './src/types';
 
 async function createTodoForAJ() {
   try {
     console.log('Creating todo for aj...');
     
     // Initialize services
-    const configService = new ConfigService();
     const todoService = new TodoService();
+    const configService = new ConfigService();
     
     // Create or get the default list
     const listName = 'default';
@@ -66,7 +65,7 @@ async function createTodoForAJ() {
     
     // List all todos to verify
     console.log('\nListing all todos...');
-    const todoLists = await configService.getLocalTodoLists();
+    const todoLists = await configService.getAllLists();
     for (const listName of todoLists) {
       const list = await todoService.getList(listName);
       if (list) {

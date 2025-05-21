@@ -13,6 +13,7 @@ import {
   RecordingMode
 } from '../../src/__mocks__/ai';
 import { Todo } from '../../src/types/todo';
+import * as fs from 'fs';
 
 describe('AI Mocking Framework', () => {
   // Sample todos for testing
@@ -274,7 +275,7 @@ describe('AI Mocking Framework', () => {
       
       // Clean up recording file
       try {
-        require('fs').unlinkSync(recordingPath);
+        fs.unlinkSync(recordingPath);
       } catch (e) {
         // Ignore errors
       }

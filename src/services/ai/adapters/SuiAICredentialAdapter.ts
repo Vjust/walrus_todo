@@ -101,7 +101,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const content = credential.data.content;
       
       // Parse metadata if available
-      let metadata: Record<string, any> = {};
+      const metadata: Record<string, any> = {};
       if ((content as any).fields.metadata) {
         try {
           const metadataStr = (content as any).fields.metadata;
@@ -189,7 +189,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         const content = obj.data.content;
         
         // Parse metadata if available
-        let metadata: Record<string, any> = {};
+        const metadata: Record<string, any> = {};
         if ((content as any).fields.metadata) {
           try {
             const metadataStr = (content as any).fields.metadata;

@@ -1,14 +1,14 @@
 /**
  * TransactionBlockAdapter
  *
- * This adapter reconciles differences between different versions of TransactionBlock
+ * This adapter reconciles differences between different versions of Transaction
  * interfaces in the @mysten/sui and @mysten/sui libraries.
  *
  * It provides a consistent interface that both mock implementations and actual
  * code can use without worrying about version-specific differences.
  *
  * Key features:
- * - Type-safe wrapper around different TransactionBlock implementations
+ * - Type-safe wrapper around different Transaction implementations
  * - Proper typeguards to ensure type safety across library versions
  * - Consistent error handling with specific TransactionAdapterError class
  * - Robustness against API changes in underlying libraries
@@ -16,12 +16,12 @@
  *
  * Usage:
  * ```typescript
- * // Create a new adapter with a new transaction block
+ * // Create a new adapter with a new transaction
  * const adapter = new TransactionBlockAdapter();
  *
- * // Or wrap an existing transaction block
- * const existingTxBlock = new TransactionBlock();
- * const adapter = TransactionBlockAdapter.from(existingTxBlock);
+ * // Or wrap an existing transaction
+ * const existingTx = new Transaction();
+ * const adapter = TransactionBlockAdapter.from(existingTx);
  *
  * // Use the adapter's methods which work across library versions
  * adapter.moveCall({
@@ -35,10 +35,10 @@
  *
  * All methods properly validate inputs and throw typed exceptions when invalid
  * data is provided, making this adapter more robust than direct usage of the
- * TransactionBlock classes.
+ * Transaction classes.
  */
 
-import { TransactionBlock as TransactionBlockSui } from '@mysten/sui/transactions';
+import { Transaction as TransactionSui } from '@mysten/sui/transactions';
 // Import Transaction from our type definition to avoid direct import errors
 import { Transaction } from '../transaction';
 import type { SuiObjectRef } from '@mysten/sui/client';
@@ -49,8 +49,8 @@ import { BaseError } from '../errors/BaseError';
 // Define a unified TransactionResult type that can handle different return types
 export type TransactionResult = TransactionObjectArgument;
 
-// Type guard to check if a transaction block is from the sui.js library
-export function isTransactionBlockSui(tx: unknown): tx is TransactionBlockSui {
+// Type guard to check if a transaction is from the sui.js library
+export function isTransactionSui(tx: unknown): tx is TransactionSui {
   return tx !== null &&
          typeof tx === 'object' &&
          tx !== undefined &&
@@ -109,7 +109,7 @@ export function isTransactionArgument(value: unknown): value is TransactionArgum
 
 /**
  * The UnifiedTransactionBlock interface defines a standardized interface
- * that works with both library versions
+ * that works with both Transaction library versions
  */
 export interface UnifiedTransactionBlock {
   // Core methods
@@ -214,8 +214,8 @@ export class TransactionAdapterError extends BaseError {
  * TransactionBlockAdapter implements the UnifiedTransactionBlock interface
  * and wraps a Transaction or TransactionBlockSui instance
  */
-export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAdapter<Transaction | TransactionBlockSui> {
-  private transactionBlock: Transaction | TransactionBlockSui;
+export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAdapter<Transaction | TransactionSui> {
+  private transactionBlock: Transaction | TransactionSui;
   private _isDisposed = false;
 
   /**
@@ -243,23 +243,23 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
    * @param transactionBlock Optional existing transaction block to adapt
    * @throws TransactionAdapterError if the provided transaction block is invalid
    */
-  constructor(transactionBlock?: Transaction | TransactionBlockSui | unknown) {
+  constructor(transactionBlock?: Transaction | TransactionSui | unknown) {
     // Use type guard to handle instantiation properly
     if (transactionBlock !== undefined) {
-      if (isTransactionBlockSui(transactionBlock)) {
+      if (isTransactionSui(transactionBlock)) {
         this.transactionBlock = transactionBlock;
       } else if (isTransaction(transactionBlock)) {
         this.transactionBlock = transactionBlock;
       } else {
         throw new TransactionAdapterError(
-          `Invalid transaction block type provided to adapter: ${
+          `Invalid transaction type provided to adapter: ${
             transactionBlock === null ? 'null' : typeof transactionBlock
           }`
         );
       }
     } else {
-      // Create a new instance using the TransactionBlockSui constructor
-      this.transactionBlock = new TransactionBlockSui();
+      // Create a new instance using the TransactionSui constructor
+      this.transactionBlock = new TransactionSui();
     }
 
     // Initialize optional properties if they exist on the underlying implementation
@@ -301,7 +301,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
    * Gets the underlying transaction block implementation
    * @throws TransactionAdapterError if the adapter has been disposed
    */
-  getUnderlyingImplementation(): Transaction | TransactionBlockSui {
+  getUnderlyingImplementation(): Transaction | TransactionSui {
     this.checkDisposed();
     return this.transactionBlock;
   }
@@ -310,7 +310,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
    * Alias for getUnderlyingImplementation to maintain backward compatibility
    * @deprecated Use getUnderlyingImplementation() instead
    */
-  getTransactionBlock(): Transaction | TransactionBlockSui {
+  getTransactionBlock(): Transaction | TransactionSui {
     return this.getUnderlyingImplementation();
   }
 
@@ -330,8 +330,8 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     if (this._isDisposed) return;
     
     try {
-      // Perform any cleanup needed for the transaction block
-      // Currently, there's no specific cleanup needed for TransactionBlock instances,
+      // Perform any cleanup needed for the transaction
+      // Currently, there's no specific cleanup needed for Transaction instances,
       // but this provides an extension point for future requirements
       
       this._isDisposed = true;
@@ -631,7 +631,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     try {
       this.checkDisposed();
       // Use type guard to handle version differences
-      if (isTransactionBlockSui(this.transactionBlock)) {
+      if (isTransactionSui(this.transactionBlock)) {
         this.transactionBlock.setSender(sender);
       } else {
         console.warn('setSender not available on this transaction implementation');
@@ -775,21 +775,21 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
   }
 
   /**
-   * Creates a new TransactionBlockAdapter from an existing TransactionBlock
-   * @param transactionBlock The transaction block to adapt
-   * @returns A new TransactionBlockAdapter wrapping the provided transaction block
-   * @throws TransactionAdapterError if the provided transaction block is invalid
+   * Creates a new TransactionBlockAdapter from an existing Transaction
+   * @param transactionBlock The transaction to adapt
+   * @returns A new TransactionBlockAdapter wrapping the provided transaction
+   * @throws TransactionAdapterError if the provided transaction is invalid
    */
   static from(transactionBlock: unknown): TransactionBlockAdapter {
     if (transactionBlock === undefined || transactionBlock === null) {
-      throw new TransactionAdapterError('Null or undefined transaction block provided to adapter.from()');
+      throw new TransactionAdapterError('Null or undefined transaction provided to adapter.from()');
     }
 
-    // Check for valid transaction block types
-    if (!isTransactionBlockSui(transactionBlock) && !isTransaction(transactionBlock)) {
+    // Check for valid transaction types
+    if (!isTransactionSui(transactionBlock) && !isTransaction(transactionBlock)) {
       throw new TransactionAdapterError(
-        `Invalid transaction block type provided to adapter.from(): ${typeof transactionBlock}. ` +
-        `The object must implement either the Transaction or TransactionBlockSui interface.`
+        `Invalid transaction type provided to adapter.from(): ${typeof transactionBlock}. ` +
+        `The object must implement either the Transaction or TransactionSui interface.`
       );
     }
 

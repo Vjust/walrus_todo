@@ -315,7 +315,9 @@ export class AIService {
       return response.result;
     } catch (error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
-      throw new Error(`Failed to summarize todos: ${typedError.message}`, { cause: typedError });
+      const summaryError = new Error(`Failed to summarize todos: ${typedError.message}`);
+      (summaryError as any).cause = typedError;
+      throw summaryError;
     }
   }
   

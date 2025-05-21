@@ -118,10 +118,23 @@ export default class StoreListCommand extends BaseCommand {
         
         try {
           const fileContent = fs.readFileSync(filePath, 'utf-8');
-          todoList = JSON.parse(fileContent);
+          try {
+            todoList = JSON.parse(fileContent);
+          } catch (parseError) {
+            if (parseError instanceof SyntaxError) {
+              throw new CLIError(
+                `Invalid JSON format in file ${filePath}: ${parseError.message}`,
+                'INVALID_JSON_FORMAT'
+              );
+            }
+            throw parseError;
+          }
         } catch (error) {
+          if (error instanceof CLIError) {
+            throw error; // Re-throw CLIError as-is
+          }
           throw new CLIError(
-            `Failed to read or parse list file: ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to read list file: ${error instanceof Error ? error.message : String(error)}`,
             'FILE_READ_ERROR'
           );
         }
@@ -183,7 +196,7 @@ export default class StoreListCommand extends BaseCommand {
 
         // Storage verification
         this.startSpinner('Verifying storage capacity...');
-        await this.walrusStorage.ensureStorageAllocated();
+        await this.walrusStorage.ensureStorageAllocated(1000000);
         this.stopSpinner(true, 'Storage capacity verified');
 
         // In a real implementation, we would store the list to Walrus

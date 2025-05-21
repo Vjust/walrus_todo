@@ -83,7 +83,7 @@ sourceFiles.forEach(fileName => {
     });
 
     // Calculate output path
-    let outputPath = fileName
+    const outputPath = fileName
       .replace(path.resolve(root, 'src'), path.join(outDir, 'src'))
       .replace(/\.tsx?$/, '.js');
     

@@ -62,7 +62,7 @@ export default class StoreSimpleCommand extends BaseCommand {
         throw new CLIError(`List "${flags.list}" not found`, 'LIST_NOT_FOUND');
       }
 
-      let todo = list.todos.find(t => t.id === flags.todo || t.title === flags.todo);
+      const todo = list.todos.find(t => t.id === flags.todo || t.title === flags.todo);
       if (!todo) {
         throw new CLIError(`Todo "${flags.todo}" not found in list "${flags.list}"`, 'TODO_NOT_FOUND');
       }

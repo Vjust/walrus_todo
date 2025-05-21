@@ -1,6 +1,6 @@
-import { SuiTestService } from '../../../src/services/SuiTestService';
-import { MockTodoListContract } from '../../__mocks__/contracts/todo-list';
-import { MockNFTStorageContract } from '../../__mocks__/contracts/nft-storage';
+import { SuiTestService } from '@/services/SuiTestService';
+import { MockTodoListContract } from '@/__mocks__/contracts/todo-list';
+import { MockNFTStorageContract } from '@/__mocks__/contracts/nft-storage';
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 
 describe('Transaction Edge Cases', () => {

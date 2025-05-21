@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { execSync } from 'child_process';
+import * as childProcess from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -75,7 +76,7 @@ describe('Cross-Platform Compatibility Tests', () => {
         const originalExecSync = execSync;
         
         // Mock execSync to simulate Windows command execution
-        jest.spyOn(require('child_process'), 'execSync').mockImplementation(mockExecSync);
+        jest.spyOn(childProcess, 'execSync').mockImplementation(mockExecSync);
         
         try {
           execSync(command, { shell: 'cmd.exe', encoding: 'utf8' });
@@ -85,7 +86,7 @@ describe('Cross-Platform Compatibility Tests', () => {
           );
         } finally {
           // Restore original execSync
-          jest.spyOn(require('child_process'), 'execSync').mockImplementation(originalExecSync);
+          jest.spyOn(childProcess, 'execSync').mockImplementation(originalExecSync);
         }
       });
     });
@@ -102,7 +103,7 @@ describe('Cross-Platform Compatibility Tests', () => {
             const originalExecSync = execSync;
             
             // Mock execSync to simulate Unix command execution
-            jest.spyOn(require('child_process'), 'execSync').mockImplementation(mockExecSync);
+            jest.spyOn(childProcess, 'execSync').mockImplementation(mockExecSync);
             
             try {
               execSync(command, { shell: '/bin/sh', encoding: 'utf8' });
@@ -114,7 +115,7 @@ describe('Cross-Platform Compatibility Tests', () => {
               );
             } finally {
               // Restore original execSync
-              jest.spyOn(require('child_process'), 'execSync').mockImplementation(originalExecSync);
+              jest.spyOn(childProcess, 'execSync').mockImplementation(originalExecSync);
             }
           });
         });

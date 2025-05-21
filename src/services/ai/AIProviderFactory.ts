@@ -204,11 +204,17 @@ export class AIProviderFactory {
    * @returns Promise resolving to an object containing provider enum and model name
    */
   public static async getDefaultProvider(): Promise<{ provider: AIProviderEnum; modelName: string }> {
-    const defaultProviderString = AI_CONFIG.DEFAULT_PROVIDER;
-    const defaultModel = AI_CONFIG.DEFAULT_MODEL;
+    // Provide safe defaults if config values are undefined
+    const defaultProviderString = AI_CONFIG.DEFAULT_PROVIDER || 'xai';
+    const defaultModel = AI_CONFIG.DEFAULT_MODEL || 'grok-beta';
 
     // Check if we have credentials for the default provider
     try {
+      // Validate that we have a valid provider string
+      if (!defaultProviderString || typeof defaultProviderString !== 'string') {
+        throw new Error(`Invalid default provider configuration: ${defaultProviderString}`);
+      }
+      
       // Convert string to enum for type safety
       const defaultProviderEnum = getProviderEnum(defaultProviderString as string);
       const hasCredential = await secureCredentialService.hasCredential(defaultProviderString as unknown as AIProviderEnum);
@@ -236,18 +242,28 @@ export class AIProviderFactory {
       // If no credentials anywhere, return default anyway (will fail later but with helpful message)
       return {
         provider: defaultProviderEnum,
-        modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString][0]
+        modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString as keyof typeof AI_CONFIG.MODELS]?.[0] || 'grok-beta'
       };
     } catch (error) {
       this.logger.error(`Error determining default provider: ${error.message}`);
 
-      // Fall back to default even if there's an error
-      const fallbackEnum = getProviderEnum(defaultProviderString as string);
+      // Fall back to hardcoded safe defaults
+      const fallbackEnum = AIProviderEnum.XAI; // Safe fallback
       return {
         provider: fallbackEnum,
-        modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString][0]
+        modelName: defaultModel || 'grok-beta'
       };
     }
+  }
+
+  /**
+   * Debug method to get environment values for diagnostics
+   */
+  public static getEnvironmentValues(): { provider: any; model: any } {
+    return {
+      provider: AI_CONFIG.DEFAULT_PROVIDER,
+      model: AI_CONFIG.DEFAULT_MODEL
+    };
   }
 
   /**

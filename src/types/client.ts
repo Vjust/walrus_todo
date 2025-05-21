@@ -2,7 +2,7 @@
  * Extended WalrusClient interfaces with additional functionality
  */
 
-import type { TransactionBlock } from '@mysten/sui/transactions';
+import type { Transaction } from '@mysten/sui/transactions';
 import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { Signer } from '@mysten/sui/cryptography';
 import type { 
@@ -38,34 +38,34 @@ export interface WalrusClientExt {
   storageCost(size: number, epochs: number): Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>;
   executeCreateStorageTransaction(
     options: StorageWithSizeOptions & { 
-      transaction?: TransactionBlock; 
+      transaction?: Transaction; 
       signer: Signer | Ed25519Keypair;
     }
   ): Promise<{ digest: string; storage: { id: { id: string }; start_epoch: number; end_epoch: number; storage_size: string; } }>;
   executeCertifyBlobTransaction(
     options: CertifyBlobOptions & { 
-      transaction?: TransactionBlock;
+      transaction?: Transaction;
       signer?: Signer | Ed25519Keypair;
     }
   ): Promise<{ digest: string }>;
   executeWriteBlobAttributesTransaction(
     options: WriteBlobAttributesOptions & { 
-      transaction?: TransactionBlock;
+      transaction?: Transaction;
       signer?: Signer | Ed25519Keypair;
     }
   ): Promise<{ digest: string }>;
-  deleteBlob(options: DeleteBlobOptions): (tx: TransactionBlock) => Promise<{ digest: string }>;
+  deleteBlob(options: DeleteBlobOptions): (tx: Transaction) => Promise<{ digest: string }>;
   executeRegisterBlobTransaction(
     options: RegisterBlobOptions & { 
-      transaction?: TransactionBlock;
+      transaction?: Transaction;
       signer?: Signer | Ed25519Keypair;
     }
   ): Promise<{ blob: BlobObject; digest: string; }>;
   getStorageConfirmationFromNode(
     options: GetStorageConfirmationOptions
   ): Promise<{ primary_verification: boolean; secondary_verification?: boolean; provider: string; signature?: string }>;
-  createStorageBlock(size: number, epochs: number): Promise<TransactionBlock>;
-  createStorage(options: StorageWithSizeOptions): (tx: TransactionBlock) => Promise<{
+  createStorageBlock(size: number, epochs: number): Promise<Transaction>;
+  createStorage(options: StorageWithSizeOptions): (tx: Transaction) => Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -86,7 +86,7 @@ export interface WalrusClientExt {
     deletable?: boolean; 
     epochs?: number; 
     attributes?: Record<string, string>; 
-    transaction?: TransactionBlock | TransactionBlockAdapter;
+    transaction?: Transaction | TransactionBlockAdapter;
   }): Promise<{
     blobId: string; // Changed from optional to required
     blobObject: BlobObject | { blob_id: string }

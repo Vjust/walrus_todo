@@ -1,8 +1,9 @@
 import { jest, describe, it, expect, beforeEach, SpyInstance } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { execSync } from 'child_process';
-import { NetworkValidator, NetworkEnvironment } from '../../../src/utils/NetworkValidator';
-import { WalrusError } from '../../../src/types/error';
+import * as childProcess from 'child_process';
+import { NetworkValidator, NetworkEnvironment } from '@/utils/NetworkValidator';
+import { WalrusError } from '@/types/errors';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
@@ -14,7 +15,7 @@ describe('NetworkValidator', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockExecSync = jest.spyOn(require('child_process'), 'execSync');
+    mockExecSync = jest.spyOn(childProcess, 'execSync');
     
     mockWalrusClient = {
       getConfig: jest.fn().mockResolvedValue({ network: 'testnet' })

@@ -10,6 +10,8 @@ import { AIModelAdapter, AIProvider } from '../../src/types/adapters/AIModelAdap
 import { Todo } from '../../src/types/todo';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
 import { ResultCache } from '../../src/services/ai/ResultCache';
+import { AIConfigManager } from '../../src/services/ai/AIConfigManager';
+import { PromptManager } from '../../src/services/ai/PromptManager';
 
 // Mock secureCredentialService
 jest.mock('../../src/services/ai/SecureCredentialService', () => ({
@@ -110,7 +112,7 @@ jest.mock('../../src/services/ai/ResultCache', () => {
 });
 
 // Add getInstance static method to ResultCache
-jest.spyOn(require('../../src/services/ai/ResultCache').ResultCache, 'getInstance')
+jest.spyOn(ResultCache, 'getInstance')
   .mockReturnValue({
     configure: jest.fn(),
     getConfig: jest.fn().mockReturnValue({
@@ -154,7 +156,7 @@ jest.mock('../../src/services/ai/PromptManager', () => {
 });
 
 // Add getInstance static method to PromptManager
-jest.spyOn(require('../../src/services/ai/PromptManager').PromptManager, 'getInstance')
+jest.spyOn(PromptManager, 'getInstance')
   .mockReturnValue({
     getPromptTemplate: jest.fn().mockReturnValue({
       format: jest.fn().mockResolvedValue('Mock formatted prompt'),
@@ -217,7 +219,7 @@ jest.mock('../../src/services/ai/AIConfigManager', () => {
 });
 
 // Add getInstance static method to AIConfigManager
-jest.spyOn(require('../../src/services/ai/AIConfigManager').AIConfigManager, 'getInstance')
+jest.spyOn(AIConfigManager, 'getInstance')
   .mockReturnValue({
     getGlobalConfig: jest.fn().mockReturnValue({
       defaultProvider: 'xai',
@@ -271,8 +273,11 @@ jest.mock('../../src/utils/Logger', () => {
   };
 });
 
+// Import Logger first
+import { Logger } from '../../src/utils/Logger';
+
 // Add a getInstance mock to Logger
-jest.spyOn(require('../../src/utils/Logger').Logger, 'getInstance')
+jest.spyOn(Logger, 'getInstance')
   .mockReturnValue({
     debug: jest.fn(),
     info: jest.fn(),

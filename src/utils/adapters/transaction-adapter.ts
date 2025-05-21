@@ -3,7 +3,7 @@
  *
  * This module provides a concrete implementation of the TransactionBlockAdapter
  * interface for the @mysten/sui library. It handles the complexities of
- * working with Sui's transaction blocks in a type-safe manner.
+ * working with Sui's transactions in a type-safe manner.
  *
  * Key features:
  * - Strong type-checking with custom type guards
@@ -14,12 +14,12 @@
  *
  * Usage:
  * ```typescript
- * // Create a new adapter with a new transaction block
+ * // Create a new adapter with a new transaction
  * const adapter = createTransactionBlockAdapter();
  *
- * // Or wrap an existing transaction block
- * const existingTxBlock = new TransactionBlock();
- * const adapter = createTransactionBlockAdapter(existingTxBlock);
+ * // Or wrap an existing transaction
+ * const existingTx = new Transaction();
+ * const adapter = createTransactionBlockAdapter(existingTx);
  *
  * // Use the adapter's methods
  * adapter.moveCall({
@@ -32,7 +32,7 @@
  * ```
  */
 
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
 import type { SuiObjectRef } from '@mysten/sui/client';
 import {
@@ -42,18 +42,18 @@ import {
   isTransactionObjectArgument,
   TransactionAdapterError,
   isTransactionArgument
-} from '../../types/adapters/TransactionBlockAdapter';
-import type { Transaction } from '../../types/transaction';
-import { BaseAdapter, isBaseAdapter } from '../../types/adapters/BaseAdapter';
+} from '@types/adapters/TransactionBlockAdapter';
+import type { Transaction } from '@types/transaction';
+import { BaseAdapter, isBaseAdapter } from '@types/adapters/BaseAdapter';
 
 /**
- * Adapter interface to bridge different TransactionBlock implementations
+ * Adapter interface to bridge different Transaction implementations
  * This provides a standardized interface regardless of the underlying implementation
  *
  * Note: This adapter is used to maintain compatibility between different versions
- * of the TransactionBlock interface in @mysten/sui and other libraries.
+ * of the Transaction interface in @mysten/sui and other libraries.
  */
-export interface TransactionBlockAdapter extends BaseAdapter<TransactionBlock> {
+export interface TransactionBlockAdapter extends BaseAdapter<Transaction> {
   // Core methods that both interfaces must implement
   setGasBudget(budget: bigint | number): void;
   setGasPrice(price: bigint | number): void;
@@ -106,9 +106,9 @@ export interface TransactionBlockAdapter extends BaseAdapter<TransactionBlock> {
 }
 
 /**
- * Type guard to check if a value is a valid TransactionBlock
+ * Type guard to check if a value is a valid Transaction
  */
-function isTransactionBlock(value: unknown): value is TransactionBlock {
+function isTransaction(value: unknown): value is Transaction {
   return value !== null &&
          typeof value === 'object' &&
          value !== undefined &&
@@ -123,30 +123,30 @@ function isTransactionBlock(value: unknown): value is TransactionBlock {
  * This handles any conversion needed between interfaces
  */
 export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
-  private transactionBlock: TransactionBlock;
+  private transactionBlock: Transaction;
   private _isDisposed = false;
 
   /**
    * Creates a new TransactionBlockAdapterImpl instance
-   * @param transactionBlock Optional existing TransactionBlock to adapt
-   * @throws TransactionAdapterError if the provided TransactionBlock is invalid
+   * @param transactionBlock Optional existing Transaction to adapt
+   * @throws TransactionAdapterError if the provided Transaction is invalid
    */
   constructor(transactionBlock?: unknown) {
     if (transactionBlock === undefined) {
-      // Create a new TransactionBlock instance
-      this.transactionBlock = new TransactionBlock();
+      // Create a new Transaction instance
+      this.transactionBlock = new Transaction();
       return;
     }
 
-    // Validate the transaction block
+    // Validate the transaction
     if (transactionBlock === null) {
-      throw new TransactionAdapterError('Null TransactionBlock provided to adapter');
+      throw new TransactionAdapterError('Null Transaction provided to adapter');
     }
 
-    if (!isTransactionBlock(transactionBlock)) {
+    if (!isTransaction(transactionBlock)) {
       throw new TransactionAdapterError(
-        `Invalid TransactionBlock provided to adapter: ${typeof transactionBlock}. ` +
-        'Expected a valid TransactionBlock instance.'
+        `Invalid Transaction provided to adapter: ${typeof transactionBlock}. ` +
+        'Expected a valid Transaction instance.'
       );
     }
 
@@ -155,10 +155,10 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
   }
 
   /**
-   * Gets the underlying transaction block implementation
+   * Gets the underlying transaction implementation
    * @throws TransactionAdapterError if the adapter has been disposed
    */
-  getUnderlyingImplementation(): TransactionBlock {
+  getUnderlyingImplementation(): Transaction {
     this.checkDisposed();
     return this.transactionBlock;
   }
@@ -167,7 +167,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
    * Alias for getUnderlyingImplementation to maintain backward compatibility
    * @deprecated Use getUnderlyingImplementation() instead
    */
-  getUnderlyingBlock(): TransactionBlock {
+  getUnderlyingBlock(): Transaction {
     return this.getUnderlyingImplementation();
   }
   
@@ -187,8 +187,8 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     if (this._isDisposed) return;
     
     try {
-      // Perform any cleanup needed for the transaction block
-      // Currently, there's no specific cleanup needed for TransactionBlock instances,
+      // Perform any cleanup needed for the transaction
+      // Currently, there's no specific cleanup needed for Transaction instances,
       // but this provides an extension point for future requirements
       
       this._isDisposed = true;
@@ -717,11 +717,11 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
 
 /**
  * Factory function to create a TransactionBlockAdapter from either
- * a TransactionBlock or creating a new one if not provided
+ * a Transaction or creating a new one if not provided
  *
- * @param transactionBlock Optional transaction block to wrap
+ * @param transactionBlock Optional transaction to wrap
  * @returns A new TransactionBlockAdapter instance
- * @throws TransactionAdapterError if the provided transaction block is invalid
+ * @throws TransactionAdapterError if the provided transaction is invalid
  */
 export function createTransactionBlockAdapter(
   transactionBlock?: unknown
@@ -732,10 +732,10 @@ export function createTransactionBlockAdapter(
   }
 
   // Validate input if provided
-  if (!isTransactionBlock(transactionBlock)) {
+  if (!isTransaction(transactionBlock)) {
     throw new TransactionAdapterError(
-      `Invalid transaction block provided to adapter factory: ${typeof transactionBlock}. ` +
-      'Expected a valid TransactionBlock instance.'
+      `Invalid transaction provided to adapter factory: ${typeof transactionBlock}. ` +
+      'Expected a valid Transaction instance.'
     );
   }
 

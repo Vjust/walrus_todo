@@ -7,6 +7,7 @@
 
 import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
+import * as path from 'path';
 import { promisify } from 'util';
 import { Logger } from './Logger';
 
@@ -117,7 +118,7 @@ export class FileHandleManager {
     }
     
     // Otherwise, resolve it relative to the base directory
-    return require('path').resolve(this.baseDir, filePath);
+    return path.resolve(this.baseDir, filePath);
   }
   
   /**
@@ -139,7 +140,7 @@ export class FileHandleManager {
     try {
       // Create directory if needed and writing
       if (this.autoCreateDirs && (flags.includes('w') || flags.includes('a'))) {
-        const dir = require('path').dirname(resolvedPath);
+        const dir = path.dirname(resolvedPath);
         await fsPromises.mkdir(dir, { recursive: true }).catch(() => {});
       }
       
@@ -257,7 +258,7 @@ export class FileHandleManager {
     
     // Create directory if needed
     if (this.autoCreateDirs) {
-      const dir = require('path').dirname(resolvedPath);
+      const dir = path.dirname(resolvedPath);
       await fsPromises.mkdir(dir, { recursive: true }).catch(() => {});
     }
     
@@ -360,7 +361,7 @@ export class FileHandleManager {
     
     // Create directory if needed
     if (this.autoCreateDirs) {
-      const dir = require('path').dirname(resolvedPath);
+      const dir = path.dirname(resolvedPath);
       try {
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });

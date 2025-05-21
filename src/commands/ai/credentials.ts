@@ -390,15 +390,16 @@ export default class Credentials extends BaseCommand {
 
   /**
    * Helper to show a confirmation prompt
+   * Override the inherited confirm method with same signature
    */
-  private async confirm(message: string): Promise<boolean> {
+  protected async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
     const { default: inquirer } = await import('inquirer');
     const { confirmed } = await inquirer.prompt([
       {
         type: 'confirm',
         name: 'confirmed',
         message,
-        default: false,
+        default: defaultValue || false,
       },
     ]);
     return confirmed;

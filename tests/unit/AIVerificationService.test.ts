@@ -4,6 +4,9 @@ import { BlockchainAIVerificationService } from '../../src/services/ai/Blockchai
 import { AIActionType, AIPrivacyLevel, VerificationRecord } from '../../src/types/adapters/AIVerifierAdapter';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';
+import { BlockchainVerifier } from '../../src/services/ai/BlockchainVerifier';
+import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
+import { getPermissionManager } from '../../src/services/ai/AIPermissionManager';
 
 // Mock blockchain verifier
 jest.mock('../../src/services/ai/BlockchainVerifier', () => {
@@ -300,16 +303,13 @@ describe('AI Verification Services', () => {
 
   // SECTION: Blockchain Verification Service
   describe('Blockchain Verification Service', () => {
-    const { BlockchainVerifier } = require('../../src/services/ai/BlockchainVerifier');
-    const { SecureCredentialManager } = require('../../src/services/ai/SecureCredentialManager');
-    const { getPermissionManager } = require('../../src/services/ai/AIPermissionManager');
     
     let blockchainVerificationService: BlockchainAIVerificationService;
     
     beforeEach(() => {
-      const blockchainVerifier = new BlockchainVerifier();
+      const blockchainVerifier = new (BlockchainVerifier as any)();
       const permissionManager = getPermissionManager();
-      const credentialManager = new SecureCredentialManager('/mock/keys');
+      const credentialManager = new (SecureCredentialManager as any)('/mock/keys');
       
       blockchainVerificationService = new BlockchainAIVerificationService(
         blockchainVerifier,

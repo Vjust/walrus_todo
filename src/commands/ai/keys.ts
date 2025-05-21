@@ -1,5 +1,5 @@
 import { Flags, Args } from '@oclif/core';
-import { BaseCommand } from '../../base-command';
+import BaseCommand from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import * as chalk from 'chalk';
 import { CLIError } from '../../types/error';
@@ -174,7 +174,7 @@ export default class AIKeysCommand extends BaseCommand {
       });
       
       // Ask which backup to restore
-      const response = await this.prompt({
+      const response = await this.promptInquirer({
         type: 'input',
         name: 'backupIndex',
         message: 'Enter the number of the backup to restore:',
@@ -212,10 +212,10 @@ export default class AIKeysCommand extends BaseCommand {
   }
 
   /**
-   * Prompt for confirmation
+   * Prompt for confirmation - override BaseCommand method
    */
-  private async confirm(message: string): Promise<boolean> {
-    const response = await this.prompt({
+  protected async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
+    const response = await this.promptInquirer({
       type: 'input',
       name: 'confirm',
       message,
@@ -225,9 +225,9 @@ export default class AIKeysCommand extends BaseCommand {
   }
 
   /**
-   * Prompt for input
+   * Prompt for input - override BaseCommand method
    */
-  private async prompt(options: any): Promise<any> {
+  protected async promptInquirer(options: any): Promise<any> {
     const { default: inquirer } = await import('inquirer');
     return inquirer.prompt(options);
   }

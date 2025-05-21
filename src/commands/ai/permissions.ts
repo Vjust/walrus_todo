@@ -525,8 +525,8 @@ export default class AiPermissions extends BaseCommand {
     }
   }
 
-  private async confirm(message: string): Promise<boolean> {
-    // Simple confirmation prompt
+  protected async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
+    // Simple confirmation prompt - override BaseCommand method
     const rl = createInterface({
       input: process.stdin,
       output: process.stdout

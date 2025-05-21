@@ -56,7 +56,57 @@ describe('DeployCommand', () => {
       })
       .it('handles missing move files gracefully');
 
-    // Add more deployment tests...
+    test
+      .stdout()
+      .stub(fs, 'existsSync', () => true)
+      .stub(fs, 'mkdtempSync', () => '/temp/test-deploy')
+      .stub(fs, 'mkdirSync', () => {})
+      .stub(fs, 'readdirSync', () => ['todo.move'])
+      .stub(fs, 'copyFileSync', () => {})
+      .stub(fs, 'rmSync', () => {})
+      .do(() => {
+        // Mock successful deployment output
+        const mockOutput = JSON.stringify({
+          effects: {
+            created: [
+              { 
+                owner: 'Immutable',
+                reference: { objectId: 'test-package-id-123' }
+              }
+            ]
+          },
+          digest: 'test-digest-456'
+        });
+        
+        // Mock config service
+        const configService = require('../../src/services/config-service').configService;
+        jest.spyOn(configService, 'getConfig').mockResolvedValue({});
+        jest.spyOn(configService, 'saveConfig').mockResolvedValue();
+        
+        // Mock command executor
+        const commandExecutor = require('../../src/utils/command-executor');
+        jest.spyOn(commandExecutor, 'safeExecFileSync').mockReturnValue();
+        jest.spyOn(commandExecutor, 'getActiveSuiAddress').mockReturnValue('0xtest-address');
+        jest.spyOn(commandExecutor, 'publishSuiPackage').mockReturnValue(mockOutput);
+      })
+      .command(['deploy', '--network', 'testnet', '--address', '0xtest-address', '--gas-budget', '200000000'])
+      .it('saves deployment config after successful deployment', () => {
+        const configService = require('../../src/services/config-service').configService;
+        
+        // Verify saveConfig was called with deployment info
+        expect(configService.saveConfig).toHaveBeenCalledWith(
+          expect.objectContaining({
+            network: 'testnet',
+            walletAddress: '0xtest-address',
+            lastDeployment: expect.objectContaining({
+              packageId: 'test-package-id-123',
+              digest: 'test-digest-456',
+              network: 'testnet',
+              timestamp: expect.any(String)
+            })
+          })
+        );
+      });
   });
 });
 

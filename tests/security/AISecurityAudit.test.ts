@@ -287,9 +287,9 @@ describe('AI Security Audit', () => {
       const maliciousOptions: AIModelOptions = {
         temperature: 0.7,
         maxTokens: 2000,
-        // @ts-ignore - intentional test of injection
+        // @ts-expect-error - intentional test of injection
         __proto__: { injected: true },
-        // @ts-ignore - intentional test of injection
+        // @ts-expect-error - intentional test of injection
         constructor: { prototype: { injected: true } }
       };
       

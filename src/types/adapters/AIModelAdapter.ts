@@ -70,6 +70,16 @@ export interface AIModelOptions {
   
   /** Exponential backoff factor for retries (e.g., 2.0 = double delay after each retry) */
   retryBackoffFactor?: number;
+  
+  // Privacy and operation parameters
+  /** Whether differential privacy is enabled for this operation */
+  differentialPrivacy?: boolean;
+  
+  /** Epsilon value for differential privacy (noise factor) */
+  epsilon?: number;
+  
+  /** The operation type being performed (e.g., 'summarize', 'categorize') */
+  operation?: string;
 }
 
 /**
@@ -244,6 +254,18 @@ export interface AIModelAdapter {
    * @throws May throw errors for template processing issues or API errors
    */
   processWithPromptTemplate(promptTemplate: PromptTemplate, input: Record<string, any>): Promise<AIResponse>;
+
+  /**
+   * Checks if the user has provided consent for a specific operation type
+   * 
+   * Optional method for checking user consent for AI operations.
+   * This supports privacy-aware AI usage where different operations
+   * may require different levels of user consent.
+   * 
+   * @param operationType - The type of operation to check consent for
+   * @returns true if user has consented to this operation type, false otherwise
+   */
+  checkConsentFor?(operationType: string): boolean;
 
   /**
    * Cancels all pending AI requests

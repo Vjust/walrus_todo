@@ -7,7 +7,7 @@ import { getAssetPath, getProjectPath } from '../../../src/utils/path-utils';
 jest.mock('fs');
 
 // Mock the entire path-utils module to control PROJECT_ROOT
-let mockProjectRoot = '/test/project/root';
+const mockProjectRoot = '/test/project/root';
 jest.mock('../../../src/utils/path-utils', () => {
     const original = jest.requireActual('../../../src/utils/path-utils') as any;
     

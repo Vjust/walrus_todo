@@ -1,12 +1,10 @@
 import { TodoService } from './src/services/todo-service';
-import { ConfigService } from './src/services/config-service';
 
 async function showTodoForAJ() {
   try {
     console.log('=== Walrus TODO CLI Test Result ===\n');
     
     // Initialize services
-    const configService = new ConfigService();
     const todoService = new TodoService();
     
     // Get the default list

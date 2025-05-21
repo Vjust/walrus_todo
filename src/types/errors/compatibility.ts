@@ -16,7 +16,7 @@ import {
   isRetryableError,
   getErrorMessage as consolidatedGetErrorMessage,
   toBaseError
-} from './consolidated';
+} from './consolidated/index';
 
 // Re-export consolidated error types
 export {
@@ -30,9 +30,11 @@ export {
   AuthorizationError,
   // Re-export utility functions
   isRetryableError,
-  consolidatedGetErrorMessage as getErrorMessage,
   toBaseError
 };
+
+// Re-export with alias for backward compatibility
+export { consolidatedGetErrorMessage as getErrorMessage };
 
 // Export legacy WalrusError enum for backward compatibility
 export enum WalrusErrorCode {

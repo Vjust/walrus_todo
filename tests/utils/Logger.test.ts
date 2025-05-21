@@ -1,16 +1,16 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { Logger, LogLevel } from '../../../src/utils/Logger';
+import { Logger, LogLevel } from '@/utils/Logger';
 import {
-  WalrusError,
+  BaseError as WalrusError,
   StorageError,
   BlockchainError,
   ValidationError,
   NetworkError
-} from '../../../src/types/errors';
+} from '@/types/errors/consolidated';
 
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance<(message?: any, ...args: any[]) => void>[];
+  let mockConsole: jest.SpyInstance[];
   let mockHandler: jest.Mock<void, [{ level: LogLevel; message: string; context?: any; error?: any }]>;
 
   beforeEach(() => {
@@ -19,8 +19,8 @@ describe('Logger', () => {
     logger.clearHandlers();
 
     // Mock console methods
-    mockConsole = ['debug', 'info', 'warn', 'error'].map(level =>
-      jest.spyOn(console, level).mockImplementation()
+    mockConsole = (['debug', 'info', 'warn', 'error'] as const).map(level =>
+      jest.spyOn(console, level as keyof Console).mockImplementation(() => {})
     );
 
     // Create mock handler

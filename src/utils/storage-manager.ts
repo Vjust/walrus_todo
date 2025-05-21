@@ -36,9 +36,7 @@ interface StorageVerification {
 }
 
 export class StorageManager {
-  // @ts-ignore - BigInt literals are not available when targeting lower than ES2020
   private readonly MIN_WAL_BALANCE = BigInt(100); // Minimum WAL tokens needed
-  // @ts-ignore - BigInt literals are not available when targeting lower than ES2020
   private readonly MIN_STORAGE_BUFFER = BigInt(10240); // 10KB minimum buffer
   private readonly DEFAULT_EPOCH_DURATION = 52; // ~6 months
   private readonly MIN_EPOCH_BUFFER = 10; // Minimum remaining epochs

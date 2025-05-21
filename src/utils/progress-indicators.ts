@@ -1,7 +1,7 @@
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { ICONS } from '../base-command';
 import ora from 'ora';
-import cliProgress from 'cli-progress';
+import * as cliProgress from 'cli-progress';
 
 // Define types
 type Ora = ReturnType<typeof ora>;
@@ -10,7 +10,7 @@ interface OraOptions {}
 // Fallback for testing environments if imports fail
 if (!ora) {
   console.warn('ora import failed, using mock implementation');
-  // @ts-ignore
+  // @ts-expect-error - Mock ora for testing when import fails
   ora = () => ({
     start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
     stop: () => {},
@@ -21,7 +21,7 @@ if (!ora) {
 
 if (!cliProgress) {
   console.warn('cli-progress import failed, using mock implementation');
-  // @ts-ignore
+  // @ts-expect-error - Mock cli-progress for testing when import fails
   cliProgress = {
     SingleBar: class MockSingleBar {
       start() { return this; }

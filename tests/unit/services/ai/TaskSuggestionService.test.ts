@@ -32,8 +32,9 @@ describe('TaskSuggestionService', () => {
       priority: 'high',
       tags: ['backend', 'security'],
       completed: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      private: false
     },
     {
       id: '2',
@@ -42,8 +43,9 @@ describe('TaskSuggestionService', () => {
       priority: 'medium',
       tags: ['frontend', 'design'],
       completed: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      private: false
     },
     {
       id: '3',
@@ -52,8 +54,9 @@ describe('TaskSuggestionService', () => {
       priority: 'medium',
       tags: ['documentation'],
       completed: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      private: false
     }
   ];
 
@@ -143,11 +146,8 @@ describe('TaskSuggestionService', () => {
       createVerification: jest.fn()
     } as unknown as jest.Mocked<AIVerificationService>;
 
-    // Mock the Logger constructor
-    (Logger as jest.MockedClass<typeof Logger>).mockImplementation(() => mockLogger);
-
-    // Create service instance
-    taskSuggestionService = new TaskSuggestionService(mockAiService, mockVerificationService);
+    // Create service instance with mocked logger for Jest isolation
+    taskSuggestionService = new TaskSuggestionService(mockAiService, mockVerificationService, mockLogger);
   });
 
   describe('Basic Functionality', () => {
@@ -157,7 +157,7 @@ describe('TaskSuggestionService', () => {
     });
 
     it('should initialize without verification service', () => {
-      const serviceWithoutVerification = new TaskSuggestionService(mockAiService);
+      const serviceWithoutVerification = new TaskSuggestionService(mockAiService, undefined, mockLogger);
       expect(serviceWithoutVerification).toBeDefined();
     });
   });
@@ -238,6 +238,27 @@ describe('TaskSuggestionService', () => {
     });
 
     it('should handle empty todo list', async () => {
+      // Reset mocks for this specific test
+      jest.clearAllMocks();
+      
+      // Set up mocks for empty todo list (should return empty results)
+      const provider = mockAiService.getProvider();
+      (provider.completeStructured as jest.Mock)
+        .mockResolvedValue({ result: [] });
+
+      mockAiService.detectDependencies.mockResolvedValue({
+        dependencies: {},
+        errors: []
+      });
+
+      mockAiService.analyze.mockResolvedValue({
+        summary: 'No tasks',
+        categorization: [],
+        priorities: {},
+        insights: [],
+        keyThemes: []
+      });
+
       const result = await taskSuggestionService.suggestTasks([]);
 
       expect(result.suggestions).toHaveLength(0);
@@ -246,6 +267,9 @@ describe('TaskSuggestionService', () => {
     });
 
     it('should handle AI service errors gracefully', async () => {
+      // Reset mocks for this specific test
+      jest.clearAllMocks();
+      
       const provider = mockAiService.getProvider();
       (provider.completeStructured as jest.Mock).mockRejectedValueOnce(new Error('AI service error'));
 
@@ -426,7 +450,7 @@ describe('TaskSuggestionService', () => {
     });
 
     it('should throw error if verification service is not initialized', async () => {
-      const serviceWithoutVerification = new TaskSuggestionService(mockAiService);
+      const serviceWithoutVerification = new TaskSuggestionService(mockAiService, undefined, mockLogger);
 
       await expect(
         serviceWithoutVerification.suggestTasksWithVerification(sampleTodos)
@@ -494,8 +518,9 @@ describe('TaskSuggestionService', () => {
           priority: 'high' as const,
           tags: ['backend', 'database'],
           completed: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          private: false
         }
       ];
 
@@ -596,8 +621,9 @@ describe('TaskSuggestionService', () => {
           priority: 'medium',
           tags: [],
           completed: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          private: false
         }
       ];
 

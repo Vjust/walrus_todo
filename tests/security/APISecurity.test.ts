@@ -401,7 +401,7 @@ describe('API Security Tests', () => {
       const maliciousTodos: Todo[] = [
         {
           id: 'todo-proto-1',
-          // @ts-ignore - intentional for testing
+          // @ts-expect-error - intentional for testing
           __proto__: { polluted: true },
           title: 'Prototype Pollution Todo',
           description: 'Prototype pollution attempt',
@@ -416,7 +416,7 @@ describe('API Security Tests', () => {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          // @ts-ignore - intentional for testing
+          // @ts-expect-error - intentional for testing
           constructor: {
             prototype: { polluted: true }
           }

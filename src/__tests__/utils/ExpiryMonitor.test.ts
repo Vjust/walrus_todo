@@ -28,7 +28,7 @@ describe('ExpiryMonitor', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-    mockExecSync = jest.spyOn(require('child_process'), 'execSync') as jest.SpyInstance<Buffer, [command: string, options?: any]>;
+    mockExecSync = jest.spyOn(execSync as any, 'default') as jest.SpyInstance<Buffer, [command: string, options?: any]>;
     mockExecSync.mockReturnValue(Buffer.from('testnet\n'));
   });
 

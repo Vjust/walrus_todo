@@ -1,4 +1,4 @@
-import { TodoList, Todo } from '../types';
+import { TodoList, Todo } from '@/types';
 
 // Mock type for Config
 export interface MockConfig {

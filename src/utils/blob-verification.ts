@@ -8,44 +8,38 @@ import { RetryManager, NetworkNode } from './retry-manager';
 import type { TransactionSigner } from '../types/signer';
 import * as crypto from 'crypto';
 
-// We need to handle both ESM and CommonJS imports for ora and cli-progress
-// in way that's compatible with Jest tests and the production environment
-let oraImport;
-let cliProgressImport;
-
-try {
-  // Try importing as ESM modules
-  oraImport = require('ora');
-  cliProgressImport = require('cli-progress');
-} catch (error) {
-  // Fallback to CommonJS imports if ESM fails
-  console.warn('ESM imports failed, falling back to CommonJS imports');
+// Provide fallback implementations for testing environments
+const oraImport = (() => {
   try {
-    oraImport = require('ora').default;
-    cliProgressImport = require('cli-progress');
-  } catch (fallbackError) {
-    console.error('Failed to import ora or cli-progress:', fallbackError);
-    // Provide mock implementations for testing environments
-    oraImport = () => ({
+    return import('ora');
+  } catch {
+    return Promise.resolve(() => ({
       start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
       stop: () => {},
       succeed: () => {},
       fail: () => {}
-    });
-    cliProgressImport = {
+    }));
+  }
+})();
+
+const cliProgressImport = (() => {
+  try {
+    return import('cli-progress');
+  } catch {
+    return Promise.resolve({
       SingleBar: class MockSingleBar {
         start() { return this; }
         update() { return this; }
         stop() { return this; }
       },
       MultiBar: class MockMultiBar {
-        create() { return new cliProgressImport.SingleBar(); }
+        create() { return new (this as any).SingleBar(); }
         remove() {}
         stop() {}
       }
-    };
+    });
   }
-}
+})();
 
 // Using BlobInfo from types/walrus.ts
 

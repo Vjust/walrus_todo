@@ -5,7 +5,7 @@ import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
 import { SignatureWithBytes } from '../../../types/adapters/SignerAdapter';
 import { SuiSDKVersion } from '../../../types/adapters/SignerAdapter';
-import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
+import type { TransactionBlockAdapter } from '@utils/adapters/transaction-adapter';
 import { TransactionType } from '../../../types/transaction';
 import { toB64 } from '@mysten/sui/utils';
 
@@ -42,7 +42,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
     this.checkDisposed();
     // Cast to required type - we're in a mock file so this is acceptable
-    let txBlock = transaction;
+    const txBlock = transaction;
 
     // Convert to base64 strings as required by SignatureWithBytes interface
     return {

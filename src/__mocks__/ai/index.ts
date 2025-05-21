@@ -41,6 +41,10 @@ export type {
  */
 // Import the RecordingMode type for use in the function signature
 import { RecordingMode } from './types';
+import { AIProviderFactory } from '../../services/ai/AIProviderFactory';
+import { MockAIProviderFactory } from './MockAIProviderFactory';
+import { getScenario } from './scenarios';
+import { MockConfigManager } from './MockConfigManager';
 
 export function setupAIMocks(options: {
   provider?: string;
@@ -49,11 +53,7 @@ export function setupAIMocks(options: {
   recordingMode?: RecordingMode;
   recordingPath?: string;
 } = {}): void {
-  // Import necessary modules for Jest environment
-  const { AIProviderFactory } = require('../../services/ai/AIProviderFactory');
-  const { MockAIProviderFactory } = require('./MockAIProviderFactory');
-  const { getScenario } = require('./scenarios');
-  const { MockConfigManager } = require('./MockConfigManager');
+  // Use the static imports
   
   // Mock the AIProviderFactory
   jest.mock('../../services/ai/AIProviderFactory', () => {
@@ -104,7 +104,6 @@ export function setupAIMocks(options: {
 export function teardownAIMocks(): void {
   jest.restoreAllMocks();
   
-  const { MockAIProviderFactory } = require('./MockAIProviderFactory');
   MockAIProviderFactory.resetAllProviders();
   MockAIProviderFactory.clearCache();
 }

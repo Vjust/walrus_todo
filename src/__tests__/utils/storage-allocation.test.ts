@@ -38,18 +38,20 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: walBalance.toString(),
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-id' // Add the property explicitly
-          // Type assertion to handle the coin object ID in tests
-        } as unknown as CoinBalance & { coinObjectId: string })
+          lockedBalance: {
+            aggregate: BigInt(0).toString(),
+            coinBalances: {} as Record<string, string>
+          }
+        } as unknown as CoinBalance)
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: storageBalance.toString(),
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
-          // Type assertion to handle the coin object ID in tests
-        } as unknown as CoinBalance & { coinObjectId: string });
+          lockedBalance: {
+            aggregate: BigInt(0).toString(),
+            coinBalances: {} as Record<string, string>
+          }
+        } as unknown as CoinBalance);
 
       const result = await storageManager.checkBalances();
       expect(result.walBalance).toBe(walBalance.toString());
@@ -63,10 +65,11 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: BigInt(50).toString(),
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-id' // Add the property explicitly
-          // Type assertion to handle the coin object ID in tests
-        } as unknown as CoinBalance & { coinObjectId: string });
+          lockedBalance: {
+            aggregate: BigInt(0).toString(),
+            coinBalances: {} as Record<string, string>
+          }
+        } as unknown as CoinBalance);
 
       await expect(storageManager.checkBalances())
         .rejects
@@ -131,18 +134,20 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: BigInt(1000).toString(),
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-id' // Add the property explicitly
-          // Type assertion to handle the coin object ID in tests
-        } as unknown as CoinBalance & { coinObjectId: string }) // WAL balance
+          lockedBalance: {
+            aggregate: BigInt(0).toString(),
+            coinBalances: {} as Record<string, string>
+          }
+        } as unknown as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: BigInt(500).toString(),
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
-          // Type assertion to handle the coin object ID in tests
-        } as unknown as CoinBalance & { coinObjectId: string }); // Storage balance
+          lockedBalance: {
+            aggregate: BigInt(0).toString(),
+            coinBalances: {} as Record<string, string>
+          }
+        } as unknown as CoinBalance); // Storage balance
 
       mockWalrusClient.storageCost.mockResolvedValue({
         storageCost: BigInt(100),
@@ -176,18 +181,20 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: BigInt(10).toString(),
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-coin-id' // Add the property explicitly
-          // Type assertion to handle the coin object ID in tests
-        } as unknown as CoinBalance & { coinObjectId: string }) // WAL balance
+          lockedBalance: {
+            aggregate: BigInt(0).toString(),
+            coinBalances: {} as Record<string, string>
+          }
+        } as unknown as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: BigInt(5).toString(),
           coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0).toString() },
-          coinObjectId: 'mock-storage-coin-id' // Add the property explicitly
-          // Type assertion to handle the coin object ID in tests
-        } as unknown as CoinBalance & { coinObjectId: string }); // Storage balance
+          lockedBalance: {
+            aggregate: BigInt(0).toString(),
+            coinBalances: {} as Record<string, string>
+          }
+        } as unknown as CoinBalance); // Storage balance
 
       // No existing storage
       mockSuiClient.getOwnedObjects.mockResolvedValue({
