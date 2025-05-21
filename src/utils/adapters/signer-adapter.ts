@@ -25,7 +25,7 @@ import {
   hasSignTransactionBlock,
   hasSignTransaction,
   hasGetPublicKey,
-  hasSignAndExecuteTransactionBlock,
+  hasSignAndExecuteTransaction,
   hasSignData,
   hasSignPersonalMessage,
   hasConnect,
@@ -447,7 +447,7 @@ export class SignerAdapterImpl implements SignerAdapter {
    * Signs and executes a transaction using the appropriate method based on SDK version
    * @throws SignerAdapterError if the adapter has been disposed or the operation fails
    */
-  async signAndExecuteTransactionBlock(
+  async signAndExecuteTransaction(
     tx: TransactionType,
     options?: SuiTransactionBlockResponseOptions
   ): Promise<SuiTransactionBlockResponse> {
@@ -471,22 +471,22 @@ export class SignerAdapterImpl implements SignerAdapter {
       }
 
       // If the native method is available, use it directly
-      if (hasSignAndExecuteTransactionBlock(this.signer)) {
+      if (hasSignAndExecuteTransaction(this.signer)) {
         try {
           // Handle different API versions safely
           if (this.sdkVersion === SuiSDKVersion.VERSION_3) {
             // Modern version with standard API
             // Use explicit cast to the expected function signature
-            const signAndExecuteFn = this.signer.signAndExecuteTransactionBlock as unknown as
+            const signAndExecuteFn = this.signer.signAndExecuteTransaction as unknown as
               (txBlock: TransactionBlock, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse>;
             return await signAndExecuteFn(txBlock, options);
           } else {
             // Older versions with different parameter types
-            return await (this.signer as any).signAndExecuteTransactionBlock(txBlock, options);
+            return await (this.signer as any).signAndExecuteTransaction(txBlock, options);
           }
         } catch (err) {
           const error = err instanceof Error ? err : new Error(String(err));
-          throw new SignerAdapterError(`Native signAndExecuteTransactionBlock failed: ${error.message}`, error);
+          throw new SignerAdapterError(`Native signAndExecuteTransaction failed: ${error.message}`, error);
         }
       }
 
@@ -527,7 +527,7 @@ export class SignerAdapterImpl implements SignerAdapter {
         throw err;
       }
       throw new SignerAdapterError(
-        `Error in signAndExecuteTransactionBlock: ${err instanceof Error ? err.message : String(err)}`,
+        `Error in signAndExecuteTransaction: ${err instanceof Error ? err.message : String(err)}`,
         err instanceof Error ? err : undefined
       );
     }

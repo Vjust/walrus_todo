@@ -1,8 +1,11 @@
-import { Args } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { commandRegistry } from '../utils/CommandRegistry';
 import { CommandShortcuts, formatShortcutsTable } from '../utils/command-shortcuts';
 import chalk from 'chalk';
+
+// Import CommandMetadata type
+import type { CommandMetadata } from '../utils/CommandRegistry';
 
 /**
  * Enhanced help command with command groups and suggestions
@@ -25,12 +28,11 @@ export default class HelpCommand extends BaseCommand {
 
   static flags = {
     ...BaseCommand.flags,
-    shortcuts: {
+    shortcuts: Flags.boolean({
       description: 'Show all available command shortcuts',
       char: 's',
-      type: 'boolean' as const,
       required: false,
-    },
+    }),
   };
 
   static aliases = ['h', '?'];

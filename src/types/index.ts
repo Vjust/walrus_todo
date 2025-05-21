@@ -11,6 +11,7 @@ export interface Config {
   };
   packageId?: string;
   registryId?: string;
+  completedTodos?: Record<string, any>; // Adding missing property
 }
 
 export * from './todo';

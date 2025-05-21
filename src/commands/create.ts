@@ -117,7 +117,7 @@ export default class CreateCommand extends BaseCommand {
         arguments: args
       });
       const signer = new KeystoreSigner(suiClient);
-      const tx = await signer.signAndExecuteTransactionBlock(txb);
+      const tx = await signer.signAndExecuteTransaction(txb);
       if (tx.effects?.status.status !== 'success') {  // Add optional chaining for null check
         throw new CLIError('Transaction failed', 'TX_FAILED');
       }

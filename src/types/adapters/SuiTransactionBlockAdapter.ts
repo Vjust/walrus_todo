@@ -111,7 +111,7 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
     try {
       // Pass only valid transaction options
       // Cast the transaction directly to handle it correctly
-      const result = await this.signer.signAndExecuteTransactionBlock(
+      const result = await this.signer.signAndExecuteTransaction(
         transactionBlock as any
       );
       

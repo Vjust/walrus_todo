@@ -10,7 +10,7 @@ import { NETWORK_URLS, TODO_NFT_CONFIG } from '../constants';
 import { CLIError } from '../types/error';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
-import { withRetry } from '../utils/error-handler';
+import { RetryManager } from '../utils/retry-manager';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -375,7 +375,7 @@ export default class CompleteCommand extends BaseCommand {
     let lastWalrusError: Error | null = null;
 
     try {
-      const { args, flags } = await this.parse(CompleteCommand);
+      const { args, flags } = await this.parse<typeof CompleteCommand>(CompleteCommand);
       
       // Get config once to avoid redeclaration issues
       const config = await configService.getConfig();
@@ -445,16 +445,22 @@ export default class CompleteCommand extends BaseCommand {
       if (todo.nftObjectId && suiNftStorage) {
         try {
           this.log(chalk.blue('Updating NFT on blockchain...'));
-          const txDigest = await withRetry(
+          const txDigest = await RetryManager.retry(
             () => suiNftStorage.updateTodoNftCompletionStatus(todo.nftObjectId!),
-            3,
-            1000
+            {
+              maxRetries: 3,
+              initialDelay: 1000,
+              onRetry: (error, attempt, delay) => {
+                const errorMessage = error ? (typeof error === 'object' && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
+                this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
+              }
+            }
           );
           this.log(chalk.green('\u2713 Todo NFT updated on blockchain'));
           this.log(chalk.dim(`Transaction: ${txDigest}`));
           
           // Verify NFT update with proper error handling
-          await withRetry(async () => {
+          await RetryManager.retry(async () => {
             try {
               // Add timeout for verification to prevent hanging
               let timeoutId: NodeJS.Timeout;
@@ -485,7 +491,14 @@ export default class CompleteCommand extends BaseCommand {
                 `NFT verification error: ${error.message}`
               );
             }
-          }, 3, 2000);
+          }, {
+            maxRetries: 3,
+            initialDelay: 2000,
+            onRetry: (error, attempt, delay) => {
+              const errorMessage = error && typeof error === 'object' && 'message' in error ? (error as Error).message : String(error);
+              this.log(chalk.yellow(`Verification retry ${attempt} after error: ${errorMessage}`));
+            }
+          });
         } catch (blockchainError) {
           // Keep local update but throw error for blockchain update
           throw new CLIError(

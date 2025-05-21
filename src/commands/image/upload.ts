@@ -1,5 +1,5 @@
 import { Flags } from '@oclif/core';
-import { BaseCommand } from '../../base-command';
+import BaseCommand from '../../base-command';
 import { CLIError } from '../../utils/error-handler';
 import { TodoService } from '../../services/todoService';
 import { createWalrusImageStorage, WalrusImageStorage } from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
@@ -28,6 +28,21 @@ export default class UploadCommand extends BaseCommand {
   ];
 
   static flags = {
+    help: Flags.boolean({
+      description: 'Show help information',
+    }),
+    json: Flags.boolean({
+      description: 'Format output as json',
+    }),
+    'no-color': Flags.boolean({
+      description: 'Disable colors in output',
+    }),
+    quiet: Flags.boolean({
+      description: 'Suppress all output',
+    }),
+    verbose: Flags.boolean({
+      description: 'Show verbose output',
+    }),
     todo: Flags.string({
       char: 't',
       description: 'ID of the todo to upload image for',

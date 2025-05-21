@@ -13,9 +13,25 @@ const memoryStore: Record<string, string> = {};
 // Check if we're in a browser environment
 export const isBrowser = () => typeof window !== 'undefined';
 
+// Global flag to track if we're during initial hydration
+let isHydrating = true;
+
+// Set isHydrating to false after a short delay
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    isHydrating = false;
+  }, 500); // Delay to ensure hydration is complete
+}
+
 // Check if localStorage is available
 export function isStorageAvailable(): boolean {
-  if (!isBrowser()) return false;
+  // Always return false during SSR or hydration
+  if (!isBrowser() || isHydrating) return false;
+  
+  // Delay access to localStorage until after hydration
+  if (typeof document !== 'undefined' && document.readyState !== 'complete') {
+    return false;
+  }
   
   try {
     // First check if localStorage is defined
@@ -23,13 +39,65 @@ export function isStorageAvailable(): boolean {
       return false;
     }
     
-    // Then try storage access
-    const testKey = '__storage_test__';
-    window.localStorage.setItem(testKey, testKey);
-    window.localStorage.removeItem(testKey);
-    return true;
+    // Use a safer detection method that doesn't cause errors
+    try {
+      // Check if we're in a private browsing context
+      // This is a safe way to test without triggering errors
+      if ('localStorage' in window && window.localStorage !== null) {
+        // Don't actually access localStorage during this check
+        return true;
+      }
+      return false;
+    } catch (privateBrowsingError) {
+      return false;
+    }
   } catch (e) {
     return false;
+  }
+}
+
+/**
+ * Safely attempts to access localStorage after hydration
+ * Returns a tuple of [success, value]
+ */
+function safeLocalStorageAccess<T>(
+  operation: 'get' | 'set' | 'remove',
+  key: string,
+  value?: T
+): [boolean, string | null] {
+  // Don't access localStorage during SSR or hydration
+  if (!isBrowser() || isHydrating) {
+    return [false, null];
+  }
+  
+  // Don't access localStorage if document isn't fully loaded
+  if (typeof document !== 'undefined' && document.readyState !== 'complete') {
+    return [false, null];
+  }
+  
+  try {
+    // First verify that localStorage is available
+    if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+      return [false, null];
+    }
+    
+    // Perform the requested operation
+    switch (operation) {
+      case 'get':
+        return [true, window.localStorage.getItem(key)];
+      case 'set':
+        window.localStorage.setItem(key, JSON.stringify(value));
+        return [true, null];
+      case 'remove':
+        window.localStorage.removeItem(key);
+        return [true, null];
+      default:
+        return [false, null];
+    }
+  } catch (error) {
+    // Log error but don't crash
+    console.warn(`Safe localStorage ${operation} failed:`, error);
+    return [false, null];
   }
 }
 
@@ -38,24 +106,26 @@ export function isStorageAvailable(): boolean {
  */
 export function getItem<T>(key: string, defaultValue?: T): T | null {
   try {
-    // Return from memory store in SSR or if storage is unavailable
-    if (!isStorageAvailable()) {
-      const memoryValue = memoryStore[key];
-      return memoryValue ? JSON.parse(memoryValue) : defaultValue ?? null;
+    // Try to get from localStorage safely
+    const [success, value] = safeLocalStorageAccess<T>('get', key);
+    
+    if (success && value !== null) {
+      try {
+        return JSON.parse(value);
+      } catch (parseError) {
+        console.warn(`Error parsing localStorage value for key "${key}":`, parseError);
+      }
     }
     
-    // Get from localStorage with proper error handling
-    const value = window.localStorage.getItem(key);
-    
-    // Return parsed value if it exists, otherwise return default or null
-    return value !== null ? JSON.parse(value) : defaultValue ?? null;
+    // Fallback to memory store if localStorage access failed or returned null
+    const memoryValue = memoryStore[key];
+    return memoryValue ? JSON.parse(memoryValue) : defaultValue ?? null;
   } catch (error) {
-    // This could be a parsing error, storage access issue, or other
+    // This could be a parsing error or other issue
     console.warn(`Error getting item "${key}" from storage:`, error);
     
-    // Return from memory store as fallback
-    const memoryValue = memoryStore[key];
-    return memoryValue ? JSON.parse(memoryValue) : defaultValue ?? null; 
+    // Return default value as ultimate fallback
+    return defaultValue ?? null; 
   }
 }
 
@@ -67,29 +137,25 @@ export function setItem<T>(key: string, value: T): boolean {
     // Store as JSON string
     const valueString = JSON.stringify(value);
     
-    // Always update memory store regardless of availability
+    // Always update memory store regardless of localStorage availability
     memoryStore[key] = valueString;
     
-    // Skip localStorage in SSR or if unavailable
-    if (!isStorageAvailable()) {
-      return true; // Success using memory store
-    }
+    // Try to set in localStorage safely
+    const [success] = safeLocalStorageAccess<T>('set', key, value);
     
-    // Set in localStorage
-    window.localStorage.setItem(key, valueString);
+    // Return true even if localStorage failed but memory store succeeded
     return true;
   } catch (error) {
     console.warn(`Error setting item "${key}" in storage:`, error);
     
-    // Still update memory store even if localStorage fails
+    // Try to update memory store as a fallback
     try {
       memoryStore[key] = JSON.stringify(value);
+      return true; // Success with memory fallback
     } catch (e) {
-      console.error(`Failed to save in memory store too:`, e);
-      return false;
+      console.error(`Failed to save in memory store:`, e);
+      return false; // Complete failure
     }
-    
-    return true; // Success with fallback
   }
 }
 
@@ -101,13 +167,9 @@ export function removeItem(key: string): boolean {
     // Always remove from memory store
     delete memoryStore[key];
     
-    // Skip localStorage in SSR or if unavailable
-    if (!isStorageAvailable()) {
-      return true;
-    }
+    // Try to remove from localStorage safely
+    safeLocalStorageAccess('remove', key);
     
-    // Remove from localStorage
-    window.localStorage.removeItem(key);
     return true;
   } catch (error) {
     console.warn(`Error removing item "${key}" from storage:`, error);
@@ -126,13 +188,17 @@ export function clearStorage(): boolean {
     // Clear memory store
     Object.keys(memoryStore).forEach(key => delete memoryStore[key]);
     
-    // Skip localStorage in SSR or if unavailable
-    if (!isStorageAvailable()) {
-      return true;
+    // Try to clear localStorage safely
+    if (isBrowser() && !isHydrating && typeof window !== 'undefined' && 
+        typeof window.localStorage !== 'undefined' && 
+        document.readyState === 'complete') {
+      try {
+        window.localStorage.clear();
+      } catch (clearError) {
+        console.warn('Error clearing localStorage:', clearError);
+      }
     }
     
-    // Clear localStorage
-    window.localStorage.clear();
     return true;
   } catch (error) {
     console.warn(`Error clearing storage:`, error);
@@ -148,16 +214,25 @@ export function clearStorage(): boolean {
  */
 export function getAllKeys(): string[] {
   try {
-    if (!isStorageAvailable()) {
-      return Object.keys(memoryStore);
-    }
-    
-    // Get keys from both localStorage and memory store
-    const localStorageKeys = Object.keys(window.localStorage);
+    // Always include memory store keys
     const memoryStoreKeys = Object.keys(memoryStore);
     
-    // Combine and remove duplicates
-    return [...new Set([...localStorageKeys, ...memoryStoreKeys])];
+    // Only attempt to get localStorage keys if it's safe to do so
+    if (isBrowser() && !isHydrating && typeof window !== 'undefined' && 
+        typeof window.localStorage !== 'undefined' && 
+        document.readyState === 'complete') {
+      try {
+        const localStorageKeys = Object.keys(window.localStorage);
+        // Combine and remove duplicates
+        return [...new Set([...localStorageKeys, ...memoryStoreKeys])];
+      } catch (storageError) {
+        console.warn('Error accessing localStorage keys:', storageError);
+        return memoryStoreKeys;
+      }
+    }
+    
+    // Default to memory store keys only
+    return memoryStoreKeys;
   } catch (error) {
     console.warn(`Error getting storage keys:`, error);
     return Object.keys(memoryStore);

@@ -208,7 +208,7 @@ export class KeystoreSigner implements SignerAdapter {
     return this;
   }
 
-  async signAndExecuteTransactionBlock(
+  async signAndExecuteTransaction(
     transactionBlock: TransactionBlock | Transaction,
     options?: { 
       requestType?: 'WaitForLocalExecution'; 
@@ -266,7 +266,10 @@ export class KeystoreSigner implements SignerAdapter {
     const signatureResult = await this.signTransactionBlock(bytes);
     
     // Convert the signature to base64 string for serialization
-    const signatureBase64 = toB64(signatureResult.signature as Uint8Array);
+    // Handle case when signature is already a string or is a Uint8Array
+    const signatureBase64 = typeof signatureResult.signature === 'string' 
+      ? signatureResult.signature 
+      : toB64(Buffer.from(signatureResult.signature as unknown as string, 'utf-8'));
     
     return {
       bytes,

@@ -17,7 +17,7 @@
       "./node_modules/@types",
       "./src/types"
     ],
-    "types": ["node", "jest", "@testing-library/jest-dom", "./src/types/jest-extended"],
+    "types": ["node", "jest", "cli-progress"],
     "resolveJsonModule": true,
     "outDir": "./dist",
     "importHelpers": true,

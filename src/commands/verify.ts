@@ -60,7 +60,7 @@ export default class Verify extends BaseCommand {
   }
   
   async run() {
-    const { args, flags } = await this.parse(Verify);
+    const { args, flags } = await this.parse<typeof Verify>(Verify);
     
     switch (args.action) {
       case 'list':

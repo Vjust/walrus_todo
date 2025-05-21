@@ -23,6 +23,7 @@ export default class ShareCommand extends BaseCommand {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     list: Flags.string({
       char: 'l',
       description: 'Name of the todo list to share',
@@ -47,7 +48,7 @@ export default class ShareCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse(ShareCommand);
+      const { args, flags } = await this.parse<typeof ShareCommand>(ShareCommand);
       
       // Use either the listName argument or the list flag
       const listName = args.listName || flags.list;

@@ -1,5 +1,9 @@
 import { CLIError } from '../types/error';
+import { RETRY_CONFIG } from '../constants';
 
+/**
+ * Options for retry behavior
+ */
 interface RetryOptions {
   initialDelay?: number;
   maxDelay?: number;
@@ -8,6 +12,12 @@ interface RetryOptions {
   timeout?: number;
   retryableErrors?: Array<string | RegExp>;
   retryableStatuses?: number[];
+  /**
+   * Callback invoked on each retry
+   * @param error - The error that caused the retry
+   * @param attempt - The retry attempt number (1-based)
+   * @param delay - The delay before the next retry attempt in milliseconds
+   */
   onRetry?: (error: Error, attempt: number, delay: number) => void;
   // New options for enhanced control
   minNodes?: number;           // Minimum healthy nodes required
@@ -38,47 +48,23 @@ export interface NetworkNode {
 
 export class RetryManager {
   private static readonly DEFAULT_OPTIONS: Required<RetryOptions> = {
-    initialDelay: 500,    // Start with 500ms
-    maxDelay: 60000,      // Max 60 seconds between retries
-    maxRetries: 5,        // Maximum 5 retries
-    maxDuration: 300000,  // Total timeout of 5 minutes
-    timeout: 15000,       // Individual attempt timeout
-    retryableErrors: [
-      'ETIMEDOUT',
-      'ECONNRESET',
-      'ECONNREFUSED',
-      'EPIPE',
-      'network',
-      'timeout',
-      'connection',
-      /^5\d{2}$/,         // 5xx errors
-      '408',              // Request Timeout
-      '429',              // Too Many Requests
-      'insufficient storage',  // Walrus-specific errors
-      'blob not found',
-      'certification pending',
-      'storage allocation',
-    ],
-    retryableStatuses: [
-      408,  // Request Timeout
-      429,  // Too Many Requests
-      500,  // Internal Server Error
-      502,  // Bad Gateway
-      503,  // Service Unavailable
-      504,  // Gateway Timeout
-      449,  // Retry after storage allocation
-      460,  // Temporary blob unavailable
-    ],
+    initialDelay: Number(RETRY_CONFIG.DELAY_MS),
+    maxDelay: Number(RETRY_CONFIG.MAX_DELAY_MS),
+    maxRetries: Number(RETRY_CONFIG.ATTEMPTS),
+    maxDuration: Number(RETRY_CONFIG.MAX_DURATION_MS),
+    timeout: Number(RETRY_CONFIG.TIMEOUT_MS),
+    retryableErrors: [...RETRY_CONFIG.RETRYABLE_ERRORS] as string[],
+    retryableStatuses: [...RETRY_CONFIG.RETRYABLE_STATUSES] as number[],
     onRetry: () => {},
     // New options with defaults
-    minNodes: 2,                     // Require at least 2 healthy nodes
-    healthThreshold: 0.3,            // Node health must be above 30%
-    adaptiveDelay: true,             // Use network conditions for delay
+    minNodes: Number(RETRY_CONFIG.MIN_NODES),
+    healthThreshold: Number(RETRY_CONFIG.HEALTH_THRESHOLD),
+    adaptiveDelay: Boolean(RETRY_CONFIG.ADAPTIVE_DELAY),
     circuitBreaker: {
-      failureThreshold: 5,           // Open circuit after 5 failures
-      resetTimeout: 30000            // Try reset after 30 seconds
+      failureThreshold: Number(RETRY_CONFIG.CIRCUIT_BREAKER.FAILURE_THRESHOLD),
+      resetTimeout: Number(RETRY_CONFIG.CIRCUIT_BREAKER.RESET_TIMEOUT_MS)
     },
-    loadBalancing: 'health'          // Default to health-based routing
+    loadBalancing: RETRY_CONFIG.LOAD_BALANCING
   };
 
   private nodes: Map<string, NetworkNode> = new Map();
@@ -145,7 +131,7 @@ export class RetryManager {
    * Gets the next best node to try
    */
   /**
-   * Circuit breaker status for each node
+   * Circuit breaker status for each node in this instance
    */
   private circuitBreakers: Map<string, {
     isOpen: boolean;
@@ -339,43 +325,60 @@ export class RetryManager {
   }
 
   /**
+   * Calculates the base delay for exponential backoff
+   * Exported as a static method to allow for unit testing
+   */
+  static computeDelay(attempt: number, initialDelay: number, maxDelay: number): number {
+    // Base exponential backoff: initialDelay * 2^(attempt-1)
+    const baseDelay = initialDelay * Math.pow(2, attempt - 1);
+    
+    // Cap at maximum delay
+    const cappedDelay = Math.min(baseDelay, maxDelay);
+    
+    // Add jitter (±20%)
+    const jitterRange = cappedDelay * 0.2; // 20% jitter
+    const jitter = (Math.random() * jitterRange * 2) - jitterRange; // Random value between -jitterRange and +jitterRange
+    
+    return Math.max(initialDelay, cappedDelay + jitter);
+  }
+
+  /**
    * Calculates next retry delay with adaptivity
    */
   private getNextDelay(context: RetryContext): number {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
     
-    // Base exponential delay
-    let delay = options.initialDelay * Math.pow(2, context.attempt - 1);
+    // Get base delay with exponential backoff and jitter
+    let delay = RetryManager.computeDelay(
+      context.attempt, 
+      options.initialDelay, 
+      options.maxDelay
+    );
 
     if (options.adaptiveDelay) {
-      // Adjust based on network conditions
+      // Apply network condition multiplier (capped)
       const networkScore = this.getNetworkScore(context);
-      delay *= (2 - networkScore); // Increase delay in poor conditions
+      const networkMultiplier = Math.min(2.0, 2 - networkScore);
+      delay *= networkMultiplier;
 
-      // Adjust based on last error
+      // Apply error-specific multiplier if available
       if (context.errors.length > 0) {
         const lastError = context.errors[context.errors.length - 1].error;
-        delay *= this.getErrorMultiplier(lastError);
+        const errorMultiplier = this.getErrorMultiplier(lastError);
+        delay *= Math.min(2.0, errorMultiplier); // Cap multiplier
       }
-
-      // Add jitter based on network stability
-      const jitterFactor = networkScore < 0.5 ? 0.5 : 0.3;
-      const jitter = Math.random() * jitterFactor * delay;
-      delay += jitter;
-    } else {
-      // Simple jitter for non-adaptive mode
-      const jitter = Math.random() * 0.3 * delay;
-      delay += jitter;
     }
 
-    // Cap at maximum delay
+    // Final cap at maximum delay
     delay = Math.min(delay, options.maxDelay);
 
     // Ensure we don't exceed maxDuration
     const timeRemaining = options.maxDuration - (Date.now() - context.startTime);
-    delay = Math.min(delay, timeRemaining);
+    if (timeRemaining < delay) {
+      delay = Math.max(0, timeRemaining);
+    }
 
-    return Math.max(delay, options.initialDelay);
+    return Math.max(options.initialDelay, delay);
   }
 
   /**
@@ -384,6 +387,17 @@ export class RetryManager {
   async execute<T>(
     operation: (node: NetworkNode) => Promise<T>,
     context: string
+  ): Promise<T> {
+    return this.retry(operation, context);
+  }
+
+  /**
+   * Alternative name for execute that matches the static API
+   * This provides compatibility with code using RetryManager.retry static method
+   */
+  async retry<T>(
+    operation: (node: NetworkNode) => Promise<T>,
+    context: string | Record<string, any>
   ): Promise<T> {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
     const retryContext: RetryContext = {
@@ -568,5 +582,40 @@ export class RetryManager {
       lastSuccess: node.lastSuccess ? new Date(node.lastSuccess) : undefined,
       lastFailure: node.lastFailure ? new Date(node.lastFailure) : undefined
     }));
+  }
+
+  /**
+   * Static version of retry for backwards compatibility
+   * This allows code to continue using RetryManager.retry
+   * while we transition to the instance method version
+   */
+  static async retry<T>(
+    operation: () => Promise<T>,
+    options: {
+      maxRetries?: number;
+      initialDelay?: number;
+      maxDelay?: number;
+      retryableErrors?: Array<string | RegExp>;
+      onRetry?: (attempt: number, error: Error, delay?: number) => void;
+    } = {}
+  ): Promise<T> {
+    // Create a temporary instance with a single default node
+    const manager = new RetryManager(['default'], {
+      maxRetries: options.maxRetries,
+      initialDelay: options.initialDelay,
+      maxDelay: options.maxDelay,
+      retryableErrors: options.retryableErrors,
+      // Adapt the onRetry callback to match instance method's parameter order
+      onRetry: options.onRetry ? 
+        (error: Error, attempt: number, delay: number) => {
+          options.onRetry!(attempt, error, delay);
+        } : undefined
+    });
+
+    // Wrap the operation to make it compatible with the instance method
+    const wrappedOperation = (_node: NetworkNode) => operation();
+    
+    // Execute with the instance method
+    return manager.execute(wrappedOperation, typeof options === 'string' ? options : 'static_operation');
   }
 }

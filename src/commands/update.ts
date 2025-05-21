@@ -30,6 +30,7 @@ export default class UpdateCommand extends BaseCommand {
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     id: Flags.string({
       char: 'i',
       description: 'Todo ID or title to update',

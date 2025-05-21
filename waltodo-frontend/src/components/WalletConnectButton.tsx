@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useWalletContext } from '@/contexts/SimpleWalletContext';
+import { useWalletContext } from '@/lib/walletContext';
 import { 
   copyToClipboard, 
   getClipboardCapabilities,
@@ -11,16 +11,16 @@ import { WalletErrorModal } from './WalletErrorModal';
 import { ClipboardErrorModal } from './ClipboardErrorModal';
 import { WalletError } from '@/lib/wallet-errors';
 import { ErrorBoundary } from './ErrorBoundary';
+import { WalletSelector } from './WalletSelector';
 
 export function WalletConnectButton() {
   const {
     connected,
     connecting,
     disconnect,
-    connect,
-    address,
-    name: walletName,
-    chainId,
+    publicKey: address,
+    walletType: walletName,
+    currentNetwork: chainId,
     error,
     setError,
     switchNetwork
@@ -324,30 +324,12 @@ export function WalletConnectButton() {
     );
   };
 
-  // Render the connect button UI
+  // Render the connect button UI with wallet selector
   const renderConnectUI = () => {
     if (connected || connecting) return null;
     
-    return (
-      <button
-        onClick={() => {
-          try {
-            connect().catch(err => {
-              console.error('Error connecting wallet:', err);
-              // Error is already handled by the context
-            });
-          } catch (error) {
-            console.error('Error in connect handler:', error);
-            if (setError && error instanceof Error) {
-              setError(error);
-            }
-          }
-        }}
-        className="px-4 py-2 bg-ocean-deep text-white rounded-lg hover:bg-ocean-deep/80 transition-colors"
-      >
-        Connect Wallet
-      </button>
-    );
+    // Use the WalletSelector component instead of a simple button
+    return <WalletSelector />;
   };
 
   // Wrap the entire component in an ErrorBoundary

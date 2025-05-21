@@ -6,11 +6,42 @@
  */
 
 import { Logger } from './Logger';
-import { withRetry } from './promise-utils';
+import { RetryManager } from './retry-manager';
 import { NetworkError } from '../types/errors';
+import { CONNECTION_CONFIG } from '../constants';
 
 // Logger instance
 const logger = Logger.getInstance();
+
+/**
+ * Interface for connection objects that can be properly closed
+ * This ensures all connections managed by ConnectionManager can be released
+ */
+export interface ConnectionLike {
+  /**
+   * Close or release the connection and free associated resources
+   */
+  close(): Promise<void>;
+}
+
+/**
+ * Alternative connection interfaces that might be used by external libraries
+ * This type helps safely handle connections with different cleanup methods
+ */
+export type ConnectionWithAlternativeCleanup = {
+  disconnect(): Promise<void>;
+} | {
+  destroy(): Promise<void>;
+} | {
+  release(): Promise<void>;
+} | {
+  end(): Promise<void>;
+};
+
+/**
+ * Union type of all possible connection types
+ */
+export type ManagedConnection = ConnectionLike | ConnectionWithAlternativeCleanup;
 
 interface ConnectionOptions {
   timeout?: number;        // Connection timeout in ms
@@ -25,70 +56,78 @@ interface ConnectionOptions {
 }
 
 const DEFAULT_OPTIONS: ConnectionOptions = {
-  timeout: 30000,         // 30 seconds
-  keepAlive: false,       // Default to no keep-alive
-  maxIdleTime: 60000,     // 1 minute idle time
-  autoReconnect: true,    // Auto-reconnect by default
+  timeout: Number(CONNECTION_CONFIG.TIMEOUT_MS),
+  keepAlive: Boolean(CONNECTION_CONFIG.KEEP_ALIVE),
+  maxIdleTime: Number(CONNECTION_CONFIG.MAX_IDLE_TIME_MS),
+  autoReconnect: Boolean(CONNECTION_CONFIG.AUTO_RECONNECT),
   retryConfig: {
-    maxRetries: 3,
-    baseDelay: 1000,
-    maxDelay: 10000
+    maxRetries: Number(CONNECTION_CONFIG.RETRY_CONFIG.MAX_RETRIES),
+    baseDelay: Number(CONNECTION_CONFIG.RETRY_CONFIG.BASE_DELAY_MS),
+    maxDelay: Number(CONNECTION_CONFIG.RETRY_CONFIG.MAX_DELAY_MS)
   }
 };
 
 /**
  * Manages a connection with automatic cleanup
+ * @template T Type of connection to manage, must include close method
  */
-export class ConnectionManager<T> {
+export class ConnectionManager<T extends ManagedConnection> {
   private connection: T | null = null;
   private lastUsed: number = Date.now();
   private connectionTimer: NodeJS.Timeout | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private readonly options: ConnectionOptions;
-  private readonly retryManager: {
-    withRetry: <T>(fn: () => Promise<T>, context: string) => Promise<T>;
-  };
+  private readonly retryManager: RetryManager;
   private readonly connectFn: () => Promise<T>;
-  private readonly disconnectFn: (connection: T) => Promise<void>;
   private readonly healthCheckFn?: (connection: T) => Promise<boolean>;
   
   /**
    * Create a new connection manager
    * 
-   * @param connectFn Function to create a new connection
-   * @param disconnectFn Function to properly close a connection
+   * @param connectFn Function to create a new connection (must return a ConnectionLike object)
    * @param healthCheckFn Optional function to check connection health
    * @param options Connection options
    */
   constructor(
     connectFn: () => Promise<T>,
-    disconnectFn: (connection: T) => Promise<void>,
     healthCheckFn?: (connection: T) => Promise<boolean>,
     options: Partial<ConnectionOptions> = {}
   ) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.connectFn = connectFn;
-    this.disconnectFn = disconnectFn;
     this.healthCheckFn = healthCheckFn;
     
-    // Create a custom retry manager that uses promise-utils's withRetry function
-    this.retryManager = {
-      withRetry: (fn: () => Promise<any>, context: string) => {
-        // Import the withRetry function from promise-utils
-        const { withRetry } = require('./promise-utils');
-
-        return withRetry(
-          fn,
-          this.options.retryConfig?.maxRetries || 3,
-          this.options.retryConfig?.baseDelay || 1000,
-          context
-        );
-      }
-    };
+    // Create a retry manager instance
+    this.retryManager = new RetryManager(['default'], {
+      maxRetries: this.options.retryConfig?.maxRetries || 3,
+      initialDelay: this.options.retryConfig?.baseDelay || 1000,
+      maxDelay: this.options.retryConfig?.maxDelay || 10000
+    });
     
     // Set up idle connection monitoring if not using keep-alive
     if (!this.options.keepAlive && this.options.maxIdleTime) {
       this.startIdleMonitoring();
+    }
+  }
+  
+  /**
+   * Safely close the connection based on its interface
+   * @param connection The connection to close
+   */
+  private async safelyCloseConnection(connection: T): Promise<void> {
+    // Check each possible cleanup method
+    if ('close' in connection && typeof connection.close === 'function') {
+      await connection.close();
+    } else if ('disconnect' in connection && typeof connection.disconnect === 'function') {
+      await connection.disconnect();
+    } else if ('destroy' in connection && typeof connection.destroy === 'function') {
+      await connection.destroy();
+    } else if ('release' in connection && typeof connection.release === 'function') {
+      await connection.release();
+    } else if ('end' in connection && typeof connection.end === 'function') {
+      await connection.end();
+    } else {
+      logger.warn('Connection has no recognized close method');
     }
   }
   
@@ -118,10 +157,11 @@ export class ConnectionManager<T> {
         }
       }
       
-      // Create a new connection with retry logic
-      this.connection = await this.retryManager.withRetry(
-        this.connectFn,
-        'Create connection'
+      // Create a new connection with retry logic using the instance retry manager
+      const connectFnWithNode = (_node: any) => this.connectFn();
+      this.connection = await this.retryManager.execute(
+        connectFnWithNode,
+        'connection_establishment'
       );
       
       this.lastUsed = Date.now();
@@ -134,9 +174,9 @@ export class ConnectionManager<T> {
       throw new NetworkError('Connection failed', {
         network: 'unknown',
         operation: 'connect',
-        recoverable: this.options.autoReconnect,
+        recoverable: !!this.options.autoReconnect,
         cause: error instanceof Error ? error : new Error(String(error))
-      } as Record<string, unknown>);
+      });
     }
   }
   
@@ -173,7 +213,7 @@ export class ConnectionManager<T> {
   async closeConnection(): Promise<void> {
     if (this.connection !== null) {
       try {
-        await this.disconnectFn(this.connection);
+        await this.safelyCloseConnection(this.connection);
         logger.debug('Connection closed successfully');
       } catch (error) {
         logger.warn('Error closing connection',

@@ -161,7 +161,7 @@ export function SimpleWalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Switch network function
+  // Enhanced switch network function
   const switchNetwork = async (network: string): Promise<void> => {
     if (!connected) {
       const error = new Error('Not connected to any wallet');
@@ -170,13 +170,31 @@ export function SimpleWalletProvider({ children }: { children: ReactNode }) {
     }
     
     try {
+      // Show switching UI
+      setError(null);
+      
       // Simulate network switching with a delay
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Validate network value
+      const validNetworks = ['mainnet', 'testnet', 'devnet'];
+      if (!validNetworks.includes(network)) {
+        throw new Error(`Invalid network: ${network}. Must be one of: ${validNetworks.join(', ')}`);
+      }
       
       // Update chain ID
       setChainId(network);
       setStorage('wallet_chain', network);
       
+      // Dispatch network change event for any listeners
+      if (typeof window !== 'undefined') {
+        const networkSwitchEvent = new CustomEvent('simpleWalletNetworkSwitch', { 
+          detail: { network } 
+        });
+        window.dispatchEvent(networkSwitchEvent);
+      }
+      
+      console.log(`Switched to ${network} network`);
       return Promise.resolve();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Network switch failed');

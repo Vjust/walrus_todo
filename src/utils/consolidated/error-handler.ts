@@ -4,7 +4,53 @@
  */
 
 import * as chalkModule from 'chalk';
-import { BaseError, CLIError, isErrorWithMessage, getErrorMessage, toBaseError, isTransientError } from '../../types/errors/consolidated';
+import { BaseError } from '../../types/errors/consolidated/BaseError';
+import { CLIError } from '../../types/errors/consolidated/CLIError';
+// Import or define error utility functions
+const isRetryableError = (error: unknown): boolean => {
+  // Check if it's a network-related error based on the message
+  if (error instanceof Error) {
+    const errorMessage = error.message.toLowerCase();
+    return (
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('network') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('retry') ||
+      errorMessage.includes('unavailable')
+    );
+  }
+  return false;
+};
+
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  try {
+    return String(error);
+  } catch {
+    return 'Unknown error';
+  }
+};
+
+const toBaseError = (error: unknown): BaseError => {
+  if (error instanceof BaseError) {
+    return error;
+  }
+  
+  if (error instanceof Error) {
+    return new BaseError({
+      message: error.message,
+      code: 'ERROR',
+      cause: error
+    });
+  }
+  
+  return new BaseError({
+    message: error instanceof Error ? error.message : 'Unknown error',
+    code: 'UNKNOWN_ERROR'
+  });
+};
 
 // Use default export if available, otherwise use the module itself
 const chalk = chalkModule.default || chalkModule;
@@ -144,7 +190,7 @@ export async function withRetry<T>(
     maxRetries = 3,
     baseDelay = 1000,
     maxDelay = 30000,
-    retryIf = isTransientError,
+    retryIf = isRetryableError,
     onRetry = defaultOnRetry
   } = options;
   
@@ -188,6 +234,6 @@ export async function withRetry<T>(
 function defaultOnRetry(error: unknown, attempt: number, delay: number): void {
   console.log(
     chalk.yellow(`Operation failed, retrying (${attempt}/${delay})...`),
-    isErrorWithMessage(error) ? error.message : String(error)
+    error instanceof Error ? error.message : String(error)
   );
 }

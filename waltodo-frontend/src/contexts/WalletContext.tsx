@@ -228,14 +228,30 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
     }
     
     try {
+      // Handle network switching through the Suiet wallet
       await wallet.switchChain({ chainId: network });
+      
+      // When using Suiet wallet kit, the switchChain method will handle the switch
+      // The UI will update automatically since we're using the Suiet hooks
+      
+      // For future reference, if we need to implement custom network switching logic:
+      // 1. Add additional wallet check based on wallet.name or wallet.adapter
+      // 2. Implement wallet-specific network switching logic
+      // 3. Update UI state after successful switch
+      
+      // Example of custom handling for different wallet types:
+      // if (wallet.name === 'Phantom' || wallet.name === 'Solflare') {
+      //   const cluster = network === 'mainnet' ? 'mainnet-beta' : network;
+      //   // Custom Solana network handling would go here
+      // }
+      
     } catch (err) {
       const walletError = categorizeWalletError(err);
       setError(walletError);
       console.error(`Network switch error:`, walletError);
       throw walletError;
     }
-  }, [connected, resetActivityTimer, wallet]);
+  }, [connected, resetActivityTimer, wallet, setError]);
 
   // Transaction tracking function
   const trackTransaction = useCallback(async <T extends { digest?: string }>(txPromise: Promise<T>, type: string): Promise<T> => {

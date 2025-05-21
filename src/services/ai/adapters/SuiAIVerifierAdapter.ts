@@ -74,7 +74,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       });
       
       // Execute the transaction
-      const result = await this.signer.signAndExecuteTransactionBlock(tx);
+      const result = await this.signer.signAndExecuteTransaction(tx);
       
       // Extract the provider object ID from the transaction results
       const providerId = this.extractCreatedObjectId(result);
@@ -120,7 +120,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       });
       
       // Execute the transaction
-      const result = await this.signer.signAndExecuteTransactionBlock(tx);
+      const result = await this.signer.signAndExecuteTransaction(tx);
       
       // Extract the verification ID from the transaction results
       const verificationId = this.extractCreatedObjectId(result);
@@ -501,7 +501,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       }
       
       // Execute the transaction
-      await this.signer.signAndExecuteTransactionBlock(tx);
+      await this.signer.signAndExecuteTransaction(tx);
       
       return expiredRecords.length;
     } catch (error) {
@@ -557,7 +557,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       });
       
       // Execute the transaction
-      await this.signer.signAndExecuteTransactionBlock(tx);
+      await this.signer.signAndExecuteTransaction(tx);
       
       return true;
     } catch (error) {
@@ -594,7 +594,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       }
       
       // Execute the transaction
-      await this.signer.signAndExecuteTransactionBlock(tx);
+      await this.signer.signAndExecuteTransaction(tx);
       
       return true;
     } catch (error) {

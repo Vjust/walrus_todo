@@ -4,6 +4,7 @@
  */
 
 // Base error infrastructure
+import { BaseError } from './BaseError';
 export { BaseError } from './BaseError';
 export type { BaseErrorOptions, PublicErrorResponse, ErrorLogEntry } from './BaseError';
 
@@ -46,9 +47,44 @@ export function isErrorWithMessage(error: unknown): error is Error {
 }
 
 /**
+ * Alias for backwards compatibility
+ */
+export { BaseError as WalrusError } from './BaseError';
+
+/**
+ * Check if an error is a transient error that can be retried
+ */
+export function isRetryableError(error: unknown): boolean {
+  // Check if NetworkError is imported
+  if (typeof NetworkError !== 'undefined' && error instanceof NetworkError) {
+    return error.recoverable === true;
+  }
+  
+  // Check if BlockchainError is imported
+  if (typeof BlockchainError !== 'undefined' && error instanceof BlockchainError) {
+    return ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT'].includes(
+      typeof error.code === 'string' ? error.code : ''
+    );
+  }
+  
+  if (isErrorWithMessage(error)) {
+    const errorMessage = error.message.toLowerCase();
+    return (
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('network') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('retry') ||
+      errorMessage.includes('unavailable')
+    );
+  }
+  
+  return false;
+}
+
+/**
  * Gets a string error message from any value
  * @param error Value to get error message from
- * @returns Error message string
+ * @returns A string error message
  */
 export function getErrorMessage(error: unknown): string {
   if (isErrorWithMessage(error)) {
@@ -72,7 +108,7 @@ export function isErrorType<T extends typeof BaseError>(
   error: unknown,
   errorClass: T
 ): error is InstanceType<T> {
-  return error instanceof (errorClass as any);
+  return error instanceof errorClass;
 }
 
 /**
@@ -98,30 +134,7 @@ export function getErrorCode(error: unknown, defaultCode = 'UNKNOWN_ERROR'): str
   return defaultCode;
 }
 
-/**
- * Determines if an error is likely transient and can be retried
- * @param error Error to check
- * @returns true if the error is likely transient
- */
-export function isTransientError(error: unknown): boolean {
-  // For BaseError-derived errors, use the shouldRetry property
-  if (error instanceof BaseError) {
-    return error.shouldRetry;
-  }
-  
-  // For network errors, check common patterns
-  const message = String(error).toLowerCase();
-  return (
-    message.includes('network') ||
-    message.includes('timeout') ||
-    message.includes('connection') ||
-    message.includes('econnrefused') ||
-    message.includes('econnreset') ||
-    message.includes('429') ||
-    message.includes('too many requests') ||
-    message.includes('rate limit')
-  );
-}
+// Using isRetryableError from above
 
 /**
  * Converts any error-like object to a BaseError

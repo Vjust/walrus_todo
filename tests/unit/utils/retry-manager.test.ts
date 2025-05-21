@@ -4,8 +4,8 @@ describe('RetryManager', () => {
   let retryManager: RetryManager;
 
   beforeEach(() => {
-    // Start with default configuration
-    retryManager = new RetryManager();
+    // Start with default configuration using a single node URL
+    retryManager = new RetryManager(['https://example.com']);
   });
 
   describe('successful operations', () => {
@@ -424,42 +424,105 @@ describe('RetryManager', () => {
     });
   });
 
-  describe('cleanup function', () => {
-    it('should call cleanup function before each retry', async () => {
-      const cleanup = jest.fn();
-      const operation = jest.fn()
-        .mockRejectedValueOnce(new Error('Failure 1'))
-        .mockRejectedValueOnce(new Error('Failure 2'))
-        .mockResolvedValue('success');
+  describe('computeDelay static method', () => {
+    it('should calculate exponential backoff properly', () => {
+      // Mock Math.random to return a consistent value for testing
+      const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.5);
       
-      await retryManager.execute(operation, {
-        maxRetries: 2,
-        cleanup
-      });
+      // Test initial delay (attempt 1)
+      let delay = RetryManager.computeDelay(1, 1000, 60000);
+      expect(delay).toBeGreaterThanOrEqual(1000); // Base delay (no exponentiation yet)
+      expect(delay).toBeLessThanOrEqual(1200); // With a bit of jitter
       
-      expect(cleanup).toHaveBeenCalledTimes(2);
-      expect(cleanup).toHaveBeenNthCalledWith(1, expect.any(Error), 0);
-      expect(cleanup).toHaveBeenNthCalledWith(2, expect.any(Error), 1);
+      // Test second attempt (delay should double)
+      delay = RetryManager.computeDelay(2, 1000, 60000);
+      expect(delay).toBeGreaterThanOrEqual(2000); // 1000 * 2^1
+      expect(delay).toBeLessThanOrEqual(2400); // With a bit of jitter
+      
+      // Test third attempt (delay should double again)
+      delay = RetryManager.computeDelay(3, 1000, 60000);
+      expect(delay).toBeGreaterThanOrEqual(4000); // 1000 * 2^2
+      expect(delay).toBeLessThanOrEqual(4800); // With a bit of jitter
+      
+      // Test max delay capping
+      delay = RetryManager.computeDelay(10, 1000, 10000);
+      expect(delay).toBeLessThanOrEqual(10000); // Capped at maxDelay
+      
+      randomSpy.mockRestore();
     });
-
-    it('should handle errors in cleanup function', async () => {
-      const cleanup = jest.fn().mockRejectedValue(new Error('Cleanup error'));
-      const operation = jest.fn()
-        .mockRejectedValueOnce(new Error('Operation failure'))
-        .mockResolvedValue('success');
+    
+    it('should never return a delay less than the initial delay', () => {
+      const delay = RetryManager.computeDelay(1, 500, 10000);
+      expect(delay).toBeGreaterThanOrEqual(500);
+    });
+    
+    it('should never return a delay greater than the max delay', () => {
+      const delay = RetryManager.computeDelay(10, 500, 5000);
+      expect(delay).toBeLessThanOrEqual(5000);
+    });
+    
+    it('should apply jitter correctly', () => {
+      // Test with various random values to ensure jitter is applied correctly
+      const mockRandom = jest.spyOn(Math, 'random');
       
-      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+      // Random value of 0 (minimum jitter)
+      mockRandom.mockReturnValueOnce(0);
+      let delay = RetryManager.computeDelay(2, 1000, 60000);
+      let baseDelay = 2000; // 1000 * 2^1
+      let minExpectedDelay = baseDelay - (baseDelay * 0.2); // -20% jitter
+      expect(delay).toBeCloseTo(minExpectedDelay, 0);
       
-      const result = await retryManager.execute(operation, {
-        maxRetries: 1,
-        cleanup
+      // Random value of 1 (maximum jitter)
+      mockRandom.mockReturnValueOnce(1);
+      delay = RetryManager.computeDelay(2, 1000, 60000);
+      baseDelay = 2000; // 1000 * 2^1
+      let maxExpectedDelay = baseDelay + (baseDelay * 0.2); // +20% jitter
+      expect(delay).toBeCloseTo(maxExpectedDelay, 0);
+      
+      // Random value of 0.5 (middle jitter)
+      mockRandom.mockReturnValueOnce(0.5);
+      delay = RetryManager.computeDelay(2, 1000, 60000);
+      baseDelay = 2000; // 1000 * 2^1
+      // With 0.5 random, we should get exactly the baseDelay (no jitter)
+      expect(delay).toBeCloseTo(baseDelay, 0);
+      
+      mockRandom.mockRestore();
+    });
+  });
+  
+  describe('static retry method', () => {
+    it('should provide backward compatibility with the static API', async () => {
+      const operation = jest.fn().mockResolvedValue('success');
+      const onRetry = jest.fn();
+      
+      const result = await RetryManager.retry(operation, {
+        maxRetries: 3,
+        initialDelay: 100,
+        onRetry
       });
       
       expect(result).toBe('success');
-      expect(cleanup).toHaveBeenCalledTimes(1);
-      expect(consoleError).toHaveBeenCalledWith('Cleanup error:', expect.any(Error));
+      expect(operation).toHaveBeenCalledTimes(1);
+      expect(onRetry).not.toHaveBeenCalled();
+    });
+    
+    it('should handle errors correctly with the static API', async () => {
+      const operation = jest.fn()
+        .mockRejectedValueOnce(new Error('Test error'))
+        .mockResolvedValue('success');
+      const onRetry = jest.fn();
       
-      consoleError.mockRestore();
+      const result = await RetryManager.retry(operation, {
+        maxRetries: 3,
+        initialDelay: 100,
+        onRetry
+      });
+      
+      expect(result).toBe('success');
+      expect(operation).toHaveBeenCalledTimes(2);
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      // Check that parameters are in the correct order (attempt, error)
+      expect(onRetry).toHaveBeenCalledWith(expect.any(Number), expect.any(Error), expect.any(Number));
     });
   });
 });

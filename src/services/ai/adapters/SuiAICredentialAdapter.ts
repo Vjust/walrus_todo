@@ -70,7 +70,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       });
       
       // Execute the transaction
-      const result = await this.signer.signAndExecuteTransactionBlock(tx);
+      const result = await this.signer.signAndExecuteTransaction(tx);
       
       // Extract the credential object ID from the transaction results
       const credentialObjectId = this.extractCreatedObjectId(result);
@@ -260,7 +260,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       });
       
       // Execute the transaction
-      await this.signer.signAndExecuteTransactionBlock(tx);
+      await this.signer.signAndExecuteTransaction(tx);
       
       return true;
     } catch (error) {
@@ -296,7 +296,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       });
       
       // Execute the transaction
-      const result = await this.signer.signAndExecuteTransactionBlock(tx);
+      const result = await this.signer.signAndExecuteTransaction(tx);
       
       // Extract the verification ID from the transaction results
       const verificationId = this.extractCreatedObjectId(result);
@@ -419,7 +419,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       });
       
       // Execute the transaction
-      await this.signer.signAndExecuteTransactionBlock(tx);
+      await this.signer.signAndExecuteTransaction(tx);
       
       return true;
     } catch (error) {

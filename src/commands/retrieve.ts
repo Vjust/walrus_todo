@@ -69,7 +69,7 @@ export default class RetrieveCommand extends BaseCommand {
   private todoService = new TodoService();
   private spinner: any = null;
 
-  private startSpinner(text: string) {
+  protected startSpinner(text: string) {
     if (this.spinner) {
       this.spinner.text = text;
     } else {
@@ -77,7 +77,7 @@ export default class RetrieveCommand extends BaseCommand {
     }
   }
 
-  private stopSpinner(success = true, text?: string) {
+  protected stopSpinner(success = true, text?: string) {
     if (text) {
       this.log(success ? chalk.green(`✓ ${text}`) : chalk.red(`✗ ${text}`));
     }
@@ -172,7 +172,7 @@ export default class RetrieveCommand extends BaseCommand {
       const walrusStorage = createWalrusStorage('testnet', mockMode);
       try {
         await walrusStorage.connect();
-        if (!mockMode && !(await walrusStorage.isConnected())) {
+        if (!mockMode && !walrusStorage.getConnectionStatus()) {
           throw new CLIError('Failed to establish connection with Walrus storage', 'WALRUS_CONNECTION_FAILED');
         }
         this.stopSpinner(true, 'Connected to Walrus storage');

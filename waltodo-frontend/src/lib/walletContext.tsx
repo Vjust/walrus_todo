@@ -18,6 +18,19 @@ import {
   useWallet as useSolanaWallet
 } from '@solana/wallet-adapter-react';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+// Import SolflareWalletAdapter conditionally with error handling
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+
+// Dynamically import Solflare wallet adapter to handle potential import failures
+let SolflareWalletAdapter: any = null;
+try {
+  // Only attempt to load in client-side environment
+  if (typeof window !== 'undefined') {
+    SolflareWalletAdapter = require('@solana/wallet-adapter-solflare').SolflareWalletAdapter;
+  }
+} catch (err) {
+  console.warn('Failed to load Solflare wallet adapter:', err);
+}
 import { Connection, clusterApiUrl, PublicKey } from '@solana/web3.js';
 import { 
   WalletError,
@@ -34,7 +47,7 @@ const { networkConfig } = createNetworkConfig({
 });
 
 // Import WalletType from types/wallet.ts
-import { WalletType } from '@/types/wallet';
+import { WalletType, BackpackAccount } from '@/types/wallet';
 
 interface WalletContextValue {
   // Common
@@ -45,6 +58,11 @@ interface WalletContextValue {
   walletType: WalletType;
   error: Error | null;
   setError: (error: Error | null) => void;
+  
+  // Network
+  currentNetwork: string | null;
+  switchNetwork: (network: 'mainnet' | 'testnet' | 'devnet') => Promise<void>;
+  isSwitchingNetwork: boolean;
   
   // Sui specific
   suiConnect: () => Promise<void>;
@@ -57,9 +75,22 @@ interface WalletContextValue {
   // Slush specific
   slushConnect: () => Promise<void>;
   slushAccount: SlushAccount | null;
+  
+  // Backpack specific
+  backpackConnect: () => Promise<void>;
+  backpackAccount: BackpackAccount | null;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
+
+// Helper function to check if Backpack wallet is installed
+function isBackpackWalletInstalled(): boolean {
+  return typeof window !== 'undefined' && (
+    !!window.xnft || 
+    !!window.backpack || 
+    !!(window.solana && window.solana.isBackpack)
+  );
+}
 
 // Inner component to access both wallet contexts
 function WalletContextInner({ children }: { children: ReactNode }) {
@@ -68,6 +99,16 @@ function WalletContextInner({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
   const [slushAccount, setSlushAccount] = useState<SlushAccount | null>(null);
   const [slushAdapter, setSlushAdapter] = useState<any | null>(null);
+  const [backpackAccount, setBackpackAccount] = useState<BackpackAccount | null>(null);
+  const [currentNetwork, setCurrentNetwork] = useState<string | null>('testnet'); // Default to testnet
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  // Track when component is mounted to avoid hydration issues
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   // Sui wallet hooks
   const suiAccount = useCurrentAccount();
@@ -83,7 +124,7 @@ function WalletContextInner({ children }: { children: ReactNode }) {
   
   // Initialize Slush adapter if needed
   useEffect(() => {
-    if (typeof window !== 'undefined' && !slushAdapter) {
+    if (typeof window !== 'undefined' && !slushAdapter && mounted) {
       try {
         // Removed StashedWalletAdapter initialization as it's no longer available
         // Consider using WalletProvider configuration for wallet integration
@@ -92,13 +133,14 @@ function WalletContextInner({ children }: { children: ReactNode }) {
         console.error('Failed to initialize Slush wallet adapter:', error);
       }
     }
-  }, [slushAdapter]);
+  }, [slushAdapter, mounted]);
   
   // Combined connected state
   const connected = 
     walletType === 'sui' ? !!suiAccount : 
     walletType === 'phantom' ? solanaConnected : 
     walletType === 'slush' ? !!slushAccount : 
+    walletType === 'backpack' ? !!backpackAccount : 
     false;
   
   // Combined public key
@@ -106,17 +148,21 @@ function WalletContextInner({ children }: { children: ReactNode }) {
     walletType === 'sui' ? suiAccount?.address || null :
     walletType === 'phantom' ? solanaPublicKey?.toBase58() || null :
     walletType === 'slush' ? slushAccount?.address || null :
+    walletType === 'backpack' ? backpackAccount?.address || null :
     null;
 
   // Auto-detect persisted connections
   useEffect(() => {
-    // Only auto-detect if no error present
+    // Only run this on the client side and only if no error present
+    if (typeof window === 'undefined' || !mounted) return;
+    
     if (!error) {
       if (suiConnected && walletType !== 'sui') setWalletType('sui');
       else if (solanaConnected && walletType !== 'phantom') setWalletType('phantom');
       else if (slushAccount && walletType !== 'slush') setWalletType('slush');
+      else if (backpackAccount && walletType !== 'backpack') setWalletType('backpack');
     }
-  }, [suiConnected, solanaConnected, slushAccount, walletType, error]);
+  }, [suiConnected, solanaConnected, slushAccount, backpackAccount, walletType, error, mounted]);
 
   // Consolidated connect logic with enhanced error handling
   const handleConnect = useCallback(async (type: WalletType) => {
@@ -162,30 +208,51 @@ function WalletContextInner({ children }: { children: ReactNode }) {
           return Promise.reject(walletError);
         }
       } else if (type === 'slush') {
-        // Slush wallet integration temporarily disabled
-        // Needs to be reimplemented using the current wallet API
-        const error = new WalletNotInstalledError('Slush - temporarily unavailable');
-        setError(error);
-        console.warn('Slush wallet functionality is temporarily disabled and needs to be updated.');
-        return Promise.reject(error);
-        
-        /* Original implementation that needs updating:
-        if (!slushAdapter) {
+        if (!wallet) {
           const error = new WalletNotInstalledError('Slush');
           setError(error);
           return Promise.reject(error);
         }
         
         try {
-          const account = await slushAdapter.connect();
-          setSlushAccount(account as SlushAccount);
+          await connectWallet({ wallet });
+          setWalletType('slush');
         } catch (connErr) {
           const walletError = categorizeWalletError(connErr);
           setError(walletError);
           console.error(`Slush wallet connection error:`, walletError);
           return Promise.reject(walletError);
-        }*/
-      }
+        }
+      } else if (type === 'backpack') {
+        // Check if Backpack is available
+        // Backpack uses the Solana wallet standard
+        if (!isBackpackWalletInstalled()) {
+          const error = new WalletNotInstalledError('Backpack');
+          setError(error);
+          return Promise.reject(error);
+        }
+        
+        try {
+          // Use Solana wallet adapter which should detect Backpack if it's using the wallet standard
+          await solanaConnect();
+          
+          // Set backpack account if connection successful
+          if (solanaPublicKey) {
+            const address = solanaPublicKey.toBase58();
+            setBackpackAccount({
+              address,
+              publicKey: solanaPublicKey,
+              chains: ['solana']
+            });
+          }
+          
+          setWalletType('backpack');
+        } catch (connErr) {
+          const walletError = categorizeWalletError(connErr);
+          setError(walletError);
+          console.error(`Backpack wallet connection error:`, walletError);
+          return Promise.reject(walletError);
+        }
       }
       
       setWalletType(type);
@@ -199,10 +266,15 @@ function WalletContextInner({ children }: { children: ReactNode }) {
     } finally {
       setConnecting(false);
     }
-  }, [connectWallet, solanaConnect, slushAdapter, wallet]);
+  }, [connectWallet, solanaConnect, slushAdapter, wallet, solanaPublicKey]);
 
   // Wallet-specific connect methods with error pre-checks
   const suiConnect = useCallback(async () => {
+    // Return early if not mounted to avoid SSR issues
+    if (typeof window === 'undefined' || !mounted) {
+      return Promise.reject(new Error('Cannot connect wallet during server rendering'));
+    }
+    
     try {
       // Check wallet availability first to provide better UX
       if (!wallet) {
@@ -230,9 +302,14 @@ function WalletContextInner({ children }: { children: ReactNode }) {
       // Always return a rejection rather than letting it propagate
       return Promise.reject(walletError);
     }
-  }, [handleConnect, wallet]);
+  }, [handleConnect, wallet, setError]);
   
   const phantomConnect = useCallback(async () => {
+    // Return early if not mounted to avoid SSR issues
+    if (typeof window === 'undefined' || !mounted) {
+      return Promise.reject(new Error('Cannot connect wallet during server rendering'));
+    }
+    
     try {
       // Check wallet availability first to provide better UX
       if (typeof window === 'undefined' || !window.solana?.isPhantom) {
@@ -265,30 +342,35 @@ function WalletContextInner({ children }: { children: ReactNode }) {
       // Always return a rejection rather than letting it propagate
       return Promise.reject(walletError);
     }
-  }, [solanaConnect, setError]);
+  }, [solanaConnect, setError, setWalletType]);
 
   // Slush wallet connect method
   const slushConnect = useCallback(async () => {
-    // Slush wallet connection temporarily disabled
-    const error = new WalletNotInstalledError('Slush - temporarily unavailable');
-    setError(error);
-    console.warn('Slush wallet functionality is temporarily disabled and needs to be reimplemented.');
-    return Promise.reject(error);
+    // Return early if not mounted to avoid SSR issues
+    if (typeof window === 'undefined' || !mounted) {
+      return Promise.reject(new Error('Cannot connect wallet during server rendering'));
+    }
     
-    /* Original implementation that needs updating:
     try {
-      // Check wallet availability first
-      if (!slushAdapter) {
+      // Check if Slush wallet is installed
+      // We'll use the Sui wallet kit's connectWallet function which should handle Slush
+      // The Slush wallet is the official Sui wallet
+      if (!wallet) {
         const error = new WalletNotInstalledError('Slush');
         setError(error);
         return Promise.reject(error);
       }
       
       try {
-        return await handleConnect('slush');
+        // Use the Sui wallet kit's connect method which will work with Slush
+        await connectWallet({ wallet });
+        setWalletType('slush');
+        return Promise.resolve();
       } catch (err) {
-        // handleConnect already handles errors, this just ensures we don't throw
-        return Promise.reject(err);
+        const walletError = categorizeWalletError(err);
+        setError(walletError);
+        console.error('Slush wallet connection error:', walletError);
+        return Promise.reject(walletError);
       }
     } catch (error) {
       // Special handling for WalletNotSelectedError
@@ -302,12 +384,71 @@ function WalletContextInner({ children }: { children: ReactNode }) {
       // Always return a rejection rather than letting it propagate
       return Promise.reject(walletError);
     }
-    */
-  }, [setError]);
+  }, [connectWallet, wallet, setError, setWalletType]);
+  
+  // Backpack wallet connect method
+  const backpackConnect = useCallback(async () => {
+    // Return early if not mounted to avoid SSR issues
+    if (typeof window === 'undefined' || !mounted) {
+      return Promise.reject(new Error('Cannot connect wallet during server rendering'));
+    }
+    
+    try {
+      // Check if Backpack wallet is installed
+      // Backpack now uses the Solana wallet adapter standard
+      // Check for Backpack's specific extensions
+      if (!isBackpackWalletInstalled()) {
+        const error = new WalletNotInstalledError('Backpack');
+        setError(error);
+        return Promise.reject(error);
+      }
+      
+      try {
+        // Use Solana wallet adapter to connect to Backpack
+        await solanaConnect();
+        
+        // Set backpack account if connection successful
+        if (solanaPublicKey) {
+          const address = solanaPublicKey.toBase58();
+          setBackpackAccount({
+            address,
+            publicKey: solanaPublicKey,
+            chains: ['solana']
+          });
+          setWalletType('backpack');
+        } else {
+          throw new Error('Failed to get Backpack public key after connection');
+        }
+        
+        return Promise.resolve();
+      } catch (err) {
+        const walletError = categorizeWalletError(err);
+        setError(walletError);
+        console.error('Backpack wallet connection error:', walletError);
+        return Promise.reject(walletError);
+      }
+    } catch (error) {
+      // Special handling for WalletNotSelectedError
+      const walletError = categorizeWalletError(error);
+      if (walletError instanceof WalletNotSelectedError) {
+        const betterError = new WalletNotSelectedError();
+        setError(betterError);
+        return Promise.reject(betterError);
+      }
+      
+      // Always return a rejection rather than letting it propagate
+      return Promise.reject(walletError);
+    }
+  }, [solanaConnect, solanaPublicKey, setError, setBackpackAccount, setWalletType]);
 
   // Universal disconnect
   const disconnect = useCallback(async () => {
     setError(null);
+    
+    // Return early if not mounted to avoid SSR issues
+    if (typeof window === 'undefined' || !mounted) {
+      return Promise.reject(new Error('Cannot disconnect wallet during server rendering'));
+    }
     
     try {
       if (walletType === 'sui') {
@@ -321,22 +462,21 @@ function WalletContextInner({ children }: { children: ReactNode }) {
           // We'll still clear the wallet type even if disconnect fails
         }
       } else if (walletType === 'slush') {
-        // Slush wallet disconnection temporarily disabled
-        // Will be reimplemented with updated wallet API
-        console.warn('Slush wallet disconnect functionality temporarily disabled.');
+        // Slush wallet disconnection is handled automatically by the Sui wallet kit
+        // We just need to clear our local state
         setSlushAccount(null);
-        /* Original implementation that needs updating:
+      } else if (walletType === 'backpack') {
+        // Disconnect from Backpack using Solana wallet adapter
         try {
-          if (slushAdapter) {
-            await slushAdapter.disconnect();
-          }
-          setSlushAccount(null);
+          await solanaDisconnect();
         } catch (discErr) {
-          console.error('Error disconnecting Slush wallet:', discErr);
+          console.error('Error disconnecting Backpack wallet:', discErr);
           // We'll still clear the wallet type even if disconnect fails
-        }*/
+        }
+        // Clear local state
+        setBackpackAccount(null);
       }
-      }
+      
       setWalletType(null);
       return Promise.resolve();
     } catch (error) {
@@ -346,7 +486,113 @@ function WalletContextInner({ children }: { children: ReactNode }) {
       // Return rejection instead of throwing directly
       return Promise.reject(walletError);
     }
-  }, [walletType, solanaDisconnect, slushAdapter]);
+  }, [walletType, solanaDisconnect, setWalletType, setSlushAccount, setBackpackAccount, setError]);
+
+  // Enhanced network switching functionality
+  const switchNetwork = useCallback(async (network: 'mainnet' | 'testnet' | 'devnet') => {
+    // Return early if not mounted to avoid SSR issues
+    if (typeof window === 'undefined' || !mounted) {
+      return Promise.reject(new Error('Cannot switch networks during server rendering'));
+    }
+    
+    if (!connected) {
+      const err = new WalletError('Not connected to any wallet');
+      setError(err);
+      throw err;
+    }
+    
+    setIsSwitchingNetwork(true);
+    setError(null);
+    
+    try {
+      // Handle network switching based on wallet type
+      if (walletType === 'sui') {
+        // Sui wallet switching
+        try {
+          // For dapp-kit, we need to use the SuiClientProvider's network state
+          // We'll dispatch a custom event to notify any listeners
+          if (typeof window !== 'undefined') {
+            const networkSwitchEvent = new CustomEvent('suiNetworkSwitch', { 
+              detail: { network } 
+            });
+            window.dispatchEvent(networkSwitchEvent);
+          }
+          
+          // Update local state
+          setCurrentNetwork(network);
+        } catch (err) {
+          console.error('Error during Sui wallet network switch:', err);
+          const walletError = categorizeWalletError(err);
+          setError(walletError);
+          throw walletError;
+        }
+      } 
+      else if (walletType === 'phantom' || walletType === 'backpack') {
+        // Phantom/Backpack wallet network switching
+        try {
+          // Convert network name to Solana cluster name
+          const clusterName = network === 'mainnet' ? 'mainnet-beta' : 
+                             network === 'testnet' ? 'testnet' : 'devnet';
+          
+          // Dispatch event for Solana connection provider
+          if (typeof window !== 'undefined') {
+            const networkSwitchEvent = new CustomEvent('solanaNetworkSwitch', { 
+              detail: { network: clusterName } 
+            });
+            window.dispatchEvent(networkSwitchEvent);
+          }
+          
+          // Update local state
+          setCurrentNetwork(network);
+          
+          // If Backpack wallet, update the account with the new network
+          if (walletType === 'backpack' && backpackAccount) {
+            setBackpackAccount({
+              ...backpackAccount,
+              network: network
+            });
+          }
+        } catch (err) {
+          console.error(`Error during ${walletType} wallet network switch:`, err);
+          const walletError = categorizeWalletError(err);
+          setError(walletError);
+          throw walletError;
+        }
+      }
+      else if (walletType === 'slush') {
+        // Slush wallet network switching (similar to Sui)
+        try {
+          // Dispatch a custom event
+          if (typeof window !== 'undefined') {
+            const networkSwitchEvent = new CustomEvent('slushNetworkSwitch', { 
+              detail: { network } 
+            });
+            window.dispatchEvent(networkSwitchEvent);
+          }
+          
+          // Update local state
+          setCurrentNetwork(network);
+        } catch (err) {
+          console.error('Error during Slush wallet network switch:', err);
+          const walletError = categorizeWalletError(err);
+          setError(walletError);
+          throw walletError;
+        }
+      }
+      else {
+        throw new Error(`Network switching not supported for wallet type: ${walletType}`);
+      }
+      
+      return Promise.resolve();
+    } catch (err) {
+      const walletError = categorizeWalletError(err);
+      setError(walletError);
+      console.error(`Network switch error:`, walletError);
+      throw walletError;
+    } finally {
+      setIsSwitchingNetwork(false);
+    }
+  }, [connected, walletType, backpackAccount, setBackpackAccount, setError]);
 
   const contextValue = useMemo<WalletContextValue>(() => ({
     connected,
@@ -356,12 +602,20 @@ function WalletContextInner({ children }: { children: ReactNode }) {
     walletType,
     error,
     setError,
+    
+    // Network
+    currentNetwork,
+    switchNetwork,
+    isSwitchingNetwork,
+    
     suiConnect,
     suiAccount,
     phantomConnect,
     phantomPublicKey: solanaPublicKey,
     slushConnect,
     slushAccount,
+    backpackConnect,
+    backpackAccount,
   }), [
     connected, 
     connecting, 
@@ -370,12 +624,20 @@ function WalletContextInner({ children }: { children: ReactNode }) {
     walletType,
     error,
     setError,
+    
+    // Network
+    currentNetwork,
+    switchNetwork,
+    isSwitchingNetwork,
+    
     suiConnect,
     suiAccount, 
     phantomConnect,
     solanaPublicKey,
     slushConnect,
-    slushAccount
+    slushAccount,
+    backpackConnect,
+    backpackAccount
   ]);
 
   return (
@@ -405,6 +667,36 @@ export function WalletContextProvider({ children }: { children: ReactNode }) {
     setupGlobalErrorHandlers();
   }, []);
 
+  // State for network configuration
+  const [solanaEndpoint, setSolanaEndpoint] = useState(clusterApiUrl('devnet'));
+  
+  // Event listeners for network switching
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Setup network switching event listeners
+    const handleSolanaNetworkSwitch = (event: any) => {
+      const network = event.detail?.network;
+      if (network) {
+        // Update Solana connection
+        const newEndpoint = 
+          network === 'mainnet-beta' ? clusterApiUrl('mainnet-beta') :
+          network === 'testnet' ? clusterApiUrl('testnet') :
+          clusterApiUrl('devnet');
+        
+        setSolanaEndpoint(newEndpoint);
+      }
+    };
+    
+    // Add event listeners
+    window.addEventListener('solanaNetworkSwitch', handleSolanaNetworkSwitch);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('solanaNetworkSwitch', handleSolanaNetworkSwitch);
+    };
+  }, []);
+
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -414,35 +706,60 @@ export function WalletContextProvider({ children }: { children: ReactNode }) {
     },
   }));
   
-  // Create the Phantom adapter with error prevention
-  const [phantomAdapter] = useState(() => {
+  // Create the wallet adapters with error prevention
+  const [solanaWallets] = useState(() => {
     try {
-      // Check if Phantom is already registered or not available
-      if (typeof window === 'undefined' || !window.solana?.isPhantom) {
-        // Skip adapter creation if Phantom isn't available
-        return null;
+      const network = WalletAdapterNetwork.Devnet;
+      
+      // Create a list of wallet adapters directly
+      const adapters = [];
+      
+      // Add Phantom adapter if available
+      try {
+        if (typeof window !== 'undefined' && window.solana?.isPhantom) {
+          adapters.push(new PhantomWalletAdapter());
+        }
+      } catch (err) {
+        console.error('Error creating PhantomWalletAdapter:', err);
       }
       
-      // Create the adapter with error handling
-      return new PhantomWalletAdapter();
+      // Add Solflare adapter if available
+      try {
+        if (SolflareWalletAdapter) {
+          adapters.push(new SolflareWalletAdapter({ network }));
+        } else {
+          console.warn('SolflareWalletAdapter is not available. Skipping Solflare wallet integration.');
+        }
+      } catch (err) {
+        console.error('Error creating SolflareWalletAdapter:', err);
+      }
+      
+      // Add Backpack adapter via Solana adapter if available
+      // Backpack should be detected automatically through the Solana wallet adapter
+      // if it's implementing the Solana wallet standard
+      try {
+        if (isBackpackWalletInstalled()) {
+          console.log('Backpack detected, it should be available through Solana adapters');
+          // Note: We don't need to explicitly add an adapter as Backpack
+          // implements the Solana wallet standard and should be detected automatically
+        }
+      } catch (err) {
+        console.error('Error checking for Backpack wallet:', err);
+      }
+      
+      return adapters;
     } catch (error) {
-      console.error('Error creating PhantomWalletAdapter:', error);
-      return null;
+      console.error('Error creating wallet adapters:', error);
+      return [];
     }
   });
   
-  const solanaEndpoint = clusterApiUrl('devnet');
-  
-  // Create a safe wallets array that won't cause duplicate registrations
-  // Always provide an array, even if empty, to avoid errors
-  const wallets = phantomAdapter ? [phantomAdapter] : [];
-
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
         <SuiWalletProvider>
           <ConnectionProvider endpoint={solanaEndpoint}>
-            <SolanaWalletProvider wallets={wallets} autoConnect={false}>
+            <SolanaWalletProvider wallets={solanaWallets} autoConnect={false}>
               <WalletContextInner>
                 {children}
               </WalletContextInner>

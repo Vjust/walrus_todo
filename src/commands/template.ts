@@ -23,6 +23,7 @@ export default class SomeCommand extends BaseCommand {  // Removed placeholder c
   ];
 
   static flags = {
+    ...BaseCommand.flags,
     // Flag definitions with clear descriptions
     flag1: Flags.string({
       char: 'f',

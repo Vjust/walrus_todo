@@ -1,7 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { detectContext, isUsingFallbackStorage, StorageContext } from '@/lib/storage-utils';
+import safeStorage, { isBrowser, isUsingFallbackStorage } from '@/lib/safe-storage';
+
+// Define context types for storage environments
+type StorageContext = 
+  | 'browser'       // Standard browser context with storage access
+  | 'extension'     // Browser extension context
+  | 'iframe'        // Embedded in an iframe
+  | 'insecure'      // Non-HTTPS context with restricted features
+  | 'incognito'     // Private/incognito browsing mode
+  | 'server'        // Server-side rendering context
+  | 'hydrating'     // During hydration phase of React
+  | 'unknown';      // Context could not be determined
 
 interface WarningMessageProps {
   context: StorageContext;
@@ -38,6 +49,11 @@ const WarningMessage: React.FC<WarningMessageProps> = ({ context, usingFallback 
           title: 'Server Rendering',
           message: 'Storage is not available during server rendering.'
         };
+      case 'hydrating':
+        return {
+          title: 'App is Initializing',
+          message: 'Storage access is temporarily restricted during app initialization.'
+        };
       default:
         return {
           title: 'Limited Storage Access',
@@ -55,6 +71,62 @@ const WarningMessage: React.FC<WarningMessageProps> = ({ context, usingFallback 
     </div>
   );
 };
+
+// Helper function to detect current context
+function detectStorageContext(): StorageContext {
+  // Check for server-side rendering
+  if (!isBrowser()) {
+    return 'server';
+  }
+  
+  // Check for hydration phase
+  if (typeof document !== 'undefined' && document.readyState === 'loading') {
+    return 'hydrating';
+  }
+
+  // Safe check for extension context
+  try {
+    if (typeof (window as any).chrome !== 'undefined' && 
+        (window as any).chrome.storage) {
+      return 'extension';
+    }
+  } catch (e) {
+    console.warn('Error checking for extension context:', e);
+  }
+
+  // Safe check for iframe
+  try {
+    if (window.top !== window.self) {
+      return 'iframe';
+    }
+  } catch (e) {
+    // If this errors, we're probably in a cross-origin iframe
+    console.warn('Error checking for iframe context:', e);
+    return 'iframe'; // Assume iframe with restrictions
+  }
+
+  // Check for insecure context (non-HTTPS except localhost)
+  try {
+    if (!window.isSecureContext) {
+      return 'insecure';
+    }
+  } catch (e) {
+    console.warn('Error checking for secure context:', e);
+  }
+
+  // Check for incognito/private mode or storage restrictions
+  try {
+    const testKey = '__storage_test__';
+    localStorage.setItem(testKey, testKey);
+    localStorage.removeItem(testKey);
+    sessionStorage.setItem(testKey, testKey);
+    sessionStorage.removeItem(testKey);
+    return 'browser';
+  } catch (e) {
+    // If storage test fails but browser isn't otherwise identified as a specific context
+    return 'incognito';
+  }
+}
 
 export function StorageContextWarning() {
   const [context, setContext] = useState<StorageContext>('unknown');
@@ -74,15 +146,15 @@ export function StorageContextWarning() {
   // Second phase - only run detection logic after initial mount
   useEffect(() => {
     // Skip if not mounted or not in browser
-    if (!mounted || typeof window === 'undefined') return;
+    if (!mounted || !isBrowser()) return;
     
-    // Use setTimeout to ensure this runs after Next.js hydration is complete
+    // Use setTimeout with a delay to ensure this runs after Next.js hydration is complete
     const timer = setTimeout(() => {
       try {
         // Safely detect context with error handling
         let detectedContext: StorageContext = 'unknown';
         try {
-          detectedContext = detectContext();
+          detectedContext = detectStorageContext();
         } catch (error) {
           console.warn('Error detecting storage context:', error);
           detectedContext = 'unknown';
@@ -108,10 +180,13 @@ export function StorageContextWarning() {
     return () => clearTimeout(timer);
   }, [mounted]);
   
-  if (!showWarning || typeof window === 'undefined') {
+  // Only render on client side after mounting
+  if (!mounted || !isBrowser() || !showWarning) {
+    // Return null during SSR and initial client-side render
     return null;
   }
   
+  // Only render the component content after mounting
   return (
     <div className="relative">
       <WarningMessage context={context} usingFallback={usingFallback} />

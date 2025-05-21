@@ -35,6 +35,14 @@ export class WalrusStorage {
   private walrusPath: string;
   private useMock: boolean;
   private configPath: string;
+  
+  /**
+   * Check if the client is connected to Walrus
+   * @returns {boolean} True if connected
+   */
+  public getConnectionStatus(): boolean {
+    return this.isConnected;
+  }
 
   /**
    * Creates a new WalrusStorage instance
