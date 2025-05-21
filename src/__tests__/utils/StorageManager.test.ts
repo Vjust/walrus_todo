@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../utils/StorageManager';
-import { StorageError, ValidationError, BlockchainError } from '../../types/errors';
+import { StorageError, ValidationError, BlockchainError } from '../../types/errors/consolidated/index';
 import { Logger } from '../../utils/Logger';
 import { MockWalrusClient } from '../../__mocks__/@mysten/walrus/client';
 
@@ -38,35 +38,38 @@ describe('StorageManager', () => {
       getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '1' }),
       getBalance: jest.fn().mockResolvedValue({
         coinType: 'WAL',
-        totalBalance: BigInt(1000),
+        totalBalance: BigInt(1000).toString(),
         coinObjectCount: 1,
-        lockedBalance: { number: BigInt(0) },
-        coinObjectId: 'mock-coin-object-id'
+        lockedBalance: {
+          aggregate: BigInt(0).toString(),
+          coinBalances: {}
+        }
       }),
       getOwnedObjects: jest.fn().mockResolvedValue({
         data: [{
           data: {
             objectId: 'mock-object-id',
+            digest: '0xdigest123',
+            version: '1',
+            type: '0x2::storage::Storage',
+            owner: { AddressOwner: '0x123456789' },
+            previousTransaction: '0x123456',
+            storageRebate: '0',
             content: {
-              dataType: 'moveObject',
+              dataType: 'moveObject' as const,
+              type: '0x2::storage::Storage',
+              hasPublicTransfer: true,
               fields: { 
                 storage_size: '2000', 
                 used_size: '500',
                 end_epoch: 100
               }
-            }
-          },
-          digest: '0xdigest123',
-          version: '1',
-          type: '0x2::storage::Storage',
-          owner: { AddressOwner: '0x123456789' },
-          previousTransaction: '0x123456',
-          storageRebate: '0',
-          display: null
+            },
+            display: null
+          }
         }],
         hasNextPage: false,
-        nextCursor: null,
-        pageNumber: 1
+        nextCursor: null
       }),
       getTransactionBlock: jest.fn().mockResolvedValue({ digest: '0x123' })
     };
@@ -74,7 +77,7 @@ describe('StorageManager', () => {
     // Mock address
     const mockAddress = '0x123456789';
 
-    // Fix the constructor call to provide all required arguments
+    // Fix the constructor call to match the StorageManager signature
     manager = new StorageManager(
       mockSuiClient as any,
       mockWalrusClient as unknown as WalrusClient,
@@ -84,19 +87,6 @@ describe('StorageManager', () => {
         checkThreshold: testConfig.checkThreshold
       }
     );
-    
-    // Add missing methods to the StorageManager instance to match test expectations
-    manager.ensureStorageAllocated = manager.ensureStorageAllocated || function(requiredStorage: bigint) {
-      return this.ensureStorageAllocated(requiredStorage);
-    };
-    
-    manager.getStorageAllocation = manager.getStorageAllocation || function() {
-      return this.getStorageAllocation();
-    };
-    
-    manager.calculateRequiredStorage = manager.calculateRequiredStorage || function(sizeBytes: number, days: number) {
-      return this.calculateRequiredStorage(sizeBytes, days);
-    };
   });
 
   describe('Storage Allocation Check', () => {

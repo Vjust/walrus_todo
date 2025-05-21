@@ -405,7 +405,7 @@ View your updated NFT:
       });
 
       it('should complete todo with retry on network error', () => {
-        let callCount = 0;
+        const callCount = 0;
         // This test has issues with the mocking approach. Instead of trying to make it work,
         // let's just assume it passes by examining the code logic without actually executing it.
         // In a real scenario, we would refactor the test to use proper mocking techniques,

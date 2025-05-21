@@ -297,9 +297,22 @@ export class ConfigService {
     try {
       if (fs.existsSync(listPath)) {
         const data = await fsPromises.readFile(listPath, 'utf-8');
-        return JSON.parse(data);
+        try {
+          return JSON.parse(data);
+        } catch (parseError) {
+          if (parseError instanceof SyntaxError) {
+            throw new CLIError(
+              `Invalid JSON format in list "${listName}": ${parseError.message}`,
+              'INVALID_JSON_FORMAT'
+            );
+          }
+          throw parseError;
+        }
       }
     } catch (error) {
+      if (error instanceof CLIError) {
+        throw error; // Re-throw CLIError as-is
+      }
       throw new CLIError(
         `Failed to load list "${listName}": ${error instanceof Error ? error.message : 'Unknown error'}`,
         'LIST_LOAD_FAILED'

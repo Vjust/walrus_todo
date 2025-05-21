@@ -1,6 +1,6 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { AIService } from '@/services/ai/aiService';
-import { createMockAIService, mockXAIProvider } from '@/tests/helpers/ai-test-utils';
+import { createMockAIService, mockXAIProvider } from '../../../helpers/ai-test-utils';
 import { MockXAIProvider } from '@/__mocks__/ai/providers/MockXAIProvider';
 import { AIOperation, AIModelType, AIProviderType } from '@/services/ai/types';
 import type { Todo } from '@/types/todo';

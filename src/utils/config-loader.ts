@@ -94,9 +94,22 @@ export function loadConfigFile(filePath: string): Record<string, any> {
   try {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(content);
+      try {
+        return JSON.parse(content);
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          throw new CLIError(
+            `Invalid JSON format in config file ${filePath}: ${parseError.message}`,
+            'INVALID_JSON_FORMAT'
+          );
+        }
+        throw parseError;
+      }
     }
   } catch (error) {
+    if (error instanceof CLIError) {
+      throw error; // Re-throw CLIError as-is  
+    }
     throw new CLIError(
       `Failed to load config file at ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       'CONFIG_FILE_LOAD_FAILED'

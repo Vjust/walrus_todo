@@ -1,12 +1,12 @@
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
-import { TodoService } from '../../../src/services/todoService';
-import { createWalrusStorage } from '../../../src/utils/walrus-storage';
-import { Todo } from '../../../src/types/todo';
-import { CLIError } from '../../../src/types/error';
+import { TodoService } from '@/services/todoService';
+import { createWalrusStorage } from '@/utils/walrus-storage';
+import { Todo } from '@/types/todo';
+import { CLIError } from '@/types/errors';
 import { createMockTodo } from '../helpers/test-utils';
 
 // Mock TodoService
-jest.mock('../../../src/services/todoService');
+jest.mock('@/services/todoService');
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
 
 // Mock WalrusStorage
@@ -22,7 +22,7 @@ const mockStorageMethods = {
 };
 
 // TypeScript needs the correct mock return type here
-jest.mock('../../../src/utils/walrus-storage', () => ({
+jest.mock('@/utils/walrus-storage', () => ({
   __esModule: true,
   createWalrusStorage: jest.fn().mockReturnValue(mockStorageMethods)
 }));

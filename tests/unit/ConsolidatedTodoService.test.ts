@@ -1,4 +1,5 @@
 import fs from 'fs';
+import * as fsPromises from 'fs/promises';
 import path from 'path';
 import { TodoService, todoService } from '../../src/services/todoService.consolidated';
 import { STORAGE_CONFIG } from '../../src/constants';
@@ -32,7 +33,7 @@ describe('Consolidated TodoService', () => {
 
   describe('getAllLists', () => {
     it('should return an array of list names', async () => {
-      const mockReaddir = require('fs/promises').readdir as jest.Mock;
+      const mockReaddir = fsPromises.readdir as jest.Mock;
       mockReaddir.mockResolvedValue(['list1.json', 'list2.json', 'not-a-list.txt']);
       
       const lists = await todoService.getAllLists();
@@ -42,7 +43,7 @@ describe('Consolidated TodoService', () => {
     });
     
     it('should return an empty array if readdir fails', async () => {
-      const mockReaddir = require('fs/promises').readdir as jest.Mock;
+      const mockReaddir = fsPromises.readdir as jest.Mock;
       mockReaddir.mockRejectedValue(new Error('Directory not found'));
       
       const lists = await todoService.getAllLists();

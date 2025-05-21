@@ -117,7 +117,7 @@ export default class AddCommand extends BaseCommand {
   async run(): Promise<void> {
     try {
       this.debugLog("Running add command...");
-      const spinner = this.startUnifiedSpinner('Processing add command...');
+      this.startUnifiedSpinner('Processing add command...');
 
       // Parse and validate input
       const { args, flags } = await this.parse(AddCommand);
@@ -125,12 +125,11 @@ export default class AddCommand extends BaseCommand {
       // Enhanced input validation using unified validators
       this.performPreExecutionValidation(args, flags);
       
-      this.debugLog("Parsed and validated arguments:", args);
-      this.debugLog("Parsed and validated flags:", flags);
+      this.debugLog("Parsed and validated arguments:", JSON.stringify(args));
+      this.debugLog("Parsed and validated flags:", JSON.stringify(flags));
 
       // If JSON output is requested, handle it separately
-      if (await this.isJson()) {
-        spinner.stop();
+      if (this.isJson) {
         return this.handleJsonOutput(args, flags);
       }
 
@@ -484,11 +483,13 @@ export default class AddCommand extends BaseCommand {
    * @param flags Command flags including AI configuration options
    */
   private async enhanceWithAI(todo: Partial<Todo>, todoTitle: string, flags: any): Promise<void> {
+    let aiSpinner: any;
+    
     try {
       this.debugLog('AI flag detected in add command');
 
       // Start AI spinner
-      const aiSpinner = this.startSpinner(`Using AI to enhance your todo...`);
+      aiSpinner = this.startSpinner(`Using AI to enhance your todo...`);
 
       // Sanitize API key before using
       const sanitizedApiKey = flags.apiKey ? CommandSanitizer.sanitizeApiKey(flags.apiKey) : undefined;
@@ -533,8 +534,8 @@ export default class AddCommand extends BaseCommand {
 
       // Display enhanced information
       this.section('AI Suggestions', [
-        `${ICONS.TAG} ${chalk.bold('Suggested Tags:')} ${chalk.cyan(suggestedTags.join(', ') || 'None')}`,
-        `${ICONS.PRIORITY} ${chalk.bold('Suggested Priority:')} ${PRIORITY[suggestedPriority as keyof typeof PRIORITY].color(suggestedPriority)}`
+        `${ICONS.tag} ${chalk.bold('Suggested Tags:')} ${chalk.cyan(suggestedTags.join(', ') || 'None')}`,
+        `${ICONS.priority} ${chalk.bold('Suggested Priority:')} ${chalk.cyan(suggestedPriority)}`
       ].join('\n'));
 
       // Merge existing and suggested tags
@@ -548,14 +549,51 @@ export default class AddCommand extends BaseCommand {
       this.debugLog('Todo updated with AI suggestions');
 
     } catch (aiError) {
-      // Handle different error types appropriately
-      if (aiError instanceof NetworkError) {
-        this.warning(`AI service temporarily unavailable - continuing without enhancement`);
-      } else {
-        this.debugLog('AI error:', aiError);
-        this.warning(`AI enhancement failed: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
+      // Stop the AI spinner if it was started
+      if (aiSpinner) {
+        this.stopSpinner(false, 'AI enhancement unavailable');
       }
-      this.info(`Continuing with provided values`);
+
+      this.debugLog('AI error details:', aiError);
+
+      // Handle different error types with specific messaging
+      if (aiError instanceof NetworkError) {
+        this.warning('AI service is temporarily unavailable due to network issues');
+        this.info('Check your network connection and try again later with the --ai flag');
+      } else if (aiError instanceof Error) {
+        // Check for specific AI configuration issues
+        if (aiError.message.includes('API key') || aiError.message.includes('unauthorized') || aiError.message.includes('authentication')) {
+          this.warning('AI service authentication failed');
+          this.info('Please verify your XAI API key configuration:');
+          this.info('• Set XAI_API_KEY environment variable, or');
+          this.info('• Use --apiKey flag to provide your API key');
+          this.info('• Get your API key from: https://console.x.ai/');
+        } else if (aiError.message.includes('quota') || aiError.message.includes('rate limit') || aiError.message.includes('limit exceeded')) {
+          this.warning('AI service rate limit exceeded');
+          this.info('Your API quota has been reached. Please try again later or upgrade your plan');
+        } else if (aiError.message.includes('timeout') || aiError.message.includes('request timed out')) {
+          this.warning('AI service request timed out');
+          this.info('The AI service is responding slowly. Try again with a simpler todo description');
+        } else {
+          this.warning(`AI enhancement failed: ${aiError.message}`);
+          this.info('AI configuration help:');
+          this.info('• Verify your API key with: waltodo ai credentials');
+          this.info('• Check service status: waltodo ai verify');
+          this.info('• View AI configuration: waltodo config');
+        }
+      } else {
+        this.warning('AI enhancement encountered an unexpected error');
+        this.info('Please check your AI configuration with: waltodo ai verify');
+      }
+
+      // Always provide fallback guidance
+      this.info('Todo created successfully using your provided values');
+      if (!todo.tags || todo.tags.length === 0) {
+        this.info('Tip: You can add tags manually with: --tags "work,urgent"');
+      }
+      if (!todo.priority) {
+        this.info('Tip: You can set priority manually with: --priority high|medium|low');
+      }
     }
   }
 
@@ -576,7 +614,7 @@ export default class AddCommand extends BaseCommand {
     let blobId: string = '';
     // Show blockchain storage warning
     this.section('Blockchain Storage', [
-      `${chalk.yellow(ICONS.WARNING)} ${chalk.yellow('Public Access Warning')}`,
+      `${chalk.yellow(ICONS.warning)} ${chalk.yellow('Public Access Warning')}`,
       `Blockchain storage will make the todo data publicly accessible.`,
       `This cannot be undone once the data is stored on the blockchain.`
     ].join('\n'));
@@ -655,8 +693,8 @@ export default class AddCommand extends BaseCommand {
 
       // Display blockchain information
       this.section('Blockchain Storage Info', [
-        `${ICONS.BLOCKCHAIN} ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`,
-        `${ICONS.ARROW} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet.wal.app/blob/${blobId}`)}`
+        `${ICONS.blockchain} ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`,
+        `${ICONS.info} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet.wal.app/blob/${blobId}`)}`
       ].join('\n'));
       
       // Save the blob mapping
@@ -688,21 +726,24 @@ export default class AddCommand extends BaseCommand {
    */
   private saveBlobMapping(todoId: string, blobId: string): void {
     try {
-      // Use the centralized getConfigDir method from BaseCommand
       const configDir = this.getConfigDir();
       const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
-      
-      // Create directory if it doesn't exist
-      if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
-      }
       
       // Read existing mappings or create empty object
       let mappings: Record<string, string> = {};
       if (fs.existsSync(blobMappingsFile)) {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
-          mappings = JSON.parse(content);
+          try {
+            mappings = JSON.parse(content);
+          } catch (parseError) {
+            if (parseError instanceof SyntaxError) {
+              this.warning(`Invalid JSON format in blob mappings file: ${parseError.message}`);
+            } else {
+              this.warning(`Error parsing blob mappings file: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+            }
+            // Continue with empty mappings
+          }
         } catch (error) {
           this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
           // Continue with empty mappings
@@ -712,7 +753,7 @@ export default class AddCommand extends BaseCommand {
       // Add or update mapping
       mappings[todoId] = blobId;
       
-      // Write mappings back to file using centralized method
+      // Write mappings back to file using centralized method (handles directory creation)
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
     } catch (error) {
@@ -724,22 +765,20 @@ export default class AddCommand extends BaseCommand {
    * Display success information after adding a todo
    */
   private async displaySuccessInfo(todo: Todo, listName: string): Promise<void> {
-    const storage = STORAGE[todo.storageLocation as keyof typeof STORAGE] || STORAGE.local;
-    const priority = PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
 
     // Choose appropriate header based on whether this is a new list or just a new task
     const headerText = this.isNewList ? `New List Created` : `New Task Added`;
 
     // Create a more compact display format
-    this.log(`${chalk.green(ICONS.SUCCESS)} ${chalk.bold.green(headerText)}: ${chalk.bold(todo.title)}`);
+    this.log(`${chalk.green(ICONS.success)} ${chalk.bold.green(headerText)}: ${chalk.bold(todo.title)}`);
 
     // Display essential details in a compact single-line format
     const compactDetails = [
-      `${ICONS.LIST} List: ${chalk.cyan(listName)}`,
-      `${ICONS.PRIORITY} Priority: ${priority.color(priority.label)}`,
-      todo.dueDate && `${ICONS.DATE} Due: ${chalk.blue(todo.dueDate)}`,
-      todo.tags && todo.tags.length > 0 && `${ICONS.TAG} Tags: ${chalk.cyan(todo.tags.join(', '))}`,
-      `${storage.icon} Storage: ${storage.color(storage.label)}`
+      `${ICONS.list} List: ${chalk.cyan(listName)}`,
+      `${ICONS.priority} Priority: ${this.formatPriority(todo.priority)}`,
+      todo.dueDate && `${ICONS.date} Due: ${chalk.blue(todo.dueDate)}`,
+      todo.tags && todo.tags.length > 0 && `${ICONS.tag} Tags: ${chalk.cyan(todo.tags.join(', '))}`,
+      `${ICONS.storage} Storage: ${this.formatStorage(todo.storageLocation)}`
     ].filter(Boolean);
 
     // Display compact details on a single line
@@ -864,6 +903,22 @@ export default class AddCommand extends BaseCommand {
       InputValidator.validate(flags.storage, [
         CommonValidationRules.storageLocation
       ], 'Storage location');
+    }
+  }
+
+  /**
+   * Format priority with appropriate color
+   */
+  private formatPriority(priority: string): string {
+    switch (priority) {
+      case 'high':
+        return chalk.red('HIGH');
+      case 'medium':
+        return chalk.yellow('MEDIUM');
+      case 'low':
+        return chalk.green('LOW');
+      default:
+        return chalk.gray(priority.toUpperCase());
     }
   }
 }

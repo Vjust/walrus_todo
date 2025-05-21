@@ -8,6 +8,8 @@ import * as sinon from 'sinon';
 import * as readline from 'readline';
 import { expect } from 'chai';
 import * as childProcess from 'child_process';
+import { TodoService } from '../../../src/services/todoService';
+import InteractiveCommand from '../../../src/commands/interactive';
 
 describe('interactive command e2e tests', () => {
   let sandbox: sinon.SinonSandbox;
@@ -60,12 +62,8 @@ describe('interactive command e2e tests', () => {
       getList: sandbox.stub().resolves({ name: 'mylist', todos: [] })
     };
     
-    // Mock the import
-    sandbox.stub(require('../../src/services/todoService'), 'TodoService').value(
-      class MockTodoService {
-        getList = mockTodoService.getList;
-      }
-    );
+    // Mock the TodoService
+    sandbox.stub(TodoService.prototype, 'getList').callsFake(mockTodoService.getList);
 
     // Mock child_process.spawn for command execution
     mockSpawn = sandbox.stub(childProcess, 'spawn');
@@ -92,8 +90,7 @@ describe('interactive command e2e tests', () => {
       
       mockSpawn.returns(mockChildProcess as any);
 
-      // Import and instantiate the command
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
+      // Instantiate the command
       const cmd = new InteractiveCommand([], {});
       
       // Run the command in a promise
@@ -156,7 +153,6 @@ describe('interactive command e2e tests', () => {
       
       mockSpawn.returns(mockChildProcess as any);
 
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
       const cmd = new InteractiveCommand([], {});
       
       const runPromise = cmd.run();
@@ -173,7 +169,6 @@ describe('interactive command e2e tests', () => {
     });
 
     it('handles invalid list on startup', async () => {
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
       const cmd = new InteractiveCommand(['--start-list', 'invalidlist'], {});
       
       // Mock the list validation to throw error
@@ -198,7 +193,6 @@ describe('interactive command e2e tests', () => {
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
       mockSpawn.returns(mockChildProcess as any);
 
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
       const cmd = new InteractiveCommand([], {});
       
       const runPromise = cmd.run();
@@ -234,7 +228,6 @@ describe('interactive command e2e tests', () => {
 
   describe('clear and exit behavior', () => {
     it('handles clear command', async () => {
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
       const cmd = new InteractiveCommand([], {});
       
       const runPromise = cmd.run();
@@ -257,7 +250,6 @@ describe('interactive command e2e tests', () => {
     });
 
     it('shows goodbye message on exit', async () => {
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
       const cmd = new InteractiveCommand([], {});
       
       const runPromise = cmd.run();
@@ -285,7 +277,6 @@ describe('interactive command e2e tests', () => {
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
       mockSpawn.returns(mockChildProcess as any);
 
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
       const cmd = new InteractiveCommand([], {});
       
       const runPromise = cmd.run();
@@ -323,7 +314,6 @@ describe('interactive command e2e tests', () => {
 
   describe('empty input handling', () => {
     it('handles empty lines gracefully', async () => {
-      const InteractiveCommand = require('../../../src/commands/interactive').default;
       const cmd = new InteractiveCommand([], {});
       
       const runPromise = cmd.run();

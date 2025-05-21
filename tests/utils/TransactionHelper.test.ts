@@ -1,12 +1,13 @@
 import { jest } from '@jest/globals';
 import type { Mocked } from 'jest-mock';
-import { TransactionHelper } from '../../../src/utils/TransactionHelper';
+import { TransactionHelper } from '@/utils/TransactionHelper';
 import { Signer } from '@mysten/sui/cryptography';
-import { Logger } from '../../../src/utils/Logger';
+import { Logger } from '@/utils/Logger';
 import {
   ValidationError,
-  BlockchainError
-} from '../../../src/types/errors';
+  BlockchainError,
+  isErrorWithMessage
+} from '@/types/errors/consolidated';
 
 jest.mock('../../../src/utils/Logger');
 
@@ -46,7 +47,7 @@ describe('TransactionHelper', () => {
 
   describe('Retry Logic', () => {
     it('should retry failed operations', async () => {
-      const operation = jest.fn<Promise<string>, []>()
+      const operation = jest.fn<[], Promise<string>>()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Timeout'))
         .mockResolvedValueOnce('success');
@@ -61,7 +62,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should respect maximum retry attempts', async () => {
-      const operation = jest.fn<Promise<never>, []>()
+      const operation = jest.fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Persistent error'));
 
       helper = new TransactionHelper(mockSigner, {
@@ -78,7 +79,7 @@ describe('TransactionHelper', () => {
 
     it('should implement exponential backoff', async () => {
       const delays: number[] = [];
-      const operation = jest.fn<Promise<never>, []>()
+      const operation = jest.fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Network error'));
 
       // Override setTimeout to capture delays
@@ -97,7 +98,7 @@ describe('TransactionHelper', () => {
 
       try {
         await helper.executeWithRetry(operation, { name: 'test operation' });
-      } catch (error) {
+      } catch (error: unknown) {
         // Expected to fail
       }
 
@@ -196,7 +197,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should include operation name in errors', async () => {
-      const operation = jest.fn<Promise<never>>()
+      const operation = jest.fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Test error'));
 
       try {
@@ -239,7 +240,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should merge retry configurations', async () => {
-      const operation = jest.fn<Promise<never>>()
+      const operation = jest.fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Test error'));
 
       helper = new TransactionHelper(mockSigner, {
@@ -254,7 +255,7 @@ describe('TransactionHelper', () => {
             attempts: 2 // Override attempts only
           }
         });
-      } catch (error) {
+      } catch (error: unknown) {
         expect(operation).toHaveBeenCalledTimes(2); // Should use custom attempts
       }
     });
@@ -262,8 +263,8 @@ describe('TransactionHelper', () => {
 
   describe('Integration Tests', () => {
     it('should handle concurrent operations', async () => {
-      const successOperation = jest.fn<Promise<string>, []>().mockResolvedValue('success');
-      const failOperation = jest.fn<Promise<never>, []>()
+      const successOperation = jest.fn<[], Promise<string>>().mockResolvedValue('success');
+      const failOperation = jest.fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Test error'));
 
       const results = await Promise.allSettled([
@@ -278,7 +279,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should handle retry with validation', async () => {
-      const operation = jest.fn<() => Promise<string>>()
+      const operation = jest.fn<[], Promise<string>>()
         .mockRejectedValueOnce(new Error('network error'))
         .mockResolvedValueOnce('success');
 
@@ -292,7 +293,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should log retry attempts with context', async () => {
-      const operation = jest.fn<() => Promise<string>>()
+      const operation = jest.fn<[], Promise<string>>()
         .mockRejectedValueOnce(new Error('Test error'))
         .mockResolvedValueOnce('success');
 

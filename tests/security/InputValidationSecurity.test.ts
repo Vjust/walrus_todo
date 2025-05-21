@@ -96,7 +96,7 @@ function createMaliciousInput(type: string): any {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      // @ts-ignore - intentional for testing
+      // @ts-expect-error - intentional for testing
       maliciousTodo.__proto__ = { polluted: true };
       return [maliciousTodo];
     case 'large':
@@ -756,9 +756,9 @@ describe('Input Validation Security Tests', () => {
       const maliciousOptions: AIModelOptions = {
         temperature: 0.7,
         maxTokens: 2000,
-        // @ts-ignore - intentional test of injection
+        // @ts-expect-error - intentional test of injection
         __proto__: { injected: true },
-        // @ts-ignore - intentional test of injection
+        // @ts-expect-error - intentional test of injection
         constructor: { prototype: { injected: true } }
       };
       

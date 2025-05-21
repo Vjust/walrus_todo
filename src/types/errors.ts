@@ -348,3 +348,62 @@ interface TransactionErrorOptions {
   recoverable: boolean;
   cause?: Error;
 }
+
+/**
+ * CLI-related errors
+ */
+export class CLIError extends WalrusError {
+  public readonly command?: string;
+  public readonly recoverable: boolean;
+
+  constructor(
+    message: string,
+    options: Partial<CLIErrorOptions> = {}
+  ) {
+    const {
+      command,
+      operation = 'unknown',
+      recoverable = false,
+      ...rest
+    } = options;
+
+    super(message, {
+      code: `CLI_${operation.toUpperCase()}_ERROR`,
+      publicMessage: 'A CLI operation failed',
+      shouldRetry: recoverable,
+      ...rest
+    });
+
+    this.recoverable = recoverable;
+    this.command = command;
+  }
+}
+
+interface CLIErrorOptions {
+  command?: string;
+  operation: string;
+  recoverable: boolean;
+  cause?: Error;
+}
+
+// Utility functions
+
+/**
+ * Gets a string error message from any value
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
+/**
+ * Converts any error to an error with a message
+ */
+export function toErrorWithMessage(error: unknown): { message: string } {
+  if (error instanceof Error) {
+    return error;
+  }
+  return { message: String(error) };
+}

@@ -90,14 +90,29 @@ export class AIService {
     modelName?: string
   ): Promise<void> {
     try {
+      // Validate inputs first
+      if (provider !== undefined && typeof provider !== 'string') {
+        throw new Error(`Invalid provider type: expected string, got ${typeof provider}`);
+      }
+      if (modelName !== undefined && typeof modelName !== 'string') {
+        throw new Error(`Invalid modelName type: expected string, got ${typeof modelName}`);
+      }
+
       // Use the secure credential service to get provider info
       const defaultProvider = await AIProviderFactory.getDefaultProvider();
+      
+      // Ensure we have valid provider and modelName
+      if (!defaultProvider.provider || !defaultProvider.modelName) {
+        throw new Error(`Invalid default provider configuration: provider=${defaultProvider.provider}, modelName=${defaultProvider.modelName}`);
+      }
+      
       const selectedProvider = provider || defaultProvider.provider;
+      const selectedModelName = modelName || defaultProvider.modelName;
       
       // Initialize the provider adapter
       this.modelAdapter = await AIProviderFactory.createProvider({
         provider: selectedProvider,
-        modelName: modelName || defaultProvider.modelName,
+        modelName: selectedModelName,
         options: this.options,
         credentialService: secureCredentialService
       });
@@ -183,10 +198,11 @@ export class AIService {
         typedError.message,
         { modelName, provider }
       );
-      throw new Error(
-        `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`,
-        { cause: typedError }
+      const initError = new Error(
+        `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`
       );
+      (initError as any).cause = typedError;
+      throw initError;
     }
   }
 
@@ -228,13 +244,15 @@ export class AIService {
         noiseFactor: this.options.epsilon || 0.5,
       } : this.options;
       
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr }, privacyOptions);
+      const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr });
       return response.result;
     } catch (error) {
       // Ensure no sensitive data in error message
       const typedError = error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
-      throw new Error(`Failed to summarize todos: ${sanitizedMessage}`, { cause: typedError });
+      const summaryError = new Error(`Failed to summarize todos: ${sanitizedMessage}`);
+      (summaryError as any).cause = typedError;
+      throw summaryError;
     }
   }
   
@@ -422,7 +440,9 @@ export class AIService {
       // Ensure no sensitive data in error message
       const typedError = error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
-      throw new Error(`Failed to categorize todos: ${sanitizedMessage}`, { cause: typedError });
+      const categorizeError = new Error(`Failed to categorize todos: ${sanitizedMessage}`);
+      (categorizeError as any).cause = typedError;
+      throw categorizeError;
     }
   }
   
@@ -628,7 +648,9 @@ export class AIService {
       }
     } catch (error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
-      throw new Error(`Failed to suggest tags: ${typedError.message}`, { cause: typedError });
+      const tagsError = new Error(`Failed to suggest tags: ${typedError.message}`);
+      (tagsError as any).cause = typedError;
+      throw tagsError;
     }
   }
 

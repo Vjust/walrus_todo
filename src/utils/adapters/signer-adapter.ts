@@ -37,7 +37,7 @@ import {
   isSignerAdapter,
   SuiSDKVersion
 } from '../../types/adapters/SignerAdapter';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import {
   SuiClient,
   SuiTransactionBlockResponse,
@@ -45,7 +45,7 @@ import {
 } from '@mysten/sui/client';
 import { TransactionType } from '../../types/transaction';
 import {
-  isTransactionBlockSui
+  isTransactionSui
 } from '../../types/adapters/TransactionBlockAdapter';
 import { BaseAdapter } from '../../types/adapters/BaseAdapter';
 import { SignerAdapter } from '../../types/adapters/SignerAdapter';

@@ -15,7 +15,7 @@ describe('NetworkValidator', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockExecSync = jest.spyOn(require('child_process'), 'execSync');
+    mockExecSync = jest.spyOn(execSync as any, 'default');
     
     mockWalrusClient = {
       getConfig: jest.fn().mockResolvedValue({

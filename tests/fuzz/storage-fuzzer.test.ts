@@ -130,9 +130,14 @@ describe('Storage Fuzzing Tests', () => {
         try {
           await todoStorage.storeTodo({
             id: fuzzer.string(),
-            text: jsonString,
+            title: fuzzer.string(),
+            description: jsonString,
             completed: false,
-            createdAt: new Date()
+            priority: 'medium',
+            tags: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            private: false
           });
         } catch (error) {
           // Expect proper JSON error handling

@@ -4,7 +4,7 @@
 
 import { Signer } from '@mysten/sui/cryptography';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction as TransactionBlock } from '@mysten/sui/transactions';
 import { Transaction } from './transaction';
 
 // Walrus blob object structure

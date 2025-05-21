@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execSync, exec } from 'child_process';
 import fs from 'fs-extra';
 import path from 'path';
 import sinon from 'sinon';
@@ -154,7 +154,7 @@ describe('End-to-End Error Scenarios', () => {
   describe('Blockchain Errors', () => {
     it('should handle insufficient funds error', () => {
       // Simulate insufficient funds
-      const execStub = sinon.stub(require('child_process'), 'exec').callsArgWith(1, 
+      const execStub = sinon.stub(exec).callsArgWith(1, 
         new Error('Insufficient balance for transaction')
       );
       
@@ -175,7 +175,7 @@ describe('End-to-End Error Scenarios', () => {
       const transactionError = new Error('Transaction validation failed: Invalid signature');
       
       // Mock transaction failure
-      const execStub = sinon.stub(require('child_process'), 'exec').callsArgWith(1, transactionError);
+      const execStub = sinon.stub(exec).callsArgWith(1, transactionError);
       
       try {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`, {
@@ -194,7 +194,7 @@ describe('End-to-End Error Scenarios', () => {
       // Simulate contract execution failure
       const contractError = new Error('Move abort: 0x1');
       
-      const execStub = sinon.stub(require('child_process'), 'exec').callsArgWith(1, contractError);
+      const execStub = sinon.stub(exec).callsArgWith(1, contractError);
       
       try {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} update 1 --title "Updated" --storageMode blockchain`, {

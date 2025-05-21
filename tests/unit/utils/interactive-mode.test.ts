@@ -2,6 +2,7 @@ import { jest } from '@jest/globals';
 import { Readable, Writable } from 'stream';
 import { InteractiveMode } from '../../../src/utils/interactive-mode';
 import { stdin as mockStdin, stdout as mockStdout } from 'process';
+import * as readline from 'readline';
 
 // Mock readline module
 jest.mock('readline', () => ({
@@ -146,7 +147,7 @@ describe('InteractiveMode', () => {
     it('should process valid commands', async () => {
       const executeCommandSpy = jest.spyOn(interactiveMode as any, 'executeCommand')
         .mockResolvedValue(undefined);
-      const readline = require('readline');
+      // Use the imported readline module
       
       // Set up mock to simulate user entering a command
       const mockRl = {
@@ -165,7 +166,7 @@ describe('InteractiveMode', () => {
 
     it('should handle exit command', async () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-      const readline = require('readline');
+      // Use the imported readline module
       
       const mockRl = {
         question: jest.fn((query, callback) => {
@@ -183,7 +184,7 @@ describe('InteractiveMode', () => {
 
     it('should handle empty input', async () => {
       const executeCommandSpy = jest.spyOn(interactiveMode as any, 'executeCommand');
-      const readline = require('readline');
+      // Use the imported readline module
       
       const mockRl = {
         question: jest.fn((query, callback) => {
@@ -328,7 +329,7 @@ describe('InteractiveMode', () => {
   describe('error handling', () => {
     it('should handle readline interface creation errors', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      const readline = require('readline');
+      // Use the imported readline module
       
       readline.createInterface.mockImplementation(() => {
         throw new Error('Failed to create interface');
@@ -367,7 +368,7 @@ describe('InteractiveMode', () => {
         { input: customInput, output: customOutput }
       );
 
-      const readline = require('readline');
+      // Use the imported readline module
       readline.createInterface.mockClear();
 
       await customMode.start();

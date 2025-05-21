@@ -120,9 +120,12 @@
     "jsonwebtoken": "^9.0.2",
     "langchain": "^0.3.24",
     "node-fetch": "^3.3.2",
+    "p-retry": "^6.2.1",
+    "shell-escape": "^0.2.0",
     "strip-ansi": "^6.0.1",
     "uuid": "^11.1.0",
-    "waltodo": "link:"
+    "waltodo": "link:",
+    "zod": "^3.25.12"
   },
   "devDependencies": {
     "@babel/core": "^7.24.3",
@@ -132,6 +135,7 @@
     "@jest/test-sequencer": "^29.6.3",
     "@jest/types": "^29.6.3",
     "@oclif/test": "^3.2.15",
+    "@playwright/test": "^1.52.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@types/cli-progress": "^3.11.3",
     "@types/glob": "^8.1.0",
@@ -144,9 +148,11 @@
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
     "babel-jest": "^29.6.3",
+    "commander": "^14.0.0",
     "csv-stringify": "^6.5.2",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-jest": "^28.11.0",
     "execa": "^7.2.0",
     "fs-extra": "^11.2.0",
     "glob": "^11.0.2",

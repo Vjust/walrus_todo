@@ -222,7 +222,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
   test('should properly validate credentials for expiration', async () => {
     // Setup private method access
     const validateCredentialMethod = jest.spyOn(
-      // @ts-ignore - accessing private method
+      // @ts-expect-error - accessing private method
       manager,
       'validateCredential'
     );
@@ -242,7 +242,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     };
     
     // Add the credential to the manager
-    // @ts-ignore - accessing private property
+    // @ts-expect-error - accessing private property
     manager.credentials = {
       'test-provider': expiredCredential
     };
@@ -261,13 +261,13 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
   test('should backup credentials periodically', () => {
     // Setup private method access
     const backupCredentialsMethod = jest.spyOn(
-      // @ts-ignore - accessing private method
+      // @ts-expect-error - accessing private method
       manager,
       'backupCredentialsIfNeeded'
     );
     
     // Trigger a save operation
-    // @ts-ignore - accessing private method
+    // @ts-expect-error - accessing private method
     manager.saveCredentials();
     
     // Check if backup function was called
@@ -287,13 +287,13 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     
     // Setup private method access
     const cleanupMethod = jest.spyOn(
-      // @ts-ignore - accessing private method
+      // @ts-expect-error - accessing private method
       manager,
       'cleanupOldBackups'
     );
     
     // Trigger a cleanup by saving credentials
-    // @ts-ignore - accessing private method
+    // @ts-expect-error - accessing private method
     manager.backupCredentialsIfNeeded();
     
     // Should attempt to clean up old backups

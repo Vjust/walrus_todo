@@ -161,7 +161,7 @@ describe('Data Privacy and PII Security Tests', () => {
         createVerification: jest.fn().mockImplementation((params) => {
           const { privacyLevel, request, response } = params;
           
-          let recordToReturn: any = { ...mockVerificationRecord };
+          const recordToReturn: any = { ...mockVerificationRecord };
           
           // Simulate different privacy level behaviors
           if (privacyLevel === AIPrivacyLevel.PUBLIC) {

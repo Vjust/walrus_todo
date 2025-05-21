@@ -139,10 +139,31 @@ export class TodoService {
         path.join(this.todosDir, `${listName}${STORAGE_CONFIG.FILE_EXT}`),
         'utf8'
       );
-      return JSON.parse(data) as TodoList;
+      try {
+        return JSON.parse(data) as TodoList;
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          throw new CLIError(
+            `Invalid JSON format in todo list "${listName}": ${parseError.message}`,
+            'INVALID_JSON_FORMAT'
+          );
+        }
+        throw parseError;
+      }
     } catch (err) {
-      // Return null instead of throwing if list doesn't exist
-      return null;
+      // Re-throw CLIError as-is
+      if (err instanceof CLIError) {
+        throw err;
+      }
+      // Return null for file not found errors
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'ENOENT') {
+        return null;
+      }
+      // For other file system errors, throw CLIError
+      throw new CLIError(
+        `Failed to read todo list "${listName}": ${err instanceof Error ? err.message : 'Unknown error'}`,
+        'LIST_READ_FAILED'
+      );
     }
   }
 

@@ -5,9 +5,9 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import StoreCommand from '../../src/commands/store';
 import { TodoService } from '../../src/services/todoService';
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
+import * as walrusStorage from '../../src/utils/walrus-storage';
 import { BatchProcessor } from '../../src/utils/batch-processor';
-import { createCache } from '../../src/utils/performance-cache';
+import * as performanceCache from '../../src/utils/performance-cache';
 
 describe('store command batch processing', () => {
   let sandbox: sinon.SinonSandbox;
@@ -39,7 +39,7 @@ describe('store command batch processing', () => {
       disconnect: sandbox.stub().resolves(),
       storeTodo: sandbox.stub().resolves('mock-blob-id')
     };
-    sandbox.stub(require('../../src/utils/walrus-storage'), 'createWalrusStorage').returns(walrusStorageStub);
+    sandbox.stub(walrusStorage, 'createWalrusStorage').returns(walrusStorageStub);
     
     // Mock cache
     cacheStub = {
@@ -47,7 +47,7 @@ describe('store command batch processing', () => {
       set: sandbox.stub().resolves(),
       shutdown: sandbox.stub().resolves()
     };
-    sandbox.stub(require('../../src/utils/performance-cache'), 'createCache').returns(cacheStub);
+    sandbox.stub(performanceCache, 'createCache').returns(cacheStub);
   });
 
   afterEach(() => {
@@ -141,6 +141,36 @@ describe('store command batch processing', () => {
       .it('shows progress during batch upload', ctx => {
         expect(ctx.stdout).to.contain('Progress:');
         expect(ctx.stdout).to.match(/\d+%/);
+      });
+  });
+
+  describe('blob mapping saves', () => {
+    test
+      .stdout()
+      .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
+      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
+      .do(() => {
+        // Mock filesystem operations
+        const fs = require('fs');
+        const fsStub = sandbox.stub(fs, 'existsSync');
+        const fsWriteStub = sandbox.stub(fs, 'writeFileSync');
+        const fsReadStub = sandbox.stub(fs, 'readFileSync');
+        
+        // Mock existing config directory
+        fsStub.withArgs(sinon.match(/\.config.*waltodo/)).returns(true);
+        fsStub.withArgs(sinon.match(/blob-mappings\.json/)).returns(false);
+        fsReadStub.returns('{}');
+        
+        // Mock BaseCommand methods
+        const StoreCommand = require('../../src/commands/store').default;
+        const writeFileSafeSpy = sandbox.spy(StoreCommand.prototype, 'writeFileSafe');
+        const getConfigDirSpy = sandbox.spy(StoreCommand.prototype, 'getConfigDir');
+      })
+      .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
+      .it('calls writeFileSafe to save blob mappings', ctx => {
+        const StoreCommand = require('../../src/commands/store').default;
+        expect(StoreCommand.prototype.writeFileSafe.called).to.be.true;
+        expect(ctx.stdout).to.contain('Todo stored successfully on Walrus');
       });
   });
 

@@ -17,9 +17,9 @@ jest.mock('../../src/services/ai/adapters/OpenAIModelAdapter', () => {
   };
 });
 
-// Get references to the mocked classes
-const { XAIModelAdapter } = require('../../src/services/ai/adapters/XAIModelAdapter');
-const { OpenAIModelAdapter } = require('../../src/services/ai/adapters/OpenAIModelAdapter');
+// Import the mocked classes
+import { XAIModelAdapter } from '../../src/services/ai/adapters/XAIModelAdapter';
+import { OpenAIModelAdapter } from '../../src/services/ai/adapters/OpenAIModelAdapter';
 
 describe('AI Provider Abstraction', () => {
   // Environment setup

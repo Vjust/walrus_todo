@@ -5,6 +5,7 @@
 import { jest } from '@jest/globals';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as childProcess from 'child_process';
 import axios from 'axios';
 import { 
   SuiTestnetSetup, 
@@ -298,7 +299,6 @@ describe('SuiTestnetSetup', () => {
 
     it('should check Sui CLI installation', () => {
       // Mock execSync to simulate CLI presence
-      const childProcess = require('child_process');
       jest.spyOn(childProcess, 'execSync').mockReturnValue('sui version 1.0.0');
 
       const isInstalled = SuiTestnetSetup.checkSuiCliInstallation();

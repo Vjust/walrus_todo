@@ -3,6 +3,7 @@ import { runCommand, mockProviderResponses } from '../../helpers/test-utils';
 import { Todo } from '../../../src/types/todo';
 import * as fs from 'fs';
 import * as path from 'path';
+import { AIProviderFactory } from '../../../src/services/ai/AIProviderFactory';
 
 // Mock the AIProviderFactory to avoid API calls
 jest.mock('../../../src/services/ai/AIProviderFactory', () => ({
@@ -267,8 +268,7 @@ describe('AI Command E2E Tests', () => {
     
     test('should handle empty suggestions', async () => {
       // Mock empty suggestions
-      const { AIProviderFactory } = require('../../../src/services/ai/AIProviderFactory');
-      AIProviderFactory.createProvider.mockImplementationOnce(() => ({
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementationOnce(() => ({
         completeStructured: jest.fn().mockResolvedValue({ result: [] })
       }));
       
@@ -340,8 +340,7 @@ describe('AI Command E2E Tests', () => {
     
     test('should handle AI service errors gracefully', async () => {
       // Mock AI service to throw an error
-      const { AIProviderFactory } = require('../../../src/services/ai/AIProviderFactory');
-      AIProviderFactory.createProvider.mockImplementationOnce(() => ({
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementationOnce(() => ({
         processWithPromptTemplate: jest.fn().mockRejectedValue(new Error('AI service error'))
       }));
       
@@ -352,8 +351,7 @@ describe('AI Command E2E Tests', () => {
     
     test('should handle malformed responses', async () => {
       // Mock malformed response
-      const { AIProviderFactory } = require('../../../src/services/ai/AIProviderFactory');
-      AIProviderFactory.createProvider.mockImplementationOnce(() => ({
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementationOnce(() => ({
         completeStructured: jest.fn().mockResolvedValue({ 
           result: 'not-an-object-when-expecting-one'
         })

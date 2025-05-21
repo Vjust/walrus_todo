@@ -55,7 +55,7 @@ export class FileValidator {
       throw new WalrusError(
         `File extension .${extension} not allowed. Allowed extensions: ${this.config.allowedExtensions.join(', ')}`
       );
-    };
+    }
 
     // Validate file size
     if (metadata.size > this.config.maxSize) {

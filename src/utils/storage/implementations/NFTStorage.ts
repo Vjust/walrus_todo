@@ -16,10 +16,10 @@ import {
 import { StorageClient } from '../core/StorageClient';
 import { StorageTransaction } from '../core/StorageTransaction';
 import { StorageOperationHandler } from '../utils/StorageOperationHandler';
-import { StorageError, BlockchainError, TransactionError } from '../../../types/errors';
-import { ValidationError } from '../../../types/errors/ValidationError';
-import { TransactionSigner } from '../../../types/signer';
-import { Todo } from '../../../types/todo';
+import { StorageError, BlockchainError, TransactionError } from '@errors';
+import { ValidationError } from '@errors/ValidationError';
+import { TransactionSigner } from '@types/signer';
+import { Todo } from '@types/todo';
 import { BlobStorage } from './BlobStorage';
 import { TransactionBlock } from '@mysten/sui/transactions';
 

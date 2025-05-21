@@ -4,7 +4,7 @@ import {
   BlockchainError,
   ValidationError,
   NetworkError
-} from '../../../src/types/errors';
+} from '@/types/errors';
 
 describe('Error Types', () => {
   describe('WalrusError', () => {

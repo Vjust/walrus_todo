@@ -47,7 +47,7 @@ sourceFileNames.forEach(fileName => {
     const sourceText = fs.readFileSync(fileName, 'utf8');
     
     // Transpile the file (no type checking)
-    const { outputText, diagnostics } = ts.transpileModule(sourceText, {
+    const { outputText } = ts.transpileModule(sourceText, {
       compilerOptions: {
         ...parsedConfig.options,
         noEmitOnError: false,
@@ -59,7 +59,7 @@ sourceFileNames.forEach(fileName => {
     });
 
     // Calculate output path
-    let outputPath = fileName
+    const outputPath = fileName
       .replace(path.resolve(root), outDir)
       .replace(/\.tsx?$/, '.js');
     

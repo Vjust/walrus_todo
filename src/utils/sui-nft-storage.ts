@@ -61,7 +61,7 @@ export class SuiNftStorage {
 
   private async checkConnectionHealth(): Promise<boolean> {
     try {
-      // @ts-ignore - Method compatibility issue with SuiClient
+      // @ts-expect-error - Method compatibility issue with SuiClient
       const systemState = await this.client.getSystemState();
       if (!systemState || !systemState.epoch) {
         console.warn('Invalid system state response:', systemState);
@@ -147,7 +147,7 @@ export class SuiNftStorage {
             const serializedTx = await tx.build({ client: this.client });
             
             // Sign the transaction block
-            // @ts-ignore - Type compatibility with Ed25519Keypair's signTransactionBlock
+            // @ts-expect-error - Type compatibility with Ed25519Keypair's signTransactionBlock
             const signature = await this.signer.signTransactionBlock(serializedTx);
             
             // Get transaction bytes for execution
@@ -258,7 +258,7 @@ export class SuiNftStorage {
           const serializedTx = await tx.build({ client: this.client });
           
           // Sign the transaction block
-          // @ts-ignore - Type compatibility with Ed25519Keypair's signTransactionBlock
+          // @ts-expect-error - Type compatibility with Ed25519Keypair's signTransactionBlock
           const signature = await this.signer.signTransactionBlock(serializedTx);
           
           // Get transaction bytes for execution

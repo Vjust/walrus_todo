@@ -3,7 +3,7 @@ import type { BlobObject } from '../types/walrus';
 import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { Signer } from '@mysten/sui/cryptography';
 import type { Transaction } from '@mysten/sui/transactions';
-import { execSync } from 'child_process';
+import { execa } from 'execa';
 import { VaultManager, BlobRecord } from './VaultManager';
 import { NetworkValidator, NetworkEnvironment } from './NetworkValidator';
 import { Logger } from './Logger';
@@ -171,7 +171,7 @@ export class ExpiryMonitor {
 
     // Check Walrus CLI for blob existence
     try {
-      execSync(`walrus read ${blobId}`, { stdio: 'ignore' });
+      await execa('walrus', ['read', blobId], { stdio: 'ignore' });
       result.exists = true;
     } catch (error) {
       this.logger.warn('Blob not found in storage', { blobId });
@@ -247,7 +247,7 @@ export class ExpiryMonitor {
       return;
     }
 
-    let pendingOperations: Promise<any>[] = [];
+    const pendingOperations: Promise<any>[] = [];
 
     try {
       const warningBlobs = this.vaultManager.getExpiringBlobs(

@@ -6,7 +6,7 @@ import { Logger } from '../../utils/Logger';
 import {
   ValidationError,
   BlockchainError
-} from '../../types/errors';
+} from '../../types/errors/consolidated/index';
 
 jest.mock('../../utils/Logger');
 
@@ -46,7 +46,7 @@ describe('TransactionHelper', () => {
 
   describe('Retry Logic', () => {
     it('should retry failed operations', async () => {
-      const operation = jest.fn<Promise<string>, []>()
+      const operation = jest.fn()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Timeout'))
         .mockResolvedValueOnce('success');
@@ -125,9 +125,9 @@ describe('TransactionHelper', () => {
         })
       ).not.toThrow();
 
-      helper = new TransactionHelper(); // No signer
+      const helperNoSigner = new TransactionHelper(); // No signer
       expect(() =>
-        helper.validateTransaction({
+        helperNoSigner.validateTransaction({
           name: 'test transaction',
           requireSigner: true
         })
@@ -156,10 +156,10 @@ describe('TransactionHelper', () => {
         })
       } as unknown as Signer;
       
-      helper = new TransactionHelper(); // No default signer
+      const helperNoSigner = new TransactionHelper(); // No default signer
 
       expect(() =>
-        helper.validateTransaction({
+        helperNoSigner.validateTransaction({
           name: 'test transaction',
           signer: customSigner,
           requireSigner: true
@@ -242,13 +242,13 @@ describe('TransactionHelper', () => {
       const operation = jest.fn()
         .mockRejectedValue(new Error('Test error'));
 
-      helper = new TransactionHelper(mockSigner, {
+      const customHelper = new TransactionHelper(mockSigner, {
         attempts: 3,
         baseDelay: 100
       });
 
       try {
-        await helper.executeWithRetry(operation, {
+        await customHelper.executeWithRetry(operation, {
           name: 'test',
           customRetry: {
             attempts: 2 // Override attempts only
@@ -284,7 +284,8 @@ describe('TransactionHelper', () => {
 
       const result = await helper.executeWithRetry(operation, {
         name: 'test operation',
-        requireSigner: true // Require signer validation
+        requireSigner: true, // Require signer validation
+        customSigner: mockSigner // Provide signer for validation
       });
 
       expect(result).toBe('success');

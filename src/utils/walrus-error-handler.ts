@@ -1,13 +1,13 @@
 import { 
-  WalrusError, 
+  BaseError as WalrusError, 
   NetworkError, 
   StorageError, 
   BlockchainError, 
   TransactionError, 
   AuthorizationError, 
-  ValidationError 
+  ValidationError,
+  CLIError 
 } from '../types/errors/consolidated';
-import { CLIError } from '../types/error';
 
 /**
  * Categorized error types for Walrus operations
@@ -160,52 +160,60 @@ export function mapToWalrusError(error: unknown, category: ErrorCategory, operat
   
   switch (category) {
     case ErrorCategory.NETWORK:
-      return new NetworkError(errorMessage, {
-        operation,
+      return new NetworkError({
+        message: errorMessage,
+        code: getErrorCode(category, operation),
         recoverable: true, // Network errors are typically recoverable
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.STORAGE:
-      return new StorageError(errorMessage, {
-        operation,
+      return new StorageError({
+        message: errorMessage,
+        code: getErrorCode(category, operation),
         recoverable: true, // Most storage errors are recoverable
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.VALIDATION:
-      return new ValidationError(errorMessage, {
-        operation,
+      return new ValidationError({
+        message: errorMessage,
+        code: getErrorCode(category, operation),
         recoverable: false, // Validation errors typically require user intervention
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.BLOCKCHAIN:
-      return new BlockchainError(errorMessage, {
-        operation,
+      return new BlockchainError({
+        message: errorMessage,
+        code: getErrorCode(category, operation),
         recoverable: false, // Blockchain errors are often not recoverable automatically
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.TRANSACTION:
-      return new TransactionError(errorMessage, {
-        operation,
+      return new TransactionError({
+        message: errorMessage,
+        code: getErrorCode(category, operation),
         recoverable: false, // Transaction errors typically need review
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.AUTHORIZATION:
-      return new AuthorizationError(errorMessage, {
-        operation,
+      return new AuthorizationError({
+        message: errorMessage,
+        code: getErrorCode(category, operation),
+        recoverable: false, // Authorization errors typically require user intervention
         cause: error instanceof Error ? error : undefined
       });
       
     default:
       // Map to CLI error for backward compatibility
-      return new CLIError(
-        `Error during ${operation}: ${errorMessage}`,
-        `WALRUS_${operation.toUpperCase()}_ERROR`
-      );
+      return new CLIError({
+        message: `Error during ${operation}: ${errorMessage}`,
+        code: `WALRUS_${operation.toUpperCase()}_ERROR`,
+        recoverable: false
+      });
   }
 }
 

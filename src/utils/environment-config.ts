@@ -729,7 +729,7 @@ export class EnvironmentConfigManager {
 
     // Get the environment value if it exists
     let value: any = process.env[key] !== undefined ? process.env[key] : defaultValue;
-    let source: 'environment' | 'default' = process.env[key] !== undefined ? 'environment' : 'default';
+    const source: 'environment' | 'default' = process.env[key] !== undefined ? 'environment' : 'default';
 
     // Convert to the right type based on the defaultValue
     if (typeof defaultValue === 'boolean') {

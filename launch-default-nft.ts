@@ -1,5 +1,6 @@
 import { SuiClient } from '@mysten/sui/client';
-import { createSuiNftStorage } from './src/utils/sui-nft-storage';
+import { SuiNftStorage } from './src/utils/sui-nft-storage';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from './src/services';
 import { TODO_NFT_CONFIG, NETWORK_URLS, CURRENT_NETWORK } from './src/constants';
 import { execSync } from 'child_process';
@@ -101,12 +102,25 @@ async function launchDefaultNft() {
 
     // Step 6: Create the NFT on chain
     console.log('\n⛓️ Creating NFT on Sui blockchain...');
-    const nftStorage = createSuiNftStorage(
+    
+    // Get the keypair for signing transactions
+    const addressInfo = execSync('sui client active-address').toString().trim();
+    const keystore = execSync('sui client envs').toString();
+    console.log(`✓ Using address: ${addressInfo}`);
+    
+    // Create a keypair (you may need to configure this based on your setup)
+    const keypair = Ed25519Keypair.generate();
+    
+    const nftStorage = new SuiNftStorage(
       suiClient,
-      TODO_NFT_CONFIG.MODULE_ADDRESS
+      keypair,
+      {
+        address: addressInfo,
+        packageId: TODO_NFT_CONFIG.MODULE_ADDRESS
+      }
     );
 
-    const txDigest = await nftStorage.createTodoNft(updatedTodo, walrusBlobId, imageUrl);
+    const txDigest = await nftStorage.createTodoNft(updatedTodo, walrusBlobId);
     
     console.log('\n✅ NFT created successfully!');
     console.log(`📝 Transaction: ${txDigest}`);

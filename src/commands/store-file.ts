@@ -60,7 +60,7 @@ export default class StoreFileCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(StoreFileCommand);
-    const files = args.files || [];
+    const files = Array.isArray(args.files) ? args.files : (args.files ? [args.files] : []);
 
     try {
       // Check if any files provided

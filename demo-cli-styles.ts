@@ -1,6 +1,5 @@
-import chalk from 'chalk';
-import BaseCommand, { ICONS, PRIORITY, STORAGE } from './src/base-command';
-import { Command } from '@oclif/core';
+import * as chalk from 'chalk';
+import BaseCommand, { ICONS } from './src/base-command';
 
 /**
  * A demo class to showcase our new CLI styling
@@ -134,5 +133,23 @@ class StyleDemo extends BaseCommand {
   }
 }
 
-// Run the demo
-new StyleDemo().run().catch(error => console.error('Error running demo:', error));
+// Run the demo using OCLIF's run method
+StyleDemo.run([], {
+  root: __dirname,
+  pjson: { 
+    name: 'demo', 
+    version: '1.0.0', 
+    oclif: {
+      update: {
+        node: {
+          version: '18.0.0',
+          targets: ['node18']
+        },
+        s3: {
+          bucket: 'demo-bucket',
+          templates: {} as any
+        }
+      }
+    }
+  }
+}).catch(error => console.error('Error running demo:', error));

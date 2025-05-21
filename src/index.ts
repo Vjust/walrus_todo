@@ -53,7 +53,7 @@ export default class WalTodo extends Command {
     }
 
     // Show help by default
-    this.help();
+    this.log(WalTodo.help);
   }
 }
 
@@ -170,8 +170,8 @@ export const run = async () => {
 };
 
 // Run the CLI if this file is executed directly
-// Use ESM-compatible method to detect if this is the main module
-const isMainModule = import.meta.url === `file://${process.argv[1]}` || require.main === module;
+// Use CommonJS method to detect if this is the main module
+const isMainModule = require.main === module;
 if (isMainModule) {
   run().catch((error) => {
     console.error('Unhandled error:', error);

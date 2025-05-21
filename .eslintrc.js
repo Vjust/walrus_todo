@@ -31,6 +31,9 @@ module.exports = {
     'dist/',
     'node_modules/',
     'coverage/',
+    'waltodo-frontend/',
+    'frontend-demo/',
+    'backup/',
     '*.js'
   ]
 };

@@ -1,16 +1,16 @@
 import { jest } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { Signer } from '@mysten/sui/cryptography';
-import { ExpiryMonitor } from '../../../src/utils/ExpiryMonitor';
-import { StorageManager } from '../../../src/utils/StorageManager';
-import { VaultManager, BlobRecord } from '../../../src/utils/VaultManager';
-import { WalrusError, StorageError } from '../../../src/types/errors';
-import { Logger } from '../../../src/utils/Logger';
-import type { WalrusClientExt } from '../../../src/types/client';
+import { ExpiryMonitor } from '@/utils/ExpiryMonitor';
+import { StorageManager } from '@/utils/StorageManager';
+import { VaultManager, BlobRecord } from '@/utils/VaultManager';
+import { WalrusError, StorageError } from '@/types/errors';
+import { Logger } from '@/utils/Logger';
+import type { WalrusClientExt } from '@/types/client';
 
 jest.mock('@mysten/walrus');
-jest.mock('../../../src/utils/VaultManager');
-jest.mock('../../../src/utils/Logger');
+jest.mock('@/utils/VaultManager');
+jest.mock('@/utils/Logger');
 
 describe('Storage Allocation Integration', () => {
   let monitor: ExpiryMonitor;

@@ -1,8 +1,8 @@
-import { SuiClient } from '@mysten/sui';
-import { TransactionBlock } from '@mysten/sui';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
 import type { Mocked } from 'jest-mock';
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
+import { createWalrusStorage } from '@/utils/walrus-storage';
 import type { WalrusStorage } from '../../src/utils/walrus-storage';
 import { KeystoreSigner } from '../../src/utils/sui-keystore';
 import { CLIError } from '../../src/types/error';

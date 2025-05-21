@@ -1,7 +1,7 @@
 import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { TransactionBlock } from '@mysten/sui/transactions';
-import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
-import { WalrusClientAdapter } from '../../../types/adapters/WalrusClientAdapter';
+import { SignerAdapter } from '@adapters/SignerAdapter';
+import { WalrusClientAdapter } from '@adapters/WalrusClientAdapter';
 import { 
   AIVerifierAdapter, 
   VerificationParams, 
@@ -10,10 +10,10 @@ import {
   AIPrivacyLevel,
   ProviderRegistrationParams,
   ProviderInfo
-} from '../../../types/adapters/AIVerifierAdapter';
+} from '@adapters/AIVerifierAdapter';
 import { createHash } from 'crypto';
 import { stringify } from 'csv-stringify/sync';
-import { CLIError } from '../../../types/error';
+import { CLIError } from '@errors';
 
 /**
  * SuiAIVerifierAdapter - Blockchain adapter for AI verification
@@ -244,7 +244,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         const content = obj.data.content;
         
         // Parse metadata if available
-        let metadata: Record<string, string> = {};
+        const metadata: Record<string, string> = {};
         if ((content as any).fields.metadata) {
           try {
             const metadataStr = (content as any).fields.metadata;
@@ -307,7 +307,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       const content = verification.data.content;
       
       // Parse metadata if available
-      let metadata: Record<string, string> = {};
+      const metadata: Record<string, string> = {};
       if ((content as any).fields.metadata) {
         try {
           const metadataStr = (content as any).fields.metadata;
@@ -583,7 +583,10 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       
       // Use the deleteBlob method if it exists
       if (typeof this.walrusAdapter.deleteBlob === 'function') {
-        const deleteFunction = this.walrusAdapter.deleteBlob({ blobId });
+        // The deleteBlob method expects different options based on the WalrusClientAdapter interface
+        const deleteFunction = this.walrusAdapter.deleteBlob({ 
+          blobId: blobId  // Use explicit property name  
+        } as any); // Type assertion to handle interface mismatch
         await deleteFunction(tx);
       } else {
         // Fallback to direct transaction call if method doesn't exist

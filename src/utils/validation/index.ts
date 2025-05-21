@@ -3,6 +3,9 @@
  * Exports all validation-related utilities for easy import
  */
 
+// Export Zod schemas and validation functions
+export * from './schemas';
+
 import { CommandSanitizer } from '../CommandSanitizer';
 import { InputValidator, ValidationRule, ValidationSchema, CommonValidationRules } from '../InputValidator';
 import { SchemaValidator, Schemas } from '../SchemaValidator';

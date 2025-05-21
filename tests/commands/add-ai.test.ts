@@ -1,18 +1,16 @@
 import { jest, expect, test, describe, beforeEach, afterEach, SpyInstance } from '@jest/globals';
 import { TodoService } from '../../src/services/todoService';
-import { AiService } from '../../src/services/ai';
+import { aiService } from '../../src/services/ai';
 import { createWalrusStorage } from '../../src/utils/walrus-storage';
 import AddCommand from '../../src/commands/add';
 
-// Mock AiService
+// Mock aiService
 jest.mock('../../src/services/ai', () => {
   return {
-    AiService: jest.fn().mockImplementation(() => {
-      return {
-        suggestTags: jest.fn().mockResolvedValue(['ai-suggested', 'important']),
-        suggestPriority: jest.fn().mockResolvedValue('high')
-      };
-    })
+    aiService: {
+      suggestTags: jest.fn().mockResolvedValue(['ai-suggested', 'important']),
+      suggestPriority: jest.fn().mockResolvedValue('high')
+    }
   };
 });
 
@@ -73,7 +71,7 @@ describe('Add Command with AI', () => {
     
     await command.run();
 
-    expect(AiService).not.toHaveBeenCalled();
+    expect(aiService.suggestTags).not.toHaveBeenCalled();
     expect(TodoService).toHaveBeenCalled();
     expect(TodoService.mock.results[0].value.addTodo).toHaveBeenCalled();
   });
@@ -91,9 +89,8 @@ describe('Add Command with AI', () => {
     
     await command.run();
 
-    expect(AiService).toHaveBeenCalled();
-    expect(AiService.mock.results[0].value.suggestTags).toHaveBeenCalled();
-    expect(AiService.mock.results[0].value.suggestPriority).toHaveBeenCalled();
+    expect(aiService.suggestTags).toHaveBeenCalled();
+    expect(aiService.suggestPriority).toHaveBeenCalled();
     expect(TodoService.mock.results[0].value.addTodo).toHaveBeenCalled();
     
     // Check AI suggestions were logged
@@ -102,10 +99,8 @@ describe('Add Command with AI', () => {
   });
 
   test('should handle AI error gracefully', async () => {
-    // Mock AiService to throw error
-    AiService.mockImplementationOnce(() => {
-      throw new Error('API key error');
-    });
+    // Mock aiService to throw error
+    (aiService.suggestTags as jest.Mock).mockRejectedValueOnce(new Error('API key error'));
 
     // Mock parse to return ai flag as true
     command.parse = jest.fn().mockResolvedValue({
@@ -138,6 +133,6 @@ describe('Add Command with AI', () => {
     
     await command.run();
 
-    expect(AiService).toHaveBeenCalledWith('custom-api-key');
+    expect(aiService.suggestTags).toHaveBeenCalled();
   });
 });

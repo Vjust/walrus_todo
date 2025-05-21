@@ -8,7 +8,7 @@ describe('EnvironmentConfigManager', () => {
     process.env = { ...originalEnv };
     
     // Reset the singleton instance
-    // @ts-ignore: Accessing private property for testing
+    // @ts-expect-error: Accessing private property for testing
     EnvironmentConfigManager.instance = undefined;
   });
   

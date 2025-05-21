@@ -1,8 +1,8 @@
-import { SuiClient } from '@mysten/sui';
-import { TransactionBlock } from '@mysten/sui';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
-import { createWalrusImageStorage } from '../../src/utils/walrus-image-storage';
-import { CLIError } from '../../src/types/error';
+import { createWalrusImageStorage } from '@/utils/walrus-image-storage';
+import { CLIError } from '@/types/errors';
 import { KeystoreSigner } from '../../src/utils/sui-keystore';
 import { execSync } from 'child_process';
 import * as fs from 'fs';

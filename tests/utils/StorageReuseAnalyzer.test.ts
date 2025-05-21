@@ -1,4 +1,4 @@
-import { StorageReuseAnalyzer } from '../../../src/utils/storage-reuse-analyzer';
+import { StorageReuseAnalyzer } from '@/utils/storage-reuse-analyzer';
 import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 

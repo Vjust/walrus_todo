@@ -69,7 +69,7 @@ export default class ListCommand extends BaseCommand {
       this.debugLog(`Command parsed with args: ${JSON.stringify(args)}`);
 
       // If JSON output is requested, handle it separately
-      if (await this.isJson()) {
+      if (this.isJson) {
         return this.handleJsonOutput(args, flags);
       }
 
@@ -314,7 +314,7 @@ export default class ListCommand extends BaseCommand {
     
     // Check cache for all lists first
     const cacheKey = 'lists:all';
-    let lists = await this.getCachedTodos(cacheKey, async () => this.todoService.getAllLists()) as string[] | null;
+    const lists = await this.getCachedTodos(cacheKey, async () => this.todoService.getAllLists()) as string[] | null;
     
     if (CACHE_DEBUG) {
       if (lists) {
