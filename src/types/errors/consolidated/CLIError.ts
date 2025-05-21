@@ -102,7 +102,7 @@ export class CLIError extends BaseError {
   static invalidParameter(
     paramName: string,
     message?: string,
-    options: Omit<CLIErrorOptions, 'invalidParams'> = {}
+    options: Omit<CLIErrorOptions, 'invalidParams' | 'message'> = {}
   ): CLIError {
     return new CLIError(
       message || `Invalid parameter: ${paramName}`,
@@ -122,7 +122,7 @@ export class CLIError extends BaseError {
    */
   static missingParameter(
     paramName: string,
-    options: Omit<CLIErrorOptions, 'invalidParams'> = {}
+    options: Omit<CLIErrorOptions, 'invalidParams' | 'message'> = {}
   ): CLIError {
     return new CLIError(
       `Missing required parameter: ${paramName}`,
@@ -142,7 +142,7 @@ export class CLIError extends BaseError {
    */
   static commandNotFound(
     command: string,
-    options: Omit<CLIErrorOptions, 'command'> = {}
+    options: Omit<CLIErrorOptions, 'command' | 'message'> = {}
   ): CLIError {
     return new CLIError(
       `Command not found: ${command}`,

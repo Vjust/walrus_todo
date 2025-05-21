@@ -133,7 +133,7 @@ export default class FetchCommand extends BaseCommand {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
               onRetry: (error, attempt, delay) => {
-                const errorMessage = error ? (typeof error === 'object' && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
+                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
               }
             }
@@ -197,7 +197,7 @@ export default class FetchCommand extends BaseCommand {
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               onRetry: (error, attempt, delay) => {
-                const errorMessage = error ? (typeof error === 'object' && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
+                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} fetching NFT after error: ${errorMessage}`));
               }
             }
@@ -218,7 +218,7 @@ export default class FetchCommand extends BaseCommand {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
               onRetry: (error, attempt, delay) => {
-                const errorMessage = error ? (typeof error === 'object' && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
+                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
               }
             }

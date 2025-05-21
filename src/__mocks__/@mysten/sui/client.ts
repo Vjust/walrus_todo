@@ -86,10 +86,7 @@ const mockSuiClient = mock<SuiClient>({
   getTransactionBlock: jest.fn().mockImplementation(async (): Promise<SuiTransactionBlockResponse> => response),
 
   // Mock the signAndExecuteTransaction method for compatibility
-  signAndExecuteTransaction: jest.fn().mockImplementation(async (): Promise<SuiTransactionBlockResponse> => response),
-  // The following is a custom extension, not part of the actual SuiClient interface
-  // But it's needed for our codebase which uses this method
-  signAndExecuteTransactionBlock: jest.fn().mockImplementation(async (): Promise<SuiTransactionBlockResponse> => response)
+  signAndExecuteTransaction: jest.fn().mockImplementation(async (): Promise<SuiTransactionBlockResponse> => response)
 });
 
 type MockedSuiClient = typeof mockSuiClient;

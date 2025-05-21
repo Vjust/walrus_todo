@@ -53,7 +53,7 @@ export default class WalTodo extends Command {
     }
 
     // Show help by default
-    await this.showHelp();
+    this.help();
   }
 }
 

@@ -63,7 +63,7 @@ export class TodoAIAdapter {
       // Cast to Uint8Array | TransactionBlock to match the expected type
       const result = await this.client.signAndExecuteTransaction({
         signer: keypair,
-        transactionBlock: tx as any,
+        transaction: tx as any,
       });
 
       this.logger.info(`Linked verification ${verificationId} to todo ${todoId}`);
@@ -102,7 +102,7 @@ export class TodoAIAdapter {
       // Cast to string | Uint8Array | TransactionBlock to match the expected type
       const result = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
-        transactionBlock: tx as any,
+        transaction: tx as any,
       });
 
       if (result?.results?.[0]) {
@@ -142,7 +142,7 @@ export class TodoAIAdapter {
       // Cast to string | Uint8Array | TransactionBlock to match the expected type
       const result = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
-        transactionBlock: tx as any,
+        transaction: tx as any,
       });
 
       if (result?.results?.[0]) {
@@ -191,7 +191,7 @@ export class TodoAIAdapter {
       // Cast to string | Uint8Array | TransactionBlock to match the expected type
       const result = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
-        transactionBlock: tx as any,
+        transaction: tx as any,
       });
 
       if (result?.results?.[0]) {
@@ -258,7 +258,7 @@ export class TodoAIAdapter {
       // Cast to Uint8Array | TransactionBlock to match the expected type
       const result = await this.client.signAndExecuteTransaction({
         signer: keypair,
-        transactionBlock: tx as any,
+        transaction: tx as any,
       });
 
       this.logger.info(`Created and linked verification to todo ${todoId}`);

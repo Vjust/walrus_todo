@@ -375,7 +375,7 @@ export default class CompleteCommand extends BaseCommand {
     let lastWalrusError: Error | null = null;
 
     try {
-      const { args, flags } = await this.parse<typeof CompleteCommand>(CompleteCommand);
+      const { args, flags } = await this.parse(CompleteCommand);
       
       // Get config once to avoid redeclaration issues
       const config = await configService.getConfig();
@@ -451,7 +451,7 @@ export default class CompleteCommand extends BaseCommand {
               maxRetries: 3,
               initialDelay: 1000,
               onRetry: (error, attempt, delay) => {
-                const errorMessage = error ? (typeof error === 'object' && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
+                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
               }
             }
@@ -495,7 +495,7 @@ export default class CompleteCommand extends BaseCommand {
             maxRetries: 3,
             initialDelay: 2000,
             onRetry: (error, attempt, delay) => {
-              const errorMessage = error && typeof error === 'object' && 'message' in error ? (error as Error).message : String(error);
+              const errorMessage = error && typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error);
               this.log(chalk.yellow(`Verification retry ${attempt} after error: ${errorMessage}`));
             }
           });

@@ -1,5 +1,12 @@
-import { WalrusError, NetworkError, StorageError, BlockchainError, TransactionError, AuthorizationError } from '../types/errors';
-import { ValidationError } from '../types/errors/ValidationError';
+import { 
+  WalrusError, 
+  NetworkError, 
+  StorageError, 
+  BlockchainError, 
+  TransactionError, 
+  AuthorizationError, 
+  ValidationError 
+} from '../types/errors/consolidated';
 import { CLIError } from '../types/error';
 
 /**

@@ -48,7 +48,7 @@ export default class ShareCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      const { args, flags } = await this.parse<typeof ShareCommand>(ShareCommand);
+      const { args, flags } = await this.parse(ShareCommand);
       
       // Use either the listName argument or the list flag
       const listName = args.listName || flags.list;

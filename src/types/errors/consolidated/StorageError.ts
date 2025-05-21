@@ -117,7 +117,7 @@ export class StorageError extends BaseError {
    */
   static fileNotFound(
     path: string,
-    options: Omit<StorageErrorOptions, 'path' | 'operation' | 'storageType'> = {}
+    options: Omit<StorageErrorOptions, 'path' | 'operation' | 'storageType' | 'message'> = {}
   ): StorageError {
     return new StorageError(`File not found: ${path}`, {
       ...options,
@@ -136,11 +136,10 @@ export class StorageError extends BaseError {
    */
   static permissionDenied(
     path: string,
-    options: Omit<StorageErrorOptions, 'path' | 'operation'> = {}
+    options: Omit<StorageErrorOptions, 'path' | 'operation' | 'message'> = {}
   ): StorageError {
     return new StorageError(`Permission denied: ${path}`, {
       ...options,
-      message: `Permission denied: ${path}`,
       path,
       operation: 'access',
       recoverable: false
@@ -155,11 +154,10 @@ export class StorageError extends BaseError {
    */
   static blobNotFound(
     blobId: string,
-    options: Omit<StorageErrorOptions, 'itemId' | 'operation' | 'storageType'> = {}
+    options: Omit<StorageErrorOptions, 'itemId' | 'operation' | 'storageType' | 'message'> = {}
   ): StorageError {
     return new StorageError(`Blob not found: ${blobId}`, {
       ...options,
-      message: `Blob not found: ${blobId}`,
       itemId: blobId,
       operation: 'read',
       storageType: 'walrus',

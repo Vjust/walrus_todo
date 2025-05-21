@@ -133,7 +133,7 @@ export class NetworkError extends BaseError {
   static fromStatusCode(
     statusCode: number,
     message?: string,
-    options: Omit<NetworkErrorOptions, 'statusCode'> = {}
+    options: Omit<NetworkErrorOptions, 'statusCode' | 'message'> = {}
   ): NetworkError {
     // Generate message based on status code if not provided
     const errorMessage = message || getMessageForStatusCode(statusCode);

@@ -110,6 +110,48 @@ export class MockKeystoreSigner implements Signer {
     };
   }
 
+  // Add signAndExecuteTransaction method required by Signer interface
+  async signAndExecuteTransaction(transaction: TransactionBlock | Transaction | Uint8Array, options?: any): Promise<any> {
+    // Mock transaction response
+    return {
+      digest: 'mock-digest',
+      effects: {
+        messageVersion: 'v1',
+        status: { status: 'success' },
+        executedEpoch: '0',
+        transactionDigest: 'mock-digest',
+        gasUsed: {
+          computationCost: '1000',
+          storageCost: '1000',
+          storageRebate: '0',
+          nonRefundableStorageFee: '10'
+        },
+        dependencies: [],
+        sharedObjects: [],
+        mutated: [],
+        deleted: [],
+        created: [],
+        unwrapped: [],
+        wrapped: [],
+        eventsDigest: null,
+        gasObject: {
+          owner: { AddressOwner: 'mock-address' },
+          reference: {
+            objectId: 'mock-object-id',
+            digest: 'mock-digest',
+            version: '1'
+          }
+        }
+      },
+      confirmedLocalExecution: true,
+      timestampMs: null,
+      checkpoint: null,
+      events: [],
+      objectChanges: [],
+      balanceChanges: []
+    };
+  }
+
   getKeyScheme(): SignatureScheme {
     return 'ED25519' as SignatureScheme;
   }

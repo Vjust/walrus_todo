@@ -37,7 +37,7 @@ export default class HistoryCommand extends BaseCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = await this.parse<typeof HistoryCommand>(HistoryCommand);
+    const { flags } = await this.parse(HistoryCommand);
 
     if (flags.clear) {
       commandHistory.clearHistory();

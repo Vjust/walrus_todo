@@ -35,9 +35,9 @@ export class ConfigService {
    */
   constructor() {
     // Check for config directory from environment variable
-    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR');
+    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR' as any) as string;
     
-    if (configDir) {
+    if (configDir && configDir.trim() !== '') {
       // If environment variable is set, use it directly
       this.configPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
     } else {
@@ -242,12 +242,12 @@ export class ConfigService {
    */
   public async mergeAndSaveConfig(config: Partial<Config>): Promise<void> {
     // Get the configured directory path from environment
-    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR');
+    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR' as any) as string;
     
     // Determine the target path for saving
     let targetConfigPath = this.configPath;
     
-    if (configDir) {
+    if (configDir && configDir.trim() !== '') {
       // Ensure the directory exists
       try {
         try {
