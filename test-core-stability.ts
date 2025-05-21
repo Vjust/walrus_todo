@@ -17,23 +17,23 @@ import { TodoService } from './src/services/todoService';
 import { ConfigService } from './src/services/config-service';
 
 async function testCoreStability() {
-  console.log('🧪 Testing Core System Stability (AI-Independent)');
-  console.log('================================================\n');
+  process.stdout.write('🧪 Testing Core System Stability (AI-Independent)\n');
+  process.stdout.write('================================================\n\n');
   
   try {
     // Test 1: Basic service initialization
-    console.log('1. Testing service initialization...');
+    process.stdout.write('1. Testing service initialization...\n');
     const todoService = new TodoService();
     const configService = new ConfigService();
-    console.log('   ✅ Services initialized successfully\n');
+    process.stdout.write('   ✅ Services initialized successfully\n\n');
     
     // Test 2: Basic todo operations
-    console.log('2. Testing core todo operations...');
+    process.stdout.write('2. Testing core todo operations...\n');
     
     // Create a test list
     const testListName = `test-stability-${Date.now()}`;
     const list = await todoService.createList(testListName, 'user');
-    console.log(`   ✅ Created test list: ${testListName}`);
+    process.stdout.write(`   ✅ Created test list: ${testListName}\n`);
     
     // Add a todo without AI
     const testTodo = {
@@ -45,50 +45,50 @@ async function testCoreStability() {
     };
     
     const addedTodo = await todoService.addTodo(testListName, testTodo);
-    console.log(`   ✅ Added todo: ${addedTodo.id}`);
+    process.stdout.write(`   ✅ Added todo: ${addedTodo.id}\n`);
     
     // List todos
     const todos = await todoService.listTodos();
-    console.log(`   ✅ Retrieved ${todos.length} todo(s) from all lists`);
+    process.stdout.write(`   ✅ Retrieved ${todos.length} todo(s) from all lists\n`);
     
     // Complete todo
     await todoService.toggleItemStatus(testListName, addedTodo.id, true);
-    console.log(`   ✅ Completed todo: ${addedTodo.id}`);
+    process.stdout.write(`   ✅ Completed todo: ${addedTodo.id}\n`);
     
     // Clean up - delete todo and list
     await todoService.deleteTodo(testListName, addedTodo.id);
-    console.log(`   ✅ Deleted todo: ${addedTodo.id}`);
+    process.stdout.write(`   ✅ Deleted todo: ${addedTodo.id}\n`);
     
     // Note: We won't delete the list to avoid potential issues
-    console.log(`   ✅ Core todo operations completed successfully\n`);
+    process.stdout.write(`   ✅ Core todo operations completed successfully\n\n`);
     
     // Test 3: Configuration operations
-    console.log('3. Testing configuration operations...');
+    process.stdout.write('3. Testing configuration operations...\n');
     
     // Get all lists
     const allLists = await configService.getAllLists();
-    console.log(`   ✅ Retrieved ${allLists.length} list(s) from configuration`);
+    process.stdout.write(`   ✅ Retrieved ${allLists.length} list(s) from configuration\n`);
     
     // Test configuration without AI
-    console.log('   ✅ Configuration operations work independently\n');
+    process.stdout.write('   ✅ Configuration operations work independently\n\n');
     
     // Test 4: AI isolation test
-    console.log('4. Testing AI isolation...');
-    console.log('   ✅ Core system operates independently of AI services');
-    console.log('   ✅ AI failures are properly isolated and don\'t crash core system');
-    console.log('   ✅ SafeAIService provides fallbacks when AI is unavailable\n');
+    process.stdout.write('4. Testing AI isolation...\n');
+    process.stdout.write('   ✅ Core system operates independently of AI services\n');
+    process.stdout.write('   ✅ AI failures are properly isolated and don\'t crash core system\n');
+    process.stdout.write('   ✅ SafeAIService provides fallbacks when AI is unavailable\n\n');
     
-    console.log('🎉 CORE SYSTEM STABILITY TEST PASSED');
-    console.log('=====================================');
-    console.log('Core todo management system is stable and AI-independent!');
-    console.log('AI features are truly optional and won\'t break core functionality.');
+    process.stdout.write('🎉 CORE SYSTEM STABILITY TEST PASSED\n');
+    process.stdout.write('=====================================\n');
+    process.stdout.write('Core todo management system is stable and AI-independent!\n');
+    process.stdout.write('AI features are truly optional and won\'t break core functionality.\n');
     
   } catch (error) {
-    console.error('❌ CORE SYSTEM STABILITY TEST FAILED');
-    console.error('====================================');
-    console.error('Error:', error instanceof Error ? error.message : String(error));
-    console.error('\nThis indicates the core system has dependencies on AI services');
-    console.error('that need to be addressed to ensure system stability.');
+    process.stderr.write('❌ CORE SYSTEM STABILITY TEST FAILED\n');
+    process.stderr.write('====================================\n');
+    process.stderr.write('Error: ' + (error instanceof Error ? error.message : String(error)) + '\n');
+    process.stderr.write('\nThis indicates the core system has dependencies on AI services\n');
+    process.stderr.write('that need to be addressed to ensure system stability.\n');
     process.exit(1);
   }
 }
@@ -96,7 +96,7 @@ async function testCoreStability() {
 // Run the test
 if (require.main === module) {
   testCoreStability().catch(error => {
-    console.error('Test execution failed:', error);
+    process.stderr.write('Test execution failed: ' + error + '\n');
     process.exit(1);
   });
 }

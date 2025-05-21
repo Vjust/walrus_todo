@@ -8,7 +8,7 @@ export interface BatchOptions {
   retryAttempts?: number;
   retryDelayMs?: number;
   progressCallback?: (progress: BatchProgress) => void;
-  errorHandler?: (error: Error, item: any, index: number) => void | Promise<void>;
+  errorHandler?: (error: Error, item: unknown, index: number) => void | Promise<void>;
   pauseBetweenBatchesMs?: number;
 }
 
@@ -26,7 +26,7 @@ export interface BatchProgress {
 
 export interface BatchResult<T> {
   successful: T[];
-  failed: Array<{ item: any; error: Error; index: number }>;
+  failed: Array<{ item: unknown; error: Error; index: number }>;
   progress: BatchProgress;
   duration: number;
 }

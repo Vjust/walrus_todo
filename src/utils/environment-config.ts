@@ -178,7 +178,7 @@ function getNumberValue(value: string | undefined, defaultValue: number): number
 export class EnvironmentConfigManager {
   private static instance: EnvironmentConfigManager;
   private config: EnvironmentConfig;
-  private extensionVars: Record<string, EnvVariable<any | boolean>> = {};
+  private extensionVars: Record<string, EnvVariable<unknown>> = {};
   private variableWarnings: string[] = [];
   
   private constructor() {
@@ -610,7 +610,7 @@ export class EnvironmentConfigManager {
   /**
    * Get all environment variables including extensions
    */
-  public getAllVariables(): Record<string, EnvVariable<any>> {
+  public getAllVariables(): Record<string, EnvVariable<unknown>> {
     return {
       ...this.config,
       ...this.extensionVars
@@ -728,7 +728,7 @@ export class EnvironmentConfigManager {
     }
 
     // Get the environment value if it exists
-    let value: any = process.env[key] !== undefined ? process.env[key] : defaultValue;
+    let value: unknown = process.env[key] !== undefined ? process.env[key] : defaultValue;
     const source: 'environment' | 'default' = process.env[key] !== undefined ? 'environment' : 'default';
 
     // Convert to the right type based on the defaultValue
@@ -856,7 +856,7 @@ export class EnvironmentConfigManager {
       const envValue = process.env[key];
       
       if (envValue !== undefined) {
-        let typedValue: any = envValue;
+        let typedValue: unknown = envValue;
         
         // Convert the string value to the appropriate type based on the default value
         if (typeof config.value === 'boolean') {
@@ -874,7 +874,7 @@ export class EnvironmentConfigManager {
       const envValue = process.env[key];
       
       if (envValue !== undefined) {
-        let typedValue: any = envValue;
+        let typedValue: unknown = envValue;
         
         // Convert the string value to the appropriate type based on the default value
         if (typeof config.value === 'boolean') {
@@ -895,7 +895,7 @@ export class EnvironmentConfigManager {
   /**
    * Load configuration from a JSON object (e.g., from a config file)
    */
-  public loadFromObject(obj: Record<string, any>): void {
+  public loadFromObject(obj: Record<string, unknown>): void {
     for (const [key, value] of Object.entries(obj)) {
       // Check if it's a core config key
       if (key in this.config) {
@@ -955,8 +955,8 @@ export class EnvironmentConfigManager {
   /**
    * Get all environment variables in a serializable format
    */
-  public toJSON(): Record<string, any> {
-    const result: Record<string, any> = {};
+  public toJSON(): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
     
     // Add core variables
     for (const [key, config] of Object.entries(this.config)) {

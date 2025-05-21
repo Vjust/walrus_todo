@@ -1,12 +1,13 @@
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 import { SuiTestService } from '../../services/SuiTestService';
-import { MockTodoListContract } from '../../__mocks__/contracts/todo-list';
-import { MockNFTStorageContract } from '../../__mocks__/contracts/nft-storage';
+jest.mock('../../__mocks__/contracts/todo-list');
+const { MockTodoListContract } = jest.requireActual('../../__mocks__/contracts/todo-list');
+jest.mock('../../__mocks__/contracts/nft-storage');
+const { MockNFTStorageContract } = jest.requireActual('../../__mocks__/contracts/nft-storage');
 
 describe('Transaction Fuzzing Tests', () => {
   const fuzzer = new FuzzGenerator();
   let suiService: SuiTestService;
-  let todoContract: MockTodoListContract;
   let nftContract: MockNFTStorageContract;
 
   beforeEach(() => {
@@ -15,7 +16,6 @@ describe('Transaction Fuzzing Tests', () => {
       walletAddress: fuzzer.blockchainData().address(),
       encryptedStorage: false
     });
-    todoContract = new MockTodoListContract('0x123');
     nftContract = new MockNFTStorageContract('0x456');
   });
 
@@ -33,10 +33,11 @@ describe('Transaction Fuzzing Tests', () => {
       await Promise.all(operations.map(async op => {
         await new Promise(resolve => setTimeout(resolve, op.delay));
         switch (op.type) {
-          case 'create':
+          case 'create': {
             await suiService.addTodo(listId, op.text);
             break;
-          case 'update':
+          }
+          case 'update': {
             const todos = await suiService.getTodos(listId);
             if (todos.length > 0) {
               const randomTodo = todos[Math.floor(Math.random() * todos.length)];
@@ -46,11 +47,15 @@ describe('Transaction Fuzzing Tests', () => {
               });
             }
             break;
-          case 'delete':
+          }
+          case 'delete': {
             await suiService.deleteTodoList(listId);
             break;
+          }
         }
       }));
+      
+      expect(operations.length).toBeGreaterThan(0);
     });
 
     it('should handle malformed input data', async () => {
@@ -65,14 +70,17 @@ describe('Transaction Fuzzing Tests', () => {
 
       const listId = await suiService.createTodoList();
 
-      for (const input of malformedInputs) {
-        try {
-          await suiService.addTodo(listId, input.text);
-        } catch (error) {
-          // Expect valid error handling
-          expect(error).toHaveProperty('message');
+      const results = await Promise.allSettled(
+        malformedInputs.map(input => suiService.addTodo(listId, input.text))
+      );
+      
+      // Check that errors have proper message property
+      const rejectedResults = results.filter(result => result.status === 'rejected');
+      rejectedResults.forEach(result => {
+        if (result.status === 'rejected') {
+          expect(result.reason).toHaveProperty('message');
         }
-      }
+      });
     });
   });
 
@@ -90,42 +98,48 @@ describe('Transaction Fuzzing Tests', () => {
 
       const nftIds: string[] = [];
 
-      await Promise.all(operations.map(async op => {
-        try {
-          switch (op.type) {
-            case 'create':
-              const nftId = await nftContract.entry_create_nft(
+      const results = await Promise.allSettled(operations.map(async op => {
+        switch (op.type) {
+          case 'create': {
+            const nftId = await nftContract.entry_create_nft(
+              { sender: fuzzer.blockchainData().address() },
+              op.metadata
+            );
+            nftIds.push(nftId);
+            break;
+          }
+          case 'transfer': {
+            if (nftIds.length > 0) {
+              const randomNftId = nftIds[Math.floor(Math.random() * nftIds.length)];
+              await nftContract.entry_transfer_nft(
                 { sender: fuzzer.blockchainData().address() },
+                randomNftId,
+                op.newOwner
+              );
+            }
+            break;
+          }
+          case 'update': {
+            if (nftIds.length > 0) {
+              const randomNftId = nftIds[Math.floor(Math.random() * nftIds.length)];
+              await nftContract.entry_update_metadata(
+                { sender: fuzzer.blockchainData().address() },
+                randomNftId,
                 op.metadata
               );
-              nftIds.push(nftId);
-              break;
-            case 'transfer':
-              if (nftIds.length > 0) {
-                const randomNftId = nftIds[Math.floor(Math.random() * nftIds.length)];
-                await nftContract.entry_transfer_nft(
-                  { sender: fuzzer.blockchainData().address() },
-                  randomNftId,
-                  op.newOwner
-                );
-              }
-              break;
-            case 'update':
-              if (nftIds.length > 0) {
-                const randomNftId = nftIds[Math.floor(Math.random() * nftIds.length)];
-                await nftContract.entry_update_metadata(
-                  { sender: fuzzer.blockchainData().address() },
-                  randomNftId,
-                  op.metadata
-                );
-              }
-              break;
+            }
+            break;
           }
-        } catch (error) {
-          // Expect valid error handling
-          expect(error).toHaveProperty('message');
         }
       }));
+      
+      // Check that errors have proper message property
+      const rejectedResults = results.filter(result => result.status === 'rejected');
+      rejectedResults.forEach(result => {
+        if (result.status === 'rejected') {
+          expect(result.reason).toHaveProperty('message');
+        }
+      });
     });
   });
 
@@ -146,15 +160,21 @@ describe('Transaction Fuzzing Tests', () => {
         }
       }), { minLength: 10, maxLength: 30 });
 
-      for (const condition of networkConditions) {
-        await new Promise(resolve => setTimeout(resolve, condition.latency));
-        try {
-          await condition.operation();
-        } catch (error) {
-          // Expect valid error handling
-          expect(error).toHaveProperty('message');
+      const results = await Promise.allSettled(
+        networkConditions.map(async condition => {
+          await new Promise(resolve => setTimeout(resolve, condition.latency));
+          return condition.operation();
+        })
+      );
+      
+      const rejectedResults = results.filter(result => result.status === 'rejected');
+      rejectedResults.forEach(result => {
+        if (result.status === 'rejected') {
+          expect(result.reason).toHaveProperty('message');
         }
-      }
+      });
+      
+      expect(results.length).toBe(networkConditions.length);
     });
   });
 });

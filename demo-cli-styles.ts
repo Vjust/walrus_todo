@@ -9,10 +9,10 @@ class StyleDemo extends BaseCommand {
 
   async run(): Promise<void> {
     // Demo all the fun new styling elements
-    console.log('\n🎨 WALRUS TODO CLI STYLE SHOWCASE 🎨\n');
+    this.log('\n🎨 WALRUS TODO CLI STYLE SHOWCASE 🎨\n');
 
     // Demo the different status messages
-    console.log(chalk.bold.underline('Status Messages:'));
+    this.log(chalk.bold.underline('Status Messages:'));
     this.success('Task completed successfully!');
     this.info('Here is some helpful information');
     this.warning('Be careful with this operation');
@@ -25,11 +25,11 @@ class StyleDemo extends BaseCommand {
       );
     } catch (error) {
       // Just catch the error for the demo
-      console.log('\n');
+      this.log('\n');
     }
 
     // Demo the fun section boxes
-    console.log(chalk.bold.underline('\nFun Section Boxes:'));
+    this.log(chalk.bold.underline('\nFun Section Boxes:'));
     this.section('Quick Tips', 
       'Here are some helpful tips for using the CLI:\n' +
       '- Use "list" to see all your todos\n' +
@@ -38,7 +38,7 @@ class StyleDemo extends BaseCommand {
     );
 
     // Demo the simple list with new bullet points
-    console.log(chalk.bold.underline('\nColored Lists with Fun Bullets:'));
+    this.log(chalk.bold.underline('\nColored Lists with Fun Bullets:'));
     this.simpleList('Available Commands', [
       'add - Create a new todo',
       'list - Show all todos',
@@ -48,50 +48,59 @@ class StyleDemo extends BaseCommand {
     ]);
 
     // Demo the todo formatting with new priority labels
-    console.log(chalk.bold.underline('\nTodo Formatting:'));
+    this.log(chalk.bold.underline('\nTodo Formatting:'));
     
     const todos = [
       { 
         id: '123', 
         title: 'Finish project presentation', 
         completed: false, 
-        priority: 'high',
+        priority: 'high' as const,
         dueDate: '2025-05-15',
-        tags: ['work', 'important']
+        tags: ['work', 'important'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        private: false
       },
       { 
         id: '456', 
         title: 'Buy groceries', 
         completed: false, 
-        priority: 'medium',
-        tags: ['personal']
+        priority: 'medium' as const,
+        tags: ['personal'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        private: false
       },
       { 
         id: '789', 
         title: 'Call Mom', 
         completed: true, 
-        priority: 'low',
+        priority: 'low' as const,
+        tags: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         private: true
       }
     ];
     
     todos.forEach(todo => {
-      console.log(this.formatTodo(todo));
-      console.log(''); // Add spacing
+      this.log(this.formatTodo(todo));
+      this.log(''); // Add spacing
     });
 
     // Demo storage types
-    console.log(chalk.bold.underline('\nStorage Types:'));
-    console.log(`Local storage: ${this.formatStorage('local')}`);
-    console.log(`Blockchain storage: ${this.formatStorage('blockchain')}`);
-    console.log(`Hybrid storage: ${this.formatStorage('both')}`);
+    this.log(chalk.bold.underline('\nStorage Types:'));
+    this.log(`Local storage: ${this.formatStorage('local')}`);
+    this.log(`Blockchain storage: ${this.formatStorage('blockchain')}`);
+    this.log(`Hybrid storage: ${this.formatStorage('both')}`);
 
     // Demo debug output
-    console.log(chalk.bold.underline('\nDebug Output:'));
+    this.log(chalk.bold.underline('\nDebug Output:'));
     this.debugLog('Processing todo list data', { count: 5, lastUpdated: '2025-05-11' });
 
     // Demo all the icons
-    console.log(chalk.bold.underline('\nFun Icons:'));
+    this.log(chalk.bold.underline('\nFun Icons:'));
     
     // Group the icons by category
     const iconGroups = {
@@ -112,7 +121,7 @@ class StyleDemo extends BaseCommand {
 
     // Display all icon groups
     Object.entries(iconGroups).forEach(([groupName, iconNames]) => {
-      console.log(chalk.yellow(`\n${groupName}:`));
+      this.log(chalk.yellow(`\n${groupName}:`));
       
       let line = '';
       iconNames.forEach(name => {
@@ -121,15 +130,15 @@ class StyleDemo extends BaseCommand {
         
         // Break into multiple lines for readability
         if (line.length > 50) {
-          console.log(line);
+          this.log(line);
           line = '';
         }
       });
       
-      if (line) console.log(line);
+      if (line) this.log(line);
     });
 
-    console.log('\n✨ End of Style Demo ✨\n');
+    this.log('\n✨ End of Style Demo ✨\n');
   }
 }
 
@@ -152,4 +161,7 @@ StyleDemo.run([], {
       }
     }
   }
-}).catch(error => console.error('Error running demo:', error));
+}).catch(error => {
+  console.error('Error running demo:', error);
+  process.exit(1);
+});

@@ -167,7 +167,7 @@ export interface LibraryAdapterOptions {
   adapterFactory?: {
     signer?: (signer: Signer | Ed25519Keypair) => SignerAdapter;
     transaction?: (tx: Transaction | TransactionBlock) => TransactionBlockAdapter;
-    walrusClient?: (client: any) => WalrusClientAdapter;
+    walrusClient?: (client: unknown) => WalrusClientAdapter;
   };
 }
 
@@ -218,8 +218,8 @@ export function assertDefined<T>(value: T | undefined | null, message?: string):
  * @returns The value cast to the specified type
  */
 export function assertType<T>(
-  value: any,
-  typeGuard: (val: any) => boolean,
+  value: unknown,
+  typeGuard: (val: unknown) => boolean,
   message?: string
 ): T {
   if (!typeGuard(value)) {
@@ -268,9 +268,9 @@ export function safeGet<T, K extends keyof T>(
  * Type compatibility checker for runtime type validation
  */
 export function isCompatibleType<T>(
-  value: any,
+  value: unknown,
   properties: (keyof T)[],
-  typeGuard?: (val: any) => boolean
+  typeGuard?: (val: unknown) => boolean
 ): value is T {
   if (!value || typeof value !== 'object') {
     return false;
@@ -299,7 +299,7 @@ export function applyIfDefined<T, R>(
 /**
  * Convert a possibly bigint/number/string value to bigint safely
  */
-export function toBigInt(value: string | number | bigint | unknown): bigint {
+export function toBigInt(value: string | number | bigint): bigint {
   if (typeof value === 'bigint') {
     return value;
   }
@@ -318,7 +318,7 @@ export function toBigInt(value: string | number | bigint | unknown): bigint {
 export function safeJsonParse<T>(str: string, fallback: T): T {
   try {
     return JSON.parse(str) as T;
-  } catch (e) {
+  } catch {
     return fallback;
   }
 }

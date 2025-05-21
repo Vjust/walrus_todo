@@ -3,7 +3,6 @@
  * Run with: npx ts-node scripts/fix-common-implicit-any.ts
  */
 
-import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
@@ -20,7 +19,7 @@ const files = glob.sync(path.join(__dirname, '../src/**/*.ts'), {
   ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts']
 });
 
-console.log(`Processing ${files.length} TypeScript files for common implicit 'any' patterns...`);
+process.stdout.write(`Processing ${files.length} TypeScript files for common implicit 'any' patterns...\n`);
 
 const changes: FileChange[] = [];
 let totalChanges = 0;
@@ -87,7 +86,7 @@ const patterns = [
   },
   // Array destructuring without types
   {
-    pattern: /const\s+\[([^\]]*)\]\s*=\s*([^;:\[]+);/g,
+    pattern: /const\s+\[([^\]]*)\]\s*=\s*([^;:[]+);/g,
     test: (match: string, elements: string) => {
       // Only apply if no type annotation is present
       return !match.includes(':') && elements.trim().length > 0;
@@ -135,10 +134,10 @@ files.forEach(filePath => {
       // Write the updated content
       fs.writeFileSync(filePath, updated);
       
-      console.log(`[${relativePath}] Applied ${fileChangeCount} changes (backup created)`);
+      process.stdout.write(`[${relativePath}] Applied ${fileChangeCount} changes (backup created)\n`);
     }
   } catch (error) {
-    console.error(`Error processing ${filePath}:`, error);
+    process.stderr.write(`Error processing ${filePath}: ${error}\n`);
   }
 });
 
@@ -202,9 +201,9 @@ console.log(\`Successfully restored \${restored} files\`);
 
 fs.writeFileSync(revertScriptPath, revertScript);
 
-console.log(`\nApplied ${totalChanges} automatic fixes to ${changes.length} files.`);
-console.log(`Report written to ${reportPath}`);
-console.log(`Created revert script at ${revertScriptPath}`);
-console.log('\nThese changes add explicit \'any\' types as a starting point.');
-console.log('You should review and replace with more specific types where appropriate.');
-console.log('To revert changes: npx ts-node scripts/revert-implicit-any-fixes.ts');
+process.stdout.write(`\nApplied ${totalChanges} automatic fixes to ${changes.length} files.\n`);
+process.stdout.write(`Report written to ${reportPath}\n`);
+process.stdout.write(`Created revert script at ${revertScriptPath}\n`);
+process.stdout.write('\nThese changes add explicit \'any\' types as a starting point.\n');
+process.stdout.write('You should review and replace with more specific types where appropriate.\n');
+process.stdout.write('To revert changes: npx ts-node scripts/revert-implicit-any-fixes.ts\n');

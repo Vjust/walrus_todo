@@ -1,4 +1,4 @@
-import { Command, Flags } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { InteractiveMode } from '../utils/interactive-mode';
 

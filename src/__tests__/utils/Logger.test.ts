@@ -19,7 +19,7 @@ interface LogEntry {
 
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance<void, any, any>[];
+  let mockConsole: jest.SpyInstance[];
   let mockHandler: jest.Mock;
 
   beforeEach(() => {

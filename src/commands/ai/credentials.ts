@@ -1,10 +1,8 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../../base-command';
-import { secureCredentialService, CredentialInfo } from '../../services/ai/SecureCredentialService';
+import { secureCredentialService } from '../../services/ai/SecureCredentialService';
 import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
-import { AIProvider as EnumAIProvider } from '../../types/adapters/AIModelAdapter';
-import { validateApiKey, obfuscateKey } from '../../utils/KeyValidator';
-import { getProviderEnum, getProviderString, isValidProvider } from '../../utils/adapters';
+import { validateApiKey } from '../../utils/KeyValidator';
 import chalk from 'chalk';
 
 /**

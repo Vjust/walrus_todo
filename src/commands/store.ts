@@ -5,13 +5,11 @@ import { createWalrusStorage } from '../utils/walrus-storage';
 import { CLIError } from '../types/error';
 import chalk from 'chalk';
 import { RetryManager } from '../utils/retry-manager';
-import { BatchProcessor } from '../utils/batch-processor';
 import { createCache } from '../utils/performance-cache';
 import { Todo } from '../types/todo';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import pRetry from 'p-retry';
 
 /**

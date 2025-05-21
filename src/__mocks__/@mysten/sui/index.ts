@@ -1,4 +1,3 @@
-import { TransactionBlock } from '@mysten/sui/transactions';
 import type { SuiSystemStateResponse, PaginatedObjectsResponse } from '@mysten/sui/client';
 // Export the BCS implementation
 import { BCS, bcs } from './bcs';

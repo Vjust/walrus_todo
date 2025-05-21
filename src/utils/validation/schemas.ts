@@ -46,7 +46,7 @@ export const TodoSchema = z.object({
   tags: z.array(z.string()
     .min(1, 'Tag cannot be empty')
     .max(50, 'Tag too long (max 50 characters)')
-    .refine(tag => !/[<>\"'&]/.test(tag), 'Tag contains invalid characters')
+    .refine(tag => !/[<>"'&]/.test(tag), 'Tag contains invalid characters')
   ).max(20, 'Too many tags (max 20)')
     .optional(),
   
@@ -95,7 +95,7 @@ export const TodoListSchema = z.object({
     .min(1, 'TodoList name cannot be empty')
     .max(100, 'TodoList name too long (max 100 characters)')
     .refine(name => name.trim().length > 0, 'TodoList name cannot be only whitespace')
-    .refine(name => !/[<>\"'&\\/:]/.test(name), 'TodoList name contains invalid characters'),
+    .refine(name => !/[<>"'&\\/:]/.test(name), 'TodoList name contains invalid characters'),
   
   description: z.string()
     .max(500, 'TodoList description too long (max 500 characters)')

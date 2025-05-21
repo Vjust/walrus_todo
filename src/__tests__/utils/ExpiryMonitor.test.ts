@@ -1,4 +1,4 @@
-import { jest, describe, it, expect, beforeEach, afterEach, SpyInstance } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { ExpiryMonitor } from '../../utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../utils/VaultManager';
@@ -20,7 +20,7 @@ describe('ExpiryMonitor', () => {
   let mockWarningHandler: jest.Mock;
   let mockRenewalHandler: jest.Mock;
   let mockSigner: jest.Mocked<Signer>;
-  let mockExecSync: jest.SpyInstance<Buffer, [command: string, options?: any]>;
+  let mockExecSync: jest.SpyInstance;
   let mockLogger: jest.Mocked<Logger>;
   
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe('ExpiryMonitor', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-    mockExecSync = jest.spyOn(execSync as any, 'default') as jest.SpyInstance<Buffer, [command: string, options?: any]>;
+    mockExecSync = jest.spyOn(execSync as any, 'default') as jest.SpyInstance;
     mockExecSync.mockReturnValue(Buffer.from('testnet\n'));
   });
 

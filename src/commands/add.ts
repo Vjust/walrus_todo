@@ -1,4 +1,4 @@
-import { Args, Flags, Hook } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { aiService } from '../services/ai';
@@ -6,15 +6,14 @@ import { AIProviderFactory } from '../services/ai/AIProviderFactory';
 import { Todo, StorageLocation } from '../types/todo';
 import { CLIError } from '../types/error';
 import { createWalrusStorage } from '../utils/walrus-storage';
-import BaseCommand, { ICONS, PRIORITY, STORAGE } from '../base-command';
+import BaseCommand, { ICONS } from '../base-command';
 import { InputValidator, CommonValidationRules } from '../utils/InputValidator';
 import { CommandSanitizer } from '../utils/CommandSanitizer';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import { addCommandValidation, validateAIApiKey, validateBlockchainConfig } from '../utils/CommandValidationMiddleware';
-import { NetworkError, ValidationError, TransactionError } from '../types/errors';
+import { NetworkError, ValidationError } from '../types/errors';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 
 /**
  * @class AddCommand
@@ -384,7 +383,7 @@ export default class AddCommand extends BaseCommand {
    * @param args Command arguments
    * @param flags Command flags
    */
-  private async handleJsonOutput(args: any, flags: any): Promise<void> {
+  private async handleJsonOutput(args: { listOrTitle?: string }, flags: Record<string, unknown>): Promise<void> {
     // Determine the list name and titles based on arguments and flags
     let todoTitles: string[] = [];
     let listName: string;
@@ -482,8 +481,8 @@ export default class AddCommand extends BaseCommand {
    * @param todoTitle Title of the todo for AI analysis
    * @param flags Command flags including AI configuration options
    */
-  private async enhanceWithAI(todo: Partial<Todo>, todoTitle: string, flags: any): Promise<void> {
-    let aiSpinner: any;
+  private async enhanceWithAI(todo: Partial<Todo>, todoTitle: string, flags: Record<string, unknown>): Promise<void> {
+    let aiSpinner: unknown;
     
     try {
       this.debugLog('AI flag detected in add command');
@@ -801,7 +800,7 @@ export default class AddCommand extends BaseCommand {
    * @param flags Command flags
    * @throws ValidationError if validation fails
    */
-  private performPreExecutionValidation(args: any, flags: any): void {
+  private performPreExecutionValidation(args: { listOrTitle?: string }, flags: Record<string, unknown>): void {
     // Validate mutually exclusive flags
     if (flags.task && args.listOrTitle) {
       const hasMultipleTasks = Array.isArray(flags.task) && flags.task.length > 1;

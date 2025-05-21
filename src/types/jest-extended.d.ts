@@ -5,13 +5,13 @@
 
 declare namespace jest {
   // Generic SpyInstance definition that properly handles return types and arguments
-  export interface SpyInstance<T extends (...args: any[]) => any, Y extends any[] = any[]> {
-    mockImplementation(fn: (...args: Parameters<T>) => ReturnType<T>): this;
-    mockImplementationOnce(fn: (...args: Parameters<T>) => ReturnType<T>): this;
-    mockReturnValue(value: ReturnType<T>): this;
-    mockReturnValueOnce(value: ReturnType<T>): this;
-    mockResolvedValue<U extends ReturnType<T>>(value: U extends Promise<infer V> ? V : U): this;
-    mockResolvedValueOnce<U extends ReturnType<T>>(value: U extends Promise<infer V> ? V : U): this;
+  export interface SpyInstance {
+    mockImplementation(fn: (...args: any[]) => any): this;
+    mockImplementationOnce(fn: (...args: any[]) => any): this;
+    mockReturnValue(value: any): this;
+    mockReturnValueOnce(value: any): this;
+    mockResolvedValue(value: any): this;
+    mockResolvedValueOnce(value: any): this;
     mockRejectedValue(value: any): this;
     mockRejectedValueOnce(value: any): this;
     mockReturnThis(): this;
@@ -22,17 +22,17 @@ declare namespace jest {
     getMockName(): string;
     getMockImplementation(): Function | undefined;
     mock: {
-      calls: Y[][];
+      calls: any[][];
       results: Array<{ type: 'return' | 'throw'; value: any }>;
       instances: any[];
       contexts: any[];
-      lastCall: Y[];
+      lastCall: any[];
       invocationCallOrder: number[];
     };
   }
 
   // Console-specific SpyInstance
-  export interface ConsoleSpyInstance extends SpyInstance<(...args: any[]) => void> {
+  export interface ConsoleSpyInstance extends SpyInstance {
     mockImplementation(fn?: (...args: any[]) => void): this;
   }
 }
@@ -50,7 +50,7 @@ declare module '@jest/globals' {
   export const it: jest.It;
   
   // Re-export the SpyInstance type
-  export type SpyInstance<T extends (...args: any[]) => any, Y extends any[] = Parameters<T>> = jest.SpyInstance<T, Y>;
+  export type SpyInstance = jest.SpyInstance;
 }
 
 // Ensure module is properly exported

@@ -1,10 +1,7 @@
 import { 
   type PublicKey, 
-  IntentScope, 
-  messageWithIntent,
-  toSerializedSignature
+  IntentScope
 } from '@mysten/sui/cryptography';
-import { fromB64 } from '@mysten/sui/utils';
 
 export class Ed25519PublicKey implements PublicKey {
   static scheme = 'ED25519';
@@ -15,32 +12,32 @@ export class Ed25519PublicKey implements PublicKey {
 
   constructor(private readonly publicKeyBytes: Uint8Array) {}
   
-  async verifyWithIntent(data: Uint8Array, signature: string | Uint8Array, intent: IntentScope): Promise<boolean> {
+  async verifyWithIntent(_data: Uint8Array, _signature: string | Uint8Array, _intent: IntentScope): Promise<boolean> {
     // This is a mock implementation - in real code would verify the signature with intent
     return Promise.resolve(true);
   }
 
-  async verifyTransactionBlock(message: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verifyTransactionBlock(_message: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     // Updated to handle both string and Uint8Array signatures
     return Promise.resolve(true);
   }
 
-  async verifyPersonalMessage(message: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verifyPersonalMessage(_message: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     // Updated to handle both string and Uint8Array signatures
     return Promise.resolve(true);
   }
 
-  async verify(data: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verify(_data: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     // Updated to handle both string and Uint8Array signatures
     return Promise.resolve(true);
   }
 
-  async verifyTransaction(transaction: Uint8Array, signature: string | Uint8Array): Promise<boolean> {
+  async verifyTransaction(_transaction: Uint8Array, _signature: string | Uint8Array): Promise<boolean> {
     // Mock implementation - in real code would verify the transaction signature
     return Promise.resolve(true);
   }
 
-  verifyAddress(address: string): boolean {
+  verifyAddress(_address: string): boolean {
     // Mock implementation - in real code would verify the address
     return true;
   }

@@ -11,7 +11,7 @@ jest.mock('@mysten/walrus');
 describe('NetworkValidator', () => {
   let validator: NetworkValidator;
   let mockWalrusClient: jest.Mocked<WalrusClientExt>;
-  let mockExecSync: jest.SpyInstance<Buffer | string>;
+  let mockExecSync: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -20,7 +20,7 @@ import { OpenAIModelAdapter } from './adapters/OpenAIModelAdapter';
 import { XAIModelAdapter } from './adapters/XAIModelAdapter';
 import { secureCredentialService } from './SecureCredentialService';
 import { AI_CONFIG } from '../../constants';
-import { Logger, LogLevel } from '../../utils/Logger';
+import { Logger } from '../../utils/Logger';
 import { getProviderString, getProviderEnum } from '../../utils/adapters';
 
 /**

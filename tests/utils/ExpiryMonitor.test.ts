@@ -20,7 +20,7 @@ describe('ExpiryMonitor', () => {
   let mockWarningHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockRenewalHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockSigner: jest.Mocked<Signer>;
-  let mockExecSync: jest.SpyInstance<typeof execSync>;
+  let mockExecSync: jest.SpyInstance;
   let mockLogger: jest.Mocked<Logger>;
   
   beforeEach(() => {

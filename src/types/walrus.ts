@@ -146,14 +146,14 @@ export interface ReadBlobOptions {
 export interface StorageWithSizeOptions {
   size: number;
   epochs: number;
-  walCoin?: any;
+  walCoin?: unknown;
 }
 
 export interface RegisterBlobOptions {
   blobId: string;
   rootHash: Uint8Array;
   deletable: boolean;
-  walCoin?: any;
+  walCoin?: unknown;
   attributes?: Record<string, string>;
   size: number;
   epochs: number;

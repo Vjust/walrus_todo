@@ -1,18 +1,16 @@
-import { TransactionBlock } from '@mysten/sui/transactions';
 
 // Create local type definitions to avoid compatibility issues
 type SuiTransactionBlockResponse = any;
 type SuiObjectResponse = any;
 type PaginatedObjectsResponse = any;
 type SuiObjectDataOptions = any;
-type SuiObjectRef = any;
 type GetObjsOwnedByAddressResponse = any;
 type SuiObjectResponseQuery = any;
 type ExecuteTransactionBlockParams = any;
 type SuiAddress = string;
 
 export class SuiClient {
-  async getObject({ id, options }: { id: string, options?: SuiObjectDataOptions }): Promise<SuiObjectResponse> {
+  async getObject({ id: _id, options: _options }: { id: string, options?: SuiObjectDataOptions }): Promise<SuiObjectResponse> {
     return {
       data: {
         objectId: 'mock-object-id',
@@ -33,8 +31,8 @@ export class SuiClient {
   }
 
   async getObjectsOwnedByAddress(
-    address: string,
-    query?: SuiObjectResponseQuery
+    _address: string,
+    _query?: SuiObjectResponseQuery
   ): Promise<GetObjsOwnedByAddressResponse> {
     return {
       data: [],
@@ -44,9 +42,9 @@ export class SuiClient {
   }
 
   async getOwnedObjects({
-    owner,
-    filter,
-    options
+    owner: _owner,
+    filter: _filter,
+    options: _options
   }: {
     owner: string;
     filter?: { StructType: string };
@@ -59,7 +57,7 @@ export class SuiClient {
     };
   }
 
-  async executeTransactionBlock(params: ExecuteTransactionBlockParams): Promise<SuiTransactionBlockResponse> {
+  async executeTransactionBlock(_params: ExecuteTransactionBlockParams): Promise<SuiTransactionBlockResponse> {
     return {
       digest: 'transaction-digest',
       transaction: {
@@ -131,14 +129,14 @@ export class SuiClient {
   }
   
   async getTransactionBlock({
-    digest,
-    options
+    digest: _digest,
+    options: _options
   }: {
     digest: string;
     options?: { showEffects?: boolean; showEvents?: boolean }
   }): Promise<SuiTransactionBlockResponse> {
     return {
-      digest: digest,
+      digest: _digest,
       effects: {
         messageVersion: 'v1',
         status: { status: 'success' },
@@ -151,7 +149,7 @@ export class SuiClient {
         },
         modifiedAtVersions: [],
         sharedObjects: [],
-        transactionDigest: digest,
+        transactionDigest: _digest,
         created: [{
           owner: { AddressOwner: 'mock-owner-address' },
           reference: {
@@ -200,8 +198,8 @@ export class SuiClient {
   }
 
   async getBalance({
-    owner,
-    coinType
+    owner: _owner,
+    coinType: _coinType
   }: {
     owner: SuiAddress;
     coinType: string;
@@ -212,7 +210,7 @@ export class SuiClient {
     lockedBalance: { number: string };
   }> {
     return {
-      coinType,
+      coinType: _coinType,
       coinObjectCount: 1,
       totalBalance: '1000',
       lockedBalance: { number: '0' }

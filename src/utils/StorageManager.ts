@@ -8,7 +8,7 @@ import { Logger } from './Logger';
 import { WalrusClientExt } from '../types/client';
 
 interface MoveStruct {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface SuiParsedData {
@@ -391,7 +391,7 @@ export class StorageManager {
     }
   }
 
-  async allocateStorage(size: string, signer: any): Promise<{
+  async allocateStorage(size: string, signer: unknown): Promise<{
     digest: string;
     storage: {
       id: { id: string };

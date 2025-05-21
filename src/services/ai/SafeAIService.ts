@@ -625,7 +625,7 @@ export class SafeAIService {
   /**
    * Safely analyzes todos with fallback
    */
-  public async analyze(todos: Todo[]): Promise<SafeAIResult<Record<string, any>>> {
+  public async analyze(todos: Todo[]): Promise<SafeAIResult<Record<string, unknown>>> {
     const fallback = DEFAULT_RESPONSES.analyze(todos.length);
     
     return this.safeExecute(
@@ -641,12 +641,12 @@ export class SafeAIService {
   public async analyzeWithVerification(
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
-  ): Promise<SafeAIResult<VerifiedAIResult<Record<string, any>>>> {
+  ): Promise<SafeAIResult<VerifiedAIResult<Record<string, unknown>>>> {
     const aiAvailable = await this.isAIAvailable();
     
     if (!aiAvailable || !this.aiService) {
       const fallbackAnalysis = DEFAULT_RESPONSES.analyze(todos.length);
-      const fallbackResult: VerifiedAIResult<Record<string, any>> = {
+      const fallbackResult: VerifiedAIResult<Record<string, unknown>> = {
         result: fallbackAnalysis,
         verification: {
           id: 'fallback-analyze',
@@ -683,7 +683,7 @@ export class SafeAIService {
       this.logger.warn(`AI verification analyze failed: ${errorMessage}, using fallback`);
       
       const fallbackAnalysis = DEFAULT_RESPONSES.analyze(todos.length);
-      const fallbackResult: VerifiedAIResult<Record<string, any>> = {
+      const fallbackResult: VerifiedAIResult<Record<string, unknown>> = {
         result: fallbackAnalysis,
         verification: {
           id: 'fallback-analyze',
@@ -740,7 +740,7 @@ export class SafeAIService {
   public async setProvider(
     provider: AIProvider,
     modelName?: string,
-    options?: any
+    options?: Record<string, unknown>
   ): Promise<SafeAIResult<boolean>> {
     if (!this.aiService) {
       return {

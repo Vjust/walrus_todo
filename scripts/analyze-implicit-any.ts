@@ -29,7 +29,7 @@ const configPath = path.resolve(__dirname, '../tsconfig.json');
 const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
 
 if (configFile.error) {
-  console.error(`Error reading tsconfig.json: ${configFile.error.messageText}`);
+  process.stderr.write(`Error reading tsconfig.json: ${configFile.error.messageText}\n`);
   process.exit(1);
 }
 
@@ -52,7 +52,7 @@ const files = glob.sync(path.join(__dirname, '../src/**/*.ts'), {
   ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts']
 });
 
-console.log(`Analyzing ${files.length} TypeScript files for implicit 'any' issues...`);
+process.stdout.write(`Analyzing ${files.length} TypeScript files for implicit 'any' issues...\n`);
 
 // Create program with files
 const program = ts.createProgram(files, strictConfig, host);
@@ -136,18 +136,18 @@ results.topFiles = Object.entries(results.issuesByFile)
   .slice(0, 20);
 
 // Print summary to console
-console.log(`\nAnalysis complete. Found ${results.totalIssues} implicit 'any' issues in ${Object.keys(results.issuesByFile).length} files.`);
+process.stdout.write(`\nAnalysis complete. Found ${results.totalIssues} implicit 'any' issues in ${Object.keys(results.issuesByFile).length} files.\n`);
 
-console.log('\nTop 20 files with most issues:');
+process.stdout.write('\nTop 20 files with most issues:\n');
 results.topFiles.forEach(({ file, count }) => {
-  console.log(`${file}: ${count} issues`);
+  process.stdout.write(`${file}: ${count} issues\n`);
 });
 
-console.log('\nIssues by category:');
+process.stdout.write('\nIssues by category:\n');
 Object.entries(results.issuesByCategory)
   .sort((a, b) => b[1].length - a[1].length)
   .forEach(([category, issues]) => {
-    console.log(`${category}: ${issues.length} issues`);
+    process.stdout.write(`${category}: ${issues.length} issues\n`);
   });
 
 // Write detailed report to file
@@ -159,8 +159,8 @@ const markdownPath = path.resolve(__dirname, '../implicit-any-report.md');
 const markdownContent = generateMarkdownReport(results);
 fs.writeFileSync(markdownPath, markdownContent);
 
-console.log(`\nDetailed report written to ${reportPath}`);
-console.log(`Markdown report written to ${markdownPath}`);
+process.stdout.write(`\nDetailed report written to ${reportPath}\n`);
+process.stdout.write(`Markdown report written to ${markdownPath}\n`);
 
 /**
  * Generates a markdown report from analysis results

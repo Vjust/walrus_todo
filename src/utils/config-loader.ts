@@ -13,7 +13,11 @@ import { envConfig, EnvironmentConfigManager } from './environment-config';
 import { CLI_CONFIG } from '../constants';
 
 // Optional dependency for .env file loading
-let dotenv: any;
+interface DotenvModule {
+  config: (options?: { path?: string; override?: boolean }) => void;
+}
+
+let dotenv: DotenvModule | null;
 try {
   // Try to load dotenv if available
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -90,7 +94,7 @@ export function loadEnvFile(filePath: string, override = false): void {
 /**
  * Load configuration from a JSON file
  */
-export function loadConfigFile(filePath: string): Record<string, any> {
+export function loadConfigFile(filePath: string): Record<string, unknown> {
   try {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
@@ -165,7 +169,7 @@ export function initializeConfig(): EnvironmentConfigManager {
 /**
  * Save configuration to a JSON file
  */
-export function saveConfigToFile(config: Record<string, any>, filePath?: string): void {
+export function saveConfigToFile(config: Record<string, unknown>, filePath?: string): void {
   try {
     // Default to the CLI_CONFIG file path
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';

@@ -201,17 +201,17 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     this.walrusAdapter = walrusAdapter;
   }
 
-  async storeCredential(credential: AIProviderCredential): Promise<string> {
+  async storeCredential(_credential: AIProviderCredential): Promise<string> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async getCredential(credentialId: string): Promise<AIProviderCredential> {
+  async getCredential(_credentialId: string): Promise<AIProviderCredential> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async getCredentialByProvider(providerName: string): Promise<AIProviderCredential> {
+  async getCredentialByProvider(_providerName: string): Promise<AIProviderCredential> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
@@ -221,22 +221,22 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     throw new Error('Method not implemented.');
   }
 
-  async hasCredential(providerName: string): Promise<boolean> {
+  async hasCredential(_providerName: string): Promise<boolean> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async deleteCredential(credentialId: string): Promise<boolean> {
+  async deleteCredential(_credentialId: string): Promise<boolean> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async verifyCredential(params: CredentialVerificationParams): Promise<CredentialVerificationResult> {
+  async verifyCredential(_params: CredentialVerificationParams): Promise<CredentialVerificationResult> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async checkVerificationStatus(verificationId: string): Promise<boolean> {
+  async checkVerificationStatus(_verificationId: string): Promise<boolean> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }

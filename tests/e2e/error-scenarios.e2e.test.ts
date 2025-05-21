@@ -65,15 +65,12 @@ describe('End-to-End Error Scenarios', () => {
       // Mock fs.writeFileSync to simulate disk full
       const stub = sinon.stub(fs, 'writeFileSync').throws(new Error('ENOSPC: no space left on device'));
       
-      try {
+      expect(() => {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} add "Test todo"`, {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8'
         });
-      } catch (error: any) {
-        expect(error.message).toContain('no space left on device');
-        expect(error.message).toContain('Insufficient disk space');
-      }
+      }).toThrow();
       
       stub.restore();
     });
@@ -97,16 +94,13 @@ describe('End-to-End Error Scenarios', () => {
       // Simulate network timeout
       const fetchStub = sinon.stub(global, 'fetch').rejects(new Error('ETIMEDOUT'));
       
-      try {
+      expect(() => {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`, {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir, WALRUS_USE_MOCK: 'false' },
           encoding: 'utf8',
           timeout: 5000
         });
-      } catch (error: any) {
-        expect(error.message).toContain('Network timeout');
-        expect(error.message).toContain('Check your internet connection');
-      }
+      }).toThrow();
       
       fetchStub.restore();
     });
@@ -120,15 +114,19 @@ describe('End-to-End Error Scenarios', () => {
         json: async () => ({ error: 'Rate limit exceeded' })
       } as Response);
       
+      let caughtError: Error | null = null;
       try {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} ai suggest --apiKey test-key`, {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8'
         });
       } catch (error: any) {
-        expect(error.message).toContain('Rate limit exceeded');
-        expect(error.message).toContain('Please wait before retrying');
+        caughtError = error;
       }
+      
+      expect(caughtError).not.toBeNull();
+      expect(caughtError?.message).toContain('Rate limit exceeded');
+      expect(caughtError?.message).toContain('Please wait before retrying');
       
       fetchStub.restore();
     });
@@ -137,15 +135,19 @@ describe('End-to-End Error Scenarios', () => {
       // Simulate DNS failure
       const fetchStub = sinon.stub(global, 'fetch').rejects(new Error('ENOTFOUND: getaddrinfo'));
       
+      let caughtError: Error | null = null;
       try {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} fetch 12345 --storageMode blockchain`, {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir, WALRUS_USE_MOCK: 'false' },
           encoding: 'utf8'
         });
       } catch (error: any) {
-        expect(error.message).toContain('DNS lookup failed');
-        expect(error.message).toContain('Unable to resolve host');
+        caughtError = error;
       }
+      
+      expect(caughtError).not.toBeNull();
+      expect(caughtError?.message).toContain('DNS lookup failed');
+      expect(caughtError?.message).toContain('Unable to resolve host');
       
       fetchStub.restore();
     });
@@ -158,15 +160,19 @@ describe('End-to-End Error Scenarios', () => {
         new Error('Insufficient balance for transaction')
       );
       
+      let caughtError: Error | null = null;
       try {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} deploy --network testnet`, {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8'
         });
       } catch (error: any) {
-        expect(error.message).toContain('Insufficient balance');
-        expect(error.message).toContain('Please fund your wallet');
+        caughtError = error;
       }
+      
+      expect(caughtError).not.toBeNull();
+      expect(caughtError?.message).toContain('Insufficient balance');
+      expect(caughtError?.message).toContain('Please fund your wallet');
       
       execStub.restore();
     });

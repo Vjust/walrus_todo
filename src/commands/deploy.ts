@@ -2,17 +2,18 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import chalk from 'chalk';
 import findUp from 'find-up';
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
+import { Logger } from '../utils/Logger';
+
+const logger = new Logger('Deploy');
 import {
   publishSuiPackage,
   getActiveSuiAddress,
   safeExecFileSync
 } from '../utils/command-executor';
-import { validatePath } from '../utils/path-validator';
 
 interface NetworkInfo {
   [key: string]: string;
@@ -143,8 +144,8 @@ export default class DeployCommand extends BaseCommand {
                 });
               }
             } catch (activeAddressError) {
-              // Use console.log for debug output since this class does not extend BaseCommand
-              console.log(`Failed to get active address: ${activeAddressError}`);
+              // Use logger for debug output
+              logger.debug('Failed to get active address', { error: activeAddressError });
               // Continue to the check below
             }
           }

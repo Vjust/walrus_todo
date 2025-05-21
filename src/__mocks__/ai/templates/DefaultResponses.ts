@@ -10,6 +10,7 @@ import { MockResponseTemplate } from '../types';
 /**
  * Default mock responses for different operations
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const DefaultMockResponses: Record<string, MockResponseTemplate> = {
   /* Summarize operation */
   summarize: {

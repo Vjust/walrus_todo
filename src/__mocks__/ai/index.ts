@@ -41,9 +41,12 @@ export type {
  */
 // Import the RecordingMode type for use in the function signature
 import { RecordingMode } from './types';
+// These imports are used inside the mock function
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { AIProviderFactory } from '../../services/ai/AIProviderFactory';
-import { MockAIProviderFactory } from './MockAIProviderFactory';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getScenario } from './scenarios';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MockConfigManager } from './MockConfigManager';
 
 export function setupAIMocks(options: {

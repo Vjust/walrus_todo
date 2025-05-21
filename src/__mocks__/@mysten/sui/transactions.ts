@@ -1,9 +1,5 @@
-import type { Transaction as RealTransaction, TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
+import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
 import type { SuiObjectRef } from '@mysten/sui/client';
-import type { TransactionBlockAdapter } from '../../../utils/adapters/transaction-adapter';
-
-// Define TypeTagSerializer locally to avoid import issues
-type TypeTagSerializer = any;
 
 // Transaction result interface that matches the TransactionObjectArgument
 interface TransactionResult extends TransactionObjectArgument {
@@ -13,8 +9,6 @@ interface TransactionResult extends TransactionObjectArgument {
   value?: any;
 }
 
-// Simplified transaction input type for compatibility
-type TransactionObjectInput = string | SuiObjectRef | { objectId: string, digest?: string, version?: string | number | bigint };
 
 // Define more accurate transaction interfaces
 interface MoveCallTransaction {
@@ -76,7 +70,6 @@ type TransactionInput = {
   index?: number;
 };
 
-type BlockDataInputs = TransactionInput[];
 
 type BlockDataTransactions = {
   typeArguments: string[];
@@ -92,11 +85,6 @@ const createTransactionResult = (index: number): TransactionResult => ({
 });
 
 // SerializedBcs type
-interface SerializedBcs<T, E> {
-  readonly bytes: Uint8Array;
-  readonly type: T;
-  readonly extraType: E;
-}
 
 // Implement Transaction as a class directly (not as an adapter)
 export class Transaction {
@@ -220,7 +208,7 @@ export class Transaction {
     return input;
   }
 
-  pure(value: any, type?: string): TransactionObjectArgument {
+  pure(value: any, _type?: string): TransactionObjectArgument {
     const input = { 
       kind: 'Input' as const,
       type: 'pure' as const,
@@ -232,20 +220,20 @@ export class Transaction {
     return input;
   }
 
-  setSender(sender: string): void {
+  setSender(_sender: string): void {
     // Sender is not stored in blockData anymore in newer versions
   }
 
-  setSenderIfNotSet(sender: string): void {
+  setSenderIfNotSet(_sender: string): void {
     // Not needed in newer versions
   }
 
-  async build(options?: any): Promise<Uint8Array> {
+  async build(_options?: any): Promise<Uint8Array> {
     // Return a mock serialized transaction
     return new Uint8Array([1, 2, 3, 4]);
   }
 
-  deserialize(bytes: Uint8Array): void {
+  deserialize(_bytes: Uint8Array): void {
     // Mock implementation - no actual deserialization needed
   }
 
@@ -318,7 +306,7 @@ export class Transaction {
     });
   }
 
-  gas(objectId?: string): TransactionObjectArgument {
+  gas(_objectId?: string): TransactionObjectArgument {
     const gasInput = { 
       kind: 'GasCoin' as const,
       index: this.inputs.length

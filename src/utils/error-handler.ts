@@ -28,7 +28,7 @@ const isRetryableError = (error: unknown): boolean => {
   }
   return false;
 };
-import { displayFriendlyError, getErrorContext } from './error-messages';
+import { displayFriendlyError } from './error-messages';
 
 
 /**
