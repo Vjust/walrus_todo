@@ -290,7 +290,7 @@ describe('SecureCredentialStorage', () => {
       };
       
       await manager.getCredential('test-provider');
-    } catch (error) {
+    } catch (_error) {
       // Error should not contain the API key
       expect(String(error)).not.toContain('sensitive-api-key-123');
     }

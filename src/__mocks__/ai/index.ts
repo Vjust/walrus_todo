@@ -48,6 +48,8 @@ import { AIProviderFactory } from '../../services/ai/AIProviderFactory';
 import { getScenario } from './scenarios';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MockConfigManager } from './MockConfigManager';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { MockAIProviderFactory } from './MockAIProviderFactory';
 
 export function setupAIMocks(options: {
   provider?: string;

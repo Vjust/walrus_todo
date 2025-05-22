@@ -1,4 +1,4 @@
-import { Command } from '@oclif/core';
+// Command imported but not used
 
 // We'll implement our own simple Levenshtein distance calculation
 // to avoid package installation issues
@@ -246,7 +246,7 @@ export class CommandRegistry {
     this.groups.forEach(group => {
       lines.push(`\n${group.name.toUpperCase()} - ${group.description}`);
       
-      Object.entries(group.commands).forEach(([cmdName, cmdInfo]) => {
+      Object.entries(group.commands).forEach(([cmdName, _cmdInfo]) => {
         const command = this.commands.get(cmdName);
         if (command) {
           const aliases = command.aliases ? ` (${command.aliases.join(', ')})` : '';

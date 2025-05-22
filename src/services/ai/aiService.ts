@@ -1,11 +1,11 @@
 import { PromptTemplate } from '@langchain/core/prompts';
-import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts';
+// ChatPromptTemplate and MessagesPlaceholder imported but not used
 import { Todo } from '../../types/todo';
 import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
 import { AIPrivacyLevel } from '../../types/adapters/AIVerifierAdapter';
 import { AIModelAdapter, AIProvider, AIModelOptions } from '../../types/adapters/AIModelAdapter';
 import { AIProviderFactory } from './AIProviderFactory';
-import { ResponseParser } from './ResponseParser';
+// ResponseParser imported but not used
 import { secureCredentialService } from './SecureCredentialService';
 
 /**
@@ -58,7 +58,7 @@ export class AIService {
     try {
       const defaultAdapter = AIProviderFactory.createDefaultAdapter();
       this.modelAdapter = defaultAdapter;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to initialize with default adapter:', error);
       // Set a minimal fallback adapter to avoid null reference errors
       this.modelAdapter = AIProviderFactory.createFallbackAdapter();
@@ -116,7 +116,7 @@ export class AIService {
         options: this.options,
         credentialService: secureCredentialService
       });
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to initialize model adapter:', error);
       throw error;
     }
@@ -191,7 +191,7 @@ export class AIService {
         options: { ...this.options, ...options },
         credentialService: secureCredentialService
       });
-    } catch (error) {
+    } catch (_error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
       console.error(
         `Failed to set provider ${provider}:`,
@@ -201,7 +201,7 @@ export class AIService {
       const initError = new Error(
         `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`
       );
-      (initError as any).cause = typedError;
+      (initError as Error & { cause?: Error }).cause = typedError;
       throw initError;
     }
   }
@@ -239,19 +239,20 @@ export class AIService {
     try {
       // Apply differential privacy if enabled in options
       const privacyEnabled = this.options.differentialPrivacy === true;
-      const privacyOptions = privacyEnabled ? {
-        ...this.options,
-        noiseFactor: this.options.epsilon || 0.5,
-      } : this.options;
+      // privacyOptions would be used for differential privacy
+      // const privacyOptions = privacyEnabled ? {
+      //   ...this.options,
+      //   noiseFactor: this.options.epsilon || 0.5,
+      // } : this.options;
       
       const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr });
       return response.result;
-    } catch (error) {
+    } catch (_error) {
       // Ensure no sensitive data in error message
       const typedError = error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
       const summaryError = new Error(`Failed to summarize todos: ${sanitizedMessage}`);
-      (summaryError as any).cause = typedError;
+      (summaryError as Error & { cause?: Error }).cause = typedError;
       throw summaryError;
     }
   }
@@ -436,12 +437,12 @@ export class AIService {
       });
 
       return sanitizedResult;
-    } catch (error) {
+    } catch (_error) {
       // Ensure no sensitive data in error message
       const typedError = error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
       const categorizeError = new Error(`Failed to categorize todos: ${sanitizedMessage}`);
-      (categorizeError as any).cause = typedError;
+      (categorizeError as Error & { cause?: Error }).cause = typedError;
       throw categorizeError;
     }
   }
@@ -573,7 +574,7 @@ export class AIService {
    * @param todos - Array of todo items to analyze
    * @returns Promise resolving to a structured analysis object
    */
-  async analyze(todos: Todo[]): Promise<Record<string, any>> {
+  async analyze(todos: Todo[]): Promise<Record<string, unknown>> {
     const prompt = PromptTemplate.fromTemplate(
       `Analyze the following todos for patterns, dependencies, and insights.
       Provide analysis including:
@@ -588,7 +589,7 @@ export class AIService {
     // Format todos with IDs for detailed analysis
     const todoStr = todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`).join('\n');
 
-    const response = await this.modelAdapter.completeStructured<Record<string, any>>({
+    const response = await this.modelAdapter.completeStructured<Record<string, unknown>>({
       prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.5 },
@@ -610,7 +611,7 @@ export class AIService {
   async analyzeWithVerification(
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
-  ): Promise<VerifiedAIResult<Record<string, any>>> {
+  ): Promise<VerifiedAIResult<Record<string, unknown>>> {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
@@ -642,14 +643,14 @@ export class AIService {
       // Parse the JSON array response
       try {
         return JSON.parse(response.result);
-      } catch (error) {
+      } catch (_error) {
         console.error('Failed to parse suggested tags:', error);
         throw new Error('Failed to parse tags response: ' + response.result);
       }
-    } catch (error) {
+    } catch (_error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
       const tagsError = new Error(`Failed to suggest tags: ${typedError.message}`);
-      (tagsError as any).cause = typedError;
+      (tagsError as Error & { cause?: Error }).cause = typedError;
       throw tagsError;
     }
   }
@@ -681,7 +682,7 @@ export class AIService {
         console.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);
         return 'medium';
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Priority suggestion error:', error);
       return 'medium'; // Default to medium on error
     }

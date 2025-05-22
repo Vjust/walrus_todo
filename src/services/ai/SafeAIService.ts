@@ -123,7 +123,7 @@ export class SafeAIService {
       await this.performHealthCheck();
       
       this.logger.debug('Safe AI Service initialized successfully');
-    } catch (error) {
+    } catch (_error) {
       this.isInitialized = false;
       this.aiHealthy = false;
       this.initializationError = error instanceof Error ? error.message : String(error);
@@ -184,7 +184,7 @@ export class SafeAIService {
       }
       
       return this.aiHealthy;
-    } catch (error) {
+    } catch (_error) {
       this.aiHealthy = false;
       this.logger.warn(`AI service health check failed: ${error instanceof Error ? error.message : String(error)}`);
       return false;
@@ -260,7 +260,7 @@ export class SafeAIService {
         usedFallback: false,
         operation
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.warn(`AI operation ${operation} failed: ${errorMessage}, using fallback`);
       
@@ -286,7 +286,7 @@ export class SafeAIService {
     
     return this.safeExecute(
       'summarize',
-      () => this.aiService!.summarize(todos),
+      () => this.aiService.summarize(todos),
       fallback
     );
   }
@@ -334,7 +334,7 @@ export class SafeAIService {
         usedFallback: false,
         operation: 'summarizeWithVerification'
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.warn(`AI verification summarize failed: ${errorMessage}, using fallback`);
       
@@ -372,7 +372,7 @@ export class SafeAIService {
     
     return this.safeExecute(
       'categorize',
-      () => this.aiService!.categorize(todos),
+      () => this.aiService.categorize(todos),
       fallback
     );
   }
@@ -420,7 +420,7 @@ export class SafeAIService {
         usedFallback: false,
         operation: 'categorizeWithVerification'
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.warn(`AI verification categorize failed: ${errorMessage}, using fallback`);
       
@@ -458,7 +458,7 @@ export class SafeAIService {
     
     return this.safeExecute(
       'prioritize',
-      () => this.aiService!.prioritize(todos),
+      () => this.aiService.prioritize(todos),
       fallback
     );
   }
@@ -506,7 +506,7 @@ export class SafeAIService {
         usedFallback: false,
         operation: 'prioritizeWithVerification'
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.warn(`AI verification prioritize failed: ${errorMessage}, using fallback`);
       
@@ -544,7 +544,7 @@ export class SafeAIService {
     
     return this.safeExecute(
       'suggest',
-      () => this.aiService!.suggest(todos),
+      () => this.aiService.suggest(todos),
       fallback
     );
   }
@@ -592,7 +592,7 @@ export class SafeAIService {
         usedFallback: false,
         operation: 'suggestWithVerification'
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.warn(`AI verification suggest failed: ${errorMessage}, using fallback`);
       
@@ -630,7 +630,7 @@ export class SafeAIService {
     
     return this.safeExecute(
       'analyze',
-      () => this.aiService!.analyze(todos),
+      () => this.aiService.analyze(todos),
       fallback
     );
   }
@@ -678,7 +678,7 @@ export class SafeAIService {
         usedFallback: false,
         operation: 'analyzeWithVerification'
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.warn(`AI verification analyze failed: ${errorMessage}, using fallback`);
       
@@ -716,7 +716,7 @@ export class SafeAIService {
     
     return this.safeExecute(
       'suggestTags',
-      () => this.aiService!.suggestTags(todo),
+      () => this.aiService.suggestTags(todo),
       fallback
     );
   }
@@ -729,7 +729,7 @@ export class SafeAIService {
     
     return this.safeExecute(
       'suggestPriority',
-      () => this.aiService!.suggestPriority(todo),
+      () => this.aiService.suggestPriority(todo),
       fallback
     );
   }
@@ -766,7 +766,7 @@ export class SafeAIService {
         usedFallback: false,
         operation: 'setProvider'
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.warn(`Failed to set AI provider to ${provider}: ${errorMessage}`);
       
@@ -789,7 +789,7 @@ export class SafeAIService {
         this.aiService.cancelAllOperations(reason);
       }
       this.logger.debug(`Cancelled all AI operations${reason ? `: ${reason}` : ''}`);
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Error cancelling AI operations: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

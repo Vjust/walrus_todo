@@ -67,7 +67,7 @@ export default class StorageCommand extends BaseCommand {
       if (flags.analyze) {
         await this.analyzeStorageEfficiency(walrusStorage);
       }
-    } catch (error) {
+    } catch (_error) {
       spinner.fail('Failed to connect to storage');
       this.handleError(error, 'Storage connection failed');
     }
@@ -204,7 +204,7 @@ export default class StorageCommand extends BaseCommand {
       this.log(`${chalk.bold('Total Remaining:')} ${formatBytes(totalAllocation - totalUsed)}`);
       this.log(`${chalk.bold('Active Storage Objects:')} ${activeCount} of ${response.data.length}`);
       
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to retrieve storage details: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -293,7 +293,7 @@ export default class StorageCommand extends BaseCommand {
       this.log('3. Consider using the `--analyze` flag before storing large amounts of data');
       this.log('4. Periodically check your storage allocation with `walrus-todo storage`');
       
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

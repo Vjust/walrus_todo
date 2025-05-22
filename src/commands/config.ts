@@ -124,7 +124,7 @@ export default class ConfigCommand extends BaseCommand {
       try {
         envConfig.validate();
         this.log(chalk.green('✓ Configuration validation successful'));
-      } catch (error) {
+      } catch (_error) {
         this.error(error instanceof Error ? error.message : String(error));
       }
     }
@@ -139,7 +139,8 @@ export default class ConfigCommand extends BaseCommand {
     if (flags.format === 'env') {
       // .env output format
       const entries = Object.entries(config).map(([key, value]) => {
-        return `${key}=${typeof value.value === 'string' ? value.value : JSON.stringify(value.value)}`;
+        const configEntry = value as { value: any };
+        return `${key}=${typeof configEntry.value === 'string' ? configEntry.value : JSON.stringify(configEntry.value)}`;
       });
       this.log(entries.join('\n'));
       return;
@@ -161,7 +162,8 @@ export default class ConfigCommand extends BaseCommand {
       }
       
       // Skip empty values if not showing all
-      if (!flags['show-all'] && (value.value === undefined || value.value === null || value.value === '')) {
+      const configEntry = value as { value: any };
+      if (!flags['show-all'] && (configEntry.value === undefined || configEntry.value === null || configEntry.value === '')) {
         continue;
       }
       
@@ -186,16 +188,18 @@ export default class ConfigCommand extends BaseCommand {
         
         const requiredStar = metadata[key]?.required ? chalk.red(' *') : '';
         
-        this.log(`${chalk.bold(key)}${requiredStar}: ${this.formatValue(value.value)} ${sourceColor(`[${source}]`)}`);
+        const configEntry = value as { value: any; description?: string; example?: string };
+        
+        this.log(`${chalk.bold(key)}${requiredStar}: ${this.formatValue(configEntry.value)} ${sourceColor(`[${source}]`)}`);
         
         // Show description if available
-        if (value.description) {
-          this.log(`  ${chalk.gray(value.description)}`);
+        if (configEntry.description) {
+          this.log(`  ${chalk.gray(configEntry.description)}`);
         }
         
         // Show example if available
-        if (value.example) {
-          this.log(`  ${chalk.gray(`Example: ${value.example}`)}`);
+        if (configEntry.example) {
+          this.log(`  ${chalk.gray(`Example: ${configEntry.example}`)}`);
         }
       }
       

@@ -166,7 +166,7 @@ export class ConnectionManager<T extends ManagedConnection> {
       
       this.lastUsed = Date.now();
       return this.connection;
-    } catch (error) {
+    } catch (_error) {
       logger.error('Failed to establish connection',
         error instanceof Error ? error : new Error(String(error)),
         { network: 'unknown' } as Record<string, unknown>
@@ -190,7 +190,7 @@ export class ConnectionManager<T extends ManagedConnection> {
     try {
       const connection = await this.getConnection();
       return await operation(connection);
-    } catch (error) {
+    } catch (_error) {
       // If it's a connection error and auto-reconnect is enabled, schedule reconnection
       if (error instanceof NetworkError && this.options.autoReconnect) {
         this.scheduleReconnect();
@@ -215,7 +215,7 @@ export class ConnectionManager<T extends ManagedConnection> {
       try {
         await this.safelyCloseConnection(this.connection);
         logger.debug('Connection closed successfully');
-      } catch (error) {
+      } catch (_error) {
         logger.warn('Error closing connection',
           { error: String(error) }
         );
@@ -252,7 +252,7 @@ export class ConnectionManager<T extends ManagedConnection> {
     const idleTime = Date.now() - this.lastUsed;
     if (idleTime > (this.options.maxIdleTime || 60000)) {
       logger.debug(`Closing idle connection (idle for ${idleTime}ms)`);
-      this.closeConnection().catch(error => {
+      this.closeConnection().catch(_error => {
         logger.warn(
           'Error closing idle connection',
           { error: String(error) }
@@ -273,7 +273,7 @@ export class ConnectionManager<T extends ManagedConnection> {
     // Set up a new reconnect timer
     this.reconnectTimer = setTimeout(() => {
       logger.debug('Attempting reconnection...');
-      this.getConnection().catch(error => {
+      this.getConnection().catch(_error => {
         logger.error('Reconnection failed',
           error instanceof Error ? error : new Error(String(error)),
           { network: 'unknown' } as Record<string, unknown>

@@ -10,7 +10,6 @@ import { BlobStorage } from './BlobStorage';
 import { StorageConfig } from '../core/StorageTypes';
 import { StorageError } from '../../../types/errors';
 import { ValidationError } from '../../../types/errors/ValidationError';
-import { StorageOperationHandler } from '../utils/StorageOperationHandler';
 import * as crypto from 'crypto';
 
 /**
@@ -124,7 +123,7 @@ export class ImageStorage extends BlobStorage {
       console.log(`Image dimensions: ${imageInfo.width}x${imageInfo.height}, Format: ${imageInfo.format}`);
       
       return blobId;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -182,7 +181,7 @@ export class ImageStorage extends BlobStorage {
         metadata,
         imageInfo
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -248,7 +247,7 @@ export class ImageStorage extends BlobStorage {
       console.log(`Previous blob ID ${blobId} will remain but can be ignored`);
       
       return newBlobId;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -409,7 +408,7 @@ export class ImageStorage extends BlobStorage {
       */
       
       return defaultInfo;
-    } catch (error) {
+    } catch (_error) {
       console.warn('Error analyzing image:', error);
       
       // Return default values if analysis fails

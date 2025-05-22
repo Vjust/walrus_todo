@@ -295,7 +295,7 @@ export function safeFileExists(
     });
     
     return fs.existsSync(validatedPath);
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof PathValidationError) {
       throw error;
     }

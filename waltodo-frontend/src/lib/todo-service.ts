@@ -8,6 +8,8 @@ import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { PublicKey } from '@solana/web3.js';
 import safeStorage, { isUsingFallbackStorage } from './safe-storage';
+import testnetConfig from '@/config/testnet.json';
+import { walrusClient } from './walrus-client';
 
 // Define wallet-aware service types
 export interface WalletSigner {
@@ -73,80 +75,104 @@ const defaultTodoLists: Record<string, TodoList> = {
   },
 };
 
-// Create a typed storage helper for todo lists
-const todoListStorage = safeStorage.createTyped<Record<string, TodoList>>(
-  'walrusTodoLists', 
-  defaultTodoLists
+// Create a typed storage helper for wallet-scoped todo lists
+// Structure: { [walletAddress]: { [listName]: TodoList } }
+const walletTodoStorage = safeStorage.createTyped<Record<string, Record<string, TodoList>>>(
+  'walrusTodoLists',
+  {}
 );
 
-// Current in-memory reference to todo lists
-let todoLists: Record<string, TodoList> = { ...defaultTodoLists };
+// Current in-memory reference to all wallet todo lists
+let allWalletTodos: Record<string, Record<string, TodoList>> = {};
+
+// Helper function to get wallet-specific storage key
+function getWalletKey(address?: string): string {
+  if (!address) return 'anonymous';
+  return address.toLowerCase();
+}
 
 /**
- * Try to load todo lists from storage
+ * Try to load todo lists from storage for all wallets
  */
-function loadTodoLists(): void {
+function loadAllWalletTodos(): void {
   try {
-    const storedLists = todoListStorage.get();
-    if (storedLists && typeof storedLists === 'object') {
-      todoLists = storedLists;
+    const storedTodos = walletTodoStorage.get();
+    if (storedTodos && typeof storedTodos === 'object') {
+      allWalletTodos = storedTodos;
     }
     
     if (isUsingFallbackStorage()) {
       console.info(`Using memory storage. Data will not persist between sessions.`);
     }
   } catch (e) {
-    console.warn('Failed to load todo lists from storage:', e);
+    console.warn('Failed to load wallet todos from storage:', e);
   }
 }
 
 /**
- * Save todo lists to storage
+ * Save all wallet todo lists to storage
  */
-function saveTodoLists(): void {
+function saveAllWalletTodos(): void {
   try {
-    todoListStorage.set(todoLists);
+    walletTodoStorage.set(allWalletTodos);
   } catch (e) {
-    console.warn('Failed to save todo lists to storage:', e);
+    console.warn('Failed to save wallet todos to storage:', e);
   }
 }
 
 /**
- * Get all todo lists
+ * Get todos for a specific wallet, initializing with defaults if first time
  */
-export function getTodoLists(): string[] {
-  // Try to load from storage first if needed
-  loadTodoLists();
-  return Object.keys(todoLists);
+function getWalletTodos(address?: string): Record<string, TodoList> {
+  const walletKey = getWalletKey(address);
+  
+  // Load from storage if not in memory
+  if (!allWalletTodos[walletKey]) {
+    loadAllWalletTodos();
+  }
+  
+  // Initialize with default todos for new wallets
+  if (!allWalletTodos[walletKey]) {
+    allWalletTodos[walletKey] = { ...defaultTodoLists };
+    saveAllWalletTodos();
+  }
+  
+  return allWalletTodos[walletKey];
 }
 
 /**
- * Get a specific todo list
+ * Get all todo lists for a specific wallet
  */
-export function getTodoList(listName: string): TodoList | null {
-  // Try to load from storage first if needed
-  loadTodoLists();
-  return todoLists[listName] || null;
+export function getTodoLists(walletAddress?: string): string[] {
+  const walletTodos = getWalletTodos(walletAddress);
+  return Object.keys(walletTodos);
 }
 
 /**
- * Get todos for a specific list
+ * Get a specific todo list for a wallet
  */
-export function getTodos(listName: string): Todo[] {
-  // Try to load from storage first if needed
-  loadTodoLists();
-  return todoLists[listName]?.todos || [];
+export function getTodoList(listName: string, walletAddress?: string): TodoList | null {
+  const walletTodos = getWalletTodos(walletAddress);
+  return walletTodos[listName] || null;
 }
 
 /**
- * Add a new todo to a list
+ * Get todos for a specific list and wallet
  */
-export function addTodo(listName: string, todo: Omit<Todo, 'id' | 'blockchainStored'>): Todo {
-  // Load latest data
-  loadTodoLists();
+export function getTodos(listName: string, walletAddress?: string): Todo[] {
+  const walletTodos = getWalletTodos(walletAddress);
+  return walletTodos[listName]?.todos || [];
+}
 
-  if (!todoLists[listName]) {
-    todoLists[listName] = {
+/**
+ * Add a new todo to a list for a specific wallet
+ */
+export function addTodo(listName: string, todo: Omit<Todo, 'id' | 'blockchainStored'>, walletAddress?: string): Todo {
+  const walletKey = getWalletKey(walletAddress);
+  const walletTodos = getWalletTodos(walletAddress);
+
+  if (!walletTodos[listName]) {
+    walletTodos[listName] = {
       name: listName,
       todos: [],
     };
@@ -158,125 +184,142 @@ export function addTodo(listName: string, todo: Omit<Todo, 'id' | 'blockchainSto
     blockchainStored: false,
   };
 
-  todoLists[listName].todos.push(newTodo);
+  walletTodos[listName].todos.push(newTodo);
+  
+  // Update the global state
+  allWalletTodos[walletKey] = walletTodos;
 
   // Save changes
-  saveTodoLists();
+  saveAllWalletTodos();
 
   return newTodo;
 }
 
 /**
- * Update an existing todo
+ * Update an existing todo for a specific wallet
  */
-export function updateTodo(listName: string, updatedTodo: Todo): boolean {
-  // Load latest data
-  loadTodoLists();
+export function updateTodo(listName: string, updatedTodo: Todo, walletAddress?: string): boolean {
+  const walletKey = getWalletKey(walletAddress);
+  const walletTodos = getWalletTodos(walletAddress);
 
-  if (!todoLists[listName]) return false;
+  if (!walletTodos[listName]) return false;
 
-  const index = todoLists[listName].todos.findIndex(todo => todo.id === updatedTodo.id);
+  const index = walletTodos[listName].todos.findIndex(todo => todo.id === updatedTodo.id);
   if (index === -1) return false;
 
-  todoLists[listName].todos[index] = updatedTodo;
+  walletTodos[listName].todos[index] = updatedTodo;
+  
+  // Update the global state
+  allWalletTodos[walletKey] = walletTodos;
 
   // Save changes
-  saveTodoLists();
+  saveAllWalletTodos();
 
   return true;
 }
 
 /**
- * Delete a todo
+ * Delete a todo for a specific wallet
  */
-export function deleteTodo(listName: string, todoId: string): boolean {
-  // Load latest data
-  loadTodoLists();
+export function deleteTodo(listName: string, todoId: string, walletAddress?: string): boolean {
+  const walletKey = getWalletKey(walletAddress);
+  const walletTodos = getWalletTodos(walletAddress);
 
-  if (!todoLists[listName]) return false;
+  if (!walletTodos[listName]) return false;
 
-  const initialLength = todoLists[listName].todos.length;
-  todoLists[listName].todos = todoLists[listName].todos.filter(todo => todo.id !== todoId);
+  const initialLength = walletTodos[listName].todos.length;
+  walletTodos[listName].todos = walletTodos[listName].todos.filter(todo => todo.id !== todoId);
+  
+  // Update the global state
+  allWalletTodos[walletKey] = walletTodos;
 
   // Save changes
-  saveTodoLists();
+  saveAllWalletTodos();
 
-  return todoLists[listName].todos.length !== initialLength;
+  return walletTodos[listName].todos.length !== initialLength;
 }
 
 /**
- * Create a new todo list
+ * Create a new todo list for a specific wallet
  */
-export function createTodoList(listName: string): boolean {
-  // Load latest data
-  loadTodoLists();
+export function createTodoList(listName: string, walletAddress?: string): boolean {
+  const walletKey = getWalletKey(walletAddress);
+  const walletTodos = getWalletTodos(walletAddress);
 
-  if (todoLists[listName]) return false;
+  if (walletTodos[listName]) return false;
 
-  todoLists[listName] = {
+  walletTodos[listName] = {
     name: listName,
     todos: [],
   };
+  
+  // Update the global state
+  allWalletTodos[walletKey] = walletTodos;
 
   // Save changes
-  saveTodoLists();
+  saveAllWalletTodos();
 
   return true;
 }
 
 /**
- * Delete a todo list
+ * Delete a todo list for a specific wallet
  */
-export function deleteTodoList(listName: string): boolean {
-  // Load latest data
-  loadTodoLists();
+export function deleteTodoList(listName: string, walletAddress?: string): boolean {
+  const walletKey = getWalletKey(walletAddress);
+  const walletTodos = getWalletTodos(walletAddress);
 
-  if (!todoLists[listName] || listName === 'default') return false;
+  if (!walletTodos[listName] || listName === 'default') return false;
 
-  delete todoLists[listName];
+  delete walletTodos[listName];
+  
+  // Update the global state
+  allWalletTodos[walletKey] = walletTodos;
 
   // Save changes
-  saveTodoLists();
+  saveAllWalletTodos();
 
   return true;
 }
 
 /**
- * Mark a todo as stored on blockchain
+ * Mark a todo as stored on blockchain for a specific wallet
  */
-export function markTodoAsBlockchainStored(listName: string, todoId: string, objectId: string): boolean {
-  // Load latest data
-  loadTodoLists();
+export function markTodoAsBlockchainStored(listName: string, todoId: string, objectId: string, walletAddress?: string): boolean {
+  const walletKey = getWalletKey(walletAddress);
+  const walletTodos = getWalletTodos(walletAddress);
 
-  if (!todoLists[listName]) return false;
+  if (!walletTodos[listName]) return false;
 
-  const todoIndex = todoLists[listName].todos.findIndex(todo => todo.id === todoId);
+  const todoIndex = walletTodos[listName].todos.findIndex(todo => todo.id === todoId);
   if (todoIndex === -1) return false;
 
-  todoLists[listName].todos[todoIndex].blockchainStored = true;
-  todoLists[listName].todos[todoIndex].objectId = objectId;
+  walletTodos[listName].todos[todoIndex].blockchainStored = true;
+  walletTodos[listName].todos[todoIndex].objectId = objectId;
+  
+  // Update the global state
+  allWalletTodos[walletKey] = walletTodos;
 
   // Save changes
-  saveTodoLists();
+  saveAllWalletTodos();
 
   return true;
 }
 
 /**
  * Store a todo on the blockchain using wallet signer
- * This is a placeholder that would integrate with the actual CLI backend
  */
 export async function storeTodoOnBlockchain(
   listName: string, 
   todoId: string, 
-  signer?: WalletSigner
+  signer?: WalletSigner,
+  walletAddress?: string
 ): Promise<string | null> {
-  // Load latest data
-  loadTodoLists();
+  const walletTodos = getWalletTodos(walletAddress);
 
-  if (!todoLists[listName]) return null;
+  if (!walletTodos[listName]) return null;
   
-  const todo = todoLists[listName].todos.find(t => t.id === todoId);
+  const todo = walletTodos[listName].todos.find(t => t.id === todoId);
   if (!todo) return null;
 
   // If no signer provided, operate in read-only mode
@@ -286,32 +329,61 @@ export async function storeTodoOnBlockchain(
   }
 
   try {
+    // First, upload the todo data to Walrus
+    const todoData = {
+      title: todo.title,
+      description: todo.description || '',
+      priority: todo.priority,
+      tags: todo.tags,
+      dueDate: todo.dueDate,
+      createdAt: new Date().toISOString(),
+      localId: todo.id
+    };
+    
+    console.log('Uploading todo data to Walrus...');
+    const walrusResult = await walrusClient.uploadJson(todoData, { epochs: 5 });
+    console.log('Walrus upload successful:', walrusResult.blobId);
+    
     // Create a transaction for storing the todo
-    // In production, this would call the actual smart contract
     const tx = new Transaction();
     
-    // Example: Add a move call to the todo contract
-    // tx.moveCall({
-    //   target: '0x123::todo::create_todo',
-    //   arguments: [
-    //     tx.pure.string(todo.title),
-    //     tx.pure.bool(todo.completed),
-    //     tx.pure.string(todo.priority || 'medium')
-    //   ],
-    // });
+    // Convert todo data to bytes for the Move contract
+    const titleBytes = new TextEncoder().encode(todo.title);
+    const descriptionBytes = new TextEncoder().encode(todo.description || '');
+    // Use the Walrus blob URL as the image URL (storing metadata there)
+    const imageUrlBytes = new TextEncoder().encode(walrusClient.getBlobUrl(walrusResult.blobId));
+    const metadataBytes = new TextEncoder().encode(JSON.stringify({
+      priority: todo.priority,
+      tags: todo.tags,
+      dueDate: todo.dueDate,
+      walrusBlobId: walrusResult.blobId
+    }));
+    
+    // Call the create_todo_nft function from the deployed contract
+    tx.moveCall({
+      target: `${testnetConfig.deployment.packageId}::todo_nft::create_todo_nft`,
+      arguments: [
+        tx.pure.vector('u8', Array.from(titleBytes)),
+        tx.pure.vector('u8', Array.from(descriptionBytes)),
+        tx.pure.vector('u8', Array.from(imageUrlBytes)),
+        tx.pure.vector('u8', Array.from(metadataBytes)),
+        tx.pure.bool(false) // is_private
+      ],
+    });
 
-    // For now, just simulate the transaction
-    console.log('Would execute transaction for todo:', todo);
+    console.log('Executing transaction for todo:', todo.title);
     
-    // In production, execute the transaction
-    // const result = await signer.signAndExecuteTransaction(tx);
-    // const objectId = result.effects?.created?.[0]?.reference?.objectId || null;
+    // Execute the transaction
+    const result = await signer.signAndExecuteTransaction(tx);
     
-    // Simulate getting an object ID
-    const objectId = `0x${Math.random().toString(16).slice(2, 10)}`;
+    // Extract the created object ID from the transaction result
+    const objectId = result.effects?.created?.[0]?.reference?.objectId || null;
     
-    // Mark the todo as stored
-    markTodoAsBlockchainStored(listName, todoId, objectId);
+    if (objectId) {
+      // Mark the todo as stored
+      markTodoAsBlockchainStored(listName, todoId, objectId, walletAddress);
+      console.log('Todo NFT created with ID:', objectId);
+    }
     
     return objectId;
   } catch (error) {
@@ -322,7 +394,6 @@ export async function storeTodoOnBlockchain(
 
 /**
  * Retrieve todos from blockchain storage
- * This is a placeholder for future blockchain integration
  */
 export async function retrieveTodosFromBlockchain(
   address?: string
@@ -333,14 +404,128 @@ export async function retrieveTodosFromBlockchain(
   }
 
   try {
-    // In production, this would query the blockchain for todos owned by the address
-    console.log('Would retrieve todos for address:', address);
+    // Create a Sui client to query the blockchain
+    const client = new SuiClient({ url: testnetConfig.rpcUrl });
     
-    // Return empty array for now
-    return [];
+    // Query for TodoNFT objects owned by the address
+    const objects = await client.getOwnedObjects({
+      owner: address,
+      filter: {
+        StructType: `${testnetConfig.deployment.packageId}::todo_nft::TodoNFT`
+      },
+      options: {
+        showContent: true,
+        showType: true
+      }
+    });
+    
+    // Convert blockchain objects to Todo format
+    const todos: Todo[] = [];
+    
+    for (const obj of objects.data) {
+      if (obj.data?.content?.dataType === 'moveObject') {
+        const fields = obj.data.content.fields as any;
+        
+        // Parse metadata if available
+        let metadata = { 
+          priority: 'medium' as const, 
+          tags: [] as string[], 
+          dueDate: undefined as string | undefined,
+          walrusBlobId: undefined as string | undefined 
+        };
+        try {
+          if (fields.metadata) {
+            metadata = JSON.parse(fields.metadata);
+          }
+        } catch (e) {
+          console.warn('Failed to parse todo metadata:', e);
+        }
+        
+        // If there's a Walrus blob ID, we can fetch additional data
+        if (metadata.walrusBlobId) {
+          try {
+            const walrusData = await walrusClient.downloadJson(metadata.walrusBlobId);
+            console.log('Fetched Walrus data for todo:', walrusData);
+          } catch (e) {
+            console.warn('Failed to fetch Walrus data:', e);
+          }
+        }
+        
+        todos.push({
+          id: obj.data.objectId,
+          title: fields.title || '',
+          description: fields.description || '',
+          completed: fields.completed || false,
+          priority: metadata.priority,
+          tags: metadata.tags,
+          dueDate: metadata.dueDate,
+          blockchainStored: true,
+          objectId: obj.data.objectId
+        });
+      }
+    }
+    
+    console.log(`Retrieved ${todos.length} todos from blockchain for address:`, address);
+    return todos;
   } catch (error) {
     console.error('Failed to retrieve todos from blockchain:', error);
     return [];
+  }
+}
+
+/**
+ * Complete a todo on the blockchain
+ */
+export async function completeTodoOnBlockchain(
+  listName: string,
+  todoId: string,
+  signer?: WalletSigner,
+  walletAddress?: string
+): Promise<boolean> {
+  const walletTodos = getWalletTodos(walletAddress);
+
+  if (!walletTodos[listName]) return false;
+  
+  const todo = walletTodos[listName].todos.find(t => t.id === todoId);
+  if (!todo || !todo.blockchainStored || !todo.objectId) {
+    console.error('Todo not found or not stored on blockchain');
+    return false;
+  }
+
+  if (!signer || !signer.signAndExecuteTransaction) {
+    console.warn('No wallet signer available - cannot complete NFT');
+    return false;
+  }
+
+  try {
+    // Create a transaction to complete the todo
+    const tx = new Transaction();
+    
+    // Call the complete_todo function from the contract
+    tx.moveCall({
+      target: `${testnetConfig.deployment.packageId}::todo_nft::complete_todo`,
+      arguments: [
+        tx.object(todo.objectId)
+      ],
+    });
+
+    console.log('Marking todo as complete:', todo.objectId);
+    
+    // Execute the transaction
+    const result = await signer.signAndExecuteTransaction(tx);
+    console.log('Complete transaction result:', result);
+    
+    // Update local state after successful completion
+    if (result.digest) {
+      todo.completed = true;
+      updateTodo(listName, todo, walletAddress);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Failed to complete todo on blockchain:', error);
+    return false;
   }
 }
 
@@ -352,14 +537,14 @@ export async function transferTodoNFT(
   listName: string,
   todoId: string,
   toAddress: string,
-  signer?: WalletSigner
+  signer?: WalletSigner,
+  walletAddress?: string
 ): Promise<boolean> {
-  // Load latest data
-  loadTodoLists();
+  const walletTodos = getWalletTodos(walletAddress);
 
-  if (!todoLists[listName]) return false;
+  if (!walletTodos[listName]) return false;
   
-  const todo = todoLists[listName].todos.find(t => t.id === todoId);
+  const todo = walletTodos[listName].todos.find(t => t.id === todoId);
   if (!todo || !todo.blockchainStored || !todo.objectId) {
     console.error('Todo not found or not stored on blockchain');
     return false;
@@ -374,19 +559,28 @@ export async function transferTodoNFT(
     // Create a transfer transaction
     const tx = new Transaction();
     
-    // Example: Transfer the NFT
-    // tx.transferObject({
-    //   objectId: todo.objectId,
-    //   recipient: toAddress,
-    // });
+    // Use the custom transfer function from the contract which emits events
+    tx.moveCall({
+      target: `${testnetConfig.deployment.packageId}::todo_nft::transfer_todo_nft`,
+      arguments: [
+        tx.object(todo.objectId),
+        tx.pure.address(toAddress)
+      ],
+    });
 
-    console.log('Would transfer NFT:', todo.objectId, 'to:', toAddress);
+    console.log('Transferring NFT:', todo.objectId, 'to:', toAddress);
     
-    // In production, execute the transaction
-    // await signer.signAndExecuteTransaction(tx);
+    // Execute the transaction
+    const result = await signer.signAndExecuteTransaction(tx);
+    console.log('Transfer transaction result:', result);
     
-    // For now, just return success
-    return true;
+    // Remove the todo from the sender's list after successful transfer
+    if (result.digest) {
+      deleteTodo(listName, todoId, walletAddress);
+      return true;
+    }
+    
+    return false;
   } catch (error) {
     console.error('Failed to transfer todo NFT:', error);
     return false;

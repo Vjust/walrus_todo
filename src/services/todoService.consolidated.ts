@@ -68,7 +68,7 @@ export class TodoService {
       if (!fs.existsSync(this.todosDir)) {
         fs.mkdirSync(this.todosDir, { recursive: true });
       }
-    } catch (error) {
+    } catch (_error) {
       // Silently catch but log the error for debugging
       console.error(`Failed to create todos directory: ${error}`);
     }
@@ -146,7 +146,7 @@ export class TodoService {
       // Filter by tags if specified (todo must have ALL specified tags)
       if (options.tags && options.tags.length > 0) {
         if (!todo.tags) return false;
-        return options.tags.every(tag => todo.tags!.includes(tag));
+        return options.tags.every(tag => todo.tags.includes(tag));
       }
 
       return true;

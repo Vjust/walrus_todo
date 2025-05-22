@@ -1,7 +1,6 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { SecureCredentialManager, AIPermissionLevel } from '../../src/services/ai/SecureCredentialManager';
 import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
-import { CLIError } from '../../src/types/error';
+
 
 // Mock the crypto module
 jest.mock('crypto', () => {
@@ -270,7 +269,7 @@ describe('Secure Credential Manager', () => {
       try {
         credentialManager.getCredential(AIProvider.ANTHROPIC);
         fail('Expected error was not thrown');
-      } catch (error) {
+      } catch (_error) {
         expect(error).toBeInstanceOf(CLIError);
         expect((error as CLIError).code).toBe('CREDENTIAL_NOT_FOUND');
       }

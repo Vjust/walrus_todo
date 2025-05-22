@@ -1,5 +1,4 @@
-import { jest, expect, describe, test, beforeEach } from '@jest/globals';
-import { TodoService } from '../../src/services/todoService';
+import { expect, describe, test, beforeEach } from '@jest/globals';
 
 describe('simple list command', () => {
   let mockOutput: string;

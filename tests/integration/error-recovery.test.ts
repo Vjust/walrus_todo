@@ -4,7 +4,6 @@
  * Tests the application's end-to-end error recovery capabilities across multiple components.
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { NetworkError, StorageError, BlockchainError } from '../../src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
@@ -101,7 +100,7 @@ describe('Error Recovery Integration Tests', () => {
         try {
           const suggestions = await aiService.suggest([todoData]);
           results.steps.push({ name: 'ai', status: 'success', data: suggestions });
-        } catch (error) {
+        } catch (_error) {
           results.steps.push({ name: 'ai', status: 'failed', error: error.message });
           // Continue despite AI failure
         }
@@ -111,7 +110,7 @@ describe('Error Recovery Integration Tests', () => {
           const storageId = await walrusStorage.store(todoData);
           results.steps.push({ name: 'storage', status: 'success', data: storageId });
           results.storageId = storageId;
-        } catch (error) {
+        } catch (_error) {
           results.steps.push({ name: 'storage', status: 'failed', error: error.message });
           throw error; // Storage failure is critical
         }
@@ -143,7 +142,7 @@ describe('Error Recovery Integration Tests', () => {
         try {
           const result = await withRetry(testTodo);
           allResults.push({ success: true, result });
-        } catch (error) {
+        } catch (_error) {
           allResults.push({ success: false, error: error.message });
         }
       }
@@ -196,7 +195,7 @@ describe('Error Recovery Integration Tests', () => {
             id: await walrusStorage.store(data),
             storage: 'primary'
           };
-        } catch (error) {
+        } catch (_error) {
           console.log('Primary storage failed, using fallback');
           // On failure, try fallback storage
           return {
@@ -257,7 +256,7 @@ describe('Error Recovery Integration Tests', () => {
             executedSteps.push(step);
           }
           return results;
-        } catch (error) {
+        } catch (_error) {
           // Compensating transaction - rollback in reverse order
           console.log(`Transaction failed at step ${executedSteps.length}, rolling back`);
           
@@ -280,7 +279,7 @@ describe('Error Recovery Integration Tests', () => {
         while (attempts < maxAttempts) {
           try {
             return await executeTransaction(steps);
-          } catch (error) {
+          } catch (_error) {
             attempts++;
             console.log(`Attempt ${attempts} failed, retrying...`);
             
@@ -352,7 +351,7 @@ describe('Error Recovery Integration Tests', () => {
             this.failureCount = 0;
             
             return result;
-          } catch (error) {
+          } catch (_error) {
             // Record failure
             this.failureCount++;
             this.lastFailure = Date.now();
@@ -400,7 +399,7 @@ describe('Error Recovery Integration Tests', () => {
             mockFallbackOperation
           );
           results.push({ success: true, result });
-        } catch (error) {
+        } catch (_error) {
           results.push({ success: false, error: error.message });
         }
       }
@@ -456,7 +455,7 @@ describe('Error Recovery Integration Tests', () => {
           let suggestions = [];
           try {
             suggestions = await this.aiService.suggest([todoData]);
-          } catch (error) {
+          } catch (_error) {
             console.log('AI suggestions unavailable, continuing without them');
             capabilities.ai = false;
           }
@@ -465,7 +464,7 @@ describe('Error Recovery Integration Tests', () => {
           let storageId;
           try {
             storageId = await this.storage.store(todoData);
-          } catch (error) {
+          } catch (_error) {
             console.log('Storage failed, operation cannot proceed');
             capabilities.storage = false;
             throw error;

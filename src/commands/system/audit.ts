@@ -1,12 +1,12 @@
 import { Flags, ux } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { auditLogger } from '../../utils/AuditLogger';
-import { permissionService } from '../../services/permission-service';
-import { ResourceType, ActionType, UserRole } from '../../types/permissions';
-import { CLIError } from '../../types/error';
+// permissionService imported but not used
+// Permission types imported but not used
+// CLIError imported but not used
 import chalk from 'chalk';
-import * as fs from 'fs';
-import * as path from 'path';
+// fs imported but not used
+// path imported but not used
 
 /**
  * Manage and view audit logs
@@ -198,7 +198,7 @@ export default class AuditCommand extends BaseCommand {
         operation: { header: 'Operation' },
         outcome: { header: 'Outcome' },
       });
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to search audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -235,7 +235,7 @@ export default class AuditCommand extends BaseCommand {
         this.log(`Invalid entries: ${result.invalidEntries}`);
         this.log(chalk.yellow('This may indicate tampering or corruption of the audit logs'));
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to verify audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -275,7 +275,7 @@ export default class AuditCommand extends BaseCommand {
       auditLogger.configure(config);
 
       this.log(chalk.green('Audit logging configuration updated'));
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to configure audit logging: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

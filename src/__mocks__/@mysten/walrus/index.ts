@@ -7,7 +7,7 @@ import { Transaction } from '@mysten/sui/transactions';
 export class MockWalrusClient {
   #network: string;
 
-  constructor(config: WalrusClientConfig) {
+  constructor(_config: WalrusClientConfig) {
     this.#network = config.network || 'testnet';
   }
 
@@ -30,7 +30,7 @@ export class MockWalrusClient {
     };
   }
 
-  async getBlobObject(params: { blobId: string }): Promise<BlobObject> {
+  async getBlobObject(_params: { blobId: string }): Promise<BlobObject> {
     return {
       id: { id: 'mock-storage-id' },
       registered_epoch: 1,
@@ -40,7 +40,7 @@ export class MockWalrusClient {
     };
   }
 
-  async getBlobInfo(blobId: string): Promise<BlobInfo> {
+  async getBlobInfo(_blobId: string): Promise<BlobInfo> {
     return {
       blob_id: blobId,
       registered_epoch: 1,
@@ -61,7 +61,7 @@ export class MockWalrusClient {
     };
   }
 
-  async getBlobMetadata(params: { blobId: string }): Promise<BlobMetadataShape> {
+  async getBlobMetadata(_params: { blobId: string }): Promise<BlobMetadataShape> {
     return {
       V1: {
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
@@ -76,11 +76,11 @@ export class MockWalrusClient {
     };
   }
 
-  async readBlob(params: { blobId: string; signal?: AbortSignal }): Promise<Uint8Array> {
+  async readBlob(_params: { blobId: string; signal?: AbortSignal }): Promise<Uint8Array> {
     return new Uint8Array(32);
   }
 
-  async writeBlob(input: { 
+  async writeBlob(_input: { 
     blob: Uint8Array; 
     deletable?: boolean; 
     epochs?: number; 
@@ -103,11 +103,11 @@ export class MockWalrusClient {
     };
   }
 
-  async verifyPoA(params: { blobId: string }): Promise<boolean> {
+  async verifyPoA(_params: { blobId: string }): Promise<boolean> {
     return true;
   }
 
-  async storageCost(size: number, epochs: number): Promise<{
+  async storageCost(_size: number, _epochs: number): Promise<{
     storageCost: bigint;
     writeCost: bigint;
     totalCost: bigint;
@@ -119,7 +119,7 @@ export class MockWalrusClient {
     };
   }
 
-  async executeCreateStorageTransaction(options: { 
+  async executeCreateStorageTransaction(_options: { 
     size: number | string; 
     epochs: number; 
     owner?: string; 
@@ -145,7 +145,7 @@ export class MockWalrusClient {
     };
   }
 
-  async createStorageBlock(size: number, epochs: number): Promise<Transaction> {
+  async createStorageBlock(_size: number, _epochs: number): Promise<Transaction> {
     // Use the instantiation pattern defined in module-declarations.d.ts
     const tx = Object.create(Transaction.prototype);
     return tx;
@@ -154,6 +154,6 @@ export class MockWalrusClient {
   reset(): void {}
 }
 
-export const WalrusClient = jest.fn().mockImplementation((config: WalrusClientConfig) => {
+export const WalrusClient = jest.fn().mockImplementation((_config: WalrusClientConfig) => {
   return new MockWalrusClient(config);
 });

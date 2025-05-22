@@ -5,7 +5,6 @@
  * command injection attacks and ensures safe execution of shell commands.
  */
 
-import { execSync, execFileSync, spawnSync, ExecSyncOptions, SpawnSyncOptions } from 'child_process';
 import { BaseError } from '../types/errors/BaseError';
 
 /**
@@ -152,7 +151,7 @@ export function safeExecSync(command: string, options?: ExecSyncOptions): Buffer
   try {
     validateCommand(command);
     return execSync(command, options);
-  } catch (error) {
+  } catch (_error) {
     // Differentiate between validation errors and execution errors
     if (error instanceof CommandExecutionError) {
       throw error;
@@ -178,7 +177,7 @@ export function safeExecFileSync(command: string, args: string[], options?: Exec
   try {
     validateCommand(command);
     return execFileSync(command, args, options);
-  } catch (error) {
+  } catch (_error) {
     // Differentiate between validation errors and execution errors
     if (error instanceof CommandExecutionError) {
       throw error;
@@ -204,7 +203,7 @@ export function safeSpawnSync(command: string, args: string[], options?: SpawnSy
   try {
     validateCommand(command);
     return spawnSync(command, args, options);
-  } catch (error) {
+  } catch (_error) {
     // Differentiate between validation errors and execution errors
     if (error instanceof CommandExecutionError) {
       throw error;
@@ -233,7 +232,7 @@ export function executeSuiCommand(
 ): string | Buffer {
   try {
     return safeExecFileSync('sui', [subcommand, ...args], options);
-  } catch (error) {
+  } catch (_error) {
     throw new CommandExecutionError(
       `Failed to execute Sui command: ${error instanceof Error ? error.message : String(error)}`,
       error instanceof Error ? error : undefined,

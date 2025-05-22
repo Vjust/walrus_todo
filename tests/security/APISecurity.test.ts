@@ -111,7 +111,7 @@ describe('API Security Tests', () => {
       // Mock provider factory to validate API key format
       (AIProviderFactory.createProvider as jest.Mock).mockImplementation((params) => {
         // Extract API key from params
-        const apiKey = params.apiKey;
+        const _apiKey = params.apiKey;
         
         // Check API key format if present
         if (apiKey) {

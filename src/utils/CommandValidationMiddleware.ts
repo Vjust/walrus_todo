@@ -110,7 +110,8 @@ export const validateEnvironment: Hook<'init'> = async (options: any) => {
       }
     } else {
       // Variable is missing entirely
-      const message = req.message || `Required environment variable ${req.variable} is missing`;
+      // message would be used for detailed error reporting
+      // const message = req.message || `Required environment variable ${req.variable} is missing`;
       const alternativeMessage = req.alternativeFlag ? 
         ` (or use --${req.alternativeFlag} flag)` : '';
       

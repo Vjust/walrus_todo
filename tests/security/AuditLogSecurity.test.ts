@@ -104,7 +104,7 @@ const getAuditLogger = () => {
       try {
         const line = JSON.stringify(entry) + '\n';
         fs.appendFileSync(this.logFilePath, line);
-      } catch (error) {
+      } catch (_error) {
         console.error('Failed to write audit log:', error);
       }
     }
@@ -209,7 +209,7 @@ describe('Audit Log Security', () => {
       
       try {
         await credentialManager.getCredential('non-existent');
-      } catch (error) {
+      } catch (_error) {
         // Expected error
       }
       
@@ -477,13 +477,13 @@ describe('Audit Log Security', () => {
       // Attempt operations that will fail
       try {
         await credentialManager.getCredential('non-existent');
-      } catch (error) {
+      } catch (_error) {
         // Expected error
       }
       
       try {
         await credentialManager.updatePermissions('non-existent', AIPermissionLevel.ADMIN);
-      } catch (error) {
+      } catch (_error) {
         // Expected error
       }
       
@@ -497,7 +497,7 @@ describe('Audit Log Security', () => {
       
       try {
         await aiService.summarize(sampleTodos);
-      } catch (error) {
+      } catch (_error) {
         // Expected error
       }
       

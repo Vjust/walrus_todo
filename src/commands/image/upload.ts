@@ -92,7 +92,7 @@ export default class UploadCommand extends BaseCommand {
       this.log(`✅ Image uploaded successfully to Walrus`);
       this.log(`📝 Image URL: ${imageUrl}`);
       this.log(`📝 Blob ID: ${blobId}`);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

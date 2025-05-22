@@ -1,5 +1,3 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { execSync } from 'child_process';
 import * as childProcess from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -60,11 +58,11 @@ describe('Cross-Platform Compatibility Tests', () => {
   });
 
   describe('Command Execution', () => {
-    const testCommands = {
-      add: 'todo add "Test todo"',
-      list: 'todo list',
-      complete: 'todo complete 1'
-    };
+    // const testCommands = {
+    //   add: 'todo add "Test todo"',
+    //   list: 'todo list',
+    //   complete: 'todo complete 1'
+    // }; // Commented out - might be used in future tests
 
     describe('Windows', () => {
       beforeEach(() => mockPlatform('win32'));
@@ -242,7 +240,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       const file = path.join(tempDir, 'windows.txt');
       
       fs.writeFileSync(file, content);
-      const read = fs.readFileSync(file, 'utf8');
+      const _read = fs.readFileSync(file, 'utf8');
       
       expect(read).toContain('\r\n');
     });
@@ -254,7 +252,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       const file = path.join(tempDir, 'unix.txt');
       
       fs.writeFileSync(file, content);
-      const read = fs.readFileSync(file, 'utf8');
+      const _read = fs.readFileSync(file, 'utf8');
       
       expect(read).not.toContain('\r\n');
       expect(read).toContain('\n');

@@ -59,7 +59,7 @@ describe('Permission Fuzzer Tests', () => {
 
           // Verify the result is a boolean
           expect(typeof hasPermission).toBe('boolean')
-        } catch (error) {
+        } catch (_error) {
           // Should not throw errors
           expect(error).toBeUndefined()
         }
@@ -221,7 +221,7 @@ describe('Permission Fuzzer Tests', () => {
           if (Array.isArray(user.permissions)) {
             hasPermission = user.permissions.includes(testCase.check as Permission)
           }
-        } catch (error) {
+        } catch (_error) {
           hasPermission = false
         }
 

@@ -684,12 +684,12 @@ export class EnvironmentConfigManager {
       if (key in this.config) {
         // Standard config key
         const configKey = key as keyof EnvironmentConfig;
-        // Use any to bypass TypeScript issues with never type
-        (this.config[configKey] as any).required = true;
+        // Use type assertion to bypass TypeScript issues with never type
+        (this.config[configKey] as EnvVariable<unknown>).required = true;
       } else if (key in this.extensionVars) {
         // Extension variable
-        // Use any to bypass TypeScript issues with never type
-        (this.extensionVars[key] as any).required = true;
+        // Use type assertion to bypass TypeScript issues with never type
+        (this.extensionVars[key] as EnvVariable<unknown>).required = true;
       }
     }
   }
@@ -778,8 +778,8 @@ export class EnvironmentConfigManager {
           if (!config.validationFn(config.value)) {
             invalidExtVars.push(config.validationError || `${key} has an invalid value: ${config.value}`);
           }
-        } catch (error) {
-          invalidExtVars.push(`${key} validation failed: ${error instanceof Error ? error.message : String(error)}`);
+        } catch (_error) {
+          invalidExtVars.push(`${key} validation failed: ${_error instanceof Error ? _error.message : String(_error)}`);
         }
       }
     }
@@ -811,8 +811,8 @@ export class EnvironmentConfigManager {
           if (!config.validationFn(config.value)) {
             invalidVars.push(config.validationError || `${key} has an invalid value: ${config.value}`);
           }
-        } catch (error) {
-          invalidVars.push(`${key} validation failed: ${error instanceof Error ? error.message : String(error)}`);
+        } catch (_error) {
+          invalidVars.push(`${key} validation failed: ${_error instanceof Error ? _error.message : String(_error)}`);
         }
       }
 

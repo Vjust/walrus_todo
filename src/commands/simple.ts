@@ -162,7 +162,7 @@ export default class SimpleCommand extends BaseCommand {
         default:
           this.error(`Unknown action: ${args.action}`);
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

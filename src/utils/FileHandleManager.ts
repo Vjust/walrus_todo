@@ -14,8 +14,8 @@ import { Logger } from './Logger';
 // Promisified fs functions
 const open = promisify(fs.open);
 const close = promisify(fs.close);
-const read = promisify(fs.read);
-const write = promisify(fs.write);
+// const read = promisify(fs.read); // Unused
+// const write = promisify(fs.write); // Unused
 
 /**
  * Configuration options for FileHandleManager
@@ -89,7 +89,7 @@ export class FileHandleManager {
           this.openHandles.splice(index, 1);
         }
         this.logger.debug(`Closed file descriptor ${fd}`);
-      } catch (error) {
+      } catch (_error) {
         const errorObj = error instanceof Error ? error : new Error(String(error));
         this.logger.error(`Error closing file descriptor ${fd}`, errorObj);
         errors.push(errorObj);
@@ -149,7 +149,7 @@ export class FileHandleManager {
       this.openHandles.push(fd);
       
       return await operation(fd);
-    } catch (error) {
+    } catch (_error) {
       const errorObj = error instanceof Error ? error : new Error(String(error));
       this.logger.error(`File operation failed on ${resolvedPath}`, errorObj);
       if (this.throwErrors) {
@@ -219,7 +219,7 @@ export class FileHandleManager {
             resolve('');
           }
         });
-      } catch (error) {
+      } catch (_error) {
         // Ensure we close the stream on synchronous errors
         if (fileStream && fileStream.readable) {
           fileStream.destroy();
@@ -288,7 +288,7 @@ export class FileHandleManager {
         // Write and end the stream
         fileStream.write(data);
         fileStream.end();
-      } catch (error) {
+      } catch (_error) {
         // Ensure we close the stream on synchronous errors
         if (fileStream) {
           fileStream.destroy();
@@ -366,7 +366,7 @@ export class FileHandleManager {
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
-      } catch (error) {
+      } catch (_error) {
         this.logger.error(`Failed to create directory ${dir}`, error);
       }
     }
@@ -395,7 +395,7 @@ export class FileHandleManager {
     try {
       await fsPromises.access(resolvedPath, fs.constants.F_OK);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -423,7 +423,7 @@ export class FileHandleManager {
         await fsPromises.mkdir(resolvedPath, { recursive, mode });
       }
       return true;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to create directory ${resolvedPath}`, error);
       if (this.throwErrors) {
         throw error;

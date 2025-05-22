@@ -34,15 +34,16 @@ export default function WalletUsageExample() {
     setTransactionStatus('pending');
 
     try {
-      // Use trackTransaction to track the transaction progress
-      const result = await trackTransaction(
-        storeTodoOnBlockchain(listName, todoId), 
-        'StoreTodo'
-      );
+      // Store the todo on blockchain (returns object ID)
+      const objectId = await storeTodoOnBlockchain(listName, todoId);
 
-      console.log('Todo stored with ID:', result);
-      setTransactionStatus('success');
-      setTransactionId(result.objectId);
+      if (objectId) {
+        console.log('Todo stored with ID:', objectId);
+        setTransactionStatus('success');
+        setTransactionId(objectId);
+      } else {
+        throw new Error('Failed to store todo on blockchain');
+      }
     } catch (error) {
       console.error('Transaction failed:', error);
       setTransactionStatus('error');

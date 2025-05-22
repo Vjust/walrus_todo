@@ -1,6 +1,6 @@
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 import { RetryManager, NetworkNode } from '../../src/utils/retry-manager';
-import { CLIError } from '../../src/types/error';
+
 
 describe('Network Retry Fuzzing Tests', () => {
   const fuzzer = new FuzzGenerator();
@@ -63,7 +63,7 @@ describe('Network Retry Fuzzing Tests', () => {
         try {
           const result = await manager.execute(operation, 'fuzz-test');
           expect(result).toHaveProperty('success', true);
-        } catch (error) {
+        } catch (_error) {
           // Verify that final errors are meaningful
           expect(error).toBeInstanceOf(CLIError);
           expect(['RETRY_MAX_ATTEMPTS', 'RETRY_TIMEOUT', 'RETRY_INSUFFICIENT_NODES', 'RETRY_NON_RETRYABLE']).toContain((error as CLIError).code);
@@ -176,7 +176,7 @@ describe('Network Retry Fuzzing Tests', () => {
           try {
             const result = await manager.execute(operation, 'adaptive-test');
             operationResults.push({ ...result, success: true });
-          } catch (error) {
+          } catch (_error) {
             operationResults.push({ 
               error: error.message, 
               timestamp: Date.now() - startTime,
@@ -253,7 +253,7 @@ describe('Network Retry Fuzzing Tests', () => {
         try {
           await manager.execute(testCase.operation, testCase.name);
           fail(`Expected ${testCase.name} to throw ${testCase.expectedError}`);
-        } catch (error) {
+        } catch (_error) {
           expect(error).toBeInstanceOf(CLIError);
           expect((error as CLIError).code).toBe(testCase.expectedError);
         }

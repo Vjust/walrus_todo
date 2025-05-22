@@ -122,7 +122,7 @@ export class AuditLogger {
             }
           }
         }
-      } catch (error) {
+      } catch (_error) {
         this.logger.error('Failed to initialize audit log storage', error as Error);
       }
     }
@@ -179,14 +179,14 @@ export class AuditLogger {
       // Create new log file
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       this.currentLogFile = path.join(
-        this.config.storage.path!,
+        this.config.storage.path || '.audit',
         `audit-${timestamp}.log`
       );
       this.currentLogSize = 0;
       
       // Clean up old log files
       this.cleanupOldLogFiles();
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to rotate audit log file', error as Error);
     }
   }
@@ -219,11 +219,11 @@ export class AuditLogger {
           if (stats.mtime < cutoffDate) {
             fs.unlinkSync(filePath);
           }
-        } catch (error) {
+        } catch (_error) {
           this.logger.warn(`Failed to delete old audit log file: ${file}`, { error });
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to clean up old audit log files', error as Error);
     }
   }
@@ -289,7 +289,7 @@ export class AuditLogger {
   /**
    * Write log entry to file
    */
-  private async writeToFile(entry: any): Promise<void> {
+  private async writeToFile(entry: AuditLogEntry): Promise<void> {
     if (!this.config.storage.path || !this.currentLogFile) {
       return;
     }
@@ -304,7 +304,7 @@ export class AuditLogger {
       
       // Update current log size
       this.currentLogSize += Buffer.byteLength(entryStr) / 1024;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to write audit log to file', error as Error);
     }
   }
@@ -340,7 +340,7 @@ export class AuditLogger {
         resource: completeEntry.resource,
         outcome: completeEntry.outcome
       });
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to log audit event', error as Error, {
         action: entry.action,
         userId: entry.userId
@@ -377,7 +377,7 @@ export class AuditLogger {
   /**
    * Search in-memory logs
    */
-  private searchMemoryLogs(options: any): AuditLogEntry[] {
+  private searchMemoryLogs(options: { userId?: string; action?: string; outcome?: string; startDate?: Date; endDate?: Date }): AuditLogEntry[] {
     let results = [...this.memoryLogs];
     
     // Apply filters
@@ -422,7 +422,7 @@ export class AuditLogger {
   /**
    * Search file logs
    */
-  private async searchFileLogs(options: any): Promise<AuditLogEntry[]> {
+  private async searchFileLogs(options: { userId?: string; action?: string; outcome?: string; startDate?: Date; endDate?: Date }): Promise<AuditLogEntry[]> {
     const results: AuditLogEntry[] = [];
     
     if (!this.config.storage.path) {
@@ -431,11 +431,12 @@ export class AuditLogger {
     
     try {
       // Get all log files
-      const files = fs.readdirSync(this.config.storage.path)
+      const storagePath = this.config.storage.path || '.audit';
+      const files = fs.readdirSync(storagePath)
         .filter(file => file.startsWith('audit-') && file.endsWith('.log'))
         .sort((a, b) => {
-          const statA = fs.statSync(path.join(this.config.storage.path!, a));
-          const statB = fs.statSync(path.join(this.config.storage.path!, b));
+          const statA = fs.statSync(path.join(storagePath, a));
+          const statB = fs.statSync(path.join(storagePath, b));
           return statB.mtime.getTime() - statA.mtime.getTime();
         });
       
@@ -469,12 +470,12 @@ export class AuditLogger {
             
             // Add to results
             results.push(entry);
-          } catch (error) {
+          } catch (_error) {
             this.logger.warn('Failed to parse audit log entry', { error, line });
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to search audit logs', error as Error);
     }
     
@@ -533,7 +534,7 @@ export class AuditLogger {
           
           // Update previous hash
           prevHash = entry.hash;
-        } catch (error) {
+        } catch (_error) {
           invalidEntries++;
         }
       }
@@ -543,7 +544,7 @@ export class AuditLogger {
         invalidEntries,
         totalEntries: lines.length
       };
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to verify audit logs', error as Error);
       return { valid: false, invalidEntries: 0, totalEntries: 0 };
     }

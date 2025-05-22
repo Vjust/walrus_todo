@@ -335,7 +335,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       // but this provides an extension point for future requirements
       
       this._isDisposed = true;
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Failed to dispose TransactionBlockAdapter: ${error instanceof Error ? error.message : String(error)}`, 
         error instanceof Error ? error : undefined
@@ -366,7 +366,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       this.checkDisposed();
       // Both implementations have compatible moveCall interfaces
       return this.transactionBlock.moveCall(params);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -402,7 +402,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
 
       // Handle potential interface differences between versions
       return this.transactionBlock.transferObjects(processedObjects, processedAddress);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -422,7 +422,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       this.checkDisposed();
       // Both implementations have compatible object methods
       return this.transactionBlock.object(value);
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Error in object conversion: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -439,7 +439,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       this.checkDisposed();
       // Apply type assertion to ensure compatibility with TransactionObjectArgument
       return this.transactionBlock.pure(value, type) as TransactionObjectArgument;
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Error in pure value conversion: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -477,7 +477,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
         objects: processedObjects,
         type: params.type
       });
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -532,7 +532,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       }
 
       return this.transactionBlock.splitCoins(processedCoin, processedAmounts);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -580,7 +580,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       }
 
       this.transactionBlock.mergeCoins(processedDestination, processedSources);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -599,7 +599,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     try {
       this.checkDisposed();
       this.transactionBlock.setGasBudget(budget);
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Error setting gas budget: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -615,7 +615,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     try {
       this.checkDisposed();
       this.transactionBlock.setGasPrice(price);
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Error setting gas price: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -636,7 +636,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       } else {
         console.warn('setSender not available on this transaction implementation');
       }
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Error setting sender: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -661,7 +661,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       } else {
         console.warn('setGasOwner not available on this transaction implementation');
       }
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Error setting gas owner: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -677,7 +677,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     try {
       this.checkDisposed();
       return await this.transactionBlock.build(options);
-    } catch (error) {
+    } catch (_error) {
       throw new TransactionAdapterError(
         `Error building transaction: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -715,7 +715,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
 
       // Handle any other type by converting to string
       return String(serialized);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -763,7 +763,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
 
       // Last resort: convert to string
       return String(result);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }

@@ -9,6 +9,7 @@ import { NETWORK_URLS } from '../constants';
 import { CLIError } from '../types/error';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
+import { Logger } from '../utils/Logger';
 
 /**
  * @class RetrieveCommand
@@ -161,7 +162,7 @@ export default class RetrieveCommand extends BaseCommand {
         try {
           await suiClient.getLatestCheckpointSequenceNumber();
           this.stopSpinner(true, 'Network connection verified');
-        } catch (error) {
+        } catch (_error) {
           this.stopSpinner(false);
           throw new CLIError(`Unable to connect to network ${network}: ${error instanceof Error ? error.message : String(error)}`, 'NETWORK_ERROR');
         }
@@ -222,7 +223,7 @@ export default class RetrieveCommand extends BaseCommand {
           const suiNftStorage = new SuiNftStorage(
             suiClient,
             signer,
-            { address: config.lastDeployment!.packageId, packageId: config.lastDeployment!.packageId, collectionId: '' }
+            { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId, collectionId: '' }
           );
 
           // Retrieve NFT from blockchain
@@ -240,7 +241,7 @@ export default class RetrieveCommand extends BaseCommand {
 
             // Retrieve todo data from Walrus
             this.startSpinner(`Retrieving todo data from Walrus (blob ID: ${nftData.walrusBlobId})...`);
-            const todo = await walrusStorage.retrieveTodo(nftData.walrusBlobId).catch(error => {
+            const todo = await walrusStorage.retrieveTodo(nftData.walrusBlobId).catch(_error => {
               if (error.message.includes('not found')) {
                 throw new CLIError(
                   `Todo data not found in Walrus storage. The data may have expired or been deleted.`,
@@ -297,10 +298,10 @@ export default class RetrieveCommand extends BaseCommand {
           this.stopSpinner(true, 'Resources cleaned up');
         } catch (cleanupError) {
           this.stopSpinner(false, 'Resource cleanup encountered issues');
-          console.warn(`Warning: Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+          Logger.getInstance().warn(`Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

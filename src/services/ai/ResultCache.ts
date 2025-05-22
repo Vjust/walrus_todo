@@ -8,7 +8,7 @@
  * - Input normalization to increase cache hits
  */
 
-import crypto from 'crypto';
+import { createHash } from 'crypto';
 import { AIResponse } from '../../types/adapters/AIModelAdapter';
 import { Todo } from '../../types/todo';
 
@@ -235,7 +235,7 @@ export class ResultCache {
     };
     
     // Create hash
-    const hash = crypto.createHash('sha256')
+    const hash = createHash('sha256')
       .update(JSON.stringify(input))
       .digest('hex');
       

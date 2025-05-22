@@ -80,7 +80,7 @@ export class AIStressTestFramework extends EventEmitter {
   private startTime: number = 0;
   private abortController: AbortController;
   private resourceUsageIntervalId?: NodeJS.Timeout;
-  private resourceMeasurements: any[] = [];
+  private resourceMeasurements: Array<{ timestamp: number; cpu: number; memory: number; heapUsed: number }> = [];
   private requestResults: RequestResult[] = [];
   private rateLimitCounter: number = 0;
   private rateLimitTimestamp: number = Date.now();
@@ -251,7 +251,7 @@ export class AIStressTestFramework extends EventEmitter {
     operation: string, 
     todos: Todo[], 
     retryCount: number = 0
-  ): Promise<any> {
+  ): Promise<unknown> {
     if (this.abortController.signal.aborted) {
       throw new Error('Operation aborted');
     }
@@ -306,7 +306,7 @@ export class AIStressTestFramework extends EventEmitter {
       this.updateMetrics(operation, true, duration);
       
       return result;
-    } catch (error: any) {
+    } catch (error) {
       const duration = Date.now() - startTime;
       
       // Handle retries
@@ -484,7 +484,7 @@ export class AIStressTestFramework extends EventEmitter {
       const requestsPerOperation = Math.ceil(this.options.requestCount / totalOperations);
       
       // Create all requests but throttle them based on concurrency
-      const allRequests: Promise<any>[] = [];
+      const allRequests: Promise<void>[] = [];
       
       for (const operation of operations) {
         for (let i = 0; i < requestsPerOperation; i++) {
@@ -509,7 +509,7 @@ export class AIStressTestFramework extends EventEmitter {
               
               await this.executeOperation(operation, todos);
               resolve();
-            } catch (error) {
+            } catch (_error) {
               // Don't reject the main promise, just record the error
               this.emit('error', { operation, error });
               resolve();
@@ -563,7 +563,7 @@ export class AIStressTestFramework extends EventEmitter {
   /**
    * Get resource usage measurements
    */
-  getResourceUsage(): any[] {
+  getResourceUsage(): Array<{ timestamp: number; cpu: number; memory: number; heapUsed: number }> {
     return this.resourceMeasurements;
   }
 

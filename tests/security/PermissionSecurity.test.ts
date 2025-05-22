@@ -8,7 +8,7 @@ import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
 import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
 import { CredentialType, AIPermissionLevel, AIOperationPermission } from '../../src/types/adapters/AICredentialAdapter';
 import { AIActionType, VerificationRecord } from '../../src/types/adapters/AIVerifierAdapter';
-import { CLIError } from '../../src/types/error';
+
 import { Todo } from '../../src/types/todo';
 
 // Mock dependencies

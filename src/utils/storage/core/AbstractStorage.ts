@@ -187,7 +187,7 @@ export abstract class AbstractStorage implements IStorage {
       
       // Compare checksums
       return calculatedChecksum === storedChecksum;
-    } catch (error) {
+    } catch (_error) {
       console.warn('Content verification failed:', error);
       return false;
     }

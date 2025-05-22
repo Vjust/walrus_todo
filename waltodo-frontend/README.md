@@ -39,7 +39,38 @@ Run the development server:
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) (or http://localhost:3001 if port 3000 is in use) with your browser to see the result.
+The server will automatically find and use an available port starting from 3000. If port 3000 is occupied, it will try 3001, 3002, etc. The server will display the actual port being used in the console.
+
+For simple development without automatic port detection:
+
+```bash
+pnpm run dev:simple
+```
+
+### Production
+
+Start the production server:
+
+```bash
+pnpm start
+```
+
+Like the development server, this will automatically find an available port and display the URL in the console.
+
+### Alternative Scripts
+
+If you need to use a specific port for testing or development, you can use the fixed-port scripts:
+
+```bash
+# Development server on port 3000 (fails if port is occupied)
+pnpm run dev:fixed-port
+
+# Production server on port 3000 (fails if port is occupied)  
+pnpm run start:fixed-port
+
+# Or set a specific port
+PORT=3005 pnpm run dev:fixed-port
+```
 
 ### Building
 
@@ -202,3 +233,24 @@ pnpm run nextjs
 # Build for production
 pnpm run nextjs:build
 ```
+
+## Troubleshooting
+
+### MIME Type Issues
+
+If you encounter errors like "Refused to apply style because its MIME type is not a supported stylesheet MIME type":
+
+1. **Clear your browser cache** completely (Ctrl/Cmd + Shift + R)
+2. **Clear Next.js cache**: `rm -rf .next && pnpm build`
+3. **Check the console** for any build errors before starting the server
+
+These issues are typically caused by cached or corrupted static assets and should resolve after clearing caches.
+
+### Storage Access Errors
+
+The application includes comprehensive error handling for storage access issues. These warnings in the console are expected in restricted environments:
+
+- `Access to storage is not allowed from this context`
+- Storage-related promise rejections
+
+The app will continue to work normally using in-memory fallbacks.

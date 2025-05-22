@@ -1,10 +1,8 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { ExpiryMonitor } from '@/utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '@/utils/VaultManager';
 import { WalrusError, StorageError } from '@/types/errors';
 import { Signer } from '@mysten/sui/cryptography';
-import { execSync } from 'child_process';
 import * as childProcess from 'child_process';
 import { Logger } from '@/utils/Logger';
 
@@ -14,12 +12,12 @@ jest.mock('@/utils/VaultManager');
 jest.mock('@/utils/Logger');
 
 describe('ExpiryMonitor', () => {
-  let monitor: ExpiryMonitor;
+  let _monitor: ExpiryMonitor;
   let mockVaultManager: jest.Mocked<VaultManager>;
   let mockWalrusClient: jest.Mocked<WalrusClient>;
   let mockWarningHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockRenewalHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
-  let mockSigner: jest.Mocked<Signer>;
+  let _mockSigner: jest.Mocked<Signer>;
   let mockExecSync: jest.SpyInstance;
   let mockLogger: jest.Mocked<Logger>;
   

@@ -4,6 +4,7 @@ import { AIPermissionLevel, AIOperationPermission } from '../../types/adapters/A
 import { AIActionType } from '../../types/adapters/AIVerifierAdapter';
 import { AIProvider } from '../../types/adapters/AIModelAdapter';
 import { CLIError } from '../../types/error';
+import { Logger } from '../../utils/Logger';
 
 /**
  * AIPermissionManager - Manages permissions for AI operations
@@ -114,8 +115,8 @@ export class AIPermissionManager {
       
       // Check if permission level is sufficient
       return credential.permissionLevel >= level;
-    } catch (error) {
-      console.warn(`Permission check failed: ${error}`);
+    } catch (_error) {
+      Logger.getInstance().warn(`Permission check failed: ${error}`);
       return false;
     }
   }
@@ -134,8 +135,8 @@ export class AIPermissionManager {
       const credential = await this.credentialManager.getCredentialObject(provider);
       
       return credential.permissionLevel;
-    } catch (error) {
-      console.warn(`Failed to get permission level: ${error}`);
+    } catch (_error) {
+      Logger.getInstance().warn(`Failed to get permission level: ${error}`);
       return AIPermissionLevel.NO_ACCESS;
     }
   }
@@ -151,8 +152,8 @@ export class AIPermissionManager {
       // Update permissions
       await this.credentialManager.updatePermissions(provider, level);
       return true;
-    } catch (error) {
-      console.error(`Failed to set permission level: ${error}`);
+    } catch (_error) {
+      Logger.getInstance().error(`Failed to set permission level: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
   }
@@ -220,8 +221,8 @@ export class AIPermissionManager {
         allowed: true,
         verificationId: verificationRecord.id
       };
-    } catch (error) {
-      console.error(`Failed to verify operation permission: ${error}`);
+    } catch (_error) {
+      Logger.getInstance().error(`Failed to verify operation permission: ${error instanceof Error ? error.message : String(error)}`);
       return { allowed: false };
     }
   }

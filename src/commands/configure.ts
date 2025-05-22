@@ -98,7 +98,7 @@ export default class ConfigureCommand extends BaseCommand {
         await this.configureAll(flags);
       }
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

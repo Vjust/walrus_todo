@@ -92,7 +92,7 @@ describe('Sui Testnet NFT Creation', () => {
       if (createdNft) {
         storageContractId = createdNft.reference.objectId;
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('NFT creation failed:', error);
       throw error;
     }
@@ -158,7 +158,7 @@ describe('Sui Testnet NFT Creation', () => {
         expect(nftObject.data?.content).toBeDefined();
         console.log('NFT with metadata created:', createdNft.reference.objectId);
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('NFT with metadata creation failed:', error);
       throw error;
     }
@@ -219,7 +219,7 @@ describe('Sui Testnet NFT Creation', () => {
         expect(nftObject.data?.owner).toBeDefined();
         console.log('NFT transferred to:', nftObject.data?.owner);
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('NFT transfer failed:', error);
       throw error;
     }
@@ -273,7 +273,7 @@ describe('Sui Testnet NFT Creation', () => {
       createdNfts?.forEach((nft, index) => {
         console.log(`NFT ${index + 1} ID:`, nft.reference.objectId);
       });
-    } catch (error) {
+    } catch (_error) {
       console.error('Batch NFT creation failed:', error);
       throw error;
     }
@@ -339,7 +339,7 @@ describe('Sui Testnet NFT Creation', () => {
           console.log('AI-enhanced NFT created:', createdNft.reference.objectId);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('AI-enhanced NFT creation failed:', error);
       throw error;
     }

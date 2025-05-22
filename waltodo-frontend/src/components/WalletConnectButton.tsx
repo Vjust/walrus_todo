@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useWalletContext } from '@/lib/walletContext';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { 
   copyToClipboard, 
   getClipboardCapabilities,
@@ -18,9 +18,9 @@ export function WalletConnectButton() {
     connected,
     connecting,
     disconnect,
-    publicKey: address,
-    walletType: walletName,
-    currentNetwork: chainId,
+    address,
+    name: walletName,
+    network: chainId,
     error,
     setError,
     switchNetwork
@@ -145,7 +145,7 @@ export function WalletConnectButton() {
   };
 
   // Convert network string to display name
-  const getNetworkDisplayName = (networkId: number | null) => {
+  const getNetworkDisplayName = (networkId: string | null) => {
     if (networkId === null) return 'Unknown';
     
     // Convert network ID to readable name as needed
@@ -203,7 +203,7 @@ export function WalletConnectButton() {
                         ? 'bg-ocean-deep text-white' 
                         : isNetworkSwitching
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'hover:bg-ocean-light/20'
+                          : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     Mainnet
@@ -216,7 +216,7 @@ export function WalletConnectButton() {
                         ? 'bg-ocean-deep text-white' 
                         : isNetworkSwitching
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'hover:bg-ocean-light/20'
+                          : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     Testnet
@@ -229,7 +229,7 @@ export function WalletConnectButton() {
                         ? 'bg-ocean-deep text-white' 
                         : isNetworkSwitching
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'hover:bg-ocean-light/20'
+                          : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     Devnet

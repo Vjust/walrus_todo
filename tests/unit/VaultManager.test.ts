@@ -1,7 +1,7 @@
 import { VaultManager } from '../../src/utils/VaultManager';
 import * as fs from 'fs';
 import * as path from 'path';
-import { WalrusError } from '../../src/types/error';
+
 
 jest.mock('fs');
 jest.mock('path');

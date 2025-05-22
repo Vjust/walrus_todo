@@ -87,12 +87,12 @@ export class BatchProcessor {
         for (const result of batchResults) {
           processedCount++;
           
-          if (result.success) {
-            successful.push(result.value!);
-          } else {
+          if (result.success && result.value !== undefined) {
+            successful.push(result.value);
+          } else if (!result.success && result.error) {
             failed.push({
               item: result.item,
-              error: result.error!,
+              error: result.error,
               index: result.index
             });
           }
@@ -125,7 +125,7 @@ export class BatchProcessor {
           await sleep(this.options.pauseBetweenBatchesMs);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Batch processing error', error);
       throw error;
     }
@@ -204,7 +204,8 @@ export class BatchProcessor {
   ): Promise<BatchItemResult<T, R>> {
     let lastError: Error | null = null;
 
-    for (let attempt = 0; attempt < this.options.retryAttempts!; attempt++) {
+    const retryAttempts = this.options.retryAttempts || 3;
+    for (let attempt = 0; attempt < retryAttempts; attempt++) {
       try {
         const value = await processor(item, index);
         return {
@@ -214,7 +215,7 @@ export class BatchProcessor {
           value,
           error: null
         };
-      } catch (error) {
+      } catch (_error) {
         lastError = error as Error;
         
         this.logger.warn(`Processing failed for item ${index}, attempt ${attempt + 1}`, {
@@ -227,8 +228,9 @@ export class BatchProcessor {
         }
 
         // Retry with exponential backoff
-        if (attempt < this.options.retryAttempts! - 1) {
-          const delay = this.options.retryDelayMs! * Math.pow(2, attempt);
+        if (attempt < retryAttempts - 1) {
+          const retryDelayMs = this.options.retryDelayMs || 1000;
+          const delay = retryDelayMs * Math.pow(2, attempt);
           await sleep(delay);
         }
       }
@@ -239,7 +241,7 @@ export class BatchProcessor {
       index,
       success: false,
       value: null,
-      error: lastError!
+      error: lastError || new Error('Unknown error during processing')
     };
   }
 

@@ -51,7 +51,7 @@ describe('DeployCommand', () => {
     test
       .stdout()
       .command(['deploy', '--network', 'testnet', '--gas-budget', '200000000'])
-      .catch(error => {
+      .catch(_error => {
         expect(error.message).toContain('Move files not found');
       })
       .it('handles missing move files gracefully');

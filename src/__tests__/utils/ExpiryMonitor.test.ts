@@ -1,10 +1,9 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
-import { WalrusClient } from '@mysten/walrus';
+// WalrusClient imported but not used
 import { ExpiryMonitor } from '../../utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../utils/VaultManager';
-import { WalrusError, StorageError } from '../../types/errors';
+// WalrusError and StorageError imported but not used
 import { Signer } from '@mysten/sui/cryptography';
-import { execSync } from 'child_process';
 import { Logger } from '../../utils/Logger';
 import { WalrusClientExt } from '../../types/client';
 

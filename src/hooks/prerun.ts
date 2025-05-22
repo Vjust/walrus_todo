@@ -1,6 +1,7 @@
 import { Hook } from '@oclif/core';
 import { CommandShortcuts } from '../utils/command-shortcuts';
-import chalk from 'chalk';
+// chalk imported but not used
+import { Logger } from '../utils/Logger';
 
 /**
  * Pre-run hook to process command shortcuts
@@ -16,7 +17,7 @@ const prerunHook: Hook<'prerun'> = async function(opts) {
       
       // Show expansion in debug mode
       if (process.env.DEBUG || process.env.VERBOSE) {
-        console.log(chalk.dim(`✓ Expanded shortcut: ${originalCommand} → ${expandedCommand}`));
+        Logger.getInstance().debug(`✓ Expanded shortcut: ${originalCommand} → ${expandedCommand}`);
       }
     }
   }

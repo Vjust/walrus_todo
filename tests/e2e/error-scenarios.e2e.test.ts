@@ -1,8 +1,6 @@
-import { execSync, exec } from 'child_process';
 import fs from 'fs-extra';
 import path from 'path';
 import sinon from 'sinon';
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals';
 
 describe('End-to-End Error Scenarios', () => {
   const testDir = path.join(__dirname, 'test-temp');

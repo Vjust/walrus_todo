@@ -7,7 +7,6 @@
 
 import { test } from '@oclif/test';
 import * as fs from 'fs';
-import { execSync } from 'child_process';
 import { 
   setupTestEnvironment, 
   cleanupTestEnvironment, 
@@ -16,7 +15,7 @@ import {
 } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
-import { TodoService } from '../../src/services/todoService';
+
 jest.mock('../../src/services/todoService');
 
 describe('WalTodo list command', () => {
@@ -162,7 +161,7 @@ describe('WalTodo list command', () => {
       );
     })
     .command(['list', 'non-existent-list'])
-    .catch(error => {
+    .catch(_error => {
       expect(error.message).toContain('List not found');
     })
     .it('errors when list does not exist');

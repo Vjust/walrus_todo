@@ -1,7 +1,6 @@
-import { jest, expect, test, describe, beforeEach, afterEach } from '@jest/globals';
 import { TestService } from '../helpers/test-utils';
 import { AiService } from '../../src/services/ai';
-import { TodoService } from '../../src/services/todoService';
+
 import { Todo, TodoList } from '../../src/types/todo';
 
 // Mock AiService

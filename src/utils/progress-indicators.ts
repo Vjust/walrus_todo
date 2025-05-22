@@ -532,7 +532,7 @@ export async function withSpinner<T>(
     const result = await operation();
     spinner.succeed();
     return result;
-  } catch (error) {
+  } catch (_error) {
     spinner.fail();
     throw error;
   }
@@ -553,7 +553,7 @@ export async function withProgressBar<T>(
     const result = await operation(progress);
     progress.stop();
     return result;
-  } catch (error) {
+  } catch (_error) {
     progress.stop();
     throw error;
   }

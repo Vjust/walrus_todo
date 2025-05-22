@@ -89,8 +89,9 @@ describe('RetryManager', () => {
       await retryManager.execute(operation, 'test');
       const health = retryManager.getNodesHealth();
       
-      expect(health.find(n => n.url === testNodes[0])?.health)
-        .toBeLessThan(health.find(n => n.url === testNodes[1])?.health!);
+      const node0Health = health.find(n => n.url === testNodes[0])?.health || 0;
+      const node1Health = health.find(n => n.url === testNodes[1])?.health || 0;
+      expect(node0Health).toBeLessThan(node1Health);
     });
 
     it('should prefer healthier nodes', async () => {
@@ -117,7 +118,7 @@ describe('RetryManager', () => {
 
       try {
         await retryManager.execute(operation, 'test');
-      } catch (error) {
+      } catch (_error) {
         // Expected to fail
       }
 
@@ -278,7 +279,9 @@ describe('RetryManager', () => {
       for (let i = 0; i < 3; i++) {
         try {
           await retryManager.execute(operation, 'test');
-        } catch {}
+        } catch {
+          // Ignore errors - we're intentionally failing nodes
+        }
       }
 
       // Next attempt should fail due to insufficient healthy nodes
@@ -315,7 +318,7 @@ describe('RetryManager', () => {
 
       try {
         await retryManager.execute(operation, 'test');
-      } catch (error) {
+      } catch (_error) {
         // Verify error categorization
         expect(mockLogger.warn).toHaveBeenCalledWith(
           expect.stringContaining('timeout'),
@@ -345,7 +348,7 @@ describe('RetryManager', () => {
 
       try {
         await retryManager.execute(operation, 'test');
-      } catch (error) {
+      } catch (_error) {
         const health = retryManager.getNodesHealth();
         const node = health[0];
         

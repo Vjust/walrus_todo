@@ -7,7 +7,7 @@ import { MockAIProvider } from './MockAIProvider';
 import { MockXAIProvider } from './providers/MockXAIProvider';
 import { MockOpenAIProvider } from './providers/MockOpenAIProvider';
 import { MockAnthropicProvider } from './providers/MockAnthropicProvider';
-import { MockResponseTemplate, MockResponseOptions, MockScenario, RecordingMode } from './types';
+import { MockResponseOptions, RecordingMode } from './types';
 import { getScenario } from './scenarios';
 
 export class MockAIProviderFactory {

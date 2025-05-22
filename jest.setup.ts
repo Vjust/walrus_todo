@@ -1,8 +1,12 @@
-import { jest, expect, describe, it, test, beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals';
+import { expect, describe, it, test, beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals';
 
 // AggregateError polyfill for ES2020 targets
-if (typeof AggregateError === 'undefined') {
-  (global as unknown as { AggregateError: typeof Error }).AggregateError = class AggregateError extends Error {
+interface GlobalWithAggregateError {
+  AggregateError?: typeof AggregateError;
+}
+
+if (typeof (global as GlobalWithAggregateError).AggregateError === 'undefined') {
+  (global as GlobalWithAggregateError).AggregateError = class AggregateErrorPolyfill extends Error {
     errors: Error[];
     
     constructor(errors: Iterable<Error>, message?: string) {
@@ -10,7 +14,7 @@ if (typeof AggregateError === 'undefined') {
       this.name = 'AggregateError';
       this.errors = Array.from(errors);
     }
-  };
+  } as any;
 }
 
 // Make Jest globals available 

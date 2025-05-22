@@ -5,7 +5,6 @@
  * including connection issues, validation errors, and resource limits.
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { StorageError, ValidationError, WalrusErrorCode } from '../../src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
@@ -73,7 +72,7 @@ describe('Storage Error Handling', () => {
       // Test specific error properties
       try {
         await walrusStorage.store(testData);
-      } catch (error) {
+      } catch (_error) {
         expect(error.code).toContain('STORAGE_');
         expect(error.shouldRetry).toBe(true);
       }
@@ -118,7 +117,7 @@ describe('Storage Error Handling', () => {
       // Test specific error properties
       try {
         await walrusStorage.store(invalidData as any);
-      } catch (error) {
+      } catch (_error) {
         expect(error.publicMessage).toContain('Invalid value for title');
       }
     });
@@ -142,7 +141,7 @@ describe('Storage Error Handling', () => {
       try {
         await walrusStorage.store(largeTestData);
         fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect(error).toBeInstanceOf(StorageError);
         expect(error.code).toBe(WalrusErrorCode.WALRUS_INSUFFICIENT_TOKENS);
       }
@@ -172,7 +171,7 @@ describe('Storage Error Handling', () => {
       // Verify error details
       try {
         await storageManager.storeObject('test-path', largeObject);
-      } catch (error) {
+      } catch (_error) {
         expect(error.code).toBe('VALIDATION_ERROR');
         expect(error.recoverable).toBe(false);
       }
@@ -193,7 +192,7 @@ describe('Storage Error Handling', () => {
       // Verify specific error details
       try {
         await walrusStorage.retrieve('corrupted-id');
-      } catch (error) {
+      } catch (_error) {
         expect(error.code).toContain('PARSE');
       }
     });
@@ -230,7 +229,7 @@ describe('Storage Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await walrusStorage.store({ id: 'retry-test', title: 'Retry Test' });
-          } catch (error) {
+          } catch (_error) {
             if (error instanceof StorageError && error.shouldRetry && attempts < maxAttempts - 1) {
               attempts++;
               await new Promise(resolve => setTimeout(resolve, 10));
@@ -317,7 +316,7 @@ describe('Storage Error Handling', () => {
         try {
           const result = await walrusStorage.store(testData);
           results.push({ success: true, result });
-        } catch (error) {
+        } catch (_error) {
           results.push({ success: false, error: error.message });
         }
       }

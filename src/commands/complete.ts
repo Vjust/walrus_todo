@@ -116,7 +116,7 @@ export default class CompleteCommand extends BaseCommand {
     try {
       const state = await suiClient.getLatestSuiSystemState();
       return state.protocolVersion?.toString() || 'unknown';
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to connect to network: ${error instanceof Error ? error.message : String(error)}`,
         'NETWORK_CONNECTION_FAILED'
@@ -174,7 +174,7 @@ export default class CompleteCommand extends BaseCommand {
           'NFT_ALREADY_COMPLETED'
         );
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Failed to validate NFT state: ${error instanceof Error ? error.message : String(error)}`,
@@ -210,7 +210,7 @@ export default class CompleteCommand extends BaseCommand {
         computationCost: dryRunResult.effects.gasUsed.computationCost,
         storageCost: dryRunResult.effects.gasUsed.storageCost
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to estimate gas: ${error instanceof Error ? error.message : String(error)}`,
         'GAS_ESTIMATION_FAILED'
@@ -273,7 +273,7 @@ export default class CompleteCommand extends BaseCommand {
       
       // Write the config, using our custom wrapper to allow mocking in tests
       await this.writeConfigSafe(config);
-    } catch (error) {
+    } catch (_error) {
       // Non-blocking error - log but don't fail the command
       this.warning(`Failed to update completion statistics: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -300,7 +300,7 @@ export default class CompleteCommand extends BaseCommand {
       // Write config using our wrapper that can be mocked
       // ALWAYS use writeFileSafe to ensure consistent behavior
       this.writeFileSafe(configPath, JSON.stringify(config, null, 2), 'utf8');
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to save config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -337,7 +337,7 @@ export default class CompleteCommand extends BaseCommand {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           mappings = JSON.parse(content);
-        } catch (error) {
+        } catch (_error) {
           this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
           // Continue with empty mappings
         }
@@ -350,7 +350,7 @@ export default class CompleteCommand extends BaseCommand {
       // This ensures directory creation and consistent error handling
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
-    } catch (error) {
+    } catch (_error) {
       this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -423,11 +423,11 @@ export default class CompleteCommand extends BaseCommand {
           suiNftStorage = new SuiNftStorage(
             suiClient,
             signer,
-            { address: config.lastDeployment!.packageId, packageId: config.lastDeployment!.packageId }
+            { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId }
           );
 
           // Estimate gas for the operation
-          const gasEstimate = await this.estimateGasForNftUpdate(suiClient, todo.nftObjectId, config.lastDeployment!.packageId);
+          const gasEstimate = await this.estimateGasForNftUpdate(suiClient, todo.nftObjectId, config.lastDeployment.packageId);
           this.log(chalk.dim(`Estimated gas cost: ${Number(gasEstimate.computationCost) + Number(gasEstimate.storageCost)} MIST`));
         }
       }
@@ -463,7 +463,7 @@ export default class CompleteCommand extends BaseCommand {
             try {
               // Add timeout for verification to prevent hanging
               let timeoutId: NodeJS.Timeout;
-              const verificationPromise = suiClient!.getObject({
+              const verificationPromise = suiClient.getObject({
                 id: todo.nftObjectId!,
                 options: { showContent: true }
               });
@@ -566,7 +566,7 @@ export default class CompleteCommand extends BaseCommand {
                 } else {
                   throw new Error('Invalid blob ID returned from Walrus');
                 }
-              } catch (error) {
+              } catch (_error) {
                 lastWalrusError = error instanceof Error ? error : new Error(String(error));
                 if (attempt === maxRetries) {
                   this.log(chalk.yellow('\u26a0\ufe0f Failed to update Walrus storage after all retries'));
@@ -606,7 +606,7 @@ export default class CompleteCommand extends BaseCommand {
         this.log(`  ${walrusUpdateStatus} Walrus storage`);
       }
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

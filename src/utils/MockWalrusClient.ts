@@ -23,10 +23,7 @@ import {
   createWalrusClientAdapter
 } from './adapters/walrus-client-adapter';
 import { WalrusClientVersion } from '../types/adapters/WalrusClientAdapter';
-import {
-  TransactionBlockAdapter,
-  createTransactionBlockAdapter
-} from './adapters/transaction-adapter';
+// TransactionBlockAdapter and createTransactionBlockAdapter imported but not used
 import { SignerAdapter } from '../types/adapters/SignerAdapter';
 
 /**
@@ -47,7 +44,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   private readonly mockStorageId = 'test-storage-id';
   private readonly mockDigest = 'mock-digest';
   
-  constructor(config?: WalrusClientConfig) {
+  constructor(_config?: WalrusClientConfig) {
     // No initialization needed for mock
   }
 
@@ -71,7 +68,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
    * Handles both interface variants with Signer | Ed25519Keypair | SignerAdapter
    */
   async executeCreateStorageTransaction(
-    options: StorageWithSizeOptions & { 
+    _options: StorageWithSizeOptions & { 
       transaction?: TransactionType; 
       signer: Signer | Ed25519Keypair | SignerAdapter 
     }
@@ -126,7 +123,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Get information about a blob by its ID
    */
-  async getBlobInfo(blobId: string): Promise<BlobInfo> {
+  async getBlobInfo(_blobId: string): Promise<BlobInfo> {
     const info: BlobInfo = {
       blob_id: blobId,
       registered_epoch: 1,
@@ -152,7 +149,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Get a blob object by its ID
    */
-  async getBlobObject(params: { blobId: string }): Promise<BlobObject> {
+  async getBlobObject(_params: { blobId: string }): Promise<BlobObject> {
     return {
       id: { id: params.blobId },
       registered_epoch: 1,
@@ -178,21 +175,21 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Verify proof of access for a blob
    */
-  async verifyPoA(params: { blobId: string }): Promise<boolean> {
+  async verifyPoA(_params: { blobId: string }): Promise<boolean> {
     return true;
   }
 
   /**
    * Get the list of storage providers for a blob
    */
-  async getStorageProviders(params: { blobId: string }): Promise<string[]> {
+  async getStorageProviders(_params: { blobId: string }): Promise<string[]> {
     return ['mock-storage-provider-1', 'mock-storage-provider-2'];
   }
 
   /**
    * Get the size of a blob in bytes
    */
-  async getBlobSize(blobId: string): Promise<number> {
+  async getBlobSize(_blobId: string): Promise<number> {
     return 1000;
   }
 
@@ -239,14 +236,14 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Read a blob's content
    */
-  async readBlob(options: ReadBlobOptions): Promise<Uint8Array> {
+  async readBlob(_options: ReadBlobOptions): Promise<Uint8Array> {
     return new Uint8Array([1, 2, 3, 4, 5]);
   }
 
   /**
    * Get metadata for a blob
    */
-  async getBlobMetadata(options: ReadBlobOptions): Promise<BlobMetadataShape> {
+  async getBlobMetadata(_options: ReadBlobOptions): Promise<BlobMetadataShape> {
     return {
       V1: {
         $kind: 'V1',
@@ -264,7 +261,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Calculate storage cost for a given size and duration
    */
-  async storageCost(size: number, epochs: number): Promise<{
+  async storageCost(_size: number, _epochs: number): Promise<{
     storageCost: bigint;
     writeCost: bigint;
     totalCost: bigint;
@@ -340,14 +337,14 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Write slivers to a storage node
    */
-  async writeSliversToNode(options: WriteSliversToNodeOptions): Promise<void> {
+  async writeSliversToNode(_options: WriteSliversToNodeOptions): Promise<void> {
     return Promise.resolve();
   }
 
   /**
    * Write encoded blob to multiple nodes
    */
-  async writeEncodedBlobToNodes(options: WriteEncodedBlobToNodesOptions): Promise<EncodingStorageConfirmation[]> {
+  async writeEncodedBlobToNodes(_options: WriteEncodedBlobToNodesOptions): Promise<EncodingStorageConfirmation[]> {
     return [{
       confirmed: true,
       proofs: [{
@@ -360,7 +357,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Write encoded blob to a specific node
    */
-  async writeEncodedBlobToNode(options: WriteBlobOptions): Promise<EncodingStorageConfirmation> {
+  async writeEncodedBlobToNode(_options: WriteBlobOptions): Promise<EncodingStorageConfirmation> {
     return {
       confirmed: true,
       proofs: [{
@@ -439,7 +436,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
   /**
    * Create a transaction block for storage allocation
    */
-  async createStorageBlock(size: number, epochs: number): Promise<TransactionType> {
+  async createStorageBlock(_size: number, _epochs: number): Promise<TransactionType> {
     // Return a TransactionBlock directly (which is a valid TransactionType)
     return new TransactionBlock();
   }

@@ -6,7 +6,7 @@ interface TransactionResult extends TransactionObjectArgument {
   kind: 'Result';
   index: number;
   digest?: string;
-  value?: any;
+  value?: unknown;
 }
 
 
@@ -63,7 +63,7 @@ type TransactionOperation =
 type TransactionInput = {
   kind: 'Input';
   index: number;
-  value?: any;
+  value?: unknown;
   type?: 'object' | 'pure';
 } | {
   kind: 'GasCoin';
@@ -208,7 +208,7 @@ export class Transaction {
     return input;
   }
 
-  pure(value: any, _type?: string): TransactionObjectArgument {
+  pure(value: unknown, _type?: string): TransactionObjectArgument {
     const input = { 
       kind: 'Input' as const,
       type: 'pure' as const,
@@ -228,7 +228,7 @@ export class Transaction {
     // Not needed in newer versions
   }
 
-  async build(_options?: any): Promise<Uint8Array> {
+  async build(_options?: unknown): Promise<Uint8Array> {
     // Return a mock serialized transaction
     return new Uint8Array([1, 2, 3, 4]);
   }
@@ -269,7 +269,7 @@ export class Transaction {
 
   splitCoins(
     coin: string | TransactionObjectArgument, 
-    amounts: (string | number | bigint | any | TransactionArgument)[]
+    amounts: (string | number | bigint | { bytes: Uint8Array } | TransactionArgument)[]
   ): TransactionObjectArgument {
     const coinArg = typeof coin === 'string' ? this.object(coin) : coin;
     const amountArgs = amounts.map(amt => {
@@ -320,7 +320,7 @@ export class Transaction {
     dependencies: string[]; 
   }): TransactionObjectArgument {
     // Convert any string modules to Uint8Array
-    const moduleArrays = (options.modules as any[]).map(mod => {
+    const moduleArrays = (options.modules as (string | number[])[]).map(mod => {
       if (typeof mod === 'string') {
         // Convert string to Uint8Array
         return new TextEncoder().encode(mod);
@@ -343,7 +343,7 @@ export class Transaction {
     ticket: string | TransactionObjectArgument;
   }): TransactionObjectArgument {
     // Convert any string modules to Uint8Array
-    const moduleArrays = (options.modules as any[]).map(mod => {
+    const moduleArrays = (options.modules as (string | number[])[]).map(mod => {
       if (typeof mod === 'string') {
         return new TextEncoder().encode(mod);
       }

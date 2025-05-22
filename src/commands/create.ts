@@ -91,7 +91,7 @@ export default class CreateCommand extends BaseCommand {
             }
           });
         }
-      } catch (error) {
+      } catch (_error) {
         throw new CLIError(
           `Failed to upload image to Walrus: ${error instanceof Error ? error.message : String(error)}`,
           'IMAGE_UPLOAD_FAILED'
@@ -138,7 +138,7 @@ export default class CreateCommand extends BaseCommand {
 
       // 'disconnect' method may not exist; removed or handle appropriately if defined in WalrusImageStorage
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

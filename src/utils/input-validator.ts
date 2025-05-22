@@ -230,7 +230,7 @@ export function validateUrl(url: string, allowedDomains?: string[]): void {
           { value: url }
         );
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError) {
         throw error;
       }

@@ -7,7 +7,6 @@
 
 import { test } from '@oclif/test';
 import * as fs from 'fs';
-import { execSync } from 'child_process';
 import { 
   setupTestEnvironment, 
   cleanupTestEnvironment, 
@@ -16,7 +15,7 @@ import {
 } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
-import { TodoService } from '../../src/services/todoService';
+
 jest.mock('../../src/services/todoService');
 
 // Mock walrus-storage module for blockchain testing
@@ -130,7 +129,7 @@ describe('WalTodo complete command', () => {
       );
     })
     .command(['complete', '--id', 'non-existent-id'])
-    .catch(error => {
+    .catch(_error => {
       expect(error.message).toContain('Todo not found');
     })
     .it('errors when todo does not exist');
@@ -139,7 +138,7 @@ describe('WalTodo complete command', () => {
   test
     .stdout()
     .command(['complete'])
-    .catch(error => {
+    .catch(_error => {
       expect(error.message).toContain('Missing required flag');
     })
     .it('errors when no ID is provided');
@@ -171,7 +170,7 @@ describe('WalTodo complete command', () => {
     try {
       const result = execSync('node bin/run.js complete --id test-todo-id-123 --storage blockchain').toString();
       fail('Should have thrown an error');
-    } catch (error) {
+    } catch (_error) {
       expect(error.message).toContain('Network error');
     }
     

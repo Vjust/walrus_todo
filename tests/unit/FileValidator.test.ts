@@ -1,5 +1,5 @@
 import { FileValidator, FileValidationConfig } from '../../src/utils/FileValidator';
-import { WalrusError } from '../../src/types/error';
+
 import * as fs from 'fs';
 import sizeOf from 'image-size';
 
@@ -9,7 +9,7 @@ jest.mock('image-size', () => {
 });
 
 class MockHash {
-  update(data: Buffer) { return this; }
+  update(_data: Buffer) { return this; }
   digest() { return 'test-checksum'; }
 }
 

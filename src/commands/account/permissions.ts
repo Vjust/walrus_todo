@@ -129,7 +129,7 @@ export default class PermissionsCommand extends BaseCommand {
       // Grant role
       await permissionService.assignRoleToUser(user.id, role);
       this.log(chalk.green(`Role ${role} granted to user ${username}`));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -152,7 +152,7 @@ export default class PermissionsCommand extends BaseCommand {
       // Revoke role
       await permissionService.removeRoleFromUser(user.id, role);
       this.log(chalk.green(`Role ${role} revoked from user ${username}`));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -195,7 +195,7 @@ export default class PermissionsCommand extends BaseCommand {
       for (const [resource, actions] of Object.entries(byResource)) {
         this.log(`${chalk.green(resource)}: ${actions.join(', ')}`);
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -222,7 +222,7 @@ export default class PermissionsCommand extends BaseCommand {
       });
 
       this.log(chalk.green(`Permission '${action}' on '${resource}' granted to user ${username}`));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -246,7 +246,7 @@ export default class PermissionsCommand extends BaseCommand {
       await permissionService.revokePermission(user.id, resource, action);
 
       this.log(chalk.green(`Permission '${action}' on '${resource}' revoked from user ${username}`));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -274,7 +274,7 @@ export default class PermissionsCommand extends BaseCommand {
       } else {
         this.log(chalk.red(`User ${username} does NOT have permission to ${action} on ${resource}`));
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {

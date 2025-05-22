@@ -1,19 +1,19 @@
-import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { AIService } from '@/services/ai/aiService';
 import { createMockAIService, mockXAIProvider } from '../../../helpers/ai-test-utils';
-import { MockXAIProvider } from '@/__mocks__/ai/providers/MockXAIProvider';
+// MockXAIProvider is available through mocking
 import { AIOperation, AIModelType, AIProviderType } from '@/services/ai/types';
 import type { Todo } from '@/types/todo';
 
 describe('AIService', () => {
   let service: AIService;
-  let mockProvider: MockXAIProvider;
+  let mockProvider: any;
   const testApiKey = 'test-api-key';
 
   beforeEach(() => {
     jest.clearAllMocks();
     service = createMockAIService(testApiKey);
-    mockProvider = mockXAIProvider as MockXAIProvider;
+    mockProvider = mockXAIProvider;
     mockProvider.reset();
   });
 

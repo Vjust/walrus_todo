@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { Command, Flags } from '@oclif/core';
 import { ux } from '@oclif/core';
+import * as cliProgress from 'cli-progress';
 import { CLIError, WalrusError } from './types/error';
 import { Todo } from './types/todo';
 import { NetworkError } from './types/errors/consolidated/NetworkError';
@@ -12,7 +13,6 @@ import {
   createSpinner, 
   createProgressBar, 
   createMultiProgress, 
-  withSpinner, 
   withProgressBar, 
   SpinnerManager, 
   ProgressBar, 
@@ -28,7 +28,7 @@ interface ChalkInstance {
   green: (text: string) => string;
   blue: (text: string) => string;
   gray: (text: string) => string;
-  bold: {
+  bold: ((text: string) => string) & {
     cyan: (text: string) => string;
     green: (text: string) => string;
     yellow: (text: string) => string;
@@ -42,16 +42,23 @@ let chalk: ChalkInstance;
 try {
   chalk = require('chalk');
 } catch (e) {
+  const boldFn = (s: string) => s;
+  Object.assign(boldFn, {
+    cyan: (s: string) => s,
+    green: (s: string) => s,
+    yellow: (s: string) => s
+  });
+  
   chalk = { 
     red: (s: string) => s, 
     yellow: (s: string) => s, 
     green: (s: string) => s, 
     blue: (s: string) => s, 
     gray: (s: string) => s,
-    bold: {
-      cyan: (s: string) => s,
-      green: (s: string) => s,
-      yellow: (s: string) => s
+    bold: boldFn as ((text: string) => string) & {
+      cyan: (text: string) => string;
+      green: (text: string) => string;
+      yellow: (text: string) => string;
     },
     cyan: (s: string) => s,
     magenta: (s: string) => s,
@@ -171,7 +178,7 @@ export abstract class BaseCommand extends Command {
   async finally(err?: Error): Promise<void> {
     try {
       await super.finally(err);
-    } catch (error) {
+    } catch (_error) {
       // Don't let cleanup errors mask original command errors
       this.warn(`Cleanup error: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -349,7 +356,7 @@ export abstract class BaseCommand extends Command {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (error) {
+      } catch (_error) {
         lastError = error as Error;
         
         // Check if we should retry
@@ -426,7 +433,7 @@ export abstract class BaseCommand extends Command {
       const result = await operation();
       this.stopSpinner(true, successText || 'Done');
       return result;
-    } catch (error) {
+    } catch (_error) {
       this.stopSpinner(false, 'Failed');
       throw error;
     }
@@ -507,7 +514,7 @@ export abstract class BaseCommand extends Command {
     
     if (typeof data === 'object' && data !== null) {
       if (Array.isArray(data)) {
-        return data.map((item, index) => `${index + 1}. ${this.toTextFormat(item)}`).join('\n');
+        return data.map((item, _index) => `${index + 1}. ${this.toTextFormat(item)}`).join('\n');
       }
       
       return Object.entries(data)
@@ -629,7 +636,7 @@ export abstract class BaseCommand extends Command {
   /**
    * Enhanced debug log with data
    */
-  protected debugLog(message: string, data?: any): void {
+  protected debugLog(message: string, data?: unknown): void {
     if (this.flagsConfig.debug) {
       let logMessage = chalk.gray(`[DEBUG] ${message}`);
       if (data) {
@@ -695,7 +702,7 @@ export abstract class BaseCommand extends Command {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
-      } catch (error) {
+      } catch (_error) {
         lastError = error as Error;
         
         if (attempt === maxRetries) {
@@ -708,7 +715,7 @@ export abstract class BaseCommand extends Command {
       }
     }
     
-    throw new Error(`${operationName} failed after ${maxRetries} attempts: ${lastError!.message}`);
+    throw new Error(`${operationName} failed after ${maxRetries} attempts: ${lastError.message}`);
   }
 
   /**
@@ -725,7 +732,7 @@ export abstract class BaseCommand extends Command {
     
     try {
       return await operation();
-    } catch (error) {
+    } catch (_error) {
       this.debugLog(`Transaction ${operationName} failed, attempting rollback`);
       
       if (rollbackFn) {
@@ -762,7 +769,7 @@ export abstract class BaseCommand extends Command {
       
       // Write file atomically
       fs.writeFileSync(filePath, content, encoding);
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to write file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -861,7 +868,7 @@ export abstract class BaseCommand extends Command {
     operations: Array<{
       name: string;
       total: number;
-      operation: (bar: ProgressBar) => Promise<T>;
+      operation: (bar: cliProgress.SingleBar) => Promise<T>;
     }>
   ): Promise<(T | undefined)[]> {
     const multiProgress = this.createMultiProgress();
@@ -870,7 +877,7 @@ export abstract class BaseCommand extends Command {
       const bar = multiProgress.create(name, total);
       try {
         return await operation(bar);
-      } catch (error) {
+      } catch (_error) {
         return undefined;
       }
     });

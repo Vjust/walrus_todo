@@ -53,7 +53,7 @@ export default class SomeCommand extends BaseCommand {  // Removed placeholder c
   async run(): Promise<void> {
     try {
       // Implementation with comments for complex logic
-    } catch (error) {
+    } catch (_error) {
       // Proper error handling with context
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new CLIError(`Command failed: ${errorMessage}`, 'COMMAND_ERROR');

@@ -20,10 +20,10 @@
 //
 // This module supports the development process by providing a means to test and refine the TODO NFT smart contract, ensuring a robust user experience in the Walrus Todo application.
 #[test_only]
-module todo_app::todo_nft_tests {
+module walrus_todo::todo_nft_tests {
     use sui::test_scenario;
     use sui::tx_context;
-    use todo_app::todo_nft::{Self, TodoNFT};
+    use walrus_todo::todo_nft::{Self, TodoNFT};
     use std::string;
     use sui::object;
 

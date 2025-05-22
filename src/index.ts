@@ -126,7 +126,7 @@ export const run = async () => {
         // Run the AI command with the remaining arguments
         await AiCommandClass.run(args.slice(1));
         return;
-      } catch (error) {
+      } catch (_error) {
         logger.error('AI command error', error instanceof Error ? error : new Error(String(error)));
         process.exit(1);
       }
@@ -148,7 +148,7 @@ export const run = async () => {
 
     // Run the command with the remaining arguments
     await CommandClass.run(args.slice(1));
-  } catch (error) {
+  } catch (_error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     
     // Handle common network errors with better messaging

@@ -86,8 +86,8 @@ export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => ({
  * ```
  */
 export type MockOf<T> = {
-  [P in keyof T]: T[P] extends (...args: any[]) => any
-    ? jest.Mock<ReturnType<T[P]>, Parameters<T[P]>>
+  [P in keyof T]: T[P] extends (...args: infer Args) => infer Return
+    ? jest.Mock<Return, Args>
     : T[P];
 };
 
@@ -141,7 +141,7 @@ export class TestService {
         await instance.run(args.slice(1));
         
         return { stdout, stderr: '' };
-      } catch (error) {
+      } catch (_error) {
         throw error;
       }
     }

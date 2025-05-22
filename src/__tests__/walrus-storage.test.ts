@@ -1,14 +1,9 @@
-import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient } from '@mysten/walrus';
 import type { BlobObject } from '../types/walrus';
-import type { Mocked } from 'jest-mock';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import type { WalrusStorage } from '../utils/walrus-storage';
-import { KeystoreSigner } from '../utils/sui-keystore';
-import { CLIError } from '../types/error';
-import { execSync } from 'child_process';
 import { Todo } from '../types/todo';
+import { execSync } from 'child_process';
 
 interface MockedWalrusClient {
   readBlob: jest.Mock<Promise<Uint8Array>, [string | { blobId: string; signal?: AbortSignal }]>;

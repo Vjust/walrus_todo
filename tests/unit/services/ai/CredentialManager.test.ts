@@ -66,7 +66,7 @@ describe('CredentialManager', () => {
   describe('saveCredentials', () => {
     it('should save credentials with proper encryption', async () => {
       const provider = 'openai';
-      const apiKey = 'test-api-key-123';
+      const _apiKey = 'test-api-key-123';
       const additionalData = { model: 'gpt-4' };
 
       mockSecureStore.saveCredentials.mockResolvedValue(undefined);
@@ -85,7 +85,7 @@ describe('CredentialManager', () => {
 
     it('should reject invalid provider names', async () => {
       const invalidProvider = 'invalid_provider!';
-      const apiKey = 'test-key';
+      const _apiKey = 'test-key';
 
       await expect(
         credentialManager.saveCredentials(invalidProvider, apiKey)
@@ -103,7 +103,7 @@ describe('CredentialManager', () => {
 
     it('should handle storage errors gracefully', async () => {
       const provider = 'openai';
-      const apiKey = 'test-key';
+      const _apiKey = 'test-key';
       const error = new Error('Storage error');
 
       mockSecureStore.saveCredentials.mockRejectedValue(error);
@@ -246,7 +246,7 @@ describe('CredentialManager', () => {
   describe('validateCredentials', () => {
     it('should validate credentials with API', async () => {
       const provider = 'openai';
-      const apiKey = 'test-api-key';
+      const _apiKey = 'test-api-key';
 
       mockSecureStore.validateApiKey.mockResolvedValue(true);
 
@@ -258,7 +258,7 @@ describe('CredentialManager', () => {
 
     it('should return false for invalid credentials', async () => {
       const provider = 'openai';
-      const apiKey = 'invalid-key';
+      const _apiKey = 'invalid-key';
 
       mockSecureStore.validateApiKey.mockResolvedValue(false);
 
@@ -269,7 +269,7 @@ describe('CredentialManager', () => {
 
     it('should handle validation errors gracefully', async () => {
       const provider = 'openai';
-      const apiKey = 'test-key';
+      const _apiKey = 'test-key';
       const error = new Error('Network error');
 
       mockSecureStore.validateApiKey.mockRejectedValue(error);
@@ -283,7 +283,7 @@ describe('CredentialManager', () => {
   describe('security features', () => {
     it('should encrypt credentials in memory', async () => {
       const provider = 'openai';
-      const apiKey = 'sensitive-api-key';
+      const _apiKey = 'sensitive-api-key';
 
       // Test that API key is encrypted before storage
       mockSecureStore.saveCredentials.mockImplementation(async (creds: any) => {
@@ -311,7 +311,7 @@ describe('CredentialManager', () => {
 
     it('should sanitize provider names for security', async () => {
       const maliciousProvider = '../../../etc/passwd';
-      const apiKey = 'test-key';
+      const _apiKey = 'test-key';
 
       await expect(
         credentialManager.saveCredentials(maliciousProvider, apiKey)
@@ -355,7 +355,7 @@ describe('CredentialManager', () => {
 
     it('should handle permission errors gracefully', async () => {
       const provider = 'openai';
-      const apiKey = 'test-key';
+      const _apiKey = 'test-key';
 
       mockSecureStore.saveCredentials.mockImplementation(() => {
         const error: any = new Error('Permission denied');
@@ -370,7 +370,7 @@ describe('CredentialManager', () => {
 
     it('should handle disk space errors', async () => {
       const provider = 'openai';
-      const apiKey = 'test-key';
+      const _apiKey = 'test-key';
 
       mockSecureStore.saveCredentials.mockImplementation(() => {
         const error: any = new Error('No space left on device');

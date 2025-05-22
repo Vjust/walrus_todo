@@ -5,7 +5,6 @@
  * including timeouts, disconnections, and rate limiting.
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { RetryManager } from '../../src/utils/retry-manager';
 import { NetworkError } from '../../src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
@@ -258,7 +257,7 @@ describe('Network Error Handling', () => {
           'custom-error-operation'
         );
         fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         // Verify error details are preserved
         expect(error.code).toContain('NETWORK_CONNECT_ERROR');
         expect(error.shouldRetry).toBe(false);
@@ -301,7 +300,7 @@ describe('Network Error Handling', () => {
         try {
           const result = await task.performNetworkRequest();
           results.push({ success: true, result });
-        } catch (error) {
+        } catch (_error) {
           results.push({ success: false, error: error.message });
         }
       }

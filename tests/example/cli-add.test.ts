@@ -8,11 +8,10 @@
 import { test } from '@oclif/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
 import { setupTestEnvironment, cleanupTestEnvironment, createTestTodo } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
-import { TodoService } from '../../src/services/todoService';
+
 jest.mock('../../src/services/todoService');
 
 describe('WalTodo add command', () => {
@@ -108,7 +107,7 @@ describe('WalTodo add command', () => {
   test
     .stdout()
     .command(['add'])
-    .catch(error => {
+    .catch(_error => {
       expect(error.message).toContain('Missing required argument');
     })
     .it('errors when no title is provided');

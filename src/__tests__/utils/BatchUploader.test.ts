@@ -1,8 +1,8 @@
 import { BatchUploader } from '../../utils/batch-uploader';
-import { TodoSizeCalculator } from '../../utils/todo-size-calculator';
+// TodoSizeCalculator imported but not used
 import { WalrusStorage } from '../../utils/walrus-storage';
 import { Todo, TodoList } from '../../types/todo';
-import { CLIError } from '../../types/error';
+// CLIError imported but not used
 
 // Mock the WalrusStorage class
 jest.mock('../../utils/walrus-storage');

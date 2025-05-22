@@ -25,7 +25,7 @@ export class ApiValidationMiddleware {
         req.body = sanitizedBody;
         
         next();
-      } catch (error) {
+      } catch (_error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -53,7 +53,7 @@ export class ApiValidationMiddleware {
         req.params = sanitizedParams;
         
         next();
-      } catch (error) {
+      } catch (_error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -81,7 +81,7 @@ export class ApiValidationMiddleware {
         req.query = sanitizedQuery;
         
         next();
-      } catch (error) {
+      } catch (_error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -120,7 +120,7 @@ export class ApiValidationMiddleware {
         }
         
         next();
-      } catch (error) {
+      } catch (_error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -173,7 +173,7 @@ export class ApiValidationMiddleware {
         }
         
         next();
-      } catch (error) {
+      } catch (_error) {
         res.status(401).json({
           error: 'Unauthorized',
           message: error instanceof Error ? error.message : String(error),

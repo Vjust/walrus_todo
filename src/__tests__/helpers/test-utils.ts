@@ -1,4 +1,3 @@
-import type { Mock } from 'jest-mock';
 import { StorageLocation, Todo } from '../../types/todo';
 import { run } from '../../index';
 import * as childProcess from 'child_process';
@@ -48,7 +47,7 @@ export interface CommandResult {
  */
 export async function runCommand(
   command: string,
-  args: string[] = [],
+  _args: string[] = [],
   options: {
     env?: NodeJS.ProcessEnv;
     mockStdout?: boolean;

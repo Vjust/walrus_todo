@@ -70,7 +70,7 @@ export default class AIKeysCommand extends BaseCommand {
         default:
           this.error(`Unknown action: ${action}`);
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(`${error.message} (${error.code})`);
       } else {
@@ -131,7 +131,7 @@ export default class AIKeysCommand extends BaseCommand {
       // Use the private method via the rotation flow which includes backup
       await secureCredentialManager.rotateKey();
       this.log(`${chalk.green('✓')} Encryption key backup created successfully`);
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to create backup: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -214,7 +214,7 @@ export default class AIKeysCommand extends BaseCommand {
   /**
    * Prompt for confirmation - override BaseCommand method
    */
-  protected async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
+  protected async confirm(message: string, _defaultValue?: boolean): Promise<boolean> {
     const response = await this.promptInquirer({
       type: 'input',
       name: 'confirm',

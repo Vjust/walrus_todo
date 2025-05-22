@@ -37,7 +37,7 @@ export function createValidationMiddleware(
       if (validateArgs && args) {
         validateArgs(args);
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

@@ -1,7 +1,6 @@
 import { TransactionBlock } from '@mysten/sui/transactions';
 import { SignerAdapter } from './SignerAdapter';
 import { SuiClient } from '@mysten/sui/client';
-import { asUint8ArrayOrTransactionBlock, asStringUint8ArrayOrTransactionBlock } from '../transaction';
 
 /**
  * TransactionInput - Generic input for a transaction
@@ -106,7 +105,7 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
    */
   async executeTransactionBlock(
     transactionBlock: TransactionBlock,
-    options: TransactionOptions = {}
+    _options: TransactionOptions = {}
   ): Promise<TransactionResponse> {
     try {
       // Pass only valid transaction options
@@ -116,7 +115,7 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
       );
       
       return result as TransactionResponse;
-    } catch (error) {
+    } catch (_error) {
       console.error('Transaction execution failed:', error);
       throw new Error(`Transaction execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -157,7 +156,7 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
       });
       
       return result;
-    } catch (error) {
+    } catch (_error) {
       console.error('Transaction inspection failed:', error);
       throw new Error(`Transaction inspection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

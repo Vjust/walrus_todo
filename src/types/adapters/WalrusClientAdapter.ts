@@ -57,7 +57,7 @@ import { type WalrusClient, type WalrusClientExt } from '../client';
  * Import transaction types for blockchain operations.
  * These are used for creating and executing storage transactions.
  */
-import { Transaction, TransactionType } from '../transaction';
+import { TransactionType } from '../transaction';
 
 /**
  * Import cryptography and signing interfaces from Sui SDK.
@@ -70,7 +70,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
  * Import adapter interfaces for transactions and signers.
  * These provide abstraction over different versions of the SDK interfaces.
  */
-import { TransactionBlockAdapter } from './TransactionBlockAdapter';
+// TransactionBlockAdapter imported but not used
 import { SignerAdapter } from './SignerAdapter';
 
 /**
@@ -103,7 +103,7 @@ export enum WalrusClientVersion {
  * ```typescript
  * try {
  *   // Adapter operation
- * } catch (error) {
+ * } catch (_error) {
  *   if (error instanceof WalrusClientAdapterError) {
  *     // Handle adapter-specific error
  *   } else {
@@ -1133,7 +1133,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
  * ```
  */
 export function createWalrusClientAdapter(
-  client: OriginalWalrusClient | WalrusClient | WalrusClientExt | any
+  _client: OriginalWalrusClient | WalrusClient | WalrusClientExt | any
 ): WalrusClientAdapter {
   // This is just a placeholder - the actual implementation will be in walrus-client-adapter.ts
   throw new Error('Implementation moved to walrus-client-adapter.ts');

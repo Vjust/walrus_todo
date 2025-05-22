@@ -13,7 +13,6 @@ import {
 import { fromB64, toB64 } from '@mysten/sui/utils';
 import { TransactionBlock, Transaction } from '@mysten/sui/transactions';
 import { SuiClient, type SuiClientOptions, SuiTransactionBlockResponse } from '@mysten/sui/client';
-import { execSync } from 'child_process';
 import { SignerAdapter, SuiSDKVersion, SignatureWithBytes } from '../types/adapters/SignerAdapter';
 import { TransactionType } from '../types/transaction';
 import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
@@ -69,7 +68,7 @@ export class KeystoreSigner implements SignerAdapter {
     try {
       const keystoreData = fs.readFileSync(keystorePath, 'utf-8');
       keystore = JSON.parse(keystoreData); // Array of base64 strings
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new KeystoreError(`Failed to read keystore file: ${errorMessage}`, 'KEYSTORE_READ_ERROR');
     }
@@ -242,7 +241,7 @@ export class KeystoreSigner implements SignerAdapter {
       }
 
       return response;
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Transaction execution failed: ${errorMessage}`);
     }

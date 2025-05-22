@@ -37,7 +37,7 @@ async function getAuthenticatedUser() {
     }
     
     return validation.user;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }

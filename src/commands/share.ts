@@ -77,7 +77,7 @@ export default class ShareCommand extends BaseCommand {
       await this.todoService.saveList(listName, todoList);
       this.log(chalk.green('✓'), `Todo list "${chalk.bold(listName)}" shared successfully with ${chalk.cyan(recipient)}`);
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

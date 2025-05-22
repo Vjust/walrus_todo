@@ -61,7 +61,7 @@ export class SecureStorage {
       });
 
       fs.writeFileSync(this.getStorageFile(key), data, { mode: 0o600 });
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to store secure item: ${error instanceof Error ? error.message : String(error)}`,
         'SECURE_STORAGE_ERROR'
@@ -88,7 +88,7 @@ export class SecureStorage {
       decrypted += decipher.final('utf8');
 
       return decrypted;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to read secure item: ${error instanceof Error ? error.message : String(error)}`,
         'SECURE_STORAGE_ERROR'

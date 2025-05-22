@@ -157,7 +157,7 @@ export class Validator<T> {
     try {
       this.validate(value, context);
       return { valid: true };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError) {
         return { valid: false, error };
       }
@@ -193,7 +193,7 @@ export class Validator<T> {
           : stringified;
       }
       return String(value);
-    } catch (error) {
+    } catch (_error) {
       return '[Complex Value]';
     }
   }

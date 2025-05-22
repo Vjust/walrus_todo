@@ -1,4 +1,4 @@
-import { CLIError } from '../types/error';
+// CLIError imported but not used
 import { ValidationError } from '../types/errors';
 
 /**
@@ -128,7 +128,8 @@ export class InputValidator {
     schema: ValidationSchema,
     options: ValidationOptions = { throwOnFirstError: false, collectAllErrors: true }
   ): ValidationResult {
-    const { collectAllErrors = true } = options;
+    // collectAllErrors would be used for error accumulation
+    // const { collectAllErrors = true } = options;
     const allErrors: ValidationResult['errors'] = [];
 
     for (const [field, rules] of Object.entries(schema)) {

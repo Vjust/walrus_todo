@@ -1,12 +1,8 @@
-import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
-import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
-import type { Mocked } from 'jest-mock';
+
+
+import { WalrusClient, type BlobObject } from '@mysten/walrus';
 import { createWalrusStorage } from '@/utils/walrus-storage';
 import type { WalrusStorage } from '../../src/utils/walrus-storage';
-import { KeystoreSigner } from '../../src/utils/sui-keystore';
-import { CLIError } from '../../src/types/error';
-import { execSync } from 'child_process';
 import { Todo } from '../../src/types/todo';
 
 interface MockedWalrusClient extends WalrusClient {
@@ -33,7 +29,7 @@ jest.mock('@mysten/walrus');
 jest.mock('../../src/utils/sui-keystore');
 
 describe('WalrusStorage', () => {
-  let mockSuiClient: MockedSuiClient;
+  let _mockSuiClient: MockedSuiClient;
   let mockWalrusClient: MockedWalrusClient;
   let storage: WalrusStorage;
   let mockTodo: Todo;

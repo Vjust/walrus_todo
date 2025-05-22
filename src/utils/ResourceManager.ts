@@ -253,7 +253,7 @@ export class ResourceManager {
       }
       this.resources.delete(id);
       return true;
-    } catch (error) {
+    } catch (_error) {
       const errorMessage = `Error disposing resource ${id} (${registration.description}): ${error instanceof Error ? error.message : String(error)}`;
 
       if (options.throwOnError) {
@@ -303,7 +303,7 @@ export class ResourceManager {
           disposed++;
         }
         this.resources.delete(registration.id);
-      } catch (error) {
+      } catch (_error) {
         const wrappedError = new ResourceManagerError(
           `Error disposing resource ${registration.id} (${registration.description}): ${error instanceof Error ? error.message : String(error)}`,
           error instanceof Error ? error : undefined
@@ -375,7 +375,7 @@ export class ResourceManager {
           continueOnError: options.continueOnError,
           throwOnError: false // We'll handle errors aggregated at this level
         });
-      } catch (error) {
+      } catch (_error) {
         if (options.continueOnError) {
           errors.push(error instanceof Error ? error : new Error(String(error)));
         } else if (options.throwOnError) {

@@ -133,7 +133,7 @@ export default class UpdateCommand extends BaseCommand {
       this.log(chalk.dim('ID: ') + todo.id);
       this.log(chalk.dim(`Changes made: ${changes}`));
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

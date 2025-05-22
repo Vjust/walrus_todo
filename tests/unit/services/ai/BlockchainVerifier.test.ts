@@ -9,7 +9,7 @@ describe('BlockchainVerifier', () => {
   let mockVerifierAdapter: jest.Mocked<AIVerifierAdapter>;
   let mockCredentialAdapter: jest.Mocked<AICredentialAdapter>;
   let mockWalrusAdapter: jest.Mocked<WalrusClientAdapter>;
-  let mockSigner: jest.Mocked<SignerAdapter>;
+  let _mockSigner: jest.Mocked<SignerAdapter>;
 
   beforeEach(() => {
     // Create mock signer

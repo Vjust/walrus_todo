@@ -46,7 +46,7 @@ async function runCustomSetup() {
     console.log('\n✅ Custom setup successful!');
     
     return result;
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Setup failed:', error);
     process.exit(1);
   }

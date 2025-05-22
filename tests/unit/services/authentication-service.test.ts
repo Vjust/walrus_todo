@@ -3,7 +3,7 @@ import { PermissionService, permissionService } from '../../../src/services/perm
 import { AuditLogger, auditLogger } from '../../../src/utils/AuditLogger';
 import { Logger } from '../../../src/utils/Logger';
 import { UserRole, PermissionUser, TokenValidationResult } from '../../../src/types/permissions';
-import { CLIError } from '../../../src/types/error';
+
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 
@@ -55,7 +55,7 @@ describe('AuthenticationService', () => {
       debug: jest.fn(),
       error: jest.fn(),
       warn: jest.fn()
-    } as any;
+    } as jest.Mocked<Logger>;
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
     
     // Reset auditLogger mock
@@ -257,7 +257,7 @@ describe('AuthenticationService', () => {
 
       (permissionService.getUser as jest.Mock).mockResolvedValue(mockUser);
 
-      const apiKey = await authService.createApiKey(
+      const _apiKey = await authService.createApiKey(
         mockUser.id,
         keyName,
         expiryDays
@@ -285,7 +285,7 @@ describe('AuthenticationService', () => {
 
       (permissionService.getUser as jest.Mock).mockResolvedValue(mockUser);
 
-      const apiKey = await authService.createApiKey(
+      const _apiKey = await authService.createApiKey(
         mockUser.id,
         keyName,
         expiryDays
@@ -432,9 +432,9 @@ describe('AuthenticationService', () => {
       );
 
       // Manually expire the session
-      const sessions = (authService as any).sessions;
+      const sessions = (authService as unknown as { sessions: Map<string, { refreshToken: string; expiresAt: number }> }).sessions;
       const session = Array.from(sessions.values()).find(
-        (s: any) => s.refreshToken === authResult.refreshToken
+        (s: { refreshToken: string }) => s.refreshToken === authResult.refreshToken
       );
       if (session) {
         session.expiresAt = Date.now() - 1000; // Set to past
@@ -469,7 +469,7 @@ describe('AuthenticationService', () => {
       }));
 
       // Verify session is removed
-      const sessions = (authService as any).sessions;
+      const sessions = (authService as unknown as { sessions: Map<string, unknown> }).sessions;
       expect(Array.from(sessions.values()).length).toBe(0);
     });
 
@@ -488,7 +488,7 @@ describe('AuthenticationService', () => {
       );
 
       // Verify we have 2 sessions
-      const sessions = (authService as any).sessions;
+      const sessions = (authService as unknown as { sessions: Map<string, unknown> }).sessions;
       expect(Array.from(sessions.values()).length).toBe(2);
 
       // Invalidate all sessions
@@ -524,7 +524,7 @@ describe('AuthenticationService', () => {
       (permissionService.getUser as jest.Mock).mockResolvedValue(mockUser);
 
       // Create an API key
-      const apiKey = await authService.createApiKey(
+      const _apiKey = await authService.createApiKey(
         mockUser.id,
         'Test Key'
       );

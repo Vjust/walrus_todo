@@ -13,7 +13,6 @@ import { AsyncOperationHandler } from '../../walrus-error-handler';
 import { NetworkError, BlockchainError, StorageError } from '../../../types/errors';
 import { ValidationError } from '../../../types/errors/ValidationError';
 import { StorageOperationOptions } from './StorageTypes';
-import { execSync } from 'child_process';
 import { createWalrusClientAdapter, WalrusClientAdapter } from '../../adapters/walrus-client-adapter';
 
 /**
@@ -69,7 +68,7 @@ export class StorageClient {
       this.suiClient = new SuiClient({ 
         url: options.suiUrl
       });
-    } catch (error) {
+    } catch (_error) {
       // In test environments, the constructor might fail
       // Create a mock client if in mock mode or running in a test environment
       if (this.useMockMode || process.env.NODE_ENV === 'test') {
@@ -147,7 +146,7 @@ export class StorageClient {
       }
       
       this.initialized = true;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
       }
@@ -204,7 +203,7 @@ export class StorageClient {
           }
         );
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
       }
@@ -299,7 +298,7 @@ export class StorageClient {
       }
       
       return BigInt(balanceResult.data.totalBalance);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError || error instanceof BlockchainError) {
         throw error;
       }
@@ -361,7 +360,7 @@ export class StorageClient {
       }
       
       return result.data || new Uint8Array();
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof StorageError) {
         throw error;
       }

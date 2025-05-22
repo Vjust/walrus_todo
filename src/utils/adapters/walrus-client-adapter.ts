@@ -69,7 +69,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
     try {
       const result = await this.walrusClient.getBlobInfo(blobId);
       return this.normalizeBlobObject(result);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob info: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -82,7 +82,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.readBlob(options);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to read blob: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -103,7 +103,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
         blobId: normalizedResult.blobId,
         blobObject: normalizedResult.blobObject
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to write blob: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -121,7 +121,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
         version: config.version || '0.0.0',
         maxSize: typeof config.maxSize === 'number' ? config.maxSize : 0
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -134,7 +134,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.getWalBalance();
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -151,7 +151,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
         used: usage.used || '0',
         total: usage.total || '0'
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -180,7 +180,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
     try {
       const blobInfo = await this.getBlobInfo(params.blobId);
       return blobInfo;
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob object using fallback: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -223,7 +223,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     try {
       const result = await this.walrusClient.getBlobInfo(blobId);
       return this.normalizeBlobObject(result);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob info: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -236,7 +236,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.readBlob(options);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to read blob: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -257,7 +257,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
         blobId: normalizedResult.blobId,
         blobObject: normalizedResult.blobObject
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to write blob: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -275,7 +275,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
         version: config.version || '0.0.0',
         maxSize: typeof config.maxSize === 'number' ? config.maxSize : 0
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -288,7 +288,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.getWalBalance();
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -305,7 +305,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
         used: usage.used || '0',
         total: usage.total || '0'
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -318,7 +318,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.getBlobMetadata(options);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob metadata: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -331,7 +331,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.verifyPoA(params);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to verify PoA: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -345,7 +345,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
     try {
       const result = await this.walrusClient.getBlobObject(params);
       return this.normalizeBlobObject(result);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob object: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -369,7 +369,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
         writeCost: this.toBigInt(result.writeCost),
         totalCost: this.toBigInt(result.totalCost)
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get storage cost: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -385,7 +385,7 @@ class CustomWalrusClientAdapter extends BaseWalrusClientAdapter {
         return typeof blobInfo.size === 'string' ? parseInt(blobInfo.size, 10) : blobInfo.size as number;
       }
       throw new WalrusClientAdapterError('Size not available in blob info');
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob size using fallback: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -412,7 +412,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     try {
       const result = await this.walrusClient.getBlobInfo(blobId);
       return this.normalizeBlobObject(result);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob info: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -425,7 +425,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.readBlob(options);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to read blob: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -446,7 +446,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
         blobId: normalizedResult.blobId,
         blobObject: normalizedResult.blobObject
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to write blob: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -464,7 +464,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
         version: config.version || '0.0.0',
         maxSize: typeof config.maxSize === 'number' ? config.maxSize : 0
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -477,7 +477,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.getWalBalance();
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -494,7 +494,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
         used: usage.used || '0',
         total: usage.total || '0'
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -507,7 +507,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.getBlobMetadata(options);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob metadata: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -520,7 +520,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     
     try {
       return await this.walrusClient.verifyPoA(params);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to verify PoA: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -534,7 +534,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
     try {
       const result = await this.walrusClient.getBlobObject(params);
       return this.normalizeBlobObject(result);
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get blob object: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -558,7 +558,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
         writeCost: this.toBigInt(result.writeCost),
         totalCost: this.toBigInt(result.totalCost)
       };
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get storage cost: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -577,7 +577,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
 
       // Fallback if method not available
       throw new WalrusClientAdapterError('getBlobSize method not available');
-    } catch (error) {
+    } catch (_error) {
       // Fallback: try to get size from blob info
       try {
         const blobInfo = await this.getBlobInfo(blobId);
@@ -614,7 +614,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       
       // Return empty array if method not available
       return [];
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to get storage providers: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -630,7 +630,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       if ('reset' in this.walrusClient && typeof this.walrusClient.reset === 'function') {
         this.walrusClient.reset();
       }
-    } catch (error) {
+    } catch (_error) {
       throw new WalrusClientAdapterError(`Failed to reset client: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -660,7 +660,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       
       try {
         return await this.walrusClient.executeCertifyBlobTransaction(adaptedOptions);
-      } catch (error) {
+      } catch (_error) {
         throw new WalrusClientAdapterError(`Failed to execute certify blob transaction: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
@@ -682,7 +682,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       
       try {
         return await this.walrusClient.executeWriteBlobAttributesTransaction(adaptedOptions);
-      } catch (error) {
+      } catch (_error) {
         throw new WalrusClientAdapterError(`Failed to execute write blob attributes transaction: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
@@ -715,7 +715,7 @@ class ExtendedWalrusClientAdapter extends BaseWalrusClientAdapter {
       
       try {
         return await this.walrusClient.executeCreateStorageTransaction(adaptedOptions);
-      } catch (error) {
+      } catch (_error) {
         throw new WalrusClientAdapterError(`Failed to execute create storage transaction: ${error instanceof Error ? error.message : String(error)}`);
       }
     }

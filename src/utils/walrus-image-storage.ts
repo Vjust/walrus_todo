@@ -51,7 +51,7 @@ const withRetry = async <T>(
   for (let i = 0; i < attempts; i++) {
     try {
       return await fn();
-    } catch (error) {
+    } catch (_error) {
       lastError = error as Error;
       // Calculate delay with exponential backoff
       const delay = Math.min(baseDelay * Math.pow(2, i), maxDelay);
@@ -168,7 +168,7 @@ export class WalrusImageStorage {
       // Use type assertion to tell TypeScript that KeystoreSigner is compatible with Signer
       this.signer = createSignerAdapter(keystoreSigner as unknown as Signer);
       this.isInitialized = true;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof Error) {
         handleError('Failed to initialize Walrus client', error);
         throw new CLIError(`Failed to initialize Walrus client: ${error.message}`, 'WALRUS_INIT_FAILED');
@@ -191,7 +191,7 @@ export class WalrusImageStorage {
     if (this.walrusClient?.reset) {
       try {
         this.walrusClient.reset();
-      } catch (error) {
+      } catch (_error) {
         // Log but don't throw since we're cleaning up
         console.error('Error resetting Walrus client:', error);
       }
@@ -365,7 +365,7 @@ export class WalrusImageStorage {
 
       // Return the Walrus URL format
       return `https://testnet.wal.app/blob/${blobId}`;
-    } catch (error) {
+    } catch (_error) {
       handleError('Failed to upload default image to Walrus', error);
       throw error;
     } finally {
@@ -401,7 +401,7 @@ export class WalrusImageStorage {
         `Unsupported image format. Only PNG, JPEG, and GIF are supported.`,
         'WALRUS_UNSUPPORTED_FORMAT'
       );
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -459,14 +459,14 @@ export class WalrusImageStorage {
             'WALRUS_INVALID_DIMENSIONS'
           );
         }
-      } catch (error) {
+      } catch (_error) {
         if (error instanceof CLIError) throw error;
         throw new CLIError(
           `Invalid image file: ${error instanceof Error ? error.message : String(error)}`,
           'WALRUS_INVALID_IMAGE'
         );
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -657,11 +657,11 @@ export class WalrusImageStorage {
             
             // If we get here, verification failed after all attempts
             throw new CLIError('Failed to verify uploaded content after multiple attempts', 'WALRUS_VERIFICATION_FAILED');
-          } catch (error) {
+          } catch (_error) {
             lastError = error instanceof Error ? error : new Error(String(error));
             if (attempt === maxRetries) throw lastError;
           }
-        } catch (error) {
+        } catch (_error) {
           if (error instanceof CLIError) {
             lastError = error;
           } else if (error instanceof Error) {
@@ -675,7 +675,7 @@ export class WalrusImageStorage {
       }
 
       throw lastError || new CLIError('Upload failed after all retries', 'WALRUS_UPLOAD_FAILED');
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Failed to upload image: ${error instanceof Error ? error.message : String(error)}`,

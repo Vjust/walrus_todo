@@ -9,7 +9,7 @@ export interface OraInstance {
   clear(): OraInstance;
   text: string;
   color: string;
-  spinner: any;
+  spinner: { interval: number; frames: string[] };
   prefixText?: string;
   indent?: number;
   discardStdin?: boolean;
@@ -21,7 +21,7 @@ export interface OraInstance {
 export interface OraOptions {
   text?: string;
   color?: string;
-  spinner?: any;
+  spinner?: { interval: number; frames: string[] };
   prefixText?: string;
   indent?: number;
   discardStdin?: boolean;
@@ -32,7 +32,7 @@ export interface OraOptions {
 class MockOraInstance implements OraInstance {
   text: string;
   color: string;
-  spinner: any;
+  spinner: { interval: number; frames: string[] };
   prefixText?: string;
   indent?: number;
   discardStdin?: boolean;

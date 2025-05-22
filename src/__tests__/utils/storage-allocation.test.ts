@@ -3,7 +3,6 @@ import { SuiClient, type CoinBalance } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../utils/storage-manager';
 import { CLIError } from '../../types/error';
-import { execSync } from 'child_process';
 
 jest.mock('child_process', () => ({
   execSync: jest.fn()

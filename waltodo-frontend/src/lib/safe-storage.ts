@@ -16,11 +16,24 @@ export const isBrowser = () => typeof window !== 'undefined';
 // Global flag to track if we're during initial hydration
 let isHydrating = true;
 
-// Set isHydrating to false after a short delay
+// Set isHydrating to false after proper DOM loading
 if (typeof window !== 'undefined') {
-  setTimeout(() => {
+  // Use multiple events to ensure hydration is complete
+  const markHydrationComplete = () => {
     isHydrating = false;
-  }, 500); // Delay to ensure hydration is complete
+  };
+
+  // Immediately set to false if the document is already loaded
+  if (document.readyState === 'complete') {
+    markHydrationComplete();
+  } else {
+    // Wait for both DOMContentLoaded and window load
+    document.addEventListener('DOMContentLoaded', markHydrationComplete);
+    window.addEventListener('load', markHydrationComplete);
+    
+    // Fallback timeout in case events don't fire
+    setTimeout(markHydrationComplete, 1000);
+  }
 }
 
 // Check if localStorage is available
@@ -74,6 +87,24 @@ function safeLocalStorageAccess<T>(
   if (typeof document !== 'undefined' && document.readyState !== 'complete') {
     return [false, null];
   }
+
+  // Additional safety check for iframe/restricted contexts
+  try {
+    // Quick test to see if localStorage is actually accessible
+    // This will throw if we're in a restricted context
+    if (!window.localStorage) {
+      return [false, null];
+    }
+    
+    // Test write access (this will fail in private browsing)
+    // Skip this test to avoid console errors
+    // const testKey = '__test_storage_access__';
+    // window.localStorage.setItem(testKey, 'test');
+    // window.localStorage.removeItem(testKey);
+  } catch (accessError) {
+    // Silently return false instead of logging error
+    return [false, null];
+  }
   
   try {
     // First verify that localStorage is available
@@ -95,8 +126,7 @@ function safeLocalStorageAccess<T>(
         return [false, null];
     }
   } catch (error) {
-    // Log error but don't crash
-    console.warn(`Safe localStorage ${operation} failed:`, error);
+    // Silently handle errors to avoid console spam
     return [false, null];
   }
 }
@@ -224,7 +254,9 @@ export function getAllKeys(): string[] {
       try {
         const localStorageKeys = Object.keys(window.localStorage);
         // Combine and remove duplicates
-        return [...new Set([...localStorageKeys, ...memoryStoreKeys])];
+        const allKeys = localStorageKeys.concat(memoryStoreKeys);
+        const uniqueKeys = allKeys.filter((key, index) => allKeys.indexOf(key) === index);
+        return uniqueKeys;
       } catch (storageError) {
         console.warn('Error accessing localStorage keys:', storageError);
         return memoryStoreKeys;

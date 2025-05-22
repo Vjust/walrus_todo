@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import type { Mocked } from 'jest-mock';
 import { TransactionHelper } from '@/utils/TransactionHelper';
 import { Signer } from '@mysten/sui/cryptography';
 import { Logger } from '@/utils/Logger';
@@ -12,7 +11,7 @@ import {
 jest.mock('../../../src/utils/Logger');
 
 describe('TransactionHelper', () => {
-  let mockSigner: Mocked<Signer>;
+  let _mockSigner: Mocked<Signer>;
   let mockLogger: Mocked<Logger>;
   let helper: TransactionHelper;
 
@@ -96,11 +95,9 @@ describe('TransactionHelper', () => {
         exponential: true
       });
 
-      try {
-        await helper.executeWithRetry(operation, { name: 'test operation' });
-      } catch (error: unknown) {
-        // Expected to fail
-      }
+      await expect(
+        helper.executeWithRetry(operation, { name: 'test operation' })
+      ).rejects.toThrow('Network error');
 
       expect(delays).toEqual([100, 200]); // 100ms, then 200ms
     });
@@ -200,16 +197,19 @@ describe('TransactionHelper', () => {
       const operation = jest.fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Test error'));
 
-      try {
-        await helper.executeWithRetry(operation, {
+      await expect(
+        helper.executeWithRetry(operation, {
           name: 'important operation'
-        });
-      } catch (error: unknown) {
-        expect(error instanceof BlockchainError).toBe(true);
-        if (error instanceof BlockchainError) {
-          expect(error.message).toContain('important operation');
-        }
-      }
+        })
+      ).rejects.toThrow(BlockchainError);
+      
+      await expect(
+        helper.executeWithRetry(operation, {
+          name: 'important operation'
+        })
+      ).rejects.toMatchObject({
+        message: expect.stringContaining('important operation')
+      });
     });
   });
 
@@ -248,16 +248,16 @@ describe('TransactionHelper', () => {
         baseDelay: 100
       });
 
-      try {
-        await helper.executeWithRetry(operation, {
+      await expect(
+        helper.executeWithRetry(operation, {
           name: 'test',
           customRetry: {
             attempts: 2 // Override attempts only
           }
-        });
-      } catch (error: unknown) {
-        expect(operation).toHaveBeenCalledTimes(2); // Should use custom attempts
-      }
+        })
+      ).rejects.toThrow('Test error');
+      
+      expect(operation).toHaveBeenCalledTimes(2); // Should use custom attempts
     });
   });
 

@@ -28,8 +28,8 @@ declare module '@mysten/sui/cryptography/keystore' {
 
 // Enhanced TransactionBlock and Transaction types
 declare module '@mysten/sui/transactions' {
-  import { Signer } from '@mysten/sui/cryptography';
-  import { SuiObjectRef, SuiTransactionBlockResponse, SuiTransactionBlockResponseOptions } from '@mysten/sui/client';
+  // Signer imported but not used
+  import { SuiObjectRef } from '@mysten/sui/client';
 
   export type TransactionArgument = TransactionObjectArgument | TransactionPureArgument;
 

@@ -516,7 +516,7 @@ describe('Data Privacy and PII Security Tests', () => {
       try {
         await aiService.summarize(sampleTodos);
         fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         // Error message should not contain sensitive data
         expect(String(error)).not.toContain('super-secret-api-key-12345');
         expect(String(error)).not.toContain('123-45-6789');

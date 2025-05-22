@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { createMockWalrusClient } from '../../../src/utils/MockWalrusClient';
-import { SuiClient } from '@mysten/sui/client';
+
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
-import { CLIError } from '../../../src/types/error';
+
 import { CredentialVerificationService } from '../../../src/services/ai/credentials/CredentialVerificationService';
 import * as crypto from 'crypto';
 
@@ -24,7 +23,7 @@ const mockSigner = {
     bytes: Buffer.from(data).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signWithIntent: async (data: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> => ({
+  signWithIntent: async (data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
     bytes: Buffer.from(data).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),

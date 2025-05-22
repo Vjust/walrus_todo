@@ -6,7 +6,7 @@
  */
 
 import { CLIError } from '../types/error';
-import { AIProvider } from '../services/ai/types';
+// AIProvider imported but not used
 
 // Define provider-specific key patterns
 const KEY_PATTERNS: Record<string, RegExp> = {

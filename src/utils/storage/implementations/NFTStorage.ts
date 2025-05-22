@@ -217,7 +217,7 @@ export class NFTStorage extends AbstractStorage {
       // Update connection state and timestamp
       this.connectionState = 'connected';
       this.lastHealthCheck = Date.now();
-    } catch (error) {
+    } catch (_error) {
       this.connectionState = 'failed';
       
       if (error instanceof ValidationError || error instanceof BlockchainError) {
@@ -278,7 +278,7 @@ export class NFTStorage extends AbstractStorage {
       }
       
       return isHealthy;
-    } catch (error) {
+    } catch (_error) {
       console.warn('NFT storage health check failed:', error);
       return false;
     }
@@ -362,7 +362,7 @@ export class NFTStorage extends AbstractStorage {
       const nftInfo = await this.getTodoNFT(nftId);
       
       return nftInfo;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError ||
           error instanceof BlockchainError ||
           error instanceof TransactionError) {
@@ -419,7 +419,7 @@ export class NFTStorage extends AbstractStorage {
       });
       
       return tx;
-    } catch (error) {
+    } catch (_error) {
       throw new BlockchainError(
         `Failed to create NFT transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
@@ -510,7 +510,7 @@ export class NFTStorage extends AbstractStorage {
         walrusBlobId: fields.walrus_blob_id || '',
         rawData: result.data
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError || error instanceof BlockchainError) {
         throw error;
       }
@@ -583,7 +583,7 @@ export class NFTStorage extends AbstractStorage {
       }
       
       return txResult.digest;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError ||
           error instanceof BlockchainError ||
           error instanceof TransactionError) {
@@ -788,7 +788,7 @@ export class NFTStorage extends AbstractStorage {
       
       console.log(`Normalized transaction digest ${idOrDigest} to object ID ${objectId}`);
       return objectId;
-    } catch (error) {
+    } catch (_error) {
       // If anything goes wrong, return the original
       console.warn('Failed to normalize object ID:', error);
       return idOrDigest;

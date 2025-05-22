@@ -24,7 +24,7 @@ export enum CredentialType {
  */
 export enum AIPermissionLevel {
   NO_ACCESS = 0,      // No access to AI operations
-  READ_ONLY = 1,      // Can only use non-modifying operations (read, analyze)
+  READ_ONLY = 1,      // Can only use non-modifying operations (_read, _analyze)
   STANDARD = 2,       // Standard access level (most operations)
   ADVANCED = 3,       // Advanced access (including training, fine-tuning)
   ADMIN = 4           // Admin level (full access)
@@ -124,17 +124,17 @@ export interface AICredentialAdapter {
   /**
    * Store a credential for an AI provider
    */
-  storeCredential(credential: AIProviderCredential): Promise<string>;
+  storeCredential(_credential: AIProviderCredential): Promise<string>;
 
   /**
    * Retrieve a credential by ID
    */
-  getCredential(credentialId: string): Promise<AIProviderCredential>;
+  getCredential(_credentialId: string): Promise<AIProviderCredential>;
 
   /**
    * Retrieve a credential by provider name
    */
-  getCredentialByProvider(providerName: string): Promise<AIProviderCredential>;
+  getCredentialByProvider(_providerName: string): Promise<AIProviderCredential>;
 
   /**
    * List all credentials
@@ -144,32 +144,32 @@ export interface AICredentialAdapter {
   /**
    * Check if a credential exists for a provider
    */
-  hasCredential(providerName: string): Promise<boolean>;
+  hasCredential(_providerName: string): Promise<boolean>;
 
   /**
    * Delete a credential
    */
-  deleteCredential(credentialId: string): Promise<boolean>;
+  deleteCredential(_credentialId: string): Promise<boolean>;
 
   /**
    * Verify a credential on the blockchain
    */
-  verifyCredential(params: CredentialVerificationParams): Promise<CredentialVerificationResult>;
+  verifyCredential(_params: CredentialVerificationParams): Promise<CredentialVerificationResult>;
 
   /**
    * Check if a credential verification is still valid
    */
-  checkVerificationStatus(verificationId: string): Promise<boolean>;
+  checkVerificationStatus(_verificationId: string): Promise<boolean>;
 
   /**
    * Generate a shareable proof for a credential
    */
-  generateCredentialProof(credentialId: string): Promise<string>;
+  generateCredentialProof(_credentialId: string): Promise<string>;
 
   /**
    * Revoke a credential verification
    */
-  revokeVerification(verificationId: string): Promise<boolean>;
+  revokeVerification(_verificationId: string): Promise<boolean>;
 
   /**
    * Get the signer for this credential adapter
@@ -241,12 +241,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     throw new Error('Method not implemented.');
   }
 
-  async generateCredentialProof(credentialId: string): Promise<string> {
+  async generateCredentialProof(_credentialId: string): Promise<string> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async revokeVerification(verificationId: string): Promise<boolean> {
+  async revokeVerification(_verificationId: string): Promise<boolean> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }

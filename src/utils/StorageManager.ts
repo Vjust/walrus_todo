@@ -1,7 +1,6 @@
 import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError, StorageError, BlockchainError, ValidationError } from '../types/errors/consolidated/index';
-import { execSync } from 'child_process';
 import { handleError } from './error-handler';
 import { WalrusClientAdapter } from './adapters/walrus-client-adapter';
 import { Logger } from './Logger';
@@ -78,7 +77,7 @@ export class StorageManager {
           'WALRUS_NETWORK_ERROR'
         );
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -124,7 +123,7 @@ export class StorageManager {
         storageFundBalance: BigInt(storageFundBalance.totalBalance),
         isStorageFundSufficient
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Failed to check balances: ${error instanceof Error ? error.message : String(error)}`,
@@ -157,7 +156,7 @@ export class StorageManager {
         requiredBalance,
         epochs: this.DEFAULT_EPOCH_DURATION
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to estimate storage cost: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_COST_ESTIMATION_FAILED'
@@ -225,7 +224,7 @@ export class StorageManager {
           endEpoch: Number(fields.end_epoch)
         }
       };
-    } catch (error) {
+    } catch (_error) {
       handleError('Failed to verify existing storage', error);
       return { isValid: false, remainingSize: 0, remainingEpochs: 0 };
     }
@@ -278,7 +277,7 @@ export class StorageManager {
         requiredCost,
         balances
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Storage validation failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -339,7 +338,7 @@ export class StorageManager {
         totalUsed,
         storageObjects
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_STORAGE_QUERY_FAILED'
@@ -383,7 +382,7 @@ export class StorageManager {
           networkFees
         }
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to calculate storage cost: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_COST_CALCULATION_FAILED'
@@ -460,7 +459,7 @@ export class StorageManager {
           usagePercentage
         });
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof StorageError || error instanceof ValidationError) {
         throw error;
       }
@@ -526,7 +525,7 @@ export class StorageManager {
         available,
         minRequired
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof ValidationError) {
         throw error;
       }

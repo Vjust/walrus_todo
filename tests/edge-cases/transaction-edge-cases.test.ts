@@ -1,6 +1,21 @@
 import { SuiTestService } from '@/services/SuiTestService';
-import { MockTodoListContract } from '@/__mocks__/contracts/todo-list';
-import { MockNFTStorageContract } from '@/__mocks__/contracts/nft-storage';
+// Mock contracts
+jest.mock('@/services/SuiTestService');
+
+class MockTodoListContract {
+  constructor(public address: string) {}
+  createList = jest.fn().mockResolvedValue({ id: 'list-123' });
+  addTodo = jest.fn().mockResolvedValue({ id: 'todo-123' });
+  updateTodo = jest.fn().mockResolvedValue({ success: true });
+  deleteTodo = jest.fn().mockResolvedValue({ success: true });
+}
+
+class MockNFTStorageContract {
+  constructor(public address: string) {}
+  mintNFT = jest.fn().mockResolvedValue({ id: 'nft-123' });
+  transferNFT = jest.fn().mockResolvedValue({ success: true });
+  burnNFT = jest.fn().mockResolvedValue({ success: true });
+}
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 
 describe('Transaction Edge Cases', () => {

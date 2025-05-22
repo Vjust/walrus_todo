@@ -18,7 +18,7 @@ export class TodoSerializer {
       const parsed = JSON.parse(buffer.toString());
       // Validate the parsed data using Zod schema
       return validateTodo(parsed);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof SyntaxError) {
         throw new CLIError(
           `Invalid JSON format in todo buffer: ${error.message}`,
@@ -40,7 +40,7 @@ export class TodoSerializer {
       const parsed = JSON.parse(buffer.toString());
       // Validate the parsed data using Zod schema
       return validateTodoList(parsed);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof SyntaxError) {
         throw new CLIError(
           `Invalid JSON format in todo list buffer: ${error.message}`,
@@ -58,7 +58,7 @@ export class TodoSerializer {
     try {
       const todo = this.bufferToTodo(buffer);
       return { success: true, data: todo };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown deserialization error'
@@ -73,7 +73,7 @@ export class TodoSerializer {
     try {
       const todoList = this.bufferToTodoList(buffer);
       return { success: true, data: todoList };
-    } catch (error) {
+    } catch (_error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown deserialization error'

@@ -3,12 +3,12 @@
  * Tests stdin input and command execution flow
  */
 
-import { test } from '@oclif/test';
+// test import removed - not used in this file
 import * as sinon from 'sinon';
 import * as readline from 'readline';
 import { expect } from 'chai';
 import * as childProcess from 'child_process';
-import { TodoService } from '../../../src/services/todoService';
+
 import InteractiveCommand from '../../../src/commands/interactive';
 
 describe('interactive command e2e tests', () => {

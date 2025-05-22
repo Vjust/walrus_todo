@@ -16,7 +16,7 @@ import type {
   DeleteBlobOptions, 
   RegisterBlobOptions, 
   GetStorageConfirmationOptions, 
-  StorageConfirmation 
+  // StorageConfirmation imported but not used
 } from './walrus';
 import type { SignerAdapter } from './adapters/SignerAdapter';
 import type { TransactionBlockAdapter } from './adapters/TransactionBlockAdapter';

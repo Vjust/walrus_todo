@@ -3,6 +3,7 @@ import BaseCommand from '../../base-command';
 import { secureCredentialService } from '../../services/ai/SecureCredentialService';
 import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
 import { validateApiKey } from '../../utils/KeyValidator';
+import { getProviderEnum, getProviderString } from '../../utils/adapters/ai-provider-adapter';
 import chalk from 'chalk';
 
 /**
@@ -157,7 +158,7 @@ export default class Credentials extends BaseCommand {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to add credential: ${error.message}`, { exit: 1 });
     }
   }
@@ -209,7 +210,7 @@ export default class Credentials extends BaseCommand {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to list credentials: ${error.message}`, { exit: 1 });
     }
   }
@@ -246,7 +247,7 @@ export default class Credentials extends BaseCommand {
       } else {
         this.log(`No API key found for ${provider}`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to remove credential: ${error.message}`, { exit: 1 });
     }
   }
@@ -270,7 +271,7 @@ export default class Credentials extends BaseCommand {
       } else {
         this.log(`Failed to verify API key for ${provider} on blockchain`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Verification failed: ${error.message}`, { exit: 1 });
     }
   }
@@ -326,7 +327,7 @@ export default class Credentials extends BaseCommand {
           this.log(`${chalk.yellow('ℹ')} Next rotation due: ${new Date(result.rotationDue).toLocaleDateString()}`);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to rotate credential: ${error.message}`, { exit: 1 });
     }
   }
@@ -365,7 +366,7 @@ export default class Credentials extends BaseCommand {
           this.log(`${chalk.green('✓')} Updated on blockchain`);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to update permissions: ${error.message}`, { exit: 1 });
     }
   }

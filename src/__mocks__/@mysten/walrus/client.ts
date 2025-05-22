@@ -22,6 +22,7 @@ import type {
 import { WalrusClientAdapter } from '../../../utils/adapters/walrus-client-adapter';
 import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
 import { WalrusClientVersion } from '../../../types/adapters/WalrusClientAdapter';
+import { WalrusClient, WalrusClientExt } from '../../../types/client';
 
 /**
  * MockWalrusClient implements the WalrusClientAdapter interface for testing
@@ -37,13 +38,13 @@ export class MockWalrusClient implements WalrusClientAdapter {
   }
   
   // Adapter interface implementation to get the underlying client
-  getUnderlyingClient(): OriginalWalrusClient | unknown {
-    return this;
+  getUnderlyingClient(): OriginalWalrusClient | WalrusClient | WalrusClientExt {
+    return this as unknown as WalrusClientExt;
   }
   
   // Alias for getUnderlyingClient for compatibility with WalrusClientAdapter
-  getWalrusClient(): OriginalWalrusClient | unknown {
-    return this;
+  getWalrusClient(): OriginalWalrusClient | WalrusClient | WalrusClientExt {
+    return this as unknown as WalrusClientExt;
   }
 
   async executeCreateStorageTransaction(
@@ -305,7 +306,7 @@ export class MockWalrusClient implements WalrusClientAdapter {
       storage_size: string;
     }
   }> {
-    return (tx: TransactionType) => Promise.resolve({
+    return (_tx: TransactionType) => Promise.resolve({
       digest: this.mockDigest,
       storage: {
         id: { id: this.mockStorageId },

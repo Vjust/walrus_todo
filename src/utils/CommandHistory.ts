@@ -37,7 +37,7 @@ export class CommandHistory {
         const data = fs.readFileSync(this.historyFile, 'utf-8');
         this.history = JSON.parse(data);
       }
-    } catch (error) {
+    } catch (_error) {
       // If there's an error reading history, start fresh
       this.history = [];
     }
@@ -49,7 +49,7 @@ export class CommandHistory {
   private saveHistory(): void {
     try {
       fs.writeFileSync(this.historyFile, JSON.stringify(this.history, null, 2));
-    } catch (error) {
+    } catch (_error) {
       // Fail silently - history is not critical
     }
   }

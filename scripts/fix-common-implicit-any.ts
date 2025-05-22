@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Helper script to apply common fixes for implicit 'any' issues
  * Run with: npx ts-node scripts/fix-common-implicit-any.ts
@@ -19,6 +20,7 @@ const files = glob.sync(path.join(__dirname, '../src/**/*.ts'), {
   ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts']
 });
 
+// eslint-disable-next-line no-console
 process.stdout.write(`Processing ${files.length} TypeScript files for common implicit 'any' patterns...\n`);
 
 const changes: FileChange[] = [];
@@ -180,7 +182,7 @@ let restored = 0;
 
 backupFiles.forEach(backupPath => {
   try {
-    const originalPath = backupPath.replace(/\.bak$/, '');
+    const originalPath = backupPath.replace(/\\.bak$/, '');
     const relativePath = path.relative(path.resolve(__dirname, '..'), originalPath);
     
     // Restore the original file

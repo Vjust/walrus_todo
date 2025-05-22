@@ -104,12 +104,12 @@ export async function cleanupTestFiles(config: Partial<CleanupConfig> = {}): Pro
             logger.debug(`Removed file: ${file}`);
             filesRemoved++;
           }
-        } catch (error) {
+        } catch (_error) {
           logger.error(`Failed to remove file: ${file}`, error);
           errors++;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       logger.debug(`No files matching pattern: ${pathPattern}`);
     }
   }
@@ -142,7 +142,7 @@ async function findFiles(pattern: string): Promise<string[]> {
   try {
     const { stdout } = await execPromise(`find . -name "${pattern}" -type f`);
     return stdout.split('\n').filter(Boolean);
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }
@@ -177,7 +177,7 @@ async function cleanupTestTodos(patterns: string[]): Promise<void> {
       await fs.writeFile(todosFile, JSON.stringify(filteredTodos, null, 2));
       logger.info(`Removed ${todos.length - filteredTodos.length} test todos`);
     }
-  } catch (error) {
+  } catch (_error) {
     logger.debug('No todos file found or error reading it:', error);
   }
 }
@@ -196,7 +196,7 @@ async function cleanupNetworkTestData(): Promise<void> {
     await cleanupSuiTestNFTs();
     
     logger.info('Network test data cleanup completed');
-  } catch (error) {
+  } catch (_error) {
     logger.error('Error cleaning up network test data:', error);
     throw error;
   }
@@ -269,7 +269,7 @@ Examples:
     await cleanupTestFiles(config);
     logger.info('Cleanup completed successfully');
     process.exit(0);
-  } catch (error) {
+  } catch (_error) {
     logger.error('Cleanup failed:', error);
     process.exit(1);
   }
@@ -277,7 +277,7 @@ Examples:
 
 // Run if called directly
 if (require.main === module) {
-  main().catch(error => {
+  main().catch(_error => {
     console.error('Fatal error:', error);
     process.exit(1);
   });

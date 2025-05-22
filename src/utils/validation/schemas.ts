@@ -148,7 +148,7 @@ export type StorageLocationType = z.infer<typeof StorageLocationSchema>;
 export function validateTodo(todo: unknown): TodoSchemaType {
   try {
     return TodoSchema.parse(todo);
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => 
         `${err.path.join('.')}: ${err.message}`
@@ -165,7 +165,7 @@ export function validateTodo(todo: unknown): TodoSchemaType {
 export function validateTodoList(todoList: unknown): TodoListSchemaType {
   try {
     return TodoListSchema.parse(todoList);
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => 
         `${err.path.join('.')}: ${err.message}`
@@ -182,7 +182,7 @@ export function validateTodoList(todoList: unknown): TodoListSchemaType {
 export function validateTodoListArray(todoLists: unknown): TodoListSchemaType[] {
   try {
     return TodoListArraySchema.parse(todoLists);
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => 
         `${err.path.join('.')}: ${err.message}`
@@ -200,7 +200,7 @@ export function validateTodoSafe(todo: unknown): { success: true; data: TodoSche
   try {
     const validated = TodoSchema.parse(todo);
     return { success: true, data: validated };
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => 
         `${err.path.join('.')}: ${err.message}`
@@ -218,7 +218,7 @@ export function validateTodoListSafe(todoList: unknown): { success: true; data: 
   try {
     const validated = TodoListSchema.parse(todoList);
     return { success: true, data: validated };
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => 
         `${err.path.join('.')}: ${err.message}`
@@ -241,7 +241,7 @@ export type PartialTodoType = z.infer<typeof PartialTodoSchema>;
 export function validatePartialTodo(todo: unknown): PartialTodoType {
   try {
     return PartialTodoSchema.parse(todo);
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = error.errors.map(err => 
         `${err.path.join('.')}: ${err.message}`

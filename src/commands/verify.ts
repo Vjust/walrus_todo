@@ -2,7 +2,7 @@ import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { AIVerifierAdapter, VerificationRecord } from '../types/adapters/AIVerifierAdapter';
 import chalk from 'chalk';
-import { TransactionBlock } from '@mysten/sui/transactions';
+// TransactionBlock imported but not used
 import * as fs from 'fs';
 import * as path from 'path';
 import { configService } from '../services/config-service';
@@ -52,8 +52,9 @@ export default class Verify extends BaseCommand {
 
     // Initialize the verifier adapter
     const config = await this.configService.getConfig();
-    const packageId = config.packageId || '';
-    const registryId = config.registryId || '';
+    // packageId and registryId would be used in real implementation
+    // const packageId = config.packageId || '';
+    // const registryId = config.registryId || '';
     
     // This would be properly initialized in a real implementation
     this.verifierAdapter = {} as AIVerifierAdapter;
@@ -113,7 +114,7 @@ export default class Verify extends BaseCommand {
       this.log(chalk.bold(`Found ${verifications.length} verifications:`));
       this.log(this.formatTable(tableData));
       
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to list verifications: ${error}`);
     }
   }
@@ -163,7 +164,7 @@ export default class Verify extends BaseCommand {
         }
       }
       
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to show verification: ${error}`);
     }
   }
@@ -229,7 +230,7 @@ export default class Verify extends BaseCommand {
         this.log(json);
       }
       
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to export verification: ${error}`);
     }
   }

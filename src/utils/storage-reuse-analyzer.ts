@@ -130,7 +130,7 @@ export class StorageReuseAnalyzer {
         }
         
         // Parse storage fields from the move object
-        const content = item.data.content as any;
+        const content = item.data.content as { fields?: { storage_size?: string | number; used_size?: string | number; end_epoch?: string | number; start_epoch?: string | number } };
         if (!content.fields) continue;
         
         const fields = content.fields;
@@ -228,7 +228,7 @@ export class StorageReuseAnalyzer {
         hasViableStorage: viableStorage.length > 0,
         recommendation
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_STORAGE_ANALYSIS_FAILED'
@@ -317,7 +317,7 @@ export class StorageReuseAnalyzer {
         },
         detailedRecommendation
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_EFFICIENCY_ANALYSIS_FAILED'

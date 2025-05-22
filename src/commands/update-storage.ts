@@ -1,4 +1,4 @@
-import { Args, Command, Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
@@ -109,7 +109,7 @@ export default class UpdateStorageCommand extends BaseCommand {
       // Perform storage updates
       await this.performStorageUpdates(todosToUpdate, newStorage, args.listName);
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -148,7 +148,7 @@ export default class UpdateStorageCommand extends BaseCommand {
         try {
           await this.walrusStorage.connect();
           await this.walrusStorage.disconnect();
-        } catch (error) {
+        } catch (_error) {
           errors.push(`Cannot store "${todo.title}" on blockchain: ${error.message}`);
         }
       }
@@ -162,7 +162,7 @@ export default class UpdateStorageCommand extends BaseCommand {
             warnings.push(`Blockchain version of "${todo.title}" is newer than local version`);
           }
           await this.walrusStorage.disconnect();
-        } catch (error) {
+        } catch (_error) {
           errors.push(`Cannot verify blockchain data for "${todo.title}": ${error.message}`);
         }
       }
@@ -198,7 +198,7 @@ export default class UpdateStorageCommand extends BaseCommand {
         try {
           await this.updateTodoStorage(todo, newStorage, listName);
           successCount++;
-        } catch (error) {
+        } catch (_error) {
           failCount++;
           this.warning(`Failed to update storage for "${todo.title}": ${error.message}`);
         }
@@ -247,7 +247,10 @@ export default class UpdateStorageCommand extends BaseCommand {
     } 
     else if (currentStorage === 'blockchain' && newStorage === 'both') {
       // Retrieve from blockchain and store locally
-      const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId!);
+      if (!todo.walrusBlobId) {
+        throw new CLIError('Todo does not have a blockchain blob ID');
+      }
+      const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId);
       await this.todoService.updateTodo(listName, todo.id, {
         ...blockchainTodo,
         storageLocation: newStorage
@@ -261,7 +264,10 @@ export default class UpdateStorageCommand extends BaseCommand {
     }
     else if (currentStorage === 'both' && newStorage === 'blockchain') {
       // Update blockchain with latest local data
-      await this.walrusStorage.updateTodo(todo.walrusBlobId!, todo);
+      if (!todo.walrusBlobId) {
+        throw new CLIError('Todo does not have a blockchain blob ID');
+      }
+      await this.walrusStorage.updateTodo(todo.walrusBlobId, todo);
       // Remove from local storage
       await this.todoService.deleteTodo(listName, todo.id);
     }

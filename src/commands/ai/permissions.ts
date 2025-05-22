@@ -1,4 +1,4 @@
-import { Flags, Args } from '@oclif/core';
+import { Flags } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import { BlockchainVerifier } from '../../services/ai/BlockchainVerifier';
@@ -19,7 +19,7 @@ export default class AiPermissions extends BaseCommand {
   private async getSuiSigner() {
     try {
       return await KeystoreSigner.fromPath('');
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`);
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -114,7 +114,7 @@ export default class AiPermissions extends BaseCommand {
       this.log(chalk.green('✓ Permission system initialized successfully.'));
       
       return permissionManager;
-    } catch (error) {
+    } catch (_error) {
       this.warn(chalk.yellow(`⚠️  Blockchain integration failed: ${error}`));
       this.warn(chalk.dim('Continuing with local permission management only.'));
       return null;
@@ -223,7 +223,7 @@ export default class AiPermissions extends BaseCommand {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to list permissions: ${error}`);
     }
   }
@@ -278,12 +278,12 @@ export default class AiPermissions extends BaseCommand {
             } else {
               this.log(chalk.red('✗ Permission verification failed'));
             }
-          } catch (error) {
+          } catch (_error) {
             this.warn(chalk.yellow(`⚠️ Blockchain verification failed: ${error}`));
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to check permission: ${error}`);
     }
   }
@@ -356,7 +356,7 @@ export default class AiPermissions extends BaseCommand {
               } else {
                 this.log(chalk.red('✗ Permission verification failed'));
               }
-            } catch (error) {
+            } catch (_error) {
               this.warn(chalk.yellow(`⚠️ Blockchain verification failed: ${error}`));
             }
           }
@@ -376,7 +376,7 @@ export default class AiPermissions extends BaseCommand {
       } else {
         this.error(`Failed to update permission level for provider '${flags.provider}'`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to grant permission: ${error}`);
     }
   }
@@ -427,7 +427,7 @@ export default class AiPermissions extends BaseCommand {
             } else {
               this.log(chalk.green('✓ Permission change verified on blockchain'));
             }
-          } catch (error) {
+          } catch (_error) {
             // This is expected since permission is revoked
             this.log(chalk.green('✓ Permission change verified (permission denied as expected)'));
           }
@@ -435,7 +435,7 @@ export default class AiPermissions extends BaseCommand {
       } else {
         this.error(`Failed to revoke permissions for provider '${flags.provider}'`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to revoke permission: ${error}`);
     }
   }
@@ -503,7 +503,7 @@ export default class AiPermissions extends BaseCommand {
       } else {
         this.log(chalk.yellow('\nNo providers currently have access to this operation.'));
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to register operation: ${error}`);
     }
   }
@@ -525,7 +525,7 @@ export default class AiPermissions extends BaseCommand {
     }
   }
 
-  protected async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
+  protected async confirm(message: string, _defaultValue?: boolean): Promise<boolean> {
     // Simple confirmation prompt - override BaseCommand method
     const rl = createInterface({
       input: process.stdin,

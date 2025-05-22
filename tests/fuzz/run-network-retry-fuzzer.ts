@@ -29,7 +29,7 @@ async function runNetworkRetryFuzzer() {
     if (stderr) console.error(stderr);
     
     console.log('\n✅ Network Retry Fuzzer Tests Completed Successfully!');
-  } catch (error) {
+  } catch (_error) {
     console.error('\n❌ Network Retry Fuzzer Tests Failed:');
     console.error(error.message);
     process.exit(1);

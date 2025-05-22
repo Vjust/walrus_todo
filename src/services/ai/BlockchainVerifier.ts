@@ -1,5 +1,5 @@
-import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
+// SuiClient imported but not used
+// TransactionBlock imported but not used
 import { SignerAdapter } from '../../types/adapters/SignerAdapter';
 import { WalrusClientAdapter } from '../../types/adapters/WalrusClientAdapter';
 import { AIVerifierAdapter, VerificationParams, VerificationRecord } from '../../types/adapters/AIVerifierAdapter';
@@ -46,8 +46,9 @@ export class BlockchainVerifier {
    */
   async verifyOperation(params: VerificationParams): Promise<VerificationRecord> {
     // Calculate request and response hashes for efficient blockchain storage
-    const requestHash = this.hashData(params.request);
-    const responseHash = this.hashData(params.response);
+    // requestHash and responseHash would be used for blockchain storage
+    // const requestHash = this.hashData(params.request);
+    // const responseHash = this.hashData(params.response);
     
     // If Walrus adapter is available, store the full request and response off-chain
     if (this.walrusAdapter && params.privacyLevel !== 'public') {
@@ -77,7 +78,7 @@ export class BlockchainVerifier {
           responseBlobId: responseBlobResult.blobId,
           storageType: 'walrus'
         };
-      } catch (error) {
+      } catch (_error) {
         console.warn('Failed to store full data in Walrus:', error);
         // Continue with only hashes if off-chain storage fails
       }
@@ -145,7 +146,7 @@ export class BlockchainVerifier {
       const response = new TextDecoder().decode(responseBlob);
       
       return { request, response };
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to retrieve full data: ${error}`);
     }
   }
@@ -205,7 +206,7 @@ export class BlockchainVerifier {
         isValid, 
         record: isValid ? record : undefined 
       };
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to verify proof:', error);
       return { isValid: false };
     }
@@ -294,13 +295,13 @@ export class BlockchainVerifier {
       }
       
       // In a real implementation, would verify the signature cryptographically
-      const dataBuffer = new TextEncoder().encode(data);
-      const signatureBuffer = Buffer.from(signature, 'base64');
-      const publicKeyBuffer = Buffer.from(publicKey, 'base64');
+      // const dataBuffer = new TextEncoder().encode(data);
+      // const signatureBuffer = Buffer.from(signature, 'base64');
+      // const publicKeyBuffer = Buffer.from(publicKey, 'base64');
       
       // This is a stub - in a real implementation, would use proper verification
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Signature verification failed:', error);
       return false;
     }

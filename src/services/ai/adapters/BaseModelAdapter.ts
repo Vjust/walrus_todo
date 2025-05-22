@@ -232,8 +232,8 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
 
     try {
       return await promptInput.format(input);
-    } catch (error) {
-      throw new Error(`Error formatting prompt template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (_error) {
+      throw new Error(`Error formatting prompt template: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
     }
   }
 

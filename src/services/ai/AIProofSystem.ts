@@ -6,6 +6,7 @@ import { WalrusClientAdapter } from '../../types/adapters/WalrusClientAdapter';
 import fs from 'fs';
 import path from 'path';
 import { CLI_CONFIG } from '../../constants';
+import { Logger } from '../../utils/Logger';
 
 /**
  * Proof data structure
@@ -102,8 +103,8 @@ export class AIProofSystem {
           signature: Buffer.from(signatureResult.signature).toString('base64'),
           publicKey: signer.getPublicKey().toBase64()
         };
-      } catch (error) {
-        console.warn('Failed to add signature to proof:', error);
+      } catch (_error) {
+        Logger.getInstance().warn(`Failed to add signature to proof: ${error instanceof Error ? error.message : String(error)}`);
         // Continue without signature
       }
       
@@ -111,7 +112,7 @@ export class AIProofSystem {
       this.saveProofToCache(proof);
       
       return proof;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to generate proof: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'PROOF_GENERATION_FAILED'
@@ -154,7 +155,7 @@ export class AIProofSystem {
       let record: VerificationRecord;
       try {
         record = await this.blockchainVerifier.getVerification(proofObj.verificationId);
-      } catch (error) {
+      } catch (_error) {
         return { 
           isValid: false,
           details: `Failed to retrieve verification record: ${error}`
@@ -183,7 +184,7 @@ export class AIProofSystem {
           // Verification logic would go here
           // For now, we just acknowledge that the signature exists
           // Signature verification not yet implemented - TODO: Add implementation
-        } catch (error) {
+        } catch (_error) {
           return { 
             isValid: false,
             details: `Failed to verify signature: ${error}`
@@ -196,7 +197,7 @@ export class AIProofSystem {
         record,
         details: 'Proof verified successfully.'
       };
-    } catch (error) {
+    } catch (_error) {
       return { 
         isValid: false,
         details: `Proof verification failed: ${error}`
@@ -250,7 +251,7 @@ export class AIProofSystem {
       }
       
       return proof;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to import proof: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'PROOF_IMPORT_FAILED'
@@ -279,7 +280,7 @@ export class AIProofSystem {
       }
       
       return proof;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to import proof string: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'PROOF_IMPORT_FAILED'
@@ -316,7 +317,7 @@ export class AIProofSystem {
       });
       
       return result.blobId;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to store proof on chain: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'PROOF_STORAGE_FAILED'
@@ -346,7 +347,7 @@ export class AIProofSystem {
       }
       
       return proof;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to retrieve proof from chain: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'PROOF_RETRIEVAL_FAILED'
@@ -380,8 +381,8 @@ export class AIProofSystem {
           if (proof.id && proof.verificationId && proof.operation) {
             proofs.push(proof);
           }
-        } catch (error) {
-          console.warn(`Failed to read proof file ${file}:`, error);
+        } catch (_error) {
+          Logger.getInstance().warn(`Failed to read proof file ${file}: ${error instanceof Error ? error.message : String(error)}`);
           // Skip invalid files
         }
       }

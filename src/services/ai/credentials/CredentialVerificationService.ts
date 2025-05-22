@@ -8,7 +8,7 @@ import { CLIError } from '../../../types/error';
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../../../types/client';
 import { Logger } from '../../../utils/Logger';
-import { createHash } from 'crypto';
+// createHash imported but not used
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 /**
@@ -75,8 +75,9 @@ export class CredentialVerificationService {
       const credential = JSON.parse(Buffer.from(credentialData).toString('utf-8'));
 
       // 3. Get metadata for verification
-      const metadata = await this.walrusClient.getBlobMetadata({ blobId: credentialId });
-      const attestationInfo = await this.walrusClient.getBlobInfo(credentialId);
+      // metadata and attestationInfo would be used for verification
+      // const metadata = await this.walrusClient.getBlobMetadata({ blobId: credentialId });
+      // const attestationInfo = await this.walrusClient.getBlobInfo(credentialId);
 
       // 4. Verify credential components
       const signatureValid = verifySignature ? await this.verifyDigitalSignature(credential) : true;
@@ -96,7 +97,7 @@ export class CredentialVerificationService {
         issuanceDate: new Date(credential.issuanceDate),
         expirationDate: credential.expirationDate ? new Date(credential.expirationDate) : null
       };
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Credential verification failed: ${error instanceof Error ? error.message : String(error)}`);
       throw new CLIError(
         `Credential verification failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -129,7 +130,7 @@ export class CredentialVerificationService {
       // TODO: Implement actual cryptographic verification
       // For now, we'll just return true for testing
       return true;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Signature verification failed: ${error.message}`);
       return false;
     }
@@ -159,7 +160,7 @@ export class CredentialVerificationService {
       }
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Timestamp verification failed: ${error.message}`);
       return false;
     }
@@ -168,12 +169,12 @@ export class CredentialVerificationService {
   /**
    * Check revocation status against blockchain registry
    */
-  private async checkRevocationStatus(credentialId: string): Promise<boolean> {
+  private async checkRevocationStatus(_credentialId: string): Promise<boolean> {
     try {
       // In a real implementation, this would check against a revocation registry on-chain
       // For testing, we'll just return true (not revoked)
       return true;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Revocation check failed: ${error.message}`);
       return false;
     }
@@ -200,7 +201,7 @@ export class CredentialVerificationService {
       }
 
       return isValid;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Schema validation failed: ${error.message}`);
       return false;
     }
@@ -270,7 +271,7 @@ export class CredentialVerificationService {
         registered: true,
         transactionDigest: 'mock-transaction-digest' // Replace with actual transaction digest
       };
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to issue credential: ${error instanceof Error ? error.message : String(error)}`);
       throw new CLIError(
         `Failed to issue credential: ${error instanceof Error ? error.message : String(error)}`,
@@ -331,7 +332,7 @@ export class CredentialVerificationService {
         revoked: true,
         transactionDigest: 'mock-revocation-digest' // Replace with actual transaction digest
       };
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to revoke credential: ${error instanceof Error ? error.message : String(error)}`);
       throw new CLIError(
         `Failed to revoke credential: ${error instanceof Error ? error.message : String(error)}`,

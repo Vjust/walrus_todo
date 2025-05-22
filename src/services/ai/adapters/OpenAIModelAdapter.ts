@@ -143,8 +143,8 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       };
 
       return aiResponse;
-    } catch (error) {
-      return this.handleError(error, 'completion');
+    } catch (_error) {
+      return this.handleError(_error, 'completion');
     }
   }
 
@@ -233,8 +233,8 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       };
 
       return aiResponse;
-    } catch (error) {
-      return this.handleError(error, 'structured completion');
+    } catch (_error) {
+      return this.handleError(_error, 'structured completion');
     }
   }
 
@@ -257,8 +257,8 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
       return this.complete({
         prompt: formattedPrompt
       });
-    } catch (error) {
-      return this.handleError(error, 'prompt template processing');
+    } catch (_error) {
+      return this.handleError(_error, 'prompt template processing');
     }
   }
 }

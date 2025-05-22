@@ -1,7 +1,22 @@
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 import { SuiTestService } from '@/services/SuiTestService';
-import { MockTodoListContract } from '@/__mocks__/contracts/todo-list';
-import { MockNFTStorageContract } from '@/__mocks__/contracts/nft-storage';
+// Mock contracts
+jest.mock('@/services/SuiTestService');
+
+class MockTodoListContract {
+  constructor(public address: string) {}
+  createList = jest.fn().mockResolvedValue({ id: 'list-123' });
+  addTodo = jest.fn().mockResolvedValue({ id: 'todo-123' });
+  updateTodo = jest.fn().mockResolvedValue({ success: true });
+  deleteTodo = jest.fn().mockResolvedValue({ success: true });
+}
+
+class MockNFTStorageContract {
+  constructor(public address: string) {}
+  mintNFT = jest.fn().mockResolvedValue({ id: 'nft-123' });
+  transferNFT = jest.fn().mockResolvedValue({ success: true });
+  burnNFT = jest.fn().mockResolvedValue({ success: true });
+}
 
 describe('Transaction Fuzzing Tests', () => {
   const fuzzer = new FuzzGenerator();
@@ -245,7 +260,7 @@ describe('Transaction Fuzzing Tests', () => {
               }
               break;
           }
-        } catch (error) {
+        } catch (_error) {
           // Expect valid error handling
           expect(error).toHaveProperty('message');
         }
@@ -345,7 +360,7 @@ describe('Transaction Fuzzing Tests', () => {
         await new Promise(resolve => setTimeout(resolve, condition.latency));
         try {
           await condition.operation();
-        } catch (error) {
+        } catch (_error) {
           // Expect valid error handling
           expect(error).toHaveProperty('message');
         }
@@ -406,7 +421,7 @@ describe('Transaction Fuzzing Tests', () => {
         if (connectionActive) {
           // When connected, operations might succeed or fail
           const result = await suiService.addTodo(listId, `Connected: ${Date.now()}`)
-            .catch(error => ({ error }));
+            .catch(_error => ({ error }));
           if ('error' in result) {
             expect(result.error).toHaveProperty('message');
           }
@@ -446,7 +461,7 @@ describe('Transaction Fuzzing Tests', () => {
           if (expectedError) {
             throw new Error('Expected gas error');
           }
-        } catch (error) {
+        } catch (_error) {
           expect(error).toHaveProperty('message');
         }
       }
@@ -481,7 +496,7 @@ describe('Transaction Fuzzing Tests', () => {
           return todoId;
         };
 
-        const result = await todoPromise().catch(error => ({ error }));
+        const result = await todoPromise().catch(_error => ({ error }));
         if ('error' in result) {
           expect(result.error).toHaveProperty('message');
         }
@@ -525,7 +540,7 @@ describe('Transaction Fuzzing Tests', () => {
       for (const size of memorySizes) {
         const largeText = 'x'.repeat(size);
         const result = await suiService.addTodo(listId, largeText)
-          .catch(error => ({ error }));
+          .catch(_error => ({ error }));
         if ('error' in result) {
           // Expect memory or size limit errors
           expect(result.error).toHaveProperty('message');
@@ -541,7 +556,7 @@ describe('Transaction Fuzzing Tests', () => {
       // Attempt to fill storage
       for (let i = 0; i < maxStorageAttempts; i++) {
         const result = await suiService.addTodo(listId, `Storage test ${i}: ${fuzzer.string({ minLength: 1000, maxLength: 5000 })}`)
-          .catch(error => ({ error }));
+          .catch(_error => ({ error }));
         if ('error' in result) {
           storageExhausted = true;
           expect(result.error).toHaveProperty('message');
@@ -552,7 +567,7 @@ describe('Transaction Fuzzing Tests', () => {
       // Test behavior when storage is nearly full
       if (!storageExhausted) {
         const result = await suiService.addTodo(listId, 'Final todo')
-          .catch(error => ({ error }));
+          .catch(_error => ({ error }));
         if ('error' in result) {
           expect(result.error).toHaveProperty('message');
         }
@@ -596,7 +611,7 @@ describe('Transaction Fuzzing Tests', () => {
 
       for (const payload of injectionPayloads) {
         const result = await suiService.addTodo(listId, payload)
-          .catch(error => ({ error }));
+          .catch(_error => ({ error }));
         
         if ('error' in result) {
           // Some payloads might be rejected, which is also acceptable

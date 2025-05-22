@@ -98,7 +98,7 @@ export class BatchUploader {
           const blobId = await this.walrusStorage.storeTodo(todo);
           result.successful.push({ id: todo.id, blobId });
           result.totalBytesUploaded += exactSize;
-        } catch (error) {
+        } catch (_error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           console.error(`Failed to upload todo "${todo.id}": ${errorMessage}`);
           result.failed.push({ id: todo.id, error: errorMessage });
@@ -111,7 +111,7 @@ export class BatchUploader {
       console.log(`- Total bytes uploaded: ${result.totalBytesUploaded}`);
       
       return result;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Batch upload failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -151,7 +151,7 @@ export class BatchUploader {
         listBlobId,
         todoResults
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Todo list batch upload failed: ${error instanceof Error ? error.message : String(error)}`,

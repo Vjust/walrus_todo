@@ -8,10 +8,10 @@
 
 import { AIProvider } from './types';
 import { EnhancedVaultManager } from '../../utils/EnhancedVaultManager';
-import { validateApiKey, performKeySecurityCheck, obfuscateKey } from '../../utils/KeyValidator';
+import { validateApiKey, performKeySecurityCheck } from '../../utils/KeyValidator';
 import { CLIError } from '../../types/error';
-import { Logger, LogLevel } from '../../utils/Logger';
-import { AICredentialAdapter, AIPermissionLevel, CredentialType } from '../../types/adapters/AICredentialAdapter';
+import { Logger } from '../../utils/Logger';
+import { AICredentialAdapter, AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
 import { randomUUID } from 'crypto';
 import { AI_CONFIG } from '../../constants';
 
@@ -156,8 +156,8 @@ export class SecureCredentialService {
         );
         
         this.logger.info(`API key for ${provider} verified on blockchain with ID: ${verificationResult.verificationId}`);
-      } catch (error) {
-        this.logger.error(`Failed to verify ${provider} credential on blockchain: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } catch (_error) {
+        this.logger.error(`Failed to verify ${provider} credential on blockchain: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       }
     }
     
@@ -217,11 +217,11 @@ export class SecureCredentialService {
             );
           }
           this.logger.debug(`Blockchain verification for ${provider} credential is valid`);
-        } catch (error) {
-          if (error instanceof CLIError && error.code === 'VERIFICATION_INVALID') {
-            throw error;
+        } catch (_error) {
+          if (_error instanceof CLIError && _error.code === 'VERIFICATION_INVALID') {
+            throw _error;
           }
-          this.logger.warn(`Failed to check blockchain verification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          this.logger.warn(`Failed to check blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
           // Continue with credential even if verification check fails
         }
       }
@@ -233,7 +233,7 @@ export class SecureCredentialService {
       });
       
       return apiKey;
-    } catch (error) {
+    } catch (_error) {
       // Check for environment variable as fallback
       const envKey = `${provider.toUpperCase()}_API_KEY`;
       const envValue = process.env[envKey];
@@ -245,7 +245,7 @@ export class SecureCredentialService {
         try {
           validateApiKey(provider, envValue);
         } catch (validationError) {
-          this.logger.warn(`Environment variable ${envKey} contains an invalid API key: ${validationError.message}`);
+          this.logger.warn(`Environment variable ${envKey} contains an invalid API key: ${(validationError as Error).message}`);
         }
         
         return envValue;
@@ -285,7 +285,7 @@ export class SecureCredentialService {
         permissionLevel: metadata?.permissionLevel || AIPermissionLevel.STANDARD,
         isSafeToUse: (metadata?.securityScore || 0) >= 70
       };
-    } catch (error) {
+    } catch (_error) {
       // Check environment variable as fallback
       const envKey = `${provider.toUpperCase()}_API_KEY`;
       if (process.env[envKey]) {
@@ -349,8 +349,8 @@ export class SecureCredentialService {
       try {
         const info = await this.getCredentialInfo(provider);
         credentials.push(info);
-      } catch (error) {
-        this.logger.warn(`Failed to get info for ${provider} credential: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } catch (_error) {
+        this.logger.warn(`Failed to get info for ${provider} credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       }
     }
     
@@ -391,8 +391,8 @@ export class SecureCredentialService {
         try {
           await this.blockchainAdapter.revokeVerification(metadata.verificationId);
           this.logger.info(`Revoked blockchain verification for ${provider} credential`);
-        } catch (error) {
-          this.logger.warn(`Failed to revoke blockchain verification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } catch (_error) {
+          this.logger.warn(`Failed to revoke blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
         }
       }
       
@@ -403,8 +403,8 @@ export class SecureCredentialService {
       this.credentialCache.delete(provider);
       
       return removed;
-    } catch (error) {
-      this.logger.error(`Failed to remove ${provider} credential: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (_error) {
+      this.logger.error(`Failed to remove ${provider} credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       return false;
     }
   }
@@ -462,10 +462,10 @@ export class SecureCredentialService {
       
       this.logger.info(`Verified ${provider} credential on blockchain`);
       return true;
-    } catch (error) {
-      this.logger.error(`Failed to verify ${provider} credential: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (_error) {
+      this.logger.error(`Failed to verify ${provider} credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       throw new CLIError(
-        `Failed to verify credential: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to verify credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         'VERIFICATION_FAILED'
       );
     }
@@ -517,8 +517,8 @@ export class SecureCredentialService {
           
           metadata.verificationId = verificationResult.verificationId;
           metadata.verificationDate = new Date().toISOString();
-        } catch (error) {
-          this.logger.warn(`Failed to update blockchain verification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } catch (_error) {
+          this.logger.warn(`Failed to update blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
           // Continue without blockchain verification update
         }
       }
@@ -537,9 +537,9 @@ export class SecureCredentialService {
       
       // Return updated info
       return await this.getCredentialInfo(provider);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
-        `Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to update permissions: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         'PERMISSION_UPDATE_FAILED'
       );
     }
@@ -600,8 +600,8 @@ export class SecureCredentialService {
           
           metadata.verificationId = verificationResult.verificationId;
           metadata.verificationDate = new Date().toISOString();
-        } catch (error) {
-          this.logger.warn(`Failed to update blockchain verification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } catch (_error) {
+          this.logger.warn(`Failed to update blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
           metadata.verified = false;
           delete metadata.verificationId;
         }
@@ -626,9 +626,9 @@ export class SecureCredentialService {
       
       // Return updated info
       return await this.getCredentialInfo(provider);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
-        `Failed to rotate credential: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to rotate credential: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         'CREDENTIAL_ROTATION_FAILED'
       );
     }
@@ -653,8 +653,8 @@ export class SecureCredentialService {
       }
       
       return providers;
-    } catch (error) {
-      this.logger.error(`Failed to check for credentials needing rotation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (_error) {
+      this.logger.error(`Failed to check for credentials needing rotation: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       return [];
     }
   }

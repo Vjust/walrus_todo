@@ -13,13 +13,13 @@
  * - Consistent prompting through PromptManager
  */
 
-import { PromptTemplate } from '@langchain/core/prompts';
+// PromptTemplate imported but not used
 import { Todo } from '../../types/todo';
 import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
-import { AIPrivacyLevel, AIActionType } from '../../types/adapters/AIVerifierAdapter';
-import { AIModelAdapter, AIProvider, AIModelOptions, AIResponse } from '../../types/adapters/AIModelAdapter';
+import { AIPrivacyLevel } from '../../types/adapters/AIVerifierAdapter';
+import { AIModelAdapter, AIProvider, AIModelOptions } from '../../types/adapters/AIModelAdapter';
 import { AIProviderFactory } from './AIProviderFactory';
-import { ResponseParser } from './ResponseParser';
+// ResponseParser imported but not used
 import { PromptManager } from './PromptManager';
 import { ResultCache } from './ResultCache';
 import { AIConfigManager } from './AIConfigManager';
@@ -139,7 +139,7 @@ export class AIService {
     try {
       const defaultAdapter = AIProviderFactory.createDefaultAdapter();
       this.modelAdapter = defaultAdapter;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to initialize with default adapter:', error);
       // Set a minimal fallback adapter to avoid null reference errors
       this.modelAdapter = AIProviderFactory.createFallbackAdapter();
@@ -178,7 +178,7 @@ export class AIService {
         options: this.options,
         credentialService: secureCredentialService
       });
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to initialize model adapter:', error);
       throw error;
     }
@@ -224,10 +224,11 @@ export class AIService {
         options: { ...this.options, ...options },
         credentialService: secureCredentialService
       });
-    } catch (error) {
+    } catch (_error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
       this.logger.error(`Failed to set provider ${provider}:`, typedError);
-      const errorMessage = `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`;
+      // errorMessage would be used for more detailed error reporting
+      // const errorMessage = `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`;
       throw typedError;
     }
   }
@@ -313,7 +314,7 @@ export class AIService {
       this.resultCache.set(operation, todos, response);
       
       return response.result;
-    } catch (error) {
+    } catch (_error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
       const summaryError = new Error(`Failed to summarize todos: ${typedError.message}`);
       (summaryError as any).cause = typedError;
@@ -677,11 +678,11 @@ export class AIService {
         });
         
         return tags;
-      } catch (error) {
+      } catch (_error) {
         this.logger.error('Failed to parse suggested tags:', error);
         throw new Error('Failed to parse tags response: ' + response.result);
       }
-    } catch (error) {
+    } catch (_error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
       this.logger.error(`Failed to suggest tags: ${typedError.message}`);
       throw typedError;
@@ -742,7 +743,7 @@ export class AIService {
         this.logger.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);
         return 'medium';
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Priority suggestion error:', error);
       return 'medium'; // Default to medium on error
     }

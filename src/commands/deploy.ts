@@ -2,11 +2,13 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import chalk from 'chalk';
 import findUp from 'find-up';
 import { CLIError } from '../utils/error-handler';
 import { configService } from '../services/config-service';
 import { Logger } from '../utils/Logger';
+import { createFrontendConfigGenerator } from '../utils/frontend-config-generator';
 
 const logger = new Logger('Deploy');
 import {
@@ -89,6 +91,10 @@ export default class DeployCommand extends BaseCommand {
     'gas-budget': Flags.string({
       description: 'Gas budget for the deployment transaction',
       default: '100000000'
+    }),
+    'skip-frontend-config': Flags.boolean({
+      description: 'Skip generating frontend configuration files',
+      default: false
     })
   };
 
@@ -109,7 +115,7 @@ export default class DeployCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(DeployCommand);
-    const { network, address, 'gas-budget': gasBudget } = flags;
+    const { network, address, 'gas-budget': gasBudget, 'skip-frontend-config': skipFrontendConfig } = flags;
 
     // First verify the exact absolute path of Move.toml
     const absoluteProjectPath = process.cwd();
@@ -120,7 +126,7 @@ export default class DeployCommand extends BaseCommand {
       // Check if sui client is installed using the safe command executor
       try {
         safeExecFileSync('sui', ['--version'], { stdio: 'ignore' });
-      } catch (error) {
+      } catch (_error) {
         throw new CLIError(
           'Sui CLI not found. Please install it first: cargo install --locked --git https://github.com/MystenLabs/sui.git sui',
           'SUI_CLI_NOT_FOUND'
@@ -149,7 +155,7 @@ export default class DeployCommand extends BaseCommand {
               // Continue to the check below
             }
           }
-        } catch (error) {
+        } catch (_error) {
           // Continue silently, we'll check for deployAddress below
         }
       }
@@ -193,7 +199,7 @@ export default class DeployCommand extends BaseCommand {
       try {
           tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'todo_nft_deploy_'));
           this.log(chalk.dim(`Created temporary directory: ${tempDir}`));
-      } catch (error) {
+      } catch (_error) {
           throw new CLIError(
               `Failed to create temporary directory: ${error instanceof Error ? error.message : String(error)}`,
               'TEMP_DIR_CREATION_FAILED'
@@ -220,7 +226,7 @@ export default class DeployCommand extends BaseCommand {
                   this.log(chalk.dim(`Copied ${file} successfully`));
               }
           }
-      } catch (error) {
+      } catch (_error) {
           throw new CLIError(
               `Failed to copy contract files: ${error instanceof Error ? error.message : String(error)}`,
               'FILE_COPY_FAILED'
@@ -312,6 +318,42 @@ export default class DeployCommand extends BaseCommand {
         this.log(chalk.dim(`  Network: ${network}`));
         this.log(chalk.dim(`  Address: ${deployAddress}`));
         
+        // Generate frontend configuration
+        if (!skipFrontendConfig) {
+          try {
+            this.log(chalk.blue('\nGenerating frontend configuration...'));
+            const frontendConfigGenerator = createFrontendConfigGenerator();
+            
+            // Check if frontend exists
+            const frontendExists = await frontendConfigGenerator.frontendExists();
+            if (frontendExists) {
+              await frontendConfigGenerator.generateConfig(
+                network,
+                packageId,
+                publishResult.digest,
+                deployAddress,
+                {
+                  aiEnabled: true,
+                  blockchainVerification: true,
+                  encryptedStorage: false,
+                }
+              );
+              
+              this.log(chalk.green('✓ Frontend configuration generated successfully!'));
+              this.log(chalk.dim(`  Config location: ${frontendConfigGenerator.getConfigDirectory()}`));
+              this.log(chalk.dim(`  You can now run the frontend with: pnpm run nextjs`));
+            } else {
+              this.log(chalk.yellow('⚠ Frontend directory not found, skipping frontend config generation'));
+              this.log(chalk.dim('  To generate frontend config later, run deploy again or use configure command'));
+            }
+          } catch (configError) {
+            this.warn(chalk.yellow(`Warning: Failed to generate frontend configuration: ${configError instanceof Error ? configError.message : String(configError)}`));
+            this.log(chalk.dim('  Deployment was successful, but frontend config generation failed'));
+          }
+        } else {
+          this.log(chalk.dim('\nSkipped frontend configuration generation (--skip-frontend-config flag used)'));
+        }
+        
         this.log('\nConfiguration has been saved. You can now use other commands without specifying the package ID.');
         this.log(chalk.blue('\nView your package on Sui Explorer:'));
         this.log(chalk.cyan(`  https://explorer.sui.io/object/${packageId}?network=${network}`));
@@ -375,7 +417,7 @@ export default class DeployCommand extends BaseCommand {
         }
       }
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

@@ -1,4 +1,4 @@
-import { TodoService } from '../../src/services/todoService';
+
 import { Todo } from '../../src/types/todo';
 
 describe('TodoService', () => {

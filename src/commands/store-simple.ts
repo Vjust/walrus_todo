@@ -97,7 +97,7 @@ export default class StoreSimpleCommand extends BaseCommand {
       try {
         await execAsync('~/.local/bin/walrus --version');
         this.log(chalk.green(`✓ Walrus CLI found`));
-      } catch (error) {
+      } catch (_error) {
         throw new CLIError(
           'Walrus CLI not found. Please install it first.',
           'WALRUS_CLI_NOT_FOUND'
@@ -110,7 +110,7 @@ export default class StoreSimpleCommand extends BaseCommand {
       const walrusCommand = `~/.local/bin/walrus --context ${flags.network} store --epochs ${flags.epochs} ${tempFile}`;
       
       try {
-        const { stdout, stderr } = await execAsync(walrusCommand);
+        const { stdout } = await execAsync(walrusCommand);
         
         // Parse the output to extract blob ID and transaction info
         const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
@@ -157,11 +157,11 @@ export default class StoreSimpleCommand extends BaseCommand {
           if (txIdMatch) {
             this.log(chalk.white(`  Transaction ID: ${chalk.yellow(txIdMatch[1])}`));
           }
-        } catch (error) {
+        } catch (_error) {
           // Ignore if we can't get the transaction ID
         }
 
-      } catch (error) {
+      } catch (_error) {
         // Check if it's a WAL balance issue
         if (error.message.includes('could not find WAL coins')) {
           throw new CLIError(
@@ -178,7 +178,7 @@ export default class StoreSimpleCommand extends BaseCommand {
       // Clean up temp file
       fs.unlinkSync(tempFile);
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

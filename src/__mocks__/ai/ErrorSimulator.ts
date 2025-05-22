@@ -25,7 +25,7 @@
  * try {
  *   errorSimulator.maybeThrowError('summarize'); // Might throw an error
  *   // Proceed with normal operation if no error
- * } catch (error) {
+ * } catch (_error) {
  *   // Handle the error
  * }
  * ```

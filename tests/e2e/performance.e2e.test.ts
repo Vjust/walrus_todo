@@ -108,7 +108,7 @@ describe('E2E Performance Tests', () => {
     
     try {
       await execAsync(command);
-    } catch (error) {
+    } catch (_error) {
       console.error(`Command failed: ${command}`, error);
     }
     

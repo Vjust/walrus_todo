@@ -218,7 +218,7 @@ describe('Walrus Testnet Integration', () => {
       // This might fail due to size or timeout
       try {
         await todoStorage.store(JSON.stringify(largeTodo));
-      } catch (error) {
+      } catch (_error) {
         expect(error).toBeDefined();
         console.log('Expected error for large upload:', error.message);
       }

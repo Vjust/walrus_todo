@@ -142,7 +142,7 @@ export default class AuthCommand extends BaseCommand {
       if (address) {
         this.log(`Wallet Address: ${address}`);
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -170,7 +170,7 @@ export default class AuthCommand extends BaseCommand {
       this.log(chalk.green(`Logged in as ${username}`));
       this.log(`Roles: ${authResult.user.roles.join(', ')}`);
       this.log(`Session expires at: ${new Date(authResult.expiresAt).toLocaleString()}`);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -197,7 +197,7 @@ export default class AuthCommand extends BaseCommand {
       fs.unlinkSync(this.authTokenFilePath);
 
       this.log(chalk.green('Logged out successfully'));
-    } catch (error) {
+    } catch (_error) {
       this.error(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -233,7 +233,7 @@ export default class AuthCommand extends BaseCommand {
         this.log(`Wallet Address: ${user.address}`);
       }
       this.log(`Session expires at: ${new Date(authInfo.expiresAt).toLocaleString()}`);
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to check status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -283,7 +283,7 @@ export default class AuthCommand extends BaseCommand {
       fs.unlinkSync(this.authTokenFilePath);
 
       this.log(chalk.green('Password changed successfully. Please login again with your new password.'));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -323,7 +323,7 @@ export default class AuthCommand extends BaseCommand {
       this.log(`Name: ${name}`);
       this.log(`Expiry: ${expiryDays === 0 ? 'Never' : `${expiryDays} days`}`);
       this.log(chalk.yellow('Please save this key now, it will not be shown again!'));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -359,7 +359,7 @@ export default class AuthCommand extends BaseCommand {
       await authenticationService.revokeApiKey(apiKey);
 
       this.log(chalk.green(`API key revoked successfully`));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -402,7 +402,7 @@ export default class AuthCommand extends BaseCommand {
     try {
       const data = fs.readFileSync(this.authTokenFilePath, 'utf-8');
       return JSON.parse(data);
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

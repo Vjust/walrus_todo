@@ -2,7 +2,7 @@ import { CLIError } from '../../../types/error';
 import { AIProvider } from '../types';
 import { SuiClient } from '@mysten/sui/client';
 import { TransactionBlock } from '@mysten/sui/transactions';
-import { asUint8ArrayOrTransactionBlock, asStringUint8ArrayOrTransactionBlock } from '../../../types/transaction';
+// asUint8ArrayOrTransactionBlock and asStringUint8ArrayOrTransactionBlock imported but not used
 import { bcs } from '@mysten/sui/bcs';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { NetworkValidator } from '../../../utils/NetworkValidator';
@@ -71,7 +71,7 @@ export class CredentialVerifier {
       
       this.logger.info(`Credential registered on blockchain with digest: ${result.digest}`);
       return result.digest;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to register credential: ${error.message}`);
       throw new CLIError(
         `Failed to register credential on blockchain: ${error.message}`,
@@ -103,7 +103,7 @@ export class CredentialVerifier {
       }
       
       return false;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to verify credential: ${error.message}`);
       return false;
     }
@@ -133,7 +133,7 @@ export class CredentialVerifier {
       }
       
       return false;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to check registration status: ${error.message}`);
       return false;
     }
@@ -160,7 +160,7 @@ export class CredentialVerifier {
       });
       
       this.logger.info(`Credential for ${provider} revoked successfully`);
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to revoke credential: ${error.message}`);
       throw new CLIError(
         `Failed to revoke credential on blockchain: ${error.message}`,

@@ -1,9 +1,8 @@
-import { expect, jest, test, describe, beforeEach, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
-import { ConfigService } from '../../../src/services/config-service';
+
 import * as configServiceModule from '../../../src/services/config-service';
-import { CLIError } from '../../../src/types/error';
+
 import { envConfig, getEnv } from '../../../src/utils/environment-config';
 import { loadConfigFile, saveConfigToFile } from '../../../src/utils/config-loader';
 import type { Config, Todo, TodoList } from '../../../src/types';
@@ -46,7 +45,7 @@ describe('ConfigService', () => {
     
     // Setup fs.promises mock
     if (!mockFs.promises) {
-      mockFs.promises = {} as any;
+      mockFs.promises = {} as typeof fs.promises;
     }
     mockFs.promises.readFile = jest.fn().mockResolvedValue('{}');
     mockFs.promises.writeFile = jest.fn().mockResolvedValue(undefined);

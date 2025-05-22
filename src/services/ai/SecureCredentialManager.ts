@@ -11,7 +11,7 @@ import {
   CredentialStorageOptions
 } from '../../types/adapters/AICredentialAdapter';
 import { randomUUID } from 'crypto';
-import { promisify } from 'util';
+// promisify imported but not used
 
 /**
  * SecureCredentialManager - Securely manages API credentials for AI providers
@@ -96,7 +96,7 @@ export class SecureCredentialManager {
 
       // Load the key
       this.encryptionKey = fs.readFileSync(this.keyPath);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to initialize encryption key: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'KEY_INITIALIZATION_FAILED'
@@ -114,7 +114,7 @@ export class SecureCredentialManager {
         return JSON.parse(metadataRaw);
       }
       return null;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to read key metadata:', error);
       return null;
     }
@@ -128,7 +128,7 @@ export class SecureCredentialManager {
       const currentMetadata = this.getKeyMetadata() || {};
       const updatedMetadata = { ...currentMetadata, ...updates };
       fs.writeFileSync(this.keyMetadataPath, JSON.stringify(updatedMetadata), { mode: 0o600 });
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to update key metadata:', error);
     }
   }
@@ -148,7 +148,7 @@ export class SecureCredentialManager {
       if (daysSinceLastRotation >= this.keyRotationIntervalDays) {
         this.rotateKey();
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to check key rotation status:', error);
     }
   }
@@ -166,7 +166,7 @@ export class SecureCredentialManager {
         }
       }
       this.initialized = true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to load credentials:', error);
       // For security, initialize with empty credentials on error
       this.credentials = {};
@@ -212,7 +212,7 @@ export class SecureCredentialManager {
           hasBackup: Boolean(fs.existsSync(`${this.backupDirectory}/credentials_backup_`))
         }
       );
-    } catch (error) {
+    } catch (_error) {
       // Create a standard error instead of CLIError for better testing compatibility
       const saveError = new Error(
         `Failed to save credentials: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -257,7 +257,7 @@ export class SecureCredentialManager {
         // Clean up old backups - keep only last 5
         this.cleanupOldBackups();
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to backup credentials:', error);
     }
   }
@@ -282,7 +282,7 @@ export class SecureCredentialManager {
           fs.unlinkSync(file.path);
         });
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to clean up old backups:', error);
     }
   }
@@ -353,7 +353,7 @@ export class SecureCredentialManager {
         // Save updated credential
         this.credentials[provider.toLowerCase()] = newCredential;
         this.saveCredentials();
-      } catch (error) {
+      } catch (_error) {
         console.warn(`Blockchain verification failed: ${error}`);
         // Continue without blockchain verification
       }
@@ -415,7 +415,7 @@ export class SecureCredentialManager {
         if (!isValid) {
           throw new CLIError(`Blockchain verification is no longer valid for provider "${providerName}"`, 'VERIFICATION_INVALID');
         }
-      } catch (error) {
+      } catch (_error) {
         console.warn(`Failed to check blockchain verification: ${error}`);
         // Continue with the credential even if verification check fails
       }
@@ -529,7 +529,7 @@ export class SecureCredentialManager {
       if (credential.isVerified && credential.verificationProof && this.blockchainAdapter) {
         try {
           await this.blockchainAdapter.revokeVerification(credential.verificationProof);
-        } catch (error) {
+        } catch (_error) {
           console.warn(`Failed to revoke blockchain verification: ${error}`);
           // Continue with local removal even if blockchain revocation fails
         }
@@ -586,7 +586,7 @@ export class SecureCredentialManager {
       this.saveCredentials();
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to verify credential: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'CREDENTIAL_VERIFICATION_FAILED'
@@ -619,7 +619,7 @@ export class SecureCredentialManager {
     
     try {
       return await this.blockchainAdapter.generateCredentialProof(credential.id);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to generate credential proof: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'PROOF_GENERATION_FAILED'
@@ -670,7 +670,7 @@ export class SecureCredentialManager {
         
         // Update credential with new verification
         credential.verificationProof = verificationResult.verificationId;
-      } catch (error) {
+      } catch (_error) {
         console.warn(`Failed to update blockchain verification: ${error}`);
         // Continue without blockchain verification update
       }
@@ -722,7 +722,7 @@ export class SecureCredentialManager {
       }
 
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Key rotation failed:', error);
       throw new CLIError(
         `Failed to rotate encryption key: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -761,7 +761,7 @@ export class SecureCredentialManager {
       this.updateKeyMetadata({
         backupLocations: backupLocations.slice(-5) // Keep only the 5 most recent backup references
       });
-    } catch (error) {
+    } catch (_error) {
       console.error('Key backup failed:', error);
       throw new CLIError(
         `Failed to backup encryption key: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -811,7 +811,7 @@ export class SecureCredentialManager {
       this.loadCredentials();
 
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Key restore failed:', error);
       throw new CLIError(
         `Failed to restore from backup: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -839,7 +839,7 @@ export class SecureCredentialManager {
         version: metadata.version || 1,
         path: backup.path
       }));
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to list backups:', error);
       return [];
     }
@@ -860,7 +860,7 @@ export class SecureCredentialManager {
       }
 
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Key validation failed:', error);
       return false;
     }
@@ -885,7 +885,7 @@ export class SecureCredentialManager {
       const encrypted = data.subarray(16);
       const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, iv);
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
-    } catch (error) {
+    } catch (_error) {
       console.error('Decryption failed:', error);
       return null;
     }

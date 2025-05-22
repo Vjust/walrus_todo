@@ -1,4 +1,3 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { test } from '@oclif/test';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -7,7 +6,7 @@ import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
 import { TaskSuggestionService } from '../../src/services/ai/TaskSuggestionService';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 import { Todo } from '../../src/types/todo';
-import { TodoService } from '../../src/services/todoService';
+
 
 // Mock the AIService
 jest.mock('../../src/services/ai/aiService', () => {

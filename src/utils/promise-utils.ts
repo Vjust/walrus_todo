@@ -34,7 +34,7 @@ export async function withTimeout<T>(
     const result = await Promise.race([promise, timeoutPromise]);
     clearTimeout(timeoutId!);
     return result;
-  } catch (error) {
+  } catch (_error) {
     // Always clear the timeout to prevent memory leaks
     clearTimeout(timeoutId!);
     
@@ -118,7 +118,7 @@ export async function withRetry<T>(
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       return await fn();
-    } catch (error) {
+    } catch (_error) {
       const typedError = error instanceof Error 
         ? error 
         : new Error(String(error));

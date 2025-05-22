@@ -1,5 +1,5 @@
 import { SyncCommand } from '../../src/commands/sync';
-import { ConfigService } from '../../src/services/config-service';
+
 import { WalrusStorage } from '../../src/utils/walrus-storage';
 import type { WalrusStorage as WalrusStorageType } from '../../src/utils/walrus-storage';
 import * as readline from 'readline';

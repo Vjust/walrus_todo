@@ -7,13 +7,12 @@ import {
   VerificationParams, 
   VerificationRecord,
   AIActionType,
-  AIPrivacyLevel,
   ProviderRegistrationParams,
   ProviderInfo
 } from '@adapters/AIVerifierAdapter';
 import { createHash } from 'crypto';
 import { stringify } from 'csv-stringify/sync';
-import { CLIError } from '@errors';
+import { CLIError } from '../../../types/errors/consolidated';
 
 /**
  * SuiAIVerifierAdapter - Blockchain adapter for AI verification
@@ -80,7 +79,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       const providerId = this.extractCreatedObjectId(result);
       
       return providerId;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to register provider:', error);
       throw new Error(`Failed to register provider: ${error}`);
     }
@@ -138,7 +137,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       };
       
       return verificationRecord;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to create verification:', error);
       throw new Error(`Failed to create verification: ${error}`);
     }
@@ -163,7 +162,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         record.responseHash === responseHash;
       
       return isValid;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to verify record:', error);
       return false;
     }
@@ -206,13 +205,13 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
           metadataEntries.forEach((entry: {key: string, value: string}) => {
             providerInfo.metadata![entry.key] = entry.value;
           });
-        } catch (error) {
+        } catch (_error) {
           console.warn('Failed to parse provider metadata:', error);
         }
       }
       
       return providerInfo;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to get provider info:', error);
       throw new Error(`Failed to get provider info: ${error}`);
     }
@@ -254,7 +253,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
             metadataEntries.forEach((entry: {key: string, value: string}) => {
               metadata[entry.key] = entry.value;
             });
-          } catch (error) {
+          } catch (_error) {
             console.warn('Failed to parse verification metadata:', error);
           }
         }
@@ -275,7 +274,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       }
       
       return verifications;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to list verifications:', error);
       throw new Error(`Failed to list verifications: ${error}`);
     }
@@ -317,7 +316,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
           metadataEntries.forEach((entry: {key: string, value: string}) => {
             metadata[entry.key] = entry.value;
           });
-        } catch (error) {
+        } catch (_error) {
           console.warn('Failed to parse verification metadata:', error);
         }
       }
@@ -335,7 +334,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       };
       
       return verificationRecord;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to get verification:', error);
       throw new Error(`Failed to get verification: ${error}`);
     }
@@ -409,7 +408,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       
       // Return the proof as a base64-encoded string
       return Buffer.from(JSON.stringify(signedProof)).toString('base64');
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to generate proof:', error);
       throw new CLIError(
         `Failed to generate proof: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -454,7 +453,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       } else {
         throw new CLIError(`Unsupported export format: ${format}`, 'UNSUPPORTED_EXPORT_FORMAT');
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to export verifications:', error);
       throw new CLIError(
         `Failed to export verifications: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -504,7 +503,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       await this.signer.signAndExecuteTransaction(tx);
       
       return expiredRecords.length;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to enforce retention policy:', error);
       throw new CLIError(
         `Failed to enforce retention policy: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -538,7 +537,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         try {
           await this.deleteWalrusBlob(record.metadata.requestBlobId);
           await this.deleteWalrusBlob(record.metadata.responseBlobId);
-        } catch (error) {
+        } catch (_error) {
           console.warn('Failed to delete Walrus blobs:', error);
           // Continue with blockchain deletion even if blob deletion fails
         }
@@ -560,7 +559,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       await this.signer.signAndExecuteTransaction(tx);
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to securely destroy data:', error);
       throw new CLIError(
         `Failed to securely destroy data: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -600,7 +599,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       await this.signer.signAndExecuteTransaction(tx);
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error(`Failed to delete blob ${blobId}:`, error);
       throw new CLIError(
         `Failed to delete blob: ${error instanceof Error ? error.message : 'Unknown error'}`,

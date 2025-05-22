@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
+
+
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { SuiTransactionBlockResponse, SuiObjectResponse } from '@mysten/sui/client';
 import { IntentScope, SignatureWithBytes } from '@mysten/sui/cryptography';
 import { SuiNftStorage } from '@/utils/sui-nft-storage';
-import { CLIError } from '@/types/errors';
+
 import { Todo } from '@/types/todo';
 import { createMockSuiObjectResponse, createMockTransactionResponse } from '../sui-test-types';
 
@@ -36,7 +36,7 @@ describe('SuiNftStorage', () => {
         bytes: Buffer.from(data).toString('base64'),
         signature: Buffer.from(new Uint8Array(64)).toString('base64')
       }),
-      signWithIntent: async (data: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> => ({
+      signWithIntent: async (data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
         bytes: Buffer.from(data).toString('base64'),
         signature: Buffer.from(new Uint8Array(64)).toString('base64')
       }),

@@ -57,7 +57,7 @@ export function loadEnvironment(options: EnvLoaderOptions = {}): void {
     
     // Finally update the configuration from environment variables
     envConfig.loadFromEnvironment();
-  } catch (error) {
+  } catch (_error) {
     if (throwOnError) {
       throw error;
     } else {
@@ -117,7 +117,7 @@ function loadDotEnvFile(envFile: string, required: boolean, throwOnError: boolea
       // Only log missing optional files in development mode
       console.log(`.env file not found at ${envPath}`);
     }
-  } catch (error) {
+  } catch (_error) {
     if (throwOnError) {
       throw error;
     } else {
@@ -148,7 +148,7 @@ function loadConfigFile(configFile: string, required: boolean, throwOnError: boo
     } else if (required) {
       throw new Error(`Required config file not found: ${configFile}`);
     }
-  } catch (error) {
+  } catch (_error) {
     if (throwOnError) {
       throw error;
     } else {
@@ -176,7 +176,7 @@ export function saveConfigToFile(configFile: string): void {
     }
     
     fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));
-  } catch (error) {
+  } catch (_error) {
     console.error(`Error saving config file: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
@@ -228,7 +228,7 @@ export function generateEnvTemplate(templateFile: string = '.env.template'): voi
     }
     
     fs.writeFileSync(templateFile, template);
-  } catch (error) {
+  } catch (_error) {
     console.error(`Error generating .env template: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

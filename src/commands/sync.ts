@@ -143,7 +143,7 @@ export default class SyncCommand extends BaseCommand {
       // Perform sync operations
       await this.performSync(needsSync, flags.resolve);
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -248,7 +248,7 @@ export default class SyncCommand extends BaseCommand {
           if (spinner) {
             this.stopSpinnerSuccess(spinner, '');
           }
-          resolution = await this.askResolution(todo, localNewer!, blockchainNewer!);
+          resolution = await this.askResolution(todo, localNewer || todo, blockchainNewer || todo);
           // @ts-expect-error - startSpinner may return undefined in tests
           spinner = this.startSpinner('Continuing sync...');
         } else if (resolveStrategy === 'newest') {
@@ -262,15 +262,19 @@ export default class SyncCommand extends BaseCommand {
         // Perform sync based on resolution
         if (resolution === 'local') {
           // Update blockchain with local version
-          await this.walrusStorage.updateTodo(todo.walrusBlobId!, todo);
+          if (todo.walrusBlobId) {
+            await this.walrusStorage.updateTodo(todo.walrusBlobId, todo);
+          }
         } else {
           // Update local with blockchain version
-          const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId!);
-          await this.todoService.updateTodo(listName, todo.id, blockchainTodo);
+          if (todo.walrusBlobId) {
+            const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId);
+            await this.todoService.updateTodo(listName, todo.id, blockchainTodo);
+          }
         }
         
         successCount++;
-      } catch (error) {
+      } catch (_error) {
         failCount++;
         this.warning(`Failed to sync "${todo.title}": ${error.message}`);
       }

@@ -6,10 +6,10 @@
 export type WalletType = 'sui' | 'phantom' | 'slush' | 'backpack' | null;
 
 // Define network types
-export type NetworkType = 'mainnet' | 'testnet' | 'devnet';
+export type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
 
 // Re-export from existing context to maintain compatibility
-export type { WalletContextValue } from '@/lib/walletContext';
+export type { WalletContextValue } from '@/contexts/WalletContext';
 
 // Slush wallet account interface (based on StashedWalletAdapter)
 export interface SlushAccount {

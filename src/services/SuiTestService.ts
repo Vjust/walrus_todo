@@ -76,7 +76,7 @@ export class SuiTestService implements ISuiService {
   async init(): Promise<void> {
     try {
       this.walletAddress = await this.getWalletAddress();
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to initialize Sui service: ${error instanceof Error ? error.message : String(error)}`,
         'INIT_FAILED'
@@ -233,7 +233,7 @@ export class SuiTestService implements ISuiService {
           }
 
           return;
-        } catch (error) {
+        } catch (_error) {
           retries++;
           if (retries >= SECURITY_CONFIG.TRANSACTION_VERIFICATION.MAX_RETRIES) {
             throw new CLIError(

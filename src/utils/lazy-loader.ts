@@ -84,7 +84,7 @@ export class LazyLoader {
       const module = await loadPromise;
       this.loadingPromises.delete(modulePath);
       return module;
-    } catch (error) {
+    } catch (_error) {
       this.loadingPromises.delete(modulePath);
       throw error;
     }
@@ -126,7 +126,7 @@ export class LazyLoader {
       });
 
       return module;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to load module: ${modulePath}`, error);
       throw error;
     }
@@ -203,7 +203,7 @@ export class LazyLoader {
       this.logger.debug(`Module preloaded: ${modulePath}`, {
         loadTime: `${loadTime}ms`
       });
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(`Failed to preload module: ${modulePath}`, error);
     }
   }

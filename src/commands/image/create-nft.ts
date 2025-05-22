@@ -82,7 +82,7 @@ export default class CreateNftCommand extends BaseCommand {
       this.log(`   - Image URL: ${todoItem.imageUrl}`);
       this.log(`   - Walrus Blob ID: ${blobId}`);
       this.log('\nYou can view this NFT in your wallet with the embedded image from Walrus.');
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

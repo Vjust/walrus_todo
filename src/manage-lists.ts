@@ -1,21 +1,22 @@
 import { TodoService } from './services/todoService';
 import { Todo } from './types/todo';
+import { Logger } from './utils/Logger';
 
 async function main() {
   const todoService = new TodoService();
 
   // List all todo lists
-  console.log('Getting all todo lists...');
+  Logger.getInstance().info('Getting all todo lists...');
   const lists = await todoService.getAllLists();
-  console.log('\nExisting lists:', lists);
+  Logger.getInstance().info('Existing lists:', { lists });
 
   // Create a new list with multiple todos
   const newListName = 'work-tasks';
-  console.log(`\nCreating new list: ${newListName}`);
+  Logger.getInstance().info(`Creating new list: ${newListName}`);
   
   try {
     await todoService.createList(newListName, 'test-user'); // Removed unused newList variable assignment
-    console.log('New list created');
+    Logger.getInstance().info('New list created');
 
     // Add multiple todos
     const todos: Partial<Todo>[] = [
@@ -39,42 +40,42 @@ async function main() {
       }
     ];
 
-    console.log('\nAdding todos to new list...');
+    Logger.getInstance().info('Adding todos to new list...');
     for (const todo of todos) {
       await todoService.addTodo(newListName, todo);
     }
 
     // Show all lists with their todos
-    console.log('\nAll todo lists:');
+    Logger.getInstance().info('All todo lists:');
     const allLists = await todoService.getAllLists();
     for (const listName of allLists) {
       const list = await todoService.getList(listName);
       if (!list) {
-        console.log(`\n${listName}: Not found or inaccessible`);
+        Logger.getInstance().info(`${listName}: Not found or inaccessible`);
         continue;
       }
 
-      console.log(`\n${list.name} (${list.todos.length} todos):`);
+      Logger.getInstance().info(`${list.name} (${list.todos.length} todos):`);
       list.todos.forEach(todo => {
-        const status = todo.completed ? '' : '';
-        const priority = todo.priority === 'high' ? '�' : todo.priority === 'medium' ? '"' : '�';
-        console.log(`${status} ${priority} ${todo.title}`);
-        console.log(`   Tags: ${todo.tags.join(', ')}`);
+        const status = todo.completed ? '✓' : '☐';
+        const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+        Logger.getInstance().info(`${status} ${priority} ${todo.title}`);
+        Logger.getInstance().info(`   Tags: ${todo.tags.join(', ')}`);
       });
     }
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof Error && error.message.includes('already exists')) {
-      console.log('List already exists, skipping creation');
+      Logger.getInstance().info('List already exists, skipping creation');
 
       // Show existing list's todos
       const list = await todoService.getList(newListName);
       if (list) {
-        console.log(`\n${list.name} (${list.todos.length} todos):`);
+        Logger.getInstance().info(`${list.name} (${list.todos.length} todos):`);
         list.todos.forEach(todo => {
-          const status = todo.completed ? '' : '';
-          const priority = todo.priority === 'high' ? '�' : todo.priority === 'medium' ? '"' : '�';
-          console.log(`${status} ${priority} ${todo.title}`);
-          console.log(`   Tags: ${todo.tags.join(', ')}`);
+          const status = todo.completed ? '✓' : '☐';
+          const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+          Logger.getInstance().info(`${status} ${priority} ${todo.title}`);
+          Logger.getInstance().info(`   Tags: ${todo.tags.join(', ')}`);
         });
       }
     } else {
@@ -83,4 +84,4 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+main().catch((error) => Logger.getInstance().error('Error in main:', error));

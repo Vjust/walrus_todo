@@ -48,8 +48,8 @@ export function handleError(messageOrError: string | unknown, error?: unknown): 
   let actualError: Error;
   if (error instanceof Error) {
     actualError = error;
-  } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
-    actualError = new Error((error as any).message);
+  } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as Record<string, unknown>).message === 'string') {
+    actualError = new Error((error as Record<string, unknown>).message as string);
   } else {
     actualError = new Error(getErrorMessage(error));
   }
@@ -76,8 +76,8 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDel
       lastError = error as Error;
       
       // Only retry on network errors or specific transient errors
-      if (!isRetryableError(error) || attempt >= maxRetries) {
-        throw error;
+      if (!isRetryableError(lastError) || attempt >= maxRetries) {
+        throw lastError;
       }
       
       const delay = baseDelay * Math.pow(2, attempt - 1);
