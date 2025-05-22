@@ -141,7 +141,7 @@ export class AICommandExample {
       // AI operation that might fail
       const response = await this.callAIService(todoTitle, apiKey);
       return response;
-    } catch (error) {
+    } catch (_error) {
       // Throw a specific AI error with context
       throw new AIError('Failed to get AI suggestions', {
         code: 'AI_ERROR',

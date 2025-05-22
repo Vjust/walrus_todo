@@ -198,7 +198,7 @@ export class BlobVerificationManager {
         poaComplete,
         providers: providers.length
       };
-    } catch (error) {
+    } catch (_error) {
       handleError('Smart contract verification failed', error);
       return {
         certified: false,
@@ -289,7 +289,7 @@ export class BlobVerificationManager {
         mismatches,
         metadata
       };
-    } catch (error) {
+    } catch (_error) {
       handleError('Metadata verification failed', error);
       // Use helper method to create properly typed default metadata
       const defaultMetadata = this.createDefaultMetadata();
@@ -466,7 +466,7 @@ export class BlobVerificationManager {
           providers: contractVerificationComplete.providers,
           metadata: metadataVerification.metadata || this.createDefaultMetadata()
         };
-      } catch (error) {
+      } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt === maxRetries) {
@@ -534,7 +534,7 @@ export class BlobVerificationManager {
 
         console.log(`Blob ${blobId} verified available and certified (attempt ${attempts}/${maxAttempts})`);
         return;
-      } catch (error) {
+      } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         if (attempts === maxAttempts) {

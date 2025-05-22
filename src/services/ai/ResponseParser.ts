@@ -52,8 +52,8 @@ export class ResponseParser {
       }
 
       return JSON.parse(processed) as T;
-    } catch (error) {
-      console.error('Error parsing JSON response:', error);
+    } catch (_error) {
+      console.error('Error parsing JSON response:', _error);
       return defaultValue;
     }
   }
@@ -97,8 +97,8 @@ export class ResponseParser {
       
       // If no JSON found or none valid, return default
       return defaultValue;
-    } catch (error) {
-      console.error('Error extracting JSON from text:', error);
+    } catch (_error) {
+      console.error('Error extracting JSON from text:', _error);
       return defaultValue;
     }
   }
@@ -137,8 +137,8 @@ export class ResponseParser {
         default:
           return response as T;
       }
-    } catch (error) {
-      console.error('Error normalizing response:', error);
+    } catch (_error) {
+      console.error('Error normalizing response:', _error);
       return null;
     }
   }

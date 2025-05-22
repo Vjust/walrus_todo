@@ -144,7 +144,7 @@ describe('Input Validation Fuzzer', () => {
           // Should not contain dangerous patterns
           expect(result).not.toContain('<script>');
           expect(result).not.toContain('javascript:');
-        } catch (error) {
+        } catch (_error) {
           // Invalid inputs should throw ValidationError
           expect(error).toBeInstanceOf(ValidationError);
         }
@@ -164,7 +164,7 @@ describe('Input Validation Fuzzer', () => {
           expect(result).not.toContain('javascript:');
           expect(result).not.toContain('../');
           expect(result).not.toContain('rm -rf');
-        } catch (error) {
+        } catch (_error) {
           // Many malicious inputs should be rejected
           expect(error).toBeInstanceOf(ValidationError);
         }
@@ -183,7 +183,7 @@ describe('Input Validation Fuzzer', () => {
           if (input.includes('🚀')) {
             expect(result).toContain('🚀');
           }
-        } catch (error) {
+        } catch (_error) {
           expect(error).toBeInstanceOf(ValidationError);
         }
       }
@@ -213,7 +213,7 @@ describe('Input Validation Fuzzer', () => {
           expect(typeof result).toBe('string');
           // Valid keys should match specific patterns
           expect(result).toMatch(/^(xai-|sk-)[A-Za-z0-9]{32,}$/);
-        } catch (error) {
+        } catch (_error) {
           expect(error).toBeInstanceOf(ValidationError);
         }
       }
@@ -251,7 +251,7 @@ describe('Input Validation Fuzzer', () => {
           // Should not contain path traversal
           expect(result).not.toContain('..');
           expect(result).not.toContain('~');
-        } catch (error) {
+        } catch (_error) {
           expect(error).toBeInstanceOf(ValidationError);
         }
       }
@@ -287,7 +287,7 @@ describe('Input Validation Fuzzer', () => {
           if (query.includes('*') || query.includes('?') || query.includes('[')) {
             expect(result).not.toMatch(/[*?[\]]/);
           }
-        } catch (error) {
+        } catch (_error) {
           expect(error).toBeInstanceOf(ValidationError);
         }
       }
@@ -325,7 +325,7 @@ describe('Input Validation Fuzzer', () => {
           expect(result).toBeGreaterThan(0);
           expect(result).toBeLessThanOrEqual(1000); // Assuming max batch size
           expect(Number.isInteger(result)).toBe(true);
-        } catch (error) {
+        } catch (_error) {
           expect(error).toBeInstanceOf(ValidationError);
         }
       }
@@ -369,7 +369,7 @@ describe('Input Validation Fuzzer', () => {
           expect(typeof result).toBe('string');
           // Should be a valid URL format
           expect(() => new URL(result)).not.toThrow();
-        } catch (error) {
+        } catch (_error) {
           expect(error).toBeInstanceOf(ValidationError);
         }
       }

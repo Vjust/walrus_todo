@@ -468,12 +468,12 @@ export class RetryManager {
           this.updateCircuitBreaker(node, true);
 
           return result;
-        } catch (error) {
+        } catch (_error) {
           // Always clear timeout to prevent memory leaks
           clearTimeout(timeoutId! as unknown as NodeJS.Timeout);
           throw error;
         }
-      } catch (error) {
+      } catch (_error) {
         const errorObj = error instanceof Error ? error : new Error(String(error));
         const node = lastNode!;
 
@@ -504,7 +504,7 @@ export class RetryManager {
         if (circuit?.isOpen) {
           this.logger.warn(
             `Circuit breaker open for node ${node.url}. ` +
-            `Will retry after ${options.circuitBreaker!.resetTimeout}ms`
+            `Will retry after ${options.circuitBreaker.resetTimeout}ms`
           );
         }
 

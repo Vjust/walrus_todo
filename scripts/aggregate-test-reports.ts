@@ -1,4 +1,5 @@
 #!/usr/bin/env ts-node
+/* eslint-disable no-console */
 /**
  * Test Report Aggregator
  * 
@@ -154,7 +155,7 @@ class TestReportAggregator {
         failed: data.numFailedTests,
         skipped: data.numPendingTests,
         total: data.numTotalTests,
-        duration: data.testResults.reduce((sum: number, r: any) => sum + r.duration, 0),
+        duration: data.testResults.reduce((sum: number, r: { duration: number }) => sum + r.duration, 0),
         testCases: this.extractTestCases(data.testResults),
         timestamp: new Date().toISOString()
       };
@@ -168,7 +169,15 @@ class TestReportAggregator {
   /**
    * Extract individual test cases from Jest results
    */
-  private extractTestCases(testResults: any[]): TestCase[] {
+  private extractTestCases(testResults: Array<{
+    name: string;
+    assertionResults?: Array<{
+      title: string;
+      status: 'passed' | 'failed' | 'skipped';
+      duration?: number;
+      failureMessages?: string[];
+    }>;
+  }>): TestCase[] {
     const cases: TestCase[] = [];
 
     for (const result of testResults) {

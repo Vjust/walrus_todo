@@ -1234,7 +1234,7 @@ describe('AI Security Audit', () => {
       try {
         await aiService.summarize(sampleTodos);
         fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         // Error message should be sanitized
         expect(String(error)).not.toContain('test-api-key');
         expect(String(error)).not.toContain('user@example.com');

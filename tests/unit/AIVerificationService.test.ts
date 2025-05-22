@@ -1,4 +1,3 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { AIVerificationService, VerifiedAIResult } from '../../src/services/ai';
 import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
 import { AIActionType, AIPrivacyLevel, VerificationRecord } from '../../src/types/adapters/AIVerifierAdapter';

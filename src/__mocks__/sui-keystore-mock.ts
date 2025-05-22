@@ -38,18 +38,18 @@ export class MockKeystoreSigner implements Signer {
   }
 
   // Implement standard Signer interface methods
-  async signData(data: Uint8Array): Promise<Uint8Array> {
+  async signData(_data: Uint8Array): Promise<Uint8Array> {
     // Return a mock signature
     return new Uint8Array(64).fill(1);
   }
 
   // Core signing method
-  async sign(bytes: Uint8Array): Promise<Uint8Array> {
+  async sign(_bytes: Uint8Array): Promise<Uint8Array> {
     return this.signData(bytes);
   }
   
   // Add signTransaction method compatible with the Signer interface
-  async signTransaction(bytes: Uint8Array): Promise<SignatureWithBytes> {
+  async signTransaction(_bytes: Uint8Array): Promise<SignatureWithBytes> {
     const signature = await this.sign(bytes);
     return {
       signature: toB64(signature),
@@ -61,7 +61,7 @@ export class MockKeystoreSigner implements Signer {
     // Create a complete PublicKey implementation with all required methods
     return {
       toSuiAddress: () => 'mock-sui-address',
-      equals: (other: PublicKey) => false,
+      equals: (_other: PublicKey) => false,
       flag: () => 0,
       toBytes: () => new Uint8Array(32).fill(1), 
       toString: () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
@@ -69,15 +69,15 @@ export class MockKeystoreSigner implements Signer {
       toSuiPublicKey: () => 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
       toRawBytes: () => new Uint8Array(32).fill(1),
       toSuiBytes: () => new Uint8Array([0, ...new Uint8Array(32).fill(1)]),
-      verify: async (data: Uint8Array, signature: Uint8Array | string): Promise<boolean> => true,
-      verifyWithIntent: async (data: Uint8Array, signature: Uint8Array | string, intent: IntentScope): Promise<boolean> => true,
-      verifyPersonalMessage: async (message: Uint8Array, signature: Uint8Array | string): Promise<boolean> => true,
-      verifyTransactionBlock: async (message: Uint8Array, signature: Uint8Array | string): Promise<boolean> => true,
+      verify: async (_data: Uint8Array, _signature: Uint8Array | string): Promise<boolean> => true,
+      verifyWithIntent: async (_data: Uint8Array, _signature: Uint8Array | string, _intent: IntentScope): Promise<boolean> => true,
+      verifyPersonalMessage: async (_message: Uint8Array, _signature: Uint8Array | string): Promise<boolean> => true,
+      verifyTransactionBlock: async (_message: Uint8Array, _signature: Uint8Array | string): Promise<boolean> => true,
       scheme: 'ED25519'
     } as unknown as PublicKey;
   }
 
-  async signMessage(message: SerializedMessage): Promise<SignatureWithBytes> {
+  async signMessage(_message: SerializedMessage): Promise<SignatureWithBytes> {
     const signature = await this.sign(message.messageBytes);
     return {
       signature: toB64(signature),
@@ -85,7 +85,7 @@ export class MockKeystoreSigner implements Signer {
     };
   }
 
-  async signPersonalMessage(bytes: Uint8Array): Promise<SignatureWithBytes> {
+  async signPersonalMessage(_bytes: Uint8Array): Promise<SignatureWithBytes> {
     const signature = await this.sign(bytes);
     return {
       signature: toB64(signature),
@@ -93,7 +93,7 @@ export class MockKeystoreSigner implements Signer {
     };
   }
 
-  async signWithIntent(bytes: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
+  async signWithIntent(_bytes: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> {
     const signature = await this.sign(bytes);
     return {
       signature: toB64(signature),
@@ -102,7 +102,7 @@ export class MockKeystoreSigner implements Signer {
   }
 
   // Add signTransactionBlock method to match current Signer interface expectations
-  async signTransactionBlock(bytes: Uint8Array): Promise<SignatureWithBytes> {
+  async signTransactionBlock(_bytes: Uint8Array): Promise<SignatureWithBytes> {
     const signature = await this.sign(bytes);
     return {
       signature: toB64(signature),
@@ -111,7 +111,43 @@ export class MockKeystoreSigner implements Signer {
   }
 
   // Add signAndExecuteTransaction method required by Signer interface
-  async signAndExecuteTransaction(transaction: TransactionBlock | Transaction | Uint8Array, options?: any): Promise<any> {
+  async signAndExecuteTransaction(_transaction: TransactionBlock | Transaction | Uint8Array, _options?: unknown): Promise<{
+    digest: string;
+    effects: {
+      messageVersion: string;
+      status: { status: string };
+      executedEpoch: string;
+      transactionDigest: string;
+      gasUsed: {
+        computationCost: string;
+        storageCost: string;
+        storageRebate: string;
+        nonRefundableStorageFee: string;
+      };
+      dependencies: unknown[];
+      sharedObjects: unknown[];
+      mutated: unknown[];
+      deleted: unknown[];
+      created: unknown[];
+      unwrapped: unknown[];
+      wrapped: unknown[];
+      eventsDigest: null;
+      gasObject: {
+        owner: { AddressOwner: string };
+        reference: {
+          objectId: string;
+          digest: string;
+          version: string;
+        };
+      };
+    };
+    confirmedLocalExecution: boolean;
+    timestampMs: null;
+    checkpoint: null;
+    events: unknown[];
+    objectChanges: unknown[];
+    balanceChanges: unknown[];
+  }> {
     // Mock transaction response
     return {
       digest: 'mock-digest',
@@ -156,12 +192,12 @@ export class MockKeystoreSigner implements Signer {
     return 'ED25519' as SignatureScheme;
   }
 
-  connect(client: SuiClient): MockKeystoreSigner {
+  connect(_client: SuiClient): MockKeystoreSigner {
     this._client = client;
     return this;
   }
 
-  static fromPath(path: string): MockKeystoreSigner {
+  static fromPath(_path: string): MockKeystoreSigner {
     return new MockKeystoreSigner();
   }
 }

@@ -106,7 +106,7 @@ export class MockResponseRecorder {
       );
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to save recordings:', error);
       return false;
     }
@@ -127,7 +127,7 @@ export class MockResponseRecorder {
       this.currentReplayIndex = 0;
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to load recordings:', error);
       return false;
     }

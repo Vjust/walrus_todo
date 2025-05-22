@@ -42,7 +42,7 @@ export class TodoService {
       return files
         .filter(f => f.endsWith(STORAGE_CONFIG.FILE_EXT))
         .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
-    } catch (error) {
+    } catch (_error) {
       // If directory doesn't exist, return empty array but log the error
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];
@@ -66,7 +66,7 @@ export class TodoService {
       return files
         .filter(f => f.endsWith(STORAGE_CONFIG.FILE_EXT))
         .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
-    } catch (error) {
+    } catch (_error) {
       // If directory doesn't exist, return empty array but log the error
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];

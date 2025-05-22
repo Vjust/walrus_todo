@@ -6,7 +6,6 @@
  * and response parsing failures.
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { AIService } from '../../src/services/ai/aiService';
 import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
@@ -28,7 +27,7 @@ jest.mock('../../src/services/ai/AIProviderFactory', () => {
 
 describe('AI Service Error Handling', () => {
   const sampleTodos = createSampleTodos(3);
-  let mockAdapter: any;
+  let mockAdapter: ReturnType<typeof createMockAIModelAdapter>;
   let aiService: AIService;
   
   beforeEach(() => {
@@ -37,7 +36,7 @@ describe('AI Service Error Handling', () => {
     
     // Initialize the AI service with mock adapter
     aiService = new AIService('test-api-key');
-    (aiService as any).modelAdapter = mockAdapter;
+    (aiService as unknown as { modelAdapter: typeof mockAdapter }).modelAdapter = mockAdapter;
   });
   
   afterEach(() => {
@@ -91,7 +90,7 @@ describe('AI Service Error Handling', () => {
         try {
           const result = await aiService.summarize(sampleTodos);
           results.push({ success: true, result });
-        } catch (error) {
+        } catch (_error) {
           results.push({ success: false, error: error.message });
         }
       }
@@ -148,7 +147,7 @@ describe('AI Service Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await aiService.summarize(sampleTodos);
-          } catch (error) {
+          } catch (_error) {
             if (attempts < maxAttempts - 1 && error.message?.includes('429')) {
               attempts++;
               await new Promise(resolve => setTimeout(resolve, backoffMs));
@@ -351,7 +350,7 @@ describe('AI Service Error Handling', () => {
         .mockImplementation(async (operation, fallbackValue) => {
           try {
             return await operation();
-          } catch (error) {
+          } catch (_error) {
             return fallbackValue;
           }
         });
@@ -395,7 +394,7 @@ describe('AI Service Error Handling', () => {
       const summarizeWithFallback = async (todos: any[]) => {
         try {
           return await aiService.summarize(todos);
-        } catch (error) {
+        } catch (_error) {
           return (aiService as any).localProcessing(todos);
         }
       };
@@ -463,7 +462,7 @@ describe('AI Service Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await aiService.summarize(sampleTodos);
-          } catch (error) {
+          } catch (_error) {
             attempts++;
             if (attempts >= maxAttempts) throw error;
             await new Promise(resolve => setTimeout(resolve, 10));

@@ -1,7 +1,7 @@
 import { KeyManagementService } from '../../../src/services/key-management';
 import { SecureStorage } from '../../../src/services/secure-storage';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { CLIError } from '../../../src/types/error';
+
 
 // Mock SecureStorage
 jest.mock('../../../src/services/secure-storage');
@@ -23,19 +23,19 @@ describe('KeyManagementService', () => {
     jest.clearAllMocks();
     
     // Reset singleton instance
-    (KeyManagementService as any).instance = undefined;
+    (KeyManagementService as unknown as { instance?: KeyManagementService }).instance = undefined;
     
     // Initialize mocks
     mockSecureStorage = {
       getSecureItem: jest.fn(),
       setSecureItem: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<SecureStorage>;
     
     mockKeypair = {
       toSuiAddress: jest.fn().mockReturnValue('0x123...'),
       getPublicKey: jest.fn().mockReturnValue({ toBase64: () => 'mock-public-key' }),
       export: jest.fn().mockReturnValue({ privateKey: 'mock-private' }),
-    } as any;
+    } as unknown as jest.Mocked<Ed25519Keypair>;
     
     // Setup mock implementations
     (SecureStorage as jest.MockedClass<typeof SecureStorage>).mockImplementation(() => mockSecureStorage);
@@ -47,7 +47,7 @@ describe('KeyManagementService', () => {
 
   afterEach(() => {
     // Clear the singleton instance to ensure clean state
-    (KeyManagementService as any).instance = undefined;
+    (KeyManagementService as unknown as { instance?: KeyManagementService }).instance = undefined;
   });
 
   describe('getInstance', () => {

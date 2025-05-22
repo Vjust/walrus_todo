@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { FuzzGenerator } from '../helpers/fuzz-generator';
-import { ConfigService } from '../../src/services/config-service';
+
 import { loadConfigFile, saveConfigToFile } from '../../src/utils/config-loader';
-import { CLIError } from '../../src/types/error';
+
 
 describe('Config Fuzzer Tests', () => {
   const fuzzer = new FuzzGenerator('config-test-seed');
@@ -64,7 +64,7 @@ describe('Config Fuzzer Tests', () => {
         let thrownError: CLIError | null = null;
         try {
           loadConfigFile(testConfigPath);
-        } catch (error) {
+        } catch (_error) {
           thrownError = error as CLIError;
         }
         

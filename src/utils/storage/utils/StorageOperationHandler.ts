@@ -249,7 +249,7 @@ export class StorageOperationHandler {
         attempts,
         durationMs: Date.now() - startTime
       };
-    } catch (error) {
+    } catch (_error) {
       // If AsyncOperationHandler rethrows, map and rethrow
       const mappedError = this.mapError(error, options.operation);
       throw mappedError;

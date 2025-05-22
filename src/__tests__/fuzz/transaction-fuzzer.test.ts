@@ -1,14 +1,19 @@
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 import { SuiTestService } from '../../services/SuiTestService';
-jest.mock('../../__mocks__/contracts/todo-list');
-const { MockTodoListContract } = jest.requireActual('../../__mocks__/contracts/todo-list');
-jest.mock('../../__mocks__/contracts/nft-storage');
-const { MockNFTStorageContract } = jest.requireActual('../../__mocks__/contracts/nft-storage');
+jest.mock('../../services/SuiTestService');
+
+// Mock NFT storage contract
+class MockNFTStorageContract {
+  constructor(public address: string) {}
+  mintNFT = jest.fn().mockResolvedValue({ id: 'nft-123' });
+  transferNFT = jest.fn().mockResolvedValue({ success: true });
+  burnNFT = jest.fn().mockResolvedValue({ success: true });
+}
 
 describe('Transaction Fuzzing Tests', () => {
   const fuzzer = new FuzzGenerator();
   let suiService: SuiTestService;
-  let nftContract: MockNFTStorageContract;
+  let nftContract: InstanceType<typeof MockNFTStorageContract>;
 
   beforeEach(() => {
     suiService = new SuiTestService({

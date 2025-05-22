@@ -51,7 +51,7 @@ export default class InteractiveCommand extends BaseCommand {
 
       // Start the interactive session
       await interactive.start();
-    } catch (error) {
+    } catch (_error) {
       // Restore original logging for error handling
       this.log = originalLog;
       this.error = originalError;

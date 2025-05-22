@@ -2,7 +2,7 @@
  * Constants and configuration values for the application.
  * These are loaded from the environment configuration system.
  */
-import { envConfig, getEnv, initializeConfig } from './utils/environment-config';
+import { getEnv, initializeConfig } from './utils/environment-config';
 
 // Initialize environment configuration if not already initialized
 if (typeof process.env.ENV_CONFIG_INITIALIZED === 'undefined') {

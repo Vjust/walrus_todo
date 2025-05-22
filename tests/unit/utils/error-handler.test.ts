@@ -1,6 +1,5 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { handleError, withRetry, assert } from '../../../src/utils/error-handler';
-import { CLIError } from '../../../src/types/error';
+
 import * as errorMessages from '../../../src/utils/error-messages';
 import chalk from 'chalk';
 
@@ -269,7 +268,7 @@ describe('Error Handler', () => {
     it('should throw Error instance', () => {
       try {
         assert(false, 'Custom error message');
-      } catch (error) {
+      } catch (_error) {
         expect(error).toBeInstanceOf(Error);
         expect((error as Error).message).toBe('Custom error message');
       }

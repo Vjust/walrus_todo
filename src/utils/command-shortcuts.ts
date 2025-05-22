@@ -228,7 +228,10 @@ export class CommandShortcuts {
       if (!byCommand.has(command)) {
         byCommand.set(command, []);
       }
-      byCommand.get(command)!.push(shortcut);
+      const cmdShortcuts = byCommand.get(command);
+      if (cmdShortcuts) {
+        cmdShortcuts.push(shortcut);
+      }
     });
     
     // Format table
@@ -239,7 +242,7 @@ export class CommandShortcuts {
     const sortedCommands = Array.from(byCommand.keys()).sort();
     
     sortedCommands.forEach(command => {
-      const shortcuts = byCommand.get(command)!;
+      const shortcuts = byCommand.get(command) || [];
       const shortcutList = shortcuts.join(', ');
       const type = this.getCommandType(command);
       table += `| ${command} | ${shortcutList} | ${type} |\n`;

@@ -2,6 +2,7 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 
+// eslint-disable-next-line no-console
 console.log('Running TypeScript build in transpile-only mode...');
 
 // Root directory of the project
@@ -9,6 +10,7 @@ const root = process.cwd();
 
 // Load tsconfig.json
 const configPath = path.join(root, 'tsconfig.json');
+// eslint-disable-next-line no-console
 console.log(`Using tsconfig: ${configPath}`);
 
 // Parse the tsconfig.json
@@ -55,6 +57,7 @@ const getSourceFiles = (dir: string, fileList: string[] = []): string[] => {
 
 // Get all TypeScript files in src directory
 const sourceFiles = getSourceFiles(path.join(root, 'src'));
+// eslint-disable-next-line no-console
 console.log(`Transpiling ${sourceFiles.length} files...`);
 
 // Keep track of files processed and errors
@@ -97,9 +100,11 @@ sourceFiles.forEach(fileName => {
     fs.writeFileSync(outputPath, outputText);
     filesProcessed++;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error(`Error processing ${fileName}:`, error);
     errors++;
   }
 });
 
+// eslint-disable-next-line no-console
 console.log(`Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.`);

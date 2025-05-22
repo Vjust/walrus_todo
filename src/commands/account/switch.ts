@@ -32,7 +32,7 @@ export default class AccountSwitchCommand extends BaseCommand {
       switchSuiAddress(args.address);
 
       this.log(`✅ Switched to address: ${args.address}`);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { SuiClient } from '@mysten/sui/client';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+// Ed25519Keypair imported but not used
 import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -129,7 +129,7 @@ export default class StoreListCommand extends BaseCommand {
             }
             throw parseError;
           }
-        } catch (error) {
+        } catch (_error) {
           if (error instanceof CLIError) {
             throw error; // Re-throw CLIError as-is
           }
@@ -164,7 +164,8 @@ export default class StoreListCommand extends BaseCommand {
        * SUI client object for blockchain interactions
        * In mock mode, this is a minimal mock implementation
        */
-      const suiClient = {
+      // suiClient would be used in real implementation
+      const _suiClient = {
         url: networkUrl,
         core: {},
         jsonRpc: {},
@@ -229,13 +230,13 @@ export default class StoreListCommand extends BaseCommand {
         this.log(chalk.yellow('1. By blob ID:'));
         this.log(chalk.dim(`   ${this.config.bin} retrieve --blob-id ${blobId}`));
 
-      } catch (error) {
+      } catch (_error) {
         throw error; // Let the outer error handler deal with it
       } finally {
         // Cleanup connection
         await this.walrusStorage.disconnect();
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

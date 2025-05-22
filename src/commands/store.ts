@@ -143,7 +143,7 @@ export default class StoreCommand extends BaseCommand {
       // Cleanup
       await walrusStorage.disconnect();
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -157,7 +157,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Connect to Walrus storage with retry
    */
-  private async connectToWalrus(walrusStorage: any, network: string): Promise<void> {
+  private async connectToWalrus(walrusStorage: ReturnType<typeof createWalrusStorage>, _network: string): Promise<void> {
     try {
       const retryManager = new RetryManager(['https://walrus-testnet.nodes.guru:443']);
       await retryManager.retry(
@@ -165,12 +165,12 @@ export default class StoreCommand extends BaseCommand {
         {
           maxRetries: 3,
           retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/, /ECONNREFUSED/],
-          onRetry: (error, attempt, delay) => {
+          onRetry: (error, attempt, _delay) => {
             this.warning(`Retry attempt ${attempt} after ${delay}ms: ${error.message}`);
           }
         }
       );
-    } catch (error) {
+    } catch (_error) {
       if (error.code === 'WALRUS_CLI_NOT_FOUND') {
         throw new CLIError(
           'Walrus CLI not found. Please install it from https://docs.wal.app',
@@ -184,7 +184,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Store a single todo
    */
-  private async storeSingleTodo(todo: Todo, walrusStorage: any, flags: any): Promise<void> {
+  private async storeSingleTodo(todo: Todo, walrusStorage: ReturnType<typeof createWalrusStorage>, flags: { epochs: number; json: boolean; reuse: boolean }): Promise<void> {
     let blobId: string;
     let attemptCount = 0;
     
@@ -199,7 +199,7 @@ export default class StoreCommand extends BaseCommand {
                 attemptCount++;
                 try {
                   return await this.uploadTodoWithCache(todo, walrusStorage, flags);
-                } catch (error) {
+                } catch (_error) {
                   this.warning(`Retry attempt ${attemptCount}: ${error instanceof Error ? error.message : String(error)}`);
                   throw error;
                 }
@@ -222,7 +222,7 @@ export default class StoreCommand extends BaseCommand {
               {
                 maxRetries: 5,
                 retryableErrors: [/NETWORK_ERROR/, /TIMEOUT/, /Connection timed out/],
-                onRetry: (error, attempt, delay) => {
+                onRetry: (error, attempt, _delay) => {
                   this.warning(`Retry attempt ${attempt} after ${delay}ms: ${error.message}`);
                 }
               }
@@ -230,7 +230,7 @@ export default class StoreCommand extends BaseCommand {
           }
         }
       );
-    } catch (error) {
+    } catch (_error) {
       this.handleStorageError(error, flags.network);
     }
 
@@ -247,7 +247,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Store multiple todos in batch
    */
-  private async storeBatchTodos(todos: Todo[], walrusStorage: any, flags: any): Promise<void> {
+  private async storeBatchTodos(todos: Todo[], walrusStorage: ReturnType<typeof createWalrusStorage>, flags: { 'batch-size': number; epochs: number; json: boolean; reuse: boolean }): Promise<void> {
     const startTime = Date.now();
 
     this.log('');
@@ -256,7 +256,7 @@ export default class StoreCommand extends BaseCommand {
     const operations = todos.map((todo, index) => ({
       name: `${index + 1}/${todos.length}: ${todo.title}`,
       total: 100,
-      operation: async (bar: any) => {
+      operation: async (bar: { increment: (delta: number) => void }) => {
         try {
           bar.update(10, { status: 'Checking cache...' });
           
@@ -293,7 +293,7 @@ export default class StoreCommand extends BaseCommand {
           
           bar.update(100, { status: 'Complete' });
           return { todo, blobId, cached: false };
-        } catch (error) {
+        } catch (_error) {
           throw error;
         }
       }
@@ -325,7 +325,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Upload todo with cache check
    */
-  private async uploadTodoWithCache(todo: Todo, walrusStorage: any, flags: any): Promise<string> {
+  private async uploadTodoWithCache(todo: Todo, walrusStorage: ReturnType<typeof createWalrusStorage>, flags: { epochs: number; reuse: boolean }): Promise<string> {
     // Check cache first
     const hash = this.getTodoHash(todo);
     const cachedBlobId = await this.uploadCache.get(hash);
@@ -356,7 +356,7 @@ export default class StoreCommand extends BaseCommand {
           updatedAt: new Date().toISOString()
         });
       });
-    } catch (error) {
+    } catch (_error) {
       this.warning('Todo was stored on Walrus but local update failed');
     }
   }
@@ -364,7 +364,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Display success information for single todo
    */
-  private displaySuccessInfo(todo: Todo, blobId: string, flags: any, attemptCount?: number): void {
+  private displaySuccessInfo(todo: Todo, blobId: string, flags: { json: boolean }, attemptCount?: number): void {
     this.log('');
     
     // Display retry success message if retries were used
@@ -418,7 +418,7 @@ export default class StoreCommand extends BaseCommand {
   /**
    * Handle storage errors
    */
-  private handleStorageError(error: any, network: string): never {
+  private handleStorageError(error: unknown, network: string): never {
     if (error.message?.includes('could not find WAL coins')) {
       throw new CLIError(
         `Insufficient WAL balance. Run "walrus --context ${network} get-wal" to acquire WAL tokens.`,
@@ -444,7 +444,7 @@ export default class StoreCommand extends BaseCommand {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           mappings = JSON.parse(content);
-        } catch (error) {
+        } catch (_error) {
           this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
           // Continue with empty mappings
         }
@@ -456,7 +456,7 @@ export default class StoreCommand extends BaseCommand {
       // Write mappings back to file using centralized method (handles directory creation)
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
-    } catch (error) {
+    } catch (_error) {
       this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

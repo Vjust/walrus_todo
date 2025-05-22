@@ -63,7 +63,7 @@ function extractTransactionBlock(tx: TransactionType): TransactionBlock {
       if (isTransactionBlockSui(block)) {
         return block;
       }
-    } catch (error) {
+    } catch (_error) {
       throw new SignerAdapterError(
         `Failed to extract a valid TransactionBlock from adapter: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -139,13 +139,13 @@ export class SignerAdapterImpl implements SignerAdapter {
       if (typeof (this.signer as any).disconnect === 'function') {
         try {
           await (this.signer as any).disconnect();
-        } catch (error) {
+        } catch (_error) {
           console.warn('Error during signer disconnect:', error);
         }
       }
       
       this._isDisposed = true;
-    } catch (error) {
+    } catch (_error) {
       throw new SignerAdapterError(
         `Failed to dispose SignerAdapter: ${error instanceof Error ? error.message : String(error)}`, 
         error instanceof Error ? error : undefined

@@ -123,7 +123,7 @@ export class PerformanceCache<T = any> {
     const exists = this.cache.has(key);
     
     if (exists && this.options.strategy === 'TTL') {
-      const entry = this.cache.get(key)!;
+      const entry = this.cache.get(key);
       if (entry.ttl) {
         const elapsed = Date.now() - entry.timestamp;
         if (elapsed > entry.ttl) {
@@ -234,7 +234,7 @@ export class PerformanceCache<T = any> {
       await fs.writeFile(cacheFile, JSON.stringify(cacheData, null, 2));
       
       this.logger.debug('Cache persisted to disk', { file: cacheFile });
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to persist cache', error);
     }
   }
@@ -278,7 +278,7 @@ export class PerformanceCache<T = any> {
       if (this.options.strategy === 'TTL') {
         await this.cleanExpiredEntries();
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.error('Failed to load cache from disk', error);
     }
   }

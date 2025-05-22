@@ -1,6 +1,6 @@
-import type { SuiObjectResponse, SuiTransactionBlockResponse } from '@mysten/sui/client';
+// SuiObjectResponse and SuiTransactionBlockResponse imported but not used
 
-import { Signer } from '@mysten/sui/cryptography';
+// Signer imported but not used
 
 declare module '@mysten/sui/client' {
   interface SuiClient {

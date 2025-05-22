@@ -3,7 +3,7 @@ import BaseCommand from '../base-command';
 import { CLIError } from '../types/error';
 import chalk from 'chalk';
 import { envConfig } from '../utils/environment-config';
-import { generateEnvTemplate, loadEnvironment, saveConfigToFile } from '../utils/env-loader';
+import { generateEnvTemplate, loadEnvironment } from '../utils/env-loader';
 import { generateEnvironmentDocs, validateEnvironmentFull, validateOrThrow } from '../utils/env-validator';
 import fs from 'fs';
 import path from 'path';
@@ -80,7 +80,7 @@ export default class EnvironmentCommand extends BaseCommand {
         default:
           this.error(`Unknown action: ${args.action}`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Error processing environment command: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -99,7 +99,7 @@ export default class EnvironmentCommand extends BaseCommand {
       });
       
       this.log(chalk.green('✓ Environment configuration is valid'));
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -119,7 +119,7 @@ export default class EnvironmentCommand extends BaseCommand {
     try {
       generateEnvTemplate(templatePath);
       this.log(chalk.green(`✓ Environment template generated at ${templatePath}`));
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to generate template: ${error instanceof Error ? error.message : String(error)}`,
         'TEMPLATE_GENERATION_FAILED'
@@ -144,7 +144,7 @@ export default class EnvironmentCommand extends BaseCommand {
       
       fs.writeFileSync(docsPath, docs);
       this.log(chalk.green(`✓ Environment documentation generated at ${docsPath}`));
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to generate documentation: ${error instanceof Error ? error.message : String(error)}`,
         'DOCS_GENERATION_FAILED'

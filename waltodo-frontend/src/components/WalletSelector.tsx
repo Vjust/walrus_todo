@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useWalletContext } from '@/lib/walletContext';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { WalletType } from '@/types/wallet';
 import { WalletErrorModal } from './WalletErrorModal';
 import { WalletNotInstalledError } from '@/lib/wallet-errors';
@@ -17,10 +17,7 @@ export function WalletSelector() {
   const { 
     connected,
     connecting,
-    suiConnect,
-    phantomConnect,
-    slushConnect,
-    backpackConnect,
+    connect,
     error,
     setError
   } = useWalletContext();
@@ -34,7 +31,7 @@ export function WalletSelector() {
     return null;
   }
   
-  // Define wallet options
+  // Define wallet options - simplified to Sui wallets primarily
   const walletOptions: WalletOption[] = [
     {
       type: 'sui',
@@ -52,39 +49,7 @@ export function WalletSelector() {
           <path d="M7.2 15.6L8.4 16.8L7.2 18L6 16.8L7.2 15.6Z" fill="currentColor"/>
         </svg>
       ),
-      description: 'Connect with Sui Wallet'
-    },
-    {
-      type: 'slush',
-      name: 'Slush',
-      icon: (
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M8 14L12 10L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ),
-      description: 'Connect with Slush Wallet (Sui)'
-    },
-    {
-      type: 'phantom',
-      name: 'Phantom',
-      icon: (
-        <svg className="w-6 h-6" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="128" height="128" rx="64" fill="currentColor"/>
-          <path d="M110.584 64.9142C110.584 58.5264 105.038 53.4541 98.1817 53.4541H74.3336V64.9142H98.1817C105.038 64.9142 110.584 59.8419 110.584 53.4541C110.584 47.0663 116.129 42 123 42H29.8183C22.9617 42 17.4161 47.0724 17.4161 53.4602C17.4161 59.848 22.9617 64.9203 29.8183 64.9203H53.6664V76.3804H29.8183C22.9617 76.3804 17.4161 81.4527 17.4161 87.8405C17.4161 94.2283 22.9617 99.3006 29.8183 99.3006H98.1878C105.044 99.3006 110.59 94.2283 110.59 87.8405V64.9203C110.584 70.7865 105.038 76.3804 98.1817 76.3804H74.3336V64.9203H98.1817C105.038 64.9142 110.584 70.5081 110.584 64.9142Z" fill="white"/>
-        </svg>
-      ),
-      description: 'Connect with Phantom Wallet (Solana)'
-    },
-    {
-      type: 'backpack',
-      name: 'Backpack',
-      icon: (
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 7h-3V5.5A2.5 2.5 0 0 0 13.5 3h-3A2.5 2.5 0 0 0 8 5.5V7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zm-9-1.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V7h-4V5.5zM19 18H5V9h14v9z" fill="currentColor"/>
-        </svg>
-      ),
-      description: 'Connect with Backpack Wallet (Solana)'
+      description: 'Connect with any Sui-compatible wallet'
     }
   ];
   
@@ -94,20 +59,8 @@ export function WalletSelector() {
     
     switch (walletType) {
       case 'sui':
-        // Check for Sui/Slush wallet
-        return !!window.suiWallet;
-      case 'slush':
-        // Slush is the new name for the Sui wallet
-        return !!window.suiWallet;
-      case 'phantom':
-        return !!(window.solana && window.solana.isPhantom);
-      case 'backpack':
-        // Check for Backpack wallet - multiple ways it might be available
-        return !!(
-          window.xnft || 
-          window.backpack || 
-          (window.solana && window.solana.isBackpack)
-        );
+        // Check for any Sui wallet
+        return true; // Always assume available since we support any Sui wallet
       default:
         return false;
     }
@@ -152,22 +105,8 @@ export function WalletSelector() {
       }
       
       // Proceed with connection if wallet is installed
-      switch (walletType) {
-        case 'sui':
-          await suiConnect();
-          break;
-        case 'slush':
-          await slushConnect();
-          break;
-        case 'phantom':
-          await phantomConnect();
-          break;
-        case 'backpack':
-          await backpackConnect();
-          break;
-        default:
-          // No default case needed
-          break;
+      if (walletType === 'sui') {
+        await connect();
       }
     } catch (err) {
       console.error(`Error connecting to ${walletType} wallet:`, err);

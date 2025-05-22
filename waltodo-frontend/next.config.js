@@ -3,9 +3,21 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     domains: ['localhost', '192.168.8.204'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: process.env.PORT || '3000',
+      },
+      {
+        protocol: 'http',
+        hostname: '192.168.8.204',
+        port: process.env.PORT || '3000',
+      }
+    ],
   },
-  // Disable chunking for development to fix MIME type issues
-  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
+  // Disable standalone output to fix MIME type issues with static assets
+  // output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   
   // Increase timeout for static generation
   staticPageGenerationTimeout: 180,
@@ -20,59 +32,6 @@ const nextConfig = {
         tls: false,
         encoding: false,
       };
-      
-      // For development mode, completely disable code splitting
-      // This prevents MIME type issues with chunked files
-      if (dev) {
-        config.optimization.splitChunks = false;
-        config.optimization.runtimeChunk = false;
-        
-        // Simplify CSS handling to prevent MIME type issues
-        // Safer approach that doesn't rely on complex find operations
-        config.module.rules.forEach(rule => {
-          if (rule.oneOf) {
-            rule.oneOf.forEach(r => {
-              if (r.test && r.test.toString().includes('css')) {
-                // For CSS modules, ensure they're handled by style-loader
-                if (r.use && Array.isArray(r.use)) {
-                  for (let i = 0; i < r.use.length; i++) {
-                    const loader = r.use[i];
-                    if (typeof loader === 'object' && 
-                        loader.loader && 
-                        loader.loader.includes('mini-css-extract-plugin')) {
-                      // Replace mini-css-extract-plugin with style-loader
-                      r.use[i] = {
-                        loader: require.resolve('style-loader')
-                      };
-                    }
-                  }
-                }
-              }
-            });
-          }
-        });
-      } else {
-        // More sophisticated chunking for production
-        config.optimization.splitChunks = {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            commons: {
-              name: 'commons',
-              test: /[\\/]node_modules[\\/]/,
-              chunks: 'all',
-              priority: 10,
-            },
-            framework: {
-              name: 'framework',
-              test: /[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
-              chunks: 'all',
-              priority: 20,
-            },
-          },
-        };
-      }
     }
     
     return config;
@@ -84,28 +43,24 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // Force full page rendering
-    workerThreads: false,
-    // Use simple compiler options
-    optimizeCss: false,
   },
   
-  // Allow development origins
-  allowedDevOrigins: [
-    '192.168.8.204:3000', // Add specific IP with port
-    'localhost:3000'
-  ],
+  // Allow development origins (dynamic port support)
+  allowedDevOrigins: function() {
+    const port = process.env.PORT || '3000';
+    return [
+      `192.168.8.204:${port}`,
+      `localhost:${port}`
+    ];
+  }(),
   
   // Define custom headers to help with caching and security
   async headers() {
     return [
       {
-        source: '/(.*)',
+        // Apply to all routes except static assets
+        source: '/((?!_next/static|favicon.ico).*)',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate',
-          },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
@@ -113,6 +68,16 @@ const nextConfig = {
           {
             key: 'X-Frame-Options',
             value: 'SAMEORIGIN',
+          },
+        ],
+      },
+      {
+        // Proper caching for static assets
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

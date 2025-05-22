@@ -38,7 +38,7 @@ export class TodoService {
       .then(() => {
         this.initialized = true;
       })
-      .catch(error => {
+      .catch(_error => {
         // Fail fast by logging and throwing error
         console.error(`Error initializing TodoService: ${error instanceof Error ? error.message : 'Unknown error'}`);
         throw new CLIError(
@@ -60,14 +60,14 @@ export class TodoService {
       // Check if directory exists, create it if it doesn't
       try {
         await this.fs.access(this.todosPath);
-      } catch (error) {
+      } catch (_error) {
         // Directory doesn't exist or is not accessible, create it
         await this.fs.mkdir(this.todosPath, { recursive: true });
       }
       
       // Double-check that the directory is now accessible
       await this.fs.access(this.todosPath);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to access or create todos directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'STORAGE_ACCESS_FAILED'
@@ -89,7 +89,7 @@ export class TodoService {
     
     try {
       await this.initializationPromise;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `TodoService not properly initialized: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'SERVICE_NOT_INITIALIZED'

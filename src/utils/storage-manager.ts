@@ -1,7 +1,6 @@
 import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError } from '../types/error';
-import { execSync } from 'child_process';
 import { handleError } from './error-handler';
 
 interface StorageCostEstimate {
@@ -69,7 +68,7 @@ export class StorageManager {
           'WALRUS_NETWORK_ERROR'
         );
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -115,7 +114,7 @@ export class StorageManager {
         storageFundBalance: BigInt(storageFundBalance.totalBalance),
         isStorageFundSufficient
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Failed to check balances: ${error instanceof Error ? error.message : String(error)}`,
@@ -148,7 +147,7 @@ export class StorageManager {
         requiredBalance,
         epochs: this.DEFAULT_EPOCH_DURATION
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to estimate storage cost: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_COST_ESTIMATION_FAILED'
@@ -217,7 +216,7 @@ export class StorageManager {
           endEpoch: Number(fields.end_epoch)
         }
       };
-    } catch (error) {
+    } catch (_error) {
       handleError('Failed to verify existing storage', error);
       return { isValid: false, remainingSize: 0, remainingEpochs: 0 };
     }
@@ -270,7 +269,7 @@ export class StorageManager {
         requiredCost,
         balances
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Storage validation failed: ${error instanceof Error ? error.message : String(error)}`,

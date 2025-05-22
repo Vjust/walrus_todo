@@ -83,7 +83,7 @@ export default class ListCommand extends BaseCommand {
         await this.showAllLists();
       }
 
-    } catch (error) {
+    } catch (_error) {
       this.debugLog(`Error: ${error}`);
 
       if (error instanceof CLIError && error.code === 'LIST_NOT_FOUND') {

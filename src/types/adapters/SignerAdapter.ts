@@ -13,7 +13,7 @@ import {
   IntentScope,
   PublicKey
 } from '@mysten/sui/cryptography';
-import { Transaction, TransactionType } from '../transaction';
+import { TransactionType } from '../transaction';
 import { SuiTransactionBlockResponse, type SuiTransactionBlockResponseOptions, SuiClient } from '@mysten/sui/client';
 import { BaseAdapter, isBaseAdapter } from './BaseAdapter';
 import { BaseError } from '../errors/BaseError';
@@ -23,10 +23,10 @@ import { BaseError } from '../errors/BaseError';
  */
 export interface SignerAdapter extends BaseAdapter<SignerSuiJs> {
   // Core signing methods
-  signData(data: Uint8Array): Promise<Uint8Array>;
-  signTransaction(transaction: TransactionType): Promise<SignatureWithBytes>;
-  signPersonalMessage(message: Uint8Array): Promise<SignatureWithBytes>;
-  signWithIntent(message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes>;
+  signData(_data: Uint8Array): Promise<Uint8Array>;
+  signTransaction(_transaction: TransactionType): Promise<SignatureWithBytes>;
+  signPersonalMessage(_message: Uint8Array): Promise<SignatureWithBytes>;
+  signWithIntent(_message: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes>;
 
   // Information methods
   getKeyScheme(): 'ED25519' | 'Secp256k1' | 'Secp256r1' | 'MultiSig' | 'ZkLogin' | 'Passkey';
@@ -34,7 +34,7 @@ export interface SignerAdapter extends BaseAdapter<SignerSuiJs> {
   getPublicKey(): PublicKey;
 
   // Advanced methods
-  connect(client: SuiClient): SignerAdapter;
+  connect(_client: SuiClient): SignerAdapter;
   getClient(): SuiClient;
   getAddress(): Promise<string>;
   signAndExecuteTransaction(
@@ -56,7 +56,7 @@ export interface SignatureWithBytes {
  * Error class for SignerAdapter operations
  */
 export class SignerAdapterError extends BaseError {
-  constructor(message: string, cause?: Error) {
+  constructor(_message: string, cause?: Error) {
     super({
       message: `SignerAdapter Error: ${message}`,
       code: 'SIGNER_ADAPTER_ERROR',
@@ -84,12 +84,12 @@ export interface BaseSigner {
   /**
    * Signs a personal message
    */
-  signPersonalMessage(message: Uint8Array): Promise<{ signature: Uint8Array; bytes?: Uint8Array; }>;
+  signPersonalMessage(_message: Uint8Array): Promise<{ signature: Uint8Array; bytes?: Uint8Array; }>;
   
   /**
    * Signs with intent
    */
-  signWithIntent(message: Uint8Array, intent: IntentScope): Promise<{ signature: Uint8Array; bytes?: Uint8Array; }>;
+  signWithIntent(_message: Uint8Array, intent: IntentScope): Promise<{ signature: Uint8Array; bytes?: Uint8Array; }>;
   
   /**
    * Gets the key scheme used
@@ -109,17 +109,17 @@ export interface UnifiedSigner extends BaseSigner {
   /**
    * Signs a transaction block
    */
-  signTransactionBlock?(bytes: Uint8Array): Promise<SignatureWithBytes>;
+  signTransactionBlock?(_bytes: Uint8Array): Promise<SignatureWithBytes>;
   
   /**
    * Signs transaction data
    */
-  signData?(data: Uint8Array): Promise<Uint8Array>;
+  signData?(_data: Uint8Array): Promise<Uint8Array>;
   
   /**
    * Signs a transaction
    */
-  signTransaction?(transaction: TransactionType): Promise<SignatureWithBytes>;
+  signTransaction?(_transaction: TransactionType): Promise<SignatureWithBytes>;
   
   /**
    * Gets the public key
@@ -143,7 +143,7 @@ export interface UnifiedSigner extends BaseSigner {
  * Checks if the input is a valid base signer object
  * with the minimum required methods
  */
-export function isValidBaseSigner(signer: unknown): signer is BaseSigner {
+export function isValidBaseSigner(_signer: unknown): signer is BaseSigner {
   return signer !== null && 
          typeof signer === 'object' && 
          signer !== undefined &&
@@ -157,14 +157,14 @@ export function isValidBaseSigner(signer: unknown): signer is BaseSigner {
 /**
  * Checks if the input is a valid signer object
  */
-export function isValidSigner(signer: unknown): signer is SignerSuiJs {
+export function isValidSigner(_signer: unknown): signer is SignerSuiJs {
   return isValidBaseSigner(signer);
 }
 
 /**
  * Checks if the signer has signTransactionBlock method
  */
-export function hasSignTransactionBlock(signer: unknown): signer is BaseSigner & { signTransactionBlock: Function } {
+export function hasSignTransactionBlock(_signer: unknown): signer is BaseSigner & { signTransactionBlock: Function } {
   return isValidBaseSigner(signer) && 
          'signTransactionBlock' in signer && 
          typeof (signer as any).signTransactionBlock === 'function';
@@ -173,7 +173,7 @@ export function hasSignTransactionBlock(signer: unknown): signer is BaseSigner &
 /**
  * Checks if the signer has signTransaction method
  */
-export function hasSignTransaction(signer: unknown): signer is BaseSigner & { signTransaction: Function } {
+export function hasSignTransaction(_signer: unknown): signer is BaseSigner & { signTransaction: Function } {
   return isValidBaseSigner(signer) && 
          'signTransaction' in signer && 
          typeof (signer as any).signTransaction === 'function';
@@ -182,7 +182,7 @@ export function hasSignTransaction(signer: unknown): signer is BaseSigner & { si
 /**
  * Checks if the signer has getPublicKey method
  */
-export function hasGetPublicKey(signer: unknown): signer is BaseSigner & { getPublicKey: Function } {
+export function hasGetPublicKey(_signer: unknown): signer is BaseSigner & { getPublicKey: Function } {
   return isValidBaseSigner(signer) && 
          'getPublicKey' in signer && 
          typeof (signer as any).getPublicKey === 'function';
@@ -191,7 +191,7 @@ export function hasGetPublicKey(signer: unknown): signer is BaseSigner & { getPu
 /**
  * Checks if the signer has signAndExecuteTransaction method
  */
-export function hasSignAndExecuteTransaction(signer: unknown): signer is BaseSigner & { signAndExecuteTransaction: Function } {
+export function hasSignAndExecuteTransaction(_signer: unknown): signer is BaseSigner & { signAndExecuteTransaction: Function } {
   return isValidBaseSigner(signer) && 
          'signAndExecuteTransaction' in signer && 
          typeof (signer as any).signAndExecuteTransaction === 'function';
@@ -200,7 +200,7 @@ export function hasSignAndExecuteTransaction(signer: unknown): signer is BaseSig
 /**
  * Checks if the signer has signData method
  */
-export function hasSignData(signer: unknown): signer is BaseSigner & { signData: Function } {
+export function hasSignData(_signer: unknown): signer is BaseSigner & { signData: Function } {
   return isValidBaseSigner(signer) && 
          'signData' in signer && 
          typeof (signer as any).signData === 'function';
@@ -209,7 +209,7 @@ export function hasSignData(signer: unknown): signer is BaseSigner & { signData:
 /**
  * Checks if the signer has signPersonalMessage
  */
-export function hasSignPersonalMessage(signer: unknown): signer is BaseSigner & { signPersonalMessage: Function } {
+export function hasSignPersonalMessage(_signer: unknown): signer is BaseSigner & { signPersonalMessage: Function } {
   return isValidBaseSigner(signer) && 
          'signPersonalMessage' in signer && 
          typeof (signer as any).signPersonalMessage === 'function';
@@ -218,7 +218,7 @@ export function hasSignPersonalMessage(signer: unknown): signer is BaseSigner & 
 /**
  * Checks if a signer supports connect to client
  */
-export function hasConnect(signer: unknown): signer is BaseSigner & { connect: Function } {
+export function hasConnect(_signer: unknown): signer is BaseSigner & { connect: Function } {
   return isValidBaseSigner(signer) && 
          'connect' in signer && 
          typeof (signer as any).connect === 'function';
@@ -239,7 +239,7 @@ export interface SignerFeatures {
 /**
  * Function to detect and capture all available features of a signer
  */
-export function detectSignerFeatures(signer: unknown): SignerFeatures | null {
+export function detectSignerFeatures(_signer: unknown): SignerFeatures | null {
   if (!isValidBaseSigner(signer)) {
     return null;
   }
@@ -258,7 +258,7 @@ export function detectSignerFeatures(signer: unknown): SignerFeatures | null {
  * Detect SDK version based on signer features
  * This provides more accurate version detection than checking individual methods
  */
-export function detectSDKVersion(signer: unknown): SuiSDKVersion {
+export function detectSDKVersion(_signer: unknown): SuiSDKVersion {
   const features = detectSignerFeatures(signer);
   
   if (!features) {
@@ -288,7 +288,7 @@ export function detectSDKVersion(signer: unknown): SuiSDKVersion {
 /**
  * A utility function to convert various signature formats to our consistent SignatureWithBytes type
  */
-export function normalizeSignature(signature: unknown): SignatureWithBytes {
+export function normalizeSignature(_signature: unknown): SignatureWithBytes {
   if (signature === null || signature === undefined) {
     throw new SignerAdapterError('Signature is null or undefined');
   }
@@ -366,7 +366,7 @@ export function normalizeSignature(signature: unknown): SignatureWithBytes {
  * Utility function to convert string to Uint8Array
  * Handles base64, hex, and UTF-8 text
  */
-export function stringToBytes(str: string): Uint8Array {
+export function stringToBytes(_str: string): Uint8Array {
   // Check if it looks like base64
   if (/^[A-Za-z0-9+/=]+$/.test(str) && str.length % 4 === 0) {
     try {
@@ -393,7 +393,7 @@ export function stringToBytes(str: string): Uint8Array {
 /**
  * Convert base64 string to Uint8Array
  */
-function base64ToBytes(base64: string): Uint8Array {
+function base64ToBytes(_base64: string): Uint8Array {
   try {
     // Using atob for browser environments or Buffer for Node.js
     const binString = typeof atob === 'function' 
@@ -413,7 +413,7 @@ function base64ToBytes(base64: string): Uint8Array {
 /**
  * Convert hex string to Uint8Array
  */
-function hexToBytes(hex: string): Uint8Array {
+function hexToBytes(_hex: string): Uint8Array {
   // Ensure even number of characters
   if (hex.length % 2 !== 0) {
     throw new SignerAdapterError('Hex string must have an even number of characters');
@@ -429,7 +429,7 @@ function hexToBytes(hex: string): Uint8Array {
 /**
  * Checks if an object is a SignerAdapter implementation
  */
-export function isSignerAdapter(obj: unknown): obj is BaseAdapter<SignerSuiJs> {
+export function isSignerAdapter(_obj: unknown): obj is BaseAdapter<SignerSuiJs> {
   return isBaseAdapter(obj) && obj !== null && 
          typeof obj === 'object' && 
          'signWithIntent' in obj && typeof (obj as Record<string, unknown>).signWithIntent === 'function' &&

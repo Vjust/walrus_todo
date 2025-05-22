@@ -1,0 +1,27 @@
+{
+  "network": "testnet",
+  "rpcUrl": "https://fullnode.testnet.sui.io",
+  "walrus": {
+    "publisherUrl": "https://publisher.walrus-testnet.walrus.space",
+    "aggregatorUrl": "https://aggregator.walrus-testnet.walrus.space"
+  },
+  "deployment": {
+    "packageId": "0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b",
+    "upgradeCapId": "0x539cf6e6eec48a561935e2a9ee41ee2862bce4b145bcb493c59cdb65468bd89d",
+    "deployerAddress": "0xca793690985183dc8e2180fd059d76f3b0644f5c2ecd3b01cdebe7d40b0cca39",
+    "timestamp": "2025-01-21T19:30:00Z",
+    "gasUsed": "15677880",
+    "transactionHash": "EUhfTqLwattcLiuqwM7DrokzoYo31Kz5rfAfwkwURbFA"
+  },
+  "features": {
+    "aiIntegration": false,
+    "batchOperations": true,
+    "storageOptimization": true,
+    "realTimeUpdates": true
+  },
+  "environment": {
+    "mode": "production",
+    "debug": false,
+    "apiEndpoint": "https://fullnode.testnet.sui.io"
+  }
+}

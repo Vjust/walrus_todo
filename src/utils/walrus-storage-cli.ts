@@ -76,7 +76,7 @@ export class WalrusStorage {
     try {
       await execAsync(`${this.walrusPath} --version`);
       this.isConnected = true;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         'Walrus CLI not found. Please install it from https://docs.wal.app',
         'WALRUS_CLI_NOT_FOUND'
@@ -288,7 +288,7 @@ export class WalrusStorage {
     try {
       const command = `${this.walrusPath} --config ${this.configPath} delete ${blobId}`;
       await execAsync(command);
-    } catch (error) {
+    } catch (_error) {
       // Some blobs may not be deletable
       if (error.message.includes('not deletable')) {
         throw new CLIError('Blob is not deletable', 'NOT_DELETABLE');
@@ -311,7 +311,7 @@ export class WalrusStorage {
       const command = `${this.walrusPath} --config ${this.configPath} status ${blobId}`;
       await execAsync(command);
       return true;
-    } catch (error) {
+    } catch (_error) {
       if (error.message.includes('not found')) {
         return false;
       }
@@ -330,7 +330,7 @@ export class WalrusStorage {
   /**
    * Get storage info (simplified for CLI version)
    */
-  async getStorageInfo(objectId: string): Promise<any> {
+  async getStorageInfo(objectId: string): Promise<{ id: string; storage_size: string; used_size: string; end_epoch: string }> {
     if (this.useMock) {
       return {
         id: objectId,
@@ -365,7 +365,7 @@ export class WalrusStorage {
         return parseFloat(walMatch[1]);
       }
       return 0;
-    } catch (error) {
+    } catch (_error) {
       return 0;
     }
   }
@@ -400,7 +400,7 @@ export class WalrusStorage {
    * Check for existing storage allocations
    * @returns {Promise<object|null>} Storage information or null
    */
-  async checkExistingStorage(): Promise<any> {
+  async checkExistingStorage(): Promise<{ id: { id: string }; storage_size: string; used_size: string } | null> {
     await this.connect();
     
     if (this.useMock) {
@@ -432,7 +432,7 @@ export class WalrusStorage {
     try {
       const { stdout } = await execAsync('sui client active-address');
       return stdout.trim();
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError('Failed to get active address', 'ADDRESS_ERROR');
     }
   }

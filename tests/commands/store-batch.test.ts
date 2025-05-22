@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import StoreCommand from '../../src/commands/store';
-import { TodoService } from '../../src/services/todoService';
+
 import * as walrusStorage from '../../src/utils/walrus-storage';
 import { BatchProcessor } from '../../src/utils/batch-processor';
 import * as performanceCache from '../../src/utils/performance-cache';

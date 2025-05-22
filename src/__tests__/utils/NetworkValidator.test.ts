@@ -1,8 +1,6 @@
-import { jest, describe, it, expect, beforeEach, SpyInstance } from '@jest/globals';
-import { WalrusClient } from '@mysten/walrus';
-import { execSync } from 'child_process';
-import { NetworkValidator, NetworkEnvironment } from '../../utils/NetworkValidator';
-import { WalrusError } from '../../types/error';
+// WalrusClient imported but not used
+import { NetworkValidator } from '../../utils/NetworkValidator';
+// WalrusError imported but not used
 import { WalrusClientExt } from '../../types/client';
 
 jest.mock('child_process');

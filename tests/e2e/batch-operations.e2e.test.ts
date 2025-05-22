@@ -3,7 +3,6 @@
  * Tests the batch functionality of commands like store-list and store-batch
  */
 
-import { execSync } from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -44,7 +43,8 @@ describe('Batch Operations E2E Tests', () => {
 
     it('should handle empty todo list gracefully', () => {
       // Clear todos
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH!, { todos: [] });
+      const todosPath = process.env.WALRUS_CLI_DEV_TODOS_PATH || path.join(os.homedir(), '.walrus-cli/todos.json');
+      await fs.writeJson(todosPath, { todos: [] });
 
       // Run store-list command
       const output = execSync(`${walrusCLI} store-list --mock`).toString();

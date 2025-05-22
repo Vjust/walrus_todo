@@ -2,7 +2,7 @@
  * Basic test file to verify Jest is working correctly
  */
 
-import { TodoService } from '../../src/services/todoService';
+
 jest.mock('../../src/services/todoService');
 
 // Sample test data

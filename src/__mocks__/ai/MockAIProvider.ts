@@ -41,7 +41,6 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { 
   MockResponseTemplate, 
   MockResponseOptions, 
-  MockErrorOptions,
   LatencyOptions, 
   RecordingMode
 } from './types';
@@ -307,7 +306,7 @@ export class MockAIProvider implements AIModelAdapter {
    */
   public async processWithPromptTemplate(
     promptTemplate: PromptTemplate, 
-    input: Record<string, any>
+    input: Record<string, unknown>
   ): Promise<AIResponse> {
     await this.simulateLatency();
     

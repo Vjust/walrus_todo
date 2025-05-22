@@ -262,7 +262,7 @@ describe('Serialization Fuzzing Tests', () => {
           expect(deserialized).toHaveProperty('id');
           expect(deserialized).toHaveProperty('title');
           expect(deserialized).toHaveProperty('completed');
-        } catch (error) {
+        } catch (_error) {
           // Memory errors are expected for extreme sizes
           if (error instanceof RangeError || error instanceof Error) {
             expect(error.message).toMatch(/memory|size|Maximum|exceeded/i);
@@ -450,7 +450,7 @@ describe('Serialization Fuzzing Tests', () => {
           expect(deserialized).toHaveProperty('name');
           expect(deserialized).toHaveProperty('owner');
           expect(Array.isArray(deserialized.todos)).toBe(true);
-        } catch (error) {
+        } catch (_error) {
           // Memory errors are expected for extreme sizes
           if (error instanceof RangeError || error instanceof Error) {
             expect(error.message).toMatch(/memory|size|Maximum|exceeded/i);
@@ -548,7 +548,7 @@ describe('Serialization Fuzzing Tests', () => {
             const buffer = TodoSerializer.todoToBuffer(todo);
             const deserialized = TodoSerializer.bufferToTodo(buffer);
             resolve(deserialized);
-          } catch (error) {
+          } catch (_error) {
             reject(error);
           }
         })

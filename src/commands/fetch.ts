@@ -131,7 +131,7 @@ export default class FetchCommand extends BaseCommand {
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
-              onRetry: (error, attempt, delay) => {
+              onRetry: (error, attempt, _delay) => {
                 const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
               }
@@ -150,7 +150,7 @@ export default class FetchCommand extends BaseCommand {
           if (todo.tags?.length) {
             this.log(`  Tags: ${todo.tags.join(', ')}`);
           }
-        } catch (error) {
+        } catch (_error) {
           // Make sure we disconnect from Walrus even if there was an error
           try {
             await this.walrusStorage.disconnect();
@@ -195,7 +195,7 @@ export default class FetchCommand extends BaseCommand {
             () => suiNftStorage.getTodoNft(flags['object-id']),
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
-              onRetry: (error, attempt, delay) => {
+              onRetry: (error, attempt, _delay) => {
                 const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} fetching NFT after error: ${errorMessage}`));
               }
@@ -216,7 +216,7 @@ export default class FetchCommand extends BaseCommand {
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
-              onRetry: (error, attempt, delay) => {
+              onRetry: (error, attempt, _delay) => {
                 const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
                 this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
               }
@@ -241,7 +241,7 @@ export default class FetchCommand extends BaseCommand {
           if (todo.tags?.length) {
             this.log(`  Tags: ${todo.tags.join(', ')}`);
           }
-        } catch (error) {
+        } catch (_error) {
           // Make sure we disconnect from Walrus even if there was an error
           try {
             await this.walrusStorage.disconnect();
@@ -256,7 +256,7 @@ export default class FetchCommand extends BaseCommand {
         await this.walrusStorage.disconnect();
       }
       
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

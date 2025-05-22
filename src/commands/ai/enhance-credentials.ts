@@ -179,7 +179,7 @@ export default class Credentials extends BaseCommand {
       if (flags.rotation) {
         this.log(`${chalk.green('\u2713')} You will be reminded to rotate this key in ${chalk.yellow(flags.rotation)} days`);
       }
-    } catch (error) {
+    } catch (_error) {
       if (error.code === 'CREDENTIAL_VERIFICATION_FAILED') {
         this.log(`${chalk.yellow('\u26a0')} ${error.message}`);
       } else if (error.code === 'INVALID_API_KEY_FORMAT') {
@@ -207,7 +207,7 @@ export default class Credentials extends BaseCommand {
 
       await credentialManager.removeCredential(provider);
       this.log(`${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} removed successfully`);
-    } catch (error) {
+    } catch (_error) {
       this.error(error.message);
     }
   }
@@ -288,7 +288,7 @@ export default class Credentials extends BaseCommand {
       this.log(`- Rotate credentials: ${chalk.cyan('walrus_todo ai credentials rotate <provider> --key NEW_KEY')}`);
       this.log(`- Update permissions: ${chalk.cyan('walrus_todo ai credentials add <provider> --key EXISTING_KEY --permission <level>')}`);
       this.log(`- Set expiry: ${chalk.cyan('walrus_todo ai credentials add <provider> --key EXISTING_KEY --expiry <days>')}`);
-    } catch (error) {
+    } catch (_error) {
       this.error(error.message);
     }
   }
@@ -306,7 +306,7 @@ export default class Credentials extends BaseCommand {
       // Check if already verified
       if (metadata.verified) {
         // Re-verify on blockchain to make sure it's still valid
-        const apiKey = await credentialManager.getCredential(provider, {
+        const _apiKey = await credentialManager.getCredential(provider, {
           requiredPermissionLevel: undefined,
           operation: "verify"
         });
@@ -325,14 +325,14 @@ export default class Credentials extends BaseCommand {
       }
       
       // Get the credential and verify it
-      const apiKey = await credentialManager.getCredential(provider);
+      const _apiKey = await credentialManager.getCredential(provider);
       
       // Verify on blockchain
       this.log(`Verifying API key for ${chalk.cyan(provider)} on blockchain...`);
       // TODO: This is just a placeholder - implement the actual verification
       
       this.log(`${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} has been verified on blockchain`);
-    } catch (error) {
+    } catch (_error) {
       this.error(error.message);
     }
   }
@@ -389,7 +389,7 @@ export default class Credentials extends BaseCommand {
       if (result.metadata?.rotationReminder) {
         this.log(`${chalk.green('\u2713')} You will be reminded to rotate this key in ${chalk.yellow(result.metadata.rotationReminder)} days`);
       }
-    } catch (error) {
+    } catch (_error) {
       if (error.code === 'INVALID_API_KEY_FORMAT') {
         this.error(`${chalk.red('\u2717')} ${error.message}`);
       } else {

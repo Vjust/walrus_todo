@@ -137,7 +137,7 @@ export default class AI extends BaseCommand {
           temperature: temperature,
         }
       );
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to set AI provider: ${error.message}`, { exit: 1 });
     }
 
@@ -385,10 +385,10 @@ export default class AI extends BaseCommand {
         this.log(chalk.cyan('📝 Summary of your todos:'));
         this.log(chalk.yellow(summary));
       }
-    } catch (error) {
+    } catch (_error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
-        console.error('DEBUG - Error in summarizeTodos:', error);
+        logger.error('DEBUG - Error in summarizeTodos:', error as Error);
       }
       this.error(`AI summarization failed: ${error.message}`, { exit: 1 });
     }
@@ -488,10 +488,10 @@ export default class AI extends BaseCommand {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
-        console.error('DEBUG - Error in categorizeTodos:', error);
+        logger.error('DEBUG - Error in categorizeTodos:', error as Error);
       }
       this.error(`AI categorization failed: ${error.message}`, { exit: 1 });
     }
@@ -610,10 +610,10 @@ export default class AI extends BaseCommand {
 
         this.log(`${priorityColor(`[${priority}]`)} ${todo.title}`);
       }
-    } catch (error) {
+    } catch (_error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
-        console.error('DEBUG - Error in prioritizeTodos:', error);
+        logger.error('DEBUG - Error in prioritizeTodos:', error as Error);
       }
       this.error(`AI prioritization failed: ${error.message}`, { exit: 1 });
     }
@@ -763,10 +763,10 @@ export default class AI extends BaseCommand {
 
       this.log('');
       this.log(`To add a suggested todo: ${chalk.cyan('walrus_todo add "Suggested Todo Title"')}`);
-    } catch (error) {
+    } catch (_error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
-        console.error('DEBUG - Error in suggestTodos:', error);
+        logger.error('DEBUG - Error in suggestTodos:', error as Error);
       }
       this.error(`AI suggestion failed: ${error.message}`, { exit: 1 });
     }
@@ -882,10 +882,10 @@ export default class AI extends BaseCommand {
           this.log(`  ${details}`);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
-        console.error('DEBUG - Error in analyzeTodos:', error);
+        logger.error('DEBUG - Error in analyzeTodos:', error as Error);
       }
       this.error(`AI analysis failed: ${error.message}`, { exit: 1 });
     }

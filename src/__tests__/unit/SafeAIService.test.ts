@@ -5,7 +5,7 @@
  * and provides graceful fallbacks when AI services are unavailable.
  */
 
-import { SafeAIService, SafeAIResult } from '../../services/ai/SafeAIService';
+import { SafeAIService } from '../../services/ai/SafeAIService';
 import { Todo } from '../../types/todo';
 import { AIService } from '../../services/ai/aiService';
 import { Logger } from '../../utils/Logger';

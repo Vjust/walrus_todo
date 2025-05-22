@@ -115,7 +115,7 @@ export function validateStartup(options: {
     }
 
     return isValid;
-  } catch (error) {
+  } catch (_error) {
     if (throwOnError) {
       throw error;
     } else {
@@ -169,7 +169,7 @@ function checkStorageDirectory(): StartupCheckResult {
           message: `Created storage directory at ${storagePath}`,
           critical: false
         };
-      } catch (error) {
+      } catch (_error) {
         return {
           success: false,
           message: `Failed to create storage directory at ${storagePath}: ${error instanceof Error ? error.message : String(error)}`,
@@ -187,7 +187,7 @@ function checkStorageDirectory(): StartupCheckResult {
       success: true,
       critical: false
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       success: false,
       message: `Storage directory at ${storagePath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
@@ -218,7 +218,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
           message: `Created temporary directory at ${tempPath}`,
           critical: false
         };
-      } catch (error) {
+      } catch (_error) {
         return {
           success: false,
           message: `Failed to create temporary directory at ${tempPath}: ${error instanceof Error ? error.message : String(error)}`,
@@ -236,7 +236,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
       success: true,
       critical: false
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       success: false,
       message: `Temporary directory at ${tempPath} is not writable: ${error instanceof Error ? error.message : String(error)}`,

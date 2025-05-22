@@ -1,11 +1,10 @@
 import { jest, expect, describe, test, beforeEach } from '@jest/globals';
 import { TodoService } from '../../services/todoService';
-import { WalrusStorage } from '../../utils/walrus-storage';
+// WalrusStorage import removed - not used in this test file
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { configService } from '../../services/config-service';
 import { SuiClient } from '@mysten/sui/client';
-import { CLIError } from '../../types/error';
-import { Todo, TodoList } from '../../types/todo';
+import { TodoList } from '../../types/todo';
 import { createMockTodo } from '../helpers/test-utils';
 import { createMockSystemStateResponse } from '../sui-test-types';
 import type { Config } from '../../types';
@@ -18,7 +17,7 @@ jest.mock('../../services/config-service');
 jest.mock('@mysten/sui/client');
 
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
-const mockWalrusStorage = WalrusStorage as jest.MockedClass<typeof WalrusStorage>;
+// WalrusStorage mocked but not directly used in tests
 const mockSuiNftStorage = SuiNftStorage as jest.MockedClass<typeof SuiNftStorage>;
 const mockSuiClient = SuiClient as jest.MockedClass<typeof SuiClient>;
 

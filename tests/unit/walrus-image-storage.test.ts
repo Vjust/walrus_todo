@@ -1,10 +1,8 @@
-import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
-import { WalrusClient, type BlobType, type BlobObject, type Storage } from '@mysten/walrus';
+
+
+import { WalrusClient, type BlobObject } from '@mysten/walrus';
 import { createWalrusImageStorage } from '@/utils/walrus-image-storage';
-import { CLIError } from '@/types/errors';
-import { KeystoreSigner } from '../../src/utils/sui-keystore';
-import { execSync } from 'child_process';
+
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -38,7 +36,7 @@ jest.mock('fs');
 jest.mock('path');
 
 describe('WalrusImageStorage', () => {
-  let mockSuiClient: MockedSuiClient;
+  let _mockSuiClient: MockedSuiClient;
   let mockWalrusClient: MockedWalrusClient;
   let mockKeystoreSigner: jest.MockedClass<typeof KeystoreSigner>;
   let storage: ReturnType<typeof createWalrusImageStorage>;
@@ -48,7 +46,7 @@ describe('WalrusImageStorage', () => {
   const mockJpegHeader = Buffer.from([0xFF, 0xD8]); // JPEG magic numbers
 
   beforeEach(async () => {
-    mockSuiClient = {
+    _mockSuiClient = {
       getBalance: jest.fn().mockResolvedValue({
         coinType: 'WAL',
         totalBalance: BigInt(1000),

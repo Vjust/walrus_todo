@@ -87,7 +87,7 @@ export class InteractiveMode {
 
       try {
         await this.handleCommand(trimmed);
-      } catch (error) {
+      } catch (_error) {
         console.error(chalk.red(`${ICONS.ERROR} Error: ${error.message}`));
       }
 

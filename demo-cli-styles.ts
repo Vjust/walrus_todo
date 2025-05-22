@@ -161,7 +161,7 @@ StyleDemo.run([], {
       }
     }
   }
-}).catch(error => {
+}).catch(_error => {
   console.error('Error running demo:', error);
   process.exit(1);
 });

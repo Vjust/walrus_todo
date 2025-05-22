@@ -28,7 +28,7 @@ export class PromptValidator {
         // Validate the input
         InputValidator.validate(sanitizedInput, rules);
         return true;
-      } catch (error) {
+      } catch (_error) {
         // Return error message for inquirer
         if (error instanceof CLIError) {
           return error.message;

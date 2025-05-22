@@ -48,7 +48,7 @@ export function validateEnvironmentFull(): ValidationResult {
           result.invalidVars.push(`${key}: ${config.validationError || 'Failed validation'}`);
           result.isValid = false;
         }
-      } catch (error) {
+      } catch (_error) {
         result.invalidVars.push(`${key}: ${error instanceof Error ? error.message : String(error)}`);
         result.isValid = false;
       }

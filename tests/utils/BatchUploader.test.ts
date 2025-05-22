@@ -3,7 +3,7 @@ import { TodoSizeCalculator } from '@/utils/todo-size-calculator';
 import { WalrusStorage } from '@/utils/walrus-storage';
 import type { WalrusStorage as WalrusStorageType } from '@/utils/walrus-storage';
 import { Todo, TodoList } from '@/types/todo';
-import { CLIError } from '@/types/errors';
+
 
 // Mock the WalrusStorage class
 jest.mock('@/utils/walrus-storage');

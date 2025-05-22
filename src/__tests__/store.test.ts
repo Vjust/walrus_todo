@@ -1,7 +1,6 @@
-import { expect, jest, test, describe, beforeEach, afterEach } from '@jest/globals';
 import { TodoService } from '../services/todoService';
 import { WalrusStorage } from '../utils/walrus-storage';
-import { ConfigService } from '../services/config-service';
+// ConfigService mocked but not directly used
 import type { Todo } from '../types/todo';
 import type { Mocked } from 'jest-mock';
 
@@ -10,7 +9,7 @@ jest.mock('../services/config-service');
 
 describe('store command', () => {
   let todoService: TodoService;
-  let todoId!: string;  // Add definite assignment assertion
+  // todoId variable removed - not used in tests
 
   beforeEach(async () => {
     todoService = new TodoService();
@@ -36,7 +35,7 @@ describe('store command', () => {
       private: true,
       storageLocation: 'local' as const
     });
-    todoId = 'test-todo-id';
+    // todoId = 'test-todo-id'; // Removed - todoId is not used in tests
   });
 
   afterEach(() => {

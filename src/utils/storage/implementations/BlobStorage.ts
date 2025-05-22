@@ -11,9 +11,7 @@ import {
   StorageInfo, 
   StorageUsage, 
   StorageOptimizationResult, 
-  StorageConfig,
-  StorageOperationOptions,
-  ContentMetadata
+  StorageConfig
 } from '../core/StorageTypes';
 import { StorageClient } from '../core/StorageClient';
 import { StorageTransaction } from '../core/StorageTransaction';
@@ -139,7 +137,7 @@ export class BlobStorage extends AbstractStorage {
       // Update connection state and timestamp
       this.connectionState = 'connected';
       this.lastHealthCheck = Date.now();
-    } catch (error) {
+    } catch (_error) {
       this.connectionState = 'failed';
       
       if (error instanceof NetworkError) {
@@ -177,7 +175,7 @@ export class BlobStorage extends AbstractStorage {
       }
       
       return isHealthy;
-    } catch (error) {
+    } catch (_error) {
       console.warn('Health check failed:', error);
       return false;
     }
@@ -265,7 +263,7 @@ export class BlobStorage extends AbstractStorage {
       }
       
       return blobId;
-    } catch (error) {
+    } catch (_error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -373,12 +371,12 @@ export class BlobStorage extends AbstractStorage {
           content: contentResult.data,
           metadata: attributes
         };
-      } catch (error) {
+      } catch (_error) {
         // Cancel the retrieval if something goes wrong
         retrievalAbortController.abort();
         throw error;
       }
-    } catch (error) {
+    } catch (_error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -427,7 +425,7 @@ export class BlobStorage extends AbstractStorage {
       
       // Store as new blob
       return this.store(content, updatedMetadata);
-    } catch (error) {
+    } catch (_error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -609,7 +607,7 @@ export class BlobStorage extends AbstractStorage {
         remainingBytes: Number(fields.storage_size || 0) - Number(fields.used_size || 0),
         isActive: Number(fields.end_epoch || 0) > currentEpoch
       };
-    } catch (error) {
+    } catch (_error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -726,7 +724,7 @@ export class BlobStorage extends AbstractStorage {
         usagePercentage,
         storageObjects
       };
-    } catch (error) {
+    } catch (_error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -780,7 +778,7 @@ export class BlobStorage extends AbstractStorage {
         savingsPercentage: analysis.costComparison.reuseExistingPercentSaved,
         recommendationDetails: analysis.detailedRecommendation
       };
-    } catch (error) {
+    } catch (_error) {
       // Categorize and log but don't throw - optimization is optional
       console.warn('Storage optimization failed:', error);
       

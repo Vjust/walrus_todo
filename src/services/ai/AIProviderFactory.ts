@@ -77,8 +77,8 @@ export class AIProviderFactory {
       // If no API key, log a warning and return fallback
       this.logger.debug(`No XAI API key found in environment variables, using fallback adapter`);
       return this.createFallbackAdapter();
-    } catch (error) {
-      this.logger.error(`Failed to create default adapter: ${error.message}`);
+    } catch (_error) {
+      this.logger.error(`Failed to create default adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       return this.createFallbackAdapter();
     }
   }
@@ -104,7 +104,7 @@ export class AIProviderFactory {
       },
       completeStructured: async () => {
         return {
-          result: {} as any,
+          result: {} as unknown,
           modelName: 'fallback-model',
           provider: AIProviderEnum.XAI,
           timestamp: Date.now()
@@ -188,8 +188,8 @@ export class AIProviderFactory {
           this.logger.warn(`Unknown provider: ${providerEnum}, using fallback provider`);
           return this.createFallbackProvider(options);
       }
-    } catch (error) {
-      this.logger.error(`Failed to create provider adapter: ${error.message}`);
+    } catch (_error) {
+      this.logger.error(`Failed to create provider adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
       return this.createFallbackProvider(options);
     }
   }
@@ -244,8 +244,8 @@ export class AIProviderFactory {
         provider: defaultProviderEnum,
         modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString as keyof typeof AI_CONFIG.MODELS]?.[0] || 'grok-beta'
       };
-    } catch (error) {
-      this.logger.error(`Error determining default provider: ${error.message}`);
+    } catch (_error) {
+      this.logger.error(`Error determining default provider: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
 
       // Fall back to hardcoded safe defaults
       const fallbackEnum = AIProviderEnum.XAI; // Safe fallback
@@ -259,7 +259,7 @@ export class AIProviderFactory {
   /**
    * Debug method to get environment values for diagnostics
    */
-  public static getEnvironmentValues(): { provider: any; model: any } {
+  public static getEnvironmentValues(): { provider: string | undefined; model: string | undefined } {
     return {
       provider: AI_CONFIG.DEFAULT_PROVIDER,
       model: AI_CONFIG.DEFAULT_MODEL
@@ -304,10 +304,10 @@ export class AIProviderFactory {
 
           // Add other provider adapters as needed
         }
-      } catch (error) {
+      } catch (_error) {
         // Only log debug messages if we actually requested AI features
         if (this.isAIFeatureRequested) {
-          this.logger.debug(`Failed to use fallback provider ${fallbackProvider}: ${error.message}`);
+          this.logger.debug(`Failed to use fallback provider ${fallbackProvider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
         }
         // Continue to next fallback
       }

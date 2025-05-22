@@ -1,7 +1,8 @@
-import { SuiClient } from '@mysten/sui/client';
+
 import { SuiNftStorage } from './src/utils/sui-nft-storage';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from './src/services';
+import { Todo } from './src/types/todo';
 import { TODO_NFT_CONFIG, NETWORK_URLS, CURRENT_NETWORK } from './src/constants';
 import { execSync } from 'child_process';
 
@@ -50,14 +51,14 @@ async function launchDefaultNft() {
     const listName = 'default';
     
     // Create or get a todo item
-    let todoItem: unknown;
+    let todoItem: Todo;
     
     // Get existing todos from default list
     const todoList = await todoService.getList(listName);
     
     if (todoList && todoList.todos.length > 0) {
       // Use the first todo in the default list
-      todoItem = todoList.todos[0];
+      todoItem = todoList.todos[0] as Todo;
       process.stdout.write(`✓ Using existing Todo: "${todoItem.title}" (ID: ${todoItem.id})\n`);
     } else {
       // Create a new todo in the default list
@@ -76,7 +77,7 @@ async function launchDefaultNft() {
       }
       
       // Add the todo to the list
-      todoItem = await todoService.addTodo(listName, newTodoData);
+      todoItem = await todoService.addTodo(listName, newTodoData) as Todo;
       process.stdout.write(`✓ Created new Todo: "${todoItem.title}" (ID: ${todoItem.id})\n`);
     }
 
@@ -91,7 +92,7 @@ async function launchDefaultNft() {
     process.stdout.write(`✓ Using image URL: ${imageUrl}\n`);
 
     // Update todo with image URL
-    const updatedTodo = {
+    const updatedTodo: Todo = {
       ...todoItem,
       imageUrl
     };

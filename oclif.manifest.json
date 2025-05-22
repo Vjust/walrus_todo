@@ -121,6 +121,16 @@
       "args": [],
       "path": "./dist/src/commands/fetch"
     },
+    "generate-frontend-config": {
+      "id": "generate-frontend-config",
+      "description": "generate-frontend-config command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/generate-frontend-config"
+    },
     "help": {
       "id": "help",
       "description": "help command",
@@ -310,6 +320,16 @@
       "flags": {},
       "args": [],
       "path": "./dist/src/commands/update"
+    },
+    "validate-config": {
+      "id": "validate-config",
+      "description": "validate-config command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/validate-config"
     },
     "verify": {
       "id": "verify",

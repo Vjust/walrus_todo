@@ -1,9 +1,8 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
 import { AIProvider, AIModelOptions } from '../../src/types/adapters/AIModelAdapter';
 import { AIPrivacyLevel } from '../../src/types/adapters/AIVerifierAdapter';
-import { CLIError } from '../../src/types/error';
+
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';

@@ -178,7 +178,7 @@ export class ValidationError extends WalrusError {
   ) {
     const {
       field,
-      value,
+      value: _value,
       constraint,
       recoverable = false,
       ...rest
@@ -215,7 +215,7 @@ export class AuthorizationError extends WalrusError {
     options: Partial<AuthErrorOptions> = {}
   ) {
     const {
-      operation = 'unknown',
+      operation: _operation = 'unknown',
       resource,
       ...rest
     } = options;

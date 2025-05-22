@@ -1,9 +1,6 @@
-import { jest, describe, it, expect, beforeEach, SpyInstance } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
-import { execSync } from 'child_process';
 import * as childProcess from 'child_process';
 import { NetworkValidator, NetworkEnvironment } from '@/utils/NetworkValidator';
-import { WalrusError } from '@/types/errors';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');

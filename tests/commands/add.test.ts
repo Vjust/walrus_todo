@@ -1,8 +1,8 @@
-import { jest, expect, describe, test, beforeEach } from '@jest/globals';
-import { TodoService } from '@/services/todoService';
+import { expect, describe, test, beforeEach } from '@jest/globals';
+
 import { createWalrusStorage } from '@/utils/walrus-storage';
 import { Todo } from '@/types/todo';
-import { CLIError } from '@/types/errors';
+
 import { createMockTodo } from '../helpers/test-utils';
 
 // Mock TodoService
@@ -49,7 +49,7 @@ const addCommand = {
           ...newTodo,
           storageLocation: 'blockchain'
         });
-      } catch (error) {
+      } catch (_error) {
         throw new CLIError(`Failed to store todo on blockchain: ${error instanceof Error ? error.message : (error ? String(error) : 'Unknown error')}`, 'STORAGE_FAILED');
       }
     }

@@ -1,21 +1,22 @@
 import { TodoService } from './services/todoService';
+import { Logger } from './utils/Logger';
 
 async function main() {
   const todoService = new TodoService();
   const listName = 'test-list';
   
   // First create or get list
-  console.log('Creating/getting todo list...');
+  Logger.getInstance().info('Creating/getting todo list...');
   let list = await todoService.getList(listName);
   if (!list) {
     list = await todoService.createList(listName, 'test-user');
-    console.log('Created new list:', list);
+    Logger.getInstance().info('Created new list:', { list });
   } else {
-    console.log('Using existing list:', list);
+    Logger.getInstance().info('Using existing list:', { list });
   }
 
   // Add a todo item
-  console.log('\nAdding todo item...');
+  Logger.getInstance().info('Adding todo item...');
   const todo = await todoService.addTodo(listName, {
     title: 'Test Todo Item',
     description: 'This is a test todo item',
@@ -23,7 +24,7 @@ async function main() {
     tags: ['test', 'demo'],
     private: true
   });
-  console.log('Created todo:', todo);
+  Logger.getInstance().info('Created todo:', { todo });
 }
 
-main().catch(console.error);
+main().catch((error) => Logger.getInstance().error('Error in main:', error));

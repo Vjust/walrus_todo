@@ -159,16 +159,16 @@ export default class AddCommand extends BaseCommand {
        */
 
       // Pattern 1: argument + task flags = argument is list name
-      if (args.listOrTitle && flags.task && flags.task.length > 0) {
+      if (args.listOrTitle && flags.task && (flags.task as string[]).length > 0) {
         // First argument is treated as the list name when tasks are provided with -t
         listName = CommandSanitizer.sanitizeString(args.listOrTitle);
-        todoTitles = flags.task.map(t => CommandSanitizer.sanitizeString(t));
+        todoTitles = (flags.task as string[]).map(t => CommandSanitizer.sanitizeString(t));
       }
       // Pattern 2: argument but no task flags
-      else if (args.listOrTitle && (!flags.task || flags.task.length === 0)) {
+      else if (args.listOrTitle && (!flags.task || (flags.task as string[]).length === 0)) {
         // Pattern 2a: With explicit list flag - argument is title
         if (flags.list) {
-          listName = CommandSanitizer.sanitizeString(flags.list);
+          listName = CommandSanitizer.sanitizeString(flags.list as string);
           todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
         }
         // Pattern 2b: No list flag - argument is title, list is default
@@ -178,10 +178,10 @@ export default class AddCommand extends BaseCommand {
         }
       }
       // Pattern 3: Only task flags, no argument
-      else if (flags.task && flags.task.length > 0) {
+      else if (flags.task && (flags.task as string[]).length > 0) {
         // Use the list flag if provided, otherwise default
-        listName = CommandSanitizer.sanitizeString(flags.list || 'default');
-        todoTitles = flags.task.map(t => CommandSanitizer.sanitizeString(t));
+        listName = CommandSanitizer.sanitizeString((flags.list as string) || 'default');
+        todoTitles = (flags.task as string[]).map(t => CommandSanitizer.sanitizeString(t));
       }
       // Pattern 4: No title provided in any form
       else {
@@ -275,7 +275,7 @@ export default class AddCommand extends BaseCommand {
           priority: priority as 'high' | 'medium' | 'low',
           dueDate: dueDate,
           tags: tags,
-          private: flags.private,
+          private: flags.private as boolean,
           storageLocation: storageLocation
         };
 
@@ -299,7 +299,7 @@ export default class AddCommand extends BaseCommand {
         await this.displaySuccessInfo(addedTodo, listName);
       }
 
-    } catch (error) {
+    } catch (_error) {
       this.debugLog(`Error: ${error}`);
 
       // Handle specific error types with helpful messages
@@ -389,16 +389,16 @@ export default class AddCommand extends BaseCommand {
     let listName: string;
 
     // Check if there's an argument and task flags
-    if (args.listOrTitle && flags.task && flags.task.length > 0) {
+    if (args.listOrTitle && flags.task && (flags.task as string[]).length > 0) {
       // First argument is the list name
       listName = CommandSanitizer.sanitizeString(args.listOrTitle);
-      todoTitles = flags.task.map((t: string) => CommandSanitizer.sanitizeString(t));
+      todoTitles = (flags.task as string[]).map((t: string) => CommandSanitizer.sanitizeString(t));
     }
     // Check if there's an argument but no task flags
-    else if (args.listOrTitle && (!flags.task || flags.task.length === 0)) {
+    else if (args.listOrTitle && (!flags.task || (flags.task as string[]).length === 0)) {
       if (flags.list) {
         // Explicit list flag, argument is title
-        listName = CommandSanitizer.sanitizeString(flags.list);
+        listName = CommandSanitizer.sanitizeString(flags.list as string);
         todoTitles = [CommandSanitizer.sanitizeString(args.listOrTitle)];
       } else {
         // No list flag, argument is title
@@ -407,9 +407,9 @@ export default class AddCommand extends BaseCommand {
       }
     }
     // Only task flags
-    else if (flags.task && flags.task.length > 0) {
-      listName = CommandSanitizer.sanitizeString(flags.list || 'default');
-      todoTitles = flags.task.map((t: string) => CommandSanitizer.sanitizeString(t));
+    else if (flags.task && (flags.task as string[]).length > 0) {
+      listName = CommandSanitizer.sanitizeString((flags.list as string) || 'default');
+      todoTitles = (flags.task as string[]).map((t: string) => CommandSanitizer.sanitizeString(t));
     }
     // Nothing provided
     else {
@@ -417,9 +417,9 @@ export default class AddCommand extends BaseCommand {
     }
 
     // Get attribute arrays
-    const priorities = flags.priority || ['medium'];
-    const dueDates = flags.due || [];
-    const tagSets = flags.tags || [];
+    const priorities = (flags.priority as string[]) || ['medium'];
+    const dueDates = (flags.due as string[]) || [];
+    const tagSets = (flags.tags as string[]) || [];
     const storageLocation = flags.storage as StorageLocation;
 
     // Create list if it doesn't exist
@@ -445,8 +445,8 @@ export default class AddCommand extends BaseCommand {
 
       // Map attributes to this todo
       const priority = priorities[i] !== undefined ? priorities[i] : priorities[priorities.length - 1];
-      const dueDate = dueDates[i] !== undefined ? CommandSanitizer.sanitizeDate(dueDates[i]) : undefined;
-      const tags = tagSets[i] !== undefined ? CommandSanitizer.sanitizeTags(tagSets[i]) : [];
+      const dueDate = dueDates[i] !== undefined ? CommandSanitizer.sanitizeDate(dueDates[i] as string) : undefined;
+      const tags = tagSets[i] !== undefined ? CommandSanitizer.sanitizeTags(tagSets[i] as string) : [];
 
       // Prepare the todo object
       const todo: Partial<Todo> = {
@@ -454,7 +454,7 @@ export default class AddCommand extends BaseCommand {
         priority: priority as 'high' | 'medium' | 'low',
         dueDate: dueDate,
         tags: tags,
-        private: flags.private,
+        private: flags.private as boolean,
         storageLocation: storageLocation
       };
 
@@ -491,7 +491,7 @@ export default class AddCommand extends BaseCommand {
       aiSpinner = this.startSpinner(`Using AI to enhance your todo...`);
 
       // Sanitize API key before using
-      const sanitizedApiKey = flags.apiKey ? CommandSanitizer.sanitizeApiKey(flags.apiKey) : undefined;
+      const sanitizedApiKey = flags.apiKey ? CommandSanitizer.sanitizeApiKey(flags.apiKey as string) : undefined;
       if (sanitizedApiKey) {
         process.env.XAI_API_KEY = sanitizedApiKey;
         await this.aiServiceInstance.setProvider(AIProvider.XAI);
@@ -674,7 +674,7 @@ export default class AddCommand extends BaseCommand {
             updatedAt: new Date().toISOString()
           });
           this.stopSpinnerSuccess(updateSpinner, 'Local copy updated with blockchain reference');
-        } catch (error) {
+        } catch (_error) {
           this.warning('Successfully stored on blockchain but failed to update local copy');
         }
       }
@@ -685,7 +685,7 @@ export default class AddCommand extends BaseCommand {
         try {
           await this.todoService.deleteTodo(listName, todo.id);
           this.stopSpinnerSuccess(cleanupSpinner, 'Local copy removed');
-        } catch (error) {
+        } catch (_error) {
           this.warning('Failed to remove local copy after blockchain storage');
         }
       }
@@ -702,7 +702,7 @@ export default class AddCommand extends BaseCommand {
       // Cleanup connection
       await this.walrusStorage.disconnect();
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) throw error;
 
       // If blockchain-only storage failed, keep it locally
@@ -743,7 +743,7 @@ export default class AddCommand extends BaseCommand {
             }
             // Continue with empty mappings
           }
-        } catch (error) {
+        } catch (_error) {
           this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
           // Continue with empty mappings
         }
@@ -755,7 +755,7 @@ export default class AddCommand extends BaseCommand {
       // Write mappings back to file using centralized method (handles directory creation)
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
-    } catch (error) {
+    } catch (_error) {
       this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -835,7 +835,7 @@ export default class AddCommand extends BaseCommand {
     // Validate AI provider using unified validators
     if (flags.provider) {
       this.validateFlag.enum(
-        flags.provider, 
+        flags.provider as string, 
         ['xai', 'openai', 'anthropic', 'ollama'], 
         'provider'
       );
@@ -843,7 +843,7 @@ export default class AddCommand extends BaseCommand {
 
     // Validate list name if provided
     if (flags.list) {
-      this.validateFlag.nonEmpty(flags.list, 'list');
+      this.validateFlag.nonEmpty(flags.list as string, 'list');
     }
 
     // Validate list name

@@ -577,7 +577,7 @@ describe('Blockchain Verification Security', () => {
         AIPrivacyLevel.HASH_ONLY
       );
       fail('Should have thrown an error');
-    } catch (error) {
+    } catch (_error) {
       // Error message should not contain sensitive details
       expect(String(error)).not.toContain('0x123...abc');
       expect(String(error)).not.toContain('nonce 42');

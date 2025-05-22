@@ -1,5 +1,4 @@
-import { jest, expect, test, describe, beforeEach, afterEach, SpyInstance } from '@jest/globals';
-import { TodoService } from '../../src/services/todoService';
+
 import { aiService } from '../../src/services/ai';
 import { createWalrusStorage } from '../../src/utils/walrus-storage';
 import AddCommand from '../../src/commands/add';

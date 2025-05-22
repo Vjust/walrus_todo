@@ -1,5 +1,5 @@
 import { TodoService } from './src/services/todo-service';
-import { ConfigService } from './src/services/config-service';
+
 import { WalrusStorage } from './src/utils/walrus-storage';
 
 async function createTodoForAJ() {

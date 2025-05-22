@@ -14,7 +14,7 @@
  * 5. Malformed response handling
  */
 
-import { TodoService } from './src/services/todoService';
+
 
 async function testAIFailureScenarios() {
   process.stdout.write('🚨 Testing AI Failure Scenarios (System Resilience)\n');
@@ -144,7 +144,7 @@ async function testAIFailureScenarios() {
 
 // Run the test
 if (require.main === module) {
-  testAIFailureScenarios().catch(error => {
+  testAIFailureScenarios().catch(_error => {
     process.stderr.write('Test execution failed: ' + error + '\n');
     process.exit(1);
   });

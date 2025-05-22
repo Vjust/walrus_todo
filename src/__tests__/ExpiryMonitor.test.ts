@@ -1,20 +1,18 @@
 import { ExpiryMonitor } from '../utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../utils/VaultManager';
 import { WalrusClientExt } from '../types/client';
-import { WalrusError } from '../types/error';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+// Ed25519Keypair import removed - not used in this test file
 
 jest.mock('../utils/VaultManager');
 jest.mock('@mysten/walrus');
 
 describe('ExpiryMonitor', () => {
-  let monitor: ExpiryMonitor;
+  // let monitor: ExpiryMonitor; // Commented out - will be used when tests are implemented
   let mockVaultManager: jest.Mocked<VaultManager>;
   let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
   let mockWarningHandler: jest.Mock;
   let mockRenewalHandler: jest.Mock;
   let mockDate: Date;
-  let mockSigner: Ed25519Keypair;
 
   const mockConfig = {
     checkInterval: 1000,
@@ -110,20 +108,20 @@ describe('ExpiryMonitor', () => {
       reset: jest.fn()
     } as unknown as jest.MockedObject<WalrusClientExt>;
 
-    mockWarningHandler = jest.fn().mockImplementation(async (blobs: BlobRecord[]): Promise<void> => {
+    mockWarningHandler = jest.fn().mockImplementation(async (_blobs: BlobRecord[]): Promise<void> => {
       return Promise.resolve();
     });
-    mockRenewalHandler = jest.fn().mockImplementation(async (blobs: BlobRecord[]): Promise<void> => {
+    mockRenewalHandler = jest.fn().mockImplementation(async (_blobs: BlobRecord[]): Promise<void> => {
       return Promise.resolve();
     });
 
-    monitor = new ExpiryMonitor(
-      mockVaultManager,
-      mockWalrusClient,
-      mockWarningHandler,
-      mockRenewalHandler,
-      mockConfig
-    );
+    // monitor = new ExpiryMonitor(
+    //   mockVaultManager,
+    //   mockWalrusClient,
+    //   mockWarningHandler,
+    //   mockRenewalHandler,
+    //   mockConfig
+    // ); // Will be used when tests are implemented
   });
 
   afterEach(() => {

@@ -1,5 +1,5 @@
 import { BlobVerificationManager } from '../../src/utils/blob-verification';
-import { SuiClient } from '@mysten/sui/client';
+
 import type { WalrusClientExt } from '../../src/types/client';
 import type { BlobMetadataShape, BlobInfo } from '../../src/types/walrus';
 import type { HashType, DigestType } from '../../src/types/walrus';
@@ -9,7 +9,7 @@ jest.mock('@mysten/walrus');
 jest.mock('blake3');
 
 describe('BlobVerificationManager', () => {
-  let mockSuiClient: Pick<SuiClient, 'getLatestSuiSystemState'>;
+  let _mockSuiClient: Pick<SuiClient, 'getLatestSuiSystemState'>;
   let mockWalrusClient: jest.Mocked<WalrusClientExt>;
   let verificationManager: BlobVerificationManager;
 

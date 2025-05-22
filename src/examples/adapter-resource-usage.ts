@@ -8,7 +8,7 @@ import {
   getResourceManager, 
   registerAdapter, 
   disposeAllAdapters, 
-  ResourceType 
+  // ResourceType imported but not used in example
 } from '../utils/ResourceManager';
 
 /**
@@ -51,7 +51,8 @@ async function adapterResourceExample(): Promise<void> {
     // Use one of the adapters
     const firstAdapter = transactionAdapters[0];
     console.log('\nUsing first adapter to create a move call...');
-    const result = firstAdapter.moveCall({
+    // result would be used in a real implementation
+    const _result = firstAdapter.moveCall({
       target: 'example::module::function',
       arguments: []
     });
@@ -70,7 +71,7 @@ async function adapterResourceExample(): Promise<void> {
     console.log('\nTrying to use disposed adapter...');
     try {
       firstAdapter.setGasBudget(20_000_000);
-    } catch (error) {
+    } catch (_error) {
       console.log(`Error caught as expected: ${error instanceof Error ? error.message : String(error)}`);
     }
     
@@ -86,7 +87,7 @@ async function adapterResourceExample(): Promise<void> {
     console.log(JSON.stringify(resourceManager.getStats(), null, 2));
     
     console.log('\nExample completed successfully!');
-  } catch (error) {
+  } catch (_error) {
     console.error('Error in adapter resource example:', error);
   }
 }

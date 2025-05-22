@@ -68,7 +68,7 @@ export class SuiNftStorage {
         return false;
       }
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.warn('Failed to check network health:', error);
       return false;
     }
@@ -92,7 +92,7 @@ export class SuiNftStorage {
           throw new Error('Invalid response from network');
         }
         return response;
-      } catch (error) {
+      } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         if (attempt < this.retryAttempts) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1);
@@ -172,14 +172,14 @@ export class SuiNftStorage {
             }
 
             return response.digest;
-          } catch (error) {
+          } catch (_error) {
             throw new CLIError(`Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`, 'TRANSACTION_EXECUTION_ERROR');
           }
         },
         (response) => Boolean(response && response.length > 0),
         'Failed to create Todo NFT'
       );
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
         'SUI_CREATION_FAILED'
@@ -278,7 +278,7 @@ export class SuiNftStorage {
           }
 
           return response.digest;
-        } catch (error) {
+        } catch (_error) {
           throw new CLIError(`Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`, 'TRANSACTION_EXECUTION_ERROR');
         }
       },

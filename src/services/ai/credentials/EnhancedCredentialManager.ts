@@ -1,6 +1,6 @@
 import { CLIError } from '../../../types/error';
 import { VaultManager } from '../../../utils/VaultManager';
-import { Logger, LogLevel } from '../../../utils/Logger';
+import { Logger } from '../../../utils/Logger';
 import { AIProvider } from '../types';
 import { CredentialVerifier } from './CredentialVerifier';
 import { AIPermissionLevel, CredentialType } from '../../../types/adapters/AICredentialAdapter';
@@ -97,13 +97,13 @@ export class EnhancedCredentialManager {
           const metadataJson = await this.vault.getSecret(key);
           const metadata = JSON.parse(metadataJson) as CredentialMetadata;
           this.metadataCache.set(metadata.provider, metadata);
-        } catch (error) {
+        } catch (_error) {
           this.logger.warn(`Failed to load metadata for ${key}: ${error.message}`);
         }
       }
       
       this.logger.debug(`Loaded ${this.metadataCache.size} credential metadata records`);
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to initialize metadata cache: ${error.message}`);
     }
   }
@@ -195,7 +195,7 @@ export class EnhancedCredentialManager {
         this.metadataCache.set(provider, metadata);
         
         this.logger.info(`Verified API key for ${provider} on blockchain with ID: ${verificationId}`);
-      } catch (error) {
+      } catch (_error) {
         // We still keep the credential even if verification fails
         this.logger.error(`Failed to verify credential on blockchain: ${error.message}`);
         throw new CLIError(
@@ -275,7 +275,7 @@ export class EnhancedCredentialManager {
       this.metadataCache.set(provider, metadata);
       
       return apiKey;
-    } catch (error) {
+    } catch (_error) {
       // Special handling for credential not found
       if (error.code === 'SECRET_NOT_FOUND') {
         // Check environment variables as fallback
@@ -315,7 +315,7 @@ export class EnhancedCredentialManager {
       this.metadataCache.set(provider, metadata);
       
       return metadata;
-    } catch (error) {
+    } catch (_error) {
       // Handle environment variables as fallback
       if (error.code === 'SECRET_NOT_FOUND') {
         const envKey = `${provider.toUpperCase()}_API_KEY`;
@@ -353,7 +353,7 @@ export class EnhancedCredentialManager {
       let metadata: CredentialMetadata | null = null;
       try {
         metadata = await this.getCredentialMetadata(provider);
-      } catch (error) {
+      } catch (_error) {
         // If metadata doesn't exist, still try to remove the credential
         this.logger.debug(`No metadata found for ${provider} during removal`);
       }
@@ -363,7 +363,7 @@ export class EnhancedCredentialManager {
         try {
           await this.verifier.revokeCredential(provider);
           this.logger.info(`Revoked ${provider} credential on blockchain`);
-        } catch (error) {
+        } catch (_error) {
           this.logger.warn(`Could not revoke credential on blockchain: ${error.message}`);
         }
       }
@@ -376,7 +376,7 @@ export class EnhancedCredentialManager {
       this.metadataCache.delete(provider);
       
       this.logger.info(`Removed API key for ${provider}`);
-    } catch (error) {
+    } catch (_error) {
       // If the error is not "credential not found", propagate it
       if (error.code !== 'SECRET_NOT_FOUND') {
         throw error;
@@ -439,7 +439,7 @@ export class EnhancedCredentialManager {
           }
           
           results.push(metadata);
-        } catch (error) {
+        } catch (_error) {
           this.logger.warn(`Failed to load metadata for ${key}: ${error.message}`);
         }
       }
@@ -463,7 +463,7 @@ export class EnhancedCredentialManager {
       }
       
       return results;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to list credentials: ${error.message}`);
       return [];
     }
@@ -489,7 +489,7 @@ export class EnhancedCredentialManager {
       // Then check storage
       await this.vault.getSecret(`${this.CREDENTIAL_PREFIX}${provider}`);
       return true;
-    } catch (error) {
+    } catch (_error) {
       if (error.code === 'SECRET_NOT_FOUND') {
         // Check environment variables as fallback
         const envKey = `${provider.toUpperCase()}_API_KEY`;
@@ -516,7 +516,7 @@ export class EnhancedCredentialManager {
     
     try {
       existingMetadata = await this.getCredentialMetadata(provider);
-    } catch (error) {
+    } catch (_error) {
       // If no existing metadata, that's fine for rotation
       this.logger.debug(`No existing metadata for ${provider} during rotation`);
     }
@@ -529,7 +529,7 @@ export class EnhancedCredentialManager {
       try {
         await this.verifier.revokeCredential(provider);
         this.logger.info(`Revoked previous ${provider} credential on blockchain`);
-      } catch (error) {
+      } catch (_error) {
         this.logger.warn(`Could not revoke previous credential on blockchain: ${error.message}`);
       }
     }
@@ -590,7 +590,7 @@ export class EnhancedCredentialManager {
         this.metadataCache.set(provider, newMetadata);
         
         this.logger.info(`Verified new API key for ${provider} on blockchain with ID: ${verificationId}`);
-      } catch (error) {
+      } catch (_error) {
         this.logger.error(`Failed to verify new credential on blockchain: ${error.message}`);
         throw new CLIError(
           `New API key was stored securely but blockchain verification failed: ${error.message}`,

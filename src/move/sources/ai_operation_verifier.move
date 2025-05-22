@@ -83,6 +83,9 @@ module walrus_todo::ai_operation_verifier {
         assert!(is_valid_operation(&operation), E_INVALID_OPERATION);
         assert!(string::length(&input_hash) == 64, E_INVALID_HASH); // SHA-256 hash length
         assert!(string::length(&output_hash) == 64, E_INVALID_HASH);
+        assert!(string::length(&timestamp) > 0 && string::length(&timestamp) <= 32, E_INVALID_HASH); // Timestamp validation
+        assert!(is_valid_hash_format(&input_hash), E_INVALID_HASH);
+        assert!(is_valid_hash_format(&output_hash), E_INVALID_HASH);
         
         // Create a verification ID (combination of provider, operation, and hashes)
         let verification_id = generate_verification_id(&provider, &operation, &input_hash, &output_hash);
@@ -136,6 +139,10 @@ module walrus_todo::ai_operation_verifier {
         assert!(is_valid_operation(&operation), E_INVALID_OPERATION);
         assert!(string::length(&input_hash) == 64, E_INVALID_HASH);
         assert!(string::length(&output_hash) == 64, E_INVALID_HASH);
+        assert!(string::length(&timestamp) > 0 && string::length(&timestamp) <= 32, E_INVALID_HASH); // Timestamp validation
+        assert!(string::length(&metadata) <= 1024, E_INVALID_HASH); // Metadata size limit
+        assert!(is_valid_hash_format(&input_hash), E_INVALID_HASH);
+        assert!(is_valid_hash_format(&output_hash), E_INVALID_HASH);
         
         // Create a verification ID (combination of provider, operation, and hashes)
         let verification_id = generate_verification_id(&provider, &operation, &input_hash, &output_hash);
@@ -231,5 +238,13 @@ module walrus_todo::ai_operation_verifier {
         // Implement proper validation; this is a simple length check
         let operation_length = string::length(operation);
         operation_length > 2 && operation_length < 30
+    }
+
+    /// Validate hash format (hexadecimal characters)
+    fun is_valid_hash_format(hash: &String): bool {
+        // For now, just check length (64 chars for SHA-256)
+        // In production, would validate all characters are hex digits
+        let hash_length = string::length(hash);
+        hash_length == 64
     }
 }

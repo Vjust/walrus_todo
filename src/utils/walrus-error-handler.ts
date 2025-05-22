@@ -160,48 +160,42 @@ export function mapToWalrusError(error: unknown, category: ErrorCategory, operat
   
   switch (category) {
     case ErrorCategory.NETWORK:
-      return new NetworkError({
-        message: errorMessage,
+      return new NetworkError(errorMessage, {
         code: getErrorCode(category, operation),
         recoverable: true, // Network errors are typically recoverable
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.STORAGE:
-      return new StorageError({
-        message: errorMessage,
+      return new StorageError(errorMessage, {
         code: getErrorCode(category, operation),
         recoverable: true, // Most storage errors are recoverable
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.VALIDATION:
-      return new ValidationError({
-        message: errorMessage,
+      return new ValidationError(errorMessage, {
         code: getErrorCode(category, operation),
         recoverable: false, // Validation errors typically require user intervention
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.BLOCKCHAIN:
-      return new BlockchainError({
-        message: errorMessage,
+      return new BlockchainError(errorMessage, {
         code: getErrorCode(category, operation),
         recoverable: false, // Blockchain errors are often not recoverable automatically
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.TRANSACTION:
-      return new TransactionError({
-        message: errorMessage,
+      return new TransactionError(errorMessage, {
         code: getErrorCode(category, operation),
         recoverable: false, // Transaction errors typically need review
         cause: error instanceof Error ? error : undefined
       });
       
     case ErrorCategory.AUTHORIZATION:
-      return new AuthorizationError({
-        message: errorMessage,
+      return new AuthorizationError(errorMessage, {
         code: getErrorCode(category, operation),
         recoverable: false, // Authorization errors typically require user intervention
         cause: error instanceof Error ? error : undefined
@@ -209,8 +203,7 @@ export function mapToWalrusError(error: unknown, category: ErrorCategory, operat
       
     default:
       // Map to CLI error for backward compatibility
-      return new CLIError({
-        message: `Error during ${operation}: ${errorMessage}`,
+      return new CLIError(`Error during ${operation}: ${errorMessage}`, {
         code: `WALRUS_${operation.toUpperCase()}_ERROR`,
         recoverable: false
       });
@@ -355,7 +348,7 @@ export class AsyncOperationHandler {
           attempts,
           timeTaken: Date.now() - startTime
         };
-      } catch (error) {
+      } catch (_error) {
         // Check for abort signal again in case it was triggered during operation
         if (signal?.aborted) {
           const abortError = new Error(`Operation ${operationName} was canceled`);
@@ -369,13 +362,13 @@ export class AsyncOperationHandler {
         }
         
         // Categorize the error
-        const category = categorizeError(error);
+        const category = categorizeError(_error);
         
         // Map to standardized error
-        lastError = errorMapper(error, category, operationName);
+        lastError = errorMapper(_error, category, operationName);
         
         // Check if error is retryable
-        const shouldRetry = attempts < maxRetries && isRetryableError(error, category);
+        const shouldRetry = attempts < maxRetries && isRetryableError(_error, category);
         
         if (!shouldRetry) {
           break;

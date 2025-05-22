@@ -22,7 +22,7 @@ try {
   // Try to load dotenv if available
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   dotenv = require('dotenv');
-} catch (error) {
+} catch (_error) {
   // dotenv is not installed, will fall back to manual parsing
   dotenv = null;
 }
@@ -110,7 +110,7 @@ export function loadConfigFile(filePath: string): Record<string, unknown> {
         throw parseError;
       }
     }
-  } catch (error) {
+  } catch (_error) {
     if (error instanceof CLIError) {
       throw error; // Re-throw CLIError as-is  
     }
@@ -184,7 +184,7 @@ export function saveConfigToFile(config: Record<string, unknown>, filePath?: str
     
     // Write the configuration file
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-  } catch (error) {
+  } catch (_error) {
     throw new CLIError(
       `Failed to save config file: ${error instanceof Error ? error.message : 'Unknown error'}`,
       'CONFIG_FILE_SAVE_FAILED'

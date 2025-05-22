@@ -5,7 +5,6 @@
  * including transaction failures, verification errors, and consensus issues.
  */
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { BlockchainError, TransactionError } from '../../src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 import { BlobVerificationManager } from '../../src/utils/blob-verification';
@@ -81,9 +80,9 @@ const createMockSigner = () => ({
 });
 
 describe('Blockchain Error Handling', () => {
-  let mockSuiClient: ReturnType<typeof createMockSuiClient>;
+  let _mockSuiClient: ReturnType<typeof createMockSuiClient>;
   let mockWalrusClient: ReturnType<typeof createMockWalrusClient>;
-  let mockSigner: ReturnType<typeof createMockSigner>;
+  let _mockSigner: ReturnType<typeof createMockSigner>;
   let verificationManager: BlobVerificationManager;
   
   beforeEach(() => {
@@ -129,7 +128,7 @@ describe('Blockchain Error Handling', () => {
       const executeTransaction = async () => {
         try {
           await mockSuiClient.executeTransactionBlock({});
-        } catch (error) {
+        } catch (_error) {
           if (error instanceof TransactionError || 
               error.message?.includes('Transaction')) {
             throw new TransactionError('Transaction failed', {
@@ -150,7 +149,7 @@ describe('Blockchain Error Handling', () => {
       // Verify specific error properties
       try {
         await executeTransaction();
-      } catch (error) {
+      } catch (_error) {
         expect(error.code).toContain('TRANSACTION_EXECUTE_ERROR');
         expect(error.transactionId).toBe('mock-tx-id');
         expect(error.recoverable).toBe(false);
@@ -176,7 +175,7 @@ describe('Blockchain Error Handling', () => {
             digest: 'mock-tx-digest',
             options: { timeout: 50 }
           });
-        } catch (error) {
+        } catch (_error) {
           throw new TransactionError('Transaction confirmation timeout', {
             operation: 'confirm',
             transactionId: 'mock-tx-digest',
@@ -203,7 +202,7 @@ describe('Blockchain Error Handling', () => {
       const executeTransaction = async () => {
         try {
           await mockSuiClient.executeTransactionBlock({});
-        } catch (error) {
+        } catch (_error) {
           throw new TransactionError(`Transaction rejected: ${error.message}`, {
             operation: 'execute',
             recoverable: false,
@@ -348,7 +347,7 @@ describe('Blockchain Error Handling', () => {
           expectedAttributes,
           { verifyAttributes: true }
         );
-      } catch (error) {
+      } catch (_error) {
         expect(error.message).toContain('Metadata verification failed');
         expect(error.message).toContain('contentType');
       }
@@ -480,7 +479,7 @@ describe('Blockchain Error Handling', () => {
           expectedAttributes,
           { requireEpochValidation: true }
         );
-      } catch (error) {
+      } catch (_error) {
         expect(error.message).toContain('Epoch validation failed');
       }
     });
@@ -507,7 +506,7 @@ describe('Blockchain Error Handling', () => {
       const signMessage = async () => {
         try {
           await mockSigner.signPersonalMessage(new Uint8Array(Buffer.from('Test message')));
-        } catch (error) {
+        } catch (_error) {
           throw new BlockchainError('Signing operation failed', {
             operation: 'sign',
             recoverable: false,
@@ -523,7 +522,7 @@ describe('Blockchain Error Handling', () => {
       // Verify error details
       try {
         await signMessage();
-      } catch (error) {
+      } catch (_error) {
         expect(error.code).toBe('BLOCKCHAIN_SIGN_ERROR');
         expect(error.shouldRetry).toBe(false);
       }
@@ -590,7 +589,7 @@ describe('Blockchain Error Handling', () => {
         try {
           // Execute operation
           return await mockWalrusClient.readBlob('test-blob-id');
-        } catch (error) {
+        } catch (_error) {
           // Update circuit state
           circuitBreakerState.failureCount++;
           circuitBreakerState.lastFailure = Date.now();
@@ -667,7 +666,7 @@ describe('Blockchain Error Handling', () => {
         try {
           const result = await mockSuiClient.getLatestSuiSystemState();
           results.push({ success: true, result });
-        } catch (error) {
+        } catch (_error) {
           results.push({ success: false, error: error.message });
         }
       }

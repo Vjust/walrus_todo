@@ -15,7 +15,8 @@ import {
   StressTestOptions 
 } from './AIStressTestFramework';
 import { createMockAIService } from '../helpers/ai-mock-helper';
-import { MockErrorType } from '../../src/__mocks__/ai/types';
+// Define mock error type
+type MockErrorType = 'AUTHENTICATION' | 'RATE_LIMIT' | 'NETWORK' | 'VALIDATION' | 'TIMEOUT';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -44,7 +45,7 @@ const generateTestTodos = (count: number): Todo[] => {
 };
 
 // Helper to write metrics to a report file
-const writeMetricsToReport = (metrics: any, testName: string) => {
+const writeMetricsToReport = (metrics: Record<string, unknown>, testName: string) => {
   // Skip in CI unless explicitly enabled
   if (process.env.CI && !process.env.SAVE_STRESS_TEST_REPORTS) {
     return;
@@ -432,7 +433,7 @@ describe('AI Operations Stress Tests', () => {
   describe('Real API Load Testing', () => {
     itIfRealEnabled('should perform a limited real API load test (USE WITH CAUTION)', async () => {
       // This test uses real API calls - BE CAREFUL with rate limits and costs
-      const apiKey = process.env.XAI_API_KEY || process.env.OPENAI_API_KEY;
+      const _apiKey = process.env.XAI_API_KEY || process.env.OPENAI_API_KEY;
       if (!apiKey) {
         console.warn('Skipping real API test due to missing API key');
         return;

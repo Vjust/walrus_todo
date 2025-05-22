@@ -188,7 +188,7 @@ export default class ImageCommand extends BaseCommand {
       } else {
         throw new CLIError(`Invalid action: ${args.action}. Use 'upload', 'create-nft', or 'list'.`, 'INVALID_ACTION');
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

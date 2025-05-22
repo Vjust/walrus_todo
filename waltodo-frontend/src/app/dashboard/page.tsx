@@ -1,15 +1,65 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '@/components/navbar'
 import TodoList from '@/components/todo-list'
 import CreateTodoForm from '@/components/create-todo-form'
+import { useWalletContext } from '@/contexts/WalletContext'
+import { getTodoLists, createTodoList, deleteTodoList } from '@/lib/todo-service'
 
 export default function Dashboard() {
   const [selectedList, setSelectedList] = useState('default')
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [todoLists, setTodoLists] = useState<string[]>(['default'])
+  const [showCreateList, setShowCreateList] = useState(false)
+  const [newListName, setNewListName] = useState('')
+  const { address } = useWalletContext()
   
-  // Mock data - will be replaced with actual data from backend
-  const mockLists = ['default', 'work', 'personal', 'shopping']
+  // Load todo lists for the current wallet
+  useEffect(() => {
+    const lists = getTodoLists(address || undefined)
+    setTodoLists(lists.length > 0 ? lists : ['default'])
+  }, [address, refreshKey])
+  
+  const handleTodoAdded = () => {
+    // Force TodoList to refresh by updating key
+    setRefreshKey(prev => prev + 1)
+  }
+  
+  const handleCreateList = () => {
+    if (!newListName.trim()) return
+    
+    const success = createTodoList(newListName.trim(), address || undefined)
+    if (success) {
+      setRefreshKey(prev => prev + 1)
+      setSelectedList(newListName.trim())
+      setNewListName('')
+      setShowCreateList(false)
+    } else {
+      alert('Failed to create list. List name might already exist.')
+    }
+  }
+  
+  const handleDeleteList = (listName: string) => {
+    if (listName === 'default') {
+      alert('Cannot delete the default list')
+      return
+    }
+    
+    if (!confirm(`Are you sure you want to delete the "${listName}" list? This will delete all todos in it.`)) {
+      return
+    }
+    
+    const success = deleteTodoList(listName, address || undefined)
+    if (success) {
+      setRefreshKey(prev => prev + 1)
+      if (selectedList === listName) {
+        setSelectedList('default')
+      }
+    } else {
+      alert('Failed to delete list')
+    }
+  }
   
   return (
     <div className="max-w-6xl mx-auto">
@@ -26,26 +76,74 @@ export default function Dashboard() {
             <h2 className="text-xl font-semibold mb-4 text-ocean-deep dark:text-ocean-foam">Your Lists</h2>
             
             <ul className="space-y-2">
-              {mockLists.map((list) => (
+              {todoLists.map((list) => (
                 <li key={list} className="mb-1">
-                  <button
-                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
-                      selectedList === list 
-                        ? 'bg-ocean-medium text-white font-medium' 
-                        : 'hover:bg-ocean-light/30 dark:hover:bg-ocean-medium/30'
-                    }`}
-                    onClick={() => setSelectedList(list)}
-                  >
-                    {list.charAt(0).toUpperCase() + list.slice(1)}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className={`flex-grow text-left px-3 py-2 rounded-lg transition-colors ${
+                        selectedList === list 
+                          ? 'bg-ocean-medium text-white font-medium' 
+                          : 'hover:bg-ocean-light/30 dark:hover:bg-ocean-medium/30'
+                      }`}
+                      onClick={() => setSelectedList(list)}
+                    >
+                      {list.charAt(0).toUpperCase() + list.slice(1)}
+                    </button>
+                    {list !== 'default' && (
+                      <button
+                        onClick={() => handleDeleteList(list)}
+                        className="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                        title="Delete list"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
             
             <div className="mt-6">
-              <button className="ocean-button w-full">
-                <span>Create New List</span>
-              </button>
+              {!showCreateList ? (
+                <button 
+                  className="ocean-button w-full"
+                  onClick={() => setShowCreateList(true)}
+                >
+                  <span>Create New List</span>
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={newListName}
+                    onChange={(e) => setNewListName(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleCreateList()}
+                    placeholder="List name..."
+                    className="w-full px-3 py-2 border border-ocean-light dark:border-ocean-medium rounded-lg focus:ring-2 focus:ring-ocean-medium focus:border-transparent bg-white dark:bg-ocean-deep text-ocean-deep dark:text-ocean-foam"
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleCreateList}
+                      disabled={!newListName.trim()}
+                      className="flex-1 px-3 py-2 bg-ocean-medium text-white rounded-lg hover:bg-ocean-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Create
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowCreateList(false)
+                        setNewListName('')
+                      }}
+                      className="px-3 py-2 border border-ocean-light dark:border-ocean-medium rounded-lg hover:bg-ocean-light/30 dark:hover:bg-ocean-medium/30 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -55,7 +153,7 @@ export default function Dashboard() {
             <h2 className="text-xl font-semibold mb-4 text-ocean-deep dark:text-ocean-foam">
               Add New Todo
             </h2>
-            <CreateTodoForm listName={selectedList} />
+            <CreateTodoForm listName={selectedList} onTodoAdded={handleTodoAdded} />
           </div>
           
           <div className="ocean-card">
@@ -77,7 +175,7 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <TodoList listName={selectedList} />
+            <TodoList key={`${selectedList}-${refreshKey}`} listName={selectedList} />
           </div>
         </div>
       </div>

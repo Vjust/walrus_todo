@@ -3,14 +3,14 @@ import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../utils/StorageManager';
 import { StorageError, ValidationError, BlockchainError } from '../../types/errors/consolidated/index';
 import { Logger } from '../../utils/Logger';
-import { MockWalrusClient } from '../../__mocks__/@mysten/walrus/client';
+// MockWalrusClient is automatically available via jest.mock
 
 jest.mock('@mysten/walrus');
 jest.mock('../../utils/Logger');
 
 describe('StorageManager', () => {
   let manager: StorageManager;
-  let mockWalrusClient: jest.Mocked<MockWalrusClient>;
+  let mockWalrusClient: jest.Mocked<WalrusClient>;
   let mockLogger: jest.MockedObject<Logger>;
 
   const testConfig = {
@@ -20,9 +20,11 @@ describe('StorageManager', () => {
   };
 
   beforeEach(() => {
-    mockWalrusClient = new MockWalrusClient() as jest.Mocked<MockWalrusClient>;
-    mockWalrusClient.getWalBalance = jest.fn();
-    mockWalrusClient.getStorageUsage = jest.fn();
+    mockWalrusClient = {
+      getWalBalance: jest.fn(),
+      getStorageUsage: jest.fn(),
+      // Add other required methods as needed
+    } as unknown as jest.Mocked<WalrusClient>;
 
     mockLogger = {
       debug: jest.fn(),

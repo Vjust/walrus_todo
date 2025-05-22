@@ -4,15 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { 
-  MockResponseOptions, 
-  MockErrorType, 
-  LatencyOptions, 
-  RecordingMode,
-  MockScenario
-} from './types';
 import { getScenario } from './scenarios';
-import { DefaultMockResponses } from './templates/DefaultResponses';
 
 interface MockConfig {
   // Provider configuration
@@ -144,7 +136,7 @@ export class MockConfigManager {
       this.config = JSON.parse(configData);
       this.configPath = configPath;
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to load mock configuration:', error);
       return false;
     }
@@ -173,7 +165,7 @@ export class MockConfigManager {
       
       this.configPath = savePath;
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to save mock configuration:', error);
       return false;
     }
@@ -308,7 +300,7 @@ export class MockConfigManager {
       );
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to create default configuration:', error);
       return false;
     }

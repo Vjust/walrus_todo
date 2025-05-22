@@ -65,14 +65,14 @@ export function setupWalrusTestnet(): WalrusTestConfig {
         if (binaryExists && !config.mock) {
           try {
             fs.accessSync(config.binaryPath, fs.constants.X_OK);
-          } catch (error) {
+          } catch (_error) {
             console.warn(`Walrus binary is not executable: ${config.binaryPath}`);
             return false;
           }
         }
         
         return true;
-      } catch (error) {
+      } catch (_error) {
         console.error('Error verifying Walrus setup:', error);
         return false;
       }
@@ -179,7 +179,7 @@ export async function cleanupTestEnvironment(config: WalrusTestConfig): Promise<
     if (config.mock && config.configPath.includes('test')) {
       await fs.promises.unlink(config.configPath).catch(() => {});
     }
-  } catch (error) {
+  } catch (_error) {
     console.warn('Error cleaning up test environment:', error);
   }
 }

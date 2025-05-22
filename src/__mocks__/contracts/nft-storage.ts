@@ -1,7 +1,21 @@
 import { CLIError } from '../../types/error';
 
 export class MockNFTStorageContract {
-  private storage: Map<string, any> = new Map();
+  private storage: Map<string, {
+    owner: string;
+    metadata: {
+      name: string;
+      description: string;
+      url: string;
+    };
+    created_at: number;
+    updated_at: number;
+    transfer_history: Array<{
+      from: string;
+      to: string;
+      timestamp: number;
+    }>;
+  }> = new Map();
   private errors = {
     NFTNotFound: 'NFT not found',
     InvalidMetadata: 'Invalid metadata',
@@ -95,7 +109,21 @@ export class MockNFTStorageContract {
     this.emitEvent('NFTMetadataUpdated', { nftId, metadata });
   }
 
-  async view_get_nft(nftId: string): Promise<any> {
+  async view_get_nft(nftId: string): Promise<{
+    owner: string;
+    metadata: {
+      name: string;
+      description: string;
+      url: string;
+    };
+    created_at: number;
+    updated_at: number;
+    transfer_history: Array<{
+      from: string;
+      to: string;
+      timestamp: number;
+    }>;
+  }> {
     const nft = this.storage.get(nftId);
     if (!nft) {
       throw new CLIError(this.errors.NFTNotFound, 'CONTRACT_ERROR');
@@ -103,13 +131,27 @@ export class MockNFTStorageContract {
     return nft;
   }
 
-  async view_get_nfts_by_owner(owner: string): Promise<any[]> {
+  async view_get_nfts_by_owner(owner: string): Promise<Array<{
+    owner: string;
+    metadata: {
+      name: string;
+      description: string;
+      url: string;
+    };
+    created_at: number;
+    updated_at: number;
+    transfer_history: Array<{
+      from: string;
+      to: string;
+      timestamp: number;
+    }>;
+  }>> {
     return Array.from(this.storage.values())
       .filter(nft => nft.owner === owner);
   }
 
   // Simulated blockchain events
-  private emitEvent(eventType: string, data: any) {
+  private emitEvent(eventType: string, data: Record<string, unknown>) {
     console.log('Contract Event:', { type: eventType, data });
   }
 }

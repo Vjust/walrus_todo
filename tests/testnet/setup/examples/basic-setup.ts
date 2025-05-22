@@ -34,7 +34,7 @@ async function runBasicSetup() {
     console.log('\n✅ Setup successful! You can now use this wallet for testing.');
     
     return result;
-  } catch (error) {
+  } catch (_error) {
     console.error('❌ Setup failed:', error);
     process.exit(1);
   }

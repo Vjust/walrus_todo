@@ -58,6 +58,24 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
         return;
       }
       
+      // Special handling for wallet errors that should not crash the app
+      if (rejectionString.includes('select failed: wallet') ||
+          rejectionString.includes('UNKNOWN_ERROR') ||
+          rejectionString.includes('KIT.UNKNOWN_ERROR') ||
+          rejectionString.includes('is not available') ||
+          rejectionString.includes('wallet Slush') ||
+          rejectionString.includes('all wallets are listed here: []') ||
+          rejectionString.includes('Wallet Standard has already been loaded')) {
+        
+        console.warn('[ErrorBoundary] Wallet availability error suppressed. This is expected when wallets are not installed.');
+        // Don't set error state for wallet availability issues
+        
+        // Still prevent default to stop error propagation
+        event.preventDefault();
+        return;
+      }
+      
+      // Only set error state for genuine errors that should show error UI
       setError(event.reason instanceof Error ? event.reason : new Error(String(event.reason)));
       setHasError(true);
       

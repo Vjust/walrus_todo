@@ -145,7 +145,7 @@ export default class DeleteCommand extends BaseCommand {
       this.log(chalk.dim('List:'), args.listName);
       this.log(chalk.dim('ID:'), todo.id);
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

@@ -1,4 +1,4 @@
-import type { SuiClient, PaginatedObjectsResponse, GetOwnedObjectsParams, SuiTransactionBlockResponse, TransactionEffects, SuiObjectResponse, GetObjectParams } from '@mysten/sui/client';
+import type { PaginatedObjectsResponse, GetOwnedObjectsParams, SuiTransactionBlockResponse, TransactionEffects, SuiObjectResponse, GetObjectParams } from '@mysten/sui/client';
 
 const ownedRef = {
   owner: { AddressOwner: 'mock-address' },
@@ -96,7 +96,7 @@ export class SuiClient {
     return response;
   }
 
-  async waitForTransaction(_params: { digest: string; timeout?: number; options?: any }): Promise<SuiTransactionBlockResponse> {
+  async waitForTransaction(_params: { digest: string; timeout?: number; options?: unknown }): Promise<SuiTransactionBlockResponse> {
     return response;
   }
 
@@ -105,11 +105,11 @@ export class SuiClient {
     return response;
   }
 
-  async getLatestSuiSystemState(): Promise<any> {
+  async getLatestSuiSystemState(): Promise<{ epoch: string }> {
     return { epoch: '123' };
   }
 
-  async getSystemState(): Promise<any> {
+  async getSystemState(): Promise<{ epoch: string }> {
     return { epoch: '123' };
   }
 }

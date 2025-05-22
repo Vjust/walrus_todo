@@ -1,11 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { createMockWalrusClient } from '../../../src/utils/MockWalrusClient';
-import { SuiClient } from '@mysten/sui/client';
+
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
-import { TransactionBlock } from '@mysten/sui/transactions';
-import { CLIError } from '../../../src/types/error';
+
+
 
 // Mock Verification Flow Controller
 class VerificationFlowController {
@@ -134,7 +133,7 @@ class VerificationFlowController {
           };
           
           console.log('Monitoring completed successfully.');
-        } catch (error) {
+        } catch (_error) {
           monitoringResult = {
             successful: false,
             attempts: 3
@@ -152,7 +151,7 @@ class VerificationFlowController {
         monitoringResult,
         registrationTransaction: 'mock-transaction-digest'
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Verification flow failed: ${error instanceof Error ? error.message : String(error)}`,
         'VERIFICATION_FLOW_ERROR'
@@ -223,7 +222,7 @@ class VerificationFlowController {
           size: parseInt(blobInfo.size)
         }
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Verification of existing data failed: ${error instanceof Error ? error.message : String(error)}`,
         'VERIFICATION_ERROR'
@@ -252,7 +251,7 @@ const mockSigner = {
     bytes: Buffer.from(data).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signWithIntent: async (data: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> => ({
+  signWithIntent: async (data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
     bytes: Buffer.from(data).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),

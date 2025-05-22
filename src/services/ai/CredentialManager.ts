@@ -55,7 +55,7 @@ export class CredentialManager {
         }
       }
       this.initialized = true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to load credentials:', error);
       // For security, initialize with empty credentials on error
       this.credentials = {};
@@ -75,7 +75,7 @@ export class CredentialManager {
       const data = JSON.stringify(this.credentials);
       const encryptedData = this.encrypt(data);
       fs.writeFileSync(this.credentialsPath, encryptedData, { mode: 0o600 }); // Restrict file permissions
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to save credentials: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'CREDENTIALS_SAVE_FAILED'
@@ -186,7 +186,7 @@ export class CredentialManager {
       const encrypted = data.subarray(16);
       const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, iv);
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
-    } catch (error) {
+    } catch (_error) {
       console.error('Decryption failed:', error);
       return null;
     }

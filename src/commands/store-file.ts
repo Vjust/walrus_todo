@@ -82,7 +82,7 @@ export default class StoreFileCommand extends BaseCommand {
       // Cleanup
       await walrusStorage.disconnect();
 
-    } catch (error) {
+    } catch (_error) {
       this.handleError(error, 'store-file');
     }
   }
@@ -97,7 +97,7 @@ export default class StoreFileCommand extends BaseCommand {
     if (!flags.mock) {
       try {
         await storage.connect();
-      } catch (error) {
+      } catch (_error) {
         if (error.code === 'WALRUS_CLI_NOT_FOUND') {
           throw new CLIError(
             'Walrus CLI not found. Please install it from https://docs.wal.app',
@@ -119,7 +119,7 @@ export default class StoreFileCommand extends BaseCommand {
     // Check if file exists
     try {
       await fs.access(filePath);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(`File not found: ${filePath}`, 'FILE_NOT_FOUND');
     }
 
@@ -182,7 +182,7 @@ export default class StoreFileCommand extends BaseCommand {
 
         this.log(`✓ ${fileName} → ${blobId} (Success)`);
         
-      } catch (error) {
+      } catch (_error) {
         results.push({
           fileName,
           error: error.message,

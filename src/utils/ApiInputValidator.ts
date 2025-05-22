@@ -13,21 +13,28 @@ export class ApiInputValidator {
    * @returns Sanitized todo object
    * @throws {CLIError} if validation fails
    */
-  static validateTodo(todo: any): any {
+  static validateTodo(todo: unknown): unknown {
+    // Type guard to ensure todo is an object
+    if (typeof todo !== 'object' || todo === null) {
+      throw new CLIError('Todo must be an object', 'INVALID_TODO');
+    }
+    
+    const todoObj = todo as Record<string, unknown>;
+    
     // Sanitize todo inputs
     const sanitizedTodo = {
-      ...todo,
-      title: CommandSanitizer.sanitizeString(todo.title),
-      description: todo.description ? CommandSanitizer.sanitizeString(todo.description) : undefined,
-      priority: todo.priority,
-      dueDate: todo.dueDate ? CommandSanitizer.sanitizeDate(todo.dueDate) : undefined,
-      tags: todo.tags ? (Array.isArray(todo.tags)
-        ? todo.tags.map(CommandSanitizer.sanitizeString)
-        : CommandSanitizer.sanitizeTags(todo.tags))
+      ...todoObj,
+      title: CommandSanitizer.sanitizeString(String(todoObj.title || '')),
+      description: todoObj.description ? CommandSanitizer.sanitizeString(String(todoObj.description)) : undefined,
+      priority: todoObj.priority,
+      dueDate: todoObj.dueDate ? CommandSanitizer.sanitizeDate(String(todoObj.dueDate)) : undefined,
+      tags: todoObj.tags ? (Array.isArray(todoObj.tags)
+        ? todoObj.tags.map((tag: unknown) => CommandSanitizer.sanitizeString(String(tag)))
+        : CommandSanitizer.sanitizeTags(String(todoObj.tags)))
         : [],
-      walrusBlobId: todo.walrusBlobId ? CommandSanitizer.sanitizeString(todo.walrusBlobId) : undefined,
-      nftObjectId: todo.nftObjectId ? CommandSanitizer.sanitizeString(todo.nftObjectId) : undefined,
-      imageUrl: todo.imageUrl ? CommandSanitizer.sanitizeUrl(todo.imageUrl) : undefined
+      walrusBlobId: todoObj.walrusBlobId ? CommandSanitizer.sanitizeString(String(todoObj.walrusBlobId)) : undefined,
+      nftObjectId: todoObj.nftObjectId ? CommandSanitizer.sanitizeString(String(todoObj.nftObjectId)) : undefined,
+      imageUrl: todoObj.imageUrl ? CommandSanitizer.sanitizeUrl(String(todoObj.imageUrl)) : undefined
     };
 
     // Define a schema that conforms to Schema interface
@@ -94,18 +101,25 @@ export class ApiInputValidator {
    * @returns Sanitized todo list object
    * @throws {CLIError} if validation fails
    */
-  static validateTodoList(list: any): any {
+  static validateTodoList(list: unknown): unknown {
+    // Type guard to ensure list is an object
+    if (typeof list !== 'object' || list === null) {
+      throw new CLIError('List must be an object', 'INVALID_TODO_LIST');
+    }
+    
+    const listObj = list as Record<string, unknown>;
+    
     // Sanitize list inputs
     const sanitizedList = {
-      ...list,
-      name: CommandSanitizer.sanitizeString(list.name),
-      owner: CommandSanitizer.sanitizeString(list.owner),
-      todos: Array.isArray(list.todos) ? list.todos.map(this.validateTodo) : [],
-      collaborators: list.collaborators
-        ? list.collaborators.map(CommandSanitizer.sanitizeString)
+      ...listObj,
+      name: CommandSanitizer.sanitizeString(String(listObj.name || '')),
+      owner: CommandSanitizer.sanitizeString(String(listObj.owner || '')),
+      todos: Array.isArray(listObj.todos) ? listObj.todos.map((todo: unknown) => this.validateTodo(todo)) : [],
+      collaborators: listObj.collaborators && Array.isArray(listObj.collaborators)
+        ? listObj.collaborators.map((collab: unknown) => CommandSanitizer.sanitizeString(String(collab)))
         : undefined,
-      walrusBlobId: list.walrusBlobId ? CommandSanitizer.sanitizeString(list.walrusBlobId) : undefined,
-      suiObjectId: list.suiObjectId ? CommandSanitizer.sanitizeString(list.suiObjectId) : undefined
+      walrusBlobId: listObj.walrusBlobId ? CommandSanitizer.sanitizeString(String(listObj.walrusBlobId)) : undefined,
+      suiObjectId: listObj.suiObjectId ? CommandSanitizer.sanitizeString(String(listObj.suiObjectId)) : undefined
     };
 
     // Define a schema that conforms to Schema interface
@@ -155,12 +169,19 @@ export class ApiInputValidator {
    * @returns Sanitized configuration object
    * @throws {CLIError} if validation fails
    */
-  static validateNetworkConfig(config: any): any {
+  static validateNetworkConfig(config: unknown): unknown {
+    // Type guard to ensure config is an object
+    if (typeof config !== 'object' || config === null) {
+      throw new CLIError('Config must be an object', 'INVALID_CONFIG');
+    }
+    
+    const configObj = config as Record<string, unknown>;
+    
     // Sanitize network inputs
     const sanitizedConfig = {
-      ...config,
-      network: CommandSanitizer.sanitizeString(config.network),
-      walletAddress: config.walletAddress ? CommandSanitizer.sanitizeWalletAddress(config.walletAddress) : undefined
+      ...configObj,
+      network: CommandSanitizer.sanitizeString(String(configObj.network || '')),
+      walletAddress: configObj.walletAddress ? CommandSanitizer.sanitizeWalletAddress(String(configObj.walletAddress)) : undefined
     };
 
     // Define a schema that conforms to Schema interface
@@ -188,7 +209,7 @@ export class ApiInputValidator {
     // Validate against schema
     try {
       SchemaValidator.validate(sanitizedConfig, networkConfigSchema);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Invalid network configuration: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_NETWORK_CONFIG'
@@ -248,7 +269,7 @@ export class ApiInputValidator {
     // Validate against schema
     try {
       SchemaValidator.validate(sanitizedConfig, aiConfigSchema);
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Invalid AI configuration: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_AI_CONFIG'

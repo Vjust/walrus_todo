@@ -59,7 +59,7 @@ describe('Storage Fuzzing Tests', () => {
     // Clean up test directory
     try {
       await fs.rm(testDir, { recursive: true, force: true });
-    } catch (error) {
+    } catch (_error) {
       // Ignore cleanup errors
     }
   });
@@ -86,7 +86,7 @@ describe('Storage Fuzzing Tests', () => {
           // Verify we can retrieve what we stored
           const retrieved = await walrusStorage.retrieve(result.blobId);
           expect(retrieved).toEqual(data);
-        } catch (error) {
+        } catch (_error) {
           // Expect proper error handling
           expect(error).toHaveProperty('message');
           expect(error.message).toMatch(/corrupt|invalid|fail/i);
@@ -139,7 +139,7 @@ describe('Storage Fuzzing Tests', () => {
             updatedAt: new Date().toISOString(),
             private: false
           });
-        } catch (error) {
+        } catch (_error) {
           // Expect proper JSON error handling
           expect(error).toHaveProperty('message');
           expect(error.message).toMatch(/JSON|parse|invalid/i);
@@ -170,7 +170,7 @@ describe('Storage Fuzzing Tests', () => {
           expect(result.blobId).toBeTruthy();
           const retrieved = await walrusStorage.retrieve(result.blobId);
           expect(retrieved.length).toBe(size);
-        } catch (error) {
+        } catch (_error) {
           // Large files might fail due to limits
           if (size > 10 * 1024 * 1024) {
             expect(error.message).toMatch(/size|limit|too large/i);
@@ -223,7 +223,7 @@ describe('Storage Fuzzing Tests', () => {
           // Verify the stored data
           const retrieved = await walrusStorage.retrieve(result.blobId);
           expect(retrieved).toEqual(data);
-        } catch (error) {
+        } catch (_error) {
           // Some filenames might fail on certain filesystems
           expect(error).toHaveProperty('message');
         } finally {
@@ -274,7 +274,7 @@ describe('Storage Fuzzing Tests', () => {
               default:
                 throw new Error(`Unknown operation type: ${op.type}`);
             }
-          } catch (error) {
+          } catch (_error) {
             return { type: op.type, error: error.message, index };
           }
         })
@@ -306,7 +306,7 @@ describe('Storage Fuzzing Tests', () => {
         
         return walrusStorage.store(data)
           .then(result => ({ success: true, blobId: result.blobId, index }))
-          .catch(error => ({ success: false, error: error.message, index }));
+          .catch(_error => ({ success: false, error: error.message, index }));
       });
 
       const results = await Promise.all(promises);
@@ -397,7 +397,7 @@ describe('Storage Fuzzing Tests', () => {
             await expect(walrusStorage.store(data as any))
               .rejects.toThrow();
           }
-        } catch (error) {
+        } catch (_error) {
           // Validate error messages
           expect(error).toHaveProperty('message');
           expect(error.message).toMatch(/type|invalid|unsupported/i);
@@ -438,7 +438,7 @@ describe('Storage Fuzzing Tests', () => {
                 if (global.gc) {
                   global.gc();
                 }
-              } catch (error) {
+              } catch (_error) {
                 // Memory allocation might fail
                 expect(error.message).toMatch(/memory|allocation|ENOMEM/i);
               }
@@ -485,7 +485,7 @@ describe('Storage Fuzzing Tests', () => {
             
             // Try to store from path
             await walrusStorage.storeFromPath(filePath);
-          } catch (error) {
+          } catch (_error) {
             // Expect file descriptor errors
             if (error.code === 'EMFILE' || error.code === 'ENFILE') {
               expect(error.message).toMatch(/too many open files/i);
@@ -546,7 +546,7 @@ describe('Storage Fuzzing Tests', () => {
           expect(result.usage.utilization).toBeLessThanOrEqual(1);
           expect(result.usage.totalSize).toBeGreaterThanOrEqual(0);
           expect(result.usage.allocatedSize).toBeGreaterThanOrEqual(result.usage.totalSize);
-        } catch (error) {
+        } catch (_error) {
           // Analyzer should handle edge cases gracefully
           expect(error).toHaveProperty('message');
           expect(error.message).not.toMatch(/undefined|null/);

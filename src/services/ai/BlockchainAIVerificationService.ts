@@ -3,7 +3,7 @@ import { AIActionType, AIPrivacyLevel } from '../../types/adapters/AIVerifierAda
 import { Todo } from '../../types/todo';
 import { BlockchainVerifier } from './BlockchainVerifier';
 import { SecureCredentialManager } from './SecureCredentialManager';
-import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
+// AIPermissionLevel imported but not used
 import { AIPermissionManager, getPermissionManager } from './AIPermissionManager';
 import { AIProofSystem, AIOperationProof } from './AIProofSystem';
 import { CLIError } from '../../types/error';
@@ -93,7 +93,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     operation: AIActionType,
     provider: string,
     todoCount: number,
-    isVerified: boolean = true
+    _isVerified: boolean = true
   ): Promise<void> {
     // Convert AIActionType enum value to operation string name
     let operationName: string;
@@ -297,7 +297,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       // For string-based proofs, we can directly verify the string
       const verificationResult = await this.proofSystem.verifyProof(exportedProof);
       return verificationResult.isValid;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to verify proof:', error);
       return false;
     }
@@ -386,7 +386,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
   public async verifyExternalProof(
     proofId: string,
     signature: string,
-    data: {
+    _data: {
       request: string;
       response: string;
     }
@@ -427,7 +427,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       const result = await this.proofSystem.verifyProof(proofString);
       
       return result.isValid;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to verify proof:', error);
       return false;
     }

@@ -8,7 +8,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -145,7 +144,7 @@ export function runCliCommand(command: string): string {
     const fullCommand = `node bin/run.js ${command}`;
     const output = execSync(fullCommand).toString();
     return output;
-  } catch (error) {
+  } catch (_error) {
     console.error('Error running CLI command:', error);
     throw error;
   }

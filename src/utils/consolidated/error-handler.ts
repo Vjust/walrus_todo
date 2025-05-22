@@ -199,7 +199,7 @@ export async function withRetry<T>(
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       return await fn();
-    } catch (error) {
+    } catch (_error) {
       lastError = error;
       
       // Don't retry on the last attempt

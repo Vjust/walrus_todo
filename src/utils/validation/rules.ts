@@ -127,9 +127,9 @@ export function custom<T>(
  * Array minimum length validation
  * @param min Minimum length
  */
-export function minItems(min: number): ValidationRule<Array<any>> {
+export function minItems(min: number): ValidationRule<Array<unknown>> {
   return {
-    validate: (value: Array<any>) => {
+    validate: (value: Array<unknown>) => {
       if (value === undefined || value === null) return true;
       return Array.isArray(value) && value.length >= min;
     },
@@ -141,9 +141,9 @@ export function minItems(min: number): ValidationRule<Array<any>> {
  * Array maximum length validation
  * @param max Maximum length
  */
-export function maxItems(max: number): ValidationRule<Array<any>> {
+export function maxItems(max: number): ValidationRule<Array<unknown>> {
   return {
-    validate: (value: Array<any>) => {
+    validate: (value: Array<unknown>) => {
       if (value === undefined || value === null) return true;
       return Array.isArray(value) && value.length <= max;
     },
@@ -175,8 +175,8 @@ export function oneOf<T>(allowedValues: T[]): ValidationRule<T> {
  * Object validation
  * @param shape Object shape to validate
  */
-export function object<T extends Record<string, any>>(
-  shape: Record<keyof T, Validator<any>>
+export function object<T extends Record<string, unknown>>(
+  shape: Record<keyof T, Validator<unknown>>
 ): ValidationRule<T> {
   return {
     validate: (value: T, context?: ValidationContext) => {
@@ -196,7 +196,7 @@ export function object<T extends Record<string, any>>(
           }
         }
         return true;
-      } catch (error) {
+      } catch (_error) {
         return false;
       }
     },

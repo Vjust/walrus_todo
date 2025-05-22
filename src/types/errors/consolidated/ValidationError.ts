@@ -70,7 +70,7 @@ export class ValidationError extends BaseError {
       context,
       cause,
       attempt,
-      ...restOptions
+      ..._restOptions
     } = options;
     
     // Build context object

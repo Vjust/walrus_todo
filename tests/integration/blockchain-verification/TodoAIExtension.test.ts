@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { createMockWalrusClient } from '../../../src/utils/MockWalrusClient';
-import { SuiClient } from '@mysten/sui/client';
+
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
-import { CLIError } from '../../../src/types/error';
+
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
 
 // Mock the AI service interface
@@ -89,7 +88,7 @@ class TodoAIExtension {
         todoContent,
         blobId: todoId
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Todo analysis failed: ${error instanceof Error ? error.message : String(error)}`,
         'AI_ANALYSIS_ERROR'
@@ -184,7 +183,7 @@ class TodoAIExtension {
           tokens: prompt.split(' ').length * 2 // Mocked token count
         }
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Todo generation failed: ${error instanceof Error ? error.message : String(error)}`,
         'AI_GENERATION_ERROR'
@@ -241,7 +240,7 @@ class TodoAIExtension {
           metadata: metadataObj
         }
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Todo verification failed: ${error instanceof Error ? error.message : String(error)}`,
         'TODO_VERIFICATION_ERROR'
@@ -267,7 +266,7 @@ const mockSigner = {
     bytes: Buffer.from(data).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signWithIntent: async (data: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> => ({
+  signWithIntent: async (data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
     bytes: Buffer.from(data).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),

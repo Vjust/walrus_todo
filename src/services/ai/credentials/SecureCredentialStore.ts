@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { randomUUID } from 'crypto';
 import { CLIError } from '../../../types/error';
 import { AI_CONFIG, CLI_CONFIG } from '../../../constants';
-import { Logger, LogLevel } from '../../../utils/Logger';
+import { Logger } from '../../../utils/Logger';
 import { AIProvider } from '../types';
 import { AIPermissionLevel, CredentialType } from '../../../types/adapters/AICredentialAdapter';
 import { ApiKeyValidator } from './ApiKeyValidator';
@@ -81,7 +81,7 @@ export class SecureCredentialStore {
       // Ensure permissions are correct on existing directory
       try {
         fs.chmodSync(configDir, 0o700);
-      } catch (error) {
+      } catch (_error) {
         this.logger.warn(`Could not set secure permissions on credential directory: ${error}`);
       }
     }
@@ -112,7 +112,7 @@ export class SecureCredentialStore {
           if (this.masterKey.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE) {
             throw new Error('Invalid master key length');
           }
-        } catch (error) {
+        } catch (_error) {
           throw new CLIError('Failed to read master encryption key', 'ENCRYPTION_KEY_ERROR');
         }
       }
@@ -122,7 +122,7 @@ export class SecureCredentialStore {
         try {
           const data = fs.readFileSync(this.storeFile);
           await this.loadCredentials(data);
-        } catch (error) {
+        } catch (_error) {
           this.logger.error(`Failed to load credentials: ${error}`);
           // Initialize with empty credentials on error
           this.credentials = new Map();
@@ -131,7 +131,7 @@ export class SecureCredentialStore {
 
       this.initialized = true;
       this.logger.debug(`Credential store initialized successfully with ${this.credentials.size} credentials`);
-    } catch (error) {
+    } catch (_error) {
       this.initialized = false;
       this.logger.error(`Failed to initialize credential store: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
@@ -171,7 +171,7 @@ export class SecureCredentialStore {
           encryptedValue: Buffer.from((value as any).encryptedValue.data)
         });
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to load credentials: ${error}`);
       throw new CLIError('Failed to load credentials', 'CREDENTIAL_LOAD_ERROR');
     }
@@ -210,7 +210,7 @@ export class SecureCredentialStore {
       fs.writeFileSync(this.storeFile, dataToSave, { mode: 0o600 }); // Only owner can read/write
       
       this.logger.debug(`Saved ${this.credentials.size} credentials to store`);
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Failed to save credentials: ${error}`);
       throw new CLIError('Failed to save credentials', 'CREDENTIAL_SAVE_ERROR');
     }
@@ -272,7 +272,7 @@ export class SecureCredentialStore {
       
       this.logger.info(`Stored credential for ${provider}`);
       return metadata;
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -365,7 +365,7 @@ export class SecureCredentialStore {
       await this.saveCredentials();
       
       return decryptedValue;
-    } catch (error) {
+    } catch (_error) {
       // Increment auth fail count on decryption error
       entry.metadata.authFailCount++;
       entry.metadata.updatedAt = new Date().toISOString();
@@ -576,7 +576,7 @@ export class SecureCredentialStore {
         delete existingMetadata.id; // Will generate new ID
         delete existingMetadata.createdAt; // Will use current time
       }
-    } catch (error) {
+    } catch (_error) {
       this.logger.debug(`No existing credential found for ${provider} during rotation`);
     }
     
@@ -733,7 +733,7 @@ export class SecureCredentialStore {
       encrypted.copy(result, offset);
       
       return result;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Encryption error: ${error}`);
       throw new CLIError('Failed to encrypt credential value', 'ENCRYPTION_ERROR');
     }
@@ -820,7 +820,7 @@ export class SecureCredentialStore {
       ]);
       
       return decrypted.toString('utf-8');
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Decryption error: ${error}`);
       throw new CLIError('Failed to decrypt credential value', 'DECRYPTION_ERROR');
     }
@@ -882,7 +882,7 @@ export class SecureCredentialStore {
         aad,
         encrypted
       ]);
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Store encryption error: ${error}`);
       throw new CLIError('Failed to encrypt credential store', 'STORE_ENCRYPTION_ERROR');
     }
@@ -948,7 +948,7 @@ export class SecureCredentialStore {
         decipher.update(encrypted),
         decipher.final()
       ]);
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Store decryption error: ${error}`);
       return null;
     }

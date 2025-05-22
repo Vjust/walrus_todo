@@ -15,7 +15,7 @@ const mockLogger = {
 };
 
 export class Logger {
-  constructor(componentName?: string) {
+  constructor(_componentName?: string) {
     // Mock constructor
   }
 

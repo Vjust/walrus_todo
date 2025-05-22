@@ -5,7 +5,7 @@
  * Implements LRU, TTL, and memory-aware cache eviction strategies
  */
 
-import { Logger, LogLevel } from './Logger';
+import { Logger } from './Logger';
 
 // Logger instance
 const logger = Logger.getInstance();
@@ -159,7 +159,7 @@ export class CacheManager<K extends string | number | symbol, V> {
     // Call eviction callback
     try {
       this.options.onEviction(key, entry.value);
-    } catch (error) {
+    } catch (_error) {
       logger.error(`Error in eviction callback for key ${String(key)}`, error as Error);
     }
     
@@ -178,7 +178,7 @@ export class CacheManager<K extends string | number | symbol, V> {
     for (const [key, entry] of this.cache.entries()) {
       try {
         this.options.onEviction(key, entry.value);
-      } catch (error) {
+      } catch (_error) {
         logger.error(`Error in eviction callback for key ${String(key)}`, error as Error);
       }
     }
@@ -273,7 +273,7 @@ export class CacheManager<K extends string | number | symbol, V> {
       const memoryRatio = memoryUsage.heapUsed / memoryUsage.heapTotal;
       
       return memoryRatio > this.options.memoryThreshold;
-    } catch (error) {
+    } catch (_error) {
       logger.warn('Failed to check memory pressure', {
         error: error instanceof Error ? error.message : String(error)
       });

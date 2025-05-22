@@ -1,13 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { test } from '@oclif/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import * as crypto from 'crypto';
 import * as sinon from 'sinon';
-import { SuiClient } from '@mysten/sui/client';
 import { BlobVerificationManager } from '../../src/utils/blob-verification';
-import { createMockWalrusClient } from '../../src/utils/MockWalrusClient';
 
 // Mock configuration values that would normally be in the user's home directory
 const mockBaseConfig = {
@@ -183,7 +179,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'blob', 'invalid-blob-id'])
-      .catch(error => {
+      .catch(_error => {
         // Mock the verification manager to fail for this test
         const verifyBlob = BlobVerificationManager.prototype.verifyBlob as jest.Mock;
         verifyBlob.mockRejectedValueOnce(new Error('Blob not found'));
@@ -207,7 +203,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'file', 'non-existent-file.json', 'mock-blob-id'])
-      .catch(error => {
+      .catch(_error => {
         // The error is expected because the file doesn't exist
         expect(error.message).to.contain('ENOENT');
       })
@@ -216,7 +212,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'file', path.join(tmpDir, 'test-data.json'), 'invalid-blob-id'])
-      .catch(error => {
+      .catch(_error => {
         // Mock the verification manager to fail for this test
         const verifyBlob = BlobVerificationManager.prototype.verifyBlob as jest.Mock;
         verifyBlob.mockRejectedValueOnce(new Error('Blob not found'));
@@ -258,7 +254,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'upload', 'non-existent-file.json'])
-      .catch(error => {
+      .catch(_error => {
         // The error is expected because the file doesn't exist
         expect(error.message).to.contain('ENOENT');
       })

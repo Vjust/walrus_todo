@@ -84,10 +84,10 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
   }
 
   // Improved connect method with proper typing
-  connect(client: SuiClient): unknown {
+  connect(client: SuiClient): SignerAdapter {
     this.checkDisposed();
     this.client = client;
-    return this;
+    return this as unknown as SignerAdapter;
   }
 
   // Add missing methods required by the interface
@@ -187,7 +187,7 @@ export class SignerWithProvider implements Omit<SignerAdapter, 'getClient' | 'ge
       // Release any connections
       this.client = null;
       this._isDisposed = true;
-    } catch (error) {
+    } catch (_error) {
       process.stderr.write(`Error disposing SignerWithProvider: ${error}\n`);
     }
   }

@@ -1,5 +1,5 @@
 import { RetryManager } from '../../../src/utils/retry-manager';
-import { CLIError } from '../../../src/types/error';
+
 
 describe('Testnet Retry Wrapper - Network Resilience', () => {
   // Testnet configuration with realistic URLs
@@ -169,7 +169,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       
       const retryManager = new RetryManager(testnetNodes, {
         ...testnetConfig,
-        onRetry: (error, attempt, delay) => {
+        onRetry: (error, attempt, _delay) => {
           delays.push(delay);
         }
       });
@@ -194,7 +194,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const delays: number[] = [];
       const retryManager = new RetryManager(testnetNodes, {
         ...testnetConfig,
-        onRetry: (error, attempt, delay) => {
+        onRetry: (error, attempt, _delay) => {
           delays.push(delay);
         }
       });
@@ -425,7 +425,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const errors: Error[] = [];
       const retryManager = new RetryManager(testnetNodes, {
         ...testnetConfig,
-        onRetry: (error, attempt, delay) => {
+        onRetry: (error, attempt, _delay) => {
           errors.push(error);
         }
       });
@@ -464,7 +464,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
       try {
         await retryManager.execute(operation, 'summary-test');
-      } catch (error) {
+      } catch (_error) {
         if (error instanceof CLIError) {
           errorSummary = error.message;
         }

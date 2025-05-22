@@ -1,5 +1,4 @@
-import { jest, describe, it, expect, beforeEach, afterEach } from "@jest/globals";
-import { TodoService } from "../../src/services/todoService";
+
 import { BatchProcessor } from "../../src/utils/batch-processor";
 import type { Todo, BatchResult } from "../../src/types/todo";
 

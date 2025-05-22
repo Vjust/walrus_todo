@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Script to incrementally enable noImplicitAny for specific directories
  * Run with: npx ts-node scripts/incremental-noImplicitAny.ts [directory]

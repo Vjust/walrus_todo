@@ -124,3 +124,84 @@ export interface TodoList {
   /** Sui object ID for this list on the Sui blockchain */
   suiObjectId?: string;
 }
+
+/**
+ * Parameters for creating a new todo item
+ */
+export interface CreateTodoParams {
+  /** Title of the todo item */
+  title: string;
+  /** Detailed description of the todo item */
+  description?: string;
+  /** Priority level of the todo */
+  priority: 'high' | 'medium' | 'low';
+  /** Due date of the todo in YYYY-MM-DD format */
+  dueDate?: string;
+  /** Tags associated with the todo for categorization and filtering */
+  tags?: string[];
+  /** Whether the todo is private (stored only locally) */
+  private?: boolean;
+  /** Where the todo is stored (local, blockchain, or both) */
+  storageLocation?: StorageLocation;
+}
+
+/**
+ * Parameters for updating an existing todo item
+ */
+export interface UpdateTodoParams {
+  /** Todo ID to update */
+  id: string;
+  /** Title of the todo item */
+  title?: string;
+  /** Detailed description of the todo item */
+  description?: string;
+  /** Whether the todo is completed */
+  completed?: boolean;
+  /** Priority level of the todo */
+  priority?: 'high' | 'medium' | 'low';
+  /** Due date of the todo in YYYY-MM-DD format */
+  dueDate?: string;
+  /** Tags associated with the todo for categorization and filtering */
+  tags?: string[];
+  /** Whether the todo is private (stored only locally) */
+  private?: boolean;
+  /** Where the todo is stored (local, blockchain, or both) */
+  storageLocation?: StorageLocation;
+}
+
+/**
+ * Result of a blockchain transaction
+ */
+export interface TransactionResult {
+  /** Transaction hash/digest */
+  digest: string;
+  /** Whether the transaction was successful */
+  success: boolean;
+  /** Error message if the transaction failed */
+  error?: string;
+  /** Gas cost of the transaction */
+  gasCost?: number;
+  /** Additional metadata about the transaction */
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Supported network types
+ */
+export type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+
+/**
+ * Context information for error reporting
+ */
+export interface ErrorContext {
+  /** The operation being performed when the error occurred */
+  operation: string;
+  /** Network being used */
+  network?: NetworkType;
+  /** Todo ID if relevant */
+  todoId?: string;
+  /** List name if relevant */
+  listName?: string;
+  /** Additional context data */
+  metadata?: Record<string, any>;
+}

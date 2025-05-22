@@ -61,7 +61,7 @@ export class ConfigService {
 
     // Ensure the todos directory exists - calling async function from constructor
     // We need to handle this properly
-    this.ensureTodosDirectory().catch(error => {
+    this.ensureTodosDirectory().catch(_error => {
       console.error(`Error creating todos directory: ${error.message}`);
       // Not throwing here as constructor can't be async
     });
@@ -111,7 +111,7 @@ export class ConfigService {
         // If directory doesn't exist, create it
         await fsPromises.mkdir(this.todosPath, { recursive: true });
       }
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to create Todos directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'DIRECTORY_CREATE_FAILED'
@@ -156,7 +156,7 @@ export class ConfigService {
           registryId: loadedConfig.registryId || getEnv('REGISTRY_ID') || undefined
         };
       }
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to load config: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'CONFIG_LOAD_FAILED'
@@ -222,7 +222,7 @@ export class ConfigService {
 
       // Update environment configuration with new values
       this.updateEnvironmentConfig();
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'CONFIG_SAVE_FAILED'
@@ -259,7 +259,7 @@ export class ConfigService {
         
         // IMPORTANT: Update the configPath for future saves
         this.configPath = targetConfigPath;
-      } catch (error) {
+      } catch (_error) {
         throw new CLIError(
           `Failed to create config directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'CONFIG_DIR_CREATE_FAILED'
@@ -276,7 +276,7 @@ export class ConfigService {
       
       // Update environment configuration with new values
       this.updateEnvironmentConfig();
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to save config: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'CONFIG_SAVE_FAILED'
@@ -309,7 +309,7 @@ export class ConfigService {
           throw parseError;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error; // Re-throw CLIError as-is
       }
@@ -335,7 +335,7 @@ export class ConfigService {
     try {
       await fsPromises.writeFile(listPath, JSON.stringify(list, null, 2));
       return list;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to save list "${listName}": ${error instanceof Error ? error.message : 'Unknown error'}`,
         'LIST_SAVE_FAILED'
@@ -367,7 +367,7 @@ export class ConfigService {
       return files
         .filter(file => file.endsWith(STORAGE_CONFIG.FILE_EXT))
         .map(file => file.replace(STORAGE_CONFIG.FILE_EXT, ''));
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to read todo lists: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'LIST_READ_FAILED'
@@ -466,13 +466,13 @@ export class ConfigService {
       try {
         await fsPromises.access(listPath);
         await fsPromises.unlink(listPath);
-      } catch (error) {
+      } catch (_error) {
         // If file doesn't exist, that's fine - nothing to delete
         if (error && 'code' in error && error.code !== 'ENOENT') {
           throw error;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to delete list "${listName}": ${error instanceof Error ? error.message : 'Unknown error'}`,
         'LIST_DELETE_FAILED'

@@ -91,7 +91,7 @@ export class StorageValidator {
           if (!isConnected) {
             await this.walrusStorage.connect();
           }
-        } catch (error) {
+        } catch (_error) {
           errors.push(`Cannot connect to blockchain: ${(error as Error).message}`);
         }
         break;
@@ -158,7 +158,7 @@ export class StorageValidator {
             message: `Unknown storage location: ${storageLocation}`
           };
       }
-    } catch (error) {
+    } catch (_error) {
       return {
         available: false,
         message: (error as Error).message
@@ -260,7 +260,7 @@ export class StorageValidator {
         localNewer: localTime > blockchainTime,
         blockchainNewer: blockchainTime > localTime
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         synced: false,
         error: (error as Error).message

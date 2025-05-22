@@ -4,7 +4,6 @@
  */
 
 import { existsSync, readFileSync } from 'fs';
-import { execSync } from 'child_process';
 import * as path from 'path';
 
 export interface TestnetConfig {
@@ -64,7 +63,7 @@ export class EnvironmentValidator {
       const version = execSync('sui --version', { encoding: 'utf8' }).trim();
       console.log(`✓ Sui CLI found: ${version}`);
       this.config.suiPath = execSync('which sui', { encoding: 'utf8' }).trim();
-    } catch (error) {
+    } catch (_error) {
       this.errors.push('Sui CLI not found. Please install it from https://docs.sui.io/guides/developer/getting-started');
     }
   }
@@ -76,7 +75,7 @@ export class EnvironmentValidator {
     try {
       const version = execSync('walrus --version', { encoding: 'utf8' }).trim();
       console.log(`✓ Walrus CLI found: ${version}`);
-    } catch (error) {
+    } catch (_error) {
       this.errors.push('Walrus CLI not found. Please install it from https://docs.wal.app');
     }
   }
@@ -123,7 +122,7 @@ export class EnvironmentValidator {
       if (balanceInSui < 0.1) {
         this.warnings.push(`Low Sui balance: ${balanceInSui} SUI. Consider getting more from the faucet.`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.errors.push('Failed to check Sui balance. Make sure you have active Sui client.');
     }
   }
@@ -146,7 +145,7 @@ export class EnvironmentValidator {
             this.config.privateKey = 'keystore';
             return;
           }
-        } catch (error) {
+        } catch (_error) {
           // Ignore parse errors
         }
       }
@@ -185,7 +184,7 @@ export class EnvironmentValidator {
           this.warnings.push(`Low Walrus token balance: ${this.config.walrusTokens}. Run 'walrus --context testnet get-wal'`);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.warnings.push('Failed to check Walrus balance. Make sure Walrus CLI is configured.');
     }
   }
@@ -201,7 +200,7 @@ export class EnvironmentValidator {
       execSync(`curl -s -f ${networkUrl}`, { encoding: 'utf8' });
       console.log(`✓ Network connectivity confirmed: ${networkUrl}`);
       this.config.networkUrl = networkUrl;
-    } catch (error) {
+    } catch (_error) {
       this.warnings.push(`Failed to connect to ${networkUrl}. Network may be slow or unavailable.`);
       this.config.networkUrl = networkUrl;
     }
@@ -244,7 +243,7 @@ export class EnvironmentValidator {
       if (gasInSui > 1) {
         this.warnings.push(`High gas budget: ${gasInSui} SUI. Consider reducing to save costs.`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.errors.push('Invalid GAS_BUDGET format. Must be a numeric string.');
     }
   }

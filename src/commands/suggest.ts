@@ -47,7 +47,7 @@ export default class Suggest extends BaseCommand {
   private async getSuiSigner() {
     try {
       return await KeystoreSigner.fromPath('');
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`);
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -184,7 +184,7 @@ export default class Suggest extends BaseCommand {
         // Here we assume valid key for now, in production would do actual validation
         await apiKeyValidationCache.set(apiKeyCacheKey, true);
         if (cacheDebugEnabled) this.log(chalk.dim('✓ API key validation result cached'));
-      } catch (error) {
+      } catch (_error) {
         await apiKeyValidationCache.set(apiKeyCacheKey, false);
         this.error('API key validation failed');
       }
@@ -227,7 +227,7 @@ export default class Suggest extends BaseCommand {
         );
 
         this.log(chalk.cyan('Blockchain verification enabled.'));
-      } catch (error) {
+      } catch (_error) {
         this.error(`Failed to initialize blockchain verification: ${error}`);
       }
     }
@@ -441,7 +441,7 @@ export default class Suggest extends BaseCommand {
         this.log(chalk.dim(`  Config: ${configStats.hits} hits, ${configStats.misses} misses (${(configStats.hitRate * 100).toFixed(1)}% hit rate)`));
         this.log(chalk.dim(`  API Keys: ${apiKeyStats.hits} hits, ${apiKeyStats.misses} misses (${(apiKeyStats.hitRate * 100).toFixed(1)}% hit rate)`));
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(`Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -481,7 +481,7 @@ export default class Suggest extends BaseCommand {
         });
         
         this.log(`Added todo: ${chalk.green(suggestion.title)}`);
-      } catch (error) {
+      } catch (_error) {
         this.error(`Failed to add todo: ${error}`);
       }
     }

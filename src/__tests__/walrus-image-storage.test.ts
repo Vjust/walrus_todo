@@ -3,12 +3,11 @@ import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient } from '@mysten/walrus';
 import type { BlobObject } from '../types/walrus';
 import { createWalrusImageStorage, type ClientWithExtensions } from '../utils/walrus-image-storage';
-import { CLIError } from '../types/error';
+// CLIError imported but not used
 import { KeystoreSigner } from '../utils/sui-keystore';
-import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MockWalrusClient } from '../utils/MockWalrusClient';
+// MockWalrusClient imported but not used
 
 interface MockedWalrusClient {
   readBlob: jest.MockedFunction<(options: { blobId: string, signal?: AbortSignal }) => Promise<Uint8Array>>;
@@ -75,7 +74,7 @@ describe('WalrusImageStorage', () => {
     // Set up SuiClient mock
     mockSuiClient = {
       connect: jest.fn().mockResolvedValue(undefined),
-      getBalance: jest.fn().mockImplementation(({ owner, coinType }) => Promise.resolve({
+      getBalance: jest.fn().mockImplementation(({ _owner, coinType }) => Promise.resolve({
         coinType: coinType || 'WAL',
         totalBalance: BigInt(1000),
         coinObjectCount: 1,
@@ -155,12 +154,11 @@ describe('WalrusImageStorage', () => {
         },
         deletable: true
       })),
-      verifyPoA: jest.fn().mockImplementation((params) => Promise.resolve(true))
+      verifyPoA: jest.fn().mockImplementation((_params) => Promise.resolve(true))
     } as MockedWalrusClient;
 
     // Set up WalrusClient mock
-    const WalrusClientConstructor = WalrusClient as jest.MockedClass<typeof WalrusClient>;
-    WalrusClientConstructor.mockImplementation(() => {
+    (WalrusClient as any).mockImplementation(() => {
       return mockWalrusClient as unknown as WalrusClient;
     });
 
@@ -174,7 +172,7 @@ describe('WalrusImageStorage', () => {
     mockKeystoreSigner = KeystoreSigner as jest.MockedClass<typeof KeystoreSigner>;
     
     // Mock the constructor with proper implementation without accessing private properties
-    mockKeystoreSigner.mockImplementation(() => ({
+    (KeystoreSigner as any).mockImplementation(() => ({
       connect: jest.fn().mockReturnThis(),
       getAddress: jest.fn().mockResolvedValue('0xtest-address'),
       getPublicKey: jest.fn().mockReturnValue({
@@ -256,12 +254,11 @@ describe('WalrusImageStorage', () => {
     } as any));
 
     // Create storage instance with mockSuiClient
-    const SuiClientConstructor = SuiClient as jest.MockedClass<typeof SuiClient>;
-    SuiClientConstructor.mockImplementation(() => mockSuiClient as unknown as SuiClient);
+    (SuiClient as any).mockImplementation(() => mockSuiClient as unknown as SuiClient);
     
     // Initialize storage with the mock client
     storage = createWalrusImageStorage(
-      mockSuiClient as unknown as SuiClient, 
+      mockSuiClient as unknown as ClientWithExtensions, 
       true  // Use mock mode for testing
     );
     await storage.connect();

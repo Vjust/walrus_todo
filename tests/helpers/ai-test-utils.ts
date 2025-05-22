@@ -204,7 +204,7 @@ export const errorHelper = {
    *   try {
    *     await aiService.summarize(todos);
    *     fail('Expected an error to be thrown');
-   *   } catch (error) {
+   *   } catch (_error) {
    *     errorHelper.validateError(error, 'AI_API_ERROR');
    *   }
    * });

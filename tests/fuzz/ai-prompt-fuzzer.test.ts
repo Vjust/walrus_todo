@@ -5,7 +5,7 @@ import { Logger } from '../../src/utils/Logger';
 describe('AI Prompt Fuzzer Tests', () => {
   let aiService: AIService;
   let promptValidator: PromptValidator;
-  let mockLogger: any;
+  let mockLogger: ReturnType<typeof Logger.getInstance>;
 
   beforeEach(() => {
     mockLogger = {
@@ -319,7 +319,7 @@ describe('AI Prompt Fuzzer Tests', () => {
       try {
         await aiService.processOperation('summarize', maliciousPrompt, []);
         fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect(error).toBeDefined();
         expect(mockLogger.error).toHaveBeenCalledWith(
           expect.stringContaining('Invalid prompt'),

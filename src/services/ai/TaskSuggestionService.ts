@@ -209,7 +209,7 @@ export class TaskSuggestionService {
         contextInfo,
         metrics
       };
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Error generating task suggestions: ${error}`);
       throw new Error(`Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -314,7 +314,7 @@ export class TaskSuggestionService {
       }));
 
       return suggestions;
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Error generating related tasks: ${error}`);
       return [];
     }
@@ -341,7 +341,7 @@ export class TaskSuggestionService {
    */
   private async generateNextStepTasks(
     todos: Todo[],
-    context: SuggestionContext
+    _context: SuggestionContext
   ): Promise<SuggestedTask[]> {
     try {
       // First, get dependency information to understand the workflow
@@ -407,7 +407,7 @@ export class TaskSuggestionService {
         type: SuggestionType.NEXT_STEP,
         relatedTodoIds: todosToFocus.map(t => t.id)
       }));
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Error generating next step tasks: ${error}`);
       return [];
     }
@@ -433,7 +433,7 @@ export class TaskSuggestionService {
    */
   private async generateDependencyTasks(
     todos: Todo[],
-    context: SuggestionContext
+    _context: SuggestionContext
   ): Promise<SuggestedTask[]> {
     try {
       // Find incomplete todos that don't have dependencies identified
@@ -472,7 +472,7 @@ export class TaskSuggestionService {
         type: SuggestionType.DEPENDENCY,
         relatedTodoIds: todosWithoutDependencies.map(t => t.id)
       }));
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Error generating dependency tasks: ${error}`);
       return [];
     }
@@ -533,7 +533,7 @@ export class TaskSuggestionService {
         completionPercentage,
         detectedThemes: Array.isArray(detectedThemes) ? detectedThemes : []
       };
-    } catch (error) {
+    } catch (_error) {
       this.logger.error(`Error analyzing context: ${error}`);
       return {
         analyzedTodoCount: todos.length,

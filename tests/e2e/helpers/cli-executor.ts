@@ -43,7 +43,7 @@ export class CLIExecutor {
         exitCode: result.exitCode,
         failed: result.failed,
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof Error) {
         // Return the error result for failed commands
         return {
@@ -90,7 +90,7 @@ export class CLIExecutor {
     
     try {
       return JSON.parse(result.stdout);
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to parse JSON output from command: ${command} ${jsonArgs.join(' ')}\nOutput: ${result.stdout}`);
     }
   }

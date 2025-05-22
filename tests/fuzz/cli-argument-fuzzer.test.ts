@@ -1,4 +1,3 @@
-import { execSync } from 'child_process';
 import { Command, Interfaces } from '@oclif/core';
 import { describe, it, expect } from '@jest/globals';
 import path from 'path';

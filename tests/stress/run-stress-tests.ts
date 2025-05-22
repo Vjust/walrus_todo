@@ -145,7 +145,7 @@ async function runStressTests() {
     });
   } else {
     // Real service
-    const apiKey = options.apiKey || process.env.XAI_API_KEY || process.env.OPENAI_API_KEY;
+    const _apiKey = options.apiKey || process.env.XAI_API_KEY || process.env.OPENAI_API_KEY;
     const provider = options.provider.toLowerCase() === 'openai' ? AIProvider.OPENAI : AIProvider.XAI;
     
     console.log(`Using real mode with ${provider} service`);
@@ -241,7 +241,7 @@ async function runStressTests() {
         }
       );
     }
-  } catch (error) {
+  } catch (_error) {
     console.error('Error running stress test:', error);
     process.exit(1);
   }

@@ -17,13 +17,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import axios from 'axios';
-import { execSync } from 'child_process';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Secp256k1Keypair } from '@mysten/sui/keypairs/secp256k1';
-import { SuiClient } from '@mysten/sui/client';
+
 import { bcs } from '@mysten/sui/bcs';
 import { fromB64, toB64 } from '@mysten/sui/utils';
-import { CLIError } from '../../../src/types/error';
+
 import { NetworkType } from '../../../src/types/network';
 import { NETWORK_URLS } from '../../../src/constants';
 
@@ -134,7 +133,7 @@ export class SuiTestnetSetup {
         backupPath,
         fundingTxDigest,
       };
-    } catch (error) {
+    } catch (_error) {
       console.error('❌ Sui testnet setup failed:', error);
       throw error;
     }
@@ -152,7 +151,7 @@ export class SuiTestnetSetup {
         throw new Error('Invalid health check response');
       }
       console.log('✅ Network connection successful');
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to connect to Sui ${this.config.network}: ${error instanceof Error ? error.message : String(error)}`,
         'NETWORK_CONNECTION_FAILED'
@@ -261,7 +260,7 @@ export class SuiTestnetSetup {
         networkUrl: NETWORK_URLS[this.config.network],
         balance: await this.getBalance(address),
       };
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to restore wallet from keystore: ${error instanceof Error ? error.message : String(error)}`,
         'KEYSTORE_RESTORE_FAILED'
@@ -313,7 +312,7 @@ export class SuiTestnetSetup {
 
         console.log(`✅ Faucet request successful! Tx: ${txDigest}`);
         return txDigest;
-      } catch (error) {
+      } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         if (attempt < RETRY_ATTEMPTS) {
@@ -364,7 +363,7 @@ export class SuiTestnetSetup {
       });
       
       return balance.totalBalance;
-    } catch (error) {
+    } catch (_error) {
       console.warn('Failed to get balance:', error);
       return '0';
     }
@@ -407,7 +406,7 @@ export class SuiTestnetSetup {
 
       console.log(`✅ Wallet backed up to: ${this.config.backupPath}`);
       return this.config.backupPath;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to backup wallet:', error);
       throw new CLIError(
         `Failed to backup wallet: ${error instanceof Error ? error.message : String(error)}`,
@@ -459,7 +458,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
       fs.writeFileSync(envPath, envContent);
 
       console.log('✅ Configuration files saved successfully');
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`,
         'CONFIG_SAVE_FAILED'
@@ -533,7 +532,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
       });
       
       console.log('✅ Sui CLI installed successfully');
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         'Failed to install Sui CLI. Please install Rust and try again.',
         'SUI_CLI_INSTALL_FAILED'
@@ -570,7 +569,7 @@ if (require.main === module) {
       if (result.backupPath) {
         console.log('Backup:', result.backupPath);
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Setup failed:', error);
       process.exit(1);
     }

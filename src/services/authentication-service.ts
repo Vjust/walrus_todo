@@ -491,7 +491,7 @@ export class AuthenticationService {
       });
       
       return authResult;
-    } catch (error) {
+    } catch (_error) {
       // Log failed login
       auditLogger.log({
         id: uuidv4(),
@@ -763,7 +763,7 @@ export class AuthenticationService {
         expired: false,
         user
       };
-    } catch (error) {
+    } catch (_error) {
       // Handle specific JWT verification errors
       if (error instanceof jwt.TokenExpiredError) {
         return {
@@ -898,7 +898,7 @@ export class AuthenticationService {
           sessionCount: sessionIds.length
         }
       });
-    } catch (error) {
+    } catch (_error) {
       // Silently fail for invalid tokens
       this.logger.debug('Failed to invalidate session', { error });
     }

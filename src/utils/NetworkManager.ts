@@ -166,23 +166,23 @@ export class NetworkManager {
           statusText: response.statusText,
           headers: response.headers,
         } as EnhancedFetchResponse<T>;
-      } catch (error) {
+      } catch (_error) {
         // Clear timeout if it was set
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
 
         // Check if operation was aborted due to timeout
-        if (error instanceof Error && error.name === 'AbortError') {
-          throw new NetworkError(`Request aborted: ${error.message}`, {
+        if (_error instanceof Error && _error.name === 'AbortError') {
+          throw new NetworkError(`Request aborted: ${_error.message}`, {
             operation: operationName || 'fetch',
             recoverable: true,
-            cause: error,
+            cause: _error,
           });
         }
 
         // Rethrow other errors to be handled by AsyncOperationHandler
-        throw error;
+        throw _error;
       }
     };
 
@@ -221,11 +221,11 @@ export class NetworkManager {
       }
 
       return enhancedResponse;
-    } catch (error) {
+    } catch (_error) {
       // This will only be reached if AsyncOperationHandler has an internal error
       const errorResponse: EnhancedFetchResponse<T> = {
         ok: false,
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: _error instanceof Error ? _error : new Error(String(_error)),
         attempts: 1,
         timeTaken: 0,
       };
@@ -339,15 +339,15 @@ export class NetworkManager {
       }
 
       return results;
-    } catch (error) {
+    } catch (_error) {
       if (throwErrors) {
-        throw error;
+        throw _error;
       }
       
       // Return error responses if not throwing
       return operations.map(() => ({
         ok: false,
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: _error instanceof Error ? _error : new Error(String(_error)),
         attempts: 0,
         timeTaken: 0,
       }));

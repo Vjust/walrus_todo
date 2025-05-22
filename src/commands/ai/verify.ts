@@ -129,7 +129,7 @@ export default class Verify extends BaseCommand {
         this.log(`${chalk.red('\u2717')} Verification ${chalk.cyan(verificationId)} is invalid or not found`);
         this.log('This verification ID does not exist on the blockchain.');
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(error.message);
     }
   }
@@ -158,7 +158,7 @@ export default class Verify extends BaseCommand {
         
         this.log(`  ${chalk.cyan(verificationId)}: ${status}`);
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(error.message);
     }
   }
@@ -187,7 +187,7 @@ export default class Verify extends BaseCommand {
           this.log(`You can create a verification with: ${chalk.cyan(`walrus_todo ai ${operation} ${todoId} --verify`)}`);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       this.error(error.message);
     }
   }

@@ -31,11 +31,11 @@ export enum RecordingMode {
  */
 export interface MockResponseTemplate {
   text?: string | ((prompt: string) => string);
-  structured?: any | ((prompt: string) => any);
+  structured?: unknown | ((prompt: string) => unknown);
   patterns?: Array<{
     match: string | RegExp;
     text?: string | ((prompt: string) => string);
-    structured?: any | ((prompt: string) => any);
+    structured?: unknown | ((prompt: string) => unknown);
   }>;
 }
 
@@ -98,8 +98,8 @@ export interface RecordedInteraction {
   timestamp: number;
   operation: string;
   method: string;
-  request: any;
-  response: any;
+  request: unknown;
+  response: unknown;
   provider: AIProvider;
   modelName: string;
 }

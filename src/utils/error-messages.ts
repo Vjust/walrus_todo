@@ -13,7 +13,7 @@ export interface ErrorContext {
   command?: string;
   resource?: string;
   field?: string;
-  value?: any;
+  value?: unknown;
   operation?: string;
   transactionId?: string;
   blobId?: string;

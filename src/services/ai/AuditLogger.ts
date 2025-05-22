@@ -49,7 +49,7 @@ export class AuditLogger {
             if (lastEntry && lastEntry.hash) {
               this.hashChain = lastEntry.hash;
             }
-          } catch (error) {
+          } catch (_error) {
             // If parsing fails, initialize a new hash chain
             this.hashChain = this.generateInitialHash();
           }
@@ -59,7 +59,7 @@ export class AuditLogger {
       } else {
         this.hashChain = this.generateInitialHash();
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to initialize hash chain:', error);
       this.hashChain = this.generateInitialHash();
     }
@@ -112,7 +112,7 @@ export class AuditLogger {
       
       // Write to file
       this.writeToFile(entryWithHash);
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to log audit event:', error);
     }
   }
@@ -135,7 +135,7 @@ export class AuditLogger {
       // Append log entry
       const line = JSON.stringify(entry) + '\n';
       fs.appendFileSync(this.logFilePath, line, { mode: 0o600 }); // Restrict file permissions
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to write audit log:', error);
     }
   }
@@ -181,7 +181,7 @@ export class AuditLogger {
           fs.writeFileSync(this.logFilePath, line, { mode: 0o600 });
         }
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to check/perform log rotation:', error);
     }
   }
@@ -310,13 +310,13 @@ export class AuditLogger {
           }
           
           previousHash = entry.hash;
-        } catch (error) {
+        } catch (_error) {
           return false; // Invalid JSON or other error
         }
       }
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to verify log integrity:', error);
       return false;
     }

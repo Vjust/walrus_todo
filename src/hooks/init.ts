@@ -3,10 +3,11 @@ import { initializeConfig } from '../utils/environment-config';
 import { validateEnvironment } from '../utils/CommandValidationMiddleware';
 import { loadEnvironment } from '../utils/env-loader';
 import { validateStartup } from '../utils/startup-validator';
-import chalk from 'chalk';
+// chalk imported but not used
 import { commandHistory } from '../utils/CommandHistory';
 import { commandRegistry } from '../utils/CommandRegistry';
 import { todoGroup } from '../commands/todos';
+import { Logger } from '../utils/Logger';
 
 /**
  * Initialize the application's environment and configuration
@@ -32,26 +33,24 @@ const initHook: Hook<'init'> = async function() {
         });
       } catch (validationError) {
         // Just log validation error but don't fail, individual commands will do more specific validation
-        console.warn(
-          chalk.yellow('Environment validation warning:'),
-          chalk.yellow(validationError instanceof Error ? validationError.message : String(validationError))
+        Logger.getInstance().warn(
+          `Environment validation warning: ${validationError instanceof Error ? validationError.message : String(validationError)}`
         );
       }
 
       // Mark as initialized to prevent duplicate initialization
       process.env.ENV_CONFIG_INITIALIZED = 'true';
-    } catch (error) {
-      console.error(
-        chalk.red('\nFailed to initialize environment configuration:'),
-        chalk.red(error instanceof Error ? error.message : String(error))
+    } catch (_error) {
+      Logger.getInstance().error(
+        `Failed to initialize environment configuration: ${error instanceof Error ? error.message : String(error)}`
       );
 
       // Output helpful error recovery information
-      console.error(chalk.yellow('\nTroubleshooting steps:'));
-      console.error(chalk.yellow('1. Check if .env file exists and is properly formatted'));
-      console.error(chalk.yellow('2. Ensure required environment variables are set'));
-      console.error(chalk.yellow('3. Verify storage directories exist and are writable'));
-      console.error(chalk.yellow('4. Run with --debug flag for more detailed error information\n'));
+      Logger.getInstance().error('Troubleshooting steps:');
+      Logger.getInstance().error('1. Check if .env file exists and is properly formatted');
+      Logger.getInstance().error('2. Ensure required environment variables are set');
+      Logger.getInstance().error('3. Verify storage directories exist and are writable');
+      Logger.getInstance().error('4. Run with --debug flag for more detailed error information');
 
       // Don't throw error here - fail gracefully and let individual commands handle validation
     }

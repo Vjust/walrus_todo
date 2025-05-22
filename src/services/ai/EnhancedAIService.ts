@@ -8,11 +8,11 @@
  * - Configurable behavior through AIConfigManager
  */
 
-import { PromptTemplate } from '@langchain/core/prompts';
+// PromptTemplate imported but not used
 import { Todo } from '../../types/todo';
 import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
-import { AIPrivacyLevel, AIActionType } from '../../types/adapters/AIVerifierAdapter';
-import { AIModelAdapter, AIProvider, AIModelOptions, AIResponse } from '../../types/adapters/AIModelAdapter';
+import { AIPrivacyLevel } from '../../types/adapters/AIVerifierAdapter';
+import { AIModelAdapter, AIProvider, AIModelOptions } from '../../types/adapters/AIModelAdapter';
 import { AIProviderFactory } from './AIProviderFactory';
 import { PromptManager } from './PromptManager';
 import { ResultCache } from './ResultCache';

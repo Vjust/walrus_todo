@@ -10,9 +10,9 @@ export interface SingleBarOptions {
   linewrap?: boolean;
   fps?: number;
   etaBuffer?: number;
-  formatBar?: (progress: number, options: any) => string;
-  formatValue?: (value: number, options: any, type: string) => string;
-  formatTime?: (time: number, options: any, roundToMultipleOf?: number) => string;
+  formatBar?: (progress: number, options: SingleBarOptions) => string;
+  formatValue?: (value: number, options: SingleBarOptions, type: string) => string;
+  formatTime?: (time: number, options: SingleBarOptions, roundToMultipleOf?: number) => string;
   align?: 'left' | 'center' | 'right';
   gracefulExit?: boolean;
 }
@@ -24,24 +24,24 @@ export interface MultiBarOptions extends SingleBarOptions {
 export class SingleBar {
   private total: number = 0;
   private current: number = 0;
-  private payload: any = {};
+  private payload: Record<string, unknown> = {};
 
   constructor(public options: SingleBarOptions = {}) {}
 
-  start(total: number, startValue: number = 0, payload?: any): void {
+  start(total: number, startValue: number = 0, payload?: Record<string, unknown>): void {
     this.total = total;
     this.current = startValue;
     this.payload = payload || {};
   }
 
-  update(value: number, payload?: any): void {
+  update(value: number, payload?: Record<string, unknown>): void {
     this.current = value;
     if (payload) {
       this.payload = { ...this.payload, ...payload };
     }
   }
 
-  increment(delta: number = 1, payload?: any): void {
+  increment(delta: number = 1, payload?: Record<string, unknown>): void {
     this.current += delta;
     if (payload) {
       this.payload = { ...this.payload, ...payload };
@@ -70,7 +70,7 @@ export class MultiBar {
 
   constructor(public options: MultiBarOptions = {}) {}
 
-  create(total: number, startValue: number = 0, payload?: any): SingleBar {
+  create(total: number, startValue: number = 0, payload?: Record<string, unknown>): SingleBar {
     const bar = new SingleBar(this.options);
     bar.start(total, startValue, payload);
     

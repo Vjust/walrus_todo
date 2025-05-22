@@ -177,7 +177,7 @@ describe('suggest command', () => {
   test
     .stdout()
     .command(['suggest'])
-    .catch(error => {
+    .catch(_error => {
       expect(error.message).toContain('API key is required');
     })
     .it('errors without API key');

@@ -150,7 +150,7 @@ export class RetryManager {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         return await operation();
-      } catch (error) {
+      } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         if (attempt < maxAttempts) {

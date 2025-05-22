@@ -78,7 +78,7 @@ export default class CheckCommand extends BaseCommand {
       this.log(chalk.dim("List: " + args.listName));  // Changed to double quotes for consistency
       this.log(chalk.dim("ID: " + flags.id));  // Changed to double quotes for consistency
 
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

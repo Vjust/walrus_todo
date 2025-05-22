@@ -1,8 +1,6 @@
-import { expect, jest, test, describe, beforeEach, afterEach } from '@jest/globals';
-import { TodoService } from '../../src/services/todoService';
+
 import { WalrusStorage } from '../../src/utils/walrus-storage';
 import type { WalrusStorage as WalrusStorageType } from '../../src/utils/walrus-storage';
-import { ConfigService } from '../../src/services/config-service';
 import type { Todo } from '../../src/types/todo';
 import type { Mock } from 'jest';
 
@@ -11,7 +9,7 @@ jest.mock('../../src/services/config-service');
 
 describe('store command', () => {
   let todoService: TodoService;
-  let todoId!: string;  // Add definite assignment assertion
+  let _todoId!: string;  // Add definite assignment assertion
 
   beforeEach(async () => {
     todoService = new TodoService();

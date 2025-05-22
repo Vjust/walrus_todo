@@ -47,7 +47,7 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
     return "MockChatXAI";
   }
 
-  async invoke(prompt: string | StringPromptValueInterface, options?: { temperature?: number; maxTokens?: number }): Promise<string> {
+  async invoke(prompt: string | StringPromptValueInterface, _options?: { temperature?: number; maxTokens?: number }): Promise<string> {
     // Handle both string and StringPromptValueInterface
     const promptStr = typeof prompt === 'string' ? prompt : prompt.toString();
     console.log('Mocked XAI model invoked with prompt:', promptStr.substring(0, 20) + '...');
@@ -208,7 +208,8 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
 }
 
 // Dynamically select real or mock implementation
-const ChatXAI = typeof RealChatXAI !== 'undefined' ? RealChatXAI : MockChatXAI;
+// ChatXAI class selected dynamically
+// const _ChatXAI = typeof RealChatXAI !== 'undefined' ? RealChatXAI : MockChatXAI;
 import { PromptTemplate } from '@langchain/core/prompts';
 import { BaseModelAdapter } from './BaseModelAdapter';
 import {
@@ -310,9 +311,9 @@ export class XAIModelAdapter extends BaseModelAdapter {
           console.warn('Falling back to mock XAI implementation despite having what appears to be a valid key');
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // If real implementation fails, fall back to mock
-      console.error('Error initializing real XAI client, falling back to mock:', error);
+      console.error('Error initializing real XAI client, falling back to mock:', _error);
       this.client = new MockChatXAI({
         apiKey,
         modelName: this.modelName,
@@ -355,8 +356,8 @@ export class XAIModelAdapter extends BaseModelAdapter {
       }
 
       return baseResponse;
-    } catch (error) {
-      return this.handleError(error, 'completion');
+    } catch (_error) {
+      return this.handleError(_error, 'completion');
     }
   }
 
@@ -397,8 +398,8 @@ export class XAIModelAdapter extends BaseModelAdapter {
       }
 
       return baseResponse;
-    } catch (error) {
-      return this.handleError(error, 'structured completion');
+    } catch (_error) {
+      return this.handleError(_error, 'structured completion');
     }
   }
 
@@ -438,8 +439,8 @@ export class XAIModelAdapter extends BaseModelAdapter {
       }
 
       return baseResponse;
-    } catch (error) {
-      return this.handleError(error, 'prompt template processing');
+    } catch (_error) {
+      return this.handleError(_error, 'prompt template processing');
     }
   }
 }

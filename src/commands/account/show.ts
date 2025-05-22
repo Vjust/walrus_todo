@@ -17,7 +17,7 @@ export default class AccountShowCommand extends BaseCommand {
         throw new CLIError('No wallet address configured. Please run "waltodo configure" first.', 'NO_WALLET_ADDRESS');
       }
       this.log(`Current active Sui address: ${config.walletAddress}`);
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof CLIError) {
         throw error;
       }

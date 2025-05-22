@@ -97,7 +97,7 @@ export class TransactionHelper {
         }
         
         return response;
-      } catch (error) {
+      } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         const shouldRetry = this.shouldRetry(lastError) && attempt < retryConfig.attempts;

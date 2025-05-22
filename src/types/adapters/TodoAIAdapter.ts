@@ -4,8 +4,8 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoAIOperation, VerificationResult, AIProvider } from '../../services/ai/types';
 import { Logger } from '../../utils/Logger';
 import { CLIError } from '../error';
-import { createTransactionBlockAdapter } from '../../utils/adapters/transaction-adapter';
-import { asUint8ArrayOrTransactionBlock, asStringUint8ArrayOrTransactionBlock } from '../transaction';
+// createTransactionBlockAdapter imported but not used
+// asUint8ArrayOrTransactionBlock and asStringUint8ArrayOrTransactionBlock imported but not used
 
 /**
  * Adapter for interacting with the Todo AI extension smart contract
@@ -256,7 +256,8 @@ export class TodoAIAdapter {
 
       // Execute the transaction
       // Cast to Uint8Array | Transaction to match the expected type
-      const result = await this.client.signAndExecuteTransaction({
+      // result would be used to return transaction details
+      const _result = await this.client.signAndExecuteTransaction({
         signer: keypair,
         transaction: tx as any,
       });

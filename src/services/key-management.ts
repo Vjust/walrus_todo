@@ -36,7 +36,7 @@ export class KeyManagementService {
     try {
       this.keypairCache = Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'base64'));
       return this.keypairCache;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Failed to load keypair: ${error instanceof Error ? error.message : String(error)}`,
         'KEYPAIR_LOAD_FAILED'
@@ -50,7 +50,7 @@ export class KeyManagementService {
       const keypair = Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'base64'));
       await this.secureStorage.setSecureItem('SUI_PRIVATE_KEY', privateKey);
       this.keypairCache = keypair;
-    } catch (error) {
+    } catch (_error) {
       throw new CLIError(
         `Invalid private key format: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_PRIVATE_KEY'

@@ -1,5 +1,5 @@
 import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
+// TransactionBlock imported but not used
 import { SignerAdapter } from './SignerAdapter';
 import { WalrusClientAdapter } from './WalrusClientAdapter';
 
@@ -52,26 +52,26 @@ export interface VerificationRecord {
 }
 
 export interface AIVerifierAdapter {
-  createVerification(params: VerificationParams): Promise<VerificationRecord>;
-  verifyRecord(record: VerificationRecord, request: string, response: string): Promise<boolean>;
-  getProviderInfo(providerAddress: string): Promise<ProviderInfo>;
+  createVerification(_params: VerificationParams): Promise<VerificationRecord>;
+  verifyRecord(_record: VerificationRecord, request: string, response: string): Promise<boolean>;
+  getProviderInfo(_providerAddress: string): Promise<ProviderInfo>;
   listVerifications(userAddress?: string): Promise<VerificationRecord[]>;
   getRegistryAddress(): Promise<string>;
-  registerProvider(params: ProviderRegistrationParams): Promise<string>;
-  getVerification(verificationId: string): Promise<VerificationRecord>;
+  registerProvider(_params: ProviderRegistrationParams): Promise<string>;
+  getVerification(_verificationId: string): Promise<VerificationRecord>;
   getSigner(): SignerAdapter;
   
   // Generate a cryptographic proof for a verification record
-  generateProof(verificationId: string): Promise<string>;
+  generateProof(_verificationId: string): Promise<string>;
   
   // Export user verification records in the specified format
-  exportVerifications(userAddress: string, format?: 'json' | 'csv'): Promise<string>;
+  exportVerifications(_userAddress: string, format?: 'json' | 'csv'): Promise<string>;
   
   // Enforce data retention policy, deleting records older than the threshold
   enforceRetentionPolicy(retentionDays?: number): Promise<number>;
   
   // Securely destroy data, ensuring it cannot be recovered
-  securelyDestroyData(verificationId: string): Promise<boolean>;
+  securelyDestroyData(_verificationId: string): Promise<boolean>;
 }
 
 export class SuiAIVerifierAdapter implements AIVerifierAdapter {
@@ -95,31 +95,31 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     this.walrusAdapter = walrusAdapter;
   }
 
-  async registerProvider(params: ProviderRegistrationParams): Promise<string> {
+  async registerProvider(_params: ProviderRegistrationParams): Promise<string> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async createVerification(params: VerificationParams): Promise<VerificationRecord> {
+  async createVerification(_params: VerificationParams): Promise<VerificationRecord> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
   async verifyRecord(
-    record: VerificationRecord,
-    request: string,
-    response: string
+    _record: VerificationRecord,
+    _request: string,
+    _response: string
   ): Promise<boolean> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async getProviderInfo(providerAddress: string): Promise<ProviderInfo> {
+  async getProviderInfo(_providerAddress: string): Promise<ProviderInfo> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
 
-  async listVerifications(userAddress?: string): Promise<VerificationRecord[]> {
+  async listVerifications(_userAddress?: string): Promise<VerificationRecord[]> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
@@ -128,7 +128,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     return this.registryId;
   }
 
-  async getVerification(verificationId: string): Promise<VerificationRecord> {
+  async getVerification(_verificationId: string): Promise<VerificationRecord> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
@@ -137,12 +137,12 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     return this.signer;
   }
   
-  async generateProof(verificationId: string): Promise<string> {
+  async generateProof(_verificationId: string): Promise<string> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
   
-  async exportVerifications(userAddress: string, format?: 'json' | 'csv'): Promise<string> {
+  async exportVerifications(_userAddress: string, _format?: 'json' | 'csv'): Promise<string> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
@@ -152,7 +152,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     throw new Error('Method not implemented.');
   }
   
-  async securelyDestroyData(verificationId: string): Promise<boolean> {
+  async securelyDestroyData(_verificationId: string): Promise<boolean> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }

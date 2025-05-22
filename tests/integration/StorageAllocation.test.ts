@@ -13,11 +13,11 @@ jest.mock('@/utils/VaultManager');
 jest.mock('@/utils/Logger');
 
 describe('Storage Allocation Integration', () => {
-  let monitor: ExpiryMonitor;
+  let _monitor: ExpiryMonitor;
   let storageManager: StorageManager;
   let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
   let mockVaultManager: jest.Mocked<VaultManager>;
-  let mockSigner: jest.Mocked<Signer>;
+  let _mockSigner: jest.Mocked<Signer>;
   let mockLogger: jest.Mocked<Logger>;
 
   beforeEach(() => {

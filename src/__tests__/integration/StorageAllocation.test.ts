@@ -1,11 +1,12 @@
 import { jest } from '@jest/globals';
-import { WalrusClient } from '@mysten/walrus';
+// WalrusClient imported but not directly used
 import { Signer } from '@mysten/sui/cryptography';
 import { SuiClient } from '@mysten/sui/client';
 import { ExpiryMonitor } from '../../utils/ExpiryMonitor';
 import { StorageManager } from '../../utils/StorageManager';
-import { VaultManager, BlobRecord } from '../../utils/VaultManager';
-import { WalrusError, StorageError } from '../../types/errors';
+import { VaultManager } from '../../utils/VaultManager';
+// BlobRecord type removed - not used in this test file
+// WalrusError and StorageError imported but not used
 import { Logger } from '../../utils/Logger';
 import type { WalrusClientExt } from '../../types/client';
 
@@ -14,8 +15,8 @@ jest.mock('../../utils/VaultManager');
 jest.mock('../../utils/Logger');
 
 describe('Storage Allocation Integration', () => {
-  let monitor: ExpiryMonitor;
-  let storageManager: StorageManager;
+  // ExpiryMonitor instantiated in tests
+  // StorageManager instantiated in tests
   let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
   let mockVaultManager: jest.Mocked<VaultManager>;
   let mockSigner: jest.Mocked<Signer>;
