@@ -7,6 +7,9 @@ import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
 import { AIPermissionManager, getPermissionManager } from './AIPermissionManager';
 import { AIProofSystem, AIOperationProof } from './AIProofSystem';
 import { CLIError } from '../../types/error';
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('BlockchainAIVerificationService');
 
 /**
  * Enhanced verified result that includes blockchain proof
@@ -262,7 +265,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       const verificationResult = await this.proofSystem.verifyProof(exportedProof);
       return verificationResult.isValid;
     } catch (error) {
-      console.error('Failed to verify proof:', error);
+      logger.error('Failed to verify proof:', error);
       return false;
     }
   }

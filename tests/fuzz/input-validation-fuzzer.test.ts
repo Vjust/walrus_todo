@@ -284,7 +284,8 @@ describe('Input Validation Fuzzer', () => {
           expect(result).toBeDefined();
           expect(typeof result).toBe('string');
           // Should sanitize special regex characters
-          if (query.includes('*') || query.includes('?') || query.includes('[')) {
+          const hasSpecialChars = query.includes('*') || query.includes('?') || query.includes('[');
+          if (hasSpecialChars) {
             expect(result).not.toMatch(/[*?[\]]/);
           }
         } catch (_error) {

@@ -7,6 +7,9 @@ class MockNFTStorageContract {
   mintNFT = jest.fn().mockResolvedValue({ id: 'nft-123' });
   transferNFT = jest.fn().mockResolvedValue({ success: true });
   burnNFT = jest.fn().mockResolvedValue({ success: true });
+  entry_create_nft = jest.fn().mockResolvedValue('nft-123');
+  entry_transfer_nft = jest.fn().mockResolvedValue({ success: true });
+  entry_update_metadata = jest.fn().mockResolvedValue({ success: true });
 }
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 
@@ -74,9 +77,9 @@ describe('Transaction Edge Cases', () => {
           user.getTodos(listId),
           user.updateTodo(listId, fuzzer.string(), { completed: true })
         ]).catch((error: unknown) => {
-          if (error instanceof Error) {
-            expect(error.message).toContain('Unauthorized');
-          }
+          // Assert error is an Error instance with Unauthorized message
+          expect(error).toBeInstanceOf(Error);
+          expect((error as Error).message).toContain('Unauthorized');
         })
       ));
     });
@@ -94,9 +97,9 @@ describe('Transaction Edge Cases', () => {
             new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), 100))
           ]);
         } catch (error: unknown) {
-          if (error instanceof Error) {
-            expect(error.message).toMatch(/timeout|failed|error/i);
-          }
+          // Assert error is an Error instance with expected message pattern
+          expect(error).toBeInstanceOf(Error);
+          expect((error as Error).message).toMatch(/timeout|failed|error/i);
         }
       };
 
@@ -144,13 +147,7 @@ describe('Transaction Edge Cases', () => {
       ];
 
       for (const transition of invalidTransitions) {
-        try {
-          await transition();
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            expect(error).toHaveProperty('message');
-          }
-        }
+        await expect(transition()).rejects.toThrow();
       }
     });
 
@@ -167,13 +164,7 @@ describe('Transaction Edge Cases', () => {
       ].map(p => p.catch(e => e))); // Capture but don't fail on errors
 
       // Verify final state is consistent
-      try {
-        await suiService.getTodos(listId);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          expect(error.message).toContain('not found');
-        }
-      }
+      await expect(suiService.getTodos(listId)).rejects.toThrow('not found');
     });
   });
 
@@ -190,18 +181,15 @@ describe('Transaction Edge Cases', () => {
       const newOwners = Array(5).fill(null).map(() => fuzzer.blockchainData().address());
       
       await Promise.all(newOwners.map(async (owner) => {
-        try {
+        // Each operation should fail with unauthorized or not found error
+        await expect(async () => {
           await nftContract.entry_transfer_nft(sender, nftId, owner);
           await nftContract.entry_update_metadata(
             { sender: owner },
             nftId,
             { description: fuzzer.string() }
           );
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            expect(error.message).toMatch(/Unauthorized|not found/i);
-          }
-        }
+        }).rejects.toThrow(/Unauthorized|not found/i);
       }));
     });
   });

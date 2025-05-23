@@ -65,7 +65,7 @@ describe('Frontend-CLI Integration Tests', () => {
           timeout: 120000
         });
       } catch (_error) {
-        console.warn('Frontend dependency installation failed - some tests may be skipped');
+        // console.warn('Frontend dependency installation failed - some tests may be skipped'); // Removed console statement
       }
     }
   });
@@ -79,7 +79,7 @@ describe('Frontend-CLI Integration Tests', () => {
 
   describe('Configuration Synchronization', () => {
     test('should deploy contract and generate frontend config', async () => {
-      console.log('Deploying contract and generating frontend config...');
+      // console.log('Deploying contract and generating frontend config...'); // Removed console statement
       
       try {
         const deployOutput = execSync(
@@ -111,12 +111,12 @@ describe('Frontend-CLI Integration Tests', () => {
           network: 'testnet'
         };
 
-        console.log('✓ Contract deployed successfully', deploymentInfo);
+        // console.log('✓ Contract deployed successfully', deploymentInfo); // Removed console statement
 
       } catch (_error) {
         if (error.toString().includes('already deployed') || 
             error.toString().includes('Package ID already exists')) {
-          console.log('⚠ Contract already deployed - continuing with existing deployment');
+          // console.log('⚠ Contract already deployed - continuing with existing deployment'); // Removed console statement
           
           // Get existing deployment info from config
           try {
@@ -162,7 +162,7 @@ describe('Frontend-CLI Integration Tests', () => {
       expect(config.features).toHaveProperty('aiEnabled');
       expect(config.features).toHaveProperty('blockchainVerification');
 
-      console.log('✓ Frontend configuration validated');
+      // console.log('✓ Frontend configuration validated'); // Removed console statement
     });
 
     test('should synchronize config to public directory', async () => {
@@ -182,14 +182,14 @@ describe('Frontend-CLI Integration Tests', () => {
       expect(config.network).toBe('testnet');
       expect(config.packageId).toMatch(/^0x[a-fA-F0-9]+$/);
 
-      console.log('✓ Public configuration synchronized');
+      // console.log('✓ Public configuration synchronized'); // Removed console statement
     });
   });
 
   describe('Frontend Server Integration', () => {
     test('should start frontend development server', async () => {
       if (!fs.existsSync(frontendPath)) {
-        console.log('⚠ Frontend not found - skipping frontend tests');
+        // console.log('⚠ Frontend not found - skipping frontend tests'); // Removed console statement
         return;
       }
 
@@ -208,19 +208,19 @@ describe('Frontend-CLI Integration Tests', () => {
 
         frontendProcess.stdout?.on('data', (data) => {
           const output = data.toString();
-          console.log(`Frontend: ${output.trim()}`);
+          // console.log(`Frontend: ${output.trim() // Removed console statement}`);
 
           if ((output.includes('ready') || output.includes(`localhost:${frontendPort}`)) && !startupComplete) {
             startupComplete = true;
             clearTimeout(timeout);
-            console.log(`✓ Frontend started on port ${frontendPort}`);
+            // console.log(`✓ Frontend started on port ${frontendPort}`); // Removed console statement
             resolve();
           }
         });
 
         frontendProcess.stderr?.on('data', (data) => {
           const error = data.toString();
-          console.log(`Frontend Error: ${error.trim()}`);
+          // console.log(`Frontend Error: ${error.trim() // Removed console statement}`);
 
           if (error.includes('EADDRINUSE')) {
             frontendPort = 3003; // Try different port
@@ -242,7 +242,7 @@ describe('Frontend-CLI Integration Tests', () => {
 
     test('should verify frontend can load configuration at runtime', async () => {
       if (!frontendProcess) {
-        console.log('⚠ Frontend not running - skipping runtime config test');
+        // console.log('⚠ Frontend not running - skipping runtime config test'); // Removed console statement
         return;
       }
 
@@ -258,12 +258,12 @@ describe('Frontend-CLI Integration Tests', () => {
           const config = await response.json();
           expect(config.network).toBe('testnet');
           expect(config.packageId).toBeTruthy();
-          console.log('✓ Frontend runtime configuration accessible');
+          // console.log('✓ Frontend runtime configuration accessible'); // Removed console statement
         } else {
-          console.log('⚠ Frontend config endpoint not accessible (may be expected)');
+          // console.log('⚠ Frontend config endpoint not accessible (may be expected) // Removed console statement');
         }
       } catch (_error) {
-        console.log('⚠ Frontend runtime config test skipped - server may not be ready');
+        // console.log('⚠ Frontend runtime config test skipped - server may not be ready'); // Removed console statement
       }
     });
   });
@@ -287,7 +287,7 @@ describe('Frontend-CLI Integration Tests', () => {
       expect(createOutput).toContain('created successfully');
       expect(createOutput).toContain('Transaction digest:');
 
-      console.log('✓ Todo created via CLI');
+      // console.log('✓ Todo created via CLI'); // Removed console statement
     });
 
     test('should list todos and verify JSON structure for frontend consumption', async () => {
@@ -311,7 +311,7 @@ describe('Frontend-CLI Integration Tests', () => {
       expect(testTodo).toHaveProperty('created_at');
       expect(typeof testTodo!.created_at).toBe('number');
 
-      console.log('✓ CLI todo data structure compatible with frontend');
+      // console.log('✓ CLI todo data structure compatible with frontend'); // Removed console statement
     });
 
     test('should verify todo completion workflow maintains data consistency', async () => {
@@ -340,7 +340,7 @@ describe('Frontend-CLI Integration Tests', () => {
       expect(completedTodo).toBeTruthy();
       expect(completedTodo!.completed).toBe(true);
 
-      console.log('✓ Todo completion maintains data consistency');
+      // console.log('✓ Todo completion maintains data consistency'); // Removed console statement
     });
   });
 
@@ -355,9 +355,9 @@ describe('Frontend-CLI Integration Tests', () => {
         expect(eventHookContent).toContain('subscription');
         expect(eventHookContent).toMatch(/TodoNFT|todo.*event/i);
 
-        console.log('✓ Frontend event subscription infrastructure verified');
+        // console.log('✓ Frontend event subscription infrastructure verified'); // Removed console statement
       } else {
-        console.log('⚠ Event subscription hook not found - feature may not be implemented');
+        // console.log('⚠ Event subscription hook not found - feature may not be implemented'); // Removed console statement
       }
     });
 
@@ -368,17 +368,17 @@ describe('Frontend-CLI Integration Tests', () => {
       if (fs.existsSync(realtimeComponentPath)) {
         const content = fs.readFileSync(realtimeComponentPath, 'utf8');
         expect(content).toContain('useBlockchainEvents');
-        console.log('✓ Real-time todo list component verified');
+        // console.log('✓ Real-time todo list component verified'); // Removed console statement
       }
 
       if (fs.existsSync(eventStatusPath)) {
         const content = fs.readFileSync(eventStatusPath, 'utf8');
         expect(content).toMatch(/status|event|connection/i);
-        console.log('✓ Event status component verified');
+        // console.log('✓ Event status component verified'); // Removed console statement
       }
 
       if (!fs.existsSync(realtimeComponentPath) && !fs.existsSync(eventStatusPath)) {
-        console.log('⚠ Real-time event components not found - feature may not be fully implemented');
+        // console.log('⚠ Real-time event components not found - feature may not be fully implemented'); // Removed console statement
       }
     });
 
@@ -394,9 +394,9 @@ describe('Frontend-CLI Integration Tests', () => {
         expect(configContent).toMatch(/subscription|websocket|event/i);
         expect(configContent).toMatch(/TodoNFT|package.*id/i);
 
-        console.log('✓ Event handling configuration verified');
+        // console.log('✓ Event handling configuration verified'); // Removed console statement
       } else {
-        console.log('⚠ Blockchain event configuration not found');
+        // console.log('⚠ Blockchain event configuration not found'); // Removed console statement
       }
     });
   });
@@ -415,7 +415,7 @@ describe('Frontend-CLI Integration Tests', () => {
       } catch (_error) {
         const errorOutput = error.toString();
         expect(errorOutput).toMatch(/invalid|empty|required/i);
-        console.log('✓ CLI input validation works correctly');
+        // console.log('✓ CLI input validation works correctly'); // Removed console statement
       }
     });
 
@@ -435,7 +435,7 @@ describe('Frontend-CLI Integration Tests', () => {
           if (fs.existsSync(configUtilPath)) {
             const configUtil = fs.readFileSync(configUtilPath, 'utf8');
             expect(configUtil).toMatch(/try.*catch|error.*handling/i);
-            console.log('✓ Frontend config error handling verified');
+            // console.log('✓ Frontend config error handling verified'); // Removed console statement
           }
 
         } finally {
@@ -459,14 +459,14 @@ describe('Frontend-CLI Integration Tests', () => {
       } catch (_error) {
         const errorOutput = error.toString();
         expect(errorOutput).toMatch(/invalid.*network|network.*not.*supported/i);
-        console.log('✓ Network error handling verified');
+        // console.log('✓ Network error handling verified'); // Removed console statement
       }
     });
   });
 
   describe('End-to-End Workflow Validation', () => {
     test('should complete full workflow: deploy → configure → create → list → complete', async () => {
-      console.log('Running complete E2E workflow...');
+      // console.log('Running complete E2E workflow...'); // Removed console statement
 
       // Step 1: Verify deployment (already done in previous tests)
       const configOutput = execSync('pnpm run cli -- config', {
@@ -521,11 +521,11 @@ describe('Frontend-CLI Integration Tests', () => {
       expect(completedTodo).toBeTruthy();
       expect(completedTodo.completed).toBe(true);
 
-      console.log('✅ Complete E2E workflow validation successful!');
+      // console.log('✅ Complete E2E workflow validation successful!'); // Removed console statement
     });
 
     test('should verify system is ready for production use', async () => {
-      console.log('Performing final system readiness check...');
+      // console.log('Performing final system readiness check...'); // Removed console statement
 
       // Check all critical components
       const checks = [
@@ -550,12 +550,12 @@ describe('Frontend-CLI Integration Tests', () => {
       }
 
       // Report results
-      console.log('\n🔍 System Readiness Report:');
+      // console.log('\n🔍 System Readiness Report:'); // Removed console statement
       results.forEach(result => {
         if (result.status === 'PASS') {
-          console.log(`  ✅ ${result.name}: PASS`);
+          // console.log(`  ✅ ${result.name}: PASS`); // Removed console statement
         } else {
-          console.log(`  ❌ ${result.name}: FAIL - ${result.error}`);
+          // console.log(`  ❌ ${result.name}: FAIL - ${result.error}`); // Removed console statement
         }
       });
 
@@ -563,7 +563,7 @@ describe('Frontend-CLI Integration Tests', () => {
       const totalChecks = results.length;
 
       expect(passedChecks).toBe(totalChecks);
-      console.log(`\n✅ System readiness: ${passedChecks}/${totalChecks} checks passed`);
+      // console.log(`\n✅ System readiness: ${passedChecks}/${totalChecks} checks passed`); // Removed console statement
     });
   });
 });

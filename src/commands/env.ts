@@ -1,6 +1,6 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import chalk from 'chalk';
 import { envConfig } from '../utils/environment-config';
 import { generateEnvTemplate, loadEnvironment } from '../utils/env-loader';
@@ -18,11 +18,14 @@ export default class EnvironmentCommand extends BaseCommand {
   static description = 'Manage environment variables and configuration';
 
   static examples = [
-    '$ waltodo env validate',
-    '$ waltodo env generate',
-    '$ waltodo env docs',
-    '$ waltodo env show',
-    '$ waltodo env check'
+    '<%= config.bin %> env validate                    # Validate .env file',
+    '<%= config.bin %> env generate                    # Generate .env template',
+    '<%= config.bin %> env docs                        # Show env var documentation',
+    '<%= config.bin %> env show                        # Display current env vars',
+    '<%= config.bin %> env check                       # Check env configuration',
+    '<%= config.bin %> env validate --fix              # Auto-fix env issues',
+    '<%= config.bin %> env show --reveal               # Show with secrets revealed',
+    '<%= config.bin %> env generate --minimal          # Generate minimal .env file'
   ];
 
   static flags = {
@@ -80,7 +83,7 @@ export default class EnvironmentCommand extends BaseCommand {
         default:
           this.error(`Unknown action: ${args.action}`);
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(`Error processing environment command: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -99,7 +102,7 @@ export default class EnvironmentCommand extends BaseCommand {
       });
       
       this.log(chalk.green('✓ Environment configuration is valid'));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -119,7 +122,7 @@ export default class EnvironmentCommand extends BaseCommand {
     try {
       generateEnvTemplate(templatePath);
       this.log(chalk.green(`✓ Environment template generated at ${templatePath}`));
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to generate template: ${error instanceof Error ? error.message : String(error)}`,
         'TEMPLATE_GENERATION_FAILED'
@@ -144,7 +147,7 @@ export default class EnvironmentCommand extends BaseCommand {
       
       fs.writeFileSync(docsPath, docs);
       this.log(chalk.green(`✓ Environment documentation generated at ${docsPath}`));
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to generate documentation: ${error instanceof Error ? error.message : String(error)}`,
         'DOCS_GENERATION_FAILED'

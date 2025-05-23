@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import { getAIVerifierAddress } from '../../services/ai/credentials/module-address';
 
 export default class Verify extends BaseCommand {
-  static description = 'Verify AI operations on the blockchain';
+  static description = 'Check and verify AI operation results on blockchain for integrity and authenticity';
 
   static flags = {
     ...BaseCommand.flags,
@@ -56,9 +56,12 @@ export default class Verify extends BaseCommand {
   };
 
   static examples = [
-    '$ walrus_todo ai verify check --id VERIFICATION_ID',
-    '$ walrus_todo ai verify list --todo TODO_ID',
-    '$ walrus_todo ai verify verify --todo TODO_ID --operation summarize',
+    '<%= config.bin %> ai verify check --id VERIFICATION_ID                   # Check verification',
+    '<%= config.bin %> ai verify list --todo TODO_ID                         # List verifications',
+    '<%= config.bin %> ai verify verify --todo TODO_ID --operation summarize  # Verify operation',
+    '<%= config.bin %> ai verify list --all                                  # List all verifications',
+    '<%= config.bin %> ai verify check --id abc123 --detailed                # Detailed check',
+    '<%= config.bin %> ai verify verify --todo task-789 --operation categorize --blockchain',
   ];
 
   private verificationService: AIVerificationService;
@@ -129,7 +132,7 @@ export default class Verify extends BaseCommand {
         this.log(`${chalk.red('\u2717')} Verification ${chalk.cyan(verificationId)} is invalid or not found`);
         this.log('This verification ID does not exist on the blockchain.');
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(error.message);
     }
   }
@@ -158,7 +161,7 @@ export default class Verify extends BaseCommand {
         
         this.log(`  ${chalk.cyan(verificationId)}: ${status}`);
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(error.message);
     }
   }
@@ -187,7 +190,7 @@ export default class Verify extends BaseCommand {
           this.log(`You can create a verification with: ${chalk.cyan(`walrus_todo ai ${operation} ${todoId} --verify`)}`);
         }
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(error.message);
     }
   }

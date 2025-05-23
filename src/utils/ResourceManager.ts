@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('ResourceManager');
  * Resource Manager - Manages lifecycle of resources requiring explicit cleanup
  * Ensures resources are properly disposed even in error scenarios
  */
@@ -82,7 +85,7 @@ export class ResourceManager {
       // Handle normal exit
       process.on('exit', () => {
         this.disposeAll().catch(err => {
-          console.error('Error during resource cleanup on exit:', err);
+          logger.error('Error during resource cleanup on exit:', err);
         });
       });
       
@@ -94,7 +97,7 @@ export class ResourceManager {
               process.exit(0);
             })
             .catch(err => {
-              console.error(`Error during resource cleanup on ${signal}:`, err);
+              logger.error(`Error during resource cleanup on ${signal}:`, err);
               process.exit(1);
             });
         });
@@ -102,26 +105,26 @@ export class ResourceManager {
       
       // Handle uncaught exceptions
       process.on('uncaughtException', (err) => {
-        console.error('Uncaught exception:', err);
+        logger.error('Uncaught exception:', err);
         this.disposeAll()
           .then(() => {
             process.exit(1);
           })
           .catch(cleanupErr => {
-            console.error('Error during resource cleanup after uncaught exception:', cleanupErr);
+            logger.error('Error during resource cleanup after uncaught exception:', cleanupErr);
             process.exit(1);
           });
       });
       
       // Handle unhandled promise rejections
       process.on('unhandledRejection', (reason) => {
-        console.error('Unhandled promise rejection:', reason);
+        logger.error('Unhandled promise rejection:', reason);
         this.disposeAll()
           .then(() => {
             process.exit(1);
           })
           .catch(cleanupErr => {
-            console.error('Error during resource cleanup after unhandled rejection:', cleanupErr);
+            logger.error('Error during resource cleanup after unhandled rejection:', cleanupErr);
             process.exit(1);
           });
       });
@@ -168,7 +171,7 @@ export class ResourceManager {
     if (isBaseAdapter(resource)) {
       // Don't register already disposed adapters
       if (resource.isDisposed()) {
-        console.warn(`Attempted to register already disposed adapter: ${id}`);
+        logger.warn(`Attempted to register already disposed adapter: ${id}`);
         return resource;
       }
 
@@ -202,7 +205,7 @@ export class ResourceManager {
     // Handle standard DisposableResource
     // Don't register already disposed resources
     if (resource.isDisposed()) {
-      console.warn(`Attempted to register already disposed resource: ${id}`);
+      logger.warn(`Attempted to register already disposed resource: ${id}`);
       return resource;
     }
 
@@ -253,7 +256,7 @@ export class ResourceManager {
       }
       this.resources.delete(id);
       return true;
-    } catch (_error) {
+    } catch (error) {
       const errorMessage = `Error disposing resource ${id} (${registration.description}): ${error instanceof Error ? error.message : String(error)}`;
 
       if (options.throwOnError) {
@@ -263,7 +266,7 @@ export class ResourceManager {
         );
       }
 
-      console.error(errorMessage);
+      logger.error(errorMessage);
       return false;
     }
   }
@@ -303,7 +306,7 @@ export class ResourceManager {
           disposed++;
         }
         this.resources.delete(registration.id);
-      } catch (_error) {
+      } catch (error) {
         const wrappedError = new ResourceManagerError(
           `Error disposing resource ${registration.id} (${registration.description}): ${error instanceof Error ? error.message : String(error)}`,
           error instanceof Error ? error : undefined
@@ -311,11 +314,11 @@ export class ResourceManager {
 
         if (options.continueOnError) {
           errors.push(wrappedError);
-          console.error(wrappedError.message);
+          logger.error(wrappedError.message);
         } else if (options.throwOnError) {
           throw wrappedError;
         } else {
-          console.error(wrappedError.message);
+          logger.error(wrappedError.message);
           return disposed;
         }
       }
@@ -375,7 +378,7 @@ export class ResourceManager {
           continueOnError: options.continueOnError,
           throwOnError: false // We'll handle errors aggregated at this level
         });
-      } catch (_error) {
+      } catch (error) {
         if (options.continueOnError) {
           errors.push(error instanceof Error ? error : new Error(String(error)));
         } else if (options.throwOnError) {
@@ -384,7 +387,7 @@ export class ResourceManager {
             error instanceof Error ? error : undefined
           );
         } else {
-          console.error(`Error during disposeAll (type ${type}):`, error);
+          logger.error(`Error during disposeAll (type ${type}):`, error);
           break;
         }
       }

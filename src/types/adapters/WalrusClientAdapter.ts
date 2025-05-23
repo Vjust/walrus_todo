@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('WalrusClientAdapter');
  * WalrusClientAdapter
  *
  * This adapter reconciles differences between WalrusClient interface versions
@@ -27,7 +30,7 @@
  *
  * // Use the adapter with a consistent interface regardless of underlying client version
  * const blobInfo = await adapter.getBlobInfo('blob-id-123');
- * console.log(blobInfo.blob_id); // Consistent property access
+ * logger.info(blobInfo.blob_id); // Consistent property access
  * ```
  */
 

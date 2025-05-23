@@ -69,14 +69,27 @@ function createMockOutputStream(): Writable {
       callback();
     }
   });
-  (stream as any).getOutput = () => chunks.join('');
-  (stream as any).chunks = chunks;
+  (stream as { getOutput: () => string; chunks: string[] }).getOutput = () => chunks.join('');
+  (stream as { chunks: string[] }).chunks = chunks;
   return stream;
 }
 
 describe('InteractiveMode', () => {
-  let mockCommandHistory: any;
-  let mockCommandRegistry: any;
+  interface MockCommandHistory {
+    add: jest.Mock;
+    getHistory: jest.Mock;
+    clear: jest.Mock;
+  }
+  
+  interface MockCommandRegistry {
+    getCommands: jest.Mock;
+    getAllCommands: jest.Mock;
+    getCommand: jest.Mock;
+    getSuggestions: jest.Mock;
+  }
+  
+  let mockCommandHistory: MockCommandHistory;
+  let mockCommandRegistry: MockCommandRegistry;
   let interactiveMode: InteractiveMode;
   let mockInput: Readable;
   let mockOutput: Writable;

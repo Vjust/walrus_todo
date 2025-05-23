@@ -28,7 +28,7 @@ export class PromptValidator {
         // Validate the input
         InputValidator.validate(sanitizedInput, rules);
         return true;
-      } catch (_error) {
+      } catch (error) {
         // Return error message for inquirer
         if (error instanceof CLIError) {
           return error.message;
@@ -103,7 +103,7 @@ export class PromptValidator {
         try {
           new URL(value);
           return true;
-        } catch {
+        } catch (error: unknown) {
           return false;
         }
       },

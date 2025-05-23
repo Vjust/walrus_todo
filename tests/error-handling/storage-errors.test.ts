@@ -72,7 +72,7 @@ describe('Storage Error Handling', () => {
       // Test specific error properties
       try {
         await walrusStorage.store(testData);
-      } catch (_error) {
+      } catch (error: any) {
         expect(error.code).toContain('STORAGE_');
         expect(error.shouldRetry).toBe(true);
       }
@@ -117,7 +117,7 @@ describe('Storage Error Handling', () => {
       // Test specific error properties
       try {
         await walrusStorage.store(invalidData as any);
-      } catch (_error) {
+      } catch (error: any) {
         expect(error.publicMessage).toContain('Invalid value for title');
       }
     });
@@ -141,7 +141,7 @@ describe('Storage Error Handling', () => {
       try {
         await walrusStorage.store(largeTestData);
         fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error: any) {
         expect(error).toBeInstanceOf(StorageError);
         expect(error.code).toBe(WalrusErrorCode.WALRUS_INSUFFICIENT_TOKENS);
       }
@@ -171,7 +171,7 @@ describe('Storage Error Handling', () => {
       // Verify error details
       try {
         await storageManager.storeObject('test-path', largeObject);
-      } catch (_error) {
+      } catch (error: any) {
         expect(error.code).toBe('VALIDATION_ERROR');
         expect(error.recoverable).toBe(false);
       }
@@ -192,7 +192,7 @@ describe('Storage Error Handling', () => {
       // Verify specific error details
       try {
         await walrusStorage.retrieve('corrupted-id');
-      } catch (_error) {
+      } catch (error: any) {
         expect(error.code).toContain('PARSE');
       }
     });
@@ -229,7 +229,7 @@ describe('Storage Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await walrusStorage.store({ id: 'retry-test', title: 'Retry Test' });
-          } catch (_error) {
+          } catch (error: any) {
             if (error instanceof StorageError && error.shouldRetry && attempts < maxAttempts - 1) {
               attempts++;
               await new Promise(resolve => setTimeout(resolve, 10));
@@ -316,7 +316,7 @@ describe('Storage Error Handling', () => {
         try {
           const result = await walrusStorage.store(testData);
           results.push({ success: true, result });
-        } catch (_error) {
+        } catch (error: any) {
           results.push({ success: false, error: error.message });
         }
       }

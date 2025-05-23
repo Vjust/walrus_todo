@@ -2,19 +2,16 @@ import { ExpiryMonitor } from '../../src/utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../src/utils/VaultManager';
 import { WalrusClientExt } from '../../src/types/client';
 
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-
 jest.mock('../../src/utils/VaultManager');
 jest.mock('@mysten/walrus');
 
 describe('ExpiryMonitor', () => {
-  let _monitor: ExpiryMonitor;
+  let monitor: ExpiryMonitor;
   let mockVaultManager: jest.Mocked<VaultManager>;
   let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
   let mockWarningHandler: jest.Mock;
   let mockRenewalHandler: jest.Mock;
   let mockDate: Date;
-  let _mockSigner: Ed25519Keypair;
 
   const mockConfig = {
     checkInterval: 1000,

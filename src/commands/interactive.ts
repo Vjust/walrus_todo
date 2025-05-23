@@ -1,6 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { InteractiveMode } from '../utils/interactive-mode';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * Interactive mode command for Walrus Todo CLI
@@ -51,14 +52,17 @@ export default class InteractiveCommand extends BaseCommand {
 
       // Start the interactive session
       await interactive.start();
-    } catch (_error) {
+    } catch (error) {
       // Restore original logging for error handling
       this.log = originalLog;
       this.error = originalError;
       
+      if (error instanceof CLIError) {
+        throw error;
+      }
       this.errorWithHelp(
         'Failed to start interactive mode',
-        error.message,
+        error instanceof Error ? error.message : String(error),
         'Please try running the command again'
       );
     }

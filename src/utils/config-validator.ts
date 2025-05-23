@@ -21,8 +21,8 @@ export interface ValidationResult {
 }
 
 export interface ConfigComparison {
-  cli: any;
-  frontend: any;
+  cli: Record<string, unknown>;
+  frontend: Record<string, unknown>;
   differences: string[];
 }
 
@@ -80,7 +80,7 @@ export class ConfigValidator {
       // Set overall validity
       result.valid = result.errors.length === 0;
 
-    } catch (_error) {
+    } catch (error) {
       result.errors.push(`Configuration validation failed: ${error instanceof Error ? error.message : String(error)}`);
       result.valid = false;
     }
@@ -91,7 +91,7 @@ export class ConfigValidator {
   /**
    * Validates CLI configuration
    */
-  private validateCliConfig(config: any, result: ValidationResult): void {
+  private validateCliConfig(config: Record<string, unknown>, result: ValidationResult): void {
     if (!config.network) {
       result.errors.push('Network not configured in CLI');
       result.suggestions.push('Run: waltodo configure --network <network>');
@@ -108,13 +108,15 @@ export class ConfigValidator {
     }
 
     // Validate network format
-    if (config.network && !['mainnet', 'testnet', 'devnet', 'localnet'].includes(config.network)) {
+    if (config.network && typeof config.network === 'string' && 
+        !['mainnet', 'testnet', 'devnet', 'localnet'].includes(config.network)) {
       result.errors.push(`Invalid network: ${config.network}`);
     }
 
     // Validate package ID format
-    const packageId = config.packageId || config.lastDeployment?.packageId;
-    if (packageId && !packageId.startsWith('0x')) {
+    const lastDeployment = config.lastDeployment as Record<string, unknown> | undefined;
+    const packageId = config.packageId || lastDeployment?.packageId;
+    if (packageId && typeof packageId === 'string' && !packageId.startsWith('0x')) {
       result.errors.push('Package ID must start with 0x');
     }
   }
@@ -159,7 +161,7 @@ export class ConfigValidator {
         result.errors.push('Frontend config package ID must start with 0x');
       }
 
-    } catch (_error) {
+    } catch (error) {
       result.errors.push(`Invalid JSON in frontend config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -167,7 +169,7 @@ export class ConfigValidator {
   /**
    * Compares CLI and frontend configurations
    */
-  private async compareConfigurations(cliConfig: any, network: string, result: ValidationResult): Promise<void> {
+  private async compareConfigurations(cliConfig: Record<string, unknown>, network: string, result: ValidationResult): Promise<void> {
     const configPath = path.join(this.frontendConfigDir, `${network}.json`);
     
     if (!fs.existsSync(configPath)) {
@@ -194,7 +196,7 @@ export class ConfigValidator {
         result.warnings.push('Deployer address mismatch between CLI and frontend config');
       }
 
-    } catch (_error) {
+    } catch (error) {
       // Already handled in validateFrontendConfig
     }
   }
@@ -202,9 +204,10 @@ export class ConfigValidator {
   /**
    * Validates deployment consistency
    */
-  private validateDeploymentConsistency(config: any, result: ValidationResult): void {
+  private validateDeploymentConsistency(config: Record<string, unknown>, result: ValidationResult): void {
     if (config.lastDeployment) {
-      const { packageId, digest, network, timestamp } = config.lastDeployment;
+      const lastDeployment = config.lastDeployment as Record<string, unknown>;
+      const { packageId, digest, network, timestamp } = lastDeployment;
 
       if (!packageId) {
         result.errors.push('Last deployment missing package ID');
@@ -254,8 +257,13 @@ export class ConfigValidator {
   /**
    * Gets nested object value by dot notation
    */
-  private getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
+  private getNestedValue(obj: unknown, path: string): unknown {
+    return path.split('.').reduce((current, key) => {
+      if (current && typeof current === 'object' && key in current) {
+        return (current as Record<string, unknown>)[key];
+      }
+      return undefined;
+    }, obj);
   }
 
   /**
@@ -266,7 +274,7 @@ export class ConfigValidator {
       const frontendPath = path.join(this.projectRoot, 'waltodo-frontend');
       const stats = await fs.promises.stat(frontendPath);
       return stats.isDirectory();
-    } catch {
+    } catch (error: unknown) {
       return false;
     }
   }
@@ -284,7 +292,7 @@ export class ConfigValidator {
       return files
         .filter(file => file.endsWith('.json'))
         .map(file => file.replace('.json', ''));
-    } catch {
+    } catch (error: unknown) {
       return [];
     }
   }

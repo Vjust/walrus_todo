@@ -17,7 +17,7 @@ export async function withTimeout<T>(
   timeoutMs: number,
   operationName: string
 ): Promise<T> {
-  let timeoutId: NodeJS.Timeout;
+  let timeoutId: NodeJS.Timeout | undefined;
   
   // Create a timeout promise that rejects after the specified time
   const timeoutPromise = new Promise<never>((_, reject) => {
@@ -32,11 +32,15 @@ export async function withTimeout<T>(
   try {
     // Race the original promise against the timeout
     const result = await Promise.race([promise, timeoutPromise]);
-    clearTimeout(timeoutId!);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     return result;
-  } catch (_error) {
+  } catch (error) {
     // Always clear the timeout to prevent memory leaks
-    clearTimeout(timeoutId!);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     
     if (error instanceof TimeoutError) {
       throw error;
@@ -118,7 +122,7 @@ export async function withRetry<T>(
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       return await fn();
-    } catch (_error) {
+    } catch (error) {
       const typedError = error instanceof Error 
         ? error 
         : new Error(String(error));

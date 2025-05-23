@@ -89,7 +89,10 @@
     "config:generate": "pnpm run build:dev && ./bin/waltodo generate-frontend-config",
     "config:validate": "pnpm run build:dev && ./bin/waltodo validate-config",
     "config:validate:detailed": "pnpm run build:dev && ./bin/waltodo validate-config --detailed",
-    "build:all": "pnpm run build && pnpm run nextjs:build"
+    "build:all": "pnpm run build && pnpm run nextjs:build",
+    "api:start": "node dist/src/api/start-server.js",
+    "api:dev": "ts-node src/api/start-server.ts",
+    "api:start:port": "node dist/src/api/start-server.js --port="
   },
   "keywords": [
     "cli",
@@ -113,9 +116,14 @@
     "axios": "^1.9.0",
     "chalk": "^4.1.2",
     "cli-progress": "^3.12.0",
+    "compression": "^1.7.6",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
     "find-up": "^5.0.0",
     "form-data": "^4.0.0",
+    "helmet": "^8.0.0",
     "image-size": "^2.0.2",
     "inquirer": "^9.2.15",
     "jsonwebtoken": "^9.0.2",
@@ -123,7 +131,6 @@
     "node-fetch": "^3.3.2",
     "p-retry": "^6.2.1",
     "uuid": "^11.1.0",
-    "waltodo": "link:",
     "zod": "^3.25.12"
   },
   "devDependencies": {
@@ -137,6 +144,9 @@
     "@playwright/test": "^1.52.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@types/cli-progress": "^3.11.3",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
     "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.30",

@@ -257,7 +257,7 @@ describe('Network Error Handling', () => {
           'custom-error-operation'
         );
         fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error: any) {
         // Verify error details are preserved
         expect(error.code).toContain('NETWORK_CONNECT_ERROR');
         expect(error.shouldRetry).toBe(false);
@@ -300,7 +300,7 @@ describe('Network Error Handling', () => {
         try {
           const result = await task.performNetworkRequest();
           results.push({ success: true, result });
-        } catch (_error) {
+        } catch (error: any) {
           results.push({ success: false, error: error.message });
         }
       }

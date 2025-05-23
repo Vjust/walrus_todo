@@ -25,14 +25,14 @@ export class CommandSanitizer {
    * @param flags Command flags object
    * @returns New object with sanitized string values
    */
-  static sanitizeFlags<T extends Record<string, any>>(flags: T): T {
+  static sanitizeFlags<T extends Record<string, unknown>>(flags: T): T {
     const sanitized = { ...flags };
 
     for (const [key, value] of Object.entries(sanitized)) {
       if (typeof value === 'string') {
-        sanitized[key as keyof T] = this.sanitizeString(value) as any;
+        sanitized[key as keyof T] = this.sanitizeString(value) as T[keyof T];
       } else if (Array.isArray(value) && value.every(item => typeof item === 'string')) {
-        sanitized[key as keyof T] = value.map(item => this.sanitizeString(item)) as any;
+        sanitized[key as keyof T] = value.map(item => this.sanitizeString(item)) as T[keyof T];
       }
     }
 
@@ -44,7 +44,7 @@ export class CommandSanitizer {
    * @param args Command args object
    * @returns New object with sanitized string values
    */
-  static sanitizeArgs<T extends Record<string, any>>(args: T): T {
+  static sanitizeArgs<T extends Record<string, unknown>>(args: T): T {
     return this.sanitizeFlags(args);
   }
 
@@ -72,19 +72,19 @@ export class CommandSanitizer {
    * @param obj Object to sanitize
    * @returns Sanitized object safe for JSON operations
    */
-  static sanitizeForJson(obj: any): any {
+  static sanitizeForJson<T>(obj: T): T {
     if (!obj) return obj;
 
     if (typeof obj === 'string') {
-      return this.sanitizeString(obj);
+      return this.sanitizeString(obj) as T;
     }
 
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeForJson(item));
+      return obj.map(item => this.sanitizeForJson(item)) as T;
     }
 
     if (typeof obj === 'object' && obj !== null) {
-      const sanitized: Record<string, any> = {};
+      const sanitized: Record<string, unknown> = {};
 
       for (const [key, value] of Object.entries(obj)) {
         // Sanitize the key (although keys are usually safe)
@@ -92,7 +92,7 @@ export class CommandSanitizer {
         sanitized[sanitizedKey] = this.sanitizeForJson(value);
       }
 
-      return sanitized;
+      return sanitized as T;
     }
 
     // Return primitives as-is
@@ -114,7 +114,7 @@ export class CommandSanitizer {
         return '';
       }
       return parsed.toString();
-    } catch {
+    } catch (error: unknown) {
       // Not a valid URL
       return '';
     }

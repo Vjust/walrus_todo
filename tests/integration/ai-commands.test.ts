@@ -1,5 +1,4 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { execSync } from 'child_process';
 
 // Mock the required modules
 jest.mock('child_process', () => ({ execSync: jest.fn() }));
@@ -17,7 +16,7 @@ describe('AI Commands Integration Tests', () => {
   const CLI_CMD = 'node ./bin/run.js';
   const MOCK_API_KEY = 'test-api-key-123';
   
-  const mockTodos = [
+  const _mockTodos = [
     { 
       id: '1', 
       title: 'Complete financial report', 

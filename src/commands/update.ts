@@ -1,10 +1,10 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../base-command';
+import BaseCommand from '../base-command';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
 import { validateDate, validatePriority } from '../utils';
 import { Todo } from '../types/todo';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * @class UpdateCommand
@@ -24,9 +24,12 @@ export default class UpdateCommand extends BaseCommand {
   static description = 'Update properties of an existing todo item';
 
   static examples = [
-    '<%= config.bin %> update my-list -i task-123 -t "Updated task"',
-    '<%= config.bin %> update my-list -i "Buy groceries" -p high',
-    '<%= config.bin %> update my-list -i task-123 -d 2024-05-01'
+    '<%= config.bin %> update my-list -i task-123 -t "Updated task"           # Update title',
+    '<%= config.bin %> update my-list -i "Buy groceries" -p high              # Update priority',
+    '<%= config.bin %> update my-list -i task-123 -d 2024-05-01               # Update due date',
+    '<%= config.bin %> update -i todo-456 -t "New title" -p low               # Multiple updates',
+    '<%= config.bin %> update work -i "Old task" -t "Revised task" -g "urgent,important"  # Update with tags',
+    '<%= config.bin %> update personal -i todo-789 --clear-due                # Clear due date'
   ];
 
   static flags = {
@@ -133,7 +136,7 @@ export default class UpdateCommand extends BaseCommand {
       this.log(chalk.dim('ID: ') + todo.id);
       this.log(chalk.dim(`Changes made: ${changes}`));
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

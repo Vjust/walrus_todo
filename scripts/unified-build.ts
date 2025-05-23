@@ -3,6 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as ts from 'typescript';
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('unified-build');
 
 /**
  * Unified build script with improved error handling and reporting.
@@ -46,7 +49,7 @@ const options: BuildOptions = {
 if (args.includes('--clean-only')) {
   options.clean = true;
   options.manifestOnly = true; // Just to skip the build
-  console.log(`${colors.blue}Running clean-only operation...${colors.reset}`);
+  logger.info(`${colors.blue}Running clean-only operation...${colors.reset}`);
 }
 
 // Root directory of the project
@@ -60,19 +63,19 @@ const manifestPath = path.join(rootDir, 'oclif.manifest.json');
  */
 function cleanDist(): void {
   if (options.verbose) {
-    console.log(`${colors.blue}Cleaning dist directory...${colors.reset}`);
+    logger.info(`${colors.blue}Cleaning dist directory...${colors.reset}`);
   }
   
   if (fs.existsSync(distDir)) {
     try {
       fs.rmSync(distDir, { recursive: true, force: true });
-      console.log(`${colors.green}✓ Successfully cleaned dist directory${colors.reset}`);
+      logger.info(`${colors.green}✓ Successfully cleaned dist directory${colors.reset}`);
     } catch (error) {
-      console.error(`${colors.red}✗ Failed to clean dist directory:${colors.reset}`, error);
+      logger.error(`${colors.red}✗ Failed to clean dist directory:${colors.reset}`, error);
       process.exit(1);
     }
   } else if (options.verbose) {
-    console.log(`${colors.gray}Dist directory does not exist, skipping clean.${colors.reset}`);
+    logger.info(`${colors.gray}Dist directory does not exist, skipping clean.${colors.reset}`);
   }
 }
 
@@ -83,7 +86,7 @@ function fixBinPermissions(): void {
   if (!options.binPermissionFix) return;
   
   if (options.verbose) {
-    console.log(`${colors.blue}Fixing bin directory permissions...${colors.reset}`);
+    logger.info(`${colors.blue}Fixing bin directory permissions...${colors.reset}`);
   }
   
   try {
@@ -99,20 +102,20 @@ function fixBinPermissions(): void {
             const newMode = currentMode | 0o111;
             fs.chmodSync(filePath, newMode);
             if (options.verbose) {
-              console.log(`${colors.green}✓ Fixed permissions for ${filePath}${colors.reset}`);
+              logger.info(`${colors.green}✓ Fixed permissions for ${filePath}${colors.reset}`);
             }
           } catch (error) {
-            console.warn(`${colors.yellow}⚠ Could not change permissions for ${filePath}:${colors.reset}`, error);
+            logger.warn(`${colors.yellow}⚠ Could not change permissions for ${filePath}:${colors.reset}`, error);
           }
         }
       });
       
-      console.log(`${colors.green}✓ Successfully updated bin directory permissions${colors.reset}`);
+      logger.info(`${colors.green}✓ Successfully updated bin directory permissions${colors.reset}`);
     } else {
-      console.warn(`${colors.yellow}⚠ Bin directory not found, skipping permission fix${colors.reset}`);
+      logger.warn(`${colors.yellow}⚠ Bin directory not found, skipping permission fix${colors.reset}`);
     }
   } catch (error) {
-    console.error(`${colors.red}✗ Failed to fix bin directory permissions:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Failed to fix bin directory permissions:${colors.reset}`, error);
   }
 }
 
@@ -121,7 +124,7 @@ function fixBinPermissions(): void {
  */
 function touchManifest(): void {
   if (options.verbose) {
-    console.log(`${colors.blue}Creating/touching manifest file...${colors.reset}`);
+    logger.info(`${colors.blue}Creating/touching manifest file...${colors.reset}`);
   }
   
   try {
@@ -133,9 +136,9 @@ function touchManifest(): void {
       const now = new Date();
       fs.utimesSync(manifestPath, now, now);
     }
-    console.log(`${colors.green}✓ Successfully touched manifest file${colors.reset}`);
+    logger.info(`${colors.green}✓ Successfully touched manifest file${colors.reset}`);
   } catch (error) {
-    console.error(`${colors.red}✗ Failed to create/touch manifest file:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Failed to create/touch manifest file:${colors.reset}`, error);
   }
 }
 
@@ -144,7 +147,7 @@ function touchManifest(): void {
  */
 function runTypeScriptCompiler(): void {
   if (options.verbose) {
-    console.log(`${colors.blue}Running TypeScript compiler with full type checking...${colors.reset}`);
+    logger.info(`${colors.blue}Running TypeScript compiler with full type checking...${colors.reset}`);
   }
   
   try {
@@ -156,16 +159,16 @@ function runTypeScriptCompiler(): void {
     
     if (tscResult.status !== 0) {
       if (options.skipTypeCheck) {
-        console.warn(`${colors.yellow}⚠ TypeScript compilation had errors, but continuing due to --skip-typecheck flag${colors.reset}`);
+        logger.warn(`${colors.yellow}⚠ TypeScript compilation had errors, but continuing due to --skip-typecheck flag${colors.reset}`);
       } else {
-        console.error(`${colors.red}✗ TypeScript compilation failed${colors.reset}`);
+        logger.error(`${colors.red}✗ TypeScript compilation failed${colors.reset}`);
         process.exit(1);
       }
     } else {
-      console.log(`${colors.green}✓ TypeScript compilation successful${colors.reset}`);
+      logger.info(`${colors.green}✓ TypeScript compilation successful${colors.reset}`);
     }
   } catch (error) {
-    console.error(`${colors.red}✗ Failed to run TypeScript compiler:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Failed to run TypeScript compiler:${colors.reset}`, error);
     if (!options.skipTypeCheck) {
       process.exit(1);
     }
@@ -177,12 +180,12 @@ function runTypeScriptCompiler(): void {
  */
 function runTranspileOnly(): void {
   if (options.verbose) {
-    console.log(`${colors.blue}Running transpile-only build...${colors.reset}`);
+    logger.info(`${colors.blue}Running transpile-only build...${colors.reset}`);
   }
   
   // Load tsconfig.json
   const configPath = path.join(rootDir, 'tsconfig.json');
-  console.log(`${colors.gray}Using tsconfig: ${configPath}${colors.reset}`);
+  logger.info(`${colors.gray}Using tsconfig: ${configPath}${colors.reset}`);
   
   try {
     // Parse the tsconfig.json
@@ -229,7 +232,7 @@ function runTranspileOnly(): void {
     
     // Get all TypeScript files in src directory
     const sourceFiles = getSourceFiles(path.join(rootDir, 'src'));
-    console.log(`${colors.gray}Transpiling ${sourceFiles.length} files...${colors.reset}`);
+    logger.info(`${colors.gray}Transpiling ${sourceFiles.length} files...${colors.reset}`);
     
     // Also include script files
     const scriptFiles = getSourceFiles(path.join(rootDir, 'scripts'));
@@ -273,34 +276,36 @@ function runTranspileOnly(): void {
         }
         
         // Create output directory if it doesn't exist
-        const outputDir = path.dirname(outputPath);
-        if (!fs.existsSync(outputDir)) {
-          fs.mkdirSync(outputDir, { recursive: true });
+        if (outputPath) {
+          const outputDir = path.dirname(outputPath);
+          if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir, { recursive: true });
+          }
+          
+          // Write the transpiled file
+          fs.writeFileSync(outputPath, outputText);
         }
-        
-        // Write the transpiled file
-        fs.writeFileSync(outputPath, outputText);
         filesProcessed++;
         
         if (options.verbose && filesProcessed % 10 === 0) {
-          console.log(`${colors.gray}Processed ${filesProcessed}/${allFiles.length} files...${colors.reset}`);
+          logger.info(`${colors.gray}Processed ${filesProcessed}/${allFiles.length} files...${colors.reset}`);
         }
       } catch (error) {
-        console.error(`${colors.red}Error processing ${fileName}:${colors.reset}`, error);
+        logger.error(`${colors.red}Error processing ${fileName}:${colors.reset}`, error);
         errors++;
       }
     });
     
-    console.log(
+    logger.info(
       `${colors.green}✓ Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.${colors.reset}`
     );
     
     if (errors > 0) {
-      console.warn(`${colors.yellow}⚠ There were ${errors} errors during transpilation.${colors.reset}`);
+      logger.warn(`${colors.yellow}⚠ There were ${errors} errors during transpilation.${colors.reset}`);
     }
     
   } catch (error) {
-    console.error(`${colors.red}✗ Failed to run transpile-only build:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Failed to run transpile-only build:${colors.reset}`, error);
     process.exit(1);
   }
 }
@@ -309,19 +314,19 @@ function runTranspileOnly(): void {
  * Main build process
  */
 function build(): void {
-  console.log(`${colors.magenta}Starting unified build process...${colors.reset}`);
+  logger.info(`${colors.magenta}Starting unified build process...${colors.reset}`);
   console.time('Build completed in');
   
   try {
     // Display build options
     if (options.verbose) {
-      console.log(`${colors.cyan}Build options:${colors.reset}`);
-      console.log(`  Skip Type Check: ${options.skipTypeCheck}`);
-      console.log(`  Verbose: ${options.verbose}`);
-      console.log(`  Clean: ${options.clean}`);
-      console.log(`  Manifest Only: ${options.manifestOnly}`);
-      console.log(`  Fix Permissions: ${options.binPermissionFix}`);
-      console.log(`  Transpile Only: ${options.transpileOnly}`);
+      logger.info(`${colors.cyan}Build options:${colors.reset}`);
+      logger.info(`  Skip Type Check: ${options.skipTypeCheck}`);
+      logger.info(`  Verbose: ${options.verbose}`);
+      logger.info(`  Clean: ${options.clean}`);
+      logger.info(`  Manifest Only: ${options.manifestOnly}`);
+      logger.info(`  Fix Permissions: ${options.binPermissionFix}`);
+      logger.info(`  Transpile Only: ${options.transpileOnly}`);
     }
     
     // Step 1: Clean if requested
@@ -332,7 +337,7 @@ function build(): void {
     // Step 2: Generate manifest only if requested
     if (options.manifestOnly) {
       touchManifest();
-      console.log(`${colors.green}✓ Manifest-only operation completed successfully${colors.reset}`);
+      logger.info(`${colors.green}✓ Manifest-only operation completed successfully${colors.reset}`);
       return;
     }
     
@@ -349,10 +354,10 @@ function build(): void {
     // Step 5: Create/touch manifest
     touchManifest();
     
-    console.log(`${colors.green}✓ Build completed successfully${colors.reset}`);
+    logger.info(`${colors.green}✓ Build completed successfully${colors.reset}`);
     console.timeEnd('Build completed in');
   } catch (error) {
-    console.error(`${colors.red}✗ Build failed:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Build failed:${colors.reset}`, error);
     process.exit(1);
   }
 }

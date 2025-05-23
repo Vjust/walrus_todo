@@ -1,15 +1,18 @@
 import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { TransactionBlock } from '@mysten/sui/transactions';
+import { createHash } from 'crypto';
 import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
 import { WalrusClientAdapter } from '../../../types/adapters/WalrusClientAdapter';
-import { 
+import { Logger } from '../../../utils/Logger';
+import {
   AICredentialAdapter,
   AIProviderCredential,
   CredentialType,
   CredentialVerificationParams,
   CredentialVerificationResult
 } from '../../../types/adapters/AICredentialAdapter';
-import { createHash } from 'crypto';
+
+const logger = new Logger('SuiAICredentialAdapter');
 
 /**
  * SuiAICredentialAdapter - Blockchain adapter for AI credentials
@@ -77,7 +80,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return credentialObjectId;
     } catch (_error) {
-      console.error('Failed to store credential:', error);
+      logger.error('Failed to store credential:', error);
       throw new Error(`Failed to store credential: ${error}`);
     }
   }
@@ -112,7 +115,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
             metadata[entry.key] = entry.value;
           });
         } catch (_error) {
-          console.warn('Failed to parse credential metadata:', error);
+          logger.warn('Failed to parse credential metadata:', error);
         }
       }
       
@@ -134,7 +137,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return providerCredential;
     } catch (_error) {
-      console.error('Failed to get credential:', error);
+      logger.error('Failed to get credential:', error);
       throw new Error(`Failed to get credential: ${error}`);
     }
   }
@@ -158,7 +161,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return credential;
     } catch (_error) {
-      console.error('Failed to get credential by provider:', error);
+      logger.error('Failed to get credential by provider:', error);
       throw new Error(`Failed to get credential by provider: ${error}`);
     }
   }
@@ -200,7 +203,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
               metadata[entry.key] = entry.value;
             });
           } catch (_error) {
-            console.warn('Failed to parse credential metadata:', error);
+            logger.warn('Failed to parse credential metadata:', error);
           }
         }
         
@@ -224,7 +227,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return credentials;
     } catch (_error) {
-      console.error('Failed to list credentials:', error);
+      logger.error('Failed to list credentials:', error);
       throw new Error(`Failed to list credentials: ${error}`);
     }
   }
@@ -237,7 +240,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const credentials = await this.listCredentials();
       return credentials.some(c => c.providerName === providerName);
     } catch (_error) {
-      console.error('Failed to check credential existence:', error);
+      logger.error('Failed to check credential existence:', error);
       return false;
     }
   }
@@ -264,7 +267,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return true;
     } catch (_error) {
-      console.error('Failed to delete credential:', error);
+      logger.error('Failed to delete credential:', error);
       return false;
     }
   }
@@ -313,7 +316,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return verificationResult;
     } catch (_error) {
-      console.error('Failed to verify credential:', error);
+      logger.error('Failed to verify credential:', error);
       throw new Error(`Failed to verify credential: ${error}`);
     }
   }
@@ -347,7 +350,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return isValid;
     } catch (_error) {
-      console.error('Failed to check verification status:', error);
+      logger.error('Failed to check verification status:', error);
       return false;
     }
   }
@@ -396,7 +399,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Convert to a shareable string
       return Buffer.from(JSON.stringify(proof)).toString('base64');
     } catch (_error) {
-      console.error('Failed to generate credential proof:', error);
+      logger.error('Failed to generate credential proof:', error);
       throw new Error(`Failed to generate credential proof: ${error}`);
     }
   }
@@ -423,7 +426,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       
       return true;
     } catch (_error) {
-      console.error('Failed to revoke verification:', error);
+      logger.error('Failed to revoke verification:', error);
       return false;
     }
   }

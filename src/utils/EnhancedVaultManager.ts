@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('EnhancedVaultManager');
  * EnhancedVaultManager.ts
  * 
  * An improved secure storage system for API keys and sensitive credentials
@@ -64,8 +67,8 @@ export class EnhancedVaultManager {
       // Set restrictive permissions on Linux/Mac
       try {
         fs.chmodSync(this.vaultDir, 0o700); // Only owner can read/write/execute
-      } catch (_error) {
-        console.warn('Could not set restrictive permissions on vault directory');
+      } catch (error) {
+        logger.warn('Could not set restrictive permissions on vault directory');
       }
     }
     
@@ -96,7 +99,7 @@ export class EnhancedVaultManager {
         if (this.encryptionKey.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE) {
           throw new CLIError('Invalid encryption key detected', 'ENCRYPTION_KEY_ERROR');
         }
-      } catch (_error) {
+      } catch (error) {
         throw new CLIError(
           'Failed to read encryption key. Vault may be corrupted.',
           'ENCRYPTION_KEY_ERROR'
@@ -123,8 +126,8 @@ export class EnhancedVaultManager {
           // Check for and handle expired credentials
           this.checkExpiredSecrets();
         }
-      } catch (_error) {
-        console.error('Failed to load vault metadata:', _error);
+      } catch (error) {
+        logger.error('Failed to load vault metadata:', _error);
         // Initialize with empty metadata for safety
         this.metadata = new Map();
       }
@@ -142,7 +145,7 @@ export class EnhancedVaultManager {
       // Encrypt and save
       const encryptedData = this.encrypt(JSON.stringify(metadataObj));
       fs.writeFileSync(this.metadataFile, encryptedData, { mode: 0o600 }); // Only owner can read/write
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to save vault metadata: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         'VAULT_METADATA_ERROR'
@@ -305,7 +308,7 @@ export class EnhancedVaultManager {
       this.failedAttempts.delete(name);
       
       return decryptedData.toString();
-    } catch (_error) {
+    } catch (error) {
       if (_error instanceof CLIError) {
         throw _error;
       }
@@ -491,7 +494,7 @@ export class EnhancedVaultManager {
       const lockUntil = Date.now() + (30 * 60 * 1000);
       this.lockoutUntil.set(name, lockUntil);
       
-      console.warn(`Too many failed attempts for secret "${name}". Locked for 30 minutes.`);
+      logger.warn(`Too many failed attempts for secret "${name}". Locked for 30 minutes.`);
     }
   }
   
@@ -573,7 +576,7 @@ export class EnhancedVaultManager {
         aad,                   // Associated data
         encrypted              // Encrypted data
       ]);
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Encryption failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         'ENCRYPTION_FAILED'
@@ -633,8 +636,8 @@ export class EnhancedVaultManager {
         decipher.update(encrypted),
         decipher.final()
       ]);
-    } catch (_error) {
-      console.error('Decryption failed:', _error);
+    } catch (error) {
+      logger.error('Decryption failed:', _error);
       return null;
     }
   }

@@ -1,6 +1,9 @@
 // Jest setup file for security audit tests
 
 // Set up environment variables for testing
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('setup');
 process.env.NODE_ENV = 'test';
 process.env.XAI_API_KEY = 'test-api-key';
 
@@ -46,7 +49,7 @@ global.sanitizeOutput = (output) => {
 
 // Set up a global error handler to catch unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', global.sanitizeOutput(String(reason)));
+  logger.error('Unhandled Rejection at:', promise, 'reason:', global.sanitizeOutput(String(reason)));
   // Don't actually exit the process during tests
 });
 

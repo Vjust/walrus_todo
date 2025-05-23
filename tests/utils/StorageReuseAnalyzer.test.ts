@@ -1,5 +1,5 @@
-import { StorageReuseAnalyzer } from '@/utils/storage-reuse-analyzer';
-
+import { StorageReuseAnalyzer } from '../../src/utils/storage-reuse-analyzer';
+import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 
 // Mock the SuiClient and WalrusClient
@@ -8,7 +8,7 @@ jest.mock('@mysten/walrus');
 
 describe('StorageReuseAnalyzer', () => {
   let storageReuseAnalyzer: StorageReuseAnalyzer;
-  let _mockSuiClient: jest.Mocked<SuiClient>;
+  let mockSuiClient: jest.Mocked<SuiClient>;
   let mockWalrusClient: jest.Mocked<WalrusClient>;
   
   beforeEach(() => {

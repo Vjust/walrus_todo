@@ -1,4 +1,4 @@
-import { CLIError } from '../../../types/error';
+import { CLIError } from '../../../types/errors/consolidated';
 import { AIProvider } from '../types';
 import { CredentialType } from '../../../types/adapters/AICredentialAdapter';
 

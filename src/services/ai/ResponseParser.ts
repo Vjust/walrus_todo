@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('ResponseParser');
  * ResponseParser - Handles parsing and normalizing responses from different AI providers
  * 
  * This class provides utilities for parsing and validating AI responses,
@@ -13,7 +16,7 @@ export class ResponseParser {
    * @param defaultValue The default value to return if parsing fails
    * @returns The parsed object or default value
    */
-  public static parseJson<T>(jsonStringOrObject: string | any, defaultValue: T): T {
+  public static parseJson<T>(jsonStringOrObject: string | unknown, defaultValue: T): T {
     try {
       // If it's already an object (not a string), return it directly
       if (typeof jsonStringOrObject !== 'string') {
@@ -32,7 +35,7 @@ export class ResponseParser {
         }
 
         // String representation to help with debugging
-        console.log('Received non-string, non-matching type:', typeof jsonStringOrObject);
+        logger.info('Received non-string, non-matching type:', typeof jsonStringOrObject);
         return defaultValue;
       }
 
@@ -53,7 +56,7 @@ export class ResponseParser {
 
       return JSON.parse(processed) as T;
     } catch (_error) {
-      console.error('Error parsing JSON response:', _error);
+      logger.error('Error parsing JSON response:', _error);
       return defaultValue;
     }
   }
@@ -64,12 +67,12 @@ export class ResponseParser {
    * @param requiredProps The required properties
    * @returns True if the object has all required properties
    */
-  public static validateObjectStructure(obj: any, requiredProps: string[]): boolean {
-    if (!obj || typeof obj !== 'object') {
+  public static validateObjectStructure(obj: unknown, requiredProps: string[]): boolean {
+    if (!obj || typeof obj !== 'object' || obj === null) {
       return false;
     }
     
-    return requiredProps.every(prop => prop in obj);
+    return requiredProps.every(prop => prop in (obj as Record<string, unknown>));
   }
 
   /**
@@ -98,7 +101,7 @@ export class ResponseParser {
       // If no JSON found or none valid, return default
       return defaultValue;
     } catch (_error) {
-      console.error('Error extracting JSON from text:', _error);
+      logger.error('Error extracting JSON from text:', _error);
       return defaultValue;
     }
   }
@@ -109,7 +112,7 @@ export class ResponseParser {
    * @param expectedType The expected type descriptor
    * @returns The normalized response or null if normalization fails
    */
-  public static normalizeResponse<T>(response: any, expectedType: string): T | null {
+  public static normalizeResponse<T>(response: unknown, expectedType: string): T | null {
     try {
       // Handle different response formats based on expected type
       switch (expectedType) {
@@ -138,7 +141,7 @@ export class ResponseParser {
           return response as T;
       }
     } catch (_error) {
-      console.error('Error normalizing response:', _error);
+      logger.error('Error normalizing response:', _error);
       return null;
     }
   }
@@ -149,7 +152,7 @@ export class ResponseParser {
    * @param schema Schema definition with property types
    * @returns True if the response matches the schema
    */
-  public static validateSchema(response: any, schema: Record<string, string>): boolean {
+  public static validateSchema(response: unknown, schema: Record<string, string>): boolean {
     if (!response || typeof response !== 'object') {
       return false;
     }

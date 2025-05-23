@@ -7,11 +7,11 @@
  * a single point of interaction for storage operations.
  */
 
+import { execSync } from 'child_process';
 import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { AsyncOperationHandler } from '../../walrus-error-handler';
-import { NetworkError, BlockchainError, StorageError } from '../../../types/errors';
-import { ValidationError } from '../../../types/errors/ValidationError';
+import { NetworkError, BlockchainError, StorageError, ValidationError } from '../../../types/errors/consolidated';
 import { StorageOperationOptions } from './StorageTypes';
 import { createWalrusClientAdapter, WalrusClientAdapter } from '../../adapters/walrus-client-adapter';
 
@@ -68,7 +68,7 @@ export class StorageClient {
       this.suiClient = new SuiClient({ 
         url: options.suiUrl
       });
-    } catch (_error) {
+    } catch (error) {
       // In test environments, the constructor might fail
       // Create a mock client if in mock mode or running in a test environment
       if (this.useMockMode || process.env.NODE_ENV === 'test') {
@@ -146,7 +146,7 @@ export class StorageClient {
       }
       
       this.initialized = true;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
       }
@@ -187,14 +187,14 @@ export class StorageClient {
       
       // Verify network connectivity
       const systemStateResult = await AsyncOperationHandler.execute(
-        () => this.suiClient.getLatestSuiSystemState(),
+        () => (this.suiClient as any).getLatestSuiSystemState(),
         {
           operation: 'network check',
           maxRetries: 2
         }
       );
       
-      if (!systemStateResult.success || !systemStateResult.data?.epoch) {
+      if (!systemStateResult.success || !(systemStateResult.data as any)?.epoch) {
         throw new NetworkError(
           'Failed to verify network state. Check your connection.',
           {
@@ -203,7 +203,7 @@ export class StorageClient {
           }
         );
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
       }
@@ -298,7 +298,7 @@ export class StorageClient {
       }
       
       return BigInt(balanceResult.data.totalBalance);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof BlockchainError) {
         throw error;
       }
@@ -360,7 +360,7 @@ export class StorageClient {
       }
       
       return result.data || new Uint8Array();
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof StorageError) {
         throw error;
       }

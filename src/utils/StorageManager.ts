@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError, StorageError, BlockchainError, ValidationError } from '../types/errors/consolidated/index';
@@ -70,14 +71,14 @@ export class StorageManager {
       }
 
       // Verify network connectivity
-      const systemState = await this.suiClient.getLatestSuiSystemState();
+      const systemState = await this.suiClient.getLatestSuiSystemState? (this.suiClient as any).getLatestSuiSystemState() : undefined;
       if (!systemState?.epoch) {
         throw new CLIError(
           'Failed to verify network state. Check your connection.',
           'WALRUS_NETWORK_ERROR'
         );
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -98,13 +99,13 @@ export class StorageManager {
   }> {
     try {
       // Check WAL token balance
-      const walBalance = await this.suiClient.getBalance({
+      const walBalance = await (this.suiClient as any).getBalance({
         owner: this.address,
         coinType: 'WAL'
       });
 
       // Get Storage Fund balance
-      const storageFundBalance = await this.suiClient.getBalance({
+      const storageFundBalance = await (this.suiClient as any).getBalance({
         owner: this.address,
         coinType: '0x2::storage::Storage'
       });
@@ -123,7 +124,7 @@ export class StorageManager {
         storageFundBalance: BigInt(storageFundBalance.totalBalance),
         isStorageFundSufficient
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Failed to check balances: ${error instanceof Error ? error.message : String(error)}`,
@@ -156,7 +157,7 @@ export class StorageManager {
         requiredBalance,
         epochs: this.DEFAULT_EPOCH_DURATION
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to estimate storage cost: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_COST_ESTIMATION_FAILED'
@@ -224,7 +225,7 @@ export class StorageManager {
           endEpoch: Number(fields.end_epoch)
         }
       };
-    } catch (_error) {
+    } catch (error) {
       handleError('Failed to verify existing storage', error);
       return { isValid: false, remainingSize: 0, remainingEpochs: 0 };
     }
@@ -252,7 +253,7 @@ export class StorageManager {
       const balances = await this.checkBalances();
 
       // 3. Get current epoch
-      const { epoch } = await this.suiClient.getLatestSuiSystemState();
+      const { epoch } = await this.suiClient.getLatestSuiSystemState? (this.suiClient as any).getLatestSuiSystemState() : undefined;
       const currentEpoch = Number(epoch);
 
       // 4. Check existing storage
@@ -277,7 +278,7 @@ export class StorageManager {
         requiredCost,
         balances
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Storage validation failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -287,7 +288,7 @@ export class StorageManager {
   }
 
   async getSuiBalance(address: string): Promise<string> {
-    const balance = await this.suiClient.getBalance({
+    const balance = await (this.suiClient as any).getBalance({
       owner: address,
       coinType: 'WAL'
     });
@@ -338,7 +339,7 @@ export class StorageManager {
         totalUsed,
         storageObjects
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to get storage usage: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_STORAGE_QUERY_FAILED'
@@ -382,7 +383,7 @@ export class StorageManager {
           networkFees
         }
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to calculate storage cost: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_COST_CALCULATION_FAILED'
@@ -390,7 +391,17 @@ export class StorageManager {
     }
   }
 
-  async allocateStorage(size: string, signer: unknown): Promise<{
+  /**
+   * Allocates new storage on Walrus
+   * NOTE: This method is currently not used in production code.
+   * The actual storage allocation happens through the Walrus CLI integration.
+   * This method exists for future direct SDK integration and testing purposes.
+   * 
+   * @param size - Size of storage to allocate
+   * @param signer - Transaction signer (unused in current implementation)
+   * @returns Mock storage allocation result
+   */
+  async allocateStorage(size: string, _signer: unknown): Promise<{
     digest: string;
     storage: {
       id: { id: string };
@@ -399,15 +410,15 @@ export class StorageManager {
       storage_size: string;
     };
   }> {
-    const tx = await this.suiClient.getTransactionBlock({
-      digest: '0x123', // TODO: Implement actual allocation
-      options: { showEffects: true }
-    });
-
+    // NOTE: This is a mock implementation for testing
+    // Real storage allocation happens through Walrus CLI integration
+    // See walrus-storage.ts and walrus-storage-cli.ts for actual implementation
+    const mockDigest = '0x' + Date.now().toString(16);
+    
     return {
-      digest: tx.digest,
+      digest: mockDigest,
       storage: {
-        id: { id: '0x123' },
+        id: { id: mockDigest },
         start_epoch: 1,
         end_epoch: 52,
         storage_size: size
@@ -459,7 +470,7 @@ export class StorageManager {
           usagePercentage
         });
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof StorageError || error instanceof ValidationError) {
         throw error;
       }
@@ -525,7 +536,7 @@ export class StorageManager {
         available,
         minRequired
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError) {
         throw error;
       }

@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('walrus-storage-cli');
  * @fileoverview Walrus Storage Interface - CLI-based implementation
  *
  * This module provides a Walrus storage interface that uses the Walrus CLI directly
@@ -7,7 +10,7 @@
  */
 
 import { Todo, TodoList } from '../types/todo';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
@@ -67,7 +70,7 @@ export class WalrusStorage {
    */
   async init(): Promise<void> {
     if (this.useMock) {
-      console.log('Using mock Walrus storage');
+      logger.info('Using mock Walrus storage');
       this.isConnected = true;
       return;
     }
@@ -76,7 +79,7 @@ export class WalrusStorage {
     try {
       await execAsync(`${this.walrusPath} --version`);
       this.isConnected = true;
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         'Walrus CLI not found. Please install it from https://docs.wal.app',
         'WALRUS_CLI_NOT_FOUND'
@@ -288,7 +291,7 @@ export class WalrusStorage {
     try {
       const command = `${this.walrusPath} --config ${this.configPath} delete ${blobId}`;
       await execAsync(command);
-    } catch (_error) {
+    } catch (error) {
       // Some blobs may not be deletable
       if (error.message.includes('not deletable')) {
         throw new CLIError('Blob is not deletable', 'NOT_DELETABLE');
@@ -311,7 +314,7 @@ export class WalrusStorage {
       const command = `${this.walrusPath} --config ${this.configPath} status ${blobId}`;
       await execAsync(command);
       return true;
-    } catch (_error) {
+    } catch (error) {
       if (error.message.includes('not found')) {
         return false;
       }
@@ -365,7 +368,7 @@ export class WalrusStorage {
         return parseFloat(walMatch[1]);
       }
       return 0;
-    } catch (_error) {
+    } catch (error) {
       return 0;
     }
   }
@@ -432,7 +435,7 @@ export class WalrusStorage {
     try {
       const { stdout } = await execAsync('sui client active-address');
       return stdout.trim();
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError('Failed to get active address', 'ADDRESS_ERROR');
     }
   }

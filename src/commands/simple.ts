@@ -1,7 +1,7 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../base-command';
+import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 // Removed unused Todo import
 import chalk from 'chalk';
 
@@ -162,7 +162,7 @@ export default class SimpleCommand extends BaseCommand {
         default:
           this.error(`Unknown action: ${args.action}`);
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

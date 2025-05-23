@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+// Simple console logger for script use
+const logger = {
+  info: (msg) => console.log(`[INFO] ${msg}`),
+  error: (msg) => console.error(`[ERROR] ${msg}`),
+  warn: (msg) => console.warn(`[WARN] ${msg}`)
+};
+
 /**
  * Cross-platform script to fix binary file permissions
  * Works on both Windows and Unix-like systems
@@ -20,7 +27,7 @@ const colors = {
 
 // Print colored message
 function print(color, message) {
-  console.log(`${colors[color]}${message}${colors.reset}`);
+  logger.info(`${colors[color]}${message}${colors.reset}`);
 }
 
 // Fix permissions for a directory

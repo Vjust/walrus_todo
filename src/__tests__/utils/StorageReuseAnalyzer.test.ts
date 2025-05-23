@@ -8,23 +8,24 @@ jest.mock('@mysten/walrus');
 
 describe('StorageReuseAnalyzer', () => {
   let storageReuseAnalyzer: StorageReuseAnalyzer;
-  let mockSuiClient: jest.Mocked<SuiClient>;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
+  let mockSuiClient: any;
+  let mockWalrusClient: any;
   
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
     
     // Setup mock implementations
-    mockSuiClient = new SuiClient({ url: 'mock-url' }) as jest.Mocked<SuiClient>;
-    mockWalrusClient = new WalrusClient({ 
-      network: 'testnet'
-    }) as unknown as jest.Mocked<WalrusClient>;
+    mockSuiClient = {
+      getLatestSuiSystemState: jest.fn().mockResolvedValue({
+        epoch: '1000'
+      }),
+      getOwnedObjects: jest.fn()
+    };
     
-    // Mock the getLatestSuiSystemState method
-    mockSuiClient.getLatestSuiSystemState = jest.fn().mockResolvedValue({
-      epoch: '1000'
-    });
+    mockWalrusClient = {
+      storageCost: jest.fn()
+    };
     
     // Mock the storageCost method
     mockWalrusClient.storageCost = jest.fn().mockResolvedValue({

@@ -10,11 +10,14 @@ export default class HistoryCommand extends BaseCommand {
   static description = 'Show command history';
 
   static examples = [
-    '<%= config.bin %> history',
-    '<%= config.bin %> history --limit 20',
-    '<%= config.bin %> history --stats',
-    '<%= config.bin %> history --search "add"',
-    '<%= config.bin %> history --clear',
+    '<%= config.bin %> history                         # Show recent command history',
+    '<%= config.bin %> history --limit 20              # Show last 20 commands',
+    '<%= config.bin %> history --stats                 # Show command usage statistics',
+    '<%= config.bin %> history --search "add"          # Search for specific commands',
+    '<%= config.bin %> history --clear                 # Clear command history',
+    '<%= config.bin %> history --export history.txt    # Export history to file',
+    '<%= config.bin %> history --filter success        # Show only successful commands',
+    '<%= config.bin %> history --date 2024-01-01      # Show history from specific date',
   ];
 
   static flags = {

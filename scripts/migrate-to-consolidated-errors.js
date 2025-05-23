@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('migrate-to-consolidated-errors');
  * Migration script for transitioning to the consolidated error handling framework
  * 
  * This script:
@@ -53,7 +56,7 @@ const migrationReport = {
  * Find files with old error imports
  */
 async function findFilesWithOldErrorImports() {
-  console.log('Searching for files with old error imports...');
+  logger.info('Searching for files with old error imports...');
   
   const filesWithImports = new Set();
   
@@ -71,7 +74,7 @@ async function findFilesWithOldErrorImports() {
     } catch (error) {
       // grep returns non-zero exit code when no matches are found
       if (error.stderr) {
-        console.error(`Error searching for pattern ${importPattern}:`, error.stderr);
+        logger.error(`Error searching for pattern ${importPattern}:`, error.stderr);
       }
     }
   }
@@ -83,7 +86,7 @@ async function findFilesWithOldErrorImports() {
  * Find error class usage in files
  */
 async function findErrorClassUsage() {
-  console.log('Analyzing error class usage...');
+  logger.info('Analyzing error class usage...');
   
   // Error classes to search for
   const errorClasses = [
@@ -131,7 +134,7 @@ async function findErrorClassUsage() {
     } catch (error) {
       // grep returns non-zero exit code when no matches are found
       if (error.stderr) {
-        console.error(`Error searching for class ${errorClass}:`, error.stderr);
+        logger.error(`Error searching for class ${errorClass}:`, error.stderr);
       }
     }
   }
@@ -144,33 +147,33 @@ async function findErrorClassUsage() {
  * Generate migration report
  */
 function generateMigrationReport() {
-  console.log('\nError Handling Migration Report:');
-  console.log('===============================\n');
+  logger.info('\nError Handling Migration Report:');
+  logger.info('===============================\n');
   
-  console.log(`Total files to update: ${migrationReport.filesToUpdate.length}`);
+  logger.info(`Total files to update: ${migrationReport.filesToUpdate.length}`);
   
-  console.log('\nError Class Usage:');
+  logger.info('\nError Class Usage:');
   for (const [errorClass, files] of Object.entries(migrationReport.errorUsage)) {
     if (files.size > 0) {
-      console.log(`- ${errorClass}: ${files.size} files`);
+      logger.info(`- ${errorClass}: ${files.size} files`);
     }
   }
   
-  console.log('\nFiles to Update:');
+  logger.info('\nFiles to Update:');
   migrationReport.filesToUpdate.forEach(file => {
-    console.log(`- ${file}`);
+    logger.info(`- ${file}`);
   });
   
-  console.log('\nMigration Steps:');
-  console.log('1. Update imports to use the consolidated error framework');
-  console.log('   Change: import { CLIError } from "../types/error"');
-  console.log('   To:     import { CLIError } from "../types/errors/consolidated"');
-  console.log('2. Update error handling to use the consolidated error handler');
-  console.log('   Change: handleError("Failed to do something", error)');
-  console.log('   To:     handleError(error, "Failed to do something")');
-  console.log('3. Update error instantiation to use the new options-based approach');
-  console.log('   Change: new CLIError("message", "ERROR_CODE")');
-  console.log('   To:     new CLIError("message", { code: "ERROR_CODE" })');
+  logger.info('\nMigration Steps:');
+  logger.info('1. Update imports to use the consolidated error framework');
+  logger.info('   Change: import { CLIError } from "../types/error"');
+  logger.info('   To:     import { CLIError } from "../types/errors/consolidated"');
+  logger.info('2. Update error handling to use the consolidated error handler');
+  logger.info('   Change: handleError("Failed to do something", error)');
+  logger.info('   To:     handleError(error, "Failed to do something")');
+  logger.info('3. Update error instantiation to use the new options-based approach');
+  logger.info('   Change: new CLIError("message", "ERROR_CODE")');
+  logger.info('   To:     new CLIError("message", { code: "ERROR_CODE" })');
   
   // Save report to file
   fs.writeFileSync(
@@ -185,14 +188,14 @@ function generateMigrationReport() {
     }, null, 2)
   );
   
-  console.log('\nReport saved to error-migration-report.json');
+  logger.info('\nReport saved to error-migration-report.json');
 }
 
 /**
  * Run the migration script
  */
 async function main() {
-  console.log('Starting migration analysis for consolidated error handling...');
+  logger.info('Starting migration analysis for consolidated error handling...');
   
   // Find files with old error imports
   const filesWithOldImports = await findFilesWithOldErrorImports();
@@ -207,6 +210,6 @@ async function main() {
 
 // Run the script
 main().catch(error => {
-  console.error('Error running migration script:', error);
+  logger.error('Error running migration script:', error);
   process.exit(1);
 });

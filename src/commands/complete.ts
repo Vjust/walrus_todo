@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../base-command';
+import BaseCommand from '../base-command';
 import { SuiClient } from '@mysten/sui/client';
 import { TransactionBlock } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -7,7 +7,7 @@ import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS, TODO_NFT_CONFIG } from '../constants';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 import { RetryManager } from '../utils/retry-manager';
@@ -39,8 +39,11 @@ export default class CompleteCommand extends BaseCommand {
   NFT updates may require gas tokens on the configured network.`;
 
   static examples = [
-    '<%= config.bin %> complete my-list -i todo-123',
-    '<%= config.bin %> complete my-list -i "Buy groceries"'
+    '<%= config.bin %> complete my-list -i todo-123              # Complete todo by ID',
+    '<%= config.bin %> complete my-list -i "Buy groceries"      # Complete todo by title',
+    '<%= config.bin %> complete -i task-456                     # Complete from default list',
+    '<%= config.bin %> complete work -i "Finish report"         # Complete specific todo',
+    '<%= config.bin %> complete personal -i todo-789 --network testnet  # Use specific network'
   ];
 
   static flags = {
@@ -116,7 +119,7 @@ export default class CompleteCommand extends BaseCommand {
     try {
       const state = await suiClient.getLatestSuiSystemState();
       return state.protocolVersion?.toString() || 'unknown';
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to connect to network: ${error instanceof Error ? error.message : String(error)}`,
         'NETWORK_CONNECTION_FAILED'
@@ -174,7 +177,7 @@ export default class CompleteCommand extends BaseCommand {
           'NFT_ALREADY_COMPLETED'
         );
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Failed to validate NFT state: ${error instanceof Error ? error.message : String(error)}`,
@@ -210,7 +213,7 @@ export default class CompleteCommand extends BaseCommand {
         computationCost: dryRunResult.effects.gasUsed.computationCost,
         storageCost: dryRunResult.effects.gasUsed.storageCost
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to estimate gas: ${error instanceof Error ? error.message : String(error)}`,
         'GAS_ESTIMATION_FAILED'
@@ -273,7 +276,7 @@ export default class CompleteCommand extends BaseCommand {
       
       // Write the config, using our custom wrapper to allow mocking in tests
       await this.writeConfigSafe(config);
-    } catch (_error) {
+    } catch (error) {
       // Non-blocking error - log but don't fail the command
       this.warning(`Failed to update completion statistics: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -300,7 +303,7 @@ export default class CompleteCommand extends BaseCommand {
       // Write config using our wrapper that can be mocked
       // ALWAYS use writeFileSafe to ensure consistent behavior
       this.writeFileSafe(configPath, JSON.stringify(config, null, 2), 'utf8');
-    } catch (_error) {
+    } catch (error) {
       throw new Error(`Failed to save config: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -337,7 +340,7 @@ export default class CompleteCommand extends BaseCommand {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           mappings = JSON.parse(content);
-        } catch (_error) {
+        } catch (error) {
           this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
           // Continue with empty mappings
         }
@@ -350,7 +353,7 @@ export default class CompleteCommand extends BaseCommand {
       // This ensures directory creation and consistent error handling
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
-    } catch (_error) {
+    } catch (error) {
       this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -566,7 +569,7 @@ export default class CompleteCommand extends BaseCommand {
                 } else {
                   throw new Error('Invalid blob ID returned from Walrus');
                 }
-              } catch (_error) {
+              } catch (error) {
                 lastWalrusError = error instanceof Error ? error : new Error(String(error));
                 if (attempt === maxRetries) {
                   this.log(chalk.yellow('\u26a0\ufe0f Failed to update Walrus storage after all retries'));
@@ -606,7 +609,7 @@ export default class CompleteCommand extends BaseCommand {
         this.log(`  ${walrusUpdateStatus} Walrus storage`);
       }
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

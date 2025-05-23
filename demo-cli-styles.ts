@@ -1,5 +1,8 @@
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import BaseCommand, { ICONS } from './src/base-command';
+import { Logger } from './src/utils/Logger';
+
+const logger = new Logger('demo-cli-styles');
 
 /**
  * A demo class to showcase our new CLI styling
@@ -162,6 +165,6 @@ StyleDemo.run([], {
     }
   }
 }).catch(_error => {
-  console.error('Error running demo:', error);
+  logger.error('Error running demo:', _error);
   process.exit(1);
 });

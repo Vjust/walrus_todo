@@ -5,6 +5,7 @@ import { StorageReuseAnalyzer } from '../utils/storage-reuse-analyzer';
 import chalk from 'chalk';
 import { SuiClient } from '@mysten/sui/client';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * @class StorageCommand
@@ -39,10 +40,13 @@ export default class StorageCommand extends BaseCommand {
   };
 
   static examples = [
-    '$ walrus-todo storage',
-    '$ walrus-todo storage --summary',
-    '$ walrus-todo storage --detail',
-    '$ walrus-todo storage --analyze',
+    '<%= config.bin %> storage                        # Show storage overview',
+    '<%= config.bin %> storage --summary              # Show storage summary',
+    '<%= config.bin %> storage --detail               # Show detailed storage info',
+    '<%= config.bin %> storage --analyze              # Analyze storage efficiency',
+    '<%= config.bin %> storage --list work            # Show storage for specific list',
+    '<%= config.bin %> storage --cleanup              # Clean up unused storage',
+    '<%= config.bin %> storage --estimate 100         # Estimate storage for 100 todos'
   ];
 
   async run() {
@@ -67,9 +71,12 @@ export default class StorageCommand extends BaseCommand {
       if (flags.analyze) {
         await this.analyzeStorageEfficiency(walrusStorage);
       }
-    } catch (_error) {
+    } catch (error) {
       spinner.fail('Failed to connect to storage');
-      this.handleError(error, 'Storage connection failed');
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Storage connection failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
@@ -204,8 +211,11 @@ export default class StorageCommand extends BaseCommand {
       this.log(`${chalk.bold('Total Remaining:')} ${formatBytes(totalAllocation - totalUsed)}`);
       this.log(`${chalk.bold('Active Storage Objects:')} ${activeCount} of ${response.data.length}`);
       
-    } catch (_error) {
-      this.error(`Failed to retrieve storage details: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to retrieve storage details: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
@@ -293,8 +303,11 @@ export default class StorageCommand extends BaseCommand {
       this.log('3. Consider using the `--analyze` flag before storing large amounts of data');
       this.log('4. Periodically check your storage allocation with `walrus-todo storage`');
       
-    } catch (_error) {
-      this.error(`Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

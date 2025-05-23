@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as os from 'os';
 import chalk from 'chalk';
 import findUp from 'find-up';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
 import { Logger } from '../utils/Logger';
 import { createFrontendConfigGenerator } from '../utils/frontend-config-generator';
@@ -71,8 +71,11 @@ export default class DeployCommand extends BaseCommand {
   static description = 'Deploy the Todo NFT smart contract to the Sui blockchain';
 
   static examples = [
-    '<%= config.bin %> deploy --network testnet',
-    '<%= config.bin %> deploy --network devnet --address 0x123456...',
+    '<%= config.bin %> deploy --network testnet                           # Deploy to testnet',
+    '<%= config.bin %> deploy --network devnet --address 0x123456...     # Deploy with specific address',
+    '<%= config.bin %> deploy --network localnet                         # Deploy locally',
+    '<%= config.bin %> deploy --network testnet --gas-budget 100000000  # Custom gas budget',
+    '<%= config.bin %> deploy --network mainnet --dry-run                # Preview deployment'
   ];
 
   static flags = {
@@ -199,7 +202,7 @@ export default class DeployCommand extends BaseCommand {
       try {
           tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'todo_nft_deploy_'));
           this.log(chalk.dim(`Created temporary directory: ${tempDir}`));
-      } catch (_error) {
+      } catch (error) {
           throw new CLIError(
               `Failed to create temporary directory: ${error instanceof Error ? error.message : String(error)}`,
               'TEMP_DIR_CREATION_FAILED'
@@ -226,7 +229,7 @@ export default class DeployCommand extends BaseCommand {
                   this.log(chalk.dim(`Copied ${file} successfully`));
               }
           }
-      } catch (_error) {
+      } catch (error) {
           throw new CLIError(
               `Failed to copy contract files: ${error instanceof Error ? error.message : String(error)}`,
               'FILE_COPY_FAILED'
@@ -417,7 +420,7 @@ export default class DeployCommand extends BaseCommand {
         }
       }
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

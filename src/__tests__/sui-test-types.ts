@@ -1,5 +1,4 @@
 import type { SuiObjectResponse, SuiTransactionBlockResponse, SuiSystemStateSummary } from '@mysten/sui/client';
-import type { TransactionEffects } from '@mysten/sui/client';
 
 export const createMockSuiObjectResponse = (fields: Record<string, any>): SuiObjectResponse => ({
   data: {
@@ -16,8 +15,7 @@ export const createMockTransactionResponse = (
   success: boolean,
   error?: string
 ): SuiTransactionBlockResponse => {
-  const effects: TransactionEffects = {
-    messageVersion: 'v1',
+  const effects = {
     status: { status: success ? 'success' : 'failure', error },
     executedEpoch: '0', 
     gasUsed: {
@@ -47,36 +45,21 @@ export const createMockTransactionResponse = (
     deleted: [],
     unwrapped: [],
     wrapped: [],
-    sharedObjects: []
+    sharedObjects: [],
+    modifiedAtVersions: [],
+    dependencies: []
   };
 
   return {
     digest: 'test-digest',
     effects,
-    events: [],
     checkpoint: null,
-    balanceChanges: [],
-    confirmedLocalExecution: false,
-    timestampMs: null,
     transaction: {
       data: {
-        messageVersion: 'v1',
-        transaction: {
-          kind: 'ProgrammableTransaction',
-          inputs: [],
-          transactions: []
-        },
-        sender: '0xsender',
-        gasData: {
-          payment: [],
-          owner: '0xowner',
-          price: '1',
-          budget: '1000'
-        }
-      },
-      txSignatures: ['mock-signature']
+        sender: '0xsender'
+      }
     }
-  };
+  } as any;
 };
 
 // Cast to SuiSystemStateSummary since we can't match the exact shape

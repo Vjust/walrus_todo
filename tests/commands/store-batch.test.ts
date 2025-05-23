@@ -1,19 +1,15 @@
 import { test } from '@oclif/test';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import * as fs from 'fs-extra';
-import * as path from 'path';
-import StoreCommand from '../../src/commands/store';
+import { TodoService } from '../../src/services/todoService';
 
 import * as walrusStorage from '../../src/utils/walrus-storage';
-import { BatchProcessor } from '../../src/utils/batch-processor';
 import * as performanceCache from '../../src/utils/performance-cache';
 
 describe('store command batch processing', () => {
   let sandbox: sinon.SinonSandbox;
   let todoServiceStub: sinon.SinonStubbedInstance<TodoService>;
   let walrusStorageStub: any;
-  let batchProcessorStub: sinon.SinonStubbedInstance<BatchProcessor>;
   let cacheStub: any;
 
   beforeEach(() => {
@@ -153,7 +149,7 @@ describe('store command batch processing', () => {
         // Mock filesystem operations
         const fs = require('fs');
         const fsStub = sandbox.stub(fs, 'existsSync');
-        const fsWriteStub = sandbox.stub(fs, 'writeFileSync');
+        sandbox.stub(fs, 'writeFileSync');
         const fsReadStub = sandbox.stub(fs, 'readFileSync');
         
         // Mock existing config directory
@@ -163,8 +159,8 @@ describe('store command batch processing', () => {
         
         // Mock BaseCommand methods
         const StoreCommand = require('../../src/commands/store').default;
-        const writeFileSafeSpy = sandbox.spy(StoreCommand.prototype, 'writeFileSafe');
-        const getConfigDirSpy = sandbox.spy(StoreCommand.prototype, 'getConfigDir');
+        sandbox.spy(StoreCommand.prototype, 'writeFileSafe');
+        sandbox.spy(StoreCommand.prototype, 'getConfigDir');
       })
       .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
       .it('calls writeFileSafe to save blob mappings', ctx => {

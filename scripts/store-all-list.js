@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('store-all-list');
 
 /**
  * Script to store all todos in a list to Walrus storage
@@ -14,8 +17,8 @@ const execPromise = promisify(exec);
 
 // Check for list argument
 if (process.argv.length < 3) {
-  console.error('Error: Missing list name argument');
-  console.error('Usage: node store-all-list.js <list-name>');
+  logger.error('Error: Missing list name argument');
+  logger.error('Usage: node store-all-list.js <list-name>');
   process.exit(1);
 }
 
@@ -29,14 +32,14 @@ async function loadTodoList(listName) {
     const listFilePath = path.join(process.cwd(), todosDir, `${listName}.json`);
     
     if (!fs.existsSync(listFilePath)) {
-      console.error(`Error: List "${listName}" not found at ${listFilePath}`);
+      logger.error(`Error: List "${listName}" not found at ${listFilePath}`);
       process.exit(1);
     }
     
     const listData = JSON.parse(fs.readFileSync(listFilePath, 'utf-8'));
     return listData.todos || [];
   } catch (error) {
-    console.error(`Error loading list: ${error.message}`);
+    logger.error(`Error loading list: ${error.message}`);
     process.exit(1);
   }
 }
@@ -47,18 +50,18 @@ async function storeTodo(todo, listName) {
     const mockFlag = mockMode ? ' --mock' : '';
     const command = `waltodo store --todo "${todo.title}" --list ${listName}${mockFlag}`;
     
-    console.log(`Storing todo: ${todo.title}`);
+    logger.info(`Storing todo: ${todo.title}`);
     const { stdout, stderr } = await execPromise(command);
     
     if (stderr) {
-      console.error(`Error: ${stderr}`);
+      logger.error(`Error: ${stderr}`);
       return false;
     }
     
-    console.log(`Successfully stored: ${todo.title}`);
+    logger.info(`Successfully stored: ${todo.title}`);
     return true;
   } catch (error) {
-    console.error(`Failed to store todo: ${error.message}`);
+    logger.error(`Failed to store todo: ${error.message}`);
     return false;
   }
 }
@@ -66,15 +69,15 @@ async function storeTodo(todo, listName) {
 // Main function
 async function main() {
   try {
-    console.log(`Loading todos from list: ${listName}`);
+    logger.info(`Loading todos from list: ${listName}`);
     const todos = await loadTodoList(listName);
     
     if (todos.length === 0) {
-      console.log(`No todos found in list "${listName}"`);
+      logger.info(`No todos found in list "${listName}"`);
       process.exit(0);
     }
     
-    console.log(`Found ${todos.length} todos in list "${listName}"`);
+    logger.info(`Found ${todos.length} todos in list "${listName}"`);
     
     let successCount = 0;
     let failureCount = 0;
@@ -88,13 +91,13 @@ async function main() {
       }
     }
     
-    console.log('\nSummary:');
-    console.log(`Total todos processed: ${todos.length}`);
-    console.log(`Successfully stored: ${successCount}`);
-    console.log(`Failed to store: ${failureCount}`);
+    logger.info('\nSummary:');
+    logger.info(`Total todos processed: ${todos.length}`);
+    logger.info(`Successfully stored: ${successCount}`);
+    logger.info(`Failed to store: ${failureCount}`);
     
   } catch (error) {
-    console.error(`Unexpected error: ${error.message}`);
+    logger.error(`Unexpected error: ${error.message}`);
     process.exit(1);
   }
 }

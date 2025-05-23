@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('error-messages-extension-guide');
  * Guide for extending the enhanced error messaging system
  * Shows how to add new error types and custom messages
  */
@@ -182,16 +185,16 @@ export function testAIErrorMessages() {
     model: 'gpt-4'
   });
   
-  console.log('Basic AI Error:');
-  console.log(basicError);
+  logger.info('Basic AI Error:');
+  logger.info(basicError);
   
   // Test rate limit error
   const rateLimitError = new AIError('Too many requests', {
     code: 'AI_RATE_LIMIT'
   });
   
-  console.log('\nRate Limit Error:');
-  console.log(rateLimitError);
+  logger.info('\nRate Limit Error:');
+  logger.info(rateLimitError);
   
   // Test invalid response error
   const invalidResponseError = new AIError('Unexpected format', {
@@ -199,8 +202,8 @@ export function testAIErrorMessages() {
     prompt: 'Generate tags for: Complete project documentation'
   });
   
-  console.log('\nInvalid Response Error:');
-  console.log(invalidResponseError);
+  logger.info('\nInvalid Response Error:');
+  logger.info(invalidResponseError);
 }
 
 /**

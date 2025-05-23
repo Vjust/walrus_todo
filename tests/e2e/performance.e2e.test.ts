@@ -92,8 +92,8 @@ describe('E2E Performance Tests', () => {
     const summary = generateReadableSummary(performanceReport);
     fs.writeFileSync(summaryPath, summary);
     
-    console.log('Performance report saved to:', reportPath);
-    console.log('Summary saved to:', summaryPath);
+    // console.log('Performance report saved to:', reportPath); // Removed console statement
+    // console.log('Summary saved to:', summaryPath); // Removed console statement
   });
   
   async function measurePerformance(
@@ -101,7 +101,7 @@ describe('E2E Performance Tests', () => {
     description: string,
     thresholds: { warning: number; critical: number }
   ): Promise<PerformanceMetric> {
-    console.log(`Measuring: ${description}`);
+    // console.log(`Measuring: ${description}`); // Removed console statement
     
     const memoryBefore = process.memoryUsage();
     const startTime = Date.now();
@@ -109,7 +109,7 @@ describe('E2E Performance Tests', () => {
     try {
       await execAsync(command);
     } catch (_error) {
-      console.error(`Command failed: ${command}`, error);
+      // console.error(`Command failed: ${command}`, error); // Removed console statement
     }
     
     const endTime = Date.now();
@@ -237,7 +237,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
     it('should measure ai suggest command performance', async () => {
       // Skip if no API key
       if (!process.env.XAI_API_KEY) {
-        console.log('Skipping AI test - no API key');
+        // console.log('Skipping AI test - no API key'); // Removed console statement
         return;
       }
       
@@ -253,7 +253,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
     it('should measure ai analyze command performance', async () => {
       // Skip if no API key
       if (!process.env.XAI_API_KEY) {
-        console.log('Skipping AI test - no API key');
+        // console.log('Skipping AI test - no API key'); // Removed console statement
         return;
       }
       
@@ -305,7 +305,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const todoCount = 100;
       
       // Measure adding many todos
-      console.log(`Adding ${todoCount} todos...`);
+      // console.log(`Adding ${todoCount} todos...`); // Removed console statement
       const addStartTime = Date.now();
       
       for (let i = 0; i < todoCount; i++) {
@@ -314,7 +314,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       
       const addEndTime = Date.now();
       const bulkAddTime = addEndTime - addStartTime;
-      console.log(`Bulk add time: ${bulkAddTime}ms (${bulkAddTime / todoCount}ms per todo)`);
+      // console.log(`Bulk add time: ${bulkAddTime}ms (${bulkAddTime / todoCount}ms per todo) // Removed console statement`);
       
       // Measure listing many todos
       const listMetric = await measurePerformance(
@@ -344,7 +344,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const endTime = Date.now();
       const totalTime = endTime - startTime;
       
-      console.log(`Concurrent adds (${concurrentOps}): ${totalTime}ms (${totalTime / concurrentOps}ms average)`);
+      // console.log(`Concurrent adds (${concurrentOps}) // Removed console statement: ${totalTime}ms (${totalTime / concurrentOps}ms average)`);
       
       expect(totalTime).toBeLessThan(concurrentOps * PERFORMANCE_THRESHOLDS.add.critical);
     });
@@ -369,7 +369,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
           { warning: 5000, critical: 10000 }
         );
         
-        console.log(`${op.desc} - Memory delta: ${(metric.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB`);
+        // console.log(`${op.desc} - Memory delta: ${(metric.memory.delta.heapUsed / 1024 / 1024) // Removed console statement.toFixed(2)}MB`);
         
         previousMemory = metric.memory.after;
       }
@@ -405,7 +405,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
           const baselineMetric = baseline.results.find(r => r.command === cmd);
           if (baselineMetric) {
             const percentChange = ((metric.executionTime - baselineMetric.executionTime) / baselineMetric.executionTime) * 100;
-            console.log(`${cmd}: ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2)}% from baseline`);
+            // console.log(`${cmd}: ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2) // Removed console statement}% from baseline`);
             
             // Fail if regression is more than 20%
             expect(percentChange).toBeLessThan(20);

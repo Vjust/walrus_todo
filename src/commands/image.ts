@@ -1,6 +1,6 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/errors/consolidated';
 import { TodoService } from '../services/todoService';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { configService } from '../services/config-service';
@@ -24,11 +24,14 @@ import * as path from 'path';
  * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
  */
 export default class ImageCommand extends BaseCommand {
-  static description = 'Manage todo images for storage on Walrus and NFT creation';
+  static description = 'Upload images to Walrus storage and create NFTs from todo items with associated images';
 
   static examples = [
-    '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png',
-    '<%= config.bin %> image create-nft --todo 123 --list my-todos',
+    '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png  # Upload image',
+    '<%= config.bin %> image create-nft --todo 123 --list my-todos                   # Create NFT',
+    '<%= config.bin %> image list --list my-todos                                    # List todo images',
+    '<%= config.bin %> image upload --todo "Buy milk" --list shopping --image photo.jpg',
+    '<%= config.bin %> image create-nft --todo task-456 --list work --network testnet'
   ];
 
   static args = {
@@ -188,7 +191,7 @@ export default class ImageCommand extends BaseCommand {
       } else {
         throw new CLIError(`Invalid action: ${args.action}. Use 'upload', 'create-nft', or 'list'.`, 'INVALID_ACTION');
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

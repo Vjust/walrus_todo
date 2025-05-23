@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('run-network-retry-fuzzer');
+
 /**
  * Script to run network retry fuzzer tests
  * Usage: pnpm run test:fuzz:network-retry
@@ -11,7 +15,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 async function runNetworkRetryFuzzer() {
-  console.log('🌐 Starting Network Retry Fuzzer Tests...\n');
+  logger.info('🌐 Starting Network Retry Fuzzer Tests...\n');
   
   try {
     const { stdout, stderr } = await execAsync(
@@ -25,13 +29,13 @@ async function runNetworkRetryFuzzer() {
       }
     );
     
-    console.log(stdout);
-    if (stderr) console.error(stderr);
+    logger.info(stdout);
+    if (stderr) logger.error(stderr);
     
-    console.log('\n✅ Network Retry Fuzzer Tests Completed Successfully!');
+    logger.info('\n✅ Network Retry Fuzzer Tests Completed Successfully!');
   } catch (_error) {
-    console.error('\n❌ Network Retry Fuzzer Tests Failed:');
-    console.error(error.message);
+    logger.error('\n❌ Network Retry Fuzzer Tests Failed:');
+    logger.error(error.message);
     process.exit(1);
   }
 }

@@ -1,8 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 import { CLI_CONFIG } from '../../constants';
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('CredentialManager');
 
 /**
  * CredentialManager - Securely manages API credentials for AI providers
@@ -56,7 +59,7 @@ export class CredentialManager {
       }
       this.initialized = true;
     } catch (_error) {
-      console.error('Failed to load credentials:', error);
+      logger.error('Failed to load credentials:', error);
       // For security, initialize with empty credentials on error
       this.credentials = {};
       this.initialized = true;
@@ -187,7 +190,7 @@ export class CredentialManager {
       const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, iv);
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (_error) {
-      console.error('Decryption failed:', error);
+      logger.error('Decryption failed:', error);
       return null;
     }
   }

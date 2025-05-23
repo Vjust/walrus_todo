@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../../src/utils/Logger';
+
+const logger = new Logger('walrus-setup');
  * Walrus Setup Configuration for Tests
  * Configures Walrus binary paths and API endpoints
  */
@@ -50,14 +53,14 @@ export function setupWalrusTestnet(): WalrusTestConfig {
         // Check if binary exists
         const binaryExists = fs.existsSync(config.binaryPath);
         if (!binaryExists && !config.mock) {
-          console.warn(`Walrus binary not found at ${config.binaryPath}`);
+          logger.warn(`Walrus binary not found at ${config.binaryPath}`);
           return false;
         }
         
         // Check if config exists
         const configExists = fs.existsSync(config.configPath);
         if (!configExists && !config.mock) {
-          console.warn(`Walrus config not found at ${config.configPath}`);
+          logger.warn(`Walrus config not found at ${config.configPath}`);
           return false;
         }
         
@@ -66,14 +69,14 @@ export function setupWalrusTestnet(): WalrusTestConfig {
           try {
             fs.accessSync(config.binaryPath, fs.constants.X_OK);
           } catch (_error) {
-            console.warn(`Walrus binary is not executable: ${config.binaryPath}`);
+            logger.warn(`Walrus binary is not executable: ${config.binaryPath}`);
             return false;
           }
         }
         
         return true;
       } catch (_error) {
-        console.error('Error verifying Walrus setup:', error);
+        logger.error('Error verifying Walrus setup:', error);
         return false;
       }
     }
@@ -180,7 +183,7 @@ export async function cleanupTestEnvironment(config: WalrusTestConfig): Promise<
       await fs.promises.unlink(config.configPath).catch(() => {});
     }
   } catch (_error) {
-    console.warn('Error cleaning up test environment:', error);
+    logger.warn('Error cleaning up test environment:', error);
   }
 }
 

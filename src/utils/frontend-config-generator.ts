@@ -192,7 +192,7 @@ export class FrontendConfigGenerator {
       await this.generateConfigIndex();
 
       logger.info(`Frontend configuration generated successfully`);
-    } catch (_error) {
+    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error(`Failed to generate frontend config: ${errorMessage}`);
       throw new CLIError(
@@ -208,7 +208,7 @@ export class FrontendConfigGenerator {
   private async ensureConfigDirectory(): Promise<void> {
     try {
       await fs.promises.mkdir(this.configDir, { recursive: true });
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to create config directory: ${error instanceof Error ? error.message : String(error)}`,
         'CONFIG_DIR_CREATE_FAILED'
@@ -373,7 +373,7 @@ export function getCurrentNetworkConfig() {
     try {
       const stats = await fs.promises.stat(this.frontendPath);
       return stats.isDirectory();
-    } catch {
+    } catch (error: unknown) {
       return false;
     }
   }

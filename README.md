@@ -10,7 +10,18 @@ A powerful CLI for managing todos with Sui blockchain and Walrus decentralized s
 
 ## Overview
 
-WalTodo is a feature-rich command-line interface (CLI) application that combines traditional todo list management with blockchain technology. It allows you to create, manage, and organize your todos locally, while also providing the option to store them on the Sui blockchain as NFTs and in Walrus decentralized storage.
+WalTodo is a feature-rich todo management system that combines traditional task management with decentralized technologies. The system features a powerful command-line interface (CLI) and a modern web frontend, all backed by a hybrid architecture that leverages the best of both centralized and decentralized approaches.
+
+### Hybrid Architecture
+
+WalTodo implements a unique hybrid architecture that balances performance, user experience, and decentralization:
+
+- **API Server**: Centralized compute layer for business logic, AI operations, and coordination
+- **Walrus Storage**: Decentralized storage for todo data and images
+- **Sui Blockchain**: Decentralized ledger for ownership, verification, and NFT management
+- **Local Storage**: Fast, offline-capable storage for immediate access
+
+This approach provides the responsiveness of traditional applications while maintaining the benefits of decentralization where it matters most - data ownership and permanence.
 
 ## Features
 
@@ -1045,30 +1056,146 @@ waltodo list blockchain-tasks
 sui client transfer --object-id 0x123... --to 0x456... --gas-budget 10000000
 ```
 
-## Storage Architecture
+## Architecture
 
-The application uses a hybrid storage model:
+### System Architecture
 
-### Local Storage
+WalTodo implements a hybrid architecture that combines the best aspects of centralized and decentralized systems:
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│                 │     │                 │     │                 │
+│   Web Frontend  │────▶│   API Server    │────▶│     Walrus      │
+│   (Next.js)     │     │   (Compute)     │     │   (Storage)     │
+│                 │     │                 │     │                 │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │                        │
+┌─────────────────┐              │                        │
+│                 │              │                        ▼
+│   CLI Client    │──────────────┘              ┌─────────────────┐
+│   (OCLIF)       │                             │                 │
+│                 │◀────────────────────────────│  Sui Blockchain │
+└─────────────────┘                             │   (Ownership)   │
+                                                │                 │
+                                                └─────────────────┘
+```
+
+### How It Works
+
+1. **Client Layer**: Users interact through either the CLI or web frontend
+2. **API Server**: Handles business logic, authentication, and coordinates between services
+3. **Storage Layer**: Walrus provides decentralized, persistent storage for todo data
+4. **Blockchain Layer**: Sui blockchain maintains ownership records and enables NFT functionality
+
+### Benefits of the Hybrid Approach
+
+#### Performance & User Experience
+- **Instant Response**: API server provides immediate feedback without blockchain latency
+- **Offline Capability**: Local caching enables work without internet connection
+- **Rich Features**: Complex operations (AI, search, filtering) run on powerful servers
+- **Scalability**: Centralized compute can scale independently of storage
+
+#### Decentralization Benefits
+- **Data Ownership**: Users truly own their data through blockchain NFTs
+- **Censorship Resistance**: Data stored on Walrus cannot be deleted or modified
+- **Interoperability**: NFTs can be transferred, traded, or integrated with other dApps
+- **Verification**: All operations can be verified on the blockchain
+
+#### Best of Both Worlds
+- **Progressive Decentralization**: Start with familiar UX, opt-in to blockchain features
+- **Cost Efficiency**: Only critical data goes on-chain, reducing transaction costs
+- **Flexibility**: Choose between local, API, or blockchain storage per use case
+- **Future-Proof**: Architecture supports gradual migration to full decentralization
+
+### Storage Architecture
+
+The application uses a multi-tier storage model:
+
+#### Local Storage
 - Plain JSON files in the `Todos` directory
-- Simple local file-based storage with no blockchain integration
-- Ideal for quick local todo management
+- Instant access and offline capability
+- Perfect for personal todo management
+- Syncs with API server when online
 
-### Decentralized Storage
-- **Todo Data**: Stored on Walrus decentralized storage
-- **NFT Reference**: Created on Sui blockchain pointing to Walrus blob
-- **Features**:
-  - Walrus provides efficient, decentralized storage for todo content
-  - Sui blockchain provides ownership verification via NFTs
-  - NFTs can be transferred between users
-  - Unique blockchain identifiers for each todo
+#### API Storage
+- Centralized database for fast queries
+- Enables complex filtering and search
+- Provides backup and sync across devices
+- Temporary cache for blockchain data
+
+#### Decentralized Storage
+- **Todo Data**: Permanently stored on Walrus
+- **NFT Reference**: Ownership records on Sui blockchain
+- **Images**: Media files stored on Walrus with CDN access
+- **Metadata**: Rich metadata stored both on-chain and in Walrus
 
 ### Storage Flow
-1. **Creation**: Todo is stored in Walrus, and an NFT is automatically minted on Sui
-2. **Retrieval**: NFT provides blob ID to fetch data from Walrus
-3. **Updates**: Changes sync to both Walrus and blockchain
-4. **Transfer**: Transfer NFT to move ownership
-5. **Images**: Todo images are stored on Walrus with references in the NFT
+
+1. **Creation**: 
+   - Todo created locally or via API
+   - Optionally stored to Walrus for permanence
+   - NFT minted on Sui for ownership
+
+2. **Retrieval**:
+   - Fast access from local cache or API
+   - Fallback to Walrus for decentralized data
+   - NFT provides authoritative ownership info
+
+3. **Updates**:
+   - Changes propagate through all storage tiers
+   - Blockchain records maintain audit trail
+   - Conflict resolution favors blockchain state
+
+4. **Transfer**:
+   - NFT transfer changes ownership
+   - New owner can retrieve from Walrus
+   - API updates access permissions
+
+### Deployment Options
+
+#### Local Development
+```bash
+# Run everything locally
+pnpm run dev:all
+```
+
+#### Cloud Deployment
+- **API Server**: Deploy to any Node.js hosting (Vercel, Railway, Heroku)
+- **Frontend**: Deploy to static hosting (Vercel, Netlify, Cloudflare Pages)
+- **Storage**: Walrus testnet (mainnet coming soon)
+- **Blockchain**: Sui testnet or mainnet
+
+#### Self-Hosted
+```bash
+# Deploy your own instance
+docker compose up -d
+```
+
+#### Fully Decentralized
+- Use CLI directly with Walrus and Sui
+- No API server required
+- Complete data sovereignty
+
+### Technical Implementation Details
+
+#### API Server Responsibilities
+- **Authentication & Authorization**: Manage user sessions and permissions
+- **Business Logic**: Complex operations like AI task generation
+- **Data Coordination**: Sync between local, API, and blockchain storage
+- **Performance Optimization**: Caching, batching, and query optimization
+- **Integration Hub**: Connect with external services (AI providers, analytics)
+
+#### Walrus Integration
+- **Blob Storage**: Each todo stored as an immutable blob
+- **Content Addressing**: Deduplication through content hashing
+- **Availability Proof**: Guaranteed data availability for specified epochs
+- **Efficient Retrieval**: CDN-like access for fast global retrieval
+
+#### Sui Blockchain Integration
+- **NFT Smart Contracts**: Move contracts for todo NFTs
+- **Ownership Transfer**: Secure transfer of todo ownership
+- **Event Emission**: Real-time updates via blockchain events
+- **Verification**: Cryptographic proof of operations
 
 ### Storage Optimization
 The CLI now includes advanced storage optimization features to maximize efficiency and reduce costs:

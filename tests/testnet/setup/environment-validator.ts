@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../../src/utils/Logger';
+
+const logger = new Logger('environment-validator');
  * Environment Validator for Testnet Configuration
  * Verifies all required configurations and prerequisites for testnet deployment
  */
@@ -61,7 +64,7 @@ export class EnvironmentValidator {
   private async validateSuiCLI(): Promise<void> {
     try {
       const version = execSync('sui --version', { encoding: 'utf8' }).trim();
-      console.log(`✓ Sui CLI found: ${version}`);
+      logger.info(`✓ Sui CLI found: ${version}`);
       this.config.suiPath = execSync('which sui', { encoding: 'utf8' }).trim();
     } catch (_error) {
       this.errors.push('Sui CLI not found. Please install it from https://docs.sui.io/guides/developer/getting-started');
@@ -74,7 +77,7 @@ export class EnvironmentValidator {
   private async validateWalrusCLI(): Promise<void> {
     try {
       const version = execSync('walrus --version', { encoding: 'utf8' }).trim();
-      console.log(`✓ Walrus CLI found: ${version}`);
+      logger.info(`✓ Walrus CLI found: ${version}`);
     } catch (_error) {
       this.errors.push('Walrus CLI not found. Please install it from https://docs.wal.app');
     }
@@ -96,7 +99,7 @@ export class EnvironmentValidator {
     }
 
     this.config.suiAddress = address;
-    console.log(`✓ Sui address configured: ${address}`);
+    logger.info(`✓ Sui address configured: ${address}`);
   }
 
   /**
@@ -117,7 +120,7 @@ export class EnvironmentValidator {
       this.config.suiBalance = totalBalance;
       const balanceInSui = Number(totalBalance) / 1e9;
       
-      console.log(`✓ Sui balance: ${balanceInSui} SUI`);
+      logger.info(`✓ Sui balance: ${balanceInSui} SUI`);
       
       if (balanceInSui < 0.1) {
         this.warnings.push(`Low Sui balance: ${balanceInSui} SUI. Consider getting more from the faucet.`);
@@ -141,7 +144,7 @@ export class EnvironmentValidator {
         try {
           const keystore = JSON.parse(readFileSync(keystorePath, 'utf8'));
           if (keystore.length > 0) {
-            console.log('✓ Private key found in Sui keystore');
+            logger.info('✓ Private key found in Sui keystore');
             this.config.privateKey = 'keystore';
             return;
           }
@@ -152,7 +155,7 @@ export class EnvironmentValidator {
       
       this.errors.push('No private key found. Set SUI_PRIVATE_KEY or configure Sui keystore');
     } else {
-      console.log('✓ Private key configured via environment variable');
+      logger.info('✓ Private key configured via environment variable');
       this.config.privateKey = privateKey;
     }
   }
@@ -169,7 +172,7 @@ export class EnvironmentValidator {
     }
 
     this.config.walrusConfig = configPath;
-    console.log(`✓ Walrus config found: ${configPath}`);
+    logger.info(`✓ Walrus config found: ${configPath}`);
 
     // Check Walrus tokens
     try {
@@ -178,7 +181,7 @@ export class EnvironmentValidator {
       
       if (tokenMatch) {
         this.config.walrusTokens = parseInt(tokenMatch[1]);
-        console.log(`✓ Walrus balance: ${this.config.walrusTokens} tokens`);
+        logger.info(`✓ Walrus balance: ${this.config.walrusTokens} tokens`);
         
         if (this.config.walrusTokens < 10) {
           this.warnings.push(`Low Walrus token balance: ${this.config.walrusTokens}. Run 'walrus --context testnet get-wal'`);
@@ -198,7 +201,7 @@ export class EnvironmentValidator {
     try {
       // Simple check using curl
       execSync(`curl -s -f ${networkUrl}`, { encoding: 'utf8' });
-      console.log(`✓ Network connectivity confirmed: ${networkUrl}`);
+      logger.info(`✓ Network connectivity confirmed: ${networkUrl}`);
       this.config.networkUrl = networkUrl;
     } catch (_error) {
       this.warnings.push(`Failed to connect to ${networkUrl}. Network may be slow or unavailable.`);
@@ -217,12 +220,12 @@ export class EnvironmentValidator {
       return;
     }
 
-    console.log('✓ Move package found');
+    logger.info('✓ Move package found');
 
     // Check if package is already deployed
     const deployedId = process.env.TODO_PACKAGE_ID;
     if (deployedId) {
-      console.log(`✓ Deployed package ID: ${deployedId}`);
+      logger.info(`✓ Deployed package ID: ${deployedId}`);
       this.config.movePackageId = deployedId;
     } else {
       this.warnings.push('TODO_PACKAGE_ID not set. Package may need to be deployed.');
@@ -238,7 +241,7 @@ export class EnvironmentValidator {
     try {
       this.config.gasBudget = BigInt(gasBudget);
       const gasInSui = Number(this.config.gasBudget) / 1e9;
-      console.log(`✓ Gas budget configured: ${gasInSui} SUI`);
+      logger.info(`✓ Gas budget configured: ${gasInSui} SUI`);
       
       if (gasInSui > 1) {
         this.warnings.push(`High gas budget: ${gasInSui} SUI. Consider reducing to save costs.`);
@@ -277,29 +280,29 @@ WALRUS_USE_MOCK=false # Set to true for testing without real storage
    * Print validation report
    */
   static printReport(result: ValidationResult): void {
-    console.log('\n=== Testnet Environment Validation Report ===\n');
+    logger.info('\n=== Testnet Environment Validation Report ===\n');
     
     if (result.errors.length > 0) {
-      console.log('❌ ERRORS:');
-      result.errors.forEach(error => console.log(`   - ${error}`));
-      console.log('');
+      logger.info('❌ ERRORS:');
+      result.errors.forEach(error => logger.info(`   - ${error}`));
+      logger.info('');
     }
     
     if (result.warnings.length > 0) {
-      console.log('⚠️  WARNINGS:');
-      result.warnings.forEach(warning => console.log(`   - ${warning}`));
-      console.log('');
+      logger.info('⚠️  WARNINGS:');
+      result.warnings.forEach(warning => logger.info(`   - ${warning}`));
+      logger.info('');
     }
     
     if (result.isValid) {
-      console.log('✅ All required configurations are valid!');
-      console.log('\nConfiguration Summary:');
-      console.log(JSON.stringify(result.config, null, 2));
+      logger.info('✅ All required configurations are valid!');
+      logger.info('\nConfiguration Summary:');
+      logger.info(JSON.stringify(result.config, null, 2));
     } else {
-      console.log('❌ Please fix the errors above before proceeding with testnet deployment.');
+      logger.info('❌ Please fix the errors above before proceeding with testnet deployment.');
     }
     
-    console.log('\n===========================================\n');
+    logger.info('\n===========================================\n');
   }
 }
 

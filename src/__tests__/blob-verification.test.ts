@@ -1,5 +1,4 @@
 import { BlobVerificationManager } from '../utils/blob-verification';
-import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../types/client';
 import type { BlobMetadataShape, BlobInfo } from '../types/walrus';
 
@@ -8,7 +7,7 @@ jest.mock('@mysten/walrus');
 jest.mock('blake3');
 
 describe('BlobVerificationManager', () => {
-  let mockSuiClient: Pick<SuiClient, 'getLatestSuiSystemState'>;
+  let mockSuiClient: any; // Pick<SuiClient, 'getLatestSuiSystemState'>;
   let mockWalrusClient: jest.Mocked<WalrusClientExt>;
   let verificationManager: BlobVerificationManager;
 
@@ -48,7 +47,7 @@ describe('BlobVerificationManager', () => {
         validatorLowStakeThreshold: '10000',
         validatorVeryLowStakeThreshold: '5000'
       })
-    } as Pick<SuiClient, 'getLatestSuiSystemState'>;
+    }; // as Pick<SuiClient, 'getLatestSuiSystemState'>;
 
     // Create a more complete mock that matches the WalrusClientExt interface
     const walrusClientMock = {

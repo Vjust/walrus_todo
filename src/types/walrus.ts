@@ -92,6 +92,7 @@ export interface BlobMetadataShape {
     }[];
   };
   $kind: 'V1';
+  [key: string]: unknown; // Index signature for compatibility with Record<string, unknown>
 }
 
 // Blob metadata with safe access patterns

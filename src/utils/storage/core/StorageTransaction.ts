@@ -106,7 +106,7 @@ export class StorageTransaction {
       });
       
       return tx;
-    } catch (_error) {
+    } catch (error) {
       throw new BlockchainError(
         `Failed to create storage allocation transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
@@ -145,7 +145,7 @@ export class StorageTransaction {
       });
       
       return tx;
-    } catch (_error) {
+    } catch (error) {
       throw new BlockchainError(
         `Failed to create storage extension transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
@@ -240,7 +240,7 @@ export class StorageTransaction {
               updatedObjects: updatedObjects.filter(id => id) as string[],
               rawResponse: response
             };
-          } catch (_error) {
+          } catch (error) {
             throw new TransactionError(
               `Failed to execute ${operationType} transaction: ${error instanceof Error ? error.message : String(error)}`,
               {
@@ -263,7 +263,7 @@ export class StorageTransaction {
         }
         return result.data;
       });
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionError) {
         throw error;
       }

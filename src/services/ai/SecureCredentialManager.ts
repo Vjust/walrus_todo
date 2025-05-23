@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 import { CLI_CONFIG } from '../../constants';
+import { Logger } from '../../utils/Logger';
 import {
   AICredentialAdapter,
   AIProviderCredential,
@@ -10,6 +11,29 @@ import {
   AIPermissionLevel,
   CredentialStorageOptions
 } from '../../types/adapters/AICredentialAdapter';
+
+const logger = new Logger('SecureCredentialManager');
+
+interface BackupLocation {
+  path: string;
+  metadataBackupPath: string;
+  timestamp: number;
+}
+
+interface KeyMetadata {
+  version: number;
+  created: number;
+  lastRotated: number;
+  backupLocations?: BackupLocation[];
+  [key: string]: unknown;
+}
+
+interface BackupInfo {
+  id: string;
+  timestamp: number;
+  version: number;
+  path: string;
+}
 import { randomUUID } from 'crypto';
 // promisify imported but not used
 
@@ -107,7 +131,7 @@ export class SecureCredentialManager {
   /**
    * Get key metadata
    */
-  private getKeyMetadata(): any {
+  private getKeyMetadata(): KeyMetadata | null {
     try {
       if (fs.existsSync(this.keyMetadataPath)) {
         const metadataRaw = fs.readFileSync(this.keyMetadataPath, 'utf8');
@@ -115,7 +139,7 @@ export class SecureCredentialManager {
       }
       return null;
     } catch (_error) {
-      console.error('Failed to read key metadata:', error);
+      logger.error('Failed to read key metadata:', error);
       return null;
     }
   }
@@ -123,13 +147,13 @@ export class SecureCredentialManager {
   /**
    * Update key metadata
    */
-  private updateKeyMetadata(updates: Record<string, any>): void {
+  private updateKeyMetadata(updates: Partial<KeyMetadata>): void {
     try {
       const currentMetadata = this.getKeyMetadata() || {};
       const updatedMetadata = { ...currentMetadata, ...updates };
       fs.writeFileSync(this.keyMetadataPath, JSON.stringify(updatedMetadata), { mode: 0o600 });
     } catch (_error) {
-      console.error('Failed to update key metadata:', error);
+      logger.error('Failed to update key metadata:', error);
     }
   }
 
@@ -149,7 +173,7 @@ export class SecureCredentialManager {
         this.rotateKey();
       }
     } catch (_error) {
-      console.error('Failed to check key rotation status:', error);
+      logger.error('Failed to check key rotation status:', error);
     }
   }
 
@@ -167,7 +191,7 @@ export class SecureCredentialManager {
       }
       this.initialized = true;
     } catch (_error) {
-      console.error('Failed to load credentials:', error);
+      logger.error('Failed to load credentials:', error);
       // For security, initialize with empty credentials on error
       this.credentials = {};
       this.initialized = true;
@@ -204,7 +228,7 @@ export class SecureCredentialManager {
       this.backupCredentialsIfNeeded();
       
       // Log succesful save with privacy-safe details
-      console.info(
+      logger.info(
         `Credentials saved successfully. Storage path hash: ${crypto.createHash('sha256').update(this.credentialsPath).digest('hex').substring(0, 8)}`,
         {
           timestamp: new Date().toISOString(),
@@ -222,7 +246,7 @@ export class SecureCredentialManager {
       (saveError as any).cause = error;
       
       // Log the error without sensitive information
-      console.error('Failed to save credentials', {
+      logger.error('Failed to save credentials', {
         errorType: error instanceof Error ? error.name : typeof error,
         timestamp: new Date().toISOString()
       });
@@ -258,7 +282,7 @@ export class SecureCredentialManager {
         this.cleanupOldBackups();
       }
     } catch (_error) {
-      console.error('Failed to backup credentials:', error);
+      logger.error('Failed to backup credentials:', error);
     }
   }
 
@@ -283,7 +307,7 @@ export class SecureCredentialManager {
         });
       }
     } catch (_error) {
-      console.error('Failed to clean up old backups:', error);
+      logger.error('Failed to clean up old backups:', error);
     }
   }
 
@@ -354,7 +378,7 @@ export class SecureCredentialManager {
         this.credentials[provider.toLowerCase()] = newCredential;
         this.saveCredentials();
       } catch (_error) {
-        console.warn(`Blockchain verification failed: ${error}`);
+        logger.warn(`Blockchain verification failed: ${error}`);
         // Continue without blockchain verification
       }
     }
@@ -405,7 +429,7 @@ export class SecureCredentialManager {
     // Check if credential is nearing expiration (within 7 days) and log a warning
     if (credential.expiresAt && Date.now() > (credential.expiresAt - 7 * 24 * 60 * 60 * 1000)) {
       const daysRemaining = Math.ceil((credential.expiresAt - Date.now()) / (1000 * 60 * 60 * 24));
-      console.warn(`WARNING: Credential for provider "${providerName}" will expire in ${daysRemaining} day(s)`);
+      logger.warn(`WARNING: Credential for provider "${providerName}" will expire in ${daysRemaining} day(s)`);
     }
 
     // If credential is verified, check verification status on blockchain
@@ -416,14 +440,14 @@ export class SecureCredentialManager {
           throw new CLIError(`Blockchain verification is no longer valid for provider "${providerName}"`, 'VERIFICATION_INVALID');
         }
       } catch (_error) {
-        console.warn(`Failed to check blockchain verification: ${error}`);
+        logger.warn(`Failed to check blockchain verification: ${error}`);
         // Continue with the credential even if verification check fails
       }
     }
 
     // Prevent usage of very old credentials (if last used more than 180 days ago)
     if (credential.lastUsed && (Date.now() - credential.lastUsed > 180 * 24 * 60 * 60 * 1000)) {
-      console.warn(`Credential for provider "${providerName}" has not been used in over 180 days. Performing additional validation.`);
+      logger.warn(`Credential for provider "${providerName}" has not been used in over 180 days. Performing additional validation.`);
       // Here additional validation could be performed
     }
   }
@@ -530,7 +554,7 @@ export class SecureCredentialManager {
         try {
           await this.blockchainAdapter.revokeVerification(credential.verificationProof);
         } catch (_error) {
-          console.warn(`Failed to revoke blockchain verification: ${error}`);
+          logger.warn(`Failed to revoke blockchain verification: ${error}`);
           // Continue with local removal even if blockchain revocation fails
         }
       }
@@ -671,7 +695,7 @@ export class SecureCredentialManager {
         // Update credential with new verification
         credential.verificationProof = verificationResult.verificationId;
       } catch (_error) {
-        console.warn(`Failed to update blockchain verification: ${error}`);
+        logger.warn(`Failed to update blockchain verification: ${error}`);
         // Continue without blockchain verification update
       }
     }
@@ -723,7 +747,7 @@ export class SecureCredentialManager {
 
       return true;
     } catch (_error) {
-      console.error('Key rotation failed:', error);
+      logger.error('Key rotation failed:', error);
       throw new CLIError(
         `Failed to rotate encryption key: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'KEY_ROTATION_FAILED'
@@ -762,7 +786,7 @@ export class SecureCredentialManager {
         backupLocations: backupLocations.slice(-5) // Keep only the 5 most recent backup references
       });
     } catch (_error) {
-      console.error('Key backup failed:', error);
+      logger.error('Key backup failed:', error);
       throw new CLIError(
         `Failed to backup encryption key: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'KEY_BACKUP_FAILED'
@@ -783,7 +807,7 @@ export class SecureCredentialManager {
       // Find the backup by ID or use the most recent if not specified
       let backupInfo;
       if (backupId) {
-        backupInfo = metadata.backupLocations.find((b: any) => b.path.includes(backupId));
+        backupInfo = metadata.backupLocations.find((b: BackupLocation) => b.path.includes(backupId));
         if (!backupInfo) {
           throw new CLIError(`No backup found with ID ${backupId}`, 'BACKUP_NOT_FOUND');
         }
@@ -812,7 +836,7 @@ export class SecureCredentialManager {
 
       return true;
     } catch (_error) {
-      console.error('Key restore failed:', error);
+      logger.error('Key restore failed:', error);
       throw new CLIError(
         `Failed to restore from backup: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'BACKUP_RESTORE_FAILED'
@@ -833,14 +857,14 @@ export class SecureCredentialManager {
       const metadata = this.getKeyMetadata();
       if (!metadata || !metadata.backupLocations) return [];
 
-      return metadata.backupLocations.map((backup: any) => ({
+      return metadata.backupLocations.map((backup: BackupLocation) => ({
         id: path.basename(backup.path).split('_')[2], // Extract ID from filename
         timestamp: backup.timestamp,
         version: metadata.version || 1,
         path: backup.path
       }));
     } catch (_error) {
-      console.error('Failed to list backups:', error);
+      logger.error('Failed to list backups:', error);
       return [];
     }
   }
@@ -861,7 +885,7 @@ export class SecureCredentialManager {
 
       return true;
     } catch (_error) {
-      console.error('Key validation failed:', error);
+      logger.error('Key validation failed:', error);
       return false;
     }
   }
@@ -886,7 +910,7 @@ export class SecureCredentialManager {
       const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, iv);
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (_error) {
-      console.error('Decryption failed:', error);
+      logger.error('Decryption failed:', error);
       return null;
     }
   }

@@ -246,7 +246,7 @@ export async function main(): Promise<void> {
   };
   
   if (args.includes('--help')) {
-    console.log(`
+    logger.info(`
 Test Cleanup Utility
 
 Usage: npm run test:cleanup [options]
@@ -278,7 +278,7 @@ Examples:
 // Run if called directly
 if (require.main === module) {
   main().catch(_error => {
-    console.error('Fatal error:', error);
+    logger.error('Fatal error:', error);
     process.exit(1);
   });
 }

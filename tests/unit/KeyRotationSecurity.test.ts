@@ -33,7 +33,7 @@ jest.mock('crypto', () => {
   
   return {
     ...originalModule,
-    randomBytes: jest.fn(size => Buffer.alloc(size, 'a')),
+    randomBytes: jest.fn((size: number) => Buffer.alloc(size, 'a')),
     createCipheriv: jest.fn(() => ({
       update: jest.fn().mockReturnValue(Buffer.from('encrypted')),
       final: jest.fn().mockReturnValue(Buffer.from('final'))
@@ -51,7 +51,7 @@ jest.mock('path', () => {
   const originalModule = jest.requireActual('path');
   return {
     ...originalModule,
-    join: jest.fn((...args) => args.join('/'))
+    join: jest.fn((...args: string[]) => args.join('/'))
   };
 });
 
@@ -222,8 +222,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
   test('should properly validate credentials for expiration', async () => {
     // Setup private method access
     const validateCredentialMethod = jest.spyOn(
-      // @ts-expect-error - accessing private method
-      manager,
+      manager as unknown as { validateCredential: jest.Mock },
       'validateCredential'
     );
     
@@ -242,8 +241,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     };
     
     // Add the credential to the manager
-    // @ts-expect-error - accessing private property
-    manager.credentials = {
+    (manager as unknown as { credentials: Record<string, typeof expiredCredential> }).credentials = {
       'test-provider': expiredCredential
     };
     
@@ -261,14 +259,12 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
   test('should backup credentials periodically', () => {
     // Setup private method access
     const backupCredentialsMethod = jest.spyOn(
-      // @ts-expect-error - accessing private method
-      manager,
+      manager as unknown as { backupCredentialsIfNeeded: jest.Mock },
       'backupCredentialsIfNeeded'
     );
     
     // Trigger a save operation
-    // @ts-expect-error - accessing private method
-    manager.saveCredentials();
+    (manager as unknown as { saveCredentials: () => void }).saveCredentials();
     
     // Check if backup function was called
     expect(backupCredentialsMethod).toHaveBeenCalled();
@@ -287,14 +283,12 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     
     // Setup private method access
     const cleanupMethod = jest.spyOn(
-      // @ts-expect-error - accessing private method
-      manager,
+      manager as unknown as { cleanupOldBackups: jest.Mock },
       'cleanupOldBackups'
     );
     
     // Trigger a cleanup by saving credentials
-    // @ts-expect-error - accessing private method
-    manager.backupCredentialsIfNeeded();
+    (manager as unknown as { backupCredentialsIfNeeded: () => void }).backupCredentialsIfNeeded();
     
     // Should attempt to clean up old backups
     expect(cleanupMethod).toHaveBeenCalled();

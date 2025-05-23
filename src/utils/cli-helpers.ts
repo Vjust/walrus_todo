@@ -2,6 +2,9 @@ import chalk from 'chalk';
 import ora from 'ora';
 import type { Ora } from 'ora';
 import { CLIError } from './error-handler';
+import { Logger } from './Logger';
+
+const logger = new Logger('cli-helpers');
 
 /**
  * Unified spinner management for CLI commands
@@ -10,7 +13,9 @@ export class SpinnerManager {
   private spinner: Ora;
   
   constructor(text: string) {
-    this.spinner = (ora as any).default ? (ora as any).default(text) : ora(text);
+    // Handle both CommonJS and ES module imports
+    const oraFn = typeof ora === 'function' ? ora : (ora as { default: typeof ora }).default;
+    this.spinner = oraFn(text);
   }
   
   start(text?: string): void {
@@ -74,7 +79,7 @@ export class ErrorHandler {
   }
   
   static exit(message: string, code: number = 1): never {
-    console.error(chalk.red(`Error: ${message}`));
+    logger.error(chalk.red(`Error: ${message}`));
     process.exit(code);
   }
 }
@@ -150,7 +155,7 @@ export class RetryManager {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         return await operation();
-      } catch (_error) {
+      } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         if (attempt < maxAttempts) {
@@ -181,29 +186,29 @@ export class RetryManager {
  */
 export class Logger {
   static success(message: string): void {
-    console.log(chalk.green(`✓ ${message}`));
+    logger.info(chalk.green(`✓ ${message}`));
   }
   
   static error(message: string): void {
-    console.error(chalk.red(`✗ ${message}`));
+    logger.error(chalk.red(`✗ ${message}`));
   }
   
   static warning(message: string): void {
-    console.warn(chalk.yellow(`⚠ ${message}`));
+    logger.warn(chalk.yellow(`⚠ ${message}`));
   }
   
   static info(message: string): void {
-    console.log(chalk.blue(`ℹ ${message}`));
+    logger.info(chalk.blue(`ℹ ${message}`));
   }
   
   static debug(message: string): void {
     if (process.env.DEBUG) {
-      console.log(chalk.gray(`[DEBUG] ${message}`));
+      logger.info(chalk.gray(`[DEBUG] ${message}`));
     }
   }
   
   static step(step: number, total: number, message: string): void {
-    console.log(chalk.dim(`[${step}/${total}]`) + ` ${message}`);
+    logger.info(chalk.dim(`[${step}/${total}]`) + ` ${message}`);
   }
 }
 

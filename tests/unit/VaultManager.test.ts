@@ -1,6 +1,25 @@
 import { VaultManager } from '../../src/utils/VaultManager';
 import * as fs from 'fs';
 import * as path from 'path';
+import { WalrusError } from '../../src/types/errors';
+
+interface VaultConfig {
+  name: string;
+  maxSize: number;
+  allowedTypes: string[];
+  retentionPeriod: number;
+}
+
+interface BlobRecord {
+  blobId: string;
+  fileName: string;
+  size: number;
+  mimeType: string;
+  checksum: string;
+  uploadedAt: string;
+  expiresAt: string;
+  vaultId: string;
+}
 
 
 jest.mock('fs');
@@ -9,7 +28,7 @@ jest.mock('path');
 describe('VaultManager', () => {
   let vaultManager: VaultManager;
   const testBaseDir = '/test/vaults';
-  const mockVaultConfig = {
+  const mockVaultConfig: VaultConfig = {
     name: 'Test Vault',
     maxSize: 1024 * 1024 * 10, // 10MB
     allowedTypes: ['image/jpeg', 'image/png'],
@@ -54,7 +73,7 @@ describe('VaultManager', () => {
   });
 
   describe('saveBlobRecord', () => {
-    let mockBlobRecord: any;
+    let mockBlobRecord: BlobRecord;
     let vaultId: string;
 
     beforeEach(() => {
@@ -114,7 +133,7 @@ describe('VaultManager', () => {
     });
 
     it('should validate total vault size', () => {
-      const mockBlobRecord = {
+      const mockBlobRecord: BlobRecord = {
         blobId: 'a'.repeat(64),
         fileName: 'test.jpg',
         size: mockVaultConfig.maxSize - 1024,
@@ -167,8 +186,9 @@ describe('VaultManager', () => {
       };
 
       (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-        const fileName = filePath.split('/').pop() as keyof typeof mockRecords;
-        return JSON.stringify(mockRecords[fileName]);
+        const fileName = filePath.split('/').pop() as string;
+        const record = mockRecords[fileName as keyof typeof mockRecords];
+        return JSON.stringify(record);
       });
 
       const expiringBlobs = vaultManager.getExpiringBlobs(3); // Check next 3 days

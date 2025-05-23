@@ -86,7 +86,7 @@ test.describe('Slush Wallet Integration', () => {
       await expect(page.getByText('Connect Slush Wallet')).toBeVisible();
     } else {
       // Handle the case where the button isn't visible
-      console.log('Test environment did not reach connected state');
+      // console.log('Test environment did not reach connected state'); // Removed console statement
     }
   });
 

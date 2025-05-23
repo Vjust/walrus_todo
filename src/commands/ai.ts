@@ -12,6 +12,7 @@ import {
 } from '../utils/CommandValidationMiddleware';
 import { getEnv, hasEnv } from '../utils/environment-config';
 import { TodoService } from '../services/todoService';
+import { CLIError } from '../types/errors/consolidated';
 
 const logger = new Logger('AI');
 
@@ -24,14 +25,17 @@ const logger = new Logger('AI');
  * optional blockchain verification of AI results for enhanced trust and traceability.
  */
 export default class AI extends BaseCommand {
-  static description = 'AI operations for todo management';
+  static description = 'Perform AI-powered operations like summarize, categorize, prioritize and analyze todos';
 
   static examples = [
-    '$ walrus_todo ai suggest',
-    '$ walrus_todo ai analyze',
-    '$ walrus_todo ai summarize',
-    '$ walrus_todo ai categorize',
-    '$ walrus_todo ai prioritize',
+    '<%= config.bin %> ai suggest                                     # Get task suggestions',
+    '<%= config.bin %> ai analyze --list work                         # Analyze work todos',
+    '<%= config.bin %> ai summarize --list personal                   # Summarize personal todos',
+    '<%= config.bin %> ai categorize --list my-todos                  # Auto-categorize todos',
+    '<%= config.bin %> ai prioritize --list urgent-tasks              # AI-powered prioritization',
+    '<%= config.bin %> ai suggest --list work --context "sprint planning"  # Context-aware suggestions',
+    '<%= config.bin %> ai analyze --all                              # Analyze all lists',
+    '<%= config.bin %> ai summarize --list project --format detailed  # Detailed summary',
     '$ walrus_todo ai credentials add xai --key YOUR_KEY',
   ];
 
@@ -137,8 +141,11 @@ export default class AI extends BaseCommand {
           temperature: temperature,
         }
       );
-    } catch (_error) {
-      this.error(`Failed to set AI provider: ${error.message}`, { exit: 1 });
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to set AI provider: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     // Use environment-based verification setting
@@ -385,12 +392,15 @@ export default class AI extends BaseCommand {
         this.log(chalk.cyan('📝 Summary of your todos:'));
         this.log(chalk.yellow(summary));
       }
-    } catch (_error) {
+    } catch (error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in summarizeTodos:', error as Error);
       }
-      this.error(`AI summarization failed: ${error.message}`, { exit: 1 });
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`AI summarization failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -488,12 +498,15 @@ export default class AI extends BaseCommand {
           }
         }
       }
-    } catch (_error) {
+    } catch (error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in categorizeTodos:', error as Error);
       }
-      this.error(`AI categorization failed: ${error.message}`, { exit: 1 });
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`AI categorization failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -610,12 +623,15 @@ export default class AI extends BaseCommand {
 
         this.log(`${priorityColor(`[${priority}]`)} ${todo.title}`);
       }
-    } catch (_error) {
+    } catch (error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in prioritizeTodos:', error as Error);
       }
-      this.error(`AI prioritization failed: ${error.message}`, { exit: 1 });
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`AI prioritization failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -763,12 +779,15 @@ export default class AI extends BaseCommand {
 
       this.log('');
       this.log(`To add a suggested todo: ${chalk.cyan('walrus_todo add "Suggested Todo Title"')}`);
-    } catch (_error) {
+    } catch (error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in suggestTodos:', error as Error);
       }
-      this.error(`AI suggestion failed: ${error.message}`, { exit: 1 });
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`AI suggestion failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -882,12 +901,15 @@ export default class AI extends BaseCommand {
           this.log(`  ${details}`);
         }
       }
-    } catch (_error) {
+    } catch (error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
         logger.error('DEBUG - Error in analyzeTodos:', error as Error);
       }
-      this.error(`AI analysis failed: ${error.message}`, { exit: 1 });
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`AI analysis failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }

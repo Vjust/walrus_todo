@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { randomUUID } from 'crypto';
-import { CLIError } from '../../../types/error';
+import { CLIError } from '../../../types/errors/consolidated';
 import { AI_CONFIG, CLI_CONFIG } from '../../../constants';
 import { Logger } from '../../../utils/Logger';
 import { AIProvider } from '../types';

@@ -3,7 +3,7 @@ import BaseCommand from '../base-command';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * @class DeleteCommand
@@ -20,10 +20,12 @@ export default class DeleteCommand extends BaseCommand {
   static description = 'Delete a specific todo item or an entire list';
 
   static examples = [
-    '<%= config.bin %> delete my-list -i task-123',
-    '<%= config.bin %> delete my-list -i "Buy groceries"',
-    '<%= config.bin %> delete my-list -i task-123 --force',
-    '<%= config.bin %> delete my-list --all'
+    '<%= config.bin %> delete my-list -i task-123              # Delete by ID',
+    '<%= config.bin %> delete my-list -i "Buy groceries"      # Delete by title',
+    '<%= config.bin %> delete my-list -i task-123 --force     # Force delete without confirmation',
+    '<%= config.bin %> delete my-list --all                   # Delete all todos in list',
+    '<%= config.bin %> delete -i todo-456                     # Delete from default list',
+    '<%= config.bin %> delete work --all --force              # Force delete all work todos'
   ];
 
   static flags = {
@@ -145,7 +147,7 @@ export default class DeleteCommand extends BaseCommand {
       this.log(chalk.dim('List:'), args.listName);
       this.log(chalk.dim('ID:'), todo.id);
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

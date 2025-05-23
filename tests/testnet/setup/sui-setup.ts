@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../../src/utils/Logger';
+
+const logger = new Logger('sui-setup');
  * Sui Testnet Setup Utilities
  * 
  * This module provides automated tools for setting up and configuring Sui wallets
@@ -94,7 +97,7 @@ export class SuiTestnetSetup {
    * Complete testnet setup process
    */
   async setup(): Promise<TestnetSetupResult> {
-    console.log('🚀 Starting Sui testnet setup...');
+    logger.info('🚀 Starting Sui testnet setup...');
 
     try {
       // Check network connectivity
@@ -124,7 +127,7 @@ export class SuiTestnetSetup {
       // Create and save configuration files
       await this.saveWalletConfiguration(wallet);
 
-      console.log('✅ Sui testnet setup completed successfully!');
+      logger.info('✅ Sui testnet setup completed successfully!');
       
       return {
         wallet,
@@ -134,7 +137,7 @@ export class SuiTestnetSetup {
         fundingTxDigest,
       };
     } catch (_error) {
-      console.error('❌ Sui testnet setup failed:', error);
+      logger.error('❌ Sui testnet setup failed:', error);
       throw error;
     }
   }
@@ -143,14 +146,14 @@ export class SuiTestnetSetup {
    * Check network connection to Sui RPC endpoint
    */
   private async checkNetworkConnection(): Promise<void> {
-    console.log('🔍 Checking network connection...');
+    logger.info('🔍 Checking network connection...');
     
     try {
       const health = await this.client.getLatestCheckpointSequenceNumber();
       if (typeof health !== 'string' && typeof health !== 'number') {
         throw new Error('Invalid health check response');
       }
-      console.log('✅ Network connection successful');
+      logger.info('✅ Network connection successful');
     } catch (_error) {
       throw new CLIError(
         `Failed to connect to Sui ${this.config.network}: ${error instanceof Error ? error.message : String(error)}`,
@@ -163,16 +166,16 @@ export class SuiTestnetSetup {
    * Create a new wallet or restore from existing keystore
    */
   private async createOrRestoreWallet(): Promise<WalletInfo> {
-    console.log('🔐 Creating/restoring wallet...');
+    logger.info('🔐 Creating/restoring wallet...');
 
     // Check if keystore already exists
     if (fs.existsSync(this.config.keystorePath)) {
-      console.log('Found existing keystore, attempting to restore...');
+      logger.info('Found existing keystore, attempting to restore...');
       return await this.restoreWalletFromKeystore();
     }
 
     // Create new wallet
-    console.log('Creating new wallet...');
+    logger.info('Creating new wallet...');
     return await this.createNewWallet();
   }
 
@@ -205,8 +208,8 @@ export class SuiTestnetSetup {
     ];
     fs.writeFileSync(this.config.keystorePath, JSON.stringify(keystoreData, null, 2));
 
-    console.log(`✅ Created new ${this.config.walletType} wallet`);
-    console.log(`📍 Address: ${address}`);
+    logger.info(`✅ Created new ${this.config.walletType} wallet`);
+    logger.info(`📍 Address: ${address}`);
 
     return {
       address,
@@ -249,8 +252,8 @@ export class SuiTestnetSetup {
       const publicKey = keypair.getPublicKey().toBase64();
       const privateKey = toB64(keypair.export().privateKey);
 
-      console.log(`✅ Restored ${keypair.getKeyScheme()} wallet from keystore`);
-      console.log(`📍 Address: ${address}`);
+      logger.info(`✅ Restored ${keypair.getKeyScheme()} wallet from keystore`);
+      logger.info(`📍 Address: ${address}`);
 
       return {
         address,
@@ -272,7 +275,7 @@ export class SuiTestnetSetup {
    * Fund wallet from testnet faucet
    */
   private async fundWalletFromFaucet(address: string): Promise<string> {
-    console.log('💰 Requesting funds from testnet faucet...');
+    logger.info('💰 Requesting funds from testnet faucet...');
     
     if (this.config.network !== 'testnet') {
       throw new CLIError(
@@ -310,13 +313,13 @@ export class SuiTestnetSetup {
           throw new Error('No transaction digest received from faucet');
         }
 
-        console.log(`✅ Faucet request successful! Tx: ${txDigest}`);
+        logger.info(`✅ Faucet request successful! Tx: ${txDigest}`);
         return txDigest;
       } catch (_error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         if (attempt < RETRY_ATTEMPTS) {
-          console.warn(`Faucet request attempt ${attempt} failed, retrying...`);
+          logger.warn(`Faucet request attempt ${attempt} failed, retrying...`);
           await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
         }
       }
@@ -332,7 +335,7 @@ export class SuiTestnetSetup {
    * Wait for faucet funding to be confirmed
    */
   private async waitForFunding(address: string): Promise<void> {
-    console.log('⏳ Waiting for funding to be confirmed...');
+    logger.info('⏳ Waiting for funding to be confirmed...');
     
     const startBalance = await this.getBalance(address);
     const startTime = Date.now();
@@ -343,13 +346,13 @@ export class SuiTestnetSetup {
       
       const currentBalance = await this.getBalance(address);
       if (BigInt(currentBalance) > BigInt(startBalance)) {
-        console.log('✅ Funding confirmed!');
-        console.log(`💰 New balance: ${this.formatBalance(currentBalance)} SUI`);
+        logger.info('✅ Funding confirmed!');
+        logger.info(`💰 New balance: ${this.formatBalance(currentBalance)} SUI`);
         return;
       }
     }
     
-    console.warn('⚠️  Funding confirmation timeout - please check wallet balance manually');
+    logger.warn('⚠️  Funding confirmation timeout - please check wallet balance manually');
   }
 
   /**
@@ -364,7 +367,7 @@ export class SuiTestnetSetup {
       
       return balance.totalBalance;
     } catch (_error) {
-      console.warn('Failed to get balance:', error);
+      logger.warn('Failed to get balance:', error);
       return '0';
     }
   }
@@ -382,7 +385,7 @@ export class SuiTestnetSetup {
    * Backup wallet to specified location
    */
   private async backupWallet(wallet: WalletInfo): Promise<string> {
-    console.log('💾 Backing up wallet...');
+    logger.info('💾 Backing up wallet...');
     
     try {
       // Create backup directory
@@ -404,10 +407,10 @@ export class SuiTestnetSetup {
       };
       fs.writeFileSync(walletInfoPath, JSON.stringify(walletInfoToSave, null, 2));
 
-      console.log(`✅ Wallet backed up to: ${this.config.backupPath}`);
+      logger.info(`✅ Wallet backed up to: ${this.config.backupPath}`);
       return this.config.backupPath;
     } catch (_error) {
-      console.error('Failed to backup wallet:', error);
+      logger.error('Failed to backup wallet:', error);
       throw new CLIError(
         `Failed to backup wallet: ${error instanceof Error ? error.message : String(error)}`,
         'WALLET_BACKUP_FAILED'
@@ -419,7 +422,7 @@ export class SuiTestnetSetup {
    * Save wallet configuration files
    */
   private async saveWalletConfiguration(wallet: WalletInfo): Promise<void> {
-    console.log('📝 Saving configuration files...');
+    logger.info('📝 Saving configuration files...');
     
     try {
       // Create config directory if it doesn't exist
@@ -457,7 +460,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
 
       fs.writeFileSync(envPath, envContent);
 
-      console.log('✅ Configuration files saved successfully');
+      logger.info('✅ Configuration files saved successfully');
     } catch (_error) {
       throw new CLIError(
         `Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`,
@@ -519,11 +522,11 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
    */
   static async installSuiCli(): Promise<void> {
     if (SuiTestnetSetup.checkSuiCliInstallation()) {
-      console.log('✅ Sui CLI is already installed');
+      logger.info('✅ Sui CLI is already installed');
       return;
     }
 
-    console.log('📦 Installing Sui CLI...');
+    logger.info('📦 Installing Sui CLI...');
     
     try {
       // Install using cargo (requires Rust)
@@ -531,7 +534,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
         stdio: 'inherit'
       });
       
-      console.log('✅ Sui CLI installed successfully');
+      logger.info('✅ Sui CLI installed successfully');
     } catch (_error) {
       throw new CLIError(
         'Failed to install Sui CLI. Please install Rust and try again.',
@@ -559,18 +562,18 @@ export async function restoreFromBackup(backupPath: string): Promise<WalletInfo>
 if (require.main === module) {
   (async () => {
     try {
-      console.log('Running Sui testnet setup...');
+      logger.info('Running Sui testnet setup...');
       const result = await quickSetup();
-      console.log('\nSetup complete!');
-      console.log('Wallet address:', result.wallet.address);
-      console.log('Balance:', result.wallet.balance, 'MIST');
-      console.log('Keystore:', result.keystorePath);
-      console.log('Config:', result.configPath);
+      logger.info('\nSetup complete!');
+      logger.info('Wallet address:', result.wallet.address);
+      logger.info('Balance:', result.wallet.balance, 'MIST');
+      logger.info('Keystore:', result.keystorePath);
+      logger.info('Config:', result.configPath);
       if (result.backupPath) {
-        console.log('Backup:', result.backupPath);
+        logger.info('Backup:', result.backupPath);
       }
     } catch (_error) {
-      console.error('Setup failed:', error);
+      logger.error('Setup failed:', error);
       process.exit(1);
     }
   })();

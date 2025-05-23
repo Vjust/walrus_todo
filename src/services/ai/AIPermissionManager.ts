@@ -3,7 +3,7 @@ import { BlockchainVerifier } from './BlockchainVerifier';
 import { AIPermissionLevel, AIOperationPermission } from '../../types/adapters/AICredentialAdapter';
 import { AIActionType } from '../../types/adapters/AIVerifierAdapter';
 import { AIProvider } from '../../types/adapters/AIModelAdapter';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 import { Logger } from '../../utils/Logger';
 
 /**

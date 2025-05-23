@@ -1,7 +1,8 @@
 import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
-import { AIProvider, AIModelOptions } from '../../src/types/adapters/AIModelAdapter';
-import { AIPrivacyLevel } from '../../src/types/adapters/AIVerifierAdapter';
+import { AIProvider, AIModelOptions, AIModelAdapter } from '../../src/types/adapters/AIModelAdapter';
+import { AIPrivacyLevel, AIVerifierAdapter } from '../../src/types/adapters/AIVerifierAdapter';
+import { Todo } from '../../src/types/todo';
 
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
@@ -21,8 +22,8 @@ jest.mock('../../src/services/ai/AIProviderFactory', () => {
 });
 
 describe('AI Service Error Handling', () => {
-  const sampleTodos = createSampleTodos(3);
-  let mockAdapter: any;
+  const sampleTodos: Todo[] = createSampleTodos(3);
+  let mockAdapter: ReturnType<typeof createMockAIModelAdapter>;
   
   beforeEach(() => {
     jest.clearAllMocks();
@@ -38,7 +39,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Request timed out');
     });
@@ -50,7 +51,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('invalid-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('401 Unauthorized');
     });
@@ -62,7 +63,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('429 Too Many Requests');
     });
@@ -74,7 +75,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('500 Internal Server Error');
     });
@@ -84,7 +85,7 @@ describe('AI Service Error Handling', () => {
   describe('Input Validation Errors', () => {
     it('should handle empty todo lists', async () => {
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       const result = await aiService.summarize([]);
       expect(result).toBe('No todos to summarize.');
@@ -93,11 +94,14 @@ describe('AI Service Error Handling', () => {
 
     it('should handle extremely large input', async () => {
       // Create an extremely large todo list
-      const largeTodos = Array.from({ length: 1000 }).map((_, index) => ({
+      const largeTodos: Todo[] = Array.from({ length: 1000 }).map((_, index) => ({
         id: `todo-${index}`,
         title: `Todo ${index}`,
         description: 'a'.repeat(1000), // Large description
         completed: false,
+        priority: 'medium' as const,
+        tags: [],
+        private: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }));
@@ -108,14 +112,14 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(largeTodos)).rejects.toThrow('exceeds maximum token limit');
     });
 
     it('should handle malformed todos', async () => {
       // Create malformed todos with missing required fields
-      const malformedTodos = [
+      const malformedTodos: (Partial<Todo> | null | undefined)[] = [
         { id: 'todo-1' }, // Missing title and other fields
         { title: 'Just a title' }, // Missing ID
         null, // Null entry
@@ -124,10 +128,10 @@ describe('AI Service Error Handling', () => {
       ];
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       // Should filter out invalid todos
-      await aiService.summarize(malformedTodos as any);
+      await aiService.summarize(malformedTodos as Todo[]);
       
       // Verify that only valid-enough todos are passed to the adapter
       expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledWith(
@@ -151,7 +155,7 @@ describe('AI Service Error Handling', () => {
       });
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       // For categorize which expects a Record<string, string[]>
       const result = await aiService.categorize(sampleTodos);
@@ -170,7 +174,7 @@ describe('AI Service Error Handling', () => {
       });
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       const result = await aiService.summarize(sampleTodos);
       
@@ -188,7 +192,7 @@ describe('AI Service Error Handling', () => {
       });
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       const result = await aiService.summarize(sampleTodos);
       
@@ -293,7 +297,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key', AIProvider.XAI);
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('currently unavailable');
     });
@@ -306,7 +310,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key', AIProvider.OPENAI);
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Content policy violation');
     });
@@ -319,7 +323,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key', AIProvider.ANTHROPIC);
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('quota exceeded');
     });
@@ -334,7 +338,7 @@ describe('AI Service Error Handling', () => {
       );
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Network error');
     });
@@ -346,7 +350,7 @@ describe('AI Service Error Handling', () => {
       });
       
       const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
       
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Unexpected system error');
     });

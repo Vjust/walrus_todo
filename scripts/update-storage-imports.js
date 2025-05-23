@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('update-storage-imports');
  * Script to find and update old storage utility imports
  * This script scans the codebase for old import statements and suggests replacements
  * using the new consolidated storage API.
@@ -58,7 +61,7 @@ function findFiles(dir) {
 
 // Find files that import old storage utilities
 function findFilesWithOldImports() {
-  console.log('Searching for files with old storage imports...');
+  logger.info('Searching for files with old storage imports...');
   
   const allFiles = findFiles(srcDir);
   const filesWithOldImports = [];
@@ -77,7 +80,7 @@ function findFilesWithOldImports() {
         }
       }
     } catch (error) {
-      console.error(`Error reading file ${file}:`, error.message);
+      logger.error(`Error reading file ${file}:`, error.message);
     }
   }
   
@@ -86,33 +89,33 @@ function findFilesWithOldImports() {
 
 // Generate migration suggestions
 function generateMigrationSuggestions(files) {
-  console.log(`\nFound ${files.length} files with old storage imports.\n`);
+  logger.info(`\nFound ${files.length} files with old storage imports.\n`);
   
   if (files.length === 0) {
     return;
   }
   
-  console.log('Migration suggestions:');
-  console.log('======================\n');
+  logger.info('Migration suggestions:');
+  logger.info('======================\n');
   
   for (const { file, patterns } of files) {
     const content = fs.readFileSync(file, 'utf-8');
     let updatedContent = content;
     
-    console.log(`File: ${path.relative(rootDir, file)}`);
-    console.log('  Import changes:');
+    logger.info(`File: ${path.relative(rootDir, file)}`);
+    logger.info('  Import changes:');
     
     for (const pattern of patterns) {
       const match = content.match(pattern.old);
       if (match) {
-        console.log(`    - Replace: ${match[0]}`);
-        console.log(`      With:    ${pattern.new}`);
+        logger.info(`    - Replace: ${match[0]}`);
+        logger.info(`      With:    ${pattern.new}`);
         
         updatedContent = updatedContent.replace(pattern.old, pattern.new);
       }
     }
     
-    console.log('  Usage changes:');
+    logger.info('  Usage changes:');
     
     for (const pattern of patterns) {
       for (const [oldUsage, newUsage] of Object.entries(pattern.usage)) {
@@ -123,28 +126,28 @@ function generateMigrationSuggestions(files) {
           const originalCode = match[0];
           const updatedCode = originalCode.replace(new RegExp(oldUsage), newUsage);
           
-          console.log(`    - Replace: ${originalCode}`);
-          console.log(`      With:    ${updatedCode}`);
+          logger.info(`    - Replace: ${originalCode}`);
+          logger.info(`      With:    ${updatedCode}`);
         }
       }
     }
     
-    console.log('\n');
+    logger.info('\n');
   }
   
-  console.log('For each file, update the imports and usage patterns as shown above.');
-  console.log('Remember to adjust the configuration parameters based on the specific needs of each file.');
+  logger.info('For each file, update the imports and usage patterns as shown above.');
+  logger.info('Remember to adjust the configuration parameters based on the specific needs of each file.');
 }
 
 // Main
 function main() {
-  console.log('Storage Import Migration Tool');
-  console.log('============================\n');
+  logger.info('Storage Import Migration Tool');
+  logger.info('============================\n');
   
   const files = findFilesWithOldImports();
   generateMigrationSuggestions(files);
   
-  console.log('\nTo convert all files, add the --convert flag.');
+  logger.info('\nTo convert all files, add the --convert flag.');
 }
 
 main();

@@ -249,7 +249,7 @@ export class StorageOperationHandler {
         attempts,
         durationMs: Date.now() - startTime
       };
-    } catch (_error) {
+    } catch (error) {
       // If AsyncOperationHandler rethrows, map and rethrow
       const mappedError = this.mapError(error, options.operation);
       throw mappedError;
@@ -284,6 +284,9 @@ export class StorageOperationHandler {
       throwErrors: true
     });
     
-    return result.data!;
+    if (result.data === undefined) {
+      throw new Error('Operation completed but returned no data');
+    }
+    return result.data;
   }
 }

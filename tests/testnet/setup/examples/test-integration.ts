@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../../../src/utils/Logger';
+
+const logger = new Logger('test-integration');
  * Test Integration Example
  * 
  * Shows how to integrate Sui testnet setup with test suites
@@ -10,22 +13,22 @@ import * as fs from 'fs';
 
 // Mock test framework functions for demonstration
 const describe = (name: string, fn: () => void) => {
-  console.log(`\n📋 Test Suite: ${name}`);
+  logger.info(`\n📋 Test Suite: ${name}`);
   fn();
 };
 
 const beforeAll = async (fn: () => Promise<void>) => {
-  console.log('🔧 Running beforeAll hook...');
+  logger.info('🔧 Running beforeAll hook...');
   await fn();
 };
 
 const afterAll = async (fn: () => Promise<void>) => {
-  console.log('🧹 Running afterAll hook...');
+  logger.info('🧹 Running afterAll hook...');
   await fn();
 };
 
 const test = (name: string, fn: () => void | Promise<void>) => {
-  console.log(`  ✓ ${name}`);
+  logger.info(`  ✓ ${name}`);
   return fn();
 };
 
@@ -35,7 +38,7 @@ describe('WalTodo Sui Integration Tests', () => {
   let testDataDir: string;
 
   beforeAll(async () => {
-    console.log('Setting up test environment...');
+    logger.info('Setting up test environment...');
     
     // Create test data directory
     testDataDir = path.join(process.cwd(), '.test-data', `run-${Date.now()}`);
@@ -53,8 +56,8 @@ describe('WalTodo Sui Integration Tests', () => {
       backupPath: path.join(testDataDir, 'backup'),
     });
 
-    console.log(`Test wallet created: ${testSetup.wallet.address}`);
-    console.log(`Initial balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`);
+    logger.info(`Test wallet created: ${testSetup.wallet.address}`);
+    logger.info(`Initial balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`);
   });
 
   test('should have a funded wallet', async () => {
@@ -62,14 +65,14 @@ describe('WalTodo Sui Integration Tests', () => {
     if (balance === 0n) {
       throw new Error('Wallet should be funded');
     }
-    console.log(`    Balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`);
+    logger.info(`    Balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`);
   });
 
   test('should have correct network configuration', () => {
     if (testSetup.wallet.networkUrl !== 'https://fullnode.testnet.sui.io:443') {
       throw new Error('Incorrect network URL');
     }
-    console.log(`    Network: ${testSetup.wallet.networkUrl}`);
+    logger.info(`    Network: ${testSetup.wallet.networkUrl}`);
   });
 
   test('should backup and restore wallet', async () => {
@@ -83,7 +86,7 @@ describe('WalTodo Sui Integration Tests', () => {
     if (restoredWallet.address !== testSetup.wallet.address) {
       throw new Error('Restored wallet address should match original');
     }
-    console.log(`    Restored wallet: ${restoredWallet.address}`);
+    logger.info(`    Restored wallet: ${restoredWallet.address}`);
   });
 
   test('should create environment file', () => {
@@ -96,11 +99,11 @@ describe('WalTodo Sui Integration Tests', () => {
     if (!envContent.includes(testSetup.wallet.address)) {
       throw new Error('Environment file should contain wallet address');
     }
-    console.log(`    Environment file created`);
+    logger.info(`    Environment file created`);
   });
 
   afterAll(async () => {
-    console.log('Cleaning up test environment...');
+    logger.info('Cleaning up test environment...');
     
     // Clean up test data directory
     if (fs.existsSync(testDataDir)) {
@@ -113,7 +116,7 @@ describe('WalTodo Sui Integration Tests', () => {
       fs.unlinkSync(envPath);
     }
 
-    console.log('Test cleanup complete');
+    logger.info('Test cleanup complete');
   });
 });
 
@@ -123,5 +126,5 @@ function formatSuiBalance(mist: string): string {
 }
 
 // Run the test suite
-console.log('🧪 Running Sui Integration Test Example\n');
-console.log('(This demonstrates test integration patterns)\n');
+logger.info('🧪 Running Sui Integration Test Example\n');
+logger.info('(This demonstrates test integration patterns)\n');

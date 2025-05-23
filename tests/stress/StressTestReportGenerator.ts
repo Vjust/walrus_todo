@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('StressTestReportGenerator');
  * Stress Test Report Generator
  * 
  * This utility generates HTML and text reports from stress test metrics.
@@ -610,10 +613,10 @@ OPERATIONS PERFORMANCE
       systemInfo
     }, null, 2));
     
-    console.log(`Reports generated in: ${outputDir}`);
-    console.log(`HTML Report: ${htmlPath}`);
-    console.log(`Text Report: ${textPath}`);
-    console.log(`CSV Report: ${csvPath}`);
-    console.log(`JSON Data: ${jsonPath}`);
+    logger.info(`Reports generated in: ${outputDir}`);
+    logger.info(`HTML Report: ${htmlPath}`);
+    logger.info(`Text Report: ${textPath}`);
+    logger.info(`CSV Report: ${csvPath}`);
+    logger.info(`JSON Data: ${jsonPath}`);
   }
 }

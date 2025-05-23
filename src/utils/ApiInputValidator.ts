@@ -209,7 +209,7 @@ export class ApiInputValidator {
     // Validate against schema
     try {
       SchemaValidator.validate(sanitizedConfig, networkConfigSchema);
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Invalid network configuration: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_NETWORK_CONFIG'
@@ -225,13 +225,28 @@ export class ApiInputValidator {
    * @returns Sanitized AI configuration object
    * @throws {CLIError} if validation fails
    */
-  static validateAIConfig(config: any): any {
+  static validateAIConfig(config: unknown): {
+    apiKey?: string;
+    provider: string;
+    maxConcurrentRequests?: number;
+    cacheResults?: boolean;
+    useBlockchainVerification?: boolean;
+  } {
+    // Type guard to ensure config is an object
+    if (typeof config !== 'object' || config === null) {
+      throw new CLIError('Config must be an object', 'INVALID_CONFIG');
+    }
+    
+    const configObj = config as Record<string, unknown>;
+    
     // Sanitize AI config inputs
     const sanitizedConfig = {
-      ...config,
-      apiKey: config.apiKey ? CommandSanitizer.sanitizeApiKey(config.apiKey) : undefined,
-      provider: CommandSanitizer.sanitizeString(config.provider),
-      maxConcurrentRequests: config.maxConcurrentRequests
+      ...configObj,
+      apiKey: configObj.apiKey ? CommandSanitizer.sanitizeApiKey(String(configObj.apiKey)) : undefined,
+      provider: CommandSanitizer.sanitizeString(String(configObj.provider || '')),
+      maxConcurrentRequests: configObj.maxConcurrentRequests as number | undefined,
+      cacheResults: configObj.cacheResults as boolean | undefined,
+      useBlockchainVerification: configObj.useBlockchainVerification as boolean | undefined
     };
 
     // Define a schema that conforms to Schema interface
@@ -269,7 +284,7 @@ export class ApiInputValidator {
     // Validate against schema
     try {
       SchemaValidator.validate(sanitizedConfig, aiConfigSchema);
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Invalid AI configuration: ${error instanceof Error ? error.message : String(error)}`,
         'INVALID_AI_CONFIG'

@@ -1,3 +1,6 @@
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('run');
 #!/usr/bin/env node
 
 /**
@@ -8,6 +11,11 @@
 // Configure Node.js to avoid loading cached versions of modules
 // This helps prevent stale module cache issues with OCLIF
 process.env.NODE_NO_REQUIRE_CACHE = 'oclif';
+
+// Fix for undefined columns in non-TTY environments
+if (process.stdout && !process.stdout.columns) {
+  process.stdout.columns = 80;
+}
 
 // Add helpful globals for troubleshooting if needed
 const DEBUG_MODE = process.env.WALTODO_DEBUG === 'true' || false;
@@ -23,9 +31,9 @@ process.on('uncaughtException', (error) => {
   console.warn = originalConsoleWarn;
   console.error = originalConsoleError;
   
-  console.error(`Uncaught Exception: ${error.message}`);
+  logger.error(`Uncaught Exception: ${error.message}`);
   if (DEBUG_MODE) {
-    console.error(error.stack);
+    logger.error(error.stack);
   }
   
   process.exit(1);
@@ -81,9 +89,9 @@ let OclifCore;
 try {
   OclifCore = require('@oclif/core');
 } catch (error) {
-  console.error(`Failed to load @oclif/core module: ${error.message}`);
+  logger.error(`Failed to load @oclif/core module: ${error.message}`);
   if (DEBUG_MODE) {
-    console.error(error.stack);
+    logger.error(error.stack);
   }
   process.exit(1);
 }
@@ -113,9 +121,9 @@ async function main() {
     await run().then(flush).catch(handle);
   } catch (error) {
     // Last resort error handler
-    console.error(`WalTodo CLI execution failed: ${error.message}`);
+    logger.error(`WalTodo CLI execution failed: ${error.message}`);
     if (DEBUG_MODE) {
-      console.error(error.stack);
+      logger.error(error.stack);
     }
     process.exit(1);
   }

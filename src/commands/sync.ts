@@ -4,7 +4,7 @@ import { confirm } from '@inquirer/prompts';
 import { select } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { StorageValidator } from '../utils/storage-validator';
 import BaseCommand, { ICONS } from '../base-command';
@@ -19,10 +19,12 @@ export default class SyncCommand extends BaseCommand {
   static description = 'Synchronize todos between local and blockchain storage';
 
   static examples = [
-    '<%= config.bin %> sync my-list',
-    '<%= config.bin %> sync my-list --id task-123',
-    '<%= config.bin %> sync my-list --resolve local',
-    '<%= config.bin %> sync --all --resolve newest',
+    '<%= config.bin %> sync my-list                            # Sync entire list',
+    '<%= config.bin %> sync my-list --id task-123              # Sync specific todo',
+    '<%= config.bin %> sync my-list --resolve local            # Use local version for conflicts',
+    '<%= config.bin %> sync --all --resolve newest             # Sync all lists, keep newest',
+    '<%= config.bin %> sync work --dry-run                     # Preview sync changes',
+    '<%= config.bin %> sync personal --force --resolve remote  # Force sync, prefer remote'
   ];
 
   static flags = {
@@ -143,7 +145,7 @@ export default class SyncCommand extends BaseCommand {
       // Perform sync operations
       await this.performSync(needsSync, flags.resolve);
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

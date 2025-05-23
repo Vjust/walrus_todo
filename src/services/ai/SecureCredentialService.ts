@@ -9,7 +9,7 @@
 import { AIProvider } from './types';
 import { EnhancedVaultManager } from '../../utils/EnhancedVaultManager';
 import { validateApiKey, performKeySecurityCheck } from '../../utils/KeyValidator';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 import { Logger } from '../../utils/Logger';
 import { AICredentialAdapter, AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
 import { randomUUID } from 'crypto';
@@ -315,7 +315,7 @@ export class SecureCredentialService {
     // Check vault
     const hasInVault = await this.vault.hasSecret(`${provider}-api-key`);
     if (hasInVault) {
-      console.log(`Found credential for ${provider} in vault`);
+      logger.info(`Found credential for ${provider} in vault`);
       return true;
     }
 
@@ -323,9 +323,9 @@ export class SecureCredentialService {
     const envKey = `${provider.toUpperCase()}_API_KEY`;
     const hasEnvKey = !!process.env[envKey];
 
-    console.log(`Checking for ${envKey} in environment: ${hasEnvKey ? 'FOUND' : 'NOT FOUND'}`);
+    logger.info(`Checking for ${envKey} in environment: ${hasEnvKey ? 'FOUND' : 'NOT FOUND'}`);
     if (hasEnvKey) {
-      console.log(`${envKey} value length: ${process.env[envKey]?.length || 0}`);
+      logger.info(`${envKey} value length: ${process.env[envKey]?.length || 0}`);
     }
 
     return hasEnvKey;

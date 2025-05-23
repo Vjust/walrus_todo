@@ -7,6 +7,9 @@ import { AIModelAdapter, AIProvider, AIModelOptions } from '../../types/adapters
 import { AIProviderFactory } from './AIProviderFactory';
 import { ResponseParser } from './ResponseParser';
 import { secureCredentialService } from './SecureCredentialService';
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('aiService');
 
 /**
  * Service responsible for AI-powered operations on todo items using various language models.
@@ -56,7 +59,7 @@ export class AIService {
       const defaultAdapter = AIProviderFactory.createDefaultAdapter();
       this.modelAdapter = defaultAdapter;
     } catch (error) {
-      console.error('Failed to initialize with default adapter:', error);
+      logger.error('Failed to initialize with default adapter:', error);
       // Set a minimal fallback adapter to avoid null reference errors
       this.modelAdapter = AIProviderFactory.createFallbackAdapter();
     }
@@ -64,7 +67,7 @@ export class AIService {
     // Initialize the full model adapter asynchronously
     this.initializeModelAdapter(provider, modelName)
       .catch(error => {
-        console.error(
+        logger.error(
           'Model adapter initialization failed:',
           error instanceof Error ? error.message : String(error),
           { provider, modelName }
@@ -99,7 +102,7 @@ export class AIService {
         credentialService: secureCredentialService
       });
     } catch (error) {
-      console.error('Failed to initialize model adapter:', error);
+      logger.error('Failed to initialize model adapter:', error);
       throw error;
     }
   }
@@ -146,7 +149,7 @@ export class AIService {
       });
     } catch (error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
-      console.error(
+      logger.error(
         `Failed to set provider ${provider}:`,
         typedError.message,
         { modelName, provider }
@@ -427,7 +430,7 @@ export class AIService {
       try {
         return JSON.parse(response.result);
       } catch (error) {
-        console.error('Failed to parse suggested tags:', error);
+        logger.error('Failed to parse suggested tags:', error);
         throw new Error('Failed to parse tags response: ' + response.result);
       }
     } catch (error) {
@@ -460,11 +463,11 @@ export class AIService {
       if (['high', 'medium', 'low'].includes(priority)) {
         return priority as 'high' | 'medium' | 'low';
       } else {
-        console.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);
+        logger.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);
         return 'medium';
       }
     } catch (error) {
-      console.error('Priority suggestion error:', error);
+      logger.error('Priority suggestion error:', error);
       return 'medium'; // Default to medium on error
     }
   }

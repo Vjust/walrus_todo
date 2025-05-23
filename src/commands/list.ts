@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import BaseCommand, { ICONS, PRIORITY } from '../base-command';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 // Add debug logging for cache hits/misses
 const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
@@ -83,7 +83,7 @@ export default class ListCommand extends BaseCommand {
         await this.showAllLists();
       }
 
-    } catch (_error) {
+    } catch (error) {
       this.debugLog(`Error: ${error}`);
 
       if (error instanceof CLIError && error.code === 'LIST_NOT_FOUND') {
@@ -121,7 +121,7 @@ export default class ListCommand extends BaseCommand {
       if (flags.pending) todos = todos.filter((t: Todo) => !t.completed);
 
       // Apply sorting if needed
-      this.applySorting(todos, flags.sort);
+      this.applySorting(todos, flags.sort as string);
 
       await this.jsonOutput({
         name: list.name,
@@ -210,7 +210,7 @@ export default class ListCommand extends BaseCommand {
     if (flags.pending) todos = todos.filter(t => !t.completed);
 
     // Apply sorting if sort flag is provided
-    this.applySorting(todos, flags.sort);
+    this.applySorting(todos, flags.sort as string);
 
     // Display todos
     if (todos.length === 0) {

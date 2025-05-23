@@ -1,5 +1,8 @@
 // Fix import for chalk with esModuleInterop
 import chalkModule from 'chalk';
+import { Logger } from './Logger';
+
+const logger = new Logger('error-handler');
 const chalk = chalkModule;
 import { CLIError } from '../types/errors/consolidated/CLIError';
 // Define utility functions directly to avoid import issues
@@ -9,7 +12,7 @@ const getErrorMessage = (error: unknown): string => {
   }
   try {
     return String(error);
-  } catch {
+  } catch (error: unknown) {
     return 'Unknown error';
   }
 };
@@ -59,7 +62,7 @@ export function handleError(messageOrError: string | unknown, error?: unknown): 
   
   // Use enhanced error display
   const friendlyError = displayFriendlyError(actualError, context);
-  console.error(friendlyError);
+  logger.error(friendlyError);
 }
 
 /**
@@ -67,7 +70,7 @@ export function handleError(messageOrError: string | unknown, error?: unknown): 
  * @deprecated Use BaseCommand.executeWithRetry for proper logging and error wrapping
  */
 export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDelay = 1000): Promise<T> {
-  let lastError: Error;
+  let lastError: Error | undefined;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -83,12 +86,12 @@ export async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3, baseDel
       const delay = baseDelay * Math.pow(2, attempt - 1);
       // Use console.error for retry notices since this is a low-level utility
       // Commands should use BaseCommand.executeWithRetry for proper logging
-      console.error(chalk.yellow(`Request failed, retrying (${attempt}/${maxRetries}) after ${delay}ms...`));
+      logger.error(chalk.yellow(`Request failed, retrying (${attempt}/${maxRetries}) after ${delay}ms...`));
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
   
-  throw lastError!;
+  throw lastError || new Error('Operation failed after all retries');
 }
 
 // Using isRetryableError from consolidated types now

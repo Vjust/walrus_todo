@@ -81,6 +81,8 @@ export interface Todo {
   category?: string;
   /** Name of the list the todo belongs to */
   listName?: string;
+  /** Sync timestamp for API server integration */
+  syncedAt?: string;
 }
 
 /**

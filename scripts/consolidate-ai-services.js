@@ -32,10 +32,10 @@ function backupFile(filePath) {
   try {
     if (fs.existsSync(filePath)) {
       fs.copyFileSync(filePath, backupPath);
-      console.log(`  Backed up to ${backupPath}`);
+      logger.info(`  Backed up to ${backupPath}`);
     }
   } catch (error) {
-    console.error(`  Failed to backup ${filePath}:`, error);
+    logger.error(`  Failed to backup ${filePath}:`, error);
   }
 }
 
@@ -1074,7 +1074,7 @@ export const aiService = AIService.getInstance();
 `;
 
   fs.writeFileSync(NEW_SERVICE_PATH, consolidatedServiceContent);
-  console.log(`Created consolidated AI service at ${NEW_SERVICE_PATH}`);
+  logger.info(`Created consolidated AI service at ${NEW_SERVICE_PATH}`);
 
   return {
     originalFiles: ['aiService.ts', 'EnhancedAIService.ts'],
@@ -1120,14 +1120,14 @@ export { AIProvider } from './types';
 export type * from './types';`;
 
   fs.writeFileSync(indexPath, indexContent);
-  console.log(`Updated AI services index file at ${indexPath}`);
+  logger.info(`Updated AI services index file at ${indexPath}`);
 }
 
 /**
  * Main script execution
  */
 async function main() {
-  console.log('Starting AI Service consolidation...');
+  logger.info('Starting AI Service consolidation...');
   
   // Backup original files
   backupFile(path.join(SOURCE_DIR, 'aiService.ts'));
@@ -1139,18 +1139,18 @@ async function main() {
   // Update index file
   updateIndexFile();
   
-  console.log('\nAI Service consolidation completed!');
-  console.log(`\nOriginal files (${originalFiles.join(', ')}) have been backed up to ${BACKUP_DIR}`);
-  console.log(`New consolidated service created at ${newServicePath}`);
-  console.log('The index.ts file has been updated to export the consolidated service.');
+  logger.info('\nAI Service consolidation completed!');
+  logger.info(`\nOriginal files (${originalFiles.join(', ')}) have been backed up to ${BACKUP_DIR}`);
+  logger.info(`New consolidated service created at ${newServicePath}`);
+  logger.info('The index.ts file has been updated to export the consolidated service.');
   
-  console.log('\nNext steps:');
-  console.log('1. Run the typechecker to verify the consolidated implementation');
-  console.log('2. Update any direct imports of the original files');
-  console.log('3. Remove the original implementation files once everything is working');
+  logger.info('\nNext steps:');
+  logger.info('1. Run the typechecker to verify the consolidated implementation');
+  logger.info('2. Update any direct imports of the original files');
+  logger.info('3. Remove the original implementation files once everything is working');
 }
 
 main().catch(err => {
-  console.error('Error during AI Service consolidation:', err);
+  logger.error('Error during AI Service consolidation:', err);
   process.exit(1);
 });

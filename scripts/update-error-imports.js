@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('update-error-imports');
  * Utility script to update error imports across the codebase
  * 
  * This script:
@@ -129,15 +132,15 @@ function updateFile(filePath) {
       stats.instantiationsUpdated += fileInstantiationsUpdated;
       
       if (VERBOSE || DRY_RUN) {
-        console.log(`Updated ${path.relative(process.cwd(), filePath)}`);
-        console.log(`  - ${fileImportsUpdated} imports updated`);
-        console.log(`  - ${fileInstantiationsUpdated} instantiations updated`);
+        logger.info(`Updated ${path.relative(process.cwd(), filePath)}`);
+        logger.info(`  - ${fileImportsUpdated} imports updated`);
+        logger.info(`  - ${fileInstantiationsUpdated} instantiations updated`);
       }
     }
     
     return modified;
   } catch (error) {
-    console.error(`Error processing ${filePath}:`, error.message);
+    logger.error(`Error processing ${filePath}:`, error.message);
     return false;
   }
 }
@@ -146,10 +149,10 @@ function updateFile(filePath) {
  * Run the script
  */
 async function main() {
-  console.log(`${DRY_RUN ? '[DRY RUN] ' : ''}Starting error import update...\n`);
+  logger.info(`${DRY_RUN ? '[DRY RUN] ' : ''}Starting error import update...\n`);
   
   const sourceFiles = await findSourceFiles();
-  console.log(`Found ${sourceFiles.length} source files\n`);
+  logger.info(`Found ${sourceFiles.length} source files\n`);
   
   // Process files
   for (const filePath of sourceFiles) {
@@ -157,22 +160,22 @@ async function main() {
   }
   
   // Print summary
-  console.log('\nUpdate Summary:');
-  console.log(`- Files processed: ${stats.filesProcessed}`);
-  console.log(`- Files modified: ${stats.filesModified}`);
-  console.log(`- Imports updated: ${stats.importsUpdated}`);
-  console.log(`- Instantiations updated: ${stats.instantiationsUpdated}`);
+  logger.info('\nUpdate Summary:');
+  logger.info(`- Files processed: ${stats.filesProcessed}`);
+  logger.info(`- Files modified: ${stats.filesModified}`);
+  logger.info(`- Imports updated: ${stats.importsUpdated}`);
+  logger.info(`- Instantiations updated: ${stats.instantiationsUpdated}`);
   
   if (DRY_RUN) {
-    console.log('\nThis was a dry run. No files were actually modified.');
-    console.log('Run without --dry-run to apply changes.');
+    logger.info('\nThis was a dry run. No files were actually modified.');
+    logger.info('Run without --dry-run to apply changes.');
   } else {
-    console.log('\nAll files updated successfully!');
+    logger.info('\nAll files updated successfully!');
   }
 }
 
 // Run the script
 main().catch(error => {
-  console.error('Error running script:', error);
+  logger.error('Error running script:', error);
   process.exit(1);
 });

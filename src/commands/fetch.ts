@@ -5,7 +5,7 @@ import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS, RETRY_CONFIG } from '../constants';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
@@ -25,8 +25,11 @@ export default class FetchCommand extends BaseCommand {
   static description = 'Fetch todos directly from blockchain or Walrus storage using IDs';
 
   static examples = [
-    '<%= config.bin %> fetch --blob-id QmXyz --list my-todos',
-    '<%= config.bin %> fetch --object-id 0x123 --list my-todos',
+    '<%= config.bin %> fetch --blob-id QmXyz --list my-todos            # Fetch by blob ID',
+    '<%= config.bin %> fetch --object-id 0x123 --list my-todos          # Fetch by NFT object ID',
+    '<%= config.bin %> fetch --blob-id abc123 --list work --save        # Fetch and save locally',
+    '<%= config.bin %> fetch --object-id 0x456 --network testnet        # Fetch from testnet',
+    '<%= config.bin %> fetch --blob-id xyz789 --list personal --verify  # Fetch with verification'
   ];
 
   static flags = {
@@ -150,7 +153,7 @@ export default class FetchCommand extends BaseCommand {
           if (todo.tags?.length) {
             this.log(`  Tags: ${todo.tags.join(', ')}`);
           }
-        } catch (_error) {
+        } catch (error) {
           // Make sure we disconnect from Walrus even if there was an error
           try {
             await this.walrusStorage.disconnect();
@@ -241,7 +244,7 @@ export default class FetchCommand extends BaseCommand {
           if (todo.tags?.length) {
             this.log(`  Tags: ${todo.tags.join(', ')}`);
           }
-        } catch (_error) {
+        } catch (error) {
           // Make sure we disconnect from Walrus even if there was an error
           try {
             await this.walrusStorage.disconnect();
@@ -256,7 +259,7 @@ export default class FetchCommand extends BaseCommand {
         await this.walrusStorage.disconnect();
       }
       
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

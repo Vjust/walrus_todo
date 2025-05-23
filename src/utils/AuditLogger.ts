@@ -122,7 +122,7 @@ export class AuditLogger {
             }
           }
         }
-      } catch (_error) {
+      } catch (error) {
         this.logger.error('Failed to initialize audit log storage', error as Error);
       }
     }
@@ -186,7 +186,7 @@ export class AuditLogger {
       
       // Clean up old log files
       this.cleanupOldLogFiles();
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to rotate audit log file', error as Error);
     }
   }
@@ -219,11 +219,11 @@ export class AuditLogger {
           if (stats.mtime < cutoffDate) {
             fs.unlinkSync(filePath);
           }
-        } catch (_error) {
-          this.logger.warn(`Failed to delete old audit log file: ${file}`, { error });
+        } catch (error) {
+          this.logger.warn(`Failed to delete old audit log file: ${file}`, { error: error });
         }
       }
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to clean up old audit log files', error as Error);
     }
   }
@@ -239,9 +239,10 @@ export class AuditLogger {
       return;
     }
     
-    // TODO: Implement blockchain backup logic
-    // This would integrate with the blockchain services to store
-    // log data in a tamper-evident way
+    // PLANNED FEATURE: Blockchain backup for critical audit logs
+    // This will store audit trails on-chain for tamper-evidence
+    // See docs/ai-blockchain-verification-roadmap.md for roadmap
+    // Current implementation uses secure file-based logging
     
     this.logger.debug('Blockchain backup would happen here', { 
       entryId: entry.id,
@@ -304,7 +305,7 @@ export class AuditLogger {
       
       // Update current log size
       this.currentLogSize += Buffer.byteLength(entryStr) / 1024;
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to write audit log to file', error as Error);
     }
   }
@@ -340,7 +341,7 @@ export class AuditLogger {
         resource: completeEntry.resource,
         outcome: completeEntry.outcome
       });
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to log audit event', error as Error, {
         action: entry.action,
         userId: entry.userId
@@ -377,7 +378,7 @@ export class AuditLogger {
   /**
    * Search in-memory logs
    */
-  private searchMemoryLogs(options: { userId?: string; action?: string; outcome?: string; startDate?: Date; endDate?: Date }): AuditLogEntry[] {
+  private searchMemoryLogs(options: { userId?: string; action?: string; outcome?: string; resource?: string; resourceId?: string; startDate?: Date; endDate?: Date; limit?: number }): AuditLogEntry[] {
     let results = [...this.memoryLogs];
     
     // Apply filters
@@ -422,7 +423,7 @@ export class AuditLogger {
   /**
    * Search file logs
    */
-  private async searchFileLogs(options: { userId?: string; action?: string; outcome?: string; startDate?: Date; endDate?: Date }): Promise<AuditLogEntry[]> {
+  private async searchFileLogs(options: { userId?: string; action?: string; outcome?: string; resource?: string; resourceId?: string; startDate?: Date; endDate?: Date; limit?: number }): Promise<AuditLogEntry[]> {
     const results: AuditLogEntry[] = [];
     
     if (!this.config.storage.path) {
@@ -470,12 +471,12 @@ export class AuditLogger {
             
             // Add to results
             results.push(entry);
-          } catch (_error) {
+          } catch (error) {
             this.logger.warn('Failed to parse audit log entry', { error, line });
           }
         }
       }
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to search audit logs', error as Error);
     }
     
@@ -534,7 +535,7 @@ export class AuditLogger {
           
           // Update previous hash
           prevHash = entry.hash;
-        } catch (_error) {
+        } catch (error) {
           invalidEntries++;
         }
       }
@@ -544,7 +545,7 @@ export class AuditLogger {
         invalidEntries,
         totalEntries: lines.length
       };
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to verify audit logs', error as Error);
       return { valid: false, invalidEntries: 0, totalEntries: 0 };
     }

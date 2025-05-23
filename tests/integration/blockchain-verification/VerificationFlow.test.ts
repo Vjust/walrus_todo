@@ -1,21 +1,19 @@
-import { createMockWalrusClient } from '../../../src/utils/MockWalrusClient';
-
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
+import { SuiClient } from '@mysten/sui/client';
+import type { WalrusClientExt } from '../../../src/types/client';
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
-
-
 
 // Mock Verification Flow Controller
 class VerificationFlowController {
   private suiClient: Pick<SuiClient, 'getLatestSuiSystemState' | 'getObject' | 'signAndExecuteTransactionBlock'>;
-  private walrusClient: ReturnType<typeof createMockWalrusClient>;
+  private walrusClient: jest.Mocked<WalrusClientExt>;
   private signer: Ed25519Keypair;
   private verificationManager: BlobVerificationManager;
   
   constructor(
     suiClient: Pick<SuiClient, 'getLatestSuiSystemState' | 'getObject' | 'signAndExecuteTransactionBlock'>,
-    walrusClient: ReturnType<typeof createMockWalrusClient>,
+    walrusClient: jest.Mocked<WalrusClientExt>,
     signer: Ed25519Keypair
   ) {
     this.suiClient = suiClient;
@@ -23,7 +21,7 @@ class VerificationFlowController {
     this.signer = signer;
     this.verificationManager = new BlobVerificationManager(
       suiClient,
-      walrusClient.getUnderlyingClient(),
+      walrusClient,
       signer
     );
   }
@@ -66,13 +64,12 @@ class VerificationFlowController {
     const {
       waitForCertification = false,
       verifyAfterUpload = true,
-      monitorAvailability = false,
-      storageEpochs = 52
+      monitorAvailability = false
     } = options;
     
     try {
       // Step 1: Upload to blockchain storage
-      console.log('Uploading data to blockchain storage...');
+      // console.log('Uploading data to blockchain storage...'); // Removed console statement
       const uploadOptions = { 
         waitForCertification, 
         waitTimeout: 10000,
@@ -82,12 +79,12 @@ class VerificationFlowController {
       const uploadResult = await this.verificationManager.verifyUpload(data, uploadOptions);
       const blobId = uploadResult.blobId;
       
-      console.log(`Data uploaded. Blob ID: ${blobId}`);
-      console.log(`Certification status: ${uploadResult.certified ? 'Certified' : 'Not Certified'}`);
+      // console.log(`Data uploaded. Blob ID: ${blobId}`); // Removed console statement
+      // console.log(`Certification status: ${uploadResult.certified ? 'Certified' : 'Not Certified'}`); // Removed console statement
       
       // Step 2: Add metadata if provided
       if (Object.keys(metadata).length > 0) {
-        console.log('Adding metadata...');
+        // console.log('Adding metadata...'); // Removed console statement
         
         const tx = new TransactionBlock();
         await this.walrusClient.executeWriteBlobAttributesTransaction({
@@ -97,13 +94,13 @@ class VerificationFlowController {
           transaction: tx
         });
         
-        console.log('Metadata added.');
+        // console.log('Metadata added.'); // Removed console statement
       }
       
       // Step 3: Verify after upload if requested
       let verificationResult;
       if (verifyAfterUpload) {
-        console.log('Verifying uploaded data...');
+        // console.log('Verifying uploaded data...'); // Removed console statement
         
         verificationResult = await this.verificationManager.verifyBlob(
           blobId,
@@ -112,13 +109,13 @@ class VerificationFlowController {
           { requireCertification: false }
         );
         
-        console.log(`Verification result: ${verificationResult.success ? 'Success' : 'Failed'}`);
+        // console.log(`Verification result: ${verificationResult.success ? 'Success' : 'Failed'}`); // Removed console statement
       }
       
       // Step 4: Monitor availability if requested
       let monitoringResult;
       if (monitorAvailability) {
-        console.log('Monitoring data availability...');
+        // console.log('Monitoring data availability...'); // Removed console statement
         
         try {
           await this.verificationManager.monitorBlobAvailability(
@@ -132,14 +129,14 @@ class VerificationFlowController {
             attempts: 1
           };
           
-          console.log('Monitoring completed successfully.');
+          // console.log('Monitoring completed successfully.'); // Removed console statement
         } catch (_error) {
           monitoringResult = {
             successful: false,
             attempts: 3
           };
           
-          console.error('Monitoring failed:', error);
+          // console.error('Monitoring failed:', error); // Removed console statement
         }
       }
       
@@ -178,7 +175,7 @@ class VerificationFlowController {
   }> {
     try {
       // Step 1: Get blob info from blockchain
-      console.log(`Verifying blob ${blobId}...`);
+      // console.log(`Verifying blob ${blobId}...`); // Removed console statement
       const blobInfo = await this.walrusClient.getBlobInfo(blobId);
       
       if (!blobInfo) {
@@ -190,7 +187,7 @@ class VerificationFlowController {
       // Step 2: Check content if expected data is provided
       let contentMatch;
       if (expectedData) {
-        console.log('Verifying content...');
+        // console.log('Verifying content...'); // Removed console statement
         
         const retrievedData = await this.walrusClient.readBlob({ blobId });
         contentMatch = Buffer.compare(expectedData, Buffer.from(retrievedData)) === 0;
@@ -199,7 +196,7 @@ class VerificationFlowController {
       // Step 3: Check metadata if expected
       let metadataMatch;
       if (Object.keys(expectedMetadata).length > 0) {
-        console.log('Verifying metadata...');
+        // console.log('Verifying metadata...'); // Removed console statement
         
         const metadata = await this.walrusClient.getBlobMetadata({ blobId });
         metadataMatch = Object.entries(expectedMetadata).every(([key, value]) => {
@@ -246,21 +243,21 @@ const mockSuiClient = {
 const mockSigner = {
   connect: () => Promise.resolve(),
   getPublicKey: () => ({ toBytes: () => new Uint8Array(32) }),
-  sign: async (data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
-  signPersonalMessage: async (data: Uint8Array): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(data).toString('base64'),
+  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  signPersonalMessage: async (_data: Uint8Array): Promise<SignatureWithBytes> => ({
+    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signWithIntent: async (data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(data).toString('base64'),
+  signWithIntent: async (_data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
+    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signTransactionBlock: async (transaction: any): Promise<SignatureWithBytes> => ({
+  signTransactionBlock: async (_transaction: any): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signData: async (data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
-  signTransaction: async (transaction: any): Promise<SignatureWithBytes> => ({
+  signData: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  signTransaction: async (_transaction: any): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
@@ -270,20 +267,73 @@ const mockSigner = {
 
 describe('Verification Flow End-to-End', () => {
   let flowController: VerificationFlowController;
-  let mockWalrusClient: ReturnType<typeof createMockWalrusClient>;
+  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWalrusClient = createMockWalrusClient();
     
-    // Set up spy methods on the mock client
-    jest.spyOn(mockWalrusClient, 'readBlob');
-    jest.spyOn(mockWalrusClient, 'getBlobInfo');
-    jest.spyOn(mockWalrusClient, 'getBlobMetadata');
-    jest.spyOn(mockWalrusClient, 'writeBlob');
-    jest.spyOn(mockWalrusClient, 'executeWriteBlobAttributesTransaction');
-    jest.spyOn(mockWalrusClient, 'verifyPoA');
-    jest.spyOn(mockWalrusClient, 'getStorageProviders');
+    // Create inline mock for WalrusClient with all required methods
+    mockWalrusClient = {
+      // Basic methods
+      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getWalBalance: jest.fn().mockResolvedValue('2000'),
+      getStorageUsage: jest.fn().mockResolvedValue({ used: '500', total: '2000' }),
+      
+      // Blob operations - these will be set up specifically in each test
+      getBlobInfo: jest.fn(),
+      getBlobObject: jest.fn().mockResolvedValue({ content: 'test', metadata: {} }),
+      verifyPoA: jest.fn(),
+      readBlob: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      writeBlob: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn().mockResolvedValue(1024),
+      
+      // Storage operations
+      storageCost: jest.fn().mockResolvedValue({
+        storageCost: BigInt(1000),
+        writeCost: BigInt(500),
+        totalCost: BigInt(1500)
+      }),
+      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
+        digest: 'test',
+        storage: {
+          id: { id: 'test' },
+          start_epoch: 0,
+          end_epoch: 52,
+          storage_size: '1000'
+        }
+      }),
+      executeCertifyBlobTransaction: jest.fn().mockResolvedValue({ digest: 'cert-digest' }),
+      executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({ digest: 'attr-digest' }),
+      deleteBlob: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({ digest: 'delete-digest' })),
+      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({ 
+        blob: { blob_id: 'test' }, 
+        digest: 'register-digest' 
+      }),
+      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
+        primary_verification: true,
+        provider: 'test-provider'
+      }),
+      createStorageBlock: jest.fn().mockResolvedValue({} as any),
+      createStorage: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({
+        digest: 'storage-digest',
+        storage: {
+          id: { id: 'storage-id' },
+          start_epoch: 0,
+          end_epoch: 52,
+          storage_size: '1000'
+        }
+      })),
+      
+      // Utility methods
+      reset: jest.fn(),
+      
+      // Optional experimental API
+      experimental: {
+        getBlobData: jest.fn().mockResolvedValue({})
+      }
+    } as jest.Mocked<WalrusClientExt>;
     
     flowController = new VerificationFlowController(
       mockSuiClient, 
@@ -307,12 +357,12 @@ describe('Verification Flow End-to-End', () => {
       };
       
       // Mock Walrus client responses
-      (mockWalrusClient.writeBlob as jest.Mock).mockResolvedValue({
+      mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: 'test-flow-blob-id',
         blobObject: { blob_id: 'test-flow-blob-id' }
       });
       
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: 'test-flow-blob-id',
         registered_epoch: 40,
         certified_epoch: 41,
@@ -328,7 +378,7 @@ describe('Verification Flow End-to-End', () => {
         }, $kind: 'V1' }
       });
       
-      (mockWalrusClient.getBlobMetadata as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
@@ -340,9 +390,9 @@ describe('Verification Flow End-to-End', () => {
         $kind: 'V1'
       });
       
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(testData));
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1', 'provider2']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(true);
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(true);
       
       // Execute the verification flow
       const result = await flowController.executeVerificationFlow(testData, metadata, {
@@ -355,8 +405,10 @@ describe('Verification Flow End-to-End', () => {
       expect(result.uploadResult.certified).toBe(true);
       expect(result.uploadResult.poaComplete).toBe(true);
       expect(result.uploadResult.hasMinProviders).toBe(true);
-      expect(result.verificationResult?.success).toBe(true);
-      expect(result.monitoringResult?.successful).toBe(true);
+      expect(result.verificationResult).toBeDefined();
+      expect(result.verificationResult!.success).toBe(true);
+      expect(result.monitoringResult).toBeDefined();
+      expect(result.monitoringResult!.successful).toBe(true);
       
       // Verify client calls
       expect(mockWalrusClient.writeBlob).toHaveBeenCalled();
@@ -375,13 +427,13 @@ describe('Verification Flow End-to-End', () => {
       };
       
       // Mock Walrus client responses for upload success
-      (mockWalrusClient.writeBlob as jest.Mock).mockResolvedValue({
+      mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: 'test-flow-blob-id',
         blobObject: { blob_id: 'test-flow-blob-id' }
       });
       
       // Mock certification status (not certified)
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: 'test-flow-blob-id',
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified
@@ -399,9 +451,9 @@ describe('Verification Flow End-to-End', () => {
       
       // Mock that data is modified during retrieval
       const modifiedData = Buffer.from('modified test data for verification flow');
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(modifiedData));
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(false);
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(modifiedData));
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(false);
       
       // Execute the verification flow, expecting data verification to fail
       const result = await flowController.executeVerificationFlow(testData, metadata, {
@@ -415,7 +467,8 @@ describe('Verification Flow End-to-End', () => {
       expect(result.uploadResult.poaComplete).toBe(false);
       
       // Data verification should fail because content is modified
-      expect(result.verificationResult?.success).toBe(false);
+      expect(result.verificationResult).toBeDefined();
+      expect(result.verificationResult!.success).toBe(false);
     });
     
     it('should handle errors during the verification flow', async () => {
@@ -423,7 +476,7 @@ describe('Verification Flow End-to-End', () => {
       const testData = Buffer.from('test data for verification flow');
       
       // Mock Walrus client error
-      (mockWalrusClient.writeBlob as jest.Mock).mockRejectedValue(
+      mockWalrusClient.writeBlob.mockRejectedValue(
         new Error('Storage allocation failed')
       );
       
@@ -443,7 +496,7 @@ describe('Verification Flow End-to-End', () => {
       };
       
       // Mock Walrus client responses
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -459,7 +512,7 @@ describe('Verification Flow End-to-End', () => {
         }, $kind: 'V1' }
       });
       
-      (mockWalrusClient.getBlobMetadata as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
@@ -470,7 +523,7 @@ describe('Verification Flow End-to-End', () => {
         $kind: 'V1'
       });
       
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
       
       // Execute the verification
       const result = await flowController.verifyExistingData(blobId, testData, metadata);
@@ -495,7 +548,7 @@ describe('Verification Flow End-to-End', () => {
       const actualData = Buffer.from('actual test data'); // Different content
       
       // Mock Walrus client responses
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -511,7 +564,7 @@ describe('Verification Flow End-to-End', () => {
         }, $kind: 'V1' }
       });
       
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(actualData));
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(actualData));
       
       // Execute the verification
       const result = await flowController.verifyExistingData(blobId, expectedData);
@@ -531,7 +584,7 @@ describe('Verification Flow End-to-End', () => {
       };
       
       // Mock Walrus client responses
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -547,7 +600,7 @@ describe('Verification Flow End-to-End', () => {
         }, $kind: 'V1' }
       });
       
-      (mockWalrusClient.getBlobMetadata as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -571,7 +624,7 @@ describe('Verification Flow End-to-End', () => {
       const nonExistentBlobId = 'non-existent-blob';
       
       // Mock blob not found
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockRejectedValue(
+      mockWalrusClient.getBlobInfo.mockRejectedValue(
         new Error('Blob not found')
       );
       
@@ -584,7 +637,7 @@ describe('Verification Flow End-to-End', () => {
       const blobId = 'uncertified-blob-id';
       
       // Mock Walrus client responses for uncertified blob
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified

@@ -3,6 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { CLIError } from '../types/error';
+import { Logger } from './Logger';
+
+const logger = new Logger('VaultManager');
 
 interface VaultConfig {
   name: string;
@@ -83,8 +86,8 @@ export class VaultManager {
       // Set restrictive permissions on the secrets directory
       try {
         fs.chmodSync(this.secretsDir, 0o700); // Only owner can read/write/execute
-      } catch (_error) {
-        console.warn('Could not set restrictive permissions on secrets directory');
+      } catch (error) {
+        logger.warn('Could not set restrictive permissions on secrets directory');
       }
     }
 
@@ -96,7 +99,7 @@ export class VaultManager {
     } else {
       try {
         this.encryptionKey = fs.readFileSync(keyFile);
-      } catch (_error) {
+      } catch (error) {
         throw new CLIError('Failed to read encryption key', 'ENCRYPTION_KEY_ERROR');
       }
     }
@@ -117,8 +120,8 @@ export class VaultManager {
           const secretsIndex = JSON.parse(decryptedIndex.toString());
           this.secretsMap = new Map(Object.entries(secretsIndex));
         }
-      } catch (_error) {
-        console.error('Failed to load secrets index:', error);
+      } catch (error) {
+        logger.error('Failed to load secrets index:', error);
         // Initialize with empty map on error
         this.secretsMap = new Map();
       }
@@ -190,7 +193,7 @@ export class VaultManager {
 
       const secret = JSON.parse(decryptedData.toString()) as Secret;
       return secret.value;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(`Error retrieving secret: ${key}`, 'SECRET_READ_ERROR');
     }
@@ -305,8 +308,8 @@ export class VaultManager {
         decipher.update(encrypted),
         decipher.final()
       ]);
-    } catch (_error) {
-      console.error('Decryption failed:', error);
+    } catch (error) {
+      logger.error('Decryption failed:', error);
       return null;
     }
   }

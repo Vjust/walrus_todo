@@ -1,24 +1,23 @@
+// TODO: This test file requires refactoring to work without mocks
+// Mock imports and jest.mock calls were removed during mock cleanup
+
 import { expect, describe, test, beforeEach } from '@jest/globals';
 
-import { WalrusStorage } from '@/utils/walrus-storage';
-import { SuiNftStorage } from '@/utils/sui-nft-storage';
-import { configService } from '@/services/config-service';
+import { SuiNftStorage } from '../../src/utils/sui-nft-storage';
+import { configService } from '../../src/services/config-service';
+import { TodoService } from '../../src/services/todoService';
+import { SuiClient } from '@mysten/sui/client';
 
-
-import { Todo, TodoList } from '@/types/todo';
+import { TodoList } from '../../src/types/todo';
 import { createMockTodo } from '../helpers/test-utils';
-import { createMockSystemStateResponse } from '../sui-test-types';
-import type { Config } from '@/types/config';
+import type { Config } from '../../src/types/config';
 
 // Mock services
-jest.mock('@/services/todoService');
-jest.mock('@/utils/walrus-storage');
-jest.mock('@/utils/sui-nft-storage');
-jest.mock('@/services/config-service');
-jest.mock('@mysten/sui/client');
-
+// TODO: jest.mock call removed during mock cleanup
+// TODO: jest.mock call removed during mock cleanup
+// TODO: jest.mock call removed during mock cleanup
+// TODO: jest.mock call removed during mock cleanup
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
-const mockWalrusStorage = WalrusStorage as jest.MockedClass<typeof WalrusStorage>;
 const mockSuiNftStorage = SuiNftStorage as jest.MockedClass<typeof SuiNftStorage>;
 const mockSuiClient = SuiClient as jest.MockedClass<typeof SuiClient>;
 

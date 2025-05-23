@@ -2,6 +2,9 @@ import chalk from 'chalk';
 import { commandRegistry } from './CommandRegistry';
 import { ICONS } from '../base-command';
 import { NetworkError, ValidationError, StorageError, BlockchainError, WalrusError } from '../types/errors/compatibility';
+import { Logger } from './Logger';
+
+const logger = new Logger('error-messages');
 
 /**
  * Enhanced error messaging system for better user experience
@@ -275,7 +278,7 @@ function getErrorCode(error: Error): string {
     return error.code;
   }
   if ('code' in error) {
-    return (error as any).code;
+    return (error as { code?: string }).code || error.constructor.name.toUpperCase();
   }
   return error.constructor.name.toUpperCase();
 }
@@ -392,14 +395,14 @@ export function displayFriendlyError(error: Error, context?: ErrorContext): stri
  * Integration with BaseCommand error handling
  */
 export function enhanceBaseCommandError(
-  baseCommand: any,
+  baseCommand: { id?: string; constructor: { name: string } },
   error: Error,
   context?: ErrorContext
 ): void {
   const friendlyError = displayFriendlyError(error, context);
   
   // Use console.error to ensure it's displayed even in quiet mode
-  console.error(friendlyError);
+  logger.error(friendlyError);
   
   // Throw the original error to maintain compatibility
   throw error;
@@ -408,30 +411,33 @@ export function enhanceBaseCommandError(
 /**
  * Get error context from command flags and arguments
  */
-export function getErrorContext(command: any, error: Error): ErrorContext {
+export function getErrorContext(command: { id?: string; constructor: { name: string } }, error: Error): ErrorContext {
   const context: ErrorContext = {
     command: command.id || command.constructor.name.toLowerCase().replace('command', '')
   };
   
   // Extract context from error properties
   if (error instanceof ValidationError) {
-    context.field = (error as any).field;
-    context.value = (error as any).value;
+    const validationError = error as ValidationError & { field?: string; value?: unknown };
+    context.field = validationError.field;
+    context.value = validationError.value;
   }
   
   if (error instanceof TransactionError) {
-    context.transactionId = (error as any).transactionId;
-    context.operation = (error as any).operation;
+    const txError = error as TransactionError & { transactionId?: string; operation?: string };
+    context.transactionId = txError.transactionId;
+    context.operation = txError.operation;
   }
   
   if (error instanceof StorageError) {
-    context.blobId = (error as any).blobId;
-    context.operation = (error as any).operation;
+    const storageError = error as StorageError & { blobId?: string; operation?: string };
+    context.blobId = storageError.blobId;
+    context.operation = storageError.operation;
   }
   
   if (error instanceof NetworkError) {
-    context.operation = (error as any).operation;
-    const networkError = error as any;
+    const networkError = error as NetworkError & { operation?: string; attempt?: number; maxAttempts?: number };
+    context.operation = networkError.operation;
     if (networkError.attempt) {
       context.attempt = networkError.attempt;
       context.maxAttempts = networkError.maxAttempts;

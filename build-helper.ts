@@ -37,7 +37,7 @@ if (!fs.existsSync(outDir)) {
 // Get the list of files to transpile
 const sourceFileNames = parsedConfig.fileNames;
 // eslint-disable-next-line no-console
-console.log(`Transpiling ${sourceFileNames.length} files...`);
+process.stdout.write(`Transpiling ${sourceFileNames.length} files...\n`);
 
 // Keep track of files processed and errors
 let filesProcessed = 0;
@@ -67,9 +67,9 @@ sourceFileNames.forEach(fileName => {
       .replace(/\.tsx?$/, '.js');
     
     // Create output directory if it doesn't exist
-    const outputDir = path.dirname(outputPath);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+    const outputFileDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputFileDir)) {
+      fs.mkdirSync(outputFileDir, { recursive: true });
     }
     
     // Write the transpiled file
@@ -83,4 +83,4 @@ sourceFileNames.forEach(fileName => {
 });
 
 // eslint-disable-next-line no-console
-console.log(`Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.`);
+process.stdout.write(`Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.\n`);

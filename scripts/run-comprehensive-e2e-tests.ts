@@ -1,5 +1,8 @@
 #!/usr/bin/env tsx
 /* eslint-disable no-console */
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('run-comprehensive-e2e-tests');
 
 /**
  * Comprehensive E2E Test Runner for Waltodo System
@@ -49,11 +52,11 @@ class ComprehensiveE2ETestRunner {
 
   constructor() {
     this.projectRoot = path.resolve(__dirname, '..');
-    console.log(chalk.blue(`🔍 Project root: ${this.projectRoot}`));
+    logger.info(chalk.blue(`🔍 Project root: ${this.projectRoot}`));
   }
 
   async run(): Promise<void> {
-    console.log(chalk.bold.blue('\n🚀 Starting Comprehensive Waltodo E2E Test Suite\n'));
+    logger.info(chalk.bold.blue('\n🚀 Starting Comprehensive Waltodo E2E Test Suite\n'));
     
     try {
       await this.checkSystemPrerequisites();
@@ -62,25 +65,25 @@ class ComprehensiveE2ETestRunner {
       await this.validateSystemIntegration();
       this.generateTestReport();
       
-      console.log(chalk.bold.green('\n✅ Comprehensive E2E Test Suite Completed Successfully!\n'));
+      logger.info(chalk.bold.green('\n✅ Comprehensive E2E Test Suite Completed Successfully!\n'));
       
     } catch (error) {
-      console.error(chalk.bold.red('\n❌ E2E Test Suite Failed:'), error);
+      logger.error(chalk.bold.red('\n❌ E2E Test Suite Failed:'), error);
       this.generateFailureReport(error);
       process.exit(1);
     }
   }
 
   private async checkSystemPrerequisites(): Promise<void> {
-    console.log(chalk.yellow('📋 Checking System Prerequisites...'));
+    logger.info(chalk.yellow('📋 Checking System Prerequisites...'));
     
     // Check Sui CLI
     try {
       const suiVersion = execSync('sui --version', { encoding: 'utf8', timeout: 10000 });
       this.systemStatus.suiCli = true;
-      console.log(chalk.green(`✓ Sui CLI: ${suiVersion.trim()}`));
+      logger.info(chalk.green(`✓ Sui CLI: ${suiVersion.trim()}`));
     } catch (error) {
-      console.log(chalk.red('✗ Sui CLI not found'));
+      logger.info(chalk.red('✗ Sui CLI not found'));
       throw new Error('Sui CLI is required but not found. Please install: https://docs.sui.io/guides/developer/getting-started/sui-install');
     }
 
@@ -88,9 +91,9 @@ class ComprehensiveE2ETestRunner {
     try {
       const walrusVersion = execSync('walrus --version', { encoding: 'utf8', timeout: 10000 });
       this.systemStatus.walrusCli = true;
-      console.log(chalk.green(`✓ Walrus CLI: ${walrusVersion.trim()}`));
+      logger.info(chalk.green(`✓ Walrus CLI: ${walrusVersion.trim()}`));
     } catch (error) {
-      console.log(chalk.yellow('⚠ Walrus CLI not found - will use mock mode for storage tests'));
+      logger.info(chalk.yellow('⚠ Walrus CLI not found - will use mock mode for storage tests'));
     }
 
     // Check Node.js and pnpm
@@ -98,8 +101,8 @@ class ComprehensiveE2ETestRunner {
       const nodeVersion = execSync('node --version', { encoding: 'utf8' });
       const pnpmVersion = execSync('pnpm --version', { encoding: 'utf8' });
       this.systemStatus.nodeAndPnpm = true;
-      console.log(chalk.green(`✓ Node.js: ${nodeVersion.trim()}`));
-      console.log(chalk.green(`✓ pnpm: ${pnpmVersion.trim()}`));
+      logger.info(chalk.green(`✓ Node.js: ${nodeVersion.trim()}`));
+      logger.info(chalk.green(`✓ pnpm: ${pnpmVersion.trim()}`));
     } catch (error) {
       throw new Error('Node.js and pnpm are required but not found');
     }
@@ -107,27 +110,27 @@ class ComprehensiveE2ETestRunner {
     // Check Sui wallet
     try {
       const activeAddress = execSync('sui client active-address', { encoding: 'utf8', timeout: 10000 });
-      console.log(chalk.green(`✓ Sui Wallet: ${activeAddress.trim()}`));
+      logger.info(chalk.green(`✓ Sui Wallet: ${activeAddress.trim()}`));
     } catch (error) {
       throw new Error('Sui wallet not configured. Please run "sui client" to set up your wallet');
     }
 
-    console.log(chalk.green('✅ System prerequisites verified\n'));
+    logger.info(chalk.green('✅ System prerequisites verified\n'));
   }
 
   private async setupTestEnvironment(): Promise<void> {
-    console.log(chalk.yellow('🔧 Setting up Test Environment...'));
+    logger.info(chalk.yellow('🔧 Setting up Test Environment...'));
     
     // Build the CLI
     try {
-      console.log('Building Waltodo CLI...');
+      logger.info('Building Waltodo CLI...');
       execSync('pnpm run build:dev', { 
         cwd: this.projectRoot,
         stdio: 'inherit',
         timeout: 120000
       });
       this.systemStatus.waltodoCli = true;
-      console.log(chalk.green('✓ Waltodo CLI built successfully'));
+      logger.info(chalk.green('✓ Waltodo CLI built successfully'));
     } catch (error) {
       throw new Error(`Failed to build Waltodo CLI: ${error}`);
     }
@@ -136,24 +139,24 @@ class ComprehensiveE2ETestRunner {
     const frontendPath = path.join(this.projectRoot, 'waltodo-frontend');
     if (fs.existsSync(frontendPath)) {
       try {
-        console.log('Installing frontend dependencies...');
+        logger.info('Installing frontend dependencies...');
         execSync('pnpm install', { 
           cwd: frontendPath,
           stdio: 'inherit',
           timeout: 120000
         });
         this.systemStatus.frontend = true;
-        console.log(chalk.green('✓ Frontend dependencies installed'));
+        logger.info(chalk.green('✓ Frontend dependencies installed'));
       } catch (error) {
-        console.log(chalk.yellow('⚠ Frontend dependency installation failed - some tests may be skipped'));
+        logger.info(chalk.yellow('⚠ Frontend dependency installation failed - some tests may be skipped'));
       }
     }
 
-    console.log(chalk.green('✅ Test environment setup complete\n'));
+    logger.info(chalk.green('✅ Test environment setup complete\n'));
   }
 
   private async runIntegrationTests(): Promise<void> {
-    console.log(chalk.yellow('🧪 Running Integration Tests...'));
+    logger.info(chalk.yellow('🧪 Running Integration Tests...'));
     
     const testConfigs = [
       {
@@ -180,7 +183,7 @@ class ComprehensiveE2ETestRunner {
 
     for (const testConfig of testConfigs) {
       try {
-        console.log(chalk.blue(`\n🔄 Running ${testConfig.name}...`));
+        logger.info(chalk.blue(`\n🔄 Running ${testConfig.name}...`));
         const startTime = Date.now();
         
         const output = execSync(testConfig.command, {
@@ -193,7 +196,7 @@ class ComprehensiveE2ETestRunner {
         const result = this.parseTestOutput(testConfig.name, output, duration);
         this.testResults.push(result);
         
-        console.log(chalk.green(`✓ ${testConfig.name} completed in ${duration}ms`));
+        logger.info(chalk.green(`✓ ${testConfig.name} completed in ${duration}ms`));
         
       } catch (error) {
         const duration = Date.now() - Date.now();
@@ -207,20 +210,20 @@ class ComprehensiveE2ETestRunner {
         };
         this.testResults.push(result);
         
-        console.log(chalk.red(`✗ ${testConfig.name} failed`));
-        console.log(chalk.red(`  Error: ${error.toString().substring(0, 200)}...`));
+        logger.info(chalk.red(`✗ ${testConfig.name} failed`));
+        logger.info(chalk.red(`  Error: ${error.toString().substring(0, 200)}...`));
       }
     }
 
-    console.log(chalk.green('✅ Integration tests completed\n'));
+    logger.info(chalk.green('✅ Integration tests completed\n'));
   }
 
   private async validateSystemIntegration(): Promise<void> {
-    console.log(chalk.yellow('🔍 Validating System Integration...'));
+    logger.info(chalk.yellow('🔍 Validating System Integration...'));
     
     // Test CLI-to-Frontend communication
     try {
-      console.log('Testing CLI deployment and frontend config generation...');
+      logger.info('Testing CLI deployment and frontend config generation...');
       
       // Deploy contract (skip if already deployed)
       try {
@@ -229,12 +232,12 @@ class ComprehensiveE2ETestRunner {
           encoding: 'utf8',
           timeout: 180000
         });
-        console.log(chalk.green('✓ Smart contract deployment successful'));
+        logger.info(chalk.green('✓ Smart contract deployment successful'));
         this.systemStatus.smartContract = true;
       } catch (error) {
         if (error.toString().includes('already deployed') || 
             error.toString().includes('Package ID already exists')) {
-          console.log(chalk.yellow('⚠ Contract already deployed - continuing with existing deployment'));
+          logger.info(chalk.yellow('⚠ Contract already deployed - continuing with existing deployment'));
           this.systemStatus.smartContract = true;
         } else {
           throw error;
@@ -248,7 +251,7 @@ class ComprehensiveE2ETestRunner {
         const hasNetworkConfig = configFiles.some(file => file.endsWith('.json'));
         
         if (hasNetworkConfig) {
-          console.log(chalk.green('✓ Frontend configuration generated successfully'));
+          logger.info(chalk.green('✓ Frontend configuration generated successfully'));
         } else {
           throw new Error('Frontend configuration files not found');
         }
@@ -271,18 +274,18 @@ class ComprehensiveE2ETestRunner {
             timeout: 30000
           });
         } catch (error) {
-          console.log(chalk.yellow(`⚠ CLI command failed: ${command}`));
+          logger.info(chalk.yellow(`⚠ CLI command failed: ${command}`));
         }
       }
 
-      console.log(chalk.green('✓ CLI operations verified'));
+      logger.info(chalk.green('✓ CLI operations verified'));
 
     } catch (error) {
-      console.log(chalk.red(`✗ System integration validation failed: ${error}`));
+      logger.info(chalk.red(`✗ System integration validation failed: ${error}`));
       throw error;
     }
 
-    console.log(chalk.green('✅ System integration validation completed\n'));
+    logger.info(chalk.green('✅ System integration validation completed\n'));
   }
 
   private parseTestOutput(testSuite: string, output: string, duration: number): TestResult {
@@ -314,10 +317,10 @@ class ComprehensiveE2ETestRunner {
   }
 
   private generateTestReport(): void {
-    console.log(chalk.bold.blue('\n📊 COMPREHENSIVE E2E TEST REPORT\n'));
+    logger.info(chalk.bold.blue('\n📊 COMPREHENSIVE E2E TEST REPORT\n'));
     
     // System Status Report
-    console.log(chalk.bold.yellow('🔧 SYSTEM STATUS:'));
+    logger.info(chalk.bold.yellow('🔧 SYSTEM STATUS:'));
     const statusItems = [
       { name: 'Sui CLI', status: this.systemStatus.suiCli },
       { name: 'Walrus CLI', status: this.systemStatus.walrusCli },
@@ -330,11 +333,11 @@ class ComprehensiveE2ETestRunner {
     statusItems.forEach(item => {
       const icon = item.status ? '✅' : '❌';
       const color = item.status ? chalk.green : chalk.red;
-      console.log(`  ${icon} ${color(item.name)}`);
+      logger.info(`  ${icon} ${color(item.name)}`);
     });
 
     // Test Results Summary
-    console.log(chalk.bold.yellow('\n🧪 TEST RESULTS SUMMARY:'));
+    logger.info(chalk.bold.yellow('\n🧪 TEST RESULTS SUMMARY:'));
     
     let totalPassed = 0;
     let totalFailed = 0;
@@ -348,45 +351,45 @@ class ComprehensiveE2ETestRunner {
       totalDuration += result.duration;
 
       const status = result.failed === 0 ? chalk.green('✅ PASS') : chalk.red('❌ FAIL');
-      console.log(`  ${status} ${result.testSuite}`);
-      console.log(`    Passed: ${result.passed}, Failed: ${result.failed}, Skipped: ${result.skipped}`);
-      console.log(`    Duration: ${result.duration}ms`);
+      logger.info(`  ${status} ${result.testSuite}`);
+      logger.info(`    Passed: ${result.passed}, Failed: ${result.failed}, Skipped: ${result.skipped}`);
+      logger.info(`    Duration: ${result.duration}ms`);
       
       if (result.errors.length > 0) {
-        console.log(`    Errors: ${result.errors.length}`);
+        logger.info(`    Errors: ${result.errors.length}`);
         result.errors.forEach(error => {
-          console.log(chalk.red(`      - ${error.substring(0, 100)}...`));
+          logger.info(chalk.red(`      - ${error.substring(0, 100)}...`));
         });
       }
-      console.log('');
+      logger.info('');
     });
 
     // Overall Summary
-    console.log(chalk.bold.yellow('📈 OVERALL SUMMARY:'));
-    console.log(`  Total Tests: ${totalPassed + totalFailed + totalSkipped}`);
-    console.log(`  ${chalk.green('✅ Passed:')} ${totalPassed}`);
-    console.log(`  ${chalk.red('❌ Failed:')} ${totalFailed}`);
-    console.log(`  ${chalk.yellow('⏭️  Skipped:')} ${totalSkipped}`);
-    console.log(`  ⏱️  Total Duration: ${Math.round(totalDuration / 1000)}s`);
+    logger.info(chalk.bold.yellow('📈 OVERALL SUMMARY:'));
+    logger.info(`  Total Tests: ${totalPassed + totalFailed + totalSkipped}`);
+    logger.info(`  ${chalk.green('✅ Passed:')} ${totalPassed}`);
+    logger.info(`  ${chalk.red('❌ Failed:')} ${totalFailed}`);
+    logger.info(`  ${chalk.yellow('⏭️  Skipped:')} ${totalSkipped}`);
+    logger.info(`  ⏱️  Total Duration: ${Math.round(totalDuration / 1000)}s`);
 
     const successRate = totalPassed / (totalPassed + totalFailed) * 100;
-    console.log(`  📊 Success Rate: ${Math.round(successRate)}%`);
+    logger.info(`  📊 Success Rate: ${Math.round(successRate)}%`);
 
     // Recommendations
-    console.log(chalk.bold.yellow('\n💡 RECOMMENDATIONS:'));
+    logger.info(chalk.bold.yellow('\n💡 RECOMMENDATIONS:'));
     
     if (totalFailed === 0) {
-      console.log(chalk.green('  🎉 All tests passed! The system is ready for production use.'));
+      logger.info(chalk.green('  🎉 All tests passed! The system is ready for production use.'));
     } else {
-      console.log(chalk.red(`  ⚠️  ${totalFailed} test(s) failed. Please address the issues before deployment.`));
+      logger.info(chalk.red(`  ⚠️  ${totalFailed} test(s) failed. Please address the issues before deployment.`));
     }
 
     if (!this.systemStatus.walrusCli) {
-      console.log(chalk.yellow('  📦 Consider installing Walrus CLI for full storage functionality.'));
+      logger.info(chalk.yellow('  📦 Consider installing Walrus CLI for full storage functionality.'));
     }
 
     if (!this.systemStatus.frontend) {
-      console.log(chalk.yellow('  🖥️  Frontend setup incomplete. Run "pnpm run nextjs:install" to fix.'));
+      logger.info(chalk.yellow('  🖥️  Frontend setup incomplete. Run "pnpm run nextjs:install" to fix.'));
     }
 
     // Generate detailed report file
@@ -411,37 +414,37 @@ class ComprehensiveE2ETestRunner {
     };
 
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    console.log(chalk.dim(`\n📝 Detailed report saved to: ${reportPath}`));
+    logger.info(chalk.dim(`\n📝 Detailed report saved to: ${reportPath}`));
   }
 
   private generateFailureReport(error: any): void {
-    console.log(chalk.bold.red('\n💥 FAILURE REPORT\n'));
+    logger.info(chalk.bold.red('\n💥 FAILURE REPORT\n'));
     
-    console.log(chalk.red('Error Details:'));
-    console.log(chalk.red(`  ${error.message || error.toString()}`));
+    logger.info(chalk.red('Error Details:'));
+    logger.info(chalk.red(`  ${error.message || error.toString()}`));
     
-    console.log(chalk.yellow('\nSystem Status at Failure:'));
+    logger.info(chalk.yellow('\nSystem Status at Failure:'));
     Object.entries(this.systemStatus).forEach(([key, value]) => {
       const icon = value ? '✅' : '❌';
-      console.log(`  ${icon} ${key}`);
+      logger.info(`  ${icon} ${key}`);
     });
 
-    console.log(chalk.yellow('\nFailure Analysis:'));
+    logger.info(chalk.yellow('\nFailure Analysis:'));
     if (!this.systemStatus.suiCli) {
-      console.log(chalk.red('  - Sui CLI not installed or not working'));
+      logger.info(chalk.red('  - Sui CLI not installed or not working'));
     }
     if (!this.systemStatus.nodeAndPnpm) {
-      console.log(chalk.red('  - Node.js or pnpm not properly installed'));
+      logger.info(chalk.red('  - Node.js or pnpm not properly installed'));
     }
     if (!this.systemStatus.waltodoCli) {
-      console.log(chalk.red('  - Waltodo CLI build failed'));
+      logger.info(chalk.red('  - Waltodo CLI build failed'));
     }
 
-    console.log(chalk.yellow('\nRecommended Actions:'));
-    console.log('  1. Check that all prerequisites are installed');
-    console.log('  2. Verify Sui wallet is configured with testnet tokens');
-    console.log('  3. Ensure internet connectivity for blockchain operations');
-    console.log('  4. Try running individual test suites to isolate issues');
+    logger.info(chalk.yellow('\nRecommended Actions:'));
+    logger.info('  1. Check that all prerequisites are installed');
+    logger.info('  2. Verify Sui wallet is configured with testnet tokens');
+    logger.info('  3. Ensure internet connectivity for blockchain operations');
+    logger.info('  4. Try running individual test suites to isolate issues');
   }
 }
 
@@ -453,7 +456,7 @@ async function main() {
 
 if (require.main === module) {
   main().catch(error => {
-    console.error(chalk.bold.red('Fatal error:'), error);
+    logger.error(chalk.bold.red('Fatal error:'), error);
     process.exit(1);
   });
 }

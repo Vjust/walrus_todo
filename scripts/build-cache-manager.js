@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('build-cache-manager');
  * Build cache manager for optimizing build performance
  * Implements file hashing and incremental builds
  */
@@ -36,13 +39,13 @@ class BuildCacheManager {
       if (fs.existsSync(this.cacheFile)) {
         const cacheContent = fs.readFileSync(this.cacheFile, 'utf8');
         this.fileHashes = JSON.parse(cacheContent);
-        console.log(`Loaded build cache with ${Object.keys(this.fileHashes).length} entries`);
+        logger.info(`Loaded build cache with ${Object.keys(this.fileHashes).length} entries`);
       } else {
         this.fileHashes = {};
-        console.log('No existing build cache found. Starting fresh.');
+        logger.info('No existing build cache found. Starting fresh.');
       }
     } catch (error) {
-      console.warn(`Warning: Failed to load build cache: ${error.message}`);
+      logger.warn(`Warning: Failed to load build cache: ${error.message}`);
       this.fileHashes = {};
     }
   }
@@ -55,9 +58,9 @@ class BuildCacheManager {
     
     try {
       fs.writeFileSync(this.cacheFile, JSON.stringify(this.fileHashes, null, 2), 'utf8');
-      console.log(`Saved build cache with ${Object.keys(this.fileHashes).length} entries`);
+      logger.info(`Saved build cache with ${Object.keys(this.fileHashes).length} entries`);
     } catch (error) {
-      console.warn(`Warning: Failed to save build cache: ${error.message}`);
+      logger.warn(`Warning: Failed to save build cache: ${error.message}`);
     }
   }
   
@@ -71,7 +74,7 @@ class BuildCacheManager {
       const fileContents = fs.readFileSync(filePath, 'utf8');
       return crypto.createHash('md5').update(fileContents).digest('hex');
     } catch (error) {
-      console.warn(`Warning: Failed to calculate hash for ${filePath}: ${error.message}`);
+      logger.warn(`Warning: Failed to calculate hash for ${filePath}: ${error.message}`);
       return null;
     }
   }
@@ -125,7 +128,7 @@ class BuildCacheManager {
     if (fs.existsSync(this.cacheFile)) {
       fs.unlinkSync(this.cacheFile);
     }
-    console.log('Build cache cleared');
+    logger.info('Build cache cleared');
   }
 }
 

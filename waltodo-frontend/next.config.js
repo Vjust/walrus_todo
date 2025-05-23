@@ -22,7 +22,7 @@ const nextConfig = {
   // Increase timeout for static generation
   staticPageGenerationTimeout: 180,
   
-  webpack: (config, { isServer, dev }) => {
+  webpack: (config, { isServer, dev, webpack }) => {
     // Fix for node-fetch encoding issue
     if (!isServer) {
       config.resolve.fallback = {
@@ -32,6 +32,13 @@ const nextConfig = {
         tls: false,
         encoding: false,
       };
+    }
+    
+    // Suppress wallet extension console errors during development
+    if (dev && !isServer) {
+      config.plugins.push(new webpack.DefinePlugin({
+        '__SUPPRESS_WALLET_ERRORS__': JSON.stringify(true)
+      }));
     }
     
     return config;

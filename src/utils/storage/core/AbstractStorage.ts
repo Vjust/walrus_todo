@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../Logger';
+
+const logger = new Logger('AbstractStorage');
  * @fileoverview Abstract Storage Implementation - Base class for storage implementations
  *
  * This abstract class provides common functionality for all storage implementations,
@@ -78,7 +81,7 @@ export abstract class AbstractStorage implements IStorage {
    */
   public async disconnect(): Promise<void> {
     if (this.connectionState !== 'disconnected') {
-      console.log('Disconnecting storage...');
+      logger.info('Disconnecting storage...');
       
       // Cancel any pending operations
       this.abortController.abort('Disconnecting');
@@ -187,8 +190,8 @@ export abstract class AbstractStorage implements IStorage {
       
       // Compare checksums
       return calculatedChecksum === storedChecksum;
-    } catch (_error) {
-      console.warn('Content verification failed:', error);
+    } catch (error) {
+      logger.warn('Content verification failed:', error);
       return false;
     }
   }

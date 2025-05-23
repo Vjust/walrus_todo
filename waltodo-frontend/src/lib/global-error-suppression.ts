@@ -34,7 +34,16 @@ export function setupGlobalErrorSuppression() {
     'installHook.js',
     'hook.js',
     'Would execute transaction with dApp Kit',
-    'Todo created successfully'
+    'Todo created successfully',
+    'dApp.connect',
+    'query #1',
+    'query #2',
+    'query #3',
+    'dapp-interface.js',
+    'opcgpfmipidbgpenhmajoajpbobppdil',
+    'chrome-extension://',
+    '[[ << query #',
+    'Error: [[ << query #'
   ];
 
   // Enhanced console.error that filters known issues

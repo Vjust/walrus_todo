@@ -66,7 +66,7 @@ describe('Consolidated Error Types', () => {
       
       // Test with empty/null values
       expect(testError.testRedactIdentifier('')).toBe('');
-      expect(testError.testRedactIdentifier(null as unknown as string)).toBe(null as unknown as string);
+      expect(testError.testRedactIdentifier(null as string)).toBe(null as string);
     });
   });
 
@@ -116,7 +116,8 @@ describe('Consolidated Error Types', () => {
       expect(logEntry.context?.customData?.addressLooking).toMatch(/^0xabcd.*ef12$/);
       // Our TransactionError is now heuristically redacting patterns that look like IDs
       // Check that even non-blockchain IDs might be redacted
-      const nonAddressValue = logEntry.context?.customData?.nonAddress as string;
+      const customData = logEntry.context?.customData as Record<string, string>;
+      const nonAddressValue = customData?.nonAddress;
       expect(nonAddressValue).toBeTruthy();
     });
 

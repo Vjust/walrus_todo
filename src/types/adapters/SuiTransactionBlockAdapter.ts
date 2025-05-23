@@ -1,6 +1,9 @@
 import { TransactionBlock } from '@mysten/sui/transactions';
 import { SignerAdapter } from './SignerAdapter';
 import { SuiClient } from '@mysten/sui/client';
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('SuiTransactionBlockAdapter');
 
 /**
  * TransactionInput - Generic input for a transaction
@@ -116,7 +119,7 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
       
       return result as TransactionResponse;
     } catch (_error) {
-      console.error('Transaction execution failed:', error);
+      logger.error('Transaction execution failed:', error);
       throw new Error(`Transaction execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -157,7 +160,7 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
       
       return result;
     } catch (_error) {
-      console.error('Transaction inspection failed:', error);
+      logger.error('Transaction inspection failed:', error);
       throw new Error(`Transaction inspection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

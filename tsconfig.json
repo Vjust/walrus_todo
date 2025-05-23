@@ -21,7 +21,7 @@
       "./node_modules/@types",
       "./src/types"
     ],
-    "types": ["node", "jest", "cli-progress"],
+    "types": ["node", "jest", "cli-progress", "express"],
     "resolveJsonModule": true,
     "outDir": "./dist",
     "importHelpers": true,
@@ -52,7 +52,6 @@
     "allowJs": true,
     "isolatedModules": true,      /* Added for better module boundary handling */
     "preserveSymlinks": true,     /* Added to preserve npm link resolutions */
-    "resolveJsonModule": true,    /* Added for JSON imports */
     "allowUmdGlobalAccess": true, /* Allow accessing UMD globals from modules */
     
     /* Enhanced compatibility settings */
@@ -68,7 +67,7 @@
     ]
   },
   "ts-node": {
-    "transpileOnly": false,
+    "transpileOnly": true,
     "compilerOptions": {
       "module": "commonjs"
     }

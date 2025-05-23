@@ -1,3 +1,4 @@
+import { Logger } from './Logger';
 import { 
   BaseError as WalrusError, 
   NetworkError, 
@@ -8,6 +9,8 @@ import {
   ValidationError,
   CLIError 
 } from '../types/errors/consolidated';
+
+const logger = new Logger('walrus-error-handler');
 
 /**
  * Categorized error types for Walrus operations
@@ -378,7 +381,7 @@ export class AsyncOperationHandler {
         const delay = baseDelay * Math.pow(2, attempts - 1) * (0.8 + Math.random() * 0.4);
         
         if (logRetries) {
-          console.log(`Operation ${operationName} failed (attempt ${attempts}/${maxRetries}), retrying in ${Math.round(delay)}ms...`);
+          logger.info(`Operation ${operationName} failed (attempt ${attempts}/${maxRetries}), retrying in ${Math.round(delay)}ms...`);
         }
         
         // Wait before retrying

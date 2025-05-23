@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ExpiryMonitor } from '../utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../utils/VaultManager';
 import { WalrusClientExt } from '../types/client';
@@ -8,12 +9,17 @@ jest.mock('@mysten/walrus');
 
 describe('ExpiryMonitor', () => {
   // let monitor: ExpiryMonitor; // Commented out - will be used when tests are implemented
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let mockVaultManager: jest.Mocked<VaultManager>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let mockWarningHandler: jest.Mock;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let mockRenewalHandler: jest.Mock;
   let mockDate: Date;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mockConfig = {
     checkInterval: 1000,
     warningThreshold: 7,

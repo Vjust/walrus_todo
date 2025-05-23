@@ -1,7 +1,7 @@
 import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { createWalrusStorage } from '../utils/walrus-storage';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import chalk from 'chalk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -16,11 +16,13 @@ export default class StoreFileCommand extends BaseCommand {
   static description = 'Store files on Walrus and get blob ID references';
 
   static examples = [
-    '<%= config.bin %> store-file file.json',
-    '<%= config.bin %> store-file file1.json file2.json --batch',
-    '<%= config.bin %> store-file file.json --mock',
-    '<%= config.bin %> store-file file.json --output json',
-    '<%= config.bin %> store-file file.json --verbose'
+    '<%= config.bin %> store-file file.json                              # Store single file',
+    '<%= config.bin %> store-file file1.json file2.json --batch          # Batch upload',
+    '<%= config.bin %> store-file file.json --mock                       # Test without storing',
+    '<%= config.bin %> store-file file.json --output json                # JSON output format',
+    '<%= config.bin %> store-file file.json --verbose                    # Show detailed progress',
+    '<%= config.bin %> store-file *.json --batch --epochs 10             # Store all JSON files',
+    '<%= config.bin %> store-file document.pdf --network testnet         # Store on testnet'
   ];
 
   static args = {
@@ -82,7 +84,7 @@ export default class StoreFileCommand extends BaseCommand {
       // Cleanup
       await walrusStorage.disconnect();
 
-    } catch (_error) {
+    } catch (error) {
       this.handleError(error, 'store-file');
     }
   }
@@ -97,7 +99,7 @@ export default class StoreFileCommand extends BaseCommand {
     if (!flags.mock) {
       try {
         await storage.connect();
-      } catch (_error) {
+      } catch (error) {
         if (error.code === 'WALRUS_CLI_NOT_FOUND') {
           throw new CLIError(
             'Walrus CLI not found. Please install it from https://docs.wal.app',
@@ -182,7 +184,7 @@ export default class StoreFileCommand extends BaseCommand {
 
         this.log(`✓ ${fileName} → ${blobId} (Success)`);
         
-      } catch (_error) {
+      } catch (error) {
         results.push({
           fileName,
           error: error.message,

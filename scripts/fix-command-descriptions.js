@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('fix-command-descriptions');
 
 /**
  * Fix Command Descriptions
@@ -74,14 +77,14 @@ function extractDescription(filePath) {
     
     return null;
   } catch (error) {
-    console.error(chalk.yellow(`Warning: Could not read file ${filePath}: ${error.message}`));
+    logger.error(chalk.yellow(`Warning: Could not read file ${filePath}: ${error.message}`));
     return null;
   }
 }
 
 // Main function
 function fixCommandDescriptions() {
-  console.log(chalk.blue('🔧 Fixing command descriptions in manifest...'));
+  logger.info(chalk.blue('🔧 Fixing command descriptions in manifest...'));
   
   // Get all command files
   const commandFiles = getCommandFiles(COMMANDS_DIR);
@@ -91,14 +94,14 @@ function fixCommandDescriptions() {
   commandFiles.forEach(commandFile => {
     // Skip if command is not in manifest
     if (!manifest.commands[commandFile.fullName]) {
-      console.log(chalk.yellow(`Warning: Command ${commandFile.fullName} not found in manifest`));
+      logger.info(chalk.yellow(`Warning: Command ${commandFile.fullName} not found in manifest`));
       return;
     }
     
     // Extract description from command file
     const description = extractDescription(commandFile.path);
     if (!description) {
-      console.log(chalk.yellow(`Warning: Could not extract description for ${commandFile.fullName}`));
+      logger.info(chalk.yellow(`Warning: Could not extract description for ${commandFile.fullName}`));
       return;
     }
     
@@ -110,16 +113,16 @@ function fixCommandDescriptions() {
          currentDescription.length < 10)) {
       manifest.commands[commandFile.fullName].description = description;
       updatedCount++;
-      console.log(chalk.green(`Updated description for ${commandFile.fullName}`));
+      logger.info(chalk.green(`Updated description for ${commandFile.fullName}`));
     }
   });
   
   // Save manifest if changes were made
   if (updatedCount > 0) {
     fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
-    console.log(chalk.green(`✅ Updated ${updatedCount} command descriptions in manifest`));
+    logger.info(chalk.green(`✅ Updated ${updatedCount} command descriptions in manifest`));
   } else {
-    console.log(chalk.blue('ℹ️ No command descriptions needed updating'));
+    logger.info(chalk.blue('ℹ️ No command descriptions needed updating'));
   }
 }
 

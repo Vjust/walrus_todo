@@ -1,6 +1,6 @@
 import { Args } from '@oclif/core';
-import { BaseCommand } from '../../base-command';
-import { CLIError } from '../../utils/error-handler';
+import BaseCommand from '../../base-command';
+import { CLIError } from '../../types/errors/consolidated';
 import { switchSuiAddress } from '../../utils/command-executor';
 import { ValidationRules, validateInput } from '../../utils/input-validator';
 
@@ -12,7 +12,7 @@ import { ValidationRules, validateInput } from '../../utils/input-validator';
  * @param {string} address - The Sui wallet address to switch to. (Required argument)
  */
 export default class AccountSwitchCommand extends BaseCommand {
-  static description = 'Switch to a different Sui address';
+  static description = 'Change the active Sui wallet address for blockchain transactions';
 
   static args = {
     address: Args.string({
@@ -32,7 +32,7 @@ export default class AccountSwitchCommand extends BaseCommand {
       switchSuiAddress(args.address);
 
       this.log(`✅ Switched to address: ${args.address}`);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

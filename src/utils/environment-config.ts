@@ -1,11 +1,14 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('environment-config');
  * Environment Configuration Manager
  * 
  * This module provides centralized management of environment variables 
  * with validation, type checking, and fallback values.
  */
 
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 export enum Environment {
   DEVELOPMENT = 'development',
@@ -1093,15 +1096,15 @@ export const initializeConfig = (): EnvironmentConfigManager => {
   // Check for environment consistency issues
   const inconsistencies = envConfig.checkEnvironmentConsistency();
   if (inconsistencies.length > 0) {
-    console.warn('Environment configuration inconsistencies detected:');
-    inconsistencies.forEach(issue => console.warn(`- ${issue}`));
+    logger.warn('Environment configuration inconsistencies detected:');
+    inconsistencies.forEach(issue => logger.warn(`- ${issue}`));
   }
 
   // Check for deprecated variables
   const warnings = envConfig.getWarnings();
   if (warnings.length > 0) {
-    console.warn('Environment configuration warnings:');
-    warnings.forEach(warning => console.warn(`- ${warning}`));
+    logger.warn('Environment configuration warnings:');
+    warnings.forEach(warning => logger.warn(`- ${warning}`));
   }
   
   return envConfig;

@@ -109,7 +109,7 @@ export class FileValidator {
             `Image height ${dimensions.height}px exceeds maximum ${this.config.maxHeight}px`
           );
         }
-      } catch (_error) {
+      } catch (error) {
         if (error instanceof WalrusError) throw error;
         throw new WalrusError(
           `Failed to validate image dimensions: ${error instanceof Error ? error.message : String(error)}`
@@ -172,7 +172,7 @@ export class FileValidator {
         if (options.validateExif && mimeType === 'image/jpeg') {
           this.validateExif(fileBuffer);
         }
-      } catch (_error) {
+      } catch (error) {
         if (error instanceof WalrusError) throw error;
         throw new WalrusError(
           `Image content validation failed: ${error instanceof Error ? error.message : String(error)}`

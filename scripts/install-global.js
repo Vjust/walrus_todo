@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('install-global');
 
 /**
  * Cross-platform script to install the CLI globally
@@ -23,7 +26,7 @@ const colors = {
 
 // Print colored message
 function print(color, message) {
-  console.log(`${colors[color]}${message}${colors.reset}`);
+  logger.info(`${colors[color]}${message}${colors.reset}`);
 }
 
 // Main installation function
@@ -121,7 +124,7 @@ async function installGlobally() {
     });
     
     print('blue', 'Installed version:');
-    console.log(versionResult.stdout);
+    logger.info(versionResult.stdout);
   } else {
     print('red', 'Installation verification failed. \'waltodo\' command not found.');
     if (!isWindows) {

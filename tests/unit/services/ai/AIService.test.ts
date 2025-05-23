@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { AIService } from '@/services/ai/aiService';
+import { AIService } from '../../../../src/services/ai/aiService';
 import { createMockAIService, mockXAIProvider } from '../../../helpers/ai-test-utils';
 // MockXAIProvider is available through mocking
-import { AIOperation, AIModelType, AIProviderType } from '@/services/ai/types';
-import type { Todo } from '@/types/todo';
+import { AIOperation, AIModelType, AIProviderType } from '../../../../src/services/ai/types';
+import type { Todo } from '../../../../src/types/todo';
 
 describe('AIService', () => {
   let service: AIService;
-  let mockProvider: any;
+  let mockProvider: ReturnType<typeof mockXAIProvider>;
   const testApiKey = 'test-api-key';
 
   beforeEach(() => {
@@ -25,7 +25,12 @@ describe('AIService', () => {
         description: 'First test todo',
         status: 'pending',
         priority: 'medium',
-        created_at: Date.now().toString()
+        created_at: Date.now().toString(),
+        tags: [],
+        private: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        completed: false
       },
       {
         id: '2',
@@ -33,7 +38,12 @@ describe('AIService', () => {
         description: 'Second test todo',
         status: 'completed',
         priority: 'high',
-        created_at: Date.now().toString()
+        created_at: Date.now().toString(),
+        tags: [],
+        private: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        completed: false
       }
     ];
 
@@ -155,11 +165,11 @@ describe('AIService', () => {
       });
 
       it('should provide detailed analysis', async () => {
-        const largeTodoSet = Array(10).fill(null).map((_, i) => ({
+        const largeTodoSet: Todo[] = Array(10).fill(null).map((_, i) => ({
           ...sampleTodos[0],
           id: `${i}`,
           title: `Todo ${i}`,
-          priority: i % 2 === 0 ? 'high' : 'low'
+          priority: i % 2 === 0 ? 'high' : 'low' as const
         }));
         
         await service.analyzeTodos(largeTodoSet);
@@ -191,14 +201,14 @@ describe('AIService', () => {
     });
 
     it('should handle invalid API responses', async () => {
-      mockProvider.setResponse(null as any);
+      mockProvider.setResponse(null as unknown as string);
 
       await expect(service.suggestNextActions(sampleTodos))
         .rejects.toThrow('Invalid response from AI service');
     });
 
     it('should handle malformed responses', async () => {
-      mockProvider.setResponse(undefined as any);
+      mockProvider.setResponse(undefined as unknown as string);
 
       await expect(service.categorizeTodos(sampleTodos))
         .rejects.toThrow('Invalid response from AI service');

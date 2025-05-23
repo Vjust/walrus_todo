@@ -123,8 +123,9 @@ describe('End-to-End Error Scenarios', () => {
       }
       
       expect(caughtError).not.toBeNull();
-      expect(caughtError?.message).toContain('Rate limit exceeded');
-      expect(caughtError?.message).toContain('Please wait before retrying');
+      expect(caughtError).toBeInstanceOf(Error);
+      expect((caughtError as Error).message).toContain('Rate limit exceeded');
+      expect((caughtError as Error).message).toContain('Please wait before retrying');
       
       fetchStub.restore();
     });
@@ -144,8 +145,9 @@ describe('End-to-End Error Scenarios', () => {
       }
       
       expect(caughtError).not.toBeNull();
-      expect(caughtError?.message).toContain('DNS lookup failed');
-      expect(caughtError?.message).toContain('Unable to resolve host');
+      expect(caughtError).toBeInstanceOf(Error);
+      expect((caughtError as Error).message).toContain('DNS lookup failed');
+      expect((caughtError as Error).message).toContain('Unable to resolve host');
       
       fetchStub.restore();
     });
@@ -169,8 +171,9 @@ describe('End-to-End Error Scenarios', () => {
       }
       
       expect(caughtError).not.toBeNull();
-      expect(caughtError?.message).toContain('Insufficient balance');
-      expect(caughtError?.message).toContain('Please fund your wallet');
+      expect(caughtError).toBeInstanceOf(Error);
+      expect((caughtError as Error).message).toContain('Insufficient balance');
+      expect((caughtError as Error).message).toContain('Please fund your wallet');
       
       execStub.restore();
     });

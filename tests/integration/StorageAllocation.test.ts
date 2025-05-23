@@ -1,10 +1,7 @@
 import { jest } from '@jest/globals';
-import { WalrusClient } from '@mysten/walrus';
 import { Signer } from '@mysten/sui/cryptography';
 import { ExpiryMonitor } from '@/utils/ExpiryMonitor';
-import { StorageManager } from '@/utils/StorageManager';
-import { VaultManager, BlobRecord } from '@/utils/VaultManager';
-import { WalrusError, StorageError } from '@/types/errors';
+import { VaultManager } from '@/utils/VaultManager';
 import { Logger } from '@/utils/Logger';
 import type { WalrusClientExt } from '@/types/client';
 
@@ -13,11 +10,10 @@ jest.mock('@/utils/VaultManager');
 jest.mock('@/utils/Logger');
 
 describe('Storage Allocation Integration', () => {
-  let _monitor: ExpiryMonitor;
-  let storageManager: StorageManager;
+  let monitor: ExpiryMonitor;
   let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
   let mockVaultManager: jest.Mocked<VaultManager>;
-  let _mockSigner: jest.Mocked<Signer>;
+  let mockSigner: jest.Mocked<Signer>;
   let mockLogger: jest.Mocked<Logger>;
 
   beforeEach(() => {
@@ -116,12 +112,6 @@ describe('Storage Allocation Integration', () => {
     } as unknown as jest.Mocked<Logger>;
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
-
-    storageManager = new StorageManager(mockWalrusClient, {
-      minAllocation: '1000',
-      checkThreshold: 20,
-      signer: mockSigner
-    });
 
     monitor = new ExpiryMonitor(
       mockVaultManager,

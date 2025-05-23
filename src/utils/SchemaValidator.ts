@@ -3,7 +3,7 @@ import { CLIError } from '../types/error';
 /**
  * Schema property type definitions
  */
-type SchemaPropertyType = 
+export type SchemaPropertyType = 
   | 'string'
   | 'number'
   | 'boolean'
@@ -15,7 +15,7 @@ type SchemaPropertyType =
 /**
  * Schema property definition
  */
-interface SchemaProperty {
+export interface SchemaProperty {
   type: SchemaPropertyType | SchemaPropertyType[];
   required?: boolean;
   pattern?: RegExp;
@@ -23,12 +23,12 @@ interface SchemaProperty {
   maxLength?: number;
   minimum?: number;
   maximum?: number;
-  enum?: any[];
+  enum?: unknown[];
   items?: SchemaProperty | Schema;
   properties?: { [key: string]: SchemaProperty };
   additionalProperties?: boolean;
   format?: string;
-  validate?: (value: any) => boolean;
+  validate?: (value: unknown) => boolean;
   errorMessage?: string;
   errorCode?: string;
 }
@@ -36,7 +36,7 @@ interface SchemaProperty {
 /**
  * Schema definition
  */
-interface Schema {
+export interface Schema {
   properties: { [key: string]: SchemaProperty };
   required?: string[];
   additionalProperties?: boolean;
@@ -52,11 +52,21 @@ export class SchemaValidator {
    * @param schema The schema to validate against
    * @throws {CLIError} if validation fails
    */
-  static validate(data: any, schema: Schema): void {
+  static validate(data: unknown, schema: Schema): void {
+    // Type guard to ensure data is an object
+    if (typeof data !== 'object' || data === null) {
+      throw new CLIError(
+        'Data must be an object',
+        'SCHEMA_VALIDATION_ERROR'
+      );
+    }
+    
+    const dataObj = data as Record<string, unknown>;
+    
     // Check required properties
     if (schema.required) {
       for (const requiredProp of schema.required) {
-        if (data[requiredProp] === undefined) {
+        if (dataObj[requiredProp] === undefined) {
           throw new CLIError(
             `Missing required property: ${requiredProp}`,
             'SCHEMA_VALIDATION_ERROR'
@@ -67,7 +77,7 @@ export class SchemaValidator {
     
     // Check if additional properties are allowed
     if (schema.additionalProperties === false) {
-      for (const key of Object.keys(data)) {
+      for (const key of Object.keys(dataObj)) {
         if (!schema.properties[key]) {
           throw new CLIError(
             `Unknown property: ${key}`,
@@ -79,8 +89,8 @@ export class SchemaValidator {
     
     // Validate properties
     for (const [key, propertySchema] of Object.entries(schema.properties)) {
-      if (data[key] !== undefined) {
-        this.validateProperty(data[key], propertySchema, key);
+      if (dataObj[key] !== undefined) {
+        this.validateProperty(dataObj[key], propertySchema, key);
       } else if (propertySchema.required) {
         throw new CLIError(
           `Missing required property: ${key}`, 
@@ -97,7 +107,7 @@ export class SchemaValidator {
    * @param path The property path (for error messages)
    * @throws {CLIError} if validation fails
    */
-  private static validateProperty(value: any, schema: SchemaProperty, path: string): void {
+  private static validateProperty(value: unknown, schema: SchemaProperty, path: string): void {
     // Check type
     if (schema.type) {
       const types = Array.isArray(schema.type) ? schema.type : [schema.type];
@@ -198,9 +208,10 @@ export class SchemaValidator {
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         // Check properties
         if (schema.properties) {
+          const objValue = value as Record<string, unknown>;
           for (const [propKey, propSchema] of Object.entries(schema.properties)) {
-            if (value[propKey] !== undefined) {
-              this.validateProperty(value[propKey], propSchema, `${path}.${propKey}`);
+            if (objValue[propKey] !== undefined) {
+              this.validateProperty(objValue[propKey], propSchema, `${path}.${propKey}`);
             } else if (propSchema.required) {
               throw new CLIError(
                 `Missing required property: ${path}.${propKey}`,
@@ -212,7 +223,8 @@ export class SchemaValidator {
         
         // Check additional properties
         if (schema.additionalProperties === false) {
-          for (const key of Object.keys(value)) {
+          const objValue = value as Record<string, unknown>;
+          for (const key of Object.keys(objValue)) {
             if (!schema.properties || !schema.properties[key]) {
               throw new CLIError(
                 `Unknown property: ${path}.${key}`,
@@ -239,7 +251,7 @@ export class SchemaValidator {
    * @param types Array of expected types
    * @returns true if the value is of one of the expected types
    */
-  private static checkType(value: any, types: SchemaPropertyType[]): boolean {
+  private static checkType(value: unknown, types: SchemaPropertyType[]): boolean {
     for (const type of types) {
       switch (type) {
         case 'string':
@@ -285,7 +297,7 @@ export class SchemaValidator {
         try {
           new URL(value);
           return true;
-        } catch {
+        } catch (error: unknown) {
           return false;
         }
       case 'wallet-address':

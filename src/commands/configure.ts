@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import { select, input, confirm, checkbox } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { configService } from '../services/config-service';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import BaseCommand from '../base-command';
 import { CommonValidationRules } from '../utils/InputValidator';
 import { CommandSanitizer } from '../utils/CommandSanitizer';
@@ -28,11 +28,14 @@ export default class ConfigureCommand extends BaseCommand {
   static description = 'Configure CLI settings, environment variables, and wallet preferences';
 
   static examples = [
-    '<%= config.bin %> configure',
-    '<%= config.bin %> configure --reset',
-    '<%= config.bin %> configure --network testnet --wallet-address 0x1234567890abcdef',
-    '<%= config.bin %> configure --env-only',
-    '<%= config.bin %> configure --view',
+    '<%= config.bin %> configure                                              # Interactive setup',
+    '<%= config.bin %> configure --reset                                      # Reset all settings',
+    '<%= config.bin %> configure --network testnet --wallet-address 0x1234... # Set network and wallet',
+    '<%= config.bin %> configure --env-only                                   # Configure env vars only',
+    '<%= config.bin %> configure --view                                       # View current config',
+    '<%= config.bin %> configure --section ai                                 # Configure AI settings',
+    '<%= config.bin %> configure --walrus-url https://api.walrus.com         # Set Walrus endpoint',
+    '<%= config.bin %> configure --default-list work                          # Set default list',
     '<%= config.bin %> configure --section ai'
   ];
 
@@ -98,7 +101,7 @@ export default class ConfigureCommand extends BaseCommand {
         await this.configureAll(flags);
       }
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

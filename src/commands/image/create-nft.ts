@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../../base-command';
-import { CLIError } from '../../utils/error-handler';
+import { CLIError } from '../../types/errors/consolidated';
 import { TodoService } from '../../services/todoService';
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../../constants';
@@ -19,10 +19,13 @@ import { configService } from '../../services/config-service';
  * @param {string} list - The name of the todo list containing the specified todo item. (Required flag: -l, --list)
  */
 export default class CreateNftCommand extends BaseCommand {
-  static description = 'Create an NFT on Sui blockchain for a todo with an existing image';
+  static description = 'Mint an NFT on Sui blockchain from a todo image stored in Walrus';
 
   static examples = [
-    '<%= config.bin %> image create-nft --todo 123 --list my-todos',
+    '<%= config.bin %> image create-nft --todo 123 --list my-todos                # Create NFT',
+    '<%= config.bin %> image create-nft -t "Buy milk" -l shopping                 # Create by title',
+    '<%= config.bin %> image create-nft --todo task-456 --list work --network testnet  # On testnet',
+    '<%= config.bin %> image create-nft --todo 789 --list personal --gas-budget 100000000  # Custom gas'
   ];
 
   static flags = {
@@ -82,7 +85,7 @@ export default class CreateNftCommand extends BaseCommand {
       this.log(`   - Image URL: ${todoItem.imageUrl}`);
       this.log(`   - Walrus Blob ID: ${blobId}`);
       this.log('\nYou can view this NFT in your wallet with the embedded image from Walrus.');
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../../../src/utils/Logger';
+
+const logger = new Logger('basic-setup');
  * Basic Setup Example
  * 
  * Demonstrates how to use the Sui testnet setup utilities
@@ -8,34 +11,34 @@ import { quickSetup } from '../sui-setup';
 
 async function runBasicSetup() {
   try {
-    console.log('🚀 Starting basic Sui testnet setup...\n');
+    logger.info('🚀 Starting basic Sui testnet setup...\n');
 
     // Run quick setup with all defaults
     const result = await quickSetup();
 
     // Display results
-    console.log('\n=== Setup Complete ===');
-    console.log(`Wallet Address: ${result.wallet.address}`);
-    console.log(`Network: testnet`);
-    console.log(`Key Scheme: ${result.wallet.keyScheme}`);
-    console.log(`Balance: ${formatSuiBalance(result.wallet.balance)} SUI`);
-    console.log(`\nFiles Created:`);
-    console.log(`- Keystore: ${result.keystorePath}`);
-    console.log(`- Config: ${result.configPath}`);
+    logger.info('\n=== Setup Complete ===');
+    logger.info(`Wallet Address: ${result.wallet.address}`);
+    logger.info(`Network: testnet`);
+    logger.info(`Key Scheme: ${result.wallet.keyScheme}`);
+    logger.info(`Balance: ${formatSuiBalance(result.wallet.balance)} SUI`);
+    logger.info(`\nFiles Created:`);
+    logger.info(`- Keystore: ${result.keystorePath}`);
+    logger.info(`- Config: ${result.configPath}`);
     
     if (result.backupPath) {
-      console.log(`- Backup: ${result.backupPath}`);
+      logger.info(`- Backup: ${result.backupPath}`);
     }
     
     if (result.fundingTxDigest) {
-      console.log(`\nFunding Transaction: ${result.fundingTxDigest}`);
+      logger.info(`\nFunding Transaction: ${result.fundingTxDigest}`);
     }
 
-    console.log('\n✅ Setup successful! You can now use this wallet for testing.');
+    logger.info('\n✅ Setup successful! You can now use this wallet for testing.');
     
     return result;
   } catch (_error) {
-    console.error('❌ Setup failed:', error);
+    logger.error('❌ Setup failed:', error);
     process.exit(1);
   }
 }

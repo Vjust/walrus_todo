@@ -1,160 +1,186 @@
 import { WalrusClient } from '@mysten/walrus';
+import { SuiClient } from '@mysten/sui/client';
 import type { BlobObject } from '../types/walrus';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import type { WalrusStorage } from '../utils/walrus-storage';
 import { Todo } from '../types/todo';
 import { execSync } from 'child_process';
 
-interface MockedWalrusClient {
-  readBlob: jest.Mock<Promise<Uint8Array>, [string | { blobId: string; signal?: AbortSignal }]>;
-  writeBlob: jest.Mock<Promise<{ blobId: string; blobObject: BlobObject }>, [{ blob: Uint8Array; deletable: boolean; epochs: number; attributes: Record<string, string> }]>;
-  storageCost: jest.Mock<Promise<{ storageCost: string; writeCost: string; totalCost: string }>, [number, number]>;
-  executeCreateStorageTransaction: jest.Mock<Promise<{ storage: { id: { id: string }; storage_size: number; end_epoch: number; start_epoch: number } }>, [{ storageSize: number; epochs: number }]>;
-  connect: jest.Mock<Promise<void>, []>;
-  getConfig: jest.Mock<Promise<{ network: string; version: string; maxSize: number }>, []>;
-  getWalBalance: jest.Mock<Promise<string>, []>;
-  getStorageUsage: jest.Mock<Promise<{ used: string; total: string }>, []>;
-  getBlobInfo: jest.Mock<Promise<any>, [string]>;
-  getBlobObject: jest.Mock<Promise<BlobObject>, [{ blobId: string }]>;
-  verifyPoA: jest.Mock<Promise<boolean>, [{ blobId: string }]>;
-  getBlobMetadata: jest.Mock<Promise<any>, [{ blobId: string; signal?: AbortSignal }]>;
-  getStorageProviders: jest.Mock<Promise<string[]>, [{ blobId: string }]>;
-  getBlobSize: jest.Mock<Promise<number>, [string]>;
-  reset: jest.Mock<void, []>;
-}
+// Mock the external dependencies
+jest.mock('@mysten/walrus', () => ({
+  WalrusClient: jest.fn().mockImplementation(() => ({
+    readBlob: jest.fn(),
+    writeBlob: jest.fn(),
+    storageCost: jest.fn(),
+    executeCreateStorageTransaction: jest.fn(),
+    connect: jest.fn(),
+    getConfig: jest.fn(),
+    getWalBalance: jest.fn(),
+    getStorageUsage: jest.fn(),
+    getBlobInfo: jest.fn(),
+    getBlobObject: jest.fn(),
+    verifyPoA: jest.fn(),
+    getBlobMetadata: jest.fn(),
+    getStorageProviders: jest.fn(),
+    getBlobSize: jest.fn(),
+    reset: jest.fn()
+  }))
+}));
 
-// Use a partial type instead of extending directly to avoid compatibility issues
-interface MockedSuiClient {
-  instanceId?: string;
-  address?: string;
-  connect: jest.Mock<Promise<void>, []>;
-  getBalance: jest.Mock<Promise<{ coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: { number: bigint }; coinObjectId: string }>, [any]>;
-  getLatestSuiSystemState: jest.Mock<Promise<{ epoch: string }>, []>;
-  getOwnedObjects: jest.Mock<Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null }>, [any]>;
-  signAndExecuteTransactionBlock: jest.Mock<Promise<{ digest: string; effects: { status: { status: string }; created?: { reference: { objectId: string } }[] } }>, [any]>;
-  executeTransactionBlock: jest.Mock<Promise<{ digest: string; effects: { status: { status: string } } }>, [any]>;
-}
+jest.mock('@mysten/sui/client', () => ({
+  SuiClient: jest.fn().mockImplementation(() => ({
+    connect: jest.fn(),
+    getBalance: jest.fn(),
+    getLatestSuiSystemState: jest.fn(),
+    getOwnedObjects: jest.fn(),
+    signAndExecuteTransactionBlock: jest.fn(),
+    executeTransactionBlock: jest.fn()
+  }))
+}));
 
-jest.mock('child_process');
-jest.mock('@mysten/sui');
-jest.mock('@mysten/walrus');
-jest.mock('../utils/sui-keystore');
-
+jest.mock('child_process', () => ({
+  execSync: jest.fn()
+}));
 describe('WalrusStorage', () => {
-  let mockSuiClient: MockedSuiClient;
-  let mockWalrusClient: MockedWalrusClient;
+  let mockSuiClient: any;
+  let mockWalrusClient: any;
   let storage: WalrusStorage;
   let mockTodo: Todo;
 
   beforeEach(() => {
-    mockSuiClient = {
-      connect: jest.fn<Promise<void>, []>().mockResolvedValue(undefined),
-      getBalance: jest.fn<Promise<{ coinType: string; totalBalance: bigint; coinObjectCount: number; lockedBalance: { number: bigint }; coinObjectId: string }>, [string]>()
-        .mockResolvedValue({
-          coinType: 'WAL',
-          totalBalance: BigInt(1000),
-          coinObjectCount: 1,
-          lockedBalance: { number: BigInt(0) },
-          coinObjectId: 'mock-coin-object-id'
-        }),
-      getLatestSuiSystemState: jest.fn<Promise<{ epoch: string }>, []>()
-        .mockResolvedValue({ epoch: '1' }),
-      getOwnedObjects: jest.fn<Promise<{ data: any[]; hasNextPage: boolean; nextCursor: string | null }>, [any]>()
-        .mockResolvedValue({ data: [], hasNextPage: false, nextCursor: null }),
-      signAndExecuteTransactionBlock: jest.fn<Promise<{ digest: string; effects: { status: { status: string } } }>, [any]>()
-        .mockResolvedValue({ digest: 'test-digest', effects: { status: { status: 'success' } } }),
-      executeTransactionBlock: jest.fn<Promise<{ digest: string; effects: { status: { status: string } } }>, [any]>()
-        .mockResolvedValue({ digest: 'test-digest', effects: { status: { status: 'success' } } })
-    } as MockedSuiClient;
+    // Reset all mocks
+    jest.clearAllMocks();
 
+    // Setup mock implementations
     mockWalrusClient = {
-      readBlob: jest.fn<Promise<Uint8Array>, [string | { blobId: string; signal?: AbortSignal }]>().mockResolvedValue(new Uint8Array()),
-      writeBlob: jest.fn<Promise<{ blobId: string; blobObject: BlobObject }>, [{ blob: Uint8Array; deletable: boolean; epochs: number; attributes: Record<string, string> }]>()
-        .mockResolvedValue({ blobId: '', blobObject: {} as BlobObject }),
-      storageCost: jest.fn<Promise<{ storageCost: string; writeCost: string; totalCost: string }>, [number, number]>()
-        .mockResolvedValue({
-          storageCost: '100',
-          writeCost: '50',
-          totalCost: '150'
-        }),
-      executeCreateStorageTransaction: jest.fn<Promise<{ storage: { id: { id: string }; storage_size: number; end_epoch: number; start_epoch: number } }>, [{ storageSize: number; epochs: number }]>()
-        .mockResolvedValue({
-          storage: {
-            id: { id: 'test-storage-id' },
-            storage_size: 1000000,
-            end_epoch: 100,
-            start_epoch: 1
-          }
-        }),
-      connect: jest.fn<Promise<void>, []>().mockResolvedValue(undefined),
-      getConfig: jest.fn<Promise<{ network: string; version: string; maxSize: number }>, []>()
-        .mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 10485760 }),
-      getWalBalance: jest.fn<Promise<string>, []>()
-        .mockResolvedValue('1000'),
-      getStorageUsage: jest.fn<Promise<{ used: string; total: string }>, []>()
-        .mockResolvedValue({ used: '100000', total: '1000000' }),
-      getBlobInfo: jest.fn<Promise<any>, [string]>()
-        .mockResolvedValue({
-          blob_id: 'test-blob-id',
-          registered_epoch: 1,
-          cert_epoch: 2,
-          size: '1024'
-        }),
-      getBlobObject: jest.fn<Promise<BlobObject>, [{ blobId: string }]>()
-        .mockResolvedValue({
-          id: { id: 'test-blob-id' },
-          blob_id: 'test-blob-id',
-          registered_epoch: 1,
-          size: '1024',
-          metadata: {
-            $kind: 'V1',
-            V1: {
-              $kind: 'V1',
-              encoding_type: {
-                RedStuff: true,
-                $kind: 'RedStuff'
-              },
-              unencoded_length: '1024',
-              hashes: []
-            }
-          },
-          cert_epoch: 2,
-          storage: {
-            id: { id: 'test-storage-id' },
-            storage_size: '1000000',
-            used_size: '1024',
-            end_epoch: 100,
-            start_epoch: 1
-          },
-          deletable: false
-        } as BlobObject),
-      verifyPoA: jest.fn<Promise<boolean>, [{ blobId: string }]>()
-        .mockResolvedValue(true),
-      getBlobMetadata: jest.fn<Promise<any>, [{ blobId: string; signal?: AbortSignal }]>()
-        .mockResolvedValue({
-          V1: {
-            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-            unencoded_length: '1024',
-            hashes: [{
-              primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-              secondary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' }
-            }],
-            $kind: 'V1'
-          },
-          $kind: 'V1'
-        }),
-      getStorageProviders: jest.fn<Promise<string[]>, [{ blobId: string }]>()
-        .mockResolvedValue(['provider1', 'provider2']),
-      getBlobSize: jest.fn<Promise<number>, [string]>()
-        .mockResolvedValue(1024),
-      reset: jest.fn<void, []>()
-    } as MockedWalrusClient;
+      readBlob: jest.fn(),
+      writeBlob: jest.fn(),
+      storageCost: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      connect: jest.fn(),
+      getConfig: jest.fn(),
+      getWalBalance: jest.fn(),
+      getStorageUsage: jest.fn(),
+      getBlobInfo: jest.fn(),
+      getBlobObject: jest.fn(),
+      verifyPoA: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn(),
+      reset: jest.fn()
+    } as any;
 
+    mockSuiClient = {
+      connect: jest.fn(),
+      getBalance: jest.fn(),
+      getLatestSuiSystemState: jest.fn(),
+      getOwnedObjects: jest.fn(),
+      signAndExecuteTransactionBlock: jest.fn(),
+      executeTransactionBlock: jest.fn()
+    } as any;
+
+    // Mock constructor implementations
+    (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
+    // SuiClient mock already set up in module mock
+    
+    // Mock execSync
     (execSync as jest.Mock).mockImplementation((cmd: string): string => {
       if (cmd.includes('active-env')) return 'testnet';
       if (cmd.includes('active-address')) return '0xtest-address';
       throw new Error(`Unexpected command: ${cmd}`);
     });
+
+    // Setup default mock responses
+    mockSuiClient.getBalance.mockResolvedValue({
+      coinType: 'WAL',
+      totalBalance: BigInt(1000),
+      coinObjectCount: 1,
+      lockedBalance: { number: BigInt(0) },
+      coinObjectId: 'mock-coin-object-id'
+    });
+
+    mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '1' });
+    mockSuiClient.getOwnedObjects.mockResolvedValue({ data: [], hasNextPage: false, nextCursor: null });
+    mockSuiClient.signAndExecuteTransactionBlock.mockResolvedValue({ 
+      digest: 'test-digest', 
+      effects: { status: { status: 'success' } } 
+    });
+    mockSuiClient.executeTransactionBlock.mockResolvedValue({ 
+      digest: 'test-digest', 
+      effects: { status: { status: 'success' } } 
+    });
+
+    mockWalrusClient.connect.mockResolvedValue(undefined);
+    mockWalrusClient.getConfig.mockResolvedValue({ 
+      network: 'testnet', 
+      version: '1.0.0', 
+      maxSize: 10485760 
+    });
+    mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array());
+    mockWalrusClient.writeBlob.mockResolvedValue({ blobId: '', blobObject: {} as BlobObject });
+    mockWalrusClient.storageCost.mockResolvedValue({
+      storageCost: '100',
+      writeCost: '50',
+      totalCost: '150'
+    });
+    mockWalrusClient.executeCreateStorageTransaction.mockResolvedValue({
+      storage: {
+        id: { id: 'test-storage-id' },
+        storage_size: 1000000,
+        end_epoch: 100,
+        start_epoch: 1
+      }
+    });
+    mockWalrusClient.getWalBalance.mockResolvedValue('1000');
+    mockWalrusClient.getStorageUsage.mockResolvedValue({ used: '100000', total: '1000000' });
+    mockWalrusClient.getBlobInfo.mockResolvedValue({
+      blob_id: 'test-blob-id',
+      registered_epoch: 1,
+      cert_epoch: 2,
+      size: '1024'
+    });
+    mockWalrusClient.getBlobObject.mockResolvedValue({
+      id: { id: 'test-blob-id' },
+      blob_id: 'test-blob-id',
+      registered_epoch: 1,
+      size: '1024',
+      metadata: {
+        $kind: 'V1',
+        V1: {
+          $kind: 'V1',
+          encoding_type: {
+            RedStuff: true,
+            $kind: 'RedStuff'
+          },
+          unencoded_length: '1024',
+          hashes: []
+        }
+      },
+      cert_epoch: 2,
+      storage: {
+        id: { id: 'test-storage-id' },
+        storage_size: '1000000',
+        used_size: '1024',
+        end_epoch: 100,
+        start_epoch: 1
+      },
+      deletable: false
+    } as BlobObject);
+    mockWalrusClient.verifyPoA.mockResolvedValue(true);
+    mockWalrusClient.getBlobMetadata.mockResolvedValue({
+      V1: {
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        unencoded_length: '1024',
+        hashes: [{
+          primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+          secondary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' }
+        }],
+        $kind: 'V1'
+      },
+      $kind: 'V1'
+    });
+    mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+    mockWalrusClient.getBlobSize.mockResolvedValue(1024);
 
     // Setup mock todo
     mockTodo = {

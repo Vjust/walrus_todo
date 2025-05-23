@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../Logger';
+
+const logger = new Logger('NFTStorage');
  * @fileoverview NFT Storage - Implementation for NFT creation and management
  *
  * This class provides functionality for creating and managing NFTs on the Sui blockchain,
@@ -217,7 +220,7 @@ export class NFTStorage extends AbstractStorage {
       // Update connection state and timestamp
       this.connectionState = 'connected';
       this.lastHealthCheck = Date.now();
-    } catch (_error) {
+    } catch (error) {
       this.connectionState = 'failed';
       
       if (error instanceof ValidationError || error instanceof BlockchainError) {
@@ -278,8 +281,8 @@ export class NFTStorage extends AbstractStorage {
       }
       
       return isHealthy;
-    } catch (_error) {
-      console.warn('NFT storage health check failed:', error);
+    } catch (error) {
+      logger.warn('NFT storage health check failed:', error);
       return false;
     }
   }
@@ -362,7 +365,7 @@ export class NFTStorage extends AbstractStorage {
       const nftInfo = await this.getTodoNFT(nftId);
       
       return nftInfo;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError ||
           error instanceof BlockchainError ||
           error instanceof TransactionError) {
@@ -419,7 +422,7 @@ export class NFTStorage extends AbstractStorage {
       });
       
       return tx;
-    } catch (_error) {
+    } catch (error) {
       throw new BlockchainError(
         `Failed to create NFT transaction: ${error instanceof Error ? error.message : String(error)}`,
         {
@@ -510,7 +513,7 @@ export class NFTStorage extends AbstractStorage {
         walrusBlobId: fields.walrus_blob_id || '',
         rawData: result.data
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof BlockchainError) {
         throw error;
       }
@@ -583,7 +586,7 @@ export class NFTStorage extends AbstractStorage {
       }
       
       return txResult.digest;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError ||
           error instanceof BlockchainError ||
           error instanceof TransactionError) {
@@ -786,11 +789,11 @@ export class NFTStorage extends AbstractStorage {
         return idOrDigest;
       }
       
-      console.log(`Normalized transaction digest ${idOrDigest} to object ID ${objectId}`);
+      logger.info(`Normalized transaction digest ${idOrDigest} to object ID ${objectId}`);
       return objectId;
-    } catch (_error) {
+    } catch (error) {
       // If anything goes wrong, return the original
-      console.warn('Failed to normalize object ID:', error);
+      logger.warn('Failed to normalize object ID:', error);
       return idOrDigest;
     }
   }

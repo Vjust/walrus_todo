@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../utils/Logger';
+
+const logger = new Logger('adapter-resource-usage');
  * Example demonstrating how to use the ResourceManager with Adapters
  */
 
@@ -16,14 +19,14 @@ import {
  * to ensure proper resource lifecycle management.
  */
 async function adapterResourceExample(): Promise<void> {
-  console.log('Starting adapter resource example...');
+  logger.info('Starting adapter resource example...');
   
   try {
     // Get the resource manager
     const resourceManager = getResourceManager();
     
     // Create adapters
-    console.log('Creating adapters...');
+    logger.info('Creating adapters...');
     const transactionAdapters = [];
     
     // Create and register 5 transaction adapters
@@ -41,54 +44,54 @@ async function adapterResourceExample(): Promise<void> {
       
       // Set gas budget to simulate some usage
       adapter.setGasBudget(10_000_000);
-      console.log(`Created and registered Transaction Adapter ${i + 1}`);
+      logger.info(`Created and registered Transaction Adapter ${i + 1}`);
     }
     
     // Show resource statistics
-    console.log('\nResource Manager Statistics:');
-    console.log(JSON.stringify(resourceManager.getStats(), null, 2));
+    logger.info('\nResource Manager Statistics:');
+    logger.info(JSON.stringify(resourceManager.getStats(), null, 2));
     
     // Use one of the adapters
     const firstAdapter = transactionAdapters[0];
-    console.log('\nUsing first adapter to create a move call...');
+    logger.info('\nUsing first adapter to create a move call...');
     // result would be used in a real implementation
     const _result = firstAdapter.moveCall({
       target: 'example::module::function',
       arguments: []
     });
-    console.log('Move call result created successfully.');
+    logger.info('Move call result created successfully.');
     
     // Dispose one adapter manually
-    console.log('\nDisposing one adapter manually...');
+    logger.info('\nDisposing one adapter manually...');
     await firstAdapter.dispose();
-    console.log('First adapter disposed manually.');
+    logger.info('First adapter disposed manually.');
     
     // Show resource statistics again
-    console.log('\nResource Manager Statistics after manual disposal:');
-    console.log(JSON.stringify(resourceManager.getStats(), null, 2));
+    logger.info('\nResource Manager Statistics after manual disposal:');
+    logger.info(JSON.stringify(resourceManager.getStats(), null, 2));
     
     // Try to use the disposed adapter (should throw an error)
-    console.log('\nTrying to use disposed adapter...');
+    logger.info('\nTrying to use disposed adapter...');
     try {
       firstAdapter.setGasBudget(20_000_000);
     } catch (_error) {
-      console.log(`Error caught as expected: ${error instanceof Error ? error.message : String(error)}`);
+      logger.info(`Error caught as expected: ${error instanceof Error ? error.message : String(error)}`);
     }
     
     // Dispose all remaining adapters
-    console.log('\nDisposing all remaining adapters...');
+    logger.info('\nDisposing all remaining adapters...');
     const count = await disposeAllAdapters({
       continueOnError: true
     });
-    console.log(`Disposed ${count} adapters.`);
+    logger.info(`Disposed ${count} adapters.`);
     
     // Show final resource statistics
-    console.log('\nFinal Resource Manager Statistics:');
-    console.log(JSON.stringify(resourceManager.getStats(), null, 2));
+    logger.info('\nFinal Resource Manager Statistics:');
+    logger.info(JSON.stringify(resourceManager.getStats(), null, 2));
     
-    console.log('\nExample completed successfully!');
+    logger.info('\nExample completed successfully!');
   } catch (_error) {
-    console.error('Error in adapter resource example:', error);
+    logger.error('Error in adapter resource example:', error);
   }
 }
 
@@ -99,7 +102,7 @@ if (require.main === module) {
   adapterResourceExample()
     .then(() => process.exit(0))
     .catch(error => {
-      console.error('Example failed:', error);
+      logger.error('Example failed:', error);
       process.exit(1);
     });
 }
