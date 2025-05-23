@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import { NETWORK_URLS } from '../src/constants';
-const { SuiClient } = require('@mysten/sui/client');
+import { SuiClient } from '@mysten/sui/client';
 import { Logger } from '../src/utils/Logger';
 
 const logger = new Logger('test-walrus-upload');

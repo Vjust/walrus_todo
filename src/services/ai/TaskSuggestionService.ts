@@ -172,6 +172,29 @@ export class TaskSuggestionService {
   ): Promise<TaskSuggestionResult> {
     this.logger.debug(`Generating task suggestions for ${todos.length} todos`);
 
+    // Handle empty todo list
+    if (todos.length === 0) {
+      return {
+        suggestions: [],
+        contextInfo: {
+          analyzedTodoCount: 0,
+          completionPercentage: 0,
+          detectedThemes: [],
+          topContextualTags: []
+        },
+        metrics: {
+          suggestionsByType: {
+            [SuggestionType.NEXT_STEP]: 0,
+            [SuggestionType.RELATED]: 0,
+            [SuggestionType.DEPENDENCY]: 0,
+            [SuggestionType.COMPLETION]: 0,
+            [SuggestionType.IMPROVEMENT]: 0
+          },
+          averageScore: 0
+        }
+      };
+    }
+
     try {
       // Get contextual information from existing todos
       const contextInfo = await this.analyzeContext(todos);
@@ -209,7 +232,7 @@ export class TaskSuggestionService {
         contextInfo,
         metrics
       };
-    } catch (_error) {
+    } catch (error) {
       this.logger.error(`Error generating task suggestions: ${error}`);
       throw new Error(`Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -314,7 +337,7 @@ export class TaskSuggestionService {
       }));
 
       return suggestions;
-    } catch (_error) {
+    } catch (error) {
       this.logger.error(`Error generating related tasks: ${error}`);
       return [];
     }
