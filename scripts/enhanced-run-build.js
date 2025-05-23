@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+// Simple logger for build script
+const logger = {
+  info: (msg) => console.log(msg),
+  error: (msg) => console.error(msg),
+  warn: (msg) => console.warn(msg)
+};
+
 /**
  * Enhanced build script for waltodo CLI
  * Provides a unified interface for all build operations with better error handling
@@ -24,7 +31,7 @@ const colors = {
 
 // Print a colored message
 function print(color, message) {
-  console.log(`${colors[color]}${message}${colors.reset}`);
+  logger.info(`${colors[color]}${message}${colors.reset}`);
 }
 
 // Parse command line arguments
@@ -80,7 +87,7 @@ function parseArgs() {
 // Display help information
 function printHelp() {
   print('magenta', 'Waltodo Build System - Available Options:');
-  console.log(`
+  logger.info(`
   Build Modes:
     --mode=dev        Fast build for development
     --mode=prod       Production build with full type checking
@@ -112,7 +119,7 @@ function runBuild(options) {
   print('magenta', 'Starting build process...');
   print('blue', 'Build configuration:');
   Object.entries(options).forEach(([key, value]) => {
-    console.log(`  ${key}: ${value}`);
+    logger.info(`  ${key}: ${value}`);
   });
   
   // Map our options to the ts-node arguments

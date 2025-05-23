@@ -1,6 +1,4 @@
 import { Signer } from '@mysten/sui/cryptography';
-import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
 import { Logger } from './Logger';
 import {
   BlockchainError,
@@ -97,7 +95,7 @@ export class TransactionHelper {
         }
         
         return response;
-      } catch (_error) {
+      } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         const shouldRetry = this.shouldRetry(lastError) && attempt < retryConfig.attempts;
@@ -193,7 +191,7 @@ export class TransactionHelper {
       requireSigner?: boolean;
     }
   ): void {
-    const { name, signer, requireSigner = true } = options;
+    const { signer, requireSigner = true } = options;
 
     if (requireSigner && !signer && !this.signer) {
       throw new ValidationError(

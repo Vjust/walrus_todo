@@ -6,8 +6,8 @@
  */
 
 import { Flags } from '@oclif/core';
-import { BaseCommand } from '../base-command';
-import { CLIError } from '../utils/error-handler';
+import BaseCommand from '../base-command';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * @class SomeCommand
@@ -53,7 +53,7 @@ export default class SomeCommand extends BaseCommand {  // Removed placeholder c
   async run(): Promise<void> {
     try {
       // Implementation with comments for complex logic
-    } catch (_error) {
+    } catch (error) {
       // Proper error handling with context
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new CLIError(`Command failed: ${errorMessage}`, 'COMMAND_ERROR');

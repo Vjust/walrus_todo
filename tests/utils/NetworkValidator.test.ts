@@ -1,6 +1,6 @@
 import { WalrusClient } from '@mysten/walrus';
 import * as childProcess from 'child_process';
-import { NetworkValidator, NetworkEnvironment } from '@/utils/NetworkValidator';
+import { NetworkValidator } from '../../src/utils/NetworkValidator';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');

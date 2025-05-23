@@ -19,7 +19,13 @@ jest.mock('@mysten/sui/client');
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
 // WalrusStorage mocked but not directly used in tests
 const mockSuiNftStorage = SuiNftStorage as jest.MockedClass<typeof SuiNftStorage>;
-const mockSuiClient = SuiClient as jest.MockedClass<typeof SuiClient>;
+// Create a mock constructor for SuiClient
+const mockSuiClient = {
+  getLatestSuiSystemState: jest.fn(),
+  getBalance: jest.fn(),
+  getOwnedObjects: jest.fn(),
+  // Add other methods as needed
+} as any;
 
 // Mock getConfig with correct type for the mock config
 type MockConfig = Config & {

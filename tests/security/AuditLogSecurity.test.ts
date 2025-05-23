@@ -105,7 +105,7 @@ const getAuditLogger = () => {
         const line = JSON.stringify(entry) + '\n';
         fs.appendFileSync(this.logFilePath, line);
       } catch (_error) {
-        console.error('Failed to write audit log:', error);
+        // console.error('Failed to write audit log:', error); // Removed console statement
       }
     }
 

@@ -6,7 +6,7 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as glob from 'glob';
+import { sync as globSync } from 'glob';
 
 interface ImplicitAnyIssue {
   file: string;
@@ -48,7 +48,7 @@ const strictConfig = {
 
 // Create a new program with the strict configuration
 const host = ts.createCompilerHost(strictConfig);
-const files = glob.sync(path.join(__dirname, '../src/**/*.ts'), {
+const files = globSync(path.join(__dirname, '../src/**/*.ts'), {
   ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts']
 });
 
@@ -73,7 +73,11 @@ const issues: ImplicitAnyIssue[] = [];
 
 implicitAnyDiagnostics.forEach(diagnostic => {
   if (diagnostic.file) {
-    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
+    const start = diagnostic.start;
+    if (start === undefined) {
+      return;
+    }
+    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(start);
     const relativePath = path.relative(path.resolve(__dirname, '..'), diagnostic.file.fileName);
     const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
     

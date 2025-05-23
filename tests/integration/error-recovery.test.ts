@@ -196,7 +196,7 @@ describe('Error Recovery Integration Tests', () => {
             storage: 'primary'
           };
         } catch (_error) {
-          console.log('Primary storage failed, using fallback');
+          // console.log('Primary storage failed, using fallback'); // Removed console statement
           // On failure, try fallback storage
           return {
             id: await fallbackStorage.store(data),
@@ -258,7 +258,7 @@ describe('Error Recovery Integration Tests', () => {
           return results;
         } catch (_error) {
           // Compensating transaction - rollback in reverse order
-          console.log(`Transaction failed at step ${executedSteps.length}, rolling back`);
+          // console.log(`Transaction failed at step ${executedSteps.length}, rolling back`); // Removed console statement
           
           for (let i = executedSteps.length - 1; i >= 0; i--) {
             const step = executedSteps[i];
@@ -281,7 +281,7 @@ describe('Error Recovery Integration Tests', () => {
             return await executeTransaction(steps);
           } catch (_error) {
             attempts++;
-            console.log(`Attempt ${attempts} failed, retrying...`);
+            // console.log(`Attempt ${attempts} failed, retrying...`); // Removed console statement
             
             if (attempts >= maxAttempts) {
               throw new Error(`Transaction failed after ${maxAttempts} attempts: ${error.message}`);
@@ -456,7 +456,7 @@ describe('Error Recovery Integration Tests', () => {
           try {
             suggestions = await this.aiService.suggest([todoData]);
           } catch (_error) {
-            console.log('AI suggestions unavailable, continuing without them');
+            // console.log('AI suggestions unavailable, continuing without them'); // Removed console statement
             capabilities.ai = false;
           }
           
@@ -465,7 +465,7 @@ describe('Error Recovery Integration Tests', () => {
           try {
             storageId = await this.storage.store(todoData);
           } catch (_error) {
-            console.log('Storage failed, operation cannot proceed');
+            // console.log('Storage failed, operation cannot proceed'); // Removed console statement
             capabilities.storage = false;
             throw error;
           }

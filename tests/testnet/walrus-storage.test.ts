@@ -25,7 +25,7 @@ describe('Walrus Testnet Integration', () => {
 
     beforeAll(() => {
       if (!isTestnetEnabled) {
-        console.log('Testnet tests are disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.');
+        // console.log('Testnet tests are disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.'); // Removed console statement
         return;
       }
       // Use real Walrus CLI (not mock)
@@ -50,14 +50,14 @@ describe('Walrus Testnet Integration', () => {
         priority: 'high'
       };
 
-      console.log('Storing todo on Walrus testnet...');
+      // console.log('Storing todo on Walrus testnet...'); // Removed console statement
       const walrusBlobId = await todoStorage.store(JSON.stringify(todo));
       
       expect(walrusBlobId).toBeDefined();
       expect(walrusBlobId).not.toBe('mock_blob_id');
       expect(walrusBlobId.length).toBeGreaterThan(20); // Real Walrus blob IDs are longer
       
-      console.log(`✓ Todo stored successfully. Blob ID: ${walrusBlobId}`);
+      // console.log(`✓ Todo stored successfully. Blob ID: ${walrusBlobId}`); // Removed console statement
     }, 30000); // Extended timeout for network operations
 
     it('should retrieve a todo from Walrus testnet', async () => {
@@ -72,14 +72,14 @@ describe('Walrus Testnet Integration', () => {
         priority: 'medium'
       };
 
-      console.log('Storing todo for retrieval test...');
+      // console.log('Storing todo for retrieval test...'); // Removed console statement
       const walrusBlobId = await todoStorage.store(JSON.stringify(todo));
-      console.log(`✓ Todo stored with blob ID: ${walrusBlobId}`);
+      // console.log(`✓ Todo stored with blob ID: ${walrusBlobId}`); // Removed console statement
 
       // Now retrieve it
-      console.log('Retrieving todo from Walrus testnet...');
+      // console.log('Retrieving todo from Walrus testnet...'); // Removed console statement
       const retrieved = await todoStorage.retrieve(walrusBlobId);
-      console.log('✓ Todo retrieved successfully');
+      // console.log('✓ Todo retrieved successfully'); // Removed console statement
 
       const retrievedTodo = JSON.parse(retrieved);
       expect(retrievedTodo.id).toBe(todo.id);
@@ -111,26 +111,26 @@ describe('Walrus Testnet Integration', () => {
     it('should store an image on Walrus testnet', async () => {
       const imageData = readFileSync(testImagePath);
       
-      console.log('Storing image on Walrus testnet...');
+      // console.log('Storing image on Walrus testnet...'); // Removed console statement
       const walrusBlobId = await imageStorage.store(imageData.toString('base64'));
       
       expect(walrusBlobId).toBeDefined();
       expect(walrusBlobId).not.toBe('mock_blob_id');
       
-      console.log(`✓ Image stored successfully. Blob ID: ${walrusBlobId}`);
+      // console.log(`✓ Image stored successfully. Blob ID: ${walrusBlobId}`); // Removed console statement
     }, 60000); // Images may take longer
 
     it('should retrieve an image from Walrus testnet', async () => {
       const imageData = readFileSync(testImagePath);
       const base64Image = imageData.toString('base64');
       
-      console.log('Storing image for retrieval test...');
+      // console.log('Storing image for retrieval test...'); // Removed console statement
       const walrusBlobId = await imageStorage.store(base64Image);
-      console.log(`✓ Image stored with blob ID: ${walrusBlobId}`);
+      // console.log(`✓ Image stored with blob ID: ${walrusBlobId}`); // Removed console statement
 
-      console.log('Retrieving image from Walrus testnet...');
+      // console.log('Retrieving image from Walrus testnet...'); // Removed console statement
       const retrieved = await imageStorage.retrieve(walrusBlobId);
-      console.log('✓ Image retrieved successfully');
+      // console.log('✓ Image retrieved successfully'); // Removed console statement
 
       // Verify the image data matches
       expect(retrieved).toBe(base64Image);
@@ -173,7 +173,7 @@ describe('Walrus Testnet Integration', () => {
         }
       ];
 
-      console.log(`Storing ${todos.length} todos in batch...`);
+      // console.log(`Storing ${todos.length} todos in batch...`); // Removed console statement
       const startTime = Date.now();
       
       const blobIds = await Promise.all(
@@ -189,8 +189,8 @@ describe('Walrus Testnet Integration', () => {
         expect(blobId).not.toBe('mock_blob_id');
       });
       
-      console.log(`✓ Batch storage completed in ${duration}s`);
-      console.log('Blob IDs:', blobIds);
+      // console.log(`✓ Batch storage completed in ${duration}s`); // Removed console statement
+      // console.log('Blob IDs:', blobIds); // Removed console statement
     }, 90000); // Extended timeout for batch operations
   });
 
@@ -220,7 +220,7 @@ describe('Walrus Testnet Integration', () => {
         await todoStorage.store(JSON.stringify(largeTodo));
       } catch (_error) {
         expect(error).toBeDefined();
-        console.log('Expected error for large upload:', error.message);
+        // console.log('Expected error for large upload:', error.message); // Removed console statement
       }
     }, 60000);
 
@@ -236,9 +236,9 @@ describe('Walrus Testnet Integration', () => {
   // Add a summary of test status
   if (!isTestnetEnabled) {
     test('Testnet tests are skipped', () => {
-      console.log('\n⚠️  Walrus testnet tests are disabled.');
-      console.log('To run these tests, set WALRUS_TEST_ENABLE_TESTNET=true');
-      console.log('Example: WALRUS_TEST_ENABLE_TESTNET=true pnpm test tests/testnet/walrus-storage.test.ts\n');
+      // console.log('\n⚠️  Walrus testnet tests are disabled.'); // Removed console statement
+      // console.log('To run these tests, set WALRUS_TEST_ENABLE_TESTNET=true'); // Removed console statement
+      // console.log('Example: WALRUS_TEST_ENABLE_TESTNET=true pnpm test tests/testnet/walrus-storage.test.ts\n'); // Removed console statement
     });
   }
 });

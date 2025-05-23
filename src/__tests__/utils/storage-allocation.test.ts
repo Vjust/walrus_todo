@@ -1,28 +1,39 @@
-import { jest } from '@jest/globals';
-import { SuiClient, type CoinBalance } from '@mysten/sui/client';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { execSync } from 'child_process';
+import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../utils/storage-manager';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 
 jest.mock('child_process', () => ({
   execSync: jest.fn()
 }));
 
+// Define CoinBalance type locally if not exported
+interface CoinBalance {
+  coinType: string;
+  coinObjectCount: number;
+  totalBalance: string;
+  lockedBalance: Record<string, string>;
+}
+
 describe('StorageManager - Allocation Tests', () => {
   let storageManager: StorageManager;
-  let mockSuiClient: jest.Mocked<SuiClient>;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
+  let mockSuiClient: any;
+  let mockWalrusClient: any;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+    
     mockSuiClient = {
       getBalance: jest.fn(),
       getLatestSuiSystemState: jest.fn(),
       getOwnedObjects: jest.fn()
-    } as any;
+    };
 
     mockWalrusClient = {
       storageCost: jest.fn()
-    } as any;
+    };
 
     storageManager = new StorageManager(mockSuiClient, mockWalrusClient, '0xtest');
   });
@@ -53,8 +64,8 @@ describe('StorageManager - Allocation Tests', () => {
         } as unknown as CoinBalance);
 
       const result = await storageManager.checkBalances();
-      expect(result.walBalance).toBe(walBalance.toString());
-      expect(result.storageFundBalance).toBe(storageBalance.toString());
+      expect(result.walBalance).toBe(walBalance);
+      expect(result.storageFundBalance).toBe(storageBalance);
       expect(result.isStorageFundSufficient).toBe(true);
     });
 

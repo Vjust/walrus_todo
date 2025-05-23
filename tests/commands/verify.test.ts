@@ -179,7 +179,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'blob', 'invalid-blob-id'])
-      .catch(_error => {
+      .catch(error => {
         // Mock the verification manager to fail for this test
         const verifyBlob = BlobVerificationManager.prototype.verifyBlob as jest.Mock;
         verifyBlob.mockRejectedValueOnce(new Error('Blob not found'));
@@ -203,7 +203,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'file', 'non-existent-file.json', 'mock-blob-id'])
-      .catch(_error => {
+      .catch(error => {
         // The error is expected because the file doesn't exist
         expect(error.message).to.contain('ENOENT');
       })
@@ -212,7 +212,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'file', path.join(tmpDir, 'test-data.json'), 'invalid-blob-id'])
-      .catch(_error => {
+      .catch(error => {
         // Mock the verification manager to fail for this test
         const verifyBlob = BlobVerificationManager.prototype.verifyBlob as jest.Mock;
         verifyBlob.mockRejectedValueOnce(new Error('Blob not found'));
@@ -254,7 +254,7 @@ describe('verify commands', () => {
     test
       .stderr()
       .command(['verify', 'upload', 'non-existent-file.json'])
-      .catch(_error => {
+      .catch(error => {
         // The error is expected because the file doesn't exist
         expect(error.message).to.contain('ENOENT');
       })

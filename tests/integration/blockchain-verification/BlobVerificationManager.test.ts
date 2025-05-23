@@ -1,10 +1,11 @@
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
-import { createMockWalrusClient } from '../../../src/utils/MockWalrusClient';
+import { CLIError } from '../../../src/types/errors/consolidated';
+import crypto from 'crypto';
 
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
-
-import * as crypto from 'crypto';
+import { SuiClient } from '@mysten/sui/client';
+import type { WalrusClientExt } from '../../../src/types/client';
 
 // Mock the SuiClient
 const mockGetLatestSuiSystemState = jest.fn().mockResolvedValue({ epoch: '42' });
@@ -16,21 +17,21 @@ const mockSuiClient = {
 const mockSigner = {
   connect: () => Promise.resolve(),
   getPublicKey: () => ({ toBytes: () => new Uint8Array(32) }),
-  sign: async (data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
-  signPersonalMessage: async (data: Uint8Array): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(data).toString('base64'),
+  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  signPersonalMessage: async (_data: Uint8Array): Promise<SignatureWithBytes> => ({
+    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signWithIntent: async (data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(data).toString('base64'),
+  signWithIntent: async (_data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
+    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signTransactionBlock: async (transaction: any): Promise<SignatureWithBytes> => ({
+  signTransactionBlock: async (_transaction: any): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signData: async (data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
-  signTransaction: async (transaction: any): Promise<SignatureWithBytes> => ({
+  signData: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  signTransaction: async (_transaction: any): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
@@ -40,23 +41,77 @@ const mockSigner = {
 
 describe('BlobVerificationManager Integration', () => {
   let verificationManager: BlobVerificationManager;
-  let mockWalrusClient: ReturnType<typeof createMockWalrusClient>;
+  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWalrusClient = createMockWalrusClient();
     
-    // Set up spy methods on the mock client
-    jest.spyOn(mockWalrusClient, 'getBlobInfo');
-    jest.spyOn(mockWalrusClient, 'getStorageProviders');
-    jest.spyOn(mockWalrusClient, 'verifyPoA');
-    jest.spyOn(mockWalrusClient, 'readBlob');
-    jest.spyOn(mockWalrusClient, 'getBlobMetadata');
-    jest.spyOn(mockWalrusClient, 'writeBlob');
+    // Create inline mock for WalrusClient with all required methods
+    mockWalrusClient = {
+      // Basic methods
+      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getWalBalance: jest.fn().mockResolvedValue('2000'),
+      getStorageUsage: jest.fn().mockResolvedValue({ used: '500', total: '2000' }),
+      
+      // Blob operations - these will be set up specifically in each test
+      getBlobInfo: jest.fn(),
+      getBlobObject: jest.fn().mockResolvedValue({ content: 'test', metadata: {} }),
+      verifyPoA: jest.fn(),
+      readBlob: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      writeBlob: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn().mockResolvedValue(1024),
+      
+      // Storage operations
+      storageCost: jest.fn().mockResolvedValue({
+        storageCost: BigInt(1000),
+        writeCost: BigInt(500),
+        totalCost: BigInt(1500)
+      }),
+      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
+        digest: 'test',
+        storage: {
+          id: { id: 'test' },
+          start_epoch: 0,
+          end_epoch: 52,
+          storage_size: '1000'
+        }
+      }),
+      executeCertifyBlobTransaction: jest.fn().mockResolvedValue({ digest: 'cert-digest' }),
+      executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({ digest: 'attr-digest' }),
+      deleteBlob: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({ digest: 'delete-digest' })),
+      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({ 
+        blob: { blob_id: 'test' }, 
+        digest: 'register-digest' 
+      }),
+      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
+        primary_verification: true,
+        provider: 'test-provider'
+      }),
+      createStorageBlock: jest.fn().mockResolvedValue({} as any),
+      createStorage: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({
+        digest: 'storage-digest',
+        storage: {
+          id: { id: 'storage-id' },
+          start_epoch: 0,
+          end_epoch: 52,
+          storage_size: '1000'
+        }
+      })),
+      
+      // Utility methods
+      reset: jest.fn(),
+      
+      // Optional experimental API
+      experimental: {
+        getBlobData: jest.fn().mockResolvedValue({})
+      }
+    } as jest.Mocked<WalrusClientExt>;
     
     verificationManager = new BlobVerificationManager(
       mockSuiClient, 
-      mockWalrusClient.getUnderlyingClient(), 
+      mockWalrusClient, 
       mockSigner
     );
   });
@@ -73,8 +128,8 @@ describe('BlobVerificationManager Integration', () => {
       const expectedAttributes = { contentType: 'text/plain' };
       
       // Set up the mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(testData));
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -92,7 +147,7 @@ describe('BlobVerificationManager Integration', () => {
           $kind: 'V1'
         }
       });
-      (mockWalrusClient.getBlobMetadata as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
@@ -105,8 +160,8 @@ describe('BlobVerificationManager Integration', () => {
         },
         $kind: 'V1'
       });
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1', 'provider2']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(true);
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(true);
       
       // Execute the verification
       const result = await verificationManager.verifyBlob(
@@ -140,8 +195,8 @@ describe('BlobVerificationManager Integration', () => {
       const expectedAttributes = { contentType: 'text/plain' };
       
       // Set up the mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(retrievedData));
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(retrievedData));
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -178,8 +233,8 @@ describe('BlobVerificationManager Integration', () => {
       const expectedAttributes = { contentType: 'text/plain' };
       
       // Set up the mock responses for uncertified blob
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(testData));
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: undefined, // Blob is not certified
@@ -197,7 +252,7 @@ describe('BlobVerificationManager Integration', () => {
           $kind: 'V1'
         }
       });
-      (mockWalrusClient.getBlobMetadata as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
@@ -210,8 +265,8 @@ describe('BlobVerificationManager Integration', () => {
         },
         $kind: 'V1'
       });
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(false);
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(false);
       
       // Execute the verification with requireCertification set to false
       const result = await verificationManager.verifyBlob(
@@ -242,8 +297,8 @@ describe('BlobVerificationManager Integration', () => {
       const expectedAttributes = { contentType: 'text/plain' };
       
       // Set up the mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(testData));
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -261,7 +316,7 @@ describe('BlobVerificationManager Integration', () => {
           $kind: 'V1'
         }
       });
-      (mockWalrusClient.getBlobMetadata as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
@@ -274,8 +329,8 @@ describe('BlobVerificationManager Integration', () => {
         },
         $kind: 'V1'
       });
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1', 'provider2']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(true);
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(true);
       
       // Execute the verification with verifyAttributes set to true
       await expect(verificationManager.verifyBlob(
@@ -305,11 +360,11 @@ describe('BlobVerificationManager Integration', () => {
       const blobId = 'test-blob-id';
       
       // Set up the mock responses
-      (mockWalrusClient.writeBlob as jest.Mock).mockResolvedValue({
+      mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: blobId,
         blobObject: { blob_id: blobId }
       });
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -327,8 +382,8 @@ describe('BlobVerificationManager Integration', () => {
           $kind: 'V1'
         }
       });
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1', 'provider2']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(true);
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(true);
       
       // Execute the verification
       const result = await verificationManager.verifyUpload(testData);
@@ -368,13 +423,13 @@ describe('BlobVerificationManager Integration', () => {
       const blobId = 'test-blob-id';
       
       // Set up the mock responses
-      (mockWalrusClient.writeBlob as jest.Mock).mockResolvedValue({
+      mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: blobId,
         blobObject: { blob_id: blobId }
       });
       
       // First call returns uncertified, second call returns certified
-      (mockWalrusClient.getBlobInfo as jest.Mock)
+      mockWalrusClient.getBlobInfo
         .mockResolvedValueOnce({
           blob_id: blobId,
           registered_epoch: 40,
@@ -406,8 +461,8 @@ describe('BlobVerificationManager Integration', () => {
           }, $kind: 'V1' }
         });
         
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1', 'provider2']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(true);
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(true);
       
       // Mock setTimeout to make the test run faster
       jest.useFakeTimers();
@@ -436,13 +491,13 @@ describe('BlobVerificationManager Integration', () => {
       const blobId = 'test-blob-id';
       
       // Set up the mock responses
-      (mockWalrusClient.writeBlob as jest.Mock).mockResolvedValue({
+      mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: blobId,
         blobObject: { blob_id: blobId }
       });
       
       // Always return uncertified blob
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: undefined, // Never certified
@@ -458,8 +513,8 @@ describe('BlobVerificationManager Integration', () => {
         }, $kind: 'V1' }
       });
         
-      (mockWalrusClient.getStorageProviders as jest.Mock).mockResolvedValue(['provider1']);
-      (mockWalrusClient.verifyPoA as jest.Mock).mockResolvedValue(false);
+      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
+      mockWalrusClient.verifyPoA.mockResolvedValue(false);
       
       // Mock setTimeout to make the test run faster
       jest.useFakeTimers();
@@ -491,8 +546,8 @@ describe('BlobVerificationManager Integration', () => {
       };
       
       // Set up the mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(testData));
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -533,11 +588,11 @@ describe('BlobVerificationManager Integration', () => {
       };
       
       // First call returns incorrect data, second call returns correct data
-      (mockWalrusClient.readBlob as jest.Mock)
+      mockWalrusClient.readBlob
         .mockResolvedValueOnce(new Uint8Array(incorrectData))
         .mockResolvedValueOnce(new Uint8Array(testData));
         
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -586,9 +641,9 @@ describe('BlobVerificationManager Integration', () => {
       };
       
       // Always return incorrect data
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(new Uint8Array(incorrectData));
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(incorrectData));
         
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,

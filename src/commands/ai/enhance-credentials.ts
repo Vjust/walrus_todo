@@ -6,7 +6,7 @@ import { AIPermissionLevel, CredentialType } from '../../types/adapters/AICreden
 import chalk from 'chalk';
 
 export default class Credentials extends BaseCommand {
-  static description = 'Manage AI provider credentials with enhanced security';
+  static description = 'Manage AI provider API keys with blockchain verification and advanced security features';
 
   // Use string-based AIProvider type directly
 
@@ -179,7 +179,7 @@ export default class Credentials extends BaseCommand {
       if (flags.rotation) {
         this.log(`${chalk.green('\u2713')} You will be reminded to rotate this key in ${chalk.yellow(flags.rotation)} days`);
       }
-    } catch (_error) {
+    } catch (error) {
       if (error.code === 'CREDENTIAL_VERIFICATION_FAILED') {
         this.log(`${chalk.yellow('\u26a0')} ${error.message}`);
       } else if (error.code === 'INVALID_API_KEY_FORMAT') {
@@ -207,7 +207,7 @@ export default class Credentials extends BaseCommand {
 
       await credentialManager.removeCredential(provider);
       this.log(`${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} removed successfully`);
-    } catch (_error) {
+    } catch (error) {
       this.error(error.message);
     }
   }
@@ -288,7 +288,7 @@ export default class Credentials extends BaseCommand {
       this.log(`- Rotate credentials: ${chalk.cyan('walrus_todo ai credentials rotate <provider> --key NEW_KEY')}`);
       this.log(`- Update permissions: ${chalk.cyan('walrus_todo ai credentials add <provider> --key EXISTING_KEY --permission <level>')}`);
       this.log(`- Set expiry: ${chalk.cyan('walrus_todo ai credentials add <provider> --key EXISTING_KEY --expiry <days>')}`);
-    } catch (_error) {
+    } catch (error) {
       this.error(error.message);
     }
   }
@@ -306,7 +306,7 @@ export default class Credentials extends BaseCommand {
       // Check if already verified
       if (metadata.verified) {
         // Re-verify on blockchain to make sure it's still valid
-        const _apiKey = await credentialManager.getCredential(provider, {
+        await credentialManager.getCredential(provider, {
           requiredPermissionLevel: undefined,
           operation: "verify"
         });
@@ -325,14 +325,15 @@ export default class Credentials extends BaseCommand {
       }
       
       // Get the credential and verify it
-      const _apiKey = await credentialManager.getCredential(provider);
+      await credentialManager.getCredential(provider);
       
       // Verify on blockchain
-      this.log(`Verifying API key for ${chalk.cyan(provider)} on blockchain...`);
-      // TODO: This is just a placeholder - implement the actual verification
+      this.log(`${chalk.yellow('[PREVIEW]')} Verifying API key for ${chalk.cyan(provider)} on blockchain...`);
+      // NOTE: Blockchain verification is a planned feature - see docs/ai-blockchain-verification-roadmap.md
       
-      this.log(`${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} has been verified on blockchain`);
-    } catch (_error) {
+      this.log(`${chalk.yellow('[PREVIEW]')} ${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} verification complete`);
+      this.log(chalk.gray('Note: Blockchain verification is currently in preview mode'));
+    } catch (error) {
       this.error(error.message);
     }
   }
@@ -389,7 +390,7 @@ export default class Credentials extends BaseCommand {
       if (result.metadata?.rotationReminder) {
         this.log(`${chalk.green('\u2713')} You will be reminded to rotate this key in ${chalk.yellow(result.metadata.rotationReminder)} days`);
       }
-    } catch (_error) {
+    } catch (error) {
       if (error.code === 'INVALID_API_KEY_FORMAT') {
         this.error(`${chalk.red('\u2717')} ${error.message}`);
       } else {

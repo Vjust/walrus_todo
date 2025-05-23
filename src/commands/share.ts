@@ -1,8 +1,8 @@
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../base-command';
+import BaseCommand from '../base-command';
 import chalk from 'chalk';
 import { TodoService } from '../services/todoService';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * @class ShareCommand
@@ -18,8 +18,11 @@ export default class ShareCommand extends BaseCommand {
   static description = 'Share a todo list with another user';
 
   static examples = [
-    '<%= config.bin %> share --list my-list --recipient username',
-    '<%= config.bin %> share my-list --recipient username'
+    '<%= config.bin %> share --list my-list --recipient username      # Share with username',
+    '<%= config.bin %> share my-list --recipient username             # Share using args',
+    '<%= config.bin %> share work --recipient alice@example.com       # Share work list',
+    '<%= config.bin %> share personal --recipient bob --read-only     # Share read-only access',
+    '<%= config.bin %> share project --recipient team --permissions edit  # Share with edit rights'
   ];
 
   static flags = {
@@ -77,7 +80,7 @@ export default class ShareCommand extends BaseCommand {
       await this.todoService.saveList(listName, todoList);
       this.log(chalk.green('✓'), `Todo list "${chalk.bold(listName)}" shared successfully with ${chalk.cyan(recipient)}`);
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

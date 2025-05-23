@@ -1,8 +1,11 @@
-import { Todo, TodoList } from '../types';
+import { Todo, TodoList } from '../types/todo';
 import { configService } from './config-service';
 import { generateId } from '../utils/id-generator';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import * as fs from 'fs';
+import { Logger } from '../utils/Logger';
+
+const logger = new Logger('todo-service');
 
 export class TodoService {
   private todosPath: string;
@@ -40,7 +43,7 @@ export class TodoService {
       })
       .catch(_error => {
         // Fail fast by logging and throwing error
-        console.error(`Error initializing TodoService: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        logger.error(`Error initializing TodoService: ${error instanceof Error ? error.message : 'Unknown error'}`);
         throw new CLIError(
           `Failed to initialize TodoService: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'INITIALIZATION_FAILED'

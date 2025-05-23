@@ -6,6 +6,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { SessionTimeoutWarning } from '@/components/SessionTimeoutWarning'
 import { StorageContextWarning } from '@/components/StorageContextWarning'
 import { ClientOnly } from '@/components/ClientOnly'
+import { ErrorSuppressor } from '@/components/ErrorSuppressor'
 import '@/lib/global-error-suppression' // Setup global error suppression
 
 // Using system fonts to avoid network issues with Google Fonts
@@ -24,6 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans wave-animation">
         <ErrorBoundary>
+          <ClientOnly>
+            <ErrorSuppressor />
+          </ClientOnly>
           <AppWalletProvider>
             <ClientOnly>
               <ContextWarning />

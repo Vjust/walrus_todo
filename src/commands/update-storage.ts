@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { Todo, StorageLocation } from '../types/todo';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import BaseCommand, { ICONS, STORAGE } from '../base-command';
 
@@ -17,9 +17,11 @@ export default class UpdateStorageCommand extends BaseCommand {
   static description = 'Update storage location for existing todos';
 
   static examples = [
-    '<%= config.bin %> update-storage my-list --id task-123 --storage blockchain',
-    '<%= config.bin %> update-storage my-list --id "Buy groceries" --storage both',
-    '<%= config.bin %> update-storage my-list --all --storage local',
+    '<%= config.bin %> update-storage my-list --id task-123 --storage blockchain  # Move to blockchain',
+    '<%= config.bin %> update-storage my-list --id "Buy groceries" --storage both  # Local + blockchain',
+    '<%= config.bin %> update-storage my-list --all --storage local                # Move all to local',
+    '<%= config.bin %> update-storage work --id todo-456 --storage walrus          # Move to Walrus',
+    '<%= config.bin %> update-storage personal --all --storage blockchain --force  # Force update all'
   ];
 
   static flags = {
@@ -109,7 +111,7 @@ export default class UpdateStorageCommand extends BaseCommand {
       // Perform storage updates
       await this.performStorageUpdates(todosToUpdate, newStorage, args.listName);
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

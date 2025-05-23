@@ -1,6 +1,9 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('monitoring');
 
 export interface TestResult {
   name: string;
@@ -144,7 +147,7 @@ export class TestMonitor extends EventEmitter {
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
     
     this.generateHTMLReport(report);
-    console.log(`Test report generated: ${reportPath}`);
+    logger.info(`Test report generated: ${reportPath}`);
   }
 
   private aggregateNetworkMetrics(): any {
@@ -303,7 +306,7 @@ export class TestMonitor extends EventEmitter {
 
   <script>
     // Add interactive features if needed
-    console.log('Test report loaded:', ${JSON.stringify(report.summary)});
+    logger.info('Test report loaded:', ${JSON.stringify(report.summary)});
   </script>
 </body>
 </html>

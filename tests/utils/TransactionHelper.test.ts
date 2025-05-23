@@ -1,18 +1,17 @@
 import { jest } from '@jest/globals';
-import { TransactionHelper } from '@/utils/TransactionHelper';
+import { TransactionHelper } from '../../src/utils/TransactionHelper';
 import { Signer } from '@mysten/sui/cryptography';
-import { Logger } from '@/utils/Logger';
+import { Logger } from '../../src/utils/Logger';
 import {
   ValidationError,
-  BlockchainError,
-  isErrorWithMessage
-} from '@/types/errors/consolidated';
+  BlockchainError
+} from '../../src/types/errors/consolidated';
 
-jest.mock('../../../src/utils/Logger');
+jest.mock('../../src/utils/Logger');
 
 describe('TransactionHelper', () => {
-  let _mockSigner: Mocked<Signer>;
-  let mockLogger: Mocked<Logger>;
+  let mockSigner: jest.Mocked<Signer>;
+  let mockLogger: jest.Mocked<Logger>;
   let helper: TransactionHelper;
 
   beforeEach(() => {
@@ -30,14 +29,14 @@ describe('TransactionHelper', () => {
         bytes: 'base64-encoded-bytes',
         messageBytes: new Uint8Array(64)
       })
-    } as unknown as Mocked<Signer>;
+    } as unknown as jest.Mocked<Signer>;
 
     mockLogger = {
       debug: jest.fn().mockReturnValue(undefined),
       info: jest.fn().mockReturnValue(undefined),
       warn: jest.fn().mockReturnValue(undefined),
       error: jest.fn().mockReturnValue(undefined),
-    } as unknown as Mocked<Logger>;
+    } as unknown as jest.Mocked<Logger>;
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 

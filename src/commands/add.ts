@@ -4,14 +4,14 @@ import { TodoService } from '../services/todoService';
 import { aiService } from '../services/ai';
 import { AIProviderFactory } from '../services/ai/AIProviderFactory';
 import { Todo, StorageLocation } from '../types/todo';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import BaseCommand, { ICONS } from '../base-command';
 import { InputValidator, CommonValidationRules } from '../utils/InputValidator';
 import { CommandSanitizer } from '../utils/CommandSanitizer';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import { addCommandValidation, validateAIApiKey, validateBlockchainConfig } from '../utils/CommandValidationMiddleware';
-import { NetworkError, ValidationError } from '../types/errors';
+import { NetworkError, ValidationError } from '../types/errors/consolidated';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -299,8 +299,12 @@ export default class AddCommand extends BaseCommand {
         await this.displaySuccessInfo(addedTodo, listName);
       }
 
-    } catch (_error) {
+    } catch (error) {
       this.debugLog(`Error: ${error}`);
+      // Add stack trace for debugging
+      if (error instanceof Error) {
+        this.debugLog(`Stack: ${error.stack}`);
+      }
 
       // Handle specific error types with helpful messages
       if (error instanceof CLIError && error.code === 'TITLE_TOO_LONG') {
@@ -702,7 +706,7 @@ export default class AddCommand extends BaseCommand {
       // Cleanup connection
       await this.walrusStorage.disconnect();
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) throw error;
 
       // If blockchain-only storage failed, keep it locally
@@ -743,8 +747,8 @@ export default class AddCommand extends BaseCommand {
             }
             // Continue with empty mappings
           }
-        } catch (_error) {
-          this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
+        } catch (readError) {
+          this.warning(`Error reading blob mappings file: ${readError instanceof Error ? readError.message : String(readError)}`);
           // Continue with empty mappings
         }
       }
@@ -755,8 +759,8 @@ export default class AddCommand extends BaseCommand {
       // Write mappings back to file using centralized method (handles directory creation)
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
-    } catch (_error) {
-      this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (saveError) {
+      this.warning(`Failed to save blob mapping: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
     }
   }
 

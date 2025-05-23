@@ -8,6 +8,9 @@ class MockNFTStorageContract {
   mintNFT = jest.fn().mockResolvedValue({ id: 'nft-123' });
   transferNFT = jest.fn().mockResolvedValue({ success: true });
   burnNFT = jest.fn().mockResolvedValue({ success: true });
+  entry_create_nft = jest.fn().mockResolvedValue('nft-123');
+  entry_transfer_nft = jest.fn().mockResolvedValue({ success: true });
+  entry_update_metadata = jest.fn().mockResolvedValue({ success: true });
 }
 
 describe('Transaction Fuzzing Tests', () => {
@@ -82,9 +85,8 @@ describe('Transaction Fuzzing Tests', () => {
       // Check that errors have proper message property
       const rejectedResults = results.filter(result => result.status === 'rejected');
       rejectedResults.forEach(result => {
-        if (result.status === 'rejected') {
-          expect(result.reason).toHaveProperty('message');
-        }
+        expect(result.status).toBe('rejected');
+        expect(result.reason).toHaveProperty('message');
       });
     });
   });
@@ -141,9 +143,8 @@ describe('Transaction Fuzzing Tests', () => {
       // Check that errors have proper message property
       const rejectedResults = results.filter(result => result.status === 'rejected');
       rejectedResults.forEach(result => {
-        if (result.status === 'rejected') {
-          expect(result.reason).toHaveProperty('message');
-        }
+        expect(result.status).toBe('rejected');
+        expect(result.reason).toHaveProperty('message');
       });
     });
   });
@@ -174,9 +175,8 @@ describe('Transaction Fuzzing Tests', () => {
       
       const rejectedResults = results.filter(result => result.status === 'rejected');
       rejectedResults.forEach(result => {
-        if (result.status === 'rejected') {
-          expect(result.reason).toHaveProperty('message');
-        }
+        expect(result.status).toBe('rejected');
+        expect(result.reason).toHaveProperty('message');
       });
       
       expect(results.length).toBe(networkConditions.length);

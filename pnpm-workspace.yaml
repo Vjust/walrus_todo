@@ -6,5 +6,3 @@ ignoreBuiltDependencies:
   - sharp
   - unrs-resolver
   - utf-8-validate
-overrides:
-  waltodo: 'link:'

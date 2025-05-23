@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -161,7 +161,7 @@ export default class StoreSimpleCommand extends BaseCommand {
           // Ignore if we can't get the transaction ID
         }
 
-      } catch (_error) {
+      } catch (error) {
         // Check if it's a WAL balance issue
         if (error.message.includes('could not find WAL coins')) {
           throw new CLIError(
@@ -178,7 +178,7 @@ export default class StoreSimpleCommand extends BaseCommand {
       // Clean up temp file
       fs.unlinkSync(tempFile);
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

@@ -2,7 +2,6 @@ import { test } from '@oclif/test';
 import * as sinon from 'sinon';
 import { TaskSuggestionService, SuggestionType } from '../../src/services/ai/TaskSuggestionService';
 import { EnhancedAIService } from '../../src/services/ai/EnhancedAIService';
-import { Todo } from '../../src/types/todo';
 
 describe('suggest command', () => {
   // Sample suggested tasks for testing
@@ -177,7 +176,7 @@ describe('suggest command', () => {
   test
     .stdout()
     .command(['suggest'])
-    .catch(_error => {
+    .catch(error => {
       expect(error.message).toContain('API key is required');
     })
     .it('errors without API key');

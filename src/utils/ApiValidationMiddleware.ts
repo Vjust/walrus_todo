@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { SchemaValidator } from './SchemaValidator';
+import { SchemaValidator, Schema } from './SchemaValidator';
 import { CommandSanitizer } from './CommandSanitizer';
+
+// Extend Request to include custom properties
+interface AuthenticatedRequest extends Request {
+  token?: string;
+  apiKey?: string;
+}
 
 /**
  * Express middleware for request validation
@@ -12,7 +18,7 @@ export class ApiValidationMiddleware {
    * @param schema Schema to validate against
    * @returns Express middleware function
    */
-  static validateBody(schema: any) {
+  static validateBody(schema: Schema) {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize the request body
@@ -25,7 +31,7 @@ export class ApiValidationMiddleware {
         req.body = sanitizedBody;
         
         next();
-      } catch (_error) {
+      } catch (error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -40,7 +46,7 @@ export class ApiValidationMiddleware {
    * @param schema Schema to validate against
    * @returns Express middleware function
    */
-  static validateParams(schema: any) {
+  static validateParams(schema: Schema) {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize URL parameters
@@ -53,7 +59,7 @@ export class ApiValidationMiddleware {
         req.params = sanitizedParams;
         
         next();
-      } catch (_error) {
+      } catch (error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -68,7 +74,7 @@ export class ApiValidationMiddleware {
    * @param schema Schema to validate against
    * @returns Express middleware function
    */
-  static validateQuery(schema: any) {
+  static validateQuery(schema: Schema) {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize query parameters
@@ -81,7 +87,7 @@ export class ApiValidationMiddleware {
         req.query = sanitizedQuery;
         
         next();
-      } catch (_error) {
+      } catch (error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -120,7 +126,7 @@ export class ApiValidationMiddleware {
         }
         
         next();
-      } catch (_error) {
+      } catch (error) {
         res.status(400).json({
           error: 'Bad Request',
           message: error instanceof Error ? error.message : String(error),
@@ -156,7 +162,7 @@ export class ApiValidationMiddleware {
           }
           
           // Add sanitized token to request
-          (req as any).token = CommandSanitizer.sanitizeString(token);
+          (req as AuthenticatedRequest).token = CommandSanitizer.sanitizeString(token);
         } else if (authType === 'api-key') {
           // Validate API key
           if (!authHeader.startsWith('ApiKey ')) {
@@ -169,11 +175,11 @@ export class ApiValidationMiddleware {
           }
           
           // Add sanitized API key to request
-          (req as any).apiKey = CommandSanitizer.sanitizeApiKey(apiKey);
+          (req as AuthenticatedRequest).apiKey = CommandSanitizer.sanitizeApiKey(apiKey);
         }
         
         next();
-      } catch (_error) {
+      } catch (error) {
         res.status(401).json({
           error: 'Unauthorized',
           message: error instanceof Error ? error.message : String(error),
@@ -188,7 +194,7 @@ export class ApiValidationMiddleware {
    * @param obj Object to sanitize
    * @returns Sanitized object
    */
-  private static sanitizeObject(obj: any): any {
-    return CommandSanitizer.sanitizeForJson(obj);
+  private static sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
+    return CommandSanitizer.sanitizeForJson(obj) as T;
   }
 }

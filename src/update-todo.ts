@@ -1,30 +1,33 @@
 import { TodoService } from './services/todoService';
+import { Logger } from './utils/Logger';
+
+const logger = new Logger('update-todo');
 
 async function main() {
   const todoService = new TodoService();
   const listName = 'test-list';
 
   // Get the todo list
-  console.log('Getting todo list...');
+  logger.info('Getting todo list...');
   const list = await todoService.getList(listName);
   if (!list) {
-    console.error('List not found');
+    logger.error('List not found');
     return;
   }
 
-  console.log('\nCurrent todos:');
+  logger.info('\nCurrent todos:');
   list.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
     const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
-    console.log(`${status} ${priority} ${todo.title}`);
-    console.log(`   Description: ${todo.description}`);
-    console.log(`   Tags: ${todo.tags.join(', ')}\n`);
+    logger.info(`${status} ${priority} ${todo.title}`);
+    logger.info(`   Description: ${todo.description}`);
+    logger.info(`   Tags: ${todo.tags.join(', ')}\n`);
   });
 
   // Update the first todo
   if (list.todos.length > 0) {
     const todoToUpdate = list.todos[0];
-    console.log(`Updating todo: ${todoToUpdate.title}`);
+    logger.info(`Updating todo: ${todoToUpdate.title}`);
     
     await todoService.updateTodo(listName, todoToUpdate.id, { // Removed unused updatedTodo variable assignment
       title: 'Updated Todo Title',
@@ -33,18 +36,18 @@ async function main() {
       tags: ['test', 'demo', 'updated']
     });
     
-    console.log('Todo updated');
+    logger.info('Todo updated');
   }
 
   // Show updated list
-  console.log('\nUpdated todos:');
+  logger.info('\nUpdated todos:');
   const updatedList = await todoService.getList(listName);
   updatedList?.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
     const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
-    console.log(`${status} ${priority} ${todo.title}`);
-    console.log(`   Description: ${todo.description}`);
-    console.log(`   Tags: ${todo.tags.join(', ')}\n`);
+    logger.info(`${status} ${priority} ${todo.title}`);
+    logger.info(`   Description: ${todo.description}`);
+    logger.info(`   Tags: ${todo.tags.join(', ')}\n`);
   });
 }
 

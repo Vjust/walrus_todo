@@ -1,5 +1,8 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('aggregate-test-reports');
 /**
  * Test Report Aggregator
  * 
@@ -88,7 +91,7 @@ class TestReportAggregator {
    * Run all test suites and aggregate results
    */
   async runAllTestsAndAggregate(): Promise<AggregatedResults> {
-    console.log('Running all test suites...\n');
+    logger.info('Running all test suites...\n');
 
     // Define test suites to run
     const testSuites = [
@@ -100,12 +103,12 @@ class TestReportAggregator {
     ];
 
     for (const suite of testSuites) {
-      console.log(`Running ${suite.name} tests...`);
+      logger.info(`Running ${suite.name} tests...`);
       try {
         execSync(suite.command, { stdio: 'inherit' });
         await this.loadJestResults(`test-results-${suite.name}.json`, suite.name);
       } catch (error) {
-        console.error(`Error running ${suite.name} tests:`, error);
+        logger.error(`Error running ${suite.name} tests:`, error);
       }
     }
 
@@ -162,7 +165,7 @@ class TestReportAggregator {
 
       this.results.push(result);
     } catch (error) {
-      console.error(`Error loading ${filepath}:`, error);
+      logger.error(`Error loading ${filepath}:`, error);
     }
   }
 
@@ -245,7 +248,7 @@ class TestReportAggregator {
           timestamp: data.timestamp
         });
       } catch (error) {
-        console.error(`Error loading stress test results:`, error);
+        logger.error(`Error loading stress test results:`, error);
       }
     }
   }
@@ -266,7 +269,7 @@ class TestReportAggregator {
         branches: data.total.branches
       };
     } catch (error) {
-      console.error('Error loading coverage data:', error);
+      logger.error('Error loading coverage data:', error);
       return undefined;
     }
   }
@@ -562,7 +565,7 @@ class TestReportAggregator {
 
     const outputPath = path.join(this.outputDir, 'test-report.html');
     fs.writeFileSync(outputPath, html);
-    console.log(`HTML report generated: ${outputPath}`);
+    logger.info(`HTML report generated: ${outputPath}`);
   }
 
   /**
@@ -653,7 +656,7 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
 
     const outputPath = path.join(this.outputDir, 'test-report.md');
     fs.writeFileSync(outputPath, markdown);
-    console.log(`Markdown report generated: ${outputPath}`);
+    logger.info(`Markdown report generated: ${outputPath}`);
   }
 
   /**
@@ -662,7 +665,7 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
   generateJsonReport(results: AggregatedResults): void {
     const outputPath = path.join(this.outputDir, 'test-report.json');
     fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
-    console.log(`JSON report generated: ${outputPath}`);
+    logger.info(`JSON report generated: ${outputPath}`);
   }
 
   /**
@@ -706,11 +709,11 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
     }
 
     // Output to console and file
-    console.log('\n' + text);
+    logger.info('\n' + text);
     
     const outputPath = path.join(this.outputDir, 'test-report.txt');
     fs.writeFileSync(outputPath, text);
-    console.log(`Text report generated: ${outputPath}`);
+    logger.info(`Text report generated: ${outputPath}`);
   }
 
   /**
@@ -807,7 +810,7 @@ async function main() {
       process.exit(1);
     }
   } catch (error) {
-    console.error('Error aggregating test reports:', error);
+    logger.error('Error aggregating test reports:', error);
     process.exit(1);
   }
 }

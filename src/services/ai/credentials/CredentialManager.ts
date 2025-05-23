@@ -1,4 +1,4 @@
-import { CLIError } from '../../../types/error';
+import { CLIError } from '../../../types/errors/consolidated';
 import { VaultManager } from '../../../utils/VaultManager';
 import { Logger } from '../../../utils/Logger';
 import { AIProvider } from '../types';

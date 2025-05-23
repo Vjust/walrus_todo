@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('generate-coverage-badge');
 
 const fs = require('fs');
 const path = require('path');
@@ -12,7 +15,7 @@ function generateCoverageBadge() {
     const coverageSummaryPath = path.join(__dirname, '../coverage/coverage-summary.json');
     
     if (!fs.existsSync(coverageSummaryPath)) {
-      console.error('Coverage summary not found. Run "pnpm test:coverage" first.');
+      logger.error('Coverage summary not found. Run "pnpm test:coverage" first.');
       process.exit(1);
     }
     
@@ -54,7 +57,7 @@ function generateCoverageBadge() {
     
     fs.writeFileSync(readmePath, readme);
     
-    console.log(`Coverage badge updated: ${percentage}% (${color})`);
+    logger.info(`Coverage badge updated: ${percentage}% (${color})`);
     
     // Also write badge data for GitHub Actions
     const badgeDataPath = path.join(__dirname, '../coverage/badge.json');
@@ -69,7 +72,7 @@ function generateCoverageBadge() {
     );
     
   } catch (error) {
-    console.error('Error generating coverage badge:', error);
+    logger.error('Error generating coverage badge:', error);
     process.exit(1);
   }
 }

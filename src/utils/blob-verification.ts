@@ -2,17 +2,20 @@
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../types/client';
 import type { BlobInfo, BlobMetadata, BlobMetadataShape } from '../types/walrus';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { handleError } from './error-handler';
 import { RetryManager, NetworkNode } from './retry-manager';
 import type { TransactionSigner } from '../types/signer';
 import * as crypto from 'crypto';
+import { Logger } from './Logger';
+
+const logger = new Logger('blob-verification');
 
 // Provide fallback implementations for testing environments
 const oraImport = (() => {
   try {
     return import('ora');
-  } catch {
+  } catch (error: unknown) {
     return Promise.resolve(() => ({
       start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
       stop: () => {},
@@ -25,7 +28,7 @@ const oraImport = (() => {
 const cliProgressImport = (() => {
   try {
     return import('cli-progress');
-  } catch {
+  } catch (error: unknown) {
     return Promise.resolve({
       SingleBar: class MockSingleBar {
         start() { return this; }
@@ -33,7 +36,7 @@ const cliProgressImport = (() => {
         stop() { return this; }
       },
       MultiBar: class MockMultiBar {
-        create() { return new (this as any).SingleBar(); }
+        create() { return new MockSingleBar(); }
         remove() {}
         stop() {}
       }
@@ -53,7 +56,7 @@ interface VerificationResult {
     certified: boolean;
     certificateEpoch?: number;
     registeredEpoch?: number;
-    attributes?: Record<string, any>;
+    attributes?: Record<string, unknown>;
   };
   attempts: number;
   poaComplete: boolean;
@@ -83,7 +86,7 @@ export class BlobVerificationManager {
   private signer: TransactionSigner | null = null;
 
   constructor(
-    private suiClient: Pick<SuiClient, 'getLatestSuiSystemState'>,
+    private suiClient: SuiClient,
     private walrusClient: WalrusClientExt,
     signer?: TransactionSigner
   ) {
@@ -188,7 +191,7 @@ export class BlobVerificationManager {
         if (options?.requirePoA && !poaComplete) reasons.push('PoA incomplete');
         if (!hasMinProviders) reasons.push(`insufficient providers (${providers.length}/${options.minProviders})`);
         
-        console.warn(`Blob ${blobId} verification incomplete: ${reasons.join(', ')}`);
+        logger.warn(`Blob ${blobId} verification incomplete: ${reasons.join(', ')}`);
       }
 
       return {
@@ -198,7 +201,7 @@ export class BlobVerificationManager {
         poaComplete,
         providers: providers.length
       };
-    } catch (_error) {
+    } catch (error) {
       handleError('Smart contract verification failed', error);
       return {
         certified: false,
@@ -215,11 +218,11 @@ export class BlobVerificationManager {
    */
   private async verifyMetadata(
     blobId: string,
-    expectedAttributes: Record<string, any>
+    expectedAttributes: Record<string, unknown>
   ): Promise<{
     valid: boolean;
-    actualAttributes: Record<string, any>;
-    mismatches: Array<{ key: string; expected: any; actual: any }>;
+    actualAttributes: Record<string, unknown>;
+    mismatches: Array<{ key: string; expected: unknown; actual: unknown }>;
     metadata: BlobMetadata;
   }> {
     try {
@@ -235,7 +238,7 @@ export class BlobVerificationManager {
       if (response && typeof response === 'object') {
         if (!('V1' in response) || !('$kind' in response)) {
           // Add the required properties if missing
-          const responseObj = response as Record<string, any>;
+          const responseObj = response as Record<string, unknown>;
           metadata = {
             ...(responseObj as object),
             V1: 'V1' in responseObj ? responseObj.V1 : {
@@ -263,8 +266,8 @@ export class BlobVerificationManager {
         metadata = this.createDefaultMetadata();
       }
       
-      const actualAttributes = (metadata.V1 || {}) as Record<string, any>;
-      const mismatches: Array<{ key: string; expected: any; actual: any }> = [];
+      const actualAttributes = (metadata.V1 || {}) as Record<string, unknown>;
+      const mismatches: Array<{ key: string; expected: unknown; actual: unknown }> = [];
 
       // Type-safe attribute comparison
       for (const [key, expectedValue] of Object.entries(expectedAttributes)) {
@@ -289,7 +292,7 @@ export class BlobVerificationManager {
         mismatches,
         metadata
       };
-    } catch (_error) {
+    } catch (error) {
       handleError('Metadata verification failed', error);
       // Use helper method to create properly typed default metadata
       const defaultMetadata = this.createDefaultMetadata();
@@ -319,7 +322,7 @@ export class BlobVerificationManager {
       maxRetries: 8,        // Up to 8 retries
       maxDuration: 180000,  // Total timeout of 3 minutes
       onRetry: (error: Error, attempt: number, delay: number) => {
-        console.log(
+        logger.info(
           `Retrieval attempt ${attempt} failed:`,
           error.message,
           `Retrying in ${delay}ms...`
@@ -342,7 +345,7 @@ export class BlobVerificationManager {
   async verifyBlob(
     blobId: string,
     expectedData: Buffer,
-    expectedAttributes: Record<string, any>,
+    expectedAttributes: Record<string, unknown>,
     options: VerificationOptions = {}
   ): Promise<VerificationResult> {
     const {
@@ -362,7 +365,7 @@ export class BlobVerificationManager {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       attempts = attempt;
       try {
-        console.log(`Verifying blob ${blobId} (attempt ${attempt}/${maxRetries})...`);
+        logger.info(`Verifying blob ${blobId} (attempt ${attempt}/${maxRetries})...`);
 
         // 1. Retrieve and verify content
         const retrievedContent = await this.retrieveBlobWithTimeout(
@@ -404,7 +407,8 @@ export class BlobVerificationManager {
         };
         
         if (verifySmartContract) {
-          const { epoch } = await this.suiClient.getLatestSuiSystemState();
+          const systemState = await this.suiClient.getLatestSuiSystemState();
+          const { epoch } = systemState as { epoch: string };
           const result = await this.verifySmartContract(blobId, BigInt(epoch));
           contractVerification = result;
           
@@ -421,8 +425,8 @@ export class BlobVerificationManager {
         // 5. Verify metadata if requested
         let metadataVerification = {
           valid: true,
-          actualAttributes: {} as Record<string, any>,
-          mismatches: [] as Array<{ key: string; expected: any; actual: any }>,
+          actualAttributes: {} as Record<string, unknown>,
+          mismatches: [] as Array<{ key: string; expected: unknown; actual: unknown }>,
           metadata: this.createDefaultMetadata()
         };
         if (verifyAttributes) {
@@ -466,7 +470,7 @@ export class BlobVerificationManager {
           providers: contractVerificationComplete.providers,
           metadata: metadataVerification.metadata || this.createDefaultMetadata()
         };
-      } catch (_error) {
+      } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt === maxRetries) {
@@ -475,7 +479,7 @@ export class BlobVerificationManager {
 
         // Exponential backoff
         const delay = baseDelay * Math.pow(2, attempt - 1);
-        console.log(`Verification attempt ${attempt} failed, retrying in ${delay}ms...`);
+        logger.info(`Verification attempt ${attempt} failed, retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -525,23 +529,24 @@ export class BlobVerificationManager {
         }
 
         // 3. Check certification status
-        const { epoch } = await this.suiClient.getLatestSuiSystemState();
+        const systemState = await this.suiClient.getLatestSuiSystemState();
+        const { epoch } = systemState as { epoch: string };
         const { certified } = await this.verifySmartContract(blobId, BigInt(epoch));
         
         if (!certified) {
           throw new Error(`Blob not certified during monitoring (attempt ${attempts})`);
         }
 
-        console.log(`Blob ${blobId} verified available and certified (attempt ${attempts}/${maxAttempts})`);
+        logger.info(`Blob ${blobId} verified available and certified (attempt ${attempts}/${maxAttempts})`);
         return;
-      } catch (_error) {
+      } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         
         if (attempts === maxAttempts) {
           break;
         }
 
-        console.log(`Monitoring attempt ${attempts} failed, retrying in ${interval}ms...`);
+        logger.info(`Monitoring attempt ${attempts} failed, retrying in ${interval}ms...`);
         await new Promise(resolve => setTimeout(resolve, interval));
       }
     }
@@ -594,7 +599,8 @@ export class BlobVerificationManager {
     const hasMinProviders = providers.length >= minProviders;
 
     // Check initial certification status
-    const { epoch } = await this.suiClient.getLatestSuiSystemState();
+    const systemState = await this.suiClient.getLatestSuiSystemState();
+    const { epoch } = systemState as { epoch: string };
     let verificationResult = await this.verifySmartContract(blobId, BigInt(epoch));
 
     // Wait for certification if requested

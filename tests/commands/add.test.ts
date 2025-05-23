@@ -1,12 +1,16 @@
+// TODO: This test file requires refactoring to work without mocks
+// Mock imports and jest.mock calls were removed during mock cleanup
+
 import { expect, describe, test, beforeEach } from '@jest/globals';
 
-import { createWalrusStorage } from '@/utils/walrus-storage';
-import { Todo } from '@/types/todo';
+import { createWalrusStorage } from '../../src/utils/walrus-storage';
+import { TodoService } from '../../src/services/todoService';
+import { CLIError } from '../../src/types/errors/consolidated';
 
 import { createMockTodo } from '../helpers/test-utils';
 
 // Mock TodoService
-jest.mock('@/services/todoService');
+// TODO: jest.mock call removed during mock cleanup
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
 
 // Mock WalrusStorage
@@ -22,11 +26,6 @@ const mockStorageMethods = {
 };
 
 // TypeScript needs the correct mock return type here
-jest.mock('@/utils/walrus-storage', () => ({
-  __esModule: true,
-  createWalrusStorage: jest.fn().mockReturnValue(mockStorageMethods)
-}));
-
 // Mock command implementation
 const addCommand = {
   init: () => Promise.resolve({}),
@@ -49,7 +48,7 @@ const addCommand = {
           ...newTodo,
           storageLocation: 'blockchain'
         });
-      } catch (_error) {
+      } catch (error) {
         throw new CLIError(`Failed to store todo on blockchain: ${error instanceof Error ? error.message : (error ? String(error) : 'Unknown error')}`, 'STORAGE_FAILED');
       }
     }

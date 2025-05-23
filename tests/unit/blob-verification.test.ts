@@ -1,8 +1,7 @@
 import { BlobVerificationManager } from '../../src/utils/blob-verification';
-
+import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../../src/types/client';
 import type { BlobMetadataShape, BlobInfo } from '../../src/types/walrus';
-import type { HashType, DigestType } from '../../src/types/walrus';
 
 jest.mock('@mysten/sui/client');
 jest.mock('@mysten/walrus');
@@ -34,7 +33,7 @@ describe('BlobVerificationManager', () => {
   };
 
   beforeEach(() => {
-    mockSuiClient = {
+    const mockSuiClient = {
       getLatestSuiSystemState: jest.fn().mockResolvedValue({
         epoch: '42',
         storageFund: '1000000',
@@ -50,6 +49,8 @@ describe('BlobVerificationManager', () => {
         validatorVeryLowStakeThreshold: '5000'
       })
     } as Pick<SuiClient, 'getLatestSuiSystemState'>;
+    
+    _mockSuiClient = mockSuiClient;
 
     // Create a more complete mock that matches the WalrusClientExt interface
     const walrusClientMock = {
@@ -108,7 +109,7 @@ describe('BlobVerificationManager', () => {
 
     mockWalrusClient = walrusClientMock;
 
-    verificationManager = new BlobVerificationManager(mockSuiClient, mockWalrusClient);
+    verificationManager = new BlobVerificationManager(_mockSuiClient, mockWalrusClient);
 
     // Reset fetch mock
     global.fetch = jest.fn();

@@ -41,7 +41,7 @@ describe('System Validation Tests', () => {
         throw new Error(`Critical paths missing: ${missingPaths.join(', ')}`);
       }
 
-      console.log('✅ All critical project files and directories are present');
+      // console.log('✅ All critical project files and directories are present'); // Removed console statement
     });
 
     test('should have valid package.json configurations', () => {
@@ -62,7 +62,7 @@ describe('System Validation Tests', () => {
         expect(frontendPkg.scripts).toHaveProperty('build');
       }
 
-      console.log('✅ Package.json configurations are valid');
+      // console.log('✅ Package.json configurations are valid'); // Removed console statement
     });
   });
 
@@ -83,7 +83,7 @@ describe('System Validation Tests', () => {
         const distPath = path.join(projectRoot, 'dist');
         expect(fs.existsSync(distPath)).toBeTruthy();
 
-        console.log('✅ CLI builds successfully');
+        // console.log('✅ CLI builds successfully'); // Removed console statement
       } catch (_error) {
         throw new Error(`CLI build failed: ${error}`);
       }
@@ -100,7 +100,7 @@ describe('System Validation Tests', () => {
         expect(versionOutput).toBeTruthy();
         expect(versionOutput).not.toContain('Error:');
 
-        console.log('✅ CLI is functional after build');
+        // console.log('✅ CLI is functional after build'); // Removed console statement
       } catch (_error) {
         throw new Error(`CLI not functional: ${error}`);
       }
@@ -117,7 +117,7 @@ describe('System Validation Tests', () => {
       expect(moveTomlContent).toContain('name =');
       expect(moveTomlContent).toContain('[dependencies]');
 
-      console.log('✅ Move.toml configuration is valid');
+      // console.log('✅ Move.toml configuration is valid'); // Removed console statement
     });
 
     test('should have valid smart contract source', () => {
@@ -130,7 +130,7 @@ describe('System Validation Tests', () => {
       expect(contractContent).toContain('public entry fun create_todo_nft');
       expect(contractContent).toContain('public entry fun complete_todo');
 
-      console.log('✅ Smart contract source is valid');
+      // console.log('✅ Smart contract source is valid'); // Removed console statement
     });
   });
 
@@ -139,7 +139,7 @@ describe('System Validation Tests', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
       
       if (!fs.existsSync(frontendPath)) {
-        console.log('⚠️ Frontend directory not found - frontend tests will be skipped');
+        // console.log('⚠️ Frontend directory not found - frontend tests will be skipped'); // Removed console statement
         return;
       }
 
@@ -156,9 +156,9 @@ describe('System Validation Tests', () => {
       );
 
       if (missingFiles.length > 0) {
-        console.log(`⚠️ Some frontend files missing: ${missingFiles.join(', ')}`);
+        // console.log(`⚠️ Some frontend files missing: ${missingFiles.join(', ') // Removed console statement}`);
       } else {
-        console.log('✅ Frontend structure is complete');
+        // console.log('✅ Frontend structure is complete'); // Removed console statement
       }
     });
 
@@ -166,7 +166,7 @@ describe('System Validation Tests', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
       
       if (!fs.existsSync(frontendPath)) {
-        console.log('⚠️ Skipping frontend dependency test - frontend not found');
+        // console.log('⚠️ Skipping frontend dependency test - frontend not found'); // Removed console statement
         return;
       }
 
@@ -180,9 +180,9 @@ describe('System Validation Tests', () => {
         const nodeModulesPath = path.join(frontendPath, 'node_modules');
         expect(fs.existsSync(nodeModulesPath)).toBeTruthy();
 
-        console.log('✅ Frontend dependencies can be installed');
+        // console.log('✅ Frontend dependencies can be installed'); // Removed console statement
       } catch (_error) {
-        console.log(`⚠️ Frontend dependency installation issues: ${error}`);
+        // console.log(`⚠️ Frontend dependency installation issues: ${error}`); // Removed console statement
         // Don't fail the test, as this might be environmental
       }
     });
@@ -213,18 +213,20 @@ describe('System Validation Tests', () => {
       const nodeResult = results.find(r => r.name === 'Node.js');
       const pnpmResult = results.find(r => r.name === 'pnpm');
       
-      expect(nodeResult?.available).toBe(true);
-      expect(pnpmResult?.available).toBe(true);
+      expect(nodeResult).toBeDefined();
+      expect(nodeResult!.available).toBe(true);
+      expect(pnpmResult).toBeDefined();
+      expect(pnpmResult!.available).toBe(true);
 
       // Check Sui CLI (required for blockchain operations)
       const suiResult = results.find(r => r.name === 'Sui CLI');
       if (!suiResult?.available) {
-        console.log('⚠️ Sui CLI not found - blockchain operations will not work');
+        // console.log('⚠️ Sui CLI not found - blockchain operations will not work'); // Removed console statement
       } else {
-        console.log(`✅ Sui CLI available: ${suiResult.version}`);
+        // console.log(`✅ Sui CLI available: ${suiResult.version}`); // Removed console statement
       }
 
-      console.log('✅ Essential tools are available');
+      // console.log('✅ Essential tools are available'); // Removed console statement
     });
 
     test('should check for optional tools', () => {
@@ -240,9 +242,9 @@ describe('System Validation Tests', () => {
             timeout: 10000,
             stdio: 'pipe'
           });
-          console.log(`✅ ${tool.name} available: ${output.trim()}`);
+          // console.log(`✅ ${tool.name} available: ${output.trim() // Removed console statement}`);
         } catch (_error) {
-          console.log(`⚠️ ${tool.name} not found - some features may use fallback modes`);
+          // console.log(`⚠️ ${tool.name} not found - some features may use fallback modes`); // Removed console statement
         }
       });
     });
@@ -260,11 +262,11 @@ describe('System Validation Tests', () => {
 
         // Should not error out completely
         expect(configOutput).toBeTruthy();
-        console.log('✅ Configuration system is accessible');
+        // console.log('✅ Configuration system is accessible'); // Removed console statement
       } catch (_error) {
         // Config might not be set up yet, which is OK for validation
         if (error.toString().includes('not configured')) {
-          console.log('⚠️ Configuration not yet set up - this is normal for fresh installations');
+          // console.log('⚠️ Configuration not yet set up - this is normal for fresh installations'); // Removed console statement
         } else {
           throw new Error(`Configuration system error: ${error}`);
         }
@@ -279,9 +281,9 @@ describe('System Validation Tests', () => {
       if (fs.existsSync(jestConfigPath)) {
         const jestConfig = fs.readFileSync(jestConfigPath, 'utf8');
         expect(jestConfig).toContain('module.exports');
-        console.log('✅ Jest configuration found');
+        // console.log('✅ Jest configuration found'); // Removed console statement
       } else {
-        console.log('⚠️ Jest configuration not found - using default configuration');
+        // console.log('⚠️ Jest configuration not found - using default configuration'); // Removed console statement
       }
     });
 
@@ -294,17 +296,17 @@ describe('System Validation Tests', () => {
           timeout: 60000
         });
 
-        console.log('✅ Test framework is functional');
+        // console.log('✅ Test framework is functional'); // Removed console statement
       } catch (_error) {
         // This test calling itself might have issues, but that's OK
-        console.log('⚠️ Test framework validation has some issues - this might be expected');
+        // console.log('⚠️ Test framework validation has some issues - this might be expected'); // Removed console statement
       }
     });
   });
 
   describe('System Readiness Summary', () => {
     test('should provide overall system readiness assessment', () => {
-      console.log('\n🔍 System Readiness Assessment:');
+      // console.log('\n🔍 System Readiness Assessment:'); // Removed console statement
       
       const checks = [
         { name: 'Project Structure', status: true },
@@ -330,20 +332,20 @@ describe('System Validation Tests', () => {
       // Display results
       checks.forEach(check => {
         const status = check.status ? '✅' : '❌';
-        console.log(`  ${status} ${check.name}`);
+        // console.log(`  ${status} ${check.name}`); // Removed console statement
       });
 
       const readyComponents = checks.filter(c => c.status).length;
       const totalComponents = checks.length;
 
-      console.log(`\n📊 Readiness Score: ${readyComponents}/${totalComponents} components ready`);
+      // console.log(`\n📊 Readiness Score: ${readyComponents}/${totalComponents} components ready`); // Removed console statement
 
       if (readyComponents === totalComponents) {
-        console.log('🎉 System is fully ready for comprehensive E2E testing!');
+        // console.log('🎉 System is fully ready for comprehensive E2E testing!'); // Removed console statement
       } else if (readyComponents >= 4) {
-        console.log('✅ System is mostly ready - some advanced features may not work');
+        // console.log('✅ System is mostly ready - some advanced features may not work'); // Removed console statement
       } else {
-        console.log('⚠️ System needs more setup before comprehensive testing');
+        // console.log('⚠️ System needs more setup before comprehensive testing'); // Removed console statement
       }
 
       // Minimum requirements check
@@ -353,7 +355,7 @@ describe('System Validation Tests', () => {
       const minReady = minRequirements.every(c => c.status);
 
       expect(minReady).toBe(true);
-      console.log('✅ Minimum system requirements are met for E2E testing');
+      // console.log('✅ Minimum system requirements are met for E2E testing'); // Removed console statement
     });
   });
 });

@@ -5,19 +5,23 @@ import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
 import { validateApiKey } from '../../utils/KeyValidator';
 import { getProviderEnum, getProviderString } from '../../utils/adapters/ai-provider-adapter';
 import chalk from 'chalk';
+import { CLIError } from '../../types/errors/consolidated';
 
 /**
  * Manage API credentials for AI providers
  */
 export default class Credentials extends BaseCommand {
-  static description = 'Manage API credentials for AI providers';
+  static description = 'Store, rotate and manage API keys for AI providers with secure encryption';
 
   static examples = [
-    '$ walrus_todo ai credentials add xai --key YOUR_API_KEY',
-    '$ walrus_todo ai credentials list',
-    '$ walrus_todo ai credentials remove openai',
-    '$ walrus_todo ai credentials verify xai',
-    '$ walrus_todo ai credentials rotate xai --key NEW_API_KEY',
+    '<%= config.bin %> ai credentials add xai --key YOUR_API_KEY              # Add XAI key',
+    '<%= config.bin %> ai credentials list                                    # List all credentials',
+    '<%= config.bin %> ai credentials remove openai                           # Remove OpenAI key',
+    '<%= config.bin %> ai credentials verify xai                              # Verify XAI key',
+    '<%= config.bin %> ai credentials rotate xai --key NEW_API_KEY            # Rotate key',
+    '<%= config.bin %> ai credentials add anthropic --key KEY --verify        # Add and verify',
+    '<%= config.bin %> ai credentials list --show-status                      # List with status',
+    '<%= config.bin %> ai credentials backup                                  # Backup credentials',
   ];
 
   static flags = {
@@ -158,8 +162,11 @@ export default class Credentials extends BaseCommand {
           }
         }
       }
-    } catch (_error) {
-      this.error(`Failed to add credential: ${error.message}`, { exit: 1 });
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to add credential: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -210,8 +217,11 @@ export default class Credentials extends BaseCommand {
           }
         }
       }
-    } catch (_error) {
-      this.error(`Failed to list credentials: ${error.message}`, { exit: 1 });
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to list credentials: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -230,7 +240,7 @@ export default class Credentials extends BaseCommand {
       // First check if credential exists
       const providerString = getProviderString(providerEnum);
       if (!await secureCredentialService.hasCredential(providerString as any)) {
-        this.error(`No credential found for ${provider}`, { exit: 1 });
+        throw new CLIError(`No credential found for ${provider}`);
       }
 
       // Confirm removal
@@ -247,8 +257,11 @@ export default class Credentials extends BaseCommand {
       } else {
         this.log(`No API key found for ${provider}`);
       }
-    } catch (_error) {
-      this.error(`Failed to remove credential: ${error.message}`, { exit: 1 });
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to remove credential: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -271,8 +284,11 @@ export default class Credentials extends BaseCommand {
       } else {
         this.log(`Failed to verify API key for ${provider} on blockchain`);
       }
-    } catch (_error) {
-      this.error(`Verification failed: ${error.message}`, { exit: 1 });
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Verification failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -327,8 +343,11 @@ export default class Credentials extends BaseCommand {
           this.log(`${chalk.yellow('ℹ')} Next rotation due: ${new Date(result.rotationDue).toLocaleDateString()}`);
         }
       }
-    } catch (_error) {
-      this.error(`Failed to rotate credential: ${error.message}`, { exit: 1 });
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to rotate credential: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -366,8 +385,11 @@ export default class Credentials extends BaseCommand {
           this.log(`${chalk.green('✓')} Updated on blockchain`);
         }
       }
-    } catch (_error) {
-      this.error(`Failed to update permissions: ${error.message}`, { exit: 1 });
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to update permissions: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

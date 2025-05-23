@@ -1,39 +1,40 @@
 import { PromptTemplate } from '@langchain/core/prompts';
-// ChatPromptTemplate and MessagesPlaceholder imported but not used
 import { Todo } from '../../types/todo';
 import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
 import { AIPrivacyLevel } from '../../types/adapters/AIVerifierAdapter';
 import { AIModelAdapter, AIProvider, AIModelOptions } from '../../types/adapters/AIModelAdapter';
 import { AIProviderFactory } from './AIProviderFactory';
-// ResponseParser imported but not used
 import { secureCredentialService } from './SecureCredentialService';
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('AIService');
 
 /**
  * Service responsible for AI-powered operations on todo items using various language models.
  * Provides a unified interface for todo-related AI operations including summarization,
  * categorization, prioritization, suggestion, and analysis - with optional blockchain
  * verification capabilities for enhanced security and provability.
- * 
+ *
  * This service acts as a facade over different AI model adapters (OpenAI, XAI, etc.)
  * and centralizes access to AI functionality throughout the application.
  */
 export class AIService {
   /** The active AI model adapter implementation */
   private modelAdapter: AIModelAdapter;
-  
+
   /** Optional service for blockchain verification of AI results */
   private verificationService?: AIVerificationService;
-  
+
   /** Configuration options for the AI model */
   private options: AIModelOptions;
-  
+
   /** Current operation type for consent management */
   private operationType?: string;
 
   /**
    * Creates a new instance of the AIService with the specified provider and configuration.
    * Uses fallback mechanisms to ensure service availability even if the primary provider fails.
-   * 
+   *
    * @param provider - Optional AI provider to use (defaults to configured default)
    * @param modelName - Optional model name to use with the provider
    * @param options - Configuration options for the AI model
@@ -58,8 +59,8 @@ export class AIService {
     try {
       const defaultAdapter = AIProviderFactory.createDefaultAdapter();
       this.modelAdapter = defaultAdapter;
-    } catch (_error) {
-      console.error('Failed to initialize with default adapter:', error);
+    } catch (error) {
+      logger.error('Failed to initialize with default adapter:', error as Error);
       // Set a minimal fallback adapter to avoid null reference errors
       this.modelAdapter = AIProviderFactory.createFallbackAdapter();
     }
@@ -67,9 +68,9 @@ export class AIService {
     // Initialize the full model adapter asynchronously
     this.initializeModelAdapter(provider, modelName)
       .catch(error => {
-        console.error(
-          'Model adapter initialization failed:',
-          error instanceof Error ? error.message : String(error),
+        logger.error(
+          'Model adapter initialization failed',
+          error as Error,
           { provider, modelName }
         );
       });
@@ -79,8 +80,8 @@ export class AIService {
    * Initializes the model adapter asynchronously with secure credential handling.
    * This allows the service to start immediately with a fallback adapter while
    * loading the actual provider credentials in the background.
-   * 
-   * @param provider - Optional AI provider to use 
+   *
+   * @param provider - Optional AI provider to use
    * @param modelName - Optional model name to use with the provider
    * @returns Promise resolving when initialization is complete
    * @throws Error if initialization fails after fallback
@@ -100,15 +101,15 @@ export class AIService {
 
       // Use the secure credential service to get provider info
       const defaultProvider = await AIProviderFactory.getDefaultProvider();
-      
+
       // Ensure we have valid provider and modelName
       if (!defaultProvider.provider || !defaultProvider.modelName) {
         throw new Error(`Invalid default provider configuration: provider=${defaultProvider.provider}, modelName=${defaultProvider.modelName}`);
       }
-      
+
       const selectedProvider = provider || defaultProvider.provider;
       const selectedModelName = modelName || defaultProvider.modelName;
-      
+
       // Initialize the provider adapter
       this.modelAdapter = await AIProviderFactory.createProvider({
         provider: selectedProvider,
@@ -116,8 +117,8 @@ export class AIService {
         options: this.options,
         credentialService: secureCredentialService
       });
-    } catch (_error) {
-      console.error('Failed to initialize model adapter:', error);
+    } catch (error) {
+      logger.error('Failed to initialize model adapter:', error as Error);
       throw error;
     }
   }
@@ -125,7 +126,7 @@ export class AIService {
   /**
    * Returns the currently active model adapter.
    * Useful for direct access to provider-specific functionality.
-   * 
+   *
    * @returns The currently active AI model adapter
    */
   public getProvider(): AIModelAdapter {
@@ -135,7 +136,7 @@ export class AIService {
   /**
    * Cancels all pending AI operations.
    * This is useful for aborting operations when the user changes context or requests cancellation.
-   * 
+   *
    * @param reason - Optional reason for cancellation for logging purposes
    */
   public cancelAllOperations(reason: string = 'User cancelled operation'): void {
@@ -143,21 +144,21 @@ export class AIService {
       this.modelAdapter.cancelAllRequests(reason);
     }
   }
-  
+
   /**
    * Sets the current operation type for consent management
-   * 
+   *
    * This method allows the AI service to track which operation type is being performed
    * so that it can enforce user consent requirements for different types of AI operations.
    * Each operation type (e.g., summarize, categorize, analyze) may have different consent
    * requirements or privacy implications.
-   * 
+   *
    * @param operationType - The type of operation being performed (e.g., 'summarize', 'categorize')
    * @throws Error if the user has not consented to this operation type
    */
   public setOperationType(operationType: string): void {
     this.operationType = operationType;
-    
+
     // Check if this adapter has consent checking capabilities
     if (this.modelAdapter && typeof this.modelAdapter.checkConsentFor === 'function') {
       const hasConsent = this.modelAdapter.checkConsentFor(operationType);
@@ -165,7 +166,7 @@ export class AIService {
         throw new Error(`User has not provided consent for operation type: ${operationType}`);
       }
     }
-    
+
     // Update options with the operation type for potential provider-specific handling
     this.options = {
       ...this.options,
@@ -176,7 +177,7 @@ export class AIService {
   /**
    * Changes the active AI provider and model.
    * This allows switching between different AI services during runtime.
-   * 
+   *
    * @param provider - The AI provider to use
    * @param modelName - Optional specific model name to use with the provider
    * @param options - Optional configuration options for the AI model
@@ -191,11 +192,11 @@ export class AIService {
         options: { ...this.options, ...options },
         credentialService: secureCredentialService
       });
-    } catch (_error) {
+    } catch (error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
-      console.error(
-        `Failed to set provider ${provider}:`,
-        typedError.message,
+      logger.error(
+        `Failed to set provider ${provider}`,
+        typedError,
         { modelName, provider }
       );
       const initError = new Error(
@@ -209,7 +210,7 @@ export class AIService {
   /**
    * Generates a concise summary of a collection of todos.
    * The summary focuses on key themes and priorities across the todos.
-   * 
+   *
    * @param todos - Array of todo items to summarize
    * @returns Promise resolving to a string summary
    * @throws Error if summarization fails
@@ -217,17 +218,17 @@ export class AIService {
   async summarize(todos: Todo[]): Promise<string> {
     // Set operation type for consent management
     this.setOperationType('summarize');
-    
+
     // Input validation: check for empty todos
     if (!todos || !Array.isArray(todos) || todos.length === 0) {
       throw new Error('Cannot summarize empty todo list');
     }
-    
+
     // Input validation: check for maximum input size to prevent DoS
     if (todos.length > 500) {
       throw new Error('Input exceeds maximum allowed size for summarization');
     }
-    
+
     const prompt = PromptTemplate.fromTemplate(
       `Summarize the following todos in 2-3 sentences, focusing on key themes and priorities:\n\n{todos}`
     );
@@ -237,17 +238,9 @@ export class AIService {
     const todoStr = sanitizedTodos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
 
     try {
-      // Apply differential privacy if enabled in options
-      const privacyEnabled = this.options.differentialPrivacy === true;
-      // privacyOptions would be used for differential privacy
-      // const privacyOptions = privacyEnabled ? {
-      //   ...this.options,
-      //   noiseFactor: this.options.epsilon || 0.5,
-      // } : this.options;
-      
       const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr });
       return response.result;
-    } catch (_error) {
+    } catch (error) {
       // Ensure no sensitive data in error message
       const typedError = error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
@@ -256,11 +249,11 @@ export class AIService {
       throw summaryError;
     }
   }
-  
+
   /**
    * Sanitizes a todo object for privacy by removing sensitive or unnecessary fields
    * and detecting/anonymizing PII in content fields
-   * 
+   *
    * @param todo - The todo object to sanitize
    * @returns A sanitized copy of the todo with minimal required fields
    */
@@ -271,34 +264,34 @@ export class AIService {
       title: this.anonymizePII(todo.title),
       completed: todo.completed
     };
-    
+
     // Only include description if present
     if (todo.description) {
       sanitized.description = this.anonymizePII(todo.description);
     }
-    
+
     // Only include priority if present
     if (todo.priority) {
       sanitized.priority = todo.priority;
     }
-    
+
     // Only include tags if present (but as a new array to prevent reference issues)
     if (todo.tags && Array.isArray(todo.tags)) {
       sanitized.tags = [...todo.tags];
     }
-    
+
     return sanitized;
   }
-  
+
   /**
    * Detects and anonymizes personally identifiable information (PII) in text
-   * 
+   *
    * @param text - The text to anonymize
    * @returns Anonymized text with PII replaced
    */
   private anonymizePII(text: string): string {
     if (!text) return text;
-    
+
     // Common PII patterns
     const piiPatterns: Array<{pattern: RegExp, replacement: string}> = [
       // Email addresses
@@ -314,19 +307,19 @@ export class AIService {
       // Likely names (simplified pattern)
       {pattern: /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, replacement: '[NAME]'}
     ];
-    
+
     // Apply each pattern
     let anonymized = text;
     for (const {pattern, replacement} of piiPatterns) {
       anonymized = anonymized.replace(pattern, replacement);
     }
-    
+
     return anonymized;
   }
-  
+
   /**
    * Sanitizes error messages to remove any potentially sensitive information
-   * 
+   *
    * @param message - The error message to sanitize
    * @returns Sanitized error message
    */
@@ -336,21 +329,21 @@ export class AIService {
     let sanitized = message.replace(apiKeyPattern, (m, key) => {
       return m.replace(key, '[REDACTED]');
     });
-    
+
     // Redact PII
     sanitized = this.anonymizePII(sanitized);
-    
+
     // Remove detailed paths
     sanitized = sanitized.replace(/(?:\/[\w.-]+){3,}/g, '[PATH]');
-    
+
     return sanitized;
   }
-  
+
   /**
    * Generates a summary with blockchain verification for provability.
    * Creates a cryptographic proof of the summary that can be verified on-chain.
    * Verification details depend on the specified privacy level.
-   * 
+   *
    * @param todos - Array of todo items to summarize
    * @param privacyLevel - Level of privacy for blockchain verification
    * @returns Promise resolving to a verified result containing the summary
@@ -363,7 +356,7 @@ export class AIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const summary = await this.summarize(todos);
     return this.verificationService.createVerifiedSummary(todos, summary, privacyLevel);
   }
@@ -371,31 +364,31 @@ export class AIService {
   /**
    * Categorizes todos into logical groups based on their content and purpose.
    * Uses AI to determine optimal categorization based on todo titles and descriptions.
-   * 
+   *
    * @param todos - Array of todo items to categorize
    * @returns Promise resolving to a map of category names to arrays of todo IDs
    */
   async categorize(todos: Todo[]): Promise<Record<string, string[]>> {
     // Set operation type for consent management
     this.setOperationType('categorize');
-    
+
     // Input validation: check for empty todos
     if (!todos || !Array.isArray(todos) || todos.length === 0) {
       throw new Error('Cannot categorize empty todo list');
     }
-    
+
     // Input validation: check for maximum input size to prevent DoS
     if (todos.length > 500) {
       throw new Error('Input exceeds maximum allowed size for categorization');
     }
-    
+
     const prompt = PromptTemplate.fromTemplate(
       `Categorize the following todos into logical groups. Return the result as a JSON object where keys are category names and values are arrays of todo IDs.\n\n{todos}`
     );
 
     // Format todos with minimal required fields and sanitize data
     const sanitizedTodos = todos.map(t => this.sanitizeTodo(t));
-    const todoStr = sanitizedTodos.map(t => 
+    const todoStr = sanitizedTodos.map(t =>
       `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
     ).join('\n');
 
@@ -406,29 +399,29 @@ export class AIService {
         ...this.options,
         noiseFactor: this.options.epsilon || 0.5,
         temperature: 0.5
-      } : { 
-        ...this.options, 
-        temperature: 0.5 
+      } : {
+        ...this.options,
+        temperature: 0.5
       };
-      
+
       const response = await this.modelAdapter.completeStructured<Record<string, string[]>>({
         prompt,
         input: { todos: todoStr },
         options: privacyOptions,
         metadata: { operation: 'categorize' }
       });
-      
+
       // Validate response structure to prevent prototype pollution or invalid data
       const result = response.result || {};
       const sanitizedResult: Record<string, string[]> = {};
-      
+
       // Ensure valid structure in the response
       Object.keys(result).forEach(category => {
         // Guard against prototype pollution or malformed response
         if (category === '__proto__' || category === 'constructor' || category === 'prototype') {
           return;
         }
-        
+
         // Ensure values are arrays of strings
         const ids = result[category];
         if (Array.isArray(ids)) {
@@ -437,7 +430,7 @@ export class AIService {
       });
 
       return sanitizedResult;
-    } catch (_error) {
+    } catch (error) {
       // Ensure no sensitive data in error message
       const typedError = error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
@@ -446,11 +439,11 @@ export class AIService {
       throw categorizeError;
     }
   }
-  
+
   /**
    * Categorizes todos with blockchain verification for provability.
    * Creates a cryptographic proof of the categorization that can be verified on-chain.
-   * 
+   *
    * @param todos - Array of todo items to categorize
    * @param privacyLevel - Level of privacy for blockchain verification
    * @returns Promise resolving to a verified result containing categorization
@@ -463,7 +456,7 @@ export class AIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const categories = await this.categorize(todos);
     return this.verificationService.createVerifiedCategorization(todos, categories, privacyLevel);
   }
@@ -472,7 +465,7 @@ export class AIService {
    * Prioritizes todos based on importance, urgency, and dependencies.
    * Uses AI to score todos on a 1-10 scale (10 being highest priority).
    * The scoring takes into account implicit relationships between tasks.
-   * 
+   *
    * @param todos - Array of todo items to prioritize
    * @returns Promise resolving to a map of todo IDs to priority scores (1-10)
    */
@@ -494,11 +487,11 @@ export class AIService {
 
     return response.result || {};
   }
-  
+
   /**
    * Prioritizes todos with blockchain verification for provability.
    * Creates a cryptographic proof of the prioritization that can be verified on-chain.
-   * 
+   *
    * @param todos - Array of todo items to prioritize
    * @param privacyLevel - Level of privacy for blockchain verification
    * @returns Promise resolving to a verified result containing prioritization
@@ -511,7 +504,7 @@ export class AIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const priorities = await this.prioritize(todos);
     return this.verificationService.createVerifiedPrioritization(todos, priorities, privacyLevel);
   }
@@ -520,7 +513,7 @@ export class AIService {
    * Suggests new todos based on the context of existing ones.
    * Uses AI to identify logical next steps or related tasks that would complement
    * the current todo list, helping users complete projects more effectively.
-   * 
+   *
    * @param todos - Array of existing todo items to base suggestions on
    * @returns Promise resolving to an array of suggested todo titles
    */
@@ -543,11 +536,11 @@ export class AIService {
 
     return response.result || [];
   }
-  
+
   /**
    * Suggests new todos with blockchain verification for provability.
    * Creates a cryptographic proof of the suggestions that can be verified on-chain.
-   * 
+   *
    * @param todos - Array of existing todo items to base suggestions on
    * @param privacyLevel - Level of privacy for blockchain verification
    * @returns Promise resolving to a verified result containing suggestions
@@ -560,17 +553,17 @@ export class AIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const suggestions = await this.suggest(todos);
     return this.verificationService.createVerifiedSuggestion(todos, suggestions, privacyLevel);
   }
 
   /**
    * Analyzes todos for patterns, dependencies, and provides insights.
-   * Generates a comprehensive analysis including themes, bottlenecks, 
+   * Generates a comprehensive analysis including themes, bottlenecks,
    * time estimates, and workflow suggestions to help users better understand
    * and organize their work.
-   * 
+   *
    * @param todos - Array of todo items to analyze
    * @returns Promise resolving to a structured analysis object
    */
@@ -598,11 +591,11 @@ export class AIService {
 
     return response.result || {};
   }
-  
+
   /**
    * Analyzes todos with blockchain verification for provability.
    * Creates a cryptographic proof of the analysis that can be verified on-chain.
-   * 
+   *
    * @param todos - Array of todo items to analyze
    * @param privacyLevel - Level of privacy for blockchain verification
    * @returns Promise resolving to a verified result containing analysis
@@ -624,7 +617,7 @@ export class AIService {
    * Suggests relevant tags for a single todo based on its content.
    * Uses AI to identify 2-4 tags that categorize the todo for better organization
    * and searchability.
-   * 
+   *
    * @param todo - The todo item to generate tags for
    * @returns Promise resolving to an array of suggested tags
    * @throws Error if tag suggestion or response parsing fails
@@ -643,11 +636,11 @@ export class AIService {
       // Parse the JSON array response
       try {
         return JSON.parse(response.result);
-      } catch (_error) {
-        console.error('Failed to parse suggested tags:', error);
+      } catch (error) {
+        logger.error('Failed to parse suggested tags:', error as Error);
         throw new Error('Failed to parse tags response: ' + response.result);
       }
-    } catch (_error) {
+    } catch (error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
       const tagsError = new Error(`Failed to suggest tags: ${typedError.message}`);
       (tagsError as Error & { cause?: Error }).cause = typedError;
@@ -659,7 +652,7 @@ export class AIService {
    * Suggests a priority level for a single todo based on its content.
    * Uses AI to determine if the todo should be high, medium, or low priority
    * based on the title and description. Defaults to medium priority if analysis fails.
-   * 
+   *
    * @param todo - The todo item to suggest priority for
    * @returns Promise resolving to 'high', 'medium', or 'low' priority
    */
@@ -679,11 +672,11 @@ export class AIService {
       if (['high', 'medium', 'low'].includes(priority)) {
         return priority as 'high' | 'medium' | 'low';
       } else {
-        console.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);
+        logger.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);
         return 'medium';
       }
-    } catch (_error) {
-      console.error('Priority suggestion error:', error);
+    } catch (error) {
+      logger.error('Priority suggestion error:', error as Error);
       return 'medium'; // Default to medium on error
     }
   }

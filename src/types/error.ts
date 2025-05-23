@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../utils/Logger';
+
+const logger = new Logger('error');
  * @file Error handling system for the Walrus Todo CLI application.
  * @description This module defines the core error handling infrastructure,
  * including interfaces, type guards, helper functions, and base error classes.
@@ -27,7 +30,7 @@ export interface ErrorWithMessage {
  * 
  * @example
  * if (isErrorWithMessage(result)) {
- *   console.error(result.message);
+ *   logger.error(result.message);
  * }
  */
 export function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
@@ -60,7 +63,7 @@ export function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
 
   try {
     return new Error(JSON.stringify(maybeError));
-  } catch {
+  } catch (error: unknown) {
     // Fallback in case there's an error stringifying the maybeError
     // Like with circular references for example.
     return new Error(String(maybeError));
@@ -79,7 +82,7 @@ export function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
  * try {
  *   await todoService.create(input);
  * } catch (err) {
- *   console.error(`Failed to create todo: ${getErrorMessage(err)}`);
+ *   logger.error(`Failed to create todo: ${getErrorMessage(err)}`);
  * }
  */
 export function getErrorMessage(error: unknown): string {

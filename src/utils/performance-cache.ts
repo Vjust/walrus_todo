@@ -32,7 +32,7 @@ interface CacheStatistics {
   lastReset: Date;
 }
 
-export class PerformanceCache<T = any> {
+export class PerformanceCache<T = unknown> {
   private cache: Map<string, CacheEntry<T>> = new Map();
   private readonly logger = Logger.getInstance();
   private statistics: CacheStatistics = {
@@ -234,7 +234,7 @@ export class PerformanceCache<T = any> {
       await fs.writeFile(cacheFile, JSON.stringify(cacheData, null, 2));
       
       this.logger.debug('Cache persisted to disk', { file: cacheFile });
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to persist cache', error);
     }
   }
@@ -278,7 +278,7 @@ export class PerformanceCache<T = any> {
       if (this.options.strategy === 'TTL') {
         await this.cleanExpiredEntries();
       }
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to load cache from disk', error);
     }
   }
@@ -350,22 +350,22 @@ export function createCache<T>(
 }
 
 // Predefined cache instances
-export const configCache = createCache<any>('config', {
+export const configCache = createCache<Record<string, unknown>>('config', {
   strategy: 'TTL',
   ttlMs: 3600000 // 1 hour
 });
 
-export const todoListCache = createCache<any>('todos', {
+export const todoListCache = createCache<{ todos: Array<unknown> }>('todos', {
   strategy: 'LRU',
   maxSize: 100
 });
 
-export const blockchainQueryCache = createCache<any>('blockchain', {
+export const blockchainQueryCache = createCache<Record<string, unknown>>('blockchain', {
   strategy: 'TTL',
   ttlMs: 300000 // 5 minutes
 });
 
-export const aiResponseCache = createCache<any>('ai-responses', {
+export const aiResponseCache = createCache<{ result: unknown; metadata?: Record<string, unknown> }>('ai-responses', {
   strategy: 'TTL',
   ttlMs: AI_CONFIG.CACHE_TTL_MS,
   maxSize: AI_CONFIG.CACHE_MAX_ENTRIES

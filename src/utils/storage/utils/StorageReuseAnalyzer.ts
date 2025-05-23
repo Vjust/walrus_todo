@@ -241,7 +241,7 @@ export class StorageReuseAnalyzer {
         hasViableStorage: viableStorage.length > 0,
         recommendation
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError) {
         throw error;
       }
@@ -342,7 +342,7 @@ export class StorageReuseAnalyzer {
         },
         detailedRecommendation
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError) {
         throw error;
       }

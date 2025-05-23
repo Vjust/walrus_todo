@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('store-full-list');
 
 /**
  * Script to store an entire list to Walrus storage as a single transaction
@@ -14,8 +17,8 @@ const execPromise = promisify(exec);
 
 // Check for list argument
 if (process.argv.length < 3) {
-  console.error('Error: Missing list name argument');
-  console.error('Usage: node store-full-list.js <list-name> [--mock]');
+  logger.error('Error: Missing list name argument');
+  logger.error('Usage: node store-full-list.js <list-name> [--mock]');
   process.exit(1);
 }
 
@@ -29,14 +32,14 @@ async function loadTodoList(listName) {
     const listFilePath = path.join(process.cwd(), todosDir, `${listName}.json`);
     
     if (!fs.existsSync(listFilePath)) {
-      console.error(`Error: List "${listName}" not found at ${listFilePath}`);
+      logger.error(`Error: List "${listName}" not found at ${listFilePath}`);
       process.exit(1);
     }
     
     const listData = JSON.parse(fs.readFileSync(listFilePath, 'utf-8'));
     return listData;
   } catch (error) {
-    console.error(`Error loading list: ${error.message}`);
+    logger.error(`Error loading list: ${error.message}`);
     process.exit(1);
   }
 }
@@ -49,46 +52,46 @@ async function storeEntireList(listData, listName) {
     const tempFilePath = path.join(process.cwd(), tempFileName);
     
     fs.writeFileSync(tempFilePath, JSON.stringify(listData, null, 2));
-    console.log(`Created temporary file: ${tempFilePath}`);
+    logger.info(`Created temporary file: ${tempFilePath}`);
     
     // Build command with options
     const mockFlag = mockMode ? ' --mock' : '';
     const command = `waltodo store-list --file ${tempFilePath}${mockFlag}`;
     
-    console.log(`Storing entire list: ${listName} (${listData.todos.length} todos)`);
+    logger.info(`Storing entire list: ${listName} (${listData.todos.length} todos)`);
     
     try {
       const { stdout, stderr } = await execPromise(command);
       
       if (stderr && !stderr.includes('warning')) {
-        console.error(`Error: ${stderr}`);
+        logger.error(`Error: ${stderr}`);
         return false;
       }
       
-      console.log(stdout);
-      console.log(`Successfully stored entire list: ${listName}`);
+      logger.info(stdout);
+      logger.info(`Successfully stored entire list: ${listName}`);
       return true;
     } catch (execError) {
       // If store-list command doesn't exist, suggest alternative
       if (execError.message.includes('command not found') || 
           execError.message.includes('is not recognized')) {
-        console.error(`The 'store-list' command is not available.`);
-        console.log(`\nAlternative approach: Use store-all-list.js to store todos individually:`);
-        console.log(`node scripts/store-all-list.js ${listName}${mockMode ? ' --mock' : ''}`);
+        logger.error(`The 'store-list' command is not available.`);
+        logger.info(`\nAlternative approach: Use store-all-list.js to store todos individually:`);
+        logger.info(`node scripts/store-all-list.js ${listName}${mockMode ? ' --mock' : ''}`);
         return false;
       }
       
-      console.error(`Command execution failed: ${execError.message}`);
+      logger.error(`Command execution failed: ${execError.message}`);
       return false;
     } finally {
       // Clean up the temporary file
       if (fs.existsSync(tempFilePath)) {
         fs.unlinkSync(tempFilePath);
-        console.log(`Removed temporary file: ${tempFilePath}`);
+        logger.info(`Removed temporary file: ${tempFilePath}`);
       }
     }
   } catch (error) {
-    console.error(`Failed to store list: ${error.message}`);
+    logger.error(`Failed to store list: ${error.message}`);
     return false;
   }
 }
@@ -96,27 +99,27 @@ async function storeEntireList(listData, listName) {
 // Main function
 async function main() {
   try {
-    console.log(`Loading list: ${listName}`);
+    logger.info(`Loading list: ${listName}`);
     const listData = await loadTodoList(listName);
     
     if (!listData.todos || listData.todos.length === 0) {
-      console.log(`No todos found in list "${listName}"`);
+      logger.info(`No todos found in list "${listName}"`);
       process.exit(0);
     }
     
-    console.log(`Found ${listData.todos.length} todos in list "${listName}"`);
+    logger.info(`Found ${listData.todos.length} todos in list "${listName}"`);
     
     // Attempt to store the entire list
     const success = await storeEntireList(listData, listName);
     
     // Provide a summary
-    console.log('\nSummary:');
-    console.log(`List name: ${listName}`);
-    console.log(`Total todos: ${listData.todos.length}`);
-    console.log(`Store operation: ${success ? 'Successful' : 'Failed'}`);
+    logger.info('\nSummary:');
+    logger.info(`List name: ${listName}`);
+    logger.info(`Total todos: ${listData.todos.length}`);
+    logger.info(`Store operation: ${success ? 'Successful' : 'Failed'}`);
     
   } catch (error) {
-    console.error(`Unexpected error: ${error.message}`);
+    logger.error(`Unexpected error: ${error.message}`);
     process.exit(1);
   }
 }

@@ -9,7 +9,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { 
   PermissionUser, 
   AuthResult, 

@@ -460,16 +460,6 @@
       "flags": {},
       "args": [],
       "path": "./dist/src/commands/system/audit"
-    },
-    "todos": {
-      "id": "todos",
-      "description": "todos command",
-      "pluginName": "waltodo",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": [],
-      "path": "./dist/src/commands/todos/index"
     }
   },
   "topics": {
@@ -487,9 +477,6 @@
     },
     "simple": {
       "description": "Simple todo management commands"
-    },
-    "todos": {
-      "description": "Todos management commands"
     }
   }
 }

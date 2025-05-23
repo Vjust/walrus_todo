@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('update-mysten-imports');
 
 const fs = require('fs');
 const path = require('path');
@@ -14,12 +17,12 @@ function updateImportsInFile(filePath) {
     
     if (content !== originalContent) {
       fs.writeFileSync(filePath, content);
-      console.log(`Updated imports in: ${filePath}`);
+      logger.info(`Updated imports in: ${filePath}`);
       return true;
     }
     return false;
   } catch (error) {
-    console.error(`Error processing ${filePath}:`, error);
+    logger.error(`Error processing ${filePath}:`, error);
     return false;
   }
 }
@@ -46,14 +49,14 @@ function findAndUpdateFiles() {
     });
   });
   
-  console.log(`\nProcessed ${totalFiles} files`);
-  console.log(`Updated ${updatedFiles} files`);
+  logger.info(`\nProcessed ${totalFiles} files`);
+  logger.info(`Updated ${updatedFiles} files`);
 }
 
 async function main() {
-  console.log('Updating @mysten/sui imports to @mysten/sui...');
+  logger.info('Updating @mysten/sui imports to @mysten/sui...');
   await findAndUpdateFiles();
-  console.log('Done!');
+  logger.info('Done!');
 }
 
 main().catch(console.error);

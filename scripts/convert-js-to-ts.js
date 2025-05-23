@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('convert-js-to-ts');
 
 /**
  * Command Standardization Script
@@ -40,7 +43,7 @@ async function main() {
   switch (command) {
     case 'convert':
       if (!target) {
-        console.error('Command name is required for convert operation');
+        logger.error('Command name is required for convert operation');
         process.exit(1);
       }
       await convertCommand(target);
@@ -50,7 +53,7 @@ async function main() {
       break;
     case 'cleanup':
       if (!target) {
-        console.error('Command name is required for cleanup operation');
+        logger.error('Command name is required for cleanup operation');
         process.exit(1);
       }
       cleanupCommand(target);
@@ -62,7 +65,7 @@ async function main() {
       analyzeCommands();
       break;
     default:
-      console.error(`Unknown command: ${command}`);
+      logger.error(`Unknown command: ${command}`);
       printUsage();
       process.exit(1);
   }
@@ -72,7 +75,7 @@ async function main() {
  * Print usage instructions
  */
 function printUsage() {
-  console.log(`
+  logger.info(`
 Command Standardization Script
 
 Usage:
@@ -93,26 +96,26 @@ Options:
 function analyzeCommands() {
   const commands = getCommandFiles();
   
-  console.log('\nCommand Analysis:\n');
+  logger.info('\nCommand Analysis:\n');
   
   // Count statistics
   const tsOnly = commands.filter(cmd => cmd.hasTS && !cmd.hasJS);
   const jsOnly = commands.filter(cmd => !cmd.hasTS && cmd.hasJS);
   const both = commands.filter(cmd => cmd.hasTS && cmd.hasJS);
   
-  console.log(`Total commands: ${commands.length}`);
-  console.log(`TypeScript only: ${tsOnly.length}`);
-  console.log(`JavaScript only: ${jsOnly.length}`);
-  console.log(`Both JS and TS: ${both.length}`);
+  logger.info(`Total commands: ${commands.length}`);
+  logger.info(`TypeScript only: ${tsOnly.length}`);
+  logger.info(`JavaScript only: ${jsOnly.length}`);
+  logger.info(`Both JS and TS: ${both.length}`);
   
-  console.log('\nCommands needing conversion (JS only):');
-  jsOnly.forEach(cmd => console.log(`  - ${cmd.name}`));
+  logger.info('\nCommands needing conversion (JS only):');
+  jsOnly.forEach(cmd => logger.info(`  - ${cmd.name}`));
   
-  console.log('\nCommands to clean up (Both JS and TS):');
-  both.forEach(cmd => console.log(`  - ${cmd.name}`));
+  logger.info('\nCommands to clean up (Both JS and TS):');
+  both.forEach(cmd => logger.info(`  - ${cmd.name}`));
   
-  console.log('\nAlready standardized (TS only):');
-  tsOnly.forEach(cmd => console.log(`  - ${cmd.name}`));
+  logger.info('\nAlready standardized (TS only):');
+  tsOnly.forEach(cmd => logger.info(`  - ${cmd.name}`));
 }
 
 /**
@@ -193,21 +196,21 @@ async function convertCommand(commandName) {
   const command = commands.find(cmd => cmd.name === commandName);
   
   if (!command) {
-    console.error(`Command ${commandName} not found`);
+    logger.error(`Command ${commandName} not found`);
     return;
   }
   
   if (!command.hasJS) {
-    console.error(`Command ${commandName} does not have a JS file to convert`);
+    logger.error(`Command ${commandName} does not have a JS file to convert`);
     return;
   }
   
   if (command.hasTS) {
-    console.log(`Command ${commandName} already has a TS file. Skipping conversion.`);
+    logger.info(`Command ${commandName} already has a TS file. Skipping conversion.`);
     return;
   }
   
-  console.log(`Converting ${commandName}...`);
+  logger.info(`Converting ${commandName}...`);
   
   // Determine the TS path from the JS path
   const tsPath = command.jsPath.replace(/\.js$/, '.ts');
@@ -218,7 +221,7 @@ async function convertCommand(commandName) {
   // Skip simple forwarding files
   if (jsContent.includes('module.exports = require(') ||
       jsContent.trim().length < 50) {
-    console.log(`Command ${commandName} is a simple wrapper. Creating a TypeScript version.`);
+    logger.info(`Command ${commandName} is a simple wrapper. Creating a TypeScript version.`);
     
     // For simple wrappers, create a proper TypeScript file
     createStandardTypeScriptFile(commandName, tsPath);
@@ -226,13 +229,13 @@ async function convertCommand(commandName) {
   }
   
   // For complex JS files, convert them to TypeScript
-  console.log(`Command ${commandName} is complex. Converting to TypeScript...`);
+  logger.info(`Command ${commandName} is complex. Converting to TypeScript...`);
   
   // This is where you'd implement the actual conversion
   // For now, we'll just create a standard template
   createStandardTypeScriptFile(commandName, tsPath);
   
-  console.log(`Successfully converted ${commandName} to TypeScript`);
+  logger.info(`Successfully converted ${commandName} to TypeScript`);
 }
 
 /**
@@ -242,13 +245,13 @@ async function convertAllCommands() {
   const commands = getCommandFiles();
   const jsOnly = commands.filter(cmd => !cmd.hasTS && cmd.hasJS);
   
-  console.log(`Found ${jsOnly.length} commands to convert`);
+  logger.info(`Found ${jsOnly.length} commands to convert`);
   
   for (const command of jsOnly) {
     await convertCommand(command.name);
   }
   
-  console.log('Conversion complete!');
+  logger.info('Conversion complete!');
 }
 
 /**
@@ -259,29 +262,29 @@ function cleanupCommand(commandName) {
   const command = commands.find(cmd => cmd.name === commandName);
   
   if (!command) {
-    console.error(`Command ${commandName} not found`);
+    logger.error(`Command ${commandName} not found`);
     return;
   }
   
   if (!command.hasJS) {
-    console.log(`Command ${commandName} does not have a JS file to clean up`);
+    logger.info(`Command ${commandName} does not have a JS file to clean up`);
     return;
   }
   
   if (!command.hasTS) {
-    console.error(`Command ${commandName} does not have a TS file. Cannot remove JS file.`);
+    logger.error(`Command ${commandName} does not have a TS file. Cannot remove JS file.`);
     return;
   }
   
   // Remove the JS file
-  console.log(`Removing JS file for ${commandName}...`);
+  logger.info(`Removing JS file for ${commandName}...`);
   if (!DRY_RUN) {
     fs.unlinkSync(command.jsPath);
   } else {
-    console.log(`DRY RUN: Would remove ${command.jsPath}`);
+    logger.info(`DRY RUN: Would remove ${command.jsPath}`);
   }
   
-  console.log(`Successfully removed JS file for ${commandName}`);
+  logger.info(`Successfully removed JS file for ${commandName}`);
 }
 
 /**
@@ -291,13 +294,13 @@ function cleanupAllCommands() {
   const commands = getCommandFiles();
   const both = commands.filter(cmd => cmd.hasTS && cmd.hasJS);
   
-  console.log(`Found ${both.length} commands to clean up`);
+  logger.info(`Found ${both.length} commands to clean up`);
   
   both.forEach(command => {
     cleanupCommand(command.name);
   });
   
-  console.log('Cleanup complete!');
+  logger.info('Cleanup complete!');
 }
 
 /**
@@ -378,14 +381,14 @@ export default class ${className}Command extends BaseCommand {
   if (!DRY_RUN) {
     fs.writeFileSync(tsPath, template);
   } else {
-    console.log(`DRY RUN: Would create ${tsPath}`);
-    console.log('Template:');
-    console.log(template);
+    logger.info(`DRY RUN: Would create ${tsPath}`);
+    logger.info('Template:');
+    logger.info(template);
   }
 }
 
 // Run main function
 main().catch(error => {
-  console.error('An error occurred:', error);
+  logger.error('An error occurred:', error);
   process.exit(1);
 });

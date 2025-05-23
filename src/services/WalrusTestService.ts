@@ -1,5 +1,5 @@
 import { Todo, TodoList } from '../types/todo';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 export interface IWalrusService {
   storeTodo(todo: Todo): Promise<string>;
@@ -21,7 +21,7 @@ export class WalrusTestService implements IWalrusService {
       const blobId = `mock_todo_${todo.id}`;
       this.todos.set(blobId, {...todo, walrusBlobId: blobId});
       return blobId;
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to store todo: ${error instanceof Error ? error.message : String(error)}`,
         'STORE_TODO_FAILED'
@@ -42,7 +42,7 @@ export class WalrusTestService implements IWalrusService {
       const blobId = `mock_list_${list.id}`;
       this.lists.set(blobId, {...list, walrusBlobId: blobId});
       return blobId;
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to store todo list: ${error instanceof Error ? error.message : String(error)}`,
         'STORE_LIST_FAILED'

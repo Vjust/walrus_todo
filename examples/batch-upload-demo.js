@@ -1,3 +1,6 @@
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('batch-upload-demo');
 #!/usr/bin/env node
 
 /**
@@ -68,24 +71,24 @@ async function runBatchUploadDemo() {
   runCommand(batchCmd);
 
   // Show final status
-  console.log(chalk.yellow('\nStep 4: Checking final status...'));
+  logger.info(chalk.yellow('\nStep 4: Checking final status...'));
   runCommand(`waltodo list ${listName} --detailed`);
 
-  console.log(chalk.green.bold('\n✅ Batch Upload Demo Complete!\n'));
-  console.log(chalk.white('Key features demonstrated:'));
-  console.log(chalk.white('  • Created multiple todos with different attributes'));
-  console.log(chalk.white('  • Uploaded all todos in batch with progress tracking'));
-  console.log(chalk.white('  • Used custom batch size for concurrent uploads'));
-  console.log(chalk.white('  • Showed cache optimization and upload statistics'));
+  logger.info(chalk.green.bold('\n✅ Batch Upload Demo Complete!\n'));
+  logger.info(chalk.white('Key features demonstrated:'));
+  logger.info(chalk.white('  • Created multiple todos with different attributes'));
+  logger.info(chalk.white('  • Uploaded all todos in batch with progress tracking'));
+  logger.info(chalk.white('  • Used custom batch size for concurrent uploads'));
+  logger.info(chalk.white('  • Showed cache optimization and upload statistics'));
   
-  console.log(chalk.cyan('\nTry it yourself:'));
-  console.log(chalk.white(`  waltodo store --all --list ${listName} --batch-size 5`));
-  console.log(chalk.white(`  waltodo store --all --list ${listName} --network mainnet`));
-  console.log(chalk.white(`  waltodo store --all --list ${listName} --epochs 10`));
+  logger.info(chalk.cyan('\nTry it yourself:'));
+  logger.info(chalk.white(`  waltodo store --all --list ${listName} --batch-size 5`));
+  logger.info(chalk.white(`  waltodo store --all --list ${listName} --network mainnet`));
+  logger.info(chalk.white(`  waltodo store --all --list ${listName} --epochs 10`));
 }
 
 // Run the demo
 runBatchUploadDemo().catch(error => {
-  console.error(chalk.red('Demo failed:'), error);
+  logger.error(chalk.red('Demo failed:'), error);
   process.exit(1);
 });

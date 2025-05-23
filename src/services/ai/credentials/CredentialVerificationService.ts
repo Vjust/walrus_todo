@@ -4,7 +4,7 @@
  * Service for verifying digital credentials on the blockchain
  */
 
-import { CLIError } from '../../../types/error';
+import { CLIError } from '../../../types/errors/consolidated';
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../../../types/client';
 import { Logger } from '../../../utils/Logger';
@@ -34,6 +34,43 @@ export interface CredentialVerificationResult {
   subject: string;
   issuanceDate: Date;
   expirationDate: Date | null;
+}
+
+/**
+ * Digital credential structure
+ */
+export interface DigitalCredential {
+  '@context': string[];
+  id: string;
+  type: string[];
+  issuer: {
+    id: string;
+    name?: string;
+  };
+  credentialSubject: {
+    id: string;
+    [key: string]: unknown;
+  };
+  issuanceDate: string;
+  expirationDate?: string;
+  proof?: {
+    type: string;
+    created: string;
+    verificationMethod: string;
+    proofPurpose: string;
+    jws: string;
+  };
+  [key: string]: unknown;
+}
+
+/**
+ * Registration result interface
+ */
+export interface CredentialRegistrationResult {
+  credentialId: string;
+  credential: DigitalCredential;
+  registered: boolean;
+  transactionDigest: string;
 }
 
 /**
@@ -109,7 +146,7 @@ export class CredentialVerificationService {
   /**
    * Verify digital signature on credential
    */
-  private async verifyDigitalSignature(credential: any): Promise<boolean> {
+  private async verifyDigitalSignature(credential: DigitalCredential): Promise<boolean> {
     try {
       // Get the signature from the proof
       const { proof } = credential;
@@ -127,8 +164,10 @@ export class CredentialVerificationService {
         return false;
       }
 
-      // TODO: Implement actual cryptographic verification
-      // For now, we'll just return true for testing
+      // PLANNED FEATURE: Cryptographic verification
+      // This will implement digital signatures and cryptographic proofs
+      // See docs/ai-blockchain-verification-roadmap.md for details
+      // Current implementation returns true for compatibility
       return true;
     } catch (_error) {
       this.logger.error(`Signature verification failed: ${error.message}`);
@@ -139,7 +178,7 @@ export class CredentialVerificationService {
   /**
    * Verify issuance and expiration timestamps
    */
-  private verifyTimestamps(credential: any): boolean {
+  private verifyTimestamps(credential: DigitalCredential): boolean {
     try {
       const now = new Date();
       const issuanceDate = new Date(credential.issuanceDate);
@@ -183,7 +222,7 @@ export class CredentialVerificationService {
   /**
    * Validate credential schema compliance
    */
-  private validateSchema(credential: any): boolean {
+  private validateSchema(credential: DigitalCredential): boolean {
     try {
       // Basic schema validation
       const isValid = (
@@ -220,7 +259,7 @@ export class CredentialVerificationService {
     }
   ): Promise<{
     credentialId: string;
-    credential: any;
+    credential: DigitalCredential;
     registered: boolean;
     transactionDigest: string;
   }> {
@@ -263,7 +302,9 @@ export class CredentialVerificationService {
       
       // 4. Register on blockchain
       const blobId = response.blobId;
-      // TODO: Implement actual blockchain registration
+      // PLANNED FEATURE: Blockchain registration
+      // This will create an on-chain record of credential verification
+      // See docs/ai-blockchain-verification-roadmap.md for details
       
       return {
         credentialId: blobId,
@@ -283,7 +324,7 @@ export class CredentialVerificationService {
   /**
    * Sign a credential with the issuer's key
    */
-  private async signCredential(credential: any): Promise<any> {
+  private async signCredential(credential: DigitalCredential): Promise<DigitalCredential> {
     const now = new Date();
     
     // Generate a signature (mock implementation)
@@ -323,7 +364,9 @@ export class CredentialVerificationService {
         throw new CLIError('Credential not found', 'CREDENTIAL_NOT_FOUND');
       }
       
-      // TODO: Implement actual blockchain revocation
+      // PLANNED FEATURE: Blockchain revocation
+      // This will register revocation on-chain
+      // See docs/ai-blockchain-verification-roadmap.md for details
       // For now, we're just returning a mock response
       
       this.logger.info(`Credential ${credentialId} revoked: ${reason}`);

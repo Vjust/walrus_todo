@@ -1,12 +1,8 @@
 import { Flags, ux } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { auditLogger } from '../../utils/AuditLogger';
-// permissionService imported but not used
-// Permission types imported but not used
-// CLIError imported but not used
 import chalk from 'chalk';
-// fs imported but not used
-// path imported but not used
+import { CLIError } from '../../types/errors/consolidated';
 
 /**
  * Manage and view audit logs
@@ -15,12 +11,14 @@ export default class AuditCommand extends BaseCommand {
   static description = 'Manage and view security audit logs';
 
   static examples = [
-    '$ walrus system:audit --search',
-    '$ walrus system:audit --search --user john',
-    '$ walrus system:audit --search --action LOGIN --outcome SUCCESS',
-    '$ walrus system:audit --search --resource todo --start-date 2023-01-01',
-    '$ walrus system:audit --verify',
-    '$ walrus system:audit --configure --storage-type file --path ./custom-logs',
+    '<%= config.bin %> system:audit --search                                        # Search all logs',
+    '<%= config.bin %> system:audit --search --user john                           # Search by user',
+    '<%= config.bin %> system:audit --search --action LOGIN --outcome SUCCESS      # Filter by action',
+    '<%= config.bin %> system:audit --search --resource todo --start-date 2023-01-01  # Date range',
+    '<%= config.bin %> system:audit --verify                                       # Verify log integrity',
+    '<%= config.bin %> system:audit --configure --storage-type file --path ./logs  # Configure storage',
+    '<%= config.bin %> system:audit --export audit-report.csv                      # Export logs',
+    '<%= config.bin %> system:audit --search --severity high                       # High severity only',
   ];
 
   static flags = {
@@ -198,8 +196,11 @@ export default class AuditCommand extends BaseCommand {
         operation: { header: 'Operation' },
         outcome: { header: 'Outcome' },
       });
-    } catch (_error) {
-      this.error(`Failed to search audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to search audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -235,8 +236,11 @@ export default class AuditCommand extends BaseCommand {
         this.log(`Invalid entries: ${result.invalidEntries}`);
         this.log(chalk.yellow('This may indicate tampering or corruption of the audit logs'));
       }
-    } catch (_error) {
-      this.error(`Failed to verify audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to verify audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -275,8 +279,11 @@ export default class AuditCommand extends BaseCommand {
       auditLogger.configure(config);
 
       this.log(chalk.green('Audit logging configuration updated'));
-    } catch (_error) {
-      this.error(`Failed to configure audit logging: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to configure audit logging: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

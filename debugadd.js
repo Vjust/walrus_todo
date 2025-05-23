@@ -1,4 +1,7 @@
 // Load dotenv
+import { Logger } from './src/utils/Logger';
+
+const logger = new Logger('debugadd');
 try {
   require('dotenv').config();
   process.stdout.write('Dotenv loaded\n');
@@ -35,11 +38,11 @@ try {
     storageLocation: 'local'
   };
   
-  console.log('Calling AI service methods...');
+  logger.info('Calling AI service methods...');
   aiService.suggestTags(testTodo)
-    .then(tags => console.log('Suggested tags:', tags))
-    .catch(error => console.error('Error suggesting tags:', error));
+    .then(tags => logger.info('Suggested tags:', tags))
+    .catch(error => logger.error('Error suggesting tags:', error));
     
 } catch (error) {
-  console.error('Error with AiService:', error);
+  logger.error('Error with AiService:', error);
 }

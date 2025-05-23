@@ -43,7 +43,7 @@ describe('Walrus Protocol Integration Tests', () => {
       storedBlobs: []
     };
 
-    console.log(`Test directory: ${context.tempDir}`);
+    // console.log(`Test directory: ${context.tempDir}`); // Removed console statement
 
     // Check Walrus CLI availability
     try {
@@ -52,9 +52,9 @@ describe('Walrus Protocol Integration Tests', () => {
         timeout: 15000 
       });
       context.walrusAvailable = true;
-      console.log(`✓ Walrus CLI available: ${walrusVersion.trim()}`);
+      // console.log(`✓ Walrus CLI available: ${walrusVersion.trim() // Removed console statement}`);
     } catch (_error) {
-      console.log('⚠ Walrus CLI not available - tests will use mock mode');
+      // console.log('⚠ Walrus CLI not available - tests will use mock mode'); // Removed console statement
     }
 
     // Create test files
@@ -74,7 +74,7 @@ describe('Walrus Protocol Integration Tests', () => {
       });
     }
 
-    console.log(`✓ Created ${context.testFiles.length} test files`);
+    // console.log(`✓ Created ${context.testFiles.length} test files`); // Removed console statement
   });
 
   afterAll(async () => {
@@ -87,7 +87,7 @@ describe('Walrus Protocol Integration Tests', () => {
   describe('Walrus CLI Direct Integration', () => {
     test('should verify Walrus CLI configuration', async () => {
       if (!context.walrusAvailable) {
-        console.log('⚠ Skipping Walrus CLI tests - CLI not available');
+        // console.log('⚠ Skipping Walrus CLI tests - CLI not available'); // Removed console statement
         return;
       }
 
@@ -96,9 +96,9 @@ describe('Walrus Protocol Integration Tests', () => {
         const configPath = path.join(os.homedir(), '.config', 'walrus', 'client_config.yaml');
         
         if (fs.existsSync(configPath)) {
-          console.log('✓ Walrus configuration file found');
+          // console.log('✓ Walrus configuration file found'); // Removed console statement
         } else {
-          console.log('⚠ Walrus configuration not found - some operations may fail');
+          // console.log('⚠ Walrus configuration not found - some operations may fail'); // Removed console statement
         }
 
         // Test basic Walrus operation
@@ -108,24 +108,24 @@ describe('Walrus Protocol Integration Tests', () => {
         });
 
         expect(infoOutput).toBeTruthy();
-        console.log('✓ Walrus CLI connectivity verified');
+        // console.log('✓ Walrus CLI connectivity verified'); // Removed console statement
 
       } catch (_error) {
-        console.log(`⚠ Walrus CLI configuration issue: ${error}`);
+        // console.log(`⚠ Walrus CLI configuration issue: ${error}`); // Removed console statement
         // Don't fail the test, as mock mode should still work
       }
     });
 
     test('should test direct Walrus storage operations', async () => {
       if (!context.walrusAvailable) {
-        console.log('⚠ Skipping direct Walrus storage test - CLI not available');
+        // console.log('⚠ Skipping direct Walrus storage test - CLI not available'); // Removed console statement
         return;
       }
 
       const testFile = context.testFiles[0];
 
       try {
-        console.log(`Storing file: ${testFile.name}`);
+        // console.log(`Storing file: ${testFile.name}`); // Removed console statement
         
         const storeOutput = execSync(`walrus store "${testFile.path}"`, {
           encoding: 'utf8',
@@ -141,7 +141,7 @@ describe('Walrus Protocol Integration Tests', () => {
           const blobId = blobIdMatch[1];
           context.storedBlobs.push({ blobId, fileName: testFile.name });
           
-          console.log(`✓ File stored successfully, Blob ID: ${blobId}`);
+          // console.log(`✓ File stored successfully, Blob ID: ${blobId}`); // Removed console statement
           
           // Test retrieval
           const retrieveOutput = execSync(`walrus read ${blobId}`, {
@@ -150,14 +150,14 @@ describe('Walrus Protocol Integration Tests', () => {
           });
 
           expect(retrieveOutput).toContain(testFile.content);
-          console.log('✓ File retrieved and content verified');
+          // console.log('✓ File retrieved and content verified'); // Removed console statement
           
         } else {
-          console.log('⚠ Could not extract blob ID from Walrus output');
+          // console.log('⚠ Could not extract blob ID from Walrus output'); // Removed console statement
         }
 
       } catch (_error) {
-        console.log(`⚠ Direct Walrus operation failed: ${error}`);
+        // console.log(`⚠ Direct Walrus operation failed: ${error}`); // Removed console statement
         // Continue with other tests
       }
     });
@@ -184,10 +184,10 @@ describe('Walrus Protocol Integration Tests', () => {
       const blobIdMatch = storeOutput.match(/Blob ID:\s*([a-zA-Z0-9_-]+)/);
       if (blobIdMatch) {
         const blobId = blobIdMatch[1];
-        console.log(`✓ File stored via CLI, Blob ID: ${blobId}`);
+        // console.log(`✓ File stored via CLI, Blob ID: ${blobId}`); // Removed console statement
         
         if (!context.walrusAvailable) {
-          console.log('✓ Mock mode storage working correctly');
+          // console.log('✓ Mock mode storage working correctly'); // Removed console statement
         }
       }
     });
@@ -207,11 +207,11 @@ describe('Walrus Protocol Integration Tests', () => {
         );
 
         expect(storeOutput).toContain('stored successfully');
-        console.log('✓ Large file storage handled correctly');
+        // console.log('✓ Large file storage handled correctly'); // Removed console statement
 
       } catch (_error) {
         if (error.toString().includes('timeout')) {
-          console.log('⚠ Large file storage timed out - this may be expected for very large files');
+          // console.log('⚠ Large file storage timed out - this may be expected for very large files'); // Removed console statement
         } else {
           throw error;
         }
@@ -237,14 +237,14 @@ describe('Walrus Protocol Integration Tests', () => {
         expect(createOutput).toContain('created successfully');
         
         if (createOutput.includes('Walrus') || createOutput.includes('blob')) {
-          console.log('✓ Todo creation with Walrus storage integration successful');
+          // console.log('✓ Todo creation with Walrus storage integration successful'); // Removed console statement
         } else {
-          console.log('✓ Todo creation successful (storage integration may not be fully implemented)');
+          // console.log('✓ Todo creation successful (storage integration may not be fully implemented) // Removed console statement');
         }
 
       } catch (_error) {
         if (error.toString().includes('--file flag not recognized')) {
-          console.log('⚠ File attachment feature not yet implemented in CLI');
+          // console.log('⚠ File attachment feature not yet implemented in CLI'); // Removed console statement
         } else {
           throw error;
         }
@@ -257,7 +257,7 @@ describe('Walrus Protocol Integration Tests', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
       
       if (!fs.existsSync(frontendPath)) {
-        console.log('⚠ Frontend not found - skipping frontend Walrus tests');
+        // console.log('⚠ Frontend not found - skipping frontend Walrus tests'); // Removed console statement
         return;
       }
 
@@ -280,15 +280,15 @@ describe('Walrus Protocol Integration Tests', () => {
           // Check for Walrus-related code
           if (content.includes('walrus') || content.includes('WalrusClient') || content.includes('blob')) {
             foundComponents++;
-            console.log(`✓ ${component.name} found and contains Walrus integration`);
+            // console.log(`✓ ${component.name} found and contains Walrus integration`); // Removed console statement
           }
         }
       }
 
       if (foundComponents > 0) {
-        console.log(`✓ Found ${foundComponents}/${components.length} Walrus frontend components`);
+        // console.log(`✓ Found ${foundComponents}/${components.length} Walrus frontend components`); // Removed console statement
       } else {
-        console.log('⚠ No Walrus frontend components found - feature may not be fully implemented');
+        // console.log('⚠ No Walrus frontend components found - feature may not be fully implemented'); // Removed console statement
       }
     });
 
@@ -306,9 +306,9 @@ describe('Walrus Protocol Integration Tests', () => {
         const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         
         if (config.walrus || config.storageConfig || config.features?.walrusEnabled) {
-          console.log('✓ Frontend configuration includes Walrus settings');
+          // console.log('✓ Frontend configuration includes Walrus settings'); // Removed console statement
         } else {
-          console.log('⚠ Frontend configuration does not include Walrus settings');
+          // console.log('⚠ Frontend configuration does not include Walrus settings'); // Removed console statement
         }
       }
 
@@ -318,7 +318,7 @@ describe('Walrus Protocol Integration Tests', () => {
       if (fs.existsSync(walrusErrorPath)) {
         const errorHandling = fs.readFileSync(walrusErrorPath, 'utf8');
         expect(errorHandling).toMatch(/error|exception|try.*catch/i);
-        console.log('✓ Frontend Walrus error handling found');
+        // console.log('✓ Frontend Walrus error handling found'); // Removed console statement
       }
     });
   });
@@ -341,7 +341,7 @@ describe('Walrus Protocol Integration Tests', () => {
       expect(storeOutput).toMatch(/Blob ID:\s*[a-zA-Z0-9_-]+/);
       expect(storeOutput).toContain('mock') || expect(storeOutput).toContain('Mock');
 
-      console.log('✓ Mock mode storage functionality verified');
+      // console.log('✓ Mock mode storage functionality verified'); // Removed console statement
     });
 
     test('should verify mock mode provides consistent behavior', async () => {
@@ -377,9 +377,9 @@ describe('Walrus Protocol Integration Tests', () => {
       expect(firstBlobId).toBeTruthy();
       expect(secondBlobId).toBeTruthy();
 
-      console.log('✓ Mock mode provides consistent behavior');
-      console.log(`  First blob ID: ${firstBlobId}`);
-      console.log(`  Second blob ID: ${secondBlobId}`);
+      // console.log('✓ Mock mode provides consistent behavior'); // Removed console statement
+      // console.log(`  First blob ID: ${firstBlobId}`); // Removed console statement
+      // console.log(`  Second blob ID: ${secondBlobId}`); // Removed console statement
     });
 
     test('should verify environment variable mock mode control', async () => {
@@ -399,9 +399,9 @@ describe('Walrus Protocol Integration Tests', () => {
       expect(mockOutput).toContain('stored successfully');
       
       if (mockOutput.includes('mock') || mockOutput.includes('Mock')) {
-        console.log('✓ Environment variable mock mode control working');
+        // console.log('✓ Environment variable mock mode control working'); // Removed console statement
       } else {
-        console.log('⚠ Environment variable mock mode control may not be fully implemented');
+        // console.log('⚠ Environment variable mock mode control may not be fully implemented'); // Removed console statement
       }
     });
   });
@@ -422,13 +422,13 @@ describe('Walrus Protocol Integration Tests', () => {
       } catch (_error) {
         const errorOutput = error.toString();
         expect(errorOutput).toMatch(/not found|does not exist|invalid/i);
-        console.log('✓ Invalid file path error handling works');
+        // console.log('✓ Invalid file path error handling works'); // Removed console statement
       }
     });
 
     test('should handle network timeouts gracefully', async () => {
       if (!context.walrusAvailable) {
-        console.log('⚠ Skipping network timeout test - Walrus CLI not available');
+        // console.log('⚠ Skipping network timeout test - Walrus CLI not available'); // Removed console statement
         return;
       }
 
@@ -444,7 +444,7 @@ describe('Walrus Protocol Integration Tests', () => {
         // This is expected - we're testing timeout handling
         const errorOutput = error.toString();
         expect(errorOutput).toMatch(/timeout|timed out|killed/i);
-        console.log('✓ Network timeout handling verified');
+        // console.log('✓ Network timeout handling verified'); // Removed console statement
       }
     });
 
@@ -467,15 +467,15 @@ describe('Walrus Protocol Integration Tests', () => {
         expect(storeOutput).toContain('stored successfully');
         
         if (storeOutput.includes('mock') || storeOutput.includes('fallback')) {
-          console.log('✓ Fallback to mock mode working');
+          // console.log('✓ Fallback to mock mode working'); // Removed console statement
         } else if (context.walrusAvailable) {
-          console.log('✓ Real Walrus storage working');
+          // console.log('✓ Real Walrus storage working'); // Removed console statement
         } else {
-          console.log('✓ Mock mode working (Walrus CLI not available)');
+          // console.log('✓ Mock mode working (Walrus CLI not available) // Removed console statement');
         }
 
       } catch (_error) {
-        console.log(`⚠ Storage operation failed: ${error}`);
+        // console.log(`⚠ Storage operation failed: ${error}`); // Removed console statement
         // Test that error is handled gracefully
         const errorOutput = error.toString();
         expect(errorOutput).not.toContain('undefined');
@@ -520,14 +520,14 @@ describe('Walrus Protocol Integration Tests', () => {
         const results = await Promise.all(concurrentOperations);
         expect(results).toHaveLength(context.testFiles.length);
         
-        console.log(`✓ ${results.length} concurrent storage operations completed successfully`);
+        // console.log(`✓ ${results.length} concurrent storage operations completed successfully`); // Removed console statement
         
         results.forEach((result: any) => {
           expect(result.result).toContain('stored successfully');
         });
 
       } catch (_error) {
-        console.error('Concurrent operations failed:', error);
+        // console.error('Concurrent operations failed:', error); // Removed console statement
         throw error;
       }
     });
@@ -560,16 +560,16 @@ describe('Walrus Protocol Integration Tests', () => {
       expect(averageTime).toBeLessThan(30000); // Should complete within 30 seconds on average
       expect(maxTime).toBeLessThan(60000); // No single operation should take more than 1 minute
 
-      console.log(`✓ Performance metrics:`);
-      console.log(`  Average time: ${Math.round(averageTime)}ms`);
-      console.log(`  Min time: ${minTime}ms`);
-      console.log(`  Max time: ${maxTime}ms`);
+      // console.log(`✓ Performance metrics:`); // Removed console statement
+      // console.log(`  Average time: ${Math.round(averageTime) // Removed console statement}ms`);
+      // console.log(`  Min time: ${minTime}ms`); // Removed console statement
+      // console.log(`  Max time: ${maxTime}ms`); // Removed console statement
     });
   });
 
   describe('Integration Summary', () => {
     test('should provide comprehensive Walrus integration status', async () => {
-      console.log('\n🔍 Walrus Integration Status Report:');
+      // console.log('\n🔍 Walrus Integration Status Report:'); // Removed console statement
       
       const status = {
         walrusCli: context.walrusAvailable,
@@ -593,28 +593,28 @@ describe('Walrus Protocol Integration Tests', () => {
         );
       }
 
-      console.log(`  ✓ Walrus CLI Available: ${status.walrusCli ? 'YES' : 'NO'}`);
-      console.log(`  ✓ Mock Mode Available: ${status.mockMode ? 'YES' : 'NO'}`);
-      console.log(`  ✓ CLI Integration: ${status.cliIntegration ? 'YES' : 'NO'}`);
-      console.log(`  ✓ Frontend Components: ${status.frontendComponents ? 'YES' : 'NO'}`);
-      console.log(`  ✓ Error Handling: ${status.errorHandling ? 'YES' : 'NO'}`);
+      // console.log(`  ✓ Walrus CLI Available: ${status.walrusCli ? 'YES' : 'NO'}`); // Removed console statement
+      // console.log(`  ✓ Mock Mode Available: ${status.mockMode ? 'YES' : 'NO'}`); // Removed console statement
+      // console.log(`  ✓ CLI Integration: ${status.cliIntegration ? 'YES' : 'NO'}`); // Removed console statement
+      // console.log(`  ✓ Frontend Components: ${status.frontendComponents ? 'YES' : 'NO'}`); // Removed console statement
+      // console.log(`  ✓ Error Handling: ${status.errorHandling ? 'YES' : 'NO'}`); // Removed console statement
 
       const readyComponents = Object.values(status).filter(Boolean).length;
       const totalComponents = Object.keys(status).length;
 
-      console.log(`\n📊 Integration Status: ${readyComponents}/${totalComponents} components ready`);
+      // console.log(`\n📊 Integration Status: ${readyComponents}/${totalComponents} components ready`); // Removed console statement
 
       if (readyComponents === totalComponents) {
-        console.log('🎉 Walrus integration is fully functional!');
+        // console.log('🎉 Walrus integration is fully functional!'); // Removed console statement
       } else if (readyComponents >= 3) {
-        console.log('✅ Walrus integration is mostly functional - some features may be pending');
+        // console.log('✅ Walrus integration is mostly functional - some features may be pending'); // Removed console statement
       } else {
-        console.log('⚠️ Walrus integration needs more work for production use');
+        // console.log('⚠️ Walrus integration needs more work for production use'); // Removed console statement
       }
 
       // At minimum, mock mode should always work
       expect(status.mockMode).toBe(true);
-      console.log('\n✅ Walrus integration test suite completed');
+      // console.log('\n✅ Walrus integration test suite completed'); // Removed console statement
     });
   });
 });

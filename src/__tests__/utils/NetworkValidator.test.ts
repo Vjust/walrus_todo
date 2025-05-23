@@ -1,6 +1,6 @@
-// WalrusClient imported but not used
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { execSync } from 'child_process';
 import { NetworkValidator } from '../../utils/NetworkValidator';
-// WalrusError imported but not used
 import { WalrusClientExt } from '../../types/client';
 
 jest.mock('child_process');

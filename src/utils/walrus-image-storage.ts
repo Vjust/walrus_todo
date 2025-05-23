@@ -1,5 +1,8 @@
 import { SuiClient } from '@mysten/sui/client';
 import { type Signer } from '@mysten/sui/cryptography';
+import { Logger } from './Logger';
+
+const logger = new Logger('walrus-image-storage');
 
 // Define compatible SignatureWithBytes interface for local usage
 interface SignatureWithBytes {
@@ -16,9 +19,8 @@ import { handleError } from './error-handler';
 import { execa } from 'execa';
 import { KeystoreSigner } from './sui-keystore';
 import * as crypto from 'crypto';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import sizeOf from 'image-size';
-import { MockWalrusClient, createMockWalrusClient } from './MockWalrusClient';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 import { SignerAdapter } from '../types/adapters/SignerAdapter';
 import { createSignerAdapter } from './adapters/signer-adapter';
@@ -51,7 +53,7 @@ const withRetry = async <T>(
   for (let i = 0; i < attempts; i++) {
     try {
       return await fn();
-    } catch (_error) {
+    } catch (error) {
       lastError = error as Error;
       // Calculate delay with exponential backoff
       const delay = Math.min(baseDelay * Math.pow(2, i), maxDelay);
@@ -95,7 +97,7 @@ const SUPPORTED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
  * A class for handling image storage on Walrus with the Sui blockchain
  */
 export class WalrusImageStorage {
-  private walrusClient!: WalrusClientAdapter;
+  private walrusClient: WalrusClientAdapter | null = null;
   private isInitialized: boolean = false;
   private signer: SignerAdapter | null = null;
   private useMockMode: boolean;
@@ -125,12 +127,8 @@ export class WalrusImageStorage {
   async connect(): Promise<void> {
     try {
       if (this.useMockMode) {
-        console.log('Using mock mode for Walrus image storage');
-        // Use the factory function to create a properly configured MockWalrusClient
-        // that implements the WalrusClientAdapter interface
-        this.walrusClient = createMockWalrusClient();
-        this.isInitialized = true;
-        return;
+        logger.info('Mock mode is no longer supported - using real Walrus client');
+        // Continue with real initialization
       }
 
       // Get active environment info from Sui CLI
@@ -168,7 +166,7 @@ export class WalrusImageStorage {
       // Use type assertion to tell TypeScript that KeystoreSigner is compatible with Signer
       this.signer = createSignerAdapter(keystoreSigner as unknown as Signer);
       this.isInitialized = true;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof Error) {
         handleError('Failed to initialize Walrus client', error);
         throw new CLIError(`Failed to initialize Walrus client: ${error.message}`, 'WALRUS_INIT_FAILED');
@@ -183,7 +181,7 @@ export class WalrusImageStorage {
    */
   async disconnect(): Promise<void> {
     if (this.useMockMode) {
-      console.log('Mock mode: No cleanup needed');
+      logger.info('Mock mode: No cleanup needed');
       return;
     }
 
@@ -191,9 +189,9 @@ export class WalrusImageStorage {
     if (this.walrusClient?.reset) {
       try {
         this.walrusClient.reset();
-      } catch (_error) {
+      } catch (error) {
         // Log but don't throw since we're cleaning up
-        console.error('Error resetting Walrus client:', error);
+        logger.error('Error resetting Walrus client:', error);
       }
     }
 
@@ -210,7 +208,7 @@ export class WalrusImageStorage {
       }
     } catch (cleanupError) {
       // Just log errors during cleanup, don't throw
-      console.error('Error during connection cleanup:', cleanupError);
+      logger.error('Error during connection cleanup:', cleanupError);
     }
     
     // Create a minimal WalrusClientAdapter with a functional getUnderlyingClient method
@@ -305,7 +303,7 @@ export class WalrusImageStorage {
 
     try {
       if (this.useMockMode) {
-        console.log('Using mock mode for default image upload');
+        logger.info('Using mock mode for default image upload');
         return 'https://testnet.wal.app/blob/mock-default-image-blob-id';
       }
 
@@ -324,6 +322,9 @@ export class WalrusImageStorage {
       const imageBuffer = Buffer.from(fileBuffer);
 
       // Use the adapter-compliant method signature for writeBlob
+      if (!this.walrusClient) {
+        throw new Error('Walrus client not initialized');
+      }
       const result = await this.walrusClient.writeBlob({
         blob: new Uint8Array(imageBuffer),
         deletable: false,
@@ -365,7 +366,7 @@ export class WalrusImageStorage {
 
       // Return the Walrus URL format
       return `https://testnet.wal.app/blob/${blobId}`;
-    } catch (_error) {
+    } catch (error) {
       handleError('Failed to upload default image to Walrus', error);
       throw error;
     } finally {
@@ -401,7 +402,7 @@ export class WalrusImageStorage {
         `Unsupported image format. Only PNG, JPEG, and GIF are supported.`,
         'WALRUS_UNSUPPORTED_FORMAT'
       );
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -459,14 +460,14 @@ export class WalrusImageStorage {
             'WALRUS_INVALID_DIMENSIONS'
           );
         }
-      } catch (_error) {
+      } catch (error) {
         if (error instanceof CLIError) throw error;
         throw new CLIError(
           `Invalid image file: ${error instanceof Error ? error.message : String(error)}`,
           'WALRUS_INVALID_IMAGE'
         );
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -497,7 +498,7 @@ export class WalrusImageStorage {
 
     try {
       if (this.useMockMode) {
-        console.log('Using mock mode for image upload');
+        logger.info('Using mock mode for image upload');
         return `https://testnet.wal.app/blob/mock-image-blob-id-${Date.now()}`;
       }
 
@@ -556,9 +557,12 @@ export class WalrusImageStorage {
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`Upload attempt ${attempt}/${maxRetries}...`);
+          logger.info(`Upload attempt ${attempt}/${maxRetries}...`);
 
           // Using the adapter-compliant method signature
+          if (!this.walrusClient) {
+            throw new Error('Walrus client not initialized');
+          }
           const result = await this.walrusClient.writeBlob({
             blob: new Uint8Array(imageBuffer),
             deletable: false,
@@ -610,7 +614,7 @@ export class WalrusImageStorage {
               const readOptions: ReadBlobOptions = { blobId };
               // Using Promise.race for timeout handling
               const uploadResult = await Promise.race([
-                this.walrusClient.readBlob(readOptions).then(result => ({ 
+                this.walrusClient?.readBlob(readOptions).then(result => ({ 
                   success: true, 
                   data: result 
                 })),
@@ -657,11 +661,11 @@ export class WalrusImageStorage {
             
             // If we get here, verification failed after all attempts
             throw new CLIError('Failed to verify uploaded content after multiple attempts', 'WALRUS_VERIFICATION_FAILED');
-          } catch (_error) {
+          } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
             if (attempt === maxRetries) throw lastError;
           }
-        } catch (_error) {
+        } catch (error) {
           if (error instanceof CLIError) {
             lastError = error;
           } else if (error instanceof Error) {
@@ -675,7 +679,7 @@ export class WalrusImageStorage {
       }
 
       throw lastError || new CLIError('Upload failed after all retries', 'WALRUS_UPLOAD_FAILED');
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) throw error;
       throw new CLIError(
         `Failed to upload image: ${error instanceof Error ? error.message : String(error)}`,

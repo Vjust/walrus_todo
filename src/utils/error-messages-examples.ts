@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('error-messages-examples');
  * Example usage of the enhanced error messaging system
  * Demonstrates how the new error system provides better user experience
  */
@@ -19,7 +22,7 @@ const validationExample = () => {
     value: '31-12-2024'
   };
   
-  console.log(displayFriendlyError(error, context));
+  logger.info(displayFriendlyError(error, context));
   
   /* Output:
   
@@ -48,7 +51,7 @@ const networkExample = () => {
     maxAttempts: 3
   };
   
-  console.log(displayFriendlyError(error, context));
+  logger.info(displayFriendlyError(error, context));
   
   /* Output:
   
@@ -74,7 +77,7 @@ const typoExample = () => {
     command: 'lst'
   };
   
-  console.log(displayFriendlyError(error, context));
+  logger.info(displayFriendlyError(error, context));
   
   /* Output:
   
@@ -104,7 +107,7 @@ const storageExample = () => {
     blobId: 'abc123'
   };
   
-  console.log(displayFriendlyError(error, context));
+  logger.info(displayFriendlyError(error, context));
   
   /* Output:
   

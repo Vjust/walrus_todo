@@ -5,7 +5,7 @@ import { TransactionBlock } from '@mysten/sui/transactions';
 import * as fs from 'fs';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import chalk from 'chalk';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 
@@ -26,6 +26,9 @@ export default class CreateCommand extends BaseCommand {
   static examples = [
     '<%= config.bin %> create --title "My first todo" --description "A test todo item" --image ./todo.png',
     '<%= config.bin %> create --title "Private todo" --description "Hidden task" --private',
+    '<%= config.bin %> create -t "Quick task" -d "Simple todo"                    # Short flags',
+    '<%= config.bin %> create --title "Work task" --list work --priority high    # Add to list',
+    '<%= config.bin %> create --title "NFT Todo" --network testnet --gas-budget 50000000  # Custom gas'
   ];
 
   static flags = {
@@ -91,7 +94,7 @@ export default class CreateCommand extends BaseCommand {
             }
           });
         }
-      } catch (_error) {
+      } catch (error) {
         throw new CLIError(
           `Failed to upload image to Walrus: ${error instanceof Error ? error.message : String(error)}`,
           'IMAGE_UPLOAD_FAILED'
@@ -138,7 +141,7 @@ export default class CreateCommand extends BaseCommand {
 
       // 'disconnect' method may not exist; removed or handle appropriately if defined in WalrusImageStorage
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

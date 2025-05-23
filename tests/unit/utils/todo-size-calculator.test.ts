@@ -256,7 +256,7 @@ describe('TodoSizeCalculator', () => {
         }
       ];
 
-      testCases.forEach((todo, index) => {
+      testCases.forEach((todo, _index) => {
         const calculatedSize = calculator.calculateBytes(todo);
         const actualSize = JSON.stringify(todo, null, 2).length;
         

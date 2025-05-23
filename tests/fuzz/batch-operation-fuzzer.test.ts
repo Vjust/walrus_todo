@@ -295,7 +295,7 @@ describe("Batch Operation Fuzzer Tests", () => {
 
     testCases.forEach((testCase, index) => {
       it(`Fuzz Test ${index + 1}: ${testCase.type} with ${testCase.batchSize} operations`, async () => {
-        console.log(`Executing: ${testCase.expectedBehavior}`);
+        // console.log(`Executing: ${testCase.expectedBehavior}`); // Removed console statement
         
         const result = await executeBatchTest(testCase);
         
@@ -321,7 +321,7 @@ describe("Batch Operation Fuzzer Tests", () => {
             break;
         }
         
-        console.log(`Result: ${result.successful} successful, ${result.failed} failed, ${result.duration}ms`);
+        // console.log(`Result: ${result.successful} successful, ${result.failed} failed, ${result.duration}ms`); // Removed console statement
       });
     });
   });
@@ -343,7 +343,7 @@ describe("Batch Operation Fuzzer Tests", () => {
       if (result.status === "fulfilled") {
         totalSuccessful += result.value.successful;
         totalFailed += result.value.failed;
-        console.log(`Batch ${index + 1}: ${result.value.successful} successful, ${result.value.failed} failed`);
+        // console.log(`Batch ${index + 1}: ${result.value.successful} successful, ${result.value.failed} failed`); // Removed console statement
       }
     });
     
@@ -371,7 +371,7 @@ describe("Batch Operation Fuzzer Tests", () => {
 
     const result = await executeBatchTest(testCase);
     expect(result.successful + result.failed).toBe(testCase.operations.length);
-    console.log(`Memory pressure test: ${result.successful} successful, ${result.failed} failed`);
+    // console.log(`Memory pressure test: ${result.successful} successful, ${result.failed} failed`); // Removed console statement
   });
 
   // Operation interruption simulation
@@ -394,7 +394,7 @@ describe("Batch Operation Fuzzer Tests", () => {
     // Simulate interruption after a delay
     setTimeout(() => {
       // In a real scenario, this might cancel ongoing operations
-      console.log("Simulating interruption...");
+      // console.log("Simulating interruption..."); // Removed console statement
     }, 50);
 
     const result = await operationPromise;

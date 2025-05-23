@@ -1,4 +1,4 @@
-import { CLIError } from '../../../types/error';
+import { CLIError } from '../../../types/errors/consolidated';
 import { AIProvider } from '../types';
 import { SuiClient } from '@mysten/sui/client';
 import { TransactionBlock } from '@mysten/sui/transactions';

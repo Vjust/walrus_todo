@@ -17,7 +17,7 @@ import {
   createResourceIdentifier,
   permissionMatches
 } from '../types/permissions';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { Logger } from '../utils/Logger';
 import { auditLogger } from '../utils/AuditLogger';
 

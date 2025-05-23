@@ -3,6 +3,10 @@
  * Comprehensive error handling and usage patterns for TodoNFT operations
  */
 
+import { Logger } from '../utils/Logger';
+
+const logger = new Logger('sui-client-utils');
+
 import { SuiClient } from '@mysten/sui/client';
 import { TransactionBlock } from '@mysten/sui/transactions';
 import { 
@@ -45,7 +49,7 @@ export function handleSuiOperationError(
   const errorContext = { ...context, timestamp };
 
   // Log error with context for debugging
-  console.error('Sui operation failed:', {
+  logger.error('Sui operation failed:', {
     error,
     context: errorContext
   });
@@ -140,7 +144,7 @@ export function validateCreateTodoParams(params: CreateTodoParams): string[] {
 
   try {
     new URL(params.imageUrl);
-  } catch {
+  } catch (error: unknown) {
     errors.push('Image URL must be a valid URL');
   }
 
@@ -176,7 +180,7 @@ export async function createTodoSafely(
     const txb = new TransactionBlock();
     
     // Mock transaction construction
-    console.log('Creating todo with params:', params);
+    logger.info('Creating todo with params:', params);
     
     // Execute transaction
     const result = await signAndExecuteTransaction(txb);

@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * Secure storage implementation for sensitive data

@@ -125,13 +125,13 @@ describe('Storage Allocation Integration', () => {
       getUnderlyingClient: jest.fn().mockReturnValue(mockWalrusClient)
     };
 
-    storageManager = new StorageManager(
+    const _storageManager = new StorageManager(
       {} as SuiClient, // Mock SuiClient
       mockWalrusClientAdapter as any,
       'mock-address' // Mock address
     );
 
-    monitor = new ExpiryMonitor(
+    const _monitor = new ExpiryMonitor(
       mockVaultManager,
       mockWalrusClientAdapter as any,
       jest.fn().mockResolvedValue(undefined),

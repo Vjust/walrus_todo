@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('TransactionBlockAdapter');
  * TransactionBlockAdapter
  *
  * This adapter reconciles differences between different versions of Transaction
@@ -634,7 +637,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       if (isTransactionSui(this.transactionBlock)) {
         this.transactionBlock.setSender(sender);
       } else {
-        console.warn('setSender not available on this transaction implementation');
+        logger.warn('setSender not available on this transaction implementation');
       }
     } catch (_error) {
       throw new TransactionAdapterError(
@@ -659,7 +662,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
         // Try using gas.setOwner as a fallback
         this.gas.setOwner(owner);
       } else {
-        console.warn('setGasOwner not available on this transaction implementation');
+        logger.warn('setGasOwner not available on this transaction implementation');
       }
     } catch (_error) {
       throw new TransactionAdapterError(

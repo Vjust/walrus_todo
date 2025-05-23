@@ -5,10 +5,11 @@
  */
 
 import { Args, Flags } from '@oclif/core';
-import { BaseCommand } from '../base-command';
+import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
+import { CLIError } from '../types/errors/consolidated';
 import chalk from 'chalk';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/errors/consolidated';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -27,8 +28,11 @@ export default class CheckCommand extends BaseCommand {
   static description = 'Toggle completion status of a todo item';
 
   static examples = [
-    '<%= config.bin %> check my-list -i task-123',
-    '<%= config.bin %> check my-list -i task-123 --uncheck'
+    '<%= config.bin %> check my-list -i task-123              # Mark as checked/in-progress',
+    '<%= config.bin %> check my-list -i task-123 --uncheck    # Uncheck/remove in-progress',
+    '<%= config.bin %> check work -i "Review PR"              # Check by title',
+    '<%= config.bin %> check -i todo-456                      # Check in default list',
+    '<%= config.bin %> check personal -i task-789 --toggle    # Toggle check status'
   ];
 
   static flags = {
@@ -78,7 +82,7 @@ export default class CheckCommand extends BaseCommand {
       this.log(chalk.dim("List: " + args.listName));  // Changed to double quotes for consistency
       this.log(chalk.dim("ID: " + flags.id));  // Changed to double quotes for consistency
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

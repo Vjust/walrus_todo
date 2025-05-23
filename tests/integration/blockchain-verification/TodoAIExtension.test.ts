@@ -1,20 +1,21 @@
-import { createMockWalrusClient } from '../../../src/utils/MockWalrusClient';
-
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
+import { SuiClient } from '@mysten/sui/client';
+import type { WalrusClientExt } from '../../../src/types/client';
 
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
+import { CLIError } from '../../../src/types/errors/consolidated';
 
 // Mock the AI service interface
 class TodoAIExtension {
   private suiClient: Pick<SuiClient, 'getLatestSuiSystemState' | 'getObject'>;
-  private walrusClient: ReturnType<typeof createMockWalrusClient>;
+  private walrusClient: jest.Mocked<WalrusClientExt>;
   private signer: Ed25519Keypair;
   private verificationManager: BlobVerificationManager;
   
   constructor(
     suiClient: Pick<SuiClient, 'getLatestSuiSystemState' | 'getObject'>,
-    walrusClient: ReturnType<typeof createMockWalrusClient>,
+    walrusClient: jest.Mocked<WalrusClientExt>,
     signer: Ed25519Keypair
   ) {
     this.suiClient = suiClient;
@@ -22,7 +23,7 @@ class TodoAIExtension {
     this.signer = signer;
     this.verificationManager = new BlobVerificationManager(
       suiClient,
-      walrusClient.getUnderlyingClient(),
+      walrusClient,
       signer
     );
   }
@@ -44,9 +45,7 @@ class TodoAIExtension {
     blobId?: string;
   }> {
     const { 
-      verifyBlockchain = true,
-      maxTokens = 100,
-      temperature = 0.7
+      verifyBlockchain = true
     } = options;
     
     try {
@@ -261,21 +260,21 @@ const mockSuiClient = {
 const mockSigner = {
   connect: () => Promise.resolve(),
   getPublicKey: () => ({ toBytes: () => new Uint8Array(32) }),
-  sign: async (data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
-  signPersonalMessage: async (data: Uint8Array): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(data).toString('base64'),
+  sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  signPersonalMessage: async (_data: Uint8Array): Promise<SignatureWithBytes> => ({
+    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signWithIntent: async (data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
-    bytes: Buffer.from(data).toString('base64'),
+  signWithIntent: async (_data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
+    bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signTransactionBlock: async (transaction: any): Promise<SignatureWithBytes> => ({
+  signTransactionBlock: async (_transaction: any): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
-  signData: async (data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
-  signTransaction: async (transaction: any): Promise<SignatureWithBytes> => ({
+  signData: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  signTransaction: async (_transaction: any): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64')
   }),
@@ -285,17 +284,73 @@ const mockSigner = {
 
 describe('TodoAIExtension Integration', () => {
   let aiExtension: TodoAIExtension;
-  let mockWalrusClient: ReturnType<typeof createMockWalrusClient>;
+  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
   
   beforeEach(() => {
     jest.clearAllMocks();
-    mockWalrusClient = createMockWalrusClient();
     
-    // Set up spy methods on the mock client
-    jest.spyOn(mockWalrusClient, 'readBlob');
-    jest.spyOn(mockWalrusClient, 'getBlobInfo');
-    jest.spyOn(mockWalrusClient, 'getBlobMetadata');
-    jest.spyOn(mockWalrusClient, 'writeBlob');
+    // Create inline mock for WalrusClient with all required methods
+    mockWalrusClient = {
+      // Basic methods
+      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getWalBalance: jest.fn().mockResolvedValue('2000'),
+      getStorageUsage: jest.fn().mockResolvedValue({ used: '500', total: '2000' }),
+      
+      // Blob operations - these will be set up specifically in each test
+      getBlobInfo: jest.fn(),
+      getBlobObject: jest.fn().mockResolvedValue({ content: 'test', metadata: {} }),
+      verifyPoA: jest.fn(),
+      readBlob: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      writeBlob: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn().mockResolvedValue(1024),
+      
+      // Storage operations
+      storageCost: jest.fn().mockResolvedValue({
+        storageCost: BigInt(1000),
+        writeCost: BigInt(500),
+        totalCost: BigInt(1500)
+      }),
+      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
+        digest: 'test',
+        storage: {
+          id: { id: 'test' },
+          start_epoch: 0,
+          end_epoch: 52,
+          storage_size: '1000'
+        }
+      }),
+      executeCertifyBlobTransaction: jest.fn().mockResolvedValue({ digest: 'cert-digest' }),
+      executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({ digest: 'attr-digest' }),
+      deleteBlob: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({ digest: 'delete-digest' })),
+      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({ 
+        blob: { blob_id: 'test' }, 
+        digest: 'register-digest' 
+      }),
+      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
+        primary_verification: true,
+        provider: 'test-provider'
+      }),
+      createStorageBlock: jest.fn().mockResolvedValue({} as any),
+      createStorage: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({
+        digest: 'storage-digest',
+        storage: {
+          id: { id: 'storage-id' },
+          start_epoch: 0,
+          end_epoch: 52,
+          storage_size: '1000'
+        }
+      })),
+      
+      // Utility methods
+      reset: jest.fn(),
+      
+      // Optional experimental API
+      experimental: {
+        getBlobData: jest.fn().mockResolvedValue({})
+      }
+    } as jest.Mocked<WalrusClientExt>;
     
     aiExtension = new TodoAIExtension(
       mockSuiClient, 
@@ -323,11 +378,11 @@ describe('TodoAIExtension Integration', () => {
       };
       
       // Set up mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(
+      mockWalrusClient.readBlob.mockResolvedValue(
         new TextEncoder().encode(JSON.stringify(todo))
       );
       
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: todoId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -371,7 +426,7 @@ describe('TodoAIExtension Integration', () => {
       };
       
       // Set up mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(
+      mockWalrusClient.readBlob.mockResolvedValue(
         new TextEncoder().encode(JSON.stringify(todo))
       );
       
@@ -392,7 +447,7 @@ describe('TodoAIExtension Integration', () => {
       const todoId = 'non-existent-todo';
       
       // Mock the blob not being found
-      (mockWalrusClient.readBlob as jest.Mock).mockRejectedValue(
+      mockWalrusClient.readBlob.mockRejectedValue(
         new Error('Blob not found')
       );
       
@@ -423,7 +478,7 @@ describe('TodoAIExtension Integration', () => {
       const deadline = new Date('2024-12-31');
       
       // Mock Walrus client response
-      (mockWalrusClient.writeBlob as jest.Mock).mockResolvedValue({
+      mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: 'blockchain-todo-id',
         blobObject: { blob_id: 'blockchain-todo-id' }
       });
@@ -441,8 +496,8 @@ describe('TodoAIExtension Integration', () => {
       expect(result.todo.priority).toBe('high');
       expect(result.todo.deadline).toBe(deadline.toISOString());
       expect(result.todo.blockchain).toBeDefined();
-      expect(result.todo.blockchain?.registered).toBe(true);
-      expect(result.todo.blockchain?.blobId).toBe('blockchain-todo-id');
+      expect(result.todo.blockchain!.registered).toBe(true);
+      expect(result.todo.blockchain!.blobId).toBe('blockchain-todo-id');
       
       // Verify generation details
       expect(result.generationDetails.model).toBe('advanced-model');
@@ -450,7 +505,7 @@ describe('TodoAIExtension Integration', () => {
       
       // Verify client calls
       expect(mockWalrusClient.writeBlob).toHaveBeenCalled();
-      const writeArgs = (mockWalrusClient.writeBlob as jest.Mock).mock.calls[0][0];
+      const writeArgs = mockWalrusClient.writeBlob.mock.calls[0][0];
       expect(writeArgs.signer).toBe(mockSigner);
       expect(writeArgs.deletable).toBe(true);
       expect(writeArgs.attributes).toEqual({
@@ -464,7 +519,7 @@ describe('TodoAIExtension Integration', () => {
       const prompt = 'Create an urgent task for system backup';
       
       // Mock Walrus client error
-      (mockWalrusClient.writeBlob as jest.Mock).mockRejectedValue(
+      mockWalrusClient.writeBlob.mockRejectedValue(
         new Error('Blockchain registration failed')
       );
       
@@ -496,11 +551,11 @@ describe('TodoAIExtension Integration', () => {
       };
       
       // Set up mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(
+      mockWalrusClient.readBlob.mockResolvedValue(
         new TextEncoder().encode(JSON.stringify(todo))
       );
       
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: todoId,
         registered_epoch: 40,
         certified_epoch: 41,
@@ -516,7 +571,7 @@ describe('TodoAIExtension Integration', () => {
         }, $kind: 'V1' }
       });
       
-      (mockWalrusClient.getBlobMetadata as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
@@ -558,11 +613,11 @@ describe('TodoAIExtension Integration', () => {
       };
       
       // Set up mock responses
-      (mockWalrusClient.readBlob as jest.Mock).mockResolvedValue(
+      mockWalrusClient.readBlob.mockResolvedValue(
         new TextEncoder().encode(JSON.stringify(todo))
       );
       
-      (mockWalrusClient.getBlobInfo as jest.Mock).mockResolvedValue({
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: todoId,
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified on blockchain
@@ -590,7 +645,7 @@ describe('TodoAIExtension Integration', () => {
       const todoId = 'non-existent-todo';
       
       // Mock the blob not being found
-      (mockWalrusClient.readBlob as jest.Mock).mockRejectedValue(
+      mockWalrusClient.readBlob.mockRejectedValue(
         new Error('Blob not found')
       );
       

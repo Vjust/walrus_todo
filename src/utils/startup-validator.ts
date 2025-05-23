@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('startup-validator');
  * Startup Validation Service
  * 
  * This module provides validation functionality for application startup,
@@ -90,13 +93,13 @@ export function validateStartup(options: {
     // Display results
     if (!isValid) {
       if (errors.length > 0) {
-        console.error(chalk.red('\nStartup validation errors:'));
-        errors.forEach(error => console.error(chalk.red(`  - ${error}`)));
+        logger.error(chalk.red('\nStartup validation errors:'));
+        errors.forEach(error => logger.error(chalk.red(`  - ${error}`)));
       }
       
       if (warnings.length > 0) {
-        console.warn(chalk.yellow('\nStartup validation warnings:'));
-        warnings.forEach(warning => console.warn(chalk.yellow(`  - ${warning}`)));
+        logger.warn(chalk.yellow('\nStartup validation warnings:'));
+        warnings.forEach(warning => logger.warn(chalk.yellow(`  - ${warning}`)));
       }
       
       if (throwOnError && critical) {
@@ -109,18 +112,18 @@ export function validateStartup(options: {
       }
     } else {
       if (warnings.length > 0) {
-        console.warn(chalk.yellow('\nStartup validation warnings:'));
-        warnings.forEach(warning => console.warn(chalk.yellow(`  - ${warning}`)));
+        logger.warn(chalk.yellow('\nStartup validation warnings:'));
+        warnings.forEach(warning => logger.warn(chalk.yellow(`  - ${warning}`)));
       }
     }
 
     return isValid;
-  } catch (_error) {
+  } catch (error) {
     if (throwOnError) {
       throw error;
     } else {
-      console.error(chalk.red('\nUnexpected startup validation error:'));
-      console.error(chalk.red(`  - ${error instanceof Error ? error.message : String(error)}`));
+      logger.error(chalk.red('\nUnexpected startup validation error:'));
+      logger.error(chalk.red(`  - ${error instanceof Error ? error.message : String(error)}`));
       if (exitOnCritical) {
         process.exit(1);
       }
@@ -141,10 +144,10 @@ function showStartupBanner(): void {
   // Convert app name to string and uppercase it safely
   const appNameUpper = typeof appName === 'string' ? appName.toUpperCase() : String(appName).toUpperCase();
 
-  console.log(chalk.blue('\n======================================'));
-  console.log(chalk.blue(`  ${appNameUpper} v${version}`));
-  console.log(chalk.blue(`  Environment: ${env}`));
-  console.log(chalk.blue('======================================\n'));
+  logger.info(chalk.blue('\n======================================'));
+  logger.info(chalk.blue(`  ${appNameUpper} v${version}`));
+  logger.info(chalk.blue(`  Environment: ${env}`));
+  logger.info(chalk.blue('======================================\n'));
 }
 
 /**
@@ -169,7 +172,7 @@ function checkStorageDirectory(): StartupCheckResult {
           message: `Created storage directory at ${storagePath}`,
           critical: false
         };
-      } catch (_error) {
+      } catch (error) {
         return {
           success: false,
           message: `Failed to create storage directory at ${storagePath}: ${error instanceof Error ? error.message : String(error)}`,
@@ -187,7 +190,7 @@ function checkStorageDirectory(): StartupCheckResult {
       success: true,
       critical: false
     };
-  } catch (_error) {
+  } catch (error) {
     return {
       success: false,
       message: `Storage directory at ${storagePath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
@@ -218,7 +221,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
           message: `Created temporary directory at ${tempPath}`,
           critical: false
         };
-      } catch (_error) {
+      } catch (error) {
         return {
           success: false,
           message: `Failed to create temporary directory at ${tempPath}: ${error instanceof Error ? error.message : String(error)}`,
@@ -236,7 +239,7 @@ function checkTemporaryDirectory(): StartupCheckResult {
       success: true,
       critical: false
     };
-  } catch (_error) {
+  } catch (error) {
     return {
       success: false,
       message: `Temporary directory at ${tempPath} is not writable: ${error instanceof Error ? error.message : String(error)}`,

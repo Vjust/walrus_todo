@@ -4,7 +4,7 @@ import path from 'path';
 import { Todo, TodoList } from '../types/todo';
 import { STORAGE_CONFIG } from '../constants';
 import { generateId } from '../utils/id-generator';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * TodoService - A service class for managing Todo lists and items locally.
@@ -42,7 +42,7 @@ export class TodoService {
       return files
         .filter(f => f.endsWith(STORAGE_CONFIG.FILE_EXT))
         .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
-    } catch (_error) {
+    } catch (error) {
       // If directory doesn't exist, return empty array but log the error
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];
@@ -66,7 +66,7 @@ export class TodoService {
       return files
         .filter(f => f.endsWith(STORAGE_CONFIG.FILE_EXT))
         .map(f => f.replace(STORAGE_CONFIG.FILE_EXT, ''));
-    } catch (_error) {
+    } catch (error) {
       // If directory doesn't exist, return empty array but log the error
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         return [];

@@ -28,7 +28,7 @@ declare module '@mysten/sui/client' {
   interface SuiSystemStateResponse {
     epoch: string;
     protocolVersion: string;
-    systemParameters: Record<string, any>;
+    systemParameters: Record<string, unknown>;
   }
 
   interface SuiSystemStateSummary {
@@ -37,13 +37,13 @@ declare module '@mysten/sui/client' {
     referenceGasPrice: string;
     totalStake: string;
     storageFund: string;
-    activeValidators: any[];
-    atRiskValidators: any[];
+    activeValidators: unknown[];
+    atRiskValidators: unknown[];
     pendingActiveValidatorsSize: number;
-    pendingRemovals: any[];
+    pendingRemovals: unknown[];
     stakingPoolMappingsSize: number;
     inactivePoolsSize: number;
-    validatorReportRecords: any[];
+    validatorReportRecords: unknown[];
     atRiskValidatorSize: number;
     validatorCandidatesSize: number;
     validatorLowStakeThreshold: string;
@@ -53,7 +53,7 @@ declare module '@mysten/sui/client' {
     systemStateVersion: string;
     maxValidatorCount: number;
     minValidatorCount: number;
-    validatorLowStakeThresholdMetadata: any;
+    validatorLowStakeThresholdMetadata: unknown;
     stakeSubsidyStartEpoch: string;
     stakeSubsidyBalance: string;
     stakeSubsidyDistributionCounter: string;
@@ -64,8 +64,8 @@ declare module '@mysten/sui/client' {
     totalStakeRewardsDistributed: string;
     totalStakeSubsidiesDistributed: string;
     validatorReportRecordsSize: number;
-    systemParameters: any;
-    systemStakeSubsidy: any;
+    systemParameters: unknown;
+    systemStakeSubsidy: unknown;
     satInCirculation: string;
     epochDurationMs: number;
   }

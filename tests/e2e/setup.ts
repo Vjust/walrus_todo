@@ -1,10 +1,13 @@
 import 'jest-extended';
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('setup');
 
 // Setup for e2e tests
 beforeAll(() => {
   // Mock process.exit to prevent tests from actually exiting
   jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-    console.log(`Process exit called with code: ${code}`);
+    logger.info(`Process exit called with code: ${code}`);
     return undefined as never;
   });
 

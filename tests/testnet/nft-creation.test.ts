@@ -75,9 +75,10 @@ describe('Sui Testnet NFT Creation', () => {
       });
 
       // Validate the transaction was successful
-      expect(response.effects?.status.status).toBe('success');
-      expect(response.effects?.created).toBeDefined();
-      expect(response.effects?.created?.length).toBeGreaterThan(0);
+      expect(response.effects).toBeDefined();
+      expect(response.effects!.status.status).toBe('success');
+      expect(response.effects!.created).toBeDefined();
+      expect(response.effects!.created!.length).toBeGreaterThan(0);
 
       // Find the created NFT object
       const createdNft = response.effects?.created?.find(
@@ -85,15 +86,15 @@ describe('Sui Testnet NFT Creation', () => {
       );
       
       expect(createdNft).toBeDefined();
-      console.log('Created NFT ID:', createdNft?.reference.objectId);
-      console.log('Transaction digest:', response.digest);
+      // console.log('Created NFT ID:', createdNft?.reference.objectId); // Removed console statement
+      // console.log('Transaction digest:', response.digest); // Removed console statement
 
       // Store the NFT ID for later tests
       if (createdNft) {
         storageContractId = createdNft.reference.objectId;
       }
     } catch (_error) {
-      console.error('NFT creation failed:', error);
+      // console.error('NFT creation failed:', error); // Removed console statement
       throw error;
     }
   }, 30000); // 30 second timeout
@@ -156,10 +157,10 @@ describe('Sui Testnet NFT Creation', () => {
         });
         
         expect(nftObject.data?.content).toBeDefined();
-        console.log('NFT with metadata created:', createdNft.reference.objectId);
+        // console.log('NFT with metadata created:', createdNft.reference.objectId); // Removed console statement
       }
     } catch (_error) {
-      console.error('NFT with metadata creation failed:', error);
+      // console.error('NFT with metadata creation failed:', error); // Removed console statement
       throw error;
     }
   }, 30000);
@@ -217,10 +218,10 @@ describe('Sui Testnet NFT Creation', () => {
         });
         
         expect(nftObject.data?.owner).toBeDefined();
-        console.log('NFT transferred to:', nftObject.data?.owner);
+        // console.log('NFT transferred to:', nftObject.data?.owner); // Removed console statement
       }
     } catch (_error) {
-      console.error('NFT transfer failed:', error);
+      // console.error('NFT transfer failed:', error); // Removed console statement
       throw error;
     }
   }, 30000);
@@ -268,13 +269,13 @@ describe('Sui Testnet NFT Creation', () => {
       );
       
       expect(createdNfts?.length).toBe(nftCount);
-      console.log(`Created ${createdNfts?.length} NFTs in batch`);
+      // console.log(`Created ${createdNfts?.length} NFTs in batch`); // Removed console statement
       
       createdNfts?.forEach((nft, index) => {
-        console.log(`NFT ${index + 1} ID:`, nft.reference.objectId);
+        // console.log(`NFT ${index + 1} ID:`, nft.reference.objectId); // Removed console statement
       });
     } catch (_error) {
-      console.error('Batch NFT creation failed:', error);
+      // console.error('Batch NFT creation failed:', error); // Removed console statement
       throw error;
     }
   }, 30000);
@@ -336,11 +337,11 @@ describe('Sui Testnet NFT Creation', () => {
         const content = nftObject.data?.content;
         if (content && 'fields' in content) {
           expect(content.fields.ai_enhanced).toBe(true);
-          console.log('AI-enhanced NFT created:', createdNft.reference.objectId);
+          // console.log('AI-enhanced NFT created:', createdNft.reference.objectId); // Removed console statement
         }
       }
     } catch (_error) {
-      console.error('AI-enhanced NFT creation failed:', error);
+      // console.error('AI-enhanced NFT creation failed:', error); // Removed console statement
       throw error;
     }
   }, 30000);

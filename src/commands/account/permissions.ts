@@ -2,14 +2,14 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { permissionService } from '../../services/permission-service';
 import { ActionType, UserRole } from '../../types/permissions';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 import chalk from 'chalk';
 
 /**
  * Manage user permissions and roles
  */
 export default class PermissionsCommand extends BaseCommand {
-  static description = 'Manage user permissions and roles';
+  static description = 'Grant, revoke and manage user roles and permissions for accessing resources';
 
   static examples = [
     '$ walrus account:permissions --list-roles',
@@ -129,7 +129,7 @@ export default class PermissionsCommand extends BaseCommand {
       // Grant role
       await permissionService.assignRoleToUser(user.id, role);
       this.log(chalk.green(`Role ${role} granted to user ${username}`));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -152,7 +152,7 @@ export default class PermissionsCommand extends BaseCommand {
       // Revoke role
       await permissionService.removeRoleFromUser(user.id, role);
       this.log(chalk.green(`Role ${role} revoked from user ${username}`));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -195,7 +195,7 @@ export default class PermissionsCommand extends BaseCommand {
       for (const [resource, actions] of Object.entries(byResource)) {
         this.log(`${chalk.green(resource)}: ${actions.join(', ')}`);
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -222,7 +222,7 @@ export default class PermissionsCommand extends BaseCommand {
       });
 
       this.log(chalk.green(`Permission '${action}' on '${resource}' granted to user ${username}`));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -246,7 +246,7 @@ export default class PermissionsCommand extends BaseCommand {
       await permissionService.revokePermission(user.id, resource, action);
 
       this.log(chalk.green(`Permission '${action}' on '${resource}' revoked from user ${username}`));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -274,7 +274,7 @@ export default class PermissionsCommand extends BaseCommand {
       } else {
         this.log(chalk.red(`User ${username} does NOT have permission to ${action} on ${resource}`));
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {

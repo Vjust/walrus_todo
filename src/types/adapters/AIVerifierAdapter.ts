@@ -147,7 +147,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     throw new Error('Method not implemented.');
   }
   
-  async enforceRetentionPolicy(retentionDays?: number): Promise<number> {
+  async enforceRetentionPolicy(_retentionDays?: number): Promise<number> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }

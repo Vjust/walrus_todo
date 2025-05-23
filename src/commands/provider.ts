@@ -2,8 +2,8 @@ import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { AIVerifierAdapter } from '../types/adapters/AIVerifierAdapter';
 import chalk from 'chalk';
-// TransactionBlock imported but not used
 import { configService } from '../services/config-service';
+import { CLIError } from '../types/errors/consolidated';
 
 export default class Provider extends BaseCommand {
   static description = 'Manage AI providers for blockchain verification';
@@ -33,9 +33,12 @@ export default class Provider extends BaseCommand {
   };
 
   static examples = [
-    '$ walrus_todo provider list',
-    '$ walrus_todo provider register --name "Grok AI" --address 0x1234...',
-    '$ walrus_todo provider info 0x1234...'
+    '<%= config.bin %> provider list                                          # List all providers',
+    '<%= config.bin %> provider register --name "Grok AI" --address 0x1234... # Register provider',
+    '<%= config.bin %> provider info 0x1234...                               # Get provider info',
+    '<%= config.bin %> provider info "OpenAI"                                # Info by name',
+    '<%= config.bin %> provider register --name "Custom AI" --address 0x5678... --type custom',
+    '<%= config.bin %> provider list --active                                # List active providers'
   ];
 
   private verifierAdapter!: AIVerifierAdapter;
@@ -45,6 +48,7 @@ export default class Provider extends BaseCommand {
     await super.init();
 
     // Initialize the verifier adapter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const config = await this.configService.getConfig();
     // packageId and registryId would be used in real implementation
     // const packageId = config.packageId || '';
@@ -119,8 +123,11 @@ export default class Provider extends BaseCommand {
       
       this.log(this.formatTable(tableData));
       
-    } catch (_error) {
-      this.error(`Failed to list providers: ${error}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to list providers: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -158,8 +165,11 @@ export default class Provider extends BaseCommand {
       this.log(`Registered:         ${new Date(provider.registeredAt).toLocaleString()}`);
       this.log(`Last Used:          ${new Date(provider.lastUsed).toLocaleString()}`);
       
-    } catch (_error) {
-      this.error(`Failed to fetch provider information: ${error}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to fetch provider information: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -182,8 +192,11 @@ export default class Provider extends BaseCommand {
       
       this.log(chalk.dim('\nTransaction would be created and executed to register the provider on-chain.'));
       
-    } catch (_error) {
-      this.error(`Failed to register provider: ${error}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to register provider: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

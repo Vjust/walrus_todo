@@ -10,8 +10,8 @@ import {
 jest.mock('../../utils/Logger');
 
 describe('TransactionHelper', () => {
-  let mockSigner: Mocked<Signer>;
-  let mockLogger: Mocked<Logger>;
+  let mockSigner: any;
+  let mockLogger: any;
   let helper: TransactionHelper;
 
   beforeEach(() => {
@@ -29,14 +29,14 @@ describe('TransactionHelper', () => {
         bytes: 'base64-encoded-bytes',
         messageBytes: new Uint8Array(64)
       })
-    } as unknown as Mocked<Signer>;
+    } as any;
 
     mockLogger = {
       debug: jest.fn().mockReturnValue(undefined),
       info: jest.fn().mockReturnValue(undefined),
       warn: jest.fn().mockReturnValue(undefined),
       error: jest.fn().mockReturnValue(undefined),
-    } as unknown as Mocked<Logger>;
+    } as any;
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 

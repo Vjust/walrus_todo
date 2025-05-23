@@ -2,7 +2,7 @@ import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import * as chalk from 'chalk';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 
 /**
  * AI Credential Key Management command
@@ -13,14 +13,16 @@ import { CLIError } from '../../types/error';
  * - Backup: List, create, and restore from key backups
  */
 export default class AIKeysCommand extends BaseCommand {
-  static description = 'Manage AI credential encryption keys';
+  static description = 'Rotate, validate and backup encryption keys used for securing AI provider credentials';
 
   static examples = [
-    '$ walrus-todo ai keys:rotate',
-    '$ walrus-todo ai keys:validate',
-    '$ walrus-todo ai keys:backup',
-    '$ walrus-todo ai keys:list-backups',
-    '$ walrus-todo ai keys:restore --backup-id 12345',
+    '<%= config.bin %> ai keys:rotate                          # Rotate encryption keys',
+    '<%= config.bin %> ai keys:validate                        # Validate current keys',
+    '<%= config.bin %> ai keys:backup                          # Create key backup',
+    '<%= config.bin %> ai keys:list-backups                    # List all backups',
+    '<%= config.bin %> ai keys:restore --backup-id 12345       # Restore from backup',
+    '<%= config.bin %> ai keys:status                          # Check key status',
+    '<%= config.bin %> ai keys:export --format pem             # Export keys',
   ];
 
   static flags = {
@@ -70,7 +72,7 @@ export default class AIKeysCommand extends BaseCommand {
         default:
           this.error(`Unknown action: ${action}`);
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(`${error.message} (${error.code})`);
       } else {
@@ -131,7 +133,7 @@ export default class AIKeysCommand extends BaseCommand {
       // Use the private method via the rotation flow which includes backup
       await secureCredentialManager.rotateKey();
       this.log(`${chalk.green('✓')} Encryption key backup created successfully`);
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to create backup: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

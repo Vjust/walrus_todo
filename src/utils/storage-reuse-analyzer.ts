@@ -228,7 +228,7 @@ export class StorageReuseAnalyzer {
         hasViableStorage: viableStorage.length > 0,
         recommendation
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_STORAGE_ANALYSIS_FAILED'
@@ -317,7 +317,7 @@ export class StorageReuseAnalyzer {
         },
         detailedRecommendation
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`,
         'WALRUS_EFFICIENCY_ANALYSIS_FAILED'

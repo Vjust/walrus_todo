@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../../base-command';
-import { CLIError } from '../../utils/error-handler';
+import { CLIError } from '../../types/errors/consolidated';
 import { TodoService } from '../../services/todoService';
 import { createWalrusImageStorage, WalrusImageStorage } from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
 import { NETWORK_URLS } from '../../constants';
@@ -21,10 +21,13 @@ import { configService } from '../../services/config-service';
  * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
  */
 export default class UploadCommand extends BaseCommand {
-  static description = 'Upload a custom image for a todo to Walrus storage';
+  static description = 'Upload and attach a custom image to a todo item using Walrus decentralized storage';
 
   static examples = [
-    '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png',
+    '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png    # Upload PNG',
+    '<%= config.bin %> image upload --todo "Buy milk" --list shopping --image photo.jpg  # Upload JPG',
+    '<%= config.bin %> image upload -t task-456 -l work -i ./logo.svg                  # Short flags',
+    '<%= config.bin %> image upload --todo 789 --list personal --image pic.webp --compress  # Compress'
   ];
 
   static flags = {
@@ -92,7 +95,7 @@ export default class UploadCommand extends BaseCommand {
       this.log(`✅ Image uploaded successfully to Walrus`);
       this.log(`📝 Image URL: ${imageUrl}`);
       this.log(`📝 Blob ID: ${blobId}`);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

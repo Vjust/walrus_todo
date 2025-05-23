@@ -34,16 +34,13 @@
 
 import { Transaction } from '@mysten/sui/transactions';
 import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
-import type { SuiObjectRef } from '@mysten/sui/client';
+
 import {
-  TransactionBlockAdapter as TypedTransactionBlockAdapter,
-  TransactionResult,
   isString,
   isTransactionObjectArgument,
   TransactionAdapterError,
   isTransactionArgument
 } from '../../types/adapters/TransactionBlockAdapter';
-import type { Transaction } from '../../types/transaction';
 import { BaseAdapter, isBaseAdapter } from '../../types/adapters/BaseAdapter';
 
 /**
@@ -68,7 +65,7 @@ export interface TransactionBlockAdapter extends BaseAdapter<Transaction> {
     address: string | TransactionObjectArgument
   ): TransactionObjectArgument;
 
-  object(value: string | SuiObjectRef | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument;
+  object(value: string | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument;
   pure(value: unknown, type?: string): TransactionObjectArgument;
 
   makeMoveVec(options: {
@@ -192,7 +189,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       // but this provides an extension point for future requirements
       
       this._isDisposed = true;
-    } catch (_error) {
+    } catch (error) {
       throw new TransactionAdapterError(
         `Failed to dispose TransactionBlockAdapter: ${error instanceof Error ? error.message : String(error)}`, 
         error instanceof Error ? error : undefined
@@ -214,7 +211,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       this.transactionBlock.setGasBudget(budget);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -229,7 +226,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       this.transactionBlock.setGasPrice(price);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -248,7 +245,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       return this.transactionBlock.moveCall(options);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -314,7 +311,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         processedObjects,
         processedAddress
       );
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -325,12 +322,12 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     }
   }
 
-  object(value: string | SuiObjectRef | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument {
+  object(value: string | { objectId: string, digest?: string, version?: string | number | bigint }): TransactionObjectArgument {
     try {
       this.checkDisposed();
       // Apply a type assertion to ensure compatibility with TransactionObjectArgument
       return this.transactionBlock.object(value) as TransactionObjectArgument;
-    } catch (_error) {
+    } catch (error) {
       throw new TransactionAdapterError(
         `Error in object conversion: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -343,7 +340,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       this.checkDisposed();
       // Apply a type assertion to ensure compatibility with TransactionObjectArgument
       return this.transactionBlock.pure(value, type) as TransactionObjectArgument;
-    } catch (_error) {
+    } catch (error) {
       throw new TransactionAdapterError(
         `Error in pure value conversion: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -393,7 +390,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         objects: processedObjects,
         type: options.type
       });
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -449,7 +446,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       }
 
       return this.transactionBlock.splitCoins(processedCoin, processedAmounts);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -497,7 +494,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
       }
 
       this.transactionBlock.mergeCoins(processedDestination, processedSources);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -512,7 +509,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       return this.transactionBlock.gas(objectId);
-    } catch (_error) {
+    } catch (error) {
       throw new TransactionAdapterError(
         `Error getting gas object: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -527,7 +524,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       return this.transactionBlock.publish(options);
-    } catch (_error) {
+    } catch (error) {
       throw new TransactionAdapterError(
         `Error in publish: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -580,7 +577,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         packageId: options.packageId,
         ticket: processedTicket
       });
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -595,7 +592,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
     try {
       this.checkDisposed();
       return await this.transactionBlock.build(options);
-    } catch (_error) {
+    } catch (error) {
       throw new TransactionAdapterError(
         `Error building transaction: ${error instanceof Error ? error.message : String(error)}`,
         error instanceof Error ? error : undefined
@@ -624,7 +621,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
         }
         return String(serialized);
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }
@@ -694,7 +691,7 @@ export class TransactionBlockAdapterImpl implements TransactionBlockAdapter {
 
       // Last resort: convert anything else to a string
       return String(digest);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof TransactionAdapterError) {
         throw error;
       }

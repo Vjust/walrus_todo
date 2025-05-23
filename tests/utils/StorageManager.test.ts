@@ -1,12 +1,12 @@
 import { jest } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
-import { StorageManager } from '@/utils/StorageManager';
-import { StorageError, ValidationError, BlockchainError } from '@/types/errors/consolidated';
-import { Logger } from '@/utils/Logger';
+import { StorageManager } from '../../src/utils/StorageManager';
+import { StorageError, ValidationError, BlockchainError } from '../../src/types/errors/consolidated';
+import { Logger } from '../../src/utils/Logger';
 // MockWalrusClient is automatically available via jest.mock
 
 jest.mock('@mysten/walrus');
-jest.mock('@/utils/Logger');
+jest.mock('../../src/utils/Logger');
 
 describe('StorageManager', () => {
   let manager: StorageManager;

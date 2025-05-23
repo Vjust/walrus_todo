@@ -379,7 +379,7 @@ describe('RetryManager', () => {
           maxRetries: 2,
           aggregateErrors: true
         });
-      } catch (_error) {
+      } catch (error) {
         expect(error).toBeInstanceOf(AggregateError);
         const aggError = error as AggregateError;
         expect(aggError.errors).toHaveLength(3);

@@ -431,11 +431,11 @@ describe('Data Privacy and PII Security Tests', () => {
           completeStructured: jest.fn(),
           processWithPromptTemplate: jest.fn().mockImplementation(async (template, context) => {
             // Log some sensitive data (bad practice, for testing)
-            console.log(`Processing request with API key: ${params.apiKey}`);
-            console.log(`User data: ${JSON.stringify(context)}`);
+            // console.log(`Processing request with API key: ${params.apiKey}`); // Removed console statement
+            // console.log(`User data: ${JSON.stringify(context) // Removed console statement}`);
             
             // Log an error with sensitive data
-            console.error(`Failed to authenticate with key ${params.apiKey}`);
+            // console.error(`Failed to authenticate with key ${params.apiKey}`); // Removed console statement
             
             return {
               result: 'Test result',

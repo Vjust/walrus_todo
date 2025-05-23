@@ -1,11 +1,14 @@
 import fs from 'fs';
-import fsPromises from 'fs/promises';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Todo, TodoList } from '../types/todo';
 import { STORAGE_CONFIG } from '../constants';
 import { generateId } from '../utils/id-generator';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { configService } from './config-service';
+import { Logger } from '../utils/Logger';
+
+const logger = new Logger('todoService.consolidated');
 
 /**
  * TodoService - A consolidated service class for managing Todo lists and items.
@@ -70,7 +73,7 @@ export class TodoService {
       }
     } catch (_error) {
       // Silently catch but log the error for debugging
-      console.error(`Failed to create todos directory: ${error}`);
+      logger.error(`Failed to create todos directory: ${error}`);
     }
   }
 

@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import chalk from 'chalk';
 import { RetryManager } from '../utils/retry-manager';
 import { createCache } from '../utils/performance-cache';
@@ -22,11 +22,13 @@ export default class StoreCommand extends BaseCommand {
   static description = 'Store a todo on Walrus and get blob ID reference';
 
   static examples = [
-    '<%= config.bin %> store --todo 123 --list my-todos',
-    '<%= config.bin %> store --todo "Buy groceries" --list my-todos',
-    '<%= config.bin %> store --todo 123 --list my-todos --epochs 10',
-    '<%= config.bin %> store --todo 123 --list my-todos --mock',
-    '<%= config.bin %> store --all --list my-todos',
+    '<%= config.bin %> store --todo 123 --list my-todos                    # Store single todo',
+    '<%= config.bin %> store --todo "Buy groceries" --list my-todos        # Store by title',
+    '<%= config.bin %> store --todo 123 --list my-todos --epochs 10        # Store for 10 epochs',
+    '<%= config.bin %> store --todo 123 --list my-todos --mock             # Test without storing',
+    '<%= config.bin %> store --all --list my-todos                         # Store all todos',
+    '<%= config.bin %> store --all --list work --create-nft                # Store all and create NFTs',
+    '<%= config.bin %> store --todo 456 --list personal --network testnet  # Use specific network',
     '<%= config.bin %> store --all --list my-todos --batch-size 10'
   ];
 
@@ -143,7 +145,7 @@ export default class StoreCommand extends BaseCommand {
       // Cleanup
       await walrusStorage.disconnect();
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
@@ -170,7 +172,7 @@ export default class StoreCommand extends BaseCommand {
           }
         }
       );
-    } catch (_error) {
+    } catch (error) {
       if (error.code === 'WALRUS_CLI_NOT_FOUND') {
         throw new CLIError(
           'Walrus CLI not found. Please install it from https://docs.wal.app',
@@ -230,7 +232,7 @@ export default class StoreCommand extends BaseCommand {
           }
         }
       );
-    } catch (_error) {
+    } catch (error) {
       this.handleStorageError(error, flags.network);
     }
 
@@ -293,7 +295,7 @@ export default class StoreCommand extends BaseCommand {
           
           bar.update(100, { status: 'Complete' });
           return { todo, blobId, cached: false };
-        } catch (_error) {
+        } catch (error) {
           throw error;
         }
       }
@@ -444,7 +446,7 @@ export default class StoreCommand extends BaseCommand {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           mappings = JSON.parse(content);
-        } catch (_error) {
+        } catch (error) {
           this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
           // Continue with empty mappings
         }
@@ -456,7 +458,7 @@ export default class StoreCommand extends BaseCommand {
       // Write mappings back to file using centralized method (handles directory creation)
       this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
-    } catch (_error) {
+    } catch (error) {
       this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

@@ -269,19 +269,20 @@ export class RetryManager {
   /**
    * Determines if an error is retryable
    */
-  private isRetryableError(error: Error | any): boolean {
+  private isRetryableError(error: Error | unknown): boolean {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
 
     // Check if it's a HTTP error with status code
-    if (error.status || error.statusCode) {
-      const status = error.status || error.statusCode;
-      if (options.retryableStatuses.includes(status)) {
+    if (error && typeof error === 'object' && ('status' in error || 'statusCode' in error)) {
+      const status = (error as { status?: number; statusCode?: number }).status || 
+                     (error as { status?: number; statusCode?: number }).statusCode;
+      if (status && options.retryableStatuses.includes(status)) {
         return true;
       }
     }
 
     // Check error message against patterns
-    const errorString = error.message || error.toString();
+    const errorString = error instanceof Error ? error.message : String(error);
     return options.retryableErrors.some(pattern => {
       if (pattern instanceof RegExp) {
         return pattern.test(errorString);
@@ -397,7 +398,7 @@ export class RetryManager {
    */
   async retry<T>(
     operation: (node: NetworkNode) => Promise<T>,
-    context: string | Record<string, any>
+    context: string | Record<string, unknown>
   ): Promise<T> {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
     const retryContext: RetryContext = {
@@ -468,12 +469,12 @@ export class RetryManager {
           this.updateCircuitBreaker(node, true);
 
           return result;
-        } catch (_error) {
+        } catch (error) {
           // Always clear timeout to prevent memory leaks
           clearTimeout(timeoutId! as unknown as NodeJS.Timeout);
           throw error;
         }
-      } catch (_error) {
+      } catch (error) {
         const errorObj = error instanceof Error ? error : new Error(String(error));
         const node = lastNode!;
 

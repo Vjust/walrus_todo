@@ -563,7 +563,7 @@ describe('AI Security Audit', () => {
       
       // Mock credential manager
       secureCredentialManager.getCredential = jest.fn().mockImplementation((provider) => {
-        console.log(`AUDIT: Credential access attempt for provider ${provider}`);
+        // console.log(`AUDIT: Credential access attempt for provider ${provider}`); // Removed console statement
         return 'test-api-key';
       });
       
@@ -1162,7 +1162,7 @@ describe('AI Security Audit', () => {
       jest.spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
         .mockImplementation(async () => {
           // Log some data that might contain sensitive info
-          console.log(`Processing todo: ${JSON.stringify(sensitiveTodo)}`);
+          // console.log(`Processing todo: ${JSON.stringify(sensitiveTodo) // Removed console statement}`);
           return { result: 'Summary', modelName: 'test', provider: AIProvider.XAI, timestamp: Date.now() };
         });
       
@@ -1259,8 +1259,8 @@ describe('AI Security Audit', () => {
       jest.spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
         .mockImplementation(async () => {
           // Debug logs that might contain sensitive info
-          console.debug(`Auth headers: Bearer test-api-key`);
-          console.debug(`User data: ${JSON.stringify({ email: 'test@example.com' })}`);
+          // console.debug(`Auth headers: Bearer test-api-key`); // Removed console statement
+          // console.debug(`User data: ${JSON.stringify({ email: 'test@example.com' }) // Removed console statement}`);
           return { result: 'Summary', modelName: 'test', provider: AIProvider.XAI, timestamp: Date.now() };
         });
       

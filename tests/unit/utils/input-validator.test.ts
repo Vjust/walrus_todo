@@ -1,5 +1,5 @@
 import { InputValidator, CommonValidationRules, ValidationRule } from '../../../src/utils/InputValidator';
-import { ValidationError } from '../../../src/types/errors';
+import { ValidationError } from '../../../src/types/errors/consolidated';
 
 describe('InputValidator', () => {
   describe('validate', () => {
@@ -66,7 +66,7 @@ describe('InputValidator', () => {
       
       expect(() => {
         InputValidator.validate('invalid', [CommonValidationRules.email], 'input', {
-          customErrorClass: CustomError as any
+          customErrorClass: CustomError as typeof Error
         });
       }).toThrow(CustomError);
     });

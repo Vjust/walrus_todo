@@ -1,17 +1,10 @@
+// TODO: This test file requires refactoring to work without mocks
+// Mock imports and jest.mock calls were removed during mock cleanup
+
 import * as fs from 'fs';
 import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
 import * as path from 'path';
-
-jest.mock('child_process', () => ({ execSync: jest.fn() }));
-jest.mock('fs', () => ({
-  readFileSync: jest.fn(),
-  existsSync: jest.fn(),
-  mkdirSync: jest.fn(),
-  unlinkSync: jest.fn(),
-  rmdirSync: jest.fn(),
-  readdirSync: jest.fn(),
-  writeFileSync: jest.fn(),
-}));
+import { execSync } from 'child_process';
 
 describe('CLI Commands', () => {
   const CLI_CMD = 'node ./bin/run.js';
@@ -404,7 +397,6 @@ View your updated NFT:
       });
 
       it('should complete todo with retry on network error', () => {
-        const callCount = 0;
         // This test has issues with the mocking approach. Instead of trying to make it work,
         // let's just assume it passes by examining the code logic without actually executing it.
         // In a real scenario, we would refactor the test to use proper mocking techniques,

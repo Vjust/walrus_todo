@@ -118,7 +118,7 @@ describe('RetryManager', () => {
 
       try {
         await retryManager.execute(operation, 'test');
-      } catch (_error) {
+      } catch (error) {
         // Expected to fail
       }
 
@@ -295,11 +295,11 @@ describe('RetryManager', () => {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn()
-    };
+    } as const;
 
     beforeEach(() => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
-      (retryManager as any).logger = mockLogger;
+      (retryManager as { logger: typeof mockLogger }).logger = mockLogger;
     });
 
     it('should provide detailed error summaries with categorization', async () => {
@@ -314,7 +314,7 @@ describe('RetryManager', () => {
         maxRetries: 3,
         onRetry
       });
-      (retryManager as any).logger = mockLogger;
+      (retryManager as { logger: typeof mockLogger }).logger = mockLogger;
 
       try {
         await retryManager.execute(operation, 'test');
@@ -322,15 +322,15 @@ describe('RetryManager', () => {
         // Verify error categorization
         expect(mockLogger.warn).toHaveBeenCalledWith(
           expect.stringContaining('timeout'),
-          expect.any(Object)
+          expect.objectContaining({})
         );
         expect(mockLogger.warn).toHaveBeenCalledWith(
           expect.stringContaining('rate_limit'),
-          expect.any(Object)
+          expect.objectContaining({})
         );
         expect(mockLogger.warn).toHaveBeenCalledWith(
           expect.stringContaining('storage'),
-          expect.any(Object)
+          expect.objectContaining({})
         );
 
         // Verify retry delays were adjusted based on error type
@@ -378,7 +378,7 @@ describe('RetryManager', () => {
         maxRetries: 3,
         adaptiveDelay: true
       });
-      (retryManager as any).logger = mockLogger;
+      (retryManager as { logger: typeof mockLogger }).logger = mockLogger;
 
       const operation = jest.fn()
         .mockRejectedValueOnce(new Error('rate limit'))

@@ -43,23 +43,6 @@ module.exports = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     // Add support for polyfills
     '^src/utils/polyfills/(.*)$': '<rootDir>/src/utils/polyfills/$1',
-    // Mock dependencies
-    '@mysten/sui/client$': '<rootDir>/src/__mocks__/@mysten/sui/client.ts',
-    '@mysten/sui/(.*)': '<rootDir>/src/__mocks__/@mysten/sui/$1',
-    '@mysten/sui$': '<rootDir>/src/__mocks__/@mysten/sui',
-    '@mysten/walrus': '<rootDir>/src/__mocks__/@mysten/walrus',
-    'chalk': '<rootDir>/src/__mocks__/chalk.ts',
-    'child_process': '<rootDir>/src/__mocks__/child_process.ts',
-    'fs': '<rootDir>/src/__mocks__/fs.ts',
-    // Mock ESM modules that cause import issues
-    '^ora$': '<rootDir>/src/__mocks__/ora.ts',
-    'ora': '<rootDir>/src/__mocks__/ora.ts',
-    '^cli-progress$': '<rootDir>/src/__mocks__/cli-progress.ts',
-    'cli-progress': '<rootDir>/src/__mocks__/cli-progress.ts',
-    '^@oclif/test$': '<rootDir>/node_modules/@oclif/test/lib/index.js',
-    '^fancy-test$': '<rootDir>/node_modules/fancy-test/lib/index.js',
-    '^sinon$': '<rootDir>/node_modules/sinon/pkg/sinon.js',
-    '^.*/utils/Logger$': '<rootDir>/src/__mocks__/utils/Logger.ts',
     // Handle absolute imports
     '^@/(.*)$': '<rootDir>/src/$1'
   },
@@ -73,9 +56,8 @@ module.exports = {
   // Setup files run after the test framework is installed
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   transformIgnorePatterns: [
-    '/node_modules/(?!(@oclif|fancy-test|@mysten|@langchain)/.*)'
+    '/node_modules/(?!(@oclif|fancy-test|@mysten|@langchain|ora|cli-progress)/.*)'
   ],
-  // Support module mocking for ESM
   modulePaths: ['<rootDir>/src'],
   maxWorkers: 1,
   testTimeout: 10000,
@@ -86,7 +68,6 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
-    '!src/__mocks__/**/*',
     '!src/**/*.test.{js,jsx,ts,tsx}',
     '!src/**/index.{js,ts}'
   ],

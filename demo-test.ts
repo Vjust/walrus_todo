@@ -1,5 +1,5 @@
 import { TodoService } from './src/services/todo-service';
-
+import { configService } from './src/services/config-service';
 import { WalrusStorage } from './src/utils/walrus-storage';
 
 async function createTodoForAJ() {
@@ -8,7 +8,6 @@ async function createTodoForAJ() {
     
     // Initialize services
     const todoService = new TodoService();
-    const configService = new ConfigService();
     
     // Create or get the default list
     const listName = 'default';

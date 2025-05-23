@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('lint-cli-commands');
 
 /**
  * CLI Command Linter
@@ -34,7 +37,7 @@ let manifest;
 try {
   manifest = require(MANIFEST_PATH);
 } catch (error) {
-  console.error(chalk.red(`Error loading manifest: ${error.message}`));
+  logger.error(chalk.red(`Error loading manifest: ${error.message}`));
   process.exit(1);
 }
 
@@ -43,7 +46,7 @@ let packageJson;
 try {
   packageJson = require(PACKAGE_JSON_PATH);
 } catch (error) {
-  console.error(chalk.red(`Error loading package.json: ${error.message}`));
+  logger.error(chalk.red(`Error loading package.json: ${error.message}`));
   process.exit(1);
 }
 
@@ -123,7 +126,7 @@ function checkCommandFile(commandFile) {
 
 // Main function
 function lintCommands() {
-  console.log(chalk.blue('🔍 Linting CLI commands...'));
+  logger.info(chalk.blue('🔍 Linting CLI commands...'));
   
   // Get all command files
   const commandFiles = getCommandFiles(COMMANDS_DIR);
@@ -171,13 +174,13 @@ function lintCommands() {
   });
   
   // Display results
-  console.log('\n' + chalk.blue('📊 Lint Results:'));
-  console.log(`Total commands: ${results.total}`);
-  console.log(`Passed: ${chalk.green(results.passed)}`);
-  console.log(`Warnings: ${chalk.yellow(results.warnings)}`);
-  console.log(`Errors: ${chalk.red(results.errors)}`);
+  logger.info('\n' + chalk.blue('📊 Lint Results:'));
+  logger.info(`Total commands: ${results.total}`);
+  logger.info(`Passed: ${chalk.green(results.passed)}`);
+  logger.info(`Warnings: ${chalk.yellow(results.warnings)}`);
+  logger.info(`Errors: ${chalk.red(results.errors)}`);
   
-  console.log('\n' + chalk.blue('📝 Details:'));
+  logger.info('\n' + chalk.blue('📝 Details:'));
   
   // Group by status
   const errorCommands = results.details.filter(detail => detail.status === 'error');
@@ -186,30 +189,30 @@ function lintCommands() {
   
   // Show errors
   if (errorCommands.length > 0) {
-    console.log(chalk.red('\n❌ Commands with errors:'));
+    logger.info(chalk.red('\n❌ Commands with errors:'));
     errorCommands.forEach(detail => {
-      console.log(`  ${chalk.red(detail.command)}`);
+      logger.info(`  ${chalk.red(detail.command)}`);
       detail.issues.forEach(issue => {
-        console.log(`    - ${issue}`);
+        logger.info(`    - ${issue}`);
       });
     });
   }
   
   // Show warnings
   if (warningCommands.length > 0) {
-    console.log(chalk.yellow('\n⚠️ Commands with warnings:'));
+    logger.info(chalk.yellow('\n⚠️ Commands with warnings:'));
     warningCommands.forEach(detail => {
-      console.log(`  ${chalk.yellow(detail.command)}`);
+      logger.info(`  ${chalk.yellow(detail.command)}`);
       detail.issues.forEach(issue => {
-        console.log(`    - ${issue}`);
+        logger.info(`    - ${issue}`);
       });
     });
   }
   
   // Show passed
   if (passedCommands.length > 0) {
-    console.log(chalk.green('\n✅ Commands that passed:'));
-    console.log(`  ${passedCommands.map(detail => detail.command).join(', ')}`);
+    logger.info(chalk.green('\n✅ Commands that passed:'));
+    logger.info(`  ${passedCommands.map(detail => detail.command).join(', ')}`);
   }
   
   // Exit with appropriate code

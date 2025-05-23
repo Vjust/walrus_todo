@@ -21,6 +21,11 @@ import {
   ProgressBarOptions
 } from './utils/progress-indicators';
 
+// Fix for undefined columns in non-TTY environments
+if (process.stdout && !process.stdout.columns) {
+  process.stdout.columns = 80;
+}
+
 // To avoid circular imports, declare chalk inline
 interface ChalkInstance {
   red: (text: string) => string;
@@ -178,7 +183,7 @@ export abstract class BaseCommand extends Command {
   async finally(err?: Error): Promise<void> {
     try {
       await super.finally(err);
-    } catch (_error) {
+    } catch (error) {
       // Don't let cleanup errors mask original command errors
       this.warn(`Cleanup error: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -388,7 +393,7 @@ export abstract class BaseCommand extends Command {
       {
         operation: operationName,
         recoverable: false,
-        cause: lastError!
+        cause: lastError || new Error('Unknown error')
       }
     );
   }

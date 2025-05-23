@@ -4,6 +4,7 @@ import { TransactionBlock } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { SuiTransactionBlockResponse, SuiObjectResponse } from '@mysten/sui/client';
 import { IntentScope } from '@mysten/sui/cryptography';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 // CLIError imported but not used
 // Todo imported but not used
@@ -15,8 +16,9 @@ const mockSignAndExecuteTransactionBlock = jest.fn() as jest.MockedFunction<(tra
 const mockGetObject = jest.fn() as jest.MockedFunction<(id: string) => Promise<SuiObjectResponse>>;
 const mockGetLatestSuiSystemState = jest.fn().mockResolvedValue(createMockSystemStateResponse());
 
-// Create a properly typed mock SuiClient
-const mockSuiClient: jest.MockedObject<SuiClient> = {
+// Create a properly typed mock SuiClient (for future use)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _mockSuiClient: jest.MockedObject<SuiClient> = {
   signAndExecuteTransactionBlock: mockSignAndExecuteTransactionBlock,
   waitForTransactionBlock: jest.fn().mockResolvedValue(null),
   getObject: mockGetObject,
@@ -46,7 +48,8 @@ const mockSuiClient: jest.MockedObject<SuiClient> = {
 } as unknown as jest.MockedObject<SuiClient>;
 
 describe('SuiNftStorage', () => {
-  const moduleAddress = '0x123';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _moduleAddress = '0x123';
   // let storage: SuiNftStorage; // Commented out - will be used when tests are implemented
 
   beforeEach(() => {

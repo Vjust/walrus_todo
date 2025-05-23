@@ -6,7 +6,7 @@ import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../constants';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 import { Logger } from '../utils/Logger';
@@ -29,11 +29,13 @@ export default class RetrieveCommand extends BaseCommand {
   static description = 'Retrieve stored todos from blockchain or Walrus storage';
 
   static examples = [
-    '<%= config.bin %> retrieve --todo "Buy groceries" --list my-todos',
-    '<%= config.bin %> retrieve --blob-id QmXyz --list my-todos',
-    '<%= config.bin %> retrieve --object-id 0x123 --list my-todos',
-    '<%= config.bin %> retrieve --object-id 0x123 --network testnet --list my-todos',
-    '<%= config.bin %> retrieve --blob-id QmXyz --mock --list my-todos',
+    '<%= config.bin %> retrieve --todo "Buy groceries" --list my-todos    # Retrieve by title',
+    '<%= config.bin %> retrieve --blob-id QmXyz --list my-todos           # Retrieve by blob ID',
+    '<%= config.bin %> retrieve --object-id 0x123 --list my-todos         # Retrieve by NFT ID',
+    '<%= config.bin %> retrieve --object-id 0x123 --network testnet --list my-todos  # Specific network',
+    '<%= config.bin %> retrieve --blob-id QmXyz --mock --list my-todos    # Test retrieval',
+    '<%= config.bin %> retrieve --all --list work                         # Retrieve all todos',
+    '<%= config.bin %> retrieve --todo task-123 --list personal --verify  # Retrieve and verify',
   ];
 
   static flags = {
@@ -301,7 +303,7 @@ export default class RetrieveCommand extends BaseCommand {
           Logger.getInstance().warn(`Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
         }
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

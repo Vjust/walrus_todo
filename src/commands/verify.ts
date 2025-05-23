@@ -2,10 +2,10 @@ import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { AIVerifierAdapter, VerificationRecord } from '../types/adapters/AIVerifierAdapter';
 import chalk from 'chalk';
-// TransactionBlock imported but not used
 import * as fs from 'fs';
 import * as path from 'path';
 import { configService } from '../services/config-service';
+import { CLIError } from '../types/errors/consolidated';
 
 export default class Verify extends BaseCommand {
   static description = 'Manage blockchain verifications for AI operations';
@@ -51,6 +51,7 @@ export default class Verify extends BaseCommand {
     await super.init();
 
     // Initialize the verifier adapter
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const config = await this.configService.getConfig();
     // packageId and registryId would be used in real implementation
     // const packageId = config.packageId || '';
@@ -114,7 +115,7 @@ export default class Verify extends BaseCommand {
       this.log(chalk.bold(`Found ${verifications.length} verifications:`));
       this.log(this.formatTable(tableData));
       
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to list verifications: ${error}`);
     }
   }
@@ -164,8 +165,11 @@ export default class Verify extends BaseCommand {
         }
       }
       
-    } catch (_error) {
-      this.error(`Failed to show verification: ${error}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to show verification: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
@@ -230,8 +234,11 @@ export default class Verify extends BaseCommand {
         this.log(json);
       }
       
-    } catch (_error) {
-      this.error(`Failed to export verification: ${error}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to export verification: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   

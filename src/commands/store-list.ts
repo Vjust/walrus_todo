@@ -6,7 +6,7 @@ import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
 import { configService } from '../services/config-service';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { NETWORK_URLS } from '../constants';
 import { TodoList } from '../types/todo';
@@ -21,10 +21,12 @@ export default class StoreListCommand extends BaseCommand {
   static description = 'Store an entire todo list on blockchain with Walrus storage';
 
   static examples = [
-    '<%= config.bin %> store-list --file ./my-list.json',
-    '<%= config.bin %> store-list --file ./my-list.json --mock',
-    '<%= config.bin %> store-list --list my-todos',
-    '<%= config.bin %> store-list --list my-todos --network testnet'
+    '<%= config.bin %> store-list --file ./my-list.json                  # Store from file',
+    '<%= config.bin %> store-list --file ./my-list.json --mock           # Test without storing',
+    '<%= config.bin %> store-list --list my-todos                        # Store existing list',
+    '<%= config.bin %> store-list --list my-todos --network testnet      # Use testnet',
+    '<%= config.bin %> store-list --list work --epochs 20                # Store for 20 epochs',
+    '<%= config.bin %> store-list --file todos.json --create-nft         # Store and create NFT'
   ];
 
   static flags = {
@@ -129,7 +131,7 @@ export default class StoreListCommand extends BaseCommand {
             }
             throw parseError;
           }
-        } catch (_error) {
+        } catch (error) {
           if (error instanceof CLIError) {
             throw error; // Re-throw CLIError as-is
           }
@@ -165,6 +167,7 @@ export default class StoreListCommand extends BaseCommand {
        * In mock mode, this is a minimal mock implementation
        */
       // suiClient would be used in real implementation
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _suiClient = {
         url: networkUrl,
         core: {},
@@ -230,13 +233,13 @@ export default class StoreListCommand extends BaseCommand {
         this.log(chalk.yellow('1. By blob ID:'));
         this.log(chalk.dim(`   ${this.config.bin} retrieve --blob-id ${blobId}`));
 
-      } catch (_error) {
+      } catch (error) {
         throw error; // Let the outer error handler deal with it
       } finally {
         // Cleanup connection
         await this.walrusStorage.disconnect();
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

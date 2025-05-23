@@ -1,5 +1,6 @@
+import { execSync } from 'child_process';
 import type { WalrusClientExt } from '../types/client';
-import { WalrusError } from '../types/error';
+import { BaseError as WalrusError } from '../types/errors/consolidated';
 
 export type NetworkEnvironment = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
 
@@ -29,7 +30,7 @@ export class NetworkValidator {
       }
 
       return environment;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof WalrusError) {
         throw error;
       }
@@ -54,7 +55,7 @@ export class NetworkValidator {
       }
 
       return environment;
-    } catch (_error) {
+    } catch (error) {
       throw new WalrusError(
         `Failed to get Walrus environment: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -77,7 +78,7 @@ export class NetworkValidator {
   private switchSuiEnvironment(targetEnvironment: NetworkEnvironment): void {
     try {
       execSync(`sui client switch --env ${targetEnvironment}`, { encoding: 'utf8' });
-    } catch (_error) {
+    } catch (error) {
       throw new WalrusError(
         `Failed to switch Sui environment: ${error instanceof Error ? error.message : String(error)}`
       );

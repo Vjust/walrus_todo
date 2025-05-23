@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('setup-test-env');
  * Test environment setup utilities for WalTodo CLI testing
  * 
  * This file provides utility functions for setting up a clean test environment
@@ -145,7 +148,7 @@ export function runCliCommand(command: string): string {
     const output = execSync(fullCommand).toString();
     return output;
   } catch (_error) {
-    console.error('Error running CLI command:', error);
+    logger.error('Error running CLI command:', error);
     throw error;
   }
 }

@@ -149,7 +149,7 @@ describe('Promise Utilities', () => {
       try {
         await safeParallel(promises, 'multiple-failures');
         fail('Expected safeParallel to throw');
-      } catch (_error) {
+      } catch (error) {
         expect(error).toBeInstanceOf(AggregateOperationError);
         
         const aggregateError = error as AggregateOperationError;

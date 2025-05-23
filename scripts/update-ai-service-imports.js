@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('update-ai-service-imports');
  * Update AI Service Imports Script
  * 
  * This script updates any imports in the codebase that still reference
@@ -13,7 +16,7 @@ const exec = util.promisify(require('child_process').exec);
 
 // Find all TypeScript and JavaScript files that import the old AI service files
 async function findFilesWithOldImports() {
-  console.log('Searching for files with old AI service imports...');
+  logger.info('Searching for files with old AI service imports...');
   
   try {
     // Find files importing aiService.ts
@@ -48,7 +51,7 @@ async function findFilesWithOldImports() {
 
 // Update imports in a file
 function updateImports(filePath) {
-  console.log(`Updating imports in ${filePath}...`);
+  logger.info(`Updating imports in ${filePath}...`);
   
   let content = fs.readFileSync(filePath, 'utf8');
   let updated = false;
@@ -85,19 +88,19 @@ function updateImports(filePath) {
 
 // Main function
 async function main() {
-  console.log('Starting update of AI Service imports...');
+  logger.info('Starting update of AI Service imports...');
   
   try {
     // Find files with old imports
     const filesToUpdate = await findFilesWithOldImports();
     
     if (filesToUpdate.length === 0) {
-      console.log('No files found with old AI Service imports.');
+      logger.info('No files found with old AI Service imports.');
       return;
     }
     
-    console.log(`Found ${filesToUpdate.length} files to update:`);
-    filesToUpdate.forEach(file => console.log(`  - ${file}`));
+    logger.info(`Found ${filesToUpdate.length} files to update:`);
+    filesToUpdate.forEach(file => logger.info(`  - ${file}`));
     
     // Update each file
     let updatedCount = 0;
@@ -107,12 +110,12 @@ async function main() {
       }
     }
     
-    console.log(`\nUpdated imports in ${updatedCount} files.`);
-    console.log('\nNext steps:');
-    console.log('1. Run the typechecker to verify the changes');
-    console.log('2. Run tests to ensure functionality is maintained');
+    logger.info(`\nUpdated imports in ${updatedCount} files.`);
+    logger.info('\nNext steps:');
+    logger.info('1. Run the typechecker to verify the changes');
+    logger.info('2. Run tests to ensure functionality is maintained');
   } catch (error) {
-    console.error('Error updating imports:', error);
+    logger.error('Error updating imports:', error);
     process.exit(1);
   }
 }

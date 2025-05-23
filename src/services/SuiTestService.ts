@@ -1,9 +1,8 @@
 import { SuiClient } from '@mysten/sui/client';
-import { SuiTransactionBlockResponse } from '@mysten/sui/client';
 import { NETWORK_URLS } from '../constants';
-import { Config } from '../types';
+import { Config } from '../types/config';
 import { NetworkType } from '../types/network';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 // SUI_DECIMALS constant removed as it was unused
 

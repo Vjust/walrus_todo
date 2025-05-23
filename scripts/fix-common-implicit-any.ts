@@ -6,7 +6,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as glob from 'glob';
+import { sync as globSync } from 'glob';
 
 interface FileChange {
   file: string;
@@ -16,7 +16,7 @@ interface FileChange {
 }
 
 // Load files to process
-const files = glob.sync(path.join(__dirname, '../src/**/*.ts'), {
+const files = globSync(path.join(__dirname, '../src/**/*.ts'), {
   ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts']
 });
 
@@ -172,10 +172,10 @@ const revertScript = `/**
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as glob from 'glob';
+import { sync as globSync } from 'glob';
 
 // Find all backup files
-const backupFiles = glob.sync(path.join(__dirname, '../src/**/*.ts.bak'));
+const backupFiles = globSync(path.join(__dirname, '../src/**/*.ts.bak'));
 console.log(\`Found \${backupFiles.length} backup files to restore\`);
 
 let restored = 0;

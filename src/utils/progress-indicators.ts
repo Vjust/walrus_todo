@@ -2,13 +2,21 @@ import * as chalk from 'chalk';
 import { ICONS } from '../base-command';
 import ora from 'ora';
 import * as cliProgress from 'cli-progress';
+import { Logger } from './Logger';
+
+const logger = new Logger('progress-indicators');
+
+// Fix for undefined columns in non-TTY environments
+if (process.stdout && !process.stdout.columns) {
+  (process.stdout as unknown as { columns: number }).columns = 80;
+}
 
 // Define types
 type Ora = ReturnType<typeof ora>;
 
 // Fallback for testing environments if imports fail
 if (!ora) {
-  console.warn('ora import failed, using mock implementation');
+  logger.warn('ora import failed, using mock implementation');
   // @ts-expect-error - Mock ora for testing when import fails
   ora = () => ({
     start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
@@ -19,7 +27,7 @@ if (!ora) {
 }
 
 if (!cliProgress) {
-  console.warn('cli-progress import failed, using mock implementation');
+  logger.warn('cli-progress import failed, using mock implementation');
   // @ts-expect-error - Mock cli-progress for testing when import fails
   cliProgress = {
     SingleBar: class MockSingleBar {
@@ -135,6 +143,12 @@ export class SpinnerManager {
 
     const spinnerStyle = SPINNER_STYLES[this.options.style || 'dots'];
     
+    // Ensure stream has columns defined
+    const stream = this.options.stream || process.stdout;
+    if (stream && !('columns' in stream)) {
+      (stream as unknown as { columns: number }).columns = 80;
+    }
+    
     this.spinner = ora({
       text: this.options.text,
       color: this.options.color as 'black' | 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white' | 'gray',
@@ -143,7 +157,7 @@ export class SpinnerManager {
       indent: this.options.indent,
       discardStdin: this.options.discardStdin,
       hideCursor: this.options.hideCursor,
-      stream: this.options.stream,
+      stream: stream,
     });
   }
 
@@ -532,7 +546,7 @@ export async function withSpinner<T>(
     const result = await operation();
     spinner.succeed();
     return result;
-  } catch (_error) {
+  } catch (error) {
     spinner.fail();
     throw error;
   }
@@ -553,7 +567,7 @@ export async function withProgressBar<T>(
     const result = await operation(progress);
     progress.stop();
     return result;
-  } catch (_error) {
+  } catch (error) {
     progress.stop();
     throw error;
   }

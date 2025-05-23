@@ -1,5 +1,6 @@
 import { SecureCredentialManager, AIPermissionLevel } from '../../src/services/ai/SecureCredentialManager';
 import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
+import { CLIError } from '../../src/types/errors/consolidated';
 
 
 // Mock the crypto module
@@ -269,7 +270,7 @@ describe('Secure Credential Manager', () => {
       try {
         credentialManager.getCredential(AIProvider.ANTHROPIC);
         fail('Expected error was not thrown');
-      } catch (_error) {
+      } catch (error) {
         expect(error).toBeInstanceOf(CLIError);
         expect((error as CLIError).code).toBe('CREDENTIAL_NOT_FOUND');
       }

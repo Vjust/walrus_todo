@@ -4,9 +4,11 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { SuiTransactionBlockResponse, SuiObjectResponse } from '@mysten/sui/client';
 import { IntentScope, SignatureWithBytes } from '@mysten/sui/cryptography';
-import { SuiNftStorage } from '@/utils/sui-nft-storage';
+import { SuiNftStorage } from '../../src/utils/sui-nft-storage';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 
-import { Todo } from '@/types/todo';
+import { Todo } from '../../src/types/todo';
 import { createMockSuiObjectResponse, createMockTransactionResponse } from '../sui-test-types';
 
 // Setup Jest mocks with proper types

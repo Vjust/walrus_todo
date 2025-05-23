@@ -269,14 +269,12 @@ export class EnhancedAIService {
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
     
     const modelOptions = this.configManager.getModelOptions(operation);
     
     const response = await this.modelAdapter.completeStructured<Record<string, string[]>>({
       prompt: promptTemplate,
+      input: { todos: todoStr },
       options: modelOptions,
       metadata: { operation }
     });
@@ -327,9 +325,6 @@ export class EnhancedAIService {
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
     
     const modelOptions = this.configManager.getModelOptions(operation);
     
@@ -421,12 +416,12 @@ export class EnhancedAIService {
   /**
    * Analyze todos for patterns, dependencies, and insights
    */
-  async analyze(todos: Todo[]): Promise<Record<string, any>> {
+  async analyze(todos: Todo[]): Promise<Record<string, unknown>> {
     const operation = 'analyze';
     this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
     
     // Check cache first
-    const cachedResult = this.resultCache.get<Record<string, any>>(operation, todos);
+    const cachedResult = this.resultCache.get<Record<string, unknown>>(operation, todos);
     if (cachedResult) {
       this.resultCache.recordHit();
       this.logger.debug(`Cache hit for ${operation}`);
@@ -443,13 +438,10 @@ export class EnhancedAIService {
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
     
     const modelOptions = this.configManager.getModelOptions(operation);
     
-    const response = await this.modelAdapter.completeStructured<Record<string, any>>({
+    const response = await this.modelAdapter.completeStructured<Record<string, unknown>>({
       prompt: promptTemplate,
       options: modelOptions,
       metadata: { operation }
@@ -467,7 +459,7 @@ export class EnhancedAIService {
   async analyzeWithVerification(
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
-  ): Promise<VerifiedAIResult<Record<string, any>>> {
+  ): Promise<VerifiedAIResult<Record<string, unknown>>> {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
@@ -501,9 +493,6 @@ export class EnhancedAIService {
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
     
     const modelOptions = this.configManager.getModelOptions(operation);
     
@@ -566,9 +555,6 @@ export class EnhancedAIService {
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
     
     const modelOptions = this.configManager.getModelOptions(operation);
     
@@ -626,9 +612,6 @@ export class EnhancedAIService {
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
     
     const modelOptions = this.configManager.getModelOptions(operation);
     
@@ -690,9 +673,6 @@ export class EnhancedAIService {
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
     
     const modelOptions = this.configManager.getModelOptions(operation);
     

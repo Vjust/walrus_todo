@@ -1,7 +1,7 @@
 
 import { aiService } from '../../src/services/ai';
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
 import AddCommand from '../../src/commands/add';
+import { TodoService } from '../../src/services/todoService';
 
 // Mock aiService
 jest.mock('../../src/services/ai', () => {
@@ -33,18 +33,6 @@ jest.mock('../../src/services/todoService', () => {
   };
 });
 
-// Mock WalrusStorage
-jest.mock('../../src/utils/walrus-storage', () => {
-  return {
-    createWalrusStorage: jest.fn().mockImplementation(() => {
-      return {
-        connect: jest.fn().mockResolvedValue(undefined),
-        disconnect: jest.fn().mockResolvedValue(undefined),
-        storeTodo: jest.fn().mockResolvedValue('mock-blob-id')
-      };
-    })
-  };
-});
 
 describe('Add Command with AI', () => {
   // Save environment variables
@@ -65,9 +53,6 @@ describe('Add Command with AI', () => {
   });
 
   test('should add a todo without AI', async () => {
-    const args = { title: 'Test todo' };
-    const flags = { list: 'default', priority: 'medium' };
-    
     await command.run();
 
     expect(aiService.suggestTags).not.toHaveBeenCalled();

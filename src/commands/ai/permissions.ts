@@ -10,7 +10,7 @@ import { KeystoreSigner } from '../../utils/sui-keystore';
 import { createInterface } from 'readline';
 
 export default class AiPermissions extends BaseCommand {
-  static description = 'Manage permissions for AI operations';
+  static description = 'Control AI provider access levels and operation permissions with blockchain verification';
 
   /**
    * Gets a Sui signer instance for blockchain operations
@@ -19,7 +19,7 @@ export default class AiPermissions extends BaseCommand {
   private async getSuiSigner() {
     try {
       return await KeystoreSigner.fromPath('');
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`);
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -114,7 +114,7 @@ export default class AiPermissions extends BaseCommand {
       this.log(chalk.green('✓ Permission system initialized successfully.'));
       
       return permissionManager;
-    } catch (_error) {
+    } catch (error) {
       this.warn(chalk.yellow(`⚠️  Blockchain integration failed: ${error}`));
       this.warn(chalk.dim('Continuing with local permission management only.'));
       return null;
@@ -223,7 +223,7 @@ export default class AiPermissions extends BaseCommand {
           }
         }
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to list permissions: ${error}`);
     }
   }
@@ -278,12 +278,12 @@ export default class AiPermissions extends BaseCommand {
             } else {
               this.log(chalk.red('✗ Permission verification failed'));
             }
-          } catch (_error) {
+          } catch (error) {
             this.warn(chalk.yellow(`⚠️ Blockchain verification failed: ${error}`));
           }
         }
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to check permission: ${error}`);
     }
   }
@@ -356,7 +356,7 @@ export default class AiPermissions extends BaseCommand {
               } else {
                 this.log(chalk.red('✗ Permission verification failed'));
               }
-            } catch (_error) {
+            } catch (error) {
               this.warn(chalk.yellow(`⚠️ Blockchain verification failed: ${error}`));
             }
           }
@@ -376,7 +376,7 @@ export default class AiPermissions extends BaseCommand {
       } else {
         this.error(`Failed to update permission level for provider '${flags.provider}'`);
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to grant permission: ${error}`);
     }
   }
@@ -435,7 +435,7 @@ export default class AiPermissions extends BaseCommand {
       } else {
         this.error(`Failed to revoke permissions for provider '${flags.provider}'`);
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to revoke permission: ${error}`);
     }
   }
@@ -503,7 +503,7 @@ export default class AiPermissions extends BaseCommand {
       } else {
         this.log(chalk.yellow('\nNo providers currently have access to this operation.'));
       }
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to register operation: ${error}`);
     }
   }

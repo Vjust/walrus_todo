@@ -166,7 +166,7 @@ export class NetworkManager {
           statusText: response.statusText,
           headers: response.headers,
         } as EnhancedFetchResponse<T>;
-      } catch (_error) {
+      } catch (error) {
         // Clear timeout if it was set
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -221,7 +221,7 @@ export class NetworkManager {
       }
 
       return enhancedResponse;
-    } catch (_error) {
+    } catch (error) {
       // This will only be reached if AsyncOperationHandler has an internal error
       const errorResponse: EnhancedFetchResponse<T> = {
         ok: false,
@@ -339,7 +339,7 @@ export class NetworkManager {
       }
 
       return results;
-    } catch (_error) {
+    } catch (error) {
       if (throwErrors) {
         throw _error;
       }

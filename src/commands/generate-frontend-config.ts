@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import chalk from 'chalk';
-import { CLIError } from '../utils/error-handler';
+import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
 import { createFrontendConfigGenerator } from '../utils/frontend-config-generator';
 
@@ -15,9 +15,12 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
   static description = 'Generate frontend configuration files from current deployment settings';
 
   static examples = [
-    '<%= config.bin %> generate-frontend-config',
-    '<%= config.bin %> generate-frontend-config --network testnet',
-    '<%= config.bin %> generate-frontend-config --package-id 0x123456... --network devnet',
+    '<%= config.bin %> generate-frontend-config                                    # Generate config',
+    '<%= config.bin %> generate-frontend-config --network testnet                  # For testnet',
+    '<%= config.bin %> generate-frontend-config --package-id 0x123... --network devnet  # Custom package',
+    '<%= config.bin %> generate-frontend-config --output ./custom-config.json      # Custom output',
+    '<%= config.bin %> generate-frontend-config --format typescript                # TS format',
+    '<%= config.bin %> generate-frontend-config --include-examples                 # With examples'
   ];
 
   static flags = {
@@ -148,7 +151,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
       this.log(chalk.dim('  2. Start the frontend development server:'));
       this.log(chalk.cyan('     pnpm run nextjs'));
 
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

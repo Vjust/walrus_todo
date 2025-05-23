@@ -90,7 +90,7 @@ describe('AI Service Error Handling', () => {
         try {
           const result = await aiService.summarize(sampleTodos);
           results.push({ success: true, result });
-        } catch (_error) {
+        } catch (error: any) {
           results.push({ success: false, error: error.message });
         }
       }
@@ -147,7 +147,7 @@ describe('AI Service Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await aiService.summarize(sampleTodos);
-          } catch (_error) {
+          } catch (error: any) {
             if (attempts < maxAttempts - 1 && error.message?.includes('429')) {
               attempts++;
               await new Promise(resolve => setTimeout(resolve, backoffMs));
@@ -350,7 +350,7 @@ describe('AI Service Error Handling', () => {
         .mockImplementation(async (operation, fallbackValue) => {
           try {
             return await operation();
-          } catch (_error) {
+          } catch (error: any) {
             return fallbackValue;
           }
         });
@@ -394,7 +394,7 @@ describe('AI Service Error Handling', () => {
       const summarizeWithFallback = async (todos: any[]) => {
         try {
           return await aiService.summarize(todos);
-        } catch (_error) {
+        } catch (error: any) {
           return (aiService as any).localProcessing(todos);
         }
       };
@@ -462,7 +462,7 @@ describe('AI Service Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await aiService.summarize(sampleTodos);
-          } catch (_error) {
+          } catch (error: any) {
             attempts++;
             if (attempts >= maxAttempts) throw error;
             await new Promise(resolve => setTimeout(resolve, 10));

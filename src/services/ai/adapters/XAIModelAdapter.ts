@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../../utils/Logger';
+
+const logger = new Logger('XAIModelAdapter');
  * XAIModelAdapter - Implementation of AIModelAdapter for the XAI service
  *
  * This adapter provides integration with XAI (Grok) models via LangChain.
@@ -13,17 +16,17 @@ type StringPromptValueInterface = {
   toString(): string;
 };
 
-interface RunnableInterface<InputType, OutputType, CallOptions extends Record<string, any> = Record<string, any>> {
+interface RunnableInterface<InputType, OutputType, CallOptions extends Record<string, unknown> = Record<string, unknown>> {
   lc_serializable: boolean;
   invoke(input: InputType, options?: CallOptions): Promise<OutputType>;
-  batch(inputs: InputType[], options?: CallOptions & { batchOptions?: any }): Promise<OutputType[]>;
+  batch(inputs: InputType[], options?: CallOptions & { batchOptions?: Record<string, unknown> }): Promise<OutputType[]>;
   stream(input: InputType, options?: CallOptions): Promise<AsyncIterable<OutputType>>;
   transform<NewOutput>(
     transformer: (output: OutputType) => NewOutput | Promise<NewOutput>
   ): RunnableInterface<InputType, NewOutput, CallOptions>;
   pipe<NewOutput>(
-    runnable: RunnableInterface<OutputType, NewOutput, any>
-  ): RunnableInterface<InputType, NewOutput, any>;
+    runnable: RunnableInterface<OutputType, NewOutput, Record<string, unknown>>
+  ): RunnableInterface<InputType, NewOutput, Record<string, unknown>>;
   getName(): string;
 }
 
@@ -35,7 +38,7 @@ type ChatXAIOptions = {
 };
 
 // Mock implementation of ChatXAI as fallback
-class MockChatXAI implements RunnableInterface<string | StringPromptValueInterface, string, Record<string, any>> {
+class MockChatXAI implements RunnableInterface<string | StringPromptValueInterface, string, Record<string, unknown>> {
   private options: ChatXAIOptions;
   lc_serializable: boolean = true;
 
@@ -50,7 +53,7 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
   async invoke(prompt: string | StringPromptValueInterface, _options?: { temperature?: number; maxTokens?: number }): Promise<string> {
     // Handle both string and StringPromptValueInterface
     const promptStr = typeof prompt === 'string' ? prompt : prompt.toString();
-    console.log('Mocked XAI model invoked with prompt:', promptStr.substring(0, 20) + '...');
+    logger.info('Mocked XAI model invoked with prompt:', promptStr.substring(0, 20) + '...');
 
     // Generate a more helpful mock response based on the prompt content
     if (promptStr.toLowerCase().includes('json') || promptStr.includes('valid JSON')) {
@@ -96,13 +99,13 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
     }
   }
 
-  async batch(inputs: (string | StringPromptValueInterface)[], options?: any): Promise<string[]> {
+  async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<string[]> {
     // Process multiple inputs in parallel
     const results = await Promise.all(inputs.map(input => this.invoke(input, options)));
     return results;
   }
 
-  async stream(input: string | StringPromptValueInterface, options?: any): Promise<AsyncIterable<string>> {
+  async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<string>> {
     // Mock implementation of streaming interface
     const result = await this.invoke(input, options);
 
@@ -128,15 +131,15 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
     return {
       lc_serializable: true,
       getName: () => `${self.getName()}_transform`,
-      async invoke(input: string | StringPromptValueInterface, options?: any): Promise<NewOutput> {
+      async invoke(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<NewOutput> {
         const output = await self.invoke(input, options);
         return await transformer(output);
       },
-      async batch(inputs: (string | StringPromptValueInterface)[], options?: any): Promise<NewOutput[]> {
+      async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<NewOutput[]> {
         const outputs = await self.batch(inputs, options);
         return await Promise.all(outputs.map(output => transformer(output)));
       },
-      async stream(input: string | StringPromptValueInterface, options?: any): Promise<AsyncIterable<NewOutput>> {
+      async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<NewOutput>> {
         const outputStream = await self.stream(input, options);
         // Implementation would transform each chunk as it comes in
         // This is a simplified mock version
@@ -155,15 +158,15 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
         return {
           lc_serializable: true,
           getName: () => `${transformed.getName()}_pipe_${runnable.getName()}`,
-          async invoke(input: string | StringPromptValueInterface, options?: any): Promise<T> {
+          async invoke(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<T> {
             const output = await transformed.invoke(input, options);
             return await runnable.invoke(output, options);
           },
-          async batch(inputs: (string | StringPromptValueInterface)[], options?: any): Promise<T[]> {
+          async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<T[]> {
             const outputs = await transformed.batch(inputs, options);
             return await runnable.batch(outputs, options);
           },
-          async stream(input: string | StringPromptValueInterface, options?: any): Promise<AsyncIterable<T>> {
+          async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<T>> {
             const output = await transformed.invoke(input, options);
             return await runnable.stream(output, options);
           },
@@ -185,15 +188,15 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
     return {
       lc_serializable: true,
       getName: () => `${self.getName()}_pipe_${runnable.getName()}`,
-      async invoke(input: string | StringPromptValueInterface, options?: any): Promise<NewOutput> {
+      async invoke(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<NewOutput> {
         const output = await self.invoke(input, options);
         return await runnable.invoke(output, options);
       },
-      async batch(inputs: (string | StringPromptValueInterface)[], options?: any): Promise<NewOutput[]> {
+      async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<NewOutput[]> {
         const outputs = await self.batch(inputs, options);
         return await runnable.batch(outputs, options);
       },
-      async stream(input: string | StringPromptValueInterface, options?: any): Promise<AsyncIterable<NewOutput>> {
+      async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<NewOutput>> {
         const output = await self.invoke(input, options);
         return await runnable.stream(output, options);
       },
@@ -248,12 +251,12 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
     // Log detected key status for debugging only in development mode
     if (process.env.NODE_ENV === 'development') {
-      console.log(`XAIModelAdapter initialized with apiKey length: ${apiKey ? apiKey.length : 0}`);
-      console.log(`Key validity check result: ${isValidKey ? 'valid' : 'invalid'}`);
+      logger.info(`XAIModelAdapter initialized with apiKey length: ${apiKey ? apiKey.length : 0}`);
+      logger.info(`Key validity check result: ${isValidKey ? 'valid' : 'invalid'}`);
 
       // Log first 10 chars of the key to help debug without revealing the full key
       const keyPrefix = apiKey && apiKey.length > 10 ? apiKey.substring(0, 10) : 'none';
-      console.log(`Key prefix: ${keyPrefix}...`);
+      logger.info(`Key prefix: ${keyPrefix}...`);
     }
 
     try {
@@ -261,7 +264,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
       if (isTestKey) {
         // Only log in development mode
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Using mock XAI implementation with test key: ${apiKey}`);
+          logger.info(`Using mock XAI implementation with test key: ${apiKey}`);
         }
         this.client = new MockChatXAI({
           apiKey,
@@ -276,7 +279,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
       else if (isValidKey && typeof RealChatXAI !== 'undefined') {
         // Only log in development mode
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Attempting to use real XAI implementation with API key`);
+          logger.info(`Attempting to use real XAI implementation with API key`);
         }
         // Use any cast to bypass TypeScript type issues since the real implementation
         // is not available during build time
@@ -295,7 +298,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
         // Only log in development mode
         if (process.env.NODE_ENV === 'development') {
-          console.log(`Using mock XAI implementation due to ${reason}`);
+          logger.info(`Using mock XAI implementation due to ${reason}`);
         }
 
         this.client = new MockChatXAI({
@@ -308,12 +311,12 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
         // Only log warning when we're falling back with what should be a valid key
         if (isValidKey) {
-          console.warn('Falling back to mock XAI implementation despite having what appears to be a valid key');
+          logger.warn('Falling back to mock XAI implementation despite having what appears to be a valid key');
         }
       }
     } catch (_error) {
       // If real implementation fails, fall back to mock
-      console.error('Error initializing real XAI client, falling back to mock:', _error);
+      logger.error('Error initializing real XAI client, falling back to mock:', _error);
       this.client = new MockChatXAI({
         apiKey,
         modelName: this.modelName,
@@ -336,7 +339,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
       // Log when using mock implementation, but only in development mode
       if (this.useMock && process.env.NODE_ENV === 'development') {
-        console.log(`Using mock XAI implementation for completion (real API key not available)`);
+        logger.info(`Using mock XAI implementation for completion (real API key not available)`);
       }
 
       const response = await this.client.invoke(resolvedPrompt, {
@@ -374,7 +377,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
       // Log when using mock implementation, but only in development mode
       if (this.useMock && process.env.NODE_ENV === 'development') {
-        console.log(`Using mock XAI implementation for structured completion (real API key not available)`);
+        logger.info(`Using mock XAI implementation for structured completion (real API key not available)`);
       }
 
       // For structured responses, we modify the prompt to request JSON format
@@ -408,7 +411,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
    */
   public async processWithPromptTemplate(
     promptTemplate: PromptTemplate,
-    input: Record<string, any>
+    input: Record<string, unknown>
   ): Promise<AIResponse> {
     await this.enforceRateLimit();
 
@@ -417,7 +420,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
       // Log when using mock implementation, but only in development mode
       if (this.useMock && process.env.NODE_ENV === 'development') {
-        console.log(`Using mock XAI implementation for prompt template processing (real API key not available)`);
+        logger.info(`Using mock XAI implementation for prompt template processing (real API key not available)`);
       }
 
       // First format the prompt template with input values

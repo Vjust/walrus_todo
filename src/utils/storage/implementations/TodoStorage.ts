@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../Logger';
+
+const logger = new Logger('TodoStorage');
  * @fileoverview Todo Storage - Specialized storage implementation for Todos
  *
  * This class extends the BlobStorage implementation to provide specialized
@@ -60,7 +63,7 @@ export class TodoStorage extends BlobStorage {
       const exactSize = buffer.length;
       const calculatedSize = TodoSizeCalculator.calculateTodoSize(todo);
       
-      console.log(`Todo size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`);
+      logger.info(`Todo size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`);
       
       // Check size limit
       if (exactSize > this.getConfig().maxContentSize) {
@@ -89,9 +92,9 @@ export class TodoStorage extends BlobStorage {
       // Store the todo
       const blobId = await this.store(buffer, metadata);
       
-      console.log(`Todo successfully stored with blob ID: ${blobId}`);
+      logger.info(`Todo successfully stored with blob ID: ${blobId}`);
       return blobId;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -123,7 +126,7 @@ export class TodoStorage extends BlobStorage {
       todo.walrusBlobId = blobId;
       
       return todo;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -168,11 +171,11 @@ export class TodoStorage extends BlobStorage {
       const buffer = TodoSerializer.todoToBuffer(todo);
       const blobId = await this.store(buffer, metadata);
       
-      console.log(`Todo updated with new blob ID: ${blobId}`);
-      console.log(`Previous blob ID ${originalBlobId} will remain but can be ignored`);
+      logger.info(`Todo updated with new blob ID: ${blobId}`);
+      logger.info(`Previous blob ID ${originalBlobId} will remain but can be ignored`);
       
       return blobId;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -204,8 +207,8 @@ export class TodoStorage extends BlobStorage {
       const exactSize = buffer.length;
       const calculatedSize = TodoSizeCalculator.calculateTodoListSize(todoList);
       
-      console.log(`Todo list size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`);
-      console.log(`Contains ${todoList.todos.length} todos`);
+      logger.info(`Todo list size: ${exactSize} bytes (raw), ${calculatedSize} bytes (with buffer)`);
+      logger.info(`Contains ${todoList.todos.length} todos`);
       
       // Prepare metadata
       const metadata = {
@@ -225,9 +228,9 @@ export class TodoStorage extends BlobStorage {
       // Store the list
       const blobId = await this.store(buffer, metadata);
       
-      console.log(`Todo list successfully stored with blob ID: ${blobId}`);
+      logger.info(`Todo list successfully stored with blob ID: ${blobId}`);
       return blobId;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -259,7 +262,7 @@ export class TodoStorage extends BlobStorage {
       todoList.walrusBlobId = blobId;
       
       return todoList;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -390,7 +393,7 @@ export class TodoStorage extends BlobStorage {
     // Validate each todo in the list
     try {
       todoList.todos.forEach(todo => this.validateTodoData(todo));
-    } catch (_error) {
+    } catch (error) {
       // Wrap the error with list context
       if (error instanceof ValidationError) {
         throw new ValidationError(`Invalid todo in list: ${error.message}`, {
@@ -432,7 +435,7 @@ export class TodoStorage extends BlobStorage {
       this.validateTodoData(todo);
       
       return todo;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError) {
         throw error;
       }
@@ -476,7 +479,7 @@ export class TodoStorage extends BlobStorage {
       this.validateTodoListData(todoList);
       
       return todoList;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError) {
         throw error;
       }

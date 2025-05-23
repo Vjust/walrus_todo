@@ -2,7 +2,7 @@ import { Flags, ux } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { authenticationService } from '../../services/authentication-service';
 import { UserRole } from '../../types/permissions';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -12,7 +12,7 @@ import * as os from 'os';
  * Manage authentication and user accounts
  */
 export default class AuthCommand extends BaseCommand {
-  static description = 'Manage authentication and user accounts';
+  static description = 'Handle user authentication including login, logout, registration and API key management';
 
   static examples = [
     '$ walrus account:auth --register username',
@@ -142,7 +142,7 @@ export default class AuthCommand extends BaseCommand {
       if (address) {
         this.log(`Wallet Address: ${address}`);
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -170,7 +170,7 @@ export default class AuthCommand extends BaseCommand {
       this.log(chalk.green(`Logged in as ${username}`));
       this.log(`Roles: ${authResult.user.roles.join(', ')}`);
       this.log(`Session expires at: ${new Date(authResult.expiresAt).toLocaleString()}`);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -197,7 +197,7 @@ export default class AuthCommand extends BaseCommand {
       fs.unlinkSync(this.authTokenFilePath);
 
       this.log(chalk.green('Logged out successfully'));
-    } catch (_error) {
+    } catch (error) {
       this.error(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -233,7 +233,7 @@ export default class AuthCommand extends BaseCommand {
         this.log(`Wallet Address: ${user.address}`);
       }
       this.log(`Session expires at: ${new Date(authInfo.expiresAt).toLocaleString()}`);
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to check status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -283,7 +283,7 @@ export default class AuthCommand extends BaseCommand {
       fs.unlinkSync(this.authTokenFilePath);
 
       this.log(chalk.green('Password changed successfully. Please login again with your new password.'));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -323,7 +323,7 @@ export default class AuthCommand extends BaseCommand {
       this.log(`Name: ${name}`);
       this.log(`Expiry: ${expiryDays === 0 ? 'Never' : `${expiryDays} days`}`);
       this.log(chalk.yellow('Please save this key now, it will not be shown again!'));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
@@ -359,7 +359,7 @@ export default class AuthCommand extends BaseCommand {
       await authenticationService.revokeApiKey(apiKey);
 
       this.log(chalk.green(`API key revoked successfully`));
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {

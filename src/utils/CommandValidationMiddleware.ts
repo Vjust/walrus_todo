@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('CommandValidationMiddleware');
  * Command Validation Middleware
  * 
  * This module provides middleware functionality for command validation
@@ -525,7 +528,7 @@ export function validateAIApiKey(flags: any): void {
 
   // Log if using mock or testing mode
   if ((isMockKey || isTestingMode) && apiKey !== process.env.XAI_API_KEY) {
-    console.log('Using mock AI functionality - AI suggestions will be simulated');
+    logger.info('Using mock AI functionality - AI suggestions will be simulated');
   }
 }
 

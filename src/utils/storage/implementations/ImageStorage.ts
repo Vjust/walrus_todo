@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../Logger';
+
+const logger = new Logger('ImageStorage');
  * @fileoverview Image Storage - Specialized storage implementation for images
  *
  * This class extends the BlobStorage implementation to provide specialized
@@ -119,11 +122,11 @@ export class ImageStorage extends BlobStorage {
       // Store the image
       const blobId = await this.store(imageData, metadata);
       
-      console.log(`Image successfully stored with blob ID: ${blobId}`);
-      console.log(`Image dimensions: ${imageInfo.width}x${imageInfo.height}, Format: ${imageInfo.format}`);
+      logger.info(`Image successfully stored with blob ID: ${blobId}`);
+      logger.info(`Image dimensions: ${imageInfo.width}x${imageInfo.height}, Format: ${imageInfo.format}`);
       
       return blobId;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -172,7 +175,7 @@ export class ImageStorage extends BlobStorage {
       if (metadata.checksum) {
         const calculatedChecksum = this.calculateChecksum(content);
         if (calculatedChecksum !== metadata.checksum) {
-          console.warn(`Image checksum verification failed for blob ${blobId}`);
+          logger.warn(`Image checksum verification failed for blob ${blobId}`);
         }
       }
       
@@ -181,7 +184,7 @@ export class ImageStorage extends BlobStorage {
         metadata,
         imageInfo
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -243,11 +246,11 @@ export class ImageStorage extends BlobStorage {
       // Store as new blob (since Walrus blobs are immutable)
       const newBlobId = await this.store(imageData, metadata);
       
-      console.log(`Image updated with new blob ID: ${newBlobId}`);
-      console.log(`Previous blob ID ${blobId} will remain but can be ignored`);
+      logger.info(`Image updated with new blob ID: ${newBlobId}`);
+      logger.info(`Previous blob ID ${blobId} will remain but can be ignored`);
       
       return newBlobId;
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError || error instanceof StorageError) {
         throw error;
       }
@@ -408,8 +411,8 @@ export class ImageStorage extends BlobStorage {
       */
       
       return defaultInfo;
-    } catch (_error) {
-      console.warn('Error analyzing image:', error);
+    } catch (error) {
+      logger.warn('Error analyzing image:', error);
       
       // Return default values if analysis fails
       return {

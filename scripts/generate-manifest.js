@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+// Simple console logger for script use
+const logger = {
+  info: (msg) => console.log(`[INFO] ${msg}`),
+  error: (msg) => console.error(`[ERROR] ${msg}`),
+  warn: (msg) => console.warn(`[WARN] ${msg}`)
+};
+
 /**
  * Improved OCLIF manifest generator script
  * This script recursively scans the command directory structure
@@ -96,7 +103,7 @@ function getDescription(commandName) {
 function scanDirectory(directory, pathSegments = []) {
   try {
     if (!fs.existsSync(directory)) {
-      console.log(`${colors.yellow}⚠ Directory does not exist: ${directory}${colors.reset}`);
+      logger.info(`${colors.yellow}⚠ Directory does not exist: ${directory}${colors.reset}`);
       return;
     }
 
@@ -148,7 +155,7 @@ function scanDirectory(directory, pathSegments = []) {
       }
     });
   } catch (error) {
-    console.error(`${colors.red}✗ Error scanning directory ${directory}:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Error scanning directory ${directory}:${colors.reset}`, error);
   }
 }
 
@@ -156,7 +163,7 @@ function scanDirectory(directory, pathSegments = []) {
  * Main function to generate the manifest
  */
 function generateManifest() {
-  console.log(`${colors.blue}Generating improved OCLIF manifest...${colors.reset}`);
+  logger.info(`${colors.blue}Generating improved OCLIF manifest...${colors.reset}`);
   
   try {
     // Scan the commands directory recursively
@@ -188,9 +195,9 @@ function generateManifest() {
     const commandCount = Object.keys(manifest.commands).length;
     const topicCount = Object.keys(manifest.topics).length;
     
-    console.log(`${colors.green}✓ Successfully generated manifest with ${commandCount} commands and ${topicCount} topics${colors.reset}`);
+    logger.info(`${colors.green}✓ Successfully generated manifest with ${commandCount} commands and ${topicCount} topics${colors.reset}`);
   } catch (error) {
-    console.error(`${colors.red}✗ Failed to generate manifest:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Failed to generate manifest:${colors.reset}`, error);
     process.exit(1);
   }
 }

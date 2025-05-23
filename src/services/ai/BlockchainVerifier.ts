@@ -5,6 +5,9 @@ import { WalrusClientAdapter } from '../../types/adapters/WalrusClientAdapter';
 import { AIVerifierAdapter, VerificationParams, VerificationRecord } from '../../types/adapters/AIVerifierAdapter';
 import { AICredentialAdapter, CredentialVerificationParams, CredentialVerificationResult } from '../../types/adapters/AICredentialAdapter';
 import { createHash } from 'crypto';
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('BlockchainVerifier');
 
 /**
  * BlockchainVerifier - Service that handles blockchain verification for AI operations
@@ -79,7 +82,7 @@ export class BlockchainVerifier {
           storageType: 'walrus'
         };
       } catch (_error) {
-        console.warn('Failed to store full data in Walrus:', error);
+        logger.warn('Failed to store full data in Walrus:', error);
         // Continue with only hashes if off-chain storage fails
       }
     }
@@ -207,7 +210,7 @@ export class BlockchainVerifier {
         record: isValid ? record : undefined 
       };
     } catch (_error) {
-      console.error('Failed to verify proof:', error);
+      logger.error('Failed to verify proof:', error);
       return { isValid: false };
     }
   }
@@ -302,7 +305,7 @@ export class BlockchainVerifier {
       // This is a stub - in a real implementation, would use proper verification
       return true;
     } catch (_error) {
-      console.error('Signature verification failed:', error);
+      logger.error('Signature verification failed:', error);
       return false;
     }
   }

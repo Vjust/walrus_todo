@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../Logger';
+
+const logger = new Logger('BlobStorage');
  * @fileoverview Blob Storage - Implementation for general blob storage on Walrus
  *
  * This class provides a concrete implementation of IStorage for general blob storage
@@ -137,7 +140,7 @@ export class BlobStorage extends AbstractStorage {
       // Update connection state and timestamp
       this.connectionState = 'connected';
       this.lastHealthCheck = Date.now();
-    } catch (_error) {
+    } catch (error) {
       this.connectionState = 'failed';
       
       if (error instanceof NetworkError) {
@@ -175,8 +178,8 @@ export class BlobStorage extends AbstractStorage {
       }
       
       return isHealthy;
-    } catch (_error) {
-      console.warn('Health check failed:', error);
+    } catch (error) {
+      logger.warn('Health check failed:', error);
       return false;
     }
   }
@@ -258,12 +261,12 @@ export class BlobStorage extends AbstractStorage {
       if (fullMetadata.checksum) {
         const isVerified = await this.verify(blobId, fullMetadata.checksum);
         if (!isVerified) {
-          console.warn(`Uploaded content verification failed for blob ${blobId}`);
+          logger.warn(`Uploaded content verification failed for blob ${blobId}`);
         }
       }
       
       return blobId;
-    } catch (_error) {
+    } catch (error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -309,7 +312,7 @@ export class BlobStorage extends AbstractStorage {
       // Check cache first
       const cached = this.getCachedContent(id);
       if (cached) {
-        console.log('Retrieved content from cache');
+        logger.info('Retrieved content from cache');
         return cached;
       }
       
@@ -371,12 +374,12 @@ export class BlobStorage extends AbstractStorage {
           content: contentResult.data,
           metadata: attributes
         };
-      } catch (_error) {
+      } catch (error) {
         // Cancel the retrieval if something goes wrong
         retrievalAbortController.abort();
         throw error;
       }
-    } catch (_error) {
+    } catch (error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -414,7 +417,7 @@ export class BlobStorage extends AbstractStorage {
   ): Promise<string> {
     try {
       // For Walrus, updates create new blobs since they're immutable
-      console.log(`Updating blob ${id}. Note: Walrus blobs are immutable, so a new blob will be created.`);
+      logger.info(`Updating blob ${id}. Note: Walrus blobs are immutable, so a new blob will be created.`);
       
       // Add reference to original blob in metadata
       const updatedMetadata = {
@@ -425,7 +428,7 @@ export class BlobStorage extends AbstractStorage {
       
       // Store as new blob
       return this.store(content, updatedMetadata);
-    } catch (_error) {
+    } catch (error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -607,7 +610,7 @@ export class BlobStorage extends AbstractStorage {
         remainingBytes: Number(fields.storage_size || 0) - Number(fields.used_size || 0),
         isActive: Number(fields.end_epoch || 0) > currentEpoch
       };
-    } catch (_error) {
+    } catch (error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -724,7 +727,7 @@ export class BlobStorage extends AbstractStorage {
         usagePercentage,
         storageObjects
       };
-    } catch (_error) {
+    } catch (error) {
       // Categorize and rethrow with appropriate type
       if (error instanceof ValidationError || 
           error instanceof StorageError || 
@@ -778,9 +781,9 @@ export class BlobStorage extends AbstractStorage {
         savingsPercentage: analysis.costComparison.reuseExistingPercentSaved,
         recommendationDetails: analysis.detailedRecommendation
       };
-    } catch (_error) {
+    } catch (error) {
       // Categorize and log but don't throw - optimization is optional
-      console.warn('Storage optimization failed:', error);
+      logger.warn('Storage optimization failed:', error);
       
       return {
         success: false,

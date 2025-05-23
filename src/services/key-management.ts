@@ -1,6 +1,6 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SecureStorage } from './secure-storage';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * Service for managing cryptographic keys securely

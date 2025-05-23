@@ -125,7 +125,7 @@ export class BatchProcessor {
           await sleep(this.options.pauseBetweenBatchesMs);
         }
       }
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Batch processing error', error);
       throw error;
     }
@@ -215,7 +215,7 @@ export class BatchProcessor {
           value,
           error: null
         };
-      } catch (_error) {
+      } catch (error) {
         lastError = error as Error;
         
         this.logger.warn(`Processing failed for item ${index}, attempt ${attempt + 1}`, {

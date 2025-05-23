@@ -64,12 +64,12 @@ describe('Config Fuzzer Tests', () => {
         let thrownError: CLIError | null = null;
         try {
           loadConfigFile(testConfigPath);
-        } catch (_error) {
+        } catch (error) {
           thrownError = error as CLIError;
         }
         
         expect(thrownError).toBeInstanceOf(CLIError);
-        expect(thrownError?.code).toBe('CONFIG_FILE_LOAD_FAILED');
+        expect((thrownError as CLIError).code).toBe('CONFIG_FILE_LOAD_FAILED');
       });
     });
 

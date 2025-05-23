@@ -2,6 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { CLI_CONFIG } from '../../constants';
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('AuditLogger');
+
+/**
+ * Log entry structure for audit events
+ */
+interface AuditLogEntry {
+  eventType: string;
+  timestamp: number;
+  hash: string;
+  [key: string]: unknown; // Additional details
+}
 
 /**
  * AuditLogger - Securely logs security-critical events for auditing purposes
@@ -11,7 +24,7 @@ import { CLI_CONFIG } from '../../constants';
  * and support for log integrity verification.
  */
 export class AuditLogger {
-  private logEntries: any[] = [];
+  private logEntries: AuditLogEntry[] = [];
   private logFilePath: string;
   private hashChain: string = '';
   private enabled: boolean = true;
@@ -60,7 +73,7 @@ export class AuditLogger {
         this.hashChain = this.generateInitialHash();
       }
     } catch (_error) {
-      console.error('Failed to initialize hash chain:', error);
+      logger.error('Failed to initialize hash chain:', error);
       this.hashChain = this.generateInitialHash();
     }
   }
@@ -77,7 +90,7 @@ export class AuditLogger {
   /**
    * Log a security event with tamper-evident hashing
    */
-  public log(eventType: string, details: any): void {
+  public log(eventType: string, details: Record<string, unknown>): void {
     if (!this.enabled) return;
 
     try {
@@ -113,21 +126,21 @@ export class AuditLogger {
       // Write to file
       this.writeToFile(entryWithHash);
     } catch (_error) {
-      console.error('Failed to log audit event:', error);
+      logger.error('Failed to log audit event:', error);
     }
   }
 
   /**
    * Get all log entries
    */
-  public getEntries(): any[] {
+  public getEntries(): AuditLogEntry[] {
     return [...this.logEntries]; // Return a copy
   }
 
   /**
    * Write log entry to file
    */
-  private writeToFile(entry: any): void {
+  private writeToFile(entry: AuditLogEntry): void {
     try {
       // Check if rotation is needed
       this.checkRotation();
@@ -135,8 +148,8 @@ export class AuditLogger {
       // Append log entry
       const line = JSON.stringify(entry) + '\n';
       fs.appendFileSync(this.logFilePath, line, { mode: 0o600 }); // Restrict file permissions
-    } catch (_error) {
-      console.error('Failed to write audit log:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to write audit log:', error);
     }
   }
 
@@ -182,14 +195,14 @@ export class AuditLogger {
         }
       }
     } catch (_error) {
-      console.error('Failed to check/perform log rotation:', error);
+      logger.error('Failed to check/perform log rotation:', error);
     }
   }
 
   /**
    * Sanitize data to remove sensitive information
    */
-  private sanitize(data: any): any {
+  private sanitize(data: Record<string, unknown>): Record<string, unknown> {
     if (!data) return data;
     
     // Create a copy to avoid modifying the original
@@ -210,7 +223,7 @@ export class AuditLogger {
     ];
     
     // Helper function to sanitize recursively
-    const sanitizeObject = (obj: any) => {
+    const sanitizeObject = (obj: unknown): unknown => {
       if (typeof obj !== 'object' || obj === null) {
         // For strings, check for PII patterns
         if (typeof obj === 'string') {
@@ -226,7 +239,7 @@ export class AuditLogger {
         return obj;
       }
       
-      const result: any = Array.isArray(obj) ? [] : {};
+      const result: Record<string, unknown> = Array.isArray(obj) ? [] : {};
       
       for (const [key, value] of Object.entries(obj)) {
         // Check if the key is sensitive
@@ -317,7 +330,7 @@ export class AuditLogger {
       
       return true;
     } catch (_error) {
-      console.error('Failed to verify log integrity:', error);
+      logger.error('Failed to verify log integrity:', error);
       return false;
     }
   }

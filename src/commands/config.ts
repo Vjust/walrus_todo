@@ -2,6 +2,7 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { envConfig, getEnvironment } from '../utils/environment-config';
 import chalk from 'chalk';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * Config command to display and validate environment configuration
@@ -10,10 +11,13 @@ export default class ConfigCommand extends BaseCommand {
   static description = 'Display or validate environment configuration';
 
   static examples = [
-    'waltodo config',
-    'waltodo config --validate',
-    'waltodo config --show-all',
-    'waltodo config --section=ai'
+    '<%= config.bin %> config                          # Show current configuration',
+    '<%= config.bin %> config --validate               # Validate configuration',
+    '<%= config.bin %> config --show-all               # Show all config including defaults',
+    '<%= config.bin %> config --section=ai             # Show AI configuration only',
+    '<%= config.bin %> config --section=blockchain     # Show blockchain config',
+    '<%= config.bin %> config --export config.json     # Export configuration',
+    '<%= config.bin %> config --check-env              # Check environment variables'
   ];
 
   static flags = {
@@ -124,8 +128,11 @@ export default class ConfigCommand extends BaseCommand {
       try {
         envConfig.validate();
         this.log(chalk.green('✓ Configuration validation successful'));
-      } catch (_error) {
-        this.error(error instanceof Error ? error.message : String(error));
+      } catch (error) {
+        if (error instanceof CLIError) {
+          throw error;
+        }
+        throw new CLIError(error instanceof Error ? error.message : String(error));
       }
     }
     
@@ -139,7 +146,7 @@ export default class ConfigCommand extends BaseCommand {
     if (flags.format === 'env') {
       // .env output format
       const entries = Object.entries(config).map(([key, value]) => {
-        const configEntry = value as { value: any };
+        const configEntry = value as { value: unknown };
         return `${key}=${typeof configEntry.value === 'string' ? configEntry.value : JSON.stringify(configEntry.value)}`;
       });
       this.log(entries.join('\n'));
@@ -162,7 +169,7 @@ export default class ConfigCommand extends BaseCommand {
       }
       
       // Skip empty values if not showing all
-      const configEntry = value as { value: any };
+      const configEntry = value as { value: unknown };
       if (!flags['show-all'] && (configEntry.value === undefined || configEntry.value === null || configEntry.value === '')) {
         continue;
       }
@@ -188,7 +195,7 @@ export default class ConfigCommand extends BaseCommand {
         
         const requiredStar = metadata[key]?.required ? chalk.red(' *') : '';
         
-        const configEntry = value as { value: any; description?: string; example?: string };
+        const configEntry = value as { value: unknown; description?: string; example?: string };
         
         this.log(`${chalk.bold(key)}${requiredStar}: ${this.formatValue(configEntry.value)} ${sourceColor(`[${source}]`)}`);
         

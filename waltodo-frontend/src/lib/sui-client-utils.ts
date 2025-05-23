@@ -4,6 +4,7 @@
  */
 
 
+import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 
 // Types for frontend usage

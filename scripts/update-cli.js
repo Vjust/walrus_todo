@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('update-cli');
 
 /**
  * Cross-platform script to update an installed CLI
@@ -22,7 +25,7 @@ const colors = {
 
 // Print colored message
 function print(color, message) {
-  console.log(`${colors[color]}${message}${colors.reset}`);
+  logger.info(`${colors[color]}${message}${colors.reset}`);
 }
 
 // Main update function
@@ -103,7 +106,7 @@ async function updateCli() {
   if (versionResult.status === 0) {
     print('green', 'Successfully updated waltodo CLI!');
     print('blue', 'Updated version:');
-    console.log(versionResult.stdout);
+    logger.info(versionResult.stdout);
   } else {
     print('red', 'Update verification failed. \'waltodo\' command not found after update.');
     process.exit(1);

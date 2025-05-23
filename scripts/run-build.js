@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('run-build');
 
 /**
  * A simple Node.js wrapper for running the unified-build.ts script
@@ -30,7 +33,7 @@ if (!args.includes('--transpile-only') && !args.includes('--no-transpile-only'))
   mappedArgs.push('--transpile-only'); // Default to fast build
 }
 
-console.log(`Running build with options: ${mappedArgs.join(' ')}`);
+logger.info(`Running build with options: ${mappedArgs.join(' ')}`);
 
 // Run the TypeScript build script using ts-node
 const result = spawnSync('npx', ['ts-node', 'scripts/unified-build.ts', ...mappedArgs], {

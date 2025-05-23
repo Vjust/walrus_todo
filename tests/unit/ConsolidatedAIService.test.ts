@@ -297,7 +297,12 @@ describe('Consolidated AIService', () => {
         id: 'todo1',
         title: 'First todo',
         description: 'This is the first todo',
-        completed: false
+        completed: false,
+        priority: 'medium',
+        tags: [],
+        private: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       },
       {
         id: 'todo2',
@@ -415,8 +420,13 @@ describe('Consolidated AIService', () => {
         id: 'singleTodo',
         title: 'Single todo',
         description: 'This is a single todo',
-        completed: false
-      };
+        completed: false,
+        priority: 'medium',
+        tags: [],
+        private: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      } as Todo;
     });
     
     it('should suggest tags for a todo', async () => {
@@ -442,7 +452,7 @@ describe('Consolidated AIService', () => {
   
   // Test verification operations
   describe('Verification Operations', () => {
-    let mockVerificationService: any;
+    let mockVerificationService: Partial<AIVerificationService>;
     
     beforeEach(() => {
       mockVerificationService = {
@@ -474,7 +484,7 @@ describe('Consolidated AIService', () => {
       };
       
       // Set the verification service
-      (aiService as any).verificationService = mockVerificationService;
+      (aiService as { verificationService: AIVerificationService }).verificationService = mockVerificationService as AIVerificationService;
     });
     
     it('should summarize with verification', async () => {

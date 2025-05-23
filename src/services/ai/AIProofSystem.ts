@@ -1,6 +1,6 @@
 import { BlockchainVerifier } from './BlockchainVerifier';
 import { VerificationRecord } from '../../types/adapters/AIVerifierAdapter';
-import { CLIError } from '../../types/error';
+import { CLIError } from '../../types/errors/consolidated';
 import { createHash } from 'crypto';
 import { WalrusClientAdapter } from '../../types/adapters/WalrusClientAdapter';
 import fs from 'fs';
@@ -135,12 +135,12 @@ export class AIProofSystem {
         try {
           // Try to parse as JSON
           proofObj = JSON.parse(proof);
-        } catch {
+        } catch (error: unknown) {
           // Try to parse as base64-encoded JSON
           try {
             const decodedJson = Buffer.from(proof, 'base64').toString('utf8');
             proofObj = JSON.parse(decodedJson);
-          } catch {
+          } catch (error: unknown) {
             return { 
               isValid: false,
               details: 'Invalid proof format. Expected JSON or base64-encoded JSON.'

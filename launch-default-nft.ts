@@ -1,6 +1,7 @@
 
 import { SuiNftStorage } from './src/utils/sui-nft-storage';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+const { SuiClient } = require('@mysten/sui/client');
 import { TodoService } from './src/services';
 import { Todo } from './src/types/todo';
 import { TODO_NFT_CONFIG, NETWORK_URLS, CURRENT_NETWORK } from './src/constants';

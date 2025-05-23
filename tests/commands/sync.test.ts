@@ -1,5 +1,5 @@
 import { SyncCommand } from '../../src/commands/sync';
-
+import { ConfigService } from '../../src/services/config-service';
 import { WalrusStorage } from '../../src/utils/walrus-storage';
 import type { WalrusStorage as WalrusStorageType } from '../../src/utils/walrus-storage';
 import * as readline from 'readline';
@@ -23,7 +23,10 @@ describe('SyncCommand', () => {
       completed: false,
       createdAt: new Date().toISOString(),
       priority: 'high',
-      category: 'work'
+      category: 'work',
+      updatedAt: new Date().toISOString(),
+      private: true,
+      tags: []
     },
     {
       id: 'remote-2',
@@ -31,7 +34,10 @@ describe('SyncCommand', () => {
       completed: true,
       createdAt: new Date().toISOString(),
       priority: 'medium',
-      category: 'personal'
+      category: 'personal',
+      updatedAt: new Date().toISOString(),
+      private: true,
+      tags: []
     }
   ];
 
@@ -42,7 +48,10 @@ describe('SyncCommand', () => {
       completed: false,
       createdAt: new Date().toISOString(),
       priority: 'low',
-      category: ''
+      category: '',
+      updatedAt: new Date().toISOString(),
+      private: true,
+      tags: []
     }
   ];
 

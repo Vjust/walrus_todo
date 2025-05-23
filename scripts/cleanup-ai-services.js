@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('cleanup-ai-services');
 
 /**
  * AI Service Consolidation Script
@@ -19,7 +22,7 @@ const DRY_RUN = process.env.DRY_RUN === 'true';
  * Main function
  */
 async function main() {
-  console.log('Starting AI Service consolidation...');
+  logger.info('Starting AI Service consolidation...');
   
   // 1. Remove duplicate AIVerificationService files
   cleanupVerificationServices();
@@ -27,35 +30,35 @@ async function main() {
   // 2. Update imports in any files that reference the removed files
   updateImports();
   
-  console.log('Consolidation complete!');
+  logger.info('Consolidation complete!');
 }
 
 /**
  * Cleanup duplicate verification service files
  */
 function cleanupVerificationServices() {
-  console.log('\nCleaning up duplicate verification service files...');
+  logger.info('\nCleaning up duplicate verification service files...');
   
   // Get all AIVerificationService files
   const verificationFiles = fs.readdirSync(AI_SERVICES_DIR)
     .filter(file => file.includes('AIVerificationService') || file.includes('aiVerificationService'))
     .map(file => path.join(AI_SERVICES_DIR, file));
   
-  console.log(`Found ${verificationFiles.length} verification service files:`);
-  verificationFiles.forEach(file => console.log(`  - ${path.basename(file)}`));
+  logger.info(`Found ${verificationFiles.length} verification service files:`);
+  verificationFiles.forEach(file => logger.info(`  - ${path.basename(file)}`));
   
   // Keep the PascalCase version (AIVerificationService.ts) and remove the rest
   const fileToKeep = path.join(AI_SERVICES_DIR, 'AIVerificationService.ts');
   
   if (!fs.existsSync(fileToKeep)) {
-    console.error(`Error: The file to keep (${fileToKeep}) does not exist!`);
+    logger.error(`Error: The file to keep (${fileToKeep}) does not exist!`);
     process.exit(1);
   }
   
   // Remove all other files
   for (const file of verificationFiles) {
     if (file !== fileToKeep) {
-      console.log(`Removing ${path.basename(file)}...`);
+      logger.info(`Removing ${path.basename(file)}...`);
       
       if (!DRY_RUN) {
         // Backup the file first
@@ -66,13 +69,13 @@ function cleanupVerificationServices() {
         
         const backupFile = path.join(backupDir, path.basename(file));
         fs.copyFileSync(file, backupFile);
-        console.log(`  Backed up to ${backupFile}`);
+        logger.info(`  Backed up to ${backupFile}`);
         
         // Remove the file
         fs.unlinkSync(file);
-        console.log(`  Removed ${path.basename(file)}`);
+        logger.info(`  Removed ${path.basename(file)}`);
       } else {
-        console.log(`  DRY RUN: Would remove ${path.basename(file)}`);
+        logger.info(`  DRY RUN: Would remove ${path.basename(file)}`);
       }
     }
   }
@@ -82,7 +85,7 @@ function cleanupVerificationServices() {
  * Update imports in files that reference the removed files
  */
 function updateImports() {
-  console.log('\nUpdating imports...');
+  logger.info('\nUpdating imports...');
   
   // Find all TypeScript files that import aiVerificationService or AIVerificationService with a version number
   try {
@@ -103,16 +106,16 @@ function updateImports() {
     
     // Skip empty results
     if (files.length === 1 && files[0] === '') {
-      console.log('No imports to update');
+      logger.info('No imports to update');
       return;
     }
     
-    console.log(`Found ${files.length} files with imports to update:`);
+    logger.info(`Found ${files.length} files with imports to update:`);
     
     // Update each file
     for (const fileInfo of files) {
       const [filePath] = fileInfo.split(':');
-      console.log(`  Updating imports in ${path.basename(filePath)}...`);
+      logger.info(`  Updating imports in ${path.basename(filePath)}...`);
       
       if (!DRY_RUN) {
         // Read the file
@@ -125,19 +128,19 @@ function updateImports() {
         
         // Write the file
         fs.writeFileSync(filePath, updatedContent);
-        console.log(`    Updated imports in ${path.basename(filePath)}`);
+        logger.info(`    Updated imports in ${path.basename(filePath)}`);
       } else {
-        console.log(`    DRY RUN: Would update imports in ${path.basename(filePath)}`);
+        logger.info(`    DRY RUN: Would update imports in ${path.basename(filePath)}`);
       }
     }
   } catch (error) {
     // No matches
-    console.log('No imports to update');
+    logger.info('No imports to update');
   }
 }
 
 // Run main function
 main().catch(error => {
-  console.error('An error occurred:', error);
+  logger.error('An error occurred:', error);
   process.exit(1);
 });

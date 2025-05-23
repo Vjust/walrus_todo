@@ -2,6 +2,8 @@ import { jest } from '@jest/globals';
 import { SuiClient, type CoinBalance } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../src/utils/StorageManager';
+import { CLIError } from '../../src/types/errors/consolidated';
+import { execSync } from 'child_process';
 
 
 jest.mock('child_process', () => ({
@@ -10,7 +12,7 @@ jest.mock('child_process', () => ({
 
 describe('StorageManager - Allocation Tests', () => {
   let storageManager: StorageManager;
-  let _mockSuiClient: jest.Mocked<SuiClient>;
+  let mockSuiClient: jest.Mocked<SuiClient>;
   let mockWalrusClient: jest.Mocked<WalrusClient>;
 
   beforeEach(() => {

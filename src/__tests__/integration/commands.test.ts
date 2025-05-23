@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 
 jest.mock('child_process', () => ({ execSync: jest.fn() }));
 jest.mock('fs', () => ({

@@ -2,8 +2,11 @@ import { SuiClient, SuiObjectResponse, SuiTransactionBlockResponse } from '@myst
 import { type TransactionBlock } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { bcs } from '@mysten/sui/bcs';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { Todo } from '../types/todo';
+import { Logger } from './Logger';
+
+const logger = new Logger('sui-nft-storage');
 
 export interface SuiNFTStorageConfig {
   readonly address: string;
@@ -64,12 +67,12 @@ export class SuiNftStorage {
       // @ts-expect-error - Method compatibility issue with SuiClient
       const systemState = await this.client.getSystemState();
       if (!systemState || !systemState.epoch) {
-        console.warn('Invalid system state response:', systemState);
+        logger.warn('Invalid system state response:', systemState);
         return false;
       }
       return true;
-    } catch (_error) {
-      console.warn('Failed to check network health:', error);
+    } catch (error) {
+      logger.warn('Failed to check network health:', error);
       return false;
     }
   }
@@ -92,11 +95,11 @@ export class SuiNftStorage {
           throw new Error('Invalid response from network');
         }
         return response;
-      } catch (_error) {
+      } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         if (attempt < this.retryAttempts) {
           const delay = this.retryDelay * Math.pow(2, attempt - 1);
-          console.warn(`Retry attempt ${attempt} failed. Retrying in ${delay}ms...`);
+          logger.warn(`Retry attempt ${attempt} failed. Retrying in ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
@@ -122,9 +125,9 @@ export class SuiNftStorage {
       throw new CLIError('Todo title must be less than 100 characters', 'INVALID_TITLE');
     }
 
-    console.log('Preparing Todo NFT creation...');
-    console.log('Title:', todo.title);
-    console.log('Walrus Blob ID:', walrusBlobId);
+    logger.info('Preparing Todo NFT creation...');
+    logger.info('Title:', todo.title);
+    logger.info('Walrus Blob ID:', walrusBlobId);
 
     try {
       // Create a transaction block instance
@@ -172,14 +175,14 @@ export class SuiNftStorage {
             }
 
             return response.digest;
-          } catch (_error) {
+          } catch (error) {
             throw new CLIError(`Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`, 'TRANSACTION_EXECUTION_ERROR');
           }
         },
         (response) => Boolean(response && response.length > 0),
         'Failed to create Todo NFT'
       );
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Failed to create Todo NFT: ${error instanceof Error ? error.message : String(error)}`,
         'SUI_CREATION_FAILED'
@@ -199,8 +202,8 @@ export class SuiNftStorage {
     }
 
     const objectId = await this.normalizeObjectId(nftId);
-    console.log('Retrieving Todo NFT with object ID:', objectId);
-    console.log('Retrieving NFT object data...');
+    logger.info('Retrieving Todo NFT with object ID:', objectId);
+    logger.info('Retrieving NFT object data...');
 
     return await this.executeWithRetry(
       async () => {
@@ -278,7 +281,7 @@ export class SuiNftStorage {
           }
 
           return response.digest;
-        } catch (_error) {
+        } catch (error) {
           throw new CLIError(`Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`, 'TRANSACTION_EXECUTION_ERROR');
         }
       },
@@ -289,8 +292,8 @@ export class SuiNftStorage {
 
   private async normalizeObjectId(idOrDigest: string): Promise<string> {
     if (idOrDigest.length === 44) {
-      console.log('Object ID', idOrDigest, 'appears to be a transaction digest, not an object ID');
-      console.log('Attempting to get the actual object ID from the transaction effects...');
+      logger.info('Object ID', idOrDigest, 'appears to be a transaction digest, not an object ID');
+      logger.info('Attempting to get the actual object ID from the transaction effects...');
 
       const tx = await this.client.getTransactionBlock({
         digest: idOrDigest,
@@ -312,7 +315,7 @@ export class SuiNftStorage {
       }
 
       const objectId = nftObject.reference.objectId;
-      console.log('Found TodoNFT object:', objectId);
+      logger.info('Found TodoNFT object:', objectId);
       return objectId;
     }
 

@@ -850,7 +850,7 @@ describe('Permission System Security Tests', () => {
             await permissionManager.setPermissionLevel(provider, newLevel);
             
             // Log the adjustment
-            console.log(`Reduced permissions for ${provider} from ${currentLevel} to ${newLevel} due to excessive usage`);
+            // console.log(`Reduced permissions for ${provider} from ${currentLevel} to ${newLevel} due to excessive usage`); // Removed console statement
           }
         }
       };

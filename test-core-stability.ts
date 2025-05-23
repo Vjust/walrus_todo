@@ -13,8 +13,8 @@
  * 4. Configuration commands work without AI
  */
 
-
-
+import { TodoService } from './src/services/todo-service';
+import { ConfigService } from './src/services/config-service';
 
 async function testCoreStability() {
   process.stdout.write('🧪 Testing Core System Stability (AI-Independent)\n');
@@ -95,7 +95,7 @@ async function testCoreStability() {
 
 // Run the test
 if (require.main === module) {
-  testCoreStability().catch(_error => {
+  testCoreStability().catch(error => {
     process.stderr.write('Test execution failed: ' + error + '\n');
     process.exit(1);
   });

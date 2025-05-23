@@ -1,5 +1,5 @@
-import { BaseCommand } from '../../base-command';
-import { CLIError } from '../../utils/error-handler';
+import BaseCommand from '../../base-command';
+import { CLIError } from '../../types/errors/consolidated';
 import { configService } from '../../services/config-service';
 
 /**
@@ -8,7 +8,7 @@ import { configService } from '../../services/config-service';
  * It retrieves the address from the configuration settings and provides feedback if no address is set.
  */
 export default class AccountShowCommand extends BaseCommand {
-  static description = 'Show current active Sui address';
+  static description = 'Display the currently configured Sui wallet address for blockchain operations';
 
   async run(): Promise<void> {
     try {
@@ -17,7 +17,7 @@ export default class AccountShowCommand extends BaseCommand {
         throw new CLIError('No wallet address configured. Please run "waltodo configure" first.', 'NO_WALLET_ADDRESS');
       }
       this.log(`Current active Sui address: ${config.walletAddress}`);
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }

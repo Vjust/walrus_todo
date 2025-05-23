@@ -246,7 +246,7 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
    */
   public async processWithPromptTemplate(
     promptTemplate: PromptTemplate, 
-    input: Record<string, any>
+    input: Record<string, unknown>
   ): Promise<AIResponse> {
     await this.enforceRateLimit();
     

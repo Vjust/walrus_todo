@@ -1,4 +1,7 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('env-loader');
  * Environment Configuration Loader
  * 
  * Provides functionality to load environment variables from various sources:
@@ -57,11 +60,11 @@ export function loadEnvironment(options: EnvLoaderOptions = {}): void {
     
     // Finally update the configuration from environment variables
     envConfig.loadFromEnvironment();
-  } catch (_error) {
+  } catch (error) {
     if (throwOnError) {
       throw error;
     } else {
-      console.error(`Error loading environment: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`Error loading environment: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -85,7 +88,7 @@ function loadDotEnvFile(envFile: string, required: boolean, throwOnError: boolea
     if (fs.existsSync(envPath)) {
       // Only log in development mode
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Loading environment variables from ${envPath}`);
+        logger.info(`Loading environment variables from ${envPath}`);
       }
 
       const envConfig = dotenv.parse(fs.readFileSync(envPath));
@@ -97,31 +100,31 @@ function loadDotEnvFile(envFile: string, required: boolean, throwOnError: boolea
         if (!systemVars.includes(key)) {
           // Only log in development mode
           if (process.env.NODE_ENV === 'development') {
-            console.log(`Setting environment variable ${key}=${value.substring(0, 3)}***`);
+            logger.info(`Setting environment variable ${key}=${value.substring(0, 3)}***`);
           }
           process.env[key] = value;
         } else if (!process.env[key]) {
           // For system variables, only set if not already present
           // Only log in development mode
           if (process.env.NODE_ENV === 'development') {
-            console.log(`Setting system environment variable ${key}=${value.substring(0, 3)}***`);
+            logger.info(`Setting system environment variable ${key}=${value.substring(0, 3)}***`);
           }
           process.env[key] = value;
         }
       });
     } else if (required) {
       // Always log errors for required files
-      console.log(`Required .env file not found: ${envFile}`);
+      logger.info(`Required .env file not found: ${envFile}`);
       throw new Error(`Required .env file not found: ${envFile}`);
     } else if (process.env.NODE_ENV === 'development') {
       // Only log missing optional files in development mode
-      console.log(`.env file not found at ${envPath}`);
+      logger.info(`.env file not found at ${envPath}`);
     }
-  } catch (_error) {
+  } catch (error) {
     if (throwOnError) {
       throw error;
     } else {
-      console.error(`Error loading .env file: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`Error loading .env file: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -148,11 +151,11 @@ function loadConfigFile(configFile: string, required: boolean, throwOnError: boo
     } else if (required) {
       throw new Error(`Required config file not found: ${configFile}`);
     }
-  } catch (_error) {
+  } catch (error) {
     if (throwOnError) {
       throw error;
     } else {
-      console.error(`Error loading config file: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(`Error loading config file: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -176,8 +179,8 @@ export function saveConfigToFile(configFile: string): void {
     }
     
     fs.writeFileSync(configFile, JSON.stringify(configData, null, 2));
-  } catch (_error) {
-    console.error(`Error saving config file: ${error instanceof Error ? error.message : String(error)}`);
+  } catch (error) {
+    logger.error(`Error saving config file: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -228,7 +231,7 @@ export function generateEnvTemplate(templateFile: string = '.env.template'): voi
     }
     
     fs.writeFileSync(templateFile, template);
-  } catch (_error) {
-    console.error(`Error generating .env template: ${error instanceof Error ? error.message : String(error)}`);
+  } catch (error) {
+    logger.error(`Error generating .env template: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

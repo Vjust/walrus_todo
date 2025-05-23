@@ -166,7 +166,7 @@ export class ConnectionManager<T extends ManagedConnection> {
       
       this.lastUsed = Date.now();
       return this.connection;
-    } catch (_error) {
+    } catch (error) {
       logger.error('Failed to establish connection',
         error instanceof Error ? error : new Error(String(error)),
         { network: 'unknown' } as Record<string, unknown>
@@ -190,7 +190,7 @@ export class ConnectionManager<T extends ManagedConnection> {
     try {
       const connection = await this.getConnection();
       return await operation(connection);
-    } catch (_error) {
+    } catch (error) {
       // If it's a connection error and auto-reconnect is enabled, schedule reconnection
       if (error instanceof NetworkError && this.options.autoReconnect) {
         this.scheduleReconnect();
@@ -215,7 +215,7 @@ export class ConnectionManager<T extends ManagedConnection> {
       try {
         await this.safelyCloseConnection(this.connection);
         logger.debug('Connection closed successfully');
-      } catch (_error) {
+      } catch (error) {
         logger.warn('Error closing connection',
           { error: String(error) }
         );

@@ -81,6 +81,7 @@ describe('Transaction Edge Cases', () => {
           user.getTodos(listId),
           user.updateTodo(listId, fuzzer.string(), { completed: true })
         ]).catch((error: unknown) => {
+          expect(error).toBeInstanceOf(Error);
           expect((error as Error).message).toContain('Unauthorized');
         })
       ));
@@ -99,10 +100,8 @@ describe('Transaction Edge Cases', () => {
             new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), 100))
           ]);
         } catch (error: unknown) {
-          if (!(error instanceof Error)) {
-            throw new Error('Unexpected error type');
-          }
-          expect(error.message).toMatch(/timeout|failed|error/i);
+          expect(error).toBeInstanceOf(Error);
+          expect((error as Error).message).toMatch(/timeout|failed|error/i);
         }
       };
 
@@ -150,14 +149,7 @@ describe('Transaction Edge Cases', () => {
       ];
 
       for (const transition of invalidTransitions) {
-        try {
-          await transition();
-        } catch (error: unknown) {
-          if (!(error instanceof Error)) {
-            throw new Error('Unexpected error type');
-          }
-          expect(error).toHaveProperty('message');
-        }
+        await expect(transition()).rejects.toThrow();
       }
     });
 
@@ -174,11 +166,7 @@ describe('Transaction Edge Cases', () => {
       ].map(p => p.catch(e => e))); // Capture but don't fail on errors
 
       // Verify final state is consistent
-      try {
-        await suiService.getTodos(listId);
-      } catch (error: unknown) {
-        expect((error as Error).message).toContain('not found');
-      }
+      await expect(suiService.getTodos(listId)).rejects.toThrow('not found');
     });
   });
 
@@ -203,10 +191,8 @@ describe('Transaction Edge Cases', () => {
             { description: fuzzer.string() }
           );
         } catch (error: unknown) {
-          if (!(error instanceof Error)) {
-            throw new Error('Unexpected error type');
-          }
-          expect(error.message).toMatch(/Unauthorized|not found/i);
+          expect(error).toBeInstanceOf(Error);
+          expect((error as Error).message).toMatch(/Unauthorized|not found/i);
         }
       }));
     });

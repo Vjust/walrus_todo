@@ -89,7 +89,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
    */
   public abstract processWithPromptTemplate(
     promptTemplate: PromptTemplate,
-    input: Record<string, any>
+    input: Record<string, unknown>
   ): Promise<AIResponse>;
 
   /**
@@ -122,21 +122,27 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
   /**
    * Handle errors with the appropriate wrapped error types
    */
-  protected handleError(error: any, operation: string): never {
+  protected handleError(error: unknown, operation: string): never {
+    // Type guard for error with name property
+    const errorWithName = error as { name?: string; cause?: { name?: string } };
+    const errorWithStatus = error as { status?: number; response?: { status?: number } };
+    const errorWithMessage = error as { message?: string };
+    
     // Check for AbortError (timeout or cancellation)
-    if (error.name === 'AbortError' || (error.cause && error.cause.name === 'AbortError')) {
+    if (errorWithName.name === 'AbortError' || (errorWithName.cause && errorWithName.cause.name === 'AbortError')) {
       throw new Error(`Operation ${operation} was cancelled or timed out`);
     }
 
-    if (error.status === 429 || (error.response && error.response.status === 429)) {
+    if (errorWithStatus.status === 429 || (errorWithStatus.response && errorWithStatus.response.status === 429)) {
       throw new Error(`Rate limit exceeded for ${this.provider} during ${operation}`);
     }
 
-    if (error.status === 401 || (error.response && error.response.status === 401)) {
+    if (errorWithStatus.status === 401 || (errorWithStatus.response && errorWithStatus.response.status === 401)) {
       throw new Error(`Authentication failed for ${this.provider}: Invalid API key`);
     }
 
-    throw new Error(`Error with ${this.provider} during ${operation}: ${error.message || 'Unknown error'}`);
+    const message = errorWithMessage.message || (error instanceof Error ? error.message : 'Unknown error');
+    throw new Error(`Error with ${this.provider} during ${operation}: ${message}`);
   }
 
   /**
@@ -159,7 +165,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
    */
   protected async executeRequest<T>(
     url: string,
-    requestOptions: RequestInit & { body?: any },
+    requestOptions: RequestInit & { body?: string | FormData | URLSearchParams },
     options: {
       timeout?: number;
       retries?: number;
@@ -220,7 +226,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
    */
   protected async resolvePrompt(
     promptInput: string | PromptTemplate,
-    input?: Record<string, any>
+    input?: Record<string, unknown>
   ): Promise<string> {
     if (typeof promptInput === 'string') {
       return promptInput;

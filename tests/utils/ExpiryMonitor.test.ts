@@ -1,24 +1,24 @@
 import { WalrusClient } from '@mysten/walrus';
-import { ExpiryMonitor } from '@/utils/ExpiryMonitor';
-import { VaultManager, BlobRecord } from '@/utils/VaultManager';
-import { WalrusError, StorageError } from '@/types/errors';
+import { ExpiryMonitor } from '../../src/utils/ExpiryMonitor';
+import { VaultManager, BlobRecord } from '../../src/utils/VaultManager';
+import { StorageError } from '../../src/types/errors/consolidated';
 import { Signer } from '@mysten/sui/cryptography';
 import * as childProcess from 'child_process';
-import { Logger } from '@/utils/Logger';
+import { Logger } from '../../src/utils/Logger';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
-jest.mock('@/utils/VaultManager');
-jest.mock('@/utils/Logger');
+jest.mock('../../src/utils/VaultManager');
+jest.mock('../../src/utils/Logger');
 
 describe('ExpiryMonitor', () => {
-  let _monitor: ExpiryMonitor;
+  let monitor: ExpiryMonitor;
   let mockVaultManager: jest.Mocked<VaultManager>;
   let mockWalrusClient: jest.Mocked<WalrusClient>;
   let mockWarningHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockRenewalHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
-  let _mockSigner: jest.Mocked<Signer>;
-  let mockExecSync: jest.SpyInstance;
+  let mockSigner: jest.Mocked<Signer>;
+  // let mockExecSync: jest.SpyInstance; // Currently unused
   let mockLogger: jest.Mocked<Logger>;
   
   beforeEach(() => {
@@ -26,8 +26,8 @@ describe('ExpiryMonitor', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-    mockExecSync = jest.spyOn(childProcess, 'execSync')
-      .mockReturnValue(Buffer.from('testnet\n'));
+    // mockExecSync = jest.spyOn(childProcess, 'execSync') // Currently unused
+    //   .mockReturnValue(Buffer.from('testnet\n'));
   });
 
   const testConfig = {
@@ -374,7 +374,7 @@ describe('ExpiryMonitor', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to check blob expiry',
         expect.any(Error),
-        expect.objectContaining({ config: mockConfig })
+        expect.objectContaining({ config: testConfig })
       );
     });
   });

@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../../../../src/utils/Logger';
+
+const logger = new Logger('custom-setup');
  * Custom Setup Example
  * 
  * Demonstrates advanced configuration options for Sui testnet setup
@@ -9,7 +12,7 @@ import * as path from 'path';
 
 async function runCustomSetup() {
   try {
-    console.log('🚀 Starting custom Sui testnet setup...\n');
+    logger.info('🚀 Starting custom Sui testnet setup...\n');
 
     // Define custom configuration
     const config: WalletSetupConfig = {
@@ -27,27 +30,27 @@ async function runCustomSetup() {
     const result = await setupTestnet(config);
 
     // Display results
-    console.log('\n=== Custom Setup Complete ===');
-    console.log(`Wallet Type: ${config.walletType}`);
-    console.log(`Wallet Address: ${result.wallet.address}`);
-    console.log(`Balance: ${formatSuiBalance(result.wallet.balance)} SUI`);
-    console.log(`Custom Keystore: ${result.keystorePath}`);
-    console.log(`Custom Config: ${result.configPath}`);
+    logger.info('\n=== Custom Setup Complete ===');
+    logger.info(`Wallet Type: ${config.walletType}`);
+    logger.info(`Wallet Address: ${result.wallet.address}`);
+    logger.info(`Balance: ${formatSuiBalance(result.wallet.balance)} SUI`);
+    logger.info(`Custom Keystore: ${result.keystorePath}`);
+    logger.info(`Custom Config: ${result.configPath}`);
     
     if (result.backupPath) {
-      console.log(`Backup Location: ${result.backupPath}`);
+      logger.info(`Backup Location: ${result.backupPath}`);
     }
 
     // Test wallet functionality
-    console.log('\n🧪 Testing wallet...');
-    console.log(`Public Key: ${result.wallet.publicKey.substring(0, 20)}...`);
-    console.log(`RPC URL: ${result.wallet.networkUrl}`);
+    logger.info('\n🧪 Testing wallet...');
+    logger.info(`Public Key: ${result.wallet.publicKey.substring(0, 20)}...`);
+    logger.info(`RPC URL: ${result.wallet.networkUrl}`);
 
-    console.log('\n✅ Custom setup successful!');
+    logger.info('\n✅ Custom setup successful!');
     
     return result;
   } catch (_error) {
-    console.error('❌ Setup failed:', error);
+    logger.error('❌ Setup failed:', error);
     process.exit(1);
   }
 }

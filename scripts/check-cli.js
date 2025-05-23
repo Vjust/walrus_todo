@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { Logger } from '../src/utils/Logger';
+
+const logger = new Logger('check-cli');
 
 /**
  * CLI Command Checker
@@ -34,7 +37,7 @@ let manifest;
 try {
   manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
 } catch (error) {
-  console.error(chalk.red(`Error loading manifest: ${error.message}`));
+  logger.error(chalk.red(`Error loading manifest: ${error.message}`));
   process.exit(1);
 }
 
@@ -43,7 +46,7 @@ const manifestCommands = Object.keys(manifest.commands);
 
 // Test a command
 function testCommand(command) {
-  console.log(chalk.blue(`Testing command: ${command}`));
+  logger.info(chalk.blue(`Testing command: ${command}`));
   
   // Run the command with --help flag
   const helpResult = spawnSync(CLI_PATH, [command, '--help'], {
@@ -75,7 +78,7 @@ function testCommand(command) {
 
 // Main function
 function checkCLI() {
-  console.log(chalk.blue('🔍 Checking CLI commands...'));
+  logger.info(chalk.blue('🔍 Checking CLI commands...'));
   
   // Test each command
   results.total = manifestCommands.length;
@@ -117,13 +120,13 @@ function checkCLI() {
   });
   
   // Display results
-  console.log('\n' + chalk.blue('📊 Check Results:'));
-  console.log(`Total commands: ${results.total}`);
-  console.log(`Passed: ${chalk.green(results.passed)}`);
-  console.log(`Warnings: ${chalk.yellow(results.warnings)}`);
-  console.log(`Errors: ${chalk.red(results.errors)}`);
+  logger.info('\n' + chalk.blue('📊 Check Results:'));
+  logger.info(`Total commands: ${results.total}`);
+  logger.info(`Passed: ${chalk.green(results.passed)}`);
+  logger.info(`Warnings: ${chalk.yellow(results.warnings)}`);
+  logger.info(`Errors: ${chalk.red(results.errors)}`);
   
-  console.log('\n' + chalk.blue('📝 Details:'));
+  logger.info('\n' + chalk.blue('📝 Details:'));
   
   // Group by status
   const errorCommands = results.details.filter(detail => detail.status === 'error');
@@ -132,29 +135,29 @@ function checkCLI() {
   
   // Show errors
   if (errorCommands.length > 0) {
-    console.log(chalk.red('\n❌ Commands with errors:'));
+    logger.info(chalk.red('\n❌ Commands with errors:'));
     errorCommands.forEach(detail => {
-      console.log(`  ${chalk.red(detail.command)}`);
+      logger.info(`  ${chalk.red(detail.command)}`);
       detail.issues.forEach(issue => {
-        console.log(`    - ${issue}`);
+        logger.info(`    - ${issue}`);
       });
     });
   }
   
   // Show warnings
   if (warningCommands.length > 0) {
-    console.log(chalk.yellow('\n⚠️ Commands with warnings:'));
+    logger.info(chalk.yellow('\n⚠️ Commands with warnings:'));
     warningCommands.forEach(detail => {
-      console.log(`  ${chalk.yellow(detail.command)}`);
+      logger.info(`  ${chalk.yellow(detail.command)}`);
       detail.issues.forEach(issue => {
-        console.log(`    - ${issue}`);
+        logger.info(`    - ${issue}`);
       });
     });
   }
   
   // Show passed
   if (passedCommands.length > 0) {
-    console.log(chalk.green('\n✅ Commands that passed:'));
+    logger.info(chalk.green('\n✅ Commands that passed:'));
     const passedCommandNames = passedCommands.map(detail => detail.command);
     
     // Display in columns for better readability
@@ -165,7 +168,7 @@ function checkCLI() {
       const row = passedCommandNames.slice(i, i + columns)
         .map(name => name.padEnd(columnWidth))
         .join('');
-      console.log(`  ${row}`);
+      logger.info(`  ${row}`);
     }
   }
   

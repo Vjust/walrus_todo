@@ -2,6 +2,7 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import chalk from 'chalk';
 import { createConfigValidator } from '../utils/config-validator';
+import { CLIError } from '../types/errors/consolidated';
 
 /**
  * @class ValidateConfigCommand
@@ -13,9 +14,12 @@ export default class ValidateConfigCommand extends BaseCommand {
   static description = 'Validate configuration consistency between CLI and frontend';
 
   static examples = [
-    '<%= config.bin %> validate-config',
-    '<%= config.bin %> validate-config --network testnet',
-    '<%= config.bin %> validate-config --detailed',
+    '<%= config.bin %> validate-config                        # Basic validation',
+    '<%= config.bin %> validate-config --network testnet      # Validate for testnet',
+    '<%= config.bin %> validate-config --detailed             # Show detailed results',
+    '<%= config.bin %> validate-config --fix                  # Auto-fix issues',
+    '<%= config.bin %> validate-config --frontend-path ./app  # Check specific frontend',
+    '<%= config.bin %> validate-config --strict               # Strict validation mode'
   ];
 
   static flags = {
@@ -101,8 +105,11 @@ export default class ValidateConfigCommand extends BaseCommand {
         process.exit(1);
       }
 
-    } catch (_error) {
-      this.error(chalk.red(`Validation failed: ${error instanceof Error ? error.message : String(error)}`));
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Validation failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

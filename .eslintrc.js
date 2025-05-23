@@ -34,6 +34,7 @@ module.exports = {
     'waltodo-frontend/',
     'frontend-demo/',
     'backup/',
+    'servers/',
     '*.js'
   ]
 };

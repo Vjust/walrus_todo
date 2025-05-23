@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Secp256k1Keypair } from '@mysten/sui/keypairs/secp256k1';
 import { 
@@ -68,7 +69,7 @@ export class KeystoreSigner implements SignerAdapter {
     try {
       const keystoreData = fs.readFileSync(keystorePath, 'utf-8');
       keystore = JSON.parse(keystoreData); // Array of base64 strings
-    } catch (_error) {
+    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new KeystoreError(`Failed to read keystore file: ${errorMessage}`, 'KEYSTORE_READ_ERROR');
     }
@@ -86,7 +87,7 @@ export class KeystoreSigner implements SignerAdapter {
             this.keyScheme = 'ED25519';
             break;
           }
-        } catch {}
+        } catch (error: unknown) {}
 
         // Try Secp256k1 if Ed25519 fails
         try {
@@ -97,7 +98,7 @@ export class KeystoreSigner implements SignerAdapter {
             this.keyScheme = 'Secp256k1';
             break;
           }
-        } catch {}
+        } catch (error: unknown) {}
       } catch (e) {
         // Skip invalid keys
         continue;
@@ -241,7 +242,7 @@ export class KeystoreSigner implements SignerAdapter {
       }
 
       return response;
-    } catch (_error) {
+    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       throw new Error(`Transaction execution failed: ${errorMessage}`);
     }

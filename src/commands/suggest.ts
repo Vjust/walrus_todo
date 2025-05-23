@@ -16,6 +16,7 @@ import { KeystoreSigner } from '../utils/sui-keystore';
 import { getPermissionManager } from '../services/ai/AIPermissionManager';
 import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
 import { checkbox } from '@inquirer/prompts';
+import { CLIError } from '../types/errors/consolidated';
 
 // Cache for AI suggestions, config, and API key validation
 const suggestionCache = createCache<any>('ai-suggestions', {
@@ -47,7 +48,7 @@ export default class Suggest extends BaseCommand {
   private async getSuiSigner() {
     try {
       return await KeystoreSigner.fromPath('');
-    } catch (_error) {
+    } catch (error) {
       this.error(`Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`);
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -61,6 +62,18 @@ export default class Suggest extends BaseCommand {
     return new TodoService();
   }
   static description = 'Get intelligent task suggestions based on your current todo list (with performance caching)';
+
+  static examples = [
+    '<%= config.bin %> suggest                                           # Get general suggestions',
+    '<%= config.bin %> suggest --list work                               # Suggestions for work list',
+    '<%= config.bin %> suggest --type next_step                          # Next step suggestions only',
+    '<%= config.bin %> suggest --tags urgent,important                   # Filter by tags',
+    '<%= config.bin %> suggest --priority high --minScore 80             # High priority, high relevance',
+    '<%= config.bin %> suggest --addTodo                                 # Add suggestions as todos',
+    '<%= config.bin %> suggest --verify --provider xai                   # Verify with blockchain',
+    '<%= config.bin %> suggest --todoId task-123 --type related          # Related to specific todo',
+    '<%= config.bin %> suggest --format json --maxResults 5              # JSON output, limit 5'
+  ];
 
   static flags = {
     ...BaseCommand.flags,
@@ -184,9 +197,9 @@ export default class Suggest extends BaseCommand {
         // Here we assume valid key for now, in production would do actual validation
         await apiKeyValidationCache.set(apiKeyCacheKey, true);
         if (cacheDebugEnabled) this.log(chalk.dim('✓ API key validation result cached'));
-      } catch (_error) {
+      } catch (error) {
         await apiKeyValidationCache.set(apiKeyCacheKey, false);
-        this.error('API key validation failed');
+        throw new CLIError('API key validation failed');
       }
     }
     
@@ -227,8 +240,11 @@ export default class Suggest extends BaseCommand {
         );
 
         this.log(chalk.cyan('Blockchain verification enabled.'));
-      } catch (_error) {
-        this.error(`Failed to initialize blockchain verification: ${error}`);
+      } catch (error) {
+        if (error instanceof CLIError) {
+          throw error;
+        }
+        throw new CLIError(`Failed to initialize blockchain verification: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
     
@@ -441,8 +457,11 @@ export default class Suggest extends BaseCommand {
         this.log(chalk.dim(`  Config: ${configStats.hits} hits, ${configStats.misses} misses (${(configStats.hitRate * 100).toFixed(1)}% hit rate)`));
         this.log(chalk.dim(`  API Keys: ${apiKeyStats.hits} hits, ${apiKeyStats.misses} misses (${(apiKeyStats.hitRate * 100).toFixed(1)}% hit rate)`));
       }
-    } catch (_error) {
-      this.error(`Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(`Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   
@@ -481,8 +500,11 @@ export default class Suggest extends BaseCommand {
         });
         
         this.log(`Added todo: ${chalk.green(suggestion.title)}`);
-      } catch (_error) {
-        this.error(`Failed to add todo: ${error}`);
+      } catch (error) {
+        if (error instanceof CLIError) {
+          throw error;
+        }
+        throw new CLIError(`Failed to add todo: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
     

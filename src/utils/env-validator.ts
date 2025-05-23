@@ -1,11 +1,14 @@
 /**
+import { Logger } from './Logger';
+
+const logger = new Logger('env-validator');
  * Environment Variable Validation Service
  * 
  * Provides robust validation and diagnostic functions for environment variables.
  */
 
 import chalk from 'chalk';
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { envConfig, EnvVariable, hasEnv } from './environment-config';
 
 export interface ValidationResult {
@@ -48,7 +51,7 @@ export function validateEnvironmentFull(): ValidationResult {
           result.invalidVars.push(`${key}: ${config.validationError || 'Failed validation'}`);
           result.isValid = false;
         }
-      } catch (_error) {
+      } catch (error) {
         result.invalidVars.push(`${key}: ${error instanceof Error ? error.message : String(error)}`);
         result.isValid = false;
       }
@@ -108,18 +111,18 @@ export function validateOrThrow(options: {
   // Show warnings if enabled
   if (showWarnings && (result.warnings.length > 0 || result.deprecatedVars.length > 0 || result.insecureVars.length > 0)) {
     if (result.deprecatedVars.length > 0) {
-      console.warn(chalk.yellow('\nDeprecated environment variables:'));
-      result.deprecatedVars.forEach(v => console.warn(chalk.yellow(`  - ${v}`)));
+      logger.warn(chalk.yellow('\nDeprecated environment variables:'));
+      result.deprecatedVars.forEach(v => logger.warn(chalk.yellow(`  - ${v}`)));
     }
 
     if (result.insecureVars.length > 0) {
-      console.warn(chalk.yellow('\nInsecure storage of sensitive variables:'));
-      result.insecureVars.forEach(v => console.warn(chalk.yellow(`  - ${v}`)));
+      logger.warn(chalk.yellow('\nInsecure storage of sensitive variables:'));
+      result.insecureVars.forEach(v => logger.warn(chalk.yellow(`  - ${v}`)));
     }
 
     if (result.warnings.length > 0) {
-      console.warn(chalk.yellow('\nEnvironment configuration warnings:'));
-      result.warnings.forEach(w => console.warn(chalk.yellow(`  - ${w}`)));
+      logger.warn(chalk.yellow('\nEnvironment configuration warnings:'));
+      result.warnings.forEach(w => logger.warn(chalk.yellow(`  - ${w}`)));
     }
 
     // Exit if configured to do so
@@ -220,7 +223,7 @@ function formatValue(value: any): string {
   } else {
     try {
       return JSON.stringify(value);
-    } catch {
+    } catch (error: unknown) {
       return String(value);
     }
   }

@@ -1,4 +1,7 @@
 /**
+import { Logger } from '../Logger';
+
+const logger = new Logger('error-handler');
  * @file Centralized error handling utilities
  * Provides consistent error handling, logging, and display throughout the application.
  */
@@ -28,7 +31,7 @@ const getErrorMessage = (error: unknown): string => {
   }
   try {
     return String(error);
-  } catch {
+  } catch (error: unknown) {
     return 'Unknown error';
   }
 };
@@ -118,31 +121,31 @@ export function handleError(
   const errorPrefix = prefix || '❌';
   
   // Display the error
-  console.error(`\n${errorPrefix} ${contextPrefix}${chalk.red(baseError.message)}`);
+  logger.error(`\n${errorPrefix} ${contextPrefix}${chalk.red(baseError.message)}`);
   
   // Display additional information for BaseError instances
   if (baseError instanceof BaseError) {
-    console.error(`${chalk.dim('Error Code:')} ${chalk.yellow(baseError.code)}`);
+    logger.error(`${chalk.dim('Error Code:')} ${chalk.yellow(baseError.code)}`);
     
     // Display cause if available and requested
     if (baseError.cause && logStack) {
-      console.error(`${chalk.dim('Caused by:')} ${chalk.red(baseError.cause.message)}`);
+      logger.error(`${chalk.dim('Caused by:')} ${chalk.red(baseError.cause.message)}`);
     }
     
     // Display context if available and requested
     if (baseError.context && Object.keys(baseError.context).length > 0) {
-      console.error(`${chalk.dim('Context:')}`, baseError.context);
+      logger.error(`${chalk.dim('Context:')}`, baseError.context);
     }
     
     // Display recovery information
     if (baseError.recoverable) {
-      console.error(`${chalk.green('This error is recoverable.')}${baseError.shouldRetry ? ' You can retry the operation.' : ''}`);
+      logger.error(`${chalk.green('This error is recoverable.')}${baseError.shouldRetry ? ' You can retry the operation.' : ''}`);
     }
   }
   
   // Display stack trace if requested
   if (logStack && baseError.stack) {
-    console.error(`\n${chalk.dim('Stack trace:')}\n${chalk.dim(baseError.stack)}`);
+    logger.error(`\n${chalk.dim('Stack trace:')}\n${chalk.dim(baseError.stack)}`);
   }
   
   // Exit if requested
@@ -199,7 +202,7 @@ export async function withRetry<T>(
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       return await fn();
-    } catch (_error) {
+    } catch (error) {
       lastError = error;
       
       // Don't retry on the last attempt
@@ -232,7 +235,7 @@ export async function withRetry<T>(
  * @param delay Delay before next attempt
  */
 function defaultOnRetry(error: unknown, attempt: number, delay: number): void {
-  console.log(
+  logger.info(
     chalk.yellow(`Operation failed, retrying (${attempt}/${delay})...`),
     error instanceof Error ? error.message : String(error)
   );
