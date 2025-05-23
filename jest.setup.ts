@@ -14,7 +14,7 @@ if (typeof (global as GlobalWithAggregateError).AggregateError === 'undefined') 
       this.name = 'AggregateError';
       this.errors = Array.from(errors);
     }
-  } as any;
+  } as typeof AggregateError;
 }
 
 // Make Jest globals available 
