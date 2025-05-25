@@ -7,7 +7,7 @@ import {
   WalrusImageStorage,
 } from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
 import { NETWORK_URLS } from '../../constants';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../utils/adapters/sui-client-adapter';
 // Removed unused chalk import
 import * as path from 'path';
 import { configService } from '../../services/config-service';

@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { SuiClient } from '@mysten/sui/client';
+// Using compatibility adapter for SuiClient
 import { WalrusClient } from '@mysten/walrus';
 import {
   CLIError,
@@ -52,7 +52,7 @@ export class StorageManager {
   private readonly MIN_EPOCH_BUFFER = 10; // Minimum remaining epochs
 
   constructor(
-    private suiClient: SuiClient,
+    private suiClient: unknown,
     private walrusClient: WalrusClient | WalrusClientAdapter | WalrusClientExt,
     private address: string,
     private config?: {
@@ -76,10 +76,11 @@ export class StorageManager {
       }
 
       // Verify network connectivity
-      const systemState = (await this.suiClient.getLatestSuiSystemState)
-        ? (this.suiClient as any).getLatestSuiSystemState()
-        : undefined;
-      if (!systemState?.epoch) {
+      let systemState: unknown;
+      if ('getLatestSuiSystemState' in this.suiClient && typeof this.suiClient.getLatestSuiSystemState === 'function') {
+        systemState = await this.suiClient.getLatestSuiSystemState();
+      }
+      if (!systemState || !(systemState as { epoch?: unknown }).epoch) {
         throw new CLIError(
           'Failed to verify network state. Check your connection.',
           'WALRUS_NETWORK_ERROR'
@@ -106,13 +107,13 @@ export class StorageManager {
   }> {
     try {
       // Check WAL token balance
-      const walBalance = await (this.suiClient as any).getBalance({
+      const walBalance: { totalBalance: string } = await (this.suiClient as { getBalance: (params: { owner: string; coinType: string }) => Promise<{ totalBalance: string }> }).getBalance({
         owner: this.address,
         coinType: 'WAL',
       });
 
       // Get Storage Fund balance
-      const storageFundBalance = await (this.suiClient as any).getBalance({
+      const storageFundBalance: { totalBalance: string } = await (this.suiClient as { getBalance: (params: { owner: string; coinType: string }) => Promise<{ totalBalance: string }> }).getBalance({
         owner: this.address,
         coinType: '0x2::storage::Storage',
       });
@@ -182,7 +183,7 @@ export class StorageManager {
     currentEpoch: number
   ): Promise<StorageVerification> {
     try {
-      const response = await this.suiClient.getOwnedObjects({
+      const response = await (this.suiClient as any).getOwnedObjects({
         owner: this.address,
         filter: { StructType: '0x2::storage::Storage' },
         options: { showContent: true },
@@ -283,9 +284,8 @@ export class StorageManager {
       const balances = await this.checkBalances();
 
       // 3. Get current epoch
-      const { epoch } = (await this.suiClient.getLatestSuiSystemState)
-        ? (this.suiClient as any).getLatestSuiSystemState()
-        : undefined;
+      const systemState = await (this.suiClient as any).getLatestSuiSystemState();
+      const epoch = systemState?.epoch;
       const currentEpoch = Number(epoch);
 
       // 4. Check existing storage
@@ -323,7 +323,7 @@ export class StorageManager {
   }
 
   async getSuiBalance(address: string): Promise<string> {
-    const balance = await (this.suiClient as any).getBalance({
+    const balance = await (this.suiClient as { getBalance: (params: { owner: string; coinType: string }) => Promise<{ totalBalance: string }> }).getBalance({
       owner: address,
       coinType: 'WAL',
     });
@@ -344,7 +344,7 @@ export class StorageManager {
     }>;
   }> {
     try {
-      const response = await this.suiClient.getOwnedObjects({
+      const response = await (this.suiClient as any).getOwnedObjects({
         owner: address,
         filter: { StructType: '0x2::storage::Storage' },
         options: { showContent: true },
@@ -368,14 +368,14 @@ export class StorageManager {
             endEpoch: Number(content.fields.end_epoch),
           };
         })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
+        .filter((item: any): item is NonNullable<typeof item> => item !== null);
 
       const totalAllocated = storageObjects.reduce(
-        (sum, obj) => sum + obj.totalSize,
+        (sum: any, obj: any) => sum + obj.totalSize,
         0
       );
       const totalUsed = storageObjects.reduce(
-        (sum, obj) => sum + obj.usedSize,
+        (sum: any, obj: any) => sum + obj.usedSize,
         0
       );
 

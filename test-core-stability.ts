@@ -32,7 +32,7 @@ async function testCoreStability() {
 
     // Create a test list
     const testListName = `test-stability-${Date.now()}`;
-    const list = await todoService.createList(testListName, 'user');
+    await todoService.createList(testListName, 'user');
     process.stdout.write(`   ✅ Created test list: ${testListName}\n`);
 
     // Add a todo without AI

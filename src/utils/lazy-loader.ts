@@ -9,7 +9,7 @@ export interface LazyLoadOptions {
 
 interface ModuleInfo {
   path: string;
-  module: any;
+  module: unknown;
   loadTime: number;
   lastAccessed: number;
   preloaded: boolean;
@@ -18,7 +18,7 @@ interface ModuleInfo {
 export class LazyLoader {
   private readonly logger = Logger.getInstance();
   private readonly moduleCache: Map<string, ModuleInfo> = new Map();
-  private readonly loadingPromises: Map<string, Promise<any>> = new Map();
+  private readonly loadingPromises: Map<string, Promise<unknown>> = new Map();
   private readonly preloadQueue: Set<string> = new Set();
   private preloadTimer?: NodeJS.Timeout;
   private readonly PRELOAD_DELAY = 100; // ms
@@ -44,7 +44,7 @@ export class LazyLoader {
   /**
    * Load a module lazily with caching
    */
-  async load<T = any>(modulePath: string): Promise<T> {
+  async load<T = unknown>(modulePath: string): Promise<T> {
     const startTime = Date.now();
 
     // Check memory cache first
@@ -54,7 +54,7 @@ export class LazyLoader {
       this.logger.debug(`Module loaded from memory cache: ${modulePath}`, {
         loadTime: `${Date.now() - startTime}ms`,
       });
-      return cached.module;
+      return cached.module as T;
     }
 
     // Check persistent cache if enabled
@@ -68,7 +68,7 @@ export class LazyLoader {
             loadTime: `${Date.now() - startTime}ms`,
           }
         );
-        return persistentCached.module;
+        return persistentCached.module as T;
       }
     }
 
@@ -76,7 +76,7 @@ export class LazyLoader {
     const existingPromise = this.loadingPromises.get(modulePath);
     if (existingPromise) {
       this.logger.debug(`Waiting for existing load: ${modulePath}`);
-      return existingPromise;
+      return existingPromise as Promise<T>;
     }
 
     // Load the module

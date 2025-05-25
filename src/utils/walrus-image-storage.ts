@@ -5,13 +5,7 @@ import { Logger } from './Logger';
 const logger = new Logger('walrus-image-storage');
 
 // Define compatible SignatureWithBytes interface for local usage
-interface SignatureWithBytes {
-  signature: string;
-  bytes: string;
-}
-import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient, type ReadBlobOptions } from '@mysten/walrus';
-import type { WalrusClientExt, WalrusClientWithExt } from '../types/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getAssetPath } from './path-utils';
@@ -28,10 +22,6 @@ import {
   WalrusClientAdapter,
   createWalrusClientAdapter,
 } from './adapters/walrus-client-adapter';
-import {
-  TransactionBlockAdapter,
-  createTransactionBlockAdapter,
-} from './adapters/transaction-adapter';
 
 /**
  * A type that extends SuiClient with optional extensions used by other parts of the code
@@ -47,34 +37,6 @@ export type ClientWithExtensions<
     jsonRpc: SuiClient;
   }> &
   T;
-
-/**
- * Execute operation with retries using exponential backoff
- */
-const withRetry = async <T>(
-  fn: () => Promise<T>,
-  options?: { attempts?: number; baseDelay?: number; maxDelay?: number }
-): Promise<T> => {
-  const attempts = options?.attempts || 3;
-  const baseDelay = options?.baseDelay || 1000;
-  const maxDelay = options?.maxDelay || 10000;
-  let lastError: Error | null = null;
-
-  for (let i = 0; i < attempts; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error as Error;
-      // Calculate delay with exponential backoff
-      const delay = Math.min(baseDelay * Math.pow(2, i), maxDelay);
-      // Add a small amount of jitter to prevent synchronized retries
-      const jitter = Math.random() * 200;
-      await new Promise(resolve => setTimeout(resolve, delay + jitter));
-    }
-  }
-
-  throw lastError;
-};
 
 /**
  * Metadata about an image for storage and retrieval

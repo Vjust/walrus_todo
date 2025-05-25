@@ -65,6 +65,7 @@ class JestPatternFixer {
       
       return errors;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error getting Jest errors:', error);
       return [];
     }
@@ -100,7 +101,7 @@ class JestPatternFixer {
         }
         
         expect(thrownError).toBeDefined();
-        ${expects.map(exp => exp.replace('expect(', `expect(thrownError).toBeDefined();\n        expect(`)).join('\n        ')}`;
+        ${expects.map((exp: string) => exp.replace('expect(', `expect(thrownError).toBeDefined();\n        expect(`)).join('\n        ')}`;
       }
       
       return match;
@@ -160,6 +161,7 @@ class JestPatternFixer {
    */
   private fixFile(filePath: string): boolean {
     if (!existsSync(filePath)) {
+      // eslint-disable-next-line no-console
       console.log(`File not found: ${filePath}`);
       return false;
     }
@@ -176,12 +178,14 @@ class JestPatternFixer {
       if (content !== originalContent) {
         writeFileSync(filePath, content);
         this.fixedFiles.add(filePath);
+        // eslint-disable-next-line no-console
         console.log(`✅ Fixed: ${filePath}`);
         return true;
       }
 
       return false;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error(`❌ Error fixing ${filePath}:`, error);
       return false;
     }
@@ -191,16 +195,19 @@ class JestPatternFixer {
    * Fix all Jest pattern errors
    */
   public async fixAllErrors(): Promise<void> {
+    // eslint-disable-next-line no-console
     console.log('🔍 Scanning for Jest errors...');
     
     const errors = this.getJestErrors();
     this.errorCount = errors.length;
     
     if (errors.length === 0) {
+      // eslint-disable-next-line no-console
       console.log('✅ No Jest errors found!');
       return;
     }
 
+    // eslint-disable-next-line no-console
     console.log(`Found ${errors.length} Jest errors across ${new Set(errors.map(e => e.file)).size} files`);
 
     // Group by file
@@ -209,13 +216,15 @@ class JestPatternFixer {
       if (!fileGroups.has(error.file)) {
         fileGroups.set(error.file, []);
       }
-      fileGroups.get(error.file)!.push(error);
+      fileGroups.get(error.file)?.push(error);
     }
 
+    // eslint-disable-next-line no-console
     console.log('\n🔧 Fixing files...');
     let fixedCount = 0;
 
     for (const [filePath, fileErrors] of fileGroups) {
+      // eslint-disable-next-line no-console
       console.log(`\n📁 ${filePath} (${fileErrors.length} errors)`);
       
       if (this.fixFile(filePath)) {
@@ -223,18 +232,25 @@ class JestPatternFixer {
       }
     }
 
+    // eslint-disable-next-line no-console
     console.log(`\n📊 Summary:`);
+    // eslint-disable-next-line no-console
     console.log(`   Files processed: ${fileGroups.size}`);
+    // eslint-disable-next-line no-console
     console.log(`   Files fixed: ${fixedCount}`);
+    // eslint-disable-next-line no-console
     console.log(`   Total errors addressed: ${this.errorCount}`);
 
     // Check remaining errors
+    // eslint-disable-next-line no-console
     console.log('\n🔍 Checking remaining errors...');
     const remainingErrors = this.getJestErrors();
     
     if (remainingErrors.length === 0) {
+      // eslint-disable-next-line no-console
       console.log('🎉 All Jest errors have been fixed!');
     } else {
+      // eslint-disable-next-line no-console
       console.log(`⚠️  ${remainingErrors.length} errors still remain and may need manual attention.`);
       
       // Show summary of remaining errors by type
@@ -243,8 +259,10 @@ class JestPatternFixer {
         return acc;
       }, {} as Record<string, number>);
       
+      // eslint-disable-next-line no-console
       console.log('Remaining error types:');
       for (const [type, count] of Object.entries(errorTypes)) {
+        // eslint-disable-next-line no-console
         console.log(`   ${type}: ${count}`);
       }
     }
@@ -254,6 +272,7 @@ class JestPatternFixer {
 // Run the fixer
 if (require.main === module) {
   const fixer = new JestPatternFixer();
+  // eslint-disable-next-line no-console
   fixer.fixAllErrors().catch(console.error);
 }
 

@@ -3,16 +3,14 @@
  * Enhanced implementation with full Sui SDK integration and auto-generated configuration
  */
 
-import { SuiClient } from '@mysten/sui/client';
-import { Transaction } from '@mysten/sui/transactions';
+import { 
+  createCompatibleSuiClient, 
+  type CompatibleSuiClient,
+  Transaction,
+  Ed25519Keypair 
+} from '../../../src/utils/adapters/sui-client-adapter';
 import { fromB64 } from '@mysten/sui/utils';
 import { bcs } from '@mysten/sui/bcs';
-import {
-  SuiObjectResponse,
-  SuiMoveObject,
-  PaginatedObjectsResponse,
-} from '@mysten/sui/client';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { loadAppConfig, type AppConfig } from './config-loader';
 
 // Network configuration - removed in favor of config-loader

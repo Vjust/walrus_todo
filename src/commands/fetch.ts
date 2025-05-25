@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../utils/adapters/sui-client-adapter';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
@@ -210,8 +210,8 @@ export default class FetchCommand extends BaseCommand {
           collectionId: EMPTY_COLLECTION_ID,
         });
 
-        let todo;
-        let nftData;
+        let todo: any;
+        let nftData: any;
 
         try {
           // Retrieve NFT from blockchain with retry

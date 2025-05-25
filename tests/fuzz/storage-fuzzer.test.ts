@@ -124,7 +124,7 @@ describe('Storage Fuzzing Tests', () => {
               return '{"text": "\\uD800\\uDC00"}';
             case 'unexpected_token':
               return '{"key": undefined}';
-            case 'circular_reference':
+            case 'circular_reference': {
               const obj: any = { a: 1 };
               obj.b = obj;
               try {
@@ -132,6 +132,7 @@ describe('Storage Fuzzing Tests', () => {
               } catch {
                 return '{"circular": "[Circular]"}';
               }
+            }
             default:
               return '{';
           }
@@ -269,10 +270,11 @@ describe('Storage Fuzzing Tests', () => {
 
           try {
             switch (op.type) {
-              case 'store':
+              case 'store': {
                 const result = await op.storage.store(op.data);
                 blobIds.add(result.blobId);
                 return { type: 'store', blobId: result.blobId, index };
+              }
 
               case 'retrieve':
                 if (blobIds.size > 0) {

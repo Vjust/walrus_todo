@@ -12,7 +12,6 @@ import { ImageStorage } from '../implementations/ImageStorage';
 import { NFTStorage } from '../implementations/NFTStorage';
 import { TransactionSigner } from '../../../types/signer';
 import { CLIError } from '../../../types/error';
-import { StorageError } from '../../../types/errors';
 
 /**
  * Adapter that provides the legacy WalrusStorage interface

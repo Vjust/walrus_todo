@@ -7,7 +7,7 @@ const logger = new Logger('error-messages-extension-guide');
  */
 
 import { WalrusError } from '../types/errors';
-import { UserFriendlyError, ErrorContext } from './error-messages';
+import { ErrorContext } from './error-messages';
 
 /**
  * Example: Adding a new error type for AI operations
@@ -169,7 +169,7 @@ export class AICommandExample {
     });
   }
 
-  private async callAIService(prompt: string, apiKey: string): Promise<any> {
+  private async callAIService(_prompt: string, _apiKey: string): Promise<any> {
     // Mock AI service call
     throw new Error('Not implemented');
   }

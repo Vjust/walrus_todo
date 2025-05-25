@@ -20,7 +20,7 @@ declare namespace jest {
     mockRestore(): void;
     mockName(name: string): this;
     getMockName(): string;
-    getMockImplementation(): Function | undefined;
+    getMockImplementation(): ((...args: any[]) => any) | undefined;
     mock: {
       calls: any[][];
       results: Array<{ type: 'return' | 'throw'; value: any }>;

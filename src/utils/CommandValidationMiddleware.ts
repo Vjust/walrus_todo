@@ -27,8 +27,8 @@ const logger = new Logger('CommandValidationMiddleware');
  * This allows proper typing when accessing command parsing functionality
  */
 type CommandWithParse = {
-  parse(argv: string[]): Promise<any>;
-  new (...args: any[]): Command;
+  parse(argv: string[]): Promise<{ flags: Record<string, unknown>; args: Record<string, unknown> }>;
+  new (...args: unknown[]): Command;
 };
 
 /**

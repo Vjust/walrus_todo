@@ -196,7 +196,7 @@ export function isValidSigner(_signer: unknown): signer is SignerSuiJs {
  */
 export function hasSignTransactionBlock(
   _signer: unknown
-): signer is BaseSigner & { signTransactionBlock: Function } {
+): signer is BaseSigner & { signTransactionBlock: (_bytes: Uint8Array) => Promise<SignatureWithBytes> } {
   return (
     isValidBaseSigner(signer) &&
     'signTransactionBlock' in signer &&
@@ -209,7 +209,7 @@ export function hasSignTransactionBlock(
  */
 export function hasSignTransaction(
   _signer: unknown
-): signer is BaseSigner & { signTransaction: Function } {
+): signer is BaseSigner & { signTransaction: (_transaction: TransactionType) => Promise<SignatureWithBytes> } {
   return (
     isValidBaseSigner(signer) &&
     'signTransaction' in signer &&
@@ -222,7 +222,7 @@ export function hasSignTransaction(
  */
 export function hasGetPublicKey(
   _signer: unknown
-): signer is BaseSigner & { getPublicKey: Function } {
+): signer is BaseSigner & { getPublicKey: () => PublicKey } {
   return (
     isValidBaseSigner(signer) &&
     'getPublicKey' in signer &&
@@ -235,7 +235,7 @@ export function hasGetPublicKey(
  */
 export function hasSignAndExecuteTransaction(
   _signer: unknown
-): signer is BaseSigner & { signAndExecuteTransaction: Function } {
+): signer is BaseSigner & { signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } {
   return (
     isValidBaseSigner(signer) &&
     'signAndExecuteTransaction' in signer &&
@@ -248,7 +248,7 @@ export function hasSignAndExecuteTransaction(
  */
 export function hasSignData(
   _signer: unknown
-): signer is BaseSigner & { signData: Function } {
+): signer is BaseSigner & { signData: (_data: Uint8Array) => Promise<Uint8Array> } {
   return (
     isValidBaseSigner(signer) &&
     'signData' in signer &&
@@ -261,7 +261,7 @@ export function hasSignData(
  */
 export function hasSignPersonalMessage(
   _signer: unknown
-): signer is BaseSigner & { signPersonalMessage: Function } {
+): signer is BaseSigner & { signPersonalMessage: (_message: Uint8Array) => Promise<{ signature: Uint8Array; bytes?: Uint8Array }> } {
   return (
     isValidBaseSigner(signer) &&
     'signPersonalMessage' in signer &&
@@ -274,7 +274,7 @@ export function hasSignPersonalMessage(
  */
 export function hasConnect(
   _signer: unknown
-): signer is BaseSigner & { connect: Function } {
+): signer is BaseSigner & { connect: (_client: SuiClient) => SignerAdapter } {
   return (
     isValidBaseSigner(signer) &&
     'connect' in signer &&

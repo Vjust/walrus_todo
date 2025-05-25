@@ -13,13 +13,13 @@ import { InputValidator, ValidationSchema } from './InputValidator';
 import { Command } from '@oclif/core';
 
 interface CommandWithParse {
-  parse(argv: string[]): Promise<any>;
-  new (...args: any[]): Command;
+  parse(argv: string[]): Promise<{ flags: Record<string, unknown>; args: Record<string, unknown> }>;
+  new (...args: unknown[]): Command;
 }
 
 export function createValidationMiddleware(
   schema: ValidationSchema,
-  validateArgs?: (args: Record<string, any>) => void
+  validateArgs?: (args: Record<string, unknown>) => void
 ): Hook<'prerun'> {
   return async options => {
     try {
@@ -114,7 +114,7 @@ export const CommonValidationSchemas = {
   priorityFlag: {
     priority: [
       {
-        test: value => ['high', 'medium', 'low'].includes(value),
+        test: (value: unknown) => typeof value === 'string' && ['high', 'medium', 'low'].includes(value),
         message: 'Priority must be high, medium, or low',
         code: 'INVALID_PRIORITY',
       },
@@ -124,7 +124,7 @@ export const CommonValidationSchemas = {
   dueDateFlag: {
     due: [
       {
-        test: value => !value || /^\d{4}-\d{2}-\d{2}$/.test(value),
+        test: (value: unknown) => !value || (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)),
         message: 'Invalid date format. Use YYYY-MM-DD',
         code: 'INVALID_DATE_FORMAT',
       },
@@ -134,7 +134,7 @@ export const CommonValidationSchemas = {
   storageFlag: {
     storage: [
       {
-        test: value => ['local', 'blockchain', 'both'].includes(value),
+        test: (value: unknown) => typeof value === 'string' && ['local', 'blockchain', 'both'].includes(value),
         message: 'Storage location must be local, blockchain, or both',
         code: 'INVALID_STORAGE_LOCATION',
       },
@@ -144,8 +144,8 @@ export const CommonValidationSchemas = {
   networkFlag: {
     network: [
       {
-        test: value =>
-          !value || ['mainnet', 'testnet', 'devnet', 'local'].includes(value),
+        test: (value: unknown) =>
+          !value || (typeof value === 'string' && ['mainnet', 'testnet', 'devnet', 'local'].includes(value)),
         message: 'Network must be mainnet, testnet, devnet, or local',
         code: 'INVALID_NETWORK',
       },
@@ -155,7 +155,7 @@ export const CommonValidationSchemas = {
   walletAddressFlag: {
     walletAddress: [
       {
-        test: value => !value || /^0x[a-fA-F0-9]{40,}$/.test(value),
+        test: (value: unknown) => !value || (typeof value === 'string' && /^0x[a-fA-F0-9]{40,}$/.test(value)),
         message:
           'Invalid wallet address format. Must be a valid hex address starting with 0x',
         code: 'INVALID_WALLET_ADDRESS',
@@ -166,7 +166,7 @@ export const CommonValidationSchemas = {
   apiKeyFlag: {
     apiKey: [
       {
-        test: value => !value || value.length >= 16,
+        test: (value: unknown) => !value || (typeof value === 'string' && value.length >= 16),
         message: 'API key must be at least 16 characters',
         code: 'INVALID_API_KEY',
       },

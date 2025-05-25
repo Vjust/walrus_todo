@@ -61,7 +61,7 @@ export function setupGlobalErrorSuppression() {
     }
 
     // For genuine errors, use original console.error
-    originalError.apply(console, args);
+    originalError(...args);
   };
 
   // Enhanced console.warn that filters known issues
@@ -79,7 +79,7 @@ export function setupGlobalErrorSuppression() {
     }
 
     // For genuine warnings, use original console.warn
-    originalWarn.apply(console, args);
+    originalWarn(...args);
   };
 
   // Enhanced console.log that filters repetitive debug messages
@@ -97,7 +97,7 @@ export function setupGlobalErrorSuppression() {
     }
 
     // For genuine logs, use original console.log
-    originalLog.apply(console, args);
+    originalLog(...args);
   };
 
   // Global error handler for uncaught errors

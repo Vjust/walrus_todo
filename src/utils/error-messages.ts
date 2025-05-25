@@ -3,9 +3,9 @@ import { commandRegistry } from './CommandRegistry';
 import { ICONS } from '../base-command';
 import {
   NetworkError,
+  TransactionError,
   ValidationError,
   StorageError,
-  BlockchainError,
   WalrusError,
 } from '../types/errors/compatibility';
 import { Logger } from './Logger';

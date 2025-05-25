@@ -1,7 +1,7 @@
 import { BlobVerificationManager } from '../utils/blob-verification';
 import type { WalrusClientExt } from '../types/client';
 import type { BlobMetadataShape, BlobInfo } from '../types/walrus';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../utils/adapters/sui-client-adapter';
 
 jest.mock('@mysten/sui/client');
 jest.mock('@mysten/walrus');

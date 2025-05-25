@@ -1,5 +1,5 @@
 import { describe, beforeEach, jest } from '@jest/globals';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../utils/adapters/sui-client-adapter';
 import { TransactionBlock } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type {

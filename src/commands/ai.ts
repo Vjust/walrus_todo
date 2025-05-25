@@ -213,7 +213,7 @@ export default class AI extends BaseCommand {
     const providers = ['XAI', 'OPENAI', 'ANTHROPIC', 'OLLAMA'];
 
     for (const provider of providers) {
-      const hasKey = hasEnv(`${provider}_API_KEY` as keyof typeof process.env);
+      const hasKey = hasEnv(`${provider}_API_KEY` as 'XAI_API_KEY' | 'OPENAI_API_KEY' | 'ANTHROPIC_API_KEY' | 'OLLAMA_API_KEY');
       const status = hasKey
         ? chalk.green('✓ available')
         : chalk.gray('not configured');
@@ -420,8 +420,8 @@ export default class AI extends BaseCommand {
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async summarizeTodos(flags: any) {
-    const todos = await this.getTodos(flags.list);
+  private async summarizeTodos(flags: Record<string, unknown>) {
+    const todos = await this.getTodos(flags.list as string);
 
     this.log(chalk.bold('Generating AI summary...'));
 
@@ -435,7 +435,7 @@ export default class AI extends BaseCommand {
       }
 
       // Extract the summary text from various response formats
-      function extractSummaryText(response: any): string {
+      const extractSummaryText = (response: unknown): string => {
         // If it's already a string, return it directly
         if (typeof response === 'string') {
           return response;
@@ -476,7 +476,7 @@ export default class AI extends BaseCommand {
 
         // Default fallback summary
         return 'Your todos include a mix of tasks with varying priorities. Some appear to be financial or project-related, while others are more general.';
-      }
+      };
 
       // Extract the actual summary text
       const summary = extractSummaryText(summaryResponse);
@@ -510,8 +510,8 @@ export default class AI extends BaseCommand {
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async categorizeTodos(flags: any) {
-    const todos = await this.getTodos(flags.list);
+  private async categorizeTodos(flags: Record<string, unknown>) {
+    const todos = await this.getTodos(flags.list as string);
 
     this.log(chalk.bold('Categorizing todos...'));
 
@@ -527,7 +527,7 @@ export default class AI extends BaseCommand {
       }
 
       // Extract the categories from various response formats
-      function extractCategoriesData(response: any): Record<string, string[]> {
+      const extractCategoriesData = (response: unknown): Record<string, string[]> => {
         // If it's already the right structure, return it directly
         if (
           response &&
@@ -589,7 +589,7 @@ export default class AI extends BaseCommand {
             )
             .map(t => t.id),
         };
-      }
+      };
 
       // Extract the categories
       const categories = extractCategoriesData(categoriesResponse);
@@ -634,8 +634,8 @@ export default class AI extends BaseCommand {
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async prioritizeTodos(flags: any) {
-    const todos = await this.getTodos(flags.list);
+  private async prioritizeTodos(flags: Record<string, unknown>) {
+    const todos = await this.getTodos(flags.list as string);
 
     this.log(chalk.bold('Prioritizing todos...'));
 
@@ -651,7 +651,7 @@ export default class AI extends BaseCommand {
       }
 
       // Extract priorities from various response formats
-      function extractPrioritiesData(response: any): Record<string, number> {
+      const extractPrioritiesData = (response: unknown): Record<string, number> => {
         // If it's already the right structure, return it directly
         if (
           response &&
@@ -724,7 +724,7 @@ export default class AI extends BaseCommand {
         });
 
         return result;
-      }
+      };
 
       // Extract the priorities
       const priorities = extractPrioritiesData(prioritiesResponse);
@@ -775,8 +775,8 @@ export default class AI extends BaseCommand {
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async suggestTodos(flags: any) {
-    const todos = await this.getTodos(flags.list);
+  private async suggestTodos(flags: Record<string, unknown>) {
+    const todos = await this.getTodos(flags.list as string);
 
     this.log(chalk.bold('Generating todo suggestions...'));
 
@@ -806,7 +806,7 @@ export default class AI extends BaseCommand {
       ];
 
       // Extract suggestions from complex LangChain response format
-      function extractSuggestionsFromResponse(obj: any): string[] {
+      const extractSuggestionsFromResponse = (obj: unknown): string[] => {
         // If it's already an array of strings, just return it
         if (Array.isArray(obj) && obj.every(item => typeof item === 'string')) {
           return obj;
@@ -909,7 +909,7 @@ export default class AI extends BaseCommand {
 
         // If nothing else worked, return an empty array
         return [];
-      }
+      };
 
       // Determine what to display
       let displaySuggestions = defaultSuggestions;
@@ -952,8 +952,8 @@ export default class AI extends BaseCommand {
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async analyzeTodos(flags: any) {
-    const todos = await this.getTodos(flags.list);
+  private async analyzeTodos(flags: Record<string, unknown>) {
+    const todos = await this.getTodos(flags.list as string);
 
     this.log(chalk.bold('Analyzing todos...'));
 
@@ -969,7 +969,7 @@ export default class AI extends BaseCommand {
       }
 
       // Extract analysis from various response formats
-      function extractAnalysisData(response: any): Record<string, any> {
+      const extractAnalysisData = (response: unknown): Record<string, unknown> => {
         // If it's already the right structure, return it directly
         if (
           response &&
@@ -1035,7 +1035,7 @@ export default class AI extends BaseCommand {
             'Group related tasks for better workflow',
           ],
         };
-      }
+      };
 
       // Extract the analysis
       const analysis = extractAnalysisData(analysisResponse);

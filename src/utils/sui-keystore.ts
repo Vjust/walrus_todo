@@ -14,10 +14,18 @@ import {
 import { toB64 } from '@mysten/sui/utils';
 import { TransactionBlock, Transaction } from '@mysten/sui/transactions';
 import {
-  SuiClient,
-  type SuiClientOptions,
-  SuiTransactionBlockResponse,
-} from '@mysten/sui/client';
+  createCompatibleSuiClient,
+  CompatibleSuiClientOptions,
+} from './adapters/sui-client-compatibility';
+
+// Import the real types if available, otherwise use fallbacks
+interface SuiTransactionBlockResponse {
+  digest?: string;
+  effects?: {
+    status?: { status: string; error?: string };
+    created?: Array<{ reference?: { objectId: string } }>;
+  };
+}
 import {
   SignerAdapter,
   SuiSDKVersion,
@@ -40,15 +48,15 @@ export class KeystoreError extends Error {
 
 export class KeystoreSigner implements SignerAdapter {
   static async fromPath(_clientConfig: string): Promise<KeystoreSigner> {
-    const config: SuiClientOptions = { url: 'https://testnet.suifrens.sui.io' };
-    const client = new SuiClient(config);
+    const config: CompatibleSuiClientOptions = { url: 'https://testnet.suifrens.sui.io' };
+    const client = createCompatibleSuiClient(config);
     return new KeystoreSigner(client);
   }
   private keypair!: Ed25519Keypair | Secp256k1Keypair;
   private keyScheme: SignatureScheme = 'ED25519';
 
   private _disposed: boolean = false;
-  public getClient(): SuiClient {
+  public getClient(): unknown {
     return this.suiClient;
   }
   public getUnderlyingImplementation(): Signer {
@@ -65,7 +73,7 @@ export class KeystoreSigner implements SignerAdapter {
     return SuiSDKVersion.UNKNOWN;
   }
 
-  constructor(private suiClient: SuiClient) {
+  constructor(private suiClient: unknown) {
     // Get active address
     const activeAddressOutput = execSync('sui client active-address')
       .toString()
@@ -252,7 +260,7 @@ export class KeystoreSigner implements SignerAdapter {
     return this.keypair.getPublicKey().toSuiAddress();
   }
 
-  connect(client: SuiClient): SignerAdapter {
+  connect(client: unknown): SignerAdapter {
     this.suiClient = client;
     return this;
   }
@@ -266,7 +274,7 @@ export class KeystoreSigner implements SignerAdapter {
       showEvents?: boolean;
       showBalanceChanges?: boolean;
     }
-  ): Promise<SuiTransactionBlockResponse> {
+  ): Promise<any> {
     try {
       if (!transactionBlock) {
         throw new Error('Invalid transaction block');
@@ -275,7 +283,7 @@ export class KeystoreSigner implements SignerAdapter {
       const { bytes, signature } =
         await this.signedTransactionBlock(transactionBlock);
 
-      const response = await this.suiClient.executeTransactionBlock({
+      const response = await (this.suiClient as any).executeTransactionBlock({
         transactionBlock: bytes,
         signature,
         requestType: options?.requestType || 'WaitForLocalExecution',
@@ -312,7 +320,7 @@ export class KeystoreSigner implements SignerAdapter {
       bytes = await transactionBlock.build({ client: this.suiClient });
     } else {
       // Handle modern Transaction type
-      bytes = await (transactionBlock as any).build({ client: this.suiClient });
+      bytes = await (transactionBlock as Transaction).build({ client: this.suiClient });
     }
     const signatureResult = await this.signTransactionBlock(bytes);
 

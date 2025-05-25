@@ -1,25 +1,25 @@
 // Polyfill for AggregateError if it doesn't exist globally
 declare global {
   interface AggregateError extends Error {
-    errors: any[];
+    errors: unknown[];
   }
 
   interface AggregateErrorConstructor {
-    new (errors: any[], message?: string): AggregateError;
-    (errors: any[], message?: string): AggregateError;
+    new (errors: unknown[], message?: string): AggregateError;
+    (errors: unknown[], message?: string): AggregateError;
     prototype: AggregateError;
   }
 
-  var AggregateError: AggregateErrorConstructor;
+  const AggregateError: AggregateErrorConstructor;
 }
 
 // Check if AggregateError already exists globally
 if (typeof globalThis.AggregateError === 'undefined') {
   // Define our own AggregateError implementation
   class AggregateErrorPolyfill extends Error {
-    errors: any[];
+    errors: unknown[];
 
-    constructor(errors: any[], message?: string) {
+    constructor(errors: unknown[], message?: string) {
       super(message);
       this.name = 'AggregateError';
       this.errors = errors;
@@ -32,7 +32,7 @@ if (typeof globalThis.AggregateError === 'undefined') {
   }
 
   // Assign to globalThis
-  (globalThis as any).AggregateError = AggregateErrorPolyfill;
+  (globalThis as unknown as { AggregateError: typeof AggregateErrorPolyfill }).AggregateError = AggregateErrorPolyfill;
 }
 
 export {};

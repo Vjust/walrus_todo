@@ -18,7 +18,7 @@ describe('SessionTimeoutWarning', () => {
   const originalNow = Date.now;
   
   // Timer mocking
-  let timerCallback: Function;
+  let timerCallback: () => void;
   
   beforeEach(() => {
     jest.clearAllMocks();

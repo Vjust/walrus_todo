@@ -194,7 +194,7 @@ export default class AIKeysCommand extends BaseCommand {
         type: 'input',
         name: 'backupIndex',
         message: 'Enter the number of the backup to restore:',
-        validate: input => {
+        validate: (input: string) => {
           const num = parseInt(input, 10);
           return !isNaN(num) && num > 0 && num <= backups.length
             ? true

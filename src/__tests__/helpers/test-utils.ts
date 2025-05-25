@@ -76,11 +76,14 @@ export async function runCommand(
   let stderr = '';
 
   // Save original console methods
+  // eslint-disable-next-line no-console
   const originalConsoleLog = console.log;
+  // eslint-disable-next-line no-console
   const originalConsoleError = console.error;
   const originalProcessExit = process.exit;
 
   if (mockStdout) {
+    // eslint-disable-next-line no-console
     console.log = (...args: any[]) => {
       // Capture stdout
       stdout += args.map(arg => String(arg)).join(' ') + '\n';
@@ -88,6 +91,7 @@ export async function runCommand(
   }
 
   if (mockStderr) {
+    // eslint-disable-next-line no-console
     console.error = (...args: any[]) => {
       // Capture stderr
       stderr += args.map(arg => String(arg)).join(' ') + '\n';
@@ -101,7 +105,9 @@ export async function runCommand(
     exitCode = code;
 
     // Restore all original methods immediately to ensure cleanup hooks run
+    // eslint-disable-next-line no-console
     if (mockStdout) console.log = originalConsoleLog;
+    // eslint-disable-next-line no-console
     if (mockStderr) console.error = originalConsoleError;
 
     // Allow any cleanup or finally blocks to execute before throwing

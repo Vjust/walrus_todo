@@ -95,7 +95,8 @@ export function handleError(
     exitCode: configuredExitCode,
     logStack = false,
     prefix = '',
-    context: _additionalContext = {},
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    context: _additionalContext = {}, // Context for future error handling
   } = handlerOptions;
 
   // Normalize the error
@@ -129,7 +130,7 @@ export function handleError(
 
     // Display context if available and requested
     if (baseError.context && Object.keys(baseError.context).length > 0) {
-      logger.error(`${chalk.dim('Context:')}`, baseError.context);
+      logger.error(`${chalk.dim('Context:')} ${JSON.stringify(baseError.context, null, 2)}`);
     }
 
     // Display recovery information
@@ -236,6 +237,6 @@ export async function withRetry<T>(
 function defaultOnRetry(error: unknown, attempt: number, delay: number): void {
   logger.info(
     chalk.yellow(`Operation failed, retrying (${attempt}/${delay})...`),
-    error instanceof Error ? error.message : String(error)
+    { error: error instanceof Error ? error.message : String(error) }
   );
 }

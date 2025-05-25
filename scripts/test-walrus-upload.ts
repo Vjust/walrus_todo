@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import { NETWORK_URLS } from '../src/constants';
-import { SuiClient } from '@mysten/sui/client';
+import { createCompatibleSuiClient } from '../src/utils/adapters/sui-client-adapter';
 import { Logger } from '../src/utils/Logger';
 
 const logger = new Logger('test-walrus-upload');
@@ -47,7 +47,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
 
     // Create SuiClient with testnet URL
     logger.info('Initializing Sui client...');
-    const suiClient = new SuiClient({ url: NETWORK_URLS.testnet });
+    const suiClient = createCompatibleSuiClient({ url: NETWORK_URLS.testnet });
 
     // Check if image exists
     const defaultImagePath = path.join(__dirname, '../assets/todo_bottle.jpeg');
