@@ -46,8 +46,8 @@ interface Window {
         message: Uint8Array,
         encoding?: string
       ) => Promise<{ signature: Uint8Array }>;
-      on: (event: string, callback: Function) => void;
-      off: (event: string, callback: Function) => void;
+      on: (event: string, callback: (...args: any[]) => void) => void;
+      off: (event: string, callback: (...args: any[]) => void) => void;
       [key: string]: any;
     };
     [key: string]: any;
@@ -66,8 +66,8 @@ interface Window {
       message: Uint8Array,
       encoding?: string
     ) => Promise<{ signature: Uint8Array }>;
-    on: (event: string, callback: Function) => void;
-    off: (event: string, callback: Function) => void;
+    on: (event: string, callback: (...args: any[]) => void) => void;
+    off: (event: string, callback: (...args: any[]) => void) => void;
     request: (request: { method: string; params?: any }) => Promise<any>;
     [key: string]: any;
   };
@@ -87,8 +87,8 @@ interface Window {
         message: Uint8Array,
         encoding?: string
       ) => Promise<{ signature: Uint8Array }>;
-      on: (event: string, callback: Function) => void;
-      off: (event: string, callback: Function) => void;
+      on: (event: string, callback: (...args: any[]) => void) => void;
+      off: (event: string, callback: (...args: any[]) => void) => void;
       [key: string]: any;
     };
     ethereum?: {
@@ -119,8 +119,8 @@ interface Window {
       message: Uint8Array,
       encoding?: string
     ) => Promise<{ signature: Uint8Array }>;
-    on: (event: string, callback: Function) => void;
-    off: (event: string, callback: Function) => void;
+    on: (event: string, callback: (...args: any[]) => void) => void;
+    off: (event: string, callback: (...args: any[]) => void) => void;
     request: (request: { method: string; params?: any }) => Promise<any>;
     isBackpack: boolean;
     publicKey?: any;

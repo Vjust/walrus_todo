@@ -32,7 +32,7 @@ export interface BlobRecord {
   uploadedAt: string;
   expiresAt: string;
   vaultId: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Secret {
@@ -40,7 +40,7 @@ export interface Secret {
   value: string;
   createdAt: string;
   updatedAt: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class VaultManager {
@@ -153,7 +153,7 @@ export class VaultManager {
   async storeSecret(
     key: string,
     value: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     if (!this.encryptionKey) {
       throw new CLIError(

@@ -178,17 +178,48 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
   /**
    * Gets blob metadata - v1 clients don't have this directly
    */
-  async getBlobMetadata(_options: ReadBlobOptions): Promise<any> {
-    throw new WalrusClientAdapterError(
-      'getBlobMetadata not supported in original WalrusClient'
-    );
+  async getBlobMetadata(options: ReadBlobOptions): Promise<any> {
+    this.ensureClientInitialized();
+
+    // Check if getBlobMetadata method exists on client
+    if ('getBlobMetadata' in this.walrusClient && typeof this.walrusClient.getBlobMetadata === 'function') {
+      try {
+        return await this.walrusClient.getBlobMetadata(options);
+      } catch (error) {
+        throw new WalrusClientAdapterError(
+          `Failed to get blob metadata: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+
+    // Fallback: try to extract metadata from getBlobInfo
+    try {
+      const blobInfo = await this.getBlobInfo(options.blobId);
+      return blobInfo.metadata || {};
+    } catch (error) {
+      throw new WalrusClientAdapterError(
+        `getBlobMetadata not supported and fallback failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   /**
    * Verifies proof of availability - v1 clients don't have this
    */
-  async verifyPoA(_params: { blobId: string }): Promise<boolean> {
-    // For V1 clients, we return true to avoid breaking functionality
+  async verifyPoA(params: { blobId: string }): Promise<boolean> {
+    this.ensureClientInitialized();
+
+    // Check if verifyPoA method exists on client
+    if ('verifyPoA' in this.walrusClient && typeof this.walrusClient.verifyPoA === 'function') {
+      try {
+        return await this.walrusClient.verifyPoA(params);
+      } catch (error) {
+        logger.warn('verifyPoA failed, returning true as fallback:', error);
+        return true;
+      }
+    }
+
+    // For V1 clients without verifyPoA, we return true to avoid breaking functionality
     logger.warn(
       'verifyPoA not implemented in original WalrusClient, returning true as fallback'
     );
@@ -201,7 +232,20 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
   async getBlobObject(params: {
     blobId: string;
   }): Promise<NormalizedBlobObject> {
-    // Fallback for V1 clients: use getBlobInfo and normalize
+    this.ensureClientInitialized();
+
+    // Check if getBlobObject method exists on client
+    if ('getBlobObject' in this.walrusClient && typeof this.walrusClient.getBlobObject === 'function') {
+      try {
+        const result = await this.walrusClient.getBlobObject(params);
+        return this.normalizeBlobObject(result);
+      } catch (error) {
+        // Fallback to getBlobInfo if getBlobObject fails
+        logger.warn('getBlobObject failed, falling back to getBlobInfo');
+      }
+    }
+
+    // Fallback for V1 clients or when getBlobObject fails: use getBlobInfo and normalize
     try {
       const blobInfo = await this.getBlobInfo(params.blobId);
       return blobInfo;

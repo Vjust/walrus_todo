@@ -5,7 +5,7 @@ import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { Logger } from '../../utils/Logger';
 import { CLIError } from '../../types/errors/consolidated';
 import { configService } from '../../services/config-service';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../utils/adapters/sui-client-adapter';
 
 export interface SyncStatus {
   todoId: string;
@@ -34,10 +34,14 @@ export class SyncService {
       this.walrusStorage = await createWalrusStorage();
 
       // Initialize Sui storage if network configured
-      const config = await configService.loadConfig();
+      const config = configService.getConfig();
       if (config.network && config.keypair) {
         const client = new SuiClient({ url: config.network });
-        this.suiStorage = new SuiNftStorage(client, config.keypair);
+        this.suiStorage = new SuiNftStorage(client, config.keypair, {
+          address: config.walletAddress || '',
+          packageId: config.packageId || '',
+          collectionId: config.registryId
+        });
       }
     } catch (error) {
       this.logger.error('Failed to initialize sync services', error);
@@ -64,7 +68,7 @@ export class SyncService {
       const blobId = await this.walrusStorage.storeTodo(todo);
 
       // Update todo with blob ID
-      await this.todoService.updateTodo(todo.id, { walrusBlobId: blobId });
+      await this.todoService.updateTodo('default', todo.id, { walrusBlobId: blobId });
 
       this.updateSyncStatus(todo.id, {
         walrusBlobId: blobId,
@@ -90,7 +94,7 @@ export class SyncService {
    */
   async syncListToWalrus(listName: string): Promise<string> {
     try {
-      const list = await this.todoService.getTodoList(listName);
+      const list = await this.todoService.getList(listName);
       if (!list) {
         throw new CLIError(`List ${listName} not found`, 'LIST_NOT_FOUND');
       }
@@ -100,7 +104,7 @@ export class SyncService {
 
       // Update list with blob ID
       list.walrusBlobId = blobId;
-      await this.todoService.saveTodoList(list);
+      await this.todoService.saveList(listName, list);
 
       return blobId;
     } catch (error) {
@@ -121,8 +125,8 @@ export class SyncService {
 
       // Save to local storage
       const list =
-        (await this.todoService.getTodoList('default')) ||
-        (await this.todoService.createTodoList('default'));
+        (await this.todoService.getList('default')) ||
+        (await this.todoService.createList('default', 'sync-service'));
 
       // Check if todo already exists
       const existingIndex = list.todos.findIndex(t => t.id === todo.id);
@@ -132,7 +136,7 @@ export class SyncService {
         list.todos.push(todo);
       }
 
-      await this.todoService.saveTodoList(list);
+      await this.todoService.saveList('default', list);
 
       this.updateSyncStatus(todo.id, {
         walrusBlobId: blobId,
@@ -173,20 +177,18 @@ export class SyncService {
           `Updating NFT ${todo.nftObjectId} for todo ${todo.id}...`
         );
         await this.suiStorage.updateTodoNftCompletionStatus(
-          todo.nftObjectId,
-          todo.completed
+          todo.nftObjectId
         );
         nftObjectId = todo.nftObjectId;
       } else {
         this.logger.info(`Creating NFT for todo ${todo.id}...`);
-        const nft = await this.suiStorage.createTodoNft(
+        nftObjectId = await this.suiStorage.createTodoNft(
           todo,
           todo.walrusBlobId
         );
-        nftObjectId = nft.objectId;
 
         // Update todo with NFT ID
-        await this.todoService.updateTodo(todo.id, { nftObjectId });
+        await this.todoService.updateTodo('default', todo.id, { nftObjectId });
       }
 
       this.updateSyncStatus(todo.id, {
@@ -216,7 +218,7 @@ export class SyncService {
 
     for (const todoId of todoIds) {
       try {
-        const todo = await this.todoService.getTodo(todoId);
+        const todo = await this.todoService.getTodo(todoId, 'default');
         if (todo) {
           const blobId = await this.syncTodoToWalrus(todo);
           results.set(todoId, blobId);
@@ -262,7 +264,7 @@ export class SyncService {
     listBlobId: string;
     todoResults: Map<string, string>;
   }> {
-    const list = await this.todoService.getTodoList(listName);
+    const list = await this.todoService.getList(listName);
     if (!list) {
       throw new CLIError(`List ${listName} not found`, 'LIST_NOT_FOUND');
     }

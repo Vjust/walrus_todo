@@ -23,8 +23,8 @@ export class AIVerificationService {
    */
   async createVerification(
     verificationType: AIActionType,
-    request: any,
-    response: any,
+    request: unknown,
+    response: unknown,
     metadata: Record<string, string> = {},
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerificationRecord> {

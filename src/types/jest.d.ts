@@ -60,7 +60,7 @@ declare namespace jest {
     mockClear(): SpyInstance;
     mockReset(): SpyInstance;
     mockRestore(): SpyInstance;
-    getMockImplementation(): Function | undefined;
+    getMockImplementation(): ((...args: any[]) => any) | undefined;
     getMockName(): string;
     mock: {
       calls: any[][];

@@ -159,10 +159,19 @@ export default class StoreCommand extends BaseCommand {
       // Step 3: Store todos (single or batch)
       if (todosToStore.length === 1) {
         // Single todo upload
-        await this.storeSingleTodo(todosToStore[0], walrusStorage, flags);
+        await this.storeSingleTodo(todosToStore[0], walrusStorage, {
+          epochs: flags.epochs,
+          json: flags.json,
+          reuse: flags.reuse
+        });
       } else {
         // Batch upload
-        await this.storeBatchTodos(todosToStore, walrusStorage, flags);
+        await this.storeBatchTodos(todosToStore, walrusStorage, {
+          'batch-size': flags['batch-size'],
+          epochs: flags.epochs,
+          json: flags.json,
+          reuse: flags.reuse
+        });
       }
 
       // Cleanup
@@ -354,8 +363,6 @@ export default class StoreCommand extends BaseCommand {
 
           bar.update(100, { status: 'Complete' });
           return { todo, blobId, cached: false };
-        } catch (error) {
-          throw error;
         }
       },
     }));

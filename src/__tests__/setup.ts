@@ -9,10 +9,11 @@ global.TextEncoder = TextEncoder;
 jest.setTimeout(10000);
 
 // Ensure mocks are applied
-jest.mock('@mysten/sui/dist/cjs/client');
-jest.mock('@mysten/sui/dist/cjs/cryptography');
-jest.mock('@mysten/sui/dist/cjs/keypairs/ed25519');
+jest.mock('@mysten/sui/client');
+jest.mock('@mysten/sui/cryptography');
+jest.mock('@mysten/sui/keypairs/ed25519');
 jest.mock('@mysten/sui/transactions');
+jest.mock('../utils/adapters/sui-client-adapter');
 
 // Reset all mocks before each test
 beforeEach(() => {

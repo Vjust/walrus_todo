@@ -15,7 +15,7 @@ export type ValidationRule<T> = {
  * Interface for validation schema
  */
 export interface ValidationSchema {
-  [key: string]: ValidationRule<any>[];
+  [key: string]: ValidationRule<unknown>[];
 }
 
 /**

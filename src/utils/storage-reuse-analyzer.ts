@@ -1,7 +1,6 @@
 import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { CLIError } from '../types/error';
-import { TodoSizeCalculator } from './todo-size-calculator';
 
 /**
  * Interface representing a Walrus blockchain storage object.
@@ -285,7 +284,7 @@ export class StorageReuseAnalyzer {
 
       // Get cost estimate for allocating new storage from Walrus
       // Default to 52 epochs (approximately 6 months)
-      const { storageCost, writeCost, totalCost } =
+      const { storageCost, totalCost } =
         await this.walrusClient.storageCost(
           requiredSize,
           52 // Default to 52 epochs (approximately 6 months)

@@ -3,7 +3,7 @@ import { Logger } from '../../utils/Logger';
 
 const logger = new Logger('ApiRequestLogger');
 
-export interface RequestLog {
+export interface RequestLog extends Record<string, unknown> {
   method: string;
   url: string;
   ip: string;
@@ -58,7 +58,7 @@ export function requestLogger(
 
     // Log based on status code
     if (res.statusCode >= 500) {
-      logger.error('Request failed', logEntry);
+      logger.error('Request failed', undefined, logEntry);
     } else if (res.statusCode >= 400) {
       logger.warn('Request error', logEntry);
     } else {
@@ -66,7 +66,7 @@ export function requestLogger(
     }
 
     // Call original end
-    return originalEnd.apply(res, args as any);
+    return originalEnd.call(res, ...args as any);
   };
 
   // Capture response chunks for size calculation
@@ -75,7 +75,7 @@ export function requestLogger(
     if (args[0]) {
       chunks.push(Buffer.isBuffer(args[0]) ? args[0] : Buffer.from(args[0]));
     }
-    return originalWrite.apply(res, args as any);
+    return originalWrite.call(res, ...args as any);
   };
 
   next();

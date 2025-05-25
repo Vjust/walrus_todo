@@ -15,7 +15,7 @@ import {
   validateAIApiKey,
   validateBlockchainConfig,
 } from '../utils/CommandValidationMiddleware';
-import { NetworkError, ValidationError } from '../types/errors/consolidated';
+import { NetworkError, ValidationError, ValidationErrorOptions } from '../types/errors/consolidated';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -979,7 +979,7 @@ export default class AddCommand extends BaseCommand {
           {
             constraint: 'AMBIGUOUS_INPUT',
             recoverable: false,
-          }
+          } as ValidationErrorOptions
         );
       }
     }

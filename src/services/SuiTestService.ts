@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui/client';
+import { createCompatibleSuiClient, type CompatibleSuiClient } from '../utils/adapters/sui-client-adapter';
 import { NETWORK_URLS } from '../constants';
 import { Config } from '../types/config';
 import { NetworkType } from '../types/network';
@@ -48,7 +48,7 @@ export interface ISuiService {
 }
 
 export class SuiTestService implements ISuiService {
-  private client: SuiClient;
+  private client: CompatibleSuiClient;
   private walletAddress?: string;
 
   // In-memory state management
@@ -63,7 +63,7 @@ export class SuiTestService implements ISuiService {
       throw new CLIError(`Invalid network type: ${network}`, 'INVALID_NETWORK');
     }
 
-    this.client = new SuiClient({ url });
+    this.client = createCompatibleSuiClient({ url });
   }
 
   /**
@@ -74,7 +74,7 @@ export class SuiTestService implements ISuiService {
       this.walletAddress = await this.getWalletAddress();
     } catch (_error) {
       throw new CLIError(
-        `Failed to initialize Sui service: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to initialize Sui service: ${_error instanceof Error ? _error.message : String(_error)}`,
         'INIT_FAILED'
       );
     }
@@ -238,7 +238,7 @@ export class SuiTestService implements ISuiService {
           retries++;
           if (retries >= SECURITY_CONFIG.TRANSACTION_VERIFICATION.MAX_RETRIES) {
             throw new CLIError(
-              `Transaction verification failed after ${retries} attempts: ${error instanceof Error ? error.message : String(error)}`,
+              `Transaction verification failed after ${retries} attempts: ${_error instanceof Error ? _error.message : String(_error)}`,
               'VERIFICATION_FAILED'
             );
           }

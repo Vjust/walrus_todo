@@ -31,11 +31,18 @@ export function validate(options: ValidationOptions) {
       if (error instanceof ZodError) {
         const validationError = new ValidationError(
           'Request validation failed',
-          error.errors.map(e => ({
-            field: e.path.join('.'),
-            message: e.message,
-            code: e.code,
-          }))
+          {
+            message: 'Request validation failed',
+            field: error.errors[0]?.path.join('.') || 'unknown',
+            constraint: error.errors[0]?.code || 'validation_failed',
+            context: {
+              errors: error.errors.map(e => ({
+                field: e.path.join('.'),
+                message: e.message,
+                code: e.code,
+              }))
+            }
+          }
         );
         next(validationError);
       } else {

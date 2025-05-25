@@ -321,9 +321,9 @@ export class TransactionBlockAdapter
           typeof this.transactionBlock.publish === 'function'
         ) {
           // Convert args to array and pass as arguments
-          return this.transactionBlock.publish.apply(
+          return this.transactionBlock.publish.call(
             this.transactionBlock,
-            args
+            ...args
           );
         }
         throw new TransactionAdapterError(
@@ -342,9 +342,9 @@ export class TransactionBlockAdapter
           typeof this.transactionBlock.upgrade === 'function'
         ) {
           // Convert args to array and pass as arguments
-          return this.transactionBlock.upgrade.apply(
+          return this.transactionBlock.upgrade.call(
             this.transactionBlock,
-            args
+            ...args
           );
         }
         throw new TransactionAdapterError(

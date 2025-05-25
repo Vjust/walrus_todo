@@ -17,6 +17,7 @@ import { EnhancedAIService } from '../services/ai/EnhancedAIService';
 import { createCache } from '../utils/performance-cache';
 import crypto from 'crypto';
 import { KeystoreSigner } from '../utils/sui-keystore';
+import { SignerAdapterImpl } from '../utils/adapters/signer-adapter';
 import { getPermissionManager } from '../services/ai/AIPermissionManager';
 import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
 import { checkbox } from '@inquirer/prompts';
@@ -229,8 +230,9 @@ export default class Suggest extends BaseCommand {
 
       try {
         // Initialize blockchain components
-        const signer = await this.getSuiSigner();
-        const suiClient = await signer.getClient();
+        const keystoreSigner = await this.getSuiSigner();
+        const suiClient = keystoreSigner.getClient();
+        const signer = new SignerAdapterImpl(keystoreSigner);
 
         // Create verifier adapter
         const verifierAdapter = new SuiAIVerifierAdapter(

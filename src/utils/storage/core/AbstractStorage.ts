@@ -15,10 +15,7 @@ import {
   StorageUsage,
   StorageOptimizationResult,
   StorageConfig,
-  StorageOperationOptions,
-  VerificationResult,
 } from './StorageTypes';
-import { StorageError, NetworkError } from '../../../types/errors';
 import { ValidationError } from '../../../types/errors/ValidationError';
 import crypto from 'crypto';
 

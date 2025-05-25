@@ -37,7 +37,7 @@ async function testAIFailureScenarios() {
 
     // Create a test list
     const testListName = `test-ai-failure-${Date.now()}`;
-    const list = await todoService.createList(testListName, 'user');
+    await todoService.createList(testListName, 'user');
     process.stdout.write(
       `   ✅ Created test list without AI dependencies: ${testListName}\n`
     );

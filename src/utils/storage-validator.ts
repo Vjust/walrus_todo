@@ -1,5 +1,4 @@
 import { Todo, StorageLocation } from '../types/todo';
-import { CLIError } from '../types/error';
 import { WalrusStorage } from './walrus-storage';
 import crypto from 'crypto';
 
@@ -38,9 +37,10 @@ export class StorageValidator {
     }
 
     // Validate checksum if present
-    if ((todo as any).checksum) {
+    const todoWithChecksum = todo as Todo & { checksum?: string };
+    if (todoWithChecksum.checksum) {
       const calculatedChecksum = this.calculateChecksum(todo);
-      if ((todo as any).checksum !== calculatedChecksum) {
+      if (todoWithChecksum.checksum !== calculatedChecksum) {
         errors.push('Todo checksum mismatch - data may be corrupted');
       }
     }
@@ -92,8 +92,8 @@ export class StorageValidator {
       case 'local->both':
         // Check blockchain connectivity
         try {
-          const isConnected = (this.walrusStorage as any).isConnected;
-          if (!isConnected) {
+          // Check if storage has connect method and call it
+          if ('connect' in this.walrusStorage && typeof this.walrusStorage.connect === 'function') {
             await this.walrusStorage.connect();
           }
         } catch (error) {
@@ -147,7 +147,7 @@ export class StorageValidator {
           return { available: true };
 
         case 'blockchain':
-        case 'both':
+        case 'both': {
           // Check blockchain connectivity and funds
           await this.walrusStorage.connect();
           const balance = await this.walrusStorage.checkBalance();
@@ -161,6 +161,7 @@ export class StorageValidator {
           }
 
           return { available: true };
+        }
 
         default:
           return {

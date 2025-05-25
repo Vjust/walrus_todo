@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../utils/adapters/sui-client-adapter';
 // Ed25519Keypair imported but not used
 import chalk from 'chalk';
 import * as fs from 'fs';
@@ -258,8 +258,6 @@ export default class StoreListCommand extends BaseCommand {
         this.log(
           chalk.dim(`   ${this.config.bin} retrieve --blob-id ${blobId}`)
         );
-      } catch (error) {
-        throw error; // Let the outer error handler deal with it
       } finally {
         // Cleanup connection
         await this.walrusStorage.disconnect();

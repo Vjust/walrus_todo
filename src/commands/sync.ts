@@ -274,8 +274,8 @@ export default class SyncCommand extends BaseCommand {
           }
           resolution = await this.askResolution(
             todo,
-            localNewer || todo,
-            blockchainNewer || todo
+            Boolean(localNewer),
+            Boolean(blockchainNewer)
           );
           // @ts-expect-error - startSpinner may return undefined in tests
           spinner = this.startSpinner('Continuing sync...');

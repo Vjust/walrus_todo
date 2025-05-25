@@ -63,7 +63,7 @@ export class ErrorSimulator {
     {
       object: any;
       methodName: string;
-      originalMethod: Function;
+      originalMethod: (...args: any[]) => any;
     }
   > = new Map();
 
@@ -149,14 +149,15 @@ export class ErrorSimulator {
           recoverable: !!this.config.shouldRetry,
         });
 
-      case ErrorType.RATE_LIMIT:
+      case ErrorType.RATE_LIMIT: {
         const rateLimitError = new Error(
           '429 Too Many Requests: Rate limit exceeded'
         );
         (rateLimitError as any).status = 429;
         return rateLimitError;
+      }
 
-      case ErrorType.SERVER:
+      case ErrorType.SERVER: {
         const serverError = new Error(
           '500 Internal Server Error: Something went wrong'
         );
@@ -183,14 +184,15 @@ export class ErrorSimulator {
           recoverable: false,
         });
 
-      case ErrorType.NOT_FOUND:
+      case ErrorType.NOT_FOUND: {
         const notFoundError = new Error(
           '404 Not Found: Resource does not exist'
         );
         (notFoundError as any).status = 404;
         return notFoundError;
+      }
 
-      case ErrorType.CONFLICT:
+      case ErrorType.CONFLICT: {
         const conflictError = new Error(
           '409 Conflict: Resource already exists or version conflict'
         );
@@ -235,7 +237,6 @@ export class ErrorSimulator {
     operationName?: string
   ): void {
     const originalMethod = object[methodName];
-    const self = this;
     const methodKey = `${object.constructor?.name || 'unknown'}.${methodName}`;
 
     // Save original method for restoration
@@ -245,27 +246,27 @@ export class ErrorSimulator {
       originalMethod,
     });
 
-    // Replace method with error-injecting version
-    object[methodName] = async function (...args: any[]) {
-      if (self.shouldTriggerError(operationName)) {
-        if (self.config.delay) {
-          await new Promise(resolve => setTimeout(resolve, self.config.delay));
+    // Replace method with error-injecting version using arrow function
+    object[methodName] = async (...args: any[]) => {
+      if (this.shouldTriggerError(operationName)) {
+        if (this.config.delay) {
+          await new Promise(resolve => setTimeout(resolve, this.config.delay));
         }
 
-        if (self.shouldRecover()) {
+        if (this.shouldRecover()) {
           // Delay then proceed with original method
-          if (self.config.recoveryDelay) {
+          if (this.config.recoveryDelay) {
             await new Promise(resolve =>
-              setTimeout(resolve, self.config.recoveryDelay)
+              setTimeout(resolve, this.config.recoveryDelay)
             );
           }
-          return originalMethod.apply(this, args);
+          return originalMethod.call(object, ...args);
         }
 
-        throw self.createError();
+        throw this.createError();
       }
 
-      return originalMethod.apply(this, args);
+      return originalMethod.call(object, ...args);
     };
   }
 

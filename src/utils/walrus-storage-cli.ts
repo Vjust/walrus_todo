@@ -1,7 +1,4 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('walrus-storage-cli');
  * @fileoverview Walrus Storage Interface - CLI-based implementation
  *
  * This module provides a Walrus storage interface that uses the Walrus CLI directly
@@ -16,9 +13,10 @@ import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import crypto from 'crypto';
+import { Logger } from './Logger';
 
 const execAsync = promisify(exec);
+const logger = new Logger('walrus-storage-cli');
 
 /**
  * Determines if mock mode should be used based on environment
@@ -34,7 +32,7 @@ function shouldUseMock(): boolean {
  * @description Provides an interface to interact with Walrus storage using the CLI
  */
 export class WalrusStorage {
-  private network: string;
+  private _network: string;
   private isConnected: boolean = false;
   private tempDir: string;
   private walrusPath: string;
@@ -55,7 +53,7 @@ export class WalrusStorage {
    * @param {boolean} [forceMock=false] - Force mock mode regardless of environment
    */
   constructor(network: string = 'testnet', forceMock: boolean = false) {
-    this.network = network;
+    this._network = network;
     this.tempDir = path.join(os.tmpdir(), 'walrus-storage');
     this.walrusPath = path.join(os.homedir(), '.local', 'bin', 'walrus');
     this.configPath =
@@ -339,7 +337,7 @@ export class WalrusStorage {
    * Update a todo (stores a new version)
    */
   async updateTodo(
-    blobId: string,
+    _blobId: string,
     todo: Todo,
     epochs: number = 5
   ): Promise<string> {
@@ -440,8 +438,6 @@ export class WalrusStorage {
         id: { id: 'mock-storage-id' },
         storage_size: '1000000',
         used_size: '500000',
-        end_epoch: '100',
-        start_epoch: '50',
       };
     }
 

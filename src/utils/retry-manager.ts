@@ -253,13 +253,14 @@ export class RetryManager {
     }
 
     switch (options.loadBalancing) {
-      case 'round-robin':
+      case 'round-robin': {
         // Simple round-robin
         const node =
           availableNodes[this.roundRobinIndex % availableNodes.length];
         this.roundRobinIndex =
           (this.roundRobinIndex + 1) % availableNodes.length;
         return node;
+      }
 
       case 'priority':
         // Use node priority only

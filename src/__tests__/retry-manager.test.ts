@@ -1,7 +1,7 @@
 import { RetryManager } from '../utils/retry-manager';
 
-// Type for RetryManager with logger access
-interface RetryManagerWithLogger extends RetryManager {
+// Type for RetryManager with logger access  
+interface RetryManagerWithLogger {
   logger: {
     info: jest.Mock;
     warn: jest.Mock;
@@ -310,7 +310,7 @@ describe('RetryManager', () => {
 
     beforeEach(() => {
       jest.spyOn(console, 'log').mockImplementation(() => {});
-      (retryManager as RetryManagerWithLogger).logger = mockLogger;
+      (retryManager as unknown as RetryManagerWithLogger).logger = mockLogger;
     });
 
     it('should provide detailed error summaries with categorization', async () => {
@@ -326,7 +326,7 @@ describe('RetryManager', () => {
         maxRetries: 3,
         onRetry,
       });
-      (retryManager as RetryManagerWithLogger).logger = mockLogger;
+      (retryManager as unknown as RetryManagerWithLogger).logger = mockLogger;
 
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow();
 
@@ -389,7 +389,7 @@ describe('RetryManager', () => {
         maxRetries: 3,
         adaptiveDelay: true,
       });
-      (retryManager as RetryManagerWithLogger).logger = mockLogger;
+      (retryManager as unknown as RetryManagerWithLogger).logger = mockLogger;
 
       const operation = jest
         .fn()

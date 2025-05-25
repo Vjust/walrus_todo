@@ -1,6 +1,5 @@
 import { SuiNftStorage } from './src/utils/sui-nft-storage';
-import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { SuiClient } from '@mysten/sui/client';
+import { createCompatibleSuiClient, Ed25519Keypair } from './src/utils/adapters/sui-client-adapter';
 import { TodoService } from './src/services';
 import { Todo } from './src/types/todo';
 import {
@@ -38,7 +37,7 @@ async function launchDefaultNft() {
 
     // Step 2: Initialize SuiClient
     process.stdout.write('\n🔄 Initializing Sui client...\n');
-    const suiClient = new SuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
+    const suiClient = createCompatibleSuiClient({ url: NETWORK_URLS[CURRENT_NETWORK] });
     process.stdout.write('✓ Sui client initialized\n');
 
     // Step 3: Check NFT module address

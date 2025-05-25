@@ -174,29 +174,28 @@ class MockChatXAI
     Record<string, any>
   > {
     // Create a new runnable that applies the transformation
-    const self = this;
     return {
       lc_serializable: true,
-      getName: () => `${self.getName()}_transform`,
-      async invoke(
+      getName: () => `${this.getName()}_transform`,
+      invoke: async (
         input: string | StringPromptValueInterface,
         options?: Record<string, unknown>
-      ): Promise<NewOutput> {
-        const output = await self.invoke(input, options);
+      ): Promise<NewOutput> => {
+        const output = await this.invoke(input, options);
         return await transformer(output);
       },
-      async batch(
+      batch: async (
         inputs: (string | StringPromptValueInterface)[],
         options?: Record<string, unknown>
-      ): Promise<NewOutput[]> {
-        const outputs = await self.batch(inputs, options);
+      ): Promise<NewOutput[]> => {
+        const outputs = await this.batch(inputs, options);
         return await Promise.all(outputs.map(output => transformer(output)));
       },
-      async stream(
+      stream: async (
         input: string | StringPromptValueInterface,
         options?: Record<string, unknown>
-      ): Promise<AsyncIterable<NewOutput>> {
-        const outputStream = await self.stream(input, options);
+      ): Promise<AsyncIterable<NewOutput>> => {
+        const outputStream = await this.stream(input, options);
         // Implementation would transform each chunk as it comes in
         // This is a simplified mock version
         async function* generate() {
@@ -206,57 +205,57 @@ class MockChatXAI
         }
         return generate();
       },
-      transform<T>(
+      transform: <T>(
         nextTransformer: (output: NewOutput) => T | Promise<T>
       ): RunnableInterface<
         string | StringPromptValueInterface,
         T,
         Record<string, any>
-      > {
-        return self.transform(async output =>
+      > => {
+        return this.transform(async output =>
           nextTransformer(await transformer(output))
         );
       },
-      pipe<T>(
+      pipe: <T>(
         runnable: RunnableInterface<NewOutput, T, any>
-      ): RunnableInterface<string | StringPromptValueInterface, T, any> {
-        const transformed = self.transform(transformer);
+      ): RunnableInterface<string | StringPromptValueInterface, T, any> => {
+        const transformed = this.transform(transformer);
         return {
           lc_serializable: true,
           getName: () => `${transformed.getName()}_pipe_${runnable.getName()}`,
-          async invoke(
+          invoke: async (
             input: string | StringPromptValueInterface,
             options?: Record<string, unknown>
-          ): Promise<T> {
+          ): Promise<T> => {
             const output = await transformed.invoke(input, options);
             return await runnable.invoke(output, options);
           },
-          async batch(
+          batch: async (
             inputs: (string | StringPromptValueInterface)[],
             options?: Record<string, unknown>
-          ): Promise<T[]> {
+          ): Promise<T[]> => {
             const outputs = await transformed.batch(inputs, options);
             return await runnable.batch(outputs, options);
           },
-          async stream(
+          stream: async (
             input: string | StringPromptValueInterface,
             options?: Record<string, unknown>
-          ): Promise<AsyncIterable<T>> {
+          ): Promise<AsyncIterable<T>> => {
             const output = await transformed.invoke(input, options);
             return await runnable.stream(output, options);
           },
-          transform<U>(
+          transform: <U>(
             nextTransformer: (output: T) => U | Promise<U>
           ): RunnableInterface<
             string | StringPromptValueInterface,
             U,
             Record<string, any>
-          > {
+          > => {
             return transformed.pipe(runnable.transform(nextTransformer));
           },
-          pipe<U>(
+          pipe: <U>(
             nextRunnable: RunnableInterface<T, U, any>
-          ): RunnableInterface<string | StringPromptValueInterface, U, any> {
+          ): RunnableInterface<string | StringPromptValueInterface, U, any> => {
             return transformed.pipe(runnable.pipe(nextRunnable));
           },
         };
@@ -267,44 +266,43 @@ class MockChatXAI
   pipe<NewOutput>(
     runnable: RunnableInterface<string, NewOutput, any>
   ): RunnableInterface<string | StringPromptValueInterface, NewOutput, any> {
-    const self = this;
     return {
       lc_serializable: true,
-      getName: () => `${self.getName()}_pipe_${runnable.getName()}`,
-      async invoke(
+      getName: () => `${this.getName()}_pipe_${runnable.getName()}`,
+      invoke: async (
         input: string | StringPromptValueInterface,
         options?: Record<string, unknown>
-      ): Promise<NewOutput> {
-        const output = await self.invoke(input, options);
+      ): Promise<NewOutput> => {
+        const output = await this.invoke(input, options);
         return await runnable.invoke(output, options);
       },
-      async batch(
+      batch: async (
         inputs: (string | StringPromptValueInterface)[],
         options?: Record<string, unknown>
-      ): Promise<NewOutput[]> {
-        const outputs = await self.batch(inputs, options);
+      ): Promise<NewOutput[]> => {
+        const outputs = await this.batch(inputs, options);
         return await runnable.batch(outputs, options);
       },
-      async stream(
+      stream: async (
         input: string | StringPromptValueInterface,
         options?: Record<string, unknown>
-      ): Promise<AsyncIterable<NewOutput>> {
-        const output = await self.invoke(input, options);
+      ): Promise<AsyncIterable<NewOutput>> => {
+        const output = await this.invoke(input, options);
         return await runnable.stream(output, options);
       },
-      transform<T>(
+      transform: <T>(
         transformer: (output: NewOutput) => T | Promise<T>
       ): RunnableInterface<
         string | StringPromptValueInterface,
         T,
         Record<string, any>
-      > {
-        return self.pipe(runnable.transform(transformer));
+      > => {
+        return this.pipe(runnable.transform(transformer));
       },
-      pipe<T>(
+      pipe: <T>(
         nextRunnable: RunnableInterface<NewOutput, T, any>
-      ): RunnableInterface<string | StringPromptValueInterface, T, any> {
-        return self.pipe(runnable.pipe(nextRunnable));
+      ): RunnableInterface<string | StringPromptValueInterface, T, any> => {
+        return this.pipe(runnable.pipe(nextRunnable));
       },
     };
   }

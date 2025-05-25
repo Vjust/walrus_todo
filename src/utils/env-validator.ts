@@ -254,7 +254,7 @@ export function generateEnvironmentDocs(): string {
 /**
  * Formats a value for display in documentation
  */
-function formatValue(value: any): string {
+function formatValue(value: unknown): string {
   if (value === undefined || value === null) {
     return '';
   } else if (typeof value === 'string') {
@@ -273,6 +273,6 @@ function formatValue(value: any): string {
 /**
  * Checks if a value exists and is not empty
  */
-function hasValue(value: any): boolean {
+function hasValue(value: unknown): boolean {
   return value !== undefined && value !== null && value !== '';
 }

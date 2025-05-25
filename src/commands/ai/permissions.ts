@@ -10,6 +10,7 @@ import {
 } from '../../services/ai/AIPermissionManager';
 import chalk from 'chalk';
 import { KeystoreSigner } from '../../utils/sui-keystore';
+import { SignerAdapterImpl } from '../../utils/adapters/signer-adapter';
 import { createInterface } from 'readline';
 
 export default class AiPermissions extends BaseCommand {
@@ -93,8 +94,9 @@ export default class AiPermissions extends BaseCommand {
 
     try {
       // Initialize blockchain components
-      const signer = await this.getSuiSigner();
-      const suiClient = signer.getClient();
+      const keystoreSigner = await this.getSuiSigner();
+      const suiClient = keystoreSigner.getClient();
+      const signer = new SignerAdapterImpl(keystoreSigner);
 
       // Create verifier adapter
       const verifierAdapter = new SuiAIVerifierAdapter(

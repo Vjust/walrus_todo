@@ -141,7 +141,7 @@ export class EnhancedVaultManager {
           this.checkExpiredSecrets();
         }
       } catch (error) {
-        logger.error('Failed to load vault metadata:', _error);
+        logger.error('Failed to load vault metadata:', error);
         // Initialize with empty metadata for safety
         this.metadata = new Map();
       }
@@ -161,7 +161,7 @@ export class EnhancedVaultManager {
       fs.writeFileSync(this.metadataFile, encryptedData, { mode: 0o600 }); // Only owner can read/write
     } catch (error) {
       throw new CLIError(
-        `Failed to save vault metadata: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        `Failed to save vault metadata: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'VAULT_METADATA_ERROR'
       );
     }
@@ -329,14 +329,14 @@ export class EnhancedVaultManager {
 
       return decryptedData.toString();
     } catch (error) {
-      if (_error instanceof CLIError) {
-        throw _error;
+      if (error instanceof CLIError) {
+        throw error;
       }
 
       // Record failed attempt
       this.recordFailedAttempt(name);
       throw new CLIError(
-        `Error retrieving secret: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        `Error retrieving secret: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'SECRET_READ_ERROR'
       );
     }
@@ -396,7 +396,7 @@ export class EnhancedVaultManager {
     }
 
     // Return a copy without the ID (to prevent direct file access)
-    const { id: _id, ...metadataCopy } = metadata;
+    const { id: _id, ...metadataCopy } = metadata; // eslint-disable-line @typescript-eslint/no-unused-vars
     return metadataCopy;
   }
 
@@ -617,7 +617,7 @@ export class EnhancedVaultManager {
       ]);
     } catch (error) {
       throw new CLIError(
-        `Encryption failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        `Encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'ENCRYPTION_FAILED'
       );
     }
@@ -683,7 +683,7 @@ export class EnhancedVaultManager {
       // Decrypt data
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (error) {
-      logger.error('Decryption failed:', _error);
+      logger.error('Decryption failed:', error);
       return null;
     }
   }

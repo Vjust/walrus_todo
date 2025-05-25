@@ -1,6 +1,9 @@
-import { SuiClient, SuiObjectResponse } from '@mysten/sui/client';
+import { 
+  SuiObjectResponse
+} from './adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { signTransactionCompatible } from './adapters/transaction-compatibility';
 // bcs import removed - not used in current implementation
 import { CLIError } from '../types/errors/consolidated';
 import { Todo } from '../types/todo';
@@ -46,14 +49,14 @@ interface TodoNftContent {
  *                                      and optional collection ID for NFT operations.
  */
 export class SuiNftStorage {
-  private readonly client: SuiClient;
+  private readonly client: unknown;
   private readonly signer: Ed25519Keypair;
   private readonly config: SuiNFTStorageConfig;
   private readonly retryAttempts = 3;
   private readonly retryDelay = 1000; // ms
 
   constructor(
-    client: SuiClient,
+    client: unknown,
     signer: Ed25519Keypair,
     config: SuiNFTStorageConfig
   ) {
@@ -64,9 +67,9 @@ export class SuiNftStorage {
 
   private async checkConnectionHealth(): Promise<boolean> {
     try {
-      // @ts-expect-error - Method compatibility issue with SuiClient
-      const systemState = await this.client.getSystemState();
-      if (!systemState || !systemState.epoch) {
+      // Try to get system state with compatibility handling
+      const systemState = await (this.client as any)?.getLatestSuiSystemState?.() || await (this.client as any)?.getSystemState?.();
+      if (!systemState || !(systemState as any)?.epoch) {
         logger.warn('Invalid system state response:', systemState);
         return false;
       }
@@ -146,9 +149,9 @@ export class SuiNftStorage {
       tx.moveCall({
         target: `${this.config.packageId}::todo_nft::create_todo_nft`,
         arguments: [
-          tx.pure(todo.title),
-          tx.pure(todo.description || ''),
-          tx.pure(walrusBlobId),
+          tx.pure(todo.title, 'string'),
+          tx.pure(todo.description || '', 'string'),
+          tx.pure(walrusBlobId, 'string'),
           tx.pure(false),
           tx.object(this.config.collectionId || ''),
         ],
@@ -160,15 +163,13 @@ export class SuiNftStorage {
             // Build and serialize transaction in a way that's compatible with different API versions
             const serializedTx = await tx.build({ client: this.client });
 
-            // Sign the transaction block
-            // @ts-expect-error - Type compatibility with Ed25519Keypair's signTransactionBlock
-            const signature =
-              await this.signer.signTransactionBlock(serializedTx);
+            // Sign the transaction block with compatibility handling
+            const signature = await signTransactionCompatible(this.signer, serializedTx);
 
             // Get transaction bytes for execution
             const txBytes = await tx.serialize();
 
-            const response = await this.client.executeTransactionBlock({
+            const response = await (this.client as any).executeTransactionBlock({
               transactionBlock: txBytes,
               signature: signature.signature,
               requestType: 'WaitForLocalExecution',
@@ -227,7 +228,7 @@ export class SuiNftStorage {
 
     return await this.executeWithRetry(
       async () => {
-        const response = (await this.client.getObject({
+        const response = (await (this.client as any).getObject({
           id: objectId,
           options: {
             showDisplay: true,
@@ -271,7 +272,7 @@ export class SuiNftStorage {
     const tx = new Transaction();
     tx.moveCall({
       target: `${this.config.packageId}::todo_nft::update_completion_status`,
-      arguments: [tx.object(nftId), tx.pure(true)],
+      arguments: [tx.object(nftId), tx.pure(true, 'bool')],
     });
 
     return await this.executeWithRetry(
@@ -280,15 +281,13 @@ export class SuiNftStorage {
           // Build and serialize transaction in a way that's compatible with different API versions
           const serializedTx = await tx.build({ client: this.client });
 
-          // Sign the transaction block
-          // @ts-expect-error - Type compatibility with Ed25519Keypair's signTransactionBlock
-          const signature =
-            await this.signer.signTransactionBlock(serializedTx);
+          // Sign the transaction block with compatibility handling
+          const signature = await signTransactionCompatible(this.signer, serializedTx);
 
           // Get transaction bytes for execution
           const txBytes = await tx.serialize();
 
-          const response = await this.client.executeTransactionBlock({
+          const response = await (this.client as any).executeTransactionBlock({
             transactionBlock: txBytes,
             signature: signature.signature,
             requestType: 'WaitForLocalExecution',
@@ -328,7 +327,7 @@ export class SuiNftStorage {
         'Attempting to get the actual object ID from the transaction effects...'
       );
 
-      const tx = await this.client.getTransactionBlock({
+      const tx = await (this.client as any).getTransactionBlock({
         digest: idOrDigest,
         options: {
           showEffects: true,
@@ -342,7 +341,7 @@ export class SuiNftStorage {
         );
       }
 
-      const nftObject = tx.effects.created.find(obj => {
+      const nftObject = tx.effects.created.find((obj: unknown) => {
         return (
           obj &&
           typeof obj === 'object' &&

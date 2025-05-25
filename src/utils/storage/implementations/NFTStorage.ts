@@ -13,7 +13,6 @@ import { AbstractStorage } from '../core/AbstractStorage';
 import {
   StorageInfo,
   StorageUsage,
-  StorageOptimizationResult,
   StorageConfig,
 } from '../core/StorageTypes';
 import { StorageClient } from '../core/StorageClient';

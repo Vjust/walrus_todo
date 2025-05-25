@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { getApiConfig } from '../config';
-import { BaseError } from '../../types/errors/consolidated/BaseError';
+import { AuthorizationError } from '../../types/errors/consolidated/AuthorizationError';
 
 export interface AuthenticatedRequest extends Request {
   apiKey?: string;
@@ -26,12 +26,17 @@ export function validateApiKey(
     (req.query.apiKey as string);
 
   if (!apiKey) {
-    return next(new BaseError('API key required'));
+    return next(new AuthorizationError('API key required', {
+      code: 'AUTHORIZATION_UNAUTHENTICATED',
+      isLoginRequired: true
+    }));
   }
 
   // Validate API key
   if (!config.auth.apiKeys.includes(apiKey)) {
-    return next(new BaseError('Invalid API key'));
+    return next(new AuthorizationError('Invalid API key', {
+      code: 'AUTHORIZATION_INVALID_CREDENTIALS'
+    }));
   }
 
   // Attach API key to request for logging
@@ -47,7 +52,10 @@ export function requireUser(
   next: NextFunction
 ): void {
   if (!req.userId) {
-    return next(new BaseError('User authentication required'));
+    return next(new AuthorizationError('User authentication required', {
+      code: 'AUTHORIZATION_UNAUTHENTICATED',
+      isLoginRequired: true
+    }));
   }
   next();
 }

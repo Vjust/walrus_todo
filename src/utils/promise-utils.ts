@@ -2,7 +2,6 @@
  * Utility functions for better promise handling
  */
 import './polyfills/aggregate-error';
-import { CLIError } from '../types/error';
 
 /**
  * Executes a promise with a timeout
@@ -118,7 +117,7 @@ export async function withRetry<T>(
   maxRetries = 3,
   initialDelay = 1000,
   operationName = 'operation',
-  shouldRetry = (error: Error): boolean => true
+  shouldRetry = (_error: Error): boolean => true
 ): Promise<T> {
   let lastError: Error | null = null;
 
