@@ -11,10 +11,13 @@ import {
   AIProvider,
   AICompletionParams,
   AIResponse,
-  AIModelOptions
+  AIModelOptions,
 } from '../../../types/adapters/AIModelAdapter';
 import { ResponseParser } from '../ResponseParser';
-import { NetworkManager, EnhancedFetchOptions } from '../../../utils/NetworkManager';
+import {
+  NetworkManager,
+  EnhancedFetchOptions,
+} from '../../../utils/NetworkManager';
 
 export abstract class BaseModelAdapter implements AIModelAdapter {
   protected provider: AIProvider;
@@ -30,7 +33,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
 
   // Request timeout defaults
   protected defaultTimeout: number = 30000; // 30 seconds default timeout
-  protected defaultRetries: number = 3;     // 3 retry attempts by default
+  protected defaultRetries: number = 3; // 3 retry attempts by default
 
   // Active request controllers for cancellation
   protected activeRequests: AbortController[] = [];
@@ -49,7 +52,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       maxTokens: 1000,
       timeout: this.defaultTimeout,
       retries: this.defaultRetries,
-      ...defaultOptions
+      ...defaultOptions,
     };
   }
 
@@ -82,7 +85,9 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
   /**
    * Generate a structured response from the AI model
    */
-  public abstract completeStructured<T>(params: AICompletionParams): Promise<AIResponse<T>>;
+  public abstract completeStructured<T>(
+    params: AICompletionParams
+  ): Promise<AIResponse<T>>;
 
   /**
    * Process a prompt through a LangChain chain
@@ -115,7 +120,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       modelName: this.modelName,
       provider: this.provider,
       timestamp: Date.now(),
-      metadata: {}
+      metadata: {},
     };
   }
 
@@ -125,24 +130,44 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
   protected handleError(error: unknown, operation: string): never {
     // Type guard for error with name property
     const errorWithName = error as { name?: string; cause?: { name?: string } };
-    const errorWithStatus = error as { status?: number; response?: { status?: number } };
+    const errorWithStatus = error as {
+      status?: number;
+      response?: { status?: number };
+    };
     const errorWithMessage = error as { message?: string };
-    
+
     // Check for AbortError (timeout or cancellation)
-    if (errorWithName.name === 'AbortError' || (errorWithName.cause && errorWithName.cause.name === 'AbortError')) {
+    if (
+      errorWithName.name === 'AbortError' ||
+      (errorWithName.cause && errorWithName.cause.name === 'AbortError')
+    ) {
       throw new Error(`Operation ${operation} was cancelled or timed out`);
     }
 
-    if (errorWithStatus.status === 429 || (errorWithStatus.response && errorWithStatus.response.status === 429)) {
-      throw new Error(`Rate limit exceeded for ${this.provider} during ${operation}`);
+    if (
+      errorWithStatus.status === 429 ||
+      (errorWithStatus.response && errorWithStatus.response.status === 429)
+    ) {
+      throw new Error(
+        `Rate limit exceeded for ${this.provider} during ${operation}`
+      );
     }
 
-    if (errorWithStatus.status === 401 || (errorWithStatus.response && errorWithStatus.response.status === 401)) {
-      throw new Error(`Authentication failed for ${this.provider}: Invalid API key`);
+    if (
+      errorWithStatus.status === 401 ||
+      (errorWithStatus.response && errorWithStatus.response.status === 401)
+    ) {
+      throw new Error(
+        `Authentication failed for ${this.provider}: Invalid API key`
+      );
     }
 
-    const message = errorWithMessage.message || (error instanceof Error ? error.message : 'Unknown error');
-    throw new Error(`Error with ${this.provider} during ${operation}: ${message}`);
+    const message =
+      errorWithMessage.message ||
+      (error instanceof Error ? error.message : 'Unknown error');
+    throw new Error(
+      `Error with ${this.provider} during ${operation}: ${message}`
+    );
   }
 
   /**
@@ -165,7 +190,9 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
    */
   protected async executeRequest<T>(
     url: string,
-    requestOptions: RequestInit & { body?: string | FormData | URLSearchParams },
+    requestOptions: RequestInit & {
+      body?: string | FormData | URLSearchParams;
+    },
     options: {
       timeout?: number;
       retries?: number;
@@ -182,14 +209,16 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       const fetchOptions: EnhancedFetchOptions = {
         ...requestOptions,
         signal: controller.signal,
-        timeout: options.timeout || this.defaultOptions.timeout || this.defaultTimeout,
-        retries: options.retries || this.defaultOptions.retries || this.defaultRetries,
+        timeout:
+          options.timeout || this.defaultOptions.timeout || this.defaultTimeout,
+        retries:
+          options.retries || this.defaultOptions.retries || this.defaultRetries,
         operationName: options.operation || 'AI model request',
         parseJson: options.parseJson !== false,
         headers: {
           'Content-Type': 'application/json',
-          ...(requestOptions.headers || {})
-        }
+          ...(requestOptions.headers || {}),
+        },
       };
 
       // If body is an object, stringify it
@@ -200,7 +229,9 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       const response = await NetworkManager.fetch<T>(url, fetchOptions);
 
       if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+        throw new Error(
+          `API request failed with status ${response.status}: ${response.statusText}`
+        );
       }
 
       return response.data as T;
@@ -239,7 +270,9 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
     try {
       return await promptInput.format(input);
     } catch (_error) {
-      throw new Error(`Error formatting prompt template: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
+      throw new Error(
+        `Error formatting prompt template: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+      );
     }
   }
 

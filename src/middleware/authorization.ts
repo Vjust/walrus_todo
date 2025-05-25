@@ -1,6 +1,6 @@
 /**
  * Authorization Middleware
- * 
+ *
  * This module provides middleware functions for checking permissions
  * and enforcing access control in command execution flows.
  */
@@ -21,21 +21,23 @@ import * as os from 'os';
  */
 async function getAuthenticatedUser() {
   const tokenPath = path.join(os.homedir(), '.walrus', 'auth.json');
-  
+
   if (!fs.existsSync(tokenPath)) {
     return null;
   }
-  
+
   try {
     const data = fs.readFileSync(tokenPath, 'utf-8');
     const authInfo = JSON.parse(data);
-    
+
     // Validate token
-    const validation = await authenticationService.validateToken(authInfo.token);
+    const validation = await authenticationService.validateToken(
+      authInfo.token
+    );
     if (!validation.valid || !validation.user) {
       return null;
     }
-    
+
     return validation.user;
   } catch (_error) {
     return null;
@@ -54,12 +56,13 @@ export async function checkPermission(
   if (!user) {
     return false;
   }
-  
+
   // Format resource identifier
-  const resourceIdentifier = typeof resource === 'string' && resource.includes(':')
-    ? resource
-    : `${resource}:${resourceId || '*'}`;
-  
+  const resourceIdentifier =
+    typeof resource === 'string' && resource.includes(':')
+      ? resource
+      : `${resource}:${resourceId || '*'}`;
+
   return permissionService.hasPermission(user.id, resourceIdentifier, action);
 }
 
@@ -74,13 +77,14 @@ export function requirePermission(
     errorMessage?: string;
   } = {}
 ) {
-  return async function(args: any) {
+  return async function (args: any) {
     // If resource is a function, call it with args to get the actual resource
     // Fixed type issue by ensuring resource is not treated as a function type when it's not
-    const resolvedResource = typeof resource === 'string' || typeof resource === 'number'
-      ? resource
-      : resource;
-    
+    const resolvedResource =
+      typeof resource === 'string' || typeof resource === 'number'
+        ? resource
+        : resource;
+
     // If resourceId is a function, call it with args to get the actual resourceId
     let resourceId: string | undefined;
     if (typeof args.resourceId === 'function') {
@@ -92,10 +96,10 @@ export function requirePermission(
     } else if (args.listId) {
       resourceId = args.listId;
     }
-    
+
     // Get current user
     const user = await getAuthenticatedUser();
-    
+
     // If no user and allowPublic is false, deny access
     if (!user && !options.allowPublic) {
       throw new CLIError(
@@ -103,36 +107,42 @@ export function requirePermission(
         'UNAUTHORIZED'
       );
     }
-    
+
     // Skip permission check for public resources if allowed
     if (!user && options.allowPublic) {
       return;
     }
-    
+
     // Check permission
-    const hasPermission = await checkPermission(resolvedResource, resourceId, action);
-    
+    const hasPermission = await checkPermission(
+      resolvedResource,
+      resourceId,
+      action
+    );
+
     // Log the authorization check
     auditLogger.log({
       id: uuidv4(),
       timestamp: Date.now(),
       userId: user?.id || 'anonymous',
       action: 'AUTHORIZATION',
-      resource: typeof resolvedResource === 'string' 
-        ? resolvedResource.split(':')[0] 
-        : resolvedResource,
+      resource:
+        typeof resolvedResource === 'string'
+          ? resolvedResource.split(':')[0]
+          : resolvedResource,
       resourceId,
       operation: action.toString(),
       outcome: hasPermission ? 'SUCCESS' : 'DENIED',
       metadata: {
         command: args.command,
-        username: user?.username
-      }
+        username: user?.username,
+      },
     });
-    
+
     if (!hasPermission) {
       throw new CLIError(
-        options.errorMessage || `You do not have permission to perform this action`,
+        options.errorMessage ||
+          `You do not have permission to perform this action`,
         'FORBIDDEN'
       );
     }
@@ -142,26 +152,23 @@ export function requirePermission(
 /**
  * Hook to check authentication and permissions before command runs
  */
-export const authorizationHook: Hook<'prerun'> = async function(options) {
+export const authorizationHook: Hook<'prerun'> = async function (options) {
   const { Command, argv } = options;
-  
+
   // Skip auth check for auth commands
-  if (
-    Command.id === 'account:auth' ||
-    Command.id === 'help'
-  ) {
+  if (Command.id === 'account:auth' || Command.id === 'help') {
     return;
   }
-  
+
   // Get required permissions from command
   const requiredPermissions = (Command as any).requiredPermissions;
   if (!requiredPermissions) {
     return;
   }
-  
+
   // Get current user
   const user = await getAuthenticatedUser();
-  
+
   // If no user and command requires authentication, deny access
   if (!user && !requiredPermissions.allowPublic) {
     throw new CLIError(
@@ -169,15 +176,16 @@ export const authorizationHook: Hook<'prerun'> = async function(options) {
       'UNAUTHORIZED'
     );
   }
-  
+
   // For authenticated users, check permissions
   if (user) {
-    const resource = typeof requiredPermissions.resource === 'function'
-      ? await requiredPermissions.resource(argv)
-      : requiredPermissions.resource;
-    
+    const resource =
+      typeof requiredPermissions.resource === 'function'
+        ? await requiredPermissions.resource(argv)
+        : requiredPermissions.resource;
+
     const action = requiredPermissions.action;
-    
+
     // Parse resource ID from args if available
     let resourceId: string | undefined;
 
@@ -185,13 +193,17 @@ export const authorizationHook: Hook<'prerun'> = async function(options) {
     // Instead, parse the argv manually to extract args
     const args = {
       flags: {},
-      args: {}
+      args: {},
     };
 
     // Extract ID values from argv array - simplified parsing just to get resource IDs
     const parsedFlags: Record<string, string> = {};
     for (let i = 0; i < argv.length; i++) {
-      if (argv[i] === '--id' || argv[i] === '--todoId' || argv[i] === '--listId') {
+      if (
+        argv[i] === '--id' ||
+        argv[i] === '--todoId' ||
+        argv[i] === '--listId'
+      ) {
         if (i + 1 < argv.length && !argv[i + 1].startsWith('--')) {
           parsedFlags[argv[i].substring(2)] = argv[i + 1];
         }
@@ -210,29 +222,31 @@ export const authorizationHook: Hook<'prerun'> = async function(options) {
     } else if (parsedFlags.listId) {
       resourceId = parsedFlags.listId;
     }
-    
+
     // Check permission
     const hasPermission = await checkPermission(resource, resourceId, action);
-    
+
     // Log the authorization check
     auditLogger.log({
       id: uuidv4(),
       timestamp: Date.now(),
       userId: user.id,
       action: 'COMMAND_AUTHORIZATION',
-      resource: typeof resource === 'string' ? resource.split(':')[0] : resource,
+      resource:
+        typeof resource === 'string' ? resource.split(':')[0] : resource,
       resourceId,
       operation: action.toString(),
       outcome: hasPermission ? 'SUCCESS' : 'DENIED',
       metadata: {
         command: Command.id,
-        username: user.username
-      }
+        username: user.username,
+      },
     });
-    
+
     if (!hasPermission) {
       throw new CLIError(
-        requiredPermissions.errorMessage || 'You do not have permission to run this command',
+        requiredPermissions.errorMessage ||
+          'You do not have permission to run this command',
         'FORBIDDEN'
       );
     }
@@ -251,13 +265,13 @@ export function RequirePermission(
     resourceIdResolver?: (args: any) => string | undefined;
   } = {}
 ) {
-  return function(target: any) {
+  return function (target: any) {
     target.requiredPermissions = {
       resource,
       action,
       allowPublic: options.allowPublic || false,
       errorMessage: options.errorMessage,
-      resourceId: options.resourceIdResolver
+      resourceId: options.resourceIdResolver,
     };
   };
 }

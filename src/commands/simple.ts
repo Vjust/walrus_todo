@@ -21,13 +21,14 @@ import chalk from 'chalk';
  * @param {string} [filter] - Filter the listed todos by status ('completed' or 'incomplete'). Used with 'list' action. (Optional flag: -f, --filter)
  */
 export default class SimpleCommand extends BaseCommand {
-  static description = 'Manage todos with simplified commands for basic operations';
+  static description =
+    'Manage todos with simplified commands for basic operations';
 
   static examples = [
     'waltodo simple create shopping-list',
     'waltodo simple add shopping-list "Buy milk" -p high -t grocery,important',
     'waltodo simple list shopping-list',
-    'waltodo simple complete shopping-list --id todo-123'
+    'waltodo simple complete shopping-list --id todo-123',
   ];
 
   static flags = {
@@ -36,42 +37,42 @@ export default class SimpleCommand extends BaseCommand {
       char: 'p',
       description: 'Priority (high, medium, low)',
       options: ['high', 'medium', 'low'],
-      default: 'medium'
+      default: 'medium',
     }),
     tags: Flags.string({
       char: 't',
-      description: 'Comma-separated tags'
+      description: 'Comma-separated tags',
     }),
     id: Flags.string({
       char: 'i',
-      description: 'Todo ID (for complete command)'
+      description: 'Todo ID (for complete command)',
     }),
     sort: Flags.string({
       char: 's',
       description: 'Sort by field (e.g., priority, title)',
-      options: ['priority', 'title']
+      options: ['priority', 'title'],
     }),
     filter: Flags.string({
       char: 'f',
       description: 'Filter by status (e.g., completed, incomplete)',
-      options: ['completed', 'incomplete']
-    })
+      options: ['completed', 'incomplete'],
+    }),
   };
 
   static args = {
     action: Args.string({
       description: 'Action to perform',
       required: true,
-      options: ['create', 'add', 'list', 'complete']
+      options: ['create', 'add', 'list', 'complete'],
     }),
     list: Args.string({
       description: 'List name',
-      required: true
+      required: true,
     }),
     title: Args.string({
       description: 'Todo title (for add command)',
-      required: false
-    })
+      required: false,
+    }),
   };
 
   private todoService = new TodoService();
@@ -83,7 +84,7 @@ export default class SimpleCommand extends BaseCommand {
       switch (args.action) {
         case 'create': {
           await this.todoService.createList(args.list, 'local-user'); // Removed unused list variable assignment
-          this.log("✅ Todo list \"" + args.list + "\" created successfully");
+          this.log('✅ Todo list "' + args.list + '" created successfully');
           break;
         }
 
@@ -96,9 +97,11 @@ export default class SimpleCommand extends BaseCommand {
             completed: false,
             priority: flags.priority as 'high' | 'medium' | 'low',
             tags: flags.tags ? flags.tags.split(',').map(t => t.trim()) : [],
-            private: true
+            private: true,
           });
-          this.log("✅ Added todo \"" + todo.title + "\" to list \"" + args.list + "\"");  // Changed to double quotes for consistency
+          this.log(
+            '✅ Added todo "' + todo.title + '" to list "' + args.list + '"'
+          ); // Changed to double quotes for consistency
           break;
         }
 
@@ -108,9 +111,11 @@ export default class SimpleCommand extends BaseCommand {
             this.log(`List "${args.list}" not found`);
             return;
           }
-          this.log(`\n${chalk.bold(todoList.name)} (${todoList.todos.length} todos):`);
+          this.log(
+            `\n${chalk.bold(todoList.name)} (${todoList.todos.length} todos):`
+          );
           let filteredTodos = todoList.todos;
-          
+
           // Apply filter if specified
           if (flags.filter) {
             if (flags.filter === 'completed') {
@@ -121,7 +126,7 @@ export default class SimpleCommand extends BaseCommand {
               this.warn(`Unknown filter: ${flags.filter}. Ignoring.`);
             }
           }
-          
+
           // Apply sort if specified
           if (flags.sort) {
             if (flags.sort === 'priority') {
@@ -135,16 +140,19 @@ export default class SimpleCommand extends BaseCommand {
               this.warn(`Unknown sort field: ${flags.sort}. Ignoring.`);
             }
           }
-          
+
           // Display the todos
           filteredTodos.forEach(todo => {
             const status = todo.completed ? chalk.green('✓') : chalk.gray('☐');
-            const priority = todo.priority === 'high' ? chalk.red('⚠️') :
-                           todo.priority === 'medium' ? chalk.yellow('•') :
-                           chalk.green('○');
+            const priority =
+              todo.priority === 'high'
+                ? chalk.red('⚠️')
+                : todo.priority === 'medium'
+                  ? chalk.yellow('•')
+                  : chalk.green('○');
             this.log(`${status} ${priority} ${todo.title} (${todo.id})`);
             if (todo.tags.length > 0) {
-              this.log(`   ${chalk.dim("Tags: " + todo.tags.join(', '))}`);  // Changed to double quotes for consistency
+              this.log(`   ${chalk.dim('Tags: ' + todo.tags.join(', '))}`); // Changed to double quotes for consistency
             }
           });
           break;
@@ -152,10 +160,12 @@ export default class SimpleCommand extends BaseCommand {
 
         case 'complete': {
           if (!flags.id) {
-            throw new Error('Todo ID is required for complete command (use --id)');
+            throw new Error(
+              'Todo ID is required for complete command (use --id)'
+            );
           }
           await this.todoService.toggleItemStatus(args.list, flags.id, true);
-          this.log("✅ Marked todo as completed");  // Changed to double quotes for consistency
+          this.log('✅ Marked todo as completed'); // Changed to double quotes for consistency
           break;
         }
 

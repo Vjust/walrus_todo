@@ -1,6 +1,6 @@
 /**
  * EnhancedAIService - Enhanced AI service with new operations and features
- * 
+ *
  * Extends the base AIService with:
  * - Advanced AI operations (group, schedule, detect_dependencies, estimate_effort)
  * - Result caching for improved performance
@@ -10,9 +10,16 @@
 
 // PromptTemplate imported but not used
 import { Todo } from '../../types/todo';
-import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
+import {
+  AIVerificationService,
+  VerifiedAIResult,
+} from './AIVerificationService';
 import { AIPrivacyLevel } from '../../types/adapters/AIVerifierAdapter';
-import { AIModelAdapter, AIProvider, AIModelOptions } from '../../types/adapters/AIModelAdapter';
+import {
+  AIModelAdapter,
+  AIProvider,
+  AIModelOptions,
+} from '../../types/adapters/AIModelAdapter';
 import { AIProviderFactory } from './AIProviderFactory';
 import { PromptManager } from './PromptManager';
 import { ResultCache } from './ResultCache';
@@ -27,19 +34,19 @@ export interface GroupResult {
 
 export interface ScheduleResult {
   [todoId: string]: {
-    start: number;  // Days from now
-    duration: number;  // Days
-    due: number;  // Days from now
+    start: number; // Days from now
+    duration: number; // Days
+    due: number; // Days from now
   };
 }
 
 export interface DependencyResult {
-  dependencies: Record<string, string[]>;  // todoId -> [dependency ids]
-  blockers: Record<string, string[]>;  // todoId -> [blocker ids]
+  dependencies: Record<string, string[]>; // todoId -> [dependency ids]
+  blockers: Record<string, string[]>; // todoId -> [blocker ids]
 }
 
 export interface EffortEstimate {
-  effort: number;  // 1-5 scale
+  effort: number; // 1-5 scale
   reasoning: string;
   estimated_hours?: number;
 }
@@ -58,7 +65,7 @@ export class EnhancedAIService {
   private logger: Logger;
 
   constructor(
-    apiKey?: string, 
+    apiKey?: string,
     provider?: AIProvider,
     modelName?: string,
     options: AIModelOptions = {},
@@ -68,21 +75,21 @@ export class EnhancedAIService {
     this.promptManager = PromptManager.getInstance();
     this.resultCache = ResultCache.getInstance();
     this.configManager = AIConfigManager.getInstance();
-    
+
     // Initialize result cache from config
     const globalConfig = this.configManager.getGlobalConfig();
     this.resultCache.configure({
       enabled: globalConfig.cacheEnabled,
       ttlMs: globalConfig.defaultTtl,
-      maxEntries: globalConfig.maxCacheEntries
+      maxEntries: globalConfig.maxCacheEntries,
     });
-    
+
     this.options = {
       temperature: globalConfig.defaultTemperature,
       maxTokens: globalConfig.defaultMaxTokens,
-      ...options
+      ...options,
     };
-    
+
     // If apiKey is provided directly, use it with the specified or default provider
     if (apiKey) {
       if (provider) {
@@ -93,7 +100,7 @@ export class EnhancedAIService {
         AIProviderFactory.createProvider({
           provider,
           modelName,
-          options: this.options
+          options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
         });
@@ -106,7 +113,7 @@ export class EnhancedAIService {
         AIProviderFactory.createProvider({
           provider: globalConfig.defaultProvider,
           modelName: modelName || 'grok-beta',
-          options: this.options
+          options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
         });
@@ -121,13 +128,13 @@ export class EnhancedAIService {
         AIProviderFactory.createProvider({
           provider: provider || defaultProvider.provider,
           modelName: modelName || defaultProvider.modelName,
-          options: this.options
+          options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
         });
       });
     }
-    
+
     this.verificationService = verificationService;
   }
 
@@ -141,12 +148,16 @@ export class EnhancedAIService {
   /**
    * Set a different provider adapter
    */
-  public async setProvider(provider: AIProvider, modelName?: string, options?: AIModelOptions): Promise<void> {
+  public async setProvider(
+    provider: AIProvider,
+    modelName?: string,
+    options?: AIModelOptions
+  ): Promise<void> {
     // Create provider
     const adapter = await AIProviderFactory.createProvider({
       provider,
       modelName,
-      options: { ...this.options, ...options }
+      options: { ...this.options, ...options },
     });
 
     // Set it
@@ -156,24 +167,27 @@ export class EnhancedAIService {
   /**
    * Configure service behavior
    */
-  public configure(config: Partial<{
-    cacheEnabled: boolean;
-    useEnhancedPrompts: boolean;
-    defaultTemperature: number;
-    defaultMaxTokens: number;
-  }>): void {
+  public configure(
+    config: Partial<{
+      cacheEnabled: boolean;
+      useEnhancedPrompts: boolean;
+      defaultTemperature: number;
+      defaultMaxTokens: number;
+    }>
+  ): void {
     if (config.cacheEnabled !== undefined) {
       this.resultCache.configure({ enabled: config.cacheEnabled });
     }
-    
-    if (config.useEnhancedPrompts !== undefined ||
-        config.defaultTemperature !== undefined ||
-        config.defaultMaxTokens !== undefined) {
-      
+
+    if (
+      config.useEnhancedPrompts !== undefined ||
+      config.defaultTemperature !== undefined ||
+      config.defaultMaxTokens !== undefined
+    ) {
       this.configManager.updateGlobalConfig({
         useEnhancedPrompts: config.useEnhancedPrompts,
         defaultTemperature: config.defaultTemperature,
-        defaultMaxTokens: config.defaultMaxTokens
+        defaultMaxTokens: config.defaultMaxTokens,
       });
     }
   }
@@ -197,8 +211,10 @@ export class EnhancedAIService {
    */
   async summarize(todos: Todo[]): Promise<string> {
     const operation = 'summarize';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
     const cachedResult = this.resultCache.get<string>(operation, todos);
     if (cachedResult) {
@@ -206,29 +222,30 @@ export class EnhancedAIService {
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
-    
-    const response = await this.modelAdapter.processWithPromptTemplate(promptTemplate, { 
-      todos: todoStr 
-    });
-    
+    const response = await this.modelAdapter.processWithPromptTemplate(
+      promptTemplate,
+      {
+        todos: todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n'),
+      }
+    );
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result;
   }
-  
+
   /**
    * Generate a summary with blockchain verification
    */
@@ -239,9 +256,13 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const summary = await this.summarize(todos);
-    return this.verificationService.createVerifiedSummary(todos, summary, privacyLevel);
+    return this.verificationService.createVerifiedSummary(
+      todos,
+      summary,
+      privacyLevel
+    );
   }
 
   /**
@@ -249,42 +270,48 @@ export class EnhancedAIService {
    */
   async categorize(todos: Todo[]): Promise<Record<string, string[]>> {
     const operation = 'categorize';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
-    const cachedResult = this.resultCache.get<Record<string, string[]>>(operation, todos);
+    const cachedResult = this.resultCache.get<Record<string, string[]>>(
+      operation,
+      todos
+    );
     if (cachedResult) {
       this.resultCache.recordHit();
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
-    const response = await this.modelAdapter.completeStructured<Record<string, string[]>>({
+
+    const response = await this.modelAdapter.completeStructured<
+      Record<string, string[]>
+    >({
       prompt: promptTemplate,
-      input: { todos: todoStr },
+      input: { todos: todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n') },
       options: modelOptions,
-      metadata: { operation }
+      metadata: { operation },
     });
-    
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result || {};
   }
-  
+
   /**
    * Categorize todos with blockchain verification
    */
@@ -295,9 +322,13 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const categories = await this.categorize(todos);
-    return this.verificationService.createVerifiedCategorization(todos, categories, privacyLevel);
+    return this.verificationService.createVerifiedCategorization(
+      todos,
+      categories,
+      privacyLevel
+    );
   }
 
   /**
@@ -305,41 +336,47 @@ export class EnhancedAIService {
    */
   async prioritize(todos: Todo[]): Promise<Record<string, number>> {
     const operation = 'prioritize';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
-    const cachedResult = this.resultCache.get<Record<string, number>>(operation, todos);
+    const cachedResult = this.resultCache.get<Record<string, number>>(
+      operation,
+      todos
+    );
     if (cachedResult) {
       this.resultCache.recordHit();
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
-    const response = await this.modelAdapter.completeStructured<Record<string, number>>({
+
+    const response = await this.modelAdapter.completeStructured<
+      Record<string, number>
+    >({
       prompt: promptTemplate,
       options: modelOptions,
-      metadata: { operation }
+      metadata: { operation },
     });
-    
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result || {};
   }
-  
+
   /**
    * Prioritize todos with blockchain verification
    */
@@ -350,9 +387,13 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const priorities = await this.prioritize(todos);
-    return this.verificationService.createVerifiedPrioritization(todos, priorities, privacyLevel);
+    return this.verificationService.createVerifiedPrioritization(
+      todos,
+      priorities,
+      privacyLevel
+    );
   }
 
   /**
@@ -360,8 +401,10 @@ export class EnhancedAIService {
    */
   async suggest(todos: Todo[]): Promise<string[]> {
     const operation = 'suggest';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
     const cachedResult = this.resultCache.get<string[]>(operation, todos);
     if (cachedResult) {
@@ -369,35 +412,31 @@ export class EnhancedAIService {
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    const todoStr = todos.map(t => 
-      `- ${t.title}: ${t.description || 'No description'}`
-    ).join('\n');
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
+
     const response = await this.modelAdapter.completeStructured<string[]>({
       prompt: promptTemplate,
       options: modelOptions,
-      metadata: { operation }
+      metadata: { operation },
     });
-    
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result || [];
   }
-  
+
   /**
    * Suggest new todos with blockchain verification
    */
@@ -408,9 +447,13 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const suggestions = await this.suggest(todos);
-    return this.verificationService.createVerifiedSuggestion(todos, suggestions, privacyLevel);
+    return this.verificationService.createVerifiedSuggestion(
+      todos,
+      suggestions,
+      privacyLevel
+    );
   }
 
   /**
@@ -418,41 +461,47 @@ export class EnhancedAIService {
    */
   async analyze(todos: Todo[]): Promise<Record<string, unknown>> {
     const operation = 'analyze';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
-    const cachedResult = this.resultCache.get<Record<string, unknown>>(operation, todos);
+    const cachedResult = this.resultCache.get<Record<string, unknown>>(
+      operation,
+      todos
+    );
     if (cachedResult) {
       this.resultCache.recordHit();
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
-    const response = await this.modelAdapter.completeStructured<Record<string, unknown>>({
+
+    const response = await this.modelAdapter.completeStructured<
+      Record<string, unknown>
+    >({
       prompt: promptTemplate,
       options: modelOptions,
-      metadata: { operation }
+      metadata: { operation },
     });
-    
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result || {};
   }
-  
+
   /**
    * Analyze todos with blockchain verification
    */
@@ -463,9 +512,13 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const analysis = await this.analyze(todos);
-    return this.verificationService.createVerifiedAnalysis(todos, analysis, privacyLevel);
+    return this.verificationService.createVerifiedAnalysis(
+      todos,
+      analysis,
+      privacyLevel
+    );
   }
 
   /**
@@ -473,8 +526,10 @@ export class EnhancedAIService {
    */
   async group(todos: Todo[]): Promise<GroupResult> {
     const operation = 'group';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
     const cachedResult = this.resultCache.get<GroupResult>(operation, todos);
     if (cachedResult) {
@@ -482,31 +537,32 @@ export class EnhancedAIService {
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
+
     const response = await this.modelAdapter.completeStructured<GroupResult>({
       prompt: promptTemplate,
       options: modelOptions,
-      metadata: { operation }
+      metadata: { operation },
     });
-    
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     // Ensure we return at least an empty result
-    return response.result || { sequentialTracks: {}, parallelOpportunities: [] };
+    return (
+      response.result || { sequentialTracks: {}, parallelOpportunities: [] }
+    );
   }
 
   /**
@@ -519,14 +575,18 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const groups = await this.group(todos);
-    
+
     // For new operations, we'll use the existing verification types that are most similar
-    const result = await this.verificationService.createVerifiedAnalysis(todos, groups, privacyLevel);
+    const result = await this.verificationService.createVerifiedAnalysis(
+      todos,
+      groups,
+      privacyLevel
+    );
     return {
       ...result,
-      result: result.result as unknown as GroupResult
+      result: result.result as unknown as GroupResult,
     };
   }
 
@@ -535,8 +595,10 @@ export class EnhancedAIService {
    */
   async schedule(todos: Todo[]): Promise<ScheduleResult> {
     const operation = 'schedule';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
     const cachedResult = this.resultCache.get<ScheduleResult>(operation, todos);
     if (cachedResult) {
@@ -544,29 +606,30 @@ export class EnhancedAIService {
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
-    const response = await this.modelAdapter.completeStructured<ScheduleResult>({
-      prompt: promptTemplate,
-      options: modelOptions,
-      metadata: { operation }
-    });
-    
+
+    const response = await this.modelAdapter.completeStructured<ScheduleResult>(
+      {
+        prompt: promptTemplate,
+        options: modelOptions,
+        metadata: { operation },
+      }
+    );
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result || {};
   }
 
@@ -580,11 +643,15 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const schedule = await this.schedule(todos);
-    
+
     // Using analysis verification type for new operation
-    return this.verificationService.createVerifiedAnalysis(todos, schedule, privacyLevel);
+    return this.verificationService.createVerifiedAnalysis(
+      todos,
+      schedule,
+      privacyLevel
+    );
   }
 
   /**
@@ -592,38 +659,43 @@ export class EnhancedAIService {
    */
   async detectDependencies(todos: Todo[]): Promise<DependencyResult> {
     const operation = 'detect_dependencies';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
-    const cachedResult = this.resultCache.get<DependencyResult>(operation, todos);
+    const cachedResult = this.resultCache.get<DependencyResult>(
+      operation,
+      todos
+    );
     if (cachedResult) {
       this.resultCache.recordHit();
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
-    const response = await this.modelAdapter.completeStructured<DependencyResult>({
-      prompt: promptTemplate,
-      options: modelOptions,
-      metadata: { operation }
-    });
-    
+
+    const response =
+      await this.modelAdapter.completeStructured<DependencyResult>({
+        prompt: promptTemplate,
+        options: modelOptions,
+        metadata: { operation },
+      });
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result || { dependencies: {}, blockers: {} };
   }
 
@@ -637,14 +709,18 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const dependencies = await this.detectDependencies(todos);
-    
+
     // Using analysis verification type for new operation
-    const result = await this.verificationService.createVerifiedAnalysis(todos, dependencies, privacyLevel);
+    const result = await this.verificationService.createVerifiedAnalysis(
+      todos,
+      dependencies,
+      privacyLevel
+    );
     return {
       ...result,
-      result: result.result as unknown as DependencyResult
+      result: result.result as unknown as DependencyResult,
     };
   }
 
@@ -653,8 +729,10 @@ export class EnhancedAIService {
    */
   async estimateEffort(todos: Todo[]): Promise<EffortResult> {
     const operation = 'estimate_effort';
-    this.logger.debug(`Starting ${operation} operation with ${todos.length} todos`);
-    
+    this.logger.debug(
+      `Starting ${operation} operation with ${todos.length} todos`
+    );
+
     // Check cache first
     const cachedResult = this.resultCache.get<EffortResult>(operation, todos);
     if (cachedResult) {
@@ -662,29 +740,28 @@ export class EnhancedAIService {
       this.logger.debug(`Cache hit for ${operation}`);
       return cachedResult.result;
     }
-    
+
     this.resultCache.recordMiss();
-    
+
     // Get operation-specific config
     const opConfig = this.configManager.getOperationConfig(operation);
     const promptTemplate = this.promptManager.getPromptTemplate(
-      operation, 
+      operation,
       this.modelAdapter.getProviderName(),
       opConfig.enhanced
     );
 
-    
     const modelOptions = this.configManager.getModelOptions(operation);
-    
+
     const response = await this.modelAdapter.completeStructured<EffortResult>({
       prompt: promptTemplate,
       options: modelOptions,
-      metadata: { operation }
+      metadata: { operation },
     });
-    
+
     // Cache the result
     this.resultCache.set(operation, todos, response);
-    
+
     return response.result || {};
   }
 
@@ -698,11 +775,15 @@ export class EnhancedAIService {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
-    
+
     const efforts = await this.estimateEffort(todos);
-    
+
     // Using analysis verification type for new operation
-    return this.verificationService.createVerifiedAnalysis(todos, efforts, privacyLevel);
+    return this.verificationService.createVerifiedAnalysis(
+      todos,
+      efforts,
+      privacyLevel
+    );
   }
 
   /**

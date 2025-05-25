@@ -2,7 +2,6 @@ import { KeyManagementService } from '../../../src/services/key-management';
 import { SecureStorage } from '../../../src/services/secure-storage';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
-
 // Mock SecureStorage
 jest.mock('../../../src/services/secure-storage');
 
@@ -21,33 +20,41 @@ describe('KeyManagementService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset singleton instance
-    (KeyManagementService as unknown as { instance?: KeyManagementService }).instance = undefined;
-    
+    (
+      KeyManagementService as unknown as { instance?: KeyManagementService }
+    ).instance = undefined;
+
     // Initialize mocks
     mockSecureStorage = {
       getSecureItem: jest.fn(),
       setSecureItem: jest.fn(),
     } as unknown as jest.Mocked<SecureStorage>;
-    
+
     mockKeypair = {
       toSuiAddress: jest.fn().mockReturnValue('0x123...'),
-      getPublicKey: jest.fn().mockReturnValue({ toBase64: () => 'mock-public-key' }),
+      getPublicKey: jest
+        .fn()
+        .mockReturnValue({ toBase64: () => 'mock-public-key' }),
       export: jest.fn().mockReturnValue({ privateKey: 'mock-private' }),
     } as unknown as jest.Mocked<Ed25519Keypair>;
-    
+
     // Setup mock implementations
-    (SecureStorage as jest.MockedClass<typeof SecureStorage>).mockImplementation(() => mockSecureStorage);
+    (
+      SecureStorage as jest.MockedClass<typeof SecureStorage>
+    ).mockImplementation(() => mockSecureStorage);
     (Ed25519Keypair.fromSecretKey as jest.Mock).mockReturnValue(mockKeypair);
     (Ed25519Keypair.generate as jest.Mock).mockReturnValue(mockKeypair);
-    
+
     keyManagementService = KeyManagementService.getInstance();
   });
 
   afterEach(() => {
     // Clear the singleton instance to ensure clean state
-    (KeyManagementService as unknown as { instance?: KeyManagementService }).instance = undefined;
+    (
+      KeyManagementService as unknown as { instance?: KeyManagementService }
+    ).instance = undefined;
   });
 
   describe('getInstance', () => {
@@ -63,10 +70,12 @@ describe('KeyManagementService', () => {
 
     it('should retrieve and cache keypair from secure storage', async () => {
       mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
-      
+
       const keypair = await keyManagementService.getKeypair();
-      
-      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledWith('SUI_PRIVATE_KEY');
+
+      expect(mockSecureStorage.getSecureItem).toHaveBeenCalledWith(
+        'SUI_PRIVATE_KEY'
+      );
       expect(Ed25519Keypair.fromSecretKey).toHaveBeenCalledWith(
         Buffer.from(validPrivateKeyBase64, 'base64')
       );
@@ -75,10 +84,10 @@ describe('KeyManagementService', () => {
 
     it('should return cached keypair on subsequent calls', async () => {
       mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
-      
+
       const keypair1 = await keyManagementService.getKeypair();
       const keypair2 = await keyManagementService.getKeypair();
-      
+
       expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1);
       expect(Ed25519Keypair.fromSecretKey).toHaveBeenCalledTimes(1);
       expect(keypair1).toBe(keypair2);
@@ -86,9 +95,12 @@ describe('KeyManagementService', () => {
 
     it('should throw error when no private key is found', async () => {
       mockSecureStorage.getSecureItem.mockResolvedValue(null);
-      
+
       await expect(keyManagementService.getKeypair()).rejects.toThrow(
-        new CLIError('No private key found. Please configure your wallet first.', 'NO_PRIVATE_KEY')
+        new CLIError(
+          'No private key found. Please configure your wallet first.',
+          'NO_PRIVATE_KEY'
+        )
       );
     });
 
@@ -97,9 +109,12 @@ describe('KeyManagementService', () => {
       (Ed25519Keypair.fromSecretKey as jest.Mock).mockImplementation(() => {
         throw new Error('Invalid key format');
       });
-      
+
       await expect(keyManagementService.getKeypair()).rejects.toThrow(
-        new CLIError('Failed to load keypair: Invalid key format', 'KEYPAIR_LOAD_FAILED')
+        new CLIError(
+          'Failed to load keypair: Invalid key format',
+          'KEYPAIR_LOAD_FAILED'
+        )
       );
     });
   });
@@ -109,7 +124,7 @@ describe('KeyManagementService', () => {
 
     it('should store valid private key in secure storage', async () => {
       await keyManagementService.storeKeypair(validPrivateKeyBase64);
-      
+
       expect(Ed25519Keypair.fromSecretKey).toHaveBeenCalledWith(
         Buffer.from(validPrivateKeyBase64, 'base64')
       );
@@ -121,10 +136,10 @@ describe('KeyManagementService', () => {
 
     it('should cache the keypair after successful storage', async () => {
       await keyManagementService.storeKeypair(validPrivateKeyBase64);
-      
+
       // Clear mocks to verify cache is used
       jest.clearAllMocks();
-      
+
       const keypair = await keyManagementService.getKeypair();
       expect(mockSecureStorage.getSecureItem).not.toHaveBeenCalled();
       expect(keypair).toBe(mockKeypair);
@@ -134,23 +149,28 @@ describe('KeyManagementService', () => {
       (Ed25519Keypair.fromSecretKey as jest.Mock).mockImplementation(() => {
         throw new Error('Invalid base64');
       });
-      
-      await expect(keyManagementService.storeKeypair('invalid-key')).rejects.toThrow(
-        new CLIError('Invalid private key format: Invalid base64', 'INVALID_PRIVATE_KEY')
+
+      await expect(
+        keyManagementService.storeKeypair('invalid-key')
+      ).rejects.toThrow(
+        new CLIError(
+          'Invalid private key format: Invalid base64',
+          'INVALID_PRIVATE_KEY'
+        )
       );
-      
+
       expect(mockSecureStorage.setSecureItem).not.toHaveBeenCalled();
     });
 
     it('should replace existing key when storing new one', async () => {
       const newKey = 'bmV3LXByaXZhdGUta2V5Cg==';
-      
+
       // Store first key
       await keyManagementService.storeKeypair(validPrivateKeyBase64);
-      
+
       // Store new key
       await keyManagementService.storeKeypair(newKey);
-      
+
       expect(mockSecureStorage.setSecureItem).toHaveBeenCalledTimes(2);
       expect(mockSecureStorage.setSecureItem).toHaveBeenLastCalledWith(
         'SUI_PRIVATE_KEY',
@@ -163,14 +183,14 @@ describe('KeyManagementService', () => {
     it('should clear the cached keypair', async () => {
       const validPrivateKeyBase64 = 'dGVzdC1wcml2YXRlLWtleQo=';
       mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
-      
+
       // Load and cache keypair
       await keyManagementService.getKeypair();
       expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1);
-      
+
       // Clear cache
       keyManagementService.clearCache();
-      
+
       // Next call should fetch from storage again
       await keyManagementService.getKeypair();
       expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(2);
@@ -181,14 +201,16 @@ describe('KeyManagementService', () => {
     it('should handle generation of new keypairs', async () => {
       const newKeypair = mockKeypair;
       (Ed25519Keypair.generate as jest.Mock).mockReturnValue(newKeypair);
-      
+
       // Generate new keypair
       const generatedKeypair = Ed25519Keypair.generate();
-      
+
       // Store the exported private key
-      const exportedKey = Buffer.from('generated-private-key').toString('base64');
+      const exportedKey = Buffer.from('generated-private-key').toString(
+        'base64'
+      );
       await keyManagementService.storeKeypair(exportedKey);
-      
+
       expect(mockSecureStorage.setSecureItem).toHaveBeenCalledWith(
         'SUI_PRIVATE_KEY',
         exportedKey
@@ -198,9 +220,13 @@ describe('KeyManagementService', () => {
 
   describe('error scenarios', () => {
     it('should handle storage errors gracefully', async () => {
-      mockSecureStorage.getSecureItem.mockRejectedValue(new Error('Storage access denied'));
-      
-      await expect(keyManagementService.getKeypair()).rejects.toThrow('Storage access denied');
+      mockSecureStorage.getSecureItem.mockRejectedValue(
+        new Error('Storage access denied')
+      );
+
+      await expect(keyManagementService.getKeypair()).rejects.toThrow(
+        'Storage access denied'
+      );
     });
 
     it('should handle corrupt key data', async () => {
@@ -208,9 +234,12 @@ describe('KeyManagementService', () => {
       (Ed25519Keypair.fromSecretKey as jest.Mock).mockImplementation(() => {
         throw new Error('Invalid base64 string');
       });
-      
+
       await expect(keyManagementService.getKeypair()).rejects.toThrow(
-        new CLIError('Failed to load keypair: Invalid base64 string', 'KEYPAIR_LOAD_FAILED')
+        new CLIError(
+          'Failed to load keypair: Invalid base64 string',
+          'KEYPAIR_LOAD_FAILED'
+        )
       );
     });
   });
@@ -219,16 +248,16 @@ describe('KeyManagementService', () => {
     it('should handle concurrent getKeypair calls safely', async () => {
       const validPrivateKeyBase64 = 'dGVzdC1wcml2YXRlLWtleQo=';
       mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
-      
+
       // Simulate concurrent access
       const promises = [
         keyManagementService.getKeypair(),
         keyManagementService.getKeypair(),
         keyManagementService.getKeypair(),
       ];
-      
+
       const results = await Promise.all(promises);
-      
+
       // Should only fetch from storage once due to caching
       expect(mockSecureStorage.getSecureItem).toHaveBeenCalledTimes(1);
       expect(results[0]).toBe(results[1]);

@@ -17,8 +17,14 @@
 
 import { Todo } from '../../types/todo';
 import { EnhancedAIService } from './EnhancedAIService';
-import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
-import { AIPrivacyLevel, AIActionType } from '../../types/adapters/AIVerifierAdapter';
+import {
+  AIVerificationService,
+  VerifiedAIResult,
+} from './AIVerificationService';
+import {
+  AIPrivacyLevel,
+  AIActionType,
+} from '../../types/adapters/AIVerifierAdapter';
 import { Logger } from '../../utils/Logger';
 
 /**
@@ -37,11 +43,11 @@ export interface SuggestedTask {
   title: string;
   description?: string;
   priority?: 'high' | 'medium' | 'low';
-  score: number;  // Relevance score (0-100)
+  score: number; // Relevance score (0-100)
   reasoning: string;
   tags?: string[];
   type: SuggestionType;
-  relatedTodoIds?: string[];  // IDs of related todos that triggered this suggestion
+  relatedTodoIds?: string[]; // IDs of related todos that triggered this suggestion
 }
 
 /**
@@ -55,11 +61,11 @@ export interface SuggestedTask {
  * - IMPROVEMENT: Tasks that enhance or improve existing todos
  */
 export enum SuggestionType {
-  RELATED = 'related',       // Tasks related to existing todos
-  NEXT_STEP = 'next_step',   // Natural next steps based on current todos
+  RELATED = 'related', // Tasks related to existing todos
+  NEXT_STEP = 'next_step', // Natural next steps based on current todos
   DEPENDENCY = 'dependency', // Tasks that should be completed before others
   COMPLETION = 'completion', // Tasks to complete a sequence or group
-  IMPROVEMENT = 'improvement' // Tasks that improve or enhance existing todos
+  IMPROVEMENT = 'improvement', // Tasks that improve or enhance existing todos
 }
 
 /**
@@ -76,13 +82,13 @@ export enum SuggestionType {
  * @property relatedToTodoIds - Suggest tasks related to these specific todos
  */
 export interface SuggestionContext {
-  includeTypes?: SuggestionType[];  // Only include these suggestion types
-  excludeTypes?: SuggestionType[];  // Exclude these suggestion types
-  minScore?: number;               // Minimum relevance score (0-100)
-  maxResults?: number;             // Maximum number of suggestions to return
-  priorityFilter?: ('high' | 'medium' | 'low')[];  // Only include suggestions with these priorities
-  tags?: string[];                 // Suggest tasks related to these tags
-  relatedToTodoIds?: string[];     // Suggest tasks related to these specific todos
+  includeTypes?: SuggestionType[]; // Only include these suggestion types
+  excludeTypes?: SuggestionType[]; // Exclude these suggestion types
+  minScore?: number; // Minimum relevance score (0-100)
+  maxResults?: number; // Maximum number of suggestions to return
+  priorityFilter?: ('high' | 'medium' | 'low')[]; // Only include suggestions with these priorities
+  tags?: string[]; // Suggest tasks related to these tags
+  relatedToTodoIds?: string[]; // Suggest tasks related to these specific todos
 }
 
 /**
@@ -133,9 +139,11 @@ export class TaskSuggestionService {
     if (typeof aiService === 'string') {
       // This path is for backward compatibility with tests that pass API key
       // In practice, this would create a real EnhancedAIService instance
-      throw new Error('String API key parameter is deprecated. Please pass EnhancedAIService instance directly.');
+      throw new Error(
+        'String API key parameter is deprecated. Please pass EnhancedAIService instance directly.'
+      );
     }
-    
+
     this.aiService = aiService;
     this.verificationService = verificationService;
     this.logger = logger || new Logger('TaskSuggestionService');
@@ -180,7 +188,7 @@ export class TaskSuggestionService {
           analyzedTodoCount: 0,
           completionPercentage: 0,
           detectedThemes: [],
-          topContextualTags: []
+          topContextualTags: [],
         },
         metrics: {
           suggestionsByType: {
@@ -188,10 +196,10 @@ export class TaskSuggestionService {
             [SuggestionType.RELATED]: 0,
             [SuggestionType.DEPENDENCY]: 0,
             [SuggestionType.COMPLETION]: 0,
-            [SuggestionType.IMPROVEMENT]: 0
+            [SuggestionType.IMPROVEMENT]: 0,
           },
-          averageScore: 0
-        }
+          averageScore: 0,
+        },
       };
     }
 
@@ -203,14 +211,14 @@ export class TaskSuggestionService {
       const [relatedTasks, nextStepTasks, dependencyTasks] = await Promise.all([
         this.generateRelatedTasks(todos, context),
         this.generateNextStepTasks(todos, context),
-        this.generateDependencyTasks(todos, context)
+        this.generateDependencyTasks(todos, context),
       ]);
 
       // Combine all suggestions
       let allSuggestions = [
         ...relatedTasks,
         ...nextStepTasks,
-        ...dependencyTasks
+        ...dependencyTasks,
       ];
 
       // Apply context filters
@@ -230,11 +238,13 @@ export class TaskSuggestionService {
       return {
         suggestions: allSuggestions,
         contextInfo,
-        metrics
+        metrics,
       };
     } catch (error) {
       this.logger.error(`Error generating task suggestions: ${error}`);
-      throw new Error(`Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -269,7 +279,7 @@ export class TaskSuggestionService {
       suggestionCount: suggestions.suggestions.length.toString(),
       averageScore: suggestions.metrics.averageScore.toFixed(2),
       timestamp: Date.now().toString(),
-      contextFilters: JSON.stringify(context)
+      contextFilters: JSON.stringify(context),
     };
 
     // Create blockchain verification
@@ -283,7 +293,7 @@ export class TaskSuggestionService {
 
     return {
       result: suggestions,
-      verification
+      verification,
     };
   }
 
@@ -324,16 +334,18 @@ export class TaskSuggestionService {
         Todos:
         ${targetTodos.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
 
-      const result = await this.aiService.getProvider().completeStructured<SuggestedTask[]>({
-        prompt,
-        options: { temperature: 0.7 }
-      });
+      const result = await this.aiService
+        .getProvider()
+        .completeStructured<SuggestedTask[]>({
+          prompt,
+          options: { temperature: 0.7 },
+        });
 
       // Add suggestion type and related todo IDs
       const suggestions = (result.result || []).map(suggestion => ({
         ...suggestion,
         type: SuggestionType.RELATED,
-        relatedTodoIds: targetTodos.map(t => t.id)
+        relatedTodoIds: targetTodos.map(t => t.id),
       }));
 
       return suggestions;
@@ -384,15 +396,17 @@ export class TaskSuggestionService {
           Todos:
           ${todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
 
-        const result = await this.aiService.getProvider().completeStructured<SuggestedTask[]>({
-          prompt,
-          options: { temperature: 0.7 }
-        });
+        const result = await this.aiService
+          .getProvider()
+          .completeStructured<SuggestedTask[]>({
+            prompt,
+            options: { temperature: 0.7 },
+          });
 
         return (result.result || []).map(suggestion => ({
           ...suggestion,
           type: SuggestionType.NEXT_STEP,
-          relatedTodoIds: todos.map(t => t.id)
+          relatedTodoIds: todos.map(t => t.id),
         }));
       }
 
@@ -408,7 +422,9 @@ export class TaskSuggestionService {
 
       // Get todos that could be started next based on completed dependencies
       const todoIdsToFocus = [...new Set(potentialNextSteps)];
-      const todosToFocus = todos.filter(todo => todoIdsToFocus.includes(todo.id));
+      const todosToFocus = todos.filter(todo =>
+        todoIdsToFocus.includes(todo.id)
+      );
 
       // Generate next step suggestions
       const prompt = `Based on these todos, suggest NEXT STEP tasks that would logically come after them.
@@ -420,15 +436,17 @@ export class TaskSuggestionService {
         Todos:
         ${todosToFocus.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
 
-      const result = await this.aiService.getProvider().completeStructured<SuggestedTask[]>({
-        prompt,
-        options: { temperature: 0.7 }
-      });
+      const result = await this.aiService
+        .getProvider()
+        .completeStructured<SuggestedTask[]>({
+          prompt,
+          options: { temperature: 0.7 },
+        });
 
       return (result.result || []).map(suggestion => ({
         ...suggestion,
         type: SuggestionType.NEXT_STEP,
-        relatedTodoIds: todosToFocus.map(t => t.id)
+        relatedTodoIds: todosToFocus.map(t => t.id),
       }));
     } catch (_error) {
       this.logger.error(`Error generating next step tasks: ${error}`);
@@ -466,9 +484,10 @@ export class TaskSuggestionService {
       const dependencies = await this.aiService.detectDependencies(todos);
 
       // Find todos that might need prerequisites
-      const todosWithoutDependencies = incompleteTodos.filter(todo =>
-        !dependencies.dependencies[todo.id] ||
-        dependencies.dependencies[todo.id].length === 0
+      const todosWithoutDependencies = incompleteTodos.filter(
+        todo =>
+          !dependencies.dependencies[todo.id] ||
+          dependencies.dependencies[todo.id].length === 0
       );
 
       if (todosWithoutDependencies.length === 0) {
@@ -485,15 +504,17 @@ export class TaskSuggestionService {
         Todos:
         ${todosWithoutDependencies.map(t => `- ID: ${t.id}, Title: ${t.title}, Desc: ${t.description || 'No description'}, Priority: ${t.priority}, Tags: [${t.tags.join(', ')}]`).join('\n')}`;
 
-      const result = await this.aiService.getProvider().completeStructured<SuggestedTask[]>({
-        prompt,
-        options: { temperature: 0.7 }
-      });
+      const result = await this.aiService
+        .getProvider()
+        .completeStructured<SuggestedTask[]>({
+          prompt,
+          options: { temperature: 0.7 },
+        });
 
       return (result.result || []).map(suggestion => ({
         ...suggestion,
         type: SuggestionType.DEPENDENCY,
-        relatedTodoIds: todosWithoutDependencies.map(t => t.id)
+        relatedTodoIds: todosWithoutDependencies.map(t => t.id),
       }));
     } catch (_error) {
       this.logger.error(`Error generating dependency tasks: ${error}`);
@@ -525,9 +546,10 @@ export class TaskSuggestionService {
   }> {
     try {
       // Get completion percentage
-      const completionPercentage = todos.length > 0
-        ? (todos.filter(todo => todo.completed).length / todos.length) * 100
-        : 0;
+      const completionPercentage =
+        todos.length > 0
+          ? (todos.filter(todo => todo.completed).length / todos.length) * 100
+          : 0;
 
       // Get top tags by counting occurrences
       const tagCounts: Record<string, number> = {};
@@ -545,16 +567,14 @@ export class TaskSuggestionService {
 
       // Get themes through AI analysis
       const analysis = await this.aiService.analyze(todos);
-      const detectedThemes = analysis.keyThemes ||
-        analysis.themes ||
-        analysis.categories ||
-        [];
+      const detectedThemes =
+        analysis.keyThemes || analysis.themes || analysis.categories || [];
 
       return {
         analyzedTodoCount: todos.length,
         topContextualTags,
         completionPercentage,
-        detectedThemes: Array.isArray(detectedThemes) ? detectedThemes : []
+        detectedThemes: Array.isArray(detectedThemes) ? detectedThemes : [],
       };
     } catch (_error) {
       this.logger.error(`Error analyzing context: ${error}`);
@@ -562,7 +582,7 @@ export class TaskSuggestionService {
         analyzedTodoCount: todos.length,
         topContextualTags: [],
         completionPercentage: 0,
-        detectedThemes: []
+        detectedThemes: [],
       };
     }
   }
@@ -590,8 +610,8 @@ export class TaskSuggestionService {
 
     // Filter by suggestion type (include)
     if (context.includeTypes && context.includeTypes.length > 0) {
-      filteredSuggestions = filteredSuggestions.filter(
-        suggestion => context.includeTypes?.includes(suggestion.type)
+      filteredSuggestions = filteredSuggestions.filter(suggestion =>
+        context.includeTypes?.includes(suggestion.type)
       );
     }
 
@@ -612,14 +632,17 @@ export class TaskSuggestionService {
     // Filter by priority
     if (context.priorityFilter && context.priorityFilter.length > 0) {
       filteredSuggestions = filteredSuggestions.filter(
-        suggestion => suggestion.priority && context.priorityFilter?.includes(suggestion.priority)
+        suggestion =>
+          suggestion.priority &&
+          context.priorityFilter?.includes(suggestion.priority)
       );
     }
 
     // Filter by tags
     if (context.tags && context.tags.length > 0) {
       filteredSuggestions = filteredSuggestions.filter(
-        suggestion => suggestion.tags &&
+        suggestion =>
+          suggestion.tags &&
           suggestion.tags.some(tag => context.tags?.includes(tag))
       );
     }
@@ -646,8 +669,12 @@ export class TaskSuggestionService {
     suggestionsByType: Record<SuggestionType, number>;
   } {
     // Calculate average relevance score
-    const totalScore = suggestions.reduce((sum, suggestion) => sum + suggestion.score, 0);
-    const averageScore = suggestions.length > 0 ? totalScore / suggestions.length : 0;
+    const totalScore = suggestions.reduce(
+      (sum, suggestion) => sum + suggestion.score,
+      0
+    );
+    const averageScore =
+      suggestions.length > 0 ? totalScore / suggestions.length : 0;
 
     // Initialize counters for each suggestion type
     const suggestionsByType: Record<SuggestionType, number> = {
@@ -655,17 +682,18 @@ export class TaskSuggestionService {
       [SuggestionType.NEXT_STEP]: 0,
       [SuggestionType.DEPENDENCY]: 0,
       [SuggestionType.COMPLETION]: 0,
-      [SuggestionType.IMPROVEMENT]: 0
+      [SuggestionType.IMPROVEMENT]: 0,
     };
 
     // Count suggestions by type
     suggestions.forEach(suggestion => {
-      suggestionsByType[suggestion.type] = (suggestionsByType[suggestion.type] || 0) + 1;
+      suggestionsByType[suggestion.type] =
+        (suggestionsByType[suggestion.type] || 0) + 1;
     });
 
     return {
       averageScore,
-      suggestionsByType
+      suggestionsByType,
     };
   }
 }

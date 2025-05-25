@@ -13,8 +13,8 @@ router.post(
   validate({
     body: z.object({
       todoIds: z.array(z.string().uuid()).optional(),
-      includeCompleted: z.boolean().default(false)
-    })
+      includeCompleted: z.boolean().default(false),
+    }),
   }),
   asyncHandler(controller.summarize)
 );
@@ -25,8 +25,8 @@ router.post(
   validate({
     body: z.object({
       todoIds: z.array(z.string().uuid()).optional(),
-      categories: z.array(z.string()).optional()
-    })
+      categories: z.array(z.string()).optional(),
+    }),
   }),
   asyncHandler(controller.categorize)
 );
@@ -37,8 +37,8 @@ router.post(
   validate({
     body: z.object({
       todoIds: z.array(z.string().uuid()).optional(),
-      criteria: z.string().optional()
-    })
+      criteria: z.string().optional(),
+    }),
   }),
   asyncHandler(controller.prioritize)
 );
@@ -49,8 +49,8 @@ router.post(
   validate({
     body: z.object({
       context: z.string().optional(),
-      count: z.number().int().positive().max(10).default(5)
-    })
+      count: z.number().int().positive().max(10).default(5),
+    }),
   }),
   asyncHandler(controller.suggest)
 );
@@ -61,17 +61,14 @@ router.post(
   validate({
     params: z.object({ id: z.string().uuid() }),
     body: z.object({
-      style: z.enum(['detailed', 'concise', 'actionable']).optional()
-    })
+      style: z.enum(['detailed', 'concise', 'actionable']).optional(),
+    }),
   }),
   asyncHandler(controller.enhance)
 );
 
 // GET /ai/providers - Get available AI providers
-router.get(
-  '/providers',
-  asyncHandler(controller.getProviders)
-);
+router.get('/providers', asyncHandler(controller.getProviders));
 
 // POST /ai/verify - Verify AI operation on blockchain
 router.post(
@@ -81,8 +78,8 @@ router.post(
       operation: z.string(),
       input: z.any(),
       output: z.any(),
-      provider: z.string()
-    })
+      provider: z.string(),
+    }),
   }),
   asyncHandler(controller.verify)
 );

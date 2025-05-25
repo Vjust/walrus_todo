@@ -16,14 +16,19 @@ async function main() {
   Logger.getInstance().info('Current todos:');
   list.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
-    const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
-    Logger.getInstance().info(`${status} ${priority} ${todo.title} (${todo.id})`);
+    const priority =
+      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+    Logger.getInstance().info(
+      `${status} ${priority} ${todo.title} (${todo.id})`
+    );
   });
 
   // Delete the first completed todo
   const completedTodo = list.todos.find(todo => todo.completed);
   if (completedTodo) {
-    Logger.getInstance().info(`Deleting completed todo: ${completedTodo.title}`);
+    Logger.getInstance().info(
+      `Deleting completed todo: ${completedTodo.title}`
+    );
     await todoService.deleteTodo(listName, completedTodo.id);
     Logger.getInstance().info('Todo deleted');
   }
@@ -33,9 +38,12 @@ async function main() {
   const updatedList = await todoService.getList(listName);
   updatedList?.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
-    const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
-    Logger.getInstance().info(`${status} ${priority} ${todo.title} (${todo.id})`);
+    const priority =
+      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+    Logger.getInstance().info(
+      `${status} ${priority} ${todo.title} (${todo.id})`
+    );
   });
 }
 
-main().catch((error) => Logger.getInstance().error('Error in main:', error));
+main().catch(error => Logger.getInstance().error('Error in main:', error));

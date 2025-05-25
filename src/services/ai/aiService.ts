@@ -1,8 +1,15 @@
 import { PromptTemplate } from '@langchain/core/prompts';
 import { Todo } from '../../types/todo';
-import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
+import {
+  AIVerificationService,
+  VerifiedAIResult,
+} from './AIVerificationService';
 import { AIPrivacyLevel } from '../../types/adapters/AIVerifierAdapter';
-import { AIModelAdapter, AIProvider, AIModelOptions } from '../../types/adapters/AIModelAdapter';
+import {
+  AIModelAdapter,
+  AIProvider,
+  AIModelOptions,
+} from '../../types/adapters/AIModelAdapter';
 import { AIProviderFactory } from './AIProviderFactory';
 import { secureCredentialService } from './SecureCredentialService';
 import { Logger } from '../../utils/Logger';
@@ -50,7 +57,7 @@ export class AIService {
     this.options = {
       temperature: 0.7,
       maxTokens: 2000,
-      ...options
+      ...options,
     };
 
     this.verificationService = verificationService;
@@ -60,20 +67,21 @@ export class AIService {
       const defaultAdapter = AIProviderFactory.createDefaultAdapter();
       this.modelAdapter = defaultAdapter;
     } catch (error) {
-      logger.error('Failed to initialize with default adapter:', error as Error);
+      logger.error(
+        'Failed to initialize with default adapter:',
+        error as Error
+      );
       // Set a minimal fallback adapter to avoid null reference errors
       this.modelAdapter = AIProviderFactory.createFallbackAdapter();
     }
 
     // Initialize the full model adapter asynchronously
-    this.initializeModelAdapter(provider, modelName)
-      .catch(error => {
-        logger.error(
-          'Model adapter initialization failed',
-          error as Error,
-          { provider, modelName }
-        );
+    this.initializeModelAdapter(provider, modelName).catch(error => {
+      logger.error('Model adapter initialization failed', error as Error, {
+        provider,
+        modelName,
       });
+    });
   }
 
   /**
@@ -93,10 +101,14 @@ export class AIService {
     try {
       // Validate inputs first
       if (provider !== undefined && typeof provider !== 'string') {
-        throw new Error(`Invalid provider type: expected string, got ${typeof provider}`);
+        throw new Error(
+          `Invalid provider type: expected string, got ${typeof provider}`
+        );
       }
       if (modelName !== undefined && typeof modelName !== 'string') {
-        throw new Error(`Invalid modelName type: expected string, got ${typeof modelName}`);
+        throw new Error(
+          `Invalid modelName type: expected string, got ${typeof modelName}`
+        );
       }
 
       // Use the secure credential service to get provider info
@@ -104,7 +116,9 @@ export class AIService {
 
       // Ensure we have valid provider and modelName
       if (!defaultProvider.provider || !defaultProvider.modelName) {
-        throw new Error(`Invalid default provider configuration: provider=${defaultProvider.provider}, modelName=${defaultProvider.modelName}`);
+        throw new Error(
+          `Invalid default provider configuration: provider=${defaultProvider.provider}, modelName=${defaultProvider.modelName}`
+        );
       }
 
       const selectedProvider = provider || defaultProvider.provider;
@@ -115,7 +129,7 @@ export class AIService {
         provider: selectedProvider,
         modelName: selectedModelName,
         options: this.options,
-        credentialService: secureCredentialService
+        credentialService: secureCredentialService,
       });
     } catch (error) {
       logger.error('Failed to initialize model adapter:', error as Error);
@@ -139,8 +153,13 @@ export class AIService {
    *
    * @param reason - Optional reason for cancellation for logging purposes
    */
-  public cancelAllOperations(reason: string = 'User cancelled operation'): void {
-    if (this.modelAdapter && typeof this.modelAdapter.cancelAllRequests === 'function') {
+  public cancelAllOperations(
+    reason: string = 'User cancelled operation'
+  ): void {
+    if (
+      this.modelAdapter &&
+      typeof this.modelAdapter.cancelAllRequests === 'function'
+    ) {
       this.modelAdapter.cancelAllRequests(reason);
     }
   }
@@ -160,17 +179,22 @@ export class AIService {
     this.operationType = operationType;
 
     // Check if this adapter has consent checking capabilities
-    if (this.modelAdapter && typeof this.modelAdapter.checkConsentFor === 'function') {
+    if (
+      this.modelAdapter &&
+      typeof this.modelAdapter.checkConsentFor === 'function'
+    ) {
       const hasConsent = this.modelAdapter.checkConsentFor(operationType);
       if (!hasConsent) {
-        throw new Error(`User has not provided consent for operation type: ${operationType}`);
+        throw new Error(
+          `User has not provided consent for operation type: ${operationType}`
+        );
       }
     }
 
     // Update options with the operation type for potential provider-specific handling
     this.options = {
       ...this.options,
-      operation: operationType
+      operation: operationType,
     };
   }
 
@@ -184,21 +208,25 @@ export class AIService {
    * @returns Promise resolving when the provider is fully initialized
    * @throws Error if provider initialization fails
    */
-  public async setProvider(provider: AIProvider, modelName?: string, options?: AIModelOptions): Promise<void> {
+  public async setProvider(
+    provider: AIProvider,
+    modelName?: string,
+    options?: AIModelOptions
+  ): Promise<void> {
     try {
       this.modelAdapter = await AIProviderFactory.createProvider({
         provider,
         modelName,
         options: { ...this.options, ...options },
-        credentialService: secureCredentialService
+        credentialService: secureCredentialService,
       });
     } catch (error) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
-      logger.error(
-        `Failed to set provider ${provider}`,
-        typedError,
-        { modelName, provider }
-      );
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
+      logger.error(`Failed to set provider ${provider}`, typedError, {
+        modelName,
+        provider,
+      });
       const initError = new Error(
         `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`
       );
@@ -235,16 +263,24 @@ export class AIService {
 
     // Format todos with minimal required fields and sanitize data
     const sanitizedTodos = todos.map(t => this.sanitizeTodo(t));
-    const todoStr = sanitizedTodos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
+    const todoStr = sanitizedTodos
+      .map(t => `- ${t.title}: ${t.description || 'No description'}`)
+      .join('\n');
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, { todos: todoStr });
+      const response = await this.modelAdapter.processWithPromptTemplate(
+        prompt,
+        { todos: todoStr }
+      );
       return response.result;
     } catch (error) {
       // Ensure no sensitive data in error message
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
-      const summaryError = new Error(`Failed to summarize todos: ${sanitizedMessage}`);
+      const summaryError = new Error(
+        `Failed to summarize todos: ${sanitizedMessage}`
+      );
       (summaryError as Error & { cause?: Error }).cause = typedError;
       throw summaryError;
     }
@@ -262,7 +298,7 @@ export class AIService {
     const sanitized: Partial<Todo> = {
       id: todo.id,
       title: this.anonymizePII(todo.title),
-      completed: todo.completed
+      completed: todo.completed,
     };
 
     // Only include description if present
@@ -293,24 +329,31 @@ export class AIService {
     if (!text) return text;
 
     // Common PII patterns
-    const piiPatterns: Array<{pattern: RegExp, replacement: string}> = [
+    const piiPatterns: Array<{ pattern: RegExp; replacement: string }> = [
       // Email addresses
-      {pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, replacement: '[EMAIL]'},
+      {
+        pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+        replacement: '[EMAIL]',
+      },
       // Phone numbers
-      {pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, replacement: '[PHONE]'},
+      { pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, replacement: '[PHONE]' },
       // Social security numbers
-      {pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '[SSN]'},
+      { pattern: /\b\d{3}-\d{2}-\d{4}\b/g, replacement: '[SSN]' },
       // Credit card numbers
-      {pattern: /\b(?:\d[ -]*?){13,16}\b/g, replacement: '[CREDIT_CARD]'},
+      { pattern: /\b(?:\d[ -]*?){13,16}\b/g, replacement: '[CREDIT_CARD]' },
       // Physical addresses (simplified)
-      {pattern: /\b\d+\s+[A-Z][a-z]+\s+(?:St|Street|Ave|Avenue|Blvd|Boulevard|Rd|Road|Drive|Dr)\b/g, replacement: '[ADDRESS]'},
+      {
+        pattern:
+          /\b\d+\s+[A-Z][a-z]+\s+(?:St|Street|Ave|Avenue|Blvd|Boulevard|Rd|Road|Drive|Dr)\b/g,
+        replacement: '[ADDRESS]',
+      },
       // Likely names (simplified pattern)
-      {pattern: /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, replacement: '[NAME]'}
+      { pattern: /\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, replacement: '[NAME]' },
     ];
 
     // Apply each pattern
     let anonymized = text;
-    for (const {pattern, replacement} of piiPatterns) {
+    for (const { pattern, replacement } of piiPatterns) {
       anonymized = anonymized.replace(pattern, replacement);
     }
 
@@ -325,7 +368,8 @@ export class AIService {
    */
   private sanitizeErrorMessage(message: string): string {
     // Redact API keys
-    const apiKeyPattern = /(?:api[-_]?key|token|secret|password|credential)[^\w\n]*?\w+[-._=]*?([a-zA-Z0-9]{5,})/gi;
+    const apiKeyPattern =
+      /(?:api[-_]?key|token|secret|password|credential)[^\w\n]*?\w+[-._=]*?([a-zA-Z0-9]{5,})/gi;
     let sanitized = message.replace(apiKeyPattern, (m, key) => {
       return m.replace(key, '[REDACTED]');
     });
@@ -358,7 +402,11 @@ export class AIService {
     }
 
     const summary = await this.summarize(todos);
-    return this.verificationService.createVerifiedSummary(todos, summary, privacyLevel);
+    return this.verificationService.createVerifiedSummary(
+      todos,
+      summary,
+      privacyLevel
+    );
   }
 
   /**
@@ -388,27 +436,34 @@ export class AIService {
 
     // Format todos with minimal required fields and sanitize data
     const sanitizedTodos = todos.map(t => this.sanitizeTodo(t));
-    const todoStr = sanitizedTodos.map(t =>
-      `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
-    ).join('\n');
+    const todoStr = sanitizedTodos
+      .map(
+        t =>
+          `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
+      )
+      .join('\n');
 
     try {
       // Apply differential privacy if enabled in options
       const privacyEnabled = this.options.differentialPrivacy === true;
-      const privacyOptions = privacyEnabled ? {
-        ...this.options,
-        noiseFactor: this.options.epsilon || 0.5,
-        temperature: 0.5
-      } : {
-        ...this.options,
-        temperature: 0.5
-      };
+      const privacyOptions = privacyEnabled
+        ? {
+            ...this.options,
+            noiseFactor: this.options.epsilon || 0.5,
+            temperature: 0.5,
+          }
+        : {
+            ...this.options,
+            temperature: 0.5,
+          };
 
-      const response = await this.modelAdapter.completeStructured<Record<string, string[]>>({
+      const response = await this.modelAdapter.completeStructured<
+        Record<string, string[]>
+      >({
         prompt,
         input: { todos: todoStr },
         options: privacyOptions,
-        metadata: { operation: 'categorize' }
+        metadata: { operation: 'categorize' },
       });
 
       // Validate response structure to prevent prototype pollution or invalid data
@@ -418,7 +473,11 @@ export class AIService {
       // Ensure valid structure in the response
       Object.keys(result).forEach(category => {
         // Guard against prototype pollution or malformed response
-        if (category === '__proto__' || category === 'constructor' || category === 'prototype') {
+        if (
+          category === '__proto__' ||
+          category === 'constructor' ||
+          category === 'prototype'
+        ) {
           return;
         }
 
@@ -432,9 +491,12 @@ export class AIService {
       return sanitizedResult;
     } catch (error) {
       // Ensure no sensitive data in error message
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       const sanitizedMessage = this.sanitizeErrorMessage(typedError.message);
-      const categorizeError = new Error(`Failed to categorize todos: ${sanitizedMessage}`);
+      const categorizeError = new Error(
+        `Failed to categorize todos: ${sanitizedMessage}`
+      );
       (categorizeError as Error & { cause?: Error }).cause = typedError;
       throw categorizeError;
     }
@@ -458,7 +520,11 @@ export class AIService {
     }
 
     const categories = await this.categorize(todos);
-    return this.verificationService.createVerifiedCategorization(todos, categories, privacyLevel);
+    return this.verificationService.createVerifiedCategorization(
+      todos,
+      categories,
+      privacyLevel
+    );
   }
 
   /**
@@ -476,13 +542,20 @@ export class AIService {
     );
 
     // Format todos with IDs for prioritization
-    const todoStr = todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`).join('\n');
+    const todoStr = todos
+      .map(
+        t =>
+          `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
+      )
+      .join('\n');
 
-    const response = await this.modelAdapter.completeStructured<Record<string, number>>({
+    const response = await this.modelAdapter.completeStructured<
+      Record<string, number>
+    >({
       prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.3 },
-      metadata: { operation: 'prioritize' }
+      metadata: { operation: 'prioritize' },
     });
 
     return response.result || {};
@@ -506,7 +579,11 @@ export class AIService {
     }
 
     const priorities = await this.prioritize(todos);
-    return this.verificationService.createVerifiedPrioritization(todos, priorities, privacyLevel);
+    return this.verificationService.createVerifiedPrioritization(
+      todos,
+      priorities,
+      privacyLevel
+    );
   }
 
   /**
@@ -524,14 +601,16 @@ export class AIService {
     );
 
     // Format todos for suggestion generation
-    const todoStr = todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n');
+    const todoStr = todos
+      .map(t => `- ${t.title}: ${t.description || 'No description'}`)
+      .join('\n');
 
     // Pass the todos in the input object
     const response = await this.modelAdapter.completeStructured<string[]>({
       prompt: prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.8 },
-      metadata: { operation: 'suggest' }
+      metadata: { operation: 'suggest' },
     });
 
     return response.result || [];
@@ -555,7 +634,11 @@ export class AIService {
     }
 
     const suggestions = await this.suggest(todos);
-    return this.verificationService.createVerifiedSuggestion(todos, suggestions, privacyLevel);
+    return this.verificationService.createVerifiedSuggestion(
+      todos,
+      suggestions,
+      privacyLevel
+    );
   }
 
   /**
@@ -580,13 +663,20 @@ export class AIService {
     );
 
     // Format todos with IDs for detailed analysis
-    const todoStr = todos.map(t => `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`).join('\n');
+    const todoStr = todos
+      .map(
+        t =>
+          `- ID: ${t.id}, Title: ${t.title}, Description: ${t.description || 'No description'}`
+      )
+      .join('\n');
 
-    const response = await this.modelAdapter.completeStructured<Record<string, unknown>>({
+    const response = await this.modelAdapter.completeStructured<
+      Record<string, unknown>
+    >({
       prompt,
       input: { todos: todoStr },
       options: { ...this.options, temperature: 0.5 },
-      metadata: { operation: 'analyze' }
+      metadata: { operation: 'analyze' },
     });
 
     return response.result || {};
@@ -610,7 +700,11 @@ export class AIService {
     }
 
     const analysis = await this.analyze(todos);
-    return this.verificationService.createVerifiedAnalysis(todos, analysis, privacyLevel);
+    return this.verificationService.createVerifiedAnalysis(
+      todos,
+      analysis,
+      privacyLevel
+    );
   }
 
   /**
@@ -628,10 +722,13 @@ export class AIService {
     );
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, {
-        title: todo.title,
-        description: todo.description || 'No description'
-      });
+      const response = await this.modelAdapter.processWithPromptTemplate(
+        prompt,
+        {
+          title: todo.title,
+          description: todo.description || 'No description',
+        }
+      );
 
       // Parse the JSON array response
       try {
@@ -641,8 +738,11 @@ export class AIService {
         throw new Error('Failed to parse tags response: ' + response.result);
       }
     } catch (error) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
-      const tagsError = new Error(`Failed to suggest tags: ${typedError.message}`);
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
+      const tagsError = new Error(
+        `Failed to suggest tags: ${typedError.message}`
+      );
       (tagsError as Error & { cause?: Error }).cause = typedError;
       throw tagsError;
     }
@@ -662,17 +762,22 @@ export class AIService {
     );
 
     try {
-      const response = await this.modelAdapter.processWithPromptTemplate(prompt, {
-        title: todo.title,
-        description: todo.description || 'No description'
-      });
+      const response = await this.modelAdapter.processWithPromptTemplate(
+        prompt,
+        {
+          title: todo.title,
+          description: todo.description || 'No description',
+        }
+      );
 
       // Validate and normalize the priority response
       const priority = response.result.trim().toLowerCase();
       if (['high', 'medium', 'low'].includes(priority)) {
         return priority as 'high' | 'medium' | 'low';
       } else {
-        logger.warn(`Invalid priority response: "${priority}", defaulting to "medium"`);
+        logger.warn(
+          `Invalid priority response: "${priority}", defaulting to "medium"`
+        );
         return 'medium';
       }
     } catch (error) {

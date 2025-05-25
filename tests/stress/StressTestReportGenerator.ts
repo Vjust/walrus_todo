@@ -28,23 +28,35 @@ export class StressTestReportGenerator {
   ): string {
     const title = options.title || 'AI Service Stress Test Report';
     const includeCharts = options.includeCharts !== false;
-    
+
     // Format timestamp
     const timestamp = new Date().toISOString();
     const formattedDate = new Date().toLocaleString();
-    
+
     // Calculate overall statistics
-    const totalRequests = Object.values(metrics).reduce((sum, m) => sum + m.totalRequests, 0);
-    const successfulRequests = Object.values(metrics).reduce((sum, m) => sum + m.successfulRequests, 0);
-    const failedRequests = Object.values(metrics).reduce((sum, m) => sum + m.failedRequests, 0);
-    const successRate = totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
-    
+    const totalRequests = Object.values(metrics).reduce(
+      (sum, m) => sum + m.totalRequests,
+      0
+    );
+    const successfulRequests = Object.values(metrics).reduce(
+      (sum, m) => sum + m.successfulRequests,
+      0
+    );
+    const failedRequests = Object.values(metrics).reduce(
+      (sum, m) => sum + m.failedRequests,
+      0
+    );
+    const successRate =
+      totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
+
     // Calculate average response times for each operation
-    const avgResponseTimes = Object.keys(metrics).map(op => ({
-      operation: op,
-      avgTime: metrics[op].avgResponseTime
-    })).sort((a, b) => a.avgTime - b.avgTime);
-    
+    const avgResponseTimes = Object.keys(metrics)
+      .map(op => ({
+        operation: op,
+        avgTime: metrics[op].avgResponseTime,
+      }))
+      .sort((a, b) => a.avgTime - b.avgTime);
+
     // Generate the HTML content
     let html = `
     <!DOCTYPE html>
@@ -168,23 +180,33 @@ export class StressTestReportGenerator {
             <div class="summary-item">
                 <h3>Performance Ranking</h3>
                 <ol>
-                    ${avgResponseTimes.map(item => 
-                        `<li><strong>${item.operation}</strong>: ${item.avgTime.toFixed(2)}ms</li>`
-                    ).join('')}
+                    ${avgResponseTimes
+                      .map(
+                        item =>
+                          `<li><strong>${item.operation}</strong>: ${item.avgTime.toFixed(2)}ms</li>`
+                      )
+                      .join('')}
                 </ol>
             </div>
         </div>
         
-        ${Object.keys(systemInfo).length > 0 ? `
+        ${
+          Object.keys(systemInfo).length > 0
+            ? `
         <h2>System Information</h2>
         <div class="system-info">
             <ul>
-                ${Object.entries(systemInfo).map(([key, value]) => 
-                    `<li><strong>${key}:</strong> ${value}</li>`
-                ).join('')}
+                ${Object.entries(systemInfo)
+                  .map(
+                    ([key, value]) =>
+                      `<li><strong>${key}:</strong> ${value}</li>`
+                  )
+                  .join('')}
             </ul>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         
         <h2>Operation Metrics</h2>
         <table class="metrics-table">
@@ -203,7 +225,9 @@ export class StressTestReportGenerator {
                 </tr>
             </thead>
             <tbody>
-                ${Object.entries(metrics).map(([operation, data]) => `
+                ${Object.entries(metrics)
+                  .map(
+                    ([operation, data]) => `
                 <tr>
                     <td>${operation}</td>
                     <td>${data.totalRequests}</td>
@@ -216,12 +240,16 @@ export class StressTestReportGenerator {
                     <td>${data.timeouts}</td>
                     <td>${data.rateLimitHits}</td>
                 </tr>
-                `).join('')}
+                `
+                  )
+                  .join('')}
             </tbody>
         </table>
         
         <h2>Response Time Percentiles</h2>
-        ${Object.entries(metrics).map(([operation, data]) => `
+        ${Object.entries(metrics)
+          .map(
+            ([operation, data]) => `
         <h3>${operation}</h3>
         <div class="percentile-bar">
             <div class="percentile-segment" style="width: 50%; background-color: #3498db;" title="P50: ${data.p50ResponseTime}ms">
@@ -237,9 +265,11 @@ export class StressTestReportGenerator {
                 P99
             </div>
         </div>
-        `).join('')}
+        `
+          )
+          .join('')}
     `;
-    
+
     // Include charts if enabled
     if (includeCharts) {
       html += `
@@ -249,11 +279,15 @@ export class StressTestReportGenerator {
             <div id="successRateChart" class="chart"></div>
         </div>
         
-        ${resourceUsage.length > 0 ? `
+        ${
+          resourceUsage.length > 0
+            ? `
         <h2>Resource Usage</h2>
         <div id="memoryUsageChart" class="resource-chart"></div>
         <div id="cpuUsageChart" class="resource-chart"></div>
-        ` : ''}
+        `
+            : ''
+        }
         
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
@@ -310,9 +344,17 @@ export class StressTestReportGenerator {
                     datasets: [{
                         data: [
                             ${successfulRequests},
-                            ${failedRequests - 
-                                Object.values(metrics).reduce((sum, m) => sum + m.timeouts, 0) - 
-                                Object.values(metrics).reduce((sum, m) => sum + m.rateLimitHits, 0)},
+                            ${
+                              failedRequests -
+                              Object.values(metrics).reduce(
+                                (sum, m) => sum + m.timeouts,
+                                0
+                              ) -
+                              Object.values(metrics).reduce(
+                                (sum, m) => sum + m.rateLimitHits,
+                                0
+                              )
+                            },
                             ${Object.values(metrics).reduce((sum, m) => sum + m.timeouts, 0)},
                             ${Object.values(metrics).reduce((sum, m) => sum + m.rateLimitHits, 0)}
                         ],
@@ -345,14 +387,18 @@ export class StressTestReportGenerator {
                 }
             });
             
-            ${resourceUsage.length > 0 ? `
+            ${
+              resourceUsage.length > 0
+                ? `
             // Memory Usage Chart
-            const memoryData = ${JSON.stringify(resourceUsage.map(point => ({
+            const memoryData = ${JSON.stringify(
+              resourceUsage.map(point => ({
                 x: point.timestamp,
                 rss: point.memory.rss / 1024 / 1024,
                 heapTotal: point.memory.heapTotal / 1024 / 1024,
-                heapUsed: point.memory.heapUsed / 1024 / 1024
-            })))};
+                heapUsed: point.memory.heapUsed / 1024 / 1024,
+              }))
+            )};
             
             const memoryCtx = document.getElementById('memoryUsageChart').getContext('2d');
             new Chart(memoryCtx, {
@@ -413,25 +459,27 @@ export class StressTestReportGenerator {
                     }
                 }
             });
-            ` : ''}
+            `
+                : ''
+            }
         });
         </script>
       `;
     }
-    
+
     html += `
     </body>
     </html>
     `;
-    
+
     // Save the report if an output path is provided
     if (options.outputPath) {
       fs.writeFileSync(options.outputPath, html);
     }
-    
+
     return html;
   }
-  
+
   /**
    * Generate a text-based report for command line output
    */
@@ -444,16 +492,26 @@ export class StressTestReportGenerator {
   ): string {
     const title = options.title || 'AI Service Stress Test Report';
     const detailed = options.detailed !== false;
-    
+
     // Format timestamp
     const formattedDate = new Date().toLocaleString();
-    
+
     // Calculate overall statistics
-    const totalRequests = Object.values(metrics).reduce((sum, m) => sum + m.totalRequests, 0);
-    const successfulRequests = Object.values(metrics).reduce((sum, m) => sum + m.successfulRequests, 0);
-    const failedRequests = Object.values(metrics).reduce((sum, m) => sum + m.failedRequests, 0);
-    const successRate = totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
-    
+    const totalRequests = Object.values(metrics).reduce(
+      (sum, m) => sum + m.totalRequests,
+      0
+    );
+    const successfulRequests = Object.values(metrics).reduce(
+      (sum, m) => sum + m.successfulRequests,
+      0
+    );
+    const failedRequests = Object.values(metrics).reduce(
+      (sum, m) => sum + m.failedRequests,
+      0
+    );
+    const successRate =
+      totalRequests > 0 ? (successfulRequests / totalRequests) * 100 : 0;
+
     // Build the text report
     let report = `
 ${title}
@@ -470,23 +528,26 @@ Operations: ${Object.keys(metrics).join(', ')}
 
 OPERATIONS PERFORMANCE
 ---------------------`;
-    
+
     // Sort operations by average response time
     const sortedOps = Object.keys(metrics).sort(
       (a, b) => metrics[a].avgResponseTime - metrics[b].avgResponseTime
     );
-    
+
     for (const op of sortedOps) {
       const m = metrics[op];
-      const opSuccessRate = m.totalRequests > 0 ? (m.successfulRequests / m.totalRequests) * 100 : 0;
-      
+      const opSuccessRate =
+        m.totalRequests > 0
+          ? (m.successfulRequests / m.totalRequests) * 100
+          : 0;
+
       report += `\n${op}:
   Requests: ${m.totalRequests}
   Success Rate: ${opSuccessRate.toFixed(2)}%
   Avg Response: ${m.avgResponseTime.toFixed(2)}ms
   Min/Max: ${m.minResponseTime === Number.MAX_SAFE_INTEGER ? 'N/A' : m.minResponseTime}ms / ${m.maxResponseTime}ms
   P95 Response: ${m.p95ResponseTime}ms`;
-      
+
       if (detailed) {
         report += `
   Timeouts: ${m.timeouts}
@@ -497,19 +558,19 @@ OPERATIONS PERFORMANCE
   Requests/sec: ${m.requestsPerSecond.toFixed(2)}`;
       }
     }
-    
+
     return report;
   }
-  
+
   /**
    * Generate a CSV export of the metrics
    */
   static generateCsvReport(metrics: Record<string, StressTestMetrics>): string {
     // Define CSV header
     const headers = [
-      'Operation', 
-      'TotalRequests', 
-      'SuccessfulRequests', 
+      'Operation',
+      'TotalRequests',
+      'SuccessfulRequests',
       'FailedRequests',
       'SuccessRate',
       'AvgResponseTime',
@@ -525,17 +586,18 @@ OPERATIONS PERFORMANCE
       'OtherErrors',
       'TotalDuration',
       'RequestsPerSecond',
-      'ConcurrentRequestsMax'
+      'ConcurrentRequestsMax',
     ];
-    
+
     // Convert the metrics to CSV rows
     let csv = headers.join(',') + '\n';
-    
+
     for (const [operation, data] of Object.entries(metrics)) {
-      const successRate = data.totalRequests > 0 
-        ? (data.successfulRequests / data.totalRequests) * 100 
-        : 0;
-      
+      const successRate =
+        data.totalRequests > 0
+          ? (data.successfulRequests / data.totalRequests) * 100
+          : 0;
+
       const row = [
         operation,
         data.totalRequests,
@@ -543,7 +605,9 @@ OPERATIONS PERFORMANCE
         data.failedRequests,
         successRate.toFixed(2),
         data.avgResponseTime.toFixed(2),
-        data.minResponseTime === Number.MAX_SAFE_INTEGER ? 'N/A' : data.minResponseTime,
+        data.minResponseTime === Number.MAX_SAFE_INTEGER
+          ? 'N/A'
+          : data.minResponseTime,
         data.maxResponseTime,
         data.p50ResponseTime,
         data.p90ResponseTime,
@@ -555,15 +619,15 @@ OPERATIONS PERFORMANCE
         data.otherErrors,
         data.totalDuration,
         data.requestsPerSecond.toFixed(2),
-        data.concurrentRequestsMax
+        data.concurrentRequestsMax,
       ];
-      
+
       csv += row.join(',') + '\n';
     }
-    
+
     return csv;
   }
-  
+
   /**
    * Generate a comprehensive report package with HTML, text, and CSV formats
    */
@@ -578,41 +642,55 @@ OPERATIONS PERFORMANCE
     } = {}
   ): void {
     const title = options.title || 'AI Service Stress Test Report';
-    const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/:/g, '-')
+      .replace(/\..+/, '');
     const baseFilename = `stress_test_report_${timestamp}`;
-    
+
     // Create output directory if it doesn't exist
-    const outputDir = options.outputDir || path.join(process.cwd(), 'stress-test-reports');
+    const outputDir =
+      options.outputDir || path.join(process.cwd(), 'stress-test-reports');
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-    
+
     // Generate HTML report
     const htmlPath = path.join(outputDir, `${baseFilename}.html`);
     this.generateHtmlReport(metrics, resourceUsage, systemInfo, {
       title,
       outputPath: htmlPath,
-      includeCharts: options.includeCharts
+      includeCharts: options.includeCharts,
     });
-    
+
     // Generate text report
     const textPath = path.join(outputDir, `${baseFilename}.txt`);
-    fs.writeFileSync(textPath, this.generateTextReport(metrics, { title, detailed: true }));
-    
+    fs.writeFileSync(
+      textPath,
+      this.generateTextReport(metrics, { title, detailed: true })
+    );
+
     // Generate CSV report
     const csvPath = path.join(outputDir, `${baseFilename}.csv`);
     fs.writeFileSync(csvPath, this.generateCsvReport(metrics));
-    
+
     // Generate JSON raw data
     const jsonPath = path.join(outputDir, `${baseFilename}.json`);
-    fs.writeFileSync(jsonPath, JSON.stringify({
-      title,
-      timestamp: new Date().toISOString(),
-      metrics,
-      resourceUsage,
-      systemInfo
-    }, null, 2));
-    
+    fs.writeFileSync(
+      jsonPath,
+      JSON.stringify(
+        {
+          title,
+          timestamp: new Date().toISOString(),
+          metrics,
+          resourceUsage,
+          systemInfo,
+        },
+        null,
+        2
+      )
+    );
+
     logger.info(`Reports generated in: ${outputDir}`);
     logger.info(`HTML Report: ${htmlPath}`);
     logger.info(`Text Report: ${textPath}`);

@@ -19,7 +19,7 @@ export enum SafePathOperation {
   WRITE = 'write',
   APPEND = 'append',
   DELETE = 'delete',
-  CREATE_DIR = 'create_directory'
+  CREATE_DIR = 'create_directory',
 }
 
 /**
@@ -30,12 +30,12 @@ export interface PathValidationConfig {
    * Base directories that are allowed for file operations
    */
   allowedDirectories: string[];
-  
+
   /**
    * Whether to allow absolute paths outside of allowed directories if explicitly approved
    */
   allowExplicitAbsolutePaths: boolean;
-  
+
   /**
    * File extensions that are allowed for specific operations
    */
@@ -44,12 +44,12 @@ export interface PathValidationConfig {
     [SafePathOperation.WRITE]?: string[];
     [SafePathOperation.APPEND]?: string[];
   };
-  
+
   /**
    * Maximum allowed file size for reading (in bytes)
    */
   maxReadSize: number;
-  
+
   /**
    * Maximum allowed file size for writing (in bytes)
    */
@@ -65,23 +65,29 @@ const DEFAULT_PATH_VALIDATION_CONFIG: PathValidationConfig = {
     os.tmpdir(),
     path.resolve(os.homedir(), '.sui'),
     path.resolve(os.homedir(), '.walrus'),
-    path.resolve(os.homedir(), '.waltodo')
+    path.resolve(os.homedir(), '.waltodo'),
   ],
   allowExplicitAbsolutePaths: false,
   allowedExtensions: {
     [SafePathOperation.READ]: [
-      '.json', '.ts', '.js', '.toml', '.md', '.txt', '.log',
-      '.move', '.jpg', '.jpeg', '.png', '.gif'
+      '.json',
+      '.ts',
+      '.js',
+      '.toml',
+      '.md',
+      '.txt',
+      '.log',
+      '.move',
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.gif',
     ],
-    [SafePathOperation.WRITE]: [
-      '.json', '.toml', '.txt', '.log', '.md'
-    ],
-    [SafePathOperation.APPEND]: [
-      '.log', '.txt', '.md'
-    ]
+    [SafePathOperation.WRITE]: ['.json', '.toml', '.txt', '.log', '.md'],
+    [SafePathOperation.APPEND]: ['.log', '.txt', '.md'],
   },
   maxReadSize: 10 * 1024 * 1024, // 10 MB
-  maxWriteSize: 5 * 1024 * 1024   // 5 MB
+  maxWriteSize: 5 * 1024 * 1024, // 5 MB
 };
 
 /**
@@ -93,15 +99,17 @@ let currentConfig: PathValidationConfig = { ...DEFAULT_PATH_VALIDATION_CONFIG };
  * Configure path validation
  * @param config Configuration for path validation
  */
-export function configurePathValidation(config: Partial<PathValidationConfig>): void {
+export function configurePathValidation(
+  config: Partial<PathValidationConfig>
+): void {
   currentConfig = {
     ...currentConfig,
     ...config,
     // Merge nested objects
     allowedExtensions: {
       ...currentConfig.allowedExtensions,
-      ...config.allowedExtensions
-    }
+      ...config.allowedExtensions,
+    },
   };
 }
 
@@ -134,45 +142,50 @@ export function validatePath(
   if (!inputPath) {
     throw new PathValidationError('File path cannot be empty', { operation });
   }
-  
+
   // Check for shell metacharacters
   if (/[;&|<>$`\\!]/.test(inputPath)) {
-    throw new PathValidationError(
-      'File path contains invalid characters',
-      { path: inputPath, operation }
-    );
+    throw new PathValidationError('File path contains invalid characters', {
+      path: inputPath,
+      operation,
+    });
   }
-  
+
   // Normalize and resolve the path
   const resolvedPath = path.resolve(inputPath);
-  
+
   // Prevent path traversal by ensuring the path is within allowed directories
-  const isWithinAllowedDirectories = currentConfig.allowedDirectories.some(dir => {
-    const normalizedDir = path.normalize(dir);
-    return resolvedPath.startsWith(normalizedDir);
-  });
-  
+  const isWithinAllowedDirectories = currentConfig.allowedDirectories.some(
+    dir => {
+      const normalizedDir = path.normalize(dir);
+      return resolvedPath.startsWith(normalizedDir);
+    }
+  );
+
   // Check if the path is allowed
-  if (!isWithinAllowedDirectories && !(options.allowAbsolutePath && currentConfig.allowExplicitAbsolutePaths)) {
+  if (
+    !isWithinAllowedDirectories &&
+    !(options.allowAbsolutePath && currentConfig.allowExplicitAbsolutePaths)
+  ) {
     throw new PathValidationError(
       `File path must be within allowed directories: ${currentConfig.allowedDirectories.join(', ')}`,
       { path: inputPath, operation }
     );
   }
-  
+
   // Check if the path exists if required
   if (options.mustExist && !fs.existsSync(resolvedPath)) {
-    throw new PathValidationError(
-      `File does not exist: ${resolvedPath}`,
-      { path: inputPath, operation }
-    );
+    throw new PathValidationError(`File does not exist: ${resolvedPath}`, {
+      path: inputPath,
+      operation,
+    });
   }
-  
+
   // For operations that need to check the file extension
   if (options.checkExtension && operation in currentConfig.allowedExtensions) {
     const ext = path.extname(resolvedPath).toLowerCase();
     const allowedExts = currentConfig.allowedExtensions[operation];
-    
+
     if (allowedExts && !allowedExts.includes(ext)) {
       throw new PathValidationError(
         `File extension "${ext}" not allowed for ${operation} operation. Allowed extensions: ${allowedExts.join(', ')}`,
@@ -180,11 +193,15 @@ export function validatePath(
       );
     }
   }
-  
+
   // Check file size for read operations if the file exists
-  if (options.checkSize && operation === SafePathOperation.READ && fs.existsSync(resolvedPath)) {
+  if (
+    options.checkSize &&
+    operation === SafePathOperation.READ &&
+    fs.existsSync(resolvedPath)
+  ) {
     const stats = fs.statSync(resolvedPath);
-    
+
     if (stats.isFile() && stats.size > currentConfig.maxReadSize) {
       throw new PathValidationError(
         `File size exceeds maximum allowed size for reading (${currentConfig.maxReadSize} bytes)`,
@@ -192,7 +209,7 @@ export function validatePath(
       );
     }
   }
-  
+
   return resolvedPath;
 }
 
@@ -215,12 +232,12 @@ export function safeReadFile(
     mustExist: true,
     allowAbsolutePath: options.allowAbsolutePath,
     checkExtension: true,
-    checkSize: true
+    checkSize: true,
   });
-  
+
   return fs.readFileSync(validatedPath, {
     encoding: options.encoding,
-    flag: options.flag
+    flag: options.flag,
   });
 }
 
@@ -243,9 +260,9 @@ export function safeWriteFile(
 ): void {
   const validatedPath = validatePath(filePath, SafePathOperation.WRITE, {
     allowAbsolutePath: options.allowAbsolutePath,
-    checkExtension: true
+    checkExtension: true,
   });
-  
+
   // Check the size of the data to write
   if (typeof data === 'string') {
     const byteSize = Buffer.byteLength(data, options.encoding);
@@ -261,17 +278,17 @@ export function safeWriteFile(
       { path: filePath, operation: SafePathOperation.WRITE }
     );
   }
-  
+
   // Create the directory if it doesn't exist
   const dirPath = path.dirname(validatedPath);
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
-  
+
   fs.writeFileSync(validatedPath, data, {
     encoding: options.encoding,
     flag: options.flag,
-    mode: options.mode
+    mode: options.mode,
   });
 }
 
@@ -291,15 +308,15 @@ export function safeFileExists(
   try {
     const validatedPath = validatePath(filePath, SafePathOperation.READ, {
       allowAbsolutePath: options.allowAbsolutePath,
-      checkExtension: false
+      checkExtension: false,
     });
-    
+
     return fs.existsSync(validatedPath);
   } catch (error) {
     if (error instanceof PathValidationError) {
       throw error;
     }
-    
+
     return false;
   }
 }
@@ -319,12 +336,12 @@ export function safeCreateDirectory(
   } = {}
 ): void {
   const validatedPath = validatePath(dirPath, SafePathOperation.CREATE_DIR, {
-    allowAbsolutePath: options.allowAbsolutePath
+    allowAbsolutePath: options.allowAbsolutePath,
   });
-  
+
   fs.mkdirSync(validatedPath, {
     recursive: options.recursive,
-    mode: options.mode
+    mode: options.mode,
   });
 }
 
@@ -343,8 +360,8 @@ export function safeDeleteFile(
   const validatedPath = validatePath(filePath, SafePathOperation.DELETE, {
     mustExist: true,
     allowAbsolutePath: options.allowAbsolutePath,
-    checkExtension: true
+    checkExtension: true,
   });
-  
+
   fs.unlinkSync(validatedPath);
 }

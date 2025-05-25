@@ -28,7 +28,11 @@ export type TransactionType = SuiTransaction | TransactionBlockAdapter;
  * Utility functions for transaction handling
  */
 export function isTransactionBlock(obj: unknown): obj is TransactionBlock {
-  return obj && typeof obj === 'object' && ('blockData' in obj || 'transactions' in obj);
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    ('blockData' in obj || 'transactions' in obj)
+  );
 }
 
 export function isSuiTransaction(obj: unknown): obj is SuiTransaction {
@@ -38,11 +42,13 @@ export function isSuiTransaction(obj: unknown): obj is SuiTransaction {
 /**
  * Convert various transaction formats to a standard Transaction
  */
-export function asTransaction(input: SuiTransaction | TransactionBlock | TransactionBlockAdapter): SuiTransaction {
+export function asTransaction(
+  input: SuiTransaction | TransactionBlock | TransactionBlockAdapter
+): SuiTransaction {
   if (isSuiTransaction(input)) {
     return input;
   }
-  
+
   // For legacy TransactionBlock, create a new Transaction
   // This is a simplified conversion - in practice you'd need proper serialization
   throw new Error('Legacy TransactionBlock conversion not implemented');
@@ -51,30 +57,34 @@ export function asTransaction(input: SuiTransaction | TransactionBlock | Transac
 /**
  * Convert Uint8Array data to appropriate transaction format
  */
-export function asUint8ArrayOrTransactionBlock(data: Uint8Array | string | SuiTransaction): Uint8Array | SuiTransaction {
+export function asUint8ArrayOrTransactionBlock(
+  data: Uint8Array | string | SuiTransaction
+): Uint8Array | SuiTransaction {
   if (data instanceof Uint8Array) {
     return data;
   }
-  
+
   if (typeof data === 'string') {
     return new TextEncoder().encode(data);
   }
-  
+
   return data;
 }
 
 /**
  * Convert string or Uint8Array data to string representation
  */
-export function asStringUint8ArrayOrTransactionBlock(data: string | Uint8Array | SuiTransaction): string {
+export function asStringUint8ArrayOrTransactionBlock(
+  data: string | Uint8Array | SuiTransaction
+): string {
   if (typeof data === 'string') {
     return data;
   }
-  
+
   if (data instanceof Uint8Array) {
     return new TextDecoder().decode(data);
   }
-  
+
   // For Transaction objects, return a string representation
   return JSON.stringify(data);
 }

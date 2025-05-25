@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 
 export class FuzzGenerator {
-  private stringCharset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+  private stringCharset =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
 
   constructor(private seed?: string) {
     if (seed) {
@@ -11,17 +12,19 @@ export class FuzzGenerator {
   }
 
   // Generate random string with optional properties
-  string(options: {
-    minLength?: number;
-    maxLength?: number;
-    charset?: string;
-    includeSpecialChars?: boolean;
-    includeUnicode?: boolean;
-  } = {}): string {
+  string(
+    options: {
+      minLength?: number;
+      maxLength?: number;
+      charset?: string;
+      includeSpecialChars?: boolean;
+      includeUnicode?: boolean;
+    } = {}
+  ): string {
     const minLen = options.minLength || 1;
     const maxLen = options.maxLength || 100;
     const length = this.number(minLen, maxLen);
-    
+
     let charset = options.charset || this.stringCharset;
     if (options.includeSpecialChars) {
       charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
@@ -30,11 +33,17 @@ export class FuzzGenerator {
       charset += '⚡️🎉🔥💫🌟✨⭐️';
     }
 
-    return Array.from({ length: length }, () => charset[Math.floor(Math.random() * charset.length)]).join('');
+    return Array.from(
+      { length: length },
+      () => charset[Math.floor(Math.random() * charset.length)]
+    ).join('');
   }
 
   // Generate random number within range
-  number(min: number = Number.MIN_SAFE_INTEGER, max: number = Number.MAX_SAFE_INTEGER): number {
+  number(
+    min: number = Number.MIN_SAFE_INTEGER,
+    max: number = Number.MAX_SAFE_INTEGER
+  ): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
@@ -49,7 +58,10 @@ export class FuzzGenerator {
   }
 
   // Generate random array of items
-  array<T>(generator: () => T, options: { minLength?: number; maxLength?: number } = {}): T[] {
+  array<T>(
+    generator: () => T,
+    options: { minLength?: number; maxLength?: number } = {}
+  ): T[] {
     const minLen = options.minLength || 0;
     const maxLen = options.maxLength || 10;
     const length = this.number(minLen, maxLen);
@@ -57,11 +69,14 @@ export class FuzzGenerator {
   }
 
   // Generate random subset of array
-  subset<T>(array: T[], options: { minSize?: number; maxSize?: number } = {}): T[] {
+  subset<T>(
+    array: T[],
+    options: { minSize?: number; maxSize?: number } = {}
+  ): T[] {
     const minSize = options.minSize || 0;
     const maxSize = options.maxSize || array.length;
     const size = this.number(minSize, maxSize);
-    
+
     const shuffled = [...array].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, size);
   }
@@ -91,11 +106,20 @@ export class FuzzGenerator {
   }
 
   // Generate random blockchain-specific data
-  blockchainData(): { address: () => string; hash: () => string; signature: () => string; gas: () => number; nonce: () => number; } {
+  blockchainData(): {
+    address: () => string;
+    hash: () => string;
+    signature: () => string;
+    gas: () => number;
+    nonce: () => number;
+  } {
     return {
-      address: () => `0x${this.string({ minLength: 40, maxLength: 40, charset: '0123456789abcdef' })}`,
-      hash: () => `0x${this.string({ minLength: 64, maxLength: 64, charset: '0123456789abcdef' })}`,
-      signature: () => `0x${this.string({ minLength: 130, maxLength: 130, charset: '0123456789abcdef' })}`,
+      address: () =>
+        `0x${this.string({ minLength: 40, maxLength: 40, charset: '0123456789abcdef' })}`,
+      hash: () =>
+        `0x${this.string({ minLength: 64, maxLength: 64, charset: '0123456789abcdef' })}`,
+      signature: () =>
+        `0x${this.string({ minLength: 130, maxLength: 130, charset: '0123456789abcdef' })}`,
       gas: () => this.number(21000, 1000000),
       nonce: () => this.number(0, 1000000),
     };

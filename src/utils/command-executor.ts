@@ -1,26 +1,37 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('command-executor');
  * Command Executor Utility
- * 
+ *
  * A secure wrapper around Node.js child_process methods that prevents
  * command injection attacks and ensures safe execution of shell commands.
  */
 
-import { execSync, execFileSync, spawnSync, ExecSyncOptions, SpawnSyncOptions } from 'child_process';
+import { Logger } from './Logger';
+
+const logger = new Logger('command-executor');
+
+import {
+  execSync,
+  execFileSync,
+  spawnSync,
+  ExecSyncOptions,
+  SpawnSyncOptions,
+} from 'child_process';
 import { BaseError } from '../types/errors/consolidated';
 
 /**
  * Error thrown by command execution operations
  */
 export class CommandExecutionError extends BaseError {
-  constructor(message: string, cause?: Error, options?: { command?: string; args?: string[] }) {
+  constructor(
+    message: string,
+    cause?: Error,
+    options?: { command?: string; args?: string[] }
+  ) {
     super({
       message: `Command execution error: ${message}`,
       code: 'COMMAND_EXECUTION_ERROR',
       cause,
-      context: options
+      context: options,
     });
     this.name = 'CommandExecutionError';
   }
@@ -34,12 +45,12 @@ export interface CommandAllowlistConfig {
    * Allowlisted command executables
    */
   allowedCommands: string[];
-  
+
   /**
    * Whether to throw an error for disallowed commands or just log a warning
    */
   strictMode: boolean;
-  
+
   /**
    * Path to the log file for command execution (optional)
    */
@@ -51,18 +62,20 @@ export interface CommandAllowlistConfig {
  */
 const DEFAULT_ALLOWLIST_CONFIG: CommandAllowlistConfig = {
   allowedCommands: [
-    'sui',           // Sui CLI
-    'node',          // Node.js
-    'npm',           // Node Package Manager
-    'pnpm',          // Performant Node Package Manager
-    'yarn',          // Yarn Package Manager
-    'ls', 'dir',     // List files
-    'cat',           // View file contents
-    'git',           // Git version control
-    'echo',          // Echo text
-    'curl', 'wget'   // Network requests
+    'sui', // Sui CLI
+    'node', // Node.js
+    'npm', // Node Package Manager
+    'pnpm', // Performant Node Package Manager
+    'yarn', // Yarn Package Manager
+    'ls',
+    'dir', // List files
+    'cat', // View file contents
+    'git', // Git version control
+    'echo', // Echo text
+    'curl',
+    'wget', // Network requests
   ],
-  strictMode: false  // Default to warning mode
+  strictMode: false, // Default to warning mode
 };
 
 /**
@@ -74,10 +87,12 @@ let currentConfig: CommandAllowlistConfig = { ...DEFAULT_ALLOWLIST_CONFIG };
  * Configure the command executor
  * @param config Configuration for command allowlisting
  */
-export function configureCommandExecutor(config: Partial<CommandAllowlistConfig>): void {
+export function configureCommandExecutor(
+  config: Partial<CommandAllowlistConfig>
+): void {
   currentConfig = {
     ...currentConfig,
-    ...config
+    ...config,
   };
 }
 
@@ -106,11 +121,13 @@ function isCommandAllowed(command: string): boolean {
 function validateCommand(command: string): void {
   if (!isCommandAllowed(command)) {
     const message = `Command not allowlisted: ${command}`;
-    
+
     if (currentConfig.strictMode) {
       throw new CommandExecutionError(message, undefined, { command });
     } else {
-      logger.warn(`[WARNING] ${message} - This could be a security risk if command injection is possible`);
+      logger.warn(
+        `[WARNING] ${message} - This could be a security risk if command injection is possible`
+      );
     }
   }
 }
@@ -151,7 +168,10 @@ export function isValidNumberString(value: string): boolean {
  * @returns The command output
  * @throws CommandExecutionError if the command fails or is not allowed
  */
-export function safeExecSync(command: string, options?: ExecSyncOptions): Buffer | string {
+export function safeExecSync(
+  command: string,
+  options?: ExecSyncOptions
+): Buffer | string {
   try {
     validateCommand(command);
     return execSync(command, options);
@@ -160,7 +180,7 @@ export function safeExecSync(command: string, options?: ExecSyncOptions): Buffer
     if (error instanceof CommandExecutionError) {
       throw error;
     }
-    
+
     throw new CommandExecutionError(
       `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`,
       error instanceof Error ? error : undefined,
@@ -177,7 +197,11 @@ export function safeExecSync(command: string, options?: ExecSyncOptions): Buffer
  * @returns The command output
  * @throws CommandExecutionError if the command fails or is not allowed
  */
-export function safeExecFileSync(command: string, args: string[], options?: ExecSyncOptions): Buffer | string {
+export function safeExecFileSync(
+  command: string,
+  args: string[],
+  options?: ExecSyncOptions
+): Buffer | string {
   try {
     validateCommand(command);
     return execFileSync(command, args, options);
@@ -186,7 +210,7 @@ export function safeExecFileSync(command: string, args: string[], options?: Exec
     if (error instanceof CommandExecutionError) {
       throw error;
     }
-    
+
     throw new CommandExecutionError(
       `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`,
       error instanceof Error ? error : undefined,
@@ -203,7 +227,11 @@ export function safeExecFileSync(command: string, args: string[], options?: Exec
  * @returns The spawn result
  * @throws CommandExecutionError if the command is not allowed
  */
-export function safeSpawnSync(command: string, args: string[], options?: SpawnSyncOptions): ReturnType<typeof spawnSync> {
+export function safeSpawnSync(
+  command: string,
+  args: string[],
+  options?: SpawnSyncOptions
+): ReturnType<typeof spawnSync> {
   try {
     validateCommand(command);
     return spawnSync(command, args, options);
@@ -212,7 +240,7 @@ export function safeSpawnSync(command: string, args: string[], options?: SpawnSy
     if (error instanceof CommandExecutionError) {
       throw error;
     }
-    
+
     throw new CommandExecutionError(
       `Failed to spawn command: ${error instanceof Error ? error.message : String(error)}`,
       error instanceof Error ? error : undefined,
@@ -260,9 +288,11 @@ export function switchSuiAddress(address: string): string {
       { args: [address] }
     );
   }
-  
+
   // Execute the command safely with the validated address
-  const result = executeSuiCommand('client', ['switch', '--address', address], { encoding: 'utf8' });
+  const result = executeSuiCommand('client', ['switch', '--address', address], {
+    encoding: 'utf8',
+  });
   return result.toString();
 }
 
@@ -272,7 +302,9 @@ export function switchSuiAddress(address: string): string {
  * @throws CommandExecutionError if the command fails
  */
 export function getActiveSuiAddress(): string {
-  const result = executeSuiCommand('client', ['active-address'], { encoding: 'utf8' });
+  const result = executeSuiCommand('client', ['active-address'], {
+    encoding: 'utf8',
+  });
   return result.toString().trim();
 }
 
@@ -298,24 +330,26 @@ export function publishSuiPackage(
       { args: [gasBudgetStr] }
     );
   }
-  
+
   // Build the args array
   const args = ['client', 'publish'];
-  
+
   if (options.skipDependencyVerification) {
     args.push('--skip-dependency-verification');
   }
-  
+
   args.push('--gas-budget', gasBudgetStr);
-  
+
   if (options.json) {
     args.push('--json');
   }
-  
+
   args.push(packagePath);
-  
+
   // Execute the command safely with the validated arguments
-  const result = executeSuiCommand('client', args.slice(1), { encoding: 'utf8' });
+  const result = executeSuiCommand('client', args.slice(1), {
+    encoding: 'utf8',
+  });
   return result.toString();
 }
 
@@ -332,7 +366,13 @@ export function customSuiCommand(
 ): string | Buffer {
   // All args should be validated before passing
   for (const arg of args) {
-    if (arg.includes(';') || arg.includes('&') || arg.includes('|') || arg.includes('<') || arg.includes('>')) {
+    if (
+      arg.includes(';') ||
+      arg.includes('&') ||
+      arg.includes('|') ||
+      arg.includes('<') ||
+      arg.includes('>')
+    ) {
       throw new CommandExecutionError(
         `Invalid argument containing shell metacharacters: ${arg}`,
         undefined,
@@ -340,6 +380,6 @@ export function customSuiCommand(
       );
     }
   }
-  
+
   return safeExecFileSync('sui', args, options);
 }

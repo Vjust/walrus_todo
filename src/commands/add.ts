@@ -10,7 +10,11 @@ import BaseCommand, { ICONS } from '../base-command';
 import { InputValidator, CommonValidationRules } from '../utils/InputValidator';
 import { CommandSanitizer } from '../utils/CommandSanitizer';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
-import { addCommandValidation, validateAIApiKey, validateBlockchainConfig } from '../utils/CommandValidationMiddleware';
+import {
+  addCommandValidation,
+  validateAIApiKey,
+  validateBlockchainConfig,
+} from '../utils/CommandValidationMiddleware';
 import { NetworkError, ValidationError } from '../types/errors/consolidated';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -35,7 +39,7 @@ export default class AddCommand extends BaseCommand {
     `<%= config.bin %> add -t "Due soon" -d 2023-05-15 -t "Later" -d 2023-06-15  # Add with different due dates`,
     `<%= config.bin %> add -t "Work" -g "job,urgent" -t "Home" -g "personal"     # Add with different tags`,
     `<%= config.bin %> add "Plan project" --ai                            # Use AI to suggest tags/priority`,
-    `<%= config.bin %> add -t "Task 1" -t "Task 2" -p high                # Multiple todos with same priority`
+    `<%= config.bin %> add -t "Task 1" -t "Task 2" -p high                # Multiple todos with same priority`,
   ];
 
   static flags = {
@@ -44,59 +48,63 @@ export default class AddCommand extends BaseCommand {
       char: 't',
       description: 'Task description (can be used multiple times)',
       required: false,
-      multiple: true
+      multiple: true,
     }),
     priority: Flags.string({
       char: 'p',
-      description: 'Task priority (high, medium, low) - can be specified multiple times for multiple todos',
+      description:
+        'Task priority (high, medium, low) - can be specified multiple times for multiple todos',
       options: ['high', 'medium', 'low'],
-      multiple: true
+      multiple: true,
     }),
     due: Flags.string({
       char: 'd',
-      description: 'Due date (YYYY-MM-DD) - can be specified multiple times for multiple todos',
-      multiple: true
+      description:
+        'Due date (YYYY-MM-DD) - can be specified multiple times for multiple todos',
+      multiple: true,
     }),
     tags: Flags.string({
       char: 'g',
-      description: 'Comma-separated tags (e.g., "work,urgent") - can be specified multiple times for multiple todos',
-      multiple: true
+      description:
+        'Comma-separated tags (e.g., "work,urgent") - can be specified multiple times for multiple todos',
+      multiple: true,
     }),
     private: Flags.boolean({
       description: 'Mark todo as private',
-      default: false
+      default: false,
     }),
     list: Flags.string({
       char: 'l',
       description: 'Name of the todo list',
-      default: 'default'
+      default: 'default',
     }),
     storage: Flags.string({
       char: 's',
       description: 'Storage location (local, blockchain, both)',
       options: ['local', 'blockchain', 'both'],
       default: 'local',
-      helpGroup: 'Storage Options'
+      helpGroup: 'Storage Options',
     }),
     // AI-related flags
     ai: Flags.boolean({
       description: 'Use AI to suggest tags and priority',
       default: false,
-      helpGroup: 'AI Options'
+      helpGroup: 'AI Options',
     }),
     apiKey: Flags.string({
       description: 'XAI API key (defaults to XAI_API_KEY environment variable)',
       required: false,
-      helpGroup: 'AI Options'
-    })
+      helpGroup: 'AI Options',
+    }),
   };
 
   static args = {
     listOrTitle: Args.string({
       name: 'listOrTitle',
-      description: 'List name or todo title (if list flag is provided, this is treated as the title)',
-      required: false
-    })
+      description:
+        'List name or todo title (if list flag is provided, this is treated as the title)',
+      required: false,
+    }),
   };
 
   // Register the validation middleware
@@ -115,17 +123,17 @@ export default class AddCommand extends BaseCommand {
 
   async run(): Promise<void> {
     try {
-      this.debugLog("Running add command...");
+      this.debugLog('Running add command...');
       this.startUnifiedSpinner('Processing add command...');
 
       // Parse and validate input
       const { args, flags } = await this.parse(AddCommand);
-      
+
       // Enhanced input validation using unified validators
       this.performPreExecutionValidation(args, flags);
-      
-      this.debugLog("Parsed and validated arguments:", JSON.stringify(args));
-      this.debugLog("Parsed and validated flags:", JSON.stringify(flags));
+
+      this.debugLog('Parsed and validated arguments:', JSON.stringify(args));
+      this.debugLog('Parsed and validated flags:', JSON.stringify(flags));
 
       // If JSON output is requested, handle it separately
       if (this.isJson) {
@@ -159,13 +167,22 @@ export default class AddCommand extends BaseCommand {
        */
 
       // Pattern 1: argument + task flags = argument is list name
-      if (args.listOrTitle && flags.task && (flags.task as string[]).length > 0) {
+      if (
+        args.listOrTitle &&
+        flags.task &&
+        (flags.task as string[]).length > 0
+      ) {
         // First argument is treated as the list name when tasks are provided with -t
         listName = CommandSanitizer.sanitizeString(args.listOrTitle);
-        todoTitles = (flags.task as string[]).map(t => CommandSanitizer.sanitizeString(t));
+        todoTitles = (flags.task as string[]).map(t =>
+          CommandSanitizer.sanitizeString(t)
+        );
       }
       // Pattern 2: argument but no task flags
-      else if (args.listOrTitle && (!flags.task || (flags.task as string[]).length === 0)) {
+      else if (
+        args.listOrTitle &&
+        (!flags.task || (flags.task as string[]).length === 0)
+      ) {
         // Pattern 2a: With explicit list flag - argument is title
         if (flags.list) {
           listName = CommandSanitizer.sanitizeString(flags.list as string);
@@ -180,8 +197,12 @@ export default class AddCommand extends BaseCommand {
       // Pattern 3: Only task flags, no argument
       else if (flags.task && (flags.task as string[]).length > 0) {
         // Use the list flag if provided, otherwise default
-        listName = CommandSanitizer.sanitizeString((flags.list as string) || 'default');
-        todoTitles = (flags.task as string[]).map(t => CommandSanitizer.sanitizeString(t));
+        listName = CommandSanitizer.sanitizeString(
+          (flags.list as string) || 'default'
+        );
+        todoTitles = (flags.task as string[]).map(t =>
+          CommandSanitizer.sanitizeString(t)
+        );
       }
       // Pattern 4: No title provided in any form
       else {
@@ -189,9 +210,9 @@ export default class AddCommand extends BaseCommand {
           'Missing title',
           'Todo title is required',
           'Provide a title as an argument or with the -t flag:\n' +
-          `${this.config.bin} add "Buy groceries"\n` +
-          `${this.config.bin} add -t "Buy groceries"\n` +
-          `${this.config.bin} add "list-name" -t "Buy groceries"`
+            `${this.config.bin} add "Buy groceries"\n` +
+            `${this.config.bin} add -t "Buy groceries"\n` +
+            `${this.config.bin} add "list-name" -t "Buy groceries"`
         );
       }
 
@@ -199,10 +220,10 @@ export default class AddCommand extends BaseCommand {
       for (const title of todoTitles) {
         InputValidator.validate(title, [
           {
-            test: (value) => value.length <= 100,
+            test: value => value.length <= 100,
             message: 'Todo title must be 100 characters or less',
-            code: 'TITLE_TOO_LONG'
-          }
+            code: 'TITLE_TOO_LONG',
+          },
         ]);
       }
 
@@ -216,20 +237,28 @@ export default class AddCommand extends BaseCommand {
       if (todoTitles.length > 1) {
         // Warn if there's a mismatch between number of titles and other attributes
         if (priorities.length > 1 && priorities.length < todoTitles.length) {
-          this.warning(`You provided ${todoTitles.length} todos but only ${priorities.length} priorities. The last priority will be used for the remaining todos.`);
+          this.warning(
+            `You provided ${todoTitles.length} todos but only ${priorities.length} priorities. The last priority will be used for the remaining todos.`
+          );
         }
 
         if (dueDates.length > 1 && dueDates.length < todoTitles.length) {
-          this.warning(`You provided ${todoTitles.length} todos but only ${dueDates.length} due dates. The remaining todos will have no due date.`);
+          this.warning(
+            `You provided ${todoTitles.length} todos but only ${dueDates.length} due dates. The remaining todos will have no due date.`
+          );
         }
 
         if (tagSets.length > 1 && tagSets.length < todoTitles.length) {
-          this.warning(`You provided ${todoTitles.length} todos but only ${tagSets.length} tag sets. The remaining todos will have no tags.`);
+          this.warning(
+            `You provided ${todoTitles.length} todos but only ${tagSets.length} tag sets. The remaining todos will have no tags.`
+          );
         }
       }
 
       // Create spinner for list creation/check
-      const listSpinner = this.startSpinner(`Processing todo${todoTitles.length > 1 ? 's' : ''} for list "${listName}"...`);
+      const listSpinner = this.startSpinner(
+        `Processing todo${todoTitles.length > 1 ? 's' : ''} for list "${listName}"...`
+      );
 
       // Check if list exists first
       const listExists = await this.todoService.getList(listName);
@@ -238,10 +267,16 @@ export default class AddCommand extends BaseCommand {
       if (!listExists) {
         await this.todoService.createList(listName, 'default-owner');
         this.isNewList = true; // Set flag for new list creation
-        this.stopSpinnerSuccess(listSpinner, `Created new list: ${chalk.cyan(listName)}`);
+        this.stopSpinnerSuccess(
+          listSpinner,
+          `Created new list: ${chalk.cyan(listName)}`
+        );
       } else {
         this.isNewList = false; // Reset flag for existing list
-        this.stopSpinnerSuccess(listSpinner, `Found list: ${chalk.cyan(listName)}`);
+        this.stopSpinnerSuccess(
+          listSpinner,
+          `Found list: ${chalk.cyan(listName)}`
+        );
       }
 
       const addedTodos: Todo[] = [];
@@ -265,9 +300,18 @@ export default class AddCommand extends BaseCommand {
         // 1. Use attribute at same index as todo if available
         // 2. Fall back to last attribute value if there are fewer attributes than todos (for priorities)
         // 3. Fall back to empty/undefined for other attributes if no value at index
-        const priority = priorities[i] !== undefined ? priorities[i] : priorities[priorities.length - 1];
-        const dueDate = dueDates[i] !== undefined ? CommandSanitizer.sanitizeDate(dueDates[i]) : undefined;
-        const tags = tagSets[i] !== undefined ? CommandSanitizer.sanitizeTags(tagSets[i]) : [];
+        const priority =
+          priorities[i] !== undefined
+            ? priorities[i]
+            : priorities[priorities.length - 1];
+        const dueDate =
+          dueDates[i] !== undefined
+            ? CommandSanitizer.sanitizeDate(dueDates[i])
+            : undefined;
+        const tags =
+          tagSets[i] !== undefined
+            ? CommandSanitizer.sanitizeTags(tagSets[i])
+            : [];
 
         // Initialize todo object with sanitized inputs
         const todo: Partial<Todo> = {
@@ -276,7 +320,7 @@ export default class AddCommand extends BaseCommand {
           dueDate: dueDate,
           tags: tags,
           private: flags.private as boolean,
-          storageLocation: storageLocation
+          storageLocation: storageLocation,
         };
 
         // Use AI if requested
@@ -286,7 +330,10 @@ export default class AddCommand extends BaseCommand {
 
         // Add todo to the list
         this.debugLog('Adding todo to list:', { listName, todo });
-        const addedTodo = await this.todoService.addTodo(listName, todo as Todo);
+        const addedTodo = await this.todoService.addTodo(
+          listName,
+          todo as Todo
+        );
         this.debugLog('Todo added:', addedTodo);
         addedTodos.push(addedTodo);
 
@@ -298,7 +345,6 @@ export default class AddCommand extends BaseCommand {
         // Display success information in a nicely formatted box
         await this.displaySuccessInfo(addedTodo, listName);
       }
-
     } catch (error) {
       this.debugLog(`Error: ${error}`);
       // Add stack trace for debugging
@@ -320,12 +366,15 @@ export default class AddCommand extends BaseCommand {
           'Missing title',
           'Todo title is required',
           'Provide a title as an argument or with the -t flag:\n' +
-          `${this.config.bin} add "Buy groceries"\n` +
-          `${this.config.bin} add -t "Buy groceries"`
+            `${this.config.bin} add "Buy groceries"\n` +
+            `${this.config.bin} add -t "Buy groceries"`
         );
       }
 
-      if (error instanceof CLIError && error.code === 'BLOCKCHAIN_CONNECTION_FAILED') {
+      if (
+        error instanceof CLIError &&
+        error.code === 'BLOCKCHAIN_CONNECTION_FAILED'
+      ) {
         this.detailedError(
           'Blockchain connection failed',
           'Failed to connect to the blockchain storage service',
@@ -333,39 +382,51 @@ export default class AddCommand extends BaseCommand {
             'Verify your network connection is working properly',
             'Check if the blockchain service is available',
             'Verify your environment configuration with `waltodo config`',
-            'Try using local storage instead with `-s local` flag'
+            'Try using local storage instead with `-s local` flag',
           ]
         );
       }
 
       // Handle multi-flag specific errors
-      if (error instanceof Error && error.message && error.message.includes('Flag --priority can only be specified once')) {
+      if (
+        error instanceof Error &&
+        error.message &&
+        error.message.includes('Flag --priority can only be specified once')
+      ) {
         this.errorWithHelp(
           'Flag usage error',
           'This version of the CLI now supports multiple flag instances',
           'You can now use multiple instances of -t, -p, -d, and -g flags to create multiple todos:\n' +
-          `${this.config.bin} add -t "Task 1" -p high -t "Task 2" -p low\n` +
-          `This will create two todos with different priorities.`
+            `${this.config.bin} add -t "Task 1" -p high -t "Task 2" -p low\n` +
+            `This will create two todos with different priorities.`
         );
       }
 
-      if (error instanceof Error && error.message && error.message.includes('Flag --due can only be specified once')) {
+      if (
+        error instanceof Error &&
+        error.message &&
+        error.message.includes('Flag --due can only be specified once')
+      ) {
         this.errorWithHelp(
           'Flag usage error',
           'This version of the CLI now supports multiple flag instances',
           'You can now use multiple instances of -t, -p, -d, and -g flags to create multiple todos:\n' +
-          `${this.config.bin} add -t "Task 1" -d 2023-01-01 -t "Task 2" -d 2023-02-01\n` +
-          `This will create two todos with different due dates.`
+            `${this.config.bin} add -t "Task 1" -d 2023-01-01 -t "Task 2" -d 2023-02-01\n` +
+            `This will create two todos with different due dates.`
         );
       }
 
-      if (error instanceof Error && error.message && error.message.includes('Flag --tags can only be specified once')) {
+      if (
+        error instanceof Error &&
+        error.message &&
+        error.message.includes('Flag --tags can only be specified once')
+      ) {
         this.errorWithHelp(
           'Flag usage error',
           'This version of the CLI now supports multiple flag instances',
           'You can now use multiple instances of -t, -p, -d, and -g flags to create multiple todos:\n' +
-          `${this.config.bin} add -t "Task 1" -g "work,urgent" -t "Task 2" -g "home,later"\n` +
-          `This will create two todos with different tag sets.`
+            `${this.config.bin} add -t "Task 1" -g "work,urgent" -t "Task 2" -g "home,later"\n` +
+            `This will create two todos with different tag sets.`
         );
       }
 
@@ -387,7 +448,10 @@ export default class AddCommand extends BaseCommand {
    * @param args Command arguments
    * @param flags Command flags
    */
-  private async handleJsonOutput(args: { listOrTitle?: string }, flags: Record<string, unknown>): Promise<void> {
+  private async handleJsonOutput(
+    args: { listOrTitle?: string },
+    flags: Record<string, unknown>
+  ): Promise<void> {
     // Determine the list name and titles based on arguments and flags
     let todoTitles: string[] = [];
     let listName: string;
@@ -396,10 +460,15 @@ export default class AddCommand extends BaseCommand {
     if (args.listOrTitle && flags.task && (flags.task as string[]).length > 0) {
       // First argument is the list name
       listName = CommandSanitizer.sanitizeString(args.listOrTitle);
-      todoTitles = (flags.task as string[]).map((t: string) => CommandSanitizer.sanitizeString(t));
+      todoTitles = (flags.task as string[]).map((t: string) =>
+        CommandSanitizer.sanitizeString(t)
+      );
     }
     // Check if there's an argument but no task flags
-    else if (args.listOrTitle && (!flags.task || (flags.task as string[]).length === 0)) {
+    else if (
+      args.listOrTitle &&
+      (!flags.task || (flags.task as string[]).length === 0)
+    ) {
       if (flags.list) {
         // Explicit list flag, argument is title
         listName = CommandSanitizer.sanitizeString(flags.list as string);
@@ -412,12 +481,19 @@ export default class AddCommand extends BaseCommand {
     }
     // Only task flags
     else if (flags.task && (flags.task as string[]).length > 0) {
-      listName = CommandSanitizer.sanitizeString((flags.list as string) || 'default');
-      todoTitles = (flags.task as string[]).map((t: string) => CommandSanitizer.sanitizeString(t));
+      listName = CommandSanitizer.sanitizeString(
+        (flags.list as string) || 'default'
+      );
+      todoTitles = (flags.task as string[]).map((t: string) =>
+        CommandSanitizer.sanitizeString(t)
+      );
     }
     // Nothing provided
     else {
-      throw new CLIError('Todo title is required. Provide it as an argument or with -t flag', 'MISSING_TITLE');
+      throw new CLIError(
+        'Todo title is required. Provide it as an argument or with -t flag',
+        'MISSING_TITLE'
+      );
     }
 
     // Get attribute arrays
@@ -448,9 +524,18 @@ export default class AddCommand extends BaseCommand {
       }
 
       // Map attributes to this todo
-      const priority = priorities[i] !== undefined ? priorities[i] : priorities[priorities.length - 1];
-      const dueDate = dueDates[i] !== undefined ? CommandSanitizer.sanitizeDate(dueDates[i] as string) : undefined;
-      const tags = tagSets[i] !== undefined ? CommandSanitizer.sanitizeTags(tagSets[i] as string) : [];
+      const priority =
+        priorities[i] !== undefined
+          ? priorities[i]
+          : priorities[priorities.length - 1];
+      const dueDate =
+        dueDates[i] !== undefined
+          ? CommandSanitizer.sanitizeDate(dueDates[i] as string)
+          : undefined;
+      const tags =
+        tagSets[i] !== undefined
+          ? CommandSanitizer.sanitizeTags(tagSets[i] as string)
+          : [];
 
       // Prepare the todo object
       const todo: Partial<Todo> = {
@@ -459,7 +544,7 @@ export default class AddCommand extends BaseCommand {
         dueDate: dueDate,
         tags: tags,
         private: flags.private as boolean,
-        storageLocation: storageLocation
+        storageLocation: storageLocation,
       };
 
       // Add todo to the list
@@ -470,10 +555,13 @@ export default class AddCommand extends BaseCommand {
     // Output as JSON
     await this.jsonOutput({
       success: true,
-      message: todoTitles.length === 1 ? 'Todo added successfully' : `${todoTitles.length} todos added successfully`,
+      message:
+        todoTitles.length === 1
+          ? 'Todo added successfully'
+          : `${todoTitles.length} todos added successfully`,
       todos: addedTodos,
       list: listName,
-      count: addedTodos.length
+      count: addedTodos.length,
     });
   }
 
@@ -485,9 +573,13 @@ export default class AddCommand extends BaseCommand {
    * @param todoTitle Title of the todo for AI analysis
    * @param flags Command flags including AI configuration options
    */
-  private async enhanceWithAI(todo: Partial<Todo>, todoTitle: string, flags: Record<string, unknown>): Promise<void> {
+  private async enhanceWithAI(
+    todo: Partial<Todo>,
+    todoTitle: string,
+    flags: Record<string, unknown>
+  ): Promise<void> {
     let aiSpinner: unknown;
-    
+
     try {
       this.debugLog('AI flag detected in add command');
 
@@ -495,7 +587,9 @@ export default class AddCommand extends BaseCommand {
       aiSpinner = this.startSpinner(`Using AI to enhance your todo...`);
 
       // Sanitize API key before using
-      const sanitizedApiKey = flags.apiKey ? CommandSanitizer.sanitizeApiKey(flags.apiKey as string) : undefined;
+      const sanitizedApiKey = flags.apiKey
+        ? CommandSanitizer.sanitizeApiKey(flags.apiKey as string)
+        : undefined;
       if (sanitizedApiKey) {
         process.env.XAI_API_KEY = sanitizedApiKey;
         await this.aiServiceInstance.setProvider(AIProvider.XAI);
@@ -513,33 +607,40 @@ export default class AddCommand extends BaseCommand {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         private: todo.private !== undefined ? todo.private : true,
-        storageLocation: todo.storageLocation || 'local'
+        storageLocation: todo.storageLocation || 'local',
       };
 
       // Get AI suggestions with retry for network errors
       const [suggestedTags, suggestedPriority] = await this.executeWithRetry(
-        async () => Promise.all([
-          this.aiServiceInstance.suggestTags(tempTodo),
-          this.aiServiceInstance.suggestPriority(tempTodo)
-        ]),
+        async () =>
+          Promise.all([
+            this.aiServiceInstance.suggestTags(tempTodo),
+            this.aiServiceInstance.suggestPriority(tempTodo),
+          ]),
         {
           maxRetries: 3,
           baseDelay: 1000,
           retryMessage: 'Retrying AI enhancement...',
-          operationName: 'ai_suggest'
+          operationName: 'ai_suggest',
         }
       );
 
-      this.debugLog('Received AI suggestions:', { tags: suggestedTags, priority: suggestedPriority });
+      this.debugLog('Received AI suggestions:', {
+        tags: suggestedTags,
+        priority: suggestedPriority,
+      });
 
       // Stop spinner with success
       this.stopSpinnerSuccess(aiSpinner, `AI enhancement complete`);
 
       // Display enhanced information
-      this.section('AI Suggestions', [
-        `${ICONS.tag} ${chalk.bold('Suggested Tags:')} ${chalk.cyan(suggestedTags.join(', ') || 'None')}`,
-        `${ICONS.priority} ${chalk.bold('Suggested Priority:')} ${chalk.cyan(suggestedPriority)}`
-      ].join('\n'));
+      this.section(
+        'AI Suggestions',
+        [
+          `${ICONS.tag} ${chalk.bold('Suggested Tags:')} ${chalk.cyan(suggestedTags.join(', ') || 'None')}`,
+          `${ICONS.priority} ${chalk.bold('Suggested Priority:')} ${chalk.cyan(suggestedPriority)}`,
+        ].join('\n')
+      );
 
       // Merge existing and suggested tags
       const existingTags = todo.tags || [];
@@ -550,7 +651,6 @@ export default class AddCommand extends BaseCommand {
       todo.priority = suggestedPriority;
 
       this.debugLog('Todo updated with AI suggestions');
-
     } catch (aiError) {
       // Stop the AI spinner if it was started
       if (aiSpinner) {
@@ -561,22 +661,41 @@ export default class AddCommand extends BaseCommand {
 
       // Handle different error types with specific messaging
       if (aiError instanceof NetworkError) {
-        this.warning('AI service is temporarily unavailable due to network issues');
-        this.info('Check your network connection and try again later with the --ai flag');
+        this.warning(
+          'AI service is temporarily unavailable due to network issues'
+        );
+        this.info(
+          'Check your network connection and try again later with the --ai flag'
+        );
       } else if (aiError instanceof Error) {
         // Check for specific AI configuration issues
-        if (aiError.message.includes('API key') || aiError.message.includes('unauthorized') || aiError.message.includes('authentication')) {
+        if (
+          aiError.message.includes('API key') ||
+          aiError.message.includes('unauthorized') ||
+          aiError.message.includes('authentication')
+        ) {
           this.warning('AI service authentication failed');
           this.info('Please verify your XAI API key configuration:');
           this.info('• Set XAI_API_KEY environment variable, or');
           this.info('• Use --apiKey flag to provide your API key');
           this.info('• Get your API key from: https://console.x.ai/');
-        } else if (aiError.message.includes('quota') || aiError.message.includes('rate limit') || aiError.message.includes('limit exceeded')) {
+        } else if (
+          aiError.message.includes('quota') ||
+          aiError.message.includes('rate limit') ||
+          aiError.message.includes('limit exceeded')
+        ) {
           this.warning('AI service rate limit exceeded');
-          this.info('Your API quota has been reached. Please try again later or upgrade your plan');
-        } else if (aiError.message.includes('timeout') || aiError.message.includes('request timed out')) {
+          this.info(
+            'Your API quota has been reached. Please try again later or upgrade your plan'
+          );
+        } else if (
+          aiError.message.includes('timeout') ||
+          aiError.message.includes('request timed out')
+        ) {
           this.warning('AI service request timed out');
-          this.info('The AI service is responding slowly. Try again with a simpler todo description');
+          this.info(
+            'The AI service is responding slowly. Try again with a simpler todo description'
+          );
         } else {
           this.warning(`AI enhancement failed: ${aiError.message}`);
           this.info('AI configuration help:');
@@ -595,7 +714,9 @@ export default class AddCommand extends BaseCommand {
         this.info('Tip: You can add tags manually with: --tags "work,urgent"');
       }
       if (!todo.priority) {
-        this.info('Tip: You can set priority manually with: --priority high|medium|low');
+        this.info(
+          'Tip: You can set priority manually with: --priority high|medium|low'
+        );
       }
     }
   }
@@ -613,30 +734,42 @@ export default class AddCommand extends BaseCommand {
    * @param listName Name of the list containing the todo
    * @param storageLocation Storage strategy (local, blockchain, or both)
    */
-  private async storeOnBlockchain(todo: Todo, listName: string, storageLocation: StorageLocation): Promise<void> {
+  private async storeOnBlockchain(
+    todo: Todo,
+    listName: string,
+    storageLocation: StorageLocation
+  ): Promise<void> {
     let blobId: string = '';
     // Show blockchain storage warning
-    this.section('Blockchain Storage', [
-      `${chalk.yellow(ICONS.warning)} ${chalk.yellow('Public Access Warning')}`,
-      `Blockchain storage will make the todo data publicly accessible.`,
-      `This cannot be undone once the data is stored on the blockchain.`
-    ].join('\n'));
+    this.section(
+      'Blockchain Storage',
+      [
+        `${chalk.yellow(ICONS.warning)} ${chalk.yellow('Public Access Warning')}`,
+        `Blockchain storage will make the todo data publicly accessible.`,
+        `This cannot be undone once the data is stored on the blockchain.`,
+      ].join('\n')
+    );
 
     // Start blockchain storage spinner
-    const blockchainSpinner = this.startSpinner('Connecting to blockchain storage...');
+    const blockchainSpinner = this.startSpinner(
+      'Connecting to blockchain storage...'
+    );
 
     try {
       // Initialize Walrus storage with retry
       await this.executeWithRetry(
         async () => {
           await this.walrusStorage.connect();
-          this.stopSpinnerSuccess(blockchainSpinner, 'Connected to blockchain storage');
+          this.stopSpinnerSuccess(
+            blockchainSpinner,
+            'Connected to blockchain storage'
+          );
         },
         {
           maxRetries: 5,
           baseDelay: 2000,
           retryMessage: 'Retrying blockchain connection...',
-          operationName: 'walrus_connect'
+          operationName: 'walrus_connect',
         }
       );
 
@@ -644,7 +777,7 @@ export default class AddCommand extends BaseCommand {
       const storeSpinner = this.startSpinner('Storing todo on blockchain...');
 
       // Variable already declared at method level
-      
+
       // Store todo on Walrus with retry and transaction handling
       blobId = await this.executeTransaction(
         async () => {
@@ -654,7 +787,7 @@ export default class AddCommand extends BaseCommand {
               maxRetries: 5,
               baseDelay: 2000,
               retryMessage: 'Retrying blockchain storage...',
-              operationName: 'walrus_store_todo'
+              operationName: 'walrus_store_todo',
             }
           );
         },
@@ -663,23 +796,30 @@ export default class AddCommand extends BaseCommand {
           rollbackFn: async () => {
             // If storage fails, we might need to clean up any partial state
             this.debugLog('Rolling back blockchain storage attempt');
-          }
+          },
         }
       );
-      
+
       this.stopSpinnerSuccess(storeSpinner, 'Todo stored on blockchain');
 
       // Update local todo with Walrus blob ID if we're keeping a local copy
       if (storageLocation === 'both') {
-        const updateSpinner = this.startSpinner('Updating local copy with blockchain reference...');
+        const updateSpinner = this.startSpinner(
+          'Updating local copy with blockchain reference...'
+        );
         try {
           await this.todoService.updateTodo(listName, todo.id, {
             walrusBlobId: blobId,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           });
-          this.stopSpinnerSuccess(updateSpinner, 'Local copy updated with blockchain reference');
+          this.stopSpinnerSuccess(
+            updateSpinner,
+            'Local copy updated with blockchain reference'
+          );
         } catch (_error) {
-          this.warning('Successfully stored on blockchain but failed to update local copy');
+          this.warning(
+            'Successfully stored on blockchain but failed to update local copy'
+          );
         }
       }
 
@@ -695,17 +835,19 @@ export default class AddCommand extends BaseCommand {
       }
 
       // Display blockchain information
-      this.section('Blockchain Storage Info', [
-        `${ICONS.blockchain} ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`,
-        `${ICONS.info} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet.wal.app/blob/${blobId}`)}`
-      ].join('\n'));
-      
+      this.section(
+        'Blockchain Storage Info',
+        [
+          `${ICONS.blockchain} ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`,
+          `${ICONS.info} ${chalk.bold('Public URL:')} ${chalk.cyan(`https://testnet.wal.app/blob/${blobId}`)}`,
+        ].join('\n')
+      );
+
       // Save the blob mapping
       this.saveBlobMapping(todo.id, blobId);
 
       // Cleanup connection
       await this.walrusStorage.disconnect();
-
     } catch (error) {
       if (error instanceof CLIError) throw error;
 
@@ -721,7 +863,7 @@ export default class AddCommand extends BaseCommand {
       }
     }
   }
-  
+
   /**
    * Save a mapping between todo ID and blob ID
    * @param todoId Todo ID
@@ -731,7 +873,7 @@ export default class AddCommand extends BaseCommand {
     try {
       const configDir = this.getConfigDir();
       const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
-      
+
       // Read existing mappings or create empty object
       let mappings: Record<string, string> = {};
       if (fs.existsSync(blobMappingsFile)) {
@@ -741,47 +883,65 @@ export default class AddCommand extends BaseCommand {
             mappings = JSON.parse(content);
           } catch (parseError) {
             if (parseError instanceof SyntaxError) {
-              this.warning(`Invalid JSON format in blob mappings file: ${parseError.message}`);
+              this.warning(
+                `Invalid JSON format in blob mappings file: ${parseError.message}`
+              );
             } else {
-              this.warning(`Error parsing blob mappings file: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+              this.warning(
+                `Error parsing blob mappings file: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+              );
             }
             // Continue with empty mappings
           }
         } catch (readError) {
-          this.warning(`Error reading blob mappings file: ${readError instanceof Error ? readError.message : String(readError)}`);
+          this.warning(
+            `Error reading blob mappings file: ${readError instanceof Error ? readError.message : String(readError)}`
+          );
           // Continue with empty mappings
         }
       }
-      
+
       // Add or update mapping
       mappings[todoId] = blobId;
-      
+
       // Write mappings back to file using centralized method (handles directory creation)
-      this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
+      this.writeFileSafe(
+        blobMappingsFile,
+        JSON.stringify(mappings, null, 2),
+        'utf8'
+      );
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
     } catch (saveError) {
-      this.warning(`Failed to save blob mapping: ${saveError instanceof Error ? saveError.message : String(saveError)}`);
+      this.warning(
+        `Failed to save blob mapping: ${saveError instanceof Error ? saveError.message : String(saveError)}`
+      );
     }
   }
 
   /**
    * Display success information after adding a todo
    */
-  private async displaySuccessInfo(todo: Todo, listName: string): Promise<void> {
-
+  private async displaySuccessInfo(
+    todo: Todo,
+    listName: string
+  ): Promise<void> {
     // Choose appropriate header based on whether this is a new list or just a new task
     const headerText = this.isNewList ? `New List Created` : `New Task Added`;
 
     // Create a more compact display format
-    this.log(`${chalk.green(ICONS.success)} ${chalk.bold.green(headerText)}: ${chalk.bold(todo.title)}`);
+    this.log(
+      `${chalk.green(ICONS.success)} ${chalk.bold.green(headerText)}: ${chalk.bold(todo.title)}`
+    );
 
     // Display essential details in a compact single-line format
     const compactDetails = [
       `${ICONS.list} List: ${chalk.cyan(listName)}`,
       `${ICONS.priority} Priority: ${this.formatPriority(todo.priority)}`,
       todo.dueDate && `${ICONS.date} Due: ${chalk.blue(todo.dueDate)}`,
-      todo.tags && todo.tags.length > 0 && `${ICONS.tag} Tags: ${chalk.cyan(todo.tags.join(', '))}`,
-      `${ICONS.storage} Storage: ${this.formatStorage(todo.storageLocation)}`
+      todo.tags &&
+        todo.tags.length > 0 &&
+        `${ICONS.tag} Tags: ${chalk.cyan(todo.tags.join(', '))}`,
+      `${ICONS.storage} Storage: ${this.formatStorage(todo.storageLocation)}`,
     ].filter(Boolean);
 
     // Display compact details on a single line
@@ -790,7 +950,7 @@ export default class AddCommand extends BaseCommand {
     // Provide helpful next steps
     const nextSteps = [
       `${chalk.cyan(`${this.config.bin} list ${listName}`)} - View all tasks`,
-      `${chalk.cyan(`${this.config.bin} complete --id ${todo.id.slice(-6)}`)} - Mark as completed`
+      `${chalk.cyan(`${this.config.bin} complete --id ${todo.id.slice(-6)}`)} - Mark as completed`,
     ];
 
     // Display next steps on same line
@@ -804,17 +964,21 @@ export default class AddCommand extends BaseCommand {
    * @param flags Command flags
    * @throws ValidationError if validation fails
    */
-  private performPreExecutionValidation(args: { listOrTitle?: string }, flags: Record<string, unknown>): void {
+  private performPreExecutionValidation(
+    args: { listOrTitle?: string },
+    flags: Record<string, unknown>
+  ): void {
     // Validate mutually exclusive flags
     if (flags.task && args.listOrTitle) {
-      const hasMultipleTasks = Array.isArray(flags.task) && flags.task.length > 1;
+      const hasMultipleTasks =
+        Array.isArray(flags.task) && flags.task.length > 1;
       if (!hasMultipleTasks && !flags.list) {
         // If single task flag and argument, but no explicit list - it's ambiguous
         throw new ValidationError(
           'Ambiguous input: use --list flag to specify list name when using both argument and --task flag',
           {
             constraint: 'AMBIGUOUS_INPUT',
-            recoverable: false
+            recoverable: false,
           }
         );
       }
@@ -830,7 +994,9 @@ export default class AddCommand extends BaseCommand {
 
     // Validate priority using unified validators
     if (flags.priority) {
-      const priorities = Array.isArray(flags.priority) ? flags.priority : [flags.priority];
+      const priorities = Array.isArray(flags.priority)
+        ? flags.priority
+        : [flags.priority];
       priorities.forEach((priority: string) => {
         this.validateFlag.enum(priority, ['high', 'medium', 'low'], 'priority');
       });
@@ -839,8 +1005,8 @@ export default class AddCommand extends BaseCommand {
     // Validate AI provider using unified validators
     if (flags.provider) {
       this.validateFlag.enum(
-        flags.provider as string, 
-        ['xai', 'openai', 'anthropic', 'ollama'], 
+        flags.provider as string,
+        ['xai', 'openai', 'anthropic', 'ollama'],
         'provider'
       );
     }
@@ -852,23 +1018,31 @@ export default class AddCommand extends BaseCommand {
 
     // Validate list name
     if (flags.list) {
-      InputValidator.validate(flags.list, [
-        InputValidator.requiredRule('List name'),
-        InputValidator.custom(
-          (value: string) => /^[a-zA-Z0-9-_]+$/.test(value),
-          'List name can only contain letters, numbers, hyphens, and underscores',
-          'INVALID_LIST_NAME'
-        )
-      ], 'List name');
+      InputValidator.validate(
+        flags.list,
+        [
+          InputValidator.requiredRule('List name'),
+          InputValidator.custom(
+            (value: string) => /^[a-zA-Z0-9-_]+$/.test(value),
+            'List name can only contain letters, numbers, hyphens, and underscores',
+            'INVALID_LIST_NAME'
+          ),
+        ],
+        'List name'
+      );
     }
 
     // Validate priority values
     if (flags.priority) {
-      const priorities = Array.isArray(flags.priority) ? flags.priority : [flags.priority];
+      const priorities = Array.isArray(flags.priority)
+        ? flags.priority
+        : [flags.priority];
       priorities.forEach((priority: string, index: number) => {
-        InputValidator.validate(priority, [
-          CommonValidationRules.priority
-        ], `Priority ${index + 1}`);
+        InputValidator.validate(
+          priority,
+          [CommonValidationRules.priority],
+          `Priority ${index + 1}`
+        );
       });
     }
 
@@ -876,9 +1050,11 @@ export default class AddCommand extends BaseCommand {
     if (flags.due) {
       const dueDates = Array.isArray(flags.due) ? flags.due : [flags.due];
       dueDates.forEach((dueDate: string, index: number) => {
-        InputValidator.validate(dueDate, [
-          CommonValidationRules.dateFormat
-        ], `Due date ${index + 1}`);
+        InputValidator.validate(
+          dueDate,
+          [CommonValidationRules.dateFormat],
+          `Due date ${index + 1}`
+        );
       });
     }
 
@@ -886,26 +1062,34 @@ export default class AddCommand extends BaseCommand {
     if (flags.tags) {
       const tagSets = Array.isArray(flags.tags) ? flags.tags : [flags.tags];
       tagSets.forEach((tagSet: string, index: number) => {
-        InputValidator.validate(tagSet, [
-          {
-            test: (value: string) => value.split(',').every(tag => tag.trim().length > 0),
-            message: 'Tags cannot be empty',
-            code: 'EMPTY_TAG'
-          },
-          {
-            test: (value: string) => value.split(',').every(tag => tag.length <= 50),
-            message: 'Tag too long (max 50 characters)',
-            code: 'TAG_TOO_LONG'
-          }
-        ], `Tag set ${index + 1}`);
+        InputValidator.validate(
+          tagSet,
+          [
+            {
+              test: (value: string) =>
+                value.split(',').every(tag => tag.trim().length > 0),
+              message: 'Tags cannot be empty',
+              code: 'EMPTY_TAG',
+            },
+            {
+              test: (value: string) =>
+                value.split(',').every(tag => tag.length <= 50),
+              message: 'Tag too long (max 50 characters)',
+              code: 'TAG_TOO_LONG',
+            },
+          ],
+          `Tag set ${index + 1}`
+        );
       });
     }
 
     // Validate storage location
     if (flags.storage) {
-      InputValidator.validate(flags.storage, [
-        CommonValidationRules.storageLocation
-      ], 'Storage location');
+      InputValidator.validate(
+        flags.storage,
+        [CommonValidationRules.storageLocation],
+        'Storage location'
+      );
     }
   }
 

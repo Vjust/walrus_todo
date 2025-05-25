@@ -6,7 +6,7 @@ const logger = new Logger('run-comprehensive-e2e-tests');
 
 /**
  * Comprehensive E2E Test Runner for Waltodo System
- * 
+ *
  * This script orchestrates the complete end-to-end testing process:
  * 1. Environment setup and validation
  * 2. System component verification
@@ -47,7 +47,7 @@ class ComprehensiveE2ETestRunner {
     nodeAndPnpm: false,
     waltodoCli: false,
     frontend: false,
-    smartContract: false
+    smartContract: false,
   };
 
   constructor() {
@@ -56,17 +56,22 @@ class ComprehensiveE2ETestRunner {
   }
 
   async run(): Promise<void> {
-    logger.info(chalk.bold.blue('\n🚀 Starting Comprehensive Waltodo E2E Test Suite\n'));
-    
+    logger.info(
+      chalk.bold.blue('\n🚀 Starting Comprehensive Waltodo E2E Test Suite\n')
+    );
+
     try {
       await this.checkSystemPrerequisites();
       await this.setupTestEnvironment();
       await this.runIntegrationTests();
       await this.validateSystemIntegration();
       this.generateTestReport();
-      
-      logger.info(chalk.bold.green('\n✅ Comprehensive E2E Test Suite Completed Successfully!\n'));
-      
+
+      logger.info(
+        chalk.bold.green(
+          '\n✅ Comprehensive E2E Test Suite Completed Successfully!\n'
+        )
+      );
     } catch (error) {
       logger.error(chalk.bold.red('\n❌ E2E Test Suite Failed:'), error);
       this.generateFailureReport(error);
@@ -76,24 +81,36 @@ class ComprehensiveE2ETestRunner {
 
   private async checkSystemPrerequisites(): Promise<void> {
     logger.info(chalk.yellow('📋 Checking System Prerequisites...'));
-    
+
     // Check Sui CLI
     try {
-      const suiVersion = execSync('sui --version', { encoding: 'utf8', timeout: 10000 });
+      const suiVersion = execSync('sui --version', {
+        encoding: 'utf8',
+        timeout: 10000,
+      });
       this.systemStatus.suiCli = true;
       logger.info(chalk.green(`✓ Sui CLI: ${suiVersion.trim()}`));
     } catch (error) {
       logger.info(chalk.red('✗ Sui CLI not found'));
-      throw new Error('Sui CLI is required but not found. Please install: https://docs.sui.io/guides/developer/getting-started/sui-install');
+      throw new Error(
+        'Sui CLI is required but not found. Please install: https://docs.sui.io/guides/developer/getting-started/sui-install'
+      );
     }
 
     // Check Walrus CLI (optional)
     try {
-      const walrusVersion = execSync('walrus --version', { encoding: 'utf8', timeout: 10000 });
+      const walrusVersion = execSync('walrus --version', {
+        encoding: 'utf8',
+        timeout: 10000,
+      });
       this.systemStatus.walrusCli = true;
       logger.info(chalk.green(`✓ Walrus CLI: ${walrusVersion.trim()}`));
     } catch (error) {
-      logger.info(chalk.yellow('⚠ Walrus CLI not found - will use mock mode for storage tests'));
+      logger.info(
+        chalk.yellow(
+          '⚠ Walrus CLI not found - will use mock mode for storage tests'
+        )
+      );
     }
 
     // Check Node.js and pnpm
@@ -109,10 +126,15 @@ class ComprehensiveE2ETestRunner {
 
     // Check Sui wallet
     try {
-      const activeAddress = execSync('sui client active-address', { encoding: 'utf8', timeout: 10000 });
+      const activeAddress = execSync('sui client active-address', {
+        encoding: 'utf8',
+        timeout: 10000,
+      });
       logger.info(chalk.green(`✓ Sui Wallet: ${activeAddress.trim()}`));
     } catch (error) {
-      throw new Error('Sui wallet not configured. Please run "sui client" to set up your wallet');
+      throw new Error(
+        'Sui wallet not configured. Please run "sui client" to set up your wallet'
+      );
     }
 
     logger.info(chalk.green('✅ System prerequisites verified\n'));
@@ -120,14 +142,14 @@ class ComprehensiveE2ETestRunner {
 
   private async setupTestEnvironment(): Promise<void> {
     logger.info(chalk.yellow('🔧 Setting up Test Environment...'));
-    
+
     // Build the CLI
     try {
       logger.info('Building Waltodo CLI...');
-      execSync('pnpm run build:dev', { 
+      execSync('pnpm run build:dev', {
         cwd: this.projectRoot,
         stdio: 'inherit',
-        timeout: 120000
+        timeout: 120000,
       });
       this.systemStatus.waltodoCli = true;
       logger.info(chalk.green('✓ Waltodo CLI built successfully'));
@@ -140,15 +162,19 @@ class ComprehensiveE2ETestRunner {
     if (fs.existsSync(frontendPath)) {
       try {
         logger.info('Installing frontend dependencies...');
-        execSync('pnpm install', { 
+        execSync('pnpm install', {
           cwd: frontendPath,
           stdio: 'inherit',
-          timeout: 120000
+          timeout: 120000,
         });
         this.systemStatus.frontend = true;
         logger.info(chalk.green('✓ Frontend dependencies installed'));
       } catch (error) {
-        logger.info(chalk.yellow('⚠ Frontend dependency installation failed - some tests may be skipped'));
+        logger.info(
+          chalk.yellow(
+            '⚠ Frontend dependency installation failed - some tests may be skipped'
+          )
+        );
       }
     }
 
@@ -157,47 +183,49 @@ class ComprehensiveE2ETestRunner {
 
   private async runIntegrationTests(): Promise<void> {
     logger.info(chalk.yellow('🧪 Running Integration Tests...'));
-    
+
     const testConfigs = [
       {
         name: 'Unit Tests',
         command: 'pnpm test:unit',
-        timeout: 60000
+        timeout: 60000,
       },
       {
         name: 'CLI Command Tests',
         command: 'pnpm test tests/commands',
-        timeout: 120000
+        timeout: 120000,
       },
       {
         name: 'Smart Contract Tests',
         command: 'pnpm test tests/integration/blockchain-verification',
-        timeout: 180000
+        timeout: 180000,
       },
       {
         name: 'E2E System Integration Tests',
-        command: 'pnpm test tests/e2e/comprehensive-system-integration.e2e.test.ts',
-        timeout: 300000
-      }
+        command:
+          'pnpm test tests/e2e/comprehensive-system-integration.e2e.test.ts',
+        timeout: 300000,
+      },
     ];
 
     for (const testConfig of testConfigs) {
       try {
         logger.info(chalk.blue(`\n🔄 Running ${testConfig.name}...`));
         const startTime = Date.now();
-        
+
         const output = execSync(testConfig.command, {
           cwd: this.projectRoot,
           encoding: 'utf8',
-          timeout: testConfig.timeout
+          timeout: testConfig.timeout,
         });
-        
+
         const duration = Date.now() - startTime;
         const result = this.parseTestOutput(testConfig.name, output, duration);
         this.testResults.push(result);
-        
-        logger.info(chalk.green(`✓ ${testConfig.name} completed in ${duration}ms`));
-        
+
+        logger.info(
+          chalk.green(`✓ ${testConfig.name} completed in ${duration}ms`)
+        );
       } catch (error) {
         const duration = Date.now() - Date.now();
         const result: TestResult = {
@@ -206,12 +234,14 @@ class ComprehensiveE2ETestRunner {
           failed: 1,
           skipped: 0,
           duration,
-          errors: [error.toString()]
+          errors: [error.toString()],
         };
         this.testResults.push(result);
-        
+
         logger.info(chalk.red(`✗ ${testConfig.name} failed`));
-        logger.info(chalk.red(`  Error: ${error.toString().substring(0, 200)}...`));
+        logger.info(
+          chalk.red(`  Error: ${error.toString().substring(0, 200)}...`)
+        );
       }
     }
 
@@ -220,24 +250,33 @@ class ComprehensiveE2ETestRunner {
 
   private async validateSystemIntegration(): Promise<void> {
     logger.info(chalk.yellow('🔍 Validating System Integration...'));
-    
+
     // Test CLI-to-Frontend communication
     try {
       logger.info('Testing CLI deployment and frontend config generation...');
-      
+
       // Deploy contract (skip if already deployed)
       try {
-        execSync('pnpm run cli -- deploy --network testnet --gas-budget 200000000', {
-          cwd: this.projectRoot,
-          encoding: 'utf8',
-          timeout: 180000
-        });
+        execSync(
+          'pnpm run cli -- deploy --network testnet --gas-budget 200000000',
+          {
+            cwd: this.projectRoot,
+            encoding: 'utf8',
+            timeout: 180000,
+          }
+        );
         logger.info(chalk.green('✓ Smart contract deployment successful'));
         this.systemStatus.smartContract = true;
       } catch (error) {
-        if (error.toString().includes('already deployed') || 
-            error.toString().includes('Package ID already exists')) {
-          logger.info(chalk.yellow('⚠ Contract already deployed - continuing with existing deployment'));
+        if (
+          error.toString().includes('already deployed') ||
+          error.toString().includes('Package ID already exists')
+        ) {
+          logger.info(
+            chalk.yellow(
+              '⚠ Contract already deployed - continuing with existing deployment'
+            )
+          );
           this.systemStatus.smartContract = true;
         } else {
           throw error;
@@ -245,13 +284,20 @@ class ComprehensiveE2ETestRunner {
       }
 
       // Verify configuration generation
-      const frontendConfigPath = path.join(this.projectRoot, 'waltodo-frontend/src/config');
+      const frontendConfigPath = path.join(
+        this.projectRoot,
+        'waltodo-frontend/src/config'
+      );
       if (fs.existsSync(frontendConfigPath)) {
         const configFiles = fs.readdirSync(frontendConfigPath);
-        const hasNetworkConfig = configFiles.some(file => file.endsWith('.json'));
-        
+        const hasNetworkConfig = configFiles.some(file =>
+          file.endsWith('.json')
+        );
+
         if (hasNetworkConfig) {
-          logger.info(chalk.green('✓ Frontend configuration generated successfully'));
+          logger.info(
+            chalk.green('✓ Frontend configuration generated successfully')
+          );
         } else {
           throw new Error('Frontend configuration files not found');
         }
@@ -263,7 +309,7 @@ class ComprehensiveE2ETestRunner {
       const cliCommands = [
         'pnpm run cli -- --version',
         'pnpm run cli -- config',
-        'pnpm run cli -- list --limit 1'
+        'pnpm run cli -- list --limit 1',
       ];
 
       for (const command of cliCommands) {
@@ -271,7 +317,7 @@ class ComprehensiveE2ETestRunner {
           execSync(command, {
             cwd: this.projectRoot,
             encoding: 'utf8',
-            timeout: 30000
+            timeout: 30000,
           });
         } catch (error) {
           logger.info(chalk.yellow(`⚠ CLI command failed: ${command}`));
@@ -279,23 +325,28 @@ class ComprehensiveE2ETestRunner {
       }
 
       logger.info(chalk.green('✓ CLI operations verified'));
-
     } catch (error) {
-      logger.info(chalk.red(`✗ System integration validation failed: ${error}`));
+      logger.info(
+        chalk.red(`✗ System integration validation failed: ${error}`)
+      );
       throw error;
     }
 
     logger.info(chalk.green('✅ System integration validation completed\n'));
   }
 
-  private parseTestOutput(testSuite: string, output: string, duration: number): TestResult {
+  private parseTestOutput(
+    testSuite: string,
+    output: string,
+    duration: number
+  ): TestResult {
     const result: TestResult = {
       testSuite,
       passed: 0,
       failed: 0,
       skipped: 0,
       duration,
-      errors: []
+      errors: [],
     };
 
     // Parse Jest output
@@ -308,9 +359,12 @@ class ComprehensiveE2ETestRunner {
     if (skippedMatch) result.skipped = parseInt(skippedMatch[1]);
 
     // Extract error messages
-    const errorLines = output.split('\n').filter(line => 
-      line.includes('Error:') || line.includes('FAIL') || line.includes('✗')
-    );
+    const errorLines = output
+      .split('\n')
+      .filter(
+        line =>
+          line.includes('Error:') || line.includes('FAIL') || line.includes('✗')
+      );
     result.errors = errorLines.slice(0, 5); // Limit to first 5 errors
 
     return result;
@@ -318,7 +372,7 @@ class ComprehensiveE2ETestRunner {
 
   private generateTestReport(): void {
     logger.info(chalk.bold.blue('\n📊 COMPREHENSIVE E2E TEST REPORT\n'));
-    
+
     // System Status Report
     logger.info(chalk.bold.yellow('🔧 SYSTEM STATUS:'));
     const statusItems = [
@@ -327,7 +381,7 @@ class ComprehensiveE2ETestRunner {
       { name: 'Node.js & pnpm', status: this.systemStatus.nodeAndPnpm },
       { name: 'Waltodo CLI', status: this.systemStatus.waltodoCli },
       { name: 'Frontend', status: this.systemStatus.frontend },
-      { name: 'Smart Contract', status: this.systemStatus.smartContract }
+      { name: 'Smart Contract', status: this.systemStatus.smartContract },
     ];
 
     statusItems.forEach(item => {
@@ -338,7 +392,7 @@ class ComprehensiveE2ETestRunner {
 
     // Test Results Summary
     logger.info(chalk.bold.yellow('\n🧪 TEST RESULTS SUMMARY:'));
-    
+
     let totalPassed = 0;
     let totalFailed = 0;
     let totalSkipped = 0;
@@ -350,11 +404,14 @@ class ComprehensiveE2ETestRunner {
       totalSkipped += result.skipped;
       totalDuration += result.duration;
 
-      const status = result.failed === 0 ? chalk.green('✅ PASS') : chalk.red('❌ FAIL');
+      const status =
+        result.failed === 0 ? chalk.green('✅ PASS') : chalk.red('❌ FAIL');
       logger.info(`  ${status} ${result.testSuite}`);
-      logger.info(`    Passed: ${result.passed}, Failed: ${result.failed}, Skipped: ${result.skipped}`);
+      logger.info(
+        `    Passed: ${result.passed}, Failed: ${result.failed}, Skipped: ${result.skipped}`
+      );
       logger.info(`    Duration: ${result.duration}ms`);
-      
+
       if (result.errors.length > 0) {
         logger.info(`    Errors: ${result.errors.length}`);
         result.errors.forEach(error => {
@@ -372,24 +429,40 @@ class ComprehensiveE2ETestRunner {
     logger.info(`  ${chalk.yellow('⏭️  Skipped:')} ${totalSkipped}`);
     logger.info(`  ⏱️  Total Duration: ${Math.round(totalDuration / 1000)}s`);
 
-    const successRate = totalPassed / (totalPassed + totalFailed) * 100;
+    const successRate = (totalPassed / (totalPassed + totalFailed)) * 100;
     logger.info(`  📊 Success Rate: ${Math.round(successRate)}%`);
 
     // Recommendations
     logger.info(chalk.bold.yellow('\n💡 RECOMMENDATIONS:'));
-    
+
     if (totalFailed === 0) {
-      logger.info(chalk.green('  🎉 All tests passed! The system is ready for production use.'));
+      logger.info(
+        chalk.green(
+          '  🎉 All tests passed! The system is ready for production use.'
+        )
+      );
     } else {
-      logger.info(chalk.red(`  ⚠️  ${totalFailed} test(s) failed. Please address the issues before deployment.`));
+      logger.info(
+        chalk.red(
+          `  ⚠️  ${totalFailed} test(s) failed. Please address the issues before deployment.`
+        )
+      );
     }
 
     if (!this.systemStatus.walrusCli) {
-      logger.info(chalk.yellow('  📦 Consider installing Walrus CLI for full storage functionality.'));
+      logger.info(
+        chalk.yellow(
+          '  📦 Consider installing Walrus CLI for full storage functionality.'
+        )
+      );
     }
 
     if (!this.systemStatus.frontend) {
-      logger.info(chalk.yellow('  🖥️  Frontend setup incomplete. Run "pnpm run nextjs:install" to fix.'));
+      logger.info(
+        chalk.yellow(
+          '  🖥️  Frontend setup incomplete. Run "pnpm run nextjs:install" to fix.'
+        )
+      );
     }
 
     // Generate detailed report file
@@ -398,7 +471,7 @@ class ComprehensiveE2ETestRunner {
 
   private generateDetailedReport(): void {
     const reportPath = path.join(this.projectRoot, 'e2e-test-report.json');
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       systemStatus: this.systemStatus,
@@ -408,9 +481,11 @@ class ComprehensiveE2ETestRunner {
         totalFailed: this.testResults.reduce((sum, r) => sum + r.failed, 0),
         totalSkipped: this.testResults.reduce((sum, r) => sum + r.skipped, 0),
         totalDuration: this.testResults.reduce((sum, r) => sum + r.duration, 0),
-        successRate: this.testResults.reduce((sum, r) => sum + r.passed, 0) / 
-                     this.testResults.reduce((sum, r) => sum + r.passed + r.failed, 0) * 100
-      }
+        successRate:
+          (this.testResults.reduce((sum, r) => sum + r.passed, 0) /
+            this.testResults.reduce((sum, r) => sum + r.passed + r.failed, 0)) *
+          100,
+      },
     };
 
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
@@ -419,10 +494,10 @@ class ComprehensiveE2ETestRunner {
 
   private generateFailureReport(error: any): void {
     logger.info(chalk.bold.red('\n💥 FAILURE REPORT\n'));
-    
+
     logger.info(chalk.red('Error Details:'));
     logger.info(chalk.red(`  ${error.message || error.toString()}`));
-    
+
     logger.info(chalk.yellow('\nSystem Status at Failure:'));
     Object.entries(this.systemStatus).forEach(([key, value]) => {
       const icon = value ? '✅' : '❌';

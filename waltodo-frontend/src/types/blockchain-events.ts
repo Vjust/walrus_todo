@@ -36,7 +36,7 @@ export interface TodoNFTTransferredEventData {
 }
 
 // Union type for all event data
-export type TodoNFTEventData = 
+export type TodoNFTEventData =
   | TodoNFTCreatedEventData
   | TodoNFTCompletedEventData
   | TodoNFTUpdatedEventData
@@ -75,7 +75,7 @@ export interface TodoNFTTransferredEvent {
 }
 
 // Union type for all events
-export type TodoNFTEvent = 
+export type TodoNFTEvent =
   | TodoNFTCreatedEvent
   | TodoNFTCompletedEvent
   | TodoNFTUpdatedEvent
@@ -85,11 +85,11 @@ export type TodoNFTEvent =
 // Event listener types
 export type TodoNFTEventListener<T = TodoNFTEvent> = (event: T) => void;
 export type TodoNFTEventListenerMap = {
-  'created': TodoNFTEventListener<TodoNFTCreatedEvent>;
-  'completed': TodoNFTEventListener<TodoNFTCompletedEvent>;
-  'updated': TodoNFTEventListener<TodoNFTUpdatedEvent>;
-  'deleted': TodoNFTEventListener<TodoNFTDeletedEvent>;
-  'transferred': TodoNFTEventListener<TodoNFTTransferredEvent>;
+  created: TodoNFTEventListener<TodoNFTCreatedEvent>;
+  completed: TodoNFTEventListener<TodoNFTCompletedEvent>;
+  updated: TodoNFTEventListener<TodoNFTUpdatedEvent>;
+  deleted: TodoNFTEventListener<TodoNFTDeletedEvent>;
+  transferred: TodoNFTEventListener<TodoNFTTransferredEvent>;
   '*': TodoNFTEventListener<TodoNFTEvent>;
 };
 
@@ -114,7 +114,7 @@ export interface EventSubscriptionConfig {
 }
 
 // Event type enumeration
-export type TodoNFTEventType = 
+export type TodoNFTEventType =
   | 'TodoNFTCreated'
   | 'TodoNFTCompleted'
   | 'TodoNFTUpdated'
@@ -136,7 +136,10 @@ export interface UseBlockchainEventsReturn {
   startSubscription: () => Promise<void>;
   stopSubscription: () => void;
   restartSubscription: () => Promise<void>;
-  addEventListener: (eventType: keyof TodoNFTEventListenerMap, listener: TodoNFTEventListener) => () => void;
+  addEventListener: (
+    eventType: keyof TodoNFTEventListenerMap,
+    listener: TodoNFTEventListener
+  ) => () => void;
   isConnected: boolean;
   isConnecting: boolean;
   error: Error | null;
@@ -185,8 +188,14 @@ export interface IBlockchainEventManager {
   initialize(): Promise<void>;
   subscribeToEvents(owner?: string): Promise<void>;
   unsubscribeAll(): void;
-  addEventListener(eventType: keyof TodoNFTEventListenerMap, listener: TodoNFTEventListener): () => void;
-  removeEventListener(eventType: keyof TodoNFTEventListenerMap, listener: TodoNFTEventListener): void;
+  addEventListener(
+    eventType: keyof TodoNFTEventListenerMap,
+    listener: TodoNFTEventListener
+  ): () => void;
+  removeEventListener(
+    eventType: keyof TodoNFTEventListenerMap,
+    listener: TodoNFTEventListener
+  ): void;
   getConnectionState(): EventConnectionState;
   destroy(): void;
 }

@@ -4,7 +4,7 @@ export enum LogLevel {
   DEBUG = 'debug',
   INFO = 'info',
   WARN = 'warn',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
 export interface LogEntry {
@@ -32,17 +32,24 @@ export class Logger {
   public constructor(componentName: string = '') {
     // Add default console handler
     this.componentName = componentName;
-    this.addHandler((entry) => {
+    this.addHandler(entry => {
       // Skip debug messages unless NODE_ENV is development
-      if (entry.level === LogLevel.DEBUG && process.env.NODE_ENV !== 'development') {
+      if (
+        entry.level === LogLevel.DEBUG &&
+        process.env.NODE_ENV !== 'development'
+      ) {
         return;
       }
 
       const context = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
-      const error = entry.error ? `\n${JSON.stringify(entry.error, null, 2)}` : '';
+      const error = entry.error
+        ? `\n${JSON.stringify(entry.error, null, 2)}`
+        : '';
       const component = this.componentName ? `[${this.componentName}] ` : '';
       // eslint-disable-next-line no-console
-      console[entry.level](`[${entry.timestamp}] ${component}${entry.message}${context}${error}`);
+      console[entry.level](
+        `[${entry.timestamp}] ${component}${entry.message}${context}${error}`
+      );
     });
   }
 
@@ -85,7 +92,7 @@ export class Logger {
       level,
       message,
       timestamp: new Date().toISOString(),
-      context: this.sanitizeContext(context)
+      context: this.sanitizeContext(context),
     };
 
     if (error) {
@@ -93,7 +100,7 @@ export class Logger {
         name: error.name,
         code: error instanceof WalrusError ? error.code : 'UNKNOWN_ERROR',
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       };
     }
 
@@ -116,7 +123,7 @@ export class Logger {
       /token/i,
       /auth/i,
       /signature/i,
-      /seed/i
+      /seed/i,
     ];
 
     for (const [key, value] of Object.entries(context)) {

@@ -14,7 +14,7 @@ describe('store command batch processing', () => {
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    
+
     // Mock TodoService
     todoServiceStub = sandbox.createStubInstance(TodoService);
     todoServiceStub.getList.resolves({
@@ -24,24 +24,26 @@ describe('store command batch processing', () => {
         { id: '2', title: 'Todo 2', completed: false },
         { id: '3', title: 'Todo 3', completed: true },
         { id: '4', title: 'Todo 4', completed: false },
-        { id: '5', title: 'Todo 5', completed: false }
-      ]
+        { id: '5', title: 'Todo 5', completed: false },
+      ],
     });
     todoServiceStub.updateTodo.resolves();
-    
+
     // Mock Walrus storage
     walrusStorageStub = {
       connect: sandbox.stub().resolves(),
       disconnect: sandbox.stub().resolves(),
-      storeTodo: sandbox.stub().resolves('mock-blob-id')
+      storeTodo: sandbox.stub().resolves('mock-blob-id'),
     };
-    sandbox.stub(walrusStorage, 'createWalrusStorage').returns(walrusStorageStub);
-    
+    sandbox
+      .stub(walrusStorage, 'createWalrusStorage')
+      .returns(walrusStorageStub);
+
     // Mock cache
     cacheStub = {
       get: sandbox.stub().resolves(null),
       set: sandbox.stub().resolves(),
-      shutdown: sandbox.stub().resolves()
+      shutdown: sandbox.stub().resolves(),
     };
     sandbox.stub(performanceCache, 'createCache').returns(cacheStub);
   });
@@ -54,7 +56,11 @@ describe('store command batch processing', () => {
     test
       .stdout()
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
-      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
+      .stub(
+        TodoService.prototype,
+        'updateTodo',
+        () => todoServiceStub.updateTodo
+      )
       .command(['store', '--all', '--list', 'test-list', '--mock'])
       .it('uploads all todos in batch', ctx => {
         expect(ctx.stdout).to.contain('Found 5 todo(s) to store');
@@ -68,8 +74,20 @@ describe('store command batch processing', () => {
     test
       .stdout()
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
-      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
-      .command(['store', '--all', '--list', 'test-list', '--batch-size', '2', '--mock'])
+      .stub(
+        TodoService.prototype,
+        'updateTodo',
+        () => todoServiceStub.updateTodo
+      )
+      .command([
+        'store',
+        '--all',
+        '--list',
+        'test-list',
+        '--batch-size',
+        '2',
+        '--mock',
+      ])
       .it('respects batch size configuration', ctx => {
         expect(ctx.stdout).to.contain('Starting batch upload of 5 todos');
         expect(ctx.stdout).to.contain('Batch Upload Summary');
@@ -80,7 +98,11 @@ describe('store command batch processing', () => {
     test
       .stdout()
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
-      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
+      .stub(
+        TodoService.prototype,
+        'updateTodo',
+        () => todoServiceStub.updateTodo
+      )
       .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
       .it('caches uploaded todos', ctx => {
         expect(cacheStub.set.called).to.be.true;
@@ -93,8 +115,12 @@ describe('store command batch processing', () => {
         // Simulate cache hit
         cacheStub.get.resolves('cached-blob-id');
       })
-      .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList) 
-      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
+      .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
+      .stub(
+        TodoService.prototype,
+        'updateTodo',
+        () => todoServiceStub.updateTodo
+      )
       .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
       .it('uses cached blob IDs when available', ctx => {
         expect(cacheStub.get.called).to.be.true;
@@ -110,14 +136,23 @@ describe('store command batch processing', () => {
       .do(() => {
         // Simulate some uploads failing
         walrusStorageStub.storeTodo
-          .onCall(0).resolves('blob-1')
-          .onCall(1).rejects(new Error('Upload failed'))
-          .onCall(2).resolves('blob-3')
-          .onCall(3).rejects(new Error('Network error'))
-          .onCall(4).resolves('blob-5');
+          .onCall(0)
+          .resolves('blob-1')
+          .onCall(1)
+          .rejects(new Error('Upload failed'))
+          .onCall(2)
+          .resolves('blob-3')
+          .onCall(3)
+          .rejects(new Error('Network error'))
+          .onCall(4)
+          .resolves('blob-5');
       })
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
-      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
+      .stub(
+        TodoService.prototype,
+        'updateTodo',
+        () => todoServiceStub.updateTodo
+      )
       .command(['store', '--all', '--list', 'test-list', '--mock'])
       .it('reports failed uploads in batch summary', ctx => {
         expect(ctx.stdout).to.contain('Successful: 3');
@@ -132,7 +167,11 @@ describe('store command batch processing', () => {
     test
       .stdout()
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
-      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
+      .stub(
+        TodoService.prototype,
+        'updateTodo',
+        () => todoServiceStub.updateTodo
+      )
       .command(['store', '--all', '--list', 'test-list', '--mock'])
       .it('shows progress during batch upload', ctx => {
         expect(ctx.stdout).to.contain('Progress:');
@@ -144,19 +183,23 @@ describe('store command batch processing', () => {
     test
       .stdout()
       .stub(TodoService.prototype, 'getList', () => todoServiceStub.getList)
-      .stub(TodoService.prototype, 'updateTodo', () => todoServiceStub.updateTodo)
+      .stub(
+        TodoService.prototype,
+        'updateTodo',
+        () => todoServiceStub.updateTodo
+      )
       .do(() => {
         // Mock filesystem operations
         const fs = require('fs');
         const fsStub = sandbox.stub(fs, 'existsSync');
         sandbox.stub(fs, 'writeFileSync');
         const fsReadStub = sandbox.stub(fs, 'readFileSync');
-        
+
         // Mock existing config directory
         fsStub.withArgs(sinon.match(/\.config.*waltodo/)).returns(true);
         fsStub.withArgs(sinon.match(/blob-mappings\.json/)).returns(false);
         fsReadStub.returns('{}');
-        
+
         // Mock BaseCommand methods
         const StoreCommand = require('../../src/commands/store').default;
         sandbox.spy(StoreCommand.prototype, 'writeFileSafe');
@@ -175,7 +218,9 @@ describe('store command batch processing', () => {
       .stderr()
       .command(['store'])
       .catch(err => {
-        expect(err.message).to.contain('Either --todo or --all must be specified');
+        expect(err.message).to.contain(
+          'Either --todo or --all must be specified'
+        );
       })
       .it('requires either --todo or --all flag');
 

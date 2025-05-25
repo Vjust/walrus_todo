@@ -41,7 +41,7 @@ export class PerformanceCache<T = unknown> {
     evictions: 0,
     totalEntries: 0,
     hitRate: 0,
-    lastReset: new Date()
+    lastReset: new Date(),
   };
   private persistenceTimer?: NodeJS.Timeout;
   private readonly PERSISTENCE_INTERVAL = 60000; // 1 minute
@@ -58,7 +58,7 @@ export class PerformanceCache<T = unknown> {
    */
   async get(key: string): Promise<T | null> {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       this.statistics.misses++;
       this.updateHitRate();
@@ -79,11 +79,13 @@ export class PerformanceCache<T = unknown> {
     // Update access time for LRU
     entry.lastAccessed = Date.now();
     entry.accessCount++;
-    
+
     this.statistics.hits++;
     this.updateHitRate();
-    
-    this.logger.debug(`Cache hit for key: ${key}`, { strategy: this.options.strategy });
+
+    this.logger.debug(`Cache hit for key: ${key}`, {
+      strategy: this.options.strategy,
+    });
     return entry.value;
   }
 
@@ -104,15 +106,15 @@ export class PerformanceCache<T = unknown> {
       timestamp: Date.now(),
       lastAccessed: Date.now(),
       accessCount: 1,
-      ttl: ttlMs || this.options.ttlMs
+      ttl: ttlMs || this.options.ttlMs,
     };
 
     this.cache.set(key, entry);
     this.statistics.totalEntries = this.cache.size;
-    
-    this.logger.debug(`Cache set for key: ${key}`, { 
+
+    this.logger.debug(`Cache set for key: ${key}`, {
       strategy: this.options.strategy,
-      ttl: entry.ttl 
+      ttl: entry.ttl,
     });
   }
 
@@ -121,7 +123,7 @@ export class PerformanceCache<T = unknown> {
    */
   has(key: string): boolean {
     const exists = this.cache.has(key);
-    
+
     if (exists && this.options.strategy === 'TTL') {
       const entry = this.cache.get(key);
       if (entry.ttl) {
@@ -132,7 +134,7 @@ export class PerformanceCache<T = unknown> {
         }
       }
     }
-    
+
     return exists;
   }
 
@@ -142,11 +144,11 @@ export class PerformanceCache<T = unknown> {
   async delete(key: string): Promise<boolean> {
     const deleted = this.cache.delete(key);
     this.statistics.totalEntries = this.cache.size;
-    
+
     if (deleted) {
       this.logger.debug(`Cache delete for key: ${key}`);
     }
-    
+
     return deleted;
   }
 
@@ -176,7 +178,7 @@ export class PerformanceCache<T = unknown> {
       evictions: 0,
       totalEntries: this.cache.size,
       hitRate: 0,
-      lastReset: new Date()
+      lastReset: new Date(),
     };
   }
 
@@ -219,20 +221,20 @@ export class PerformanceCache<T = unknown> {
       const cacheData = {
         entries: Array.from(this.cache.entries()).map(([key, entry]) => ({
           key,
-          entry
+          entry,
         })),
         statistics: this.statistics,
         metadata: {
           savedAt: new Date().toISOString(),
           strategy: this.options.strategy,
-          version: CLI_CONFIG.VERSION
-        }
+          version: CLI_CONFIG.VERSION,
+        },
       };
 
       const cacheFile = path.join(this.options.persistenceDir, 'cache.json');
       await fs.mkdir(this.options.persistenceDir, { recursive: true });
       await fs.writeFile(cacheFile, JSON.stringify(cacheData, null, 2));
-      
+
       this.logger.debug('Cache persisted to disk', { file: cacheFile });
     } catch (error) {
       this.logger.error('Failed to persist cache', error);
@@ -247,7 +249,7 @@ export class PerformanceCache<T = unknown> {
 
     try {
       const cacheFile = path.join(this.options.persistenceDir, 'cache.json');
-      
+
       if (!existsSync(cacheFile)) {
         this.logger.debug('No cache file found to load');
         return;
@@ -265,13 +267,13 @@ export class PerformanceCache<T = unknown> {
       if (cacheData.statistics) {
         this.statistics = {
           ...cacheData.statistics,
-          lastReset: new Date(cacheData.statistics.lastReset)
+          lastReset: new Date(cacheData.statistics.lastReset),
         };
       }
 
-      this.logger.info('Cache loaded from disk', { 
+      this.logger.info('Cache loaded from disk', {
         entries: this.cache.size,
-        savedAt: cacheData.metadata?.savedAt 
+        savedAt: cacheData.metadata?.savedAt,
       });
 
       // Clean up expired entries for TTL strategy
@@ -340,35 +342,41 @@ export function createCache<T>(
     maxSize: 1000,
     ttlMs: AI_CONFIG.CACHE_TTL_MS,
     persistenceDir: path.join(process.cwd(), '.waltodo-cache', name),
-    enableStatistics: true
+    enableStatistics: true,
   };
 
   return new PerformanceCache<T>({
     ...defaultOptions,
-    ...options
+    ...options,
   });
 }
 
 // Predefined cache instances
 export const configCache = createCache<Record<string, unknown>>('config', {
   strategy: 'TTL',
-  ttlMs: 3600000 // 1 hour
+  ttlMs: 3600000, // 1 hour
 });
 
 export const todoListCache = createCache<{ todos: Array<unknown> }>('todos', {
   strategy: 'LRU',
-  maxSize: 100
+  maxSize: 100,
 });
 
-export const blockchainQueryCache = createCache<Record<string, unknown>>('blockchain', {
-  strategy: 'TTL',
-  ttlMs: 300000 // 5 minutes
-});
+export const blockchainQueryCache = createCache<Record<string, unknown>>(
+  'blockchain',
+  {
+    strategy: 'TTL',
+    ttlMs: 300000, // 5 minutes
+  }
+);
 
-export const aiResponseCache = createCache<{ result: unknown; metadata?: Record<string, unknown> }>('ai-responses', {
+export const aiResponseCache = createCache<{
+  result: unknown;
+  metadata?: Record<string, unknown>;
+}>('ai-responses', {
   strategy: 'TTL',
   ttlMs: AI_CONFIG.CACHE_TTL_MS,
-  maxSize: AI_CONFIG.CACHE_MAX_ENTRIES
+  maxSize: AI_CONFIG.CACHE_MAX_ENTRIES,
 });
 
 // Global shutdown hook
@@ -377,6 +385,6 @@ process.on('SIGINT', async () => {
     configCache.shutdown(),
     todoListCache.shutdown(),
     blockchainQueryCache.shutdown(),
-    aiResponseCache.shutdown()
+    aiResponseCache.shutdown(),
   ]);
 });

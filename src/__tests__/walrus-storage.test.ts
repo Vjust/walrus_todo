@@ -1,5 +1,4 @@
 import { WalrusClient } from '@mysten/walrus';
-import { SuiClient } from '@mysten/sui/client';
 import type { BlobObject } from '../types/walrus';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import type { WalrusStorage } from '../utils/walrus-storage';
@@ -23,8 +22,8 @@ jest.mock('@mysten/walrus', () => ({
     getBlobMetadata: jest.fn(),
     getStorageProviders: jest.fn(),
     getBlobSize: jest.fn(),
-    reset: jest.fn()
-  }))
+    reset: jest.fn(),
+  })),
 }));
 
 jest.mock('@mysten/sui/client', () => ({
@@ -34,12 +33,12 @@ jest.mock('@mysten/sui/client', () => ({
     getLatestSuiSystemState: jest.fn(),
     getOwnedObjects: jest.fn(),
     signAndExecuteTransactionBlock: jest.fn(),
-    executeTransactionBlock: jest.fn()
-  }))
+    executeTransactionBlock: jest.fn(),
+  })),
 }));
 
 jest.mock('child_process', () => ({
-  execSync: jest.fn()
+  execSync: jest.fn(),
 }));
 describe('WalrusStorage', () => {
   let mockSuiClient: any;
@@ -67,7 +66,7 @@ describe('WalrusStorage', () => {
       getBlobMetadata: jest.fn(),
       getStorageProviders: jest.fn(),
       getBlobSize: jest.fn(),
-      reset: jest.fn()
+      reset: jest.fn(),
     } as any;
 
     mockSuiClient = {
@@ -76,13 +75,13 @@ describe('WalrusStorage', () => {
       getLatestSuiSystemState: jest.fn(),
       getOwnedObjects: jest.fn(),
       signAndExecuteTransactionBlock: jest.fn(),
-      executeTransactionBlock: jest.fn()
+      executeTransactionBlock: jest.fn(),
     } as any;
 
     // Mock constructor implementations
     (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
     // SuiClient mock already set up in module mock
-    
+
     // Mock execSync
     (execSync as jest.Mock).mockImplementation((cmd: string): string => {
       if (cmd.includes('active-env')) return 'testnet';
@@ -96,48 +95,58 @@ describe('WalrusStorage', () => {
       totalBalance: BigInt(1000),
       coinObjectCount: 1,
       lockedBalance: { number: BigInt(0) },
-      coinObjectId: 'mock-coin-object-id'
+      coinObjectId: 'mock-coin-object-id',
     });
 
     mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '1' });
-    mockSuiClient.getOwnedObjects.mockResolvedValue({ data: [], hasNextPage: false, nextCursor: null });
-    mockSuiClient.signAndExecuteTransactionBlock.mockResolvedValue({ 
-      digest: 'test-digest', 
-      effects: { status: { status: 'success' } } 
+    mockSuiClient.getOwnedObjects.mockResolvedValue({
+      data: [],
+      hasNextPage: false,
+      nextCursor: null,
     });
-    mockSuiClient.executeTransactionBlock.mockResolvedValue({ 
-      digest: 'test-digest', 
-      effects: { status: { status: 'success' } } 
+    mockSuiClient.signAndExecuteTransactionBlock.mockResolvedValue({
+      digest: 'test-digest',
+      effects: { status: { status: 'success' } },
+    });
+    mockSuiClient.executeTransactionBlock.mockResolvedValue({
+      digest: 'test-digest',
+      effects: { status: { status: 'success' } },
     });
 
     mockWalrusClient.connect.mockResolvedValue(undefined);
-    mockWalrusClient.getConfig.mockResolvedValue({ 
-      network: 'testnet', 
-      version: '1.0.0', 
-      maxSize: 10485760 
+    mockWalrusClient.getConfig.mockResolvedValue({
+      network: 'testnet',
+      version: '1.0.0',
+      maxSize: 10485760,
     });
     mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array());
-    mockWalrusClient.writeBlob.mockResolvedValue({ blobId: '', blobObject: {} as BlobObject });
+    mockWalrusClient.writeBlob.mockResolvedValue({
+      blobId: '',
+      blobObject: {} as BlobObject,
+    });
     mockWalrusClient.storageCost.mockResolvedValue({
       storageCost: '100',
       writeCost: '50',
-      totalCost: '150'
+      totalCost: '150',
     });
     mockWalrusClient.executeCreateStorageTransaction.mockResolvedValue({
       storage: {
         id: { id: 'test-storage-id' },
         storage_size: 1000000,
         end_epoch: 100,
-        start_epoch: 1
-      }
+        start_epoch: 1,
+      },
     });
     mockWalrusClient.getWalBalance.mockResolvedValue('1000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({ used: '100000', total: '1000000' });
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '100000',
+      total: '1000000',
+    });
     mockWalrusClient.getBlobInfo.mockResolvedValue({
       blob_id: 'test-blob-id',
       registered_epoch: 1,
       cert_epoch: 2,
-      size: '1024'
+      size: '1024',
     });
     mockWalrusClient.getBlobObject.mockResolvedValue({
       id: { id: 'test-blob-id' },
@@ -150,11 +159,11 @@ describe('WalrusStorage', () => {
           $kind: 'V1',
           encoding_type: {
             RedStuff: true,
-            $kind: 'RedStuff'
+            $kind: 'RedStuff',
           },
           unencoded_length: '1024',
-          hashes: []
-        }
+          hashes: [],
+        },
       },
       cert_epoch: 2,
       storage: {
@@ -162,24 +171,29 @@ describe('WalrusStorage', () => {
         storage_size: '1000000',
         used_size: '1024',
         end_epoch: 100,
-        start_epoch: 1
+        start_epoch: 1,
       },
-      deletable: false
+      deletable: false,
     } as BlobObject);
     mockWalrusClient.verifyPoA.mockResolvedValue(true);
     mockWalrusClient.getBlobMetadata.mockResolvedValue({
       V1: {
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         unencoded_length: '1024',
-        hashes: [{
-          primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-          secondary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' }
-        }],
-        $kind: 'V1'
+        hashes: [
+          {
+            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+            secondary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+          },
+        ],
+        $kind: 'V1',
       },
-      $kind: 'V1'
+      $kind: 'V1',
     });
-    mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+    mockWalrusClient.getStorageProviders.mockResolvedValue([
+      'provider1',
+      'provider2',
+    ]);
     mockWalrusClient.getBlobSize.mockResolvedValue(1024);
 
     // Setup mock todo
@@ -192,7 +206,7 @@ describe('WalrusStorage', () => {
       updatedAt: new Date().toISOString(),
       priority: 'medium',
       tags: [],
-      private: false
+      private: false,
     };
 
     storage = createWalrusStorage();
@@ -200,13 +214,19 @@ describe('WalrusStorage', () => {
 
   describe('retrieveTodo', () => {
     beforeEach(async () => {
-      (WalrusClient as unknown as jest.Mock).mockImplementation(() => mockWalrusClient);
+      (WalrusClient as unknown as jest.Mock).mockImplementation(
+        () => mockWalrusClient
+      );
       await storage.init();
     });
 
     it('should validate input', async () => {
-      await expect(storage.retrieveTodo('')).rejects.toThrow(/Blob ID is required/);
-      await expect(storage.retrieveTodo('   ')).rejects.toThrow(/Blob ID is required/);
+      await expect(storage.retrieveTodo('')).rejects.toThrow(
+        /Blob ID is required/
+      );
+      await expect(storage.retrieveTodo('   ')).rejects.toThrow(
+        /Blob ID is required/
+      );
     });
 
     it('should retrieve from cache if available', async () => {
@@ -237,12 +257,13 @@ describe('WalrusStorage', () => {
       mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array());
 
       // Mock global fetch for aggregator fallback
-      const mockFetch = jest.fn<Promise<Response>, [string, RequestInit?]>()
+      const mockFetch = jest
+        .fn<Promise<Response>, [string, RequestInit?]>()
         .mockRejectedValueOnce(new Error('First attempt failed'))
         .mockRejectedValueOnce(new Error('Second attempt failed'))
         .mockResolvedValueOnce({
           ok: true,
-          arrayBuffer: async () => Buffer.from(JSON.stringify(mockTodo))
+          arrayBuffer: async () => Buffer.from(JSON.stringify(mockTodo)),
         } as unknown as Response);
       global.fetch = mockFetch;
 
@@ -257,8 +278,9 @@ describe('WalrusStorage', () => {
       const mockData = Buffer.from(JSON.stringify(invalidTodo));
       mockWalrusClient.readBlob.mockResolvedValueOnce(mockData);
 
-      await expect(storage.retrieveTodo('test-blob-id'))
-        .rejects.toThrow(/Retrieved todo data is invalid/);
+      await expect(storage.retrieveTodo('test-blob-id')).rejects.toThrow(
+        /Retrieved todo data is invalid/
+      );
     });
 
     it('should handle all retrieval attempts failing', async () => {
@@ -266,13 +288,15 @@ describe('WalrusStorage', () => {
       mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array());
 
       // Mock aggregator failures
-      global.fetch = jest.fn<Promise<Response>, [string, RequestInit?]>()
+      global.fetch = jest
+        .fn<Promise<Response>, [string, RequestInit?]>()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(storage.retrieveTodo('test-blob-id'))
-        .rejects.toThrow(/Failed to retrieve todo after all attempts/);
+      await expect(storage.retrieveTodo('test-blob-id')).rejects.toThrow(
+        /Failed to retrieve todo after all attempts/
+      );
     });
 
     it('should handle invalid JSON data', async () => {
@@ -280,33 +304,42 @@ describe('WalrusStorage', () => {
       const invalidData = Buffer.from('not json');
       mockWalrusClient.readBlob.mockResolvedValueOnce(invalidData);
 
-      await expect(storage.retrieveTodo('test-blob-id'))
-        .rejects.toThrow(/Failed to parse todo data/);
+      await expect(storage.retrieveTodo('test-blob-id')).rejects.toThrow(
+        /Failed to parse todo data/
+      );
     });
   });
 
   describe('storeTodo', () => {
     beforeEach(async () => {
       // Initialize WalrusClient with successful connection
-      (WalrusClient as unknown as jest.Mock).mockImplementation(() => mockWalrusClient);
+      (WalrusClient as unknown as jest.Mock).mockImplementation(
+        () => mockWalrusClient
+      );
       await storage.init();
     });
 
     it('should validate todo data', async () => {
       // Invalid todo with missing fields
       const invalidTodo = { ...mockTodo, title: undefined };
-      await expect(storage.storeTodo(invalidTodo as unknown as Todo))
-        .rejects.toThrow(/Invalid todo: missing or invalid title/);
+      await expect(
+        storage.storeTodo(invalidTodo as unknown as Todo)
+      ).rejects.toThrow(/Invalid todo: missing or invalid title/);
 
       // Invalid todo with wrong data types
-      const wrongTypeTodo = { ...mockTodo, completed: 'yes' as unknown as boolean };
-      await expect(storage.storeTodo(wrongTypeTodo))
-        .rejects.toThrow(/Invalid todo: invalid completed status/);
+      const wrongTypeTodo = {
+        ...mockTodo,
+        completed: 'yes' as unknown as boolean,
+      };
+      await expect(storage.storeTodo(wrongTypeTodo)).rejects.toThrow(
+        /Invalid todo: invalid completed status/
+      );
 
       // Invalid todo with invalid dates
       const invalidDateTodo = { ...mockTodo, createdAt: 'not-a-date' };
-      await expect(storage.storeTodo(invalidDateTodo))
-        .rejects.toThrow(/Invalid todo: invalid createdAt date/);
+      await expect(storage.storeTodo(invalidDateTodo)).rejects.toThrow(
+        /Invalid todo: invalid createdAt date/
+      );
     });
 
     it('should store todo successfully with verification', async () => {
@@ -326,14 +359,14 @@ describe('WalrusStorage', () => {
               $kind: 'V1',
               encoding_type: {
                 RedStuff: true,
-                $kind: 'RedStuff'
+                $kind: 'RedStuff',
               },
               unencoded_length: '1024',
-              hashes: []
-            }
+              hashes: [],
+            },
           },
-          deletable: true
-        }
+          deletable: true,
+        },
       });
 
       // Mock successful read for verification
@@ -356,8 +389,8 @@ describe('WalrusStorage', () => {
             completed: 'false',
             checksum_algo: 'sha256',
             schemaVersion: '1',
-            encoding: 'utf-8'
-          })
+            encoding: 'utf-8',
+          }),
         })
       );
     });
@@ -365,11 +398,12 @@ describe('WalrusStorage', () => {
     it('should handle data size limits', async () => {
       const largeTodo = {
         ...mockTodo,
-        description: 'a'.repeat(11 * 1024 * 1024) // 11MB
+        description: 'a'.repeat(11 * 1024 * 1024), // 11MB
       };
 
-      await expect(storage.storeTodo(largeTodo))
-        .rejects.toThrow(/Todo data is too large/);
+      await expect(storage.storeTodo(largeTodo)).rejects.toThrow(
+        /Todo data is too large/
+      );
     });
 
     it('should verify content integrity with retries', async () => {
@@ -388,21 +422,23 @@ describe('WalrusStorage', () => {
               $kind: 'V1',
               encoding_type: {
                 RedStuff: true,
-                $kind: 'RedStuff'
+                $kind: 'RedStuff',
               },
               unencoded_length: '1024',
-              hashes: []
-            }
+              hashes: [],
+            },
           },
-          deletable: true
-        }
+          deletable: true,
+        },
       });
 
       // First verification attempt: content not found
       mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array());
 
       // Second attempt: wrong size
-      const wrongSizeBuffer = Buffer.from(JSON.stringify({ ...mockTodo, extraData: 'padding' }));
+      const wrongSizeBuffer = Buffer.from(
+        JSON.stringify({ ...mockTodo, extraData: 'padding' })
+      );
       mockWalrusClient.readBlob.mockResolvedValueOnce(wrongSizeBuffer);
 
       // Third attempt: success
@@ -430,22 +466,22 @@ describe('WalrusStorage', () => {
               $kind: 'V1',
               encoding_type: {
                 RedStuff: true,
-                $kind: 'RedStuff'
+                $kind: 'RedStuff',
               },
               unencoded_length: '1024',
-              hashes: []
-            }
+              hashes: [],
+            },
           },
-          deletable: true
-        }
+          deletable: true,
+        },
       });
 
       // All verification attempts fail
-      mockWalrusClient.readBlob
-        .mockResolvedValue(new Uint8Array());
+      mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array());
 
-      await expect(storage.storeTodo(mockTodo))
-        .rejects.toThrow(/Failed to verify uploaded content after 3 attempts/);
+      await expect(storage.storeTodo(mockTodo)).rejects.toThrow(
+        /Failed to verify uploaded content after 3 attempts/
+      );
       expect(mockWalrusClient.readBlob).toHaveBeenCalledTimes(3);
     });
 
@@ -465,19 +501,20 @@ describe('WalrusStorage', () => {
               $kind: 'V1',
               encoding_type: {
                 RedStuff: true,
-                $kind: 'RedStuff'
+                $kind: 'RedStuff',
               },
               unencoded_length: '1024',
-              hashes: []
-            }
+              hashes: [],
+            },
           },
-          deletable: true
-        }
+          deletable: true,
+        },
       });
       mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array()); // Verification fails
 
-      await expect(storage.storeTodo(mockTodo))
-        .rejects.toThrow(/Failed to verify uploaded content/);
+      await expect(storage.storeTodo(mockTodo)).rejects.toThrow(
+        /Failed to verify uploaded content/
+      );
     });
 
     it('should retry on transient errors', async () => {
@@ -498,14 +535,14 @@ describe('WalrusStorage', () => {
                 $kind: 'V1',
                 encoding_type: {
                   RedStuff: true,
-                  $kind: 'RedStuff'
+                  $kind: 'RedStuff',
                 },
                 unencoded_length: '1024',
-                hashes: []
-              }
+                hashes: [],
+              },
             },
-            deletable: true
-          }
+            deletable: true,
+          },
         });
 
       const mockTodoBuffer = Buffer.from(JSON.stringify(mockTodo));
@@ -518,8 +555,9 @@ describe('WalrusStorage', () => {
 
     it('should handle insufficient WAL tokens', async () => {
       // Mock storage allocation failure
-      mockWalrusClient.executeCreateStorageTransaction
-        .mockRejectedValueOnce(new Error('insufficient WAL tokens'));
+      mockWalrusClient.executeCreateStorageTransaction.mockRejectedValueOnce(
+        new Error('insufficient WAL tokens')
+      );
 
       // Mock low WAL balance
       mockSuiClient.getBalance.mockResolvedValueOnce({
@@ -527,17 +565,19 @@ describe('WalrusStorage', () => {
         totalBalance: BigInt(50), // Below minimum required
         coinObjectCount: 1,
         lockedBalance: { number: BigInt(0) },
-        coinObjectId: 'mock-coin-object-id'
+        coinObjectId: 'mock-coin-object-id',
       });
 
-      await expect(storage.storeTodo(mockTodo))
-        .rejects.toThrow(/Insufficient WAL tokens/);
+      await expect(storage.storeTodo(mockTodo)).rejects.toThrow(
+        /Insufficient WAL tokens/
+      );
     });
 
     it('should handle storage allocation failures gracefully', async () => {
       // Mock storage allocation failure
-      mockWalrusClient.executeCreateStorageTransaction
-        .mockRejectedValueOnce(new Error('storage allocation error'));
+      mockWalrusClient.executeCreateStorageTransaction.mockRejectedValueOnce(
+        new Error('storage allocation error')
+      );
 
       // Mock sufficient WAL balance to test other errors
       mockSuiClient.getBalance.mockResolvedValueOnce({
@@ -545,11 +585,12 @@ describe('WalrusStorage', () => {
         totalBalance: BigInt(1000),
         coinObjectCount: 1,
         lockedBalance: { number: BigInt(0) },
-        coinObjectId: 'mock-coin-object-id'
+        coinObjectId: 'mock-coin-object-id',
       });
 
-      await expect(storage.storeTodo(mockTodo))
-        .rejects.toThrow(/Failed to allocate storage/);
+      await expect(storage.storeTodo(mockTodo)).rejects.toThrow(
+        /Failed to allocate storage/
+      );
     });
 
     it('should handle mock mode correctly', async () => {
@@ -562,61 +603,74 @@ describe('WalrusStorage', () => {
 
   describe('ensureStorageAllocated', () => {
     beforeEach(async () => {
-      (WalrusClient as unknown as jest.Mock).mockImplementation(() => mockWalrusClient);
+      (WalrusClient as unknown as jest.Mock).mockImplementation(
+        () => mockWalrusClient
+      );
       await storage.init();
     });
 
     it('should allocate new storage if none exists', async () => {
-      mockSuiClient.getOwnedObjects.mockResolvedValueOnce({ data: [], hasNextPage: false, nextCursor: null });
-      
+      mockSuiClient.getOwnedObjects.mockResolvedValueOnce({
+        data: [],
+        hasNextPage: false,
+        nextCursor: null,
+      });
+
       const result = await storage.ensureStorageAllocated(1000000, 5);
       expect(result).toBeTruthy();
-      expect(mockWalrusClient.executeCreateStorageTransaction).toHaveBeenCalledWith(
+      expect(
+        mockWalrusClient.executeCreateStorageTransaction
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           storageSize: 1000000,
-          epochs: 52
+          epochs: 52,
         })
       );
     });
 
     it('should reuse existing storage if suitable', async () => {
       mockSuiClient.getOwnedObjects.mockResolvedValueOnce({
-        data: [{
-          data: {
-            objectId: 'existing-storage',
-            digest: '0xdigest',
-            version: '1',
-            type: '0x2::storage::Storage',
-            owner: { AddressOwner: 'owner' },
-            previousTransaction: '0xtx',
-            storageRebate: '0',
-            content: {
-              dataType: 'moveObject',
+        data: [
+          {
+            data: {
+              objectId: 'existing-storage',
+              digest: '0xdigest',
+              version: '1',
               type: '0x2::storage::Storage',
-              hasPublicTransfer: true,
-              fields: {
-                storage_size: '2000000',
-                used_size: '100000',
-                end_epoch: '200',
-                id: { id: 'storage1' },
-                start_epoch: '100'
-              }
-            }
+              owner: { AddressOwner: 'owner' },
+              previousTransaction: '0xtx',
+              storageRebate: '0',
+              content: {
+                dataType: 'moveObject',
+                type: '0x2::storage::Storage',
+                hasPublicTransfer: true,
+                fields: {
+                  storage_size: '2000000',
+                  used_size: '100000',
+                  end_epoch: '200',
+                  id: { id: 'storage1' },
+                  start_epoch: '100',
+                },
+              },
+            },
+            error: null,
           },
-          error: null
-        }],
+        ],
         hasNextPage: false,
-        nextCursor: null
+        nextCursor: null,
       });
 
       const result = await storage.ensureStorageAllocated(1000000, 5);
       expect(result).toBeTruthy();
-      expect(mockWalrusClient.executeCreateStorageTransaction).not.toHaveBeenCalled();
+      expect(
+        mockWalrusClient.executeCreateStorageTransaction
+      ).not.toHaveBeenCalled();
     });
 
     it('should handle insufficient WAL tokens', async () => {
-      mockWalrusClient.executeCreateStorageTransaction
-        .mockRejectedValueOnce(new Error('insufficient WAL tokens'));
+      mockWalrusClient.executeCreateStorageTransaction.mockRejectedValueOnce(
+        new Error('insufficient WAL tokens')
+      );
 
       const result = await storage.ensureStorageAllocated(1000000, 5);
       expect(result).toBeFalsy();

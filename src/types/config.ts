@@ -42,7 +42,7 @@ export interface AccountConfig {
  */
 export interface StorageConfig {
   defaultSize: number;
-  defaultEpochs: number; 
+  defaultEpochs: number;
   replicationFactor: number;
   directory: string;
   temporaryDirectory: string;
@@ -166,7 +166,9 @@ export interface LibraryAdapterOptions {
   strictTypeChecking?: boolean;
   adapterFactory?: {
     signer?: (signer: Signer | Ed25519Keypair) => SignerAdapter;
-    transaction?: (tx: Transaction | TransactionBlock) => TransactionBlockAdapter;
+    transaction?: (
+      tx: Transaction | TransactionBlock
+    ) => TransactionBlockAdapter;
     walrusClient?: (client: unknown) => WalrusClientAdapter;
   };
 }
@@ -203,7 +205,10 @@ export interface WalrusClientAdapterOptions {
  * @param message Optional error message
  * @returns The value cast to the specified type
  */
-export function assertDefined<T>(value: T | undefined | null, message?: string): T {
+export function assertDefined<T>(
+  value: T | undefined | null,
+  message?: string
+): T {
   if (value === undefined || value === null) {
     throw new Error(message || 'Value is undefined or null');
   }
@@ -275,11 +280,11 @@ export function isCompatibleType<T>(
   if (!value || typeof value !== 'object') {
     return false;
   }
-  
+
   if (typeGuard && !typeGuard(value)) {
     return false;
   }
-  
+
   return properties.every(prop => prop in value);
 }
 

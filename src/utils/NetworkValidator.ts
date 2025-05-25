@@ -24,7 +24,7 @@ export class NetworkValidator {
     try {
       const output = execSync('sui client active-env', { encoding: 'utf8' });
       const environment = output.trim().toLowerCase() as NetworkEnvironment;
-      
+
       if (!this.isValidEnvironment(environment)) {
         throw new WalrusError(`Invalid Sui environment: ${environment}`);
       }
@@ -45,7 +45,9 @@ export class NetworkValidator {
    * @param walrusClient The Walrus client instance
    * @returns The active Walrus network environment
    */
-  private async getWalrusEnvironment(walrusClient: WalrusClientExt): Promise<NetworkEnvironment> {
+  private async getWalrusEnvironment(
+    walrusClient: WalrusClientExt
+  ): Promise<NetworkEnvironment> {
     try {
       const config = await walrusClient.getConfig();
       const environment = config?.network?.toLowerCase() as NetworkEnvironment;
@@ -67,7 +69,9 @@ export class NetworkValidator {
    * @param environment The environment string to validate
    * @returns True if valid, false otherwise
    */
-  private isValidEnvironment(environment: string): environment is NetworkEnvironment {
+  private isValidEnvironment(
+    environment: string
+  ): environment is NetworkEnvironment {
     return ['mainnet', 'testnet', 'devnet', 'localnet'].includes(environment);
   }
 
@@ -77,7 +81,9 @@ export class NetworkValidator {
    */
   private switchSuiEnvironment(targetEnvironment: NetworkEnvironment): void {
     try {
-      execSync(`sui client switch --env ${targetEnvironment}`, { encoding: 'utf8' });
+      execSync(`sui client switch --env ${targetEnvironment}`, {
+        encoding: 'utf8',
+      });
     } catch (error) {
       throw new WalrusError(
         `Failed to switch Sui environment: ${error instanceof Error ? error.message : String(error)}`
@@ -90,7 +96,9 @@ export class NetworkValidator {
    * @param walrusClient The Walrus client instance
    * @throws {WalrusError} if validation fails
    */
-  public async validateEnvironment(walrusClient: WalrusClientExt): Promise<void> {
+  public async validateEnvironment(
+    walrusClient: WalrusClientExt
+  ): Promise<void> {
     // Get current environments
     const suiEnvironment = this.getSuiEnvironment();
     const walrusEnvironment = await this.getWalrusEnvironment(walrusClient);
@@ -130,8 +138,9 @@ export class NetworkValidator {
     return {
       suiEnvironment,
       walrusEnvironment,
-      isValid: suiEnvironment === walrusEnvironment && 
-               suiEnvironment === this.config.expectedEnvironment
+      isValid:
+        suiEnvironment === walrusEnvironment &&
+        suiEnvironment === this.config.expectedEnvironment,
     };
   }
 }

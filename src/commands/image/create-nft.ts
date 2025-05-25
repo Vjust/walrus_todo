@@ -19,13 +19,14 @@ import { configService } from '../../services/config-service';
  * @param {string} list - The name of the todo list containing the specified todo item. (Required flag: -l, --list)
  */
 export default class CreateNftCommand extends BaseCommand {
-  static description = 'Mint an NFT on Sui blockchain from a todo image stored in Walrus';
+  static description =
+    'Mint an NFT on Sui blockchain from a todo image stored in Walrus';
 
   static examples = [
     '<%= config.bin %> image create-nft --todo 123 --list my-todos                # Create NFT',
     '<%= config.bin %> image create-nft -t "Buy milk" -l shopping                 # Create by title',
     '<%= config.bin %> image create-nft --todo task-456 --list work --network testnet  # On testnet',
-    '<%= config.bin %> image create-nft --todo 789 --list personal --gas-budget 100000000  # Custom gas'
+    '<%= config.bin %> image create-nft --todo 789 --list personal --gas-budget 100000000  # Custom gas',
   ];
 
   static flags = {
@@ -51,28 +52,38 @@ export default class CreateNftCommand extends BaseCommand {
       // Get the todo item
       const todoItem = await todoService.getTodo(flags.todo, flags.list);
       if (!todoItem) {
-        throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list}`, 'TODO_NOT_FOUND');
+        throw new CLIError(
+          `Todo with ID ${flags.todo} not found in list ${flags.list}`,
+          'TODO_NOT_FOUND'
+        );
       }
 
       if (!todoItem.imageUrl) {
-        throw new CLIError('No image URL found for this todo. Please upload an image first using "image upload".', 'NO_IMAGE_URL');
+        throw new CLIError(
+          'No image URL found for this todo. Please upload an image first using "image upload".',
+          'NO_IMAGE_URL'
+        );
       }
 
       const blobId = todoItem.imageUrl.split('/').pop() || '';
 
       if (!config.lastDeployment?.packageId) {
-        throw new CLIError('Todo NFT module address not configured. Please deploy the NFT module first.', 'NOT_DEPLOYED');
+        throw new CLIError(
+          'Todo NFT module address not configured. Please deploy the NFT module first.',
+          'NOT_DEPLOYED'
+        );
       }
 
       // Setup SuiClient with type assertion for network
-      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS] });
+      const suiClient = new SuiClient({
+        url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS],
+      });
 
       // Initialize Sui NFT storage
-      const suiNftStorage = new SuiNftStorage(
-        suiClient,
-        {} as Ed25519Keypair,
-        { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId }
-      );
+      const suiNftStorage = new SuiNftStorage(suiClient, {} as Ed25519Keypair, {
+        address: config.lastDeployment.packageId,
+        packageId: config.lastDeployment.packageId,
+      });
 
       // Create NFT
       this.log('Creating NFT on Sui blockchain...');
@@ -84,12 +95,17 @@ export default class CreateNftCommand extends BaseCommand {
       this.log(`   - Title: ${todoItem.title}`);
       this.log(`   - Image URL: ${todoItem.imageUrl}`);
       this.log(`   - Walrus Blob ID: ${blobId}`);
-      this.log('\nYou can view this NFT in your wallet with the embedded image from Walrus.');
+      this.log(
+        '\nYou can view this NFT in your wallet with the embedded image from Walrus.'
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to create NFT: ${error instanceof Error ? error.message : String(error)}`, 'NFT_CREATE_FAILED');
+      throw new CLIError(
+        `Failed to create NFT: ${error instanceof Error ? error.message : String(error)}`,
+        'NFT_CREATE_FAILED'
+      );
     }
   }
 }

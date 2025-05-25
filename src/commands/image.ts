@@ -24,14 +24,15 @@ import * as path from 'path';
  * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
  */
 export default class ImageCommand extends BaseCommand {
-  static description = 'Upload images to Walrus storage and create NFTs from todo items with associated images';
+  static description =
+    'Upload images to Walrus storage and create NFTs from todo items with associated images';
 
   static examples = [
     '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png  # Upload image',
     '<%= config.bin %> image create-nft --todo 123 --list my-todos                   # Create NFT',
     '<%= config.bin %> image list --list my-todos                                    # List todo images',
     '<%= config.bin %> image upload --todo "Buy milk" --list shopping --image photo.jpg',
-    '<%= config.bin %> image create-nft --todo task-456 --list work --network testnet'
+    '<%= config.bin %> image create-nft --todo task-456 --list work --network testnet',
   ];
 
   static args = {
@@ -75,10 +76,10 @@ export default class ImageCommand extends BaseCommand {
         url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS],
         core: {},
         jsonRpc: {},
-        signAndExecuteTransaction: async () => { },
+        signAndExecuteTransaction: async () => {},
         getEpochMetrics: async () => null,
         getObject: async () => null,
-        getTransactionBlock: async () => null
+        getTransactionBlock: async () => null,
       } as unknown as SuiClient;
 
       // Initialize WalrusImageStorage
@@ -88,7 +89,7 @@ export default class ImageCommand extends BaseCommand {
       if (args.action === 'list') {
         const allLists = await todoService.getAllLists();
         let foundImages = false;
-        
+
         this.log('📷 Todos with associated images:');
         for (const listName of allLists) {
           const list = await todoService.getList(listName);
@@ -103,24 +104,32 @@ export default class ImageCommand extends BaseCommand {
             }
           }
         }
-        
+
         if (!foundImages) {
           this.log('⚠️ No todos with images found');
           this.log('\nTo add an image to a todo, use:');
-          this.log('  waltodo image upload --todo <id> --list <list> [--image <path>]');
+          this.log(
+            '  waltodo image upload --todo <id> --list <list> [--image <path>]'
+          );
         }
         return;
       }
-      
+
       // For upload and create-nft actions, we need a todo item
       if (!flags.todo || !flags.list) {
-        throw new CLIError(`Todo ID (--todo) and list name (--list) are required for ${args.action} action`, 'MISSING_PARAMETERS');
+        throw new CLIError(
+          `Todo ID (--todo) and list name (--list) are required for ${args.action} action`,
+          'MISSING_PARAMETERS'
+        );
       }
-      
+
       // Get the todo item
       const todoItem = await todoService.getTodo(flags.todo, flags.list);
       if (!todoItem) {
-        throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list}`, 'TODO_NOT_FOUND');
+        throw new CLIError(
+          `Todo with ID ${flags.todo} not found in list ${flags.list}`,
+          'TODO_NOT_FOUND'
+        );
       }
 
       // Connect to Walrus
@@ -136,7 +145,11 @@ export default class ImageCommand extends BaseCommand {
         if (flags.image) {
           // Resolve relative path to absolute
           const absoluteImagePath = path.resolve(process.cwd(), flags.image);
-          imageUrl = await walrusImageStorage.uploadTodoImage(absoluteImagePath, todoItem.title, todoItem.completed);
+          imageUrl = await walrusImageStorage.uploadTodoImage(
+            absoluteImagePath,
+            todoItem.title,
+            todoItem.completed
+          );
         } else {
           // Use default image
           imageUrl = await walrusImageStorage.uploadDefaultImage();
@@ -148,7 +161,7 @@ export default class ImageCommand extends BaseCommand {
         // Update todo with image URL
         const updatedTodo = {
           ...todoItem,
-          imageUrl
+          imageUrl,
         };
         await todoService.updateTodo(flags.todo, flags.list, updatedTodo);
 
@@ -164,20 +177,24 @@ export default class ImageCommand extends BaseCommand {
       } else if (args.action === 'create-nft') {
         // Create NFT logic (requires image URL and blob ID)
         if (!todoItem.imageUrl) {
-          throw new CLIError('No image URL found for this todo. Please upload an image first using "upload" action.', 'NO_IMAGE_URL');
+          throw new CLIError(
+            'No image URL found for this todo. Please upload an image first using "upload" action.',
+            'NO_IMAGE_URL'
+          );
         }
         const blobId = todoItem.imageUrl.split('/').pop() || '';
 
         if (!config.lastDeployment?.packageId) {
-          throw new CLIError('Todo NFT module address is not configured. Please deploy the NFT module first.');
+          throw new CLIError(
+            'Todo NFT module address is not configured. Please deploy the NFT module first.'
+          );
         }
 
         this.log('Creating NFT on Sui blockchain...');
-        const nftStorage = new SuiNftStorage(
-          suiClient,
-          {} as Ed25519Keypair,
-          { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId }
-        );
+        const nftStorage = new SuiNftStorage(suiClient, {} as Ed25519Keypair, {
+          address: config.lastDeployment.packageId,
+          packageId: config.lastDeployment.packageId,
+        });
 
         // Create NFT with todo data and blob ID
         const txDigest = await nftStorage.createTodoNft(todoItem, blobId);
@@ -187,9 +204,14 @@ export default class ImageCommand extends BaseCommand {
         this.log(`   - Title: ${todoItem.title}`);
         this.log(`   - Image URL: ${todoItem.imageUrl}`);
         this.log(`   - Walrus Blob ID: ${blobId}`);
-        this.log('\nYou can view this NFT in your wallet with the embedded image from Walrus.');
+        this.log(
+          '\nYou can view this NFT in your wallet with the embedded image from Walrus.'
+        );
       } else {
-        throw new CLIError(`Invalid action: ${args.action}. Use 'upload', 'create-nft', or 'list'.`, 'INVALID_ACTION');
+        throw new CLIError(
+          `Invalid action: ${args.action}. Use 'upload', 'create-nft', or 'list'.`,
+          'INVALID_ACTION'
+        );
       }
     } catch (error) {
       if (error instanceof CLIError) {

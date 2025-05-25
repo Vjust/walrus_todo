@@ -12,7 +12,7 @@ const logger = new Logger('error');
 /**
  * Interface for objects that have a message property.
  * Used as the minimal requirement for error-like objects.
- * 
+ *
  * @interface ErrorWithMessage
  * @property {string} message - The error message
  */
@@ -23,11 +23,11 @@ export interface ErrorWithMessage {
 /**
  * Type guard for ErrorWithMessage interface.
  * Used to safely determine if an unknown object conforms to the ErrorWithMessage interface.
- * 
+ *
  * @function isErrorWithMessage
  * @param {unknown} error - The value to check
  * @returns {boolean} True if the object is an ErrorWithMessage, false otherwise
- * 
+ *
  * @example
  * if (isErrorWithMessage(result)) {
  *   logger.error(result.message);
@@ -45,11 +45,11 @@ export function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
 /**
  * Converts any error-like object into a normalized ErrorWithMessage.
  * This ensures consistent error handling regardless of the original error type.
- * 
+ *
  * @function toErrorWithMessage
  * @param {unknown} maybeError - Any value that might be an error
  * @returns {ErrorWithMessage} A normalized error with a message property
- * 
+ *
  * @example
  * try {
  *   // some operation
@@ -73,11 +73,11 @@ export function toErrorWithMessage(maybeError: unknown): ErrorWithMessage {
 /**
  * Extracts a human-readable error message from any error-like object.
  * Useful for logging and displaying errors to users.
- * 
+ *
  * @function getErrorMessage
  * @param {unknown} error - Any value that might be an error
  * @returns {string} The error message as a string
- * 
+ *
  * @example
  * try {
  *   await todoService.create(input);
@@ -93,11 +93,11 @@ export function getErrorMessage(error: unknown): string {
  * Base class for all CLI errors in the application.
  * Provides consistent structure for application-specific errors
  * with support for error codes.
- * 
+ *
  * @class CLIError
  * @extends Error
  * @property {string} code - A categorized error code for programmatic handling
- * 
+ *
  * @example
  * throw new CLIError('Failed to retrieve todos', 'TODO_FETCH_ERROR');
  */
@@ -106,7 +106,7 @@ export class CLIError extends Error {
 
   /**
    * Creates a new CLIError instance.
-   * 
+   *
    * @param {string} message - The error message
    * @param {string} [code='GENERAL_ERROR'] - An error code for categorization
    */
@@ -121,17 +121,17 @@ export class CLIError extends Error {
  * Specialized error class for Walrus-specific operations.
  * Used for errors related to Walrus storage, blockchain interactions,
  * and other Walrus-specific functionality.
- * 
+ *
  * @class WalrusError
  * @extends CLIError
- * 
+ *
  * @example
  * throw new WalrusError('Failed to upload to Walrus storage', 'STORAGE_ERROR');
  */
 export class WalrusError extends CLIError {
   /**
    * Creates a new WalrusError instance.
-   * 
+   *
    * @param {string} message - The error message
    * @param {string} [code='WALRUS_ERROR'] - A specific error code for Walrus operations
    */
@@ -149,7 +149,7 @@ export class WalrusError extends CLIError {
       code: this.code,
       message: this.message,
       timestamp: new Date().toISOString(),
-      shouldRetry: false
+      shouldRetry: false,
     };
   }
 }

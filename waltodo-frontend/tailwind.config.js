@@ -29,17 +29,18 @@ module.exports = {
         'dream-purple': '#7209b7',
         'dream-violet': '#9d4edd',
         'dream-teal': '#48bfe3',
-        'coral': '#ff7f50',
-        'sand': '#f5e1c0',
+        coral: '#ff7f50',
+        sand: '#f5e1c0',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'ocean-wave': 'url("/images/ocean-wave.svg")',
       },
       animation: {
-        'wave': 'wave 8s ease-in-out infinite',
-        'float': 'float 6s ease-in-out infinite',
+        wave: 'wave 8s ease-in-out infinite',
+        float: 'float 6s ease-in-out infinite',
       },
       keyframes: {
         wave: {
@@ -52,10 +53,10 @@ module.exports = {
         },
       },
       boxShadow: {
-        'dreamy': '0 4px 30px rgba(0, 105, 148, 0.3)',
-        'underwater': '0 8px 32px rgba(144, 224, 239, 0.3)',
+        dreamy: '0 4px 30px rgba(0, 105, 148, 0.3)',
+        underwater: '0 8px 32px rgba(144, 224, 239, 0.3)',
       },
     },
   },
   plugins: [],
-}
+};

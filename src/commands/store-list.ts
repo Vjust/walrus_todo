@@ -18,7 +18,8 @@ import { TodoList } from '../types/todo';
  * and provides detailed feedback on the storage process.
  */
 export default class StoreListCommand extends BaseCommand {
-  static description = 'Store an entire todo list on blockchain with Walrus storage';
+  static description =
+    'Store an entire todo list on blockchain with Walrus storage';
 
   static examples = [
     '<%= config.bin %> store-list --file ./my-list.json                  # Store from file',
@@ -26,24 +27,24 @@ export default class StoreListCommand extends BaseCommand {
     '<%= config.bin %> store-list --list my-todos                        # Store existing list',
     '<%= config.bin %> store-list --list my-todos --network testnet      # Use testnet',
     '<%= config.bin %> store-list --list work --epochs 20                # Store for 20 epochs',
-    '<%= config.bin %> store-list --file todos.json --create-nft         # Store and create NFT'
+    '<%= config.bin %> store-list --file todos.json --create-nft         # Store and create NFT',
   ];
 
   static flags = {
     ...BaseCommand.flags,
     mock: Flags.boolean({
       description: 'Use mock mode for testing',
-      default: false
+      default: false,
     }),
     file: Flags.string({
       char: 'f',
       description: 'Path to a JSON file containing the todo list',
-      exclusive: ['list']
+      exclusive: ['list'],
     }),
     list: Flags.string({
       char: 'l',
       description: 'Name of the todo list to store',
-      exclusive: ['file']
+      exclusive: ['file'],
     }),
     network: Flags.string({
       char: 'n',
@@ -57,7 +58,7 @@ export default class StoreListCommand extends BaseCommand {
    * @private
    */
   private walrusStorage = createWalrusStorage('testnet', false);
-  
+
   /**
    * Start a spinner with the given text message
    * @param text The text to display alongside the spinner
@@ -85,18 +86,21 @@ export default class StoreListCommand extends BaseCommand {
   async run(): Promise<void> {
     try {
       const { flags } = await this.parse(StoreListCommand);
-      
+
       this.startSpinner('Loading configuration...');
       const config = await configService.getConfig();
-      
+
       const network = flags.network || config.network || 'testnet';
       const mockMode = flags.mock || false;
 
       this.walrusStorage = createWalrusStorage(network, mockMode);
-      
+
       // Validate network configuration
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
-        throw new CLIError(`Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`, 'INVALID_NETWORK');
+        throw new CLIError(
+          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`,
+          'INVALID_NETWORK'
+        );
       }
 
       // Validate deployment information
@@ -110,14 +114,14 @@ export default class StoreListCommand extends BaseCommand {
 
       // Load the list data
       let todoList: TodoList;
-      
+
       if (flags.file) {
         // Load from file
         const filePath = path.resolve(process.cwd(), flags.file);
         if (!fs.existsSync(filePath)) {
           throw new CLIError(`File not found: ${filePath}`, 'FILE_NOT_FOUND');
         }
-        
+
         try {
           const fileContent = fs.readFileSync(filePath, 'utf-8');
           try {
@@ -144,11 +148,17 @@ export default class StoreListCommand extends BaseCommand {
         // Load from local storage
         const listFromStorage = await configService.getLocalTodos(flags.list);
         if (!listFromStorage) {
-          throw new CLIError(`List "${flags.list}" not found`, 'LIST_NOT_FOUND');
+          throw new CLIError(
+            `List "${flags.list}" not found`,
+            'LIST_NOT_FOUND'
+          );
         }
         todoList = listFromStorage;
       } else {
-        throw new CLIError('Either --file or --list must be provided', 'MISSING_PARAMETER');
+        throw new CLIError(
+          'Either --file or --list must be provided',
+          'MISSING_PARAMETER'
+        );
       }
 
       // Validate the list structure
@@ -161,7 +171,7 @@ export default class StoreListCommand extends BaseCommand {
 
       // Initialize SUI client
       const networkUrl = NETWORK_URLS[network as keyof typeof NETWORK_URLS];
-      
+
       /**
        * SUI client object for blockchain interactions
        * In mock mode, this is a minimal mock implementation
@@ -172,29 +182,35 @@ export default class StoreListCommand extends BaseCommand {
         url: networkUrl,
         core: {},
         jsonRpc: {},
-        signAndExecuteTransaction: async () => { },
+        signAndExecuteTransaction: async () => {},
         getEpochMetrics: async () => null,
         getObject: async () => null,
-        getTransactionBlock: async () => null
+        getTransactionBlock: async () => null,
       } as unknown as SuiClient;
-      
+
       // Initialize and validate Walrus storage connection
       this.startSpinner('Connecting to Walrus storage...');
       await this.walrusStorage.connect();
       const isConnected = this.walrusStorage.getConnectionStatus();
       if (!isConnected) {
-        throw new CLIError('Failed to establish connection with Walrus storage', 'WALRUS_CONNECTION_FAILED');
+        throw new CLIError(
+          'Failed to establish connection with Walrus storage',
+          'WALRUS_CONNECTION_FAILED'
+        );
       }
       this.stopSpinner(true, 'Connected to Walrus storage');
 
       // Store list on Walrus
       this.startSpinner(`Storing todo list "${todoList.name}" on Walrus...`);
-      
+
       try {
         // Pre-upload validation
         this.startSpinner('Validating list data...');
         if (!todoList.name || !Array.isArray(todoList.todos)) {
-          throw new CLIError('Invalid list: missing name or todos array', 'VALIDATION_ERROR');
+          throw new CLIError(
+            'Invalid list: missing name or todos array',
+            'VALIDATION_ERROR'
+          );
         }
         this.stopSpinner(true, 'List data validated');
 
@@ -220,19 +236,28 @@ export default class StoreListCommand extends BaseCommand {
         }
 
         // Display success message
-        this.log('\n' + chalk.green.bold('✨ Todo list successfully stored! ✨'));
+        this.log(
+          '\n' + chalk.green.bold('✨ Todo list successfully stored! ✨')
+        );
         this.log('\n' + chalk.blue.bold('Storage Summary:'));
         this.log(chalk.dim('----------------------------------------'));
         this.log(chalk.green('✓ List name:'), chalk.cyan(todoList.name));
-        this.log(chalk.green('✓ Total todos:'), chalk.cyan(todoList.todos.length));
-        this.log(chalk.green('✓ Stored on Walrus with blob ID:'), chalk.dim(blobId));
+        this.log(
+          chalk.green('✓ Total todos:'),
+          chalk.cyan(todoList.todos.length)
+        );
+        this.log(
+          chalk.green('✓ Stored on Walrus with blob ID:'),
+          chalk.dim(blobId)
+        );
         this.log(chalk.green('✓ Network:'), chalk.cyan(network));
 
         this.log('\n' + chalk.blue.bold('How to Retrieve:'));
         this.log(chalk.dim('----------------------------------------'));
         this.log(chalk.yellow('1. By blob ID:'));
-        this.log(chalk.dim(`   ${this.config.bin} retrieve --blob-id ${blobId}`));
-
+        this.log(
+          chalk.dim(`   ${this.config.bin} retrieve --blob-id ${blobId}`)
+        );
       } catch (error) {
         throw error; // Let the outer error handler deal with it
       } finally {

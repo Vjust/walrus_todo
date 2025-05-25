@@ -1,5 +1,5 @@
 import { Todo, TodoList } from '../types/todo';
-import { validateTodo, validateTodoList, TodoSchemaType, TodoListSchemaType } from './validation/schemas';
+import { validateTodo, validateTodoList } from './validation/schemas';
 import { CLIError } from '../types/errors/consolidated';
 
 /**
@@ -54,14 +54,19 @@ export class TodoSerializer {
   /**
    * Safe deserialization that returns result object instead of throwing
    */
-  static safeBufferToTodo(buffer: Buffer): { success: true; data: Todo } | { success: false; error: string } {
+  static safeBufferToTodo(
+    buffer: Buffer
+  ): { success: true; data: Todo } | { success: false; error: string } {
     try {
       const todo = this.bufferToTodo(buffer);
       return { success: true, data: todo };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown deserialization error'
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unknown deserialization error',
       };
     }
   }
@@ -69,14 +74,19 @@ export class TodoSerializer {
   /**
    * Safe deserialization for todo lists
    */
-  static safeBufferToTodoList(buffer: Buffer): { success: true; data: TodoList } | { success: false; error: string } {
+  static safeBufferToTodoList(
+    buffer: Buffer
+  ): { success: true; data: TodoList } | { success: false; error: string } {
     try {
       const todoList = this.bufferToTodoList(buffer);
       return { success: true, data: todoList };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown deserialization error'
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Unknown deserialization error',
       };
     }
   }

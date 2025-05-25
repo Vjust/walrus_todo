@@ -1,6 +1,6 @@
 /**
  * Centralized Filesystem Mocking Helper
- * 
+ *
  * This module provides a consistent filesystem mocking infrastructure for all tests.
  * It ensures that all tests use the same mocked filesystem methods and provides
  * utilities for asserting filesystem operations.
@@ -37,7 +37,7 @@ export const mockedFs: MockedFs = {
   mkdirSync: jest.fn(),
   unlinkSync: jest.fn(),
   rmdirSync: jest.fn(),
-  readdirSync: jest.fn()
+  readdirSync: jest.fn(),
 };
 
 export const mockedFsPromises: MockedFsPromises = {
@@ -48,7 +48,7 @@ export const mockedFsPromises: MockedFsPromises = {
   rmdir: jest.fn(),
   readdir: jest.fn(),
   access: jest.fn(),
-  stat: jest.fn()
+  stat: jest.fn(),
 };
 
 /**
@@ -63,7 +63,7 @@ export function setupFsMocks(): MockedFs {
   mockedFs.existsSync.mockReturnValue(true);
   mockedFs.readFileSync.mockReturnValue('{}');
   mockedFs.readdirSync.mockReturnValue([]);
-  
+
   // Setup fs.promises defaults
   mockedFsPromises.readFile.mockResolvedValue('{}');
   mockedFsPromises.writeFile.mockResolvedValue(undefined);
@@ -72,7 +72,10 @@ export function setupFsMocks(): MockedFs {
   mockedFsPromises.rmdir.mockResolvedValue(undefined);
   mockedFsPromises.readdir.mockResolvedValue([]);
   mockedFsPromises.access.mockResolvedValue(undefined);
-  mockedFsPromises.stat.mockResolvedValue({ isDirectory: () => false, isFile: () => true });
+  mockedFsPromises.stat.mockResolvedValue({
+    isDirectory: () => false,
+    isFile: () => true,
+  });
 
   return mockedFs;
 }
@@ -112,7 +115,10 @@ export function createMockFileSystem(files: Record<string, string>): MockedFs {
 /**
  * Assert that a file was written with specific content
  */
-export function assertFileWritten(expectedPath: string, expectedContent?: string): void {
+export function assertFileWritten(
+  expectedPath: string,
+  expectedContent?: string
+): void {
   expect(mockedFs.writeFileSync).toHaveBeenCalledWith(
     expectedPath,
     expectedContent ? expectedContent : expect.any(String),
@@ -121,9 +127,12 @@ export function assertFileWritten(expectedPath: string, expectedContent?: string
 }
 
 /**
- * Assert that fs.promises.writeFile was called with specific content  
+ * Assert that fs.promises.writeFile was called with specific content
  */
-export function assertFileWrittenAsync(expectedPath: string, expectedContent?: string): void {
+export function assertFileWrittenAsync(
+  expectedPath: string,
+  expectedContent?: string
+): void {
   expect(mockedFsPromises.writeFile).toHaveBeenCalledWith(
     expectedPath,
     expectedContent ? expectedContent : expect.any(String),
@@ -207,8 +216,8 @@ export function mockFsModule(): void {
       rmdir: mockedFsPromises.rmdir,
       readdir: mockedFsPromises.readdir,
       access: mockedFsPromises.access,
-      stat: mockedFsPromises.stat
-    }
+      stat: mockedFsPromises.stat,
+    },
   }));
 }
 

@@ -40,5 +40,5 @@ export {
   StoreCommand,
   StoreFileCommand,
   TemplateCommand,
-  UpdateCommand
+  UpdateCommand,
 };

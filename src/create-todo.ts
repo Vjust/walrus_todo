@@ -4,7 +4,7 @@ import { Logger } from './utils/Logger';
 async function main() {
   const todoService = new TodoService();
   const listName = 'test-list';
-  
+
   // First create or get list
   Logger.getInstance().info('Creating/getting todo list...');
   let list = await todoService.getList(listName);
@@ -22,9 +22,9 @@ async function main() {
     description: 'This is a test todo item',
     priority: 'high',
     tags: ['test', 'demo'],
-    private: true
+    private: true,
   });
   Logger.getInstance().info('Created todo:', { todo });
 }
 
-main().catch((error) => Logger.getInstance().error('Error in main:', error));
+main().catch(error => Logger.getInstance().error('Error in main:', error));

@@ -29,18 +29,25 @@ const mappedArgs = args.map(arg => {
 });
 
 // Add default options if not provided
-if (!args.includes('--transpile-only') && !args.includes('--no-transpile-only')) {
+if (
+  !args.includes('--transpile-only') &&
+  !args.includes('--no-transpile-only')
+) {
   mappedArgs.push('--transpile-only'); // Default to fast build
 }
 
 logger.info(`Running build with options: ${mappedArgs.join(' ')}`);
 
 // Run the TypeScript build script using ts-node
-const result = spawnSync('npx', ['ts-node', 'scripts/unified-build.ts', ...mappedArgs], {
-  stdio: 'inherit',
-  shell: true,
-  cwd: path.resolve(__dirname, '..')
-});
+const result = spawnSync(
+  'npx',
+  ['ts-node', 'scripts/unified-build.ts', ...mappedArgs],
+  {
+    stdio: 'inherit',
+    shell: true,
+    cwd: path.resolve(__dirname, '..'),
+  }
+);
 
 // Forward the exit code
 process.exit(result.status);

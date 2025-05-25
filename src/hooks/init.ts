@@ -12,13 +12,13 @@ import { Logger } from '../utils/Logger';
 /**
  * Initialize the application's environment and configuration
  */
-const initHook: Hook<'init'> = async function() {
+const initHook: Hook<'init'> = async function () {
   // Initialize configuration if not already done
   if (typeof process.env.ENV_CONFIG_INITIALIZED === 'undefined') {
     try {
       // Load from .env and config files first
       loadEnvironment({
-        loadDefaultEnvInDev: true
+        loadDefaultEnvInDev: true,
       });
 
       // Initialize and apply environment-specific configurations
@@ -29,7 +29,7 @@ const initHook: Hook<'init'> = async function() {
         validateStartup({
           throwOnError: false,
           showBanner: true,
-          exitOnCritical: false
+          exitOnCritical: false,
         });
       } catch (validationError) {
         // Just log validation error but don't fail, individual commands will do more specific validation
@@ -42,15 +42,23 @@ const initHook: Hook<'init'> = async function() {
       process.env.ENV_CONFIG_INITIALIZED = 'true';
     } catch (_error) {
       Logger.getInstance().error(
-        `Failed to initialize environment configuration: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to initialize environment configuration: ${_error instanceof Error ? _error.message : String(_error)}`
       );
 
       // Output helpful error recovery information
       Logger.getInstance().error('Troubleshooting steps:');
-      Logger.getInstance().error('1. Check if .env file exists and is properly formatted');
-      Logger.getInstance().error('2. Ensure required environment variables are set');
-      Logger.getInstance().error('3. Verify storage directories exist and are writable');
-      Logger.getInstance().error('4. Run with --debug flag for more detailed error information');
+      Logger.getInstance().error(
+        '1. Check if .env file exists and is properly formatted'
+      );
+      Logger.getInstance().error(
+        '2. Ensure required environment variables are set'
+      );
+      Logger.getInstance().error(
+        '3. Verify storage directories exist and are writable'
+      );
+      Logger.getInstance().error(
+        '4. Run with --debug flag for more detailed error information'
+      );
 
       // Don't throw error here - fail gracefully and let individual commands handle validation
     }
@@ -60,7 +68,7 @@ const initHook: Hook<'init'> = async function() {
 /**
  * Command history and registry initialization hook
  */
-const commandRegistryHook: Hook<'init'> = async function(opts) {
+const commandRegistryHook: Hook<'init'> = async function (opts) {
   // Record command in history
   const command = opts.argv.join(' ');
   if (command) {
@@ -69,14 +77,14 @@ const commandRegistryHook: Hook<'init'> = async function(opts) {
 
   // Register todo commands and groups
   commandRegistry.registerGroup(todoGroup);
-  
+
   // Register all commands in the todo group
   Object.entries(todoGroup.commands).forEach(([cmdName, cmdInfo]) => {
     commandRegistry.registerCommand({
       name: cmdName,
       description: cmdInfo.description,
       aliases: cmdInfo.aliases,
-      group: 'todos'
+      group: 'todos',
     });
   });
 
@@ -84,30 +92,30 @@ const commandRegistryHook: Hook<'init'> = async function(opts) {
   commandRegistry.registerCommand({
     name: 'help',
     description: 'Display help for WalTodo',
-    aliases: ['h', '?']
+    aliases: ['h', '?'],
   });
 
   commandRegistry.registerCommand({
     name: 'config',
     description: 'Configure WalTodo settings',
-    aliases: ['configure', 'cfg']
+    aliases: ['configure', 'cfg'],
   });
 
   commandRegistry.registerCommand({
     name: 'store',
     description: 'Store todo on blockchain',
-    aliases: ['save']
+    aliases: ['save'],
   });
 
   commandRegistry.registerCommand({
     name: 'deploy',
-    description: 'Deploy smart contract'
+    description: 'Deploy smart contract',
   });
 
   commandRegistry.registerCommand({
     name: 'sync',
     description: 'Sync todos between local and blockchain',
-    aliases: ['synchronize']
+    aliases: ['synchronize'],
   });
 };
 
@@ -117,7 +125,7 @@ const commandRegistryHook: Hook<'init'> = async function(opts) {
 const hooks: Hook<'init'>[] = [
   initHook,
   validateEnvironment,
-  commandRegistryHook
+  commandRegistryHook,
 ];
 
 export default hooks;

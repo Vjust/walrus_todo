@@ -24,7 +24,9 @@ const execAsync = promisify(exec);
  * Determines if mock mode should be used based on environment
  */
 function shouldUseMock(): boolean {
-  return process.env.WALRUS_USE_MOCK === 'true' || process.env.NODE_ENV === 'test';
+  return (
+    process.env.WALRUS_USE_MOCK === 'true' || process.env.NODE_ENV === 'test'
+  );
 }
 
 /**
@@ -38,7 +40,7 @@ export class WalrusStorage {
   private walrusPath: string;
   private useMock: boolean;
   private configPath: string;
-  
+
   /**
    * Check if the client is connected to Walrus
    * @returns {boolean} True if connected
@@ -56,9 +58,11 @@ export class WalrusStorage {
     this.network = network;
     this.tempDir = path.join(os.tmpdir(), 'walrus-storage');
     this.walrusPath = path.join(os.homedir(), '.local', 'bin', 'walrus');
-    this.configPath = process.env.WALRUS_CONFIG_PATH || path.join(os.homedir(), '.walrus', 'client_config.yaml');
+    this.configPath =
+      process.env.WALRUS_CONFIG_PATH ||
+      path.join(os.homedir(), '.walrus', 'client_config.yaml');
     this.useMock = forceMock || shouldUseMock();
-    
+
     // Create temp directory if it doesn't exist
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir, { recursive: true });
@@ -132,7 +136,7 @@ export class WalrusStorage {
       tags: todo.tags,
       createdAt: todo.createdAt,
       updatedAt: todo.updatedAt,
-      private: todo.private
+      private: todo.private,
     };
 
     try {
@@ -145,7 +149,10 @@ export class WalrusStorage {
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
       if (!blobIdMatch) {
-        throw new CLIError('Failed to parse blob ID from Walrus output', 'PARSE_ERROR');
+        throw new CLIError(
+          'Failed to parse blob ID from Walrus output',
+          'PARSE_ERROR'
+        );
       }
 
       return blobIdMatch[1];
@@ -170,7 +177,7 @@ export class WalrusStorage {
 
     // Create a temporary file with the list data
     const tempFile = path.join(this.tempDir, `list-${list.id}.json`);
-    
+
     try {
       fs.writeFileSync(tempFile, JSON.stringify(list, null, 2));
 
@@ -181,7 +188,10 @@ export class WalrusStorage {
       // Parse blob ID from output
       const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
       if (!blobIdMatch) {
-        throw new CLIError('Failed to parse blob ID from Walrus output', 'PARSE_ERROR');
+        throw new CLIError(
+          'Failed to parse blob ID from Walrus output',
+          'PARSE_ERROR'
+        );
       }
 
       return blobIdMatch[1];
@@ -218,7 +228,7 @@ export class WalrusStorage {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         private: false,
-        storageLocation: 'blockchain'
+        storageLocation: 'blockchain',
       };
     }
 
@@ -255,11 +265,14 @@ export class WalrusStorage {
         todos: [],
         version: 1,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
     }
 
-    const tempFile = path.join(this.tempDir, `retrieved-list-${Date.now()}.json`);
+    const tempFile = path.join(
+      this.tempDir,
+      `retrieved-list-${Date.now()}.json`
+    );
 
     try {
       // Retrieve using Walrus CLI
@@ -325,7 +338,11 @@ export class WalrusStorage {
   /**
    * Update a todo (stores a new version)
    */
-  async updateTodo(blobId: string, todo: Todo, epochs: number = 5): Promise<string> {
+  async updateTodo(
+    blobId: string,
+    todo: Todo,
+    epochs: number = 5
+  ): Promise<string> {
     // In Walrus, we can't update - we create a new blob
     return this.storeTodo(todo, epochs);
   }
@@ -333,13 +350,18 @@ export class WalrusStorage {
   /**
    * Get storage info (simplified for CLI version)
    */
-  async getStorageInfo(objectId: string): Promise<{ id: string; storage_size: string; used_size: string; end_epoch: string }> {
+  async getStorageInfo(objectId: string): Promise<{
+    id: string;
+    storage_size: string;
+    used_size: string;
+    end_epoch: string;
+  }> {
     if (this.useMock) {
       return {
         id: objectId,
         storage_size: '1000000',
         used_size: '500000',
-        end_epoch: '100'
+        end_epoch: '100',
       };
     }
 
@@ -349,7 +371,7 @@ export class WalrusStorage {
       id: objectId,
       storage_size: 'unknown',
       used_size: 'unknown',
-      end_epoch: 'unknown'
+      end_epoch: 'unknown',
     };
   }
 
@@ -379,7 +401,10 @@ export class WalrusStorage {
    * @param {number} epochs - Number of epochs for storage
    * @returns {Promise<object>} Storage allocation details
    */
-  async ensureStorageAllocated(size: number, epochs: number = 5): Promise<{
+  async ensureStorageAllocated(
+    size: number,
+    epochs: number = 5
+  ): Promise<{
     id: { id: string };
     storage_size: string;
     used_size: string;
@@ -389,13 +414,13 @@ export class WalrusStorage {
     // Mock implementation for testing compatibility
     // The actual storage allocation happens implicitly when storing data
     await this.connect();
-    
+
     return {
       id: { id: 'mock-storage-id' },
       storage_size: size.toString(),
       used_size: '0',
       end_epoch: epochs.toString(),
-      start_epoch: '1'
+      start_epoch: '1',
     };
   }
 
@@ -403,16 +428,20 @@ export class WalrusStorage {
    * Check for existing storage allocations
    * @returns {Promise<object|null>} Storage information or null
    */
-  async checkExistingStorage(): Promise<{ id: { id: string }; storage_size: string; used_size: string } | null> {
+  async checkExistingStorage(): Promise<{
+    id: { id: string };
+    storage_size: string;
+    used_size: string;
+  } | null> {
     await this.connect();
-    
+
     if (this.useMock) {
       return {
         id: { id: 'mock-storage-id' },
         storage_size: '1000000',
         used_size: '500000',
         end_epoch: '100',
-        start_epoch: '50'
+        start_epoch: '50',
       };
     }
 
@@ -427,7 +456,7 @@ export class WalrusStorage {
    */
   async getActiveAddress(): Promise<string> {
     await this.connect();
-    
+
     if (this.useMock) {
       return 'mock-sui-address';
     }
@@ -444,6 +473,9 @@ export class WalrusStorage {
 /**
  * Factory function to create a WalrusStorage instance
  */
-export function createWalrusStorage(network: string = 'testnet', forceMock: boolean = false): WalrusStorage {
+export function createWalrusStorage(
+  network: string = 'testnet',
+  forceMock: boolean = false
+): WalrusStorage {
   return new WalrusStorage(network, forceMock);
 }

@@ -20,7 +20,8 @@ export class TodoAPIClient {
   private apiKey?: string;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    this.baseURL =
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
     this.apiKey = process.env.NEXT_PUBLIC_API_KEY;
   }
 
@@ -30,7 +31,7 @@ export class TodoAPIClient {
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string> || {}),
+      ...((options.headers as Record<string, string>) || {}),
     };
 
     if (this.apiKey) {
@@ -43,7 +44,9 @@ export class TodoAPIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: response.statusText }));
+      const error = await response
+        .json()
+        .catch(() => ({ message: response.statusText }));
       throw new Error(error.message || `Request failed: ${response.status}`);
     }
 
@@ -59,7 +62,10 @@ export class TodoAPIClient {
     return this.request<Todo>(`/todos/${id}`);
   }
 
-  async createTodo(todo: Partial<Todo>, listName: string = 'default'): Promise<Todo> {
+  async createTodo(
+    todo: Partial<Todo>,
+    listName: string = 'default'
+  ): Promise<Todo> {
     return this.request<Todo>('/todos', {
       method: 'POST',
       body: JSON.stringify({ ...todo, listName }),
@@ -104,7 +110,10 @@ export class TodoAPIClient {
   }
 
   // AI operations
-  async suggestTasks(context: { existingTodos: Todo[]; preferences?: any }): Promise<AIResponse> {
+  async suggestTasks(context: {
+    existingTodos: Todo[];
+    preferences?: any;
+  }): Promise<AIResponse> {
     return this.request<AIResponse>('/ai/suggest', {
       method: 'POST',
       body: JSON.stringify(context),
@@ -140,9 +149,12 @@ export class TodoAPIClient {
   }
 
   async syncTodoToBlockchain(todoId: string): Promise<{ nftObjectId: string }> {
-    return this.request<{ nftObjectId: string }>(`/sync/todos/${todoId}/blockchain`, {
-      method: 'POST',
-    });
+    return this.request<{ nftObjectId: string }>(
+      `/sync/todos/${todoId}/blockchain`,
+      {
+        method: 'POST',
+      }
+    );
   }
 
   async syncListToWalrus(listName: string): Promise<{ blobId: string }> {

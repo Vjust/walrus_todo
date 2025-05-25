@@ -5,7 +5,7 @@ import { BaseError } from '../../types/errors/BaseError';
  */
 export class ValidationError extends BaseError {
   constructor(
-    message: string, 
+    message: string,
     options: {
       field?: string;
       value?: string;
@@ -19,26 +19,26 @@ export class ValidationError extends BaseError {
       value,
       code = 'VALIDATION_ERROR',
       context,
-      recoverable = false
+      recoverable = false,
     } = options;
-    
+
     // Build context with field information
     const validationContext = {
       ...context,
       field,
-      value: typeof value === 'string' ? value : undefined
+      value: typeof value === 'string' ? value : undefined,
     };
-    
+
     // Customize code if field is specified
-    const errorCode = field 
+    const errorCode = field
       ? `${code}_${field.toUpperCase().replace(/[^A-Z0-9_]/g, '_')}`
       : code;
-    
+
     super({
       message,
       code: errorCode,
       context: validationContext,
-      recoverable
+      recoverable,
     });
   }
 }
@@ -49,7 +49,7 @@ export class ValidationError extends BaseError {
 export type ValidationRule<T> = {
   /** Validation function that returns true if valid, false if invalid */
   validate: (value: T, context?: ValidationContext) => boolean;
-  
+
   /** Error message or function that returns an error message */
   message: string | ((value: T, context?: ValidationContext) => string);
 };
@@ -60,16 +60,16 @@ export type ValidationRule<T> = {
 export interface ValidationContext {
   /** Name of the field being validated */
   fieldName?: string;
-  
+
   /** Parent object containing the field */
   parentValue?: unknown;
-  
+
   /** Root object being validated */
   rootValue?: unknown;
-  
+
   /** Path to the current field from the root */
   path?: string[];
-  
+
   /** Additional context for validation */
   [key: string]: unknown;
 }
@@ -80,10 +80,10 @@ export interface ValidationContext {
 export class Validator<T> {
   /** Validation rules to apply */
   private rules: ValidationRule<T>[] = [];
-  
+
   /** Field name for error reporting */
   private fieldName?: string;
-  
+
   /**
    * Create a new validator
    * @param fieldName Optional field name for error reporting
@@ -91,7 +91,7 @@ export class Validator<T> {
   constructor(fieldName?: string) {
     this.fieldName = fieldName;
   }
-  
+
   /**
    * Add a validation rule
    * @param rule Validation rule to add
@@ -101,7 +101,7 @@ export class Validator<T> {
     this.rules.push(rule);
     return this;
   }
-  
+
   /**
    * Set field name for error reporting
    * @param name Field name
@@ -111,7 +111,7 @@ export class Validator<T> {
     this.fieldName = name;
     return this;
   }
-  
+
   /**
    * Validate a value against all rules
    * @param value Value to validate
@@ -123,36 +123,40 @@ export class Validator<T> {
     // Update context with field name
     const validationContext = {
       ...context,
-      fieldName: this.fieldName || context.fieldName
+      fieldName: this.fieldName || context.fieldName,
     };
-    
+
     // Check all rules
     for (const rule of this.rules) {
       if (!rule.validate(value, validationContext)) {
-        const message = typeof rule.message === 'function'
-          ? rule.message(value, validationContext)
-          : rule.message;
-          
+        const message =
+          typeof rule.message === 'function'
+            ? rule.message(value, validationContext)
+            : rule.message;
+
         throw new ValidationError(message, {
           field: validationContext.fieldName,
           value: this.safeStringify(value),
-          recoverable: false
+          recoverable: false,
         });
       }
     }
-    
+
     return true;
   }
-  
+
   /**
    * Validate a value without throwing
    * @param value Value to validate
    * @param context Validation context
    * @returns { valid: true } if valid, { valid: false, error: ValidationError } if invalid
    */
-  validateSafe(value: T, context: ValidationContext = {}): { 
-    valid: boolean; 
-    error?: ValidationError 
+  validateSafe(
+    value: T,
+    context: ValidationContext = {}
+  ): {
+    valid: boolean;
+    error?: ValidationError;
   } {
     try {
       this.validate(value, context);
@@ -165,7 +169,7 @@ export class Validator<T> {
       throw error;
     }
   }
-  
+
   /**
    * Safely convert value to string for error messages
    * @param value Value to stringify
@@ -174,22 +178,26 @@ export class Validator<T> {
   private safeStringify(value: unknown): string {
     if (value === undefined) return 'undefined';
     if (value === null) return 'null';
-    
+
     try {
       if (typeof value === 'object') {
         // Handle circular references and truncate large objects
         const seen = new WeakSet();
-        const stringified = JSON.stringify(value, (key, val) => {
-          if (typeof val === 'object' && val !== null) {
-            if (seen.has(val)) return '[Circular]';
-            seen.add(val);
-          }
-          return val;
-        }, 2);
-        
+        const stringified = JSON.stringify(
+          value,
+          (key, val) => {
+            if (typeof val === 'object' && val !== null) {
+              if (seen.has(val)) return '[Circular]';
+              seen.add(val);
+            }
+            return val;
+          },
+          2
+        );
+
         // Truncate large objects
-        return stringified.length > 100 
-          ? stringified.slice(0, 100) + '...' 
+        return stringified.length > 100
+          ? stringified.slice(0, 100) + '...'
           : stringified;
       }
       return String(value);

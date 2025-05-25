@@ -34,7 +34,7 @@ export function validate(options: ValidationOptions) {
           error.errors.map(e => ({
             field: e.path.join('.'),
             message: e.message,
-            code: e.code
+            code: e.code,
           }))
         );
         next(validationError);
@@ -52,7 +52,7 @@ export const schemas = {
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(100).default(20),
     sort: z.string().optional(),
-    order: z.enum(['asc', 'desc']).default('desc')
+    order: z.enum(['asc', 'desc']).default('desc'),
   }),
 
   // Todo schemas
@@ -60,7 +60,7 @@ export const schemas = {
     content: z.string().min(1).max(1000),
     priority: z.enum(['low', 'medium', 'high']).optional(),
     category: z.string().optional(),
-    tags: z.array(z.string()).optional()
+    tags: z.array(z.string()).optional(),
   }),
 
   updateTodo: z.object({
@@ -68,28 +68,28 @@ export const schemas = {
     priority: z.enum(['low', 'medium', 'high']).optional(),
     category: z.string().optional(),
     tags: z.array(z.string()).optional(),
-    completed: z.boolean().optional()
+    completed: z.boolean().optional(),
   }),
 
   // AI schemas
   aiOperation: z.object({
     operation: z.enum(['summarize', 'categorize', 'prioritize', 'suggest']),
     input: z.string().optional(),
-    options: z.record(z.any()).optional()
+    options: z.record(z.any()).optional(),
   }),
 
   // Sync schemas
   syncRequest: z.object({
     lastSync: z.string().datetime().optional(),
-    includeDeleted: z.boolean().default(false)
-  })
+    includeDeleted: z.boolean().default(false),
+  }),
 };
 
 // Helper function to create ID validation
 export function validateId(paramName: string = 'id') {
   return validate({
     params: z.object({
-      [paramName]: z.string().uuid()
-    })
+      [paramName]: z.string().uuid(),
+    }),
   });
 }

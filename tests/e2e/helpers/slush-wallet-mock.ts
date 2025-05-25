@@ -1,6 +1,6 @@
 /**
  * Slush wallet mock helpers for testing
- * 
+ *
  * This provides standard mock implementations of the Slush wallet
  * that can be reused across various test files.
  */
@@ -24,7 +24,7 @@ export const DEFAULT_SLUSH_ACCOUNT: MockSlushAccount = {
   address: '0xslush123456789abcdef',
   publicKey: new Uint8Array([1, 2, 3, 4, 5]),
   chains: ['sui:testnet'],
-  features: ['standard:connect', 'standard:events']
+  features: ['standard:connect', 'standard:events'],
 };
 
 /**
@@ -34,7 +34,7 @@ export const DEFAULT_SLUSH_ACCOUNT: MockSlushAccount = {
  * @param options Additional configuration options
  */
 export async function injectSlushWallet(
-  page: Page, 
+  page: Page,
   account: MockSlushAccount = DEFAULT_SLUSH_ACCOUNT,
   options: {
     connected?: boolean;
@@ -44,8 +44,12 @@ export async function injectSlushWallet(
 ) {
   await page.evaluate(
     ({ account, options }) => {
-      const { connected = false, rejectConnection = false, failDisconnect = false } = options;
-      
+      const {
+        connected = false,
+        rejectConnection = false,
+        failDisconnect = false,
+      } = options;
+
       // Mock Slush provider (previously Stashed)
       (window as any).slushProvider = {
         hasPermissions: async () => connected,
@@ -55,9 +59,9 @@ export async function injectSlushWallet(
           }
           return true;
         },
-        getAccounts: async () => connected ? [account] : []
+        getAccounts: async () => (connected ? [account] : []),
       };
-      
+
       // Mock Slush adapter (standard interface)
       (window as any).stashed = {
         connect: async () => {
@@ -72,9 +76,9 @@ export async function injectSlushWallet(
           }
         },
         signTransaction: async () => ({}),
-        signMessage: async () => ({})
+        signMessage: async () => ({}),
       };
-      
+
       // For legacy support, also mock stashedProvider
       (window as any).stashedProvider = (window as any).slushProvider;
     },
@@ -103,7 +107,7 @@ export async function removeSlushWallet(page: Page) {
 export function createSlushAccount(address: string): MockSlushAccount {
   return {
     ...DEFAULT_SLUSH_ACCOUNT,
-    address
+    address,
   };
 }
 
@@ -116,16 +120,16 @@ export async function simulateSlushConnection(
   page: Page,
   account: MockSlushAccount = DEFAULT_SLUSH_ACCOUNT
 ) {
-  await page.evaluate((acc) => {
+  await page.evaluate(acc => {
     // This simulates what happens in the wallet context after a successful connection
     const walletContextEvent = new CustomEvent('walletContextChange', {
       detail: {
         walletType: 'slush',
         connected: true,
-        slushAccount: acc
-      }
+        slushAccount: acc,
+      },
     });
-    
+
     document.dispatchEvent(walletContextEvent);
   }, account);
 }

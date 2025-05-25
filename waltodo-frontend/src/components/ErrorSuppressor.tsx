@@ -12,13 +12,13 @@ export function ErrorSuppressor() {
     const suppressedPatterns = [
       'dApp.connect',
       'query #1',
-      'query #2', 
+      'query #2',
       'query #3',
       'dapp-interface.js',
       'opcgpfmipidbgpenhmajoajpbobppdil',
       'chrome-extension://',
       '[[ << query #',
-      'Error: [[ << query #'
+      'Error: [[ << query #',
     ];
 
     // Store original error handler
@@ -28,40 +28,47 @@ export function ErrorSuppressor() {
     // Override window.onerror
     window.onerror = (message, source, lineno, colno, error) => {
       const errorMessage = String(message);
-      
+
       // Check if this error should be suppressed
-      const shouldSuppress = suppressedPatterns.some(pattern => 
-        errorMessage.includes(pattern) || 
-        (source && source.includes(pattern))
+      const shouldSuppress = suppressedPatterns.some(
+        pattern =>
+          errorMessage.includes(pattern) || (source && source.includes(pattern))
       );
-      
+
       if (shouldSuppress) {
         // Prevent the error from being logged
         return true;
       }
-      
+
       // Call original handler for genuine errors
       if (originalErrorHandler) {
-        return originalErrorHandler.call(window, message, source, lineno, colno, error);
+        return originalErrorHandler.call(
+          window,
+          message,
+          source,
+          lineno,
+          colno,
+          error
+        );
       }
-      
+
       return false;
     };
 
     // Override unhandled promise rejection
-    window.onunhandledrejection = (event) => {
+    window.onunhandledrejection = event => {
       const errorMessage = String(event.reason);
-      
+
       // Check if this error should be suppressed
-      const shouldSuppress = suppressedPatterns.some(pattern => 
+      const shouldSuppress = suppressedPatterns.some(pattern =>
         errorMessage.includes(pattern)
       );
-      
+
       if (shouldSuppress) {
         event.preventDefault();
         return;
       }
-      
+
       // Call original handler for genuine errors
       if (originalUnhandledRejection) {
         return originalUnhandledRejection.call(window, event);
@@ -72,17 +79,17 @@ export function ErrorSuppressor() {
     const originalConsoleError = console.error;
     console.error = (...args) => {
       const errorMessage = args.join(' ');
-      
+
       // Check if this error should be suppressed
-      const shouldSuppress = suppressedPatterns.some(pattern => 
+      const shouldSuppress = suppressedPatterns.some(pattern =>
         errorMessage.includes(pattern)
       );
-      
+
       if (shouldSuppress) {
         // Silently suppress the error
         return;
       }
-      
+
       // Call original console.error for genuine errors
       originalConsoleError.apply(console, args);
     };

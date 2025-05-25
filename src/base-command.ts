@@ -9,16 +9,16 @@ import { Todo } from './types/todo';
 import { NetworkError } from './types/errors/consolidated/NetworkError';
 import { ValidationError } from './types/errors/consolidated/ValidationError';
 import { TransactionError } from './types/errors/consolidated/TransactionError';
-import { 
-  createSpinner, 
-  createProgressBar, 
-  createMultiProgress, 
-  withProgressBar, 
-  SpinnerManager, 
-  ProgressBar, 
+import {
+  createSpinner,
+  createProgressBar,
+  createMultiProgress,
+  withProgressBar,
+  SpinnerManager,
+  ProgressBar,
   MultiProgress,
   SpinnerOptions,
-  ProgressBarOptions
+  ProgressBarOptions,
 } from './utils/progress-indicators';
 
 // Fix for undefined columns in non-TTY environments
@@ -51,14 +51,14 @@ try {
   Object.assign(boldFn, {
     cyan: (s: string) => s,
     green: (s: string) => s,
-    yellow: (s: string) => s
+    yellow: (s: string) => s,
   });
-  
-  chalk = { 
-    red: (s: string) => s, 
-    yellow: (s: string) => s, 
-    green: (s: string) => s, 
-    blue: (s: string) => s, 
+
+  chalk = {
+    red: (s: string) => s,
+    yellow: (s: string) => s,
+    green: (s: string) => s,
+    blue: (s: string) => s,
     gray: (s: string) => s,
     bold: boldFn as ((text: string) => string) & {
       cyan: (text: string) => string;
@@ -67,7 +67,7 @@ try {
     },
     cyan: (s: string) => s,
     magenta: (s: string) => s,
-    dim: (s: string) => s
+    dim: (s: string) => s,
   };
 }
 
@@ -101,7 +101,7 @@ export abstract class BaseCommand extends Command {
       description: 'Enable debug mode',
       default: false,
       required: false,
-      env: 'WALRUS_DEBUG'
+      env: 'WALRUS_DEBUG',
     }),
     network: Flags.string({
       char: 'n',
@@ -109,36 +109,36 @@ export abstract class BaseCommand extends Command {
       options: ['mainnet', 'testnet', 'localnet'],
       default: 'testnet',
       required: false,
-      env: 'WALRUS_NETWORK'
+      env: 'WALRUS_NETWORK',
     }),
     verbose: Flags.boolean({
       char: 'v',
       description: 'Enable verbose output',
       default: false,
-      required: false
+      required: false,
     }),
     output: Flags.string({
       char: 'o',
       description: 'Output format',
       options: ['text', 'json', 'yaml'],
       default: 'text',
-      required: false
+      required: false,
     }),
     mock: Flags.boolean({
       char: 'm',
       description: 'Enable mock mode for testing',
       default: false,
       required: false,
-      env: 'WALRUS_USE_MOCK'
+      env: 'WALRUS_USE_MOCK',
     }),
     apiKey: Flags.string({
       char: 'k',
       description: 'API key for AI features',
       required: false,
-      env: 'XAI_API_KEY'
+      env: 'XAI_API_KEY',
     }),
     help: Flags.help({
-      char: 'h'
+      char: 'h',
     }),
     timeout: Flags.integer({
       char: 't',
@@ -150,14 +150,14 @@ export abstract class BaseCommand extends Command {
       char: 'f',
       description: 'Force operation without confirmation',
       default: false,
-      required: false
+      required: false,
     }),
     quiet: Flags.boolean({
       char: 'q',
       description: 'Suppress output',
       default: false,
-      required: false
-    })
+      required: false,
+    }),
   };
 
   // Expose base flags for command classes to inherit
@@ -185,7 +185,9 @@ export abstract class BaseCommand extends Command {
       await super.finally(err);
     } catch (error) {
       // Don't let cleanup errors mask original command errors
-      this.warn(`Cleanup error: ${error instanceof Error ? error.message : String(error)}`);
+      this.warn(
+        `Cleanup error: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -222,7 +224,7 @@ export abstract class BaseCommand extends Command {
    * Setup global error handlers for the command
    */
   private setupErrorHandlers(): void {
-    process.on('uncaughtException', (error) => {
+    process.on('uncaughtException', error => {
       this.error(`Uncaught exception: ${error.message}`, { exit: 1 });
     });
 
@@ -236,16 +238,16 @@ export abstract class BaseCommand extends Command {
    */
   private handleStructuredError(error: WalrusError): never {
     const errorInfo = error.toPublicError();
-    
+
     // Build troubleshooting steps based on error code
     const troubleshooting: string[] = [];
-    
+
     if (errorInfo.code.includes('STORAGE')) {
       troubleshooting.push('• Check your Walrus storage allocation');
       troubleshooting.push('• Verify network connectivity to Walrus nodes');
       troubleshooting.push('• Ensure you have sufficient WAL tokens');
     }
-    
+
     if (errorInfo.code.includes('NETWORK')) {
       troubleshooting.push('• Check your internet connection');
       troubleshooting.push('• Try again in a few moments');
@@ -254,7 +256,7 @@ export abstract class BaseCommand extends Command {
 
     this.error(chalk.red(`${error.name}: ${error.message}`), {
       suggestions: troubleshooting,
-      exit: 1
+      exit: 1,
     });
   }
 
@@ -266,9 +268,9 @@ export abstract class BaseCommand extends Command {
       suggestions: [
         'Check the format of your input parameters',
         'Refer to command help with --help flag',
-        'Use --verbose for detailed validation info'
+        'Use --verbose for detailed validation info',
       ],
-      exit: 1
+      exit: 1,
     });
   }
 
@@ -277,19 +279,21 @@ export abstract class BaseCommand extends Command {
    */
   private handleNetworkError(error: NetworkError): never {
     const shouldRetry = error.recoverable || error.shouldRetry;
-    
+
     this.error(chalk.red(`Network Error: ${error.message}`), {
-      suggestions: shouldRetry ? [
-        'Check your internet connection',
-        'Try again in a few moments',
-        'Use --timeout to increase wait time',
-        'Use --mock flag to work offline'
-      ] : [
-        'Check your network configuration',
-        'Verify service endpoints are accessible',
-        'Contact support if the issue persists'
-      ],
-      exit: 1
+      suggestions: shouldRetry
+        ? [
+            'Check your internet connection',
+            'Try again in a few moments',
+            'Use --timeout to increase wait time',
+            'Use --mock flag to work offline',
+          ]
+        : [
+            'Check your network configuration',
+            'Verify service endpoints are accessible',
+            'Contact support if the issue persists',
+          ],
+      exit: 1,
     });
   }
 
@@ -302,9 +306,9 @@ export abstract class BaseCommand extends Command {
         'Check your wallet balance and gas fees',
         'Verify transaction parameters',
         'Try with a higher gas limit',
-        'Check blockchain network status'
+        'Check blockchain network status',
       ],
-      exit: 1
+      exit: 1,
     });
   }
 
@@ -316,9 +320,9 @@ export abstract class BaseCommand extends Command {
       suggestions: [
         'Check command syntax with --help',
         'Verify all required parameters are provided',
-        'Use --verbose for more detailed output'
+        'Use --verbose for more detailed output',
       ],
-      exit: 1
+      exit: 1,
     });
   }
 
@@ -331,9 +335,9 @@ export abstract class BaseCommand extends Command {
         'Try running the command again',
         'Use --debug for detailed error information',
         'Check the command documentation',
-        'Report this issue if it persists'
+        'Report this issue if it persists',
       ],
-      exit: 1
+      exit: 1,
     });
   }
 
@@ -353,49 +357,48 @@ export abstract class BaseCommand extends Command {
       maxRetries = 3,
       initialDelay = 1000,
       operationName = 'operation',
-      isRetryable = () => true
+      isRetryable = () => true,
     } = options;
 
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
       } catch (_error) {
-        lastError = error as Error;
-        
+        lastError = _error as Error;
+
         // Check if we should retry
         if (!isRetryable(lastError) || attempt === maxRetries) {
           // Wrap in NetworkError if not already wrapped
-          if (!(error instanceof NetworkError)) {
+          if (!(lastError instanceof NetworkError)) {
             throw new NetworkError(
               lastError.message || 'Network operation failed',
               {
                 operation: operationName,
                 recoverable: isRetryable(lastError),
-                cause: lastError
+                cause: lastError,
               }
             );
           }
-          throw error;
+          throw lastError;
         }
-        
+
         // Wait before retrying
         const delay = initialDelay * Math.pow(2, attempt - 1);
-        this.log(chalk.yellow(`Attempt ${attempt} failed, retrying in ${delay}ms...`));
+        this.log(
+          chalk.yellow(`Attempt ${attempt} failed, retrying in ${delay}ms...`)
+        );
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
+
     // Should never reach here, but for TypeScript
-    throw new NetworkError(
-      'Operation failed after all retries',
-      {
-        operation: operationName,
-        recoverable: false,
-        cause: lastError || new Error('Unknown error')
-      }
-    );
+    throw new NetworkError('Operation failed after all retries', {
+      operation: operationName,
+      recoverable: false,
+      cause: lastError || new Error('Unknown error'),
+    });
   }
 
   /**
@@ -440,37 +443,43 @@ export abstract class BaseCommand extends Command {
       return result;
     } catch (_error) {
       this.stopSpinner(false, 'Failed');
-      throw error;
+      throw _error;
     }
   }
 
   /**
    * Utility method for user confirmation prompts
    */
-  protected async confirm(message: string, defaultValue: boolean = false): Promise<boolean> {
+  protected async confirm(
+    message: string,
+    defaultValue: boolean = false
+  ): Promise<boolean> {
     if (this.flagsConfig.force) {
       return true;
     }
-    
+
     return ux.confirm(message + (defaultValue ? ' (Y/n)' : ' (y/N)'));
   }
 
   /**
    * Utility method for user input prompts
    */
-  protected async prompt(message: string, options: {
-    required?: boolean;
-    type?: 'normal' | 'mask' | 'hide';
-    default?: string;
-  } = {}): Promise<string> {
+  protected async prompt(
+    message: string,
+    options: {
+      required?: boolean;
+      type?: 'normal' | 'mask' | 'hide';
+      default?: string;
+    } = {}
+  ): Promise<string> {
     const { required = true, type = 'normal', default: defaultValue } = options;
-    
+
     const result = await ux.prompt(message, {
       required,
       type: type as 'normal' | 'mask' | 'hide',
-      default: defaultValue
+      default: defaultValue,
     });
-    
+
     return result;
   }
 
@@ -479,7 +488,7 @@ export abstract class BaseCommand extends Command {
    */
   protected formatOutput(data: unknown, format?: string): string {
     const outputFormat = format || this.flagsConfig.output || 'text';
-    
+
     switch (outputFormat) {
       case 'json':
         return JSON.stringify(data, null, 2);
@@ -499,13 +508,18 @@ export abstract class BaseCommand extends Command {
     if (typeof obj !== 'object' || obj === null) {
       return String(obj);
     }
-    
+
     if (Array.isArray(obj)) {
-      return obj.map(item => `${indent}- ${this.toYamlLike(item, indent + '  ')}`).join('\n');
+      return obj
+        .map(item => `${indent}- ${this.toYamlLike(item, indent + '  ')}`)
+        .join('\n');
     }
-    
+
     return Object.entries(obj)
-      .map(([key, value]) => `${indent}${key}: ${this.toYamlLike(value, indent + '  ')}`)
+      .map(
+        ([key, value]) =>
+          `${indent}${key}: ${this.toYamlLike(value, indent + '  ')}`
+      )
       .join('\n');
   }
 
@@ -516,17 +530,19 @@ export abstract class BaseCommand extends Command {
     if (typeof data === 'string') {
       return data;
     }
-    
+
     if (typeof data === 'object' && data !== null) {
       if (Array.isArray(data)) {
-        return data.map((item, _index) => `${index + 1}. ${this.toTextFormat(item)}`).join('\n');
+        return data
+          .map((item, _index) => `${_index + 1}. ${this.toTextFormat(item)}`)
+          .join('\n');
       }
-      
+
       return Object.entries(data)
         .map(([key, value]) => `${key}: ${this.toTextFormat(value)}`)
         .join('\n');
     }
-    
+
     return String(data);
   }
 
@@ -572,7 +588,11 @@ export abstract class BaseCommand extends Command {
   /**
    * Display error with help message and throw
    */
-  protected errorWithHelp(title: string, message: string, helpText: string): never {
+  protected errorWithHelp(
+    title: string,
+    message: string,
+    helpText: string
+  ): never {
     this.error(`${title}: ${message}\n${chalk.gray(helpText)}`, { exit: 1 });
   }
 
@@ -602,23 +622,27 @@ export abstract class BaseCommand extends Command {
    */
   protected formatTodo(todo: Todo): string {
     const statusIcon = todo.completed ? ICONS.success : ICONS.pending;
-    const priorityColor = todo.priority === 'high' ? chalk.red : 
-                         todo.priority === 'medium' ? chalk.yellow : chalk.green;
-    
+    const priorityColor =
+      todo.priority === 'high'
+        ? chalk.red
+        : todo.priority === 'medium'
+          ? chalk.yellow
+          : chalk.green;
+
     let result = `${statusIcon} ${chalk.bold(todo.title)}`;
-    
+
     if (todo.priority) {
       result += ` ${priorityColor(`[${todo.priority.toUpperCase()}]`)}`;
     }
-    
+
     if (todo.dueDate) {
       result += ` ${chalk.gray(`Due: ${todo.dueDate}`)}`;
     }
-    
+
     if (todo.tags && todo.tags.length > 0) {
       result += ` ${chalk.magenta(`#${todo.tags.join(' #')}`)}`;
     }
-    
+
     return result;
   }
 
@@ -661,10 +685,14 @@ export abstract class BaseCommand extends Command {
   /**
    * Display detailed error with suggestions
    */
-  protected detailedError(title: string, message: string, suggestions: string[]): never {
+  protected detailedError(
+    title: string,
+    message: string,
+    suggestions: string[]
+  ): never {
     this.log(chalk.red(`\n❌ ${title}`));
     this.log(chalk.red(`${message}\n`));
-    
+
     if (suggestions && suggestions.length > 0) {
       this.log(chalk.yellow('💡 Troubleshooting steps:'));
       suggestions.forEach((suggestion, index) => {
@@ -672,7 +700,7 @@ export abstract class BaseCommand extends Command {
       });
       this.log('');
     }
-    
+
     this.exit(1);
   }
 
@@ -699,28 +727,30 @@ export abstract class BaseCommand extends Command {
       maxRetries = 3,
       baseDelay = 1000,
       retryMessage = 'Retrying operation...',
-      operationName = 'operation'
+      operationName = 'operation',
     } = options;
 
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await operation();
       } catch (_error) {
-        lastError = error as Error;
-        
+        lastError = _error as Error;
+
         if (attempt === maxRetries) {
           break;
         }
-        
+
         const delay = baseDelay * Math.pow(2, attempt - 1);
         this.warning(`${retryMessage} (attempt ${attempt}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
-    throw new Error(`${operationName} failed after ${maxRetries} attempts: ${lastError.message}`);
+
+    throw new Error(
+      `${operationName} failed after ${maxRetries} attempts: ${lastError.message}`
+    );
   }
 
   /**
@@ -734,22 +764,24 @@ export abstract class BaseCommand extends Command {
     } = {}
   ): Promise<T> {
     const { operation: operationName = 'transaction', rollbackFn } = options;
-    
+
     try {
       return await operation();
     } catch (_error) {
       this.debugLog(`Transaction ${operationName} failed, attempting rollback`);
-      
+
       if (rollbackFn) {
         try {
           await rollbackFn();
           this.debugLog(`Rollback for ${operationName} completed`);
         } catch (rollbackError) {
-          this.warning(`Rollback failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`);
+          this.warning(
+            `Rollback failed: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}`
+          );
         }
       }
-      
-      throw error;
+
+      throw _error;
     }
   }
 
@@ -758,24 +790,33 @@ export abstract class BaseCommand extends Command {
    * Respects WALRUS_TODO_CONFIG_DIR environment variable for testing
    */
   protected getConfigDir(): string {
-    return process.env.WALRUS_TODO_CONFIG_DIR || path.join(os.homedir(), '.config', 'waltodo');
+    return (
+      process.env.WALRUS_TODO_CONFIG_DIR ||
+      path.join(os.homedir(), '.config', 'waltodo')
+    );
   }
 
   /**
    * Safely write file with error handling
    * Creates directory atomically and ensures file write integrity
    */
-  protected writeFileSafe(filePath: string, content: string, encoding: BufferEncoding = 'utf8'): void {
+  protected writeFileSafe(
+    filePath: string,
+    content: string,
+    encoding: BufferEncoding = 'utf8'
+  ): void {
     try {
       const dir = path.dirname(filePath);
-      
+
       // Create directory atomically with recursive option
       fs.mkdirSync(dir, { recursive: true });
-      
+
       // Write file atomically
       fs.writeFileSync(filePath, content, encoding);
     } catch (_error) {
-      throw new Error(`Failed to write file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to write file ${filePath}: ${_error instanceof Error ? _error.message : String(_error)}`
+      );
     }
   }
 
@@ -785,10 +826,7 @@ export abstract class BaseCommand extends Command {
   protected validateFlag = {
     nonEmpty: (value: string, fieldName: string): void => {
       if (!value || value.trim().length === 0) {
-        throw new ValidationError(
-          `${fieldName} cannot be empty`,
-          fieldName
-        );
+        throw new ValidationError(`${fieldName} cannot be empty`, fieldName);
       }
     },
 
@@ -799,7 +837,7 @@ export abstract class BaseCommand extends Command {
           fieldName
         );
       }
-    }
+    },
   };
 
   /**
@@ -826,7 +864,10 @@ export abstract class BaseCommand extends Command {
   /**
    * Create a spinner with progress indicator
    */
-  protected createSpinner(text: string, options: SpinnerOptions = {}): SpinnerManager {
+  protected createSpinner(
+    text: string,
+    options: SpinnerOptions = {}
+  ): SpinnerManager {
     return createSpinner(text, options);
   }
 
@@ -840,17 +881,21 @@ export abstract class BaseCommand extends Command {
   /**
    * Create a gradient progress bar
    */
-  protected createGradientProgressBar(options: ProgressBarOptions = {}): ProgressBar {
+  protected createGradientProgressBar(
+    options: ProgressBarOptions = {}
+  ): ProgressBar {
     return createProgressBar({
       format: ' {spinner} {bar} {percentage}% | Task: {task} | ETA: {eta}s',
-      ...options
+      ...options,
     });
   }
 
   /**
    * Create a multi-progress manager
    */
-  protected createMultiProgress(options: ProgressBarOptions = {}): MultiProgress {
+  protected createMultiProgress(
+    options: ProgressBarOptions = {}
+  ): MultiProgress {
     return createMultiProgress(options);
   }
 
@@ -865,7 +910,6 @@ export abstract class BaseCommand extends Command {
     return withProgressBar(total, operation, options);
   }
 
-
   /**
    * Run multiple operations with multi-progress
    */
@@ -877,7 +921,7 @@ export abstract class BaseCommand extends Command {
     }>
   ): Promise<(T | undefined)[]> {
     const multiProgress = this.createMultiProgress();
-    
+
     const promises = operations.map(async ({ name, total, operation }) => {
       const bar = multiProgress.create(name, total);
       try {
@@ -886,7 +930,7 @@ export abstract class BaseCommand extends Command {
         return undefined;
       }
     });
-    
+
     try {
       return await Promise.all(promises);
     } finally {
@@ -898,7 +942,7 @@ export abstract class BaseCommand extends Command {
    * Create fun spinners with special effects
    */
   protected createFunSpinner(
-    text: string, 
+    text: string,
     type: 'walrus' | 'sparkle' | 'moon' | 'star' = 'walrus'
   ): SpinnerManager {
     return createSpinner(text, { style: type as SpinnerOptions['style'] });
@@ -908,7 +952,7 @@ export abstract class BaseCommand extends Command {
    * Cache management for todos
    */
   protected async getCachedTodos<T>(
-    cacheKey: string, 
+    cacheKey: string,
     fetcher: () => Promise<T>
   ): Promise<T> {
     // Simple implementation - in a full app this would use a proper cache
@@ -920,8 +964,10 @@ export abstract class BaseCommand extends Command {
    */
   protected handleError(error: unknown, operation?: string): never {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const contextMessage = operation ? `${operation}: ${errorMessage}` : errorMessage;
-    
+    const contextMessage = operation
+      ? `${operation}: ${errorMessage}`
+      : errorMessage;
+
     this.error(contextMessage, { exit: 1 });
   }
 
@@ -935,7 +981,7 @@ export abstract class BaseCommand extends Command {
       error: (text: string) => chalk.red(text),
       warning: (text: string) => chalk.yellow(text),
       info: (text: string) => chalk.blue(text),
-      muted: (text: string) => chalk.gray(text)
+      muted: (text: string) => chalk.gray(text),
     };
   }
 }
@@ -1004,40 +1050,40 @@ export const ICONS = {
   user: '👤',
   search: '🔍',
   secure: '🔒',
-  insecure: '🔓'
+  insecure: '🔓',
 };
 
 export const PRIORITY = {
   high: {
     label: 'HIGH',
-    color: chalk.red
+    color: chalk.red,
   },
   medium: {
-    label: 'MEDIUM', 
-    color: chalk.yellow
+    label: 'MEDIUM',
+    color: chalk.yellow,
   },
   low: {
     label: 'LOW',
-    color: chalk.green
-  }
+    color: chalk.green,
+  },
 };
 
 export const STORAGE = {
   local: {
     label: 'Local',
     color: chalk.blue,
-    icon: '💾'
+    icon: '💾',
   },
   blockchain: {
     label: 'Blockchain',
     color: chalk.green,
-    icon: '⛓️'
+    icon: '⛓️',
   },
   both: {
     label: 'Hybrid',
     color: chalk.cyan,
-    icon: '🔄'
-  }
+    icon: '🔄',
+  },
 };
 
 // Export BaseCommand as default for backward compatibility

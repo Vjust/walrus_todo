@@ -9,14 +9,14 @@
 const memoryStorage: Record<string, string> = {};
 
 // Context types
-export type StorageContext = 
-  | 'browser'       // Standard browser context with storage access
-  | 'extension'     // Browser extension context
-  | 'iframe'        // Embedded in an iframe
-  | 'insecure'      // Non-HTTPS context with restricted features
-  | 'incognito'     // Private/incognito browsing mode
-  | 'server'        // Server-side rendering context
-  | 'unknown';      // Context could not be determined
+export type StorageContext =
+  | 'browser' // Standard browser context with storage access
+  | 'extension' // Browser extension context
+  | 'iframe' // Embedded in an iframe
+  | 'insecure' // Non-HTTPS context with restricted features
+  | 'incognito' // Private/incognito browsing mode
+  | 'server' // Server-side rendering context
+  | 'unknown'; // Context could not be determined
 
 // Check if we're in a browser environment without throwing errors
 function isBrowser(): boolean {
@@ -32,8 +32,10 @@ export function detectContext(): StorageContext {
 
   // Safe check for extension context
   try {
-    if (typeof (window as any).chrome !== 'undefined' && 
-        (window as any).chrome.storage) {
+    if (
+      typeof (window as any).chrome !== 'undefined' &&
+      (window as any).chrome.storage
+    ) {
       return 'extension';
     }
   } catch (e) {
@@ -80,10 +82,13 @@ export function isStorageAvailable(): boolean {
   try {
     // First check if we're in a context that blocks storage APIs
     // Common in SSR, cross-origin iframes, or when "Block all cookies" is enabled
-    if (window.localStorage === undefined || window.sessionStorage === undefined) {
+    if (
+      window.localStorage === undefined ||
+      window.sessionStorage === undefined
+    ) {
       return false;
     }
-    
+
     const testKey = '__storage_test__';
     window.localStorage.setItem(testKey, testKey);
     window.localStorage.removeItem(testKey);
@@ -138,11 +143,11 @@ export function safeGetItem(key: string): string | null {
 
   try {
     const storage = getStorage();
-    
+
     if (storage === memoryStorage) {
       return memoryStorage[key] || null;
     }
-    
+
     return (storage as Storage).getItem(key);
   } catch (e) {
     console.warn(`Safe storage getItem failed for key "${key}":`, e);
@@ -163,12 +168,12 @@ export function safeSetItem(key: string, value: string): boolean {
 
   try {
     const storage = getStorage();
-    
+
     if (storage === memoryStorage) {
       memoryStorage[key] = value;
       return true;
     }
-    
+
     (storage as Storage).setItem(key, value);
     return true;
   } catch (e) {
@@ -192,12 +197,12 @@ export function safeRemoveItem(key: string): boolean {
 
   try {
     const storage = getStorage();
-    
+
     if (storage === memoryStorage) {
       delete memoryStorage[key];
       return true;
     }
-    
+
     (storage as Storage).removeItem(key);
     return true;
   } catch (e) {
@@ -223,14 +228,14 @@ export function safeClear(): boolean {
 
   try {
     const storage = getStorage();
-    
+
     if (storage === memoryStorage) {
       Object.keys(memoryStorage).forEach(key => {
         delete memoryStorage[key];
       });
       return true;
     }
-    
+
     (storage as Storage).clear();
     return true;
   } catch (e) {
@@ -262,11 +267,11 @@ export function getStorageKeys(): string[] {
 
   try {
     const storage = getStorage();
-    
+
     if (storage === memoryStorage) {
       return Object.keys(memoryStorage);
     }
-    
+
     return Object.keys(storage);
   } catch (e) {
     console.warn('Failed to get storage keys:', e);
@@ -283,7 +288,7 @@ export function getStorageContextMessage(): string {
   try {
     const context = detectContext();
     const usingFallback = isUsingFallbackStorage();
-    
+
     if (usingFallback) {
       switch (context) {
         case 'extension':
@@ -300,7 +305,7 @@ export function getStorageContextMessage(): string {
           return 'Using temporary storage. Your data will not persist between sessions.';
       }
     }
-    
+
     return 'Using persistent storage.';
   } catch (e) {
     return 'Using temporary storage due to browser restrictions.';

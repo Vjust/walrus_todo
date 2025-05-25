@@ -41,13 +41,13 @@ export interface BlobInfo extends BlobObject {
 // Blob metadata structure
 export enum HashType {
   SHA256 = 'Sha256',
-  DIGEST = 'Digest'
+  DIGEST = 'Digest',
 }
 
 export enum DigestType {
   SHA256 = 'Sha256',
   SHA512 = 'SHA512',
-  BLAKE2B = 'BLAKE2B'
+  BLAKE2B = 'BLAKE2B',
 }
 
 export interface BlobMetadataShape {
@@ -124,7 +124,7 @@ export interface StorageConfirmation {
   secondary_verification?: boolean;
   provider: string;
   signature?: string;
-  confirmed?: boolean;  // Added for compatibility
+  confirmed?: boolean; // Added for compatibility
   serializedMessage?: string;
 }
 

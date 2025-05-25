@@ -1,6 +1,6 @@
 /**
  * Frontend Configuration Loader
- * 
+ *
  * Loads configuration dynamically based on the current network environment.
  * This system allows the frontend to automatically use the correct contract addresses
  * and network settings that were generated during CLI deployment.
@@ -194,7 +194,7 @@ async function loadGeneratedConfig(network: string): Promise<AppConfig | null> {
   } catch (error) {
     console.warn(`Failed to load generated config for ${network}:`, error);
   }
-  
+
   return null;
 }
 
@@ -206,9 +206,11 @@ function createFallbackConfig(network: string): AppConfig {
   if (!fallback) {
     throw new Error(`No configuration available for network: ${network}`);
   }
-  
-  console.warn(`Using fallback configuration for ${network} - run 'waltodo deploy' to generate proper config`);
-  
+
+  console.warn(
+    `Using fallback configuration for ${network} - run 'waltodo deploy' to generate proper config`
+  );
+
   return fallback as AppConfig;
 }
 
@@ -217,31 +219,31 @@ function createFallbackConfig(network: string): AppConfig {
  */
 export async function loadAppConfig(): Promise<AppConfig> {
   const network = getCurrentNetwork();
-  
+
   // Return cached config if network hasn't changed
   if (cachedConfig && currentNetwork === network) {
     return cachedConfig;
   }
-  
+
   console.log(`Loading configuration for ${network} network`);
-  
+
   // Try to load generated configuration first
   let config = await loadGeneratedConfig(network);
-  
+
   // Fall back to default configuration if needed
   if (!config) {
     config = createFallbackConfig(network);
   }
-  
+
   // Validate configuration
   if (!config.deployment.packageId || config.deployment.packageId === '0x0') {
     console.warn('Package ID not set - some blockchain features may not work');
   }
-  
+
   // Cache the configuration
   cachedConfig = config;
   currentNetwork = network;
-  
+
   return config;
 }
 
@@ -259,17 +261,17 @@ export function useAppConfig() {
   const [config, setConfig] = React.useState<AppConfig | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  
+
   React.useEffect(() => {
     loadAppConfig()
       .then(setConfig)
-      .catch((err) => {
+      .catch(err => {
         setError(err.message);
         console.error('Failed to load app configuration:', err);
       })
       .finally(() => setLoading(false));
   }, []);
-  
+
   return { config, loading, error };
 }
 

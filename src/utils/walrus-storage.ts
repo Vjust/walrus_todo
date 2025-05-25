@@ -8,7 +8,10 @@
  * @module walrus-storage
  */
 
-import { WalrusStorage as WalrusStorageCLI, createWalrusStorage as createWalrusStorageCLI } from './walrus-storage-cli';
+import {
+  WalrusStorage as WalrusStorageCLI,
+  createWalrusStorage as createWalrusStorageCLI,
+} from './walrus-storage-cli';
 
 // Export the CLI-based implementation as the default
 export const WalrusStorage = WalrusStorageCLI;
@@ -22,6 +25,8 @@ export function createMockWalrusStorage(): WalrusStorage {
   return new WalrusStorage('testnet', true);
 }
 
-export function createRealWalrusStorage(network: string = 'testnet'): WalrusStorage {
+export function createRealWalrusStorage(
+  network: string = 'testnet'
+): WalrusStorage {
   return new WalrusStorage(network, false);
 }

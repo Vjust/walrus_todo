@@ -25,7 +25,7 @@ export class InteractiveMode {
     this.todoService = new TodoService();
     this.context = {
       history: [],
-      currentList: undefined
+      currentList: undefined,
     };
 
     // Define command shortcuts
@@ -41,19 +41,19 @@ export class InteractiveMode {
       ['cl', 'current-list'],
       ['exit', 'exit'],
       ['quit', 'exit'],
-      ['clear', 'clear']
+      ['clear', 'clear'],
     ]);
 
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
       prompt: this.getPrompt(),
-      completer: this.completer.bind(this)
+      completer: this.completer.bind(this),
     });
   }
 
   private getPrompt(): string {
-    const list = this.context.currentList 
+    const list = this.context.currentList
       ? chalk.cyan(`[${this.context.currentList}]`)
       : '';
     return `${chalk.bold('🌊 walrus')}${list}${chalk.blue('> ')}`;
@@ -61,9 +61,18 @@ export class InteractiveMode {
 
   private completer(line: string): [string[], string] {
     const commands = [
-      'list', 'add', 'complete', 'delete', 'update',
-      'suggest', 'store', 'help', 'exit', 'clear',
-      'set-list', 'current-list'
+      'list',
+      'add',
+      'complete',
+      'delete',
+      'update',
+      'suggest',
+      'store',
+      'help',
+      'exit',
+      'clear',
+      'set-list',
+      'current-list',
     ];
 
     const hits = commands.filter(cmd => cmd.startsWith(line));
@@ -74,7 +83,7 @@ export class InteractiveMode {
     this.running = true;
     this.showWelcome();
 
-    this.rl.on('line', async (input) => {
+    this.rl.on('line', async input => {
       if (!this.running) return;
 
       const trimmed = input.trim();
@@ -107,7 +116,9 @@ export class InteractiveMode {
 
   private showWelcome(): void {
     logger.info('\n' + chalk.blue('═'.repeat(50)));
-    logger.info(chalk.cyan.bold('  🌊 Welcome to Walrus Todo Interactive Mode! 🌊'));
+    logger.info(
+      chalk.cyan.bold('  🌊 Welcome to Walrus Todo Interactive Mode! 🌊')
+    );
     logger.info(chalk.blue('═'.repeat(50)));
     logger.info();
     logger.info(chalk.yellow('Quick Commands:'));
@@ -155,16 +166,24 @@ export class InteractiveMode {
 
       case 'set-list':
         if (args.length === 0) {
-          logger.info(chalk.yellow(`${ICONS.WARNING} Please specify a list name`));
+          logger.info(
+            chalk.yellow(`${ICONS.WARNING} Please specify a list name`)
+          );
           return;
         }
         this.context.currentList = args[0];
-        logger.info(chalk.green(`${ICONS.SUCCESS} Current list set to: ${args[0]}`));
+        logger.info(
+          chalk.green(`${ICONS.SUCCESS} Current list set to: ${args[0]}`)
+        );
         break;
 
       case 'current-list':
         if (this.context.currentList) {
-          logger.info(chalk.blue(`${ICONS.LIST} Current list: ${this.context.currentList}`));
+          logger.info(
+            chalk.blue(
+              `${ICONS.LIST} Current list: ${this.context.currentList}`
+            )
+          );
         } else {
           logger.info(chalk.yellow(`${ICONS.WARNING} No list selected`));
         }
@@ -177,13 +196,24 @@ export class InteractiveMode {
     }
   }
 
-  private async executeCliCommand(command: string, args: string[]): Promise<void> {
+  private async executeCliCommand(
+    command: string,
+    args: string[]
+  ): Promise<void> {
     // Build the full command
     const fullArgs = [command];
-    
+
     // Add current list context if applicable and not specified
-    if (this.context.currentList && ['add', 'list', 'complete', 'delete'].includes(command)) {
-      if (command === 'add' && args.length > 0 && !args.includes('-t') && !args.includes('--title')) {
+    if (
+      this.context.currentList &&
+      ['add', 'list', 'complete', 'delete'].includes(command)
+    ) {
+      if (
+        command === 'add' &&
+        args.length > 0 &&
+        !args.includes('-t') &&
+        !args.includes('--title')
+      ) {
         fullArgs.push(this.context.currentList);
         fullArgs.push('-t', args.join(' '));
       } else if (command === 'list' && args.length === 0) {
@@ -200,10 +230,10 @@ export class InteractiveMode {
       const cliPath = path.join(__dirname, '..', '..', 'bin', 'run');
       const child = spawn(process.execPath, [cliPath, ...fullArgs], {
         stdio: 'inherit',
-        env: { ...process.env, FORCE_COLOR: '1' }
+        env: { ...process.env, FORCE_COLOR: '1' },
       });
 
-      child.on('exit', (code) => {
+      child.on('exit', code => {
         if (code === 0) {
           resolve();
         } else {
@@ -211,7 +241,7 @@ export class InteractiveMode {
         }
       });
 
-      child.on('error', (error) => {
+      child.on('error', error => {
         reject(error);
       });
     });
@@ -222,9 +252,15 @@ export class InteractiveMode {
     logger.info(chalk.bold('📚 Interactive Mode Commands:'));
     logger.info();
     logger.info(chalk.green('List Management:'));
-    logger.info('  ' + chalk.cyan('set-list <name>') + ' (sl) - Set the current list');
-    logger.info('  ' + chalk.cyan('current-list') + ' (cl) - Show current list');
-    logger.info('  ' + chalk.cyan('list') + ' (l) - List todos in current list');
+    logger.info(
+      '  ' + chalk.cyan('set-list <name>') + ' (sl) - Set the current list'
+    );
+    logger.info(
+      '  ' + chalk.cyan('current-list') + ' (cl) - Show current list'
+    );
+    logger.info(
+      '  ' + chalk.cyan('list') + ' (l) - List todos in current list'
+    );
     logger.info();
     logger.info(chalk.green('Todo Operations:'));
     logger.info('  ' + chalk.cyan('add <title>') + ' (a) - Add a new todo');
@@ -238,14 +274,18 @@ export class InteractiveMode {
     logger.info();
     logger.info(chalk.green('Storage:'));
     logger.info('  ' + chalk.cyan('store') + ' - Store todos to blockchain');
-    logger.info('  ' + chalk.cyan('retrieve') + ' - Retrieve todos from blockchain');
+    logger.info(
+      '  ' + chalk.cyan('retrieve') + ' - Retrieve todos from blockchain'
+    );
     logger.info();
     logger.info(chalk.green('System:'));
     logger.info('  ' + chalk.cyan('help') + ' (h, ?) - Show this help');
     logger.info('  ' + chalk.cyan('clear') + ' - Clear the screen');
     logger.info('  ' + chalk.cyan('exit') + ' (quit) - Exit interactive mode');
     logger.info();
-    logger.info(chalk.dim('Note: When a list is set, todo operations use it by default'));
+    logger.info(
+      chalk.dim('Note: When a list is set, todo operations use it by default')
+    );
     logger.info();
   }
 

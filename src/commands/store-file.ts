@@ -22,47 +22,51 @@ export default class StoreFileCommand extends BaseCommand {
     '<%= config.bin %> store-file file.json --output json                # JSON output format',
     '<%= config.bin %> store-file file.json --verbose                    # Show detailed progress',
     '<%= config.bin %> store-file *.json --batch --epochs 10             # Store all JSON files',
-    '<%= config.bin %> store-file document.pdf --network testnet         # Store on testnet'
+    '<%= config.bin %> store-file document.pdf --network testnet         # Store on testnet',
   ];
 
   static args = {
     files: Args.string({
       description: 'Files to store',
       required: false,
-      multiple: true
-    })
+      multiple: true,
+    }),
   };
 
   static flags = {
     ...BaseCommand.flags,
     mock: Flags.boolean({
-      description: 'Use mock mode for testing'
+      description: 'Use mock mode for testing',
     }),
     batch: Flags.boolean({
       char: 'b',
-      description: 'Process multiple files in batch mode'
+      description: 'Process multiple files in batch mode',
     }),
     output: Flags.string({
       char: 'o',
       description: 'Output format',
       options: ['text', 'json'],
-      default: 'text'
+      default: 'text',
     }),
     verbose: Flags.boolean({
       char: 'v',
       description: 'Show verbose output',
-      default: false
+      default: false,
     }),
     epochs: Flags.integer({
       char: 'e',
       description: 'Number of epochs to store for',
-      default: 5
-    })
+      default: 5,
+    }),
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(StoreFileCommand);
-    const files = Array.isArray(args.files) ? args.files : (args.files ? [args.files] : []);
+    const files = Array.isArray(args.files)
+      ? args.files
+      : args.files
+        ? [args.files]
+        : [];
 
     try {
       // Check if any files provided
@@ -83,7 +87,6 @@ export default class StoreFileCommand extends BaseCommand {
 
       // Cleanup
       await walrusStorage.disconnect();
-
     } catch (error) {
       this.handleError(error, 'store-file');
     }
@@ -91,11 +94,13 @@ export default class StoreFileCommand extends BaseCommand {
 
   private async initializeStorage(flags: any): Promise<any> {
     if (flags.verbose) {
-      this.log(chalk.blue('Using mock storage') + (flags.mock ? ' (mock mode)' : ''));
+      this.log(
+        chalk.blue('Using mock storage') + (flags.mock ? ' (mock mode)' : '')
+      );
     }
-    
+
     const storage = createWalrusStorage(flags.network, flags.mock);
-    
+
     if (!flags.mock) {
       try {
         await storage.connect();
@@ -109,11 +114,15 @@ export default class StoreFileCommand extends BaseCommand {
         throw error;
       }
     }
-    
+
     return storage;
   }
 
-  private async storeSingleFile(filePath: string, walrusStorage: any, flags: any): Promise<void> {
+  private async storeSingleFile(
+    filePath: string,
+    walrusStorage: any,
+    flags: any
+  ): Promise<void> {
     if (flags.verbose) {
       this.log(chalk.gray(`Reading file: ${filePath}`));
     }
@@ -136,7 +145,7 @@ export default class StoreFileCommand extends BaseCommand {
     // Store file
     const blobId = await walrusStorage.storeBlob(data, {
       epochs: flags.epochs,
-      fileName
+      fileName,
     });
 
     if (flags.verbose) {
@@ -145,11 +154,13 @@ export default class StoreFileCommand extends BaseCommand {
 
     // Format output
     if (flags.output === 'json') {
-      this.log(JSON.stringify({
-        blobId,
-        size: data.length,
-        fileName
-      }));
+      this.log(
+        JSON.stringify({
+          blobId,
+          size: data.length,
+          fileName,
+        })
+      );
     } else {
       this.log('');
       this.log(chalk.green('✓') + ` Stored blob: ${fileName}`);
@@ -157,38 +168,41 @@ export default class StoreFileCommand extends BaseCommand {
     }
   }
 
-  private async storeBatchFiles(files: string[], walrusStorage: any, flags: any): Promise<void> {
+  private async storeBatchFiles(
+    files: string[],
+    walrusStorage: any,
+    flags: any
+  ): Promise<void> {
     const results = [];
-    
+
     this.log(`Batch storing ${files.length} files...`);
     this.log('');
 
     for (const file of files) {
       const fileName = path.basename(file);
-      
+
       try {
         await fs.access(file);
         const data = await fs.readFile(file);
-        
+
         const blobId = await walrusStorage.storeBlob(data, {
           epochs: flags.epochs,
-          fileName
+          fileName,
         });
 
         results.push({
           fileName,
           blobId,
           size: data.length,
-          status: 'success'
+          status: 'success',
         });
 
         this.log(`✓ ${fileName} → ${blobId} (Success)`);
-        
       } catch (error) {
         results.push({
           fileName,
           error: error.message,
-          status: 'error'
+          status: 'error',
         });
 
         this.log(`✗ ${fileName} (Error: ${error.message})`);
@@ -209,15 +223,20 @@ export default class StoreFileCommand extends BaseCommand {
 
     if (flags.output === 'json') {
       this.log('');
-      this.log(JSON.stringify({
-        results,
-        summary: {
-          total: files.length,
-          successful,
-          failed
-        }
-      }, null, 2));
+      this.log(
+        JSON.stringify(
+          {
+            results,
+            summary: {
+              total: files.length,
+              successful,
+              failed,
+            },
+          },
+          null,
+          2
+        )
+      );
     }
   }
-
 }

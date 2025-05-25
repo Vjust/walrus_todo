@@ -1,13 +1,14 @@
 /**
-import { Logger } from '../../../src/utils/Logger';
-
-const logger = new Logger('environment-validator');
  * Environment Validator for Testnet Configuration
  * Verifies all required configurations and prerequisites for testnet deployment
  */
 
 import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
+import { Logger } from '../../../src/utils/Logger';
+
+const logger = new Logger('environment-validator');
 
 export interface TestnetConfig {
   suiPath: string;
@@ -39,7 +40,7 @@ export class EnvironmentValidator {
   async validate(): Promise<ValidationResult> {
     this.errors = [];
     this.warnings = [];
-    
+
     await this.validateSuiCLI();
     await this.validateWalrusCLI();
     await this.validateSuiAddress();
@@ -49,12 +50,13 @@ export class EnvironmentValidator {
     await this.validateNetworkConnectivity();
     await this.validateMovePackage();
     await this.validateGasBudget();
-    
+
     return {
       isValid: this.errors.length === 0,
       errors: this.errors,
       warnings: this.warnings,
-      config: this.errors.length === 0 ? this.config as TestnetConfig : undefined
+      config:
+        this.errors.length === 0 ? (this.config as TestnetConfig) : undefined,
     };
   }
 
@@ -67,7 +69,9 @@ export class EnvironmentValidator {
       logger.info(`✓ Sui CLI found: ${version}`);
       this.config.suiPath = execSync('which sui', { encoding: 'utf8' }).trim();
     } catch (_error) {
-      this.errors.push('Sui CLI not found. Please install it from https://docs.sui.io/guides/developer/getting-started');
+      this.errors.push(
+        'Sui CLI not found. Please install it from https://docs.sui.io/guides/developer/getting-started'
+      );
     }
   }
 
@@ -79,7 +83,9 @@ export class EnvironmentValidator {
       const version = execSync('walrus --version', { encoding: 'utf8' }).trim();
       logger.info(`✓ Walrus CLI found: ${version}`);
     } catch (_error) {
-      this.errors.push('Walrus CLI not found. Please install it from https://docs.wal.app');
+      this.errors.push(
+        'Walrus CLI not found. Please install it from https://docs.wal.app'
+      );
     }
   }
 
@@ -94,7 +100,9 @@ export class EnvironmentValidator {
     }
 
     if (!address.startsWith('0x') || address.length !== 66) {
-      this.errors.push('Invalid SUI_ADDRESS format. Must be a 66-character hex string starting with 0x');
+      this.errors.push(
+        'Invalid SUI_ADDRESS format. Must be a 66-character hex string starting with 0x'
+      );
       return;
     }
 
@@ -111,7 +119,7 @@ export class EnvironmentValidator {
     try {
       const gasObj = execSync(`sui client gas --json`, { encoding: 'utf8' });
       const gasData = JSON.parse(gasObj);
-      
+
       let totalBalance = BigInt(0);
       for (const coin of gasData) {
         totalBalance += BigInt(coin.gasBalance);
@@ -119,14 +127,18 @@ export class EnvironmentValidator {
 
       this.config.suiBalance = totalBalance;
       const balanceInSui = Number(totalBalance) / 1e9;
-      
+
       logger.info(`✓ Sui balance: ${balanceInSui} SUI`);
-      
+
       if (balanceInSui < 0.1) {
-        this.warnings.push(`Low Sui balance: ${balanceInSui} SUI. Consider getting more from the faucet.`);
+        this.warnings.push(
+          `Low Sui balance: ${balanceInSui} SUI. Consider getting more from the faucet.`
+        );
       }
     } catch (_error) {
-      this.errors.push('Failed to check Sui balance. Make sure you have active Sui client.');
+      this.errors.push(
+        'Failed to check Sui balance. Make sure you have active Sui client.'
+      );
     }
   }
 
@@ -135,11 +147,15 @@ export class EnvironmentValidator {
    */
   private async validatePrivateKey(): Promise<void> {
     const privateKey = process.env.SUI_PRIVATE_KEY;
-    
+
     if (!privateKey) {
       // Try to load from keystore
-      const keystorePath = path.join(process.env.HOME || '', '.sui', 'keystore');
-      
+      const keystorePath = path.join(
+        process.env.HOME || '',
+        '.sui',
+        'keystore'
+      );
+
       if (existsSync(keystorePath)) {
         try {
           const keystore = JSON.parse(readFileSync(keystorePath, 'utf8'));
@@ -152,8 +168,10 @@ export class EnvironmentValidator {
           // Ignore parse errors
         }
       }
-      
-      this.errors.push('No private key found. Set SUI_PRIVATE_KEY or configure Sui keystore');
+
+      this.errors.push(
+        'No private key found. Set SUI_PRIVATE_KEY or configure Sui keystore'
+      );
     } else {
       logger.info('✓ Private key configured via environment variable');
       this.config.privateKey = privateKey;
@@ -164,10 +182,17 @@ export class EnvironmentValidator {
    * Validate Walrus configuration
    */
   private async validateWalrusConfig(): Promise<void> {
-    const configPath = path.join(process.env.HOME || '', '.config', 'walrus', 'client_config.yaml');
-    
+    const configPath = path.join(
+      process.env.HOME || '',
+      '.config',
+      'walrus',
+      'client_config.yaml'
+    );
+
     if (!existsSync(configPath)) {
-      this.errors.push(`Walrus config not found at ${configPath}. Run 'walrus --context testnet config'`);
+      this.errors.push(
+        `Walrus config not found at ${configPath}. Run 'walrus --context testnet config'`
+      );
       return;
     }
 
@@ -176,19 +201,25 @@ export class EnvironmentValidator {
 
     // Check Walrus tokens
     try {
-      const output = execSync('walrus --context testnet balance', { encoding: 'utf8' });
+      const output = execSync('walrus --context testnet balance', {
+        encoding: 'utf8',
+      });
       const tokenMatch = output.match(/Balance:\s*(\d+)/);
-      
+
       if (tokenMatch) {
         this.config.walrusTokens = parseInt(tokenMatch[1]);
         logger.info(`✓ Walrus balance: ${this.config.walrusTokens} tokens`);
-        
+
         if (this.config.walrusTokens < 10) {
-          this.warnings.push(`Low Walrus token balance: ${this.config.walrusTokens}. Run 'walrus --context testnet get-wal'`);
+          this.warnings.push(
+            `Low Walrus token balance: ${this.config.walrusTokens}. Run 'walrus --context testnet get-wal'`
+          );
         }
       }
     } catch (_error) {
-      this.warnings.push('Failed to check Walrus balance. Make sure Walrus CLI is configured.');
+      this.warnings.push(
+        'Failed to check Walrus balance. Make sure Walrus CLI is configured.'
+      );
     }
   }
 
@@ -196,15 +227,18 @@ export class EnvironmentValidator {
    * Validate network connectivity
    */
   private async validateNetworkConnectivity(): Promise<void> {
-    const networkUrl = process.env.SUI_NETWORK_URL || 'https://fullnode.testnet.sui.io:443';
-    
+    const networkUrl =
+      process.env.SUI_NETWORK_URL || 'https://fullnode.testnet.sui.io:443';
+
     try {
       // Simple check using curl
       execSync(`curl -s -f ${networkUrl}`, { encoding: 'utf8' });
       logger.info(`✓ Network connectivity confirmed: ${networkUrl}`);
       this.config.networkUrl = networkUrl;
     } catch (_error) {
-      this.warnings.push(`Failed to connect to ${networkUrl}. Network may be slow or unavailable.`);
+      this.warnings.push(
+        `Failed to connect to ${networkUrl}. Network may be slow or unavailable.`
+      );
       this.config.networkUrl = networkUrl;
     }
   }
@@ -214,7 +248,7 @@ export class EnvironmentValidator {
    */
   private async validateMovePackage(): Promise<void> {
     const movePath = path.join(process.cwd(), 'src', 'move', 'Move.toml');
-    
+
     if (!existsSync(movePath)) {
       this.errors.push('Move package not found at src/move/Move.toml');
       return;
@@ -228,7 +262,9 @@ export class EnvironmentValidator {
       logger.info(`✓ Deployed package ID: ${deployedId}`);
       this.config.movePackageId = deployedId;
     } else {
-      this.warnings.push('TODO_PACKAGE_ID not set. Package may need to be deployed.');
+      this.warnings.push(
+        'TODO_PACKAGE_ID not set. Package may need to be deployed.'
+      );
     }
   }
 
@@ -237,14 +273,16 @@ export class EnvironmentValidator {
    */
   private async validateGasBudget(): Promise<void> {
     const gasBudget = process.env.GAS_BUDGET || '100000000'; // 0.1 SUI default
-    
+
     try {
       this.config.gasBudget = BigInt(gasBudget);
       const gasInSui = Number(this.config.gasBudget) / 1e9;
       logger.info(`✓ Gas budget configured: ${gasInSui} SUI`);
-      
+
       if (gasInSui > 1) {
-        this.warnings.push(`High gas budget: ${gasInSui} SUI. Consider reducing to save costs.`);
+        this.warnings.push(
+          `High gas budget: ${gasInSui} SUI. Consider reducing to save costs.`
+        );
       }
     } catch (_error) {
       this.errors.push('Invalid GAS_BUDGET format. Must be a numeric string.');
@@ -281,27 +319,29 @@ WALRUS_USE_MOCK=false # Set to true for testing without real storage
    */
   static printReport(result: ValidationResult): void {
     logger.info('\n=== Testnet Environment Validation Report ===\n');
-    
+
     if (result.errors.length > 0) {
       logger.info('❌ ERRORS:');
       result.errors.forEach(error => logger.info(`   - ${error}`));
       logger.info('');
     }
-    
+
     if (result.warnings.length > 0) {
       logger.info('⚠️  WARNINGS:');
       result.warnings.forEach(warning => logger.info(`   - ${warning}`));
       logger.info('');
     }
-    
+
     if (result.isValid) {
       logger.info('✅ All required configurations are valid!');
       logger.info('\nConfiguration Summary:');
       logger.info(JSON.stringify(result.config, null, 2));
     } else {
-      logger.info('❌ Please fix the errors above before proceeding with testnet deployment.');
+      logger.info(
+        '❌ Please fix the errors above before proceeding with testnet deployment.'
+      );
     }
-    
+
     logger.info('\n===========================================\n');
   }
 }
@@ -317,7 +357,7 @@ if (require.main === module) {
   (async () => {
     const result = await validateTestnetEnvironment();
     EnvironmentValidator.printReport(result);
-    
+
     if (!result.isValid) {
       process.exit(1);
     }

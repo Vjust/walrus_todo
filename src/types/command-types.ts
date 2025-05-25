@@ -26,7 +26,7 @@ export interface ParsedFlags {
  */
 export interface ParsedOutput<
   TArgs extends ParsedArgs = ParsedArgs,
-  TFlags extends ParsedFlags = ParsedFlags
+  TFlags extends ParsedFlags = ParsedFlags,
 > {
   args: TArgs;
   flags: TFlags;
@@ -326,7 +326,10 @@ export function ensureArray<T>(value: T | T[] | undefined): T[] {
 /**
  * Helper to ensure a flag value is a string
  */
-export function ensureString(value: string | string[] | undefined, defaultValue = ''): string {
+export function ensureString(
+  value: string | string[] | undefined,
+  defaultValue = ''
+): string {
   if (value === undefined) return defaultValue;
   return Array.isArray(value) ? value[0] : value;
 }

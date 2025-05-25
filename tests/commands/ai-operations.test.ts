@@ -6,39 +6,40 @@ import { createSampleTodos } from '../helpers/ai-test-utils';
 import { TodoService } from '../../src/services/todoService';
 import AICommand from '../../src/commands/ai';
 
-
 // Mock the AIService
 jest.mock('../../src/services/ai/aiService', () => {
   return {
     AIService: jest.fn().mockImplementation(() => ({
       summarize: jest.fn().mockResolvedValue('Mock summary of your todos'),
       categorize: jest.fn().mockResolvedValue({
-        'work': ['todo-1'],
-        'personal': ['todo-2', 'todo-3']
+        work: ['todo-1'],
+        personal: ['todo-2', 'todo-3'],
       }),
       prioritize: jest.fn().mockResolvedValue({
         'todo-1': 9,
         'todo-2': 7,
-        'todo-3': 4
+        'todo-3': 4,
       }),
-      suggest: jest.fn().mockResolvedValue([
-        'Create project documentation',
-        'Schedule weekly team meeting',
-        'Review pull requests'
-      ]),
+      suggest: jest
+        .fn()
+        .mockResolvedValue([
+          'Create project documentation',
+          'Schedule weekly team meeting',
+          'Review pull requests',
+        ]),
       analyze: jest.fn().mockResolvedValue({
-        'themes': ['productivity', 'project management'],
-        'bottlenecks': ['waiting for approvals'],
-        'timeEstimates': {
-          'total': '5 days',
-          'breakdown': {
+        themes: ['productivity', 'project management'],
+        bottlenecks: ['waiting for approvals'],
+        timeEstimates: {
+          total: '5 days',
+          breakdown: {
             'todo-1': '2 days',
             'todo-2': '2 days',
-            'todo-3': '1 day'
-          }
-        }
-      })
-    }))
+            'todo-3': '1 day',
+          },
+        },
+      }),
+    })),
   };
 });
 
@@ -46,50 +47,54 @@ jest.mock('../../src/services/ai/aiService', () => {
 jest.mock('../../src/services/ai/TaskSuggestionService', () => {
   return {
     TaskSuggestionService: jest.fn().mockImplementation(() => ({
-      suggestTasks: jest.fn().mockResolvedValue([
-        'Create project documentation',
-        'Schedule weekly team meeting',
-        'Review pull requests'
-      ]),
+      suggestTasks: jest
+        .fn()
+        .mockResolvedValue([
+          'Create project documentation',
+          'Schedule weekly team meeting',
+          'Review pull requests',
+        ]),
       suggestPrioritizedTasks: jest.fn().mockResolvedValue([
         { title: 'Create project documentation', priority: 'high' },
         { title: 'Schedule weekly team meeting', priority: 'medium' },
-        { title: 'Review pull requests', priority: 'medium' }
+        { title: 'Review pull requests', priority: 'medium' },
       ]),
       suggestTaskWorkflow: jest.fn().mockResolvedValue({
         steps: [
           'First, review pull requests',
           'Then, create project documentation',
-          'Finally, schedule weekly team meeting'
-        ]
+          'Finally, schedule weekly team meeting',
+        ],
       }),
-      identifyBottlenecks: jest.fn().mockResolvedValue([
-        'waiting for approvals',
-        'dependency on external teams'
-      ])
-    }))
+      identifyBottlenecks: jest
+        .fn()
+        .mockResolvedValue([
+          'waiting for approvals',
+          'dependency on external teams',
+        ]),
+    })),
   };
 });
 
 // Mock the TodoService
 jest.mock('../../src/services/todoService', () => {
   const sampleTodos = createSampleTodos(3);
-  
+
   return {
     TodoService: jest.fn().mockImplementation(() => ({
       getAllTodos: jest.fn().mockResolvedValue(sampleTodos),
-      createTodo: jest.fn().mockImplementation((todo) => {
+      createTodo: jest.fn().mockImplementation(todo => {
         return Promise.resolve({
           id: 'new-todo-' + Date.now(),
           ...todo,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         });
       }),
-      getActiveTodos: jest.fn().mockResolvedValue(
-        sampleTodos.filter(todo => !todo.completed)
-      )
-    }))
+      getActiveTodos: jest
+        .fn()
+        .mockResolvedValue(sampleTodos.filter(todo => !todo.completed)),
+    })),
   };
 });
 
@@ -99,16 +104,16 @@ jest.mock('fs', () => {
   return {
     ...actualFs,
     existsSync: jest.fn().mockReturnValue(true),
-    readFileSync: jest.fn().mockImplementation((path) => {
+    readFileSync: jest.fn().mockImplementation(path => {
       if (path.includes('config.json')) {
         return JSON.stringify({
           aiProvider: 'xai',
-          apiKey: 'mock-api-key'
+          apiKey: 'mock-api-key',
         });
       }
       return '{}';
     }),
-    writeFileSync: jest.fn()
+    writeFileSync: jest.fn(),
   };
 });
 
@@ -116,17 +121,19 @@ describe('AI Command Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  
+
   // SECTION: Summarize command tests
   describe('ai summarize command', () => {
     it('should summarize todos', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['summarize'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Mock summary of your todos');
       expect(AIService).toHaveBeenCalled();
@@ -136,11 +143,13 @@ describe('AI Command Integration Tests', () => {
     it('should handle API key from flag', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['summarize', '--apiKey=test-api-key'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Mock summary of your todos');
       expect(AIService).toHaveBeenCalled();
@@ -149,11 +158,13 @@ describe('AI Command Integration Tests', () => {
     it('should handle specific provider option', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['summarize', '--provider=openai'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Mock summary of your todos');
       expect(AIService).toHaveBeenCalled();
@@ -165,11 +176,13 @@ describe('AI Command Integration Tests', () => {
     it('should categorize todos', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['categorize'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('work');
       expect(output).toContain('personal');
@@ -180,11 +193,13 @@ describe('AI Command Integration Tests', () => {
     it('should output in JSON format when specified', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['categorize', '--format=json'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('"work":');
       expect(output).toContain('"personal":');
@@ -198,11 +213,13 @@ describe('AI Command Integration Tests', () => {
     it('should prioritize todos', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['prioritize'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Priority');
       expect(output).toContain('todo-1');
@@ -213,11 +230,13 @@ describe('AI Command Integration Tests', () => {
     it('should output only high priority todos when specified', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['prioritize', '--threshold=8'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('todo-1');
       expect(output).not.toContain('todo-3');
@@ -229,11 +248,13 @@ describe('AI Command Integration Tests', () => {
     it('should suggest new todos', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['suggest'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Create project documentation');
       expect(output).toContain('Schedule weekly team meeting');
@@ -244,11 +265,13 @@ describe('AI Command Integration Tests', () => {
     it('should create suggested todos when requested', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['suggest', '--create'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Created new todo');
       const mockTodoService = TodoService.mock.results[0].value;
@@ -258,13 +281,17 @@ describe('AI Command Integration Tests', () => {
     it('should limit suggestions when count is specified', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['suggest', '--count=2'], {});
       await command.run();
-      
+
       console.log = originalLog;
-      const suggestionLines = output.split('\n').filter(line => line.trim().startsWith('-'));
+      const suggestionLines = output
+        .split('\n')
+        .filter(line => line.trim().startsWith('-'));
       expect(suggestionLines).toHaveLength(2);
     });
   });
@@ -274,11 +301,13 @@ describe('AI Command Integration Tests', () => {
     it('should analyze todos', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['analyze'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Themes');
       expect(output).toContain('Bottlenecks');
@@ -290,11 +319,13 @@ describe('AI Command Integration Tests', () => {
     it('should focus on specific analysis when specified', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['analyze', '--focus=timeEstimates'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Time Estimates');
       expect(output).toContain('5 days');
@@ -306,11 +337,13 @@ describe('AI Command Integration Tests', () => {
     it('should suggest a workflow for todos', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['workflow'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Suggested Workflow');
       expect(output).toContain('First');
@@ -324,11 +357,13 @@ describe('AI Command Integration Tests', () => {
     it('should identify bottlenecks in todos', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['bottlenecks'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Identified Bottlenecks');
       expect(output).toContain('waiting for approvals');
@@ -342,11 +377,16 @@ describe('AI Command Integration Tests', () => {
     it('should set AI configuration options', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
-      const command = new AICommand(['configure', '--provider=openai', '--apiKey=new-api-key'], {});
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
+      const command = new AICommand(
+        ['configure', '--provider=openai', '--apiKey=new-api-key'],
+        {}
+      );
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('AI configuration updated');
       expect(fs.writeFileSync).toHaveBeenCalled();
@@ -355,11 +395,13 @@ describe('AI Command Integration Tests', () => {
     it('should display current configuration', async () => {
       const originalLog = console.log;
       let output = '';
-      console.log = (msg: string) => { output += msg + '\n'; };
-      
+      console.log = (msg: string) => {
+        output += msg + '\n';
+      };
+
       const command = new AICommand(['configure', '--show'], {});
       await command.run();
-      
+
       console.log = originalLog;
       expect(output).toContain('Current AI Configuration');
       expect(output).toContain('xai');
@@ -374,40 +416,46 @@ describe('AI Command Integration Tests', () => {
       (fs.readFileSync as jest.Mock) = jest.fn().mockImplementation(() => {
         return JSON.stringify({ aiProvider: 'xai' });
       });
-      
+
       // Mock AIService to throw an error
       (AIService as jest.Mock).mockImplementationOnce(() => {
         throw new Error('API key is required');
       });
-      
+
       const originalError = console.error;
       let errorOutput = '';
-      console.error = (msg: string) => { errorOutput += msg + '\n'; };
-      
+      console.error = (msg: string) => {
+        errorOutput += msg + '\n';
+      };
+
       const command = new AICommand(['summarize'], {});
       await expect(command.run()).rejects.toThrow('API key is required');
-      
+
       console.error = originalError;
     });
 
     it('should handle AI service errors gracefully', async () => {
       // Mock AIService to throw after initialization
-      const mockSummarize = jest.fn().mockRejectedValue(new Error('AI service error'));
+      const mockSummarize = jest
+        .fn()
+        .mockRejectedValue(new Error('AI service error'));
       (AIService as jest.Mock).mockImplementationOnce(() => ({
         summarize: mockSummarize,
         categorize: jest.fn(),
         prioritize: jest.fn(),
         suggest: jest.fn(),
-        analyze: jest.fn()
+        analyze: jest.fn(),
       }));
-      
+
       const originalError = console.error;
       let errorOutput = '';
-      console.error = (msg: string) => { errorOutput += msg + '\n'; };
-      
+      console.error = (msg: string) => {
+        errorOutput += msg + '\n';
+      };
+
       const command = new AICommand(['summarize'], {});
       await expect(command.run()).rejects.toThrow('AI service error');
-      
+
       console.error = originalError;
     });
   });

@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - .
+  - waltodo-frontend
 ignoreBuiltDependencies:
   - bufferutil
   - sharp

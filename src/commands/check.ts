@@ -32,7 +32,7 @@ export default class CheckCommand extends BaseCommand {
     '<%= config.bin %> check my-list -i task-123 --uncheck    # Uncheck/remove in-progress',
     '<%= config.bin %> check work -i "Review PR"              # Check by title',
     '<%= config.bin %> check -i todo-456                      # Check in default list',
-    '<%= config.bin %> check personal -i task-789 --toggle    # Toggle check status'
+    '<%= config.bin %> check personal -i task-789 --toggle    # Toggle check status',
   ];
 
   static flags = {
@@ -40,21 +40,21 @@ export default class CheckCommand extends BaseCommand {
     id: Flags.string({
       char: 'i',
       description: 'Todo ID',
-      required: true
+      required: true,
     }),
     uncheck: Flags.boolean({
       char: 'u',
       description: 'Uncheck the todo instead of checking it',
-      default: false
-    })
+      default: false,
+    }),
   };
 
   static args = {
     listName: Args.string({
       name: 'listName',
       description: 'Name of the todo list',
-      required: true
-    })
+      required: true,
+    }),
   };
 
   async run(): Promise<void> {
@@ -69,19 +69,23 @@ export default class CheckCommand extends BaseCommand {
 
       const todo = list.todos.find(t => t.id === flags.id);
       if (!todo) {
-        throw new CLIError(`Todo with ID "${flags.id}" not found in list "${args.listName}"`, 'INVALID_TASK_ID');
+        throw new CLIError(
+          `Todo with ID "${flags.id}" not found in list "${args.listName}"`,
+          'INVALID_TASK_ID'
+        );
       }
 
       todo.completed = !flags.uncheck;
       todo.updatedAt = new Date().toISOString();
-      
+
       await todoService.saveList(args.listName, list);
 
       const status = todo.completed ? chalk.green('✓') : chalk.yellow('☐');
-      this.log(`${status} Todo ${chalk.bold(todo.title)} marked as ${todo.completed ? 'complete' : 'incomplete'}`);
-      this.log(chalk.dim("List: " + args.listName));  // Changed to double quotes for consistency
-      this.log(chalk.dim("ID: " + flags.id));  // Changed to double quotes for consistency
-
+      this.log(
+        `${status} Todo ${chalk.bold(todo.title)} marked as ${todo.completed ? 'complete' : 'incomplete'}`
+      );
+      this.log(chalk.dim('List: ' + args.listName)); // Changed to double quotes for consistency
+      this.log(chalk.dim('ID: ' + flags.id)); // Changed to double quotes for consistency
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

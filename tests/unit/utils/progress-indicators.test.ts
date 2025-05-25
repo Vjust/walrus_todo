@@ -1,27 +1,12 @@
 // TODO: This test file requires refactoring to work without mocks
 // The following jest.mock calls were removed during mock cleanup:
-// - jest.mock('ora')  
+// - jest.mock('ora')
 // - jest.mock('cli-progress')
 
 import {
   SPINNER_STYLES,
-  SpinnerManager,
-  ProgressBar,
-  MultiProgress,
-  createSpinner,
-  createProgressBar,
-  createMultiProgress,
-  withSpinner,
-  withProgressBar,
-  SpinnerStyles
+  SpinnerStyles,
 } from '../../../src/utils/progress-indicators';
-
-const ICONS = {
-  SUCCESS: '🎉',
-  ERROR: '💥',
-  WARNING: '⚡️',
-  INFO: '💡',
-};
 
 describe('progress-indicators', () => {
   // Tests that can work without mocks:
@@ -40,10 +25,10 @@ describe('progress-indicators', () => {
     it('should have correct intervals and frames for each style', () => {
       expect(SPINNER_STYLES.dots.interval).toBe(80);
       expect(SPINNER_STYLES.dots.frames).toHaveLength(10);
-      
+
       expect(SPINNER_STYLES.walrus.interval).toBe(300);
       expect(SPINNER_STYLES.walrus.frames).toContain('🦭');
-      
+
       expect(SPINNER_STYLES.sparkle.interval).toBe(100);
       expect(SPINNER_STYLES.sparkle.frames).toContain('✨');
     });
@@ -52,11 +37,14 @@ describe('progress-indicators', () => {
   // TODO: The following test suites require mocks and need to be refactored
   // All these test suites were commented out during mock removal:
   // - SpinnerManager tests
-  // - ProgressBar tests  
+  // - ProgressBar tests
   // - MultiProgress tests
   // - Helper functions tests
   // - Utility functions tests (withSpinner, withProgressBar)
 
+  // NOTE: The following test suites are commented out as they require mocks
+  // that were removed during cleanup. They can be uncommented when proper
+  // mocking is re-implemented.
   /*
   describe('SpinnerManager', () => {
     let spinner: SpinnerManager;

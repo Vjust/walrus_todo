@@ -30,12 +30,12 @@ async function loadTodoList(listName) {
   try {
     const todosDir = process.env.STORAGE_PATH || 'Todos';
     const listFilePath = path.join(process.cwd(), todosDir, `${listName}.json`);
-    
+
     if (!fs.existsSync(listFilePath)) {
       logger.error(`Error: List "${listName}" not found at ${listFilePath}`);
       process.exit(1);
     }
-    
+
     const listData = JSON.parse(fs.readFileSync(listFilePath, 'utf-8'));
     return listData.todos || [];
   } catch (error) {
@@ -49,15 +49,15 @@ async function storeTodo(todo, listName) {
   try {
     const mockFlag = mockMode ? ' --mock' : '';
     const command = `waltodo store --todo "${todo.title}" --list ${listName}${mockFlag}`;
-    
+
     logger.info(`Storing todo: ${todo.title}`);
     const { stdout, stderr } = await execPromise(command);
-    
+
     if (stderr) {
       logger.error(`Error: ${stderr}`);
       return false;
     }
-    
+
     logger.info(`Successfully stored: ${todo.title}`);
     return true;
   } catch (error) {
@@ -71,17 +71,17 @@ async function main() {
   try {
     logger.info(`Loading todos from list: ${listName}`);
     const todos = await loadTodoList(listName);
-    
+
     if (todos.length === 0) {
       logger.info(`No todos found in list "${listName}"`);
       process.exit(0);
     }
-    
+
     logger.info(`Found ${todos.length} todos in list "${listName}"`);
-    
+
     let successCount = 0;
     let failureCount = 0;
-    
+
     for (const todo of todos) {
       const success = await storeTodo(todo, listName);
       if (success) {
@@ -90,12 +90,11 @@ async function main() {
         failureCount++;
       }
     }
-    
+
     logger.info('\nSummary:');
     logger.info(`Total todos processed: ${todos.length}`);
     logger.info(`Successfully stored: ${successCount}`);
     logger.info(`Failed to store: ${failureCount}`);
-    
   } catch (error) {
     logger.error(`Unexpected error: ${error.message}`);
     process.exit(1);

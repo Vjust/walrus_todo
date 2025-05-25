@@ -1,8 +1,8 @@
 /**
  * AI Service Consolidation Script
- * 
+ *
  * This script consolidates the duplicate AI service implementations in the project,
- * creating a unified AIService class that combines the features of both 
+ * creating a unified AIService class that combines the features of both
  * aiService.ts and EnhancedAIService.ts
  */
 
@@ -28,7 +28,7 @@ if (!fs.existsSync(BACKUP_DIR)) {
 function backupFile(filePath) {
   const fileName = path.basename(filePath);
   const backupPath = path.join(BACKUP_DIR, fileName);
-  
+
   try {
     if (fs.existsSync(filePath)) {
       fs.copyFileSync(filePath, backupPath);
@@ -1087,10 +1087,10 @@ export const aiService = AIService.getInstance();
  */
 function updateIndexFile() {
   const indexPath = path.join(SOURCE_DIR, 'index.ts');
-  
+
   // Backup the original index file
   backupFile(indexPath);
-  
+
   const indexContent = `/**
  * AI Service exports
  */
@@ -1128,26 +1128,34 @@ export type * from './types';`;
  */
 async function main() {
   logger.info('Starting AI Service consolidation...');
-  
+
   // Backup original files
   backupFile(path.join(SOURCE_DIR, 'aiService.ts'));
   backupFile(path.join(SOURCE_DIR, 'EnhancedAIService.ts'));
-  
+
   // Create consolidated AI service
   const { originalFiles, newServicePath } = createConsolidatedAIService();
-  
+
   // Update index file
   updateIndexFile();
-  
+
   logger.info('\nAI Service consolidation completed!');
-  logger.info(`\nOriginal files (${originalFiles.join(', ')}) have been backed up to ${BACKUP_DIR}`);
+  logger.info(
+    `\nOriginal files (${originalFiles.join(', ')}) have been backed up to ${BACKUP_DIR}`
+  );
   logger.info(`New consolidated service created at ${newServicePath}`);
-  logger.info('The index.ts file has been updated to export the consolidated service.');
-  
+  logger.info(
+    'The index.ts file has been updated to export the consolidated service.'
+  );
+
   logger.info('\nNext steps:');
-  logger.info('1. Run the typechecker to verify the consolidated implementation');
+  logger.info(
+    '1. Run the typechecker to verify the consolidated implementation'
+  );
   logger.info('2. Update any direct imports of the original files');
-  logger.info('3. Remove the original implementation files once everything is working');
+  logger.info(
+    '3. Remove the original implementation files once everything is working'
+  );
 }
 
 main().catch(err => {

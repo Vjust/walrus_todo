@@ -1,6 +1,9 @@
 import { test } from '@oclif/test';
 import * as sinon from 'sinon';
-import { TaskSuggestionService, SuggestionType } from '../../src/services/ai/TaskSuggestionService';
+import {
+  TaskSuggestionService,
+  SuggestionType,
+} from '../../src/services/ai/TaskSuggestionService';
 import { EnhancedAIService } from '../../src/services/ai/EnhancedAIService';
 
 describe('suggest command', () => {
@@ -15,37 +18,38 @@ describe('suggest command', () => {
         reasoning: 'This is a common feature needed alongside authentication',
         tags: ['backend', 'security', 'user-experience'],
         type: SuggestionType.RELATED,
-        relatedTodoIds: ['todo1']
+        relatedTodoIds: ['todo1'],
       },
       {
         title: 'Add form validation to authentication',
-        description: 'Implement client and server-side validation for login forms',
+        description:
+          'Implement client and server-side validation for login forms',
         priority: 'high',
         score: 90,
         reasoning: 'Authentication requires proper validation for security',
         tags: ['frontend', 'security', 'validation'],
         type: SuggestionType.DEPENDENCY,
-        relatedTodoIds: ['todo1']
-      }
+        relatedTodoIds: ['todo1'],
+      },
     ],
     contextInfo: {
       analyzedTodoCount: 3,
       topContextualTags: ['security', 'backend', 'frontend'],
       completionPercentage: 33.33,
-      detectedThemes: ['Authentication', 'UI/UX', 'Infrastructure']
+      detectedThemes: ['Authentication', 'UI/UX', 'Infrastructure'],
     },
     metrics: {
       averageScore: 87.5,
       suggestionsByType: {
-        'related': 1,
-        'next_step': 0,
-        'dependency': 1,
-        'completion': 0,
-        'improvement': 0
-      }
-    }
+        related: 1,
+        next_step: 0,
+        dependency: 1,
+        completion: 0,
+        improvement: 0,
+      },
+    },
   };
-  
+
   // Sample todos
   const sampleTodos = [
     {
@@ -57,7 +61,7 @@ describe('suggest command', () => {
       tags: ['backend', 'security'],
       createdAt: '2023-01-01T00:00:00Z',
       updatedAt: '2023-01-01T00:00:00Z',
-      private: false
+      private: false,
     },
     {
       id: 'todo2',
@@ -69,7 +73,7 @@ describe('suggest command', () => {
       createdAt: '2023-01-02T00:00:00Z',
       updatedAt: '2023-01-03T00:00:00Z',
       completedAt: '2023-01-03T00:00:00Z',
-      private: false
+      private: false,
     },
     {
       id: 'todo3',
@@ -80,50 +84,62 @@ describe('suggest command', () => {
       tags: ['devops', 'testing'],
       createdAt: '2023-01-04T00:00:00Z',
       updatedAt: '2023-01-04T00:00:00Z',
-      private: false
-    }
+      private: false,
+    },
   ];
 
   // Stub for the TaskSuggestionService
   let stubSuggestTasks: sinon.SinonStub;
   let stubSuggestTasksWithVerification: sinon.SinonStub;
   let todoServiceStub: sinon.SinonStub;
-  
+
   beforeEach(() => {
     // Create stubs for the TaskSuggestionService methods
-    stubSuggestTasks = sinon.stub(TaskSuggestionService.prototype, 'suggestTasks').resolves(sampleSuggestions);
-    stubSuggestTasksWithVerification = sinon.stub(TaskSuggestionService.prototype, 'suggestTasksWithVerification').resolves({
-      result: sampleSuggestions,
-      verification: {
-        id: 'mock-verification-id',
-        timestamp: Date.now(),
-        provider: 'xai',
-        metadata: {},
-        requestHash: 'hash1',
-        responseHash: 'hash2',
-        user: 'user1',
-        verificationType: 0
-      }
-    });
-    
+    stubSuggestTasks = sinon
+      .stub(TaskSuggestionService.prototype, 'suggestTasks')
+      .resolves(sampleSuggestions);
+    stubSuggestTasksWithVerification = sinon
+      .stub(TaskSuggestionService.prototype, 'suggestTasksWithVerification')
+      .resolves({
+        result: sampleSuggestions,
+        verification: {
+          id: 'mock-verification-id',
+          timestamp: Date.now(),
+          provider: 'xai',
+          metadata: {},
+          requestHash: 'hash1',
+          responseHash: 'hash2',
+          user: 'user1',
+          verificationType: 0,
+        },
+      });
+
     // Stub the todo service
     todoServiceStub = sinon.stub().resolves({
       listTodos: sinon.stub().resolves(sampleTodos),
-      addTodo: sinon.stub().resolves({ id: 'new-todo-id' })
+      addTodo: sinon.stub().resolves({ id: 'new-todo-id' }),
     });
-    
+
     // Stub the environment variable
     process.env.XAI_API_KEY = 'test-api-key';
   });
-  
+
   afterEach(() => {
     sinon.restore();
     delete process.env.XAI_API_KEY;
   });
 
   test
-    .stub(TaskSuggestionService.prototype, 'suggestTasks', () => stubSuggestTasks)
-    .stub(TaskSuggestionService.prototype, 'suggestTasksWithVerification', () => stubSuggestTasksWithVerification)
+    .stub(
+      TaskSuggestionService.prototype,
+      'suggestTasks',
+      () => stubSuggestTasks
+    )
+    .stub(
+      TaskSuggestionService.prototype,
+      'suggestTasksWithVerification',
+      () => stubSuggestTasksWithVerification
+    )
     .stub(EnhancedAIService.prototype, 'getProvider', () => ({}))
     .stdout()
     .command(['suggest'])
@@ -135,7 +151,11 @@ describe('suggest command', () => {
     });
 
   test
-    .stub(TaskSuggestionService.prototype, 'suggestTasks', () => stubSuggestTasks)
+    .stub(
+      TaskSuggestionService.prototype,
+      'suggestTasks',
+      () => stubSuggestTasks
+    )
     .stdout()
     .command(['suggest', '--format=json'])
     .it('outputs JSON when format is json', ctx => {
@@ -146,7 +166,11 @@ describe('suggest command', () => {
     });
 
   test
-    .stub(TaskSuggestionService.prototype, 'suggestTasks', () => stubSuggestTasks)
+    .stub(
+      TaskSuggestionService.prototype,
+      'suggestTasks',
+      () => stubSuggestTasks
+    )
     .stdout()
     .command(['suggest', '--type=related'])
     .it('filters suggestions by type', ctx => {
@@ -159,13 +183,17 @@ describe('suggest command', () => {
     });
 
   test
-    .stub(TaskSuggestionService.prototype, 'suggestTasksWithVerification', () => stubSuggestTasksWithVerification)
+    .stub(
+      TaskSuggestionService.prototype,
+      'suggestTasksWithVerification',
+      () => stubSuggestTasksWithVerification
+    )
     .stdout()
     .command([
-      'suggest', 
-      '--verify', 
-      '--registryAddress=0x123', 
-      '--packageId=0x456'
+      'suggest',
+      '--verify',
+      '--registryAddress=0x123',
+      '--packageId=0x456',
     ])
     .it('runs suggestion with verification', ctx => {
       expect(stubSuggestTasksWithVerification.called).toBeTruthy();

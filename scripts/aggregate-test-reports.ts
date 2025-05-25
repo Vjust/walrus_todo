@@ -5,7 +5,7 @@ import { Logger } from '../src/utils/Logger';
 const logger = new Logger('aggregate-test-reports');
 /**
  * Test Report Aggregator
- * 
+ *
  * Combines test results from multiple test suites into comprehensive reports.
  * Supports Jest, stress test, and other test format results.
  */
@@ -95,18 +95,40 @@ class TestReportAggregator {
 
     // Define test suites to run
     const testSuites = [
-      { name: 'unit', command: 'pnpm test:unit --json --outputFile=test-results-unit.json' },
-      { name: 'integration', command: 'pnpm test:integration --json --outputFile=test-results-integration.json' },
-      { name: 'commands', command: 'pnpm test:commands --json --outputFile=test-results-commands.json' },
-      { name: 'security', command: 'pnpm test:security --json --outputFile=test-results-security.json' },
-      { name: 'stress', command: 'pnpm test:stress --json --outputFile=test-results-stress.json' }
+      {
+        name: 'unit',
+        command: 'pnpm test:unit --json --outputFile=test-results-unit.json',
+      },
+      {
+        name: 'integration',
+        command:
+          'pnpm test:integration --json --outputFile=test-results-integration.json',
+      },
+      {
+        name: 'commands',
+        command:
+          'pnpm test:commands --json --outputFile=test-results-commands.json',
+      },
+      {
+        name: 'security',
+        command:
+          'pnpm test:security --json --outputFile=test-results-security.json',
+      },
+      {
+        name: 'stress',
+        command:
+          'pnpm test:stress --json --outputFile=test-results-stress.json',
+      },
     ];
 
     for (const suite of testSuites) {
       logger.info(`Running ${suite.name} tests...`);
       try {
         execSync(suite.command, { stdio: 'inherit' });
-        await this.loadJestResults(`test-results-${suite.name}.json`, suite.name);
+        await this.loadJestResults(
+          `test-results-${suite.name}.json`,
+          suite.name
+        );
       } catch (error) {
         logger.error(`Error running ${suite.name} tests:`, error);
       }
@@ -127,7 +149,7 @@ class TestReportAggregator {
       { file: 'test-results-integration.json', suite: 'integration' },
       { file: 'test-results-commands.json', suite: 'commands' },
       { file: 'test-results-security.json', suite: 'security' },
-      { file: 'test-results-stress.json', suite: 'stress' }
+      { file: 'test-results-stress.json', suite: 'stress' },
     ];
 
     for (const { file, suite } of resultFiles) {
@@ -148,19 +170,25 @@ class TestReportAggregator {
   /**
    * Load Jest test results
    */
-  private async loadJestResults(filepath: string, suiteName: string): Promise<void> {
+  private async loadJestResults(
+    filepath: string,
+    suiteName: string
+  ): Promise<void> {
     try {
       const data = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
-      
+
       const result: TestResult = {
         suite: suiteName,
         passed: data.numPassedTests,
         failed: data.numFailedTests,
         skipped: data.numPendingTests,
         total: data.numTotalTests,
-        duration: data.testResults.reduce((sum: number, r: { duration: number }) => sum + r.duration, 0),
+        duration: data.testResults.reduce(
+          (sum: number, r: { duration: number }) => sum + r.duration,
+          0
+        ),
         testCases: this.extractTestCases(data.testResults),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       this.results.push(result);
@@ -172,15 +200,17 @@ class TestReportAggregator {
   /**
    * Extract individual test cases from Jest results
    */
-  private extractTestCases(testResults: Array<{
-    name: string;
-    assertionResults?: Array<{
-      title: string;
-      status: 'passed' | 'failed' | 'skipped';
-      duration?: number;
-      failureMessages?: string[];
-    }>;
-  }>): TestCase[] {
+  private extractTestCases(
+    testResults: Array<{
+      name: string;
+      assertionResults?: Array<{
+        title: string;
+        status: 'passed' | 'failed' | 'skipped';
+        duration?: number;
+        failureMessages?: string[];
+      }>;
+    }>
+  ): TestCase[] {
     const cases: TestCase[] = [];
 
     for (const result of testResults) {
@@ -190,7 +220,7 @@ class TestReportAggregator {
           suite: result.name,
           status: assertion.status,
           duration: assertion.duration || 0,
-          error: assertion.failureMessages?.[0]
+          error: assertion.failureMessages?.[0],
         });
       }
     }
@@ -205,26 +235,31 @@ class TestReportAggregator {
     const stressReportDir = 'stress-test-reports';
     if (!fs.existsSync(stressReportDir)) return;
 
-    const files = fs.readdirSync(stressReportDir)
+    const files = fs
+      .readdirSync(stressReportDir)
       .filter(f => f.endsWith('.json'))
       .sort()
       .slice(-1); // Get the most recent
 
     for (const file of files) {
       try {
-        const data = JSON.parse(fs.readFileSync(path.join(stressReportDir, file), 'utf-8')) as { metrics: { [key: string]: TestStats }, timestamp: string };
-        
+        const data = JSON.parse(
+          fs.readFileSync(path.join(stressReportDir, file), 'utf-8')
+        ) as { metrics: { [key: string]: TestStats }; timestamp: string };
+
         // Convert stress test metrics to test result format
         const testCases: TestCase[] = [];
         let totalPassed = 0;
         let totalFailed = 0;
         let totalDuration = 0;
 
-        for (const [op, metrics] of Object.entries(data.metrics as { [key: string]: TestStats })) {
+        for (const [op, metrics] of Object.entries(
+          data.metrics as { [key: string]: TestStats }
+        )) {
           const testStats = metrics as TestStats;
           const passed = testStats.successfulRequests;
           const failed = testStats.failedRequests;
-          
+
           totalPassed += passed;
           totalFailed += failed;
           totalDuration += testStats.totalDuration;
@@ -233,7 +268,7 @@ class TestReportAggregator {
             name: `Stress Test: ${op}`,
             suite: 'stress',
             status: testStats.successRate > 90 ? 'passed' : 'failed',
-            duration: testStats.avgResponseTime
+            duration: testStats.avgResponseTime,
           });
         }
 
@@ -245,7 +280,7 @@ class TestReportAggregator {
           total: totalPassed + totalFailed,
           duration: totalDuration,
           testCases,
-          timestamp: data.timestamp
+          timestamp: data.timestamp,
         });
       } catch (error) {
         logger.error(`Error loading stress test results:`, error);
@@ -266,7 +301,7 @@ class TestReportAggregator {
         lines: data.total.lines,
         statements: data.total.statements,
         functions: data.total.functions,
-        branches: data.total.branches
+        branches: data.total.branches,
       };
     } catch (error) {
       logger.error('Error loading coverage data:', error);
@@ -299,20 +334,22 @@ class TestReportAggregator {
       successRate: totalTests > 0 ? (totalPassed / totalTests) * 100 : 0,
       suites: this.results,
       coverage,
-      performance
+      performance,
     };
   }
 
   /**
    * Calculate performance metrics
    */
-  private calculatePerformanceMetrics(testCases: TestCase[]): PerformanceMetrics {
+  private calculatePerformanceMetrics(
+    testCases: TestCase[]
+  ): PerformanceMetrics {
     if (testCases.length === 0) {
       return {
         avgTestDuration: 0,
         slowestTests: [],
         fastestTests: [],
-        testsByDuration: {}
+        testsByDuration: {},
       };
     }
 
@@ -325,7 +362,7 @@ class TestReportAggregator {
       '100-500ms': 0,
       '500ms-1s': 0,
       '1s-5s': 0,
-      '>5s': 0
+      '>5s': 0,
     };
 
     for (const test of testCases) {
@@ -340,7 +377,7 @@ class TestReportAggregator {
       avgTestDuration: totalDuration / testCases.length,
       slowestTests: sorted.slice(0, 10),
       fastestTests: sorted.slice(-10).reverse(),
-      testsByDuration: buckets
+      testsByDuration: buckets,
     };
   }
 
@@ -479,7 +516,9 @@ class TestReportAggregator {
         </div>
     </div>
 
-    ${results.coverage ? `
+    ${
+      results.coverage
+        ? `
     <h2>Code Coverage</h2>
     <div class="coverage-section">
         ${this.renderCoverageBar('Lines', results.coverage.lines)}
@@ -487,7 +526,9 @@ class TestReportAggregator {
         ${this.renderCoverageBar('Functions', results.coverage.functions)}
         ${this.renderCoverageBar('Branches', results.coverage.branches)}
     </div>
-    ` : ''}
+    `
+        : ''
+    }
 
     <h2>Test Suites</h2>
     <table>
@@ -503,7 +544,9 @@ class TestReportAggregator {
             </tr>
         </thead>
         <tbody>
-            ${results.suites.map(suite => `
+            ${results.suites
+              .map(
+                suite => `
             <tr class="${suite.failed > 0 ? 'failed-test' : ''}">
                 <td><strong>${suite.suite}</strong></td>
                 <td>${suite.total}</td>
@@ -513,11 +556,15 @@ class TestReportAggregator {
                 <td>${suite.total > 0 ? ((suite.passed / suite.total) * 100).toFixed(2) : 0}%</td>
                 <td>${(suite.duration / 1000).toFixed(2)}s</td>
             </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
         </tbody>
     </table>
 
-    ${results.performance ? `
+    ${
+      results.performance
+        ? `
     <h2>Performance Analysis</h2>
     <div class="summary-grid">
         <div class="summary-card">
@@ -526,9 +573,13 @@ class TestReportAggregator {
         </div>
         <div class="summary-card">
             <div class="metric-label">Test Duration Distribution</div>
-            ${Object.entries(results.performance.testsByDuration).map(([bucket, count]) => `
+            ${Object.entries(results.performance.testsByDuration)
+              .map(
+                ([bucket, count]) => `
                 <div>${bucket}: ${count} tests</div>
-            `).join('')}
+            `
+              )
+              .join('')}
         </div>
     </div>
 
@@ -543,17 +594,23 @@ class TestReportAggregator {
             </tr>
         </thead>
         <tbody>
-            ${results.performance.slowestTests.map(test => `
+            ${results.performance.slowestTests
+              .map(
+                test => `
             <tr class="slow-test">
                 <td>${test.name}</td>
                 <td>${test.suite}</td>
                 <td>${test.duration.toFixed(2)}ms</td>
                 <td>${test.status}</td>
             </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
         </tbody>
     </table>
-    ` : ''}
+    `
+        : ''
+    }
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -626,7 +683,10 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
 `;
 
     for (const suite of results.suites) {
-      const successRate = suite.total > 0 ? ((suite.passed / suite.total) * 100).toFixed(2) : '0.00';
+      const successRate =
+        suite.total > 0
+          ? ((suite.passed / suite.total) * 100).toFixed(2)
+          : '0.00';
       markdown += `| ${suite.suite} | ${suite.total} | ${suite.passed} | ${suite.failed} | ${suite.skipped} | ${successRate}% | ${(suite.duration / 1000).toFixed(2)}s |\n`;
     }
 
@@ -639,10 +699,12 @@ Generated on: ${new Date(results.timestamp).toLocaleString()}
 ### Test Duration Distribution
 
 `;
-      for (const [bucket, count] of Object.entries(results.performance.testsByDuration)) {
+      for (const [bucket, count] of Object.entries(
+        results.performance.testsByDuration
+      )) {
         markdown += `- ${bucket}: ${count} tests\n`;
       }
-      
+
       markdown += `
 ### Slowest Tests
 
@@ -704,13 +766,16 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
 `;
 
     for (const suite of results.suites) {
-      const successRate = suite.total > 0 ? ((suite.passed / suite.total) * 100).toFixed(2) : '0.00';
+      const successRate =
+        suite.total > 0
+          ? ((suite.passed / suite.total) * 100).toFixed(2)
+          : '0.00';
       text += `${suite.suite}: ${suite.passed}/${suite.total} passed (${successRate}%) - ${(suite.duration / 1000).toFixed(2)}s\n`;
     }
 
     // Output to console and file
     logger.info('\n' + text);
-    
+
     const outputPath = path.join(this.outputDir, 'test-report.txt');
     fs.writeFileSync(outputPath, text);
     logger.info(`Text report generated: ${outputPath}`);
@@ -724,7 +789,7 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
     this.generateMarkdownReport(results);
     this.generateJsonReport(results);
     this.generateTextReport(results);
-    
+
     // Update README with latest test results
     this.updateReadmeBadge(results);
   }
@@ -733,27 +798,36 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
    * Update README with test results badge
    */
   private updateReadmeBadge(results: AggregatedResults): void {
-    const badgeColor = results.successRate >= 90 ? 'brightgreen' : 
-                      results.successRate >= 75 ? 'green' :
-                      results.successRate >= 60 ? 'yellow' :
-                      results.successRate >= 40 ? 'orange' : 'red';
-    
+    const badgeColor =
+      results.successRate >= 90
+        ? 'brightgreen'
+        : results.successRate >= 75
+          ? 'green'
+          : results.successRate >= 60
+            ? 'yellow'
+            : results.successRate >= 40
+              ? 'orange'
+              : 'red';
+
     const badgeUrl = `https://img.shields.io/badge/tests-${results.totalPassed}%20passed%20%2F%20${results.totalFailed}%20failed-${badgeColor}`;
     const badgeMarkdown = `![Test Status](${badgeUrl})`;
-    
+
     const readmePath = path.join(process.cwd(), 'README.md');
     if (fs.existsSync(readmePath)) {
       let readme = fs.readFileSync(readmePath, 'utf-8');
-      
+
       // Replace existing test badge or add new one
-      const badgeRegex = /!\[Test Status\]\(https:\/\/img\.shields\.io\/badge\/tests-.*?\)/;
-      
+      const badgeRegex =
+        /!\[Test Status\]\(https:\/\/img\.shields\.io\/badge\/tests-.*?\)/;
+
       if (badgeRegex.test(readme)) {
         readme = readme.replace(badgeRegex, badgeMarkdown);
       } else {
         // Add badge after coverage badge if exists
         const lines = readme.split('\n');
-        const coverageIndex = lines.findIndex(line => line.includes('Coverage Status'));
+        const coverageIndex = lines.findIndex(line =>
+          line.includes('Coverage Status')
+        );
         if (coverageIndex !== -1) {
           lines.splice(coverageIndex + 1, 0, badgeMarkdown);
         } else {
@@ -761,7 +835,7 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
         }
         readme = lines.join('\n');
       }
-      
+
       fs.writeFileSync(readmePath, readme);
     }
   }
@@ -770,15 +844,16 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
 // Main execution
 async function main() {
   const aggregator = new TestReportAggregator();
-  
+
   // Parse command line arguments
   const args = process.argv.slice(2);
   const runTests = args.includes('--run-tests');
-  const format = args.find(arg => arg.startsWith('--format='))?.split('=')[1] || 'all';
-  
+  const format =
+    args.find(arg => arg.startsWith('--format='))?.split('=')[1] || 'all';
+
   try {
     let results: AggregatedResults;
-    
+
     if (runTests) {
       // Run all tests and aggregate
       results = await aggregator.runAllTestsAndAggregate();
@@ -786,7 +861,7 @@ async function main() {
       // Load existing test results
       results = await aggregator.loadExistingResults();
     }
-    
+
     // Generate reports
     switch (format) {
       case 'html':
@@ -804,7 +879,7 @@ async function main() {
       default:
         aggregator.generateAllReports(results);
     }
-    
+
     // Exit with error code if tests failed
     if (results.totalFailed > 0) {
       process.exit(1);
@@ -821,4 +896,11 @@ if (require.main === module) {
 }
 
 export { TestReportAggregator };
-export type { AggregatedResults, TestResult, TestCase, CoverageInfo, CoverageMetric, TestStats };
+export type {
+  AggregatedResults,
+  TestResult,
+  TestCase,
+  CoverageInfo,
+  CoverageMetric,
+  TestStats,
+};

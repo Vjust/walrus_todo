@@ -4,7 +4,7 @@ import { Logger } from './utils/Logger';
 async function main() {
   const todoService = new TodoService();
   const listName = 'test-list';
-  
+
   // Get the todo list
   Logger.getInstance().info('Getting todo list...');
   const list = await todoService.getList(listName);
@@ -16,8 +16,11 @@ async function main() {
   Logger.getInstance().info('Current todos:');
   list.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
-    const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
-    Logger.getInstance().info(`${status} ${priority} ${todo.title} (${todo.id})`);
+    const priority =
+      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+    Logger.getInstance().info(
+      `${status} ${priority} ${todo.title} (${todo.id})`
+    );
   });
 
   // Complete the first todo
@@ -33,9 +36,12 @@ async function main() {
   const updatedList = await todoService.getList(listName);
   updatedList?.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
-    const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
-    Logger.getInstance().info(`${status} ${priority} ${todo.title} (${todo.id})`);
+    const priority =
+      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+    Logger.getInstance().info(
+      `${status} ${priority} ${todo.title} (${todo.id})`
+    );
   });
 }
 
-main().catch((error) => Logger.getInstance().error('Error in main:', error));
+main().catch(error => Logger.getInstance().error('Error in main:', error));

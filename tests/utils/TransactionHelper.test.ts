@@ -4,7 +4,7 @@ import { Signer } from '@mysten/sui/cryptography';
 import { Logger } from '../../src/utils/Logger';
 import {
   ValidationError,
-  BlockchainError
+  BlockchainError,
 } from '../../src/types/errors/consolidated';
 
 jest.mock('../../src/utils/Logger');
@@ -22,13 +22,13 @@ describe('TransactionHelper', () => {
       signTransaction: jest.fn().mockResolvedValue({
         signature: 'mock-signature',
         bytes: 'base64-encoded-bytes',
-        messageBytes: new Uint8Array(64)
+        messageBytes: new Uint8Array(64),
       }),
       signMessage: jest.fn().mockResolvedValue({
         signature: 'mock-signature',
         bytes: 'base64-encoded-bytes',
-        messageBytes: new Uint8Array(64)
-      })
+        messageBytes: new Uint8Array(64),
+      }),
     } as unknown as jest.Mocked<Signer>;
 
     mockLogger = {
@@ -45,13 +45,14 @@ describe('TransactionHelper', () => {
 
   describe('Retry Logic', () => {
     it('should retry failed operations', async () => {
-      const operation = jest.fn<[], Promise<string>>()
+      const operation = jest
+        .fn<[], Promise<string>>()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Timeout'))
         .mockResolvedValueOnce('success');
 
       const result = await helper.executeWithRetry(operation, {
-        name: 'test operation'
+        name: 'test operation',
       });
 
       expect(result).toBe('success');
@@ -60,12 +61,13 @@ describe('TransactionHelper', () => {
     });
 
     it('should respect maximum retry attempts', async () => {
-      const operation = jest.fn<[], Promise<never>>()
+      const operation = jest
+        .fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Persistent error'));
 
       helper = new TransactionHelper(mockSigner, {
         attempts: 2,
-        baseDelay: 100
+        baseDelay: 100,
       });
 
       await expect(
@@ -77,21 +79,24 @@ describe('TransactionHelper', () => {
 
     it('should implement exponential backoff', async () => {
       const delays: number[] = [];
-      const operation = jest.fn<[], Promise<never>>()
+      const operation = jest
+        .fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Network error'));
 
       // Override setTimeout to capture delays
-      jest.spyOn(global, 'setTimeout').mockImplementation((cb: (...args: any[]) => void, delay?: number) => {
-        delays.push(delay || 0);
-        cb();
-        return undefined as unknown as NodeJS.Timeout;
-      });
+      jest
+        .spyOn(global, 'setTimeout')
+        .mockImplementation((cb: (...args: any[]) => void, delay?: number) => {
+          delays.push(delay || 0);
+          cb();
+          return undefined as unknown as NodeJS.Timeout;
+        });
 
       helper = new TransactionHelper(mockSigner, {
         attempts: 3,
         baseDelay: 100,
         maxDelay: 1000,
-        exponential: true
+        exponential: true,
       });
 
       await expect(
@@ -105,7 +110,7 @@ describe('TransactionHelper', () => {
       helper = new TransactionHelper(mockSigner, {
         baseDelay: 1000,
         maxDelay: 5000,
-        exponential: true
+        exponential: true,
       });
 
       const delay = helper.getRetryDelay(5); // 5th attempt
@@ -118,7 +123,7 @@ describe('TransactionHelper', () => {
       expect(() =>
         helper.validateTransaction({
           name: 'test transaction',
-          requireSigner: true
+          requireSigner: true,
         })
       ).not.toThrow();
 
@@ -126,7 +131,7 @@ describe('TransactionHelper', () => {
       expect(() =>
         helper.validateTransaction({
           name: 'test transaction',
-          requireSigner: true
+          requireSigner: true,
         })
       ).toThrow(ValidationError);
     });
@@ -139,27 +144,27 @@ describe('TransactionHelper', () => {
         signTransaction: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
           bytes: 'base64-encoded-bytes',
-          messageBytes: new Uint8Array(64)
+          messageBytes: new Uint8Array(64),
         }),
         signMessage: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
           bytes: 'base64-encoded-bytes',
-          messageBytes: new Uint8Array(64)
+          messageBytes: new Uint8Array(64),
         }),
         signWithIntent: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
           bytes: 'base64-encoded-bytes',
-          messageBytes: new Uint8Array(64)
-        })
+          messageBytes: new Uint8Array(64),
+        }),
       } as unknown as Signer;
-      
+
       helper = new TransactionHelper(); // No default signer
 
       expect(() =>
         helper.validateTransaction({
           name: 'test transaction',
           signer: customSigner,
-          requireSigner: true
+          requireSigner: true,
         })
       ).not.toThrow();
     });
@@ -172,42 +177,49 @@ describe('TransactionHelper', () => {
       expect(helper.shouldRetry(new Error('connection refused'))).toBe(true);
 
       // Validation errors should not be retried
-      expect(helper.shouldRetry(
-        new ValidationError('Invalid input', { field: 'test' })
-      )).toBe(false);
+      expect(
+        helper.shouldRetry(
+          new ValidationError('Invalid input', { field: 'test' })
+        )
+      ).toBe(false);
 
       // Blockchain errors depend on recoverable flag
-      expect(helper.shouldRetry(
-        new BlockchainError('Tx failed', {
-          operation: 'test',
-          recoverable: true
-        })
-      )).toBe(true);
+      expect(
+        helper.shouldRetry(
+          new BlockchainError('Tx failed', {
+            operation: 'test',
+            recoverable: true,
+          })
+        )
+      ).toBe(true);
 
-      expect(helper.shouldRetry(
-        new BlockchainError('Tx failed', {
-          operation: 'test',
-          recoverable: false
-        })
-      )).toBe(false);
+      expect(
+        helper.shouldRetry(
+          new BlockchainError('Tx failed', {
+            operation: 'test',
+            recoverable: false,
+          })
+        )
+      ).toBe(false);
     });
 
     it('should include operation name in errors', async () => {
-      const operation = jest.fn<[], Promise<never>>()
+      const operation = jest
+        .fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Test error'));
 
       await expect(
         helper.executeWithRetry(operation, {
-          name: 'important operation'
+          name: 'important operation',
         })
       ).rejects.toThrow(BlockchainError);
-      
+
       await expect(
         helper.executeWithRetry(operation, {
-          name: 'important operation'
+          name: 'important operation',
         })
       ).rejects.toMatchObject({
-        message: expect.stringContaining('important operation')
+        message: expect.stringContaining('important operation'),
       });
     });
   });
@@ -218,58 +230,62 @@ describe('TransactionHelper', () => {
         signData: jest.fn().mockResolvedValue(new Uint8Array(32)),
         toSuiAddress: jest.fn().mockReturnValue('0x789'),
         getPublicKey: jest.fn().mockReturnValue(new Uint8Array(32)),
-        signTransaction: jest.fn().mockResolvedValue(new Uint8Array(64))
+        signTransaction: jest.fn().mockResolvedValue(new Uint8Array(64)),
       } as unknown as Signer;
-      
+
       const customHelper = helper.withConfig({
         signer: customSigner,
         retry: {
           attempts: 5,
-          baseDelay: 200
-        }
+          baseDelay: 200,
+        },
       });
 
       expect(customHelper).toBeInstanceOf(TransactionHelper);
       expect(() =>
         customHelper.validateTransaction({
           name: 'test',
-          requireSigner: true
+          requireSigner: true,
         })
       ).not.toThrow();
     });
 
     it('should merge retry configurations', async () => {
-      const operation = jest.fn<[], Promise<never>>()
+      const operation = jest
+        .fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Test error'));
 
       helper = new TransactionHelper(mockSigner, {
         attempts: 3,
-        baseDelay: 100
+        baseDelay: 100,
       });
 
       await expect(
         helper.executeWithRetry(operation, {
           name: 'test',
           customRetry: {
-            attempts: 2 // Override attempts only
-          }
+            attempts: 2, // Override attempts only
+          },
         })
       ).rejects.toThrow('Test error');
-      
+
       expect(operation).toHaveBeenCalledTimes(2); // Should use custom attempts
     });
   });
 
   describe('Integration Tests', () => {
     it('should handle concurrent operations', async () => {
-      const successOperation = jest.fn<[], Promise<string>>().mockResolvedValue('success');
-      const failOperation = jest.fn<[], Promise<never>>()
+      const successOperation = jest
+        .fn<[], Promise<string>>()
+        .mockResolvedValue('success');
+      const failOperation = jest
+        .fn<[], Promise<never>>()
         .mockRejectedValue(new Error('Test error'));
 
       const results = await Promise.allSettled([
         helper.executeWithRetry(successOperation, { name: 'op1' }),
         helper.executeWithRetry(successOperation, { name: 'op2' }),
-        helper.executeWithRetry(failOperation, { name: 'op3' })
+        helper.executeWithRetry(failOperation, { name: 'op3' }),
       ]);
 
       expect(results[0].status).toBe('fulfilled');
@@ -278,13 +294,14 @@ describe('TransactionHelper', () => {
     });
 
     it('should handle retry with validation', async () => {
-      const operation = jest.fn<[], Promise<string>>()
+      const operation = jest
+        .fn<[], Promise<string>>()
         .mockRejectedValueOnce(new Error('network error'))
         .mockResolvedValueOnce('success');
 
       const result = await helper.executeWithRetry(operation, {
         name: 'test operation',
-        requireSigner: true // Require signer validation
+        requireSigner: true, // Require signer validation
       });
 
       expect(result).toBe('success');
@@ -292,12 +309,13 @@ describe('TransactionHelper', () => {
     });
 
     it('should log retry attempts with context', async () => {
-      const operation = jest.fn<[], Promise<string>>()
+      const operation = jest
+        .fn<[], Promise<string>>()
         .mockRejectedValueOnce(new Error('Test error'))
         .mockResolvedValueOnce('success');
 
       await helper.executeWithRetry(operation, {
-        name: 'important operation'
+        name: 'important operation',
       });
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -305,7 +323,7 @@ describe('TransactionHelper', () => {
         expect.objectContaining({
           attempt: 1,
           delay: expect.any(Number),
-          error: 'Test error'
+          error: 'Test error',
         })
       );
     });

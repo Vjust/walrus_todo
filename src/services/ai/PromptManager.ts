@@ -1,6 +1,6 @@
 /**
  * PromptManager - Central system for managing and accessing prompts
- * 
+ *
  * Provides consistent prompting across different AI providers, enabling:
  * - Centralized prompt management
  * - Template variables for dynamic content
@@ -18,18 +18,18 @@ const PROMPTS = {
     enhanced: `Provide a comprehensive summary of the following todos in 2-3 sentences.
 Focus on key themes, priorities, and potential bottlenecks or dependencies.
 Include both urgent and important items in your summary.
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   categorize: {
     default: `Categorize the following todos into logical groups. Return the result as a JSON object where keys are category names and values are arrays of todo IDs.\n\n{todos}`,
     enhanced: `Categorize the following todos into logical groups based on task type, domain, priority, or project.
 Consider relationships between tasks and their natural groupings.
 Return the result as a JSON object where keys are descriptive category names 
 and values are arrays of todo IDs.
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   prioritize: {
     default: `Prioritize the following todos on a scale of 1-10 (10 being highest priority). Consider urgency, importance, and dependencies.
 Return the result as a JSON object where keys are todo IDs and values are numeric priority scores.\n\n{todos}`,
@@ -42,9 +42,9 @@ Consider the following factors in your prioritization:
 - Impact: What is the potential positive outcome of completing this task?
 
 Return the result as a JSON object where keys are todo IDs and values are numeric priority scores.
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   suggest: {
     default: `Based on the following todos, suggest 3-5 additional todos that would be logical next steps or related tasks.
 Return the result as a JSON array of strings, where each string is a suggested todo title.\n\n{todos}`,
@@ -57,9 +57,9 @@ Your suggestions should:
 - Be specific and actionable
 
 Return the result as a JSON array of strings, where each string is a suggested todo title.
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   analyze: {
     default: `Analyze the following todos for patterns, dependencies, and insights. 
 Provide analysis including:
@@ -81,17 +81,17 @@ Provide analysis including:
 7. Optimization opportunities: Suggest where parallel work or other optimizations are possible
 
 Return the result as a JSON object with these analysis categories as keys.
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   // New operations
   group: {
     default: `Group the following todos into workflow sequences or parallel tracks.
 Identify which todos can be worked on simultaneously and which must be completed in sequence.
 Return the result as a JSON object with sequential tracks as keys and arrays of todo IDs in execution order.
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   schedule: {
     default: `Create a suggested schedule for the following todos.
 For each todo, estimate:
@@ -101,18 +101,18 @@ For each todo, estimate:
 
 Return the result as a JSON object where keys are todo IDs and values are objects 
 with "start", "duration", and "due" properties (all in days).
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   detect_dependencies: {
     default: `Analyze the following todos to detect dependencies between tasks.
 Return a JSON object with two properties:
 1. "dependencies": An object where keys are todo IDs and values are arrays of todo IDs that must be completed before the key todo can begin
 2. "blockers": An object where keys are todo IDs and values are arrays of todo IDs that are currently blocking the key todo
 
-\n\n{todos}`
+\n\n{todos}`,
   },
-  
+
   estimate_effort: {
     default: `Estimate the relative effort required for each todo on a scale of 1-5 (1 being minimal effort, 5 being significant effort).
 Consider factors like complexity, scope, and technical requirements.
@@ -121,32 +121,32 @@ Return the result as a JSON object where keys are todo IDs and values are object
 - "reasoning": Brief explanation of the estimate
 - "estimated_hours": Rough estimate of hours required (if possible)
 
-\n\n{todos}`
-  }
+\n\n{todos}`,
+  },
 };
 
 // Provider-specific optimizations
 const PROVIDER_OPTIMIZATIONS = {
   [AIProvider.XAI]: {
     summarize: `${PROMPTS.summarize.enhanced}\n\nBe objective and factual in your summary.`,
-    prioritize: `${PROMPTS.prioritize.enhanced}\n\nBe objective in your prioritization, focusing on measurable criteria.`
+    prioritize: `${PROMPTS.prioritize.enhanced}\n\nBe objective in your prioritization, focusing on measurable criteria.`,
   },
   [AIProvider.OPENAI]: {
-    analyze: `${PROMPTS.analyze.enhanced}\n\nProvide concrete, specific insights rather than general observations.`
+    analyze: `${PROMPTS.analyze.enhanced}\n\nProvide concrete, specific insights rather than general observations.`,
   },
   [AIProvider.ANTHROPIC]: {
-    schedule: `${PROMPTS.schedule.default}\n\nFocus on realistic timelines that consider dependencies between tasks.`
-  }
+    schedule: `${PROMPTS.schedule.default}\n\nFocus on realistic timelines that consider dependencies between tasks.`,
+  },
 };
 
 export class PromptManager {
   private static instance: PromptManager;
   private promptOverrides: Record<string, string> = {};
-  
+
   private constructor() {
     // Private constructor for singleton
   }
-  
+
   /**
    * Get the singleton instance
    */
@@ -154,22 +154,22 @@ export class PromptManager {
     if (!PromptManager.instance) {
       PromptManager.instance = new PromptManager();
     }
-    
+
     return PromptManager.instance;
   }
-  
+
   /**
    * Static factory method to create a prompt template from a template string
    * This is a convenience method that exposes the PromptTemplate.fromTemplate
    * factory method at the class level
-   * 
+   *
    * @param template - The template string to use
    * @returns A new PromptTemplate instance
    */
   public static fromTemplate(template: string): PromptTemplate {
     return PromptTemplate.fromTemplate(template);
   }
-  
+
   /**
    * Get a prompt template for a specific operation
    */
@@ -182,49 +182,52 @@ export class PromptManager {
     if (this.promptOverrides[operation]) {
       return PromptTemplate.fromTemplate(this.promptOverrides[operation]);
     }
-    
+
     // Check for provider-specific optimization
     if (provider && PROVIDER_OPTIMIZATIONS[provider]?.[operation]) {
-      return PromptTemplate.fromTemplate(PROVIDER_OPTIMIZATIONS[provider][operation]);
+      return PromptTemplate.fromTemplate(
+        PROVIDER_OPTIMIZATIONS[provider][operation]
+      );
     }
-    
+
     // Fall back to standard prompts
     const promptKey = enhanced ? 'enhanced' : 'default';
-    const promptText = PROMPTS[operation]?.[promptKey] || PROMPTS[operation]?.default;
-    
+    const promptText =
+      PROMPTS[operation]?.[promptKey] || PROMPTS[operation]?.default;
+
     if (!promptText) {
       throw new Error(`No prompt template found for operation: ${operation}`);
     }
-    
+
     return PromptTemplate.fromTemplate(promptText);
   }
-  
+
   /**
    * Create a new prompt template from a template string
    * This is a convenience method that exposes the PromptTemplate.fromTemplate
    * factory method directly from the PromptManager
-   * 
+   *
    * @param template - The template string to use
    * @returns A new PromptTemplate instance
    */
   public fromTemplate(template: string): PromptTemplate {
     return PromptTemplate.fromTemplate(template);
   }
-  
+
   /**
    * Set a custom prompt override
    */
   public setPromptOverride(operation: string, promptTemplate: string): void {
     this.promptOverrides[operation] = promptTemplate;
   }
-  
+
   /**
    * Clear a prompt override
    */
   public clearPromptOverride(operation: string): void {
     delete this.promptOverrides[operation];
   }
-  
+
   /**
    * Clear all prompt overrides
    */

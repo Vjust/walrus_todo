@@ -1,4 +1,9 @@
-import { AIVerifierAdapter, AIActionType, AIPrivacyLevel, VerificationRecord } from '../../types/adapters/AIVerifierAdapter';
+import {
+  AIVerifierAdapter,
+  AIActionType,
+  AIPrivacyLevel,
+  VerificationRecord,
+} from '../../types/adapters/AIVerifierAdapter';
 import { Todo } from '../../types/todo';
 
 export interface VerifiedAIResult<T> {
@@ -24,8 +29,10 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerificationRecord> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr =
+      typeof request === 'string' ? request : JSON.stringify(request);
+    const responseStr =
+      typeof response === 'string' ? response : JSON.stringify(response);
 
     // Create verification
     return this.verifierAdapter.createVerification({
@@ -33,7 +40,7 @@ export class AIVerificationService {
       request: requestStr,
       response: responseStr,
       metadata,
-      privacyLevel
+      privacyLevel,
     });
   }
 
@@ -46,8 +53,10 @@ export class AIVerificationService {
     response: any
   ): Promise<boolean> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr =
+      typeof request === 'string' ? request : JSON.stringify(request);
+    const responseStr =
+      typeof response === 'string' ? response : JSON.stringify(response);
 
     return this.verifierAdapter.verifyRecord(record, requestStr, responseStr);
   }
@@ -69,7 +78,7 @@ export class AIVerificationService {
   ): Promise<VerifiedAIResult<string>> {
     const metadata = {
       todoCount: todos.length.toString(),
-      timestamp: Date.now().toString()
+      timestamp: Date.now().toString(),
     };
 
     const verification = await this.createVerification(
@@ -82,7 +91,7 @@ export class AIVerificationService {
 
     return {
       result: summary,
-      verification
+      verification,
     };
   }
 
@@ -97,7 +106,7 @@ export class AIVerificationService {
     const metadata = {
       todoCount: todos.length.toString(),
       categoryCount: Object.keys(categories).length.toString(),
-      timestamp: Date.now().toString()
+      timestamp: Date.now().toString(),
     };
 
     const verification = await this.createVerification(
@@ -110,7 +119,7 @@ export class AIVerificationService {
 
     return {
       result: categories,
-      verification
+      verification,
     };
   }
 
@@ -124,7 +133,7 @@ export class AIVerificationService {
   ): Promise<VerifiedAIResult<Record<string, number>>> {
     const metadata = {
       todoCount: todos.length.toString(),
-      timestamp: Date.now().toString()
+      timestamp: Date.now().toString(),
     };
 
     const verification = await this.createVerification(
@@ -137,7 +146,7 @@ export class AIVerificationService {
 
     return {
       result: priorities,
-      verification
+      verification,
     };
   }
 
@@ -152,7 +161,7 @@ export class AIVerificationService {
     const metadata = {
       todoCount: todos.length.toString(),
       suggestionCount: suggestions.length.toString(),
-      timestamp: Date.now().toString()
+      timestamp: Date.now().toString(),
     };
 
     const verification = await this.createVerification(
@@ -165,7 +174,7 @@ export class AIVerificationService {
 
     return {
       result: suggestions,
-      verification
+      verification,
     };
   }
 
@@ -180,7 +189,7 @@ export class AIVerificationService {
     const metadata = {
       todoCount: todos.length.toString(),
       analysisKeys: Object.keys(analysis).join(','),
-      timestamp: Date.now().toString()
+      timestamp: Date.now().toString(),
     };
 
     const verification = await this.createVerification(
@@ -193,7 +202,7 @@ export class AIVerificationService {
 
     return {
       result: analysis,
-      verification
+      verification,
     };
   }
 }

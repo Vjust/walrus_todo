@@ -1,14 +1,19 @@
 /**
  * Tests for the 'add' command in WalTodo CLI
- * 
+ *
  * This test file demonstrates how to test the 'add' command using Jest
  * and the test environment setup utilities.
  */
 
 import { test } from '@oclif/test';
-import * as fs from 'fs';
-import * as path from 'path';
-import { setupTestEnvironment, cleanupTestEnvironment, createTestTodo } from './setup-test-env';
+// import * as fs from 'fs';
+// import * as path from 'path';
+// import { execSync } from 'child_process';
+import {
+  setupTestEnvironment,
+  cleanupTestEnvironment,
+  createTestTodo,
+} from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
 
@@ -28,7 +33,7 @@ describe('WalTodo add command', () => {
   // Reset mocks before each test
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up specific mocks for the TodoService
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
       id: 'default',
@@ -37,19 +42,21 @@ describe('WalTodo add command', () => {
       todos: [],
       version: 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
 
-    (TodoService.prototype.addTodo as jest.Mock).mockImplementation(async (listName, todo) => ({
-      ...todo,
-      id: `test-id-${Date.now()}`,
-      completed: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      private: false,
-      priority: todo.priority || 'medium',
-      tags: todo.tags || []
-    }));
+    (TodoService.prototype.addTodo as jest.Mock).mockImplementation(
+      async (listName, todo) => ({
+        ...todo,
+        id: `test-id-${Date.now()}`,
+        completed: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        private: false,
+        priority: todo.priority || 'medium',
+        tags: todo.tags || [],
+      })
+    );
   });
 
   // Test using @oclif/test library which provides tools specifically for testing CLI commands
@@ -71,7 +78,7 @@ describe('WalTodo add command', () => {
         'default',
         expect.objectContaining({
           title: 'High priority task',
-          priority: 'high'
+          priority: 'high',
         })
       );
     });
@@ -85,7 +92,7 @@ describe('WalTodo add command', () => {
         'default',
         expect.objectContaining({
           title: 'Todo with tags',
-          tags: ['work', 'important']
+          tags: ['work', 'important'],
         })
       );
     });
@@ -98,7 +105,7 @@ describe('WalTodo add command', () => {
       expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
         'work',
         expect.objectContaining({
-          title: 'Todo for specific list'
+          title: 'Todo for specific list',
         })
       );
     });
@@ -116,13 +123,13 @@ describe('WalTodo add command', () => {
   it('should add a todo through direct service call', async () => {
     const todoService = new TodoService();
     const todo = createTestTodo({ title: 'Direct service todo' });
-    
+
     await todoService.addTodo('default', todo);
-    
+
     expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
       'default',
       expect.objectContaining({
-        title: 'Direct service todo'
+        title: 'Direct service todo',
       })
     );
   });

@@ -3,7 +3,7 @@ import { WalrusError } from '../types/error';
 export class WalrusUrlManager {
   private readonly baseUrls = {
     testnet: 'https://testnet.wal.app',
-    mainnet: 'https://mainnet.wal.app'
+    mainnet: 'https://mainnet.wal.app',
   };
 
   private environment: 'testnet' | 'mainnet';

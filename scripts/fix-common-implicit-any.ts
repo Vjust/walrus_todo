@@ -17,11 +17,13 @@ interface FileChange {
 
 // Load files to process
 const files = globSync(path.join(__dirname, '../src/**/*.ts'), {
-  ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts']
+  ignore: ['**/*.d.ts', '**/__mocks__/**/*.ts'],
 });
 
 // eslint-disable-next-line no-console
-process.stdout.write(`Processing ${files.length} TypeScript files for common implicit 'any' patterns...\n`);
+process.stdout.write(
+  `Processing ${files.length} TypeScript files for common implicit 'any' patterns...\n`
+);
 
 const changes: FileChange[] = [];
 let totalChanges = 0;
@@ -38,24 +40,26 @@ const patterns = [
     fix: (match: string) => {
       // Add 'any' type to parameters
       return match.replace(/(\w+)(?=[,)])/g, '$1: any');
-    }
+    },
   },
   // Callback parameters in methods like map, filter, reduce
   {
-    pattern: /\.(map|filter|forEach|reduce|find|findIndex|some|every|sort)\(\s*(?:function\s*\(|\()([^)]*)\)/g,
+    pattern:
+      /\.(map|filter|forEach|reduce|find|findIndex|some|every|sort)\(\s*(?:function\s*\(|\()([^)]*)\)/g,
     test: (match: string, methodName: string, params: string) => {
       // Only apply if parameters don't already have types
       return params.length > 0 && !params.includes(':');
     },
     fix: (match: string, methodName: string, params: string) => {
       // Add 'any' types to array method callbacks
-      const typedParams = params.split(',')
+      const typedParams = params
+        .split(',')
         .map(p => p.trim())
-        .map(p => p && !p.includes(':') ? `${p}: any` : p)
+        .map(p => (p && !p.includes(':') ? `${p}: any` : p))
         .join(', ');
-      
+
       return match.replace(params, typedParams);
-    }
+    },
   },
   // Function declarations without return types
   {
@@ -66,13 +70,14 @@ const patterns = [
     },
     fix: (match: string, funcName: string, params: string) => {
       // Add 'any' types to parameters
-      const typedParams = params.split(',')
+      const typedParams = params
+        .split(',')
         .map(p => p.trim())
-        .map(p => p && !p.includes(':') ? `${p}: any` : p)
+        .map(p => (p && !p.includes(':') ? `${p}: any` : p))
         .join(', ');
-      
+
       return `function ${funcName}(${typedParams}): any {`;
-    }
+    },
   },
   // Object destructuring without types
   {
@@ -84,7 +89,7 @@ const patterns = [
     fix: (match: string, props: string, source: string) => {
       // Add a type annotation to the destructuring
       return `const {${props}}: any = ${source};`;
-    }
+    },
   },
   // Array destructuring without types
   {
@@ -96,8 +101,8 @@ const patterns = [
     fix: (match: string, elements: string, source: string) => {
       // Add 'any[]' type to array destructuring
       return `const [${elements}]: any[] = ${source};`;
-    }
-  }
+    },
+  },
 ];
 
 // Process each file
@@ -107,7 +112,7 @@ files.forEach(filePath => {
     const content = fs.readFileSync(filePath, 'utf-8');
     let updated = content;
     let fileChangeCount = 0;
-    
+
     // Apply each pattern
     patterns.forEach(({ pattern, test, fix }) => {
       updated = updated.replace(pattern, (match, ...args) => {
@@ -120,23 +125,25 @@ files.forEach(filePath => {
         return match;
       });
     });
-    
+
     if (fileChangeCount > 0) {
       changes.push({
         file: relativePath,
         original: content,
         updated,
-        changeCount: fileChangeCount
+        changeCount: fileChangeCount,
       });
-      
+
       // Create a backup of the original file
       const backupPath = `${filePath}.bak`;
       fs.writeFileSync(backupPath, content);
-      
+
       // Write the updated content
       fs.writeFileSync(filePath, updated);
-      
-      process.stdout.write(`[${relativePath}] Applied ${fileChangeCount} changes (backup created)\n`);
+
+      process.stdout.write(
+        `[${relativePath}] Applied ${fileChangeCount} changes (backup created)\n`
+      );
     }
   } catch (error) {
     process.stderr.write(`Error processing ${filePath}: ${error}\n`);
@@ -164,7 +171,10 @@ report += `To revert changes: \`npx ts-node scripts/revert-implicit-any-fixes.ts
 fs.writeFileSync(reportPath, report);
 
 // Create revert script
-const revertScriptPath = path.resolve(__dirname, './revert-implicit-any-fixes.ts');
+const revertScriptPath = path.resolve(
+  __dirname,
+  './revert-implicit-any-fixes.ts'
+);
 const revertScript = `/**
  * Script to revert changes made by fix-common-implicit-any.ts
  * Run with: npx ts-node scripts/revert-implicit-any-fixes.ts
@@ -203,9 +213,17 @@ console.log(\`Successfully restored \${restored} files\`);
 
 fs.writeFileSync(revertScriptPath, revertScript);
 
-process.stdout.write(`\nApplied ${totalChanges} automatic fixes to ${changes.length} files.\n`);
+process.stdout.write(
+  `\nApplied ${totalChanges} automatic fixes to ${changes.length} files.\n`
+);
 process.stdout.write(`Report written to ${reportPath}\n`);
 process.stdout.write(`Created revert script at ${revertScriptPath}\n`);
-process.stdout.write('\nThese changes add explicit \'any\' types as a starting point.\n');
-process.stdout.write('You should review and replace with more specific types where appropriate.\n');
-process.stdout.write('To revert changes: npx ts-node scripts/revert-implicit-any-fixes.ts\n');
+process.stdout.write(
+  "\nThese changes add explicit 'any' types as a starting point.\n"
+);
+process.stdout.write(
+  'You should review and replace with more specific types where appropriate.\n'
+);
+process.stdout.write(
+  'To revert changes: npx ts-node scripts/revert-implicit-any-fixes.ts\n'
+);

@@ -7,7 +7,12 @@
 export * from './schemas';
 
 import { CommandSanitizer } from '../CommandSanitizer';
-import { InputValidator, ValidationRule, ValidationSchema, CommonValidationRules } from '../InputValidator';
+import {
+  InputValidator,
+  ValidationRule,
+  ValidationSchema,
+  CommonValidationRules,
+} from '../InputValidator';
 import { SchemaValidator, Schemas } from '../SchemaValidator';
 import { PromptValidator } from '../PromptValidator';
 import { ApiInputValidator } from '../ApiInputValidator';
@@ -23,7 +28,7 @@ import {
   createNFTCommandValidation,
   configureCommandValidation,
   validateAIApiKey,
-  validateBlockchainConfig
+  validateBlockchainConfig,
 } from '../CommandValidationMiddleware';
 
 export {
@@ -44,7 +49,7 @@ export {
   createNFTCommandValidation,
   configureCommandValidation,
   validateAIApiKey,
-  validateBlockchainConfig
+  validateBlockchainConfig,
 };
 
 // Re-export types with correct syntax for isolatedModules

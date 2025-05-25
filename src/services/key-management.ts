@@ -10,7 +10,7 @@ export class KeyManagementService {
   private static instance: KeyManagementService;
   private secureStorage: SecureStorage;
   private keypairCache: Ed25519Keypair | null = null;
-  
+
   private constructor() {
     this.secureStorage = new SecureStorage();
   }
@@ -28,13 +28,19 @@ export class KeyManagementService {
       return this.keypairCache;
     }
 
-    const privateKey = await this.secureStorage.getSecureItem('SUI_PRIVATE_KEY');
+    const privateKey =
+      await this.secureStorage.getSecureItem('SUI_PRIVATE_KEY');
     if (!privateKey) {
-      throw new CLIError('No private key found. Please configure your wallet first.', 'NO_PRIVATE_KEY');
+      throw new CLIError(
+        'No private key found. Please configure your wallet first.',
+        'NO_PRIVATE_KEY'
+      );
     }
 
     try {
-      this.keypairCache = Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'base64'));
+      this.keypairCache = Ed25519Keypair.fromSecretKey(
+        Buffer.from(privateKey, 'base64')
+      );
       return this.keypairCache;
     } catch (_error) {
       throw new CLIError(
@@ -47,7 +53,9 @@ export class KeyManagementService {
   async storeKeypair(privateKey: string): Promise<void> {
     try {
       // Validate the private key format before storing
-      const keypair = Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'base64'));
+      const keypair = Ed25519Keypair.fromSecretKey(
+        Buffer.from(privateKey, 'base64')
+      );
       await this.secureStorage.setSecureItem('SUI_PRIVATE_KEY', privateKey);
       this.keypairCache = keypair;
     } catch (_error) {
@@ -62,4 +70,3 @@ export class KeyManagementService {
     this.keypairCache = null;
   }
 }
-

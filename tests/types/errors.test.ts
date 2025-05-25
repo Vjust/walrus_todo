@@ -3,7 +3,7 @@ import {
   StorageError,
   BlockchainError,
   ValidationError,
-  NetworkError
+  NetworkError,
 } from '@/types/errors';
 
 describe('Error Types', () => {
@@ -22,7 +22,7 @@ describe('Error Types', () => {
       const error = new WalrusError('Test error', {
         code: 'CUSTOM_ERROR',
         publicMessage: 'Public message',
-        shouldRetry: true
+        shouldRetry: true,
       });
 
       expect(error.code).toBe('CUSTOM_ERROR');
@@ -43,7 +43,7 @@ describe('Error Types', () => {
     it('should format operation in code', () => {
       const error = new StorageError('Storage error', {
         operation: 'read',
-        blobId: 'test-blob'
+        blobId: 'test-blob',
       });
 
       expect(error.code).toBe('STORAGE_READ_ERROR');
@@ -53,12 +53,12 @@ describe('Error Types', () => {
     it('should handle blob ID securely', () => {
       const error = new StorageError('Storage error', {
         operation: 'write',
-        blobId: 'sensitive-id'
+        blobId: 'sensitive-id',
       });
 
       // blobId should not be exposed in public properties
       expect(Object.keys(error)).not.toContain('blobId');
-      
+
       // blobId should not appear in public error
       const publicError = error.toPublicError();
       expect(JSON.stringify(publicError)).not.toContain('sensitive-id');
@@ -69,7 +69,7 @@ describe('Error Types', () => {
     it('should format operation in code', () => {
       const error = new BlockchainError('Blockchain error', {
         operation: 'transaction',
-        transactionId: 'tx123'
+        transactionId: 'tx123',
       });
 
       expect(error.code).toBe('BLOCKCHAIN_TRANSACTION_ERROR');
@@ -79,12 +79,12 @@ describe('Error Types', () => {
     it('should handle transaction ID securely', () => {
       const error = new BlockchainError('Blockchain error', {
         operation: 'execute',
-        transactionId: 'sensitive-tx'
+        transactionId: 'sensitive-tx',
       });
 
       // transactionId should not be exposed in public properties
       expect(Object.keys(error)).not.toContain('transactionId');
-      
+
       // transactionId should not appear in public error
       const publicError = error.toPublicError();
       expect(JSON.stringify(publicError)).not.toContain('sensitive-tx');
@@ -96,7 +96,7 @@ describe('Error Types', () => {
       const error = new ValidationError('Validation error', {
         field: 'size',
         value: -1,
-        constraint: 'positive'
+        constraint: 'positive',
       });
 
       expect(error.code).toBe('VALIDATION_ERROR');
@@ -107,12 +107,12 @@ describe('Error Types', () => {
       const error = new ValidationError('Validation error', {
         field: 'token',
         value: 'secret-token',
-        constraint: 'format'
+        constraint: 'format',
       });
 
       // Value should not be exposed in public properties
       expect(Object.keys(error)).not.toContain('value');
-      
+
       // Value should not appear in public error
       const publicError = error.toPublicError();
       expect(JSON.stringify(publicError)).not.toContain('secret-token');
@@ -124,7 +124,7 @@ describe('Error Types', () => {
       const error = new NetworkError('Network error', {
         operation: 'request',
         network: 'testnet',
-        recoverable: true
+        recoverable: true,
       });
 
       expect(error.code).toBe('NETWORK_REQUEST_ERROR');
@@ -136,12 +136,12 @@ describe('Error Types', () => {
       const error = new NetworkError('Network error', {
         operation: 'connect',
         network: 'private-testnet',
-        recoverable: false
+        recoverable: false,
       });
 
       // Network details should not be exposed in public properties
       expect(Object.keys(error)).not.toContain('network');
-      
+
       // Network name should not appear in public error
       const publicError = error.toPublicError();
       expect(JSON.stringify(publicError)).not.toContain('private-testnet');
@@ -152,18 +152,18 @@ describe('Error Types', () => {
     it('should handle chained errors', () => {
       const networkError = new NetworkError('Network failed', {
         operation: 'request',
-        network: 'testnet'
+        network: 'testnet',
       });
 
       const blockchainError = new BlockchainError('Transaction failed', {
         operation: 'execute',
-        cause: networkError
+        cause: networkError,
       });
 
       const storageError = new StorageError('Storage failed', {
         operation: 'write',
         blobId: 'test-blob',
-        cause: blockchainError
+        cause: blockchainError,
       });
 
       const logEntry = storageError.toLogEntry();
@@ -175,14 +175,14 @@ describe('Error Types', () => {
       const networkError = new NetworkError('Network failed', {
         operation: 'request',
         network: 'testnet',
-        recoverable: true
+        recoverable: true,
       });
 
       const storageError = new StorageError('Storage failed', {
         operation: 'write',
         blobId: 'test-blob',
         recoverable: true,
-        cause: networkError
+        cause: networkError,
       });
 
       expect(storageError.shouldRetry).toBe(true);
@@ -195,7 +195,7 @@ describe('Error Types', () => {
       const error = new StorageError('Failed to store blob', {
         operation: 'write',
         blobId: 'sensitive-blob-id',
-        recoverable: true
+        recoverable: true,
       });
 
       const logEntry = error.toLogEntry();
@@ -207,7 +207,7 @@ describe('Error Types', () => {
         'Transaction tx123 failed with key abc123',
         {
           operation: 'execute',
-          transactionId: 'tx123'
+          transactionId: 'tx123',
         }
       );
 
@@ -221,7 +221,7 @@ describe('Error Types', () => {
       const error = new ValidationError('Validation failed', {
         field: 'credentials',
         value: { token: 'secret123', key: 'key123' },
-        constraint: 'format'
+        constraint: 'format',
       });
 
       const logEntry = error.toLogEntry();

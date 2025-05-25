@@ -15,20 +15,15 @@ interface BlockchainEventStatusProps {
   compact?: boolean;
 }
 
-export function BlockchainEventStatus({ 
+export function BlockchainEventStatus({
   className = '',
   showReconnectButton = true,
   showDetails = false,
-  compact = false
+  compact = false,
 }: BlockchainEventStatusProps) {
-  const { 
-    connectionState, 
-    statusColor, 
-    statusText, 
-    canReconnect, 
-    reconnect 
-  } = useEventConnectionStatus();
-  
+  const { connectionState, statusColor, statusText, canReconnect, reconnect } =
+    useEventConnectionStatus();
+
   const [showDetailsState, setShowDetailsState] = useState(showDetails);
 
   const getIndicatorClasses = () => {
@@ -57,7 +52,7 @@ export function BlockchainEventStatus({
     return (
       <div className={`flex items-center text-sm ${className}`}>
         <span className={getIndicatorClasses()}></span>
-        <span className="text-gray-600 dark:text-gray-300">
+        <span className='text-gray-600 dark:text-gray-300'>
           {connectionState.connected ? 'Live' : 'Offline'}
         </span>
       </div>
@@ -65,34 +60,36 @@ export function BlockchainEventStatus({
   }
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 ${className}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 ${className}`}
+    >
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center'>
           <span className={getIndicatorClasses()}></span>
           <div>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className='font-medium text-gray-900 dark:text-gray-100'>
               Blockchain Events
             </span>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
               {statusText}
             </p>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
+
+        <div className='flex items-center space-x-2'>
           {!compact && (
             <button
               onClick={() => setShowDetailsState(!showDetailsState)}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+              className='text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300'
             >
               {showDetailsState ? 'Hide' : 'Details'}
             </button>
           )}
-          
+
           {showReconnectButton && canReconnect && (
             <button
               onClick={handleReconnect}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className='px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'
             >
               Reconnect
             </button>
@@ -101,43 +98,45 @@ export function BlockchainEventStatus({
       </div>
 
       {showDetailsState && (
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-          <dl className="grid grid-cols-2 gap-4 text-sm">
+        <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-600'>
+          <dl className='grid grid-cols-2 gap-4 text-sm'>
             <div>
-              <dt className="font-medium text-gray-900 dark:text-gray-100">
+              <dt className='font-medium text-gray-900 dark:text-gray-100'>
                 Status
               </dt>
-              <dd className="text-gray-600 dark:text-gray-400">
+              <dd className='text-gray-600 dark:text-gray-400'>
                 {connectionState.connected ? 'Connected' : 'Disconnected'}
               </dd>
             </div>
-            
+
             <div>
-              <dt className="font-medium text-gray-900 dark:text-gray-100">
+              <dt className='font-medium text-gray-900 dark:text-gray-100'>
                 Reconnect Attempts
               </dt>
-              <dd className="text-gray-600 dark:text-gray-400">
+              <dd className='text-gray-600 dark:text-gray-400'>
                 {connectionState.reconnectAttempts}
               </dd>
             </div>
-            
+
             {connectionState.lastReconnectAttempt > 0 && (
-              <div className="col-span-2">
-                <dt className="font-medium text-gray-900 dark:text-gray-100">
+              <div className='col-span-2'>
+                <dt className='font-medium text-gray-900 dark:text-gray-100'>
                   Last Reconnect Attempt
                 </dt>
-                <dd className="text-gray-600 dark:text-gray-400">
-                  {new Date(connectionState.lastReconnectAttempt).toLocaleString()}
+                <dd className='text-gray-600 dark:text-gray-400'>
+                  {new Date(
+                    connectionState.lastReconnectAttempt
+                  ).toLocaleString()}
                 </dd>
               </div>
             )}
-            
+
             {connectionState.error && (
-              <div className="col-span-2">
-                <dt className="font-medium text-red-600 dark:text-red-400">
+              <div className='col-span-2'>
+                <dt className='font-medium text-red-600 dark:text-red-400'>
                   Error
                 </dt>
-                <dd className="text-red-600 dark:text-red-400 font-mono text-xs">
+                <dd className='text-red-600 dark:text-red-400 font-mono text-xs'>
                   {connectionState.error.message}
                 </dd>
               </div>
@@ -152,9 +151,13 @@ export function BlockchainEventStatus({
 /**
  * Simple status indicator for nav bars or headers
  */
-export function BlockchainEventIndicator({ className = '' }: { className?: string }) {
+export function BlockchainEventIndicator({
+  className = '',
+}: {
+  className?: string;
+}) {
   return (
-    <BlockchainEventStatus 
+    <BlockchainEventStatus
       className={className}
       compact={true}
       showReconnectButton={false}

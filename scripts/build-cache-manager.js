@@ -19,27 +19,29 @@ class BuildCacheManager {
     this.cacheFile = path.join(this.cacheDir, 'file-hashes.json');
     this.rootDir = process.cwd();
     this.fileHashes = {};
-    
+
     // Create cache directory if it doesn't exist
     if (this.enabled && !fs.existsSync(this.cacheDir)) {
       fs.mkdirSync(this.cacheDir, { recursive: true });
     }
-    
+
     // Load existing cache
     this.loadCache();
   }
-  
+
   /**
    * Load the cache from disk
    */
   loadCache() {
     if (!this.enabled) return;
-    
+
     try {
       if (fs.existsSync(this.cacheFile)) {
         const cacheContent = fs.readFileSync(this.cacheFile, 'utf8');
         this.fileHashes = JSON.parse(cacheContent);
-        logger.info(`Loaded build cache with ${Object.keys(this.fileHashes).length} entries`);
+        logger.info(
+          `Loaded build cache with ${Object.keys(this.fileHashes).length} entries`
+        );
       } else {
         this.fileHashes = {};
         logger.info('No existing build cache found. Starting fresh.');
@@ -49,21 +51,27 @@ class BuildCacheManager {
       this.fileHashes = {};
     }
   }
-  
+
   /**
    * Save the cache to disk
    */
   saveCache() {
     if (!this.enabled) return;
-    
+
     try {
-      fs.writeFileSync(this.cacheFile, JSON.stringify(this.fileHashes, null, 2), 'utf8');
-      logger.info(`Saved build cache with ${Object.keys(this.fileHashes).length} entries`);
+      fs.writeFileSync(
+        this.cacheFile,
+        JSON.stringify(this.fileHashes, null, 2),
+        'utf8'
+      );
+      logger.info(
+        `Saved build cache with ${Object.keys(this.fileHashes).length} entries`
+      );
     } catch (error) {
       logger.warn(`Warning: Failed to save build cache: ${error.message}`);
     }
   }
-  
+
   /**
    * Calculate hash for a file
    * @param {string} filePath - Path to the file
@@ -74,11 +82,13 @@ class BuildCacheManager {
       const fileContents = fs.readFileSync(filePath, 'utf8');
       return crypto.createHash('md5').update(fileContents).digest('hex');
     } catch (error) {
-      logger.warn(`Warning: Failed to calculate hash for ${filePath}: ${error.message}`);
+      logger.warn(
+        `Warning: Failed to calculate hash for ${filePath}: ${error.message}`
+      );
       return null;
     }
   }
-  
+
   /**
    * Check if a file has changed since last build
    * @param {string} filePath - Path to the file
@@ -86,27 +96,27 @@ class BuildCacheManager {
    */
   hasFileChanged(filePath) {
     if (!this.enabled) return true;
-    
+
     const currentHash = this.calculateFileHash(filePath);
     if (!currentHash) return true;
-    
+
     const previousHash = this.fileHashes[filePath];
     return !previousHash || previousHash !== currentHash;
   }
-  
+
   /**
    * Update the hash for a file
    * @param {string} filePath - Path to the file
    */
   updateFileHash(filePath) {
     if (!this.enabled) return;
-    
+
     const currentHash = this.calculateFileHash(filePath);
     if (currentHash) {
       this.fileHashes[filePath] = currentHash;
     }
   }
-  
+
   /**
    * Get a list of files that have changed since the last build
    * @param {string[]} filePaths - List of file paths to check
@@ -114,16 +124,16 @@ class BuildCacheManager {
    */
   getChangedFiles(filePaths) {
     if (!this.enabled) return filePaths;
-    
+
     return filePaths.filter(filePath => this.hasFileChanged(filePath));
   }
-  
+
   /**
    * Clear the cache
    */
   clearCache() {
     if (!this.enabled) return;
-    
+
     this.fileHashes = {};
     if (fs.existsSync(this.cacheFile)) {
       fs.unlinkSync(this.cacheFile);

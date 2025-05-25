@@ -16,7 +16,9 @@ process.stdout.write(`Using tsconfig: ${configPath}\n`);
 // Parse the tsconfig.json
 const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
 if (configFile.error) {
-  throw new Error(`Error reading tsconfig.json: ${configFile.error.messageText}`);
+  throw new Error(
+    `Error reading tsconfig.json: ${configFile.error.messageText}`
+  );
 }
 
 // Parse the parsed config
@@ -48,7 +50,7 @@ sourceFileNames.forEach(fileName => {
   try {
     // Read the file
     const sourceText = fs.readFileSync(fileName, 'utf8');
-    
+
     // Transpile the file (no type checking)
     const { outputText } = ts.transpileModule(sourceText, {
       compilerOptions: {
@@ -65,13 +67,13 @@ sourceFileNames.forEach(fileName => {
     const outputPath = fileName
       .replace(path.resolve(root), outDir)
       .replace(/\.tsx?$/, '.js');
-    
+
     // Create output directory if it doesn't exist
     const outputFileDir = path.dirname(outputPath);
     if (!fs.existsSync(outputFileDir)) {
       fs.mkdirSync(outputFileDir, { recursive: true });
     }
-    
+
     // Write the transpiled file
     fs.writeFileSync(outputPath, outputText);
     filesProcessed++;
@@ -83,4 +85,6 @@ sourceFileNames.forEach(fileName => {
 });
 
 // eslint-disable-next-line no-console
-process.stdout.write(`Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.\n`);
+process.stdout.write(
+  `Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.\n`
+);

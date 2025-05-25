@@ -2,7 +2,6 @@
  * Simplified test for the add command without using @oclif/test
  */
 
-
 jest.mock('../../src/services/todoService');
 
 // Mock command execution
@@ -21,13 +20,13 @@ const sampleTodo = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   private: false,
-  storageLocation: 'local'
+  storageLocation: 'local',
 };
 
 describe('Add Command', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock TodoService methods
     (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(sampleTodo);
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
@@ -37,9 +36,9 @@ describe('Add Command', () => {
       todos: [sampleTodo],
       version: 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
-    
+
     // Mock execSync for command execution
     (execSync as jest.Mock).mockImplementation((command: string) => {
       if (command.includes('add "Test Todo"')) {
@@ -58,7 +57,9 @@ describe('Add Command', () => {
   });
 
   it('should add todo with priority', () => {
-    const result = execSync('node bin/run.js add "High Priority" -p high').toString();
+    const result = execSync(
+      'node bin/run.js add "High Priority" -p high'
+    ).toString();
     expect(result).toContain('HIGH priority');
   });
 
@@ -68,12 +69,15 @@ describe('Add Command', () => {
     const newTodo = {
       title: 'New Test Todo',
       priority: 'high',
-      tags: ['important']
+      tags: ['important'],
     };
-    
+
     const result = await todoService.addTodo('default', newTodo);
-    
-    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith('default', newTodo);
+
+    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
+      'default',
+      newTodo
+    );
     expect(result).toEqual(sampleTodo); // Returns our mocked todo
   });
 });

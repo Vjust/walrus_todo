@@ -1,13 +1,7 @@
-// SuiObjectResponse and SuiTransactionBlockResponse imported but not used
-
-// Signer imported but not used
+// Type augmentations for @mysten/sui/client
+// This file augments existing types without overriding exports
 
 declare module '@mysten/sui/client' {
-  interface SuiClient {
-    instanceId: string;
-    address: string;
-    connect(): Promise<void>;
-  }
   interface SuiObjectResponse {
     data?: {
       content?: {
@@ -72,13 +66,13 @@ declare module '@mysten/sui/client' {
 
   interface SuiTransactionBlockEffects {
     status: { status: string };
-    created?: Array<{ 
+    created?: Array<{
       owner?: { AddressOwner?: string };
-      reference: { 
+      reference: {
         objectId: string;
         digest: string;
         version: string;
-      } 
+      };
     }>;
     gasUsed?: { computationCost: string; storageCost: string };
   }

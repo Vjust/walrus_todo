@@ -1,15 +1,27 @@
 /**
  * Unit tests for TaskSuggestionService
- * 
+ *
  * These tests verify the task generation and suggestion logic of the TaskSuggestionService.
  * They use mocked dependencies and focus on testing the service's behavior in isolation.
  */
 
-import { TaskSuggestionService, SuggestedTask, SuggestionType, SuggestionContext, TaskSuggestionResult } from '../../../../src/services/ai/TaskSuggestionService';
+import {
+  TaskSuggestionService,
+  SuggestedTask,
+  SuggestionType,
+  SuggestionContext,
+  TaskSuggestionResult,
+} from '../../../../src/services/ai/TaskSuggestionService';
 import { EnhancedAIService } from '../../../../src/services/ai/EnhancedAIService';
-import { AIVerificationService, VerifiedAIResult } from '../../../../src/services/ai/AIVerificationService';
+import {
+  AIVerificationService,
+  VerifiedAIResult,
+} from '../../../../src/services/ai/AIVerificationService';
 import { Todo } from '../../../../src/types/todo';
-import { AIPrivacyLevel, AIActionType } from '../../../../src/types/adapters/AIVerifierAdapter';
+import {
+  AIPrivacyLevel,
+  AIActionType,
+} from '../../../../src/types/adapters/AIVerifierAdapter';
 import { Logger } from '../../../../src/utils/Logger';
 
 // Mock the dependencies
@@ -34,7 +46,7 @@ describe('TaskSuggestionService', () => {
       completed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      private: false
+      private: false,
     },
     {
       id: '2',
@@ -45,7 +57,7 @@ describe('TaskSuggestionService', () => {
       completed: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      private: false
+      private: false,
     },
     {
       id: '3',
@@ -56,8 +68,8 @@ describe('TaskSuggestionService', () => {
       completed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      private: false
-    }
+      private: false,
+    },
   ];
 
   // Sample suggested tasks for mocking
@@ -70,7 +82,7 @@ describe('TaskSuggestionService', () => {
       reasoning: 'Related to authentication system',
       tags: ['backend', 'security'],
       type: SuggestionType.RELATED,
-      relatedTodoIds: ['1']
+      relatedTodoIds: ['1'],
     },
     {
       title: 'Add OAuth integration',
@@ -80,8 +92,8 @@ describe('TaskSuggestionService', () => {
       reasoning: 'Complements existing authentication',
       tags: ['backend', 'security'],
       type: SuggestionType.RELATED,
-      relatedTodoIds: ['1']
-    }
+      relatedTodoIds: ['1'],
+    },
   ];
 
   const mockNextStepSuggestions: SuggestedTask[] = [
@@ -93,7 +105,7 @@ describe('TaskSuggestionService', () => {
       reasoning: 'Natural next step after authentication',
       tags: ['backend'],
       type: SuggestionType.NEXT_STEP,
-      relatedTodoIds: ['1']
+      relatedTodoIds: ['1'],
     },
     {
       title: 'Create user dashboard',
@@ -103,8 +115,8 @@ describe('TaskSuggestionService', () => {
       reasoning: 'Next logical UI component after login',
       tags: ['frontend'],
       type: SuggestionType.NEXT_STEP,
-      relatedTodoIds: ['2']
-    }
+      relatedTodoIds: ['2'],
+    },
   ];
 
   const mockDependencySuggestions: SuggestedTask[] = [
@@ -116,8 +128,8 @@ describe('TaskSuggestionService', () => {
       reasoning: 'Required before writing tests for authentication',
       tags: ['testing', 'infrastructure'],
       type: SuggestionType.DEPENDENCY,
-      relatedTodoIds: ['1', '3']
-    }
+      relatedTodoIds: ['1', '3'],
+    },
   ];
 
   beforeEach(() => {
@@ -129,25 +141,29 @@ describe('TaskSuggestionService', () => {
       debug: jest.fn(),
       info: jest.fn(),
       error: jest.fn(),
-      warn: jest.fn()
+      warn: jest.fn(),
     } as unknown as jest.Mocked<Logger>;
 
     const mockProvider = {
-      completeStructured: jest.fn()
+      completeStructured: jest.fn(),
     };
 
     mockAiService = {
       getProvider: jest.fn().mockReturnValue(mockProvider),
       detectDependencies: jest.fn(),
-      analyze: jest.fn()
+      analyze: jest.fn(),
     } as unknown as jest.Mocked<EnhancedAIService>;
 
     mockVerificationService = {
-      createVerification: jest.fn()
+      createVerification: jest.fn(),
     } as unknown as jest.Mocked<AIVerificationService>;
 
     // Create service instance with mocked logger for Jest isolation
-    taskSuggestionService = new TaskSuggestionService(mockAiService, mockVerificationService, mockLogger);
+    taskSuggestionService = new TaskSuggestionService(
+      mockAiService,
+      mockVerificationService,
+      mockLogger
+    );
   });
 
   describe('Basic Functionality', () => {
@@ -157,7 +173,11 @@ describe('TaskSuggestionService', () => {
     });
 
     it('should initialize without verification service', () => {
-      const serviceWithoutVerification = new TaskSuggestionService(mockAiService, undefined, mockLogger);
+      const serviceWithoutVerification = new TaskSuggestionService(
+        mockAiService,
+        undefined,
+        mockLogger
+      );
       expect(serviceWithoutVerification).toBeDefined();
     });
   });
@@ -176,9 +196,9 @@ describe('TaskSuggestionService', () => {
         dependencies: {
           '1': [],
           '2': ['1'],
-          '3': ['1', '2']
+          '3': ['1', '2'],
         },
-        errors: []
+        errors: [],
       });
 
       // Mock AI analysis
@@ -191,8 +211,8 @@ describe('TaskSuggestionService', () => {
         completionAnalysis: {
           completedCount: 1,
           totalCount: 3,
-          completionPercentage: 33.33
-        }
+          completionPercentage: 33.33,
+        },
       });
     });
 
@@ -225,7 +245,11 @@ describe('TaskSuggestionService', () => {
       expect(result.contextInfo.analyzedTodoCount).toBe(3);
       expect(result.contextInfo.completionPercentage).toBeCloseTo(33.33, 2);
       expect(result.contextInfo.topContextualTags).toContain('backend');
-      expect(result.contextInfo.detectedThemes).toEqual(['authentication', 'UI', 'documentation']);
+      expect(result.contextInfo.detectedThemes).toEqual([
+        'authentication',
+        'UI',
+        'documentation',
+      ]);
     });
 
     it('should calculate correct metrics', async () => {
@@ -233,22 +257,27 @@ describe('TaskSuggestionService', () => {
 
       expect(result.metrics.averageScore).toBeCloseTo(85, 1);
       expect(result.metrics.suggestionsByType[SuggestionType.RELATED]).toBe(2);
-      expect(result.metrics.suggestionsByType[SuggestionType.NEXT_STEP]).toBe(2);
-      expect(result.metrics.suggestionsByType[SuggestionType.DEPENDENCY]).toBe(1);
+      expect(result.metrics.suggestionsByType[SuggestionType.NEXT_STEP]).toBe(
+        2
+      );
+      expect(result.metrics.suggestionsByType[SuggestionType.DEPENDENCY]).toBe(
+        1
+      );
     });
 
     it('should handle empty todo list', async () => {
       // Reset mocks for this specific test
       jest.clearAllMocks();
-      
+
       // Set up mocks for empty todo list (should return empty results)
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.Mock)
-        .mockResolvedValue({ result: [] });
+      (provider.completeStructured as jest.Mock).mockResolvedValue({
+        result: [],
+      });
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -256,7 +285,7 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
 
       const result = await taskSuggestionService.suggestTasks([]);
@@ -270,16 +299,20 @@ describe('TaskSuggestionService', () => {
       // Create a new service instance with a failing AI service for this test
       const failingAiService = {
         getProvider: () => ({
-          completeStructured: jest.fn().mockRejectedValue(new Error('AI service error'))
-        })
+          completeStructured: jest
+            .fn()
+            .mockRejectedValue(new Error('AI service error')),
+        }),
       };
-      
+
       const failingTaskSuggestionService = new TaskSuggestionService(
         failingAiService as any,
         mockLogger
       );
 
-      await expect(failingTaskSuggestionService.suggestTasks(sampleTodos)).rejects.toThrow('Failed to generate task suggestions');
+      await expect(
+        failingTaskSuggestionService.suggestTasks(sampleTodos)
+      ).rejects.toThrow('Failed to generate task suggestions');
       expect(mockLogger.error).toHaveBeenCalled();
     });
   });
@@ -290,7 +323,7 @@ describe('TaskSuggestionService', () => {
       const allSuggestions = [
         ...mockRelatedSuggestions,
         ...mockNextStepSuggestions,
-        ...mockDependencySuggestions
+        ...mockDependencySuggestions,
       ];
 
       const provider = mockAiService.getProvider();
@@ -301,7 +334,7 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -309,67 +342,91 @@ describe('TaskSuggestionService', () => {
         categorization: ['backend', 'frontend'],
         priorities: {},
         insights: [],
-        keyThemes: ['development']
+        keyThemes: ['development'],
       });
     });
 
     it('should filter by include types', async () => {
       const context: SuggestionContext = {
-        includeTypes: [SuggestionType.RELATED]
+        includeTypes: [SuggestionType.RELATED],
       };
 
-      const result = await taskSuggestionService.suggestTasks(sampleTodos, context);
+      const result = await taskSuggestionService.suggestTasks(
+        sampleTodos,
+        context
+      );
 
       expect(result.suggestions).toHaveLength(2);
-      expect(result.suggestions.every(s => s.type === SuggestionType.RELATED)).toBe(true);
+      expect(
+        result.suggestions.every(s => s.type === SuggestionType.RELATED)
+      ).toBe(true);
     });
 
     it('should filter by exclude types', async () => {
       const context: SuggestionContext = {
-        excludeTypes: [SuggestionType.DEPENDENCY]
+        excludeTypes: [SuggestionType.DEPENDENCY],
       };
 
-      const result = await taskSuggestionService.suggestTasks(sampleTodos, context);
+      const result = await taskSuggestionService.suggestTasks(
+        sampleTodos,
+        context
+      );
 
-      expect(result.suggestions.every(s => s.type !== SuggestionType.DEPENDENCY)).toBe(true);
+      expect(
+        result.suggestions.every(s => s.type !== SuggestionType.DEPENDENCY)
+      ).toBe(true);
     });
 
     it('should filter by minimum score', async () => {
       const context: SuggestionContext = {
-        minScore: 80
+        minScore: 80,
       };
 
-      const result = await taskSuggestionService.suggestTasks(sampleTodos, context);
+      const result = await taskSuggestionService.suggestTasks(
+        sampleTodos,
+        context
+      );
 
       expect(result.suggestions.every(s => s.score >= 80)).toBe(true);
     });
 
     it('should filter by priority', async () => {
       const context: SuggestionContext = {
-        priorityFilter: ['high']
+        priorityFilter: ['high'],
       };
 
-      const result = await taskSuggestionService.suggestTasks(sampleTodos, context);
+      const result = await taskSuggestionService.suggestTasks(
+        sampleTodos,
+        context
+      );
 
       expect(result.suggestions.every(s => s.priority === 'high')).toBe(true);
     });
 
     it('should filter by tags', async () => {
       const context: SuggestionContext = {
-        tags: ['backend']
+        tags: ['backend'],
       };
 
-      const result = await taskSuggestionService.suggestTasks(sampleTodos, context);
+      const result = await taskSuggestionService.suggestTasks(
+        sampleTodos,
+        context
+      );
 
-      expect(result.suggestions.every(s => s.tags?.includes('backend'))).toBe(true);
+      expect(result.suggestions.every(s => s.tags?.includes('backend'))).toBe(
+        true
+      );
     });
 
     it('should limit results by maxResults', async () => {
       const context: SuggestionContext = {
-        maxResults: 3
+        maxResults: 3,
       };
 
-      const result = await taskSuggestionService.suggestTasks(sampleTodos, context);
+      const result = await taskSuggestionService.suggestTasks(
+        sampleTodos,
+        context
+      );
 
       expect(result.suggestions).toHaveLength(3);
     });
@@ -379,17 +436,24 @@ describe('TaskSuggestionService', () => {
         includeTypes: [SuggestionType.RELATED, SuggestionType.NEXT_STEP],
         minScore: 80,
         priorityFilter: ['high'],
-        maxResults: 2
+        maxResults: 2,
       };
 
-      const result = await taskSuggestionService.suggestTasks(sampleTodos, context);
+      const result = await taskSuggestionService.suggestTasks(
+        sampleTodos,
+        context
+      );
 
       expect(result.suggestions).toHaveLength(2);
-      expect(result.suggestions.every(s => 
-        (s.type === SuggestionType.RELATED || s.type === SuggestionType.NEXT_STEP) &&
-        s.score >= 80 &&
-        s.priority === 'high'
-      )).toBe(true);
+      expect(
+        result.suggestions.every(
+          s =>
+            (s.type === SuggestionType.RELATED ||
+              s.type === SuggestionType.NEXT_STEP) &&
+            s.score >= 80 &&
+            s.priority === 'high'
+        )
+      ).toBe(true);
     });
   });
 
@@ -404,7 +468,7 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -412,7 +476,7 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
     });
 
@@ -420,10 +484,12 @@ describe('TaskSuggestionService', () => {
       const mockVerificationResult = {
         blockchainRecordId: 'verification-123',
         timestamp: Date.now(),
-        status: 'verified'
+        status: 'verified',
       };
 
-      mockVerificationService.createVerification.mockResolvedValue(mockVerificationResult);
+      mockVerificationService.createVerification.mockResolvedValue(
+        mockVerificationResult
+      );
 
       const result = await taskSuggestionService.suggestTasksWithVerification(
         sampleTodos,
@@ -442,21 +508,25 @@ describe('TaskSuggestionService', () => {
         expect.objectContaining({
           suggestions: expect.any(Array),
           contextInfo: expect.any(Object),
-          metrics: expect.any(Object)
+          metrics: expect.any(Object),
         }),
         expect.objectContaining({
           todoCount: '3',
           suggestionCount: '5',
           averageScore: expect.any(String),
           timestamp: expect.any(String),
-          contextFilters: '{}'
+          contextFilters: '{}',
         }),
         AIPrivacyLevel.HASH_ONLY
       );
     });
 
     it('should throw error if verification service is not initialized', async () => {
-      const serviceWithoutVerification = new TaskSuggestionService(mockAiService, undefined, mockLogger);
+      const serviceWithoutVerification = new TaskSuggestionService(
+        mockAiService,
+        undefined,
+        mockLogger
+      );
 
       await expect(
         serviceWithoutVerification.suggestTasksWithVerification(sampleTodos)
@@ -466,13 +536,13 @@ describe('TaskSuggestionService', () => {
     it('should pass context filters to verification metadata', async () => {
       const context: SuggestionContext = {
         includeTypes: [SuggestionType.RELATED],
-        minScore: 80
+        minScore: 80,
       };
 
       mockVerificationService.createVerification.mockResolvedValue({
         blockchainRecordId: 'verification-123',
         timestamp: Date.now(),
-        status: 'verified'
+        status: 'verified',
       });
 
       await taskSuggestionService.suggestTasksWithVerification(
@@ -486,7 +556,7 @@ describe('TaskSuggestionService', () => {
         expect.any(Object),
         expect.any(Object),
         expect.objectContaining({
-          contextFilters: JSON.stringify(context)
+          contextFilters: JSON.stringify(context),
         }),
         AIPrivacyLevel.HASH_ONLY
       );
@@ -505,13 +575,15 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       const result = await taskSuggestionService.suggestTasks(sampleTodos);
 
       expect(result.contextInfo.detectedThemes).toEqual([]);
-      expect(mockLogger.error).toHaveBeenCalledWith(expect.stringContaining('Error analyzing context'));
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining('Error analyzing context')
+      );
     });
 
     it('should handle dependency detection for next step suggestions', async () => {
@@ -526,8 +598,8 @@ describe('TaskSuggestionService', () => {
           completed: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          private: false
-        }
+          private: false,
+        },
       ];
 
       mockAiService.detectDependencies.mockResolvedValue({
@@ -535,9 +607,9 @@ describe('TaskSuggestionService', () => {
           '1': ['4'], // Authentication depends on database
           '2': [],
           '3': ['1', '2'],
-          '4': []
+          '4': [],
         },
-        errors: []
+        errors: [],
       });
 
       const provider = mockAiService.getProvider();
@@ -551,13 +623,16 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
 
-      const result = await taskSuggestionService.suggestTasks(todosWithCompleted);
+      const result =
+        await taskSuggestionService.suggestTasks(todosWithCompleted);
 
       // Should include next step suggestions since we have completed todos
-      expect(result.suggestions.some(s => s.type === SuggestionType.NEXT_STEP)).toBe(true);
+      expect(
+        result.suggestions.some(s => s.type === SuggestionType.NEXT_STEP)
+      ).toBe(true);
     });
 
     it('should handle todos without dependencies for dependency suggestions', async () => {
@@ -565,9 +640,9 @@ describe('TaskSuggestionService', () => {
         dependencies: {
           '1': [],
           '2': [],
-          '3': []
+          '3': [],
         },
-        errors: []
+        errors: [],
       });
 
       const provider = mockAiService.getProvider();
@@ -581,13 +656,15 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
 
       const result = await taskSuggestionService.suggestTasks(sampleTodos);
 
       // Should include dependency suggestions for todos without dependencies
-      expect(result.suggestions.some(s => s.type === SuggestionType.DEPENDENCY)).toBe(true);
+      expect(
+        result.suggestions.some(s => s.type === SuggestionType.DEPENDENCY)
+      ).toBe(true);
     });
 
     it('should handle AI provider returning null result', async () => {
@@ -599,7 +676,7 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -607,7 +684,7 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
 
       const result = await taskSuggestionService.suggestTasks(sampleTodos);
@@ -629,8 +706,8 @@ describe('TaskSuggestionService', () => {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          private: false
-        }
+          private: false,
+        },
       ];
 
       const provider = mockAiService.getProvider();
@@ -641,7 +718,7 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -649,7 +726,7 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
 
       const result = await taskSuggestionService.suggestTasks(todosWithoutTags);
@@ -663,8 +740,8 @@ describe('TaskSuggestionService', () => {
           title: 'Minimal suggestion',
           score: 70,
           reasoning: 'A minimal suggestion',
-          type: SuggestionType.RELATED
-        }
+          type: SuggestionType.RELATED,
+        },
       ];
 
       const provider = mockAiService.getProvider();
@@ -675,7 +752,7 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -683,7 +760,7 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
 
       const result = await taskSuggestionService.suggestTasks(sampleTodos);
@@ -703,7 +780,7 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -712,7 +789,7 @@ describe('TaskSuggestionService', () => {
         priorities: {},
         insights: [],
         themes: 'not an array' as any,
-        categories: undefined
+        categories: undefined,
       });
 
       const result = await taskSuggestionService.suggestTasks(sampleTodos);
@@ -729,7 +806,7 @@ describe('TaskSuggestionService', () => {
 
       mockAiService.detectDependencies.mockResolvedValue({
         dependencies: {},
-        errors: []
+        errors: [],
       });
 
       mockAiService.analyze.mockResolvedValue({
@@ -737,13 +814,17 @@ describe('TaskSuggestionService', () => {
         categorization: [],
         priorities: {},
         insights: [],
-        keyThemes: []
+        keyThemes: [],
       });
 
       const result = await taskSuggestionService.suggestTasks(sampleTodos);
 
       expect(result.metrics.averageScore).toBe(0);
-      expect(Object.values(result.metrics.suggestionsByType).every(count => count === 0)).toBe(true);
+      expect(
+        Object.values(result.metrics.suggestionsByType).every(
+          count => count === 0
+        )
+      ).toBe(true);
     });
   });
 });

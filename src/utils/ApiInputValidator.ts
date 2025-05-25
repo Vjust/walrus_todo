@@ -18,23 +18,36 @@ export class ApiInputValidator {
     if (typeof todo !== 'object' || todo === null) {
       throw new CLIError('Todo must be an object', 'INVALID_TODO');
     }
-    
+
     const todoObj = todo as Record<string, unknown>;
-    
+
     // Sanitize todo inputs
     const sanitizedTodo = {
       ...todoObj,
       title: CommandSanitizer.sanitizeString(String(todoObj.title || '')),
-      description: todoObj.description ? CommandSanitizer.sanitizeString(String(todoObj.description)) : undefined,
+      description: todoObj.description
+        ? CommandSanitizer.sanitizeString(String(todoObj.description))
+        : undefined,
       priority: todoObj.priority,
-      dueDate: todoObj.dueDate ? CommandSanitizer.sanitizeDate(String(todoObj.dueDate)) : undefined,
-      tags: todoObj.tags ? (Array.isArray(todoObj.tags)
-        ? todoObj.tags.map((tag: unknown) => CommandSanitizer.sanitizeString(String(tag)))
-        : CommandSanitizer.sanitizeTags(String(todoObj.tags)))
+      dueDate: todoObj.dueDate
+        ? CommandSanitizer.sanitizeDate(String(todoObj.dueDate))
+        : undefined,
+      tags: todoObj.tags
+        ? Array.isArray(todoObj.tags)
+          ? todoObj.tags.map((tag: unknown) =>
+              CommandSanitizer.sanitizeString(String(tag))
+            )
+          : CommandSanitizer.sanitizeTags(String(todoObj.tags))
         : [],
-      walrusBlobId: todoObj.walrusBlobId ? CommandSanitizer.sanitizeString(String(todoObj.walrusBlobId)) : undefined,
-      nftObjectId: todoObj.nftObjectId ? CommandSanitizer.sanitizeString(String(todoObj.nftObjectId)) : undefined,
-      imageUrl: todoObj.imageUrl ? CommandSanitizer.sanitizeUrl(String(todoObj.imageUrl)) : undefined
+      walrusBlobId: todoObj.walrusBlobId
+        ? CommandSanitizer.sanitizeString(String(todoObj.walrusBlobId))
+        : undefined,
+      nftObjectId: todoObj.nftObjectId
+        ? CommandSanitizer.sanitizeString(String(todoObj.nftObjectId))
+        : undefined,
+      imageUrl: todoObj.imageUrl
+        ? CommandSanitizer.sanitizeUrl(String(todoObj.imageUrl))
+        : undefined,
     };
 
     // Define a schema that conforms to Schema interface
@@ -47,7 +60,7 @@ export class ApiInputValidator {
           minLength: 1,
           maxLength: 100,
           errorMessage: 'Todo title must be between 1 and 100 characters',
-          errorCode: 'INVALID_TODO_TITLE'
+          errorCode: 'INVALID_TODO_TITLE',
         },
         description: { type: 'string' as const },
         completed: { type: 'boolean' as const },
@@ -55,17 +68,17 @@ export class ApiInputValidator {
           type: 'string' as const,
           enum: ['high', 'medium', 'low'],
           errorMessage: 'Priority must be high, medium, or low',
-          errorCode: 'INVALID_PRIORITY'
+          errorCode: 'INVALID_PRIORITY',
         },
         dueDate: {
           type: 'string' as const,
           format: 'date',
           errorMessage: 'Due date must be in the format YYYY-MM-DD',
-          errorCode: 'INVALID_DUE_DATE'
+          errorCode: 'INVALID_DUE_DATE',
         },
         tags: {
           type: 'array' as const,
-          items: { type: 'string' as const }
+          items: { type: 'string' as const },
         },
         createdAt: { type: 'string' as const },
         updatedAt: { type: 'string' as const },
@@ -74,12 +87,12 @@ export class ApiInputValidator {
           type: 'string' as const,
           enum: ['local', 'blockchain', 'both'],
           errorMessage: 'Storage location must be local, blockchain, or both',
-          errorCode: 'INVALID_STORAGE_LOCATION'
+          errorCode: 'INVALID_STORAGE_LOCATION',
         },
-        walrusBlobId: { type: 'string' as const }
+        walrusBlobId: { type: 'string' as const },
       },
       required: ['id', 'title'],
-      additionalProperties: false
+      additionalProperties: false,
     };
 
     // Validate against schema
@@ -106,20 +119,29 @@ export class ApiInputValidator {
     if (typeof list !== 'object' || list === null) {
       throw new CLIError('List must be an object', 'INVALID_TODO_LIST');
     }
-    
+
     const listObj = list as Record<string, unknown>;
-    
+
     // Sanitize list inputs
     const sanitizedList = {
       ...listObj,
       name: CommandSanitizer.sanitizeString(String(listObj.name || '')),
       owner: CommandSanitizer.sanitizeString(String(listObj.owner || '')),
-      todos: Array.isArray(listObj.todos) ? listObj.todos.map((todo: unknown) => this.validateTodo(todo)) : [],
-      collaborators: listObj.collaborators && Array.isArray(listObj.collaborators)
-        ? listObj.collaborators.map((collab: unknown) => CommandSanitizer.sanitizeString(String(collab)))
+      todos: Array.isArray(listObj.todos)
+        ? listObj.todos.map((todo: unknown) => this.validateTodo(todo))
+        : [],
+      collaborators:
+        listObj.collaborators && Array.isArray(listObj.collaborators)
+          ? listObj.collaborators.map((collab: unknown) =>
+              CommandSanitizer.sanitizeString(String(collab))
+            )
+          : undefined,
+      walrusBlobId: listObj.walrusBlobId
+        ? CommandSanitizer.sanitizeString(String(listObj.walrusBlobId))
         : undefined,
-      walrusBlobId: listObj.walrusBlobId ? CommandSanitizer.sanitizeString(String(listObj.walrusBlobId)) : undefined,
-      suiObjectId: listObj.suiObjectId ? CommandSanitizer.sanitizeString(String(listObj.suiObjectId)) : undefined
+      suiObjectId: listObj.suiObjectId
+        ? CommandSanitizer.sanitizeString(String(listObj.suiObjectId))
+        : undefined,
     };
 
     // Define a schema that conforms to Schema interface
@@ -129,25 +151,26 @@ export class ApiInputValidator {
           type: 'string' as const,
           required: true,
           pattern: /^[a-zA-Z0-9_-]+$/,
-          errorMessage: 'List name can only contain letters, numbers, underscores, and hyphens',
-          errorCode: 'INVALID_LIST_NAME'
+          errorMessage:
+            'List name can only contain letters, numbers, underscores, and hyphens',
+          errorCode: 'INVALID_LIST_NAME',
         },
         owner: { type: 'string' as const, required: true },
         todos: {
           type: 'array' as const,
-          items: { type: 'object' as const } // This would reference the Todo schema in a full implementation
+          items: { type: 'object' as const }, // This would reference the Todo schema in a full implementation
         },
         createdAt: { type: 'string' as const },
         updatedAt: { type: 'string' as const },
         collaborators: {
           type: 'array' as const,
-          items: { type: 'string' as const }
+          items: { type: 'string' as const },
         },
         walrusBlobId: { type: 'string' as const },
-        suiObjectId: { type: 'string' as const }
+        suiObjectId: { type: 'string' as const },
       },
       required: ['name', 'owner'],
-      additionalProperties: false
+      additionalProperties: false,
     };
 
     // Validate against schema
@@ -174,14 +197,18 @@ export class ApiInputValidator {
     if (typeof config !== 'object' || config === null) {
       throw new CLIError('Config must be an object', 'INVALID_CONFIG');
     }
-    
+
     const configObj = config as Record<string, unknown>;
-    
+
     // Sanitize network inputs
     const sanitizedConfig = {
       ...configObj,
       network: CommandSanitizer.sanitizeString(String(configObj.network || '')),
-      walletAddress: configObj.walletAddress ? CommandSanitizer.sanitizeWalletAddress(String(configObj.walletAddress)) : undefined
+      walletAddress: configObj.walletAddress
+        ? CommandSanitizer.sanitizeWalletAddress(
+            String(configObj.walletAddress)
+          )
+        : undefined,
     };
 
     // Define a schema that conforms to Schema interface
@@ -191,19 +218,19 @@ export class ApiInputValidator {
           type: 'string' as const,
           enum: ['mainnet', 'testnet', 'devnet', 'local'],
           errorMessage: 'Network must be mainnet, testnet, devnet, or local',
-          errorCode: 'INVALID_NETWORK'
+          errorCode: 'INVALID_NETWORK',
         },
         walletAddress: {
           type: 'string' as const,
           format: 'wallet-address',
           errorMessage: 'Invalid wallet address format',
-          errorCode: 'INVALID_WALLET_ADDRESS'
+          errorCode: 'INVALID_WALLET_ADDRESS',
         },
         encryptedStorage: {
-          type: 'boolean' as const
-        }
+          type: 'boolean' as const,
+        },
       },
-      additionalProperties: false
+      additionalProperties: false,
     };
 
     // Validate against schema
@@ -236,17 +263,25 @@ export class ApiInputValidator {
     if (typeof config !== 'object' || config === null) {
       throw new CLIError('Config must be an object', 'INVALID_CONFIG');
     }
-    
+
     const configObj = config as Record<string, unknown>;
-    
+
     // Sanitize AI config inputs
     const sanitizedConfig = {
       ...configObj,
-      apiKey: configObj.apiKey ? CommandSanitizer.sanitizeApiKey(String(configObj.apiKey)) : undefined,
-      provider: CommandSanitizer.sanitizeString(String(configObj.provider || '')),
-      maxConcurrentRequests: configObj.maxConcurrentRequests as number | undefined,
+      apiKey: configObj.apiKey
+        ? CommandSanitizer.sanitizeApiKey(String(configObj.apiKey))
+        : undefined,
+      provider: CommandSanitizer.sanitizeString(
+        String(configObj.provider || '')
+      ),
+      maxConcurrentRequests: configObj.maxConcurrentRequests as
+        | number
+        | undefined,
       cacheResults: configObj.cacheResults as boolean | undefined,
-      useBlockchainVerification: configObj.useBlockchainVerification as boolean | undefined
+      useBlockchainVerification: configObj.useBlockchainVerification as
+        | boolean
+        | undefined,
     };
 
     // Define a schema that conforms to Schema interface
@@ -256,29 +291,29 @@ export class ApiInputValidator {
           type: 'string' as const,
           minLength: 16,
           errorMessage: 'API key must be at least 16 characters',
-          errorCode: 'INVALID_API_KEY'
+          errorCode: 'INVALID_API_KEY',
         },
         provider: {
           type: 'string' as const,
           enum: ['xai', 'openai', 'anthropic'],
           errorMessage: 'Provider must be xai, openai, or anthropic',
-          errorCode: 'INVALID_PROVIDER'
+          errorCode: 'INVALID_PROVIDER',
         },
         maxConcurrentRequests: {
           type: 'number' as const,
           minimum: 1,
           maximum: 50,
           errorMessage: 'Max concurrent requests must be between 1 and 50',
-          errorCode: 'INVALID_CONCURRENT_REQUESTS'
+          errorCode: 'INVALID_CONCURRENT_REQUESTS',
         },
         cacheResults: {
-          type: 'boolean' as const
+          type: 'boolean' as const,
         },
         useBlockchainVerification: {
-          type: 'boolean' as const
-        }
+          type: 'boolean' as const,
+        },
       },
-      additionalProperties: false
+      additionalProperties: false,
     };
 
     // Validate against schema
@@ -302,14 +337,14 @@ export class ApiInputValidator {
    */
   static validateTransactionId(txId: string): string {
     const sanitized = CommandSanitizer.sanitizeTransactionId(txId);
-    
+
     if (!sanitized) {
       throw new CLIError(
         'Invalid transaction ID format',
         'INVALID_TRANSACTION_ID'
       );
     }
-    
+
     return sanitized;
   }
 
@@ -321,14 +356,14 @@ export class ApiInputValidator {
    */
   static validateWalletAddress(address: string): string {
     const sanitized = CommandSanitizer.sanitizeWalletAddress(address);
-    
+
     if (!sanitized) {
       throw new CLIError(
         'Invalid wallet address format',
         'INVALID_WALLET_ADDRESS'
       );
     }
-    
+
     return sanitized;
   }
 
@@ -340,7 +375,7 @@ export class ApiInputValidator {
    */
   static validateImagePath(path: string): string {
     const sanitized = CommandSanitizer.sanitizePath(path);
-    
+
     const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(sanitized);
     if (!isImage) {
       throw new CLIError(
@@ -348,7 +383,7 @@ export class ApiInputValidator {
         'INVALID_IMAGE_FORMAT'
       );
     }
-    
+
     return sanitized;
   }
 
@@ -360,14 +395,11 @@ export class ApiInputValidator {
    */
   static validateUrl(url: string): string {
     const sanitized = CommandSanitizer.sanitizeUrl(url);
-    
+
     if (!sanitized) {
-      throw new CLIError(
-        'Invalid URL format',
-        'INVALID_URL'
-      );
+      throw new CLIError('Invalid URL format', 'INVALID_URL');
     }
-    
+
     return sanitized;
   }
 
@@ -379,14 +411,14 @@ export class ApiInputValidator {
    */
   static validateApiKey(apiKey: string): string {
     const sanitized = CommandSanitizer.sanitizeApiKey(apiKey);
-    
+
     if (!sanitized || sanitized.length < 16) {
       throw new CLIError(
         'Invalid API key format. API key must be at least 16 characters long',
         'INVALID_API_KEY'
       );
     }
-    
+
     return sanitized;
   }
 }

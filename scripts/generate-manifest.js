@@ -2,9 +2,9 @@
 
 // Simple console logger for script use
 const logger = {
-  info: (msg) => console.log(`[INFO] ${msg}`),
-  error: (msg) => console.error(`[ERROR] ${msg}`),
-  warn: (msg) => console.warn(`[WARN] ${msg}`)
+  info: msg => console.log(`[INFO] ${msg}`),
+  error: msg => console.error(`[ERROR] ${msg}`),
+  warn: msg => console.warn(`[WARN] ${msg}`),
 };
 
 /**
@@ -22,7 +22,7 @@ const colors = {
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
-  blue: '\x1b[34m'
+  blue: '\x1b[34m',
 };
 
 // Package information
@@ -36,20 +36,20 @@ const manifestPath = path.join(__dirname, '..', 'oclif.manifest.json');
 // Topic descriptions
 const topics = {
   account: {
-    description: 'Manage Sui accounts'
+    description: 'Manage Sui accounts',
   },
   ai: {
-    description: 'AI-powered todo management features'
+    description: 'AI-powered todo management features',
   },
   image: {
-    description: 'Manage todo images for storage on Walrus and NFT creation'
+    description: 'Manage todo images for storage on Walrus and NFT creation',
   },
   system: {
-    description: 'Manage and view security audit logs'
+    description: 'Manage and view security audit logs',
   },
   simple: {
-    description: 'Simple todo management commands'
-  }
+    description: 'Simple todo management commands',
+  },
 };
 
 // Command descriptions - these will override the default "{command} command" descriptions
@@ -59,7 +59,8 @@ const commandDescriptions = {
   check: 'Toggle completion status of a todo item',
   complete: 'Mark a todo as completed.',
   config: 'Display or validate environment configuration',
-  configure: 'Configure CLI settings, environment variables, and wallet preferences',
+  configure:
+    'Configure CLI settings, environment variables, and wallet preferences',
   create: 'Create a new todo item as an NFT on the Sui blockchain',
   delete: 'Delete a specific todo item or an entire list',
   deploy: 'Deploy the Todo NFT smart contract to the Sui blockchain',
@@ -76,14 +77,14 @@ const commandDescriptions = {
   suggest: 'Get intelligent task suggestions based on your current todo list',
   template: 'Template for creating new CLI commands - not for end users',
   update: 'Update properties of an existing todo item',
-  verify: 'Manage blockchain verifications for AI operations'
+  verify: 'Manage blockchain verifications for AI operations',
 };
 
 // Initialize manifest structure
 const manifest = {
   version,
   commands: {},
-  topics
+  topics,
 };
 
 /**
@@ -103,19 +104,22 @@ function getDescription(commandName) {
 function scanDirectory(directory, pathSegments = []) {
   try {
     if (!fs.existsSync(directory)) {
-      logger.info(`${colors.yellow}⚠ Directory does not exist: ${directory}${colors.reset}`);
+      logger.info(
+        `${colors.yellow}⚠ Directory does not exist: ${directory}${colors.reset}`
+      );
       return;
     }
 
     const items = fs.readdirSync(directory);
-    
+
     // First process direct .js files (commands)
-    const commandFiles = items.filter(item => 
-      item.endsWith('.js') && 
-      !item.includes(' 2.js') && 
-      !item.includes('.d.ts') && 
-      !item.includes('.d.js') && 
-      item !== 'index.js'
+    const commandFiles = items.filter(
+      item =>
+        item.endsWith('.js') &&
+        !item.includes(' 2.js') &&
+        !item.includes('.d.ts') &&
+        !item.includes('.d.js') &&
+        item !== 'index.js'
     );
 
     // Process each command file
@@ -123,7 +127,7 @@ function scanDirectory(directory, pathSegments = []) {
       const commandName = path.basename(file, '.js');
       const commandId = [...pathSegments, commandName].join(':');
       const relativePath = [...pathSegments, commandName].join('/');
-      
+
       // Add command to manifest
       manifest.commands[commandId] = {
         id: commandId,
@@ -133,7 +137,7 @@ function scanDirectory(directory, pathSegments = []) {
         aliases: [],
         flags: {},
         args: [],
-        path: `./dist/src/commands/${relativePath}`
+        path: `./dist/src/commands/${relativePath}`,
       };
     });
 
@@ -146,16 +150,19 @@ function scanDirectory(directory, pathSegments = []) {
     subdirectories.forEach(subdir => {
       const newPathSegments = [...pathSegments, subdir];
       scanDirectory(path.join(directory, subdir), newPathSegments);
-      
+
       // Create topic entry for directory if it doesn't exist
       if (pathSegments.length === 0 && !topics[subdir]) {
         topics[subdir] = {
-          description: `${subdir.charAt(0).toUpperCase() + subdir.slice(1)} management commands`
+          description: `${subdir.charAt(0).toUpperCase() + subdir.slice(1)} management commands`,
         };
       }
     });
   } catch (error) {
-    logger.error(`${colors.red}✗ Error scanning directory ${directory}:${colors.reset}`, error);
+    logger.error(
+      `${colors.red}✗ Error scanning directory ${directory}:${colors.reset}`,
+      error
+    );
   }
 }
 
@@ -163,18 +170,20 @@ function scanDirectory(directory, pathSegments = []) {
  * Main function to generate the manifest
  */
 function generateManifest() {
-  logger.info(`${colors.blue}Generating improved OCLIF manifest...${colors.reset}`);
-  
+  logger.info(
+    `${colors.blue}Generating improved OCLIF manifest...${colors.reset}`
+  );
+
   try {
     // Scan the commands directory recursively
     scanDirectory(commandsDir);
-    
-    // Special handling for nested command files 
+
+    // Special handling for nested command files
     // If there's an index.js in a directory, add it as a parent command
     Object.keys(topics).forEach(topic => {
       const topicDir = path.join(commandsDir, topic);
       const indexFile = path.join(topicDir, 'index.js');
-      
+
       if (fs.existsSync(indexFile)) {
         manifest.commands[topic] = {
           id: topic,
@@ -184,20 +193,25 @@ function generateManifest() {
           aliases: [],
           flags: {},
           args: [],
-          path: `./dist/src/commands/${topic}/index`
+          path: `./dist/src/commands/${topic}/index`,
         };
       }
     });
-    
+
     // Write manifest to file
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-    
+
     const commandCount = Object.keys(manifest.commands).length;
     const topicCount = Object.keys(manifest.topics).length;
-    
-    logger.info(`${colors.green}✓ Successfully generated manifest with ${commandCount} commands and ${topicCount} topics${colors.reset}`);
+
+    logger.info(
+      `${colors.green}✓ Successfully generated manifest with ${commandCount} commands and ${topicCount} topics${colors.reset}`
+    );
   } catch (error) {
-    logger.error(`${colors.red}✗ Failed to generate manifest:${colors.reset}`, error);
+    logger.error(
+      `${colors.red}✗ Failed to generate manifest:${colors.reset}`,
+      error
+    );
     process.exit(1);
   }
 }

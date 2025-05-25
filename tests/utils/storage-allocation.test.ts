@@ -5,9 +5,8 @@ import { StorageManager } from '../../src/utils/StorageManager';
 import { CLIError } from '../../src/types/errors/consolidated';
 import { execSync } from 'child_process';
 
-
 jest.mock('child_process', () => ({
-  execSync: jest.fn()
+  execSync: jest.fn(),
 }));
 
 describe('StorageManager - Allocation Tests', () => {
@@ -19,14 +18,18 @@ describe('StorageManager - Allocation Tests', () => {
     mockSuiClient = {
       getBalance: jest.fn(),
       getLatestSuiSystemState: jest.fn(),
-      getOwnedObjects: jest.fn()
+      getOwnedObjects: jest.fn(),
     } as any;
 
     mockWalrusClient = {
-      storageCost: jest.fn()
+      storageCost: jest.fn(),
     } as any;
 
-    storageManager = new StorageManager(mockSuiClient, mockWalrusClient, '0xtest');
+    storageManager = new StorageManager(
+      mockSuiClient,
+      mockWalrusClient,
+      '0xtest'
+    );
   });
 
   describe('checkBalances', () => {
@@ -39,13 +42,13 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: walBalance,
           coinObjectCount: 1,
-          lockedBalance: { number: '0' }
+          lockedBalance: { number: '0' },
         } as CoinBalance)
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: storageBalance,
           coinObjectCount: 1,
-          lockedBalance: { number: '0' }
+          lockedBalance: { number: '0' },
         } as CoinBalance);
 
       const result = await storageManager.checkBalances();
@@ -55,25 +58,20 @@ describe('StorageManager - Allocation Tests', () => {
     });
 
     it('should throw error on insufficient WAL balance', async () => {
-      mockSuiClient.getBalance
-        .mockResolvedValueOnce({
-          coinType: 'WAL',
-          totalBalance: '50',
-          coinObjectCount: 1,
-          lockedBalance: { number: '0' }
-        } as CoinBalance);
+      mockSuiClient.getBalance.mockResolvedValueOnce({
+        coinType: 'WAL',
+        totalBalance: '50',
+        coinObjectCount: 1,
+        lockedBalance: { number: '0' },
+      } as CoinBalance);
 
-      await expect(storageManager.checkBalances())
-        .rejects
-        .toThrow(CLIError);
+      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError);
     });
 
     it('should handle network errors during balance check', async () => {
       mockSuiClient.getBalance.mockRejectedValue(new Error('Network error'));
 
-      await expect(storageManager.checkBalances())
-        .rejects
-        .toThrow(CLIError);
+      await expect(storageManager.checkBalances()).rejects.toThrow(CLIError);
     });
   });
 
@@ -88,7 +86,7 @@ describe('StorageManager - Allocation Tests', () => {
         totalStake: '1000000',
         storageFund: {
           totalObjectStorageRebates: '0',
-          nonRefundableBalance: '10000'
+          nonRefundableBalance: '10000',
         },
         activeValidators: [],
         atRiskValidators: [],
@@ -120,7 +118,7 @@ describe('StorageManager - Allocation Tests', () => {
         systemParameters: {},
         systemStakeSubsidy: {},
         satInCirculation: '1000000',
-        epochDurationMs: '86400000'
+        epochDurationMs: '86400000',
       } as any);
 
       // Mock successful balance check
@@ -129,19 +127,19 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: '1000',
           coinObjectCount: 1,
-          lockedBalance: { number: '0' }
+          lockedBalance: { number: '0' },
         } as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: '500',
           coinObjectCount: 1,
-          lockedBalance: { number: '0' }
+          lockedBalance: { number: '0' },
         } as CoinBalance); // Storage balance
 
       mockWalrusClient.storageCost.mockResolvedValue({
         storageCost: BigInt(100),
         writeCost: BigInt(50),
-        totalCost: BigInt(150)
+        totalCost: BigInt(150),
       });
     });
 
@@ -153,7 +151,7 @@ describe('StorageManager - Allocation Tests', () => {
       mockSuiClient.getOwnedObjects.mockResolvedValue({
         hasNextPage: false,
         data: [],
-        nextCursor: null
+        nextCursor: null,
       });
 
       const result = await storageManager.validateStorageRequirements(1024);
@@ -170,55 +168,57 @@ describe('StorageManager - Allocation Tests', () => {
           coinType: 'WAL',
           totalBalance: '10',
           coinObjectCount: 1,
-          lockedBalance: { number: '0' }
+          lockedBalance: { number: '0' },
         } as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
           coinType: 'STORAGE',
           totalBalance: '5',
           coinObjectCount: 1,
-          lockedBalance: { number: '0' }
+          lockedBalance: { number: '0' },
         } as CoinBalance); // Storage balance
 
       // No existing storage
       mockSuiClient.getOwnedObjects.mockResolvedValue({
         hasNextPage: false,
         data: [],
-        nextCursor: null
+        nextCursor: null,
       });
 
       // Storage cost higher than balance
       mockWalrusClient.storageCost.mockResolvedValue({
         storageCost: BigInt(1000),
         writeCost: BigInt(500),
-        totalCost: BigInt(1500)
+        totalCost: BigInt(1500),
       });
 
-      await expect(storageManager.validateStorageRequirements(1024))
-        .rejects
-        .toThrow(CLIError);
+      await expect(
+        storageManager.validateStorageRequirements(1024)
+      ).rejects.toThrow(CLIError);
     });
 
     it('should detect and use existing storage if available', async () => {
       const mockStorage = {
         hasNextPage: false,
-        data: [{
-          data: {
-            objectId: '0xstorage',
-            version: '1',
-            digest: 'mock-digest',
-            content: {
-              dataType: 'moveObject' as const,
-              type: '0x2::storage::Storage',
-              hasPublicTransfer: true,
-              fields: {
-                storage_size: '20480',
-                used_size: '1024',
-                end_epoch: 200
-              }
-            }
-          }
-        }],
-        nextCursor: null
+        data: [
+          {
+            data: {
+              objectId: '0xstorage',
+              version: '1',
+              digest: 'mock-digest',
+              content: {
+                dataType: 'moveObject' as const,
+                type: '0x2::storage::Storage',
+                hasPublicTransfer: true,
+                fields: {
+                  storage_size: '20480',
+                  used_size: '1024',
+                  end_epoch: 200,
+                },
+              },
+            },
+          },
+        ],
+        nextCursor: null,
       };
 
       mockSuiClient.getOwnedObjects.mockResolvedValue(mockStorage);

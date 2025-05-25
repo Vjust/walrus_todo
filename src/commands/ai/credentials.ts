@@ -3,7 +3,10 @@ import BaseCommand from '../../base-command';
 import { secureCredentialService } from '../../services/ai/SecureCredentialService';
 import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
 import { validateApiKey } from '../../utils/KeyValidator';
-import { getProviderEnum, getProviderString } from '../../utils/adapters/ai-provider-adapter';
+import {
+  getProviderEnum,
+  getProviderString,
+} from '../../utils/adapters/ai-provider-adapter';
 import chalk from 'chalk';
 import { CLIError } from '../../types/errors/consolidated';
 
@@ -11,7 +14,8 @@ import { CLIError } from '../../types/errors/consolidated';
  * Manage API credentials for AI providers
  */
 export default class Credentials extends BaseCommand {
-  static description = 'Store, rotate and manage API keys for AI providers with secure encryption';
+  static description =
+    'Store, rotate and manage API keys for AI providers with secure encryption';
 
   static examples = [
     '<%= config.bin %> ai credentials add xai --key YOUR_API_KEY              # Add XAI key',
@@ -39,7 +43,8 @@ export default class Credentials extends BaseCommand {
     }),
     permission: Flags.string({
       char: 'p',
-      description: 'Permission level (no_access, read_only, standard, advanced, admin)',
+      description:
+        'Permission level (no_access, read_only, standard, advanced, admin)',
       required: false,
       options: ['no_access', 'read_only', 'standard', 'advanced', 'admin'],
       default: 'standard',
@@ -68,7 +73,7 @@ export default class Credentials extends BaseCommand {
       description: 'AI provider (xai, openai, anthropic)',
       required: false,
       options: ['xai', 'openai', 'anthropic'],
-    })
+    }),
   };
 
   async run() {
@@ -114,14 +119,15 @@ export default class Credentials extends BaseCommand {
 
     // Convert permission flag to enum
     const permissionMap: Record<string, AIPermissionLevel> = {
-      'no_access': AIPermissionLevel.NO_ACCESS,
-      'read_only': AIPermissionLevel.READ_ONLY,
-      'standard': AIPermissionLevel.STANDARD,
-      'advanced': AIPermissionLevel.ADVANCED,
-      'admin': AIPermissionLevel.ADMIN,
+      no_access: AIPermissionLevel.NO_ACCESS,
+      read_only: AIPermissionLevel.READ_ONLY,
+      standard: AIPermissionLevel.STANDARD,
+      advanced: AIPermissionLevel.ADVANCED,
+      admin: AIPermissionLevel.ADMIN,
     };
-    
-    const permissionLevel = permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
+
+    const permissionLevel =
+      permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
 
     try {
       // Convert string provider to AIProvider enum value and back to string
@@ -131,30 +137,38 @@ export default class Credentials extends BaseCommand {
 
       // The type cast is needed because the AIProvider in SecureCredentialService
       // is different from the AIProvider enum in AIModelAdapter
-      const result = await secureCredentialService.storeCredential(providerString as any, apiKey, {
-        permissionLevel,
-        expiryDays: flags.expiry,
-        verifyOnChain: flags.verify,
-        rotationDays: flags.rotation,
-      });
+      const result = await secureCredentialService.storeCredential(
+        providerString as any,
+        apiKey,
+        {
+          permissionLevel,
+          expiryDays: flags.expiry,
+          verifyOnChain: flags.verify,
+          rotationDays: flags.rotation,
+        }
+      );
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2));
       } else {
         this.log(`✅ API key for ${chalk.green(provider)} added successfully`);
-        
+
         if (result.verified) {
           this.log(`${chalk.green('✓')} Verified on blockchain`);
         }
-        
+
         if (result.expiresAt) {
-          this.log(`${chalk.yellow('ℹ')} Expires on: ${new Date(result.expiresAt).toLocaleDateString()}`);
+          this.log(
+            `${chalk.yellow('ℹ')} Expires on: ${new Date(result.expiresAt).toLocaleDateString()}`
+          );
         }
-        
+
         if (result.rotationDue) {
-          this.log(`${chalk.yellow('ℹ')} Rotation due: ${new Date(result.rotationDue).toLocaleDateString()}`);
+          this.log(
+            `${chalk.yellow('ℹ')} Rotation due: ${new Date(result.rotationDue).toLocaleDateString()}`
+          );
         }
-        
+
         if (!result.isSafeToUse) {
           this.log(`${chalk.red('⚠')} Security issues detected:`);
           for (const issue of result.securityIssues || []) {
@@ -166,7 +180,9 @@ export default class Credentials extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to add credential: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Failed to add credential: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -186,34 +202,46 @@ export default class Credentials extends BaseCommand {
 
       if (credentials.length === 0) {
         this.log('No API credentials found.');
-        this.log(`Use '${chalk.cyan('walrus_todo ai credentials add <provider> --key YOUR_API_KEY')}' to add one.`);
+        this.log(
+          `Use '${chalk.cyan('walrus_todo ai credentials add <provider> --key YOUR_API_KEY')}' to add one.`
+        );
         return;
       }
 
       this.log(chalk.bold('API Credentials:'));
 
       for (const cred of credentials) {
-        const expiry = cred.expiresAt ? `expires ${new Date(cred.expiresAt).toLocaleDateString()}` : 'no expiry';
-        const verified = cred.verified ? chalk.green('✓ verified') : chalk.gray('not verified');
+        const expiry = cred.expiresAt
+          ? `expires ${new Date(cred.expiresAt).toLocaleDateString()}`
+          : 'no expiry';
+        const verified = cred.verified
+          ? chalk.green('✓ verified')
+          : chalk.gray('not verified');
 
         // Get permission level name
-        const permissionName = Object.entries(AIPermissionLevel)
-          .find(([_, value]) => value === cred.permissionLevel)?.[0]?.toLowerCase() || 'standard';
+        const permissionName =
+          Object.entries(AIPermissionLevel)
+            .find(([_, value]) => value === cred.permissionLevel)?.[0]
+            ?.toLowerCase() || 'standard';
 
         this.log(
           `${chalk.green(cred.provider.padEnd(10))} | ${chalk.yellow(permissionName.padEnd(10))} | ` +
-          `${verified.padEnd(15)} | ${chalk.blue(expiry)}`
+            `${verified.padEnd(15)} | ${chalk.blue(expiry)}`
         );
 
         if (cred.rotationDue) {
           const now = new Date();
           const rotationDate = new Date(cred.rotationDue);
-          const daysToRotation = Math.ceil((rotationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          const daysToRotation = Math.ceil(
+            (rotationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          );
 
           if (daysToRotation <= 0) {
             this.log(`  ${chalk.red('⚠ Rotation overdue')}`);
           } else if (daysToRotation < 7) {
-            this.log(`  ${chalk.yellow(`⚠ Rotation due in ${daysToRotation} days`)}`);
+            this.log(
+              `  ${chalk.yellow(`⚠ Rotation due in ${daysToRotation} days`)}`
+            );
           }
         }
       }
@@ -221,7 +249,9 @@ export default class Credentials extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to list credentials: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Failed to list credentials: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -239,21 +269,29 @@ export default class Credentials extends BaseCommand {
 
       // First check if credential exists
       const providerString = getProviderString(providerEnum);
-      if (!await secureCredentialService.hasCredential(providerString as any)) {
+      if (
+        !(await secureCredentialService.hasCredential(providerString as any))
+      ) {
         throw new CLIError(`No credential found for ${provider}`);
       }
 
       // Confirm removal
-      const confirmed = await this.confirm(`Are you sure you want to remove the API key for ${provider}?`);
+      const confirmed = await this.confirm(
+        `Are you sure you want to remove the API key for ${provider}?`
+      );
       if (!confirmed) {
         this.log('Operation cancelled.');
         return;
       }
 
-      const removed = await secureCredentialService.removeCredential(providerString as any);
-      
+      const removed = await secureCredentialService.removeCredential(
+        providerString as any
+      );
+
       if (removed) {
-        this.log(`✅ API key for ${chalk.green(provider)} removed successfully`);
+        this.log(
+          `✅ API key for ${chalk.green(provider)} removed successfully`
+        );
       } else {
         this.log(`No API key found for ${provider}`);
       }
@@ -261,7 +299,9 @@ export default class Credentials extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to remove credential: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Failed to remove credential: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -277,10 +317,14 @@ export default class Credentials extends BaseCommand {
       // Convert string provider to AIProvider enum
       const providerEnum = getProviderEnum(provider);
       const providerString = getProviderString(providerEnum);
-      const verified = await secureCredentialService.verifyCredential(providerString as any);
-      
+      const verified = await secureCredentialService.verifyCredential(
+        providerString as any
+      );
+
       if (verified) {
-        this.log(`✅ API key for ${chalk.green(provider)} verified successfully on blockchain`);
+        this.log(
+          `✅ API key for ${chalk.green(provider)} verified successfully on blockchain`
+        );
       } else {
         this.log(`Failed to verify API key for ${provider} on blockchain`);
       }
@@ -288,7 +332,9 @@ export default class Credentials extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Verification failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Verification failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -324,30 +370,41 @@ export default class Credentials extends BaseCommand {
         return;
       }
 
-      const result = await secureCredentialService.rotateCredential(providerString as any, newApiKey);
-      
+      const result = await secureCredentialService.rotateCredential(
+        providerString as any,
+        newApiKey
+      );
+
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2));
       } else {
-        this.log(`✅ API key for ${chalk.green(provider)} rotated successfully`);
-        
+        this.log(
+          `✅ API key for ${chalk.green(provider)} rotated successfully`
+        );
+
         if (result.verified) {
           this.log(`${chalk.green('✓')} Verified on blockchain`);
         }
-        
+
         if (result.expiresAt) {
-          this.log(`${chalk.yellow('ℹ')} Expires on: ${new Date(result.expiresAt).toLocaleDateString()}`);
+          this.log(
+            `${chalk.yellow('ℹ')} Expires on: ${new Date(result.expiresAt).toLocaleDateString()}`
+          );
         }
-        
+
         if (result.rotationDue) {
-          this.log(`${chalk.yellow('ℹ')} Next rotation due: ${new Date(result.rotationDue).toLocaleDateString()}`);
+          this.log(
+            `${chalk.yellow('ℹ')} Next rotation due: ${new Date(result.rotationDue).toLocaleDateString()}`
+          );
         }
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to rotate credential: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Failed to rotate credential: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -361,26 +418,32 @@ export default class Credentials extends BaseCommand {
 
     // Convert permission flag to enum
     const permissionMap: Record<string, AIPermissionLevel> = {
-      'no_access': AIPermissionLevel.NO_ACCESS,
-      'read_only': AIPermissionLevel.READ_ONLY,
-      'standard': AIPermissionLevel.STANDARD,
-      'advanced': AIPermissionLevel.ADVANCED,
-      'admin': AIPermissionLevel.ADMIN,
+      no_access: AIPermissionLevel.NO_ACCESS,
+      read_only: AIPermissionLevel.READ_ONLY,
+      standard: AIPermissionLevel.STANDARD,
+      advanced: AIPermissionLevel.ADVANCED,
+      admin: AIPermissionLevel.ADMIN,
     };
-    
-    const permissionLevel = permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
+
+    const permissionLevel =
+      permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
 
     try {
       // Convert string provider to AIProvider enum
       const providerEnum = getProviderEnum(provider);
       const providerString = getProviderString(providerEnum);
-      const result = await secureCredentialService.updatePermissions(providerString as any, permissionLevel);
-      
+      const result = await secureCredentialService.updatePermissions(
+        providerString as any,
+        permissionLevel
+      );
+
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2));
       } else {
-        this.log(`✅ Permission level for ${chalk.green(provider)} updated to ${chalk.yellow(flags.permission)}`);
-        
+        this.log(
+          `✅ Permission level for ${chalk.green(provider)} updated to ${chalk.yellow(flags.permission)}`
+        );
+
         if (result.verified) {
           this.log(`${chalk.green('✓')} Updated on blockchain`);
         }
@@ -389,7 +452,9 @@ export default class Credentials extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to update permissions: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Failed to update permissions: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -413,7 +478,10 @@ export default class Credentials extends BaseCommand {
    * Helper to show a confirmation prompt
    * Override the inherited confirm method with same signature
    */
-  protected async confirm(message: string, defaultValue?: boolean): Promise<boolean> {
+  protected async confirm(
+    message: string,
+    defaultValue?: boolean
+  ): Promise<boolean> {
     const { default: inquirer } = await import('inquirer');
     const { confirmed } = await inquirer.prompt([
       {

@@ -22,9 +22,11 @@ export class PromptValidator {
         // Sanitize if needed and if it's a string
         let sanitizedInput = input;
         if (sanitize && typeof input === 'string') {
-          sanitizedInput = CommandSanitizer.sanitizeString(input) as unknown as T;
+          sanitizedInput = CommandSanitizer.sanitizeString(
+            input
+          ) as unknown as T;
         }
-        
+
         // Validate the input
         InputValidator.validate(sanitizedInput, rules);
         return true;
@@ -43,11 +45,13 @@ export class PromptValidator {
    * @returns Validator function for date inputs
    */
   static dateValidator(): (input: string) => boolean | string {
-    return this.createInquirerValidator([{
-      test: (value) => !value || /^\d{4}-\d{2}-\d{2}$/.test(value),
-      message: 'Invalid date format. Use YYYY-MM-DD',
-      code: 'INVALID_DATE_FORMAT'
-    }]);
+    return this.createInquirerValidator([
+      {
+        test: value => !value || /^\d{4}-\d{2}-\d{2}$/.test(value),
+        message: 'Invalid date format. Use YYYY-MM-DD',
+        code: 'INVALID_DATE_FORMAT',
+      },
+    ]);
   }
 
   /**
@@ -55,11 +59,14 @@ export class PromptValidator {
    * @returns Validator function for wallet address inputs
    */
   static walletAddressValidator(): (input: string) => boolean | string {
-    return this.createInquirerValidator([{
-      test: (value) => /^0x[a-fA-F0-9]{40,}$/.test(value),
-      message: 'Invalid wallet address format. Must be a valid hex address starting with 0x',
-      code: 'INVALID_WALLET_ADDRESS'
-    }]);
+    return this.createInquirerValidator([
+      {
+        test: value => /^0x[a-fA-F0-9]{40,}$/.test(value),
+        message:
+          'Invalid wallet address format. Must be a valid hex address starting with 0x',
+        code: 'INVALID_WALLET_ADDRESS',
+      },
+    ]);
   }
 
   /**
@@ -67,11 +74,13 @@ export class PromptValidator {
    * @returns Validator function for priority inputs
    */
   static priorityValidator(): (input: string) => boolean | string {
-    return this.createInquirerValidator([{
-      test: (value) => ['high', 'medium', 'low'].includes(value.toLowerCase()),
-      message: 'Priority must be high, medium, or low',
-      code: 'INVALID_PRIORITY'
-    }]);
+    return this.createInquirerValidator([
+      {
+        test: value => ['high', 'medium', 'low'].includes(value.toLowerCase()),
+        message: 'Priority must be high, medium, or low',
+        code: 'INVALID_PRIORITY',
+      },
+    ]);
   }
 
   /**
@@ -81,15 +90,16 @@ export class PromptValidator {
   static listNameValidator(): (input: string) => boolean | string {
     return this.createInquirerValidator([
       {
-        test: (value) => value.trim().length > 0,
+        test: value => value.trim().length > 0,
         message: 'List name cannot be empty',
-        code: 'EMPTY_LIST_NAME'
+        code: 'EMPTY_LIST_NAME',
       },
       {
-        test: (value) => /^[a-zA-Z0-9_-]+$/.test(value),
-        message: 'List name can only contain letters, numbers, underscores, and hyphens',
-        code: 'INVALID_LIST_NAME'
-      }
+        test: value => /^[a-zA-Z0-9_-]+$/.test(value),
+        message:
+          'List name can only contain letters, numbers, underscores, and hyphens',
+        code: 'INVALID_LIST_NAME',
+      },
     ]);
   }
 
@@ -98,18 +108,20 @@ export class PromptValidator {
    * @returns Validator function for URL inputs
    */
   static urlValidator(): (input: string) => boolean | string {
-    return this.createInquirerValidator([{
-      test: (value) => {
-        try {
-          new URL(value);
-          return true;
-        } catch (error: unknown) {
-          return false;
-        }
+    return this.createInquirerValidator([
+      {
+        test: value => {
+          try {
+            new URL(value);
+            return true;
+          } catch (error: unknown) {
+            return false;
+          }
+        },
+        message: 'Invalid URL format',
+        code: 'INVALID_URL',
       },
-      message: 'Invalid URL format',
-      code: 'INVALID_URL'
-    }]);
+    ]);
   }
 
   /**
@@ -117,11 +129,13 @@ export class PromptValidator {
    * @returns Validator function for API key inputs
    */
   static apiKeyValidator(): (input: string) => boolean | string {
-    return this.createInquirerValidator([{
-      test: (value) => value.length >= 16,
-      message: 'API key must be at least 16 characters',
-      code: 'INVALID_API_KEY'
-    }]);
+    return this.createInquirerValidator([
+      {
+        test: value => value.length >= 16,
+        message: 'API key must be at least 16 characters',
+        code: 'INVALID_API_KEY',
+      },
+    ]);
   }
 
   /**
@@ -136,20 +150,28 @@ export class PromptValidator {
   ): (input: string) => boolean | string {
     return this.createInquirerValidator([
       {
-        test: (value) => !isNaN(Number(value)),
+        test: value => !isNaN(Number(value)),
         message: 'Input must be a number',
-        code: 'INVALID_NUMBER'
+        code: 'INVALID_NUMBER',
       },
-      ...(min !== undefined ? [{
-        test: (value) => Number(value) >= min,
-        message: `Value must be at least ${min}`,
-        code: 'BELOW_MINIMUM'
-      }] : []),
-      ...(max !== undefined ? [{
-        test: (value) => Number(value) <= max,
-        message: `Value must be at most ${max}`,
-        code: 'ABOVE_MAXIMUM'
-      }] : [])
+      ...(min !== undefined
+        ? [
+            {
+              test: value => Number(value) >= min,
+              message: `Value must be at least ${min}`,
+              code: 'BELOW_MINIMUM',
+            },
+          ]
+        : []),
+      ...(max !== undefined
+        ? [
+            {
+              test: value => Number(value) <= max,
+              message: `Value must be at most ${max}`,
+              code: 'ABOVE_MAXIMUM',
+            },
+          ]
+        : []),
     ]);
   }
 
@@ -161,11 +183,13 @@ export class PromptValidator {
   static requiredValidator(
     errorMessage: string = 'This field is required'
   ): (input: string) => boolean | string {
-    return this.createInquirerValidator([{
-      test: (value) => value.trim().length > 0,
-      message: errorMessage,
-      code: 'REQUIRED_FIELD'
-    }]);
+    return this.createInquirerValidator([
+      {
+        test: value => value.trim().length > 0,
+        message: errorMessage,
+        code: 'REQUIRED_FIELD',
+      },
+    ]);
   }
 
   /**
@@ -180,10 +204,12 @@ export class PromptValidator {
     errorMessage: string,
     errorCode: string
   ): (input: string) => boolean | string {
-    return this.createInquirerValidator([{
-      test: validateFn,
-      message: errorMessage,
-      code: errorCode
-    }]);
+    return this.createInquirerValidator([
+      {
+        test: validateFn,
+        message: errorMessage,
+        code: errorCode,
+      },
+    ]);
   }
 }

@@ -16,7 +16,7 @@ const execAsync = promisify(exec);
 
 async function runNetworkRetryFuzzer() {
   logger.info('🌐 Starting Network Retry Fuzzer Tests...\n');
-  
+
   try {
     const { stdout, stderr } = await execAsync(
       'npx jest tests/fuzz/network-retry-fuzzer.test.ts --verbose',
@@ -24,14 +24,14 @@ async function runNetworkRetryFuzzer() {
         env: {
           ...process.env,
           NODE_ENV: 'test',
-          FORCE_COLOR: '1'
-        }
+          FORCE_COLOR: '1',
+        },
       }
     );
-    
+
     logger.info(stdout);
     if (stderr) logger.error(stderr);
-    
+
     logger.info('\n✅ Network Retry Fuzzer Tests Completed Successfully!');
   } catch (_error) {
     logger.error('\n❌ Network Retry Fuzzer Tests Failed:');

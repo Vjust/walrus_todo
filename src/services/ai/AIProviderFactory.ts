@@ -1,21 +1,26 @@
 /**
  * AI Provider Factory
- * 
+ *
  * Implements the Factory design pattern to create and manage AI provider adapters
  * with secure credential handling. This class centralizes the instantiation logic
  * for different AI model adapters, providing a consistent interface for obtaining
  * provider instances based on configuration and available credentials.
- * 
+ *
  * Key responsibilities:
  * - Creates appropriate AI provider adapters based on requested provider type
  * - Manages credential verification through SecureCredentialService
  * - Provides fallback mechanisms when requested providers are unavailable
  * - Tracks whether AI features were explicitly requested to adjust logging verbosity
- * 
+ *
  * @module services/ai/AIProviderFactory
  */
 
-import { AIModelAdapter, AIProvider as AIProviderEnum, AIModelOptions, AIProviderCreationParams } from '../../types/adapters/AIModelAdapter';
+import {
+  AIModelAdapter,
+  AIProvider as AIProviderEnum,
+  AIModelOptions,
+  AIProviderCreationParams,
+} from '../../types/adapters/AIModelAdapter';
 import { OpenAIModelAdapter } from './adapters/OpenAIModelAdapter';
 import { XAIModelAdapter } from './adapters/XAIModelAdapter';
 import { secureCredentialService } from './SecureCredentialService';
@@ -26,21 +31,21 @@ import { getProviderString, getProviderEnum } from '../../utils/adapters';
 /**
  * Factory class responsible for creating and configuring AI provider adapters
  * based on requested provider type, available credentials, and configuration options.
- * 
+ *
  * Uses the Factory design pattern to abstract the complex creation logic from
  * client code, ensuring consistent provider instantiation throughout the application.
  */
 export class AIProviderFactory {
   /** Logger instance for tracking factory operations */
   private static readonly logger = Logger.getInstance();
-  
+
   /** Flag to track whether AI features were explicitly requested by the user */
   private static isAIFeatureRequested = false;
 
   /**
    * Sets the flag indicating AI features have been explicitly requested
    * This affects logging verbosity for credential warnings and errors
-   * 
+   *
    * @param value - Boolean indicating if AI features were requested, defaults to true
    */
   public static setAIFeatureRequested(value: boolean = true): void {
@@ -50,7 +55,7 @@ export class AIProviderFactory {
   /**
    * Returns whether AI features were explicitly requested
    * Used to determine appropriate logging levels for warnings and errors
-   * 
+   *
    * @returns True if AI features were explicitly requested, false otherwise
    */
   public static isAIRequested(): boolean {
@@ -60,7 +65,7 @@ export class AIProviderFactory {
   /**
    * Creates a default adapter for initial system setup
    * Uses environment variables for initial configuration if available
-   * 
+   *
    * @returns A configured XAIModelAdapter instance or fallback adapter if creation fails
    */
   public static createDefaultAdapter(): AIModelAdapter {
@@ -75,10 +80,14 @@ export class AIProviderFactory {
       }
 
       // If no API key, log a warning and return fallback
-      this.logger.debug(`No XAI API key found in environment variables, using fallback adapter`);
+      this.logger.debug(
+        `No XAI API key found in environment variables, using fallback adapter`
+      );
       return this.createFallbackAdapter();
     } catch (_error) {
-      this.logger.error(`Failed to create default adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Failed to create default adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+      );
       return this.createFallbackAdapter();
     }
   }
@@ -86,7 +95,7 @@ export class AIProviderFactory {
   /**
    * Creates a minimal implementation of AIModelAdapter that doesn't throw exceptions
    * Used as a last resort when no working adapters can be created
-   * 
+   *
    * @returns A minimal AIModelAdapter implementation that returns error messages instead of failing
    */
   public static createFallbackAdapter(): AIModelAdapter {
@@ -99,7 +108,7 @@ export class AIProviderFactory {
           result: 'Sorry, AI service is currently unavailable.',
           modelName: 'fallback-model',
           provider: AIProviderEnum.XAI,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       },
       completeStructured: async () => {
@@ -107,7 +116,7 @@ export class AIProviderFactory {
           result: {} as unknown,
           modelName: 'fallback-model',
           provider: AIProviderEnum.XAI,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       },
       processWithPromptTemplate: async () => {
@@ -115,26 +124,28 @@ export class AIProviderFactory {
           result: 'Sorry, AI service is currently unavailable.',
           modelName: 'fallback-model',
           provider: AIProviderEnum.XAI,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       },
-      cancelAllRequests: () => {}
+      cancelAllRequests: () => {},
     };
   }
 
   /**
    * Main factory method that creates an appropriate AI provider adapter
    * based on the requested provider type and available credentials
-   * 
+   *
    * @param params - Configuration parameters for creating the provider
    * @param params.provider - The AI provider to use (enum or string)
    * @param params.modelName - Optional model name to use, defaults to first model in config
    * @param params.options - Optional configuration options for the model
    * @param params.credentialService - Optional credential service override
-   * 
+   *
    * @returns A promise resolving to a configured AIModelAdapter instance
    */
-  public static async createProvider(params: AIProviderCreationParams): Promise<AIModelAdapter> {
+  public static async createProvider(
+    params: AIProviderCreationParams
+  ): Promise<AIModelAdapter> {
     const { provider, modelName, options, credentialService } = params;
 
     // Use the provided credential service or the default one
@@ -142,18 +153,25 @@ export class AIProviderFactory {
 
     try {
       // Ensure provider is a valid enum value by converting string to enum if needed
-      const providerEnum = typeof provider === 'string' ? getProviderEnum(provider as string) : provider;
+      const providerEnum =
+        typeof provider === 'string'
+          ? getProviderEnum(provider as string)
+          : provider;
 
       // Convert enum to string for credential service
       const providerString = getProviderString(providerEnum);
 
       // Verify that we have credentials for this provider
-      const hasCredential = await credService.hasCredential(providerString as unknown as AIProviderEnum);
+      const hasCredential = await credService.hasCredential(
+        providerString as unknown as AIProviderEnum
+      );
 
       if (!hasCredential) {
         // Only log warnings if AI features were explicitly requested
         if (this.isAIFeatureRequested) {
-          this.logger.warn(`No credentials found for ${providerString}. Using fallback provider.`);
+          this.logger.warn(
+            `No credentials found for ${providerString}. Using fallback provider.`
+          );
         } else {
           this.logger.debug(`No credentials found for ${providerString}.`);
         }
@@ -161,7 +179,9 @@ export class AIProviderFactory {
       }
 
       // Get the API key for the provider
-      const apiKey = await credService.getCredential(providerString as unknown as AIProviderEnum);
+      const apiKey = await credService.getCredential(
+        providerString as unknown as AIProviderEnum
+      );
 
       // Create the appropriate adapter based on provider
       switch (providerEnum) {
@@ -181,15 +201,21 @@ export class AIProviderFactory {
 
         case AIProviderEnum.ANTHROPIC:
           // Would implement AnthropicModelAdapter here
-          this.logger.warn('Anthropic adapter not yet implemented, using fallback provider');
+          this.logger.warn(
+            'Anthropic adapter not yet implemented, using fallback provider'
+          );
           return this.createFallbackProvider(options);
 
         default:
-          this.logger.warn(`Unknown provider: ${providerEnum}, using fallback provider`);
+          this.logger.warn(
+            `Unknown provider: ${providerEnum}, using fallback provider`
+          );
           return this.createFallbackProvider(options);
       }
     } catch (_error) {
-      this.logger.error(`Failed to create provider adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Failed to create provider adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+      );
       return this.createFallbackProvider(options);
     }
   }
@@ -197,13 +223,16 @@ export class AIProviderFactory {
   /**
    * Determines the default provider and model configuration based on
    * available credentials and application configuration
-   * 
+   *
    * This method tries to find credentials for the default provider,
    * then falls back to alternative providers if needed
-   * 
+   *
    * @returns Promise resolving to an object containing provider enum and model name
    */
-  public static async getDefaultProvider(): Promise<{ provider: AIProviderEnum; modelName: string }> {
+  public static async getDefaultProvider(): Promise<{
+    provider: AIProviderEnum;
+    modelName: string;
+  }> {
     // Provide safe defaults if config values are undefined
     const defaultProviderString = AI_CONFIG.DEFAULT_PROVIDER || 'xai';
     const defaultModel = AI_CONFIG.DEFAULT_MODEL || 'grok-beta';
@@ -212,29 +241,39 @@ export class AIProviderFactory {
     try {
       // Validate that we have a valid provider string
       if (!defaultProviderString || typeof defaultProviderString !== 'string') {
-        throw new Error(`Invalid default provider configuration: ${defaultProviderString}`);
+        throw new Error(
+          `Invalid default provider configuration: ${defaultProviderString}`
+        );
       }
-      
+
       // Convert string to enum for type safety
-      const defaultProviderEnum = getProviderEnum(defaultProviderString as string);
-      const hasCredential = await secureCredentialService.hasCredential(defaultProviderString as unknown as AIProviderEnum);
+      const defaultProviderEnum = getProviderEnum(
+        defaultProviderString as string
+      );
+      const hasCredential = await secureCredentialService.hasCredential(
+        defaultProviderString as unknown as AIProviderEnum
+      );
 
       if (hasCredential) {
         return {
           provider: defaultProviderEnum,
-          modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString][0]
+          modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString][0],
         };
       }
 
       // If no credentials for default, try fallback providers
       for (const fallbackProvider of AI_CONFIG.FALLBACK_PROVIDERS) {
-        const hasCredential = await secureCredentialService.hasCredential(fallbackProvider as unknown as AIProviderEnum);
+        const hasCredential = await secureCredentialService.hasCredential(
+          fallbackProvider as unknown as AIProviderEnum
+        );
 
         if (hasCredential) {
-          const fallbackProviderEnum = getProviderEnum(fallbackProvider as string);
+          const fallbackProviderEnum = getProviderEnum(
+            fallbackProvider as string
+          );
           return {
             provider: fallbackProviderEnum,
-            modelName: AI_CONFIG.MODELS[fallbackProvider][0]
+            modelName: AI_CONFIG.MODELS[fallbackProvider][0],
           };
         }
       }
@@ -242,16 +281,23 @@ export class AIProviderFactory {
       // If no credentials anywhere, return default anyway (will fail later but with helpful message)
       return {
         provider: defaultProviderEnum,
-        modelName: defaultModel || AI_CONFIG.MODELS[defaultProviderString as keyof typeof AI_CONFIG.MODELS]?.[0] || 'grok-beta'
+        modelName:
+          defaultModel ||
+          AI_CONFIG.MODELS[
+            defaultProviderString as keyof typeof AI_CONFIG.MODELS
+          ]?.[0] ||
+          'grok-beta',
       };
     } catch (_error) {
-      this.logger.error(`Error determining default provider: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Error determining default provider: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+      );
 
       // Fall back to hardcoded safe defaults
       const fallbackEnum = AIProviderEnum.XAI; // Safe fallback
       return {
         provider: fallbackEnum,
-        modelName: defaultModel || 'grok-beta'
+        modelName: defaultModel || 'grok-beta',
       };
     }
   }
@@ -259,29 +305,38 @@ export class AIProviderFactory {
   /**
    * Debug method to get environment values for diagnostics
    */
-  public static getEnvironmentValues(): { provider: string | undefined; model: string | undefined } {
+  public static getEnvironmentValues(): {
+    provider: string | undefined;
+    model: string | undefined;
+  } {
     return {
       provider: AI_CONFIG.DEFAULT_PROVIDER,
-      model: AI_CONFIG.DEFAULT_MODEL
+      model: AI_CONFIG.DEFAULT_MODEL,
     };
   }
 
   /**
    * Attempts to create a working provider adapter from the configured fallback providers
    * Tries each fallback provider in sequence until one with valid credentials is found
-   * 
+   *
    * @param options - Optional configuration options to pass to the provider adapter
    * @returns Promise resolving to a configured AIModelAdapter or minimal fallback adapter
    */
-  private static async createFallbackProvider(options?: AIModelOptions): Promise<AIModelAdapter> {
+  private static async createFallbackProvider(
+    options?: AIModelOptions
+  ): Promise<AIModelAdapter> {
     // Try each fallback provider in order
     for (const fallbackProvider of AI_CONFIG.FALLBACK_PROVIDERS) {
       try {
-        const hasCredential = await secureCredentialService.hasCredential(fallbackProvider as unknown as AIProviderEnum);
+        const hasCredential = await secureCredentialService.hasCredential(
+          fallbackProvider as unknown as AIProviderEnum
+        );
 
         if (hasCredential) {
           this.logger.info(`Using fallback provider: ${fallbackProvider}`);
-          const apiKey = await secureCredentialService.getCredential(fallbackProvider as unknown as AIProviderEnum);
+          const apiKey = await secureCredentialService.getCredential(
+            fallbackProvider as unknown as AIProviderEnum
+          );
 
           // Convert string provider to enum
           const providerEnum = getProviderEnum(fallbackProvider as string);
@@ -307,7 +362,9 @@ export class AIProviderFactory {
       } catch (_error) {
         // Only log debug messages if we actually requested AI features
         if (this.isAIFeatureRequested) {
-          this.logger.debug(`Failed to use fallback provider ${fallbackProvider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`);
+          this.logger.debug(
+            `Failed to use fallback provider ${fallbackProvider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+          );
         }
         // Continue to next fallback
       }
@@ -317,7 +374,7 @@ export class AIProviderFactory {
     if (this.isAIFeatureRequested) {
       this.logger.warn(
         'No valid AI provider credentials found. AI features will be limited. ' +
-        'Add API credentials using: walrus_todo ai credentials add <provider> --key YOUR_API_KEY'
+          'Add API credentials using: walrus_todo ai credentials add <provider> --key YOUR_API_KEY'
       );
     } else {
       // Otherwise, just log at debug level

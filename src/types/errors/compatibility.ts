@@ -15,7 +15,7 @@ import {
   AuthorizationError,
   isRetryableError,
   getErrorMessage as consolidatedGetErrorMessage,
-  toBaseError
+  toBaseError,
 } from './consolidated/index';
 
 // Re-export consolidated error types
@@ -30,7 +30,7 @@ export {
   AuthorizationError,
   // Re-export utility functions
   isRetryableError,
-  toBaseError
+  toBaseError,
 };
 
 // Re-export with alias for backward compatibility
@@ -52,7 +52,7 @@ export enum WalrusErrorCode {
   WALRUS_RETRIEVE_FAILED = 'WALRUS_RETRIEVE_FAILED',
   WALRUS_PARSE_FAILED = 'WALRUS_PARSE_FAILED',
   WALRUS_INVALID_TODO_DATA = 'WALRUS_INVALID_TODO_DATA',
-  WALRUS_UPDATE_FAILED = 'WALRUS_UPDATE_FAILED'
+  WALRUS_UPDATE_FAILED = 'WALRUS_UPDATE_FAILED',
 }
 
 /**
@@ -68,12 +68,14 @@ export class WalrusError extends BaseError {
    */
   constructor(
     message: string,
-    codeOrOptions: string | Partial<{
-      code: string;
-      publicMessage?: string;
-      shouldRetry?: boolean;
-      cause?: Error;
-    }> = {}
+    codeOrOptions:
+      | string
+      | Partial<{
+          code: string;
+          publicMessage?: string;
+          shouldRetry?: boolean;
+          cause?: Error;
+        }> = {}
   ) {
     // Process the legacy constructor parameters
     let options: {
@@ -88,21 +90,21 @@ export class WalrusError extends BaseError {
       options = {
         code: codeOrOptions,
         publicMessage: 'An unexpected error occurred',
-        shouldRetry: false
+        shouldRetry: false,
       };
     } else {
       const {
         code = 'WALRUS_ERROR',
         publicMessage = 'An unexpected error occurred',
         shouldRetry = false,
-        cause
+        cause,
       } = codeOrOptions;
 
       options = {
         code,
         publicMessage,
         shouldRetry,
-        cause
+        cause,
       };
     }
 
@@ -113,7 +115,7 @@ export class WalrusError extends BaseError {
       publicMessage: options.publicMessage,
       shouldRetry: options.shouldRetry,
       recoverable: options.shouldRetry,
-      cause: options.cause
+      cause: options.cause,
     });
   }
 
@@ -130,7 +132,7 @@ export class WalrusError extends BaseError {
       code: this.code,
       message: this.publicMessage,
       timestamp: this.timestamp,
-      shouldRetry: this.shouldRetry
+      shouldRetry: this.shouldRetry,
     };
   }
 
@@ -155,21 +157,23 @@ export class WalrusError extends BaseError {
       timestamp: this.timestamp,
       shouldRetry: this.shouldRetry,
       stack: this.stack,
-      cause: this.cause instanceof Error ? this.cause.message : String(this.cause)
+      cause:
+        this.cause instanceof Error ? this.cause.message : String(this.cause),
     };
   }
 }
-
 
 /**
  * Legacy toErrorWithMessage implementation for backward compatibility
  * @deprecated Use the consolidated toBaseError function instead
  */
 export function toErrorWithMessage(maybeError: unknown): { message: string } {
-  if (typeof maybeError === 'object' && 
-      maybeError !== null && 
-      'message' in maybeError && 
-      typeof (maybeError as any).message === 'string') {
+  if (
+    typeof maybeError === 'object' &&
+    maybeError !== null &&
+    'message' in maybeError &&
+    typeof (maybeError as any).message === 'string'
+  ) {
     return maybeError as { message: string };
   }
   try {

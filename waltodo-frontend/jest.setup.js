@@ -15,7 +15,7 @@ jest.mock('next/router', () => ({
 // Mock Next.js image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props) => {
+  default: props => {
     // eslint-disable-next-line @next/next/no-img-element
     return <img {...props} alt={props.alt || ''} />;
   },
@@ -59,7 +59,9 @@ console.error = (...args) => {
   if (
     errorStr.includes('Warning: ReactDOM.render is no longer supported') ||
     errorStr.includes('Warning: useLayoutEffect does nothing on the server') ||
-    errorStr.includes('Error: Uncaught [Error: Expected server HTML to contain a matching')
+    errorStr.includes(
+      'Error: Uncaught [Error: Expected server HTML to contain a matching'
+    )
   ) {
     return;
   }

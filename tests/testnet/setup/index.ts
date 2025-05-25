@@ -1,22 +1,22 @@
 /**
  * Testnet Setup Module
- * 
+ *
  * Main entry point for Sui testnet setup utilities
  */
 
 export * from './sui-setup';
 
 // Re-export main functions for convenience
-export { 
+export {
   setupTestnet,
   quickSetup,
   restoreFromBackup,
-  SuiTestnetSetup 
+  SuiTestnetSetup,
 } from './sui-setup';
 
 // Re-export types
 export type {
   WalletSetupConfig,
   WalletInfo,
-  TestnetSetupResult
+  TestnetSetupResult,
 } from './sui-setup';

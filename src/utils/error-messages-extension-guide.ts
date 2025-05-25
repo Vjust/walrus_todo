@@ -47,14 +47,14 @@ export const AI_ERROR_MESSAGES = {
     suggestions: [
       'Check your AI API key configuration',
       'Verify the AI service is available',
-      'Try a simpler prompt or request'
+      'Try a simpler prompt or request',
     ],
     quickTips: [
       'Set AI API key: walrus ai:credentials --set-key YOUR_KEY',
-      'Test AI connection: walrus ai:verify'
-    ]
+      'Test AI connection: walrus ai:verify',
+    ],
   },
-  
+
   AI_RATE_LIMIT: {
     title: 'AI Rate Limit Exceeded',
     emoji: '⏱️',
@@ -62,14 +62,14 @@ export const AI_ERROR_MESSAGES = {
     suggestions: [
       'Wait a few minutes before trying again',
       'Consider upgrading your AI plan',
-      'Use caching for repeated requests'
+      'Use caching for repeated requests',
     ],
     quickTips: [
       'Check rate limits: walrus ai:limits',
-      'Enable AI caching: walrus config --ai-cache true'
-    ]
+      'Enable AI caching: walrus config --ai-cache true',
+    ],
   },
-  
+
   AI_INVALID_RESPONSE: {
     title: 'Invalid AI Response',
     emoji: '🤯',
@@ -77,9 +77,9 @@ export const AI_ERROR_MESSAGES = {
     suggestions: [
       'Try rephrasing your request',
       'Check the AI model capabilities',
-      'Use a different AI provider'
-    ]
-  }
+      'Use a different AI provider',
+    ],
+  },
 };
 
 /**
@@ -91,24 +91,24 @@ export const AI_COMMAND_GUIDANCE = {
       suggestions: [
         'Provide more context in your todo description',
         'Use simpler language for better AI understanding',
-        'Try the --model flag to use a different AI model'
+        'Try the --model flag to use a different AI model',
       ],
       quickTips: [
         'Example: walrus ai:suggest "Plan project" --context "software development"',
-        'Available models: gpt-4, claude-3, grok-2'
-      ]
-    }
+        'Available models: gpt-4, claude-3, grok-2',
+      ],
+    },
   },
-  
+
   'ai:categorize': {
     AI_INVALID_RESPONSE: {
       suggestions: [
         'Ensure your todos have descriptive titles',
         'Use the --custom-categories flag for specific domains',
-        'Try categorizing fewer todos at once'
-      ]
-    }
-  }
+        'Try categorizing fewer todos at once',
+      ],
+    },
+  },
 };
 
 /**
@@ -119,7 +119,7 @@ export function extractAIErrorContext(error: AIError): ErrorContext {
     operation: 'ai_operation',
     // Add any AI-specific context
     ...(error.model && { model: error.model }),
-    ...(error.prompt && { prompt: error.prompt.substring(0, 50) + '...' })
+    ...(error.prompt && { prompt: error.prompt.substring(0, 50) + '...' }),
   };
 }
 
@@ -132,7 +132,7 @@ export const AI_COMMAND_TYPOS = {
   'ai:category': ['ai:categorize'],
   'ai:catergorize': ['ai:categorize'],
   'ai:creds': ['ai:credentials'],
-  'ai:auth': ['ai:credentials']
+  'ai:auth': ['ai:credentials'],
 };
 
 /**
@@ -150,7 +150,7 @@ export class AICommandExample {
         code: 'AI_ERROR',
         model: 'gpt-4',
         prompt: todoTitle,
-        recoverable: true
+        recoverable: true,
       });
     }
   }
@@ -158,14 +158,14 @@ export class AICommandExample {
   async handleRateLimit() {
     throw new AIError('Rate limit exceeded', {
       code: 'AI_RATE_LIMIT',
-      recoverable: true
+      recoverable: true,
     });
   }
 
   async handleInvalidResponse() {
     throw new AIError('AI returned invalid response format', {
       code: 'AI_INVALID_RESPONSE',
-      recoverable: false
+      recoverable: false,
     });
   }
 
@@ -182,33 +182,33 @@ export function testAIErrorMessages() {
   // Test basic AI error
   const basicError = new AIError('Connection failed', {
     code: 'AI_ERROR',
-    model: 'gpt-4'
+    model: 'gpt-4',
   });
-  
+
   logger.info('Basic AI Error:');
   logger.info(basicError);
-  
+
   // Test rate limit error
   const rateLimitError = new AIError('Too many requests', {
-    code: 'AI_RATE_LIMIT'
+    code: 'AI_RATE_LIMIT',
   });
-  
+
   logger.info('\nRate Limit Error:');
   logger.info(rateLimitError);
-  
+
   // Test invalid response error
   const invalidResponseError = new AIError('Unexpected format', {
     code: 'AI_INVALID_RESPONSE',
-    prompt: 'Generate tags for: Complete project documentation'
+    prompt: 'Generate tags for: Complete project documentation',
   });
-  
+
   logger.info('\nInvalid Response Error:');
   logger.info(invalidResponseError);
 }
 
 /**
  * Best practices for extending error messages:
- * 
+ *
  * 1. Use descriptive error codes (AI_RATE_LIMIT vs RATE_LIMIT)
  * 2. Include specific suggestions for each error type
  * 3. Add quick tips for immediate actions users can take

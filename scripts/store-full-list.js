@@ -30,12 +30,12 @@ async function loadTodoList(listName) {
   try {
     const todosDir = process.env.STORAGE_PATH || 'Todos';
     const listFilePath = path.join(process.cwd(), todosDir, `${listName}.json`);
-    
+
     if (!fs.existsSync(listFilePath)) {
       logger.error(`Error: List "${listName}" not found at ${listFilePath}`);
       process.exit(1);
     }
-    
+
     const listData = JSON.parse(fs.readFileSync(listFilePath, 'utf-8'));
     return listData;
   } catch (error) {
@@ -50,37 +50,45 @@ async function storeEntireList(listData, listName) {
     // Create a temporary file with the list data
     const tempFileName = `temp_${listName}_${Date.now()}.json`;
     const tempFilePath = path.join(process.cwd(), tempFileName);
-    
+
     fs.writeFileSync(tempFilePath, JSON.stringify(listData, null, 2));
     logger.info(`Created temporary file: ${tempFilePath}`);
-    
+
     // Build command with options
     const mockFlag = mockMode ? ' --mock' : '';
     const command = `waltodo store-list --file ${tempFilePath}${mockFlag}`;
-    
-    logger.info(`Storing entire list: ${listName} (${listData.todos.length} todos)`);
-    
+
+    logger.info(
+      `Storing entire list: ${listName} (${listData.todos.length} todos)`
+    );
+
     try {
       const { stdout, stderr } = await execPromise(command);
-      
+
       if (stderr && !stderr.includes('warning')) {
         logger.error(`Error: ${stderr}`);
         return false;
       }
-      
+
       logger.info(stdout);
       logger.info(`Successfully stored entire list: ${listName}`);
       return true;
     } catch (execError) {
       // If store-list command doesn't exist, suggest alternative
-      if (execError.message.includes('command not found') || 
-          execError.message.includes('is not recognized')) {
+      if (
+        execError.message.includes('command not found') ||
+        execError.message.includes('is not recognized')
+      ) {
         logger.error(`The 'store-list' command is not available.`);
-        logger.info(`\nAlternative approach: Use store-all-list.js to store todos individually:`);
-        logger.info(`node scripts/store-all-list.js ${listName}${mockMode ? ' --mock' : ''}`);
+        logger.info(
+          `\nAlternative approach: Use store-all-list.js to store todos individually:`
+        );
+        logger.info(
+          `node scripts/store-all-list.js ${listName}${mockMode ? ' --mock' : ''}`
+        );
         return false;
       }
-      
+
       logger.error(`Command execution failed: ${execError.message}`);
       return false;
     } finally {
@@ -101,23 +109,22 @@ async function main() {
   try {
     logger.info(`Loading list: ${listName}`);
     const listData = await loadTodoList(listName);
-    
+
     if (!listData.todos || listData.todos.length === 0) {
       logger.info(`No todos found in list "${listName}"`);
       process.exit(0);
     }
-    
+
     logger.info(`Found ${listData.todos.length} todos in list "${listName}"`);
-    
+
     // Attempt to store the entire list
     const success = await storeEntireList(listData, listName);
-    
+
     // Provide a summary
     logger.info('\nSummary:');
     logger.info(`List name: ${listName}`);
     logger.info(`Total todos: ${listData.todos.length}`);
     logger.info(`Store operation: ${success ? 'Successful' : 'Failed'}`);
-    
   } catch (error) {
     logger.error(`Unexpected error: ${error.message}`);
     process.exit(1);

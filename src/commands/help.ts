@@ -1,7 +1,10 @@
 import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { commandRegistry } from '../utils/CommandRegistry';
-import { CommandShortcuts, formatShortcutsTable } from '../utils/command-shortcuts';
+import {
+  CommandShortcuts,
+  formatShortcutsTable,
+} from '../utils/command-shortcuts';
 import chalk from 'chalk';
 
 // Import CommandMetadata type
@@ -49,11 +52,11 @@ export default class HelpCommand extends BaseCommand {
     if (args.command) {
       // First try to expand shortcut
       const expandedCommand = CommandShortcuts.expand(args.command);
-      
+
       // Show help for specific command
       const command = commandRegistry.resolveAlias(expandedCommand);
       const metadata = commandRegistry.getCommand(command);
-      
+
       if (metadata) {
         this.showCommandHelp(metadata);
       } else {
@@ -61,9 +64,9 @@ export default class HelpCommand extends BaseCommand {
         const suggestions = commandRegistry.suggestCommands(args.command);
         if (suggestions.length > 0) {
           this.error(
-            `Command '${args.command}' not found. Did you mean: ${
-              suggestions.map(s => chalk.cyan(s.name)).join(', ')
-            }?`
+            `Command '${args.command}' not found. Did you mean: ${suggestions
+              .map(s => chalk.cyan(s.name))
+              .join(', ')}?`
           );
         } else {
           this.error(`Command '${args.command}' not found`);
@@ -127,7 +130,7 @@ ${chalk.dim('Run')} ${chalk.cyan(`${this.config.bin} help COMMAND`)} ${chalk.dim
 
   private showCommandHelp(command: CommandMetadata): void {
     const shortcuts = CommandShortcuts.getShortcutsForCommand(command.name);
-    
+
     this.log(`
 ${chalk.bold(command.name)} - ${command.description}
 

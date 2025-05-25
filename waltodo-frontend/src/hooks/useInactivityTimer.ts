@@ -25,7 +25,7 @@ export function useInactivityTimer({
 
   const resetActivityTimer = useCallback(() => {
     const now = Date.now();
-    
+
     // Throttle updates to avoid excessive state changes
     if (now - lastActivity > throttle) {
       setLastActivity(now);
@@ -47,7 +47,7 @@ export function useInactivityTimer({
     const interval = setInterval(() => {
       const now = Date.now();
       const timeSinceLastActivity = now - lastActivity;
-      
+
       if (timeSinceLastActivity >= timeout) {
         setIsActive(false);
         onTimeout();

@@ -11,10 +11,10 @@ function updateImportsInFile(filePath) {
   try {
     let content = fs.readFileSync(filePath, 'utf8');
     const originalContent = content;
-    
+
     // Replace all @mysten/sui imports with @mysten/sui
     content = content.replace(/@mysten\/sui\.js/g, '@mysten/sui');
-    
+
     if (content !== originalContent) {
       fs.writeFileSync(filePath, content);
       logger.info(`Updated imports in: ${filePath}`);
@@ -34,13 +34,13 @@ function findAndUpdateFiles() {
     'packages/**/*.{ts,tsx,js,jsx}',
     'scripts/**/*.{ts,tsx,js,jsx}',
   ];
-  
+
   let totalFiles = 0;
   let updatedFiles = 0;
-  
+
   patterns.forEach(async pattern => {
     const files = await glob(pattern, { nodir: true });
-    
+
     files.forEach(file => {
       totalFiles++;
       if (updateImportsInFile(file)) {
@@ -48,7 +48,7 @@ function findAndUpdateFiles() {
       }
     });
   });
-  
+
   logger.info(`\nProcessed ${totalFiles} files`);
   logger.info(`Updated ${updatedFiles} files`);
 }

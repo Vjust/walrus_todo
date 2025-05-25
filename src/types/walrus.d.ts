@@ -78,9 +78,13 @@ declare module '@mysten/walrus' {
     deletable: boolean;
   };
 
-  export type EnumOutputShapeWithKeys<T extends object, K extends keyof T> = { [P in keyof T]: boolean } & { $kind: K };
+  export type EnumOutputShapeWithKeys<T extends object, K extends keyof T> = {
+    [P in keyof T]: boolean;
+  } & { $kind: K };
 
-  export type EncodingType = { RedStuff: true; RS2: false; $kind: 'RedStuff' } | { RedStuff: false; RS2: true; $kind: 'RS2' };
+  export type EncodingType =
+    | { RedStuff: true; RS2: false; $kind: 'RedStuff' }
+    | { RedStuff: false; RS2: true; $kind: 'RS2' };
 
   export interface BlobMetadata {
     blob_id: string;
@@ -98,7 +102,6 @@ declare module '@mysten/walrus' {
     };
   }
 
-
   export interface WalrusClient {
     getConfig(): Promise<{
       network: string;
@@ -106,7 +109,12 @@ declare module '@mysten/walrus' {
       maxSize: number;
     }>;
 
-    executeCreateStorageTransaction(options: StorageWithSizeOptions & { transaction?: Transaction; signer: SignerType }): Promise<{
+    executeCreateStorageTransaction(
+      options: StorageWithSizeOptions & {
+        transaction?: Transaction;
+        signer: SignerType;
+      }
+    ): Promise<{
       digest: string;
       storage: {
         id: { id: string };

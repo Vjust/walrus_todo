@@ -3,7 +3,6 @@
  * Comprehensive error handling and usage patterns for TodoNFT operations
  */
 
-
 import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 
@@ -79,7 +78,7 @@ export function handleSuiOperationError(
   // Log error with context for debugging
   console.error('Sui operation failed:', {
     error,
-    context: errorContext
+    context: errorContext,
   });
 
   if (error instanceof Error) {
@@ -104,7 +103,7 @@ export async function retryOperation<T>(
       return await operation();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (attempt === maxRetries) {
         break;
       }
@@ -151,7 +150,7 @@ export async function createTodoSafely(
   const context: ErrorContext = {
     operation: 'create_todo',
     network: getCurrentNetwork(),
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   try {
@@ -163,17 +162,17 @@ export async function createTodoSafely(
 
     // Create transaction block
     const txb = new Transaction();
-    
+
     // Mock transaction construction
     console.log('Creating todo with params:', params);
-    
+
     // Execute transaction
     const result = await signAndExecuteTransaction(txb);
-    
+
     return {
       success: true,
       digest: result.digest,
-      objectId: result.objectChanges?.[0]?.objectId
+      objectId: result.objectChanges?.[0]?.objectId,
     };
   } catch (error) {
     handleSuiOperationError(error, context);
@@ -188,31 +187,34 @@ export async function waitForTransactionConfirmation(
   maxWaitTime: number = 30000
 ): Promise<boolean> {
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < maxWaitTime) {
     try {
       const status = await getTransactionStatus(digest);
-      
+
       if (status.status === 'success') {
         return true;
       }
-      
+
       if (status.status === 'failure') {
         throw new Error('Transaction failed');
       }
-      
+
       // Wait 1 second before checking again
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Transaction failed')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Transaction failed')
+      ) {
         throw error;
       }
-      
+
       // Continue waiting for other errors (might be temporary network issues)
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-  
+
   throw new Error(`Transaction confirmation timeout after ${maxWaitTime}ms`);
 }
 
@@ -225,23 +227,23 @@ export async function checkNetworkHealth(): Promise<{
   error?: string;
 }> {
   const startTime = Date.now();
-  
+
   try {
     const client = initializeSuiClient();
-    
+
     // Try to get chain identifier as a health check
     await client.getChainIdentifier();
-    
+
     const latency = Date.now() - startTime;
-    
+
     return {
       healthy: true,
-      latency
+      latency,
     };
   } catch (error) {
     return {
       healthy: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

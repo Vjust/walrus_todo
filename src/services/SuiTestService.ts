@@ -11,12 +11,12 @@ const SECURITY_CONFIG = {
   ENABLE_BLOCKCHAIN_VERIFICATION: true,
   TRANSACTION_VERIFICATION: {
     MAX_RETRIES: 3,
-    RETRY_DELAY_MS: 2000
-  }
+    RETRY_DELAY_MS: 2000,
+  },
 };
 
 const RETRY_CONFIG = {
-  TIMEOUT_MS: 30000
+  TIMEOUT_MS: 30000,
 };
 
 type TodoItem = {
@@ -42,7 +42,7 @@ export interface ISuiService {
   updateTodo(
     listId: string,
     itemId: string,
-    changes: Partial<Omit<TodoItem, "id">>
+    changes: Partial<Omit<TodoItem, 'id'>>
   ): Promise<void>;
   deleteTodoList(listId: string): Promise<void>;
 }
@@ -50,7 +50,7 @@ export interface ISuiService {
 export class SuiTestService implements ISuiService {
   private client: SuiClient;
   private walletAddress?: string;
-  
+
   // In-memory state management
   private todoLists: Map<string, TodoList> = new Map();
   private counter = 0;
@@ -58,14 +58,11 @@ export class SuiTestService implements ISuiService {
   constructor(private config: Config) {
     const network = config.network as NetworkType;
     const url = NETWORK_URLS[network];
-    
+
     if (!url) {
-      throw new CLIError(
-        `Invalid network type: ${network}`,
-        'INVALID_NETWORK'
-      );
+      throw new CLIError(`Invalid network type: ${network}`, 'INVALID_NETWORK');
     }
-    
+
     this.client = new SuiClient({ url });
   }
 
@@ -109,15 +106,15 @@ export class SuiTestService implements ISuiService {
   async createTodoList(): Promise<string> {
     const id = this.generateId();
     const owner = await this.getWalletAddress();
-    
+
     const todoList: TodoList = {
       id,
       owner,
       items: new Map(),
       createdAt: Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
-    
+
     this.todoLists.set(id, todoList);
     return id;
   }
@@ -136,12 +133,12 @@ export class SuiTestService implements ISuiService {
       id: itemId,
       text,
       completed: false,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
 
     list.items.set(itemId, item);
     list.updatedAt = Date.now();
-    
+
     return itemId;
   }
 
@@ -163,7 +160,7 @@ export class SuiTestService implements ISuiService {
   async updateTodo(
     listId: string,
     itemId: string,
-    changes: Partial<Omit<TodoItem, "id">>
+    changes: Partial<Omit<TodoItem, 'id'>>
   ): Promise<void> {
     const list = this.todoLists.get(listId);
     if (!list) {
@@ -193,8 +190,13 @@ export class SuiTestService implements ISuiService {
   /**
    * Verify transaction execution and effects
    */
-  private async verifyTransaction(result: SuiTransactionBlockResponse): Promise<void> {
-    if (!result.effects?.status?.status || result.effects.status.status !== 'success') {
+  private async verifyTransaction(
+    result: SuiTransactionBlockResponse
+  ): Promise<void> {
+    if (
+      !result.effects?.status?.status ||
+      result.effects.status.status !== 'success'
+    ) {
       throw new CLIError(
         `Transaction failed: ${result.effects?.status?.error || 'Unknown error'}`,
         'TRANSACTION_FAILED'
@@ -212,7 +214,7 @@ export class SuiTestService implements ISuiService {
             options: {
               showEffects: true,
               showEvents: true,
-            }
+            },
           });
 
           // Verify effects match expected changes
@@ -221,7 +223,7 @@ export class SuiTestService implements ISuiService {
             options: {
               showEffects: true,
               showEvents: true,
-            }
+            },
           });
 
           if (effects.effects?.status?.status !== 'success') {
@@ -240,8 +242,11 @@ export class SuiTestService implements ISuiService {
               'VERIFICATION_FAILED'
             );
           }
-          await new Promise(resolve => 
-            setTimeout(resolve, SECURITY_CONFIG.TRANSACTION_VERIFICATION.RETRY_DELAY_MS)
+          await new Promise(resolve =>
+            setTimeout(
+              resolve,
+              SECURITY_CONFIG.TRANSACTION_VERIFICATION.RETRY_DELAY_MS
+            )
           );
         }
       }

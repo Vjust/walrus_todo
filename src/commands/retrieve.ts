@@ -26,7 +26,8 @@ import { Logger } from '../utils/Logger';
  * @param {string} [network] - The blockchain network to use for Sui operations ('localnet', 'devnet', 'testnet', 'mainnet'). Defaults to the configured network. (Optional flag: -n, --network)
  */
 export default class RetrieveCommand extends BaseCommand {
-  static description = 'Retrieve stored todos from blockchain or Walrus storage';
+  static description =
+    'Retrieve stored todos from blockchain or Walrus storage';
 
   static examples = [
     '<%= config.bin %> retrieve --todo "Buy groceries" --list my-todos    # Retrieve by title',
@@ -56,11 +57,11 @@ export default class RetrieveCommand extends BaseCommand {
     list: Flags.string({
       char: 'l',
       description: 'Save to this todo list',
-      default: 'default'
+      default: 'default',
     }),
     mock: Flags.boolean({
       description: 'Use mock Walrus storage for testing',
-      default: false
+      default: false,
     }),
     network: Flags.string({
       char: 'n',
@@ -89,7 +90,7 @@ export default class RetrieveCommand extends BaseCommand {
   async run(): Promise<void> {
     try {
       const { flags } = await this.parse(RetrieveCommand);
-      
+
       this.startSpinner('Loading configuration...');
       const config = await configService.getConfig();
       const network = flags.network || config.network || 'testnet';
@@ -97,7 +98,10 @@ export default class RetrieveCommand extends BaseCommand {
 
       // Validate network configuration
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
-        throw new CLIError(`Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`, 'INVALID_NETWORK');
+        throw new CLIError(
+          `Invalid network: ${network}. Available networks: ${Object.keys(NETWORK_URLS).join(', ')}`,
+          'INVALID_NETWORK'
+        );
       }
       this.stopSpinner(true, 'Configuration validated');
 
@@ -108,10 +112,16 @@ export default class RetrieveCommand extends BaseCommand {
       // Look up IDs from local todo if title/id provided
       this.startSpinner('Looking up todo information...');
       if (flags.todo) {
-        const localTodo = await this.todoService.getTodoByTitleOrId(flags.todo, flags.list);
+        const localTodo = await this.todoService.getTodoByTitleOrId(
+          flags.todo,
+          flags.list
+        );
         if (!localTodo) {
           this.stopSpinner(false);
-          throw new CLIError(`Todo "${flags.todo}" not found in list "${flags.list}"`, 'TODO_NOT_FOUND');
+          throw new CLIError(
+            `Todo "${flags.todo}" not found in list "${flags.list}"`,
+            'TODO_NOT_FOUND'
+          );
         }
         blobId = localTodo.walrusBlobId;
         objectId = localTodo.nftObjectId;
@@ -126,20 +136,42 @@ export default class RetrieveCommand extends BaseCommand {
         // Validate input if not using todo lookup
         if (!flags['blob-id'] && !flags['object-id']) {
           // Make the error message more helpful
-          this.log(chalk.yellow('⚠️'), 'You must specify either a todo title/ID, Walrus blob ID, or Sui object ID to retrieve');
+          this.log(
+            chalk.yellow('⚠️'),
+            'You must specify either a todo title/ID, Walrus blob ID, or Sui object ID to retrieve'
+          );
           this.log(chalk.dim('\nExamples:'));
-          this.log(chalk.dim(`  ${this.config.bin} retrieve --todo "My Task" --list ${flags.list}`));
-          this.log(chalk.dim(`  ${this.config.bin} retrieve --blob-id <walrus-blob-id> --list ${flags.list}`));
-          this.log(chalk.dim(`  ${this.config.bin} retrieve --object-id <sui-object-id> --list ${flags.list}`));
-          
+          this.log(
+            chalk.dim(
+              `  ${this.config.bin} retrieve --todo "My Task" --list ${flags.list}`
+            )
+          );
+          this.log(
+            chalk.dim(
+              `  ${this.config.bin} retrieve --blob-id <walrus-blob-id> --list ${flags.list}`
+            )
+          );
+          this.log(
+            chalk.dim(
+              `  ${this.config.bin} retrieve --object-id <sui-object-id> --list ${flags.list}`
+            )
+          );
+
           // If the user is in test mode, provide sample test IDs
           if (mockMode) {
-            this.log(chalk.blue('\nSince you specified --mock, you can use these test IDs:'));
+            this.log(
+              chalk.blue(
+                '\nSince you specified --mock, you can use these test IDs:'
+              )
+            );
             this.log(chalk.dim('  --blob-id mock-blob-123'));
             this.log(chalk.dim('  --object-id mock-object-456'));
           }
-          
-          throw new CLIError('No retrieval identifier specified', 'MISSING_PARAMETER');
+
+          throw new CLIError(
+            'No retrieval identifier specified',
+            'MISSING_PARAMETER'
+          );
         }
 
         blobId = flags['blob-id'];
@@ -149,7 +181,9 @@ export default class RetrieveCommand extends BaseCommand {
       // Check deployment status if retrieving from blockchain
       if (objectId && !config?.lastDeployment?.packageId) {
         throw new CLIError(
-          'Contract not deployed. Please run "waltodo deploy --network ' + network + '" first.', 
+          'Contract not deployed. Please run "waltodo deploy --network ' +
+            network +
+            '" first.',
           'NOT_DEPLOYED'
         );
       }
@@ -157,7 +191,7 @@ export default class RetrieveCommand extends BaseCommand {
       // Initialize SUI client using the provided or configured network
       const networkUrl = NETWORK_URLS[network as keyof typeof NETWORK_URLS];
       const suiClient = new SuiClient({ url: networkUrl });
-      
+
       // Initialize and verify network connection
       if (!mockMode) {
         this.startSpinner('Verifying network connection...');
@@ -166,7 +200,10 @@ export default class RetrieveCommand extends BaseCommand {
           this.stopSpinner(true, 'Network connection verified');
         } catch (_error) {
           this.stopSpinner(false);
-          throw new CLIError(`Unable to connect to network ${network}: ${error instanceof Error ? error.message : String(error)}`, 'NETWORK_ERROR');
+          throw new CLIError(
+            `Unable to connect to network ${network}: ${_error instanceof Error ? _error.message : String(_error)}`,
+            'NETWORK_ERROR'
+          );
         }
       }
 
@@ -176,7 +213,10 @@ export default class RetrieveCommand extends BaseCommand {
       try {
         await walrusStorage.connect();
         if (!mockMode && !walrusStorage.getConnectionStatus()) {
-          throw new CLIError('Failed to establish connection with Walrus storage', 'WALRUS_CONNECTION_FAILED');
+          throw new CLIError(
+            'Failed to establish connection with Walrus storage',
+            'WALRUS_CONNECTION_FAILED'
+          );
         }
         this.stopSpinner(true, 'Connected to Walrus storage');
       } catch (connectError) {
@@ -191,27 +231,33 @@ export default class RetrieveCommand extends BaseCommand {
         this.startSpinner('Preparing to retrieve data...');
         if (blobId) {
           // Retrieve todo from Walrus directly
-          this.startSpinner(`Retrieving todo from Walrus (blob ID: ${blobId})...`);
-          
+          this.startSpinner(
+            `Retrieving todo from Walrus (blob ID: ${blobId})...`
+          );
+
           try {
             const todo = await walrusStorage.retrieveTodo(blobId);
-            
+
             // Save to local list
             await this.todoService.addTodo(flags.list, {
               ...todo,
-              walrusBlobId: blobId
+              walrusBlobId: blobId,
             });
 
             this.stopSpinner(true, 'Todo retrieved successfully from Walrus');
             this.log(chalk.dim('Details:'));
             this.log(`  Title: ${chalk.bold(todo.title)}`);
-            this.log(`  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`);
+            this.log(
+              `  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
+            );
             this.log(`  Priority: ${getColoredPriority(todo.priority)}`);
             this.log(`  List: ${chalk.cyan(flags.list)}`);
             this.log(`  Walrus Blob ID: ${chalk.dim(blobId)}`);
 
             if (todo.tags?.length) {
-              this.log(`  Tags: ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`);
+              this.log(
+                `  Tags: ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`
+              );
             }
           } catch (blobError) {
             throw new CLIError(
@@ -222,65 +268,82 @@ export default class RetrieveCommand extends BaseCommand {
         } else if (objectId) {
           // Initialize Sui NFT storage with the packageId from config
           const signer = {} as Ed25519Keypair;
-          const suiNftStorage = new SuiNftStorage(
-            suiClient,
-            signer,
-            { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId, collectionId: '' }
-          );
+          const suiNftStorage = new SuiNftStorage(suiClient, signer, {
+            address: config.lastDeployment.packageId,
+            packageId: config.lastDeployment.packageId,
+            collectionId: '',
+          });
 
           // Retrieve NFT from blockchain
-          this.startSpinner(`Retrieving NFT from blockchain (object ID: ${objectId})...`);
-          
+          this.startSpinner(
+            `Retrieving NFT from blockchain (object ID: ${objectId})...`
+          );
+
           try {
             const nftData = await suiNftStorage.getTodoNft(objectId);
 
             if (!nftData.walrusBlobId) {
               throw new CLIError(
-                'NFT does not contain a valid Walrus blob ID. This might not be a todo NFT.', 
+                'NFT does not contain a valid Walrus blob ID. This might not be a todo NFT.',
                 'INVALID_NFT'
               );
             }
 
             // Retrieve todo data from Walrus
-            this.startSpinner(`Retrieving todo data from Walrus (blob ID: ${nftData.walrusBlobId})...`);
-            const todo = await walrusStorage.retrieveTodo(nftData.walrusBlobId).catch(_error => {
-              if (error.message.includes('not found')) {
-                throw new CLIError(
-                  `Todo data not found in Walrus storage. The data may have expired or been deleted.`,
-                  'DATA_NOT_FOUND'
-                );
-              }
-              throw error;
-            });
+            this.startSpinner(
+              `Retrieving todo data from Walrus (blob ID: ${nftData.walrusBlobId})...`
+            );
+            const todo = await walrusStorage
+              .retrieveTodo(nftData.walrusBlobId)
+              .catch(_error => {
+                if (_error.message.includes('not found')) {
+                  throw new CLIError(
+                    `Todo data not found in Walrus storage. The data may have expired or been deleted.`,
+                    'DATA_NOT_FOUND'
+                  );
+                }
+                throw _error;
+              });
 
             // Save to local list
             await this.todoService.addTodo(flags.list, {
               ...todo,
               nftObjectId: objectId,
-              walrusBlobId: nftData.walrusBlobId
+              walrusBlobId: nftData.walrusBlobId,
             });
 
-            this.stopSpinner(true, "Todo retrieved successfully from blockchain and Walrus");
-            this.log(chalk.dim("Details:"));
+            this.stopSpinner(
+              true,
+              'Todo retrieved successfully from blockchain and Walrus'
+            );
+            this.log(chalk.dim('Details:'));
             this.log(`  Title: ${chalk.bold(todo.title)}`);
-            this.log(`  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`);
+            this.log(
+              `  Status: ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
+            );
             this.log(`  Priority: ${getColoredPriority(todo.priority)}`);
             this.log(`  List: ${chalk.cyan(flags.list)}`);
             this.log(`  NFT Object ID: ${chalk.cyan(objectId)}`);
             this.log(`  Walrus Blob ID: ${chalk.dim(nftData.walrusBlobId)}`);
-            
+
             if (todo.dueDate) {
               this.log(`  Due Date: ${chalk.blue(todo.dueDate)}`);
             }
 
             if (todo.tags?.length) {
-              this.log(`  Tags: ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`);
+              this.log(
+                `  Tags: ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`
+              );
             }
 
             // Add a link to view the NFT on Sui Explorer
             if (!mockMode) {
               this.log(chalk.blue('\nView your NFT on Sui Explorer:'));
-              this.log(chalk.cyan(`  https://explorer.sui.io/object/${objectId}?network=${network}`));
+              this.log(
+                chalk.cyan(
+                  `  https://explorer.sui.io/object/${objectId}?network=${network}`
+                )
+              );
             }
           } catch (nftError) {
             if (nftError instanceof CLIError) {
@@ -300,7 +363,9 @@ export default class RetrieveCommand extends BaseCommand {
           this.stopSpinner(true, 'Resources cleaned up');
         } catch (cleanupError) {
           this.stopSpinner(false, 'Resource cleanup encountered issues');
-          Logger.getInstance().warn(`Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+          Logger.getInstance().warn(
+            `Failed to disconnect from Walrus storage: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`
+          );
         }
       }
     } catch (error) {

@@ -25,7 +25,7 @@ export default class DeleteCommand extends BaseCommand {
     '<%= config.bin %> delete my-list -i task-123 --force     # Force delete without confirmation',
     '<%= config.bin %> delete my-list --all                   # Delete all todos in list',
     '<%= config.bin %> delete -i todo-456                     # Delete from default list',
-    '<%= config.bin %> delete work --all --force              # Force delete all work todos'
+    '<%= config.bin %> delete work --all --force              # Force delete all work todos',
   ];
 
   static flags = {
@@ -33,26 +33,26 @@ export default class DeleteCommand extends BaseCommand {
     id: Flags.string({
       char: 'i',
       description: 'Todo ID or title to delete',
-      exclusive: ['all']
+      exclusive: ['all'],
     }),
     all: Flags.boolean({
       char: 'a',
       description: 'Delete entire list',
-      exclusive: ['id']
+      exclusive: ['id'],
     }),
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation prompt',
-      default: false
-    })
+      default: false,
+    }),
   };
 
   static args = {
     listName: Args.string({
       name: 'listName',
       description: 'Name of the todo list',
-      required: true
-    })
+      required: true,
+    }),
   };
 
   private todoService = new TodoService();
@@ -63,14 +63,17 @@ export default class DeleteCommand extends BaseCommand {
 
       const list = await this.todoService.getList(args.listName);
       if (!list) {
-        throw new CLIError(`List "${args.listName}" not found`, 'LIST_NOT_FOUND');
+        throw new CLIError(
+          `List "${args.listName}" not found`,
+          'LIST_NOT_FOUND'
+        );
       }
 
       if (flags.all) {
         if (!flags.force) {
           const shouldDelete = await confirm({
             message: `Are you sure you want to delete the entire list "${args.listName}"?`,
-            default: false
+            default: false,
           });
           if (!shouldDelete) {
             this.log(chalk.yellow('Operation cancelled'));
@@ -79,30 +82,47 @@ export default class DeleteCommand extends BaseCommand {
         }
 
         await this.todoService.deleteList(args.listName);
-        this.log(chalk.green('✓'), `Deleted list: ${chalk.bold(args.listName)}`);
+        this.log(
+          chalk.green('✓'),
+          `Deleted list: ${chalk.bold(args.listName)}`
+        );
         this.log(chalk.dim(`Items removed: ${list.todos.length}`));
         return;
       }
 
       if (!flags.id && !flags.all) {
         // Instead of throwing an error, ask the user what they want to delete
-        this.log(chalk.yellow('⚠️'), `You must specify either a todo ID (--id) or --all to delete the entire list`);
-        
+        this.log(
+          chalk.yellow('⚠️'),
+          `You must specify either a todo ID (--id) or --all to delete the entire list`
+        );
+
         // Provide a helpful example
         this.log(chalk.dim('\nExamples:'));
-        this.log(chalk.dim(`  ${this.config.bin} delete ${args.listName} --id <todo-id>     # Delete a specific todo`));
-        this.log(chalk.dim(`  ${this.config.bin} delete ${args.listName} --all              # Delete the entire list\n`));
-        
+        this.log(
+          chalk.dim(
+            `  ${this.config.bin} delete ${args.listName} --id <todo-id>     # Delete a specific todo`
+          )
+        );
+        this.log(
+          chalk.dim(
+            `  ${this.config.bin} delete ${args.listName} --all              # Delete the entire list\n`
+          )
+        );
+
         const shouldDeleteAll = await confirm({
           message: `Do you want to delete the entire "${args.listName}" list?`,
-          default: false
+          default: false,
         });
-        
+
         if (shouldDeleteAll) {
           // Rather than recursively calling run() which causes the issue we're seeing,
           // just directly call the delete list function
           await this.todoService.deleteList(args.listName);
-          this.log(chalk.green('✓'), `Deleted list: ${chalk.bold(args.listName)}`);
+          this.log(
+            chalk.green('✓'),
+            `Deleted list: ${chalk.bold(args.listName)}`
+          );
           this.log(chalk.dim(`Items removed: ${list.todos.length}`));
           return;
         } else {
@@ -111,8 +131,10 @@ export default class DeleteCommand extends BaseCommand {
           list.todos.forEach(todo => {
             this.log(`  ${chalk.dim(todo.id)}: ${todo.title}`);
           });
-          
-          this.log(chalk.yellow('\nPlease run the command again with a specific ID'));
+
+          this.log(
+            chalk.yellow('\nPlease run the command again with a specific ID')
+          );
           return;
         }
       }
@@ -124,15 +146,21 @@ export default class DeleteCommand extends BaseCommand {
       }
 
       // Use the new lookup method to find todo by title or ID
-      const todo = await this.todoService.getTodoByTitleOrId(flags.id, args.listName);
+      const todo = await this.todoService.getTodoByTitleOrId(
+        flags.id,
+        args.listName
+      );
       if (!todo) {
-        throw new CLIError(`Todo "${flags.id}" not found in list "${args.listName}"`, 'TODO_NOT_FOUND');
+        throw new CLIError(
+          `Todo "${flags.id}" not found in list "${args.listName}"`,
+          'TODO_NOT_FOUND'
+        );
       }
 
       if (!flags.force) {
         const shouldDelete = await confirm({
           message: `Are you sure you want to delete todo "${todo.title}"?`,
-          default: false
+          default: false,
         });
         if (!shouldDelete) {
           this.log(chalk.yellow('Operation cancelled'));
@@ -142,11 +170,10 @@ export default class DeleteCommand extends BaseCommand {
 
       // Use todo.id which is the actual ID (in case user provided a title)
       await this.todoService.deleteTodo(args.listName, todo.id);
-      
+
       this.log(chalk.green('✓'), 'Deleted todo:', chalk.bold(todo.title));
       this.log(chalk.dim('List:'), args.listName);
       this.log(chalk.dim('ID:'), todo.id);
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

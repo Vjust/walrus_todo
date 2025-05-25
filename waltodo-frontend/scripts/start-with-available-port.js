@@ -13,8 +13,11 @@ async function startWithAvailablePort() {
     // Set the PORT environment variable
     process.env.PORT = port.toString();
     
+    // Resolve the path to Next.js CLI
+    const nextPath = require.resolve('next/dist/bin/next');
+    
     // Start the Next.js server with the available port
-    const nextProcess = spawn('node', ['node_modules/.ignored/next/dist/bin/next', process.argv[2] || 'dev'], {
+    const nextProcess = spawn(process.execPath, [nextPath, process.argv[2] || 'dev'], {
       stdio: 'inherit',
       env: { ...process.env, PORT: port.toString() }
     });

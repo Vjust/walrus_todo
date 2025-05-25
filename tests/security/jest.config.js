@@ -1,8 +1,6 @@
 module.exports = {
   displayName: 'Security Audit Tests',
-  testMatch: [
-    '<rootDir>/tests/security/**/*.test.ts'
-  ],
+  testMatch: ['<rootDir>/tests/security/**/*.test.ts'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   verbose: true,
@@ -10,15 +8,15 @@ module.exports = {
   collectCoverageFrom: [
     '<rootDir>/src/services/ai/**/*.ts',
     '<rootDir>/src/types/adapters/AI*.ts',
-    '<rootDir>/src/commands/ai*.ts'
+    '<rootDir>/src/commands/ai*.ts',
   ],
   coverageThreshold: {
     global: {
       branches: 80,
       functions: 80,
       lines: 80,
-      statements: 80
-    }
+      statements: 80,
+    },
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/security/setup.js']
+  setupFilesAfterEnv: ['<rootDir>/tests/security/setup.js'],
 };

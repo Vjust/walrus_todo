@@ -2,7 +2,7 @@
 
 /**
  * Configuration Setup Script for Frontend
- * 
+ *
  * Copies auto-generated configuration files from src/config to public/config
  * so they can be loaded dynamically at runtime.
  */
@@ -28,24 +28,28 @@ function ensureDir(dir) {
  */
 function copyConfigFiles() {
   ensureDir(CONFIG_PUBLIC_DIR);
-  
+
   if (!fs.existsSync(CONFIG_SOURCE_DIR)) {
-    console.log('No config directory found - run "waltodo deploy" first to generate configurations');
+    console.log(
+      'No config directory found - run "waltodo deploy" first to generate configurations'
+    );
     return;
   }
-  
+
   const files = fs.readdirSync(CONFIG_SOURCE_DIR);
   const jsonFiles = files.filter(file => file.endsWith('.json'));
-  
+
   if (jsonFiles.length === 0) {
-    console.log('No JSON config files found - run "waltodo deploy" first to generate configurations');
+    console.log(
+      'No JSON config files found - run "waltodo deploy" first to generate configurations'
+    );
     return;
   }
-  
+
   jsonFiles.forEach(file => {
     const sourcePath = path.join(CONFIG_SOURCE_DIR, file);
     const destPath = path.join(CONFIG_PUBLIC_DIR, file);
-    
+
     try {
       fs.copyFileSync(sourcePath, destPath);
       console.log(`Copied ${file} to public/config/`);
@@ -53,7 +57,7 @@ function copyConfigFiles() {
       console.error(`Failed to copy ${file}:`, error.message);
     }
   });
-  
+
   console.log(`\nConfiguration setup complete! Found configs for:`);
   jsonFiles.forEach(file => {
     const network = file.replace('.json', '');

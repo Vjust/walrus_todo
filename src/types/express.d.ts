@@ -1,4 +1,3 @@
-import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 
 declare global {
   namespace Express {
@@ -9,7 +8,7 @@ declare global {
       params: any;
       query: any;
     }
-    
+
     interface Response {
       json(body?: any): this;
       status(code: number): this;

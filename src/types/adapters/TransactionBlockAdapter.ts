@@ -1,7 +1,4 @@
 /**
-import { Logger } from '../../utils/Logger';
-
-const logger = new Logger('TransactionBlockAdapter');
  * TransactionBlockAdapter
  *
  * This adapter reconciles differences between different versions of Transaction
@@ -31,7 +28,7 @@ const logger = new Logger('TransactionBlockAdapter');
  *   target: 'package::module::function',
  *   arguments: [...],
  * });
- * 
+ *
  * // Don't forget to properly dispose the adapter when done
  * await adapter.dispose();
  * ```
@@ -45,40 +42,55 @@ import { Transaction as TransactionSui } from '@mysten/sui/transactions';
 // Import Transaction from our type definition to avoid direct import errors
 import { Transaction } from '../transaction';
 import type { SuiObjectRef } from '@mysten/sui/client';
-import type { TransactionArgument, TransactionObjectArgument } from '@mysten/sui/transactions';
+import type {
+  TransactionArgument,
+  TransactionObjectArgument,
+} from '@mysten/sui/transactions';
 import { BaseAdapter, isBaseAdapter } from './BaseAdapter';
 import { BaseError } from '../errors/BaseError';
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('TransactionBlockAdapter');
 
 // Define a unified TransactionResult type that can handle different return types
 export type TransactionResult = TransactionObjectArgument;
 
 // Type guard to check if a transaction is from the sui.js library
 export function isTransactionSui(tx: unknown): tx is TransactionSui {
-  return tx !== null &&
-         typeof tx === 'object' &&
-         tx !== undefined &&
-         'setSender' in tx &&
-         typeof (tx as Record<string, unknown>).setSender === 'function' &&
-         'moveCall' in tx &&
-         typeof (tx as Record<string, unknown>).moveCall === 'function';
+  return (
+    tx !== null &&
+    typeof tx === 'object' &&
+    tx !== undefined &&
+    'setSender' in tx &&
+    typeof (tx as Record<string, unknown>).setSender === 'function' &&
+    'moveCall' in tx &&
+    typeof (tx as Record<string, unknown>).moveCall === 'function'
+  );
 }
 
 // Type guard for checking if a value is a Transaction
 export function isTransaction(tx: unknown): tx is Transaction {
-  return tx !== null &&
-         typeof tx === 'object' &&
-         tx !== undefined &&
-         ('moveCall' in tx && typeof (tx as Record<string, unknown>).moveCall === 'function') &&
-         !('setSender' in tx); // Distinguishing feature from TransactionBlockSui
+  return (
+    tx !== null &&
+    typeof tx === 'object' &&
+    tx !== undefined &&
+    'moveCall' in tx &&
+    typeof (tx as Record<string, unknown>).moveCall === 'function' &&
+    !('setSender' in tx)
+  ); // Distinguishing feature from TransactionBlockSui
 }
 
 // Type guard for checking TransactionObjectArgument
-export function isTransactionObjectArgument(arg: unknown): arg is TransactionObjectArgument {
-  return arg !== null &&
-         typeof arg === 'object' &&
-         arg !== undefined &&
-         'kind' in arg &&
-         typeof (arg as Record<string, unknown>).kind === 'string';
+export function isTransactionObjectArgument(
+  arg: unknown
+): arg is TransactionObjectArgument {
+  return (
+    arg !== null &&
+    typeof arg === 'object' &&
+    arg !== undefined &&
+    'kind' in arg &&
+    typeof (arg as Record<string, unknown>).kind === 'string'
+  );
 }
 
 // Type guard for checking if a value is a string
@@ -98,16 +110,20 @@ export function isString(value: unknown): value is string {
  * @param value Value to check
  * @returns true if the value is a valid TransactionArgument
  */
-export function isTransactionArgument(value: unknown): value is TransactionArgument {
+export function isTransactionArgument(
+  value: unknown
+): value is TransactionArgument {
   // Check if it's a TransactionObjectArgument
   if (isTransactionObjectArgument(value)) {
     return true;
   }
 
   // Check for primitive types that are valid as TransactionArguments
-  return typeof value === 'string' ||
-         typeof value === 'number' ||
-         typeof value === 'bigint';
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'bigint'
+  );
 }
 
 /**
@@ -132,7 +148,16 @@ export interface UnifiedTransactionBlock {
   /**
    * Creates a reference to a transaction object
    */
-  object(value: string | SuiObjectRef | { objectId: string; digest?: string; version?: string | number | bigint }): TransactionObjectArgument;
+  object(
+    value:
+      | string
+      | SuiObjectRef
+      | {
+          objectId: string;
+          digest?: string;
+          version?: string | number | bigint;
+        }
+  ): TransactionObjectArgument;
 
   /**
    * Creates a reference to a pure value
@@ -207,7 +232,7 @@ export class TransactionAdapterError extends BaseError {
     super({
       message: `TransactionAdapter Error: ${message}`,
       code: 'TRANSACTION_ADAPTER_ERROR',
-      cause
+      cause,
     });
     this.name = 'TransactionAdapterError';
   }
@@ -217,7 +242,9 @@ export class TransactionAdapterError extends BaseError {
  * TransactionBlockAdapter implements the UnifiedTransactionBlock interface
  * and wraps a Transaction or TransactionBlockSui instance
  */
-export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAdapter<Transaction | TransactionSui> {
+export class TransactionBlockAdapter
+  implements UnifiedTransactionBlock, BaseAdapter<Transaction | TransactionSui>
+{
   private transactionBlock: Transaction | TransactionSui;
   private _isDisposed = false;
 
@@ -269,33 +296,60 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     if ('gas' in this.transactionBlock && this.transactionBlock.gas) {
       this.gas = {
         setOwner: (owner: string) => {
-          if (this.transactionBlock.gas && 'setOwner' in this.transactionBlock.gas) {
+          if (
+            this.transactionBlock.gas &&
+            'setOwner' in this.transactionBlock.gas
+          ) {
             // Cast to any to avoid type errors since TransactionBlock has evolved
             (this.transactionBlock.gas as any).setOwner(owner);
           } else {
-            throw new TransactionAdapterError('gas.setOwner method not available on this transaction implementation');
+            throw new TransactionAdapterError(
+              'gas.setOwner method not available on this transaction implementation'
+            );
           }
-        }
+        },
       };
     }
 
-    if ('publish' in this.transactionBlock && typeof this.transactionBlock.publish === 'function') {
+    if (
+      'publish' in this.transactionBlock &&
+      typeof this.transactionBlock.publish === 'function'
+    ) {
       this.publish = (...args: unknown[]) => {
-        if ('publish' in this.transactionBlock && typeof this.transactionBlock.publish === 'function') {
+        if (
+          'publish' in this.transactionBlock &&
+          typeof this.transactionBlock.publish === 'function'
+        ) {
           // Convert args to array and pass as arguments
-          return this.transactionBlock.publish.apply(this.transactionBlock, args);
+          return this.transactionBlock.publish.apply(
+            this.transactionBlock,
+            args
+          );
         }
-        throw new TransactionAdapterError('publish method not available on this transaction implementation');
+        throw new TransactionAdapterError(
+          'publish method not available on this transaction implementation'
+        );
       };
     }
 
-    if ('upgrade' in this.transactionBlock && typeof this.transactionBlock.upgrade === 'function') {
+    if (
+      'upgrade' in this.transactionBlock &&
+      typeof this.transactionBlock.upgrade === 'function'
+    ) {
       this.upgrade = (...args: unknown[]) => {
-        if ('upgrade' in this.transactionBlock && typeof this.transactionBlock.upgrade === 'function') {
+        if (
+          'upgrade' in this.transactionBlock &&
+          typeof this.transactionBlock.upgrade === 'function'
+        ) {
           // Convert args to array and pass as arguments
-          return this.transactionBlock.upgrade.apply(this.transactionBlock, args);
+          return this.transactionBlock.upgrade.apply(
+            this.transactionBlock,
+            args
+          );
         }
-        throw new TransactionAdapterError('upgrade method not available on this transaction implementation');
+        throw new TransactionAdapterError(
+          'upgrade method not available on this transaction implementation'
+        );
       };
     }
   }
@@ -308,7 +362,7 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     this.checkDisposed();
     return this.transactionBlock;
   }
-  
+
   /**
    * Alias for getUnderlyingImplementation to maintain backward compatibility
    * @deprecated Use getUnderlyingImplementation() instead
@@ -331,17 +385,17 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
    */
   async dispose(): Promise<void> {
     if (this._isDisposed) return;
-    
+
     try {
       // Perform any cleanup needed for the transaction
       // Currently, there's no specific cleanup needed for Transaction instances,
       // but this provides an extension point for future requirements
-      
+
       this._isDisposed = true;
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Failed to dispose TransactionBlockAdapter: ${error instanceof Error ? error.message : String(error)}`, 
-        error instanceof Error ? error : undefined
+        `Failed to dispose TransactionBlockAdapter: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -352,7 +406,9 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
    */
   private checkDisposed(): void {
     if (this._isDisposed) {
-      throw new TransactionAdapterError('Cannot perform operations on a disposed adapter');
+      throw new TransactionAdapterError(
+        'Cannot perform operations on a disposed adapter'
+      );
     }
   }
 
@@ -370,12 +426,12 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       // Both implementations have compatible moveCall interfaces
       return this.transactionBlock.moveCall(params);
     } catch (_error) {
-      if (error instanceof TransactionAdapterError) {
-        throw error;
+      if (_error instanceof TransactionAdapterError) {
+        throw _error;
       }
       throw new TransactionAdapterError(
-        `Error in moveCall: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error in moveCall: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -404,14 +460,17 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
         : address;
 
       // Handle potential interface differences between versions
-      return this.transactionBlock.transferObjects(processedObjects, processedAddress);
+      return this.transactionBlock.transferObjects(
+        processedObjects,
+        processedAddress
+      );
     } catch (_error) {
-      if (error instanceof TransactionAdapterError) {
-        throw error;
+      if (_error instanceof TransactionAdapterError) {
+        throw _error;
       }
       throw new TransactionAdapterError(
-        `Error in transferObjects: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error in transferObjects: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -420,15 +479,24 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
    * Creates a reference to a transaction object
    * @throws TransactionAdapterError if the adapter has been disposed or the operation fails
    */
-  object(value: string | SuiObjectRef | { objectId: string; digest?: string; version?: string | number | bigint }): TransactionObjectArgument {
+  object(
+    value:
+      | string
+      | SuiObjectRef
+      | {
+          objectId: string;
+          digest?: string;
+          version?: string | number | bigint;
+        }
+  ): TransactionObjectArgument {
     try {
       this.checkDisposed();
       // Both implementations have compatible object methods
       return this.transactionBlock.object(value);
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Error in object conversion: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error in object conversion: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -441,11 +509,14 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
     try {
       this.checkDisposed();
       // Apply type assertion to ensure compatibility with TransactionObjectArgument
-      return this.transactionBlock.pure(value, type) as TransactionObjectArgument;
+      return this.transactionBlock.pure(
+        value,
+        type
+      ) as TransactionObjectArgument;
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Error in pure value conversion: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error in pure value conversion: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -471,22 +542,24 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
         } else if (isTransactionObjectArgument(obj)) {
           processedObjects.push(obj);
         } else {
-          throw new TransactionAdapterError(`Invalid object in makeMoveVec: ${JSON.stringify(obj)}`);
+          throw new TransactionAdapterError(
+            `Invalid object in makeMoveVec: ${JSON.stringify(obj)}`
+          );
         }
       }
 
       // Both implementations should have compatible makeMoveVec methods
       return this.transactionBlock.makeMoveVec({
         objects: processedObjects,
-        type: params.type
+        type: params.type,
       });
     } catch (_error) {
-      if (error instanceof TransactionAdapterError) {
-        throw error;
+      if (_error instanceof TransactionAdapterError) {
+        throw _error;
       }
       throw new TransactionAdapterError(
-        `Error in makeMoveVec: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error in makeMoveVec: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -512,7 +585,9 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       } else if (isTransactionObjectArgument(coin)) {
         processedCoin = coin;
       } else {
-        throw new TransactionAdapterError(`Invalid coin argument: ${JSON.stringify(coin)}`);
+        throw new TransactionAdapterError(
+          `Invalid coin argument: ${JSON.stringify(coin)}`
+        );
       }
 
       // Process amounts to ensure they're all TransactionObjectArguments
@@ -520,7 +595,11 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       const processedAmounts: TransactionObjectArgument[] = [];
 
       for (const amount of amounts) {
-        if (typeof amount === 'string' || typeof amount === 'number' || typeof amount === 'bigint') {
+        if (
+          typeof amount === 'string' ||
+          typeof amount === 'number' ||
+          typeof amount === 'bigint'
+        ) {
           // Convert primitive types to TransactionObjectArguments using pure()
           processedAmounts.push(this.pure(amount));
         } else if (isTransactionObjectArgument(amount)) {
@@ -530,18 +609,20 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
           // Handle other TransactionArgument types
           processedAmounts.push(this.pure(amount) as TransactionObjectArgument);
         } else {
-          throw new TransactionAdapterError(`Invalid amount in splitCoins: ${JSON.stringify(amount)}`);
+          throw new TransactionAdapterError(
+            `Invalid amount in splitCoins: ${JSON.stringify(amount)}`
+          );
         }
       }
 
       return this.transactionBlock.splitCoins(processedCoin, processedAmounts);
     } catch (_error) {
-      if (error instanceof TransactionAdapterError) {
-        throw error;
+      if (_error instanceof TransactionAdapterError) {
+        throw _error;
       }
       throw new TransactionAdapterError(
-        `Error in splitCoins: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error in splitCoins: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -566,7 +647,9 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       } else if (isTransactionObjectArgument(destination)) {
         processedDestination = destination;
       } else {
-        throw new TransactionAdapterError(`Invalid destination coin: ${JSON.stringify(destination)}`);
+        throw new TransactionAdapterError(
+          `Invalid destination coin: ${JSON.stringify(destination)}`
+        );
       }
 
       // Process sources to ensure they're all TransactionObjectArguments
@@ -578,18 +661,20 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
         } else if (isTransactionObjectArgument(source)) {
           processedSources.push(source);
         } else {
-          throw new TransactionAdapterError(`Invalid source coin: ${JSON.stringify(source)}`);
+          throw new TransactionAdapterError(
+            `Invalid source coin: ${JSON.stringify(source)}`
+          );
         }
       }
 
       this.transactionBlock.mergeCoins(processedDestination, processedSources);
     } catch (_error) {
-      if (error instanceof TransactionAdapterError) {
-        throw error;
+      if (_error instanceof TransactionAdapterError) {
+        throw _error;
       }
       throw new TransactionAdapterError(
-        `Error in mergeCoins: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error in mergeCoins: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -604,8 +689,8 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       this.transactionBlock.setGasBudget(budget);
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Error setting gas budget: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error setting gas budget: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -620,8 +705,8 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       this.transactionBlock.setGasPrice(price);
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Error setting gas price: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error setting gas price: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -637,12 +722,14 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       if (isTransactionSui(this.transactionBlock)) {
         this.transactionBlock.setSender(sender);
       } else {
-        logger.warn('setSender not available on this transaction implementation');
+        logger.warn(
+          'setSender not available on this transaction implementation'
+        );
       }
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Error setting sender: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error setting sender: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -656,18 +743,23 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       this.checkDisposed();
 
       // Check if the method exists on the underlying implementation
-      if ('setGasOwner' in this.transactionBlock && typeof this.transactionBlock.setGasOwner === 'function') {
+      if (
+        'setGasOwner' in this.transactionBlock &&
+        typeof this.transactionBlock.setGasOwner === 'function'
+      ) {
         this.transactionBlock.setGasOwner(owner);
       } else if (this.gas && this.gas.setOwner) {
         // Try using gas.setOwner as a fallback
         this.gas.setOwner(owner);
       } else {
-        logger.warn('setGasOwner not available on this transaction implementation');
+        logger.warn(
+          'setGasOwner not available on this transaction implementation'
+        );
       }
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Error setting gas owner: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error setting gas owner: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -682,8 +774,8 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       return await this.transactionBlock.build(options);
     } catch (_error) {
       throw new TransactionAdapterError(
-        `Error building transaction: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error building transaction: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -698,7 +790,9 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       const serialized = this.transactionBlock.serialize();
 
       if (serialized === null || serialized === undefined) {
-        throw new TransactionAdapterError('Serialization returned null or undefined');
+        throw new TransactionAdapterError(
+          'Serialization returned null or undefined'
+        );
       }
 
       if (typeof serialized === 'string') {
@@ -719,12 +813,12 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       // Handle any other type by converting to string
       return String(serialized);
     } catch (_error) {
-      if (error instanceof TransactionAdapterError) {
-        throw error;
+      if (_error instanceof TransactionAdapterError) {
+        throw _error;
       }
       throw new TransactionAdapterError(
-        `Error serializing transaction: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error serializing transaction: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -739,7 +833,9 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       const result = await this.transactionBlock.getDigest();
 
       if (result === null || result === undefined) {
-        throw new TransactionAdapterError('Transaction digest returned null or undefined');
+        throw new TransactionAdapterError(
+          'Transaction digest returned null or undefined'
+        );
       }
 
       // Handle different return types
@@ -749,7 +845,12 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
 
       // Check if the result is Promise-like
       // Use any casting to avoid typescript errors with 'then' property
-      if (result && typeof result === 'object' && 'then' in (result as any) && typeof (result as any).then === 'function') {
+      if (
+        result &&
+        typeof result === 'object' &&
+        'then' in (result as any) &&
+        typeof (result as any).then === 'function'
+      ) {
         try {
           const resolvedResult = await result;
           if (typeof resolvedResult === 'string') {
@@ -767,12 +868,12 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
       // Last resort: convert to string
       return String(result);
     } catch (_error) {
-      if (error instanceof TransactionAdapterError) {
-        throw error;
+      if (_error instanceof TransactionAdapterError) {
+        throw _error;
       }
       throw new TransactionAdapterError(
-        `Error getting transaction digest: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Error getting transaction digest: ${_error instanceof Error ? _error.message : String(_error)}`,
+        _error instanceof Error ? _error : undefined
       );
     }
   }
@@ -785,26 +886,33 @@ export class TransactionBlockAdapter implements UnifiedTransactionBlock, BaseAda
    */
   static from(transactionBlock: unknown): TransactionBlockAdapter {
     if (transactionBlock === undefined || transactionBlock === null) {
-      throw new TransactionAdapterError('Null or undefined transaction provided to adapter.from()');
+      throw new TransactionAdapterError(
+        'Null or undefined transaction provided to adapter.from()'
+      );
     }
 
     // Check for valid transaction types
-    if (!isTransactionSui(transactionBlock) && !isTransaction(transactionBlock)) {
+    if (
+      !isTransactionSui(transactionBlock) &&
+      !isTransaction(transactionBlock)
+    ) {
       throw new TransactionAdapterError(
         `Invalid transaction type provided to adapter.from(): ${typeof transactionBlock}. ` +
-        `The object must implement either the Transaction or TransactionSui interface.`
+          `The object must implement either the Transaction or TransactionSui interface.`
       );
     }
 
     return new TransactionBlockAdapter(transactionBlock);
   }
-  
+
   /**
    * Type guard to check if an object is a TransactionBlockAdapter
    * @param obj Object to check
    * @returns true if the object is a TransactionBlockAdapter
    */
-  static isTransactionBlockAdapter(obj: unknown): obj is TransactionBlockAdapter {
+  static isTransactionBlockAdapter(
+    obj: unknown
+  ): obj is TransactionBlockAdapter {
     return isBaseAdapter(obj) && obj instanceof TransactionBlockAdapter;
   }
 }

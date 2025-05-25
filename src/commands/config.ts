@@ -17,7 +17,7 @@ export default class ConfigCommand extends BaseCommand {
     '<%= config.bin %> config --section=ai             # Show AI configuration only',
     '<%= config.bin %> config --section=blockchain     # Show blockchain config',
     '<%= config.bin %> config --export config.json     # Export configuration',
-    '<%= config.bin %> config --check-env              # Check environment variables'
+    '<%= config.bin %> config --check-env              # Check environment variables',
   ];
 
   static flags = {
@@ -35,7 +35,14 @@ export default class ConfigCommand extends BaseCommand {
     section: Flags.string({
       char: 's',
       description: 'Show only a specific section of the configuration',
-      options: ['common', 'blockchain', 'storage', 'ai', 'security', 'advanced'],
+      options: [
+        'common',
+        'blockchain',
+        'storage',
+        'ai',
+        'security',
+        'advanced',
+      ],
     }),
     format: Flags.string({
       char: 'f',
@@ -52,16 +59,37 @@ export default class ConfigCommand extends BaseCommand {
     if (key === 'NODE_ENV' || key === 'LOG_LEVEL') {
       return 'common';
     }
-    if (key.startsWith('AI_') || ['XAI_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'OLLAMA_API_KEY'].includes(key)) {
+    if (
+      key.startsWith('AI_') ||
+      [
+        'XAI_API_KEY',
+        'OPENAI_API_KEY',
+        'ANTHROPIC_API_KEY',
+        'OLLAMA_API_KEY',
+      ].includes(key)
+    ) {
       return 'ai';
     }
-    if (key === 'NETWORK' || key === 'FULLNODE_URL' || key === 'TODO_PACKAGE_ID' || key === 'WALLET_ADDRESS') {
+    if (
+      key === 'NETWORK' ||
+      key === 'FULLNODE_URL' ||
+      key === 'TODO_PACKAGE_ID' ||
+      key === 'WALLET_ADDRESS'
+    ) {
       return 'blockchain';
     }
-    if (key === 'STORAGE_PATH' || key === 'TEMPORARY_STORAGE' || key === 'ENCRYPTED_STORAGE') {
+    if (
+      key === 'STORAGE_PATH' ||
+      key === 'TEMPORARY_STORAGE' ||
+      key === 'ENCRYPTED_STORAGE'
+    ) {
       return 'storage';
     }
-    if (key.startsWith('CREDENTIAL_') || key === 'REQUIRE_SIGNATURE_VERIFICATION' || key === 'ENABLE_BLOCKCHAIN_VERIFICATION') {
+    if (
+      key.startsWith('CREDENTIAL_') ||
+      key === 'REQUIRE_SIGNATURE_VERIFICATION' ||
+      key === 'ENABLE_BLOCKCHAIN_VERIFICATION'
+    ) {
       return 'security';
     }
     return 'advanced';
@@ -108,7 +136,9 @@ export default class ConfigCommand extends BaseCommand {
     if (typeof value === 'string') {
       // Check if it's an API key - if so, mask it
       if (/API_KEY/.test(value) || value.startsWith('sk-')) {
-        return chalk.magenta(`${value.substring(0, 4)}...${value.substring(value.length - 4)}`);
+        return chalk.magenta(
+          `${value.substring(0, 4)}...${value.substring(value.length - 4)}`
+        );
       }
       return chalk.blue(value);
     }
@@ -117,12 +147,12 @@ export default class ConfigCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(ConfigCommand);
-    
+
     // Get the environment configuration
     const config = envConfig.getConfig();
     const metadata = envConfig.getMetadata();
     const currentEnv = getEnvironment();
-    
+
     // Validate if requested
     if (flags.validate) {
       try {
@@ -132,17 +162,19 @@ export default class ConfigCommand extends BaseCommand {
         if (error instanceof CLIError) {
           throw error;
         }
-        throw new CLIError(error instanceof Error ? error.message : String(error));
+        throw new CLIError(
+          error instanceof Error ? error.message : String(error)
+        );
       }
     }
-    
+
     // Output in requested format
     if (flags.format === 'json') {
       // JSON output format
       this.log(JSON.stringify(envConfig.toJSON(), null, 2));
       return;
     }
-    
+
     if (flags.format === 'env') {
       // .env output format
       const entries = Object.entries(config).map(([key, value]) => {
@@ -152,71 +184,92 @@ export default class ConfigCommand extends BaseCommand {
       this.log(entries.join('\n'));
       return;
     }
-    
+
     // Pretty output format (default)
-    this.log(chalk.bold(`Environment Configuration (${chalk.cyan(currentEnv)})`));
+    this.log(
+      chalk.bold(`Environment Configuration (${chalk.cyan(currentEnv)})`)
+    );
     this.log('');
-    
+
     // Group by section
     const sections: Record<string, Array<[string, unknown]>> = {};
-    
+
     for (const [key, value] of Object.entries(config)) {
       const section = this.getSection(key);
-      
+
       // Skip if we're only showing a specific section
       if (flags.section && section !== flags.section) {
         continue;
       }
-      
+
       // Skip empty values if not showing all
       const configEntry = value as { value: unknown };
-      if (!flags['show-all'] && (configEntry.value === undefined || configEntry.value === null || configEntry.value === '')) {
+      if (
+        !flags['show-all'] &&
+        (configEntry.value === undefined ||
+          configEntry.value === null ||
+          configEntry.value === '')
+      ) {
         continue;
       }
-      
+
       // Initialize section array if it doesn't exist
       if (!sections[section]) {
         sections[section] = [];
       }
-      
+
       sections[section].push([key, value]);
     }
-    
+
     // Display each section
     for (const [section, entries] of Object.entries(sections)) {
       this.log(chalk.bold.underline(this.getSectionTitle(section)));
-      
+
       for (const [key, value] of entries) {
         const source = metadata[key]?.source;
-        const sourceColor = 
-          source === 'environment' ? chalk.green :
-          source === 'config' ? chalk.yellow :
-          chalk.gray;
-        
+        const sourceColor =
+          source === 'environment'
+            ? chalk.green
+            : source === 'config'
+              ? chalk.yellow
+              : chalk.gray;
+
         const requiredStar = metadata[key]?.required ? chalk.red(' *') : '';
-        
-        const configEntry = value as { value: unknown; description?: string; example?: string };
-        
-        this.log(`${chalk.bold(key)}${requiredStar}: ${this.formatValue(configEntry.value)} ${sourceColor(`[${source}]`)}`);
-        
+
+        const configEntry = value as {
+          value: unknown;
+          description?: string;
+          example?: string;
+        };
+
+        this.log(
+          `${chalk.bold(key)}${requiredStar}: ${this.formatValue(configEntry.value)} ${sourceColor(`[${source}]`)}`
+        );
+
         // Show description if available
         if (configEntry.description) {
           this.log(`  ${chalk.gray(configEntry.description)}`);
         }
-        
+
         // Show example if available
         if (configEntry.example) {
           this.log(`  ${chalk.gray(`Example: ${configEntry.example}`)}`);
         }
       }
-      
+
       this.log(''); // Add space between sections
     }
-    
+
     // Show legend
     this.log(chalk.dim('Legend:'));
-    this.log(chalk.dim(`  [${chalk.green('environment')}] - Set from environment variable`));
-    this.log(chalk.dim(`  [${chalk.yellow('config')}] - Set from configuration file`));
+    this.log(
+      chalk.dim(
+        `  [${chalk.green('environment')}] - Set from environment variable`
+      )
+    );
+    this.log(
+      chalk.dim(`  [${chalk.yellow('config')}] - Set from configuration file`)
+    );
     this.log(chalk.dim(`  [${chalk.gray('default')}] - Using default value`));
     this.log(chalk.dim(`  ${chalk.red('*')} - Required value`));
   }

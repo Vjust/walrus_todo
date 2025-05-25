@@ -11,7 +11,7 @@ export class CommandSanitizer {
    */
   static sanitizeString(input: string | undefined | null): string {
     if (!input) return '';
-    
+
     return input
       .replace(/<[^>]*>/g, '') // Remove HTML tags
       .replace(/[\\$'"`;(){}[\]|&*?~<>]/g, '\\$&') // Escape shell and special metacharacters
@@ -31,8 +31,13 @@ export class CommandSanitizer {
     for (const [key, value] of Object.entries(sanitized)) {
       if (typeof value === 'string') {
         sanitized[key as keyof T] = this.sanitizeString(value) as T[keyof T];
-      } else if (Array.isArray(value) && value.every(item => typeof item === 'string')) {
-        sanitized[key as keyof T] = value.map(item => this.sanitizeString(item)) as T[keyof T];
+      } else if (
+        Array.isArray(value) &&
+        value.every(item => typeof item === 'string')
+      ) {
+        sanitized[key as keyof T] = value.map(item =>
+          this.sanitizeString(item)
+        ) as T[keyof T];
       }
     }
 
@@ -129,9 +134,7 @@ export class CommandSanitizer {
     if (!address) return '';
 
     // Keep only hex characters and the 0x prefix
-    return address.trim().match(/^(0x)?[a-fA-F0-9]+$/i)
-      ? address.trim()
-      : '';
+    return address.trim().match(/^(0x)?[a-fA-F0-9]+$/i) ? address.trim() : '';
   }
 
   /**

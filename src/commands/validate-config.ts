@@ -11,7 +11,8 @@ import { CLIError } from '../types/errors/consolidated';
  * suggestions for resolving configuration issues.
  */
 export default class ValidateConfigCommand extends BaseCommand {
-  static description = 'Validate configuration consistency between CLI and frontend';
+  static description =
+    'Validate configuration consistency between CLI and frontend';
 
   static examples = [
     '<%= config.bin %> validate-config                        # Basic validation',
@@ -19,7 +20,7 @@ export default class ValidateConfigCommand extends BaseCommand {
     '<%= config.bin %> validate-config --detailed             # Show detailed results',
     '<%= config.bin %> validate-config --fix                  # Auto-fix issues',
     '<%= config.bin %> validate-config --frontend-path ./app  # Check specific frontend',
-    '<%= config.bin %> validate-config --strict               # Strict validation mode'
+    '<%= config.bin %> validate-config --strict               # Strict validation mode',
   ];
 
   static flags = {
@@ -41,23 +42,23 @@ export default class ValidateConfigCommand extends BaseCommand {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(ValidateConfigCommand);
-    
+
     this.log(chalk.blue('🔍 Validating configuration...\n'));
 
     try {
       // Create validator
       const validator = createConfigValidator();
-      
+
       // Run validation
       const result = await validator.validateConfiguration(flags.network);
-      
+
       // Display results
       if (result.valid) {
         this.log(chalk.green('✅ Configuration is valid!'));
       } else {
         this.log(chalk.red('❌ Configuration validation failed!'));
       }
-      
+
       this.log('');
 
       // Show errors
@@ -104,12 +105,13 @@ export default class ValidateConfigCommand extends BaseCommand {
       if (!result.valid) {
         process.exit(1);
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Validation failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Validation failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -118,7 +120,7 @@ export default class ValidateConfigCommand extends BaseCommand {
    */
   private async showDetailedInfo(validator: any): Promise<void> {
     this.log(chalk.blue('📋 Detailed Information:'));
-    
+
     // Show available configurations
     const availableConfigs = await validator.getAvailableConfigurations();
     if (availableConfigs.length > 0) {
@@ -129,7 +131,7 @@ export default class ValidateConfigCommand extends BaseCommand {
     } else {
       this.log(chalk.dim('No frontend configurations found'));
     }
-    
+
     this.log('');
   }
 }

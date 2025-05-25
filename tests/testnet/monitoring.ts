@@ -39,12 +39,15 @@ export interface TestMetrics {
   averageDuration: number;
   totalDuration: number;
   successRate: number;
-  categories: Record<string, {
-    total: number;
-    passed: number;
-    failed: number;
-    skipped: number;
-  }>;
+  categories: Record<
+    string,
+    {
+      total: number;
+      passed: number;
+      failed: number;
+      skipped: number;
+    }
+  >;
 }
 
 export class TestMonitor extends EventEmitter {
@@ -70,7 +73,7 @@ export class TestMonitor extends EventEmitter {
   recordTestResult(result: TestResult): void {
     this.results.push(result);
     this.emit('test:complete', result);
-    
+
     if (result.status === 'fail') {
       this.emit('test:fail', result);
     }
@@ -88,20 +91,25 @@ export class TestMonitor extends EventEmitter {
 
   getTestMetrics(): TestMetrics {
     const categories: Record<string, any> = {};
-    
+
     this.results.forEach(result => {
       if (!categories[result.category]) {
         categories[result.category] = {
           total: 0,
           passed: 0,
           failed: 0,
-          skipped: 0
+          skipped: 0,
         };
       }
-      
+
       categories[result.category].total++;
-      categories[result.category][result.status === 'pass' ? 'passed' : 
-                                  result.status === 'fail' ? 'failed' : 'skipped']++;
+      categories[result.category][
+        result.status === 'pass'
+          ? 'passed'
+          : result.status === 'fail'
+            ? 'failed'
+            : 'skipped'
+      ]++;
     });
 
     const totalDuration = this.results.reduce((sum, r) => sum + r.duration, 0);
@@ -114,38 +122,45 @@ export class TestMonitor extends EventEmitter {
       passedTests,
       failedTests,
       skippedTests,
-      averageDuration: this.results.length > 0 ? totalDuration / this.results.length : 0,
+      averageDuration:
+        this.results.length > 0 ? totalDuration / this.results.length : 0,
       totalDuration,
-      successRate: this.results.length > 0 ? passedTests / this.results.length : 0,
-      categories
+      successRate:
+        this.results.length > 0 ? passedTests / this.results.length : 0,
+      categories,
     };
   }
 
   generateReport(): void {
     const metrics = this.getTestMetrics();
     const endTime = new Date();
-    
+
     const report = {
       summary: {
         startTime: this.startTime,
         endTime,
         duration: endTime.getTime() - this.startTime.getTime(),
-        ...metrics
+        ...metrics,
       },
       testResults: this.results,
       networkMetrics: this.aggregateNetworkMetrics(),
       resourceUsage: this.aggregateResourceUsage(),
-      failedTests: this.results.filter(r => r.status === 'fail').map(r => ({
-        name: r.name,
-        category: r.category,
-        error: r.error?.message || 'Unknown error',
-        stack: r.error?.stack
-      }))
+      failedTests: this.results
+        .filter(r => r.status === 'fail')
+        .map(r => ({
+          name: r.name,
+          category: r.category,
+          error: r.error?.message || 'Unknown error',
+          stack: r.error?.stack,
+        })),
     };
 
-    const reportPath = path.join(this.outputDir, `test-report-${Date.now()}.json`);
+    const reportPath = path.join(
+      this.outputDir,
+      `test-report-${Date.now()}.json`
+    );
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-    
+
     this.generateHTMLReport(report);
     logger.info(`Test report generated: ${reportPath}`);
   }
@@ -153,34 +168,50 @@ export class TestMonitor extends EventEmitter {
   private aggregateNetworkMetrics(): any {
     if (this.networkMetrics.length === 0) return null;
 
-    const avgLatency = this.networkMetrics.reduce((sum, m) => sum + m.latency, 0) / this.networkMetrics.length;
-    const avgThroughput = this.networkMetrics.reduce((sum, m) => sum + m.throughput, 0) / this.networkMetrics.length;
-    const avgSuccessRate = this.networkMetrics.reduce((sum, m) => sum + m.successRate, 0) / this.networkMetrics.length;
-    const avgErrorRate = this.networkMetrics.reduce((sum, m) => sum + m.errorRate, 0) / this.networkMetrics.length;
+    const avgLatency =
+      this.networkMetrics.reduce((sum, m) => sum + m.latency, 0) /
+      this.networkMetrics.length;
+    const avgThroughput =
+      this.networkMetrics.reduce((sum, m) => sum + m.throughput, 0) /
+      this.networkMetrics.length;
+    const avgSuccessRate =
+      this.networkMetrics.reduce((sum, m) => sum + m.successRate, 0) /
+      this.networkMetrics.length;
+    const avgErrorRate =
+      this.networkMetrics.reduce((sum, m) => sum + m.errorRate, 0) /
+      this.networkMetrics.length;
 
     return {
       averageLatency: avgLatency,
       averageThroughput: avgThroughput,
       averageSuccessRate: avgSuccessRate,
       averageErrorRate: avgErrorRate,
-      samples: this.networkMetrics.length
+      samples: this.networkMetrics.length,
     };
   }
 
   private aggregateResourceUsage(): any {
     if (this.resourceUsage.length === 0) return null;
 
-    const avgCpu = this.resourceUsage.reduce((sum, u) => sum + u.cpu, 0) / this.resourceUsage.length;
-    const avgMemory = this.resourceUsage.reduce((sum, u) => sum + u.memory, 0) / this.resourceUsage.length;
-    const avgNetworkIO = this.resourceUsage.reduce((sum, u) => sum + u.networkIO, 0) / this.resourceUsage.length;
-    const avgDiskIO = this.resourceUsage.reduce((sum, u) => sum + u.diskIO, 0) / this.resourceUsage.length;
+    const avgCpu =
+      this.resourceUsage.reduce((sum, u) => sum + u.cpu, 0) /
+      this.resourceUsage.length;
+    const avgMemory =
+      this.resourceUsage.reduce((sum, u) => sum + u.memory, 0) /
+      this.resourceUsage.length;
+    const avgNetworkIO =
+      this.resourceUsage.reduce((sum, u) => sum + u.networkIO, 0) /
+      this.resourceUsage.length;
+    const avgDiskIO =
+      this.resourceUsage.reduce((sum, u) => sum + u.diskIO, 0) /
+      this.resourceUsage.length;
 
     return {
       averageCpu: avgCpu,
       averageMemory: avgMemory,
       averageNetworkIO: avgNetworkIO,
       averageDiskIO: avgDiskIO,
-      samples: this.resourceUsage.length
+      samples: this.resourceUsage.length,
     };
   }
 
@@ -237,7 +268,10 @@ export class TestMonitor extends EventEmitter {
   </div>
 
   <h2>Failed Tests</h2>
-  ${report.failedTests.length === 0 ? '<p class="success">No failed tests!</p>' : `
+  ${
+    report.failedTests.length === 0
+      ? '<p class="success">No failed tests!</p>'
+      : `
     <table>
       <thead>
         <tr>
@@ -247,16 +281,21 @@ export class TestMonitor extends EventEmitter {
         </tr>
       </thead>
       <tbody>
-        ${report.failedTests.map((test: any) => `
+        ${report.failedTests
+          .map(
+            (test: any) => `
           <tr>
             <td>${test.name}</td>
             <td>${test.category}</td>
             <td class="failure">${test.error}</td>
           </tr>
-        `).join('')}
+        `
+          )
+          .join('')}
       </tbody>
     </table>
-  `}
+  `
+  }
 
   <h2>Category Breakdown</h2>
   <table>
@@ -270,21 +309,27 @@ export class TestMonitor extends EventEmitter {
       </tr>
     </thead>
     <tbody>
-      ${Object.entries(report.summary.categories).map(([category, stats]: [string, any]) => `
+      ${Object.entries(report.summary.categories)
+        .map(
+          ([category, stats]: [string, any]) => `
         <tr>
           <td>${category}</td>
           <td>${stats.total}</td>
           <td class="success">${stats.passed}</td>
           <td class="failure">${stats.failed}</td>
-          <td class="${stats.passed/stats.total >= 0.9 ? 'success' : 'warning'}">
-            ${((stats.passed/stats.total) * 100).toFixed(1)}%
+          <td class="${stats.passed / stats.total >= 0.9 ? 'success' : 'warning'}">
+            ${((stats.passed / stats.total) * 100).toFixed(1)}%
           </td>
         </tr>
-      `).join('')}
+      `
+        )
+        .join('')}
     </tbody>
   </table>
 
-  ${report.networkMetrics ? `
+  ${
+    report.networkMetrics
+      ? `
     <h2>Network Performance</h2>
     <div class="metrics">
       <div class="metric">
@@ -302,7 +347,9 @@ export class TestMonitor extends EventEmitter {
         </p>
       </div>
     </div>
-  ` : ''}
+  `
+      : ''
+  }
 
   <script>
     // Add interactive features if needed
@@ -312,7 +359,10 @@ export class TestMonitor extends EventEmitter {
 </html>
     `;
 
-    const htmlPath = path.join(this.outputDir, `test-report-${Date.now()}.html`);
+    const htmlPath = path.join(
+      this.outputDir,
+      `test-report-${Date.now()}.html`
+    );
     fs.writeFileSync(htmlPath, html);
   }
 
@@ -330,19 +380,21 @@ export class PerformanceMonitor {
 
   startMeasurement(label: string): () => void {
     const startTime = Date.now();
-    
+
     return () => {
       const duration = Date.now() - startTime;
-      
+
       if (!this.measurements.has(label)) {
         this.measurements.set(label, []);
       }
-      
+
       this.measurements.get(label)!.push(duration);
     };
   }
 
-  getStats(label: string): { avg: number; min: number; max: number; count: number } | null {
+  getStats(
+    label: string
+  ): { avg: number; min: number; max: number; count: number } | null {
     const measurements = this.measurements.get(label);
     if (!measurements || measurements.length === 0) return null;
 
@@ -350,7 +402,7 @@ export class PerformanceMonitor {
       avg: measurements.reduce((a, b) => a + b, 0) / measurements.length,
       min: Math.min(...measurements),
       max: Math.max(...measurements),
-      count: measurements.length
+      count: measurements.length,
     };
   }
 
@@ -363,7 +415,7 @@ export class PerformanceMonitor {
 export const testHooks = {
   beforeEach: (monitor: TestMonitor, testName: string, category: string) => {
     const startTime = Date.now();
-    
+
     return {
       end: (status: 'pass' | 'fail' | 'skip', error?: Error) => {
         monitor.recordTestResult({
@@ -372,15 +424,15 @@ export const testHooks = {
           status,
           error,
           timestamp: new Date(),
-          category
+          category,
         });
-      }
+      },
     };
   },
 
   afterAll: (monitor: TestMonitor) => {
     monitor.generateReport();
-  }
+  },
 };
 
 // Network monitoring utilities
@@ -399,13 +451,13 @@ export async function measureNetworkOperation<T>(
     throw e;
   } finally {
     const latency = Date.now() - startTime;
-    
+
     monitor.recordNetworkMetrics({
       latency,
       throughput: 1000 / latency, // operations per second
       successRate: error ? 0 : 1,
       errorRate: error ? 1 : 0,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
@@ -413,7 +465,10 @@ export async function measureNetworkOperation<T>(
 }
 
 // Resource monitoring utilities
-export function monitorResourceUsage(monitor: TestMonitor, intervalMs: number = 1000): () => void {
+export function monitorResourceUsage(
+  monitor: TestMonitor,
+  intervalMs: number = 1000
+): () => void {
   const interval = setInterval(() => {
     // Simplified resource monitoring - in real implementation would use actual system metrics
     monitor.recordResourceUsage({
@@ -421,7 +476,7 @@ export function monitorResourceUsage(monitor: TestMonitor, intervalMs: number = 
       memory: Math.random() * 1000,
       networkIO: Math.random() * 100,
       diskIO: Math.random() * 50,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }, intervalMs);
 

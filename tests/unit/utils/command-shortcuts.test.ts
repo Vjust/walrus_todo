@@ -42,7 +42,9 @@ describe('ShortcutRegistry', () => {
     });
 
     it('should handle colon notation for subcommands', () => {
-      expect(registry.resolveCommand('ai:enhance')).toBe('ai:enhance-credentials');
+      expect(registry.resolveCommand('ai:enhance')).toBe(
+        'ai:enhance-credentials'
+      );
       expect(registry.resolveCommand('img:upload')).toBe('image:upload');
       expect(registry.resolveCommand('img:nft')).toBe('image:create-nft');
     });
@@ -120,7 +122,9 @@ describe('ShortcutRegistry', () => {
     it('should be case insensitive', () => {
       const suggestionsLower = registry.getSuggestions('s');
       const suggestionsUpper = registry.getSuggestions('S');
-      expect(suggestionsLower.suggestions).toEqual(suggestionsUpper.suggestions);
+      expect(suggestionsLower.suggestions).toEqual(
+        suggestionsUpper.suggestions
+      );
     });
   });
 
@@ -146,7 +150,7 @@ describe('ShortcutRegistry', () => {
     beforeEach(() => {
       registry = new ShortcutRegistry({
         custom: 'test:custom',
-        foo: 'bar:baz'
+        foo: 'bar:baz',
       });
     });
 
@@ -157,7 +161,7 @@ describe('ShortcutRegistry', () => {
 
     it('should override default shortcuts', () => {
       registry = new ShortcutRegistry({
-        a: 'test:override'
+        a: 'test:override',
       });
       expect(registry.resolveCommand('a')).toBe('test:override');
     });
@@ -206,7 +210,7 @@ describe('ShortcutRegistry', () => {
       const suggestions = registry.getSuggestions('s');
       expect(suggestions.isAmbiguous).toBe(true);
       expect(suggestions.suggestions.length).toBeGreaterThan(1);
-      
+
       // User should be able to disambiguate
       suggestions.suggestions.forEach(suggestion => {
         expect(registry.resolveCommand(suggestion)).toBe(suggestion);

@@ -13,8 +13,8 @@ router.post(
   validate({
     body: z.object({
       lastSync: z.string().datetime().optional(),
-      force: z.boolean().default(false)
-    })
+      force: z.boolean().default(false),
+    }),
   }),
   asyncHandler(controller.pull)
 );
@@ -25,17 +25,14 @@ router.post(
   validate({
     body: z.object({
       todoIds: z.array(z.string().uuid()).optional(),
-      includeAll: z.boolean().default(false)
-    })
+      includeAll: z.boolean().default(false),
+    }),
   }),
   asyncHandler(controller.push)
 );
 
 // GET /sync/status - Get sync status
-router.get(
-  '/status',
-  asyncHandler(controller.status)
-);
+router.get('/status', asyncHandler(controller.status));
 
 // POST /sync/resolve - Resolve sync conflicts
 router.post(
@@ -44,26 +41,25 @@ router.post(
     body: z.object({
       conflictId: z.string(),
       resolution: z.enum(['local', 'remote', 'merge']),
-      mergedData: z.any().optional()
-    })
+      mergedData: z.any().optional(),
+    }),
   }),
   asyncHandler(controller.resolveConflict)
 );
 
 // GET /sync/conflicts - Get unresolved conflicts
-router.get(
-  '/conflicts',
-  asyncHandler(controller.getConflicts)
-);
+router.get('/conflicts', asyncHandler(controller.getConflicts));
 
 // POST /sync/full - Full synchronization
 router.post(
   '/full',
   validate({
     body: z.object({
-      direction: z.enum(['pull', 'push', 'bidirectional']).default('bidirectional'),
-      resolveStrategy: z.enum(['local', 'remote', 'newest']).default('newest')
-    })
+      direction: z
+        .enum(['pull', 'push', 'bidirectional'])
+        .default('bidirectional'),
+      resolveStrategy: z.enum(['local', 'remote', 'newest']).default('newest'),
+    }),
   }),
   asyncHandler(controller.fullSync)
 );

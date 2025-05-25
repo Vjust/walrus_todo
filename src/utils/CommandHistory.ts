@@ -87,7 +87,7 @@ export class CommandHistory {
    */
   searchHistory(pattern: string): string[] {
     const lowercasePattern = pattern.toLowerCase();
-    return this.history.filter(cmd => 
+    return this.history.filter(cmd =>
       cmd.toLowerCase().includes(lowercasePattern)
     );
   }
@@ -112,7 +112,7 @@ export class CommandHistory {
    */
   getStatistics(): { [command: string]: number } {
     const stats: { [command: string]: number } = {};
-    
+
     this.history.forEach(cmd => {
       const command = cmd.split(' ')[0];
       stats[command] = (stats[command] || 0) + 1;
@@ -124,9 +124,11 @@ export class CommandHistory {
   /**
    * Get most frequently used commands
    */
-  getMostFrequent(limit: number = 10): Array<{ command: string; count: number }> {
+  getMostFrequent(
+    limit: number = 10
+  ): Array<{ command: string; count: number }> {
     const stats = this.getStatistics();
-    
+
     return Object.entries(stats)
       .map(([command, count]) => ({ command, count }))
       .sort((a, b) => b.count - a.count)

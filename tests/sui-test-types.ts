@@ -1,16 +1,23 @@
-import type { SuiObjectResponse, SuiTransactionBlockResponse, SuiSystemStateSummary } from '@mysten/sui/client';
+import type {
+  SuiObjectResponse,
+  SuiTransactionBlockResponse,
+  SuiSystemStateSummary,
+} from '@mysten/sui/client';
 import type { TransactionEffects } from '@mysten/sui/client';
 
-export const createMockSuiObjectResponse = (fields: Record<string, any>): SuiObjectResponse => ({
-  data: {
-    content: {
-      dataType: 'moveObject',
-      type: 'test::todo_nft::TodoNFT',
-      hasPublicTransfer: true,
-      fields
-    }
-  } as any
-} as SuiObjectResponse);
+export const createMockSuiObjectResponse = (
+  fields: Record<string, any>
+): SuiObjectResponse =>
+  ({
+    data: {
+      content: {
+        dataType: 'moveObject',
+        type: 'test::todo_nft::TodoNFT',
+        hasPublicTransfer: true,
+        fields,
+      },
+    } as any,
+  }) as SuiObjectResponse;
 
 export const createMockTransactionResponse = (
   success: boolean,
@@ -24,30 +31,34 @@ export const createMockTransactionResponse = (
       computationCost: '0',
       storageCost: '0',
       storageRebate: '0',
-      nonRefundableStorageFee: '0'
+      nonRefundableStorageFee: '0',
     },
     transactionDigest: 'mock-digest',
-    created: success ? [{
-      owner: { AddressOwner: '0xowner' },
-      reference: {
-        objectId: 'test-nft-id',
-        version: '1',
-        digest: '0xnft-digest'
-      }
-    }] : [],
+    created: success
+      ? [
+          {
+            owner: { AddressOwner: '0xowner' },
+            reference: {
+              objectId: 'test-nft-id',
+              version: '1',
+              digest: '0xnft-digest',
+            },
+          },
+        ]
+      : [],
     gasObject: {
       owner: { AddressOwner: '0xowner' },
       reference: {
         objectId: '0xgas',
         version: '1',
-        digest: '0xgas-digest'
-      }
+        digest: '0xgas-digest',
+      },
     },
     mutated: [],
     deleted: [],
     unwrapped: [],
     wrapped: [],
-    sharedObjects: []
+    sharedObjects: [],
   };
 
   return {
@@ -64,22 +75,24 @@ export const createMockTransactionResponse = (
         transaction: {
           kind: 'ProgrammableTransaction',
           inputs: [],
-          transactions: []
+          transactions: [],
         },
         sender: '0xsender',
         gasData: {
           payment: [],
           owner: '0xowner',
           price: '1',
-          budget: '1000'
-        }
+          budget: '1000',
+        },
       },
-      txSignatures: ['mock-signature']
-    }
+      txSignatures: ['mock-signature'],
+    },
   };
 };
 
-export const createMockSystemStateResponse = (options: { epoch?: string; protocolVersion?: string } = {}): Partial<SuiSystemStateSummary> => ({
+export const createMockSystemStateResponse = (
+  options: { epoch?: string; protocolVersion?: string } = {}
+): Partial<SuiSystemStateSummary> => ({
   epoch: options.epoch || '1',
   protocolVersion: options.protocolVersion || '1.0.0',
   systemStateVersion: '1',
@@ -93,7 +106,10 @@ export const createMockSystemStateResponse = (options: { epoch?: string; protoco
   validatorLowStakeGracePeriod: '0',
   validatorVeryLowStakeGracePeriod: '0',
   minValidatorJoiningStake: '0',
-  validatorReportRecords: [['validator1', ['report1']], ['validator2', ['report2']]] as [string, string[]][],
+  validatorReportRecords: [
+    ['validator1', ['report1']],
+    ['validator2', ['report2']],
+  ] as [string, string[]][],
   stakeSubsidyStartEpoch: '0',
   stakeSubsidyDistributionCounter: '0',
   stakeSubsidyBalance: '0',
@@ -121,5 +137,5 @@ export const createMockSystemStateResponse = (options: { epoch?: string; protoco
   safeMode: false,
   activeValidatorSetSize: '0',
   validatorSetSize: '0',
-  validatorEpochInfoEvents: []
+  validatorEpochInfoEvents: [],
 });

@@ -26,7 +26,7 @@ describe('SyncCommand', () => {
       category: 'work',
       updatedAt: new Date().toISOString(),
       private: true,
-      tags: []
+      tags: [],
     },
     {
       id: 'remote-2',
@@ -37,8 +37,8 @@ describe('SyncCommand', () => {
       category: 'personal',
       updatedAt: new Date().toISOString(),
       private: true,
-      tags: []
-    }
+      tags: [],
+    },
   ];
 
   const mockLocalTodos: Todo[] = [
@@ -51,21 +51,28 @@ describe('SyncCommand', () => {
       category: '',
       updatedAt: new Date().toISOString(),
       private: true,
-      tags: []
-    }
+      tags: [],
+    },
   ];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockConfigService = new ConfigService() as jest.Mocked<ConfigService>;
-    mockWalrusStorage = new WalrusStorage('testnet', true) as jest.Mocked<WalrusStorageType>;
+    mockWalrusStorage = new WalrusStorage(
+      'testnet',
+      true
+    ) as jest.Mocked<WalrusStorageType>;
 
     sync = new SyncCommand([], {} as any);
-    
+
     // Mock the services
-    jest.spyOn(sync as any, 'getConfigService').mockReturnValue(mockConfigService);
-    jest.spyOn(sync as any, 'getWalrusStorage').mockReturnValue(mockWalrusStorage);
+    jest
+      .spyOn(sync as any, 'getConfigService')
+      .mockReturnValue(mockConfigService);
+    jest
+      .spyOn(sync as any, 'getWalrusStorage')
+      .mockReturnValue(mockWalrusStorage);
   });
 
   describe('run', () => {
@@ -73,7 +80,7 @@ describe('SyncCommand', () => {
       // Setup mocks
       mockWalrusStorage.retrieve.mockResolvedValue({
         id: mockBlobId,
-        todos: mockRemoteTodos
+        todos: mockRemoteTodos,
       });
       mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
       mockConfigService.saveAllTodos.mockResolvedValue(true);
@@ -81,9 +88,11 @@ describe('SyncCommand', () => {
       // Mock interactive prompt
       const mockReadline = {
         question: jest.fn((_, callback) => callback('merge')),
-        close: jest.fn()
+        close: jest.fn(),
       };
-      jest.spyOn(readline, 'createInterface').mockReturnValue(mockReadline as any);
+      jest
+        .spyOn(readline, 'createInterface')
+        .mockReturnValue(mockReadline as any);
 
       // Run the command
       await sync.run({ args: { blobIdOrUrl: mockBlobId } });
@@ -93,7 +102,7 @@ describe('SyncCommand', () => {
       expect(mockConfigService.getTodoList).toHaveBeenCalled();
       expect(mockConfigService.saveAllTodos).toHaveBeenCalledWith([
         ...mockLocalTodos,
-        ...mockRemoteTodos
+        ...mockRemoteTodos,
       ]);
       expect(mockReadline.close).toHaveBeenCalled();
     });
@@ -101,34 +110,40 @@ describe('SyncCommand', () => {
     it('should sync todos with replace option', async () => {
       mockWalrusStorage.retrieve.mockResolvedValue({
         id: mockBlobId,
-        todos: mockRemoteTodos
+        todos: mockRemoteTodos,
       });
       mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
       mockConfigService.saveAllTodos.mockResolvedValue(true);
 
       const mockReadline = {
         question: jest.fn((_, callback) => callback('replace')),
-        close: jest.fn()
+        close: jest.fn(),
       };
-      jest.spyOn(readline, 'createInterface').mockReturnValue(mockReadline as any);
+      jest
+        .spyOn(readline, 'createInterface')
+        .mockReturnValue(mockReadline as any);
 
       await sync.run({ args: { blobIdOrUrl: mockBlobId } });
 
-      expect(mockConfigService.saveAllTodos).toHaveBeenCalledWith(mockRemoteTodos);
+      expect(mockConfigService.saveAllTodos).toHaveBeenCalledWith(
+        mockRemoteTodos
+      );
     });
 
     it('should cancel sync operation', async () => {
       mockWalrusStorage.retrieve.mockResolvedValue({
         id: mockBlobId,
-        todos: mockRemoteTodos
+        todos: mockRemoteTodos,
       });
       mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
 
       const mockReadline = {
         question: jest.fn((_, callback) => callback('cancel')),
-        close: jest.fn()
+        close: jest.fn(),
       };
-      jest.spyOn(readline, 'createInterface').mockReturnValue(mockReadline as any);
+      jest
+        .spyOn(readline, 'createInterface')
+        .mockReturnValue(mockReadline as any);
 
       await sync.run({ args: { blobIdOrUrl: mockBlobId } });
 
@@ -137,19 +152,21 @@ describe('SyncCommand', () => {
 
     it('should handle shared link URLs', async () => {
       const sharedLink = `https://wal.gg/${mockBlobId}`;
-      
+
       mockWalrusStorage.retrieve.mockResolvedValue({
         id: mockBlobId,
-        todos: mockRemoteTodos
+        todos: mockRemoteTodos,
       });
       mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
       mockConfigService.saveAllTodos.mockResolvedValue(true);
 
       const mockReadline = {
         question: jest.fn((_, callback) => callback('merge')),
-        close: jest.fn()
+        close: jest.fn(),
       };
-      jest.spyOn(readline, 'createInterface').mockReturnValue(mockReadline as any);
+      jest
+        .spyOn(readline, 'createInterface')
+        .mockReturnValue(mockReadline as any);
 
       await sync.run({ args: { blobIdOrUrl: sharedLink } });
 
@@ -163,8 +180,9 @@ describe('SyncCommand', () => {
       // Mock console.error to prevent output during tests
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(sync.run({ args: { blobIdOrUrl: mockBlobId } }))
-        .rejects.toThrow('Network error');
+      await expect(
+        sync.run({ args: { blobIdOrUrl: mockBlobId } })
+      ).rejects.toThrow('Network error');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         chalk.red('Failed to sync:'),
@@ -177,7 +195,7 @@ describe('SyncCommand', () => {
     it('should handle empty blob data', async () => {
       mockWalrusStorage.retrieve.mockResolvedValue({
         id: mockBlobId,
-        todos: []
+        todos: [],
       });
       mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
 
@@ -198,16 +216,18 @@ describe('SyncCommand', () => {
     it('should display todo counts during sync', async () => {
       mockWalrusStorage.retrieve.mockResolvedValue({
         id: mockBlobId,
-        todos: mockRemoteTodos
+        todos: mockRemoteTodos,
       });
       mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
       mockConfigService.saveAllTodos.mockResolvedValue(true);
 
       const mockReadline = {
         question: jest.fn((_, callback) => callback('merge')),
-        close: jest.fn()
+        close: jest.fn(),
       };
-      jest.spyOn(readline, 'createInterface').mockReturnValue(mockReadline as any);
+      jest
+        .spyOn(readline, 'createInterface')
+        .mockReturnValue(mockReadline as any);
 
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 
@@ -230,8 +250,9 @@ describe('SyncCommand', () => {
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(sync.run({ args: { blobIdOrUrl: invalidBlobId } }))
-        .rejects.toThrow('Invalid blob ID');
+      await expect(
+        sync.run({ args: { blobIdOrUrl: invalidBlobId } })
+      ).rejects.toThrow('Invalid blob ID');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         chalk.red('Failed to sync:'),
@@ -245,14 +266,15 @@ describe('SyncCommand', () => {
       // Mock retrieve to return corrupted data
       mockWalrusStorage.retrieve.mockResolvedValue({
         id: mockBlobId,
-        todos: null as any // This would cause an error when trying to access length
+        todos: null as any, // This would cause an error when trying to access length
       });
       mockConfigService.getTodoList.mockResolvedValue(mockLocalTodos);
 
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(sync.run({ args: { blobIdOrUrl: mockBlobId } }))
-        .rejects.toThrow();
+      await expect(
+        sync.run({ args: { blobIdOrUrl: mockBlobId } })
+      ).rejects.toThrow();
 
       consoleErrorSpy.mockRestore();
     });
@@ -265,7 +287,7 @@ describe('SyncCommand', () => {
         { input: 'http://wal.gg/blob456', expected: 'blob456' },
         { input: 'https://example.wal.app/blob/789', expected: '789' },
         { input: '0x12345', expected: '0x12345' },
-        { input: 'plain-blob-id', expected: 'plain-blob-id' }
+        { input: 'plain-blob-id', expected: 'plain-blob-id' },
       ];
 
       testCases.forEach(({ input, expected }) => {

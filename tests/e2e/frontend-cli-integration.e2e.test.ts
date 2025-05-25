@@ -1,6 +1,6 @@
 /**
  * Frontend-CLI Integration Tests
- * 
+ *
  * Tests the complete integration between CLI backend and frontend:
  * 1. Configuration sharing between CLI and frontend
  * 2. Real-time event synchronization
@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import * as os from 'os';
 import fetch from 'node-fetch';
 
@@ -47,10 +48,10 @@ describe('Frontend-CLI Integration Tests', () => {
   beforeAll(async () => {
     // Ensure CLI is built
     try {
-      execSync('pnpm run build:dev', { 
+      execSync('pnpm run build:dev', {
         cwd: projectRoot,
         stdio: 'inherit',
-        timeout: 60000
+        timeout: 60000,
       });
     } catch (_error) {
       throw new Error(`Failed to build CLI: ${error}`);
@@ -59,10 +60,10 @@ describe('Frontend-CLI Integration Tests', () => {
     // Ensure frontend dependencies are installed
     if (fs.existsSync(frontendPath)) {
       try {
-        execSync('pnpm install', { 
+        execSync('pnpm install', {
           cwd: frontendPath,
           stdio: 'inherit',
-          timeout: 120000
+          timeout: 120000,
         });
       } catch (_error) {
         // console.warn('Frontend dependency installation failed - some tests may be skipped'); // Removed console statement
@@ -80,14 +81,14 @@ describe('Frontend-CLI Integration Tests', () => {
   describe('Configuration Synchronization', () => {
     test('should deploy contract and generate frontend config', async () => {
       // console.log('Deploying contract and generating frontend config...'); // Removed console statement
-      
+
       try {
         const deployOutput = execSync(
           'pnpm run cli -- deploy --network testnet --gas-budget 200000000',
           {
             encoding: 'utf8',
             cwd: projectRoot,
-            timeout: 180000
+            timeout: 180000,
           }
         );
 
@@ -96,7 +97,9 @@ describe('Frontend-CLI Integration Tests', () => {
         expect(deployOutput).toContain('Frontend configuration generated');
 
         // Extract deployment info
-        const packageIdMatch = deployOutput.match(/Package ID:\s*(0x[a-fA-F0-9]+)/);
+        const packageIdMatch = deployOutput.match(
+          /Package ID:\s*(0x[a-fA-F0-9]+)/
+        );
         const digestMatch = deployOutput.match(/Digest:\s*([A-Za-z0-9]+)/);
         const addressMatch = deployOutput.match(/Address:\s*(0x[a-fA-F0-9]+)/);
 
@@ -108,37 +111,44 @@ describe('Frontend-CLI Integration Tests', () => {
           packageId: packageIdMatch![1],
           digest: digestMatch![1],
           walletAddress: addressMatch![1],
-          network: 'testnet'
+          network: 'testnet',
         };
 
         // console.log('✓ Contract deployed successfully', deploymentInfo); // Removed console statement
-
       } catch (_error) {
-        if (error.toString().includes('already deployed') || 
-            error.toString().includes('Package ID already exists')) {
+        if (
+          error.toString().includes('already deployed') ||
+          error.toString().includes('Package ID already exists')
+        ) {
           // console.log('⚠ Contract already deployed - continuing with existing deployment'); // Removed console statement
-          
+
           // Get existing deployment info from config
           try {
             const configOutput = execSync('pnpm run cli -- config', {
               encoding: 'utf8',
               cwd: projectRoot,
-              timeout: 30000
+              timeout: 30000,
             });
-            
+
             // Parse config to get deployment info
-            const packageIdMatch = configOutput.match(/Package ID:\s*(0x[a-fA-F0-9]+)/);
-            const addressMatch = configOutput.match(/Wallet Address:\s*(0x[a-fA-F0-9]+)/);
-            
+            const packageIdMatch = configOutput.match(
+              /Package ID:\s*(0x[a-fA-F0-9]+)/
+            );
+            const addressMatch = configOutput.match(
+              /Wallet Address:\s*(0x[a-fA-F0-9]+)/
+            );
+
             if (packageIdMatch && addressMatch) {
               deploymentInfo = {
                 packageId: packageIdMatch[1],
                 walletAddress: addressMatch[1],
-                network: 'testnet'
+                network: 'testnet',
               };
             }
           } catch (configError) {
-            throw new Error(`Unable to get existing deployment info: ${configError}`);
+            throw new Error(
+              `Unable to get existing deployment info: ${configError}`
+            );
           }
         } else {
           throw error;
@@ -153,7 +163,9 @@ describe('Frontend-CLI Integration Tests', () => {
       expect(fs.existsSync(configDir)).toBeTruthy();
       expect(fs.existsSync(testnetConfigPath)).toBeTruthy();
 
-      const config: FrontendConfig = JSON.parse(fs.readFileSync(testnetConfigPath, 'utf8'));
+      const config: FrontendConfig = JSON.parse(
+        fs.readFileSync(testnetConfigPath, 'utf8')
+      );
 
       expect(config.network).toBe('testnet');
       expect(config.packageId).toMatch(/^0x[a-fA-F0-9]+$/);
@@ -169,7 +181,7 @@ describe('Frontend-CLI Integration Tests', () => {
       // Run setup-config script
       execSync('node setup-config.js', {
         cwd: frontendPath,
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
 
       const publicConfigDir = path.join(frontendPath, 'public/config');
@@ -201,16 +213,20 @@ describe('Frontend-CLI Integration Tests', () => {
         frontendProcess = spawn('pnpm', ['run', 'dev'], {
           cwd: frontendPath,
           env: { ...process.env, PORT: frontendPort.toString() },
-          stdio: ['pipe', 'pipe', 'pipe']
+          stdio: ['pipe', 'pipe', 'pipe'],
         });
 
         let startupComplete = false;
 
-        frontendProcess.stdout?.on('data', (data) => {
+        frontendProcess.stdout?.on('data', data => {
           const output = data.toString();
           // console.log(`Frontend: ${output.trim() // Removed console statement}`);
 
-          if ((output.includes('ready') || output.includes(`localhost:${frontendPort}`)) && !startupComplete) {
+          if (
+            (output.includes('ready') ||
+              output.includes(`localhost:${frontendPort}`)) &&
+            !startupComplete
+          ) {
             startupComplete = true;
             clearTimeout(timeout);
             // console.log(`✓ Frontend started on port ${frontendPort}`); // Removed console statement
@@ -218,7 +234,7 @@ describe('Frontend-CLI Integration Tests', () => {
           }
         });
 
-        frontendProcess.stderr?.on('data', (data) => {
+        frontendProcess.stderr?.on('data', data => {
           const error = data.toString();
           // console.log(`Frontend Error: ${error.trim() // Removed console statement}`);
 
@@ -231,7 +247,7 @@ describe('Frontend-CLI Integration Tests', () => {
           }
         });
 
-        frontendProcess.on('exit', (code) => {
+        frontendProcess.on('exit', code => {
           if (code !== 0 && !startupComplete) {
             clearTimeout(timeout);
             reject(new Error(`Frontend process exited with code ${code}`));
@@ -253,7 +269,7 @@ describe('Frontend-CLI Integration Tests', () => {
         // Test config endpoint (if available)
         const configUrl = `http://localhost:${frontendPort}/config/testnet.json`;
         const response = await fetch(configUrl);
-        
+
         if (response.ok) {
           const config = await response.json();
           expect(config.network).toBe('testnet');
@@ -273,14 +289,15 @@ describe('Frontend-CLI Integration Tests', () => {
 
     test('should create todo via CLI and verify data structure', async () => {
       testTodoTitle = `Frontend CLI Integration Test ${Date.now()}`;
-      const todoDescription = 'Test todo for frontend-CLI integration verification';
+      const todoDescription =
+        'Test todo for frontend-CLI integration verification';
 
       const createOutput = execSync(
         `pnpm run cli -- create "${testTodoTitle}" "${todoDescription}" --blockchain`,
         {
           encoding: 'utf8',
           cwd: projectRoot,
-          timeout: 120000
+          timeout: 120000,
         }
       );
 
@@ -294,7 +311,7 @@ describe('Frontend-CLI Integration Tests', () => {
       const listOutput = execSync('pnpm run cli -- list --blockchain --json', {
         encoding: 'utf8',
         cwd: projectRoot,
-        timeout: 60000
+        timeout: 60000,
       });
 
       const todos: CliTodo[] = JSON.parse(listOutput);
@@ -321,21 +338,26 @@ describe('Frontend-CLI Integration Tests', () => {
         {
           encoding: 'utf8',
           cwd: projectRoot,
-          timeout: 120000
+          timeout: 120000,
         }
       );
 
       expect(completeOutput).toContain('completed successfully');
 
       // Verify the change is reflected in subsequent list calls
-      const updatedListOutput = execSync('pnpm run cli -- list --blockchain --json', {
-        encoding: 'utf8',
-        cwd: projectRoot,
-        timeout: 60000
-      });
+      const updatedListOutput = execSync(
+        'pnpm run cli -- list --blockchain --json',
+        {
+          encoding: 'utf8',
+          cwd: projectRoot,
+          timeout: 60000,
+        }
+      );
 
       const updatedTodos: CliTodo[] = JSON.parse(updatedListOutput);
-      const completedTodo = updatedTodos.find(todo => todo.title === testTodoTitle);
+      const completedTodo = updatedTodos.find(
+        todo => todo.title === testTodoTitle
+      );
 
       expect(completedTodo).toBeTruthy();
       expect(completedTodo!.completed).toBe(true);
@@ -346,11 +368,14 @@ describe('Frontend-CLI Integration Tests', () => {
 
   describe('Real-time Event Integration', () => {
     test('should verify frontend has event subscription infrastructure', async () => {
-      const eventHookPath = path.join(frontendPath, 'src/hooks/useBlockchainEvents.ts');
-      
+      const eventHookPath = path.join(
+        frontendPath,
+        'src/hooks/useBlockchainEvents.ts'
+      );
+
       if (fs.existsSync(eventHookPath)) {
         const eventHookContent = fs.readFileSync(eventHookPath, 'utf8');
-        
+
         expect(eventHookContent).toContain('useEffect');
         expect(eventHookContent).toContain('subscription');
         expect(eventHookContent).toMatch(/TodoNFT|todo.*event/i);
@@ -362,8 +387,14 @@ describe('Frontend-CLI Integration Tests', () => {
     });
 
     test('should verify event handling components exist', async () => {
-      const realtimeComponentPath = path.join(frontendPath, 'src/components/RealtimeTodoList.tsx');
-      const eventStatusPath = path.join(frontendPath, 'src/components/BlockchainEventStatus.tsx');
+      const realtimeComponentPath = path.join(
+        frontendPath,
+        'src/components/RealtimeTodoList.tsx'
+      );
+      const eventStatusPath = path.join(
+        frontendPath,
+        'src/components/BlockchainEventStatus.tsx'
+      );
 
       if (fs.existsSync(realtimeComponentPath)) {
         const content = fs.readFileSync(realtimeComponentPath, 'utf8');
@@ -377,7 +408,10 @@ describe('Frontend-CLI Integration Tests', () => {
         // console.log('✓ Event status component verified'); // Removed console statement
       }
 
-      if (!fs.existsSync(realtimeComponentPath) && !fs.existsSync(eventStatusPath)) {
+      if (
+        !fs.existsSync(realtimeComponentPath) &&
+        !fs.existsSync(eventStatusPath)
+      ) {
         // console.log('⚠ Real-time event components not found - feature may not be fully implemented'); // Removed console statement
       }
     });
@@ -386,11 +420,14 @@ describe('Frontend-CLI Integration Tests', () => {
       // This test verifies that the event subscription would work
       // by checking the configuration and infrastructure
 
-      const blockchainConfigPath = path.join(frontendPath, 'src/lib/blockchain-events.ts');
-      
+      const blockchainConfigPath = path.join(
+        frontendPath,
+        'src/lib/blockchain-events.ts'
+      );
+
       if (fs.existsSync(blockchainConfigPath)) {
         const configContent = fs.readFileSync(blockchainConfigPath, 'utf8');
-        
+
         expect(configContent).toMatch(/subscription|websocket|event/i);
         expect(configContent).toMatch(/TodoNFT|package.*id/i);
 
@@ -408,7 +445,7 @@ describe('Frontend-CLI Integration Tests', () => {
         execSync('pnpm run cli -- create "" "" --blockchain', {
           encoding: 'utf8',
           cwd: projectRoot,
-          timeout: 30000
+          timeout: 30000,
         });
         // Should not reach here
         expect(false).toBe(true);
@@ -422,7 +459,10 @@ describe('Frontend-CLI Integration Tests', () => {
     test('should verify frontend can handle missing configuration', async () => {
       // Temporarily rename config file
       const configPath = path.join(frontendPath, 'public/config/testnet.json');
-      const backupPath = path.join(frontendPath, 'public/config/testnet.json.backup');
+      const backupPath = path.join(
+        frontendPath,
+        'public/config/testnet.json.backup'
+      );
 
       if (fs.existsSync(configPath)) {
         fs.renameSync(configPath, backupPath);
@@ -430,14 +470,16 @@ describe('Frontend-CLI Integration Tests', () => {
         try {
           // Frontend should handle missing config gracefully
           // This test verifies the error handling exists
-          const configUtilPath = path.join(frontendPath, 'src/lib/config-loader.ts');
-          
+          const configUtilPath = path.join(
+            frontendPath,
+            'src/lib/config-loader.ts'
+          );
+
           if (fs.existsSync(configUtilPath)) {
             const configUtil = fs.readFileSync(configUtilPath, 'utf8');
             expect(configUtil).toMatch(/try.*catch|error.*handling/i);
             // console.log('✓ Frontend config error handling verified'); // Removed console statement
           }
-
         } finally {
           // Restore config file
           if (fs.existsSync(backupPath)) {
@@ -453,12 +495,14 @@ describe('Frontend-CLI Integration Tests', () => {
         execSync('pnpm run cli -- deploy --network invalid-network', {
           encoding: 'utf8',
           cwd: projectRoot,
-          timeout: 30000
+          timeout: 30000,
         });
         expect(false).toBe(true);
       } catch (_error) {
         const errorOutput = error.toString();
-        expect(errorOutput).toMatch(/invalid.*network|network.*not.*supported/i);
+        expect(errorOutput).toMatch(
+          /invalid.*network|network.*not.*supported/i
+        );
         // console.log('✓ Network error handling verified'); // Removed console statement
       }
     });
@@ -472,7 +516,7 @@ describe('Frontend-CLI Integration Tests', () => {
       const configOutput = execSync('pnpm run cli -- config', {
         encoding: 'utf8',
         cwd: projectRoot,
-        timeout: 30000
+        timeout: 30000,
       });
       expect(configOutput).toMatch(/Package ID|Network|Address/);
 
@@ -483,7 +527,7 @@ describe('Frontend-CLI Integration Tests', () => {
         {
           encoding: 'utf8',
           cwd: projectRoot,
-          timeout: 120000
+          timeout: 120000,
         }
       );
       expect(createOutput).toContain('created successfully');
@@ -492,10 +536,12 @@ describe('Frontend-CLI Integration Tests', () => {
       const listOutput = execSync('pnpm run cli -- list --blockchain --json', {
         encoding: 'utf8',
         cwd: projectRoot,
-        timeout: 60000
+        timeout: 60000,
       });
       const todos = JSON.parse(listOutput);
-      const workflowTodo = todos.find((todo: CliTodo) => todo.title === workflowTodoTitle);
+      const workflowTodo = todos.find(
+        (todo: CliTodo) => todo.title === workflowTodoTitle
+      );
       expect(workflowTodo).toBeTruthy();
       expect(workflowTodo.completed).toBe(false);
 
@@ -505,19 +551,24 @@ describe('Frontend-CLI Integration Tests', () => {
         {
           encoding: 'utf8',
           cwd: projectRoot,
-          timeout: 120000
+          timeout: 120000,
         }
       );
       expect(completeOutput).toContain('completed successfully');
 
       // Step 5: Final verification
-      const finalListOutput = execSync('pnpm run cli -- list --blockchain --json', {
-        encoding: 'utf8',
-        cwd: projectRoot,
-        timeout: 60000
-      });
+      const finalListOutput = execSync(
+        'pnpm run cli -- list --blockchain --json',
+        {
+          encoding: 'utf8',
+          cwd: projectRoot,
+          timeout: 60000,
+        }
+      );
       const finalTodos = JSON.parse(finalListOutput);
-      const completedTodo = finalTodos.find((todo: CliTodo) => todo.title === workflowTodoTitle);
+      const completedTodo = finalTodos.find(
+        (todo: CliTodo) => todo.title === workflowTodoTitle
+      );
       expect(completedTodo).toBeTruthy();
       expect(completedTodo.completed).toBe(true);
 
@@ -531,7 +582,10 @@ describe('Frontend-CLI Integration Tests', () => {
       const checks = [
         { name: 'CLI Build', command: 'pnpm run cli -- --version' },
         { name: 'Smart Contract Config', command: 'pnpm run cli -- config' },
-        { name: 'Blockchain Connection', command: 'pnpm run cli -- list --limit 1 --blockchain' }
+        {
+          name: 'Blockchain Connection',
+          command: 'pnpm run cli -- list --limit 1 --blockchain',
+        },
       ];
 
       const results = [];
@@ -541,11 +595,19 @@ describe('Frontend-CLI Integration Tests', () => {
           const output = execSync(check.command, {
             encoding: 'utf8',
             cwd: projectRoot,
-            timeout: 60000
+            timeout: 60000,
           });
-          results.push({ name: check.name, status: 'PASS', output: output.substring(0, 100) });
+          results.push({
+            name: check.name,
+            status: 'PASS',
+            output: output.substring(0, 100),
+          });
         } catch (_error) {
-          results.push({ name: check.name, status: 'FAIL', error: error.toString().substring(0, 100) });
+          results.push({
+            name: check.name,
+            status: 'FAIL',
+            error: error.toString().substring(0, 100),
+          });
         }
       }
 

@@ -25,7 +25,7 @@ describe('TestReportAggregator', () => {
         failedRequests: 10,
         totalDuration: 5000,
         successRate: 90,
-        avgResponseTime: 50
+        avgResponseTime: 50,
       };
 
       // Test that TypeScript recognizes these properties
@@ -40,21 +40,21 @@ describe('TestReportAggregator', () => {
       const mockStressData = {
         timestamp: '2024-01-01T00:00:00Z',
         metrics: {
-          'create': {
+          create: {
             successfulRequests: 150,
             failedRequests: 5,
             totalDuration: 7500,
             successRate: 96.8,
-            avgResponseTime: 48.4
+            avgResponseTime: 48.4,
           },
-          'update': {
+          update: {
             successfulRequests: 200,
             failedRequests: 3,
             totalDuration: 8000,
             successRate: 98.5,
-            avgResponseTime: 39.4
-          }
-        }
+            avgResponseTime: 39.4,
+          },
+        },
       };
 
       // Verify the structure matches our TestStats interface
@@ -73,14 +73,14 @@ describe('TestReportAggregator', () => {
       const stressTestData = {
         timestamp: '2024-01-01T00:00:00Z',
         metrics: {
-          'operation1': {
+          operation1: {
             successfulRequests: 100,
             failedRequests: 10,
             totalDuration: 5000,
             successRate: 90,
-            avgResponseTime: 50
-          }
-        }
+            avgResponseTime: 50,
+          },
+        },
       };
 
       mockFs.existsSync.mockReturnValue(true);
@@ -89,7 +89,7 @@ describe('TestReportAggregator', () => {
 
       // Test the private method indirectly by calling loadExistingResults
       const results = await aggregator.loadExistingResults();
-      
+
       // The results should include stress test data properly typed
       expect(results).toBeDefined();
     });
@@ -108,7 +108,7 @@ describe('TestReportAggregator', () => {
         successRate: 90,
         suites: [],
         coverage: undefined,
-        performance: undefined
+        performance: undefined,
       };
 
       expect(mockResults.title).toBe('Test Report');

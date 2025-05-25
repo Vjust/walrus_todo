@@ -24,7 +24,7 @@ export default class SyncCommand extends BaseCommand {
     '<%= config.bin %> sync my-list --resolve local            # Use local version for conflicts',
     '<%= config.bin %> sync --all --resolve newest             # Sync all lists, keep newest',
     '<%= config.bin %> sync work --dry-run                     # Preview sync changes',
-    '<%= config.bin %> sync personal --force --resolve remote  # Force sync, prefer remote'
+    '<%= config.bin %> sync personal --force --resolve remote  # Force sync, prefer remote',
   ];
 
   static flags = {
@@ -36,25 +36,25 @@ export default class SyncCommand extends BaseCommand {
     all: Flags.boolean({
       char: 'a',
       description: 'Sync all todos across all lists',
-      exclusive: ['id']
+      exclusive: ['id'],
     }),
     resolve: Flags.string({
       char: 'r',
       description: 'Conflict resolution strategy',
       options: ['local', 'blockchain', 'newest', 'oldest', 'ask'],
-      default: 'ask'
+      default: 'ask',
     }),
     force: Flags.boolean({
       char: 'f',
-      description: 'Force sync without confirmations'
+      description: 'Force sync without confirmations',
     }),
   };
 
   static args = {
     listName: Args.string({
       description: 'Name of the todo list',
-      required: false
-    })
+      required: false,
+    }),
   };
 
   private todoService = new TodoService();
@@ -78,36 +78,53 @@ export default class SyncCommand extends BaseCommand {
         for (const listName of lists) {
           const list = await this.todoService.getList(listName);
           if (list) {
-            const bothStorageTodos = list.todos.filter(t => t.storageLocation === 'both');
-            todosToSync.push(...bothStorageTodos.map(todo => ({ todo, listName })));
+            const bothStorageTodos = list.todos.filter(
+              t => t.storageLocation === 'both'
+            );
+            todosToSync.push(
+              ...bothStorageTodos.map(todo => ({ todo, listName }))
+            );
           }
         }
       } else {
         // Sync specific list or todo
         const listName = args.listName || 'default';
         const list = await this.todoService.getList(listName);
-        
+
         if (!list) {
           throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
         }
 
         if (flags.id) {
-          const todo = await this.todoService.findTodoByIdOrTitle(flags.id, listName);
+          const todo = await this.todoService.findTodoByIdOrTitle(
+            flags.id,
+            listName
+          );
           if (!todo) {
-            throw new CLIError(`Todo "${flags.id}" not found`, 'TODO_NOT_FOUND');
+            throw new CLIError(
+              `Todo "${flags.id}" not found`,
+              'TODO_NOT_FOUND'
+            );
           }
           if (todo.storageLocation !== 'both') {
-            throw new CLIError(`Todo "${todo.title}" is not configured for 'both' storage`, 'INVALID_STORAGE');
+            throw new CLIError(
+              `Todo "${todo.title}" is not configured for 'both' storage`,
+              'INVALID_STORAGE'
+            );
           }
           todosToSync = [{ todo, listName }];
         } else {
-          const bothStorageTodos = list.todos.filter(t => t.storageLocation === 'both');
+          const bothStorageTodos = list.todos.filter(
+            t => t.storageLocation === 'both'
+          );
           todosToSync = bothStorageTodos.map(todo => ({ todo, listName }));
         }
       }
 
       if (todosToSync.length === 0) {
-        this.log(chalk.yellow('No todos found with "both" storage mode to sync'));
+        this.log(
+          chalk.yellow('No todos found with "both" storage mode to sync')
+        );
         return;
       }
 
@@ -118,13 +135,13 @@ export default class SyncCommand extends BaseCommand {
 
       // Check sync status for all todos
       const syncResults = await this.checkSyncStatus(todosToSync);
-      
+
       // Display sync status
       this.displaySyncStatus(syncResults);
 
       // Process todos that need syncing
       const needsSync = syncResults.filter(r => !r.synced);
-      
+
       if (needsSync.length === 0) {
         this.log(chalk.green('✓ All todos are synchronized'));
         return;
@@ -134,7 +151,7 @@ export default class SyncCommand extends BaseCommand {
       if (!flags.force && needsSync.length > 0) {
         const shouldSync = await confirm({
           message: `Sync ${needsSync.length} todo${needsSync.length !== 1 ? 's' : ''}?`,
-          default: false
+          default: false,
         });
         if (!shouldSync) {
           this.log(chalk.yellow('Sync cancelled'));
@@ -144,7 +161,6 @@ export default class SyncCommand extends BaseCommand {
 
       // Perform sync operations
       await this.performSync(needsSync, flags.resolve);
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -160,25 +176,27 @@ export default class SyncCommand extends BaseCommand {
 
   private async checkSyncStatus(
     todosToSync: Array<{ todo: Todo; listName: string }>
-  ): Promise<Array<{
-    todo: Todo;
-    listName: string;
-    synced: boolean;
-    localNewer?: boolean;
-    blockchainNewer?: boolean;
-    error?: string;
-  }>> {
+  ): Promise<
+    Array<{
+      todo: Todo;
+      listName: string;
+      synced: boolean;
+      localNewer?: boolean;
+      blockchainNewer?: boolean;
+      error?: string;
+    }>
+  > {
     const results = [];
-    
+
     for (const { todo, listName } of todosToSync) {
       const syncStatus = await this.validator.validateSyncStatus(todo);
       results.push({
         todo,
         listName,
-        ...syncStatus
+        ...syncStatus,
       });
     }
-    
+
     return results;
   }
 
@@ -193,20 +211,24 @@ export default class SyncCommand extends BaseCommand {
     }>
   ): void {
     const sections = [];
-    
+
     const synced = syncResults.filter(r => r.synced);
     const needsSync = syncResults.filter(r => !r.synced && !r.error);
     const errors = syncResults.filter(r => r.error);
-    
+
     if (synced.length > 0) {
       sections.push(
         chalk.green(`${ICONS.SUCCESS} Synchronized: ${synced.length}`)
       );
     }
-    
+
     if (needsSync.length > 0) {
       const conflicts = needsSync.map(r => {
-        const direction = r.localNewer ? 'Local newer' : r.blockchainNewer ? 'Blockchain newer' : 'Out of sync';
+        const direction = r.localNewer
+          ? 'Local newer'
+          : r.blockchainNewer
+            ? 'Blockchain newer'
+            : 'Out of sync';
         return `  ${ICONS.ARROW} "${r.todo.title}" - ${chalk.yellow(direction)}`;
       });
       sections.push(
@@ -214,17 +236,17 @@ export default class SyncCommand extends BaseCommand {
         ...conflicts
       );
     }
-    
+
     if (errors.length > 0) {
-      const errorList = errors.map(r => 
-        `  ${ICONS.ERROR} "${r.todo.title}" - ${chalk.red(r.error)}`
+      const errorList = errors.map(
+        r => `  ${ICONS.ERROR} "${r.todo.title}" - ${chalk.red(r.error)}`
       );
       sections.push(
         chalk.red(`${ICONS.ERROR} Errors: ${errors.length}`),
         ...errorList
       );
     }
-    
+
     this.section('Sync Status', sections.join('\n'));
   }
 
@@ -244,13 +266,17 @@ export default class SyncCommand extends BaseCommand {
     for (const { todo, listName, localNewer, blockchainNewer } of needsSync) {
       try {
         let resolution: 'local' | 'blockchain';
-        
+
         // Determine resolution strategy
         if (resolveStrategy === 'ask') {
           if (spinner) {
             this.stopSpinnerSuccess(spinner, '');
           }
-          resolution = await this.askResolution(todo, localNewer || todo, blockchainNewer || todo);
+          resolution = await this.askResolution(
+            todo,
+            localNewer || todo,
+            blockchainNewer || todo
+          );
           // @ts-expect-error - startSpinner may return undefined in tests
           spinner = this.startSpinner('Continuing sync...');
         } else if (resolveStrategy === 'newest') {
@@ -270,15 +296,21 @@ export default class SyncCommand extends BaseCommand {
         } else {
           // Update local with blockchain version
           if (todo.walrusBlobId) {
-            const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId);
-            await this.todoService.updateTodo(listName, todo.id, blockchainTodo);
+            const blockchainTodo = await this.walrusStorage.retrieveTodo(
+              todo.walrusBlobId
+            );
+            await this.todoService.updateTodo(
+              listName,
+              todo.id,
+              blockchainTodo
+            );
           }
         }
-        
+
         successCount++;
       } catch (_error) {
         failCount++;
-        this.warning(`Failed to sync "${todo.title}": ${error.message}`);
+        this.warning(`Failed to sync "${todo.title}": ${_error.message}`);
       }
     }
 
@@ -288,10 +320,15 @@ export default class SyncCommand extends BaseCommand {
     );
 
     // Display summary
-    this.section('Sync Summary', [
-      `${ICONS.SUCCESS} Successfully synced: ${chalk.green(successCount)}`,
-      failCount > 0 ? `${ICONS.ERROR} Failed: ${chalk.red(failCount)}` : null,
-    ].filter(Boolean).join('\n'));
+    this.section(
+      'Sync Summary',
+      [
+        `${ICONS.SUCCESS} Successfully synced: ${chalk.green(successCount)}`,
+        failCount > 0 ? `${ICONS.ERROR} Failed: ${chalk.red(failCount)}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
   }
 
   private async askResolution(
@@ -302,18 +339,18 @@ export default class SyncCommand extends BaseCommand {
     const choices = [
       {
         name: `Use local version ${localNewer ? '(newer)' : ''}`,
-        value: 'local'
+        value: 'local',
       },
       {
         name: `Use blockchain version ${blockchainNewer ? '(newer)' : ''}`,
-        value: 'blockchain'
-      }
+        value: 'blockchain',
+      },
     ];
 
     this.log(`\nConflict detected for "${chalk.bold(todo.title)}"`);
     const resolution = await select({
       message: 'Which version should be used?',
-      choices
+      choices,
     });
 
     return resolution as 'local' | 'blockchain';

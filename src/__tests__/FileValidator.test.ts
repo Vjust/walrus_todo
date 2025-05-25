@@ -8,12 +8,16 @@ jest.mock('image-size', () => {
 });
 
 class MockHash {
-  update(_data: Buffer) { return this; }
-  digest() { return 'test-checksum'; }
+  update(_data: Buffer) {
+    return this;
+  }
+  digest() {
+    return 'test-checksum';
+  }
 }
 
 jest.mock('crypto', () => ({
-  createHash: () => new MockHash()
+  createHash: () => new MockHash(),
 }));
 
 describe('FileValidator', () => {
@@ -26,7 +30,7 @@ describe('FileValidator', () => {
     minHeight: 100,
     maxWidth: 4000,
     maxHeight: 4000,
-    allowedExtensions: ['jpg', 'jpeg', 'png', 'gif']
+    allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'],
   };
 
   beforeEach(() => {
@@ -34,10 +38,16 @@ describe('FileValidator', () => {
     validator = new FileValidator(defaultConfig);
 
     mockBuffer = Buffer.from([
-      0xFF, 0xD8, // JPEG SOI
-      0xFF, 0xE1, // EXIF marker
-      0x45, 0x78, 0x69, 0x66, // "Exif"
-      0x00, 0x00  // Null terminator
+      0xff,
+      0xd8, // JPEG SOI
+      0xff,
+      0xe1, // EXIF marker
+      0x45,
+      0x78,
+      0x69,
+      0x66, // "Exif"
+      0x00,
+      0x00, // Null terminator
     ]);
 
     (fs.readFileSync as jest.Mock).mockReturnValue(mockBuffer);
@@ -51,19 +61,24 @@ describe('FileValidator', () => {
 
       const result = await validator.validateFile('/test/image.jpg');
 
-      expect(result).toEqual(expect.objectContaining({
-        mimeType: 'image/jpeg',
-        width: 800,
-        height: 600,
-        extension: 'jpg'
-      }));
+      expect(result).toEqual(
+        expect.objectContaining({
+          mimeType: 'image/jpeg',
+          width: 800,
+          height: 600,
+          extension: 'jpg',
+        })
+      );
     });
 
     it('should reject file that is too large', async () => {
-      Object.defineProperty(mockBuffer, 'length', { value: defaultConfig.maxSize + 1 });
+      Object.defineProperty(mockBuffer, 'length', {
+        value: defaultConfig.maxSize + 1,
+      });
 
-      await expect(validator.validateFile('/test/large.jpg'))
-        .rejects.toThrow(/exceeds maximum allowed size/);
+      await expect(validator.validateFile('/test/large.jpg')).rejects.toThrow(
+        /exceeds maximum allowed size/
+      );
     });
 
     it('should reject unsupported file type', async () => {
@@ -71,36 +86,43 @@ describe('FileValidator', () => {
       const invalidBuffer = Buffer.from([0x00, 0x00, 0x00, 0x00]); // Invalid header
       Object.defineProperty(invalidBuffer, 'length', { value: 100 });
       (fs.readFileSync as jest.Mock).mockReturnValue(invalidBuffer);
-      jest.spyOn(validator as any, 'detectMimeType').mockReturnValueOnce('application/octet-stream');
+      jest
+        .spyOn(validator as any, 'detectMimeType')
+        .mockReturnValueOnce('application/octet-stream');
 
-      await expect(validator.validateFile('/test/file.txt'))
-        .rejects.toThrow(/not allowed. Allowed types:/);
+      await expect(validator.validateFile('/test/file.txt')).rejects.toThrow(
+        /not allowed. Allowed types:/
+      );
     });
 
     it('should reject file with invalid extension', async () => {
-
-      await expect(validator.validateFile('/test/file.bmp'))
-        .rejects.toThrow(/extension .bmp not allowed/);
+      await expect(validator.validateFile('/test/file.bmp')).rejects.toThrow(
+        /extension .bmp not allowed/
+      );
     });
 
     it('should validate image dimensions', async () => {
       Object.defineProperty(mockBuffer, 'length', { value: 1024 });
-      
+
       (sizeOf as jest.Mock).mockReturnValueOnce({ width: 50, height: 200 });
-      await expect(validator.validateFile('/test/small.jpg'))
-        .rejects.toThrow(/width 50px below minimum/);
+      await expect(validator.validateFile('/test/small.jpg')).rejects.toThrow(
+        /width 50px below minimum/
+      );
 
       (sizeOf as jest.Mock).mockReturnValueOnce({ width: 200, height: 50 });
-      await expect(validator.validateFile('/test/small.jpg'))
-        .rejects.toThrow(/height 50px below minimum/);
+      await expect(validator.validateFile('/test/small.jpg')).rejects.toThrow(
+        /height 50px below minimum/
+      );
 
       (sizeOf as jest.Mock).mockReturnValueOnce({ width: 5000, height: 200 });
-      await expect(validator.validateFile('/test/large.jpg'))
-        .rejects.toThrow(/width 5000px exceeds maximum/);
+      await expect(validator.validateFile('/test/large.jpg')).rejects.toThrow(
+        /width 5000px exceeds maximum/
+      );
 
       (sizeOf as jest.Mock).mockReturnValueOnce({ width: 200, height: 5000 });
-      await expect(validator.validateFile('/test/large.jpg'))
-        .rejects.toThrow(/height 5000px exceeds maximum/);
+      await expect(validator.validateFile('/test/large.jpg')).rejects.toThrow(
+        /height 5000px exceeds maximum/
+      );
     });
   });
 
@@ -108,31 +130,40 @@ describe('FileValidator', () => {
     it('should validate EXIF data structure', async () => {
       Object.defineProperty(mockBuffer, 'length', { value: 100 });
       (sizeOf as jest.Mock).mockReturnValueOnce({ width: 800, height: 600 });
-      
-      await expect(validator.validateFileContent('/test/image.jpg', { validateExif: true }))
-        .resolves.not.toThrow();
+
+      await expect(
+        validator.validateFileContent('/test/image.jpg', { validateExif: true })
+      ).resolves.not.toThrow();
     });
 
     it('should reject corrupt EXIF data', async () => {
       const badExifBuffer = Buffer.from([
-        0xFF, 0xD8, // JPEG SOI
-        0xFF, 0xE1, // EXIF marker
-        0x00, 0x00, 0x00, 0x00, // Invalid EXIF data
-        0x00, 0x00  // Null terminator
+        0xff,
+        0xd8, // JPEG SOI
+        0xff,
+        0xe1, // EXIF marker
+        0x00,
+        0x00,
+        0x00,
+        0x00, // Invalid EXIF data
+        0x00,
+        0x00, // Null terminator
       ]);
       Object.defineProperty(badExifBuffer, 'length', { value: 100 });
       (fs.readFileSync as jest.Mock).mockReturnValue(badExifBuffer);
       (sizeOf as jest.Mock).mockReturnValueOnce({ width: 800, height: 600 });
 
-      await expect(validator.validateFileContent('/test/image.jpg', { validateExif: true }))
-        .rejects.toThrow(/Invalid EXIF data structure/);
+      await expect(
+        validator.validateFileContent('/test/image.jpg', { validateExif: true })
+      ).rejects.toThrow(/Invalid EXIF data structure/);
     });
 
     it('should validate file minimum size', async () => {
       Object.defineProperty(mockBuffer, 'length', { value: 20 });
 
-      await expect(validator.validateFileContent('/test/small.jpg'))
-        .rejects.toThrow(/too small to be valid/);
+      await expect(
+        validator.validateFileContent('/test/small.jpg')
+      ).rejects.toThrow(/too small to be valid/);
     });
   });
 });

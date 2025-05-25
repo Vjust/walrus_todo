@@ -22,7 +22,7 @@ export enum ResourceType {
   TIMER = 'timer',
   DATABASE = 'database',
   EXTERNAL_PROCESS = 'external_process',
-  OTHER = 'other'
+  OTHER = 'other',
 }
 
 /**
@@ -72,14 +72,14 @@ export class ResourceManager {
   private resources: Map<string, ResourceRegistration> = new Map();
   private disposed = false;
   private readonly autoDispose: boolean;
-  
+
   /**
    * Create a new ResourceManager
    * @param options Configuration options
    */
   private constructor(options: { autoDispose?: boolean } = {}) {
     this.autoDispose = options.autoDispose ?? true;
-    
+
     // Register automatic cleanup if enabled
     if (this.autoDispose) {
       // Handle normal exit
@@ -88,7 +88,7 @@ export class ResourceManager {
           logger.error('Error during resource cleanup on exit:', err);
         });
       });
-      
+
       // Handle signals
       ['SIGINT', 'SIGTERM'].forEach(signal => {
         process.on(signal, () => {
@@ -102,45 +102,53 @@ export class ResourceManager {
             });
         });
       });
-      
+
       // Handle uncaught exceptions
-      process.on('uncaughtException', (err) => {
+      process.on('uncaughtException', err => {
         logger.error('Uncaught exception:', err);
         this.disposeAll()
           .then(() => {
             process.exit(1);
           })
           .catch(cleanupErr => {
-            logger.error('Error during resource cleanup after uncaught exception:', cleanupErr);
+            logger.error(
+              'Error during resource cleanup after uncaught exception:',
+              cleanupErr
+            );
             process.exit(1);
           });
       });
-      
+
       // Handle unhandled promise rejections
-      process.on('unhandledRejection', (reason) => {
+      process.on('unhandledRejection', reason => {
         logger.error('Unhandled promise rejection:', reason);
         this.disposeAll()
           .then(() => {
             process.exit(1);
           })
           .catch(cleanupErr => {
-            logger.error('Error during resource cleanup after unhandled rejection:', cleanupErr);
+            logger.error(
+              'Error during resource cleanup after unhandled rejection:',
+              cleanupErr
+            );
             process.exit(1);
           });
       });
     }
   }
-  
+
   /**
    * Get the singleton instance of ResourceManager
    */
-  public static getInstance(options?: { autoDispose?: boolean }): ResourceManager {
+  public static getInstance(options?: {
+    autoDispose?: boolean;
+  }): ResourceManager {
     if (!ResourceManager.instance) {
       ResourceManager.instance = new ResourceManager(options);
     }
     return ResourceManager.instance;
   }
-  
+
   /**
    * Register a resource for management
    * @param resource Resource to register
@@ -162,9 +170,11 @@ export class ResourceManager {
 
     const {
       id = `resource-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      type = isBaseAdapter(resource) ? ResourceType.ADAPTER : ResourceType.OTHER,
+      type = isBaseAdapter(resource)
+        ? ResourceType.ADAPTER
+        : ResourceType.OTHER,
       description = `Resource ${id}`,
-      disposeWithManager = true
+      disposeWithManager = true,
     } = options;
 
     // Handle BaseAdapter resources
@@ -184,8 +194,8 @@ export class ResourceManager {
           type,
           description,
           disposeWithManager,
-          registeredAt: new Date()
-        }
+          registeredAt: new Date(),
+        },
       };
 
       // Register the wrapper
@@ -195,7 +205,7 @@ export class ResourceManager {
         description,
         disposeWithManager,
         registeredAt: new Date(),
-        resource: adapterWrapper
+        resource: adapterWrapper,
       });
 
       // Return the original adapter
@@ -215,7 +225,7 @@ export class ResourceManager {
       type,
       description,
       disposeWithManager,
-      registeredAt: new Date()
+      registeredAt: new Date(),
     };
 
     // Register resource
@@ -225,13 +235,13 @@ export class ResourceManager {
       description,
       disposeWithManager,
       registeredAt: new Date(),
-      resource
+      resource,
     });
 
     // Return resource
     return resource;
   }
-  
+
   /**
    * Dispose a specific resource
    * @param id Resource ID
@@ -270,7 +280,7 @@ export class ResourceManager {
       return false;
     }
   }
-  
+
   /**
    * Dispose all resources of a specific type
    * @param type Resource type to dispose
@@ -289,19 +299,25 @@ export class ResourceManager {
     const errors: Error[] = [];
 
     // Get all resources of type
-    const resources = Array.from(this.resources.values())
-      .filter(r => r.type === type);
+    const resources = Array.from(this.resources.values()).filter(
+      r => r.type === type
+    );
 
     if (resources.length === 0) {
       return 0;
     }
 
     // Dispose in reverse order of registration (LIFO)
-    resources.sort((a, b) => b.registeredAt.getTime() - a.registeredAt.getTime());
+    resources.sort(
+      (a, b) => b.registeredAt.getTime() - a.registeredAt.getTime()
+    );
 
     for (const registration of resources) {
       try {
-        if (!registration.resource.isDisposed() && registration.disposeWithManager) {
+        if (
+          !registration.resource.isDisposed() &&
+          registration.disposeWithManager
+        ) {
           await registration.resource.dispose();
           disposed++;
         }
@@ -334,7 +350,7 @@ export class ResourceManager {
 
     return disposed;
   }
-  
+
   /**
    * Dispose all managed resources
    *
@@ -368,7 +384,7 @@ export class ResourceManager {
       ResourceType.TIMER,
       ResourceType.DATABASE,
       ResourceType.EXTERNAL_PROCESS,
-      ResourceType.OTHER
+      ResourceType.OTHER,
     ];
 
     // Dispose in priority order
@@ -376,16 +392,20 @@ export class ResourceManager {
       try {
         await this.disposeResourcesByType(type, {
           continueOnError: options.continueOnError,
-          throwOnError: false // We'll handle errors aggregated at this level
+          throwOnError: false, // We'll handle errors aggregated at this level
         });
       } catch (error) {
         if (options.continueOnError) {
-          errors.push(error instanceof Error ? error : new Error(String(error)));
-        } else if (options.throwOnError) {
-          throw error instanceof ResourceManagerError ? error : new ResourceManagerError(
-            `Failed to dispose resources of type ${type}: ${error instanceof Error ? error.message : String(error)}`,
-            error instanceof Error ? error : undefined
+          errors.push(
+            error instanceof Error ? error : new Error(String(error))
           );
+        } else if (options.throwOnError) {
+          throw error instanceof ResourceManagerError
+            ? error
+            : new ResourceManagerError(
+                `Failed to dispose resources of type ${type}: ${error instanceof Error ? error.message : String(error)}`,
+                error instanceof Error ? error : undefined
+              );
         } else {
           logger.error(`Error during disposeAll (type ${type}):`, error);
           break;
@@ -409,7 +429,7 @@ export class ResourceManager {
       );
     }
   }
-  
+
   /**
    * Get active resources for debugging
    */
@@ -425,10 +445,10 @@ export class ResourceManager {
         id: r.id,
         type: r.type,
         description: r.description,
-        registeredAt: r.registeredAt
+        registeredAt: r.registeredAt,
       }));
   }
-  
+
   /**
    * Get statistics about managed resources
    */
@@ -442,12 +462,15 @@ export class ResourceManager {
       total: this.resources.size,
       active: 0,
       disposed: 0,
-      byType: Object.values(ResourceType).reduce((acc, type) => {
-        acc[type] = 0;
-        return acc;
-      }, {} as Record<ResourceType, number>)
+      byType: Object.values(ResourceType).reduce(
+        (acc, type) => {
+          acc[type] = 0;
+          return acc;
+        },
+        {} as Record<ResourceType, number>
+      ),
     };
-    
+
     // Calculate stats
     for (const registration of this.resources.values()) {
       if (!registration.resource.isDisposed()) {
@@ -457,7 +480,7 @@ export class ResourceManager {
       }
       stats.byType[registration.type]++;
     }
-    
+
     return stats;
   }
 }
@@ -465,7 +488,9 @@ export class ResourceManager {
 /**
  * Get the singleton instance of ResourceManager
  */
-export function getResourceManager(options?: { autoDispose?: boolean }): ResourceManager {
+export function getResourceManager(options?: {
+  autoDispose?: boolean;
+}): ResourceManager {
   return ResourceManager.getInstance(options);
 }
 
@@ -489,7 +514,7 @@ export function registerAdapter<T extends BaseAdapter<unknown>>(
     id: options.id,
     type: ResourceType.ADAPTER,
     description: options.description || 'Adapter',
-    disposeWithManager: options.disposeWithManager ?? true
+    disposeWithManager: options.disposeWithManager ?? true,
   });
 }
 

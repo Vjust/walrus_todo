@@ -6,7 +6,11 @@
 export interface ClipboardResult {
   success: boolean;
   error?: Error;
-  method?: 'clipboard-api' | 'document-execcommand' | 'clipboard-polyfill' | 'none';
+  method?:
+    | 'clipboard-api'
+    | 'document-execcommand'
+    | 'clipboard-polyfill'
+    | 'none';
 }
 
 // Custom error types for better error handling
@@ -59,33 +63,33 @@ export function getClipboardCapabilities(): {
       hasModernApi: false,
       hasLegacySupport: false,
       isSecureContext: false,
-      canPolyfill: false
+      canPolyfill: false,
     };
   }
-  
+
   // Check for secure context (HTTPS or localhost)
   const isSecureContext = window.isSecureContext === true;
-  
+
   // Check for modern clipboard API
-  const hasModernApi = 
-    typeof navigator !== 'undefined' && 
+  const hasModernApi =
+    typeof navigator !== 'undefined' &&
     navigator.clipboard !== undefined &&
     typeof navigator.clipboard.writeText === 'function';
-  
+
   // Check for legacy support via execCommand
-  const hasLegacySupport = 
-    typeof document !== 'undefined' && 
-    document.queryCommandSupported && 
+  const hasLegacySupport =
+    typeof document !== 'undefined' &&
+    document.queryCommandSupported &&
     document.queryCommandSupported('copy');
-  
+
   // Check if we can use any method (including polyfill)
   const canPolyfill = hasLegacySupport || hasModernApi;
-  
+
   return {
     hasModernApi,
     hasLegacySupport,
     isSecureContext,
-    canPolyfill
+    canPolyfill,
   };
 }
 
@@ -97,7 +101,7 @@ function copyWithExecCommand(text: string): boolean {
     // Create temporary element
     const textArea = document.createElement('textarea');
     textArea.value = text;
-    
+
     // Hide the element but make it available for selection
     textArea.style.position = 'fixed';
     textArea.style.opacity = '0';
@@ -105,23 +109,23 @@ function copyWithExecCommand(text: string): boolean {
     textArea.style.top = '0';
     textArea.setAttribute('readonly', '');
     textArea.setAttribute('aria-hidden', 'true');
-    
+
     // Add to DOM
     document.body.appendChild(textArea);
-    
+
     // Select text
     textArea.focus();
     textArea.select();
-    
+
     // For mobile devices
     textArea.setSelectionRange(0, text.length);
-    
+
     // Execute copy command
     const successful = document.execCommand('copy');
-    
+
     // Clean up
     document.body.removeChild(textArea);
-    
+
     return successful;
   } catch (e) {
     console.warn('Legacy clipboard copy failed:', e);
@@ -142,12 +146,12 @@ function enhanceClipboardError(error: unknown): Error {
       return new InsecureContextError();
     }
   }
-  
+
   // Return original error if it's already an Error instance
   if (error instanceof Error) {
     return error;
   }
-  
+
   // Create generic error for other cases
   return new ClipboardError(String(error) || 'Unknown clipboard error');
 }
@@ -160,42 +164,44 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
   if (typeof window === 'undefined') {
     return {
       success: false,
-      error: new ClipboardError('Clipboard operations require a browser environment'),
-      method: 'none'
+      error: new ClipboardError(
+        'Clipboard operations require a browser environment'
+      ),
+      method: 'none',
     };
   }
-  
+
   const capabilities = getClipboardCapabilities();
-  
+
   // Try modern clipboard API first (if available)
   if (capabilities.hasModernApi && capabilities.isSecureContext) {
     try {
       await navigator.clipboard.writeText(text);
-      return { 
+      return {
         success: true,
-        method: 'clipboard-api'
+        method: 'clipboard-api',
       };
     } catch (error) {
       console.warn('Modern clipboard API failed, falling back:', error);
       // Continue to fallbacks instead of returning immediately
     }
   }
-  
+
   // Try legacy method
   if (capabilities.hasLegacySupport) {
     const legacyResult = copyWithExecCommand(text);
     if (legacyResult) {
-      return { 
+      return {
         success: true,
-        method: 'document-execcommand'
+        method: 'document-execcommand',
       };
     }
   }
-  
+
   // If we got here, both modern and legacy methods failed
   // Create appropriate error based on context
   let error: Error;
-  
+
   if (!capabilities.isSecureContext) {
     error = new InsecureContextError();
   } else if (!capabilities.hasModernApi && !capabilities.hasLegacySupport) {
@@ -203,11 +209,11 @@ export async function copyToClipboard(text: string): Promise<ClipboardResult> {
   } else {
     error = new ClipboardError('All clipboard methods failed');
   }
-  
+
   return {
     success: false,
     error,
-    method: 'none'
+    method: 'none',
   };
 }
 
@@ -224,22 +230,22 @@ export function isCopySupported(): boolean {
  */
 export function getClipboardSupportMessage(): string {
   const capabilities = getClipboardCapabilities();
-  
+
   if (!capabilities.hasModernApi && !capabilities.hasLegacySupport) {
     return 'Copy to clipboard is not supported in this browser';
   }
-  
+
   if (!capabilities.isSecureContext) {
     return 'Copy requires a secure context (HTTPS). Some features may be limited.';
   }
-  
+
   if (capabilities.hasModernApi) {
     return 'Clipboard API is fully supported';
   }
-  
+
   if (capabilities.hasLegacySupport) {
     return 'Using legacy clipboard support';
   }
-  
+
   return 'Limited clipboard support';
 }

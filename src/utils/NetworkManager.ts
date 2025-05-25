@@ -1,4 +1,7 @@
-import { AsyncOperationHandler, AsyncOperationOptions } from './walrus-error-handler';
+import {
+  AsyncOperationHandler,
+  AsyncOperationOptions,
+} from './walrus-error-handler';
 import { NetworkError } from '../types/errors';
 
 /**
@@ -64,9 +67,9 @@ const DEFAULT_FETCH_OPTIONS: EnhancedFetchOptions = {
 };
 
 /**
- * NetworkManager - A utility class for handling network operations with 
+ * NetworkManager - A utility class for handling network operations with
  * robust timeout handling, cancellation support, and retry mechanisms.
- * 
+ *
  * Features:
  * - Configurable timeouts with AbortController for proper cancellation
  * - Automatic retries with exponential backoff and jitter
@@ -80,20 +83,20 @@ export class NetworkManager {
    * Enhanced fetch implementation with robust error handling, timeouts, and retries
    */
   public static async fetch<T = any>(
-    url: string, 
+    url: string,
     options: EnhancedFetchOptions = {}
   ): Promise<EnhancedFetchResponse<T>> {
     const opts = { ...DEFAULT_FETCH_OPTIONS, ...options };
-    const { 
-      timeout, 
-      retries, 
-      retryDelay, 
+    const {
+      timeout,
+      retries,
+      retryDelay,
       operationName,
       retryableStatusCodes,
       logRetries,
       parseJson,
       throwErrors,
-      ...fetchOptions 
+      ...fetchOptions
     } = opts;
 
     // Create a parent AbortController for the overall operation
@@ -120,16 +123,18 @@ export class NetworkManager {
     const fetchOperation = async () => {
       // Set up timeout if specified
       let timeoutId: NodeJS.Timeout | undefined;
-      
+
       if (timeout) {
         timeoutId = setTimeout(() => {
-          controller.abort(new Error(`Operation ${operationName} timed out after ${timeout}ms`));
+          controller.abort(
+            new Error(`Operation ${operationName} timed out after ${timeout}ms`)
+          );
         }, timeout);
       }
 
       try {
         const response = await fetch(url, fetchOptsWithSignal);
-        
+
         // Clear timeout if it was set
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -137,21 +142,26 @@ export class NetworkManager {
 
         // Check if we should retry based on status code
         if (retryableStatusCodes?.includes(response.status)) {
-          throw new NetworkError(`HTTP ${response.status}: ${response.statusText}`, {
-            operation: operationName || 'fetch',
-            recoverable: true,
-          });
+          throw new NetworkError(
+            `HTTP ${response.status}: ${response.statusText}`,
+            {
+              operation: operationName || 'fetch',
+              recoverable: true,
+            }
+          );
         }
 
         // Process successful response
         let data: T | undefined;
-        
+
         if (parseJson && response.ok) {
           try {
             data = await response.clone().json();
           } catch (parseError) {
             if (throwErrors) {
-              throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+              throw new Error(
+                `Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+              );
             }
           }
         }
@@ -198,10 +208,13 @@ export class NetworkManager {
 
     try {
       // Execute with retry logic
-      const result = await AsyncOperationHandler.execute(fetchOperation, asyncOptions);
-      
+      const result = await AsyncOperationHandler.execute(
+        fetchOperation,
+        asyncOptions
+      );
+
       const enhancedResponse: EnhancedFetchResponse<T> = {
-        ...result.data as EnhancedFetchResponse<T>,
+        ...(result.data as EnhancedFetchResponse<T>),
         attempts: result.attempts,
         timeTaken: result.timeTaken || 0,
         ok: result.success && (result.data as EnhancedFetchResponse<T>)?.ok,
@@ -212,7 +225,7 @@ export class NetworkManager {
         const errorMessage = enhancedResponse.response
           ? `HTTP ${enhancedResponse.status}: ${enhancedResponse.statusText}`
           : result.error?.message || 'Unknown network error';
-          
+
         throw new NetworkError(errorMessage, {
           operation: operationName || 'fetch',
           recoverable: false,
@@ -273,11 +286,11 @@ export class NetworkManager {
       throwErrors?: boolean;
     } = {}
   ): Promise<EnhancedFetchResponse<T>[]> {
-    const { 
-      timeout, 
-      abortOnError = false, 
-      operationName = 'concurrent fetch', 
-      throwErrors = true 
+    const {
+      timeout,
+      abortOnError = false,
+      operationName = 'concurrent fetch',
+      throwErrors = true,
     } = options;
 
     // Create a parent AbortController for all operations
@@ -288,17 +301,19 @@ export class NetworkManager {
     let timeoutId: NodeJS.Timeout | undefined;
     if (timeout) {
       timeoutId = setTimeout(() => {
-        controller.abort(new Error(`Operation ${operationName} timed out after ${timeout}ms`));
+        controller.abort(
+          new Error(`Operation ${operationName} timed out after ${timeout}ms`)
+        );
       }, timeout);
     }
 
     try {
       const startTime = Date.now();
-      
+
       // Execute all operations with shared AbortController
       const promises = operations.map(op => {
-        const opOptions = { 
-          ...op.options, 
+        const opOptions = {
+          ...op.options,
           signal,
           throwErrors: false, // We'll handle errors at this level
         };
@@ -307,22 +322,24 @@ export class NetworkManager {
 
       // Wait for all promises to complete or fail
       let results: EnhancedFetchResponse<T>[];
-      
+
       if (abortOnError) {
         // Execute sequentially if we need to abort on first error
         results = [];
         for (const promise of promises) {
           const result = await promise;
           results.push(result as EnhancedFetchResponse<T>);
-          
+
           if (!result.ok) {
-            controller.abort(`Operation failed: ${result.error?.message || 'Unknown error'}`);
+            controller.abort(
+              `Operation failed: ${result.error?.message || 'Unknown error'}`
+            );
             break;
           }
         }
       } else {
         // Execute all in parallel
-        results = await Promise.all(promises) as EnhancedFetchResponse<T>[];
+        results = (await Promise.all(promises)) as EnhancedFetchResponse<T>[];
       }
 
       // Add total time information
@@ -343,7 +360,7 @@ export class NetworkManager {
       if (throwErrors) {
         throw _error;
       }
-      
+
       // Return error responses if not throwing
       return operations.map(() => ({
         ok: false,
@@ -356,7 +373,7 @@ export class NetworkManager {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      
+
       // Ensure we abort the controller to clean up resources
       if (!signal.aborted) {
         controller.abort('Operation complete');
@@ -375,9 +392,10 @@ export class NetworkManager {
     abort: (reason?: any) => void;
   } {
     const controller = new AbortController();
-    
+
     return {
-      execute: () => this.fetch<T>(url, { ...options, signal: controller.signal }),
+      execute: () =>
+        this.fetch<T>(url, { ...options, signal: controller.signal }),
       abort: (reason?: any) => controller.abort(reason),
     };
   }

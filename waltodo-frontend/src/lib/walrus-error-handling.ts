@@ -1,6 +1,6 @@
 /**
  * Comprehensive Error Handling for Walrus Protocol Integration
- * 
+ *
  * This module provides specialized error handling, recovery strategies,
  * and user-friendly error messages for Walrus Protocol operations.
  */
@@ -15,7 +15,7 @@ export enum WalrusErrorCategory {
   VALIDATION = 'validation',
   QUOTA = 'quota',
   PERMISSION = 'permission',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
 }
 
 // Error severity levels
@@ -23,7 +23,7 @@ export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 // User-facing error information
@@ -67,93 +67,125 @@ export class WalrusErrorAnalyzer {
   /**
    * Analyze WalrusClientError specifically
    */
-  private static analyzeWalrusClientError(error: WalrusClientError): UserErrorInfo {
+  private static analyzeWalrusClientError(
+    error: WalrusClientError
+  ): UserErrorInfo {
     const code = error.code?.toLowerCase() || '';
     const message = error.message.toLowerCase();
 
     // Network-related errors
-    if (code.includes('network') || message.includes('network') || 
-        message.includes('connection') || message.includes('timeout')) {
+    if (
+      code.includes('network') ||
+      message.includes('network') ||
+      message.includes('connection') ||
+      message.includes('timeout')
+    ) {
       return {
         title: 'Network Connection Error',
         message: 'Unable to connect to Walrus Protocol network.',
-        suggestion: 'Check your internet connection and try again. The Walrus network may be temporarily unavailable.',
+        suggestion:
+          'Check your internet connection and try again. The Walrus network may be temporarily unavailable.',
         canRetry: true,
         severity: ErrorSeverity.MEDIUM,
         category: WalrusErrorCategory.NETWORK,
         technicalDetails: error.message,
-        helpUrl: 'https://docs.walrus.site/troubleshooting/network'
+        helpUrl: 'https://docs.walrus.site/troubleshooting/network',
       };
     }
 
     // Insufficient funds
-    if (code.includes('funds') || message.includes('insufficient') || 
-        message.includes('balance') || message.includes('wal')) {
+    if (
+      code.includes('funds') ||
+      message.includes('insufficient') ||
+      message.includes('balance') ||
+      message.includes('wal')
+    ) {
       return {
         title: 'Insufficient WAL Tokens',
-        message: 'You don\'t have enough WAL tokens to complete this storage operation.',
-        suggestion: 'Get more WAL tokens from the testnet faucet or check your wallet balance.',
+        message:
+          "You don't have enough WAL tokens to complete this storage operation.",
+        suggestion:
+          'Get more WAL tokens from the testnet faucet or check your wallet balance.',
         canRetry: false,
         severity: ErrorSeverity.HIGH,
         category: WalrusErrorCategory.QUOTA,
         technicalDetails: error.message,
-        helpUrl: 'https://docs.walrus.site/usage/web-api#testnet-wal-faucet'
+        helpUrl: 'https://docs.walrus.site/usage/web-api#testnet-wal-faucet',
       };
     }
 
     // Authentication/signer errors
-    if (code.includes('signer') || message.includes('signer') || 
-        message.includes('signature') || message.includes('auth')) {
+    if (
+      code.includes('signer') ||
+      message.includes('signer') ||
+      message.includes('signature') ||
+      message.includes('auth')
+    ) {
       return {
         title: 'Wallet Authentication Error',
-        message: 'Failed to authenticate with your wallet for the storage operation.',
-        suggestion: 'Make sure your wallet is connected and try signing the transaction again.',
+        message:
+          'Failed to authenticate with your wallet for the storage operation.',
+        suggestion:
+          'Make sure your wallet is connected and try signing the transaction again.',
         canRetry: true,
         severity: ErrorSeverity.HIGH,
         category: WalrusErrorCategory.AUTHENTICATION,
-        technicalDetails: error.message
+        technicalDetails: error.message,
       };
     }
 
     // Blob not found errors
-    if (code.includes('not_found') || message.includes('not found') || 
-        message.includes('blob') && message.includes('exist')) {
+    if (
+      code.includes('not_found') ||
+      message.includes('not found') ||
+      (message.includes('blob') && message.includes('exist'))
+    ) {
       return {
         title: 'Todo Not Found',
         message: 'The requested todo could not be found in Walrus storage.',
-        suggestion: 'Check the blob ID and make sure the todo hasn\'t expired or been deleted.',
+        suggestion:
+          "Check the blob ID and make sure the todo hasn't expired or been deleted.",
         canRetry: false,
         severity: ErrorSeverity.MEDIUM,
         category: WalrusErrorCategory.STORAGE,
-        technicalDetails: error.message
+        technicalDetails: error.message,
       };
     }
 
     // Validation errors
-    if (code.includes('validation') || message.includes('invalid') || 
-        message.includes('size') || message.includes('format')) {
+    if (
+      code.includes('validation') ||
+      message.includes('invalid') ||
+      message.includes('size') ||
+      message.includes('format')
+    ) {
       return {
         title: 'Invalid Data',
         message: 'The todo data is invalid or exceeds size limits.',
-        suggestion: 'Check that your todo content is under 13MB and properly formatted.',
+        suggestion:
+          'Check that your todo content is under 13MB and properly formatted.',
         canRetry: false,
         severity: ErrorSeverity.MEDIUM,
         category: WalrusErrorCategory.VALIDATION,
-        technicalDetails: error.message
+        technicalDetails: error.message,
       };
     }
 
     // Storage quota errors
-    if (message.includes('quota') || message.includes('limit') || 
-        message.includes('storage') && message.includes('exceeded')) {
+    if (
+      message.includes('quota') ||
+      message.includes('limit') ||
+      (message.includes('storage') && message.includes('exceeded'))
+    ) {
       return {
         title: 'Storage Quota Exceeded',
         message: 'You have exceeded your storage quota on Walrus Protocol.',
-        suggestion: 'Delete some older todos or purchase additional storage capacity.',
+        suggestion:
+          'Delete some older todos or purchase additional storage capacity.',
         canRetry: false,
         severity: ErrorSeverity.HIGH,
         category: WalrusErrorCategory.QUOTA,
-        technicalDetails: error.message
+        technicalDetails: error.message,
       };
     }
 
@@ -165,7 +197,7 @@ export class WalrusErrorAnalyzer {
       canRetry: true,
       severity: ErrorSeverity.MEDIUM,
       category: WalrusErrorCategory.STORAGE,
-      technicalDetails: error.message
+      technicalDetails: error.message,
     };
   }
 
@@ -176,8 +208,12 @@ export class WalrusErrorAnalyzer {
     const message = error.message.toLowerCase();
 
     // Network errors
-    if (message.includes('fetch') || message.includes('network') || 
-        message.includes('cors') || message.includes('timeout')) {
+    if (
+      message.includes('fetch') ||
+      message.includes('network') ||
+      message.includes('cors') ||
+      message.includes('timeout')
+    ) {
       return {
         title: 'Network Error',
         message: 'A network error occurred while processing your request.',
@@ -185,21 +221,26 @@ export class WalrusErrorAnalyzer {
         canRetry: true,
         severity: ErrorSeverity.MEDIUM,
         category: WalrusErrorCategory.NETWORK,
-        technicalDetails: error.message
+        technicalDetails: error.message,
       };
     }
 
     // Permission errors
-    if (message.includes('permission') || message.includes('denied') || 
-        message.includes('forbidden') || message.includes('unauthorized')) {
+    if (
+      message.includes('permission') ||
+      message.includes('denied') ||
+      message.includes('forbidden') ||
+      message.includes('unauthorized')
+    ) {
       return {
         title: 'Permission Denied',
-        message: 'You don\'t have permission to perform this operation.',
-        suggestion: 'Make sure your wallet is connected and you have the necessary permissions.',
+        message: "You don't have permission to perform this operation.",
+        suggestion:
+          'Make sure your wallet is connected and you have the necessary permissions.',
         canRetry: false,
         severity: ErrorSeverity.HIGH,
         category: WalrusErrorCategory.PERMISSION,
-        technicalDetails: error.message
+        technicalDetails: error.message,
       };
     }
 
@@ -211,7 +252,7 @@ export class WalrusErrorAnalyzer {
       canRetry: true,
       severity: ErrorSeverity.MEDIUM,
       category: WalrusErrorCategory.UNKNOWN,
-      technicalDetails: error.message
+      technicalDetails: error.message,
     };
   }
 
@@ -226,7 +267,7 @@ export class WalrusErrorAnalyzer {
       canRetry: true,
       severity: ErrorSeverity.LOW,
       category: WalrusErrorCategory.UNKNOWN,
-      technicalDetails: errorString
+      technicalDetails: errorString,
     };
   }
 
@@ -243,7 +284,7 @@ export class WalrusErrorAnalyzer {
    */
   static getRetryDelay(error: unknown, attempt: number): number {
     const errorInfo = this.analyzeError(error);
-    
+
     // Base delays by category (in milliseconds)
     const baseDelays = {
       [WalrusErrorCategory.NETWORK]: 1000,
@@ -252,11 +293,11 @@ export class WalrusErrorAnalyzer {
       [WalrusErrorCategory.QUOTA]: 5000,
       [WalrusErrorCategory.PERMISSION]: 3000,
       [WalrusErrorCategory.VALIDATION]: 0, // Don't retry validation errors
-      [WalrusErrorCategory.UNKNOWN]: 2000
+      [WalrusErrorCategory.UNKNOWN]: 2000,
     };
 
     const baseDelay = baseDelays[errorInfo.category] || 2000;
-    
+
     // Exponential backoff with jitter
     return baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000;
   }
@@ -269,12 +310,15 @@ export class WalrusErrorRecovery {
   /**
    * Get recovery actions for an error
    */
-  static getRecoveryActions(error: unknown, context?: {
-    refreshWallet?: () => Promise<void>;
-    refreshBalance?: () => Promise<void>;
-    retryOperation?: () => Promise<void>;
-    switchNetwork?: () => Promise<void>;
-  }): RecoveryAction[] {
+  static getRecoveryActions(
+    error: unknown,
+    context?: {
+      refreshWallet?: () => Promise<void>;
+      refreshBalance?: () => Promise<void>;
+      retryOperation?: () => Promise<void>;
+      switchNetwork?: () => Promise<void>;
+    }
+  ): RecoveryAction[] {
     const errorInfo = WalrusErrorAnalyzer.analyzeError(error);
     const actions: RecoveryAction[] = [];
 
@@ -284,13 +328,13 @@ export class WalrusErrorRecovery {
           actions.push({
             label: 'Retry',
             action: context.retryOperation,
-            isPrimary: true
+            isPrimary: true,
           });
         }
         if (context?.switchNetwork) {
           actions.push({
             label: 'Switch Network',
-            action: context.switchNetwork
+            action: context.switchNetwork,
           });
         }
         break;
@@ -300,7 +344,7 @@ export class WalrusErrorRecovery {
           actions.push({
             label: 'Reconnect Wallet',
             action: context.refreshWallet,
-            isPrimary: true
+            isPrimary: true,
           });
         }
         break;
@@ -310,14 +354,17 @@ export class WalrusErrorRecovery {
           actions.push({
             label: 'Check Balance',
             action: context.refreshBalance,
-            isPrimary: true
+            isPrimary: true,
           });
         }
         actions.push({
           label: 'Get Test Tokens',
           action: () => {
-            window.open('https://docs.walrus.site/usage/web-api#testnet-wal-faucet', '_blank');
-          }
+            window.open(
+              'https://docs.walrus.site/usage/web-api#testnet-wal-faucet',
+              '_blank'
+            );
+          },
         });
         break;
 
@@ -326,7 +373,7 @@ export class WalrusErrorRecovery {
           actions.push({
             label: 'Retry',
             action: context.retryOperation,
-            isPrimary: true
+            isPrimary: true,
           });
         }
         break;
@@ -336,7 +383,7 @@ export class WalrusErrorRecovery {
           actions.push({
             label: 'Try Again',
             action: context.retryOperation,
-            isPrimary: true
+            isPrimary: true,
           });
         }
         break;
@@ -348,7 +395,7 @@ export class WalrusErrorRecovery {
         label: 'Get Help',
         action: () => {
           window.open(errorInfo.helpUrl, '_blank');
-        }
+        },
       });
     }
 
@@ -369,8 +416,10 @@ export class WalrusErrorRecovery {
     const errorInfo = WalrusErrorAnalyzer.analyzeError(error);
 
     // Don't auto-recover from high severity errors
-    if (errorInfo.severity === ErrorSeverity.HIGH || 
-        errorInfo.severity === ErrorSeverity.CRITICAL) {
+    if (
+      errorInfo.severity === ErrorSeverity.HIGH ||
+      errorInfo.severity === ErrorSeverity.CRITICAL
+    ) {
       return false;
     }
 
@@ -418,11 +467,11 @@ export class WalrusErrorLogger {
    */
   static logError(error: unknown, context?: any): void {
     const errorInfo = WalrusErrorAnalyzer.analyzeError(error);
-    
+
     this.logs.push({
       timestamp: Date.now(),
       error: errorInfo,
-      context
+      context,
     });
 
     // Console log for development
@@ -455,25 +504,37 @@ export class WalrusErrorLogger {
     recentErrors: number;
   } {
     const now = Date.now();
-    const oneHourAgo = now - (60 * 60 * 1000);
-    
-    const recentErrors = this.logs.filter(log => log.timestamp > oneHourAgo).length;
-    
-    const errorsByCategory = Object.values(WalrusErrorCategory).reduce((acc, category) => {
-      acc[category] = this.logs.filter(log => log.error.category === category).length;
-      return acc;
-    }, {} as Record<WalrusErrorCategory, number>);
+    const oneHourAgo = now - 60 * 60 * 1000;
 
-    const errorsBySeverity = Object.values(ErrorSeverity).reduce((acc, severity) => {
-      acc[severity] = this.logs.filter(log => log.error.severity === severity).length;
-      return acc;
-    }, {} as Record<ErrorSeverity, number>);
+    const recentErrors = this.logs.filter(
+      log => log.timestamp > oneHourAgo
+    ).length;
+
+    const errorsByCategory = Object.values(WalrusErrorCategory).reduce(
+      (acc, category) => {
+        acc[category] = this.logs.filter(
+          log => log.error.category === category
+        ).length;
+        return acc;
+      },
+      {} as Record<WalrusErrorCategory, number>
+    );
+
+    const errorsBySeverity = Object.values(ErrorSeverity).reduce(
+      (acc, severity) => {
+        acc[severity] = this.logs.filter(
+          log => log.error.severity === severity
+        ).length;
+        return acc;
+      },
+      {} as Record<ErrorSeverity, number>
+    );
 
     return {
       totalErrors: this.logs.length,
       errorsByCategory,
       errorsBySeverity,
-      recentErrors
+      recentErrors,
     };
   }
 
@@ -486,7 +547,10 @@ export class WalrusErrorLogger {
 }
 
 // Export utility function for easy error handling
-export function handleWalrusError(error: unknown, context?: any): UserErrorInfo {
+export function handleWalrusError(
+  error: unknown,
+  context?: any
+): UserErrorInfo {
   WalrusErrorLogger.logError(error, context);
   return WalrusErrorAnalyzer.analyzeError(error);
 }

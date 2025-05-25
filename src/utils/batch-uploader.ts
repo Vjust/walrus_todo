@@ -1,10 +1,7 @@
 import { Todo, TodoList } from '../types/todo';
 import { TodoSizeCalculator } from './todo-size-calculator';
-import { TodoSerializer } from './todo-serializer';
 import { CLIError } from '../types/errors/consolidated';
 import { WalrusStorage } from './walrus-storage';
-import { WalrusClient } from '@mysten/walrus';
-import type { TransactionSigner } from '../types/signer';
 import { Logger } from './Logger';
 
 const logger = new Logger('batch-uploader');
@@ -32,7 +29,7 @@ export class BatchUploader {
   /**
    * Calculates the optimal storage size needed for a batch of todos
    * and uploads them efficiently in a single transaction when possible
-   * 
+   *
    * @param todos Array of todos to upload as a batch
    * @param options Upload options
    * @returns Results of the batch upload operation
@@ -48,22 +45,28 @@ export class BatchUploader {
     try {
       // Validate all todos before starting
       todos.forEach(todo => {
-        if (!todo.id) throw new CLIError(`Todo is missing ID`, 'INVALID_TODO_DATA');
-        if (!todo.title) throw new CLIError(`Todo "${todo.id}" is missing title`, 'INVALID_TODO_DATA');
+        if (!todo.id)
+          throw new CLIError(`Todo is missing ID`, 'INVALID_TODO_DATA');
+        if (!todo.title)
+          throw new CLIError(
+            `Todo "${todo.id}" is missing title`,
+            'INVALID_TODO_DATA'
+          );
       });
 
       logger.info(`Preparing batch upload for ${todos.length} todos...`);
-      
+
       // Calculate total storage needed for all todos with optimal allocation
       const totalSizeNeeded = TodoSizeCalculator.calculateOptimalStorageSize(
         todos,
         { extraAllocation: 10 * 1024 } // Add 10KB extra for future growth
       );
-      
+
       logger.info(`Total storage needed for batch: ${totalSizeNeeded} bytes`);
-      
+
       // Ensure we have enough storage allocated
-      const storage = await this.walrusStorage.ensureStorageAllocated(totalSizeNeeded);
+      const storage =
+        await this.walrusStorage.ensureStorageAllocated(totalSizeNeeded);
       if (!storage) {
         throw new CLIError(
           'Failed to allocate storage for batch upload',
@@ -74,45 +77,52 @@ export class BatchUploader {
       // Calculate how much we would have spent without batching
       // Each todo would need its own 1MB minimum allocation
       const unbatchedSize = todos.length * 1024 * 1024;
-      const tokensSavedEstimate = Math.floor((unbatchedSize - totalSizeNeeded) / 1024);
-      
-      logger.info(`Optimized batch allocation: saved approximately ${tokensSavedEstimate} WAL tokens`);
-      
+      const tokensSavedEstimate = Math.floor(
+        (unbatchedSize - totalSizeNeeded) / 1024
+      );
+
+      logger.info(
+        `Optimized batch allocation: saved approximately ${tokensSavedEstimate} WAL tokens`
+      );
+
       // Process todos
       const result: BatchUploadResult = {
         successful: [],
         failed: [],
         totalSaved: tokensSavedEstimate,
-        totalBytesUploaded: 0
+        totalBytesUploaded: 0,
       };
-      
+
       // Upload each todo
       for (let i = 0; i < todos.length; i++) {
         const todo = todos[i];
-        const exactSize = TodoSizeCalculator.calculateTodoSize(todo, { includeBuffer: false });
-        
+        const exactSize = TodoSizeCalculator.calculateTodoSize(todo, {
+          includeBuffer: false,
+        });
+
         if (options.progressCallback) {
           options.progressCallback(i + 1, todos.length, todo.id);
         }
-        
+
         logger.info(`Uploading todo "${todo.title}" (${exactSize} bytes)...`);
-        
+
         try {
           const blobId = await this.walrusStorage.storeTodo(todo);
           result.successful.push({ id: todo.id, blobId });
           result.totalBytesUploaded += exactSize;
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           logger.error(`Failed to upload todo "${todo.id}": ${errorMessage}`);
           result.failed.push({ id: todo.id, error: errorMessage });
         }
       }
-      
+
       logger.info(`Batch upload completed:`);
       logger.info(`- Successfully uploaded: ${result.successful.length} todos`);
       logger.info(`- Failed: ${result.failed.length} todos`);
       logger.info(`- Total bytes uploaded: ${result.totalBytesUploaded}`);
-      
+
       return result;
     } catch (error) {
       if (error instanceof CLIError) throw error;
@@ -125,7 +135,7 @@ export class BatchUploader {
 
   /**
    * Uploads a todo list with all its todos in a batch operation
-   * 
+   *
    * @param todoList TodoList to upload
    * @param options Upload options
    * @returns Results of the batch upload
@@ -137,7 +147,7 @@ export class BatchUploader {
     try {
       // First upload all the todos in the list as a batch
       const todoResults = await this.uploadTodos(todoList.todos, options);
-      
+
       // Update the todo list with the new blob IDs
       for (const result of todoResults.successful) {
         const todoIndex = todoList.todos.findIndex(t => t.id === result.id);
@@ -145,14 +155,14 @@ export class BatchUploader {
           todoList.todos[todoIndex].walrusBlobId = result.blobId;
         }
       }
-      
+
       // Upload the todo list itself
       logger.info(`Uploading todo list "${todoList.name}"...`);
       const listBlobId = await this.walrusStorage.storeTodoList(todoList);
-      
+
       return {
         listBlobId,
-        todoResults
+        todoResults,
       };
     } catch (error) {
       if (error instanceof CLIError) throw error;
@@ -167,10 +177,12 @@ export class BatchUploader {
 /**
  * Create a BatchUploader for efficient uploading of multiple todos
  * and todo lists at once.
- * 
+ *
  * @param walrusStorage A connected WalrusStorage instance
  * @returns A new BatchUploader instance
  */
-export function createBatchUploader(walrusStorage: WalrusStorage): BatchUploader {
+export function createBatchUploader(
+  walrusStorage: WalrusStorage
+): BatchUploader {
   return new BatchUploader(walrusStorage);
 }

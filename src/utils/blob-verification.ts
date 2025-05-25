@@ -1,7 +1,9 @@
 // Import statements with CommonJS compatibility
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../types/client';
-import type { BlobInfo, BlobMetadata, BlobMetadataShape } from '../types/walrus';
+import type {
+  BlobMetadata,
+} from '../types/walrus';
 import { CLIError } from '../types/errors/consolidated';
 import { handleError } from './error-handler';
 import { RetryManager, NetworkNode } from './retry-manager';
@@ -12,37 +14,7 @@ import { Logger } from './Logger';
 const logger = new Logger('blob-verification');
 
 // Provide fallback implementations for testing environments
-const oraImport = (() => {
-  try {
-    return import('ora');
-  } catch (error: unknown) {
-    return Promise.resolve(() => ({
-      start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
-      stop: () => {},
-      succeed: () => {},
-      fail: () => {}
-    }));
-  }
-})();
 
-const cliProgressImport = (() => {
-  try {
-    return import('cli-progress');
-  } catch (error: unknown) {
-    return Promise.resolve({
-      SingleBar: class MockSingleBar {
-        start() { return this; }
-        update() { return this; }
-        stop() { return this; }
-      },
-      MultiBar: class MockMultiBar {
-        create() { return new MockSingleBar(); }
-        remove() {}
-        stop() {}
-      }
-    });
-  }
-})();
 
 // Using BlobInfo from types/walrus.ts
 
@@ -80,7 +52,7 @@ export class BlobVerificationManager {
     timeout: 15000,
     verifySmartContract: true,
     requireCertification: true,
-    verifyAttributes: true
+    verifyAttributes: true,
   };
 
   private signer: TransactionSigner | null = null;
@@ -105,22 +77,24 @@ export class BlobVerificationManager {
    */
   private createDefaultMetadata(): BlobMetadata {
     return {
-      V1: { 
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' }, 
-        unencoded_length: '0', 
-        hashes: [{
-          primary_hash: {
-            Digest: new Uint8Array(),
-            $kind: 'Digest'
+      V1: {
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        unencoded_length: '0',
+        hashes: [
+          {
+            primary_hash: {
+              Digest: new Uint8Array(),
+              $kind: 'Digest',
+            },
+            secondary_hash: {
+              Sha256: new Uint8Array(),
+              $kind: 'Sha256',
+            },
           },
-          secondary_hash: {
-            Sha256: new Uint8Array(),
-            $kind: 'Sha256'
-          }
-        }], 
-        $kind: 'V1' 
-      }, 
-      $kind: 'V1' 
+        ],
+        $kind: 'V1',
+      },
+      $kind: 'V1',
     };
   }
 
@@ -136,7 +110,7 @@ export class BlobVerificationManager {
     const checksums = {
       sha256: crypto.createHash('sha256').update(data).digest('hex'),
       sha512: crypto.createHash('sha512').update(data).digest('hex'),
-      blake2b: crypto.createHash('blake2b512').update(data).digest('hex')
+      blake2b: crypto.createHash('blake2b512').update(data).digest('hex'),
     };
 
     return checksums;
@@ -161,37 +135,51 @@ export class BlobVerificationManager {
   }> {
     try {
       const blobInfo = await this.walrusClient.getBlobInfo(blobId);
-      
+
       if (!blobInfo) {
-        throw new CLIError('Failed to retrieve blob information', 'WALRUS_INFO_ERROR');
+        throw new CLIError(
+          'Failed to retrieve blob information',
+          'WALRUS_INFO_ERROR'
+        );
       }
 
       // Get storage providers and availability proof
       const providers = await this.walrusClient.getStorageProviders({ blobId });
-      const hasMinProviders = !options?.minProviders || providers.length >= options.minProviders;
+      const hasMinProviders =
+        !options?.minProviders || providers.length >= options.minProviders;
 
       // A blob is considered certified if:
       // 1. It has a certification epoch number AND
       // 2. That epoch is not in the future AND
       // 3. The certification was recorded on-chain through Sui's storage fund
-      const certified = blobInfo.certified_epoch !== undefined && 
-                       BigInt(blobInfo.certified_epoch) <= currentEpoch;
+      const certified =
+        blobInfo.certified_epoch !== undefined &&
+        BigInt(blobInfo.certified_epoch) <= currentEpoch;
 
       // An on-chain PoA (Proof of Availability) is complete when:
       // 1. Required storage fees were paid AND
       // 2. Storage providers published their certificates AND
       // 3. Certificates were validated by Sui validators
-      const poaComplete = options?.requirePoA ? 
-        await this.walrusClient.verifyPoA({ blobId }).catch(() => false) :
-        true;
+      const poaComplete = options?.requirePoA
+        ? await this.walrusClient.verifyPoA({ blobId }).catch(() => false)
+        : true;
 
-      if (!certified || (options?.requirePoA && !poaComplete) || !hasMinProviders) {
+      if (
+        !certified ||
+        (options?.requirePoA && !poaComplete) ||
+        !hasMinProviders
+      ) {
         const reasons = [];
         if (!certified) reasons.push('not certified');
         if (options?.requirePoA && !poaComplete) reasons.push('PoA incomplete');
-        if (!hasMinProviders) reasons.push(`insufficient providers (${providers.length}/${options.minProviders})`);
-        
-        logger.warn(`Blob ${blobId} verification incomplete: ${reasons.join(', ')}`);
+        if (!hasMinProviders)
+          reasons.push(
+            `insufficient providers (${providers.length}/${options.minProviders})`
+          );
+
+        logger.warn(
+          `Blob ${blobId} verification incomplete: ${reasons.join(', ')}`
+        );
       }
 
       return {
@@ -199,7 +187,7 @@ export class BlobVerificationManager {
         certificateEpoch: blobInfo.certified_epoch,
         registeredEpoch: blobInfo.registered_epoch,
         poaComplete,
-        providers: providers.length
+        providers: providers.length,
       };
     } catch (error) {
       handleError('Smart contract verification failed', error);
@@ -208,7 +196,7 @@ export class BlobVerificationManager {
         certificateEpoch: undefined,
         registeredEpoch: undefined,
         poaComplete: false,
-        providers: 0
+        providers: 0,
       };
     }
   }
@@ -228,12 +216,15 @@ export class BlobVerificationManager {
     try {
       const response = await this.walrusClient.getBlobMetadata({ blobId });
       if (!response) {
-        throw new CLIError('Failed to retrieve blob metadata', 'WALRUS_METADATA_ERROR');
+        throw new CLIError(
+          'Failed to retrieve blob metadata',
+          'WALRUS_METADATA_ERROR'
+        );
       }
-      
+
       // Cast the response to BlobMetadata and ensure it has the required structure
       let metadata: BlobMetadata;
-      
+
       // Check if response has the required structure
       if (response && typeof response === 'object') {
         if (!('V1' in response) || !('$kind' in response)) {
@@ -241,22 +232,27 @@ export class BlobVerificationManager {
           const responseObj = response as Record<string, unknown>;
           metadata = {
             ...(responseObj as object),
-            V1: 'V1' in responseObj ? responseObj.V1 : {
-              encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-              unencoded_length: '0',
-              hashes: [{
-                primary_hash: {
-                  Digest: new Uint8Array(),
-                  $kind: 'Digest'
-                },
-                secondary_hash: {
-                  Sha256: new Uint8Array(),
-                  $kind: 'Sha256'
-                }
-              }],
-              $kind: 'V1'
-            },
-            $kind: 'V1'
+            V1:
+              'V1' in responseObj
+                ? responseObj.V1
+                : {
+                    encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+                    unencoded_length: '0',
+                    hashes: [
+                      {
+                        primary_hash: {
+                          Digest: new Uint8Array(),
+                          $kind: 'Digest',
+                        },
+                        secondary_hash: {
+                          Sha256: new Uint8Array(),
+                          $kind: 'Sha256',
+                        },
+                      },
+                    ],
+                    $kind: 'V1',
+                  },
+            $kind: 'V1',
           } as BlobMetadata;
         } else {
           metadata = response as BlobMetadata;
@@ -265,23 +261,28 @@ export class BlobVerificationManager {
         // If response is null or not an object, use default metadata
         metadata = this.createDefaultMetadata();
       }
-      
+
       const actualAttributes = (metadata.V1 || {}) as Record<string, unknown>;
-      const mismatches: Array<{ key: string; expected: unknown; actual: unknown }> = [];
+      const mismatches: Array<{
+        key: string;
+        expected: unknown;
+        actual: unknown;
+      }> = [];
 
       // Type-safe attribute comparison
       for (const [key, expectedValue] of Object.entries(expectedAttributes)) {
         const actualValue = actualAttributes[key];
         // Handle different types appropriately
-        const match = typeof expectedValue === 'object' ?
-          JSON.stringify(actualValue) === JSON.stringify(expectedValue) :
-          String(actualValue) === String(expectedValue);
-          
+        const match =
+          typeof expectedValue === 'object'
+            ? JSON.stringify(actualValue) === JSON.stringify(expectedValue)
+            : String(actualValue) === String(expectedValue);
+
         if (!match) {
           mismatches.push({
             key,
             expected: expectedValue,
-            actual: actualValue
+            actual: actualValue,
           });
         }
       }
@@ -290,7 +291,7 @@ export class BlobVerificationManager {
         valid: mismatches.length === 0,
         actualAttributes,
         mismatches,
-        metadata
+        metadata,
       };
     } catch (error) {
       handleError('Metadata verification failed', error);
@@ -300,7 +301,7 @@ export class BlobVerificationManager {
         valid: false,
         actualAttributes: {},
         mismatches: [],
-        metadata: defaultMetadata
+        metadata: defaultMetadata,
       };
     }
   }
@@ -311,26 +312,29 @@ export class BlobVerificationManager {
   private async retrieveBlobWithTimeout(
     blobId: string,
     timeout: number,
-    attempt: number
+    _attempt: number
   ): Promise<Buffer> {
-    const retryManager = new RetryManager([
-      'https://testnet.wal.app',
-      'https://testnet-replica1.wal.app',
-      'https://testnet-replica2.wal.app'
-    ], {
-      timeout,
-      maxRetries: 8,        // Up to 8 retries
-      maxDuration: 180000,  // Total timeout of 3 minutes
-      onRetry: (error: Error, attempt: number, delay: number) => {
-        logger.info(
-          `Retrieval attempt ${attempt} failed:`,
-          error.message,
-          `Retrying in ${delay}ms...`
-        );
+    const retryManager = new RetryManager(
+      [
+        'https://testnet.wal.app',
+        'https://testnet-replica1.wal.app',
+        'https://testnet-replica2.wal.app',
+      ],
+      {
+        timeout,
+        maxRetries: 8, // Up to 8 retries
+        maxDuration: 180000, // Total timeout of 3 minutes
+        onRetry: (error: Error, attempt: number, delay: number) => {
+          logger.info(
+            `Retrieval attempt ${attempt} failed:`,
+            error.message,
+            `Retrying in ${delay}ms...`
+          );
+        },
       }
-    });
+    );
 
-    return retryManager.execute(async (node: NetworkNode) => {
+    return retryManager.execute(async (_node: NetworkNode) => {
       const content = await this.walrusClient.readBlob({ blobId });
       if (!content) {
         throw new Error('Retrieved content is empty');
@@ -354,7 +358,7 @@ export class BlobVerificationManager {
       timeout,
       verifySmartContract,
       requireCertification,
-      verifyAttributes
+      verifyAttributes,
     } = { ...BlobVerificationManager.DEFAULT_OPTIONS, ...options };
 
     let attempts = 0;
@@ -365,7 +369,9 @@ export class BlobVerificationManager {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       attempts = attempt;
       try {
-        logger.info(`Verifying blob ${blobId} (attempt ${attempt}/${maxRetries})...`);
+        logger.info(
+          `Verifying blob ${blobId} (attempt ${attempt}/${maxRetries})...`
+        );
 
         // 1. Retrieve and verify content
         const retrievedContent = await this.retrieveBlobWithTimeout(
@@ -383,8 +389,13 @@ export class BlobVerificationManager {
 
         // 3. Verify checksums
         const actualChecksums = this.calculateChecksums(retrievedContent);
-        for (const [algorithm, expectedHash] of Object.entries(expectedChecksums)) {
-          if (actualChecksums[algorithm as keyof typeof actualChecksums] !== expectedHash) {
+        for (const [algorithm, expectedHash] of Object.entries(
+          expectedChecksums
+        )) {
+          if (
+            actualChecksums[algorithm as keyof typeof actualChecksums] !==
+            expectedHash
+          ) {
             throw new Error(
               `${algorithm} checksum mismatch: expected ${expectedHash}, got ${
                 actualChecksums[algorithm as keyof typeof actualChecksums]
@@ -403,21 +414,21 @@ export class BlobVerificationManager {
         } = {
           certified: false,
           certificateEpoch: undefined,
-          registeredEpoch: undefined
+          registeredEpoch: undefined,
         };
-        
+
         if (verifySmartContract) {
           const systemState = await this.suiClient.getLatestSuiSystemState();
           const { epoch } = systemState as { epoch: string };
           const result = await this.verifySmartContract(blobId, BigInt(epoch));
           contractVerification = result;
-          
+
           if (requireCertification && !contractVerification.certified) {
             throw new Error(
               'Blob certification required but not found' +
-              (contractVerification.registeredEpoch !== undefined
-                ? ` (registered at epoch ${contractVerification.registeredEpoch})`
-                : '')
+                (contractVerification.registeredEpoch !== undefined
+                  ? ` (registered at epoch ${contractVerification.registeredEpoch})`
+                  : '')
             );
           }
         }
@@ -426,18 +437,28 @@ export class BlobVerificationManager {
         let metadataVerification = {
           valid: true,
           actualAttributes: {} as Record<string, unknown>,
-          mismatches: [] as Array<{ key: string; expected: unknown; actual: unknown }>,
-          metadata: this.createDefaultMetadata()
+          mismatches: [] as Array<{
+            key: string;
+            expected: unknown;
+            actual: unknown;
+          }>,
+          metadata: this.createDefaultMetadata(),
         };
         if (verifyAttributes) {
           const result = await this.verifyMetadata(blobId, expectedAttributes);
           metadataVerification = result;
-          if (!metadataVerification.valid && metadataVerification.mismatches?.length) {
+          if (
+            !metadataVerification.valid &&
+            metadataVerification.mismatches?.length
+          ) {
             throw new Error(
               'Metadata verification failed:\n' +
-              metadataVerification.mismatches
-                .map(m => `  ${m.key}: expected "${m.expected}", got "${m.actual}"`)
-                .join('\n')
+                metadataVerification.mismatches
+                  .map(
+                    m =>
+                      `  ${m.key}: expected "${m.expected}", got "${m.actual}"`
+                  )
+                  .join('\n')
             );
           }
         }
@@ -446,13 +467,15 @@ export class BlobVerificationManager {
         // Ensure we include all required properties with proper type-safe fallbacks
         const contractVerificationComplete = {
           ...contractVerification,
-          poaComplete: 'poaComplete' in contractVerification ? 
-            (contractVerification as { poaComplete: boolean }).poaComplete : false,
-          providers: 'providers' in contractVerification ? 
-            (contractVerification as { providers: number }).providers : 0
+          poaComplete:
+            'poaComplete' in contractVerification
+              ? (contractVerification as { poaComplete: boolean }).poaComplete
+              : false,
+          providers:
+            'providers' in contractVerification
+              ? (contractVerification as { providers: number }).providers
+              : 0,
         };
-
-        const defaultMetadata = this.createDefaultMetadata();
 
         return {
           success: true,
@@ -463,12 +486,13 @@ export class BlobVerificationManager {
             certified: contractVerification.certified,
             certificateEpoch: contractVerification.certificateEpoch,
             registeredEpoch: contractVerification.registeredEpoch,
-            attributes: metadataVerification.actualAttributes
+            attributes: metadataVerification.actualAttributes,
           },
           attempts,
           poaComplete: contractVerificationComplete.poaComplete,
           providers: contractVerificationComplete.providers,
-          metadata: metadataVerification.metadata || this.createDefaultMetadata()
+          metadata:
+            metadataVerification.metadata || this.createDefaultMetadata(),
         };
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
@@ -479,7 +503,9 @@ export class BlobVerificationManager {
 
         // Exponential backoff
         const delay = baseDelay * Math.pow(2, attempt - 1);
-        logger.info(`Verification attempt ${attempt} failed, retrying in ${delay}ms...`);
+        logger.info(
+          `Verification attempt ${attempt} failed, retrying in ${delay}ms...`
+        );
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -503,11 +529,7 @@ export class BlobVerificationManager {
       timeout?: number;
     } = {}
   ): Promise<void> {
-    const {
-      interval = 5000,
-      maxAttempts = 12,
-      timeout = 10000
-    } = options;
+    const { interval = 5000, maxAttempts = 12, timeout = 10000 } = options;
 
     let attempts = 0;
     let lastError: Error | null = null;
@@ -516,12 +538,19 @@ export class BlobVerificationManager {
       attempts++;
       try {
         // 1. Check blob content
-        const content = await this.retrieveBlobWithTimeout(blobId, timeout, attempts);
+        const content = await this.retrieveBlobWithTimeout(
+          blobId,
+          timeout,
+          attempts
+        );
         const actualChecksums = this.calculateChecksums(content);
 
         // 2. Verify all checksums
         for (const [algorithm, expectedHash] of Object.entries(checksums)) {
-          if (actualChecksums[algorithm as keyof typeof actualChecksums] !== expectedHash) {
+          if (
+            actualChecksums[algorithm as keyof typeof actualChecksums] !==
+            expectedHash
+          ) {
             throw new Error(
               `${algorithm} checksum mismatch during monitoring (attempt ${attempts})`
             );
@@ -531,22 +560,31 @@ export class BlobVerificationManager {
         // 3. Check certification status
         const systemState = await this.suiClient.getLatestSuiSystemState();
         const { epoch } = systemState as { epoch: string };
-        const { certified } = await this.verifySmartContract(blobId, BigInt(epoch));
-        
+        const { certified } = await this.verifySmartContract(
+          blobId,
+          BigInt(epoch)
+        );
+
         if (!certified) {
-          throw new Error(`Blob not certified during monitoring (attempt ${attempts})`);
+          throw new Error(
+            `Blob not certified during monitoring (attempt ${attempts})`
+          );
         }
 
-        logger.info(`Blob ${blobId} verified available and certified (attempt ${attempts}/${maxAttempts})`);
+        logger.info(
+          `Blob ${blobId} verified available and certified (attempt ${attempts}/${maxAttempts})`
+        );
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         if (attempts === maxAttempts) {
           break;
         }
 
-        logger.info(`Monitoring attempt ${attempts} failed, retrying in ${interval}ms...`);
+        logger.info(
+          `Monitoring attempt ${attempts} failed, retrying in ${interval}ms...`
+        );
         await new Promise(resolve => setTimeout(resolve, interval));
       }
     }
@@ -560,11 +598,14 @@ export class BlobVerificationManager {
   /**
    * Verify a blob upload with optional certification waiting
    */
-  async verifyUpload(data: Buffer, options: {
-    waitForCertification?: boolean;
-    waitTimeout?: number;
-    minProviders?: number;
-  } = {}): Promise<{
+  async verifyUpload(
+    data: Buffer,
+    options: {
+      waitForCertification?: boolean;
+      waitTimeout?: number;
+      minProviders?: number;
+    } = {}
+  ): Promise<{
     blobId: string;
     checksums: {
       sha256: string;
@@ -578,7 +619,7 @@ export class BlobVerificationManager {
     const {
       waitForCertification = false,
       waitTimeout = 30000,
-      minProviders = 1
+      minProviders = 1,
     } = options;
 
     // Upload the blob
@@ -587,7 +628,7 @@ export class BlobVerificationManager {
       blob: new Uint8Array(data),
       deletable: false,
       epochs: 52,
-      signer
+      signer,
     });
     const blobId = uploadResult.blobObject.blob_id;
 
@@ -601,30 +642,41 @@ export class BlobVerificationManager {
     // Check initial certification status
     const systemState = await this.suiClient.getLatestSuiSystemState();
     const { epoch } = systemState as { epoch: string };
-    let verificationResult = await this.verifySmartContract(blobId, BigInt(epoch));
+    let verificationResult = await this.verifySmartContract(
+      blobId,
+      BigInt(epoch)
+    );
 
     // Wait for certification if requested
     if (waitForCertification && !verificationResult.certified) {
       const startTime = Date.now();
       while (Date.now() - startTime < waitTimeout) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        verificationResult = await this.verifySmartContract(blobId, BigInt(epoch));
+        verificationResult = await this.verifySmartContract(
+          blobId,
+          BigInt(epoch)
+        );
         if (verificationResult.certified) break;
       }
       if (!verificationResult.certified) {
-        throw new CLIError('Timeout waiting for certification', 'WALRUS_CERTIFICATION_TIMEOUT');
+        throw new CLIError(
+          'Timeout waiting for certification',
+          'WALRUS_CERTIFICATION_TIMEOUT'
+        );
       }
     }
 
     // Check PoA
-    const poaComplete = await this.walrusClient.verifyPoA({ blobId }).catch(() => false);
+    const poaComplete = await this.walrusClient
+      .verifyPoA({ blobId })
+      .catch(() => false);
 
     return {
       blobId,
       checksums,
       certified: verificationResult.certified,
       poaComplete,
-      hasMinProviders
+      hasMinProviders,
     };
   }
 }

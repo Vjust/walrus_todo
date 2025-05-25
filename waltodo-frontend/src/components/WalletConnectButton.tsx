@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
-import { 
-  copyToClipboard, 
+import {
+  copyToClipboard,
   getClipboardCapabilities,
-  ClipboardError
+  ClipboardError,
 } from '@/lib/clipboard';
 import { WalletErrorModal } from './WalletErrorModal';
 import { ClipboardErrorModal } from './ClipboardErrorModal';
@@ -23,12 +23,16 @@ export function WalletConnectButton() {
     network: chainId,
     error,
     setError,
-    switchNetwork
+    switchNetwork,
   } = useWalletContext();
 
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>(
+    'idle'
+  );
   const [copyError, setCopyError] = useState<string | null>(null);
-  const [clipboardError, setClipboardError] = useState<ClipboardError | null>(null);
+  const [clipboardError, setClipboardError] = useState<ClipboardError | null>(
+    null
+  );
   const [showNetworkOptions, setShowNetworkOptions] = useState(false);
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
 
@@ -47,14 +51,14 @@ export function WalletConnectButton() {
       setCopyError('No wallet address available');
       return;
     }
-    
+
     setCopyStatus('idle');
     setCopyError(null);
     setClipboardError(null);
-    
+
     try {
       const result = await copyToClipboard(address || '');
-      
+
       if (result.success) {
         setCopyStatus('success');
         // Reset success status after 2 seconds
@@ -62,24 +66,24 @@ export function WalletConnectButton() {
       } else {
         setCopyStatus('error');
         setCopyError(result.error?.message || 'Unknown error');
-        
+
         // If it's a ClipboardError, show the modal
         if (result.error instanceof ClipboardError) {
           setClipboardError(result.error);
         }
-        
+
         console.error('Failed to copy address:', result.error);
       }
     } catch (error) {
       setCopyStatus('error');
       const message = error instanceof Error ? error.message : 'Failed to copy';
       setCopyError(message);
-      
+
       // If it's a ClipboardError, show the modal
       if (error instanceof ClipboardError) {
         setClipboardError(error);
       }
-      
+
       console.error('Copy operation failed:', error);
     }
   };
@@ -100,18 +104,20 @@ export function WalletConnectButton() {
       tempInput.style.position = 'fixed';
       tempInput.style.top = '0';
       tempInput.style.opacity = '1'; // Make visible but out of normal flow
-      tempInput.style.zIndex = '1000'; 
+      tempInput.style.zIndex = '1000';
       document.body.appendChild(tempInput);
-      
+
       try {
         tempInput.focus();
         tempInput.select();
-        
+
         // Show instructions
-        alert('Please use keyboard shortcut to copy:\n' + 
-              '• Windows/Linux: Press Ctrl+C\n' + 
-              '• Mac: Press Command+C\n\n' +
-              'Then click OK to continue.');
+        alert(
+          'Please use keyboard shortcut to copy:\n' +
+            '• Windows/Linux: Press Ctrl+C\n' +
+            '• Mac: Press Command+C\n\n' +
+            'Then click OK to continue.'
+        );
       } finally {
         // Always clean up, even if there's an error
         try {
@@ -126,11 +132,13 @@ export function WalletConnectButton() {
   };
 
   // Handle network switching
-  const handleNetworkSwitch = async (network: 'mainnet' | 'testnet' | 'devnet') => {
+  const handleNetworkSwitch = async (
+    network: 'mainnet' | 'testnet' | 'devnet'
+  ) => {
     if (isNetworkSwitching) return; // Prevent multiple clicks
-    
+
     setIsNetworkSwitching(true);
-    
+
     try {
       await switchNetwork(network);
       setShowNetworkOptions(false);
@@ -147,14 +155,14 @@ export function WalletConnectButton() {
   // Convert network string to display name
   const getNetworkDisplayName = (networkId: string | null) => {
     if (networkId === null) return 'Unknown';
-    
+
     // Convert network ID to readable name as needed
     const networkMap: Record<string, string> = {
-      'mainnet': 'Mainnet',
-      'testnet': 'Testnet',
-      'devnet': 'Devnet'
+      mainnet: 'Mainnet',
+      testnet: 'Testnet',
+      devnet: 'Devnet',
     };
-    
+
     // Return formatted name or the original if not in our map
     return networkMap[String(networkId)] || String(networkId);
   };
@@ -162,45 +170,47 @@ export function WalletConnectButton() {
   // Render the connected wallet UI
   const renderConnectedUI = () => {
     if (!connected || !address) return null;
-    
+
     // Get clipboard capabilities to determine what UI to show
     const clipboardCapabilities = getClipboardCapabilities();
-    const showClipboardButton = clipboardCapabilities.hasModernApi || clipboardCapabilities.hasLegacySupport;
+    const showClipboardButton =
+      clipboardCapabilities.hasModernApi ||
+      clipboardCapabilities.hasLegacySupport;
 
     return (
-      <div className="flex items-center gap-4">
-        <div className="px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg flex items-center gap-2 relative">
-          <div className="flex flex-col">
-            <p className="text-sm text-ocean-deep dark:text-ocean-foam">
+      <div className='flex items-center gap-4'>
+        <div className='px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg flex items-center gap-2 relative'>
+          <div className='flex flex-col'>
+            <p className='text-sm text-ocean-deep dark:text-ocean-foam'>
               {walletName || 'Wallet'}: {truncateAddress(address)}
             </p>
-            <p className="text-xs text-ocean-medium dark:text-ocean-light">
+            <p className='text-xs text-ocean-medium dark:text-ocean-light'>
               {getNetworkDisplayName(chainId)}
               {!isNetworkSwitching ? (
-                <button 
+                <button
                   onClick={() => setShowNetworkOptions(!showNetworkOptions)}
-                  className="ml-2 text-xs text-ocean-medium hover:text-ocean-deep dark:text-ocean-light dark:hover:text-ocean-foam"
+                  className='ml-2 text-xs text-ocean-medium hover:text-ocean-deep dark:text-ocean-light dark:hover:text-ocean-foam'
                   disabled={isNetworkSwitching}
                 >
                   (change)
                 </button>
               ) : (
-                <span className="ml-2 text-xs text-yellow-500 animate-pulse">
+                <span className='ml-2 text-xs text-yellow-500 animate-pulse'>
                   (switching...)
                 </span>
               )}
             </p>
-            
+
             {/* Network selection dropdown */}
             {showNetworkOptions && !isNetworkSwitching && (
-              <div className="absolute top-full left-0 mt-2 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg z-10 w-full min-w-[150px]">
-                <div className="flex flex-col gap-2">
-                  <button 
+              <div className='absolute top-full left-0 mt-2 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg z-10 w-full min-w-[150px]'>
+                <div className='flex flex-col gap-2'>
+                  <button
                     onClick={() => handleNetworkSwitch('mainnet')}
                     disabled={isNetworkSwitching || chainId === 'mainnet'}
                     className={`text-sm px-3 py-1 rounded-md ${
-                      chainId === 'mainnet' 
-                        ? 'bg-ocean-deep text-white' 
+                      chainId === 'mainnet'
+                        ? 'bg-ocean-deep text-white'
                         : isNetworkSwitching
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
@@ -208,12 +218,12 @@ export function WalletConnectButton() {
                   >
                     Mainnet
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleNetworkSwitch('testnet')}
                     disabled={isNetworkSwitching || chainId === 'testnet'}
                     className={`text-sm px-3 py-1 rounded-md ${
-                      chainId === 'testnet' 
-                        ? 'bg-ocean-deep text-white' 
+                      chainId === 'testnet'
+                        ? 'bg-ocean-deep text-white'
                         : isNetworkSwitching
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
@@ -221,12 +231,12 @@ export function WalletConnectButton() {
                   >
                     Testnet
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleNetworkSwitch('devnet')}
                     disabled={isNetworkSwitching || chainId === 'devnet'}
                     className={`text-sm px-3 py-1 rounded-md ${
-                      chainId === 'devnet' 
-                        ? 'bg-ocean-deep text-white' 
+                      chainId === 'devnet'
+                        ? 'bg-ocean-deep text-white'
                         : isNetworkSwitching
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
@@ -238,46 +248,81 @@ export function WalletConnectButton() {
               </div>
             )}
           </div>
-          
+
           {showClipboardButton && (
             <button
               onClick={handleCopyAddress}
               className={`text-ocean-medium hover:text-ocean-deep dark:text-ocean-light dark:hover:text-ocean-foam transition-colors ${
-                copyStatus === 'error' ? 'text-red-500 dark:text-red-400' : 
-                copyStatus === 'success' ? 'text-green-500 dark:text-green-400' : ''
+                copyStatus === 'error'
+                  ? 'text-red-500 dark:text-red-400'
+                  : copyStatus === 'success'
+                    ? 'text-green-500 dark:text-green-400'
+                    : ''
               }`}
               title={
-                copyStatus === 'error' ? 'Copy failed' : 
-                copyStatus === 'success' ? 'Copied!' : 
-                'Copy address'
+                copyStatus === 'error'
+                  ? 'Copy failed'
+                  : copyStatus === 'success'
+                    ? 'Copied!'
+                    : 'Copy address'
               }
             >
               {copyStatus === 'success' ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className='w-4 h-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M5 13l4 4L19 7'
+                  />
                 </svg>
               ) : copyStatus === 'error' ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className='w-4 h-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <svg
+                  className='w-4 h-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
+                  />
                 </svg>
               )}
             </button>
           )}
-          
+
           {/* Error tooltip */}
           {copyStatus === 'error' && copyError && (
-            <div className="absolute top-full left-0 mt-2 p-2 bg-red-100 text-red-800 text-xs rounded shadow-md z-10">
+            <div className='absolute top-full left-0 mt-2 p-2 bg-red-100 text-red-800 text-xs rounded shadow-md z-10'>
               {copyError}
             </div>
           )}
-          
+
           {/* Success tooltip */}
           {copyStatus === 'success' && (
-            <div className="absolute top-full left-0 mt-2 p-2 bg-green-100 text-green-800 text-xs rounded shadow-md z-10">
+            <div className='absolute top-full left-0 mt-2 p-2 bg-green-100 text-green-800 text-xs rounded shadow-md z-10'>
               Address copied to clipboard!
             </div>
           )}
@@ -299,7 +344,7 @@ export function WalletConnectButton() {
             }
           }}
           disabled={isNetworkSwitching}
-          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:bg-red-300 disabled:cursor-not-allowed"
+          className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:bg-red-300 disabled:cursor-not-allowed'
         >
           Disconnect
         </button>
@@ -310,13 +355,29 @@ export function WalletConnectButton() {
   // Render the connecting UI
   const renderConnectingUI = () => {
     if (!connecting) return null;
-    
+
     return (
-      <div className="px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg">
-        <p className="text-sm text-ocean-deep dark:text-ocean-foam flex items-center">
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-ocean-deep dark:text-ocean-foam" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      <div className='px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg'>
+        <p className='text-sm text-ocean-deep dark:text-ocean-foam flex items-center'>
+          <svg
+            className='animate-spin -ml-1 mr-2 h-4 w-4 text-ocean-deep dark:text-ocean-foam'
+            xmlns='http://www.w3.org/2000/svg'
+            fill='none'
+            viewBox='0 0 24 24'
+          >
+            <circle
+              className='opacity-25'
+              cx='12'
+              cy='12'
+              r='10'
+              stroke='currentColor'
+              strokeWidth='4'
+            ></circle>
+            <path
+              className='opacity-75'
+              fill='currentColor'
+              d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+            ></path>
           </svg>
           Connecting...
         </p>
@@ -327,7 +388,7 @@ export function WalletConnectButton() {
   // Render the connect button UI with wallet selector
   const renderConnectUI = () => {
     if (connected || connecting) return null;
-    
+
     // Use the WalletSelector component instead of a simple button
     return <WalletSelector />;
   };
@@ -337,10 +398,10 @@ export function WalletConnectButton() {
     <ErrorBoundary>
       <>
         {renderConnectedUI() || renderConnectingUI() || renderConnectUI()}
-        
-        <WalletErrorModal 
-          error={error instanceof WalletError ? error : null} 
-          onDismiss={() => setError(null)} 
+
+        <WalletErrorModal
+          error={error instanceof WalletError ? error : null}
+          onDismiss={() => setError(null)}
         />
         <ClipboardErrorModal
           error={clipboardError}

@@ -1,13 +1,14 @@
 /**
-import { Logger } from '../../utils/Logger';
-
-const logger = new Logger('ResponseParser');
  * ResponseParser - Handles parsing and normalizing responses from different AI providers
- * 
+ *
  * This class provides utilities for parsing and validating AI responses,
  * handling different response formats from various providers, and
  * ensuring type safety for structured responses.
  */
+
+import { Logger } from '../../utils/Logger';
+
+const logger = new Logger('ResponseParser');
 
 export class ResponseParser {
   /**
@@ -16,7 +17,10 @@ export class ResponseParser {
    * @param defaultValue The default value to return if parsing fails
    * @returns The parsed object or default value
    */
-  public static parseJson<T>(jsonStringOrObject: string | unknown, defaultValue: T): T {
+  public static parseJson<T>(
+    jsonStringOrObject: string | unknown,
+    defaultValue: T
+  ): T {
     try {
       // If it's already an object (not a string), return it directly
       if (typeof jsonStringOrObject !== 'string') {
@@ -26,16 +30,19 @@ export class ResponseParser {
           (Array.isArray(defaultValue) && Array.isArray(jsonStringOrObject)) ||
           // Objects
           (typeof defaultValue === 'object' &&
-           defaultValue !== null &&
-           typeof jsonStringOrObject === 'object' &&
-           jsonStringOrObject !== null &&
-           !Array.isArray(jsonStringOrObject))
+            defaultValue !== null &&
+            typeof jsonStringOrObject === 'object' &&
+            jsonStringOrObject !== null &&
+            !Array.isArray(jsonStringOrObject))
         ) {
           return jsonStringOrObject as T;
         }
 
         // String representation to help with debugging
-        logger.info('Received non-string, non-matching type:', typeof jsonStringOrObject);
+        logger.info(
+          'Received non-string, non-matching type:',
+          typeof jsonStringOrObject
+        );
         return defaultValue;
       }
 
@@ -67,12 +74,17 @@ export class ResponseParser {
    * @param requiredProps The required properties
    * @returns True if the object has all required properties
    */
-  public static validateObjectStructure(obj: unknown, requiredProps: string[]): boolean {
+  public static validateObjectStructure(
+    obj: unknown,
+    requiredProps: string[]
+  ): boolean {
     if (!obj || typeof obj !== 'object' || obj === null) {
       return false;
     }
-    
-    return requiredProps.every(prop => prop in (obj as Record<string, unknown>));
+
+    return requiredProps.every(
+      prop => prop in (obj as Record<string, unknown>)
+    );
   }
 
   /**
@@ -86,7 +98,7 @@ export class ResponseParser {
       // Try to find JSON-like content in the response
       const jsonRegex = /\{[\s\S]*?\}|\[[\s\S]*?\]/g;
       const matches = text.match(jsonRegex);
-      
+
       if (matches && matches.length > 0) {
         // Try each match until we find valid JSON
         for (const match of matches) {
@@ -97,7 +109,7 @@ export class ResponseParser {
           }
         }
       }
-      
+
       // If no JSON found or none valid, return default
       return defaultValue;
     } catch (_error) {
@@ -112,15 +124,22 @@ export class ResponseParser {
    * @param expectedType The expected type descriptor
    * @returns The normalized response or null if normalization fails
    */
-  public static normalizeResponse<T>(response: unknown, expectedType: string): T | null {
+  public static normalizeResponse<T>(
+    response: unknown,
+    expectedType: string
+  ): T | null {
     try {
       // Handle different response formats based on expected type
       switch (expectedType) {
         case 'string':
-          return typeof response === 'string' 
-            ? response as unknown as T 
-            : (response.text || response.content || response.answer || response.result || null);
-            
+          return typeof response === 'string'
+            ? (response as unknown as T)
+            : response.text ||
+                response.content ||
+                response.answer ||
+                response.result ||
+                null;
+
         case 'array':
           if (Array.isArray(response)) {
             return response as unknown as T;
@@ -128,7 +147,7 @@ export class ResponseParser {
             return this.parseJson<T>(response, [] as unknown as T);
           }
           return null;
-          
+
         case 'object':
           if (typeof response === 'object' && !Array.isArray(response)) {
             return response as T;
@@ -136,7 +155,7 @@ export class ResponseParser {
             return this.parseJson<T>(response, {} as T);
           }
           return null;
-          
+
         default:
           return response as T;
       }
@@ -152,24 +171,27 @@ export class ResponseParser {
    * @param schema Schema definition with property types
    * @returns True if the response matches the schema
    */
-  public static validateSchema(response: unknown, schema: Record<string, string>): boolean {
+  public static validateSchema(
+    response: unknown,
+    schema: Record<string, string>
+  ): boolean {
     if (!response || typeof response !== 'object') {
       return false;
     }
-    
+
     for (const [key, type] of Object.entries(schema)) {
       // Skip optional properties (marked with ?)
       if (key.endsWith('?') && !(key.slice(0, -1) in response)) {
         continue;
       }
-      
+
       const value = response[key];
-      
+
       // Check if the value exists and matches the expected type
       if (value === undefined) {
         return false;
       }
-      
+
       switch (type) {
         case 'string':
           if (typeof value !== 'string') return false;
@@ -184,14 +206,19 @@ export class ResponseParser {
           if (!Array.isArray(value)) return false;
           break;
         case 'object':
-          if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+          if (
+            typeof value !== 'object' ||
+            value === null ||
+            Array.isArray(value)
+          )
+            return false;
           break;
         default:
           // For complex types (e.g., 'array:string'), we'd need more sophisticated validation
           break;
       }
     }
-    
+
     return true;
   }
 }

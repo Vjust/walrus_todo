@@ -1,6 +1,6 @@
 /**
  * Walrus Protocol Integration for Todo Management
- * 
+ *
  * This module provides the two-step process:
  * 1. Upload todo content to Walrus decentralized storage
  * 2. Create Sui NFT with blob reference for ownership and transferability
@@ -9,21 +9,21 @@
 import { Transaction as TransactionBlock } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { Signer } from '@mysten/sui/cryptography';
-import { 
-  FrontendWalrusClient, 
-  WalrusTodoStorage, 
+import {
+  FrontendWalrusClient,
+  WalrusTodoStorage,
   ContentEncoder,
   WalrusClientError,
   WalrusRetryError,
   WalrusValidationError,
   type WalrusUploadResult,
-  type WalrusNetwork 
+  type WalrusNetwork,
 } from './walrus-client';
-import { 
-  storeTodoOnBlockchain, 
-  type CreateTodoParams, 
+import {
+  storeTodoOnBlockchain,
+  type CreateTodoParams,
   type TransactionResult,
-  getSuiClient
+  getSuiClient,
 } from './sui-client';
 
 // Extended Todo interface with Walrus integration
@@ -35,12 +35,12 @@ export interface WalrusTodo {
   priority: 'low' | 'medium' | 'high';
   tags?: string[];
   dueDate?: string;
-  
+
   // Storage information
-  walrusBlobId?: string;       // Walrus blob ID for content
-  suiObjectId?: string;        // Sui NFT object ID for ownership
-  blockchainStored: boolean;   // Whether stored on blockchain
-  
+  walrusBlobId?: string; // Walrus blob ID for content
+  suiObjectId?: string; // Sui NFT object ID for ownership
+  blockchainStored: boolean; // Whether stored on blockchain
+
   // Metadata
   createdAt: number;
   updatedAt: number;
@@ -97,7 +97,10 @@ export class WalrusTodoManager {
    * Create todo with Walrus storage and optional NFT creation
    */
   async createTodo(
-    todo: Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>,
+    todo: Omit<
+      WalrusTodo,
+      'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'
+    >,
     signer: Signer | Ed25519Keypair,
     signAndExecuteTransaction?: (txb: TransactionBlock) => Promise<any>,
     options: WalrusTodoUploadOptions = {}
@@ -107,12 +110,12 @@ export class WalrusTodoManager {
       deletable = true,
       isPrivate = false,
       createNFT = true,
-      onProgress
+      onProgress,
     } = options;
 
     // Generate unique ID
     const todoId = `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Create complete todo object
     const completeTodo: WalrusTodo = {
       ...todo,
@@ -121,26 +124,32 @@ export class WalrusTodoManager {
       updatedAt: Date.now(),
       blockchainStored: false,
       isPrivate,
-      storageEpochs: epochs
+      storageEpochs: epochs,
     };
 
     try {
       // Step 1: Upload to Walrus
       onProgress?.('Uploading to Walrus storage...', 25);
-      
-      const walrusResult = await this.walrusStorage.storeTodo(completeTodo, signer, {
-        epochs,
-        deletable,
-        attributes: {
-          type: 'todo',
-          title: completeTodo.title,
-          priority: completeTodo.priority,
-          private: String(isPrivate),
-          created: new Date().toISOString()
-        },
-        // Transform progress callback to match WalrusUploadOptions interface
-        onProgress: onProgress ? (progress) => onProgress('Uploading...', 25 + (progress * 0.5)) : undefined
-      });
+
+      const walrusResult = await this.walrusStorage.storeTodo(
+        completeTodo,
+        signer,
+        {
+          epochs,
+          deletable,
+          attributes: {
+            type: 'todo',
+            title: completeTodo.title,
+            priority: completeTodo.priority,
+            private: String(isPrivate),
+            created: new Date().toISOString(),
+          },
+          // Transform progress callback to match WalrusUploadOptions interface
+          onProgress: onProgress
+            ? progress => onProgress('Uploading...', 25 + progress * 0.5)
+            : undefined,
+        }
+      );
 
       // Update todo with Walrus information
       completeTodo.walrusBlobId = walrusResult.blobId;
@@ -151,10 +160,10 @@ export class WalrusTodoManager {
 
       // Step 2: Create NFT (optional)
       let suiResult: TransactionResult | undefined;
-      
+
       if (createNFT && signAndExecuteTransaction) {
         onProgress?.('Creating NFT on Sui blockchain...', 85);
-        
+
         try {
           // Create NFT with blob reference
           const nftParams: CreateTodoParams = {
@@ -167,31 +176,47 @@ export class WalrusTodoManager {
               tags: completeTodo.tags,
               dueDate: completeTodo.dueDate,
               storageEpochs: epochs,
-              createdAt: completeTodo.createdAt
+              createdAt: completeTodo.createdAt,
             }),
-            isPrivate
+            isPrivate,
           };
 
           // Get address from signer
           let walletAddress = '';
-          if ('getAddress' in signer && typeof signer.getAddress === 'function') {
+          if (
+            'getAddress' in signer &&
+            typeof signer.getAddress === 'function'
+          ) {
             walletAddress = await signer.getAddress();
-          } else if ('toSuiAddress' in signer && typeof signer.toSuiAddress === 'function') {
+          } else if (
+            'toSuiAddress' in signer &&
+            typeof signer.toSuiAddress === 'function'
+          ) {
             walletAddress = signer.toSuiAddress();
           }
-          
-          suiResult = await storeTodoOnBlockchain(nftParams, signAndExecuteTransaction, walletAddress);
-          
+
+          suiResult = await storeTodoOnBlockchain(
+            nftParams,
+            signAndExecuteTransaction,
+            walletAddress
+          );
+
           if (suiResult.success) {
             completeTodo.suiObjectId = suiResult.objectId;
             onProgress?.('NFT creation complete', 100);
           } else {
             console.warn('Failed to create NFT:', suiResult.error);
-            onProgress?.('NFT creation failed, but Walrus storage successful', 90);
+            onProgress?.(
+              'NFT creation failed, but Walrus storage successful',
+              90
+            );
           }
         } catch (error) {
           console.warn('NFT creation failed:', error);
-          onProgress?.('NFT creation failed, but Walrus storage successful', 90);
+          onProgress?.(
+            'NFT creation failed, but Walrus storage successful',
+            90
+          );
         }
       } else {
         onProgress?.('Storage complete', 100);
@@ -199,7 +224,7 @@ export class WalrusTodoManager {
 
       // Calculate storage metadata
       const costInfo = await this.walrusClient.calculateStorageCost(
-        walrusResult.metadata.size, 
+        walrusResult.metadata.size,
         epochs
       );
 
@@ -211,19 +236,18 @@ export class WalrusTodoManager {
         storageCost: {
           total: costInfo.totalCost,
           storage: costInfo.storageCost,
-          write: costInfo.writeCost
+          write: costInfo.writeCost,
         },
         uploadTimestamp: Date.now(),
-        expiresAt: walrusResult.metadata.expiresAt
+        expiresAt: walrusResult.metadata.expiresAt,
       };
 
       return {
         todo: completeTodo,
         walrusResult,
         suiResult,
-        metadata
+        metadata,
       };
-      
     } catch (error) {
       if (error instanceof WalrusClientError) {
         throw error;
@@ -242,7 +266,7 @@ export class WalrusTodoManager {
   async retrieveTodo(walrusBlobId: string): Promise<WalrusTodo> {
     try {
       const todoData = await this.walrusStorage.retrieveTodo(walrusBlobId);
-      
+
       // Ensure the retrieved data is a valid todo
       if (!todoData || typeof todoData !== 'object') {
         throw new WalrusClientError('Invalid todo data retrieved from storage');
@@ -251,7 +275,7 @@ export class WalrusTodoManager {
       return {
         blockchainStored: true,
         ...todoData,
-        walrusBlobId // Ensure blob ID is set
+        walrusBlobId, // Ensure blob ID is set
       };
     } catch (error) {
       if (error instanceof WalrusClientError) {
@@ -275,7 +299,7 @@ export class WalrusTodoManager {
   ): Promise<WalrusUploadResult> {
     const updatedTodo: WalrusTodo = {
       ...todo,
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
     };
 
     try {
@@ -283,9 +307,9 @@ export class WalrusTodoManager {
       const { onProgress, ...restOptions } = options;
       const transformedOptions = {
         ...restOptions,
-        ...(onProgress && { 
-          onProgress: (progress: number) => onProgress('storing', progress) 
-        })
+        ...(onProgress && {
+          onProgress: (progress: number) => onProgress('storing', progress),
+        }),
       };
 
       return await this.walrusStorage.storeTodo(updatedTodo, signer, {
@@ -296,9 +320,9 @@ export class WalrusTodoManager {
           title: updatedTodo.title,
           priority: updatedTodo.priority,
           originalBlobId: todo.walrusBlobId || '',
-          updated: new Date().toISOString()
+          updated: new Date().toISOString(),
         },
-        ...transformedOptions
+        ...transformedOptions,
       });
     } catch (error) {
       if (error instanceof WalrusClientError) {
@@ -343,13 +367,13 @@ export class WalrusTodoManager {
   }> {
     try {
       const exists = await this.walrusClient.blobExists(walrusBlobId);
-      
+
       if (!exists) {
         return { exists: false };
       }
 
       const blobInfo = await this.walrusClient.getBlobInfo(walrusBlobId);
-      
+
       // Estimate storage cost based on blob size
       let storageCost;
       try {
@@ -358,7 +382,7 @@ export class WalrusTodoManager {
         storageCost = {
           total: cost.totalCost,
           storage: cost.storageCost,
-          write: cost.writeCost
+          write: cost.writeCost,
         };
       } catch (error) {
         console.warn('Failed to calculate storage cost:', error);
@@ -367,7 +391,7 @@ export class WalrusTodoManager {
       return {
         exists: true,
         blobInfo,
-        storageCost
+        storageCost,
       };
     } catch (error) {
       console.error('Error getting todo storage info:', error);
@@ -379,30 +403,40 @@ export class WalrusTodoManager {
    * Batch operations for multiple todos
    */
   async createMultipleTodos(
-    todos: Array<Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>>,
+    todos: Array<
+      Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
+    >,
     signer: Signer | Ed25519Keypair,
     signAndExecuteTransaction?: (txb: TransactionBlock) => Promise<any>,
     options: WalrusTodoUploadOptions = {}
   ): Promise<WalrusTodoCreateResult[]> {
     const results: WalrusTodoCreateResult[] = [];
     const { onProgress } = options;
-    
+
     for (let i = 0; i < todos.length; i++) {
       const todo = todos[i];
-      onProgress?.(`Creating todo ${i + 1} of ${todos.length}`, (i / todos.length) * 100);
-      
+      onProgress?.(
+        `Creating todo ${i + 1} of ${todos.length}`,
+        (i / todos.length) * 100
+      );
+
       try {
-        const result = await this.createTodo(todo, signer, signAndExecuteTransaction, {
-          ...options,
-          onProgress: undefined // Avoid nested progress callbacks
-        });
+        const result = await this.createTodo(
+          todo,
+          signer,
+          signAndExecuteTransaction,
+          {
+            ...options,
+            onProgress: undefined, // Avoid nested progress callbacks
+          }
+        );
         results.push(result);
       } catch (error) {
         console.error(`Failed to create todo ${i + 1}:`, error);
         // Continue with other todos even if one fails
       }
     }
-    
+
     onProgress?.('Batch creation complete', 100);
     return results;
   }
@@ -411,7 +445,9 @@ export class WalrusTodoManager {
    * Check storage costs before operations
    */
   async estimateStorageCosts(
-    todos: Array<Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>>,
+    todos: Array<
+      Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>
+    >,
     epochs: number = 5
   ): Promise<{
     totalCost: bigint;
@@ -423,19 +459,22 @@ export class WalrusTodoManager {
     const perTodoCost: Array<{ totalCost: bigint; size: number }> = [];
 
     for (const todo of todos) {
-      const estimate = await this.walrusStorage.estimateTodoStorageCost(todo, epochs);
+      const estimate = await this.walrusStorage.estimateTodoStorageCost(
+        todo,
+        epochs
+      );
       totalCost += estimate.totalCost;
       totalSize += estimate.sizeBytes;
       perTodoCost.push({
         totalCost: estimate.totalCost,
-        size: estimate.sizeBytes
+        size: estimate.sizeBytes,
       });
     }
 
     return {
       totalCost,
       totalSize,
-      perTodoCost
+      perTodoCost,
     };
   }
 

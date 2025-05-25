@@ -3,7 +3,7 @@ import { Logger } from './Logger';
 import {
   BlockchainError,
   TransactionError,
-  ValidationError
+  ValidationError,
 } from '../types/errors/consolidated';
 
 export interface RetryConfig {
@@ -22,7 +22,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
   attempts: 3,
   baseDelay: 1000,
   maxDelay: 10000,
-  exponential: true
+  exponential: true,
 };
 
 export class TransactionHelper {
@@ -55,63 +55,59 @@ export class TransactionHelper {
       requireSigner = false,
       customSigner,
       customRetry,
-      validateResponse
+      validateResponse,
     } = options;
 
     // Validate signer if required
     if (requireSigner) {
       const signer = customSigner || this.signer;
       if (!signer) {
-        throw new ValidationError(
-          'Signer required for operation',
-          { field: 'signer', value: 'missing', recoverable: false }
-        );
+        throw new ValidationError('Signer required for operation', {
+          field: 'signer',
+          value: 'missing',
+          recoverable: false,
+        });
       }
     }
 
     // Apply custom retry config if provided
-    const retryConfig = customRetry ?
-      { ...this.config, ...customRetry } :
-      this.config;
+    const retryConfig = customRetry
+      ? { ...this.config, ...customRetry }
+      : this.config;
 
     let lastError: Error | null = null;
     let attempts = 0;
-    
+
     for (let attempt = 1; attempt <= retryConfig.attempts; attempt++) {
       attempts = attempt;
       try {
         const response = await operation();
-        
+
         // Validate response if validator provided
         if (validateResponse && !validateResponse(response)) {
-          throw new ValidationError(
-            'Invalid response from operation',
-            {
-              operation: name,
-              attempt,
-              recoverable: true
-            }
-          );
+          throw new ValidationError('Invalid response from operation', {
+            operation: name,
+            attempt,
+            recoverable: true,
+          });
         }
-        
+
         return response;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
-        const shouldRetry = this.shouldRetry(lastError) && attempt < retryConfig.attempts;
+
+        const shouldRetry =
+          this.shouldRetry(lastError) && attempt < retryConfig.attempts;
         if (!shouldRetry) break;
 
         // Calculate delay with exponential backoff
         const delay = this.getRetryDelay(attempt);
-        this.logger.warn(
-          `Retry attempt ${attempt} for ${name}`,
-          {
-            attempt,
-            delay,
-            error: lastError.message,
-            maxAttempts: retryConfig.attempts
-          }
-        );
+        this.logger.warn(`Retry attempt ${attempt} for ${name}`, {
+          attempt,
+          delay,
+          error: lastError.message,
+          maxAttempts: retryConfig.attempts,
+        });
 
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -125,7 +121,7 @@ export class TransactionHelper {
           operation: name,
           transactionId: lastError.transactionId,
           recoverable: lastError.recoverable,
-          cause: lastError
+          cause: lastError,
         }
       );
     }
@@ -134,8 +130,9 @@ export class TransactionHelper {
       `Operation '${name}' failed after ${attempts} attempts: ${lastError?.message || 'Unknown error'}`,
       {
         operation: name,
-        recoverable: lastError instanceof ValidationError ? lastError.recoverable : true,
-        cause: lastError
+        recoverable:
+          lastError instanceof ValidationError ? lastError.recoverable : true,
+        cause: lastError,
       }
     );
   }
@@ -184,23 +181,18 @@ export class TransactionHelper {
   /**
    * Validate transaction requirements
    */
-  public validateTransaction(
-    options: {
-      name: string;
-      signer?: Signer;
-      requireSigner?: boolean;
-    }
-  ): void {
+  public validateTransaction(options: {
+    name: string;
+    signer?: Signer;
+    requireSigner?: boolean;
+  }): void {
     const { signer, requireSigner = true } = options;
 
     if (requireSigner && !signer && !this.signer) {
-      throw new ValidationError(
-        'Signer required for transaction',
-        {
-          field: 'signer',
-          value: 'missing'
-        }
-      );
+      throw new ValidationError('Signer required for transaction', {
+        field: 'signer',
+        value: 'missing',
+      });
     }
   }
 
@@ -208,9 +200,6 @@ export class TransactionHelper {
    * Create a new instance with custom config
    */
   public withConfig(config: Partial<TransactionConfig>): TransactionHelper {
-    return new TransactionHelper(
-      config.signer || this.signer,
-      config.retry
-    );
+    return new TransactionHelper(config.signer || this.signer, config.retry);
   }
 }

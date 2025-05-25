@@ -17,17 +17,26 @@ export function validateDate(dateStr: string): boolean {
   return !isNaN(date.getTime());
 }
 
-export function validatePriority(priority: string): priority is 'high' | 'medium' | 'low' {
+export function validatePriority(
+  priority: string
+): priority is 'high' | 'medium' | 'low' {
   return ['high', 'medium', 'low'].includes(priority);
 }
 
-export function formatTodoOutput(todo: { completed: boolean; priority: 'high' | 'medium' | 'low'; title: string; dueDate?: string; tags: string[] }): string {
+export function formatTodoOutput(todo: {
+  completed: boolean;
+  priority: 'high' | 'medium' | 'low';
+  title: string;
+  dueDate?: string;
+  tags: string[];
+}): string {
   const status = todo.completed ? '✓' : '⃞';
-  const priority = {
-    high: '⚠️',
-    medium: '•',
-    low: '○'
-  }[todo.priority] || '•';
+  const priority =
+    {
+      high: '⚠️',
+      medium: '•',
+      low: '○',
+    }[todo.priority] || '•';
 
   return `${status} ${priority} ${todo.title}${todo.dueDate ? ` (due: ${todo.dueDate})` : ''}${
     todo.tags.length ? ` [${todo.tags.join(', ')}]` : ''

@@ -16,7 +16,7 @@ global.Date = class extends Date {
     }
     return new Date(...args);
   }
-  
+
   static now() {
     return fixedDate.getTime();
   }
@@ -26,7 +26,7 @@ global.Date = class extends Date {
 jest.setTimeout(10000); // Increase timeout for security tests
 
 // Add global security testing helpers
-global.sanitizeOutput = (output) => {
+global.sanitizeOutput = output => {
   // Simple sanitizer to remove sensitive patterns
   const patterns = [
     /api[-_]?key[-_=:]["']?[\w\d]+["']?/gi,
@@ -36,20 +36,25 @@ global.sanitizeOutput = (output) => {
     /authorization[-_=:]["']?[\w\d]+["']?/gi,
     /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/, // Phone
     /\b\d{3}-\d{2}-\d{4}\b/, // SSN
-    /\b(?:\d[ -]*?){13,16}\b/ // Credit card
+    /\b(?:\d[ -]*?){13,16}\b/, // Credit card
   ];
-  
+
   let sanitized = output;
   patterns.forEach(pattern => {
     sanitized = sanitized.replace(pattern, '[REDACTED]');
   });
-  
+
   return sanitized;
 };
 
 // Set up a global error handler to catch unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', global.sanitizeOutput(String(reason)));
+  logger.error(
+    'Unhandled Rejection at:',
+    promise,
+    'reason:',
+    global.sanitizeOutput(String(reason))
+  );
   // Don't actually exit the process during tests
 });
 
@@ -58,20 +63,21 @@ expect.extend({
   toBeSecurelyHashed(received, algorithm = 'sha256') {
     // Check if a string looks like it's been securely hashed
     const hashPatterns = {
-      'sha256': /^[a-f0-9]{64}$/i,
-      'sha512': /^[a-f0-9]{128}$/i,
-      'md5': /^[a-f0-9]{32}$/i
+      sha256: /^[a-f0-9]{64}$/i,
+      sha512: /^[a-f0-9]{128}$/i,
+      md5: /^[a-f0-9]{32}$/i,
     };
-    
+
     const pattern = hashPatterns[algorithm] || hashPatterns.sha256;
     const pass = pattern.test(received);
-    
+
     return {
-      message: () => `expected ${received} ${pass ? 'not ' : ''}to be a valid ${algorithm} hash`,
-      pass
+      message: () =>
+        `expected ${received} ${pass ? 'not ' : ''}to be a valid ${algorithm} hash`,
+      pass,
     };
   },
-  
+
   notToContainSensitiveData(received) {
     // Check if a string contains common patterns of sensitive data
     const sensitivePatterns = [
@@ -83,18 +89,19 @@ expect.extend({
       /access[-_]token/i,
       /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/, // Phone
       /\b\d{3}-\d{2}-\d{4}\b/, // SSN
-      /\b(?:\d[ -]*?){13,16}\b/ // Credit card
+      /\b(?:\d[ -]*?){13,16}\b/, // Credit card
     ];
-    
+
     const matches = sensitivePatterns
-      .map(pattern => pattern.test(received) ? pattern.toString() : null)
+      .map(pattern => (pattern.test(received) ? pattern.toString() : null))
       .filter(Boolean);
-    
+
     const pass = matches.length === 0;
-    
+
     return {
-      message: () => `expected string not to contain sensitive data but found: ${matches.join(', ')}`,
-      pass
+      message: () =>
+        `expected string not to contain sensitive data but found: ${matches.join(', ')}`,
+      pass,
     };
-  }
+  },
 });

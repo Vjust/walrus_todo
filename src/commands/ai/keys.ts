@@ -6,14 +6,15 @@ import { CLIError } from '../../types/errors/consolidated';
 
 /**
  * AI Credential Key Management command
- * 
+ *
  * This command provides functionality to manage the encryption keys used for AI credentials:
  * - Rotation: Safely rotate encryption keys while preserving credentials
  * - Validation: Check encryption key integrity
  * - Backup: List, create, and restore from key backups
  */
 export default class AIKeysCommand extends BaseCommand {
-  static description = 'Rotate, validate and backup encryption keys used for securing AI provider credentials';
+  static description =
+    'Rotate, validate and backup encryption keys used for securing AI provider credentials';
 
   static examples = [
     '<%= config.bin %> ai keys:rotate                          # Rotate encryption keys',
@@ -42,10 +43,11 @@ export default class AIKeysCommand extends BaseCommand {
   static args = {
     action: Args.string({
       name: 'action',
-      description: 'Action to perform: rotate, validate, backup, list-backups, restore',
+      description:
+        'Action to perform: rotate, validate, backup, list-backups, restore',
       required: true,
       options: ['rotate', 'validate', 'backup', 'list-backups', 'restore'],
-    })
+    }),
   };
 
   async run() {
@@ -76,7 +78,9 @@ export default class AIKeysCommand extends BaseCommand {
       if (error instanceof CLIError) {
         this.error(`${error.message} (${error.code})`);
       } else {
-        this.error(`Operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.error(
+          `Operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
   }
@@ -88,19 +92,19 @@ export default class AIKeysCommand extends BaseCommand {
     if (!force) {
       const confirm = await this.confirm(
         `${chalk.yellow('⚠️ Warning:')} Key rotation will re-encrypt all stored credentials. ` +
-        'This operation is secure but should be done with caution.\n\n' +
-        'Do you want to continue? (yes/no)'
+          'This operation is secure but should be done with caution.\n\n' +
+          'Do you want to continue? (yes/no)'
       );
-      
+
       if (!confirm) {
         this.log('Key rotation cancelled.');
         return;
       }
     }
-    
+
     this.log('Rotating encryption key...');
     const success = await secureCredentialManager.rotateKey();
-    
+
     if (success) {
       this.log(`${chalk.green('✓')} Encryption key rotated successfully`);
       this.log('All credentials have been re-encrypted with the new key.');
@@ -115,11 +119,13 @@ export default class AIKeysCommand extends BaseCommand {
   private async validateKey() {
     this.log('Validating encryption key integrity...');
     const isValid = secureCredentialManager.validateKeyIntegrity();
-    
+
     if (isValid) {
       this.log(`${chalk.green('✓')} Encryption key integrity verified`);
     } else {
-      this.error(`${chalk.red('✗')} Encryption key failed validation. Consider restoring from backup.`);
+      this.error(
+        `${chalk.red('✗')} Encryption key failed validation. Consider restoring from backup.`
+      );
     }
   }
 
@@ -128,13 +134,17 @@ export default class AIKeysCommand extends BaseCommand {
    */
   private async backupKey() {
     this.log('Creating encryption key backup...');
-    
+
     try {
       // Use the private method via the rotation flow which includes backup
       await secureCredentialManager.rotateKey();
-      this.log(`${chalk.green('✓')} Encryption key backup created successfully`);
+      this.log(
+        `${chalk.green('✓')} Encryption key backup created successfully`
+      );
     } catch (error) {
-      this.error(`Failed to create backup: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.error(
+        `Failed to create backup: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -143,16 +153,18 @@ export default class AIKeysCommand extends BaseCommand {
    */
   private async listBackups() {
     const backups = secureCredentialManager.listKeyBackups();
-    
+
     if (backups.length === 0) {
       this.log('No key backups found.');
       return;
     }
-    
+
     this.log('Available key backups:');
     backups.forEach((backup, index) => {
       const date = new Date(backup.timestamp).toLocaleString();
-      this.log(`${index + 1}. ID: ${chalk.cyan(backup.id)} - Created: ${date} - Version: ${backup.version}`);
+      this.log(
+        `${index + 1}. ID: ${chalk.cyan(backup.id)} - Created: ${date} - Version: ${backup.version}`
+      );
     });
   }
 
@@ -163,49 +175,51 @@ export default class AIKeysCommand extends BaseCommand {
     if (!backupId) {
       // List available backups first
       const backups = secureCredentialManager.listKeyBackups();
-      
+
       if (backups.length === 0) {
         this.error('No key backups found for restore operation.');
         return;
       }
-      
+
       this.log('Available backups:');
       backups.forEach((backup, index) => {
         const date = new Date(backup.timestamp).toLocaleString();
-        this.log(`${index + 1}. ID: ${chalk.cyan(backup.id)} - Created: ${date}`);
+        this.log(
+          `${index + 1}. ID: ${chalk.cyan(backup.id)} - Created: ${date}`
+        );
       });
-      
+
       // Ask which backup to restore
       const response = await this.promptInquirer({
         type: 'input',
         name: 'backupIndex',
         message: 'Enter the number of the backup to restore:',
-        validate: (input) => {
+        validate: input => {
           const num = parseInt(input, 10);
-          return (!isNaN(num) && num > 0 && num <= backups.length) 
-            ? true 
+          return !isNaN(num) && num > 0 && num <= backups.length
+            ? true
             : `Please enter a number between 1 and ${backups.length}`;
-        }
+        },
       });
-      
+
       const selectedIndex = parseInt(response.backupIndex, 10) - 1;
       backupId = backups[selectedIndex].id;
     }
-    
+
     const confirm = await this.confirm(
       `${chalk.yellow('⚠️ Warning:')} Restoring from backup will replace your current encryption key. ` +
-      'This may cause issues accessing recently added credentials.\n\n' +
-      'Do you want to continue? (yes/no)'
+        'This may cause issues accessing recently added credentials.\n\n' +
+        'Do you want to continue? (yes/no)'
     );
-    
+
     if (!confirm) {
       this.log('Restore operation cancelled.');
       return;
     }
-    
+
     this.log(`Restoring from backup ${chalk.cyan(backupId)}...`);
     const success = await secureCredentialManager.restoreFromBackup(backupId);
-    
+
     if (success) {
       this.log(`${chalk.green('✓')} Successfully restored from backup`);
     } else {
@@ -216,14 +230,20 @@ export default class AIKeysCommand extends BaseCommand {
   /**
    * Prompt for confirmation - override BaseCommand method
    */
-  protected async confirm(message: string, _defaultValue?: boolean): Promise<boolean> {
+  protected async confirm(
+    message: string,
+    _defaultValue?: boolean
+  ): Promise<boolean> {
     const response = await this.promptInquirer({
       type: 'input',
       name: 'confirm',
       message,
     });
-    
-    return response.confirm.toLowerCase() === 'yes' || response.confirm.toLowerCase() === 'y';
+
+    return (
+      response.confirm.toLowerCase() === 'yes' ||
+      response.confirm.toLowerCase() === 'y'
+    );
   }
 
   /**

@@ -1,6 +1,6 @@
 /**
  * AI Provider Adapter Utilities
- * 
+ *
  * Utility functions for working with AI providers and converting between
  * enum and string representations.
  */
@@ -33,7 +33,7 @@ export function getProviderString(provider: AIProvider): string {
 export function getProviderEnum(providerString: string): AIProvider {
   // Case-insensitive matching
   const normalizedProvider = providerString.toLowerCase();
-  
+
   switch (normalizedProvider) {
     case 'xai':
       return AIProvider.XAI;

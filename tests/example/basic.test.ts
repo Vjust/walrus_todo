@@ -2,7 +2,6 @@
  * Basic test file to verify Jest is working correctly
  */
 
-
 jest.mock('../../src/services/todoService');
 
 // Sample test data
@@ -16,13 +15,13 @@ const sampleTodo = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   private: false,
-  storageLocation: 'local'
+  storageLocation: 'local',
 };
 
 describe('Basic Jest Test', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock TodoService methods
     (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(sampleTodo);
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
@@ -32,7 +31,7 @@ describe('Basic Jest Test', () => {
       todos: [sampleTodo],
       version: 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
   });
 
@@ -43,22 +42,27 @@ describe('Basic Jest Test', () => {
   it('should mock TodoService correctly', async () => {
     const todoService = new TodoService();
     const result = await todoService.addTodo('default', sampleTodo);
-    
+
     expect(result).toEqual(sampleTodo);
-    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith('default', sampleTodo);
+    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
+      'default',
+      sampleTodo
+    );
   });
 
   it('should handle mock implementations', async () => {
     // Override the implementation for this test
-    (TodoService.prototype.addTodo as jest.Mock).mockImplementation(async (listName, todo) => ({
-      ...todo,
-      id: 'new-id',
-      completed: true
-    }));
-    
+    (TodoService.prototype.addTodo as jest.Mock).mockImplementation(
+      async (listName, todo) => ({
+        ...todo,
+        id: 'new-id',
+        completed: true,
+      })
+    );
+
     const todoService = new TodoService();
     const result = await todoService.addTodo('default', sampleTodo);
-    
+
     expect(result.id).toEqual('new-id');
     expect(result.completed).toEqual(true);
   });

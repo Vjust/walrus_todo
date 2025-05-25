@@ -12,7 +12,7 @@ export class CLIExecutor {
   constructor(options: { cliPath?: string } = {}) {
     // Default to the built CLI binary path
     this.cliPath = options.cliPath || path.join(process.cwd(), 'bin', 'run');
-    
+
     // Default execa options for all CLI executions
     this.defaultOptions = {
       timeout: 30000, // 30 second timeout
@@ -29,14 +29,22 @@ export class CLIExecutor {
   /**
    * Execute a CLI command with the given arguments
    */
-  async execute(command: string, args: string[] = [], options: Partial<ExecaOptions> = {}) {
+  async execute(
+    command: string,
+    args: string[] = [],
+    options: Partial<ExecaOptions> = {}
+  ) {
     const mergedOptions = {
       ...this.defaultOptions,
       ...options,
     };
 
     try {
-      const result = await execa(this.cliPath, [command, ...args], mergedOptions);
+      const result = await execa(
+        this.cliPath,
+        [command, ...args],
+        mergedOptions
+      );
       return {
         stdout: result.stdout,
         stderr: result.stderr,
@@ -61,10 +69,16 @@ export class CLIExecutor {
   /**
    * Execute a CLI command and expect it to succeed
    */
-  async expectSuccess(command: string, args: string[] = [], options: Partial<ExecaOptions> = {}) {
+  async expectSuccess(
+    command: string,
+    args: string[] = [],
+    options: Partial<ExecaOptions> = {}
+  ) {
     const result = await this.execute(command, args, options);
     if (result.failed) {
-      throw new Error(`CLI command failed: ${command} ${args.join(' ')}\nError: ${result.stderr || result.error?.message}`);
+      throw new Error(
+        `CLI command failed: ${command} ${args.join(' ')}\nError: ${result.stderr || result.error?.message}`
+      );
     }
     return result;
   }
@@ -72,10 +86,16 @@ export class CLIExecutor {
   /**
    * Execute a CLI command and expect it to fail
    */
-  async expectFailure(command: string, args: string[] = [], options: Partial<ExecaOptions> = {}) {
+  async expectFailure(
+    command: string,
+    args: string[] = [],
+    options: Partial<ExecaOptions> = {}
+  ) {
     const result = await this.execute(command, args, options);
     if (!result.failed) {
-      throw new Error(`CLI command unexpectedly succeeded: ${command} ${args.join(' ')}`);
+      throw new Error(
+        `CLI command unexpectedly succeeded: ${command} ${args.join(' ')}`
+      );
     }
     return result;
   }
@@ -83,15 +103,21 @@ export class CLIExecutor {
   /**
    * Execute a CLI command with JSON output
    */
-  async executeJSON<T = any>(command: string, args: string[] = [], options: Partial<ExecaOptions> = {}): Promise<T> {
+  async executeJSON<T = any>(
+    command: string,
+    args: string[] = [],
+    options: Partial<ExecaOptions> = {}
+  ): Promise<T> {
     // Add JSON output flag
     const jsonArgs = [...args, '--json'];
     const result = await this.expectSuccess(command, jsonArgs, options);
-    
+
     try {
       return JSON.parse(result.stdout);
     } catch (_error) {
-      throw new Error(`Failed to parse JSON output from command: ${command} ${jsonArgs.join(' ')}\nOutput: ${result.stdout}`);
+      throw new Error(
+        `Failed to parse JSON output from command: ${command} ${jsonArgs.join(' ')}\nOutput: ${result.stdout}`
+      );
     }
   }
 
@@ -111,20 +137,20 @@ export class CLIExecutor {
     };
 
     const subprocess = execa(this.cliPath, [command, ...args], mergedOptions);
-    
+
     // Send inputs sequentially
     for (const input of inputs) {
       if (subprocess.stdin) {
         subprocess.stdin.write(input + '\n');
       }
     }
-    
+
     if (subprocess.stdin) {
       subprocess.stdin.end();
     }
 
     const result = await subprocess;
-    
+
     return {
       stdout: result.stdout,
       stderr: result.stderr,
