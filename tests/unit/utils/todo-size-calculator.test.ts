@@ -14,7 +14,7 @@ describe('TodoSizeCalculator', () => {
         id: '12345',
         title: 'Simple task',
         completed: false,
-        user: 'test-user'
+        user: 'test-user',
       };
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
@@ -27,9 +27,10 @@ describe('TodoSizeCalculator', () => {
       const todo: Todo = {
         id: '12345',
         title: 'Task with description',
-        description: 'This is a longer description that adds to the overall size',
+        description:
+          'This is a longer description that adds to the overall size',
         completed: false,
-        user: 'test-user'
+        user: 'test-user',
       };
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
@@ -50,11 +51,13 @@ describe('TodoSizeCalculator', () => {
         category: 'work',
         priority: 'high',
         tags: ['urgent', 'important', 'project-x'],
-        reminders: [{
-          id: 'reminder-1',
-          date: '2024-01-03T00:00:00.000Z',
-          message: 'Review this task'
-        }],
+        reminders: [
+          {
+            id: 'reminder-1',
+            date: '2024-01-03T00:00:00.000Z',
+            message: 'Review this task',
+          },
+        ],
         metadata: {
           project: 'alpha',
           client: 'acme',
@@ -62,10 +65,10 @@ describe('TodoSizeCalculator', () => {
             notes: 'Some additional notes here',
             customFields: {
               field1: 'value1',
-              field2: 'value2'
-            }
-          }
-        }
+              field2: 'value2',
+            },
+          },
+        },
       };
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
@@ -79,7 +82,7 @@ describe('TodoSizeCalculator', () => {
         id: '',
         title: '',
         completed: false,
-        user: ''
+        user: '',
       };
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
@@ -94,7 +97,7 @@ describe('TodoSizeCalculator', () => {
         title: '测试任务 🔥 ñoño',
         description: 'Test with emojis 😊🎉 and special chars: €¥£',
         completed: false,
-        user: 'test-user'
+        user: 'test-user',
       };
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
@@ -115,11 +118,11 @@ describe('TodoSizeCalculator', () => {
             level2: {
               level3: {
                 deepData: 'nested value',
-                array: [1, 2, 3, 4, 5]
-              }
-            }
-          }
-        }
+                array: [1, 2, 3, 4, 5],
+              },
+            },
+          },
+        },
       };
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
@@ -131,8 +134,14 @@ describe('TodoSizeCalculator', () => {
 
   describe('calculateFormattedSize', () => {
     it('should format bytes correctly', () => {
-      expect(calculator.calculateFormattedSize({ id: '1', title: 'a', completed: false, user: 'u' }))
-        .toMatch(/^\d+\s*B$/);
+      expect(
+        calculator.calculateFormattedSize({
+          id: '1',
+          title: 'a',
+          completed: false,
+          user: 'u',
+        })
+      ).toMatch(/^\d+\s*B$/);
     });
 
     it('should format kilobytes correctly', () => {
@@ -144,8 +153,8 @@ describe('TodoSizeCalculator', () => {
         user: 'test-user',
         tags: Array(50).fill('tag'),
         metadata: {
-          data: 'B'.repeat(500)
-        }
+          data: 'B'.repeat(500),
+        },
       };
 
       const size = calculator.calculateFormattedSize(largeTodo);
@@ -160,8 +169,8 @@ describe('TodoSizeCalculator', () => {
         completed: false,
         user: 'test-user',
         metadata: {
-          data: 'B'.repeat(500000)
-        }
+          data: 'B'.repeat(500000),
+        },
       };
 
       const size = calculator.calculateFormattedSize(veryLargeTodo);
@@ -175,7 +184,7 @@ describe('TodoSizeCalculator', () => {
         id: '12345',
         title: 'Circular todo',
         completed: false,
-        user: 'test-user'
+        user: 'test-user',
       };
       // Create circular reference
       todo.self = todo;
@@ -189,7 +198,7 @@ describe('TodoSizeCalculator', () => {
         title: 'X'.repeat(10000),
         description: 'Y'.repeat(50000),
         completed: false,
-        user: 'test-user'
+        user: 'test-user',
       };
 
       const size = calculator.calculateBytes(todo);
@@ -207,8 +216,8 @@ describe('TodoSizeCalculator', () => {
           negInfinity: -Infinity,
           notANumber: NaN,
           maxInt: Number.MAX_SAFE_INTEGER,
-          minInt: Number.MIN_SAFE_INTEGER
-        }
+          minInt: Number.MIN_SAFE_INTEGER,
+        },
       };
 
       // JSON.stringify converts these to null or string representations
@@ -226,21 +235,21 @@ describe('TodoSizeCalculator', () => {
           id: '1',
           title: 'Simple',
           completed: false,
-          user: 'user1'
+          user: 'user1',
         },
         {
           id: '2',
           title: 'With description',
           description: 'A description here',
           completed: true,
-          user: 'user2'
+          user: 'user2',
         },
         {
           id: '3',
           title: 'With tags',
           completed: false,
           user: 'user3',
-          tags: ['urgent', 'work', 'deadline']
+          tags: ['urgent', 'work', 'deadline'],
         },
         {
           id: '4',
@@ -252,14 +261,14 @@ describe('TodoSizeCalculator', () => {
           priority: 'medium',
           tags: ['health', 'exercise'],
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
+          updatedAt: new Date().toISOString(),
+        },
       ];
 
       testCases.forEach((todo, _index) => {
         const calculatedSize = calculator.calculateBytes(todo);
         const actualSize = JSON.stringify(todo, null, 2).length;
-        
+
         expect(calculatedSize).toBe(actualSize);
       });
     });
@@ -272,12 +281,12 @@ describe('TodoSizeCalculator', () => {
           description: i % 2 === 0 ? 'D'.repeat(i * 20) : undefined,
           completed: i % 3 === 0,
           user: `user-${i}`,
-          tags: i > 5 ? Array(i).fill(`tag-${i}`) : undefined
+          tags: i > 5 ? Array(i).fill(`tag-${i}`) : undefined,
         };
 
         const calculatedSize = calculator.calculateBytes(todo);
         const actualSize = JSON.stringify(todo, null, 2).length;
-        
+
         expect(calculatedSize).toBe(actualSize);
       }
     });

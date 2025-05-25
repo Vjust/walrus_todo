@@ -15,28 +15,28 @@ export const createMockAIModelAdapter = () => {
       result: expectedResults.summarize,
       modelName: 'mock-model',
       provider: AIProvider.XAI,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }),
-    
+
     completeStructured: jest.fn().mockResolvedValue({
       result: JSON.stringify(expectedResults.categorize),
       modelName: 'mock-model',
       provider: AIProvider.XAI,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }),
-    
+
     complete: jest.fn().mockResolvedValue({
       result: expectedResults.summarize,
       modelName: 'mock-model',
       provider: AIProvider.XAI,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }),
-    
+
     getProvider: jest.fn().mockReturnValue(AIProvider.XAI),
     getModelName: jest.fn().mockReturnValue('mock-model'),
-    
+
     // Configuration methods
     updateConfig: jest.fn(),
-    validateConfig: jest.fn().mockReturnValue(true)
+    validateConfig: jest.fn().mockReturnValue(true),
   };
 };

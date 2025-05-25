@@ -11,9 +11,17 @@ import { execSync } from 'child_process';
 import { SuiClient } from '@mysten/sui/client';
 import { WalrusClient } from '@mysten/walrus';
 import { AsyncOperationHandler } from '../../walrus-error-handler';
-import { NetworkError, BlockchainError, StorageError, ValidationError } from '../../../types/errors/consolidated';
+import {
+  NetworkError,
+  BlockchainError,
+  StorageError,
+  ValidationError,
+} from '../../../types/errors/consolidated';
 import { StorageOperationOptions } from './StorageTypes';
-import { createWalrusClientAdapter, WalrusClientAdapter } from '../../adapters/walrus-client-adapter';
+import {
+  createWalrusClientAdapter,
+  WalrusClientAdapter,
+} from '../../adapters/walrus-client-adapter';
 
 /**
  * Options for initializing the StorageClient
@@ -21,16 +29,16 @@ import { createWalrusClientAdapter, WalrusClientAdapter } from '../../adapters/w
 export interface StorageClientOptions {
   /** URL for the Sui blockchain node */
   suiUrl: string;
-  
+
   /** Network environment (testnet, mainnet, etc.) */
   network: 'testnet' | 'mainnet' | 'devnet' | 'localnet';
-  
+
   /** Whether to use a mock client for testing */
   useMockMode?: boolean;
-  
+
   /** User wallet address */
   address?: string;
-  
+
   /** Whether to validate the network environment on initialization */
   validateEnvironment?: boolean;
 }
@@ -42,31 +50,31 @@ export interface StorageClientOptions {
 export class StorageClient {
   /** The wrapped SuiClient instance */
   private suiClient: SuiClient;
-  
+
   /** The wrapped WalrusClient instance */
   private walrusClient: WalrusClientAdapter;
-  
+
   /** Whether the client is initialized */
   private initialized: boolean = false;
-  
+
   /** The user's wallet address */
   private address: string | null = null;
-  
+
   /** Whether to use mock mode for testing */
   private useMockMode: boolean;
-  
+
   /**
    * Creates a new StorageClient instance.
-   * 
+   *
    * @param options - Options for initializing the client
    */
   constructor(private options: StorageClientOptions) {
     this.useMockMode = options.useMockMode || false;
-    
+
     try {
       // Initialize SuiClient with proper error handling
-      this.suiClient = new SuiClient({ 
-        url: options.suiUrl
+      this.suiClient = new SuiClient({
+        url: options.suiUrl,
       });
     } catch (error) {
       // In test environments, the constructor might fail
@@ -79,24 +87,27 @@ export class StorageClient {
         } as unknown as SuiClient;
       } else {
         // Re-throw the error in production environments
-        throw new NetworkError(`Failed to initialize SuiClient: ${error instanceof Error ? error.message : String(error)}`, {
-          operation: 'client initialization',
-          recoverable: false,
-          cause: error instanceof Error ? error : undefined
-        });
+        throw new NetworkError(
+          `Failed to initialize SuiClient: ${error instanceof Error ? error.message : String(error)}`,
+          {
+            operation: 'client initialization',
+            recoverable: false,
+            cause: error instanceof Error ? error : undefined,
+          }
+        );
       }
     }
-    
+
     // Address will be set during initialization
     this.address = options.address || null;
-    
+
     // WalrusClient will be initialized later in init()
     this.walrusClient = null;
   }
-  
+
   /**
    * Initializes the client by setting up WalrusClient and validating environment.
-   * 
+   *
    * @returns Promise that resolves when initialization is complete
    * @throws {ValidationError} if environment validation fails
    * @throws {NetworkError} if client initialization fails
@@ -105,31 +116,33 @@ export class StorageClient {
     if (this.initialized && !this.useMockMode) {
       return;
     }
-    
+
     try {
       // Validate network environment if needed
       if (this.options.validateEnvironment && !this.useMockMode) {
         await this.validateNetworkEnvironment();
       }
-      
+
       // Initialize WalrusClient
       if (this.useMockMode) {
         // For mock mode, create a simple mock client
         const mockWalrusClient = {
           getWalBalance: jest.fn().mockResolvedValue('1000'),
-          getStorageUsage: jest.fn().mockResolvedValue({ total: '1000000', used: '0' }),
+          getStorageUsage: jest
+            .fn()
+            .mockResolvedValue({ total: '1000000', used: '0' }),
           storageCost: jest.fn().mockResolvedValue({
             storageCost: '5000',
             writeCost: '1000',
-            totalCost: '6000'
+            totalCost: '6000',
           }),
           readBlob: jest.fn().mockResolvedValue(new Uint8Array()),
           writeBlob: jest.fn().mockResolvedValue({ blobId: 'mock-blob-id' }),
           getBlobInfo: jest.fn().mockResolvedValue({ size: '1000' }),
           getBlobMetadata: jest.fn().mockResolvedValue({ metadata: {} }),
-          reset: jest.fn()
+          reset: jest.fn(),
         } as unknown as WalrusClient;
-        
+
         this.walrusClient = createWalrusClientAdapter(mockWalrusClient);
       } else {
         // Create real WalrusClient
@@ -138,33 +151,33 @@ export class StorageClient {
           fullnode: this.options.suiUrl,
           fetchOptions: {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          }
+            headers: { 'Content-Type': 'application/json' },
+          },
         });
-        
+
         this.walrusClient = createWalrusClientAdapter(walrusClient);
       }
-      
+
       this.initialized = true;
     } catch (error) {
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
       }
-      
+
       throw new NetworkError(
         `Failed to initialize storage client: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'client initialization',
           recoverable: false,
-          cause: error instanceof Error ? error : undefined
+          cause: error instanceof Error ? error : undefined,
         }
       );
     }
   }
-  
+
   /**
    * Validates that the current environment is set to testnet.
-   * 
+   *
    * @throws {ValidationError} if not connected to testnet
    */
   private async validateNetworkEnvironment(): Promise<void> {
@@ -174,32 +187,35 @@ export class StorageClient {
         async () => execSync('sui client active-env').toString().trim(),
         {
           operation: 'environment check',
-          maxRetries: 2
+          maxRetries: 2,
         }
       );
-      
+
       if (!envInfo.success || !envInfo.data.includes('testnet')) {
         throw new ValidationError(
           'Must be connected to testnet environment. Use "sui client switch --env testnet"',
           { operation: 'environment validation' }
         );
       }
-      
+
       // Verify network connectivity
       const systemStateResult = await AsyncOperationHandler.execute(
         () => (this.suiClient as any).getLatestSuiSystemState(),
         {
           operation: 'network check',
-          maxRetries: 2
+          maxRetries: 2,
         }
       );
-      
-      if (!systemStateResult.success || !(systemStateResult.data as any)?.epoch) {
+
+      if (
+        !systemStateResult.success ||
+        !(systemStateResult.data as any)?.epoch
+      ) {
         throw new NetworkError(
           'Failed to verify network state. Check your connection.',
           {
             operation: 'network validation',
-            recoverable: true
+            recoverable: true,
           }
         );
       }
@@ -207,20 +223,20 @@ export class StorageClient {
       if (error instanceof ValidationError || error instanceof NetworkError) {
         throw error;
       }
-      
+
       throw new ValidationError(
         `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'environment validation',
-          cause: error instanceof Error ? error : undefined
+          cause: error instanceof Error ? error : undefined,
         }
       );
     }
   }
-  
+
   /**
    * Gets the SuiClient instance.
-   * 
+   *
    * @returns The SuiClient instance
    * @throws {ValidationError} if client is not initialized
    */
@@ -228,10 +244,10 @@ export class StorageClient {
     this.validateInitialized('get Sui client');
     return this.suiClient;
   }
-  
+
   /**
    * Gets the WalrusClient instance.
-   * 
+   *
    * @returns The WalrusClient adapter
    * @throws {ValidationError} if client is not initialized
    */
@@ -239,34 +255,37 @@ export class StorageClient {
     this.validateInitialized('get Walrus client');
     return this.walrusClient;
   }
-  
+
   /**
    * Sets the user wallet address for operations.
-   * 
+   *
    * @param address - The wallet address to use
    */
   public setAddress(address: string): void {
     this.address = address;
   }
-  
+
   /**
    * Gets the currently set wallet address.
-   * 
+   *
    * @returns The wallet address
    * @throws {ValidationError} if address is not set
    */
   public getAddress(): string {
     if (!this.address) {
-      throw new ValidationError('No wallet address set. Call setAddress() first.', {
-        operation: 'get address'
-      });
+      throw new ValidationError(
+        'No wallet address set. Call setAddress() first.',
+        {
+          operation: 'get address',
+        }
+      );
     }
     return this.address;
   }
-  
+
   /**
    * Checks the WAL token balance for the current address.
-   * 
+   *
    * @returns Promise resolving to the WAL balance
    * @throws {ValidationError} if address is not set
    * @throws {BlockchainError} if balance check fails
@@ -274,49 +293,50 @@ export class StorageClient {
   public async getWalBalance(): Promise<bigint> {
     try {
       const address = this.getAddress();
-      
+
       const balanceResult = await AsyncOperationHandler.execute(
-        () => this.suiClient.getBalance({
-          owner: address,
-          coinType: 'WAL'
-        }),
+        () =>
+          this.suiClient.getBalance({
+            owner: address,
+            coinType: 'WAL',
+          }),
         {
           operation: 'check WAL balance',
-          maxRetries: 2
+          maxRetries: 2,
         }
       );
-      
+
       if (!balanceResult.success) {
-        throw new BlockchainError(
-          'Failed to check WAL balance',
-          {
-            operation: 'balance check',
-            recoverable: true,
-            cause: balanceResult.error
-          }
-        );
+        throw new BlockchainError('Failed to check WAL balance', {
+          operation: 'balance check',
+          recoverable: true,
+          cause: balanceResult.error,
+        });
       }
-      
+
       return BigInt(balanceResult.data.totalBalance);
     } catch (error) {
-      if (error instanceof ValidationError || error instanceof BlockchainError) {
+      if (
+        error instanceof ValidationError ||
+        error instanceof BlockchainError
+      ) {
         throw error;
       }
-      
+
       throw new BlockchainError(
         `Failed to get WAL balance: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'get balance',
           recoverable: true,
-          cause: error instanceof Error ? error : undefined
+          cause: error instanceof Error ? error : undefined,
         }
       );
     }
   }
-  
+
   /**
    * Retrieves blob content from Walrus storage.
-   * 
+   *
    * @param blobId - ID of the blob to retrieve
    * @param options - Options for the retrieval operation
    * @returns Promise resolving to the blob content
@@ -327,14 +347,14 @@ export class StorageClient {
     options: StorageOperationOptions = {}
   ): Promise<Uint8Array> {
     this.validateInitialized('retrieve blob');
-    
+
     const {
       maxRetries = 3,
       timeout = 15000,
       signal,
-      throwErrors = true
+      throwErrors = true,
     } = options;
-    
+
     try {
       const result = await AsyncOperationHandler.execute(
         () => this.walrusClient.readBlob({ blobId, signal }),
@@ -343,10 +363,10 @@ export class StorageClient {
           maxRetries,
           timeout,
           signal,
-          throwErrors
+          throwErrors,
         }
       );
-      
+
       if (!result.success) {
         throw new StorageError(
           `Failed to retrieve blob: ${result.error?.message}`,
@@ -354,40 +374,43 @@ export class StorageClient {
             operation: 'blob retrieval',
             blobId,
             recoverable: true,
-            cause: result.error
+            cause: result.error,
           }
         );
       }
-      
+
       return result.data || new Uint8Array();
     } catch (error) {
       if (error instanceof StorageError) {
         throw error;
       }
-      
+
       throw new StorageError(
         `Failed to retrieve blob: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'blob retrieval',
           blobId,
           recoverable: true,
-          cause: error instanceof Error ? error : undefined
+          cause: error instanceof Error ? error : undefined,
         }
       );
     }
   }
-  
+
   /**
    * Validates that the client is initialized.
-   * 
+   *
    * @param operation - The operation being performed
    * @throws {ValidationError} if not initialized
    */
   private validateInitialized(operation: string): void {
     if (!this.initialized) {
-      throw new ValidationError('StorageClient not initialized. Call init() first.', {
-        operation
-      });
+      throw new ValidationError(
+        'StorageClient not initialized. Call init() first.',
+        {
+          operation,
+        }
+      );
     }
   }
 }

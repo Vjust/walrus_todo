@@ -1,6 +1,6 @@
 /**
  * Simple test for Consolidated AI Service
- * 
+ *
  * Tests only the creation of the singleton instance
  */
 

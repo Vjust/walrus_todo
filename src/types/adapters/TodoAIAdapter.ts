@@ -1,7 +1,11 @@
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { TodoAIOperation, VerificationResult, AIProvider } from '../../services/ai/types';
+import {
+  TodoAIOperation,
+  VerificationResult,
+  AIProvider,
+} from '../../services/ai/types';
 import { Logger } from '../../utils/Logger';
 import { CLIError } from '../error';
 // createTransactionBlockAdapter imported but not used
@@ -66,10 +70,14 @@ export class TodoAIAdapter {
         transaction: tx as any,
       });
 
-      this.logger.info(`Linked verification ${verificationId} to todo ${todoId}`);
+      this.logger.info(
+        `Linked verification ${verificationId} to todo ${todoId}`
+      );
       return result.digest;
     } catch (error: any) {
-      this.logger.error(`Failed to link verification to todo: ${error.message}`);
+      this.logger.error(
+        `Failed to link verification to todo: ${error.message}`
+      );
       throw new CLIError(
         `Failed to link verification to todo: ${error.message}`,
         'VERIFICATION_LINK_FAILED'
@@ -122,9 +130,7 @@ export class TodoAIAdapter {
   /**
    * Get all verification IDs for a todo
    */
-  async getVerificationsForTodo(
-    todoId: string
-  ): Promise<string[]> {
+  async getVerificationsForTodo(todoId: string): Promise<string[]> {
     try {
       // Create a standard Transaction
       // Create a transaction block and cast to the expected type
@@ -133,10 +139,7 @@ export class TodoAIAdapter {
 
       tx.moveCall({
         target: `${this.todoAIModuleAddress}::todo_ai_extension::get_verifications_for_todo`,
-        arguments: [
-          tx.object(this.todoAIRegistry),
-          tx.pure(todoId),
-        ],
+        arguments: [tx.object(this.todoAIRegistry), tx.pure(todoId)],
       });
 
       // Cast to string | Uint8Array | Transaction to match the expected type
@@ -240,7 +243,12 @@ export class TodoAIAdapter {
       });
 
       // Generate the verification ID (needs to match the algorithm in smart contract)
-      const verificationId = this.generateVerificationId(provider, operation, inputHash, outputHash);
+      const verificationId = this.generateVerificationId(
+        provider,
+        operation,
+        inputHash,
+        outputHash
+      );
 
       // Link the verification to the todo
       tx.moveCall({
@@ -257,7 +265,7 @@ export class TodoAIAdapter {
       // Execute the transaction
       // Cast to Uint8Array | Transaction to match the expected type
       // result would be used to return transaction details
-      const _result = await this.client.signAndExecuteTransaction({
+      await this.client.signAndExecuteTransaction({
         signer: keypair,
         transaction: tx as any,
       });
@@ -269,10 +277,12 @@ export class TodoAIAdapter {
         verificationId,
         timestamp,
         provider: provider as unknown as AIProvider,
-        operation
+        operation,
       };
     } catch (error: any) {
-      this.logger.error(`Failed to create and link verification: ${error.message}`);
+      this.logger.error(
+        `Failed to create and link verification: ${error.message}`
+      );
       throw new CLIError(
         `Failed to create and link verification: ${error.message}`,
         'VERIFICATION_CREATION_FAILED'

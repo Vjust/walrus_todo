@@ -4,13 +4,13 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  BlockchainEventManager, 
-  TodoNFTEvent, 
+import {
+  BlockchainEventManager,
+  TodoNFTEvent,
   EventConnectionState,
   EventListener,
   getEventManager,
-  transformEventToTodoUpdate
+  transformEventToTodoUpdate,
 } from '@/lib/blockchain-events';
 import { Todo } from '@/lib/sui-client';
 import { useWalletContext } from '@/contexts/WalletContext';
@@ -18,11 +18,13 @@ import { useWalletContext } from '@/contexts/WalletContext';
 /**
  * Hook for managing blockchain event subscriptions
  */
-export function useBlockchainEvents(options: {
-  autoStart?: boolean;
-  owner?: string;
-  enableReconnect?: boolean;
-} = {}) {
+export function useBlockchainEvents(
+  options: {
+    autoStart?: boolean;
+    owner?: string;
+    enableReconnect?: boolean;
+  } = {}
+) {
   const { autoStart = true, owner, enableReconnect = true } = options;
   const [connectionState, setConnectionState] = useState<EventConnectionState>({
     connected: false,
@@ -31,10 +33,10 @@ export function useBlockchainEvents(options: {
     lastReconnectAttempt: 0,
     reconnectAttempts: 0,
   });
-  
+
   const eventManagerRef = useRef<BlockchainEventManager | null>(null);
   const { address } = useWalletContext();
-  
+
   // Use wallet address if no owner specified
   const targetOwner = owner || address;
 
@@ -48,7 +50,7 @@ export function useBlockchainEvents(options: {
           autoReconnect: enableReconnect,
         });
       }
-      
+
       await eventManagerRef.current.initialize();
       setConnectionState(eventManagerRef.current.getConnectionState());
     } catch (error) {
@@ -68,7 +70,7 @@ export function useBlockchainEvents(options: {
     if (!eventManagerRef.current) {
       await initialize();
     }
-    
+
     if (!eventManagerRef.current) return;
 
     try {
@@ -106,24 +108,24 @@ export function useBlockchainEvents(options: {
   /**
    * Add event listener
    */
-  const addEventListener = useCallback((
-    eventType: string | '*', 
-    listener: EventListener
-  ): (() => void) => {
-    if (!eventManagerRef.current) {
-      // Don't spam console with warnings, just return noop
-      return () => {};
-    }
-    
-    return eventManagerRef.current.addEventListener(eventType, listener);
-  }, []);
+  const addEventListener = useCallback(
+    (eventType: string | '*', listener: EventListener): (() => void) => {
+      if (!eventManagerRef.current) {
+        // Don't spam console with warnings, just return noop
+        return () => {};
+      }
+
+      return eventManagerRef.current.addEventListener(eventType, listener);
+    },
+    []
+  );
 
   // Auto-start subscription when wallet connects
   useEffect(() => {
     if (autoStart && targetOwner) {
       startSubscription();
     }
-    
+
     return () => {
       if (eventManagerRef.current) {
         eventManagerRef.current.destroy();
@@ -157,21 +159,23 @@ export function useBlockchainEvents(options: {
 /**
  * Hook for real-time todo updates from blockchain events
  */
-export function useTodoEvents(options: {
-  onTodoCreated?: (todo: Partial<Todo>) => void;
-  onTodoUpdated?: (todo: Partial<Todo>) => void;
-  onTodoCompleted?: (todo: Partial<Todo>) => void;
-  onTodoDeleted?: (todoId: string) => void;
-  owner?: string;
-  autoStart?: boolean;
-} = {}) {
+export function useTodoEvents(
+  options: {
+    onTodoCreated?: (todo: Partial<Todo>) => void;
+    onTodoUpdated?: (todo: Partial<Todo>) => void;
+    onTodoCompleted?: (todo: Partial<Todo>) => void;
+    onTodoDeleted?: (todoId: string) => void;
+    owner?: string;
+    autoStart?: boolean;
+  } = {}
+) {
   const {
     onTodoCreated,
-    onTodoUpdated, 
+    onTodoUpdated,
     onTodoCompleted,
     onTodoDeleted,
     owner,
-    autoStart = true
+    autoStart = true,
   } = options;
 
   const [recentEvents, setRecentEvents] = useState<TodoNFTEvent[]>([]);
@@ -185,10 +189,10 @@ export function useTodoEvents(options: {
     const unsubscribe = addEventListener('*', (event: TodoNFTEvent) => {
       // Add to recent events list
       setRecentEvents(prev => [event, ...prev.slice(0, 49)]); // Keep last 50 events
-      
+
       // Transform event to todo update
       const todoUpdate = transformEventToTodoUpdate(event);
-      
+
       // Call appropriate callback
       switch (event.type) {
         case 'created':
@@ -215,7 +219,13 @@ export function useTodoEvents(options: {
     });
 
     return unsubscribe;
-  }, [addEventListener, onTodoCreated, onTodoUpdated, onTodoCompleted, onTodoDeleted]);
+  }, [
+    addEventListener,
+    onTodoCreated,
+    onTodoUpdated,
+    onTodoCompleted,
+    onTodoDeleted,
+  ]);
 
   return {
     ...eventHookResult,
@@ -228,22 +238,26 @@ export function useTodoEvents(options: {
  * Hook for real-time todo state synchronization
  * Automatically updates local state when blockchain events occur
  */
-export function useTodoStateSync(options: {
-  todos: Todo[];
-  onTodoChange: (todos: Todo[]) => void;
-  owner?: string;
-  autoStart?: boolean;
-} = {} as any) {
+export function useTodoStateSync(
+  options: {
+    todos: Todo[];
+    onTodoChange: (todos: Todo[]) => void;
+    owner?: string;
+    autoStart?: boolean;
+  } = {} as any
+) {
   const { todos, onTodoChange, owner, autoStart = true } = options;
   const [syncedTodos, setSyncedTodos] = useState<Todo[]>(todos || []);
 
   const { ...eventHookResult } = useTodoEvents({
     owner,
     autoStart,
-    onTodoCreated: (todoUpdate) => {
+    onTodoCreated: todoUpdate => {
       setSyncedTodos(prev => {
         // Check if todo already exists
-        const existingIndex = prev.findIndex(t => t.id === todoUpdate.id || t.objectId === todoUpdate.id);
+        const existingIndex = prev.findIndex(
+          t => t.id === todoUpdate.id || t.objectId === todoUpdate.id
+        );
         if (existingIndex >= 0) {
           // Update existing todo
           const updated = [...prev];
@@ -263,9 +277,11 @@ export function useTodoStateSync(options: {
         }
       });
     },
-    onTodoUpdated: (todoUpdate) => {
+    onTodoUpdated: todoUpdate => {
       setSyncedTodos(prev => {
-        const index = prev.findIndex(t => t.id === todoUpdate.id || t.objectId === todoUpdate.id);
+        const index = prev.findIndex(
+          t => t.id === todoUpdate.id || t.objectId === todoUpdate.id
+        );
         if (index >= 0) {
           const updated = [...prev];
           updated[index] = { ...updated[index], ...todoUpdate };
@@ -274,9 +290,11 @@ export function useTodoStateSync(options: {
         return prev;
       });
     },
-    onTodoCompleted: (todoUpdate) => {
+    onTodoCompleted: todoUpdate => {
       setSyncedTodos(prev => {
-        const index = prev.findIndex(t => t.id === todoUpdate.id || t.objectId === todoUpdate.id);
+        const index = prev.findIndex(
+          t => t.id === todoUpdate.id || t.objectId === todoUpdate.id
+        );
         if (index >= 0) {
           const updated = [...prev];
           updated[index] = { ...updated[index], ...todoUpdate };
@@ -285,8 +303,10 @@ export function useTodoStateSync(options: {
         return prev;
       });
     },
-    onTodoDeleted: (todoId) => {
-      setSyncedTodos(prev => prev.filter(t => t.id !== todoId && t.objectId !== todoId));
+    onTodoDeleted: todoId => {
+      setSyncedTodos(prev =>
+        prev.filter(t => t.id !== todoId && t.objectId !== todoId)
+      );
     },
   });
 

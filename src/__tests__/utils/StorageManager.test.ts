@@ -1,7 +1,11 @@
 import { jest } from '@jest/globals';
 import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../utils/StorageManager';
-import { StorageError, ValidationError, BlockchainError } from '../../types/errors/consolidated/index';
+import {
+  StorageError,
+  ValidationError,
+  BlockchainError,
+} from '../../types/errors/consolidated/index';
 import { Logger } from '../../utils/Logger';
 // MockWalrusClient is automatically available via jest.mock
 
@@ -16,7 +20,7 @@ describe('StorageManager', () => {
   const testConfig = {
     minAllocation: 1000n,
     checkThreshold: 20,
-    client: {} as any
+    client: {} as any,
   };
 
   beforeEach(() => {
@@ -44,36 +48,38 @@ describe('StorageManager', () => {
         coinObjectCount: 1,
         lockedBalance: {
           aggregate: BigInt(0).toString(),
-          coinBalances: {}
-        }
+          coinBalances: {},
+        },
       }),
       getOwnedObjects: jest.fn().mockResolvedValue({
-        data: [{
-          data: {
-            objectId: 'mock-object-id',
-            digest: '0xdigest123',
-            version: '1',
-            type: '0x2::storage::Storage',
-            owner: { AddressOwner: '0x123456789' },
-            previousTransaction: '0x123456',
-            storageRebate: '0',
-            content: {
-              dataType: 'moveObject' as const,
+        data: [
+          {
+            data: {
+              objectId: 'mock-object-id',
+              digest: '0xdigest123',
+              version: '1',
               type: '0x2::storage::Storage',
-              hasPublicTransfer: true,
-              fields: { 
-                storage_size: '2000', 
-                used_size: '500',
-                end_epoch: 100
-              }
+              owner: { AddressOwner: '0x123456789' },
+              previousTransaction: '0x123456',
+              storageRebate: '0',
+              content: {
+                dataType: 'moveObject' as const,
+                type: '0x2::storage::Storage',
+                hasPublicTransfer: true,
+                fields: {
+                  storage_size: '2000',
+                  used_size: '500',
+                  end_epoch: 100,
+                },
+              },
+              display: null,
             },
-            display: null
-          }
-        }],
+          },
+        ],
         hasNextPage: false,
-        nextCursor: null
+        nextCursor: null,
       }),
-      getTransactionBlock: jest.fn().mockResolvedValue({ digest: '0x123' })
+      getTransactionBlock: jest.fn().mockResolvedValue({ digest: '0x123' }),
     };
 
     // Mock address
@@ -86,7 +92,7 @@ describe('StorageManager', () => {
       mockAddress,
       {
         minAllocation: testConfig.minAllocation,
-        checkThreshold: testConfig.checkThreshold
+        checkThreshold: testConfig.checkThreshold,
       }
     );
   });
@@ -96,31 +102,31 @@ describe('StorageManager', () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('2000');
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '500',
-        total: '2000'
+        total: '2000',
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(1000)))
-        .resolves
-        .not.toThrow();
+      await expect(
+        manager.ensureStorageAllocated(BigInt(1000))
+      ).resolves.not.toThrow();
     });
 
     it('should throw when insufficient storage', async () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('1500');
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '1000',
-        total: '1500'
+        total: '1500',
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(1000)))
-        .rejects
-        .toThrow(StorageError);
+      await expect(
+        manager.ensureStorageAllocated(BigInt(1000))
+      ).rejects.toThrow(StorageError);
     });
 
     it('should warn when storage is below threshold', async () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('2000');
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '1700', // 85% used
-        total: '2000'
+        total: '2000',
       });
 
       await manager.ensureStorageAllocated(BigInt(100));
@@ -135,24 +141,24 @@ describe('StorageManager', () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('500'); // Below min 1000
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '100',
-        total: '500'
+        total: '500',
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(100)))
-        .rejects
-        .toThrow('Insufficient WAL tokens');
+      await expect(manager.ensureStorageAllocated(BigInt(100))).rejects.toThrow(
+        'Insufficient WAL tokens'
+      );
     });
 
     it('should handle missing balance data', async () => {
       mockWalrusClient.getWalBalance.mockResolvedValue(null as any);
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '100',
-        total: '1000'
+        total: '1000',
       });
 
-      await expect(manager.ensureStorageAllocated(BigInt(100)))
-        .rejects
-        .toThrow(ValidationError);
+      await expect(manager.ensureStorageAllocated(BigInt(100))).rejects.toThrow(
+        ValidationError
+      );
     });
 
     it('should handle client errors', async () => {
@@ -160,9 +166,9 @@ describe('StorageManager', () => {
         new Error('Network error')
       );
 
-      await expect(manager.ensureStorageAllocated(BigInt(100)))
-        .rejects
-        .toThrow(BlockchainError);
+      await expect(manager.ensureStorageAllocated(BigInt(100))).rejects.toThrow(
+        BlockchainError
+      );
     });
   });
 
@@ -171,7 +177,7 @@ describe('StorageManager', () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('2000');
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '500',
-        total: '2000'
+        total: '2000',
       });
 
       const status = await manager.getStorageAllocation();
@@ -180,7 +186,7 @@ describe('StorageManager', () => {
         allocated: BigInt(2000),
         used: BigInt(500),
         available: BigInt(1500),
-        minRequired: BigInt(1000)
+        minRequired: BigInt(1000),
       });
     });
 
@@ -188,7 +194,7 @@ describe('StorageManager', () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('1000');
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '0',
-        total: '1000'
+        total: '1000',
       });
 
       const status = await manager.getStorageAllocation();
@@ -200,7 +206,7 @@ describe('StorageManager', () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('1000');
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '1000',
-        total: '1000'
+        total: '1000',
       });
 
       const status = await manager.getStorageAllocation();
@@ -231,17 +237,21 @@ describe('StorageManager', () => {
     });
 
     it('should validate size', () => {
-      expect(() => manager.calculateRequiredStorage(0, 30))
-        .toThrow(ValidationError);
-      expect(() => manager.calculateRequiredStorage(-1, 30))
-        .toThrow(ValidationError);
+      expect(() => manager.calculateRequiredStorage(0, 30)).toThrow(
+        ValidationError
+      );
+      expect(() => manager.calculateRequiredStorage(-1, 30)).toThrow(
+        ValidationError
+      );
     });
 
     it('should validate duration', () => {
-      expect(() => manager.calculateRequiredStorage(1024, 0))
-        .toThrow(ValidationError);
-      expect(() => manager.calculateRequiredStorage(1024, -1))
-        .toThrow(ValidationError);
+      expect(() => manager.calculateRequiredStorage(1024, 0)).toThrow(
+        ValidationError
+      );
+      expect(() => manager.calculateRequiredStorage(1024, -1)).toThrow(
+        ValidationError
+      );
     });
   });
 });

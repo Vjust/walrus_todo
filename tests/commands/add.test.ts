@@ -22,7 +22,7 @@ const mockStorageMethods = {
   write: jest.fn().mockResolvedValue({ blobId: 'test-blob-id' }),
   read: jest.fn(),
   verify: jest.fn().mockResolvedValue(true),
-  delete: jest.fn()
+  delete: jest.fn(),
 };
 
 // TypeScript needs the correct mock return type here
@@ -37,7 +37,7 @@ const addCommand = {
 
     const newTodo = createMockTodo({
       title,
-      storageLocation: 'local'
+      storageLocation: 'local',
     });
 
     if (options?.storage === 'blockchain') {
@@ -46,15 +46,18 @@ const addCommand = {
         await walrusStorage.connect();
         await walrusStorage.storeTodo({
           ...newTodo,
-          storageLocation: 'blockchain'
+          storageLocation: 'blockchain',
         });
       } catch (error) {
-        throw new CLIError(`Failed to store todo on blockchain: ${error instanceof Error ? error.message : (error ? String(error) : 'Unknown error')}`, 'STORAGE_FAILED');
+        throw new CLIError(
+          `Failed to store todo on blockchain: ${error instanceof Error ? error.message : error ? String(error) : 'Unknown error'}`,
+          'STORAGE_FAILED'
+        );
       }
     }
 
     return mockTodoService.prototype.addTodo('default', newTodo);
-  }
+  },
 };
 
 describe('add', () => {
@@ -69,25 +72,28 @@ describe('add', () => {
       todos: [],
       version: 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     });
 
-    mockTodoService.prototype.addTodo.mockImplementation(async (listName, todo) => ({
-      ...todo,
-      id: 'test-id',
-      completed: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      private: true,
-      priority: 'medium',
-      tags: []
-    } as Todo));
+    mockTodoService.prototype.addTodo.mockImplementation(
+      async (listName, todo) =>
+        ({
+          ...todo,
+          id: 'test-id',
+          completed: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          private: true,
+          priority: 'medium',
+          tags: [],
+        }) as Todo
+    );
   });
 
   test('adds a todo with title from argument', async () => {
     const args = {
       title: 'Test Todo',
-      options: { storage: 'local' }
+      options: { storage: 'local' },
     };
 
     await addCommand.run(args);
@@ -96,7 +102,7 @@ describe('add', () => {
       'default',
       expect.objectContaining({
         title: 'Test Todo',
-        storageLocation: 'local'
+        storageLocation: 'local',
       })
     );
   });
@@ -104,10 +110,11 @@ describe('add', () => {
   test('handles blockchain storage failure gracefully', async () => {
     const args = {
       title: 'Test Todo',
-      options: { storage: 'blockchain' }
+      options: { storage: 'blockchain' },
     };
 
-    await expect(addCommand.run(args))
-      .rejects.toThrow('Failed to store todo on blockchain: Storage failed');
+    await expect(addCommand.run(args)).rejects.toThrow(
+      'Failed to store todo on blockchain: Storage failed'
+    );
   });
 });

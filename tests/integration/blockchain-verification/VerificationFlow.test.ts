@@ -6,13 +6,19 @@ import { BlobVerificationManager } from '../../../src/utils/blob-verification';
 
 // Mock Verification Flow Controller
 class VerificationFlowController {
-  private suiClient: Pick<SuiClient, 'getLatestSuiSystemState' | 'getObject' | 'signAndExecuteTransactionBlock'>;
+  private suiClient: Pick<
+    SuiClient,
+    'getLatestSuiSystemState' | 'getObject' | 'signAndExecuteTransactionBlock'
+  >;
   private walrusClient: jest.Mocked<WalrusClientExt>;
   private signer: Ed25519Keypair;
   private verificationManager: BlobVerificationManager;
-  
+
   constructor(
-    suiClient: Pick<SuiClient, 'getLatestSuiSystemState' | 'getObject' | 'signAndExecuteTransactionBlock'>,
+    suiClient: Pick<
+      SuiClient,
+      'getLatestSuiSystemState' | 'getObject' | 'signAndExecuteTransactionBlock'
+    >,
     walrusClient: jest.Mocked<WalrusClientExt>,
     signer: Ed25519Keypair
   ) {
@@ -25,7 +31,7 @@ class VerificationFlowController {
       signer
     );
   }
-  
+
   /**
    * Complete end-to-end verification flow
    */
@@ -64,89 +70,92 @@ class VerificationFlowController {
     const {
       waitForCertification = false,
       verifyAfterUpload = true,
-      monitorAvailability = false
+      monitorAvailability = false,
     } = options;
-    
+
     try {
       // Step 1: Upload to blockchain storage
       // console.log('Uploading data to blockchain storage...'); // Removed console statement
-      const uploadOptions = { 
-        waitForCertification, 
+      const uploadOptions = {
+        waitForCertification,
         waitTimeout: 10000,
-        minProviders: 1
+        minProviders: 1,
       };
-      
-      const uploadResult = await this.verificationManager.verifyUpload(data, uploadOptions);
+
+      const uploadResult = await this.verificationManager.verifyUpload(
+        data,
+        uploadOptions
+      );
       const blobId = uploadResult.blobId;
-      
+
       // console.log(`Data uploaded. Blob ID: ${blobId}`); // Removed console statement
       // console.log(`Certification status: ${uploadResult.certified ? 'Certified' : 'Not Certified'}`); // Removed console statement
-      
+
       // Step 2: Add metadata if provided
       if (Object.keys(metadata).length > 0) {
         // console.log('Adding metadata...'); // Removed console statement
-        
+
         const tx = new TransactionBlock();
         await this.walrusClient.executeWriteBlobAttributesTransaction({
           blobId,
           attributes: metadata,
           signer: this.signer,
-          transaction: tx
+          transaction: tx,
         });
-        
+
         // console.log('Metadata added.'); // Removed console statement
       }
-      
+
       // Step 3: Verify after upload if requested
       let verificationResult;
       if (verifyAfterUpload) {
         // console.log('Verifying uploaded data...'); // Removed console statement
-        
+
         verificationResult = await this.verificationManager.verifyBlob(
           blobId,
           data,
           metadata,
           { requireCertification: false }
         );
-        
+
         // console.log(`Verification result: ${verificationResult.success ? 'Success' : 'Failed'}`); // Removed console statement
       }
-      
+
       // Step 4: Monitor availability if requested
       let monitoringResult;
       if (monitorAvailability) {
         // console.log('Monitoring data availability...'); // Removed console statement
-        
+
         try {
           await this.verificationManager.monitorBlobAvailability(
             blobId,
             uploadResult.checksums,
             { interval: 1000, maxAttempts: 3, timeout: 5000 }
           );
-          
+
           monitoringResult = {
             successful: true,
-            attempts: 1
+            attempts: 1,
           };
-          
+
           // console.log('Monitoring completed successfully.'); // Removed console statement
         } catch (_error) {
           monitoringResult = {
             successful: false,
-            attempts: 3
+            attempts: 3,
           };
-          
+
           // console.error('Monitoring failed:', error); // Removed console statement
         }
       }
-      
+
       // Return combined results
       return {
         blobId,
         uploadResult,
         verificationResult,
         monitoringResult,
-        registrationTransaction: 'mock-transaction-digest'
+        registrationTransaction: 'mock-transaction-digest',
       };
     } catch (_error) {
       throw new CLIError(
@@ -155,7 +164,7 @@ class VerificationFlowController {
       );
     }
   }
-  
+
   /**
    * Verify existing data on blockchain
    */
@@ -177,38 +186,42 @@ class VerificationFlowController {
       // Step 1: Get blob info from blockchain
       // console.log(`Verifying blob ${blobId}...`); // Removed console statement
       const blobInfo = await this.walrusClient.getBlobInfo(blobId);
-      
+
       if (!blobInfo) {
         throw new CLIError('Blob not found', 'BLOB_NOT_FOUND');
       }
-      
+
       const certified = !!blobInfo.certified_epoch;
-      
+
       // Step 2: Check content if expected data is provided
       let contentMatch;
       if (expectedData) {
         // console.log('Verifying content...'); // Removed console statement
-        
+
         const retrievedData = await this.walrusClient.readBlob({ blobId });
-        contentMatch = Buffer.compare(expectedData, Buffer.from(retrievedData)) === 0;
+        contentMatch =
+          Buffer.compare(expectedData, Buffer.from(retrievedData)) === 0;
       }
-      
+
       // Step 3: Check metadata if expected
       let metadataMatch;
       if (Object.keys(expectedMetadata).length > 0) {
         // console.log('Verifying metadata...'); // Removed console statement
-        
+
         const metadata = await this.walrusClient.getBlobMetadata({ blobId });
-        metadataMatch = Object.entries(expectedMetadata).every(([key, value]) => {
-          return metadata?.V1 && metadata.V1[key] === value;
-        });
+        metadataMatch = Object.entries(expectedMetadata).every(
+          ([key, value]) => {
+            return metadata?.V1 && metadata.V1[key] === value;
+          }
+        );
       }
-      
+
       // Compute overall verification result
-      const verified = certified && 
-        (contentMatch === undefined || contentMatch) && 
+      const verified =
+        certified &&
+        (contentMatch === undefined || contentMatch) &&
         (metadataMatch === undefined || metadataMatch);
-      
+
       return {
         verified,
         details: {
@@ -216,8 +229,8 @@ class VerificationFlowController {
           contentMatch,
           metadataMatch,
           epoch: blobInfo.certified_epoch,
-          size: parseInt(blobInfo.size)
-        }
+          size: parseInt(blobInfo.size),
+        },
       };
     } catch (_error) {
       throw new CLIError(
@@ -229,14 +242,18 @@ class VerificationFlowController {
 }
 
 // Mock the SuiClient
-const mockGetLatestSuiSystemState = jest.fn().mockResolvedValue({ epoch: '42' });
+const mockGetLatestSuiSystemState = jest
+  .fn()
+  .mockResolvedValue({ epoch: '42' });
 const mockGetObject = jest.fn();
-const mockSignAndExecuteTransactionBlock = jest.fn().mockResolvedValue({ digest: 'mock-transaction-digest' });
+const mockSignAndExecuteTransactionBlock = jest
+  .fn()
+  .mockResolvedValue({ digest: 'mock-transaction-digest' });
 
 const mockSuiClient = {
   getLatestSuiSystemState: mockGetLatestSuiSystemState,
   getObject: mockGetObject,
-  signAndExecuteTransactionBlock: mockSignAndExecuteTransactionBlock
+  signAndExecuteTransactionBlock: mockSignAndExecuteTransactionBlock,
 } as unknown as jest.Mocked<SuiClient>;
 
 // Create a mock transaction signer
@@ -244,56 +261,72 @@ const mockSigner = {
   connect: () => Promise.resolve(),
   getPublicKey: () => ({ toBytes: () => new Uint8Array(32) }),
   sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
-  signPersonalMessage: async (_data: Uint8Array): Promise<SignatureWithBytes> => ({
+  signPersonalMessage: async (
+    _data: Uint8Array
+  ): Promise<SignatureWithBytes> => ({
     bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64')
+    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
-  signWithIntent: async (_data: Uint8Array, _intent: IntentScope): Promise<SignatureWithBytes> => ({
+  signWithIntent: async (
+    _data: Uint8Array,
+    _intent: IntentScope
+  ): Promise<SignatureWithBytes> => ({
     bytes: Buffer.from(new Uint8Array(32)).toString('base64'),
-    signature: Buffer.from(new Uint8Array(64)).toString('base64')
+    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
-  signTransactionBlock: async (_transaction: any): Promise<SignatureWithBytes> => ({
+  signTransactionBlock: async (
+    _transaction: any
+  ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64')
+    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
-  signData: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+  signData: async (_data: Uint8Array): Promise<Uint8Array> =>
+    new Uint8Array(64),
   signTransaction: async (_transaction: any): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
-    signature: Buffer.from(new Uint8Array(64)).toString('base64')
+    signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
   toSuiAddress: () => 'mock-address',
-  getKeyScheme: () => 'ED25519' as const
+  getKeyScheme: () => 'ED25519' as const,
 } as unknown as Ed25519Keypair;
 
 describe('Verification Flow End-to-End', () => {
   let flowController: VerificationFlowController;
   let mockWalrusClient: jest.Mocked<WalrusClientExt>;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Create inline mock for WalrusClient with all required methods
     mockWalrusClient = {
       // Basic methods
-      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getConfig: jest.fn().mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000,
+      }),
       getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest.fn().mockResolvedValue({ used: '500', total: '2000' }),
-      
+      getStorageUsage: jest
+        .fn()
+        .mockResolvedValue({ used: '500', total: '2000' }),
+
       // Blob operations - these will be set up specifically in each test
       getBlobInfo: jest.fn(),
-      getBlobObject: jest.fn().mockResolvedValue({ content: 'test', metadata: {} }),
+      getBlobObject: jest
+        .fn()
+        .mockResolvedValue({ content: 'test', metadata: {} }),
       verifyPoA: jest.fn(),
       readBlob: jest.fn(),
       getBlobMetadata: jest.fn(),
       writeBlob: jest.fn(),
       getStorageProviders: jest.fn(),
       getBlobSize: jest.fn().mockResolvedValue(1024),
-      
+
       // Storage operations
       storageCost: jest.fn().mockResolvedValue({
         storageCost: BigInt(1000),
         writeCost: BigInt(500),
-        totalCost: BigInt(1500)
+        totalCost: BigInt(1500),
       }),
       executeCreateStorageTransaction: jest.fn().mockResolvedValue({
         digest: 'test',
@@ -301,43 +334,53 @@ describe('Verification Flow End-to-End', () => {
           id: { id: 'test' },
           start_epoch: 0,
           end_epoch: 52,
-          storage_size: '1000'
-        }
+          storage_size: '1000',
+        },
       }),
-      executeCertifyBlobTransaction: jest.fn().mockResolvedValue({ digest: 'cert-digest' }),
-      executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({ digest: 'attr-digest' }),
-      deleteBlob: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({ digest: 'delete-digest' })),
-      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({ 
-        blob: { blob_id: 'test' }, 
-        digest: 'register-digest' 
+      executeCertifyBlobTransaction: jest
+        .fn()
+        .mockResolvedValue({ digest: 'cert-digest' }),
+      executeWriteBlobAttributesTransaction: jest
+        .fn()
+        .mockResolvedValue({ digest: 'attr-digest' }),
+      deleteBlob: jest
+        .fn()
+        .mockReturnValue(
+          jest.fn().mockResolvedValue({ digest: 'delete-digest' })
+        ),
+      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
+        blob: { blob_id: 'test' },
+        digest: 'register-digest',
       }),
       getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
         primary_verification: true,
-        provider: 'test-provider'
+        provider: 'test-provider',
       }),
       createStorageBlock: jest.fn().mockResolvedValue({} as any),
-      createStorage: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({
-        digest: 'storage-digest',
-        storage: {
-          id: { id: 'storage-id' },
-          start_epoch: 0,
-          end_epoch: 52,
-          storage_size: '1000'
-        }
-      })),
-      
+      createStorage: jest.fn().mockReturnValue(
+        jest.fn().mockResolvedValue({
+          digest: 'storage-digest',
+          storage: {
+            id: { id: 'storage-id' },
+            start_epoch: 0,
+            end_epoch: 52,
+            storage_size: '1000',
+          },
+        })
+      ),
+
       // Utility methods
       reset: jest.fn(),
-      
+
       // Optional experimental API
       experimental: {
-        getBlobData: jest.fn().mockResolvedValue({})
-      }
+        getBlobData: jest.fn().mockResolvedValue({}),
+      },
     } as jest.Mocked<WalrusClientExt>;
-    
+
     flowController = new VerificationFlowController(
-      mockSuiClient, 
-      mockWalrusClient, 
+      mockSuiClient,
+      mockWalrusClient,
       mockSigner
     );
   });
@@ -353,31 +396,36 @@ describe('Verification Flow End-to-End', () => {
       const metadata = {
         contentType: 'text/plain',
         description: 'Test data for verification',
-        owner: 'Test User'
+        owner: 'Test User',
       };
-      
+
       // Mock Walrus client responses
       mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: 'test-flow-blob-id',
-        blobObject: { blob_id: 'test-flow-blob-id' }
+        blobObject: { blob_id: 'test-flow-blob-id' },
       });
-      
+
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: 'test-flow-blob-id',
         registered_epoch: 40,
         certified_epoch: 41,
         size: String(testData.length),
-        metadata: { V1: { 
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: String(testData.length),
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' }
-          }],
-          $kind: 'V1'
-        }, $kind: 'V1' }
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: String(testData.length),
+            hashes: [
+              {
+                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              },
+            ],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
       });
-      
+
       mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
@@ -385,21 +433,28 @@ describe('Verification Flow End-to-End', () => {
           contentType: 'text/plain',
           description: 'Test data for verification',
           owner: 'Test User',
-          $kind: 'V1'
+          $kind: 'V1',
         },
-        $kind: 'V1'
+        $kind: 'V1',
       });
-      
+
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
-      mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1', 'provider2']);
+      mockWalrusClient.getStorageProviders.mockResolvedValue([
+        'provider1',
+        'provider2',
+      ]);
       mockWalrusClient.verifyPoA.mockResolvedValue(true);
-      
+
       // Execute the verification flow
-      const result = await flowController.executeVerificationFlow(testData, metadata, {
-        verifyAfterUpload: true,
-        monitorAvailability: true
-      });
-      
+      const result = await flowController.executeVerificationFlow(
+        testData,
+        metadata,
+        {
+          verifyAfterUpload: true,
+          monitorAvailability: true,
+        }
+      );
+
       // Verify the results
       expect(result.blobId).toBe('test-flow-blob-id');
       expect(result.uploadResult.certified).toBe(true);
@@ -409,82 +464,97 @@ describe('Verification Flow End-to-End', () => {
       expect(result.verificationResult!.success).toBe(true);
       expect(result.monitoringResult).toBeDefined();
       expect(result.monitoringResult!.successful).toBe(true);
-      
+
       // Verify client calls
       expect(mockWalrusClient.writeBlob).toHaveBeenCalled();
-      expect(mockWalrusClient.executeWriteBlobAttributesTransaction).toHaveBeenCalled();
+      expect(
+        mockWalrusClient.executeWriteBlobAttributesTransaction
+      ).toHaveBeenCalled();
       expect(mockWalrusClient.readBlob).toHaveBeenCalled();
       expect(mockWalrusClient.getBlobInfo).toHaveBeenCalled();
       expect(mockWalrusClient.getBlobMetadata).toHaveBeenCalled();
     });
-    
+
     it('should handle verification failure in the flow', async () => {
       // Test data
       const testData = Buffer.from('test data for verification flow');
       const metadata = {
         contentType: 'text/plain',
-        description: 'Test data for verification'
+        description: 'Test data for verification',
       };
-      
+
       // Mock Walrus client responses for upload success
       mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: 'test-flow-blob-id',
-        blobObject: { blob_id: 'test-flow-blob-id' }
+        blobObject: { blob_id: 'test-flow-blob-id' },
       });
-      
+
       // Mock certification status (not certified)
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: 'test-flow-blob-id',
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified
         size: String(testData.length),
-        metadata: { V1: { 
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: String(testData.length),
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' }
-          }],
-          $kind: 'V1'
-        }, $kind: 'V1' }
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: String(testData.length),
+            hashes: [
+              {
+                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              },
+            ],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
       });
-      
+
       // Mock that data is modified during retrieval
-      const modifiedData = Buffer.from('modified test data for verification flow');
+      const modifiedData = Buffer.from(
+        'modified test data for verification flow'
+      );
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(modifiedData));
       mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
       mockWalrusClient.verifyPoA.mockResolvedValue(false);
-      
+
       // Execute the verification flow, expecting data verification to fail
-      const result = await flowController.executeVerificationFlow(testData, metadata, {
-        verifyAfterUpload: true,
-        requireCertification: false // Don't require certification to see content mismatch
-      });
-      
+      const result = await flowController.executeVerificationFlow(
+        testData,
+        metadata,
+        {
+          verifyAfterUpload: true,
+          requireCertification: false, // Don't require certification to see content mismatch
+        }
+      );
+
       // We should still get results, but verification should fail
       expect(result.blobId).toBe('test-flow-blob-id');
       expect(result.uploadResult.certified).toBe(false);
       expect(result.uploadResult.poaComplete).toBe(false);
-      
+
       // Data verification should fail because content is modified
       expect(result.verificationResult).toBeDefined();
       expect(result.verificationResult!.success).toBe(false);
     });
-    
+
     it('should handle errors during the verification flow', async () => {
       // Test data
       const testData = Buffer.from('test data for verification flow');
-      
+
       // Mock Walrus client error
       mockWalrusClient.writeBlob.mockRejectedValue(
         new Error('Storage allocation failed')
       );
-      
+
       // Execute the verification flow and expect it to fail
-      await expect(flowController.executeVerificationFlow(testData)).rejects.toThrow(CLIError);
+      await expect(
+        flowController.executeVerificationFlow(testData)
+      ).rejects.toThrow(CLIError);
     });
   });
-  
+
   describe('verifyExistingData', () => {
     it('should verify existing data successfully', async () => {
       // Test data
@@ -492,170 +562,203 @@ describe('Verification Flow End-to-End', () => {
       const testData = Buffer.from('existing test data');
       const metadata = {
         contentType: 'text/plain',
-        description: 'Existing test data'
+        description: 'Existing test data',
       };
-      
+
       // Mock Walrus client responses
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
         size: String(testData.length),
-        metadata: { V1: { 
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: String(testData.length),
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' }
-          }],
-          $kind: 'V1'
-        }, $kind: 'V1' }
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: String(testData.length),
+            hashes: [
+              {
+                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              },
+            ],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
       });
-      
+
       mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
           contentType: 'text/plain',
           description: 'Existing test data',
-          $kind: 'V1'
+          $kind: 'V1',
         },
-        $kind: 'V1'
+        $kind: 'V1',
       });
-      
+
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
-      
+
       // Execute the verification
-      const result = await flowController.verifyExistingData(blobId, testData, metadata);
-      
+      const result = await flowController.verifyExistingData(
+        blobId,
+        testData,
+        metadata
+      );
+
       // Verify the results
       expect(result.verified).toBe(true);
       expect(result.details.certified).toBe(true);
       expect(result.details.contentMatch).toBe(true);
       expect(result.details.metadataMatch).toBe(true);
       expect(result.details.epoch).toBe(41);
-      
+
       // Verify client calls
       expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(blobId);
       expect(mockWalrusClient.getBlobMetadata).toHaveBeenCalledWith({ blobId });
       expect(mockWalrusClient.readBlob).toHaveBeenCalledWith({ blobId });
     });
-    
+
     it('should detect content mismatch', async () => {
       // Test data
       const blobId = 'existing-blob-id';
       const expectedData = Buffer.from('expected test data');
       const actualData = Buffer.from('actual test data'); // Different content
-      
+
       // Mock Walrus client responses
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
         size: String(actualData.length),
-        metadata: { V1: { 
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: String(actualData.length),
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' }
-          }],
-          $kind: 'V1'
-        }, $kind: 'V1' }
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: String(actualData.length),
+            hashes: [
+              {
+                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              },
+            ],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
       });
-      
+
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(actualData));
-      
+
       // Execute the verification
-      const result = await flowController.verifyExistingData(blobId, expectedData);
-      
+      const result = await flowController.verifyExistingData(
+        blobId,
+        expectedData
+      );
+
       // Verify the results
       expect(result.verified).toBe(false);
       expect(result.details.certified).toBe(true); // Certified but content doesn't match
       expect(result.details.contentMatch).toBe(false);
     });
-    
+
     it('should detect metadata mismatch', async () => {
       // Test data
       const blobId = 'existing-blob-id';
       const metadata = {
         contentType: 'text/plain',
-        description: 'Expected description'
+        description: 'Expected description',
       };
-      
+
       // Mock Walrus client responses
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
         size: '1000',
-        metadata: { V1: { 
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: '1000',
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' }
-          }],
-          $kind: 'V1'
-        }, $kind: 'V1' }
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: '1000',
+            hashes: [
+              {
+                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              },
+            ],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
       });
-      
+
       mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
           contentType: 'text/plain',
           description: 'Different description', // Different metadata
-          $kind: 'V1'
+          $kind: 'V1',
         },
-        $kind: 'V1'
+        $kind: 'V1',
       });
-      
+
       // Execute the verification
-      const result = await flowController.verifyExistingData(blobId, undefined, metadata);
-      
+      const result = await flowController.verifyExistingData(
+        blobId,
+        undefined,
+        metadata
+      );
+
       // Verify the results
       expect(result.verified).toBe(false);
       expect(result.details.certified).toBe(true); // Certified but metadata doesn't match
       expect(result.details.metadataMatch).toBe(false);
     });
-    
+
     it('should handle non-existent blob', async () => {
       const nonExistentBlobId = 'non-existent-blob';
-      
+
       // Mock blob not found
       mockWalrusClient.getBlobInfo.mockRejectedValue(
         new Error('Blob not found')
       );
-      
+
       // Execute the verification and expect it to fail
-      await expect(flowController.verifyExistingData(nonExistentBlobId)).rejects.toThrow(CLIError);
+      await expect(
+        flowController.verifyExistingData(nonExistentBlobId)
+      ).rejects.toThrow(CLIError);
     });
-    
+
     it('should detect uncertified blob', async () => {
       // Test data
       const blobId = 'uncertified-blob-id';
-      
+
       // Mock Walrus client responses for uncertified blob
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified
         size: '1000',
-        metadata: { V1: { 
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: '1000',
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' }
-          }],
-          $kind: 'V1'
-        }, $kind: 'V1' }
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: '1000',
+            hashes: [
+              {
+                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              },
+            ],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
       });
-      
+
       // Execute the verification
       const result = await flowController.verifyExistingData(blobId);
-      
+
       // Verify the results
       expect(result.verified).toBe(false);
       expect(result.details.certified).toBe(false);

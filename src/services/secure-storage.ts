@@ -48,8 +48,12 @@ export class SecureStorage {
   async setSecureItem(key: string, value: string): Promise<void> {
     try {
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipheriv('aes-256-gcm', this.getEncryptionKey(), iv);
-      
+      const cipher = crypto.createCipheriv(
+        'aes-256-gcm',
+        this.getEncryptionKey(),
+        iv
+      );
+
       let encrypted = cipher.update(value, 'utf8', 'hex');
       encrypted += cipher.final('hex');
       const authTag = cipher.getAuthTag();
@@ -57,7 +61,7 @@ export class SecureStorage {
       const data = JSON.stringify({
         iv: iv.toString('hex'),
         encrypted,
-        authTag: authTag.toString('hex')
+        authTag: authTag.toString('hex'),
       });
 
       fs.writeFileSync(this.getStorageFile(key), data, { mode: 0o600 });
@@ -103,4 +107,3 @@ export class SecureStorage {
     }
   }
 }
-

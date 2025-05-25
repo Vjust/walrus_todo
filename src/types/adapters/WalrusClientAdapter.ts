@@ -40,14 +40,14 @@ const logger = new Logger('WalrusClientAdapter');
  */
 import {
   type WalrusClient as OriginalWalrusClient, // Original SDK client interface
-  type WriteBlobOptions,         // Options for writing data blobs to storage
-  type StorageWithSizeOptions,   // Options for allocating storage with specific size
-  type RegisterBlobOptions,      // Options for registering existing blobs
-  type DeleteBlobOptions,        // Options for deleting blobs from storage
-  type CertifyBlobOptions,       // Options for certifying blob authenticity
+  type WriteBlobOptions, // Options for writing data blobs to storage
+  type StorageWithSizeOptions, // Options for allocating storage with specific size
+  type RegisterBlobOptions, // Options for registering existing blobs
+  type DeleteBlobOptions, // Options for deleting blobs from storage
+  type CertifyBlobOptions, // Options for certifying blob authenticity
   type WriteBlobAttributesOptions, // Options for updating blob metadata
   type GetStorageConfirmationOptions, // Options for confirming storage allocation
-  type ReadBlobOptions           // Options for reading blob data
+  type ReadBlobOptions, // Options for reading blob data
 } from '@mysten/walrus';
 
 /**
@@ -89,8 +89,8 @@ import { SignerAdapter } from './SignerAdapter';
  */
 export enum WalrusClientVersion {
   ORIGINAL = 'original', // Base WalrusClient from SDK
-  CUSTOM = 'custom',     // Project's WalrusClient interface
-  EXTENDED = 'extended'  // Project's WalrusClientExt interface
+  CUSTOM = 'custom', // Project's WalrusClient interface
+  EXTENDED = 'extended', // Project's WalrusClientExt interface
 }
 
 /**
@@ -240,14 +240,18 @@ export interface UnifiedWalrusClient {
    * @returns {Promise<{blobId: string, blobObject: NormalizedBlobObject}>} Promise resolving to blob identifier and metadata
    * @throws {WalrusClientAdapterError} If the blob cannot be stored or there's a network error
    */
-  writeBlob(options: WriteBlobOptions | {
-    blob: Uint8Array;
-    signer: Signer | Ed25519Keypair | SignerAdapter;
-    deletable?: boolean;
-    epochs?: number;
-    attributes?: Record<string, string>;
-    transaction?: TransactionType;
-  }): Promise<{
+  writeBlob(
+    options:
+      | WriteBlobOptions
+      | {
+          blob: Uint8Array;
+          signer: Signer | Ed25519Keypair | SignerAdapter;
+          deletable?: boolean;
+          epochs?: number;
+          attributes?: Record<string, string>;
+          transaction?: TransactionType;
+        }
+  ): Promise<{
     blobId: string; // Not optional
     blobObject: NormalizedBlobObject;
   }>;
@@ -327,10 +331,13 @@ export interface UnifiedWalrusClient {
    * @returns {Promise<{storageCost: bigint, writeCost: bigint, totalCost: bigint}>} Promise resolving to cost information
    * @throws {WalrusClientAdapterError} If there's a network error
    */
-  storageCost(size: number, epochs: number): Promise<{
+  storageCost(
+    size: number,
+    epochs: number
+  ): Promise<{
     storageCost: bigint;
     writeCost: bigint;
-    totalCost: bigint
+    totalCost: bigint;
   }>;
 
   /**
@@ -424,7 +431,7 @@ export interface UnifiedWalrusClient {
   executeCreateStorageTransaction?(
     options: StorageWithSizeOptions & {
       transaction?: TransactionType;
-      signer: Signer | Ed25519Keypair | SignerAdapter
+      signer: Signer | Ed25519Keypair | SignerAdapter;
     }
   ): Promise<{
     digest: string;
@@ -433,7 +440,7 @@ export interface UnifiedWalrusClient {
       start_epoch: number;
       end_epoch: number;
       storage_size: string;
-    }
+    };
   }>;
 
   /**
@@ -446,7 +453,9 @@ export interface UnifiedWalrusClient {
    * @returns {Function} Function that accepts a transaction and returns a promise resolving to the transaction digest
    * @throws {WalrusClientAdapterError} If the operation cannot be added to the transaction
    */
-  deleteBlob?(options: DeleteBlobOptions): (tx: TransactionType) => Promise<{ digest: string }>;
+  deleteBlob?(
+    options: DeleteBlobOptions
+  ): (tx: TransactionType) => Promise<{ digest: string }>;
 
   /**
    * Gets storage confirmation from a specific node
@@ -460,7 +469,12 @@ export interface UnifiedWalrusClient {
    */
   getStorageConfirmationFromNode?(
     options: GetStorageConfirmationOptions
-  ): Promise<{ primary_verification: boolean; secondary_verification?: boolean; provider: string; signature?: string }>;
+  ): Promise<{
+    primary_verification: boolean;
+    secondary_verification?: boolean;
+    provider: string;
+    signature?: string;
+  }>;
 
   /**
    * Creates a transaction block for storage allocation
@@ -485,16 +499,16 @@ export interface UnifiedWalrusClient {
    * @returns {Function} Function that accepts a transaction and returns a promise resolving to storage details
    * @throws {WalrusClientAdapterError} If the operation cannot be added to the transaction
    */
-  createStorage?(
-    options: StorageWithSizeOptions
-  ): (tx: TransactionType) => Promise<{
+  createStorage?(options: StorageWithSizeOptions): (
+    tx: TransactionType
+  ) => Promise<{
     digest: string;
     storage: {
       id: { id: string };
       start_epoch: number;
       end_epoch: number;
       storage_size: string;
-    }
+    };
   }>;
 
   /**
@@ -590,15 +604,19 @@ export interface WalrusClientAdapter extends UnifiedWalrusClient {
  * }
  * ```
  */
-export function isOriginalWalrusClient(client: any): client is OriginalWalrusClient {
-  return client &&
-         typeof client === 'object' &&
-         typeof client.getBlobInfo === 'function' &&
-         typeof client.readBlob === 'function' &&
-         typeof client.writeBlob === 'function' &&
-         typeof client.getConfig === 'function' &&
-         typeof client.getWalBalance === 'function' &&
-         typeof client.getStorageUsage === 'function';
+export function isOriginalWalrusClient(
+  client: any
+): client is OriginalWalrusClient {
+  return (
+    client &&
+    typeof client === 'object' &&
+    typeof client.getBlobInfo === 'function' &&
+    typeof client.readBlob === 'function' &&
+    typeof client.writeBlob === 'function' &&
+    typeof client.getConfig === 'function' &&
+    typeof client.getWalBalance === 'function' &&
+    typeof client.getStorageUsage === 'function'
+  );
 }
 
 /**
@@ -619,9 +637,11 @@ export function isOriginalWalrusClient(client: any): client is OriginalWalrusCli
  * ```
  */
 export function isWalrusClient(client: any): client is WalrusClient {
-  return isOriginalWalrusClient(client) &&
-         typeof client.getBlobObject === 'function' &&
-         typeof client.verifyPoA === 'function';
+  return (
+    isOriginalWalrusClient(client) &&
+    typeof client.getBlobObject === 'function' &&
+    typeof client.verifyPoA === 'function'
+  );
 }
 
 /**
@@ -641,8 +661,7 @@ export function isWalrusClient(client: any): client is WalrusClient {
  * ```
  */
 export function isWalrusClientExt(client: any): client is WalrusClientExt {
-  return isWalrusClient(client) &&
-         typeof client.getBlobSize === 'function';
+  return isWalrusClient(client) && typeof client.getBlobSize === 'function';
 }
 
 /**
@@ -677,7 +696,9 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    */
   constructor(walrusClient: any) {
     if (!walrusClient) {
-      throw new WalrusClientAdapterError('Cannot initialize WalrusClientAdapter with null or undefined client');
+      throw new WalrusClientAdapterError(
+        'Cannot initialize WalrusClientAdapter with null or undefined client'
+      );
     }
     this.walrusClient = walrusClient;
     this.clientVersion = this.detectClientVersion(walrusClient);
@@ -717,7 +738,9 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    */
   protected detectClientVersion(client: any): WalrusClientVersion {
     if (!client) {
-      throw new WalrusClientAdapterError('Cannot detect version of null or undefined client');
+      throw new WalrusClientAdapterError(
+        'Cannot detect version of null or undefined client'
+      );
     }
 
     // Check for V3 (extended) methods
@@ -736,13 +759,19 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     }
 
     // If types don't match exactly, use method detection as a fallback
-    if (('getBlobSize' in client && typeof client.getBlobSize === 'function') ||
-        ('experimental' in client && client.experimental)) {
+    if (
+      ('getBlobSize' in client && typeof client.getBlobSize === 'function') ||
+      ('experimental' in client && client.experimental)
+    ) {
       return WalrusClientVersion.EXTENDED;
     }
 
-    if (('getBlobObject' in client && typeof client.getBlobObject === 'function') &&
-        ('verifyPoA' in client && typeof client.verifyPoA === 'function')) {
+    if (
+      'getBlobObject' in client &&
+      typeof client.getBlobObject === 'function' &&
+      'verifyPoA' in client &&
+      typeof client.verifyPoA === 'function'
+    ) {
       return WalrusClientVersion.CUSTOM;
     }
 
@@ -787,23 +816,31 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       try {
         return BigInt(value);
       } catch (e) {
-        throw new WalrusClientAdapterError(`Cannot convert string to bigint: ${value}`);
+        throw new WalrusClientAdapterError(
+          `Cannot convert string to bigint: ${value}`
+        );
       }
     }
 
     // Proper type guard to check if value is an object and has toString method
-    if (value !== null &&
-        typeof value === 'object' &&
-        'toString' in value &&
-        typeof value.toString === 'function') {
+    if (
+      value !== null &&
+      typeof value === 'object' &&
+      'toString' in value &&
+      typeof value.toString === 'function'
+    ) {
       try {
         return BigInt(value.toString());
       } catch (e) {
-        throw new WalrusClientAdapterError(`Cannot convert value to bigint: ${value}`);
+        throw new WalrusClientAdapterError(
+          `Cannot convert value to bigint: ${value}`
+        );
       }
     }
 
-    throw new WalrusClientAdapterError(`Unsupported value type for bigint conversion: ${typeof value}`);
+    throw new WalrusClientAdapterError(
+      `Unsupported value type for bigint conversion: ${typeof value}`
+    );
   }
 
   /**
@@ -820,11 +857,17 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
 
     if (typeof tx === 'object' && tx !== null) {
       // Check for adapter interfaces
-      if ('getUnderlyingBlock' in tx && typeof tx.getUnderlyingBlock === 'function') {
+      if (
+        'getUnderlyingBlock' in tx &&
+        typeof tx.getUnderlyingBlock === 'function'
+      ) {
         return tx.getUnderlyingBlock();
       }
 
-      if ('getTransactionBlock' in tx && typeof tx.getTransactionBlock === 'function') {
+      if (
+        'getTransactionBlock' in tx &&
+        typeof tx.getTransactionBlock === 'function'
+      ) {
         return tx.getTransactionBlock();
       }
 
@@ -847,12 +890,17 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * @param {Signer|Ed25519Keypair|SignerAdapter} signer - The signer or signer adapter
    * @returns {any} The extracted underlying signer
    */
-  protected extractSigner(signer: Signer | Ed25519Keypair | SignerAdapter): any {
+  protected extractSigner(
+    signer: Signer | Ed25519Keypair | SignerAdapter
+  ): any {
     if (!signer) return undefined;
 
     if (typeof signer === 'object' && signer !== null) {
       // Check for adapter interfaces
-      if ('getUnderlyingSigner' in signer && typeof signer.getUnderlyingSigner === 'function') {
+      if (
+        'getUnderlyingSigner' in signer &&
+        typeof signer.getUnderlyingSigner === 'function'
+      ) {
         return signer.getUnderlyingSigner();
       }
 
@@ -882,14 +930,28 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     };
 
     // Use explicit type checking instead of property access to avoid type errors
-    if (result && typeof result === 'object' && 'transaction' in result && result.transaction) {
+    if (
+      result &&
+      typeof result === 'object' &&
+      'transaction' in result &&
+      result.transaction
+    ) {
       // Extract the transaction object from the adapter
-      result.transaction = this.extractTransaction(result.transaction as TransactionType);
+      result.transaction = this.extractTransaction(
+        result.transaction as TransactionType
+      );
     }
 
-    if (result && typeof result === 'object' && 'signer' in result && result.signer) {
+    if (
+      result &&
+      typeof result === 'object' &&
+      'signer' in result &&
+      result.signer
+    ) {
       // Extract the signer object from the adapter
-      result.signer = this.extractSigner(result.signer as Signer | Ed25519Keypair | SignerAdapter);
+      result.signer = this.extractSigner(
+        result.signer as Signer | Ed25519Keypair | SignerAdapter
+      );
     }
 
     return result;
@@ -909,7 +971,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     if (!blob) {
       return {
         blob_id: '',
-        deletable: false
+        deletable: false,
       };
     }
 
@@ -921,13 +983,17 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       storage_cost: { value: '0' },
       metadata: {},
       deletable: false,
-      size: 0
+      size: 0,
     };
 
     // Extract blob_id with proper type checking
     if (typeof blob.blob_id === 'string') {
       normalizedBlob.blob_id = blob.blob_id;
-    } else if (blob.id && typeof blob.id === 'object' && typeof blob.id.id === 'string') {
+    } else if (
+      blob.id &&
+      typeof blob.id === 'object' &&
+      typeof blob.id.id === 'string'
+    ) {
       normalizedBlob.blob_id = blob.id.id;
     }
 
@@ -976,9 +1042,13 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * @returns {NormalizedWriteBlobResponse} The normalized write blob response
    * @throws {WalrusClientAdapterError} If the response is empty or missing required data
    */
-  protected normalizeWriteBlobResponse(response: any): NormalizedWriteBlobResponse {
+  protected normalizeWriteBlobResponse(
+    response: any
+  ): NormalizedWriteBlobResponse {
     if (!response) {
-      throw new WalrusClientAdapterError('Empty response from writeBlob operation');
+      throw new WalrusClientAdapterError(
+        'Empty response from writeBlob operation'
+      );
     }
 
     // Extract blobId from various possible locations with proper type checking
@@ -988,18 +1058,26 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       blobId = response;
     } else if (typeof response.blobId === 'string') {
       blobId = response.blobId;
-    } else if (response.blobObject && typeof response.blobObject.blob_id === 'string') {
+    } else if (
+      response.blobObject &&
+      typeof response.blobObject.blob_id === 'string'
+    ) {
       blobId = response.blobObject.blob_id;
     } else if (typeof response.blob_id === 'string') {
       blobId = response.blob_id;
-    } else if (response.blobObject && response.blobObject.id &&
-              typeof response.blobObject.id === 'object' &&
-              typeof response.blobObject.id.id === 'string') {
+    } else if (
+      response.blobObject &&
+      response.blobObject.id &&
+      typeof response.blobObject.id === 'object' &&
+      typeof response.blobObject.id.id === 'string'
+    ) {
       blobId = response.blobObject.id.id;
     }
 
     if (!blobId) {
-      throw new WalrusClientAdapterError('Could not extract blobId from writeBlob response');
+      throw new WalrusClientAdapterError(
+        'Could not extract blobId from writeBlob response'
+      );
     }
 
     // Prepare the normalized blob object
@@ -1014,7 +1092,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     return {
       blobId,
       blobObject,
-      digest: typeof response.digest === 'string' ? response.digest : ''
+      digest: typeof response.digest === 'string' ? response.digest : '',
     };
   }
 
@@ -1048,7 +1126,9 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * @returns {Promise<{blobId: string, blobObject: NormalizedBlobObject}>} Promise resolving to blob info
    * @abstract
    */
-  abstract writeBlob(options: any): Promise<{ blobId: string; blobObject: NormalizedBlobObject }>;
+  abstract writeBlob(
+    options: any
+  ): Promise<{ blobId: string; blobObject: NormalizedBlobObject }>;
 
   /**
    * Gets the client configuration
@@ -1056,7 +1136,11 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * @returns {Promise<{network: string, version: string, maxSize: number}>} Promise resolving to configuration
    * @abstract
    */
-  abstract getConfig(): Promise<{ network: string; version: string; maxSize: number }>;
+  abstract getConfig(): Promise<{
+    network: string;
+    version: string;
+    maxSize: number;
+  }>;
 
   /**
    * Gets the WAL token balance
@@ -1099,7 +1183,9 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * @returns {Promise<NormalizedBlobObject>} Promise resolving to the blob object
    * @abstract
    */
-  abstract getBlobObject(params: { blobId: string }): Promise<NormalizedBlobObject>;
+  abstract getBlobObject(params: {
+    blobId: string;
+  }): Promise<NormalizedBlobObject>;
 
   /**
    * Gets storage cost for given size and epochs
@@ -1109,7 +1195,10 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * @returns {Promise<{storageCost: bigint, writeCost: bigint, totalCost: bigint}>} Promise resolving to cost information
    * @abstract
    */
-  abstract storageCost(size: number, epochs: number): Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>;
+  abstract storageCost(
+    size: number,
+    epochs: number
+  ): Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>;
 }
 
 /**

@@ -15,32 +15,32 @@ jest.mock('fs', () => ({
 describe('AI Commands Integration Tests', () => {
   const CLI_CMD = 'node ./bin/run.js';
   const MOCK_API_KEY = 'test-api-key-123';
-  
+
   const _mockTodos = [
-    { 
-      id: '1', 
-      title: 'Complete financial report', 
-      description: 'Q4 financial report for board meeting', 
+    {
+      id: '1',
+      title: 'Complete financial report',
+      description: 'Q4 financial report for board meeting',
       completed: false,
       tags: ['finance', 'urgent'],
-      priority: 'high'
+      priority: 'high',
     },
-    { 
-      id: '2', 
-      title: 'Update budget spreadsheet', 
-      description: 'Include Q1 projections', 
+    {
+      id: '2',
+      title: 'Update budget spreadsheet',
+      description: 'Include Q1 projections',
       completed: false,
       tags: ['finance', 'planning'],
-      priority: 'medium'
+      priority: 'medium',
     },
-    { 
-      id: '3', 
-      title: 'Schedule team meeting', 
-      description: 'Weekly sync with development team', 
+    {
+      id: '3',
+      title: 'Schedule team meeting',
+      description: 'Weekly sync with development team',
       completed: true,
       tags: ['management', 'recurring'],
-      priority: 'low'
-    }
+      priority: 'low',
+    },
   ];
 
   beforeEach(() => {
@@ -71,7 +71,9 @@ You have 3 todos, with 67% incomplete. Your tasks focus on financial reporting a
     it('should handle missing API key', () => {
       delete process.env.XAI_API_KEY;
       (execSync as jest.Mock).mockImplementation(() => {
-        throw new Error('API key is required. Provide it via --apiKey flag or XAI_API_KEY environment variable.');
+        throw new Error(
+          'API key is required. Provide it via --apiKey flag or XAI_API_KEY environment variable.'
+        );
       });
 
       expect(() => {
@@ -82,15 +84,22 @@ You have 3 todos, with 67% incomplete. Your tasks focus on financial reporting a
     it('should output JSON format when requested', () => {
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('--json')) {
-          return Buffer.from(JSON.stringify({
-            summary: "You have 3 todos focusing on financial and team management tasks.",
-            stats: {
-              total: 3,
-              completed: 1,
-              incomplete: 2,
-              categories: ['finance', 'management']
-            }
-          }, null, 2));
+          return Buffer.from(
+            JSON.stringify(
+              {
+                summary:
+                  'You have 3 todos focusing on financial and team management tasks.',
+                stats: {
+                  total: 3,
+                  completed: 1,
+                  incomplete: 2,
+                  categories: ['finance', 'management'],
+                },
+              },
+              null,
+              2
+            )
+          );
         }
         throw new Error(`Command not mocked: ${command}`);
       });
@@ -201,7 +210,9 @@ Transaction: 0xdef456...
         throw new Error(`Command not mocked: ${command}`);
       });
 
-      const result = execSync(`${CLI_CMD} suggest --verify --registryAddress 0x123 --packageId 0x456`).toString();
+      const result = execSync(
+        `${CLI_CMD} suggest --verify --registryAddress 0x123 --packageId 0x456`
+      ).toString();
       expect(result).toContain('Blockchain verification enabled');
       expect(result).toContain('Verification Details');
       expect(result).toContain('Transaction:');
@@ -335,14 +346,20 @@ trends:
     it('should output analysis in JSON format', () => {
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('--json')) {
-          return Buffer.from(JSON.stringify({
-            analysis: {
-              themes: ['Financial planning', 'Task management'],
-              bottlenecks: ['Multiple financial reviews'],
-              recommendations: ['Consolidate financial tasks'],
-              trends: ['Quarterly reporting cycle']
-            }
-          }, null, 2));
+          return Buffer.from(
+            JSON.stringify(
+              {
+                analysis: {
+                  themes: ['Financial planning', 'Task management'],
+                  bottlenecks: ['Multiple financial reviews'],
+                  recommendations: ['Consolidate financial tasks'],
+                  trends: ['Quarterly reporting cycle'],
+                },
+              },
+              null,
+              2
+            )
+          );
         }
         throw new Error(`Command not mocked: ${command}`);
       });
@@ -364,7 +381,9 @@ themes:
         throw new Error(`Command not mocked: ${command}`);
       });
 
-      const result = execSync(`${CLI_CMD} ai analyze --list personal`).toString();
+      const result = execSync(
+        `${CLI_CMD} ai analyze --list personal`
+      ).toString();
       expect(result).toContain('personal list');
       expect(result).toContain('Personal development');
     });
@@ -395,12 +414,18 @@ Management Tasks:
     it('should output categories in JSON format', () => {
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('--json')) {
-          return Buffer.from(JSON.stringify({
-            categories: {
-              'Financial Tasks': ['1', '2'],
-              'Management Tasks': ['3']
-            }
-          }, null, 2));
+          return Buffer.from(
+            JSON.stringify(
+              {
+                categories: {
+                  'Financial Tasks': ['1', '2'],
+                  'Management Tasks': ['3'],
+                },
+              },
+              null,
+              2
+            )
+          );
         }
         throw new Error(`Command not mocked: ${command}`);
       });
@@ -434,13 +459,19 @@ Management Tasks:
     it('should output priorities in JSON format', () => {
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('--json')) {
-          return Buffer.from(JSON.stringify({
-            priorities: {
-              '1': 9,
-              '2': 7,
-              '3': 3
-            }
-          }, null, 2));
+          return Buffer.from(
+            JSON.stringify(
+              {
+                priorities: {
+                  '1': 9,
+                  '2': 7,
+                  '3': 3,
+                },
+              },
+              null,
+              2
+            )
+          );
         }
         throw new Error(`Command not mocked: ${command}`);
       });
@@ -465,7 +496,9 @@ Management Tasks:
 
     it('should handle network timeouts', () => {
       (execSync as jest.Mock).mockImplementation(() => {
-        throw new Error('Request timeout: AI service did not respond within 30 seconds');
+        throw new Error(
+          'Request timeout: AI service did not respond within 30 seconds'
+        );
       });
 
       expect(() => {
@@ -475,7 +508,9 @@ Management Tasks:
 
     it('should validate required flags for verification', () => {
       (execSync as jest.Mock).mockImplementation(() => {
-        throw new Error('Registry address and package ID are required for blockchain verification');
+        throw new Error(
+          'Registry address and package ID are required for blockchain verification'
+        );
       });
 
       expect(() => {
@@ -489,13 +524,17 @@ Management Tasks:
       });
 
       expect(() => {
-        execSync(`${CLI_CMD} ai summarize --provider unsupported_provider`, { stdio: 'inherit' });
+        execSync(`${CLI_CMD} ai summarize --provider unsupported_provider`, {
+          stdio: 'inherit',
+        });
       }).toThrow('Invalid AI provider');
     });
 
     it('should handle missing todos', () => {
       (execSync as jest.Mock).mockImplementation(() => {
-        throw new Error('No todos found. Add some todos first with "walrus_todo add"');
+        throw new Error(
+          'No todos found. Add some todos first with "walrus_todo add"'
+        );
       });
 
       expect(() => {
@@ -520,13 +559,19 @@ Summary: Analysis of 3 local todos.`);
         throw new Error(`Command not mocked: ${command}`);
       });
 
-      const openaiResult = execSync(`${CLI_CMD} ai summarize --provider openai --apiKey test-key`).toString();
+      const openaiResult = execSync(
+        `${CLI_CMD} ai summarize --provider openai --apiKey test-key`
+      ).toString();
       expect(openaiResult).toContain('Using OpenAI provider');
 
-      const anthropicResult = execSync(`${CLI_CMD} ai summarize --provider anthropic --apiKey test-key`).toString();
+      const anthropicResult = execSync(
+        `${CLI_CMD} ai summarize --provider anthropic --apiKey test-key`
+      ).toString();
       expect(anthropicResult).toContain('Using Anthropic provider');
 
-      const ollamaResult = execSync(`${CLI_CMD} ai summarize --provider ollama`).toString();
+      const ollamaResult = execSync(
+        `${CLI_CMD} ai summarize --provider ollama`
+      ).toString();
       expect(ollamaResult).toContain('Using Ollama provider');
     });
 
@@ -539,7 +584,9 @@ Advanced analysis of your todos...`);
         throw new Error(`Command not mocked: ${command}`);
       });
 
-      const result = execSync(`${CLI_CMD} ai analyze --provider openai --model gpt-4 --apiKey test-key`).toString();
+      const result = execSync(
+        `${CLI_CMD} ai analyze --provider openai --model gpt-4 --apiKey test-key`
+      ).toString();
       expect(result).toContain('Using model: gpt-4');
     });
 
@@ -579,7 +626,7 @@ walrus_todo ai credentials  - Manage AI provider credentials`);
   describe('AI with Mock AI Providers', () => {
     it('should use mock providers during testing', () => {
       process.env.USE_MOCK_AI = 'true';
-      
+
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('ai summarize')) {
           return Buffer.from(`[MOCK] Summary of your todos:
@@ -591,13 +638,13 @@ Mock response for testing purposes. 3 todos analyzed.`);
       const result = execSync(`${CLI_CMD} ai summarize`).toString();
       expect(result).toContain('[MOCK]');
       expect(result).toContain('Mock response');
-      
+
       delete process.env.USE_MOCK_AI;
     });
 
     it('should simulate provider-specific responses', () => {
       process.env.USE_MOCK_AI = 'true';
-      
+
       (execSync as jest.Mock).mockImplementation((command: string) => {
         if (command.includes('--provider xai')) {
           return Buffer.from(`[MOCK XAI] Grok analysis results...`);
@@ -607,12 +654,16 @@ Mock response for testing purposes. 3 todos analyzed.`);
         throw new Error(`Command not mocked: ${command}`);
       });
 
-      const xaiResult = execSync(`${CLI_CMD} ai analyze --provider xai`).toString();
+      const xaiResult = execSync(
+        `${CLI_CMD} ai analyze --provider xai`
+      ).toString();
       expect(xaiResult).toContain('[MOCK XAI]');
 
-      const openaiResult = execSync(`${CLI_CMD} ai analyze --provider openai`).toString();
+      const openaiResult = execSync(
+        `${CLI_CMD} ai analyze --provider openai`
+      ).toString();
       expect(openaiResult).toContain('[MOCK OpenAI]');
-      
+
       delete process.env.USE_MOCK_AI;
     });
   });

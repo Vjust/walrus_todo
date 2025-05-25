@@ -10,8 +10,8 @@ export { AIProvider };
 /**
  * AI operation types
  */
-export type TodoAIOperation = 
-  | 'summarize' 
+export type TodoAIOperation =
+  | 'summarize'
   | 'categorize'
   | 'prioritize'
   | 'suggest'
@@ -25,9 +25,9 @@ export type TodoAIOperation =
  * AI verification level
  */
 export enum VerificationLevel {
-  NONE = 'none',        // No verification
-  HASH = 'hash',        // Store hash only on-chain
-  FULL = 'full'         // Store full verification
+  NONE = 'none', // No verification
+  HASH = 'hash', // Store hash only on-chain
+  FULL = 'full', // Store full verification
 }
 
 /**
@@ -122,7 +122,13 @@ export interface AnthropicResponse {
  * Prompt template input types
  */
 export interface PromptInput {
-  [key: string]: string | number | boolean | string[] | PromptInput | PromptInput[];
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | string[]
+    | PromptInput
+    | PromptInput[];
 }
 
 /**

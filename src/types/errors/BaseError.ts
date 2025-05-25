@@ -28,17 +28,15 @@ export class BaseError extends Error {
    * Create a new BaseError
    * @param options Error options
    */
-  constructor(
-    options: {
-      message: string;
-      code?: string;
-      context?: Record<string, unknown>;
-      cause?: Error;
-      recoverable?: boolean;
-      shouldRetry?: boolean;
-      retryDelay?: number;
-    }
-  ) {
+  constructor(options: {
+    message: string;
+    code?: string;
+    context?: Record<string, unknown>;
+    cause?: Error;
+    recoverable?: boolean;
+    shouldRetry?: boolean;
+    retryDelay?: number;
+  }) {
     super(options.message);
 
     const {
@@ -47,7 +45,7 @@ export class BaseError extends Error {
       cause,
       recoverable = false,
       shouldRetry = false,
-      retryDelay
+      retryDelay,
     } = options;
 
     this.name = this.constructor.name;
@@ -64,7 +62,7 @@ export class BaseError extends Error {
         value: cause,
         enumerable: false,
         writable: false,
-        configurable: false
+        configurable: false,
       });
     }
 
@@ -91,10 +89,10 @@ export class BaseError extends Error {
   ): BaseError {
     return new BaseError({
       message,
-      ...options
+      ...options,
     });
   }
-  
+
   /**
    * Get a safe error response suitable for client/user consumption
    * This prevents leaking sensitive information
@@ -106,10 +104,10 @@ export class BaseError extends Error {
       timestamp: this.timestamp,
       recoverable: this.recoverable,
       shouldRetry: this.shouldRetry,
-      retryDelay: this.retryDelay
+      retryDelay: this.retryDelay,
     };
   }
-  
+
   /**
    * Get full error details for logging (internal use only)
    */
@@ -124,18 +122,24 @@ export class BaseError extends Error {
       retryDelay: this.retryDelay,
       context: this.context,
       stack: this.stack,
-      cause: this.cause ? (this.cause instanceof Error ? this.cause.message : String(this.cause)) : undefined
+      cause: this.cause
+        ? this.cause instanceof Error
+          ? this.cause.message
+          : String(this.cause)
+        : undefined,
     };
   }
-  
+
   /**
    * Sanitize context to remove sensitive information
    * @param context Context object to sanitize
    * @returns Sanitized context or undefined
    */
-  protected sanitizeContext(context?: Record<string, unknown>): Record<string, unknown> | undefined {
+  protected sanitizeContext(
+    context?: Record<string, unknown>
+  ): Record<string, unknown> | undefined {
     if (!context) return undefined;
-    
+
     const sanitized: Record<string, unknown> = {};
     const sensitivePatterns = [
       /\b(password)\b/i,
@@ -147,16 +151,16 @@ export class BaseError extends Error {
       /\b(signature)\b/i,
       /\b(seed|seedPhrase)\b/i,
       /\b(mnemonic)\b/i,
-      /\b(phrase|recoveryPhrase)\b/i
+      /\b(phrase|recoveryPhrase)\b/i,
     ];
-    
+
     // Additional blockchain-specific patterns
     const blockchainPatterns = [
       { pattern: /address/i, redactPartial: true },
       { pattern: /hash/i, redactPartial: true },
-      { pattern: /transaction(?:Id|Hash)/i, redactPartial: true }
+      { pattern: /transaction(?:Id|Hash)/i, redactPartial: true },
     ];
-    
+
     // Sanitize each property
     for (const [key, value] of Object.entries(context)) {
       // Check for sensitive keys
@@ -164,25 +168,31 @@ export class BaseError extends Error {
         sanitized[key] = '[REDACTED]';
         continue;
       }
-      
+
       // Check for blockchain identifiers that need partial redaction
-      const blockchainMatch = blockchainPatterns.find(item => item.pattern.test(key));
+      const blockchainMatch = blockchainPatterns.find(item =>
+        item.pattern.test(key)
+      );
       if (blockchainMatch && typeof value === 'string') {
         sanitized[key] = this.redactIdentifier(value);
         continue;
       }
-      
+
       // Sanitize recursive objects
-      if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      if (
+        value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
+      ) {
         sanitized[key] = this.sanitizeContext(value as Record<string, unknown>);
       } else {
         sanitized[key] = value;
       }
     }
-    
+
     return sanitized;
   }
-  
+
   /**
    * Redacts part of an identifier (like an address or transaction hash)
    * keeping only the first and last few characters
@@ -191,7 +201,7 @@ export class BaseError extends Error {
    */
   protected redactIdentifier(identifier: string): string {
     if (!identifier || identifier.length <= 8) return identifier;
-    
+
     const firstChars = identifier.slice(0, 6);
     const lastChars = identifier.slice(-4);
     return `${firstChars}...${lastChars}`;

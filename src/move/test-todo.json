@@ -4,11 +4,7 @@
   "description": "",
   "completed": false,
   "priority": "high",
-  "tags": [
-    "blockchain",
-    "storage",
-    "test"
-  ],
+  "tags": ["blockchain", "storage", "test"],
   "createdAt": "2025-05-14T22:51:04.695Z",
   "updatedAt": "2025-05-14T22:51:11.895Z",
   "private": false,

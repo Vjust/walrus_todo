@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import { execSync } from 'child_process';
 
 // This test simulates exactly how a real user would use the Walrus TODO CLI
 // to create a todo, store it on blockchain, and verify it on scanners
@@ -9,11 +10,11 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
   it('should create a todo and store it on testnet blockchain', async () => {
     // Step 1: User creates a new todo called "todo for aj"
     // console.log('\n=== Step 1: Creating TODO "todo for aj" ==='); // Removed console statement
-    
+
     const todoTitle = 'todo for aj';
     const createCommand = `walrustodo add "${todoTitle}"`;
     // console.log(`Running: ${createCommand}`); // Removed console statement
-    
+
     try {
       const createOutput = execSync(createCommand, { encoding: 'utf8' });
       // console.log('TODO created successfully:'); // Removed console statement
@@ -26,20 +27,20 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
 
     // Step 2: User adds tasks for fixing waltodo
     // console.log('\n=== Step 2: Adding tasks for fixing waltodo ==='); // Removed console statement
-    
+
     const tasks = [
       'Review current waltodo codebase',
       'Identify critical bugs and issues',
       'Implement fixes for high-priority bugs',
       'Add comprehensive test coverage',
       'Update documentation with fixes',
-      'Deploy and verify fixes on testnet'
+      'Deploy and verify fixes on testnet',
     ];
 
     for (const task of tasks) {
       const addTaskCommand = `walrustodo add "${todoTitle}" --task "${task}"`;
       // console.log(`Running: ${addTaskCommand}`); // Removed console statement
-      
+
       try {
         const taskOutput = execSync(addTaskCommand, { encoding: 'utf8' });
         // console.log(`Task added: ${task}`); // Removed console statement
@@ -51,10 +52,10 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
 
     // Step 3: User lists the todo to verify it was created
     // console.log('\n=== Step 3: Verifying TODO was created ==='); // Removed console statement
-    
+
     const listCommand = 'walrustodo list';
     // console.log(`Running: ${listCommand}`); // Removed console statement
-    
+
     try {
       const listOutput = execSync(listCommand, { encoding: 'utf8' });
       // console.log('Current TODOs:'); // Removed console statement
@@ -67,32 +68,32 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
 
     // Step 4: User stores the todo on the testnet blockchain
     // console.log('\n=== Step 4: Storing TODO on Testnet Blockchain ==='); // Removed console statement
-    
+
     const storeCommand = `walrustodo store "${todoTitle}" --network testnet`;
     // console.log(`Running: ${storeCommand}`); // Removed console statement
-    
+
     let blobId: string | null = null;
     let suiObjectId: string | null = null;
-    
+
     try {
       const storeOutput = execSync(storeCommand, { encoding: 'utf8' });
       // console.log('Store output:'); // Removed console statement
       // console.log(storeOutput); // Removed console statement
-      
+
       // Extract blob ID and Sui object ID from output
       const blobIdMatch = storeOutput.match(/blob.*?([a-zA-Z0-9]+)/i);
       const suiIdMatch = storeOutput.match(/object.*?([a-zA-Z0-9]+)/i);
-      
+
       if (blobIdMatch) {
         blobId = blobIdMatch[1];
         // console.log(`Walrus Blob ID: ${blobId}`); // Removed console statement
       }
-      
+
       if (suiIdMatch) {
         suiObjectId = suiIdMatch[1];
         // console.log(`Sui Object ID: ${suiObjectId}`); // Removed console statement
       }
-      
+
       expect(storeOutput).toContain('successfully stored');
       expect(blobId).toBeTruthy();
       expect(suiObjectId).toBeTruthy();
@@ -107,11 +108,11 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       const walrusUrl = `https://testnet.viewblock.io/sui/blob/${blobId}`;
       // console.log(`View on Walrus scanner: ${walrusUrl}`); // Removed console statement
       // console.log('User would open this URL in browser to verify storage'); // Removed console statement
-      
+
       // Simulate checking if the blob exists
       const checkWalrusCommand = `walrustodo fetch ${blobId} --network testnet`;
       // console.log(`Running: ${checkWalrusCommand}`); // Removed console statement
-      
+
       try {
         const fetchOutput = execSync(checkWalrusCommand, { encoding: 'utf8' });
         // console.log('Blob verification successful'); // Removed console statement
@@ -127,11 +128,11 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       const suiUrl = `https://testnet.explorer.sui.io/object/${suiObjectId}`;
       // console.log(`View on Sui scanner: ${suiUrl}`); // Removed console statement
       // console.log('User would open this URL in browser to verify NFT creation'); // Removed console statement
-      
+
       // Simulate checking if the object exists
       const checkSuiCommand = `walrustodo check ${suiObjectId} --network testnet`;
       // console.log(`Running: ${checkSuiCommand}`); // Removed console statement
-      
+
       try {
         const checkOutput = execSync(checkSuiCommand, { encoding: 'utf8' });
         // console.log('Sui object verification successful'); // Removed console statement
@@ -160,11 +161,11 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
   // Additional test to show how a user would retrieve the todo later
   it('should retrieve and verify the stored todo from blockchain', async () => {
     // console.log('\n=== Retrieving Stored TODO from Blockchain ==='); // Removed console statement
-    
+
     // User wants to retrieve their stored todos
     const retrieveCommand = 'walrustodo retrieve --network testnet';
     // console.log(`Running: ${retrieveCommand}`); // Removed console statement
-    
+
     try {
       const retrieveOutput = execSync(retrieveCommand, { encoding: 'utf8' });
       // console.log('Retrieved TODOs from blockchain:'); // Removed console statement

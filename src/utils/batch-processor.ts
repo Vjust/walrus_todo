@@ -8,7 +8,11 @@ export interface BatchOptions {
   retryAttempts?: number;
   retryDelayMs?: number;
   progressCallback?: (progress: BatchProgress) => void;
-  errorHandler?: (error: Error, item: unknown, index: number) => void | Promise<void>;
+  errorHandler?: (
+    error: Error,
+    item: unknown,
+    index: number
+  ) => void | Promise<void>;
   pauseBetweenBatchesMs?: number;
 }
 
@@ -39,7 +43,7 @@ export class BatchProcessor {
     this.options = {
       ...options,
       retryAttempts: options.retryAttempts ?? RETRY_CONFIG.ATTEMPTS,
-      retryDelayMs: options.retryDelayMs ?? RETRY_CONFIG.DELAY_MS
+      retryDelayMs: options.retryDelayMs ?? RETRY_CONFIG.DELAY_MS,
     };
   }
 
@@ -54,10 +58,10 @@ export class BatchProcessor {
     const totalItems = items.length;
     const batchSize = this.options.batchSize;
     const totalBatches = Math.ceil(totalItems / batchSize);
-    
+
     const successful: R[] = [];
     const failed: Array<{ item: T; error: Error; index: number }> = [];
-    
+
     let processedCount = 0;
     this.abortController = new AbortController();
 
@@ -73,7 +77,7 @@ export class BatchProcessor {
 
         this.logger.info(`Processing batch ${batchIndex + 1}/${totalBatches}`, {
           batchSize: batchItems.length,
-          range: `${batchStart}-${batchEnd - 1}`
+          range: `${batchStart}-${batchEnd - 1}`,
         });
 
         // Process batch with concurrency control
@@ -86,14 +90,14 @@ export class BatchProcessor {
         // Collect results
         for (const result of batchResults) {
           processedCount++;
-          
+
           if (result.success && result.value !== undefined) {
             successful.push(result.value);
           } else if (!result.success && result.error) {
             failed.push({
               item: result.item,
               error: result.error,
-              index: result.index
+              index: result.index,
             });
           }
 
@@ -113,7 +117,7 @@ export class BatchProcessor {
               currentBatch: batchIndex + 1,
               totalBatches,
               elapsedMs,
-              estimatedTimeRemainingMs
+              estimatedTimeRemainingMs,
             };
 
             this.options.progressCallback(progress);
@@ -121,7 +125,10 @@ export class BatchProcessor {
         }
 
         // Pause between batches if configured
-        if (this.options.pauseBetweenBatchesMs && batchIndex < totalBatches - 1) {
+        if (
+          this.options.pauseBetweenBatchesMs &&
+          batchIndex < totalBatches - 1
+        ) {
           await sleep(this.options.pauseBetweenBatchesMs);
         }
       }
@@ -140,20 +147,20 @@ export class BatchProcessor {
       currentBatch: totalBatches,
       totalBatches,
       elapsedMs: duration,
-      estimatedTimeRemainingMs: 0
+      estimatedTimeRemainingMs: 0,
     };
 
     this.logger.info('Batch processing completed', {
       successful: successful.length,
       failed: failed.length,
-      duration: `${duration}ms`
+      duration: `${duration}ms`,
     });
 
     return {
       successful,
       failed,
       progress: finalProgress,
-      duration
+      duration,
     };
   }
 
@@ -179,11 +186,14 @@ export class BatchProcessor {
       }
 
       // Process item
-      const promise = this.processItemWithRetry(item, globalIndex, processor)
-        .then((result) => {
-          results[i] = result;
-          activePromises.delete(i);
-        });
+      const promise = this.processItemWithRetry(
+        item,
+        globalIndex,
+        processor
+      ).then(result => {
+        results[i] = result;
+        activePromises.delete(i);
+      });
 
       activePromises.set(i, promise);
     }
@@ -213,14 +223,17 @@ export class BatchProcessor {
           index,
           success: true,
           value,
-          error: null
+          error: null,
         };
       } catch (error) {
         lastError = error as Error;
-        
-        this.logger.warn(`Processing failed for item ${index}, attempt ${attempt + 1}`, {
-          error: error instanceof Error ? error.message : String(error)
-        });
+
+        this.logger.warn(
+          `Processing failed for item ${index}, attempt ${attempt + 1}`,
+          {
+            error: error instanceof Error ? error.message : String(error),
+          }
+        );
 
         // Call error handler if provided
         if (this.options.errorHandler) {
@@ -241,7 +254,7 @@ export class BatchProcessor {
       index,
       success: false,
       value: null,
-      error: lastError || new Error('Unknown error during processing')
+      error: lastError || new Error('Unknown error during processing'),
     };
   }
 
@@ -266,14 +279,18 @@ export class BatchProcessor {
     const defaultOptions: BatchOptions = {
       batchSize: 10,
       concurrencyLimit: 5,
-      ...options
+      ...options,
     };
 
     const batchProcessor = new BatchProcessor(defaultOptions);
-    const result = await batchProcessor.process(items, (item, _index) => processor(item));
-    
+    const result = await batchProcessor.process(items, (item, _index) =>
+      processor(item)
+    );
+
     if (result.failed.length > 0) {
-      throw new Error(`Batch processing failed for ${result.failed.length} items`);
+      throw new Error(
+        `Batch processing failed for ${result.failed.length} items`
+      );
     }
 
     return result.successful;
@@ -290,12 +307,12 @@ export class BatchProcessor {
     const defaultOptions: BatchOptions = {
       batchSize: 10,
       concurrencyLimit: 5,
-      ...options
+      ...options,
     };
 
     const batchProcessor = new BatchProcessor(defaultOptions);
     const result = await batchProcessor.process(items, mapper);
-    
+
     return result.successful;
   }
 
@@ -310,7 +327,7 @@ export class BatchProcessor {
     const defaultOptions: BatchOptions = {
       batchSize: 10,
       concurrencyLimit: 5,
-      ...options
+      ...options,
     };
 
     const batchProcessor = new BatchProcessor(defaultOptions);
@@ -318,7 +335,7 @@ export class BatchProcessor {
       const passed = await predicate(item, index);
       return { item, passed };
     });
-    
+
     return result.successful
       .filter(({ passed }) => passed)
       .map(({ item }) => item);

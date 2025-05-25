@@ -11,19 +11,19 @@ import { BaseError, BaseErrorOptions } from './BaseError';
 export interface TransactionErrorOptions extends BaseErrorOptions {
   /** Transaction hash if available */
   transactionHash?: string;
-  
+
   /** Gas limit issue */
   gasLimit?: number;
-  
+
   /** Gas price issue */
   gasPrice?: number;
-  
+
   /** Block number where the transaction failed */
   blockNumber?: number;
-  
+
   /** Contract address if this was a contract interaction */
   contractAddress?: string;
-  
+
   /** Method or function that was called */
   methodName?: string;
 }
@@ -34,22 +34,22 @@ export interface TransactionErrorOptions extends BaseErrorOptions {
 export class TransactionError extends BaseError {
   /** Transaction hash if available */
   public readonly transactionHash?: string;
-  
+
   /** Gas limit issue */
   public readonly gasLimit?: number;
-  
+
   /** Gas price issue */
   public readonly gasPrice?: number;
-  
+
   /** Block number where the transaction failed */
   public readonly blockNumber?: number;
-  
+
   /** Contract address if this was a contract interaction */
   public readonly contractAddress?: string;
-  
+
   /** Method or function that was called */
   public readonly methodName?: string;
-  
+
   /**
    * Create a new TransactionError
    * @param message Error message
@@ -66,7 +66,7 @@ export class TransactionError extends BaseError {
       code = 'TRANSACTION_ERROR',
       ...restOptions
     } = options;
-    
+
     // Build context with transaction details
     const context = {
       ...(options.context || {}),
@@ -75,19 +75,19 @@ export class TransactionError extends BaseError {
       ...(gasPrice ? { gasPrice } : {}),
       ...(blockNumber ? { blockNumber } : {}),
       ...(contractAddress ? { contractAddress } : {}),
-      ...(methodName ? { methodName } : {})
+      ...(methodName ? { methodName } : {}),
     };
-    
+
     // Call BaseError constructor
     super({
       message,
       code,
       context,
-      recoverable: false,  // Transaction failures are generally not recoverable
-      shouldRetry: false,  // Retrying the same transaction usually won't help
-      ...restOptions
+      recoverable: false, // Transaction failures are generally not recoverable
+      shouldRetry: false, // Retrying the same transaction usually won't help
+      ...restOptions,
     });
-    
+
     // Store properties
     this.transactionHash = transactionHash;
     this.gasLimit = gasLimit;
@@ -96,7 +96,7 @@ export class TransactionError extends BaseError {
     this.contractAddress = contractAddress;
     this.methodName = methodName;
   }
-  
+
   /**
    * Create a TransactionError for gas limit exceeded
    * @param gasLimit Gas limit that was exceeded
@@ -112,11 +112,11 @@ export class TransactionError extends BaseError {
       {
         ...options,
         gasLimit,
-        code: 'TRANSACTION_GAS_LIMIT_EXCEEDED'
+        code: 'TRANSACTION_GAS_LIMIT_EXCEEDED',
       }
     );
   }
-  
+
   /**
    * Create a TransactionError for insufficient funds
    * @param options Additional options
@@ -125,15 +125,12 @@ export class TransactionError extends BaseError {
   static insufficientFunds(
     options: Omit<TransactionErrorOptions, 'message'> = {}
   ): TransactionError {
-    return new TransactionError(
-      'Transaction failed: insufficient funds',
-      {
-        ...options,
-        code: 'TRANSACTION_INSUFFICIENT_FUNDS'
-      }
-    );
+    return new TransactionError('Transaction failed: insufficient funds', {
+      ...options,
+      code: 'TRANSACTION_INSUFFICIENT_FUNDS',
+    });
   }
-  
+
   /**
    * Create a TransactionError for reverted transaction
    * @param reason Revert reason if available
@@ -148,52 +145,57 @@ export class TransactionError extends BaseError {
       reason ? `Transaction reverted: ${reason}` : 'Transaction reverted',
       {
         ...options,
-        code: 'TRANSACTION_REVERTED'
+        code: 'TRANSACTION_REVERTED',
       }
     );
   }
-  
+
   /**
    * Override sanitizeContext to handle transaction-specific sensitive data
    * @param context Context object to sanitize
    * @returns Sanitized context or undefined
    */
-  protected override sanitizeContext(context?: Record<string, unknown>): Record<string, unknown> | undefined {
+  protected override sanitizeContext(
+    context?: Record<string, unknown>
+  ): Record<string, unknown> | undefined {
     if (!context) return undefined;
-    
+
     // First apply base sanitization
     const sanitized = super.sanitizeContext(context) || {};
-    
+
     // Additional transaction-specific sanitization
     const txSpecificKeys = [
-      'transactionHash', 
-      'contractAddress', 
-      'fromAddress', 
+      'transactionHash',
+      'contractAddress',
+      'fromAddress',
       'toAddress',
       'senderAddress',
       'receiverAddress',
-      'walletAddress'
+      'walletAddress',
     ];
-    
+
     for (const key of txSpecificKeys) {
       if (key in sanitized && typeof sanitized[key] === 'string') {
         sanitized[key] = this.redactIdentifier(sanitized[key] as string);
       }
     }
-    
+
     // Check for any string that looks like an address or transaction hash
     for (const [key, value] of Object.entries(sanitized)) {
       if (typeof value === 'string') {
         // Look for Sui, Ethereum, or blockchain address patterns
         const addressRegex = /^(0x[a-fA-F0-9]{40,64})$/;
         const txHashRegex = /^(0x[a-fA-F0-9]{64,66})$/;
-        
-        if (addressRegex.test(value as string) || txHashRegex.test(value as string)) {
+
+        if (
+          addressRegex.test(value as string) ||
+          txHashRegex.test(value as string)
+        ) {
           sanitized[key] = this.redactIdentifier(value as string);
         }
       }
     }
-    
+
     return sanitized;
   }
 }

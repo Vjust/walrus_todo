@@ -13,17 +13,17 @@ import { displayFriendlyError, ErrorContext } from './error-messages';
 const validationExample = () => {
   const error = new ValidationError('Invalid date format', {
     field: 'due',
-    value: '31-12-2024'
+    value: '31-12-2024',
   });
-  
+
   const context: ErrorContext = {
     command: 'add',
     field: 'due',
-    value: '31-12-2024'
+    value: '31-12-2024',
   };
-  
+
   logger.info(displayFriendlyError(error, context));
-  
+
   /* Output:
   
   ⚠️ Invalid Input
@@ -41,18 +41,18 @@ const validationExample = () => {
 const networkExample = () => {
   const error = new NetworkError('Connection timeout', {
     operation: 'store',
-    recoverable: true
+    recoverable: true,
   });
-  
+
   const context: ErrorContext = {
     command: 'store',
     operation: 'upload',
     attempt: 2,
-    maxAttempts: 3
+    maxAttempts: 3,
   };
-  
+
   logger.info(displayFriendlyError(error, context));
-  
+
   /* Output:
   
   🌐 Network Connection Issue
@@ -72,13 +72,13 @@ const networkExample = () => {
 // Example 3: Command typo with suggestions
 const typoExample = () => {
   const error = new Error("Command 'lst' not found");
-  
+
   const context: ErrorContext = {
-    command: 'lst'
+    command: 'lst',
   };
-  
+
   logger.info(displayFriendlyError(error, context));
-  
+
   /* Output:
   
   ❌ Unexpected Error
@@ -98,17 +98,17 @@ const typoExample = () => {
 const storageExample = () => {
   const error = new StorageError('Insufficient WAL tokens', {
     operation: 'store',
-    blobId: 'abc123'
+    blobId: 'abc123',
   });
-  
+
   const context: ErrorContext = {
     command: 'store',
     operation: 'store',
-    blobId: 'abc123'
+    blobId: 'abc123',
   };
-  
+
   logger.info(displayFriendlyError(error, context));
-  
+
   /* Output:
   
   💾 Storage Operation Failed

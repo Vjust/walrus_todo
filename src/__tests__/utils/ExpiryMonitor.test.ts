@@ -21,7 +21,7 @@ describe('ExpiryMonitor', () => {
   let mockSigner: jest.Mocked<Signer>;
   let mockExecSync: jest.SpyInstance;
   let mockLogger: jest.Mocked<Logger>;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -38,9 +38,9 @@ describe('ExpiryMonitor', () => {
     renewalPeriod: 30,
     storage: {
       minAllocation: BigInt(1000),
-      checkThreshold: 20
+      checkThreshold: 20,
     },
-    signer: mockSigner
+    signer: mockSigner,
   };
 
   beforeEach(() => {
@@ -56,7 +56,7 @@ describe('ExpiryMonitor', () => {
       vaults: new Map(),
       recordsFile: '/mock/base/dir/vault-records.json',
       initializeVaultSystem: jest.fn(),
-      saveVaultRecords: jest.fn()
+      saveVaultRecords: jest.fn(),
     } as unknown as jest.Mocked<VaultManager>;
 
     mockLogger = {
@@ -69,9 +69,15 @@ describe('ExpiryMonitor', () => {
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
     mockWalrusClient = {
-      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getConfig: jest.fn().mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000,
+      }),
       getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest.fn().mockResolvedValue({ used: '500', total: '2000' }),
+      getStorageUsage: jest
+        .fn()
+        .mockResolvedValue({ used: '500', total: '2000' }),
       getBlobObject: jest.fn().mockResolvedValue({
         id: { id: 'mock-blob-id' },
         blob_id: 'mock-blob-id',
@@ -83,9 +89,9 @@ describe('ExpiryMonitor', () => {
           storage_size: '1000',
           used_size: '100',
           end_epoch: 100,
-          start_epoch: 1
+          start_epoch: 1,
         },
-        deletable: false
+        deletable: false,
       }),
       verifyPoA: jest.fn().mockResolvedValue(true),
       executeCreateStorageTransaction: jest.fn().mockResolvedValue({
@@ -94,46 +100,60 @@ describe('ExpiryMonitor', () => {
           id: { id: 'storage1' },
           start_epoch: 40,
           end_epoch: 52,
-          storage_size: '1000000'
-        }
+          storage_size: '1000000',
+        },
       }),
       // Required WalrusClientExt methods
       getBlobSize: jest.fn().mockResolvedValue(1024),
-      getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2']),
+      getStorageProviders: jest
+        .fn()
+        .mockResolvedValue(['provider1', 'provider2']),
       reset: jest.fn(),
       // Other required methods
       getBlobInfo: jest.fn().mockResolvedValue({
         blob_id: 'mock-blob-id',
         registered_epoch: 1,
         cert_epoch: 1,
-        size: '1024'
+        size: '1024',
       }),
       readBlob: jest.fn().mockResolvedValue(new Uint8Array(1024)),
       writeBlob: jest.fn().mockResolvedValue({
         blobId: 'mock-blob-id',
-        blobObject: { blob_id: 'mock-blob-id' }
+        blobObject: { blob_id: 'mock-blob-id' },
       }),
       getBlobMetadata: jest.fn().mockResolvedValue({}),
       storageCost: jest.fn().mockResolvedValue({
         storageCost: '100',
         writeCost: '50',
-        totalCost: '150'
+        totalCost: '150',
       }),
-      executeCertifyBlobTransaction: jest.fn().mockResolvedValue({ digest: 'tx1' }),
-      executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({ digest: 'tx1' }),
-      deleteBlob: jest.fn().mockReturnValue(() => Promise.resolve({ digest: 'tx1' })),
-      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({ blob: {}, digest: 'tx1' }),
-      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({ confirmed: true }),
+      executeCertifyBlobTransaction: jest
+        .fn()
+        .mockResolvedValue({ digest: 'tx1' }),
+      executeWriteBlobAttributesTransaction: jest
+        .fn()
+        .mockResolvedValue({ digest: 'tx1' }),
+      deleteBlob: jest
+        .fn()
+        .mockReturnValue(() => Promise.resolve({ digest: 'tx1' })),
+      executeRegisterBlobTransaction: jest
+        .fn()
+        .mockResolvedValue({ blob: {}, digest: 'tx1' }),
+      getStorageConfirmationFromNode: jest
+        .fn()
+        .mockResolvedValue({ confirmed: true }),
       createStorageBlock: jest.fn().mockResolvedValue({}),
-      createStorage: jest.fn().mockReturnValue(() => Promise.resolve({
-        digest: 'tx1',
-        storage: {
-          id: { id: 'storage1' },
-          start_epoch: 40,
-          end_epoch: 52,
-          storage_size: '1000000'
-        }
-      }))
+      createStorage: jest.fn().mockReturnValue(() =>
+        Promise.resolve({
+          digest: 'tx1',
+          storage: {
+            id: { id: 'storage1' },
+            start_epoch: 40,
+            end_epoch: 52,
+            storage_size: '1000000',
+          },
+        })
+      ),
     } as unknown as jest.Mocked<WalrusClientExt>;
 
     mockSigner = {
@@ -147,26 +167,32 @@ describe('ExpiryMonitor', () => {
         verifyWithIntent: () => Promise.resolve(true),
         flag: () => 0x00,
         scheme: () => 'ED25519',
-        bytes: () => new Uint8Array([1, 2, 3])
+        bytes: () => new Uint8Array([1, 2, 3]),
       }),
       getKeyScheme: jest.fn().mockReturnValue('ED25519'),
       connect: jest.fn().mockReturnValue({
         client: {},
         signData: jest.fn(),
         toSuiAddress: jest.fn(),
-        getPublicKey: jest.fn()
+        getPublicKey: jest.fn(),
       }),
       sign: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
-      signMessage: jest.fn().mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
-      signTransaction: jest.fn().mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
+      signMessage: jest
+        .fn()
+        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
+      signTransaction: jest
+        .fn()
+        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
       signAndExecuteTransaction: jest.fn().mockResolvedValue({
         digest: 'mock-digest',
-        effects: { 
+        effects: {
           status: { status: 'success' },
-          created: [{ reference: { objectId: 'mock-object-id' } }]
-        }
+          created: [{ reference: { objectId: 'mock-object-id' } }],
+        },
       }),
-      signWithIntent: jest.fn().mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' })
+      signWithIntent: jest
+        .fn()
+        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
     } as unknown as jest.Mocked<Signer>;
 
     mockWarningHandler = jest.fn().mockResolvedValue(undefined);
@@ -179,7 +205,7 @@ describe('ExpiryMonitor', () => {
       mockRenewalHandler,
       {
         ...testConfig,
-        signer: mockSigner
+        signer: mockSigner,
       }
     );
   });
@@ -195,26 +221,28 @@ describe('ExpiryMonitor', () => {
       mimeType: 'image/jpeg',
       checksum: 'sha256:def456',
       uploadedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
+      expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
     };
 
     it('should check storage before renewal', async () => {
       mockWalrusClient.getStorageUsage.mockResolvedValue({
-        used: '500',  // Using 25%
-        total: '2000'
+        used: '500', // Using 25%
+        total: '2000',
       });
       mockVaultManager.getBlobRecord.mockReturnValue(testBlob);
 
       await monitor.renewBlobById(testBlob.blobId, testBlob.vaultId);
 
-      expect(mockWalrusClient.executeCreateStorageTransaction).toHaveBeenCalled();
+      expect(
+        mockWalrusClient.executeCreateStorageTransaction
+      ).toHaveBeenCalled();
       expect(mockWalrusClient.getStorageUsage).toHaveBeenCalled();
     });
 
     it('should fail renewal on insufficient storage', async () => {
       mockWalrusClient.getStorageUsage.mockResolvedValue({
-        used: '1900',  // Using 95%
-        total: '2000'
+        used: '1900', // Using 95%
+        total: '2000',
       });
       mockVaultManager.getBlobRecord.mockReturnValue(testBlob);
       mockWalrusClient.verifyPoA.mockResolvedValue(true);
@@ -230,24 +258,25 @@ describe('ExpiryMonitor', () => {
           'storage.storage_size': '1000',
           'storage.used_size': '100',
           'storage.end_epoch': '100',
-          'storage.start_epoch': '1'
+          'storage.start_epoch': '1',
         },
-        deletable: false
+        deletable: false,
       });
 
-      await expect(monitor.renewBlobById(testBlob.blobId, testBlob.vaultId))
-        .rejects
-        .toThrow('Storage capacity exceeded');
+      await expect(
+        monitor.renewBlobById(testBlob.blobId, testBlob.vaultId)
+      ).rejects.toThrow('Storage capacity exceeded');
 
-      expect(mockWalrusClient.executeCreateStorageTransaction)
-        .not.toHaveBeenCalled();
+      expect(
+        mockWalrusClient.executeCreateStorageTransaction
+      ).not.toHaveBeenCalled();
     });
 
     it('should warn on low storage during batch renewal', async () => {
       // Setup storage at 85% usage
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '1700',
-        total: '2000'
+        total: '2000',
       });
 
       // Mock a blob that needs renewal
@@ -259,7 +288,7 @@ describe('ExpiryMonitor', () => {
         mimeType: 'image/jpeg',
         checksum: 'sha256:abc123',
         uploadedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days until expiry
+        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days until expiry
       };
       mockVaultManager.getExpiringBlobs.mockReturnValue([expiringBlob]);
 
@@ -277,16 +306,18 @@ describe('ExpiryMonitor', () => {
       expect(mockRenewalHandler).not.toHaveBeenCalled();
 
       // Renewal should still be attempted
-      expect(mockWalrusClient.executeCreateStorageTransaction).toHaveBeenCalled();
+      expect(
+        mockWalrusClient.executeCreateStorageTransaction
+      ).toHaveBeenCalled();
     });
 
     it('should skip renewal for insufficient storage', async () => {
       const blob1 = { ...testBlob, blobId: 'blob1' };
       const blob2 = { ...testBlob, blobId: 'blob2' };
-      
+
       mockWalrusClient.getStorageUsage.mockResolvedValue({
-        used: '1900',  // 95% used
-        total: '2000'
+        used: '1900', // 95% used
+        total: '2000',
       });
       mockVaultManager.getExpiringBlobs.mockReturnValue([blob1, blob2]);
 
@@ -301,13 +332,17 @@ describe('ExpiryMonitor', () => {
         expect.objectContaining({ usedPercentage: 95 })
       );
 
-      expect(mockWalrusClient.executeCreateStorageTransaction).not.toHaveBeenCalled();
+      expect(
+        mockWalrusClient.executeCreateStorageTransaction
+      ).not.toHaveBeenCalled();
     });
 
     it('should handle storage check errors gracefully', async () => {
       // Mock storage check to fail
-      mockWalrusClient.getStorageUsage.mockRejectedValue(new Error('Storage check failed'));
-      
+      mockWalrusClient.getStorageUsage.mockRejectedValue(
+        new Error('Storage check failed')
+      );
+
       // Mock blob data
       const blob = {
         blobId: 'test-blob',
@@ -317,7 +352,7 @@ describe('ExpiryMonitor', () => {
         mimeType: 'image/jpeg',
         checksum: 'sha256:abc123',
         uploadedAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+        expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
       };
       mockVaultManager.getBlobRecord.mockReturnValue(blob);
 
@@ -335,15 +370,15 @@ describe('ExpiryMonitor', () => {
           'storage.storage_size': '1000',
           'storage.used_size': '100',
           'storage.end_epoch': '100',
-          'storage.start_epoch': '1'
+          'storage.start_epoch': '1',
         },
-        deletable: false
+        deletable: false,
       });
 
       // Attempt renewal
-      await expect(monitor.renewBlobById(blob.blobId, blob.vaultId))
-        .rejects
-        .toThrow(StorageError);
+      await expect(
+        monitor.renewBlobById(blob.blobId, blob.vaultId)
+      ).rejects.toThrow(StorageError);
 
       // Error should be logged
       expect(mockLogger.error).toHaveBeenCalledWith(
@@ -353,7 +388,9 @@ describe('ExpiryMonitor', () => {
       );
 
       // No storage transaction should be attempted
-      expect(mockWalrusClient.executeCreateStorageTransaction).not.toHaveBeenCalled();
+      expect(
+        mockWalrusClient.executeCreateStorageTransaction
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -368,8 +405,10 @@ describe('ExpiryMonitor', () => {
           mimeType: 'image/jpeg',
           checksum: 'sha256:abc123',
           uploadedAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days until expiry
-        }
+          expiresAt: new Date(
+            Date.now() + 2 * 24 * 60 * 60 * 1000
+          ).toISOString(), // 2 days until expiry
+        },
       ];
       mockVaultManager.getExpiringBlobs.mockReturnValue(expiringBlobs);
 
@@ -389,8 +428,10 @@ describe('ExpiryMonitor', () => {
           mimeType: 'image/jpeg',
           checksum: 'sha256:abc123',
           uploadedAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString() // 1 day until expiry
-        }
+          expiresAt: new Date(
+            Date.now() + 1 * 24 * 60 * 60 * 1000
+          ).toISOString(), // 1 day until expiry
+        },
       ];
       mockVaultManager.getExpiringBlobs.mockReturnValue(expiringBlobs);
 

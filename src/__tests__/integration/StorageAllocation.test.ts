@@ -24,40 +24,44 @@ describe('Storage Allocation Integration', () => {
 
   beforeEach(() => {
     mockSigner = {
-      signData: jest.fn().mockReturnValue(new Uint8Array([1,2,3,4])),
+      signData: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3, 4])),
       toSuiAddress: jest.fn().mockReturnValue('mockAddress'),
       getPublicKey: jest.fn().mockReturnValue({
-        toBytes: () => new Uint8Array([1,2,3,4]),
+        toBytes: () => new Uint8Array([1, 2, 3, 4]),
         toBase64: () => 'base64',
         toSuiAddress: () => 'mockAddress',
         verify: async () => true,
         verifyWithIntent: async () => true,
         equals: () => true,
         flag: () => 0,
-        scheme: 'ED25519'
+        scheme: 'ED25519',
       }),
       signTransactionBlock: jest.fn().mockResolvedValue({
-        signature: new Uint8Array([1,2,3,4]),
-        bytes: new Uint8Array([1,2,3,4])
+        signature: new Uint8Array([1, 2, 3, 4]),
+        bytes: new Uint8Array([1, 2, 3, 4]),
       }),
       signPersonalMessage: jest.fn().mockResolvedValue({
-        signature: new Uint8Array([1,2,3,4]),
-        bytes: new Uint8Array([1,2,3,4])
+        signature: new Uint8Array([1, 2, 3, 4]),
+        bytes: new Uint8Array([1, 2, 3, 4]),
       }),
       getKeyScheme: jest.fn().mockReturnValue('ED25519'),
       connect: jest.fn().mockResolvedValue(undefined),
       signWithIntent: jest.fn().mockResolvedValue({
-        signature: new Uint8Array([1,2,3,4]),
-        bytes: new Uint8Array([1,2,3,4])
-      })
+        signature: new Uint8Array([1, 2, 3, 4]),
+        bytes: new Uint8Array([1, 2, 3, 4]),
+      }),
     } as unknown as jest.Mocked<Signer>;
 
     mockWalrusClient = {
-      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getConfig: jest.fn().mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 1000000,
+      }),
       getWalBalance: jest.fn().mockResolvedValue('2000'),
       getStorageUsage: jest.fn().mockResolvedValue({
         used: '500',
-        total: '2000'
+        total: '2000',
       }),
       executeCreateStorageTransaction: jest.fn().mockResolvedValue({
         digest: 'test',
@@ -65,31 +69,37 @@ describe('Storage Allocation Integration', () => {
           id: { id: 'test' },
           start_epoch: 0,
           end_epoch: 52,
-          storage_size: '1000'
-        }
+          storage_size: '1000',
+        },
       }),
-      getBlobObject: jest.fn().mockResolvedValue({ content: 'test', metadata: {} }),
+      getBlobObject: jest
+        .fn()
+        .mockResolvedValue({ content: 'test', metadata: {} }),
       verifyPoA: jest.fn().mockResolvedValue(true),
-      writeBlob: jest.fn().mockResolvedValue({ blobId: 'test-blob', blobObject: {} }),
+      writeBlob: jest
+        .fn()
+        .mockResolvedValue({ blobId: 'test-blob', blobObject: {} }),
       readBlob: jest.fn().mockResolvedValue(new Uint8Array()),
       getBlobMetadata: jest.fn().mockResolvedValue({
         size: 1024,
         type: 'text/plain',
-        created: new Date().toISOString()
+        created: new Date().toISOString(),
       }),
       storageCost: jest.fn().mockResolvedValue({
         storageCost: '1000',
         writeCost: '500',
-        totalCost: '1500'
+        totalCost: '1500',
       }),
       getBlobInfo: jest.fn().mockResolvedValue({
         id: 'blob1',
         size: 1024,
         type: 'text/plain',
         created: new Date().toISOString(),
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }),
-      getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2']),
+      getStorageProviders: jest
+        .fn()
+        .mockResolvedValue(['provider1', 'provider2']),
       getSuiBalance: jest.fn().mockResolvedValue('1000'),
       getBlobSize: jest.fn().mockResolvedValue(1024),
       reset: jest.fn(),
@@ -99,22 +109,22 @@ describe('Storage Allocation Integration', () => {
           id: { id: 'test' },
           start_epoch: 0,
           end_epoch: 52,
-          storage_size: '1000'
-        }
-      })
+          storage_size: '1000',
+        },
+      }),
     } as unknown as jest.MockedObject<WalrusClientExt>;
 
     mockVaultManager = {
       getExpiringBlobs: jest.fn().mockReturnValue([]),
       getBlobRecord: jest.fn(),
-      updateBlobExpiry: jest.fn()
+      updateBlobExpiry: jest.fn(),
     } as unknown as jest.Mocked<VaultManager>;
 
     mockLogger = {
       debug: jest.fn(),
       info: jest.fn(),
       warn: jest.fn(),
-      error: jest.fn()
+      error: jest.fn(),
     } as unknown as jest.Mocked<Logger>;
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
@@ -122,18 +132,19 @@ describe('Storage Allocation Integration', () => {
     // Create a mock adapter that implements the required getUnderlyingClient method
     const mockWalrusClientAdapter = {
       ...mockWalrusClient,
-      getUnderlyingClient: jest.fn().mockReturnValue(mockWalrusClient)
+      getUnderlyingClient: jest.fn().mockReturnValue(mockWalrusClient),
     };
 
-    const _storageManager = new StorageManager(
+    // Initialize storage manager and monitor for potential test use
+    new StorageManager(
       {} as SuiClient, // Mock SuiClient
-      mockWalrusClientAdapter as any,
+      mockWalrusClientAdapter as WalrusClientExt,
       'mock-address' // Mock address
     );
 
-    const _monitor = new ExpiryMonitor(
+    new ExpiryMonitor(
       mockVaultManager,
-      mockWalrusClientAdapter as any,
+      mockWalrusClientAdapter as WalrusClientExt,
       jest.fn().mockResolvedValue(undefined),
       jest.fn().mockResolvedValue(undefined),
       {
@@ -144,12 +155,11 @@ describe('Storage Allocation Integration', () => {
         signer: mockSigner,
         network: {
           environment: 'testnet' as const,
-          autoSwitch: false
-        }
+          autoSwitch: false,
+        },
       }
     );
   });
 
   // ... rest of the test file unchanged ...
-
 });

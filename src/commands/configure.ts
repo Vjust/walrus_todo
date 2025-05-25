@@ -25,7 +25,8 @@ import path from 'path';
  * @param {string} [section] - Configure a specific section (network, storage, ai, security). (Optional flag: --section)
  */
 export default class ConfigureCommand extends BaseCommand {
-  static description = 'Configure CLI settings, environment variables, and wallet preferences';
+  static description =
+    'Configure CLI settings, environment variables, and wallet preferences';
 
   static examples = [
     '<%= config.bin %> configure                                              # Interactive setup',
@@ -36,7 +37,7 @@ export default class ConfigureCommand extends BaseCommand {
     '<%= config.bin %> configure --section ai                                 # Configure AI settings',
     '<%= config.bin %> configure --walrus-url https://api.walrus.com         # Set Walrus endpoint',
     '<%= config.bin %> configure --default-list work                          # Set default list',
-    '<%= config.bin %> configure --section ai'
+    '<%= config.bin %> configure --section ai',
   ];
 
   static flags = {
@@ -44,35 +45,35 @@ export default class ConfigureCommand extends BaseCommand {
     reset: Flags.boolean({
       char: 'r',
       description: 'Reset all settings to defaults',
-      default: false
+      default: false,
     }),
     network: Flags.string({
       description: 'Network to use (mainnet, testnet, devnet, local)',
-      options: ['mainnet', 'testnet', 'devnet', 'local']
+      options: ['mainnet', 'testnet', 'devnet', 'local'],
     }),
     walletAddress: Flags.string({
-      description: 'Wallet address for configuration'
+      description: 'Wallet address for configuration',
     }),
     'env-only': Flags.boolean({
       description: 'Only configure environment variables',
-      default: false
+      default: false,
     }),
     view: Flags.boolean({
       char: 'v',
       description: 'View current configuration',
-      default: false
+      default: false,
     }),
     section: Flags.string({
       char: 's',
       description: 'Configure a specific section',
-      options: ['network', 'storage', 'ai', 'security']
-    })
+      options: ['network', 'storage', 'ai', 'security'],
+    }),
   };
 
   // Set up validation schema
   static validationSchema = {
     network: [CommonValidationRules.network],
-    walletAddress: [CommonValidationRules.walletAddress]
+    walletAddress: [CommonValidationRules.walletAddress],
   };
 
   async run(): Promise<void> {
@@ -100,7 +101,6 @@ export default class ConfigureCommand extends BaseCommand {
       } else {
         await this.configureAll(flags);
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -118,7 +118,7 @@ export default class ConfigureCommand extends BaseCommand {
   private async resetConfiguration(): Promise<void> {
     const confirmReset = await confirm({
       message: 'Are you sure you want to reset all configuration to defaults?',
-      default: false
+      default: false,
     });
 
     if (!confirmReset) {
@@ -130,7 +130,7 @@ export default class ConfigureCommand extends BaseCommand {
     await configService.saveConfig({
       network: 'testnet',
       walletAddress: '',
-      encryptedStorage: false
+      encryptedStorage: false,
     });
 
     // Reset environment configuration
@@ -138,14 +138,14 @@ export default class ConfigureCommand extends BaseCommand {
     const defaultConfig = Object.fromEntries(
       Object.entries(config).map(([key, _]) => [key, undefined])
     );
-    
+
     // Get home directory
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
-    
+
     // Save empty configuration
     await saveConfigToFile(defaultConfig, configPath);
-    
+
     this.log(chalk.green('✓ Configuration reset to defaults'));
   }
 
@@ -156,33 +156,39 @@ export default class ConfigureCommand extends BaseCommand {
     // Get current configuration
     const walletConfig = configService.getConfig();
     const envVars = envConfig.getAllVariables();
-    
+
     // Display wallet configuration
     this.log(chalk.bold('\nWallet Configuration:'));
     this.log(chalk.dim('Network:'), walletConfig.network);
-    this.log(chalk.dim('Wallet Address:'), walletConfig.walletAddress || 'Not set');
-    this.log(chalk.dim('Encryption:'), walletConfig.encryptedStorage ? 'Enabled' : 'Disabled');
-    
+    this.log(
+      chalk.dim('Wallet Address:'),
+      walletConfig.walletAddress || 'Not set'
+    );
+    this.log(
+      chalk.dim('Encryption:'),
+      walletConfig.encryptedStorage ? 'Enabled' : 'Disabled'
+    );
+
     // Display environment variables by category
     this.log(chalk.bold('\nEnvironment Configuration:'));
-    
+
     // Common configuration
     this.log(chalk.yellow('\nCommon Configuration:'));
     this.logEnvVar('NODE_ENV', envVars);
     this.logEnvVar('LOG_LEVEL', envVars);
-    
+
     // Network configuration
     this.log(chalk.yellow('\nNetwork Configuration:'));
     this.logEnvVar('NETWORK', envVars);
     this.logEnvVar('FULLNODE_URL', envVars);
     this.logEnvVar('TODO_PACKAGE_ID', envVars);
-    
+
     // Storage configuration
     this.log(chalk.yellow('\nStorage Configuration:'));
     this.logEnvVar('STORAGE_PATH', envVars);
     this.logEnvVar('TEMPORARY_STORAGE', envVars);
     this.logEnvVar('ENCRYPTED_STORAGE', envVars);
-    
+
     // AI configuration
     this.log(chalk.yellow('\nAI Configuration:'));
     this.logEnvVar('AI_DEFAULT_PROVIDER', envVars);
@@ -198,7 +204,7 @@ export default class ConfigureCommand extends BaseCommand {
     this.logEnvVar('OPENAI_API_KEY', envVars, true);
     this.logEnvVar('ANTHROPIC_API_KEY', envVars, true);
     this.logEnvVar('OLLAMA_API_KEY', envVars, true);
-    
+
     // Security configuration
     this.log(chalk.yellow('\nSecurity Configuration:'));
     this.logEnvVar('REQUIRE_SIGNATURE_VERIFICATION', envVars);
@@ -207,32 +213,32 @@ export default class ConfigureCommand extends BaseCommand {
     this.logEnvVar('CREDENTIAL_AUTO_ROTATION_DAYS', envVars);
     this.logEnvVar('CREDENTIAL_ROTATION_WARNING_DAYS', envVars);
     this.logEnvVar('CREDENTIAL_MAX_FAILED_AUTH', envVars);
-    
+
     // Advanced configuration
     this.log(chalk.yellow('\nRetry Configuration:'));
     this.logEnvVar('RETRY_ATTEMPTS', envVars);
     this.logEnvVar('RETRY_DELAY_MS', envVars);
     this.logEnvVar('TIMEOUT_MS', envVars);
-    
+
     // Show extension variables if any
-    const extensionVars = Object.entries(envVars).filter(([key]) => 
-      !Object.keys(envConfig.getConfig()).includes(key)
+    const extensionVars = Object.entries(envVars).filter(
+      ([key]) => !Object.keys(envConfig.getConfig()).includes(key)
     );
-    
+
     if (extensionVars.length > 0) {
       this.log(chalk.yellow('\nExtension Configuration:'));
       for (const [key, value] of extensionVars) {
         this.logEnvVar(key, envVars, value.sensitive);
       }
     }
-    
+
     // Show environment inconsistencies and warnings
     const inconsistencies = envConfig.checkEnvironmentConsistency();
     if (inconsistencies.length > 0) {
       this.log(chalk.red('\nEnvironment Inconsistencies:'));
       inconsistencies.forEach(issue => this.log(chalk.dim('-'), issue));
     }
-    
+
     const warnings = envConfig.getWarnings();
     if (warnings.length > 0) {
       this.log(chalk.yellow('\nEnvironment Warnings:'));
@@ -243,26 +249,30 @@ export default class ConfigureCommand extends BaseCommand {
   /**
    * Display an environment variable with proper formatting
    */
-  private logEnvVar(key: string, envVars: Record<string, any>, isSensitive = false): void {
+  private logEnvVar(
+    key: string,
+    envVars: Record<string, any>,
+    isSensitive = false
+  ): void {
     const varInfo = envVars[key];
     if (!varInfo) return;
-    
+
     const source = varInfo.source;
-    const sourceColor = source === 'environment' ? chalk.green : 
-                      source === 'config' ? chalk.blue : chalk.gray;
-    
+    const sourceColor =
+      source === 'environment'
+        ? chalk.green
+        : source === 'config'
+          ? chalk.blue
+          : chalk.gray;
+
     let value = varInfo.value;
     if (isSensitive && value) {
       value = value.toString().length > 0 ? '*****' : 'Not set';
     } else if (value === undefined || value === null || value === '') {
       value = 'Not set';
     }
-    
-    this.log(
-      chalk.dim(key + ':'), 
-      value, 
-      sourceColor(`[${source}]`)
-    );
+
+    this.log(chalk.dim(key + ':'), value, sourceColor(`[${source}]`));
   }
 
   /**
@@ -292,62 +302,64 @@ export default class ConfigureCommand extends BaseCommand {
    */
   private async configureNetwork(): Promise<void> {
     this.log(chalk.bold('Configuring Network Settings'));
-    
+
     const network = await select({
       message: 'Select network:',
       choices: [
         { name: 'mainnet', value: 'mainnet' },
         { name: 'testnet', value: 'testnet' },
         { name: 'devnet', value: 'devnet' },
-        { name: 'local', value: 'local' }
+        { name: 'local', value: 'local' },
       ],
-      default: getEnv('NETWORK')
+      default: getEnv('NETWORK'),
     });
-    
+
     const fullnodeUrl = await input({
       message: 'Enter custom fullnode URL (leave empty for default):',
-      default: getEnv('FULLNODE_URL') || ''
+      default: getEnv('FULLNODE_URL') || '',
     });
-    
+
     const todoPackageId = await input({
       message: 'Enter Todo package ID (leave empty for default):',
-      default: getEnv('TODO_PACKAGE_ID') || ''
+      default: getEnv('TODO_PACKAGE_ID') || '',
     });
-    
+
     const walletAddress = await input({
       message: 'Enter your wallet address (e.g., 0x123...):',
       default: configService.getConfig().walletAddress || '',
     });
-    
+
     // Sanitize and validate inputs
     const sanitizedNetwork = CommandSanitizer.sanitizeString(network);
     const sanitizedFullnodeUrl = CommandSanitizer.sanitizeUrl(fullnodeUrl);
-    const sanitizedPackageId = CommandSanitizer.sanitizeWalletAddress(todoPackageId);
-    const sanitizedWalletAddress = CommandSanitizer.sanitizeWalletAddress(walletAddress);
-    
+    const sanitizedPackageId =
+      CommandSanitizer.sanitizeWalletAddress(todoPackageId);
+    const sanitizedWalletAddress =
+      CommandSanitizer.sanitizeWalletAddress(walletAddress);
+
     // Save to config
     const configObj: Record<string, any> = {
       NETWORK: sanitizedNetwork,
-      WALLET_ADDRESS: sanitizedWalletAddress
+      WALLET_ADDRESS: sanitizedWalletAddress,
     };
-    
+
     if (sanitizedFullnodeUrl) configObj.FULLNODE_URL = sanitizedFullnodeUrl;
     if (sanitizedPackageId) configObj.TODO_PACKAGE_ID = sanitizedPackageId;
-    
+
     // Save to config file
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
     await saveConfigToFile(configObj, configPath);
-    
+
     // Update wallet config separately
     await configService.saveConfig({
       network: sanitizedNetwork,
-      walletAddress: sanitizedWalletAddress
+      walletAddress: sanitizedWalletAddress,
     });
-    
+
     // Reload environment configuration
     envConfig.loadFromObject(configObj);
-    
+
     this.log(chalk.green('\n✓ Network configuration saved successfully'));
   }
 
@@ -356,46 +368,46 @@ export default class ConfigureCommand extends BaseCommand {
    */
   private async configureStorage(): Promise<void> {
     this.log(chalk.bold('Configuring Storage Settings'));
-    
+
     const storagePath = await input({
       message: 'Enter path for todo storage:',
-      default: getEnv('STORAGE_PATH')
+      default: getEnv('STORAGE_PATH'),
     });
-    
+
     const tempStorage = await input({
       message: 'Enter path for temporary storage:',
-      default: getEnv('TEMPORARY_STORAGE')
+      default: getEnv('TEMPORARY_STORAGE'),
     });
-    
+
     const encryptedStorage = await confirm({
       message: 'Enable encryption for local storage?',
-      default: getEnv('ENCRYPTED_STORAGE')
+      default: getEnv('ENCRYPTED_STORAGE'),
     });
-    
+
     // Sanitize inputs
     const sanitizedStoragePath = CommandSanitizer.sanitizePath(storagePath);
     const sanitizedTempStorage = CommandSanitizer.sanitizePath(tempStorage);
-    
+
     // Save to config
     const configObj: Record<string, any> = {
       STORAGE_PATH: sanitizedStoragePath,
       TEMPORARY_STORAGE: sanitizedTempStorage,
-      ENCRYPTED_STORAGE: encryptedStorage
+      ENCRYPTED_STORAGE: encryptedStorage,
     };
-    
+
     // Save to config file
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
     await saveConfigToFile(configObj, configPath);
-    
+
     // Update wallet config to include encryption setting
     await configService.saveConfig({
-      encryptedStorage: encryptedStorage
+      encryptedStorage: encryptedStorage,
     });
-    
+
     // Reload environment configuration
     envConfig.loadFromObject(configObj);
-    
+
     this.log(chalk.green('\n✓ Storage configuration saved successfully'));
   }
 
@@ -404,24 +416,24 @@ export default class ConfigureCommand extends BaseCommand {
    */
   private async configureAI(): Promise<void> {
     this.log(chalk.bold('Configuring AI Settings'));
-    
+
     const provider = await select({
       message: 'Select default AI provider:',
       choices: [
         { name: 'XAI (Grok)', value: 'xai' },
         { name: 'OpenAI', value: 'openai' },
         { name: 'Anthropic', value: 'anthropic' },
-        { name: 'Ollama (Local)', value: 'ollama' }
+        { name: 'Ollama (Local)', value: 'ollama' },
       ],
-      default: getEnv('AI_DEFAULT_PROVIDER')
+      default: getEnv('AI_DEFAULT_PROVIDER'),
     });
-    
+
     // Ask for API keys based on selected provider
     let xaiApiKey = getEnv('XAI_API_KEY') || '';
     let openaiApiKey = getEnv('OPENAI_API_KEY') || '';
     let anthropicApiKey = getEnv('ANTHROPIC_API_KEY') || '';
     let ollamaApiKey = getEnv('OLLAMA_API_KEY') || '';
-    
+
     // Always configure the primary provider
     if (provider === 'xai') {
       xaiApiKey = await input({
@@ -444,13 +456,13 @@ export default class ConfigureCommand extends BaseCommand {
         default: getEnv('OLLAMA_API_KEY') ? '*****' : '',
       });
     }
-    
+
     // Ask if user wants to configure other providers
     const configureOthers = await confirm({
       message: 'Configure API keys for other providers?',
-      default: false
+      default: false,
     });
-    
+
     if (configureOthers) {
       // Configure other providers if not already done
       if (provider !== 'xai') {
@@ -459,21 +471,21 @@ export default class ConfigureCommand extends BaseCommand {
           default: getEnv('XAI_API_KEY') ? '*****' : '',
         });
       }
-      
+
       if (provider !== 'openai') {
         openaiApiKey = await input({
           message: 'Enter OpenAI API key:',
           default: getEnv('OPENAI_API_KEY') ? '*****' : '',
         });
       }
-      
+
       if (provider !== 'anthropic') {
         anthropicApiKey = await input({
           message: 'Enter Anthropic API key:',
           default: getEnv('ANTHROPIC_API_KEY') ? '*****' : '',
         });
       }
-      
+
       if (provider !== 'ollama') {
         ollamaApiKey = await input({
           message: 'Enter Ollama API key (if required):',
@@ -481,61 +493,67 @@ export default class ConfigureCommand extends BaseCommand {
         });
       }
     }
-    
+
     // Configure models
     let model = '';
     const models = {
       xai: ['grok-beta', 'grok-1'],
       openai: ['gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o'],
       anthropic: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-      ollama: ['llama2', 'llama3', 'mistral']
+      ollama: ['llama2', 'llama3', 'mistral'],
     };
-    
+
     model = await select({
       message: `Select default ${provider} model:`,
-      choices: models[provider as keyof typeof models].map(m => ({ name: m, value: m })),
-      default: getEnv('AI_DEFAULT_MODEL')
+      choices: models[provider as keyof typeof models].map(m => ({
+        name: m,
+        value: m,
+      })),
+      default: getEnv('AI_DEFAULT_MODEL'),
     });
-    
+
     // Configure additional settings
     const temperature = await input({
       message: 'Enter temperature (0.0-1.0):',
       default: getEnv('AI_TEMPERATURE').toString(),
-      validate: (input) => {
+      validate: input => {
         const num = parseFloat(input);
-        return (num >= 0 && num <= 1) || 'Temperature must be between 0.0 and 1.0';
-      }
+        return (
+          (num >= 0 && num <= 1) || 'Temperature must be between 0.0 and 1.0'
+        );
+      },
     });
-    
+
     const maxTokens = await input({
       message: 'Enter maximum tokens:',
       default: getEnv('AI_MAX_TOKENS').toString(),
-      validate: (input) => {
+      validate: input => {
         const num = parseInt(input);
-        return (num > 0) || 'Maximum tokens must be greater than 0';
-      }
+        return num > 0 || 'Maximum tokens must be greater than 0';
+      },
     });
-    
+
     const cacheEnabled = await confirm({
       message: 'Enable AI response caching?',
-      default: getEnv('AI_CACHE_ENABLED')
+      default: getEnv('AI_CACHE_ENABLED'),
     });
-    
+
     const cacheTtl = await input({
       message: 'Enter cache TTL in milliseconds:',
       default: getEnv('AI_CACHE_TTL_MS').toString(),
-      validate: (input) => {
+      validate: input => {
         const num = parseInt(input);
-        return (num > 0) || 'Cache TTL must be greater than 0';
-      }
+        return num > 0 || 'Cache TTL must be greater than 0';
+      },
     });
-    
+
     // Process API keys (don't replace with ***** placeholders)
     if (xaiApiKey === '*****') xaiApiKey = getEnv('XAI_API_KEY') || '';
     if (openaiApiKey === '*****') openaiApiKey = getEnv('OPENAI_API_KEY') || '';
-    if (anthropicApiKey === '*****') anthropicApiKey = getEnv('ANTHROPIC_API_KEY') || '';
+    if (anthropicApiKey === '*****')
+      anthropicApiKey = getEnv('ANTHROPIC_API_KEY') || '';
     if (ollamaApiKey === '*****') ollamaApiKey = getEnv('OLLAMA_API_KEY') || '';
-    
+
     // Save to config
     const configObj: Record<string, any> = {
       AI_DEFAULT_PROVIDER: provider,
@@ -543,48 +561,59 @@ export default class ConfigureCommand extends BaseCommand {
       AI_TEMPERATURE: parseFloat(temperature),
       AI_MAX_TOKENS: parseInt(maxTokens),
       AI_CACHE_ENABLED: cacheEnabled,
-      AI_CACHE_TTL_MS: parseInt(cacheTtl)
+      AI_CACHE_TTL_MS: parseInt(cacheTtl),
     };
-    
+
     // Only save API keys if they were actually entered
     if (xaiApiKey) configObj.XAI_API_KEY = xaiApiKey;
     if (openaiApiKey) configObj.OPENAI_API_KEY = openaiApiKey;
     if (anthropicApiKey) configObj.ANTHROPIC_API_KEY = anthropicApiKey;
     if (ollamaApiKey) configObj.OLLAMA_API_KEY = ollamaApiKey;
-    
+
     // Save to config file, but API keys should go to environment variables if possible
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
-    
+
     // Separate sensitive values from standard config
     const sensitiveConfig: Record<string, any> = {};
     const standardConfig: Record<string, any> = {};
-    
+
     for (const [key, value] of Object.entries(configObj)) {
-      if (['XAI_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'OLLAMA_API_KEY'].includes(key)) {
+      if (
+        [
+          'XAI_API_KEY',
+          'OPENAI_API_KEY',
+          'ANTHROPIC_API_KEY',
+          'OLLAMA_API_KEY',
+        ].includes(key)
+      ) {
         sensitiveConfig[key] = value;
       } else {
         standardConfig[key] = value;
       }
     }
-    
+
     // Save standard config to file
     await saveConfigToFile(standardConfig, configPath);
-    
+
     // Suggest exporting sensitive values to environment
     if (Object.keys(sensitiveConfig).length > 0) {
-      this.log(chalk.yellow('\nFor better security, consider adding these to your environment variables:'));
+      this.log(
+        chalk.yellow(
+          '\nFor better security, consider adding these to your environment variables:'
+        )
+      );
       for (const [key, value] of Object.entries(sensitiveConfig)) {
         this.log(`export ${key}="${value}"`);
-        
+
         // Set for the current session
         process.env[key] = value.toString();
       }
     }
-    
+
     // Reload environment configuration
     envConfig.loadFromObject(standardConfig);
-    
+
     this.log(chalk.green('\n✓ AI configuration saved successfully'));
   }
 
@@ -593,53 +622,53 @@ export default class ConfigureCommand extends BaseCommand {
    */
   private async configureSecurity(): Promise<void> {
     this.log(chalk.bold('Configuring Security Settings'));
-    
+
     const signatureVerification = await confirm({
       message: 'Require signature verification for operations?',
-      default: getEnv('REQUIRE_SIGNATURE_VERIFICATION')
+      default: getEnv('REQUIRE_SIGNATURE_VERIFICATION'),
     });
-    
+
     const blockchainVerification = await confirm({
       message: 'Enable blockchain verification for AI operations?',
-      default: getEnv('ENABLE_BLOCKCHAIN_VERIFICATION')
+      default: getEnv('ENABLE_BLOCKCHAIN_VERIFICATION'),
     });
-    
+
     const keyIterations = await input({
       message: 'Number of iterations for PBKDF2 key derivation:',
       default: getEnv('CREDENTIAL_KEY_ITERATIONS').toString(),
-      validate: (input) => {
+      validate: input => {
         const num = parseInt(input);
-        return (num >= 10000) || 'Iterations must be at least 10000 for security';
-      }
+        return num >= 10000 || 'Iterations must be at least 10000 for security';
+      },
     });
-    
+
     const autoRotationDays = await input({
       message: 'Days before credentials are auto-rotated:',
       default: getEnv('CREDENTIAL_AUTO_ROTATION_DAYS').toString(),
-      validate: (input) => {
+      validate: input => {
         const num = parseInt(input);
-        return (num > 0) || 'Must be a positive number';
-      }
+        return num > 0 || 'Must be a positive number';
+      },
     });
-    
+
     const rotationWarningDays = await input({
       message: 'Days before showing credential rotation warnings:',
       default: getEnv('CREDENTIAL_ROTATION_WARNING_DAYS').toString(),
-      validate: (input) => {
+      validate: input => {
         const num = parseInt(input);
-        return (num > 0) || 'Must be a positive number';
-      }
+        return num > 0 || 'Must be a positive number';
+      },
     });
-    
+
     const maxFailedAuth = await input({
       message: 'Maximum failed authentication attempts before lockout:',
       default: getEnv('CREDENTIAL_MAX_FAILED_AUTH').toString(),
-      validate: (input) => {
+      validate: input => {
         const num = parseInt(input);
-        return (num > 0) || 'Must be a positive number';
-      }
+        return num > 0 || 'Must be a positive number';
+      },
     });
-    
+
     // Save to config
     const configObj: Record<string, any> = {
       REQUIRE_SIGNATURE_VERIFICATION: signatureVerification,
@@ -647,17 +676,17 @@ export default class ConfigureCommand extends BaseCommand {
       CREDENTIAL_KEY_ITERATIONS: parseInt(keyIterations),
       CREDENTIAL_AUTO_ROTATION_DAYS: parseInt(autoRotationDays),
       CREDENTIAL_ROTATION_WARNING_DAYS: parseInt(rotationWarningDays),
-      CREDENTIAL_MAX_FAILED_AUTH: parseInt(maxFailedAuth)
+      CREDENTIAL_MAX_FAILED_AUTH: parseInt(maxFailedAuth),
     };
-    
+
     // Save to config file
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
     await saveConfigToFile(configObj, configPath);
-    
+
     // Reload environment configuration
     envConfig.loadFromObject(configObj);
-    
+
     this.log(chalk.green('\n✓ Security configuration saved successfully'));
   }
 
@@ -666,7 +695,7 @@ export default class ConfigureCommand extends BaseCommand {
    */
   private async configureEnvironment(): Promise<void> {
     this.log(chalk.bold('Configuring Environment Variables'));
-    
+
     // Ask which sections to configure
     const sections = await checkbox({
       message: 'Select sections to configure:',
@@ -674,26 +703,26 @@ export default class ConfigureCommand extends BaseCommand {
         { name: 'Network Settings', value: 'network' },
         { name: 'Storage Settings', value: 'storage' },
         { name: 'AI Settings', value: 'ai' },
-        { name: 'Security Settings', value: 'security' }
-      ]
+        { name: 'Security Settings', value: 'security' },
+      ],
     });
-    
+
     if (sections.includes('network')) {
       await this.configureNetwork();
     }
-    
+
     if (sections.includes('storage')) {
       await this.configureStorage();
     }
-    
+
     if (sections.includes('ai')) {
       await this.configureAI();
     }
-    
+
     if (sections.includes('security')) {
       await this.configureSecurity();
     }
-    
+
     this.log(chalk.green('\n✓ Environment configuration completed'));
   }
 
@@ -712,9 +741,9 @@ export default class ConfigureCommand extends BaseCommand {
           { name: 'mainnet', value: 'mainnet' },
           { name: 'testnet', value: 'testnet' },
           { name: 'devnet', value: 'devnet' },
-          { name: 'local', value: 'local' }
+          { name: 'local', value: 'local' },
         ],
-        default: getEnv('NETWORK')
+        default: getEnv('NETWORK'),
       });
 
       // Sanitize user input
@@ -740,13 +769,14 @@ export default class ConfigureCommand extends BaseCommand {
 
     const encryptedStorage = await confirm({
       message: 'Enable encryption for sensitive data?',
-      default: getEnv('ENCRYPTED_STORAGE')
+      default: getEnv('ENCRYPTED_STORAGE'),
     });
 
     // Ask if user wants to configure more settings
     const configureMore = await confirm({
-      message: 'Configure additional environment settings (AI, security, etc.)?',
-      default: false
+      message:
+        'Configure additional environment settings (AI, security, etc.)?',
+      default: false,
     });
 
     if (configureMore) {
@@ -757,7 +787,7 @@ export default class ConfigureCommand extends BaseCommand {
     await configService.saveConfig({
       network,
       walletAddress,
-      encryptedStorage
+      encryptedStorage,
     });
 
     // Update environment config
@@ -768,6 +798,9 @@ export default class ConfigureCommand extends BaseCommand {
     this.log(chalk.green('\n✓ Configuration saved successfully'));
     this.log(chalk.dim('Network:'), network);
     this.log(chalk.dim('Wallet Address:'), walletAddress);
-    this.log(chalk.dim('Encryption:'), encryptedStorage ? 'Enabled' : 'Disabled');
+    this.log(
+      chalk.dim('Encryption:'),
+      encryptedStorage ? 'Enabled' : 'Disabled'
+    );
   }
 }

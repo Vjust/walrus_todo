@@ -22,17 +22,17 @@ export class WalrusError extends Error {
       code = 'WALRUS_ERROR',
       publicMessage = 'An unexpected error occurred',
       shouldRetry = false,
-      cause
+      cause,
     } = options;
 
     super(message);
     if (cause) {
       Object.defineProperty(this, 'cause', {
         value: cause,
-        enumerable: false
+        enumerable: false,
       });
     }
-    
+
     this.name = this.constructor.name;
     this.code = code;
     this.publicMessage = publicMessage;
@@ -51,7 +51,7 @@ export class WalrusError extends Error {
       code: this.code,
       message: this.publicMessage,
       timestamp: this.timestamp,
-      shouldRetry: this.shouldRetry
+      shouldRetry: this.shouldRetry,
     };
   }
 
@@ -67,7 +67,8 @@ export class WalrusError extends Error {
       timestamp: this.timestamp,
       shouldRetry: this.shouldRetry,
       stack: this.stack,
-      cause: this.cause instanceof Error ? this.cause.message : String(this.cause)
+      cause:
+        this.cause instanceof Error ? this.cause.message : String(this.cause),
     };
   }
 }
@@ -76,10 +77,7 @@ export class WalrusError extends Error {
  * Network-related errors
  */
 export class NetworkError extends WalrusError {
-  constructor(
-    message: string,
-    options: Partial<NetworkErrorOptions> = {}
-  ) {
+  constructor(message: string, options: Partial<NetworkErrorOptions> = {}) {
     const {
       network = 'unknown',
       operation = 'unknown',
@@ -91,13 +89,13 @@ export class NetworkError extends WalrusError {
       code: `NETWORK_${operation.toUpperCase()}_ERROR`,
       publicMessage: 'A network operation failed',
       shouldRetry: recoverable,
-      ...rest
+      ...rest,
     });
 
     // Hide sensitive network details from stack trace
     Object.defineProperty(this, 'network', {
       value: network,
-      enumerable: false
+      enumerable: false,
     });
   }
 }
@@ -106,10 +104,7 @@ export class NetworkError extends WalrusError {
  * Blockchain-related errors
  */
 export class BlockchainError extends WalrusError {
-  constructor(
-    message: string,
-    options: Partial<BlockchainErrorOptions> = {}
-  ) {
+  constructor(message: string, options: Partial<BlockchainErrorOptions> = {}) {
     const {
       operation = 'unknown',
       transactionId,
@@ -121,14 +116,14 @@ export class BlockchainError extends WalrusError {
       code: `BLOCKCHAIN_${operation.toUpperCase()}_ERROR`,
       publicMessage: 'A blockchain operation failed',
       shouldRetry: recoverable,
-      ...rest
+      ...rest,
     });
 
     // Hide sensitive blockchain details from stack trace
     if (transactionId) {
       Object.defineProperty(this, 'transactionId', {
         value: transactionId,
-        enumerable: false
+        enumerable: false,
       });
     }
   }
@@ -138,10 +133,7 @@ export class BlockchainError extends WalrusError {
  * Storage-related errors
  */
 export class StorageError extends WalrusError {
-  constructor(
-    message: string,
-    options: Partial<StorageErrorOptions> = {}
-  ) {
+  constructor(message: string, options: Partial<StorageErrorOptions> = {}) {
     const {
       operation = 'unknown',
       blobId,
@@ -153,14 +145,14 @@ export class StorageError extends WalrusError {
       code: `STORAGE_${operation.toUpperCase()}_ERROR`,
       publicMessage: 'A storage operation failed',
       shouldRetry: recoverable,
-      ...rest
+      ...rest,
     });
 
     // Hide sensitive storage details from stack trace
     if (blobId) {
       Object.defineProperty(this, 'blobId', {
         value: blobId,
-        enumerable: false
+        enumerable: false,
       });
     }
   }
@@ -171,28 +163,20 @@ export class StorageError extends WalrusError {
  */
 export class ValidationError extends WalrusError {
   public readonly recoverable: boolean;
-  
-  constructor(
-    message: string,
-    options: Partial<ValidationErrorOptions> = {}
-  ) {
-    const {
-      field,
-      constraint,
-      recoverable = false,
-      ...rest
-    } = options;
+
+  constructor(message: string, options: Partial<ValidationErrorOptions> = {}) {
+    const { field, constraint, recoverable = false, ...rest } = options;
 
     // Ensure error message doesn't contain sensitive data
-    const publicMessage = field ? 
-      `Invalid value for ${field}` : 
-      'Validation failed';
+    const publicMessage = field
+      ? `Invalid value for ${field}`
+      : 'Validation failed';
 
     super(message, {
       code: 'VALIDATION_ERROR',
       publicMessage,
       shouldRetry: recoverable,
-      ...rest
+      ...rest,
     });
 
     this.recoverable = recoverable;
@@ -200,7 +184,7 @@ export class ValidationError extends WalrusError {
     // Hide validation details from stack trace
     Object.defineProperties(this, {
       field: { value: field, enumerable: false },
-      constraint: { value: constraint, enumerable: false }
+      constraint: { value: constraint, enumerable: false },
     });
   }
 }
@@ -209,27 +193,21 @@ export class ValidationError extends WalrusError {
  * Authorization-related errors
  */
 export class AuthorizationError extends WalrusError {
-  constructor(
-    message: string,
-    options: Partial<AuthErrorOptions> = {}
-  ) {
-    const {
-      resource,
-      ...rest
-    } = options;
+  constructor(message: string, options: Partial<AuthErrorOptions> = {}) {
+    const { resource, ...rest } = options;
 
     super(message, {
       code: 'AUTHORIZATION_ERROR',
       publicMessage: 'Not authorized to perform this operation',
       shouldRetry: false,
-      ...rest
+      ...rest,
     });
 
     // Hide sensitive auth details from stack trace
     if (resource) {
       Object.defineProperty(this, 'resource', {
         value: resource,
-        enumerable: false
+        enumerable: false,
       });
     }
   }
@@ -298,7 +276,7 @@ export enum WalrusErrorCode {
   WALRUS_RETRIEVE_FAILED = 'WALRUS_RETRIEVE_FAILED',
   WALRUS_PARSE_FAILED = 'WALRUS_PARSE_FAILED',
   WALRUS_INVALID_TODO_DATA = 'WALRUS_INVALID_TODO_DATA',
-  WALRUS_UPDATE_FAILED = 'WALRUS_UPDATE_FAILED'
+  WALRUS_UPDATE_FAILED = 'WALRUS_UPDATE_FAILED',
 }
 
 interface AuthErrorOptions {
@@ -314,10 +292,7 @@ export class TransactionError extends WalrusError {
   public readonly transactionId?: string;
   public readonly recoverable: boolean;
 
-  constructor(
-    message: string,
-    options: Partial<TransactionErrorOptions> = {}
-  ) {
+  constructor(message: string, options: Partial<TransactionErrorOptions> = {}) {
     const {
       operation = 'unknown',
       transactionId,
@@ -329,7 +304,7 @@ export class TransactionError extends WalrusError {
       code: `TRANSACTION_${operation.toUpperCase()}_ERROR`,
       publicMessage: 'A transaction operation failed',
       shouldRetry: recoverable,
-      ...rest
+      ...rest,
     });
 
     this.recoverable = recoverable;
@@ -354,10 +329,7 @@ export class CLIError extends WalrusError {
   public readonly command?: string;
   public readonly recoverable: boolean;
 
-  constructor(
-    message: string,
-    options: Partial<CLIErrorOptions> = {}
-  ) {
+  constructor(message: string, options: Partial<CLIErrorOptions> = {}) {
     const {
       command,
       operation = 'unknown',
@@ -369,7 +341,7 @@ export class CLIError extends WalrusError {
       code: `CLI_${operation.toUpperCase()}_ERROR`,
       publicMessage: 'A CLI operation failed',
       shouldRetry: recoverable,
-      ...rest
+      ...rest,
     });
 
     this.recoverable = recoverable;

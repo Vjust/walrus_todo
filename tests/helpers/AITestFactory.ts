@@ -7,8 +7,14 @@
 import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
 import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
-import { AIProvider, AIModelOptions } from '../../src/types/adapters/AIModelAdapter';
-import { AIVerifierAdapter, AIPrivacyLevel } from '../../src/types/adapters/AIVerifierAdapter';
+import {
+  AIProvider,
+  AIModelOptions,
+} from '../../src/types/adapters/AIModelAdapter';
+import {
+  AIVerifierAdapter,
+  AIPrivacyLevel,
+} from '../../src/types/adapters/AIVerifierAdapter';
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { expectedResults } from './ai-test-utils';
@@ -57,11 +63,13 @@ export class AITestFactory {
    *   withVerification: true
    * });
    */
-  public static createMockAIService(options: {
-    provider?: AIProvider;
-    modelName?: string;
-    withVerification?: boolean;
-  } = {}): AIService {
+  public static createMockAIService(
+    options: {
+      provider?: AIProvider;
+      modelName?: string;
+      withVerification?: boolean;
+    } = {}
+  ): AIService {
     const mockAdapter = createMockAIModelAdapter();
 
     // Configure the mock adapter with standard responses for template-based processing
@@ -69,37 +77,52 @@ export class AITestFactory {
       result: expectedResults.summarize,
       modelName: options.modelName || 'mock-model',
       provider: options.provider || AIProvider.XAI,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     // Configure the structured completion to return different responses based on prompt content
-    mockAdapter.completeStructured = jest.fn().mockImplementation(async (params) => {
-      const promptStr = typeof params.prompt === 'string'
-        ? params.prompt
-        : JSON.stringify(params.prompt);
+    mockAdapter.completeStructured = jest
+      .fn()
+      .mockImplementation(async params => {
+        const promptStr =
+          typeof params.prompt === 'string'
+            ? params.prompt
+            : JSON.stringify(params.prompt);
 
-      let result: any;
+        let result: any;
 
-      // Determine the operation type from prompt contents
-      if (promptStr.includes('categorize') || promptStr.toLowerCase().includes('categories')) {
-        result = expectedResults.categorize;
-      } else if (promptStr.includes('prioritize') || promptStr.toLowerCase().includes('priority')) {
-        result = expectedResults.prioritize;
-      } else if (promptStr.includes('suggest') || promptStr.toLowerCase().includes('suggestions')) {
-        result = expectedResults.suggest;
-      } else if (promptStr.includes('analyze') || promptStr.toLowerCase().includes('analysis')) {
-        result = expectedResults.analyze;
-      } else {
-        result = { 'default': 'mock structured result' };
-      }
+        // Determine the operation type from prompt contents
+        if (
+          promptStr.includes('categorize') ||
+          promptStr.toLowerCase().includes('categories')
+        ) {
+          result = expectedResults.categorize;
+        } else if (
+          promptStr.includes('prioritize') ||
+          promptStr.toLowerCase().includes('priority')
+        ) {
+          result = expectedResults.prioritize;
+        } else if (
+          promptStr.includes('suggest') ||
+          promptStr.toLowerCase().includes('suggestions')
+        ) {
+          result = expectedResults.suggest;
+        } else if (
+          promptStr.includes('analyze') ||
+          promptStr.toLowerCase().includes('analysis')
+        ) {
+          result = expectedResults.analyze;
+        } else {
+          result = { default: 'mock structured result' };
+        }
 
-      return {
-        result,
-        modelName: options.modelName || 'mock-model',
-        provider: options.provider || AIProvider.XAI,
-        timestamp: Date.now()
-      };
-    });
+        return {
+          result,
+          modelName: options.modelName || 'mock-model',
+          provider: options.provider || AIProvider.XAI,
+          timestamp: Date.now(),
+        };
+      });
 
     // Create the service with mock API key and configured provider/model
     const aiService = new AIService(
@@ -114,7 +137,9 @@ export class AITestFactory {
     // Optionally add verification service if requested
     if (options.withVerification) {
       const mockVerifierAdapter = createMockAIVerifierAdapter();
-      const verificationService = new AIVerificationService(mockVerifierAdapter);
+      const verificationService = new AIVerificationService(
+        mockVerifierAdapter
+      );
       (aiService as any).verificationService = verificationService;
     }
 
@@ -162,9 +187,15 @@ export class AITestFactory {
    */
   public static createMockBlockchainVerificationService(): BlockchainAIVerificationService {
     // These dependencies are expected to be mocked at the module level in tests
-    const blockchainVerifier = new (jest.requireMock('../../src/services/ai/BlockchainVerifier').BlockchainVerifier)();
-    const permissionManager = (jest.requireMock('../../src/services/ai/AIPermissionManager').getPermissionManager)();
-    const credentialManager = new (jest.requireMock('../../src/services/ai/SecureCredentialManager').SecureCredentialManager)();
+    const blockchainVerifier = new (jest.requireMock(
+      '../../src/services/ai/BlockchainVerifier'
+    ).BlockchainVerifier)();
+    const permissionManager = jest
+      .requireMock('../../src/services/ai/AIPermissionManager')
+      .getPermissionManager();
+    const credentialManager = new (jest.requireMock(
+      '../../src/services/ai/SecureCredentialManager'
+    ).SecureCredentialManager)();
 
     return new BlockchainAIVerificationService(
       blockchainVerifier,
@@ -197,17 +228,19 @@ export class AITestFactory {
    * const isValid = await verificationService.verifyOperation(record);
    * expect(isValid).toBe(false); // Will fail due to our configuration
    */
-  public static createCustomVerifierAdapter(options: {
-    verificationCreationSucceeds?: boolean;
-    verificationValidationSucceeds?: boolean;
-  } = {}): AIVerifierAdapter {
+  public static createCustomVerifierAdapter(
+    options: {
+      verificationCreationSucceeds?: boolean;
+      verificationValidationSucceeds?: boolean;
+    } = {}
+  ): AIVerifierAdapter {
     const mockAdapter = createMockAIVerifierAdapter();
 
     // Override behavior based on options to simulate failures if requested
     if (options.verificationCreationSucceeds === false) {
-      mockAdapter.createVerification = jest.fn().mockRejectedValue(
-        new Error('Failed to create verification')
-      );
+      mockAdapter.createVerification = jest
+        .fn()
+        .mockRejectedValue(new Error('Failed to create verification'));
     }
 
     if (options.verificationValidationSucceeds === false) {
@@ -238,22 +271,32 @@ export class AITestFactory {
    * const mockSuggestions = AITestFactory.generateMockResponses('suggest');
    * // Returns an array of suggested tasks
    */
-  public static generateMockResponses(operationType: string, todoCount: number = 3): any {
+  public static generateMockResponses(
+    operationType: string,
+    todoCount: number = 3
+  ): any {
     switch (operationType.toLowerCase()) {
       case 'summarize':
         return `This is a mock summary of ${todoCount} todos. The todos appear to be related to work and personal tasks.`;
 
       case 'categorize':
         return {
-          'work': Array.from({ length: Math.floor(todoCount / 2) }).map((_, i) => `todo-${i + 1}`),
-          'personal': Array.from({ length: Math.ceil(todoCount / 2) }).map((_, i) => `todo-${Math.floor(todoCount / 2) + i + 1}`)
+          work: Array.from({ length: Math.floor(todoCount / 2) }).map(
+            (_, i) => `todo-${i + 1}`
+          ),
+          personal: Array.from({ length: Math.ceil(todoCount / 2) }).map(
+            (_, i) => `todo-${Math.floor(todoCount / 2) + i + 1}`
+          ),
         };
 
       case 'prioritize':
-        return Array.from({ length: todoCount }).reduce((acc, _, i) => {
-          acc[`todo-${i + 1}`] = Math.floor(Math.random() * 10) + 1;
-          return acc;
-        }, {} as Record<string, number>);
+        return Array.from({ length: todoCount }).reduce(
+          (acc, _, i) => {
+            acc[`todo-${i + 1}`] = Math.floor(Math.random() * 10) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        );
 
       case 'suggest':
         return [
@@ -261,22 +304,22 @@ export class AITestFactory {
           'Schedule team meeting',
           'Review progress with stakeholders',
           'Update task dependencies',
-          'Prepare quarterly report'
+          'Prepare quarterly report',
         ].slice(0, todoCount);
 
       case 'analyze':
         return {
-          'themes': ['work', 'planning', 'communication'],
-          'bottlenecks': ['waiting for approvals', 'resource constraints'],
-          'timeEstimates': {
-            'total': `${todoCount * 2} days`,
-            'critical': `${Math.ceil(todoCount / 2)} days`
+          themes: ['work', 'planning', 'communication'],
+          bottlenecks: ['waiting for approvals', 'resource constraints'],
+          timeEstimates: {
+            total: `${todoCount * 2} days`,
+            critical: `${Math.ceil(todoCount / 2)} days`,
           },
-          'recommendations': [
+          recommendations: [
             'Focus on high priority items first',
             'Consider delegating routine tasks',
-            'Set up regular check-ins'
-          ]
+            'Set up regular check-ins',
+          ],
         };
 
       default:
@@ -305,7 +348,9 @@ export class AITestFactory {
    *   validateCategories(result, todos);
    * });
    */
-  public static createOperationValidator(operationType: string): (result: any, todos: Todo[]) => void {
+  public static createOperationValidator(
+    operationType: string
+  ): (result: any, todos: Todo[]) => void {
     return (result: any, todos: Todo[]) => {
       expect(result).toBeDefined();
 

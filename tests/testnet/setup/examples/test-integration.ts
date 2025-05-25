@@ -7,7 +7,11 @@ const logger = new Logger('test-integration');
  * Shows how to integrate Sui testnet setup with test suites
  */
 
-import { setupTestnet, restoreFromBackup, TestnetSetupResult } from '../sui-setup';
+import {
+  setupTestnet,
+  restoreFromBackup,
+  TestnetSetupResult,
+} from '../sui-setup';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -39,7 +43,7 @@ describe('WalTodo Sui Integration Tests', () => {
 
   beforeAll(async () => {
     logger.info('Setting up test environment...');
-    
+
     // Create test data directory
     testDataDir = path.join(process.cwd(), '.test-data', `run-${Date.now()}`);
     fs.mkdirSync(testDataDir, { recursive: true });
@@ -57,7 +61,9 @@ describe('WalTodo Sui Integration Tests', () => {
     });
 
     logger.info(`Test wallet created: ${testSetup.wallet.address}`);
-    logger.info(`Initial balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`);
+    logger.info(
+      `Initial balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`
+    );
   });
 
   test('should have a funded wallet', async () => {
@@ -65,7 +71,9 @@ describe('WalTodo Sui Integration Tests', () => {
     if (balance === 0n) {
       throw new Error('Wallet should be funded');
     }
-    logger.info(`    Balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`);
+    logger.info(
+      `    Balance: ${formatSuiBalance(testSetup.wallet.balance)} SUI`
+    );
   });
 
   test('should have correct network configuration', () => {
@@ -94,7 +102,7 @@ describe('WalTodo Sui Integration Tests', () => {
     if (!fs.existsSync(envPath)) {
       throw new Error('Environment file should be created');
     }
-    
+
     const envContent = fs.readFileSync(envPath, 'utf-8');
     if (!envContent.includes(testSetup.wallet.address)) {
       throw new Error('Environment file should contain wallet address');
@@ -104,7 +112,7 @@ describe('WalTodo Sui Integration Tests', () => {
 
   afterAll(async () => {
     logger.info('Cleaning up test environment...');
-    
+
     // Clean up test data directory
     if (fs.existsSync(testDataDir)) {
       fs.rmSync(testDataDir, { recursive: true, force: true });

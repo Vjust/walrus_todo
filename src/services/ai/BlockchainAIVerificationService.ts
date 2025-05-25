@@ -1,10 +1,19 @@
-import { AIVerificationService, VerifiedAIResult } from './AIVerificationService';
-import { AIActionType, AIPrivacyLevel } from '../../types/adapters/AIVerifierAdapter';
+import {
+  AIVerificationService,
+  VerifiedAIResult,
+} from './AIVerificationService';
+import {
+  AIActionType,
+  AIPrivacyLevel,
+} from '../../types/adapters/AIVerifierAdapter';
 import { Todo } from '../../types/todo';
 import { BlockchainVerifier } from './BlockchainVerifier';
 import { SecureCredentialManager } from './SecureCredentialManager';
 // AIPermissionLevel imported but not used
-import { AIPermissionManager, getPermissionManager } from './AIPermissionManager';
+import {
+  AIPermissionManager,
+  getPermissionManager,
+} from './AIPermissionManager';
 import { AIProofSystem, AIOperationProof } from './AIProofSystem';
 import { CLIError } from '../../types/errors/consolidated';
 import { Logger } from '../../utils/Logger';
@@ -23,7 +32,7 @@ export interface BlockchainVerifiedResult<T> extends VerifiedAIResult<T> {
 
 /**
  * BlockchainAIVerificationService - Enhanced AI verification service using the blockchain
- * 
+ *
  * This class extends the basic AIVerificationService with blockchain verification,
  * permission management, and proof generation.
  */
@@ -33,7 +42,6 @@ export class BlockchainAIVerificationService extends AIVerificationService {
   private proofSystem: AIProofSystem;
   private credentialManager: SecureCredentialManager;
   private defaultProvider: string;
-
 
   constructor(
     blockchainVerifier: BlockchainVerifier,
@@ -52,39 +60,50 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     // Initialize with an adapter to ensure it's properly bound
     // Get the verifier adapter from the BlockchainVerifier
     // BlockchainVerifier wraps an AIVerifierAdapter, so we access that adapter
-    const verifierAdapter = blockchainVerifier.getVerifierAdapter ? 
-      blockchainVerifier.getVerifierAdapter() : null;
-      
+    const verifierAdapter = blockchainVerifier.getVerifierAdapter
+      ? blockchainVerifier.getVerifierAdapter()
+      : null;
+
     if (!verifierAdapter) {
       throw new CLIError(
         'BlockchainVerifier must provide a valid AIVerifierAdapter',
         'AI_SERVICE_INITIALIZATION_ERROR'
       );
     }
-    
+
     // Defensive check for required methods on verifier
-    if (!blockchainVerifier.verifyOperation || typeof blockchainVerifier.verifyOperation !== 'function') {
+    if (
+      !blockchainVerifier.verifyOperation ||
+      typeof blockchainVerifier.verifyOperation !== 'function'
+    ) {
       throw new CLIError(
         'BlockchainVerifier must implement verifyOperation method',
         'AI_SERVICE_INITIALIZATION_ERROR'
       );
     }
 
-    if (!blockchainVerifier.getVerification || typeof blockchainVerifier.getVerification !== 'function') {
+    if (
+      !blockchainVerifier.getVerification ||
+      typeof blockchainVerifier.getVerification !== 'function'
+    ) {
       throw new CLIError(
         'BlockchainVerifier must implement getVerification method',
         'AI_SERVICE_INITIALIZATION_ERROR'
       );
     }
-    
+
     // Pass the adapter to the parent constructor
-    super(blockchainVerifier.getVerifierAdapter ? blockchainVerifier.getVerifierAdapter() : verifierAdapter);
-    
+    super(
+      blockchainVerifier.getVerifierAdapter
+        ? blockchainVerifier.getVerifierAdapter()
+        : verifierAdapter
+    );
+
     this.blockchainVerifier = blockchainVerifier;
     this.permissionManager = permissionManager || getPermissionManager(); // Fallback to default permission manager
     this.credentialManager = credentialManager;
     this.defaultProvider = defaultProvider;
-    
+
     // Initialize proof system
     this.proofSystem = new AIProofSystem(blockchainVerifier);
   }
@@ -121,7 +140,10 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     }
 
     // Check permission using the permission manager
-    const permissionGranted = await this.permissionManager.checkPermission(provider, operationName);
+    const permissionGranted = await this.permissionManager.checkPermission(
+      provider,
+      operationName
+    );
 
     if (!permissionGranted) {
       throw new CLIError(
@@ -143,20 +165,16 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     metadata: Record<string, string> = {}
   ): Promise<BlockchainVerifiedResult<T>> {
     // Check operation permission
-    await this.checkOperationPermission(
-      operationType,
-      provider,
-      todos.length
-    );
-    
+    await this.checkOperationPermission(operationType, provider, todos.length);
+
     // Add standard metadata
     const enhancedMetadata = {
       ...metadata,
       todoCount: todos.length.toString(),
       timestamp: Date.now().toString(),
-      privacyLevel
+      privacyLevel,
     };
-    
+
     // Create verification on blockchain
     const verificationResult = await this.blockchainVerifier.verifyOperation({
       actionType: operationType,
@@ -164,9 +182,9 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       response: JSON.stringify(result),
       provider,
       metadata: enhancedMetadata,
-      privacyLevel
+      privacyLevel,
     });
-    
+
     // Verification result is directly the record in this implementation
     if (!verificationResult) {
       throw new CLIError(
@@ -174,10 +192,10 @@ export class BlockchainAIVerificationService extends AIVerificationService {
         'BLOCKCHAIN_VERIFICATION_FAILED'
       );
     }
-    
+
     // Generate proof for the operation
     const proof = await this.proofSystem.generateProof(verificationResult.id);
-    
+
     // Return enhanced result
     return {
       result,
@@ -185,7 +203,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       proof,
       transactionId: verificationResult.id, // Use record ID as transaction ID
       provider,
-      verificationDate: new Date(verificationResult.timestamp)
+      verificationDate: new Date(verificationResult.timestamp),
     };
   }
 
@@ -205,7 +223,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        summaryLength: summary.length.toString()
+        summaryLength: summary.length.toString(),
       }
     );
   }
@@ -226,7 +244,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        categoryCount: Object.keys(categories).length.toString()
+        categoryCount: Object.keys(categories).length.toString(),
       }
     );
   }
@@ -265,7 +283,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        suggestionCount: suggestions.length.toString()
+        suggestionCount: suggestions.length.toString(),
       }
     );
   }
@@ -286,7 +304,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       provider,
       privacyLevel,
       {
-        analysisKeys: Object.keys(analysis).join(',')
+        analysisKeys: Object.keys(analysis).join(','),
       }
     );
   }
@@ -298,7 +316,8 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     try {
       // For path-based proofs, we need to import from a file
       // For string-based proofs, we can directly verify the string
-      const verificationResult = await this.proofSystem.verifyProof(exportedProof);
+      const verificationResult =
+        await this.proofSystem.verifyProof(exportedProof);
       return verificationResult.isValid;
     } catch (_error) {
       logger.error('Failed to verify proof:', error);
@@ -309,9 +328,12 @@ export class BlockchainAIVerificationService extends AIVerificationService {
   /**
    * Get a specific verification record
    */
-  public async getVerification(verificationId: string): Promise<BlockchainVerifiedResult<any>> {
+  public async getVerification(
+    verificationId: string
+  ): Promise<BlockchainVerifiedResult<any>> {
     // Get verification from blockchain
-    const verification = await this.blockchainVerifier.getVerification(verificationId);
+    const verification =
+      await this.blockchainVerifier.getVerification(verificationId);
 
     // The actual result content will depend on the privacy level
     // For non-public data, we'd need to fetch from Walrus storage
@@ -320,7 +342,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       result: {}, // Placeholder - would fetch actual content
       verification,
       provider: verification.provider,
-      verificationDate: new Date(verification.timestamp)
+      verificationDate: new Date(verification.timestamp),
     };
   }
 
@@ -329,18 +351,18 @@ export class BlockchainAIVerificationService extends AIVerificationService {
    */
   public async listVerifications(): Promise<BlockchainVerifiedResult<any>[]> {
     const verifications = await this.blockchainVerifier.listVerifications();
-    
+
     return verifications.map(verification => ({
       result: {}, // Placeholder - would fetch actual content
       verification,
       provider: verification.provider,
-      verificationDate: new Date(verification.timestamp)
+      verificationDate: new Date(verification.timestamp),
     }));
   }
 
   /**
    * Generate a proof for an operation type
-   * 
+   *
    * Creates a cryptographically verifiable proof for an AI operation
    */
   public async generateProof(
@@ -355,7 +377,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       request: string;
       response: string;
       timestamp: number;
-    }
+    };
   }> {
     // Create verification first
     const verification = await this.createBlockchainVerification(
@@ -366,7 +388,9 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     );
 
     // Generate proof from the verification
-    const proofString = await this.blockchainVerifier.generateProof(verification.verification.id);
+    const proofString = await this.blockchainVerifier.generateProof(
+      verification.verification.id
+    );
     const proofData = JSON.parse(Buffer.from(proofString, 'base64').toString());
 
     return {
@@ -376,14 +400,14 @@ export class BlockchainAIVerificationService extends AIVerificationService {
         actionType,
         request,
         response,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     };
   }
 
   /**
    * Verify an external proof
-   * 
+   *
    * Verifies a proof's authenticity and integrity
    */
   public async verifyExternalProof(
@@ -395,19 +419,20 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     }
   ): Promise<boolean> {
     // Simulate verifying signature
-    const isValidSignature = await this.blockchainVerifier['verifySignature']?.(signature);
-    
+    const isValidSignature =
+      await this.blockchainVerifier['verifySignature']?.(signature);
+
     if (!isValidSignature) {
       throw new Error('Invalid signature for proof verification');
     }
-    
+
     // In a real implementation, would verify the actual proof data against blockchain records
     return true;
   }
 
   /**
    * Verify a proof with blockchain
-   * 
+   *
    * Verifies the authenticity and integrity of a proof based on blockchain records
    */
   public async verifyProof(
@@ -417,18 +442,23 @@ export class BlockchainAIVerificationService extends AIVerificationService {
   ): Promise<boolean> {
     try {
       // Convert proof to expected format
-      const proofString = Buffer.from(JSON.stringify({
-        id: proofId,
-        signature: {
-          signature,
-          publicKey: this.blockchainVerifier.getSigner().getPublicKey().toBase64()
-        },
-        ...data
-      })).toString('base64');
-      
+      const proofString = Buffer.from(
+        JSON.stringify({
+          id: proofId,
+          signature: {
+            signature,
+            publicKey: this.blockchainVerifier
+              .getSigner()
+              .getPublicKey()
+              .toBase64(),
+          },
+          ...data,
+        })
+      ).toString('base64');
+
       // Verify proof integrity using blockchain data
       const result = await this.proofSystem.verifyProof(proofString);
-      
+
       return result.isValid;
     } catch (_error) {
       logger.error('Failed to verify proof:', error);

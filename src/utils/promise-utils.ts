@@ -18,17 +18,19 @@ export async function withTimeout<T>(
   operationName: string
 ): Promise<T> {
   let timeoutId: NodeJS.Timeout | undefined;
-  
+
   // Create a timeout promise that rejects after the specified time
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeoutId = setTimeout(() => {
-      reject(new TimeoutError(
-        `Operation '${operationName}' timed out after ${timeoutMs}ms`,
-        { operationName, timeoutMs }
-      ));
+      reject(
+        new TimeoutError(
+          `Operation '${operationName}' timed out after ${timeoutMs}ms`,
+          { operationName, timeoutMs }
+        )
+      );
     }, timeoutMs);
   });
-  
+
   try {
     // Race the original promise against the timeout
     const result = await Promise.race([promise, timeoutPromise]);
@@ -41,11 +43,11 @@ export async function withTimeout<T>(
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    
+
     if (error instanceof TimeoutError) {
       throw error;
     }
-    
+
     throw new OperationError(
       `Operation '${operationName}' failed: ${error instanceof Error ? error.message : String(error)}`,
       { operationName, cause: error }
@@ -67,28 +69,29 @@ export async function safeParallel<T>(
   if (promises.length === 0) {
     return [];
   }
-  
+
   const results = await Promise.allSettled(promises);
   const successResults: T[] = [];
   const errors: Error[] = [];
-  
+
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
       successResults.push(result.value);
     } else {
-      const error = result.reason instanceof Error
-        ? result.reason
-        : new Error(String(result.reason));
-      
+      const error =
+        result.reason instanceof Error
+          ? result.reason
+          : new Error(String(result.reason));
+
       errors.push(
-        new OperationError(
-          `Operation ${index} failed: ${error.message}`,
-          { operationName: `${operationName}[${index}]`, cause: error }
-        )
+        new OperationError(`Operation ${index} failed: ${error.message}`, {
+          operationName: `${operationName}[${index}]`,
+          cause: error,
+        })
       );
     }
   });
-  
+
   if (errors.length > 0) {
     // Create an AggregateError to contain all the individual errors
     throw new AggregateOperationError(
@@ -97,7 +100,7 @@ export async function safeParallel<T>(
       { operationName }
     );
   }
-  
+
   return successResults;
 }
 
@@ -118,35 +121,34 @@ export async function withRetry<T>(
   shouldRetry = (error: Error): boolean => true
 ): Promise<T> {
   let lastError: Error | null = null;
-  
+
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      const typedError = error instanceof Error 
-        ? error 
-        : new Error(String(error));
-      
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
+
       lastError = new OperationError(
         `Attempt ${attempt} failed: ${typedError.message}`,
         { operationName, cause: typedError }
       );
-      
+
       if (attempt > maxRetries || !shouldRetry(typedError)) {
         break;
       }
-      
+
       // Calculate delay with exponential backoff
       const delay = initialDelay * Math.pow(2, attempt - 1);
-      
+
       // Add jitter to prevent thundering herd
       const jitteredDelay = delay * (0.8 + Math.random() * 0.4);
-      
+
       // Wait before next retry
       await new Promise(resolve => setTimeout(resolve, jitteredDelay));
     }
   }
-  
+
   throw new RetryError(
     `All ${maxRetries} retries failed for operation '${operationName}'`,
     { operationName, maxRetries, lastError }
@@ -159,9 +161,9 @@ export async function withRetry<T>(
 export class TimeoutError extends Error {
   constructor(
     message: string,
-    public readonly context: { 
-      operationName: string; 
-      timeoutMs: number; 
+    public readonly context: {
+      operationName: string;
+      timeoutMs: number;
     }
   ) {
     super(message);
@@ -175,8 +177,8 @@ export class TimeoutError extends Error {
 export class OperationError extends Error {
   constructor(
     message: string,
-    public readonly context: { 
-      operationName: string; 
+    public readonly context: {
+      operationName: string;
       cause?: unknown;
     }
   ) {
@@ -192,9 +194,9 @@ export class OperationError extends Error {
 export class RetryError extends Error {
   constructor(
     message: string,
-    public readonly context: { 
-      operationName: string; 
-      maxRetries: number; 
+    public readonly context: {
+      operationName: string;
+      maxRetries: number;
       lastError: Error | null;
     }
   ) {

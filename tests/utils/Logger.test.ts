@@ -4,13 +4,16 @@ import {
   StorageError,
   BlockchainError,
   ValidationError,
-  NetworkError
+  NetworkError,
 } from '../../src/types/errors/consolidated';
 
 describe('Logger', () => {
   let logger: Logger;
   let mockConsole: jest.SpyInstance[];
-  let mockHandler: jest.Mock<void, [{ level: LogLevel; message: string; context?: any; error?: any }]>;
+  let mockHandler: jest.Mock<
+    void,
+    [{ level: LogLevel; message: string; context?: any; error?: any }]
+  >;
 
   beforeEach(() => {
     // Reset logger instance
@@ -58,12 +61,12 @@ describe('Logger', () => {
 
     it('should handle undefined context', () => {
       logger.info('Test message');
-      
+
       expect(mockHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           level: LogLevel.INFO,
           message: 'Test message',
-          context: undefined
+          context: undefined,
         })
       );
     });
@@ -73,7 +76,7 @@ describe('Logger', () => {
     it('should properly format WalrusError', () => {
       const error = new WalrusError('Test error', {
         code: 'TEST_ERROR',
-        publicMessage: 'Public message'
+        publicMessage: 'Public message',
       });
 
       logger.error('Error occurred', error);
@@ -85,8 +88,8 @@ describe('Logger', () => {
             name: 'WalrusError',
             code: 'TEST_ERROR',
             message: 'Test error',
-            publicMessage: 'Public message'
-          })
+            publicMessage: 'Public message',
+          }),
         })
       );
     });
@@ -96,7 +99,7 @@ describe('Logger', () => {
       const error = new StorageError('Storage error', {
         operation: 'read',
         blobId: 'test-blob',
-        cause
+        cause,
       });
 
       logger.error('Error occurred', error);
@@ -104,8 +107,8 @@ describe('Logger', () => {
       expect(mockHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
-            cause: 'Cause error'
-          })
+            cause: 'Cause error',
+          }),
         })
       );
     });
@@ -118,8 +121,8 @@ describe('Logger', () => {
           error: expect.objectContaining({
             name: 'Error',
             code: 'UNKNOWN_ERROR',
-            message: 'string error'
-          })
+            message: 'string error',
+          }),
         })
       );
     });
@@ -133,12 +136,12 @@ describe('Logger', () => {
         token: 'token123',
         user: {
           authToken: 'auth123',
-          name: 'John'
+          name: 'John',
         },
         data: {
           signature: 'sig123',
-          content: 'safe content'
-        }
+          content: 'safe content',
+        },
       };
 
       logger.info('Test message', sensitiveContext);
@@ -150,12 +153,12 @@ describe('Logger', () => {
         token: '[REDACTED]',
         user: {
           authToken: '[REDACTED]',
-          name: 'John'
+          name: 'John',
         },
         data: {
           signature: '[REDACTED]',
-          content: 'safe content'
-        }
+          content: 'safe content',
+        },
       });
     });
 
@@ -164,9 +167,9 @@ describe('Logger', () => {
         data: {
           user: {
             password: 'secret',
-            name: 'John'
-          }
-        }
+            name: 'John',
+          },
+        },
       };
 
       logger.info('Test message', nestedContext);
@@ -175,9 +178,9 @@ describe('Logger', () => {
         data: {
           user: {
             password: '[REDACTED]',
-            name: 'John'
-          }
-        }
+            name: 'John',
+          },
+        },
       });
     });
   });
@@ -186,7 +189,7 @@ describe('Logger', () => {
     it('should handle StorageError', () => {
       const error = new StorageError('Storage operation failed', {
         operation: 'upload',
-        blobId: 'test-blob'
+        blobId: 'test-blob',
       });
 
       logger.error('Storage error', error);
@@ -195,8 +198,8 @@ describe('Logger', () => {
         expect.objectContaining({
           error: expect.objectContaining({
             code: 'STORAGE_UPLOAD_ERROR',
-            publicMessage: 'A storage operation failed'
-          })
+            publicMessage: 'A storage operation failed',
+          }),
         })
       );
     });
@@ -204,7 +207,7 @@ describe('Logger', () => {
     it('should handle BlockchainError', () => {
       const error = new BlockchainError('Transaction failed', {
         operation: 'execute',
-        transactionId: 'tx123'
+        transactionId: 'tx123',
       });
 
       logger.error('Blockchain error', error);
@@ -213,8 +216,8 @@ describe('Logger', () => {
         expect.objectContaining({
           error: expect.objectContaining({
             code: 'BLOCKCHAIN_EXECUTE_ERROR',
-            publicMessage: 'A blockchain operation failed'
-          })
+            publicMessage: 'A blockchain operation failed',
+          }),
         })
       );
     });
@@ -223,7 +226,7 @@ describe('Logger', () => {
       const error = new ValidationError('Invalid blob size', {
         field: 'size',
         value: -1,
-        constraint: 'positive'
+        constraint: 'positive',
       });
 
       logger.error('Validation error', error);
@@ -232,8 +235,8 @@ describe('Logger', () => {
         expect.objectContaining({
           error: expect.objectContaining({
             code: 'VALIDATION_ERROR',
-            publicMessage: 'Invalid value for size'
-          })
+            publicMessage: 'Invalid value for size',
+          }),
         })
       );
     });
@@ -242,7 +245,7 @@ describe('Logger', () => {
       const error = new NetworkError('Network request failed', {
         operation: 'request',
         network: 'testnet',
-        recoverable: true
+        recoverable: true,
       });
 
       logger.error('Network error', error);
@@ -252,8 +255,8 @@ describe('Logger', () => {
           error: expect.objectContaining({
             code: 'NETWORK_REQUEST_ERROR',
             publicMessage: 'A network operation failed',
-            shouldRetry: true
-          })
+            shouldRetry: true,
+          }),
         })
       );
     });
@@ -264,7 +267,7 @@ describe('Logger', () => {
       const error = new StorageError('Internal storage error', {
         operation: 'read',
         blobId: 'sensitive-blob-id',
-        recoverable: true
+        recoverable: true,
       });
 
       const publicError = error.toPublicError();
@@ -273,7 +276,7 @@ describe('Logger', () => {
         code: 'STORAGE_READ_ERROR',
         message: 'A storage operation failed',
         timestamp: expect.any(String),
-        shouldRetry: true
+        shouldRetry: true,
       });
 
       // Ensure sensitive details are not included
@@ -287,7 +290,7 @@ describe('Logger', () => {
         operation: 'connect',
         network: 'testnet',
         recoverable: true,
-        cause
+        cause,
       });
 
       const logEntry = error.toLogEntry();
@@ -300,7 +303,7 @@ describe('Logger', () => {
         timestamp: expect.any(String),
         shouldRetry: true,
         stack: expect.any(String),
-        cause: 'Network timeout'
+        cause: 'Network timeout',
       });
     });
   });

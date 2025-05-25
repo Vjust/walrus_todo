@@ -22,7 +22,7 @@ describe('Transaction Edge Cases', () => {
     suiService = new SuiTestService({
       network: 'testnet',
       walletAddress: fuzzer.blockchainData().address(),
-      encryptedStorage: false
+      encryptedStorage: false,
     });
     nftContract = new MockNFTStorageContract('0x456');
   });
@@ -34,9 +34,9 @@ describe('Transaction Edge Cases', () => {
 
       // Create many todos simultaneously
       await Promise.all(
-        Array(largeVolume).fill(null).map(() =>
-          suiService.addTodo(listId, fuzzer.string())
-        )
+        Array(largeVolume)
+          .fill(null)
+          .map(() => suiService.addTodo(listId, fuzzer.string()))
       );
 
       const todos = await suiService.getTodos(listId);
@@ -45,16 +45,18 @@ describe('Transaction Edge Cases', () => {
 
     it('should handle memory pressure', async () => {
       const listId = await suiService.createTodoList();
-      
+
       // Create todos with large content
-      const largeTodos = Array(100).fill(null).map(() => ({
-        text: fuzzer.string({ minLength: 1000000, maxLength: 2000000 }) // 1-2MB strings
-      }));
+      const largeTodos = Array(100)
+        .fill(null)
+        .map(() => ({
+          text: fuzzer.string({ minLength: 1000000, maxLength: 2000000 }), // 1-2MB strings
+        }));
 
       for (const todo of largeTodos) {
         await suiService.addTodo(listId, todo.text);
       }
-      
+
       const todos = await suiService.getTodos(listId);
       expect(todos.length).toBe(100);
     });
@@ -63,55 +65,79 @@ describe('Transaction Edge Cases', () => {
   describe('Concurrent Access', () => {
     it('should handle concurrent modifications', async () => {
       const listId = await suiService.createTodoList();
-      
-      // Simulate multiple users modifying the same list
-      const users = Array(10).fill(null).map(() => new SuiTestService({
-        network: 'testnet',
-        walletAddress: fuzzer.blockchainData().address(),
-        encryptedStorage: false
-      }));
 
-      await Promise.all(users.map(user =>
-        Promise.all([
-          user.addTodo(listId, fuzzer.string()),
-          user.getTodos(listId),
-          user.updateTodo(listId, fuzzer.string(), { completed: true })
-        ]).catch((error: unknown) => {
-          // Assert error is an Error instance with Unauthorized message
-          expect(error).toBeInstanceOf(Error);
-          expect((error as Error).message).toContain('Unauthorized');
-        })
-      ));
+      // Simulate multiple users modifying the same list
+      const users = Array(10)
+        .fill(null)
+        .map(
+          () =>
+            new SuiTestService({
+              network: 'testnet',
+              walletAddress: fuzzer.blockchainData().address(),
+              encryptedStorage: false,
+            })
+        );
+
+      const results = await Promise.allSettled(
+        users.map(user =>
+          Promise.all([
+            user.addTodo(listId, fuzzer.string()),
+            user.getTodos(listId),
+            user.updateTodo(listId, fuzzer.string(), { completed: true }),
+          ])
+        )
+      );
+
+      // Check that at least some operations failed with expected errors
+      const rejectedResults = results.filter(
+        result => result.status === 'rejected'
+      ) as PromiseRejectedResult[];
+      
+      // Verify rejected results have proper error structure
+      rejectedResults.forEach(result => {
+        expect(result.reason).toBeInstanceOf(Error);
+        expect((result.reason as Error).message).toContain('Unauthorized');
+      });
     });
   });
 
   describe('Network Conditions', () => {
     it('should handle connection interruptions', async () => {
       const listId = await suiService.createTodoList();
-      
+
       // Simulate network interruptions during operations
       const operations = async () => {
-        try {
-          await Promise.race([
-            suiService.addTodo(listId, fuzzer.string()),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Network timeout')), 100))
-          ]);
-        } catch (error: unknown) {
-          // Assert error is an Error instance with expected message pattern
-          expect(error).toBeInstanceOf(Error);
-          expect((error as Error).message).toMatch(/timeout|failed|error/i);
-        }
+        return Promise.race([
+          suiService.addTodo(listId, fuzzer.string()),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Network timeout')), 100)
+          ),
+        ]);
       };
 
-      await Promise.all(Array(10).fill(null).map(operations));
+      const operationResults = await Promise.allSettled(
+        Array(10).fill(null).map(operations)
+      );
+
+      // Verify that operations either succeeded or failed with expected errors
+      const failedOperations = operationResults.filter(
+        result => result.status === 'rejected'
+      ) as PromiseRejectedResult[];
+      
+      failedOperations.forEach(result => {
+        expect(result.reason).toBeInstanceOf(Error);
+        expect((result.reason as Error).message).toMatch(
+          /timeout|failed|error/i
+        );
+      });
     });
 
     it('should handle slow responses', async () => {
       const listId = await suiService.createTodoList();
-      
+
       // Simulate varying network latencies
       const latencies = [100, 500, 1000, 2000, 5000];
-      
+
       for (const latency of latencies) {
         const start = Date.now();
         await new Promise(resolve => setTimeout(resolve, latency));
@@ -143,7 +169,7 @@ describe('Transaction Edge Cases', () => {
         async () => {
           await suiService.deleteTodoList(listId);
           await suiService.deleteTodoList(listId);
-        }
+        },
       ];
 
       for (const transition of invalidTransitions) {
@@ -156,12 +182,14 @@ describe('Transaction Edge Cases', () => {
       const todoId = await suiService.addTodo(listId, 'test');
 
       // Simulate concurrent updates to the same todo
-      await Promise.all([
-        suiService.updateTodo(listId, todoId, { text: 'update 1' }),
-        suiService.updateTodo(listId, todoId, { text: 'update 2' }),
-        suiService.updateTodo(listId, todoId, { completed: true }),
-        suiService.deleteTodoList(listId)
-      ].map(p => p.catch(e => e))); // Capture but don't fail on errors
+      await Promise.all(
+        [
+          suiService.updateTodo(listId, todoId, { text: 'update 1' }),
+          suiService.updateTodo(listId, todoId, { text: 'update 2' }),
+          suiService.updateTodo(listId, todoId, { completed: true }),
+          suiService.deleteTodoList(listId),
+        ].map(p => p.catch(e => e))
+      ); // Capture but don't fail on errors
 
       // Verify final state is consistent
       await expect(suiService.getTodos(listId)).rejects.toThrow('not found');
@@ -174,23 +202,25 @@ describe('Transaction Edge Cases', () => {
       const nftId = await nftContract.entry_create_nft(sender, {
         name: 'Test NFT',
         description: 'Test Description',
-        url: 'https://example.com/test'
+        url: 'https://example.com/test',
       });
 
       // Simulate rapid ownership changes
-      const newOwners = Array(5).fill(null).map(() => fuzzer.blockchainData().address());
-      
-      await Promise.all(newOwners.map(async (owner) => {
-        // Each operation should fail with unauthorized or not found error
-        await expect(async () => {
-          await nftContract.entry_transfer_nft(sender, nftId, owner);
-          await nftContract.entry_update_metadata(
-            { sender: owner },
-            nftId,
-            { description: fuzzer.string() }
-          );
-        }).rejects.toThrow(/Unauthorized|not found/i);
-      }));
+      const newOwners = Array(5)
+        .fill(null)
+        .map(() => fuzzer.blockchainData().address());
+
+      await Promise.all(
+        newOwners.map(async owner => {
+          // Each operation should fail with unauthorized or not found error
+          await expect(async () => {
+            await nftContract.entry_transfer_nft(sender, nftId, owner);
+            await nftContract.entry_update_metadata({ sender: owner }, nftId, {
+              description: fuzzer.string(),
+            });
+          }).rejects.toThrow(/Unauthorized|not found/i);
+        })
+      );
     });
   });
 });

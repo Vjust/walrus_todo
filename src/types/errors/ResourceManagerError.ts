@@ -11,22 +11,22 @@ import { BaseError } from './BaseError';
 export interface ResourceManagerErrorOptions {
   /** Resource ID that had an issue */
   resourceId?: string;
-  
+
   /** Resource type that had an issue */
   resourceType?: string;
-  
+
   /** Resource description */
   resourceDescription?: string;
-  
+
   /** Operation that was being performed when error occurred */
   operation?: string;
-  
+
   /** Additional context information */
   context?: Record<string, unknown>;
-  
+
   /** Original error that caused this error */
   cause?: Error;
-  
+
   /** Whether the operation can be recovered from this error */
   recoverable?: boolean;
 }
@@ -46,17 +46,17 @@ export class ResourceManagerError extends BaseError {
   ) {
     // Handle both constructor signatures for backward compatibility
     let options: ResourceManagerErrorOptions = {};
-    
+
     if (optionsOrCause instanceof Error) {
       // Support previous signature: (message, cause)
       options = {
-        cause: optionsOrCause
+        cause: optionsOrCause,
       };
     } else if (optionsOrCause && typeof optionsOrCause === 'object') {
       // Support object-based options
       options = optionsOrCause;
     }
-    
+
     const {
       resourceId,
       resourceType,
@@ -64,18 +64,18 @@ export class ResourceManagerError extends BaseError {
       operation,
       context,
       cause,
-      recoverable = false
+      recoverable = false,
     } = options;
-    
+
     // Build context object
     const errorContext: Record<string, unknown> = {
       ...(context || {}),
       ...(resourceId !== undefined ? { resourceId } : {}),
       ...(resourceType !== undefined ? { resourceType } : {}),
       ...(resourceDescription !== undefined ? { resourceDescription } : {}),
-      ...(operation !== undefined ? { operation } : {})
+      ...(operation !== undefined ? { operation } : {}),
     };
-    
+
     // Call BaseError constructor
     super({
       message: `ResourceManager Error: ${message}`,
@@ -83,9 +83,9 @@ export class ResourceManagerError extends BaseError {
       context: errorContext,
       cause,
       recoverable,
-      shouldRetry: false
+      shouldRetry: false,
     });
-    
+
     // Set error name
     this.name = 'ResourceManagerError';
   }

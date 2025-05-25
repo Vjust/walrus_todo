@@ -22,7 +22,7 @@ export default class ShareCommand extends BaseCommand {
     '<%= config.bin %> share my-list --recipient username             # Share using args',
     '<%= config.bin %> share work --recipient alice@example.com       # Share work list',
     '<%= config.bin %> share personal --recipient bob --read-only     # Share read-only access',
-    '<%= config.bin %> share project --recipient team --permissions edit  # Share with edit rights'
+    '<%= config.bin %> share project --recipient team --permissions edit  # Share with edit rights',
   ];
 
   static flags = {
@@ -33,7 +33,7 @@ export default class ShareCommand extends BaseCommand {
       required: false,
     }),
     recipient: Flags.string({
-      char: 'r', 
+      char: 'r',
       description: 'Username to share with',
       required: true,
     }),
@@ -42,9 +42,10 @@ export default class ShareCommand extends BaseCommand {
   static args = {
     listName: Args.string({
       name: 'listName',
-      description: 'Name of the todo list to share (alternative to --list flag)',
-      required: false
-    })
+      description:
+        'Name of the todo list to share (alternative to --list flag)',
+      required: false,
+    }),
   };
 
   private todoService = new TodoService();
@@ -52,14 +53,17 @@ export default class ShareCommand extends BaseCommand {
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(ShareCommand);
-      
+
       // Use either the listName argument or the list flag
       const listName = args.listName || flags.list;
-      
+
       if (!listName) {
-        throw new CLIError('List name is required. Provide it as an argument or with --list flag', 'MISSING_LIST');
+        throw new CLIError(
+          'List name is required. Provide it as an argument or with --list flag',
+          'MISSING_LIST'
+        );
       }
-      
+
       const { recipient } = flags;
 
       // Get the list
@@ -71,15 +75,20 @@ export default class ShareCommand extends BaseCommand {
       // Update collaborators
       todoList.collaborators = todoList.collaborators || [];
       if (todoList.collaborators.includes(recipient)) {
-        throw new CLIError(`User "${recipient}" already has access to list "${listName}"`, 'ALREADY_SHARED');
+        throw new CLIError(
+          `User "${recipient}" already has access to list "${listName}"`,
+          'ALREADY_SHARED'
+        );
       }
 
       todoList.collaborators.push(recipient);
       todoList.updatedAt = new Date().toISOString();
 
       await this.todoService.saveList(listName, todoList);
-      this.log(chalk.green('✓'), `Todo list "${chalk.bold(listName)}" shared successfully with ${chalk.cyan(recipient)}`);
-
+      this.log(
+        chalk.green('✓'),
+        `Todo list "${chalk.bold(listName)}" shared successfully with ${chalk.cyan(recipient)}`
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

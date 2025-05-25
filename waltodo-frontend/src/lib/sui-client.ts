@@ -3,12 +3,15 @@
  * Enhanced implementation with full Sui SDK integration and auto-generated configuration
  */
 
-
 import { SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { fromB64 } from '@mysten/sui/utils';
 import { bcs } from '@mysten/sui/bcs';
-import { SuiObjectResponse, SuiMoveObject, PaginatedObjectsResponse } from '@mysten/sui/client';
+import {
+  SuiObjectResponse,
+  SuiMoveObject,
+  PaginatedObjectsResponse,
+} from '@mysten/sui/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { loadAppConfig, type AppConfig } from './config-loader';
 
@@ -17,9 +20,10 @@ import { loadAppConfig, type AppConfig } from './config-loader';
 
 // TodoNFT contract configuration - fallback values if config not loaded
 const TODO_NFT_CONFIG = {
-  PACKAGE_ID: '0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b', // Fallback - will be overridden by config
+  PACKAGE_ID:
+    '0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b', // Fallback - will be overridden by config
   MODULE_NAME: 'todo_nft',
-  STRUCT_NAME: 'TodoNFT'
+  STRUCT_NAME: 'TodoNFT',
 } as const;
 
 export type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
@@ -87,14 +91,20 @@ export interface UpdateTodoParams {
 
 // Error classes for better error handling
 export class SuiClientError extends Error {
-  constructor(message: string, public code?: string) {
+  constructor(
+    message: string,
+    public code?: string
+  ) {
     super(message);
     this.name = 'SuiClientError';
   }
 }
 
 export class TransactionError extends SuiClientError {
-  constructor(message: string, public digest?: string) {
+  constructor(
+    message: string,
+    public digest?: string
+  ) {
     super(message, 'TRANSACTION_ERROR');
     this.name = 'TransactionError';
   }
@@ -143,20 +153,24 @@ export async function initializeSuiClientWithConfig(): Promise<SuiClient> {
 /**
  * Initialize Sui client with network configuration (legacy)
  */
-export async function initializeSuiClient(network: NetworkType = 'testnet'): Promise<SuiClient> {
+export async function initializeSuiClient(
+  network: NetworkType = 'testnet'
+): Promise<SuiClient> {
   // Try to load configuration first
   try {
     return await initializeSuiClientWithConfig();
   } catch (error) {
     // Fallback to direct network URL from config
-    console.warn('Failed to load app config, using fallback network configuration');
+    console.warn(
+      'Failed to load app config, using fallback network configuration'
+    );
     currentNetwork = network;
     // Use the network URLs from the config-loader fallback
     const networkUrls = {
       mainnet: 'https://fullnode.mainnet.sui.io:443',
       testnet: 'https://fullnode.testnet.sui.io:443',
       devnet: 'https://fullnode.devnet.sui.io:443',
-      localnet: 'http://127.0.0.1:9000'
+      localnet: 'http://127.0.0.1:9000',
     };
     suiClient = new SuiClient({ url: networkUrls[network] });
     return suiClient;
@@ -168,7 +182,9 @@ export async function initializeSuiClient(network: NetworkType = 'testnet'): Pro
  */
 export function getSuiClient(): SuiClient {
   if (!suiClient) {
-    throw new Error('Sui client not initialized. Call initializeSuiClient() first.');
+    throw new Error(
+      'Sui client not initialized. Call initializeSuiClient() first.'
+    );
   }
   return suiClient;
 }
@@ -194,7 +210,7 @@ export function getPackageId(): string {
 /**
  * Switch to a different network
  */
-export function switchNetwork(network: NetworkType): SuiClient {
+export function switchNetwork(network: NetworkType): Promise<SuiClient> {
   return initializeSuiClient(network);
 }
 
@@ -217,7 +233,10 @@ export function getCurrentNetwork(): NetworkType {
  * Transform Sui object data to Todo interface
  */
 function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
-  if (!suiObject.data?.content || suiObject.data.content.dataType !== 'moveObject') {
+  if (
+    !suiObject.data?.content ||
+    suiObject.data.content.dataType !== 'moveObject'
+  ) {
     return null;
   }
 
@@ -240,10 +259,12 @@ function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
       blockchainStored: true,
       imageUrl: fields.image_url,
       createdAt: fields.created_at ? parseInt(fields.created_at) : Date.now(),
-      completedAt: fields.completed_at ? parseInt(fields.completed_at) : undefined,
+      completedAt: fields.completed_at
+        ? parseInt(fields.completed_at)
+        : undefined,
       owner: fields.owner,
       metadata: fields.metadata || '',
-      isPrivate: fields.is_private === true
+      isPrivate: fields.is_private === true,
     };
   } catch (error) {
     console.error('Error transforming Sui object to Todo:', error);
@@ -254,10 +275,12 @@ function transformSuiObjectToTodo(suiObject: SuiObjectResponse): Todo | null {
 /**
  * Get TodoNFTs owned by a specific address
  */
-export async function getTodosFromBlockchain(ownerAddress: string): Promise<Todo[]> {
+export async function getTodosFromBlockchain(
+  ownerAddress: string
+): Promise<Todo[]> {
   try {
     const client = getSuiClient();
-    
+
     if (!ownerAddress) {
       throw new WalletNotConnectedError();
     }
@@ -266,13 +289,13 @@ export async function getTodosFromBlockchain(ownerAddress: string): Promise<Todo
     const response: PaginatedObjectsResponse = await client.getOwnedObjects({
       owner: ownerAddress,
       filter: {
-        StructType: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`
+        StructType: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`,
       },
       options: {
         showContent: true,
         showOwner: true,
-        showType: true
-      }
+        showType: true,
+      },
     });
 
     // Transform Sui objects to Todo format
@@ -286,7 +309,9 @@ export async function getTodosFromBlockchain(ownerAddress: string): Promise<Todo
     if (error instanceof SuiClientError) {
       throw error;
     }
-    throw new SuiClientError(`Failed to fetch todos: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new SuiClientError(
+      `Failed to fetch todos: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -308,8 +333,8 @@ export function createTodoNFTTransaction(
       tx.pure(bcs.string().serialize(params.description)),
       tx.pure(bcs.string().serialize(params.imageUrl)),
       tx.pure(bcs.string().serialize(params.metadata || '')),
-      tx.pure(bcs.bool().serialize(params.isPrivate || false))
-    ]
+      tx.pure(bcs.bool().serialize(params.isPrivate || false)),
+    ],
   });
 
   return tx;
@@ -341,20 +366,21 @@ export async function storeTodoOnBlockchain(
         digest: result.digest,
         options: {
           showEffects: true,
-          showObjectChanges: true
-        }
+          showObjectChanges: true,
+        },
       });
 
       // Find the created TodoNFT object
       const createdObject = txResponse.objectChanges?.find(
-        change => change.type === 'created' && 
-        change.objectType?.includes(TODO_NFT_CONFIG.STRUCT_NAME)
+        change =>
+          change.type === 'created' &&
+          change.objectType?.includes(TODO_NFT_CONFIG.STRUCT_NAME)
       );
 
       return {
         success: true,
         digest: result.digest,
-        objectId: (createdObject as any)?.objectId
+        objectId: (createdObject as any)?.objectId,
       };
     }
 
@@ -363,7 +389,7 @@ export async function storeTodoOnBlockchain(
     console.error('Error storing todo on blockchain:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -386,8 +412,8 @@ export function updateTodoNFTTransaction(
       tx.pure(bcs.string().serialize(params.title || '')),
       tx.pure(bcs.string().serialize(params.description || '')),
       tx.pure(bcs.string().serialize(params.imageUrl || '')),
-      tx.pure(bcs.string().serialize(params.metadata || ''))
-    ]
+      tx.pure(bcs.string().serialize(params.metadata || '')),
+    ],
   });
 
   return tx;
@@ -406,9 +432,7 @@ export function completeTodoNFTTransaction(
   // Call the complete_todo function from the smart contract
   tx.moveCall({
     target: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::complete_todo`,
-    arguments: [
-      tx.object(objectId)
-    ]
+    arguments: [tx.object(objectId)],
   });
 
   return tx;
@@ -427,9 +451,7 @@ export function deleteTodoNFTTransaction(
   // Call the delete_todo function from the smart contract
   tx.moveCall({
     target: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::delete_todo`,
-    arguments: [
-      tx.object(objectId)
-    ]
+    arguments: [tx.object(objectId)],
   });
 
   return tx;
@@ -457,13 +479,13 @@ export async function updateTodoOnBlockchain(
     return {
       success: !!result.digest,
       digest: result.digest,
-      error: result.digest ? undefined : 'Transaction failed'
+      error: result.digest ? undefined : 'Transaction failed',
     };
   } catch (error) {
     console.error('Error updating todo on blockchain:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -490,13 +512,13 @@ export async function completeTodoOnBlockchain(
     return {
       success: !!result.digest,
       digest: result.digest,
-      error: result.digest ? undefined : 'Transaction failed'
+      error: result.digest ? undefined : 'Transaction failed',
     };
   } catch (error) {
     console.error('Error completing todo on blockchain:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -523,13 +545,13 @@ export async function deleteTodoOnBlockchain(
     return {
       success: !!result.digest,
       digest: result.digest,
-      error: result.digest ? undefined : 'Transaction failed'
+      error: result.digest ? undefined : 'Transaction failed',
     };
   } catch (error) {
     console.error('Error deleting todo on blockchain:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -537,7 +559,9 @@ export async function deleteTodoOnBlockchain(
 /**
  * Get a specific TodoNFT by object ID
  */
-export async function getTodoByObjectId(objectId: string): Promise<Todo | null> {
+export async function getTodoByObjectId(
+  objectId: string
+): Promise<Todo | null> {
   try {
     const client = getSuiClient();
     const response = await client.getObject({
@@ -545,21 +569,25 @@ export async function getTodoByObjectId(objectId: string): Promise<Todo | null> 
       options: {
         showContent: true,
         showOwner: true,
-        showType: true
-      }
+        showType: true,
+      },
     });
 
     return transformSuiObjectToTodo(response);
   } catch (error) {
     console.error('Error fetching todo by object ID:', error);
-    throw new SuiClientError(`Failed to fetch todo: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new SuiClientError(
+      `Failed to fetch todo: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
 /**
  * Batch fetch multiple TodoNFTs by object IDs
  */
-export async function getTodosByObjectIds(objectIds: string[]): Promise<Todo[]> {
+export async function getTodosByObjectIds(
+  objectIds: string[]
+): Promise<Todo[]> {
   try {
     const client = getSuiClient();
     const response = await client.multiGetObjects({
@@ -567,8 +595,8 @@ export async function getTodosByObjectIds(objectIds: string[]): Promise<Todo[]> 
       options: {
         showContent: true,
         showOwner: true,
-        showType: true
-      }
+        showType: true,
+      },
     });
 
     return response
@@ -576,7 +604,9 @@ export async function getTodosByObjectIds(objectIds: string[]): Promise<Todo[]> 
       .filter((todo): todo is Todo => todo !== null);
   } catch (error) {
     console.error('Error batch fetching todos:', error);
-    throw new SuiClientError(`Failed to batch fetch todos: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new SuiClientError(
+      `Failed to batch fetch todos: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -591,8 +621,8 @@ export async function getTransactionStatus(digest: string) {
       options: {
         showEffects: true,
         showEvents: true,
-        showObjectChanges: true
-      }
+        showObjectChanges: true,
+      },
     });
 
     return {
@@ -600,10 +630,12 @@ export async function getTransactionStatus(digest: string) {
       digest: response.digest,
       timestamp: response.timestampMs,
       objectChanges: response.objectChanges,
-      events: response.events
+      events: response.events,
     };
   } catch (error) {
     console.error('Error getting transaction status:', error);
-    throw new SuiClientError(`Failed to get transaction status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new SuiClientError(
+      `Failed to get transaction status: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }

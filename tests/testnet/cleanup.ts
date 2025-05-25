@@ -6,7 +6,7 @@ import { Logger } from '../../src/utils/Logger';
 
 /**
  * Test cleanup utility for removing test data and temporary files after test runs
- * 
+ *
  * This utility helps clean up test artifacts created during test execution:
  * - Temporary test files
  * - Mock data files
@@ -42,23 +42,23 @@ const DEFAULT_CONFIG: CleanupConfig = {
     'temp-test-*',
     'test-temp-*',
     '*.tmp',
-    
+
     // Test data files
     'test-*.json',
     'mock-*.json',
     'test-*.xml',
-    
+
     // Test images
     'test-*.png',
     'test-*.jpg',
     'test-*.jpeg',
     'test-image.*',
-    
+
     // Test storage files
     'test-todos*.db',
     'test-storage*',
     '.test-cache*',
-    
+
     // Test logs
     'test-*.log',
     'test-audit*.log',
@@ -70,31 +70,33 @@ const DEFAULT_CONFIG: CleanupConfig = {
     'test-upload-*',
   ],
   dryRun: false,
-  cleanNetwork: false
+  cleanNetwork: false,
 };
 
 /**
  * Clean up test data files
  */
-export async function cleanupTestFiles(config: Partial<CleanupConfig> = {}): Promise<void> {
+export async function cleanupTestFiles(
+  config: Partial<CleanupConfig> = {}
+): Promise<void> {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  
+
   logger.info('Starting test cleanup...', {
     dryRun: finalConfig.dryRun,
     pathCount: finalConfig.paths.length,
-    patternCount: finalConfig.patterns.length
+    patternCount: finalConfig.patterns.length,
   });
-  
+
   const projectRoot = path.resolve(__dirname, '../../');
   let filesRemoved = 0;
   let errors = 0;
-  
+
   // Clean up specified paths
   for (const pathPattern of finalConfig.paths) {
     try {
       const fullPath = path.join(projectRoot, pathPattern);
       const files = await findFiles(fullPath);
-      
+
       for (const file of files) {
         try {
           if (finalConfig.dryRun) {
@@ -113,23 +115,23 @@ export async function cleanupTestFiles(config: Partial<CleanupConfig> = {}): Pro
       logger.debug(`No files matching pattern: ${pathPattern}`);
     }
   }
-  
+
   // Clean up test todos from local storage
   if (!finalConfig.dryRun) {
     await cleanupTestTodos(finalConfig.patterns);
   }
-  
+
   // Clean up network test data if requested
   if (finalConfig.cleanNetwork && !finalConfig.dryRun) {
     await cleanupNetworkTestData();
   }
-  
+
   logger.info('Test cleanup completed', {
     filesRemoved,
     errors,
-    dryRun: finalConfig.dryRun
+    dryRun: finalConfig.dryRun,
   });
-  
+
   if (errors > 0) {
     throw new Error(`Cleanup completed with ${errors} errors`);
   }
@@ -153,25 +155,25 @@ async function findFiles(pattern: string): Promise<string[]> {
 async function cleanupTestTodos(patterns: string[]): Promise<void> {
   const storageDir = path.join(process.env.HOME || '', '.walrus-todos');
   const todosFile = path.join(storageDir, 'todos.json');
-  
+
   try {
     const data = await fs.readFile(todosFile, 'utf-8');
     const todos = JSON.parse(data);
-    
+
     // Filter out test todos based on patterns
     const filteredTodos = todos.filter((todo: any) => {
       const isTestTodo = patterns.some(pattern => {
         const regex = new RegExp(pattern.replace('*', '.*'));
         return regex.test(todo.id) || regex.test(todo.title);
       });
-      
+
       if (isTestTodo) {
         logger.debug(`Removing test todo: ${todo.id} - ${todo.title}`);
       }
-      
+
       return !isTestTodo;
     });
-    
+
     // Write back filtered todos
     if (todos.length !== filteredTodos.length) {
       await fs.writeFile(todosFile, JSON.stringify(filteredTodos, null, 2));
@@ -187,14 +189,14 @@ async function cleanupTestTodos(patterns: string[]): Promise<void> {
  */
 async function cleanupNetworkTestData(): Promise<void> {
   logger.info('Cleaning up network test data...');
-  
+
   try {
     // Clean up test blobs from Walrus
     await cleanupWalrusTestBlobs();
-    
+
     // Clean up test NFTs from Sui
     await cleanupSuiTestNFTs();
-    
+
     logger.info('Network test data cleanup completed');
   } catch (_error) {
     logger.error('Error cleaning up network test data:', error);
@@ -209,12 +211,12 @@ async function cleanupWalrusTestBlobs(): Promise<void> {
   // This would typically interact with Walrus API to delete test blobs
   // For now, we'll just log the action
   logger.info('Cleaning up Walrus test blobs...');
-  
+
   // In a real implementation:
   // 1. Query Walrus for blobs with test-specific metadata
   // 2. Delete each test blob
   // 3. Verify deletion
-  
+
   logger.debug('Walrus test blob cleanup completed');
 }
 
@@ -225,12 +227,12 @@ async function cleanupSuiTestNFTs(): Promise<void> {
   // This would typically interact with Sui to burn/delete test NFTs
   // For now, we'll just log the action
   logger.info('Cleaning up Sui test NFTs...');
-  
+
   // In a real implementation:
   // 1. Query Sui for NFTs owned by test accounts
   // 2. Filter for test NFTs (by name pattern or metadata)
   // 3. Burn/transfer test NFTs
-  
+
   logger.debug('Sui test NFT cleanup completed');
 }
 
@@ -239,12 +241,12 @@ async function cleanupSuiTestNFTs(): Promise<void> {
  */
 export async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  
+
   const config: Partial<CleanupConfig> = {
     dryRun: args.includes('--dry-run'),
-    cleanNetwork: args.includes('--network')
+    cleanNetwork: args.includes('--network'),
   };
-  
+
   if (args.includes('--help')) {
     logger.info(`
 Test Cleanup Utility
@@ -264,7 +266,7 @@ Examples:
 `);
     process.exit(0);
   }
-  
+
   try {
     await cleanupTestFiles(config);
     logger.info('Cleanup completed successfully');
@@ -289,5 +291,5 @@ if (require.main === module) {
 export default {
   cleanupTestFiles,
   cleanupTestTodos,
-  cleanupNetworkTestData
+  cleanupNetworkTestData,
 };

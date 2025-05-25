@@ -2,7 +2,6 @@
  * Simplified test for the list command without using @oclif/test
  */
 
-
 jest.mock('../../src/services/todoService');
 
 // Mock command execution
@@ -22,7 +21,7 @@ const testTodos = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: false,
-    storageLocation: 'local'
+    storageLocation: 'local',
   },
   {
     id: 'todo-2',
@@ -34,7 +33,7 @@ const testTodos = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: false,
-    storageLocation: 'local'
+    storageLocation: 'local',
   },
   {
     id: 'todo-3',
@@ -47,8 +46,8 @@ const testTodos = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: false,
-    storageLocation: 'local'
-  }
+    storageLocation: 'local',
+  },
 ];
 
 const testList = {
@@ -58,13 +57,13 @@ const testList = {
   todos: testTodos,
   version: 1,
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
+  updatedAt: new Date().toISOString(),
 };
 
 describe('List Command', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock TodoService methods
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue(testList);
     (TodoService.prototype.getAllLists as jest.Mock).mockResolvedValue([
@@ -73,33 +72,39 @@ describe('List Command', () => {
         ...testList,
         id: 'work',
         name: 'work',
-        todos: [testTodos[0]]
-      }
+        todos: [testTodos[0]],
+      },
     ]);
-    
+
     // Mock execSync for command execution
     (execSync as jest.Mock).mockImplementation((command: string) => {
-      if (command.includes('list default') && !command.includes('--detailed') && 
-          !command.includes('--pending') && !command.includes('--completed')) {
+      if (
+        command.includes('list default') &&
+        !command.includes('--detailed') &&
+        !command.includes('--pending') &&
+        !command.includes('--completed')
+      ) {
         return Buffer.from(JSON.stringify(testTodos));
       }
-      
+
       if (command.includes('list --format json')) {
         return Buffer.from(JSON.stringify([testList]));
       }
-      
+
       if (command.includes('list default --detailed')) {
-        return Buffer.from('STATUS\nPRIORITY\nFirst Todo\nHigh Priority Todo\nCompleted Todo');
+        return Buffer.from(
+          'STATUS\nPRIORITY\nFirst Todo\nHigh Priority Todo\nCompleted Todo'
+        );
       }
-      
+
       if (command.includes('list default --pending')) {
         return Buffer.from('First Todo\nHigh Priority Todo');
       }
-      
+
       if (command.includes('list default --completed')) {
         return Buffer.from('Completed Todo');
       }
-      
+
       return Buffer.from('Command executed successfully');
     });
   });
@@ -114,7 +119,9 @@ describe('List Command', () => {
   });
 
   it('should show detailed view', () => {
-    const result = execSync('node bin/run.js list default --detailed').toString();
+    const result = execSync(
+      'node bin/run.js list default --detailed'
+    ).toString();
     expect(result).toContain('STATUS');
     expect(result).toContain('PRIORITY');
     expect(result).toContain('First Todo');
@@ -128,7 +135,7 @@ describe('List Command', () => {
     expect(result).toContain('First Todo');
     expect(result).toContain('High Priority Todo');
     expect(result).not.toContain('Completed Todo');
-    
+
     // Test completed filter
     result = execSync('node bin/run.js list default --completed').toString();
     expect(result).not.toContain('First Todo');
@@ -139,16 +146,16 @@ describe('List Command', () => {
   it('should handle service interaction correctly', async () => {
     const todoService = new TodoService();
     const list = await todoService.getList('default');
-    
+
     expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
     expect(list).toEqual(testList);
     expect(list.todos).toHaveLength(3);
-    
+
     // Verify completed filter logic works
     const completedTodos = list.todos.filter(todo => todo.completed);
     expect(completedTodos).toHaveLength(1);
     expect(completedTodos[0].title).toBe('Completed Todo');
-    
+
     // Verify pending filter logic works
     const pendingTodos = list.todos.filter(todo => !todo.completed);
     expect(pendingTodos).toHaveLength(2);

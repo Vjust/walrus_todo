@@ -48,7 +48,7 @@ declare module '@jest/globals' {
   export const afterAll: jest.Lifecycle;
   export const test: jest.It;
   export const it: jest.It;
-  
+
   // Re-export the SpyInstance type
   export type SpyInstance = jest.SpyInstance;
 }

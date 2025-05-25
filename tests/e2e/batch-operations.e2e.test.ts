@@ -6,15 +6,16 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { execSync } from 'child_process';
 
 describe('Batch Operations E2E Tests', () => {
   const tempDir = path.join(__dirname, `../../.tmp-e2e-${uuidv4()}`);
   const walrusCLI = path.join(__dirname, '../../bin/dev');
-  
+
   beforeAll(async () => {
     // Create temporary directory for test files
     await fs.ensureDir(tempDir);
-    
+
     // Set up environment variables for CLI
     process.env.WALRUS_USE_MOCK = 'true';
     process.env.WALRUS_CLI_DEV_TODOS_PATH = path.join(tempDir, 'todos.json');
@@ -43,7 +44,9 @@ describe('Batch Operations E2E Tests', () => {
 
     it('should handle empty todo list gracefully', () => {
       // Clear todos
-      const todosPath = process.env.WALRUS_CLI_DEV_TODOS_PATH || path.join(os.homedir(), '.walrus-cli/todos.json');
+      const todosPath =
+        process.env.WALRUS_CLI_DEV_TODOS_PATH ||
+        path.join(os.homedir(), '.walrus-cli/todos.json');
       await fs.writeJson(todosPath, { todos: [] });
 
       // Run store-list command
@@ -60,9 +63,13 @@ describe('Batch Operations E2E Tests', () => {
       // Force an error by using invalid environment
       process.env.WALRUS_SIMULATE_ERROR = 'true';
 
+      await expect(async () => {
+        execSync(`${walrusCLI} store-list --mock`);
+      }).rejects.toThrow();
+      
       try {
         execSync(`${walrusCLI} store-list --mock`);
-        fail('Expected command to throw error');
+        throw new Error('Expected command to throw error');
       } catch (error: any) {
         expect(error.message).toContain('Failed to store todos');
       }
@@ -103,7 +110,9 @@ describe('Batch Operations E2E Tests', () => {
       execSync(`${walrusCLI} add "Review documentation update"`);
 
       // Run batch store with optimization
-      const output = execSync(`${walrusCLI} store-batch --optimize --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-batch --optimize --mock`
+      ).toString();
 
       // Verify optimization occurred
       expect(output).toContain('Storage optimization enabled');
@@ -119,7 +128,9 @@ describe('Batch Operations E2E Tests', () => {
       }
 
       // Run batch store with verbose output
-      const output = execSync(`${walrusCLI} store-batch --verbose --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-batch --verbose --mock`
+      ).toString();
 
       // Verify detailed metrics
       expect(output).toContain('Batch processing metrics:');
@@ -135,7 +146,7 @@ describe('Batch Operations E2E Tests', () => {
     beforeEach(async () => {
       // Set up variety of todos for filtering
       await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH!, { todos: [] });
-      
+
       execSync(`${walrusCLI} add "High priority task 1" --priority high`);
       execSync(`${walrusCLI} add "High priority task 2" --priority high`);
       execSync(`${walrusCLI} add "Medium priority task" --priority medium`);
@@ -146,7 +157,9 @@ describe('Batch Operations E2E Tests', () => {
 
     it('should support filtering by priority in batch operations', () => {
       // Store only high priority todos
-      const output = execSync(`${walrusCLI} store-list --priority high --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-list --priority high --mock`
+      ).toString();
 
       expect(output).toContain('Filtering todos by priority: high');
       expect(output).toContain('Successfully stored 2 todos');
@@ -154,7 +167,9 @@ describe('Batch Operations E2E Tests', () => {
 
     it('should support filtering by category in batch operations', () => {
       // Store only work category todos
-      const output = execSync(`${walrusCLI} store-list --category work --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-list --category work --mock`
+      ).toString();
 
       expect(output).toContain('Filtering todos by category: work');
       expect(output).toContain('Successfully stored 1 todo');
@@ -162,10 +177,14 @@ describe('Batch Operations E2E Tests', () => {
 
     it('should support combined filters in batch operations', () => {
       // Add todo that matches both filters
-      execSync(`${walrusCLI} add "Urgent work task" --priority high --category work`);
+      execSync(
+        `${walrusCLI} add "Urgent work task" --priority high --category work`
+      );
 
       // Store with combined filters
-      const output = execSync(`${walrusCLI} store-list --priority high --category work --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-list --priority high --category work --mock`
+      ).toString();
 
       expect(output).toContain('Filtering todos by priority: high');
       expect(output).toContain('Filtering todos by category: work');
@@ -183,15 +202,20 @@ describe('Batch Operations E2E Tests', () => {
       // Simulate partial failure
       process.env.WALRUS_FAIL_ON_THIRD = 'true';
 
+      let errorCaught = false;
+      let output = '';
       try {
         execSync(`${walrusCLI} store-batch --mock`);
       } catch (error: any) {
-        const output = error.stdout.toString();
-        expect(output).toContain('Partial batch failure');
-        expect(output).toContain('Successfully stored: 2 todos');
-        expect(output).toContain('Failed: 1 todo');
-        expect(output).toContain('Remaining: 2 todos');
+        errorCaught = true;
+        output = error.stdout.toString();
       }
+      
+      expect(errorCaught).toBe(true);
+      expect(output).toContain('Partial batch failure');
+      expect(output).toContain('Successfully stored: 2 todos');
+      expect(output).toContain('Failed: 1 todo');
+      expect(output).toContain('Remaining: 2 todos');
 
       // Clean up
       delete process.env.WALRUS_FAIL_ON_THIRD;
@@ -206,7 +230,9 @@ describe('Batch Operations E2E Tests', () => {
       // Simulate failure then success on retry
       process.env.WALRUS_FAIL_FIRST_ATTEMPT = 'true';
 
-      const output = execSync(`${walrusCLI} store-batch --retry --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-batch --retry --mock`
+      ).toString();
 
       expect(output).toContain('Retrying failed items...');
       expect(output).toContain('All todos stored successfully after retry');
@@ -225,7 +251,9 @@ describe('Batch Operations E2E Tests', () => {
       }
 
       // Run with progress indicator
-      const output = execSync(`${walrusCLI} store-batch --progress --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-batch --progress --mock`
+      ).toString();
 
       expect(output).toContain('Processing batch...');
       expect(output).toMatch(/\[.*\] \d+\/\d+ todos processed/);
@@ -241,7 +269,9 @@ describe('Batch Operations E2E Tests', () => {
       // Simulate slow processing
       process.env.WALRUS_SLOW_MODE = 'true';
 
-      const output = execSync(`${walrusCLI} store-batch --eta --mock`).toString();
+      const output = execSync(
+        `${walrusCLI} store-batch --eta --mock`
+      ).toString();
 
       expect(output).toMatch(/ETA: \d+:\d+/);
       expect(output).toContain('Batch processing completed');
@@ -255,7 +285,7 @@ describe('Batch Operations E2E Tests', () => {
     it('should integrate with other commands seamlessly', async () => {
       // Create todos with AI-generated content
       execSync(`${walrusCLI} ai suggest --count 5 --mock-ai`);
-      
+
       // Store the suggested todos in batch
       const storeOutput = execSync(`${walrusCLI} store-list --mock`).toString();
       expect(storeOutput).toContain('Successfully stored 5 todos');
@@ -270,11 +300,13 @@ describe('Batch Operations E2E Tests', () => {
       const testData = [
         { title: 'Test 1', priority: 'high', tags: ['urgent', 'work'] },
         { title: 'Test 2', priority: 'medium', tags: ['personal'] },
-        { title: 'Test 3', priority: 'low', tags: ['optional'] }
+        { title: 'Test 3', priority: 'low', tags: ['optional'] },
       ];
 
       for (const item of testData) {
-        execSync(`${walrusCLI} add "${item.title}" --priority ${item.priority} --tags ${item.tags.join(',')}`);
+        execSync(
+          `${walrusCLI} add "${item.title}" --priority ${item.priority} --tags ${item.tags.join(',')}`
+        );
       }
 
       // Store in batch
@@ -292,7 +324,7 @@ describe('Batch Operations E2E Tests', () => {
       expect(retrievedTodos[0]).toMatchObject({
         title: 'Test 1',
         priority: 'high',
-        tags: expect.arrayContaining(['urgent', 'work'])
+        tags: expect.arrayContaining(['urgent', 'work']),
       });
     });
   });

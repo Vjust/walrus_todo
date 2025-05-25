@@ -20,9 +20,10 @@ describe('DeployCommand', () => {
 
     test('finds files in development environment', () => {
       const devPath = path.join(process.cwd(), 'src/move');
-      (fs.existsSync as jest.Mock).mockImplementation((p: string) => 
-        p === path.join(devPath, 'Move.toml') || 
-        p === path.join(devPath, 'sources')
+      (fs.existsSync as jest.Mock).mockImplementation(
+        (p: string) =>
+          p === path.join(devPath, 'Move.toml') ||
+          p === path.join(devPath, 'sources')
       );
 
       const result = getMoveFilesPath();
@@ -32,9 +33,10 @@ describe('DeployCommand', () => {
 
     test('finds files in production environment', () => {
       const prodPath = path.join(__dirname, '../../src/move');
-      (fs.existsSync as jest.Mock).mockImplementation((p: string) => 
-        p === path.join(prodPath, 'Move.toml') || 
-        p === path.join(prodPath, 'sources')
+      (fs.existsSync as jest.Mock).mockImplementation(
+        (p: string) =>
+          p === path.join(prodPath, 'Move.toml') ||
+          p === path.join(prodPath, 'sources')
       );
 
       const result = getMoveFilesPath();
@@ -69,30 +71,44 @@ describe('DeployCommand', () => {
         const mockOutput = JSON.stringify({
           effects: {
             created: [
-              { 
+              {
                 owner: 'Immutable',
-                reference: { objectId: 'test-package-id-123' }
-              }
-            ]
+                reference: { objectId: 'test-package-id-123' },
+              },
+            ],
           },
-          digest: 'test-digest-456'
+          digest: 'test-digest-456',
         });
-        
+
         // Mock config service
-        const configService = require('../../src/services/config-service').configService;
+        const configService =
+          require('../../src/services/config-service').configService;
         jest.spyOn(configService, 'getConfig').mockResolvedValue({});
         jest.spyOn(configService, 'saveConfig').mockResolvedValue();
-        
+
         // Mock command executor
         const commandExecutor = require('../../src/utils/command-executor');
         jest.spyOn(commandExecutor, 'safeExecFileSync').mockReturnValue();
-        jest.spyOn(commandExecutor, 'getActiveSuiAddress').mockReturnValue('0xtest-address');
-        jest.spyOn(commandExecutor, 'publishSuiPackage').mockReturnValue(mockOutput);
+        jest
+          .spyOn(commandExecutor, 'getActiveSuiAddress')
+          .mockReturnValue('0xtest-address');
+        jest
+          .spyOn(commandExecutor, 'publishSuiPackage')
+          .mockReturnValue(mockOutput);
       })
-      .command(['deploy', '--network', 'testnet', '--address', '0xtest-address', '--gas-budget', '200000000'])
+      .command([
+        'deploy',
+        '--network',
+        'testnet',
+        '--address',
+        '0xtest-address',
+        '--gas-budget',
+        '200000000',
+      ])
       .it('saves deployment config after successful deployment', () => {
-        const configService = require('../../src/services/config-service').configService;
-        
+        const configService =
+          require('../../src/services/config-service').configService;
+
         // Verify saveConfig was called with deployment info
         expect(configService.saveConfig).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -102,11 +118,10 @@ describe('DeployCommand', () => {
               packageId: 'test-package-id-123',
               digest: 'test-digest-456',
               network: 'testnet',
-              timestamp: expect.any(String)
-            })
+              timestamp: expect.any(String),
+            }),
           })
         );
       });
   });
 });
-

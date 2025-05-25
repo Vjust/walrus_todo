@@ -55,7 +55,11 @@ export class VaultManager {
     // Ensure baseDir is absolute
     this.baseDir = path.isAbsolute(baseDir)
       ? baseDir
-      : path.join(process.env.HOME || process.env.USERPROFILE || '', '.config', baseDir);
+      : path.join(
+          process.env.HOME || process.env.USERPROFILE || '',
+          '.config',
+          baseDir
+        );
 
     this.recordsFile = path.join(this.baseDir, 'vault-records.json');
     this.secretsDir = path.join(this.baseDir, 'secrets');
@@ -87,7 +91,9 @@ export class VaultManager {
       try {
         fs.chmodSync(this.secretsDir, 0o700); // Only owner can read/write/execute
       } catch (error) {
-        logger.warn('Could not set restrictive permissions on secrets directory');
+        logger.warn(
+          'Could not set restrictive permissions on secrets directory'
+        );
       }
     }
 
@@ -100,7 +106,10 @@ export class VaultManager {
       try {
         this.encryptionKey = fs.readFileSync(keyFile);
       } catch (error) {
-        throw new CLIError('Failed to read encryption key', 'ENCRYPTION_KEY_ERROR');
+        throw new CLIError(
+          'Failed to read encryption key',
+          'ENCRYPTION_KEY_ERROR'
+        );
       }
     }
 
@@ -141,9 +150,16 @@ export class VaultManager {
   /**
    * Store a secret in the vault
    */
-  async storeSecret(key: string, value: string, metadata?: Record<string, any>): Promise<void> {
+  async storeSecret(
+    key: string,
+    value: string,
+    metadata?: Record<string, any>
+  ): Promise<void> {
     if (!this.encryptionKey) {
-      throw new CLIError('Encryption key not initialized', 'ENCRYPTION_KEY_ERROR');
+      throw new CLIError(
+        'Encryption key not initialized',
+        'ENCRYPTION_KEY_ERROR'
+      );
     }
 
     // Create secret record
@@ -152,7 +168,7 @@ export class VaultManager {
       value: value,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      metadata
+      metadata,
     };
 
     // Encrypt the secret value and store it
@@ -164,7 +180,7 @@ export class VaultManager {
     // Update the index with the secret metadata (excluding the value)
     this.secretsMap.set(key, {
       ...secret,
-      value: '' // Don't store actual value in the index for additional security
+      value: '', // Don't store actual value in the index for additional security
     });
 
     this.saveSecretIndex();
@@ -181,21 +197,30 @@ export class VaultManager {
 
     const secretFile = path.join(this.secretsDir, `${secretMeta.id}.enc`);
     if (!fs.existsSync(secretFile)) {
-      throw new CLIError(`Secret file not found: ${key}`, 'SECRET_FILE_NOT_FOUND');
+      throw new CLIError(
+        `Secret file not found: ${key}`,
+        'SECRET_FILE_NOT_FOUND'
+      );
     }
 
     try {
       const encryptedData = fs.readFileSync(secretFile);
       const decryptedData = this.decrypt(encryptedData);
       if (!decryptedData) {
-        throw new CLIError(`Failed to decrypt secret: ${key}`, 'SECRET_DECRYPTION_FAILED');
+        throw new CLIError(
+          `Failed to decrypt secret: ${key}`,
+          'SECRET_DECRYPTION_FAILED'
+        );
       }
 
       const secret = JSON.parse(decryptedData.toString()) as Secret;
       return secret.value;
     } catch (error) {
       if (error instanceof CLIError) throw error;
-      throw new CLIError(`Error retrieving secret: ${key}`, 'SECRET_READ_ERROR');
+      throw new CLIError(
+        `Error retrieving secret: ${key}`,
+        'SECRET_READ_ERROR'
+      );
     }
   }
 
@@ -237,7 +262,10 @@ export class VaultManager {
    */
   private encrypt(data: string): Buffer {
     if (!this.encryptionKey) {
-      throw new CLIError('Encryption key not initialized', 'ENCRYPTION_KEY_ERROR');
+      throw new CLIError(
+        'Encryption key not initialized',
+        'ENCRYPTION_KEY_ERROR'
+      );
     }
 
     // Generate a random initialization vector for each encryption
@@ -247,7 +275,13 @@ export class VaultManager {
     const salt = crypto.randomBytes(16);
 
     // Derive an encryption key using PBKDF2
-    const key = crypto.pbkdf2Sync(this.encryptionKey, salt, 10000, 32, 'sha256');
+    const key = crypto.pbkdf2Sync(
+      this.encryptionKey,
+      salt,
+      10000,
+      32,
+      'sha256'
+    );
 
     // Create a cipher using AES-256-GCM mode
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
@@ -259,7 +293,7 @@ export class VaultManager {
     // Encrypt the data
     const encrypted = Buffer.concat([
       cipher.update(Buffer.from(data, 'utf-8')),
-      cipher.final()
+      cipher.final(),
     ]);
 
     // Get the authentication tag
@@ -267,12 +301,12 @@ export class VaultManager {
 
     // Combine all components (salt + iv + tag + aad length + aad + encrypted data)
     return Buffer.concat([
-      salt,             // 16 bytes
-      iv,               // 16 bytes
-      tag,              // 16 bytes
+      salt, // 16 bytes
+      iv, // 16 bytes
+      tag, // 16 bytes
       Buffer.from([aad.length]), // 1 byte for AAD length
-      aad,              // Variable length
-      encrypted         // Variable length
+      aad, // Variable length
+      encrypted, // Variable length
     ]);
   }
 
@@ -281,7 +315,10 @@ export class VaultManager {
    */
   private decrypt(data: Buffer): Buffer | null {
     if (!this.encryptionKey) {
-      throw new CLIError('Encryption key not initialized', 'ENCRYPTION_KEY_ERROR');
+      throw new CLIError(
+        'Encryption key not initialized',
+        'ENCRYPTION_KEY_ERROR'
+      );
     }
 
     try {
@@ -294,7 +331,13 @@ export class VaultManager {
       const encrypted = data.subarray(49 + aadLength);
 
       // Derive the same encryption key using PBKDF2
-      const key = crypto.pbkdf2Sync(this.encryptionKey, salt, 10000, 32, 'sha256');
+      const key = crypto.pbkdf2Sync(
+        this.encryptionKey,
+        salt,
+        10000,
+        32,
+        'sha256'
+      );
 
       // Create a decipher
       const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
@@ -304,10 +347,7 @@ export class VaultManager {
       decipher.setAAD(aad);
 
       // Decrypt the data
-      return Buffer.concat([
-        decipher.update(encrypted),
-        decipher.final()
-      ]);
+      return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (error) {
       logger.error('Decryption failed:', error);
       return null;
@@ -323,8 +363,8 @@ export class VaultManager {
         created: vault.created,
         totalFiles: vault.totalFiles,
         totalSize: vault.totalSize,
-        config: vault.config
-      }))
+        config: vault.config,
+      })),
     };
     fs.writeFileSync(this.recordsFile, JSON.stringify(records, null, 2));
   }
@@ -337,7 +377,7 @@ export class VaultManager {
       created: new Date().toISOString(),
       totalFiles: 0,
       totalSize: 0,
-      config
+      config,
     };
 
     const vaultDir = path.join(this.baseDir, vaultId);
@@ -448,7 +488,11 @@ export class VaultManager {
     return expiringBlobs;
   }
 
-  updateBlobExpiry(blobId: string, vaultId: string, newExpiryDate: string): void {
+  updateBlobExpiry(
+    blobId: string,
+    vaultId: string,
+    newExpiryDate: string
+  ): void {
     const record = this.getBlobRecord(blobId, vaultId);
     record.expiresAt = newExpiryDate;
 

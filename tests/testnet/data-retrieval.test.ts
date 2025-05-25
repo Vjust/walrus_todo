@@ -1,11 +1,14 @@
 /**
  * @fileoverview Tests for Walrus testnet data retrieval operations
- * 
+ *
  * This test suite verifies the data fetch operations from Walrus testnet storage,
  * including retrieving todos and todo lists using blob IDs.
  */
 
-import { WalrusStorage, createRealWalrusStorage } from '../../src/utils/walrus-storage';
+import {
+  WalrusStorage,
+  createRealWalrusStorage,
+} from '../../src/utils/walrus-storage';
 import { Todo, TodoList } from '../../src/types/todo';
 
 import { exec } from 'child_process';
@@ -44,7 +47,7 @@ describe('Walrus Testnet Data Retrieval', () => {
     updatedAt: '2024-01-15T10:00:00.000Z',
     private: false,
     storageLocation: 'blockchain',
-    walrusBlobId: sampleTodoBlobId
+    walrusBlobId: sampleTodoBlobId,
   };
 
   const sampleTodoList: TodoList = {
@@ -55,18 +58,18 @@ describe('Walrus Testnet Data Retrieval', () => {
     version: 1,
     createdAt: '2024-01-15T09:00:00.000Z',
     updatedAt: '2024-01-15T10:00:00.000Z',
-    walrusBlobId: sampleListBlobId
+    walrusBlobId: sampleListBlobId,
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock OS methods
     mockOs.tmpdir.mockReturnValue('/tmp');
     mockOs.homedir.mockReturnValue('/home');
 
     // Mock file system operations
-    mockFs.existsSync.mockImplementation((path) => {
+    mockFs.existsSync.mockImplementation(path => {
       if (path === mockTempDir) return true;
       if (path.startsWith(mockTempDir)) return false; // Temp files don't exist initially
       return false;
@@ -82,7 +85,10 @@ describe('Walrus Testnet Data Retrieval', () => {
 
   describe('Initialization and Connection', () => {
     test('should check for Walrus CLI availability', async () => {
-      execAsync.mockResolvedValueOnce({ stdout: 'walrus version 0.1.0', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'walrus version 0.1.0',
+        stderr: '',
+      });
 
       await walrusStorage.init();
 
@@ -94,12 +100,15 @@ describe('Walrus Testnet Data Retrieval', () => {
 
       await expect(walrusStorage.init()).rejects.toThrow(CLIError);
       await expect(walrusStorage.init()).rejects.toMatchObject({
-        code: 'WALRUS_CLI_NOT_FOUND'
+        code: 'WALRUS_CLI_NOT_FOUND',
       });
     });
 
     test('should maintain connection state', async () => {
-      execAsync.mockResolvedValueOnce({ stdout: 'walrus version 0.1.0', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'walrus version 0.1.0',
+        stderr: '',
+      });
 
       await walrusStorage.connect();
       const isConnected = await walrusStorage.checkConnection();
@@ -111,21 +120,26 @@ describe('Walrus Testnet Data Retrieval', () => {
   describe('Todo Retrieval', () => {
     beforeEach(async () => {
       // Mock successful CLI connection
-      execAsync.mockResolvedValueOnce({ stdout: 'walrus version 0.1.0', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'walrus version 0.1.0',
+        stderr: '',
+      });
       await walrusStorage.init();
     });
 
     test('should retrieve a todo by blob ID', async () => {
       // Mock the walrus get command
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
-      
+
       // Mock reading the retrieved file
       mockFs.readFileSync.mockReturnValueOnce(JSON.stringify(sampleTodo));
 
       const retrievedTodo = await walrusStorage.retrieveTodo(sampleTodoBlobId);
 
       expect(execAsync).toHaveBeenCalledWith(
-        expect.stringContaining(`walrus --context testnet get ${sampleTodoBlobId} --output`)
+        expect.stringContaining(
+          `walrus --context testnet get ${sampleTodoBlobId} --output`
+        )
       );
       expect(retrievedTodo).toEqual(sampleTodo);
     });
@@ -133,16 +147,17 @@ describe('Walrus Testnet Data Retrieval', () => {
     test('should handle retrieval errors gracefully', async () => {
       execAsync.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(walrusStorage.retrieveTodo(sampleTodoBlobId))
-        .rejects.toThrow('Network error');
+      await expect(
+        walrusStorage.retrieveTodo(sampleTodoBlobId)
+      ).rejects.toThrow('Network error');
     });
 
     test('should clean up temporary files after retrieval', async () => {
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockFs.readFileSync.mockReturnValueOnce(JSON.stringify(sampleTodo));
-      
+
       let tempFilePath: string = '';
-      mockFs.existsSync.mockImplementation((path) => {
+      mockFs.existsSync.mockImplementation(path => {
         if (typeof path === 'string' && path.includes('retrieved-')) {
           tempFilePath = path;
           return true;
@@ -152,21 +167,27 @@ describe('Walrus Testnet Data Retrieval', () => {
 
       await walrusStorage.retrieveTodo(sampleTodoBlobId);
 
-      expect(mockFs.unlinkSync).toHaveBeenCalledWith(expect.stringContaining('retrieved-'));
+      expect(mockFs.unlinkSync).toHaveBeenCalledWith(
+        expect.stringContaining('retrieved-')
+      );
     });
 
     test('should handle invalid JSON data', async () => {
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockFs.readFileSync.mockReturnValueOnce('invalid json');
 
-      await expect(walrusStorage.retrieveTodo(sampleTodoBlobId))
-        .rejects.toThrow(SyntaxError);
+      await expect(
+        walrusStorage.retrieveTodo(sampleTodoBlobId)
+      ).rejects.toThrow(SyntaxError);
     });
   });
 
   describe('TodoList Retrieval', () => {
     beforeEach(async () => {
-      execAsync.mockResolvedValueOnce({ stdout: 'walrus version 0.1.0', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'walrus version 0.1.0',
+        stderr: '',
+      });
       await walrusStorage.init();
     });
 
@@ -177,7 +198,9 @@ describe('Walrus Testnet Data Retrieval', () => {
       const retrievedList = await walrusStorage.retrieveList(sampleListBlobId);
 
       expect(execAsync).toHaveBeenCalledWith(
-        expect.stringContaining(`walrus --context testnet get ${sampleListBlobId} --output`)
+        expect.stringContaining(
+          `walrus --context testnet get ${sampleListBlobId} --output`
+        )
       );
       expect(retrievedList).toEqual(sampleTodoList);
     });
@@ -185,8 +208,9 @@ describe('Walrus Testnet Data Retrieval', () => {
     test('should handle missing blob IDs', async () => {
       execAsync.mockRejectedValueOnce(new Error('Blob not found'));
 
-      await expect(walrusStorage.retrieveList('non-existent-blob-id'))
-        .rejects.toThrow('Blob not found');
+      await expect(
+        walrusStorage.retrieveList('non-existent-blob-id')
+      ).rejects.toThrow('Blob not found');
     });
 
     test('should retrieve lists with multiple todos', async () => {
@@ -195,12 +219,14 @@ describe('Walrus Testnet Data Retrieval', () => {
         todos: [
           sampleTodo,
           { ...sampleTodo, id: 'todo-456', title: 'Second Todo' },
-          { ...sampleTodo, id: 'todo-789', title: 'Third Todo' }
-        ]
+          { ...sampleTodo, id: 'todo-789', title: 'Third Todo' },
+        ],
       };
 
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
-      mockFs.readFileSync.mockReturnValueOnce(JSON.stringify(listWithMultipleTodos));
+      mockFs.readFileSync.mockReturnValueOnce(
+        JSON.stringify(listWithMultipleTodos)
+      );
 
       const retrievedList = await walrusStorage.retrieveList(sampleListBlobId);
 
@@ -211,12 +237,18 @@ describe('Walrus Testnet Data Retrieval', () => {
 
   describe('Blob Deletion', () => {
     beforeEach(async () => {
-      execAsync.mockResolvedValueOnce({ stdout: 'walrus version 0.1.0', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'walrus version 0.1.0',
+        stderr: '',
+      });
       await walrusStorage.init();
     });
 
     test('should delete a blob by ID', async () => {
-      execAsync.mockResolvedValueOnce({ stdout: 'Blob deleted successfully', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'Blob deleted successfully',
+        stderr: '',
+      });
 
       await walrusStorage.deleteBlob(sampleTodoBlobId);
 
@@ -228,15 +260,19 @@ describe('Walrus Testnet Data Retrieval', () => {
     test('should handle deletion of non-existent blobs', async () => {
       execAsync.mockRejectedValueOnce(new Error('Blob not found'));
 
-      await expect(walrusStorage.deleteBlob('non-existent-blob'))
-        .rejects.toThrow('Blob not found');
+      await expect(
+        walrusStorage.deleteBlob('non-existent-blob')
+      ).rejects.toThrow('Blob not found');
     });
   });
 
   describe('Network-Specific Operations', () => {
     test('should use correct network context', async () => {
       const mainnetStorage = createRealWalrusStorage('mainnet');
-      execAsync.mockResolvedValueOnce({ stdout: 'walrus version 0.1.0', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'walrus version 0.1.0',
+        stderr: '',
+      });
       await mainnetStorage.init();
 
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
@@ -252,39 +288,49 @@ describe('Walrus Testnet Data Retrieval', () => {
 
   describe('Error Handling and Edge Cases', () => {
     beforeEach(async () => {
-      execAsync.mockResolvedValueOnce({ stdout: 'walrus version 0.1.0', stderr: '' });
+      execAsync.mockResolvedValueOnce({
+        stdout: 'walrus version 0.1.0',
+        stderr: '',
+      });
       await walrusStorage.init();
     });
 
     test('should handle network timeouts', async () => {
-      execAsync.mockImplementationOnce(() => 
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 100)
-        )
+      execAsync.mockImplementationOnce(
+        () =>
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 100)
+          )
       );
 
-      await expect(walrusStorage.retrieveTodo(sampleTodoBlobId))
-        .rejects.toThrow('Timeout');
+      await expect(
+        walrusStorage.retrieveTodo(sampleTodoBlobId)
+      ).rejects.toThrow('Timeout');
     });
 
     test('should handle partial data corruption', async () => {
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
-      
-      // Mock corrupted JSON with missing closing brace
-      mockFs.readFileSync.mockReturnValueOnce('{"id":"test","title":"Corrupted"');
 
-      await expect(walrusStorage.retrieveTodo(sampleTodoBlobId))
-        .rejects.toThrow(SyntaxError);
+      // Mock corrupted JSON with missing closing brace
+      mockFs.readFileSync.mockReturnValueOnce(
+        '{"id":"test","title":"Corrupted"'
+      );
+
+      await expect(
+        walrusStorage.retrieveTodo(sampleTodoBlobId)
+      ).rejects.toThrow(SyntaxError);
     });
 
     test('should handle large data retrieval', async () => {
       const largeTodoList: TodoList = {
         ...sampleTodoList,
-        todos: Array(1000).fill(null).map((_, index) => ({
-          ...sampleTodo,
-          id: `todo-${index}`,
-          title: `Todo ${index}`
-        }))
+        todos: Array(1000)
+          .fill(null)
+          .map((_, index) => ({
+            ...sampleTodo,
+            id: `todo-${index}`,
+            title: `Todo ${index}`,
+          })),
       };
 
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });

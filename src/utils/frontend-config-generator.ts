@@ -1,6 +1,6 @@
 /**
  * Frontend Configuration Generator
- * 
+ *
  * Generates configuration files that the frontend can consume after deployment.
  * This ensures both CLI and frontend use consistent contract addresses and network settings.
  */
@@ -193,7 +193,8 @@ export class FrontendConfigGenerator {
 
       logger.info(`Frontend configuration generated successfully`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       logger.error(`Failed to generate frontend config: ${errorMessage}`);
       throw new CLIError(
         `Failed to generate frontend configuration: ${errorMessage}`,
@@ -222,7 +223,10 @@ export class FrontendConfigGenerator {
   private getNetworkConfig(network: string): NetworkConfig {
     const config = NETWORK_CONFIGS[network];
     if (!config) {
-      throw new CLIError(`Unsupported network: ${network}`, 'UNSUPPORTED_NETWORK');
+      throw new CLIError(
+        `Unsupported network: ${network}`,
+        'UNSUPPORTED_NETWORK'
+      );
     }
     return config;
   }
@@ -233,7 +237,10 @@ export class FrontendConfigGenerator {
   private getWalrusConfig(network: string): WalrusConfig {
     const config = WALRUS_CONFIGS[network];
     if (!config) {
-      throw new CLIError(`Unsupported Walrus network: ${network}`, 'UNSUPPORTED_WALRUS_NETWORK');
+      throw new CLIError(
+        `Unsupported Walrus network: ${network}`,
+        'UNSUPPORTED_WALRUS_NETWORK'
+      );
     }
     return config;
   }
@@ -241,10 +248,13 @@ export class FrontendConfigGenerator {
   /**
    * Saves network-specific configuration file
    */
-  private async saveNetworkConfig(network: string, config: FrontendConfig): Promise<void> {
+  private async saveNetworkConfig(
+    network: string,
+    config: FrontendConfig
+  ): Promise<void> {
     const configPath = path.join(this.configDir, `${network}.ts`);
     const content = this.generateNetworkConfigContent(network, config);
-    
+
     await fs.promises.writeFile(configPath, content, 'utf-8');
     logger.debug(`Saved network config: ${configPath}`);
   }
@@ -252,10 +262,13 @@ export class FrontendConfigGenerator {
   /**
    * Saves environment configuration (JSON format for runtime loading)
    */
-  private async saveEnvironmentConfig(network: string, config: FrontendConfig): Promise<void> {
+  private async saveEnvironmentConfig(
+    network: string,
+    config: FrontendConfig
+  ): Promise<void> {
     const configPath = path.join(this.configDir, `${network}.json`);
     const content = JSON.stringify(config, null, 2);
-    
+
     await fs.promises.writeFile(configPath, content, 'utf-8');
     logger.debug(`Saved environment config: ${configPath}`);
   }
@@ -263,7 +276,10 @@ export class FrontendConfigGenerator {
   /**
    * Generates TypeScript content for network configuration
    */
-  private generateNetworkConfigContent(network: string, config: FrontendConfig): string {
+  private generateNetworkConfigContent(
+    network: string,
+    config: FrontendConfig
+  ): string {
     return `/**
  * Auto-generated configuration for ${network} network
  * Generated at: ${config.deployment.timestamp}
@@ -316,7 +332,7 @@ export default ${network.toUpperCase()}_CONFIG;
    */
   private async generateConfigIndex(): Promise<void> {
     const indexPath = path.join(this.configDir, 'index.ts');
-    
+
     // Get all existing network config files
     const configFiles = await fs.promises.readdir(this.configDir);
     const networkFiles = configFiles
@@ -328,16 +344,16 @@ export default ${network.toUpperCase()}_CONFIG;
  * Exports all network configurations
  */
 
-${networkFiles.map(network => 
-  `import ${network.toUpperCase()}_CONFIG from './${network}';`
-).join('\n')}
+${networkFiles
+  .map(network => `import ${network.toUpperCase()}_CONFIG from './${network}';`)
+  .join('\n')}
 
 export type NetworkName = ${networkFiles.map(n => `'${n}'`).join(' | ')};
 
 export const NETWORK_CONFIGS = {
-${networkFiles.map(network => 
-  `  ${network}: ${network.toUpperCase()}_CONFIG,`
-).join('\n')}
+${networkFiles
+  .map(network => `  ${network}: ${network.toUpperCase()}_CONFIG,`)
+  .join('\n')}
 } as const;
 
 export { ${networkFiles.map(n => `${n.toUpperCase()}_CONFIG`).join(', ')} };
@@ -389,6 +405,8 @@ export function getCurrentNetworkConfig() {
 /**
  * Creates a new frontend configuration generator
  */
-export function createFrontendConfigGenerator(projectRoot?: string): FrontendConfigGenerator {
+export function createFrontendConfigGenerator(
+  projectRoot?: string
+): FrontendConfigGenerator {
   return new FrontendConfigGenerator(projectRoot);
 }

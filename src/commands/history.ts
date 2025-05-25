@@ -63,20 +63,23 @@ export default class HistoryCommand extends BaseCommand {
 
   private showRecentHistory(limit: number): void {
     const history = commandHistory.getHistory(limit);
-    
+
     if (history.length === 0) {
       this.info('No command history found');
       return;
     }
 
-    this.section('Recent Commands', history.map((cmd, index) => 
-      `${chalk.dim(`${index + 1}.`)} ${chalk.cyan(cmd)}`
-    ).join('\n'));
+    this.section(
+      'Recent Commands',
+      history
+        .map((cmd, index) => `${chalk.dim(`${index + 1}.`)} ${chalk.cyan(cmd)}`)
+        .join('\n')
+    );
   }
 
   private showStatistics(): void {
     const stats = commandHistory.getMostFrequent(10);
-    
+
     if (stats.length === 0) {
       this.info('No command statistics available');
       return;
@@ -85,26 +88,38 @@ export default class HistoryCommand extends BaseCommand {
     const maxCount = Math.max(...stats.map(s => s.count));
     const barMaxLength = 30;
 
-    this.section('Command Usage Statistics', stats.map(({ command, count }) => {
-      const percentage = (count / maxCount) * 100;
-      const barLength = Math.round((count / maxCount) * barMaxLength);
-      const bar = '█'.repeat(barLength) + '▒'.repeat(barMaxLength - barLength);
-      
-      return `${chalk.cyan(command.padEnd(15))} ${chalk.gray(bar)} ${chalk.yellow(count.toString().padStart(3))} (${percentage.toFixed(1)}%)`;
-    }).join('\n'));
+    this.section(
+      'Command Usage Statistics',
+      stats
+        .map(({ command, count }) => {
+          const percentage = (count / maxCount) * 100;
+          const barLength = Math.round((count / maxCount) * barMaxLength);
+          const bar =
+            '█'.repeat(barLength) + '▒'.repeat(barMaxLength - barLength);
+
+          return `${chalk.cyan(command.padEnd(15))} ${chalk.gray(bar)} ${chalk.yellow(count.toString().padStart(3))} (${percentage.toFixed(1)}%)`;
+        })
+        .join('\n')
+    );
   }
 
   private showSearchResults(pattern: string): void {
     const results = commandHistory.searchHistory(pattern);
-    
+
     if (results.length === 0) {
       this.info(`No commands found matching "${pattern}"`);
       return;
     }
 
-    this.section(`Commands matching "${pattern}"`, results.map((cmd, index) => 
-      `${chalk.dim(`${index + 1}.`)} ${this.highlightPattern(cmd, pattern)}`
-    ).join('\n'));
+    this.section(
+      `Commands matching "${pattern}"`,
+      results
+        .map(
+          (cmd, index) =>
+            `${chalk.dim(`${index + 1}.`)} ${this.highlightPattern(cmd, pattern)}`
+        )
+        .join('\n')
+    );
   }
 
   private highlightPattern(text: string, pattern: string): string {

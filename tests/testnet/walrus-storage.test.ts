@@ -1,12 +1,12 @@
 /**
  * Real Walrus Testnet Integration Tests
- * 
+ *
  * These tests interact with the actual Walrus testnet.
  * Prerequisites:
  * - Walrus CLI installed and configured
  * - WAL tokens in testnet wallet
  * - Environment variable WALRUS_TEST_ENABLE_TESTNET=true
- * 
+ *
  * Run with: WALRUS_TEST_ENABLE_TESTNET=true pnpm test tests/testnet/walrus-storage.test.ts
  */
 
@@ -32,7 +32,7 @@ describe('Walrus Testnet Integration', () => {
       const previousMockSetting = process.env.WALRUS_USE_MOCK;
       process.env.WALRUS_USE_MOCK = 'false';
       todoStorage = new TodoStorage();
-      
+
       // Restore after test
       afterAll(() => {
         process.env.WALRUS_USE_MOCK = previousMockSetting;
@@ -47,16 +47,16 @@ describe('Walrus Testnet Integration', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         tags: ['test', 'walrus', 'integration'],
-        priority: 'high'
+        priority: 'high',
       };
 
       // console.log('Storing todo on Walrus testnet...'); // Removed console statement
       const walrusBlobId = await todoStorage.store(JSON.stringify(todo));
-      
+
       expect(walrusBlobId).toBeDefined();
       expect(walrusBlobId).not.toBe('mock_blob_id');
       expect(walrusBlobId.length).toBeGreaterThan(20); // Real Walrus blob IDs are longer
-      
+
       // console.log(`✓ Todo stored successfully. Blob ID: ${walrusBlobId}`); // Removed console statement
     }, 30000); // Extended timeout for network operations
 
@@ -69,7 +69,7 @@ describe('Walrus Testnet Integration', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         tags: ['retrieval', 'test'],
-        priority: 'medium'
+        priority: 'medium',
       };
 
       // console.log('Storing todo for retrieval test...'); // Removed console statement
@@ -91,7 +91,7 @@ describe('Walrus Testnet Integration', () => {
     it('should handle storage errors gracefully', async () => {
       // Test with invalid data
       const invalidData = new Array(200 * 1024 * 1024).join('x'); // 200MB+ exceeds typical limits
-      
+
       await expect(todoStorage.store(invalidData)).rejects.toThrow();
     }, 30000);
   });
@@ -110,20 +110,22 @@ describe('Walrus Testnet Integration', () => {
 
     it('should store an image on Walrus testnet', async () => {
       const imageData = readFileSync(testImagePath);
-      
+
       // console.log('Storing image on Walrus testnet...'); // Removed console statement
-      const walrusBlobId = await imageStorage.store(imageData.toString('base64'));
-      
+      const walrusBlobId = await imageStorage.store(
+        imageData.toString('base64')
+      );
+
       expect(walrusBlobId).toBeDefined();
       expect(walrusBlobId).not.toBe('mock_blob_id');
-      
+
       // console.log(`✓ Image stored successfully. Blob ID: ${walrusBlobId}`); // Removed console statement
     }, 60000); // Images may take longer
 
     it('should retrieve an image from Walrus testnet', async () => {
       const imageData = readFileSync(testImagePath);
       const base64Image = imageData.toString('base64');
-      
+
       // console.log('Storing image for retrieval test...'); // Removed console statement
       const walrusBlobId = await imageStorage.store(base64Image);
       // console.log(`✓ Image stored with blob ID: ${walrusBlobId}`); // Removed console statement
@@ -155,40 +157,40 @@ describe('Walrus Testnet Integration', () => {
           title: 'Batch Todo 1',
           description: 'First todo in batch operation',
           completed: false,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           id: '4',
           title: 'Batch Todo 2',
           description: 'Second todo in batch operation',
           completed: true,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           id: '5',
           title: 'Batch Todo 3',
           description: 'Third todo in batch operation',
           completed: false,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       // console.log(`Storing ${todos.length} todos in batch...`); // Removed console statement
       const startTime = Date.now();
-      
+
       const blobIds = await Promise.all(
         todos.map(todo => storageClient.storeTodo(JSON.stringify(todo)))
       );
-      
+
       const endTime = Date.now();
       const duration = (endTime - startTime) / 1000;
-      
+
       expect(blobIds).toHaveLength(todos.length);
       blobIds.forEach(blobId => {
         expect(blobId).toBeDefined();
         expect(blobId).not.toBe('mock_blob_id');
       });
-      
+
       // console.log(`✓ Batch storage completed in ${duration}s`); // Removed console statement
       // console.log('Blob IDs:', blobIds); // Removed console statement
     }, 90000); // Extended timeout for batch operations
@@ -212,7 +214,7 @@ describe('Walrus Testnet Integration', () => {
         title: 'Large Todo',
         description: new Array(10 * 1024 * 1024).join('x'), // 10MB
         completed: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
 
       // This might fail due to size or timeout
@@ -226,10 +228,8 @@ describe('Walrus Testnet Integration', () => {
 
     it('should handle invalid blob IDs gracefully', async () => {
       const invalidBlobId = 'invalid_blob_id_12345';
-      
-      await expect(todoStorage.retrieve(invalidBlobId))
-        .rejects
-        .toThrow();
+
+      await expect(todoStorage.retrieve(invalidBlobId)).rejects.toThrow();
     }, 30000);
   });
 

@@ -9,19 +9,19 @@ const logger = new Logger('sui-client-utils');
 
 import { SuiClient } from '@mysten/sui/client';
 import { TransactionBlock } from '@mysten/sui/transactions';
-import { 
-  Todo, 
-  CreateTodoParams, 
+import {
+  Todo,
+  CreateTodoParams,
   UpdateTodoParams,
   TransactionResult,
   NetworkType,
-  ErrorContext
+  ErrorContext,
 } from '../types/todo';
-import { 
-  TodoOperationError, 
-  TransactionError, 
+import {
+  TodoOperationError,
+  TransactionError,
   SuiClientError,
-  WalletNotConnectedError
+  WalletNotConnectedError,
 } from '../types/errors/consolidated';
 
 // Mock implementations for basic utility functions
@@ -51,7 +51,7 @@ export function handleSuiOperationError(
   // Log error with context for debugging
   logger.error('Sui operation failed:', {
     error,
-    context: errorContext
+    context: errorContext,
   });
 
   if (error instanceof WalletNotConnectedError) {
@@ -86,10 +86,7 @@ export function handleSuiOperationError(
     );
   }
 
-  throw new TodoOperationError(
-    'An unknown error occurred',
-    context.operation
-  );
+  throw new TodoOperationError('An unknown error occurred', context.operation);
 }
 
 /**
@@ -107,7 +104,7 @@ export async function retryOperation<T>(
       return await operation();
     } catch (_error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (attempt === maxRetries) {
         break;
       }
@@ -163,7 +160,7 @@ export async function createTodoSafely(
     operation: 'create_todo',
     address,
     network: getCurrentNetwork(),
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   try {
@@ -178,17 +175,17 @@ export async function createTodoSafely(
 
     // Create transaction block
     const txb = new TransactionBlock();
-    
+
     // Mock transaction construction
     logger.info('Creating todo with params:', params);
-    
+
     // Execute transaction
     const result = await signAndExecuteTransaction(txb);
-    
+
     return {
       success: true,
       digest: result.digest,
-      objectId: result.objectChanges?.[0]?.objectId
+      objectId: result.objectChanges?.[0]?.objectId,
     };
   } catch (_error) {
     handleSuiOperationError(error, context);
@@ -203,31 +200,31 @@ export async function waitForTransactionConfirmation(
   maxWaitTime: number = 30000
 ): Promise<boolean> {
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < maxWaitTime) {
     try {
       const status = await getTransactionStatus(digest);
-      
+
       if (status.status === 'success') {
         return true;
       }
-      
+
       if (status.status === 'failure') {
         throw new TransactionError('Transaction failed', digest);
       }
-      
+
       // Wait 1 second before checking again
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (_error) {
       if (error instanceof TransactionError) {
         throw error;
       }
-      
+
       // Continue waiting for other errors (might be temporary network issues)
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
-  
+
   throw new Error(`Transaction confirmation timeout after ${maxWaitTime}ms`);
 }
 
@@ -240,23 +237,23 @@ export async function checkNetworkHealth(): Promise<{
   error?: string;
 }> {
   const startTime = Date.now();
-  
+
   try {
     const client = initializeSuiClient();
-    
+
     // Try to get chain identifier as a health check
     await client.getChainIdentifier();
-    
+
     const latency = Date.now() - startTime;
-    
+
     return {
       healthy: true,
-      latency
+      latency,
     };
   } catch (_error) {
     return {
       healthy: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -268,5 +265,5 @@ export type {
   UpdateTodoParams,
   TransactionResult,
   NetworkType,
-  ErrorContext
+  ErrorContext,
 };

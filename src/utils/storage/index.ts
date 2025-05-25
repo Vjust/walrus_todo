@@ -14,7 +14,7 @@ export type {
   StorageOptimizationResult,
   StorageOperationOptions,
   ContentMetadata,
-  VerificationResult
+  VerificationResult,
 } from './core/StorageTypes';
 
 // Base classes
@@ -32,7 +32,11 @@ export { BlobStorage } from './implementations/BlobStorage';
 export { TodoStorage } from './implementations/TodoStorage';
 export { ImageStorage } from './implementations/ImageStorage';
 export { NFTStorage } from './implementations/NFTStorage';
-export type { NFTStorageConfig, NFTMetadata, NFTInfo } from './implementations/NFTStorage';
+export type {
+  NFTStorageConfig,
+  NFTMetadata,
+  NFTInfo,
+} from './implementations/NFTStorage';
 
 // Import implementations for factory function
 import { TodoStorage } from './implementations/TodoStorage';
@@ -44,7 +48,9 @@ import { BlobStorage } from './implementations/BlobStorage';
 export function createStorage(
   type: 'todo' | 'image' | 'blob' | 'nft',
   address: string,
-  config?: Partial<import('./core/StorageTypes').StorageConfig> | Partial<import('./implementations/NFTStorage').NFTStorageConfig>
+  config?:
+    | Partial<import('./core/StorageTypes').StorageConfig>
+    | Partial<import('./implementations/NFTStorage').NFTStorageConfig>
 ): import('./core/IStorage').IStorage {
   switch (type) {
     case 'todo':
@@ -63,16 +69,17 @@ export function createStorage(
 }
 
 // Default configuration
-export const DEFAULT_STORAGE_CONFIG: import('./core/StorageTypes').StorageConfig = {
-  minWalBalance: BigInt(100),
-  storageBuffer: BigInt(10240),
-  defaultEpochDuration: 52,
-  minEpochBuffer: 10,
-  enableOptimization: true,
-  useMockMode: false,
-  maxRetries: 3,
-  retryBaseDelay: 1000,
-  maxContentSize: 10 * 1024 * 1024, // 10MB
-  networkUrl: 'https://fullnode.testnet.sui.io:443',
-  networkEnvironment: 'testnet'
-};
+export const DEFAULT_STORAGE_CONFIG: import('./core/StorageTypes').StorageConfig =
+  {
+    minWalBalance: BigInt(100),
+    storageBuffer: BigInt(10240),
+    defaultEpochDuration: 52,
+    minEpochBuffer: 10,
+    enableOptimization: true,
+    useMockMode: false,
+    maxRetries: 3,
+    retryBaseDelay: 1000,
+    maxContentSize: 10 * 1024 * 1024, // 10MB
+    networkUrl: 'https://fullnode.testnet.sui.io:443',
+    networkEnvironment: 'testnet',
+  };

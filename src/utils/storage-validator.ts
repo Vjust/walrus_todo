@@ -17,7 +17,9 @@ export class StorageValidator {
   /**
    * Validates a todo's data integrity
    */
-  async validateTodoIntegrity(todo: Todo): Promise<{ valid: boolean; errors: string[] }> {
+  async validateTodoIntegrity(
+    todo: Todo
+  ): Promise<{ valid: boolean; errors: string[] }> {
     const errors: string[] = [];
 
     // Check basic required fields
@@ -27,8 +29,11 @@ export class StorageValidator {
     if (!todo.storageLocation) errors.push('Storage location is missing');
 
     // Validate storage-specific requirements
-    if ((todo.storageLocation === 'blockchain' || todo.storageLocation === 'both') && 
-        !todo.walrusBlobId) {
+    if (
+      (todo.storageLocation === 'blockchain' ||
+        todo.storageLocation === 'both') &&
+      !todo.walrusBlobId
+    ) {
       errors.push('Blockchain storage requires a Walrus blob ID');
     }
 
@@ -42,7 +47,7 @@ export class StorageValidator {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -58,9 +63,9 @@ export class StorageValidator {
       priority: todo.priority,
       tags: todo.tags,
       dueDate: todo.dueDate,
-      createdAt: todo.createdAt
+      createdAt: todo.createdAt,
     };
-    
+
     const dataString = JSON.stringify(todoData, Object.keys(todoData).sort());
     return crypto.createHash('sha256').update(dataString).digest('hex');
   }
@@ -69,7 +74,7 @@ export class StorageValidator {
    * Validates a storage transition
    */
   async validateStorageTransition(
-    todo: Todo, 
+    todo: Todo,
     newStorage: StorageLocation
   ): Promise<{ valid: boolean; warnings: string[]; errors: string[] }> {
     const warnings: string[] = [];
@@ -92,12 +97,16 @@ export class StorageValidator {
             await this.walrusStorage.connect();
           }
         } catch (error) {
-          errors.push(`Cannot connect to blockchain: ${(error as Error).message}`);
+          errors.push(
+            `Cannot connect to blockchain: ${(error as Error).message}`
+          );
         }
         break;
 
       case 'blockchain->local':
-        warnings.push('Moving from blockchain to local will not remove blockchain data');
+        warnings.push(
+          'Moving from blockchain to local will not remove blockchain data'
+        );
         if (!todo.walrusBlobId) {
           errors.push('Cannot retrieve from blockchain: missing blob ID');
         }
@@ -121,7 +130,7 @@ export class StorageValidator {
     return {
       valid: errors.length === 0,
       warnings,
-      errors
+      errors,
     };
   }
 
@@ -142,26 +151,27 @@ export class StorageValidator {
           // Check blockchain connectivity and funds
           await this.walrusStorage.connect();
           const balance = await this.walrusStorage.checkBalance();
-          
-          if (balance < 0.001) { // Minimum required balance
+
+          if (balance < 0.001) {
+            // Minimum required balance
             return {
               available: false,
-              message: 'Insufficient funds for blockchain storage'
+              message: 'Insufficient funds for blockchain storage',
             };
           }
-          
+
           return { available: true };
 
         default:
           return {
             available: false,
-            message: `Unknown storage location: ${storageLocation}`
+            message: `Unknown storage location: ${storageLocation}`,
           };
       }
     } catch (error) {
       return {
         available: false,
-        message: (error as Error).message
+        message: (error as Error).message,
       };
     }
   }
@@ -184,21 +194,24 @@ export class StorageValidator {
 
     for (const todo of todos) {
       const integrityCheck = await this.validateTodoIntegrity(todo);
-      
+
       if (!integrityCheck.valid) {
         invalidTodos.push({ todo, errors: integrityCheck.errors });
         continue;
       }
 
-      const transitionCheck = await this.validateStorageTransition(todo, newStorage);
-      
+      const transitionCheck = await this.validateStorageTransition(
+        todo,
+        newStorage
+      );
+
       if (!transitionCheck.valid) {
         invalidTodos.push({ todo, errors: transitionCheck.errors });
         continue;
       }
 
       validTodos.push(todo);
-      
+
       // Estimate storage cost
       if (newStorage === 'blockchain' || newStorage === 'both') {
         totalCost += await this.estimateStorageCost(todo);
@@ -209,7 +222,7 @@ export class StorageValidator {
       valid: invalidTodos.length === 0,
       validTodos,
       invalidTodos,
-      totalCost: totalCost > 0 ? totalCost : undefined
+      totalCost: totalCost > 0 ? totalCost : undefined,
     };
   }
 
@@ -220,7 +233,7 @@ export class StorageValidator {
     // Simple size calculation
     const todoJson = JSON.stringify(todo);
     const sizeInBytes = Buffer.byteLength(todoJson);
-    
+
     // Rough estimate: $0.01 per KB
     return (sizeInBytes / 1024) * 0.01;
   }
@@ -240,30 +253,32 @@ export class StorageValidator {
 
     try {
       await this.walrusStorage.connect();
-      const blockchainTodo = await this.walrusStorage.retrieveTodo(todo.walrusBlobId);
-      
+      const blockchainTodo = await this.walrusStorage.retrieveTodo(
+        todo.walrusBlobId
+      );
+
       const localTime = new Date(todo.updatedAt).getTime();
       const blockchainTime = new Date(blockchainTodo.updatedAt).getTime();
-      
+
       if (localTime === blockchainTime) {
         // Check checksums to ensure data is identical
         const localChecksum = this.calculateChecksum(todo);
         const blockchainChecksum = this.calculateChecksum(blockchainTodo);
-        
+
         return {
-          synced: localChecksum === blockchainChecksum
+          synced: localChecksum === blockchainChecksum,
         };
       }
-      
+
       return {
         synced: false,
         localNewer: localTime > blockchainTime,
-        blockchainNewer: blockchainTime > localTime
+        blockchainNewer: blockchainTime > localTime,
       };
     } catch (error) {
       return {
         synced: false,
-        error: (error as Error).message
+        error: (error as Error).message,
       };
     }
   }

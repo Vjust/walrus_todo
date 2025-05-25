@@ -5,8 +5,12 @@ declare namespace jest {
     mockImplementationOnce(fn: (...args: Parameters<T>) => ReturnType<T>): this;
     mockReturnValue(value: ReturnType<T>): this;
     mockReturnValueOnce(value: ReturnType<T>): this;
-    mockResolvedValue<U extends ReturnType<T>>(value: U extends Promise<infer R> ? R : U): this;
-    mockResolvedValueOnce<U extends ReturnType<T>>(value: U extends Promise<infer R> ? R : U): this;
+    mockResolvedValue<U extends ReturnType<T>>(
+      value: U extends Promise<infer R> ? R : U
+    ): this;
+    mockResolvedValueOnce<U extends ReturnType<T>>(
+      value: U extends Promise<infer R> ? R : U
+    ): this;
     mockRejectedValue(value: any): this;
     mockRejectedValueOnce(value: any): this;
     mockClear(): this;
@@ -39,8 +43,8 @@ declare namespace jest {
     [P in keyof T]: T[P] extends (...args: any[]) => any
       ? MockedFunction<T[P]>
       : T[P] extends new (...args: any[]) => any
-      ? MockedClass<T[P]>
-      : T[P];
+        ? MockedClass<T[P]>
+        : T[P];
   } & T;
 
   type SpyInstance = {

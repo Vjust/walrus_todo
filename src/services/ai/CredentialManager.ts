@@ -9,7 +9,7 @@ const logger = new Logger('CredentialManager');
 
 /**
  * CredentialManager - Securely manages API credentials for AI providers
- * 
+ *
  * This class handles secure storage and retrieval of API credentials using
  * encryption to protect sensitive information. It supports multiple providers
  * and ensures credentials are safely stored on the user's system.
@@ -23,14 +23,14 @@ export class CredentialManager {
   constructor() {
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
-    
+
     // Ensure the config directory exists
     if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true });
     }
-    
+
     this.credentialsPath = path.join(configDir, 'credentials.enc');
-    
+
     // Use deterministic but secure key derivation
     // In a production system, consider a more robust key management solution
     const keyPath = path.join(configDir, '.keyfile');
@@ -38,9 +38,9 @@ export class CredentialManager {
       const newKey = crypto.randomBytes(32);
       fs.writeFileSync(keyPath, newKey, { mode: 0o600 }); // Restrict file permissions
     }
-    
+
     this.encryptionKey = fs.readFileSync(keyPath);
-    
+
     // Load credentials if they exist
     this.loadCredentials();
   }
@@ -71,9 +71,12 @@ export class CredentialManager {
    */
   private saveCredentials(): void {
     if (!this.initialized) {
-      throw new CLIError('Credential manager not initialized', 'CREDENTIALS_NOT_INITIALIZED');
+      throw new CLIError(
+        'Credential manager not initialized',
+        'CREDENTIALS_NOT_INITIALIZED'
+      );
     }
-    
+
     try {
       const data = JSON.stringify(this.credentials);
       const encryptedData = this.encrypt(data);
@@ -91,13 +94,19 @@ export class CredentialManager {
    */
   public setCredential(provider: string, credential: string): void {
     if (!this.initialized) {
-      throw new CLIError('Credential manager not initialized', 'CREDENTIALS_NOT_INITIALIZED');
+      throw new CLIError(
+        'Credential manager not initialized',
+        'CREDENTIALS_NOT_INITIALIZED'
+      );
     }
-    
+
     if (!provider || !credential) {
-      throw new CLIError('Provider and credential must be provided', 'INVALID_CREDENTIALS');
+      throw new CLIError(
+        'Provider and credential must be provided',
+        'INVALID_CREDENTIALS'
+      );
     }
-    
+
     this.credentials[provider.toLowerCase()] = credential;
     this.saveCredentials();
   }
@@ -107,22 +116,28 @@ export class CredentialManager {
    */
   public getCredential(provider: string): string {
     if (!this.initialized) {
-      throw new CLIError('Credential manager not initialized', 'CREDENTIALS_NOT_INITIALIZED');
+      throw new CLIError(
+        'Credential manager not initialized',
+        'CREDENTIALS_NOT_INITIALIZED'
+      );
     }
-    
+
     const credential = this.credentials[provider.toLowerCase()];
     if (!credential) {
       // Check environment variables as fallback (format: PROVIDER_API_KEY, e.g., XAI_API_KEY)
       const envKey = `${provider.toUpperCase()}_API_KEY`;
       const envCredential = process.env[envKey];
-      
+
       if (envCredential) {
         return envCredential;
       }
-      
-      throw new CLIError(`No credential found for provider "${provider}"`, 'CREDENTIAL_NOT_FOUND');
+
+      throw new CLIError(
+        `No credential found for provider "${provider}"`,
+        'CREDENTIAL_NOT_FOUND'
+      );
     }
-    
+
     return credential;
   }
 
@@ -133,12 +148,12 @@ export class CredentialManager {
     if (!this.initialized) {
       return false;
     }
-    
+
     // Check stored credentials
     if (this.credentials[provider.toLowerCase()]) {
       return true;
     }
-    
+
     // Check environment variables as fallback
     const envKey = `${provider.toUpperCase()}_API_KEY`;
     return !!process.env[envKey];
@@ -151,7 +166,7 @@ export class CredentialManager {
     if (!this.initialized) {
       return [];
     }
-    
+
     return Object.keys(this.credentials);
   }
 
@@ -160,9 +175,12 @@ export class CredentialManager {
    */
   public removeCredential(provider: string): void {
     if (!this.initialized) {
-      throw new CLIError('Credential manager not initialized', 'CREDENTIALS_NOT_INITIALIZED');
+      throw new CLIError(
+        'Credential manager not initialized',
+        'CREDENTIALS_NOT_INITIALIZED'
+      );
     }
-    
+
     const providerKey = provider.toLowerCase();
     if (this.credentials[providerKey]) {
       delete this.credentials[providerKey];
@@ -176,7 +194,10 @@ export class CredentialManager {
   private encrypt(data: string): Buffer {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', this.encryptionKey, iv);
-    const encrypted = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
+    const encrypted = Buffer.concat([
+      cipher.update(data, 'utf8'),
+      cipher.final(),
+    ]);
     return Buffer.concat([iv, encrypted]);
   }
 
@@ -187,7 +208,11 @@ export class CredentialManager {
     try {
       const iv = data.subarray(0, 16);
       const encrypted = data.subarray(16);
-      const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey, iv);
+      const decipher = crypto.createDecipheriv(
+        'aes-256-cbc',
+        this.encryptionKey,
+        iv
+      );
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (_error) {
       logger.error('Decryption failed:', error);

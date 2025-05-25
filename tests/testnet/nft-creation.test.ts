@@ -13,7 +13,9 @@ const TEST_PRIVATE_KEY = process.env.TEST_WALLET_PRIVATE_KEY;
 const PACKAGE_ID = process.env.PACKAGE_ID;
 
 if (!TEST_PRIVATE_KEY || !PACKAGE_ID) {
-  throw new Error('Missing TEST_WALLET_PRIVATE_KEY or PACKAGE_ID in environment');
+  throw new Error(
+    'Missing TEST_WALLET_PRIVATE_KEY or PACKAGE_ID in environment'
+  );
 }
 
 describe('Sui Testnet NFT Creation', () => {
@@ -24,7 +26,7 @@ describe('Sui Testnet NFT Creation', () => {
   beforeAll(() => {
     // Set up Sui client for testnet
     suiClient = new SuiClient({ url: getFullnodeUrl('testnet') });
-    
+
     // Set up test wallet
     const { secretKey } = decodeSuiPrivateKey(TEST_PRIVATE_KEY);
     testWallet = Ed25519Keypair.fromSecretKey(secretKey);
@@ -34,7 +36,7 @@ describe('Sui Testnet NFT Creation', () => {
     try {
       // Build transaction
       const txb = new Transaction();
-      
+
       // Call create_todo_nft function
       txb.moveCall({
         target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
@@ -60,7 +62,7 @@ describe('Sui Testnet NFT Creation', () => {
           // completed
           txb.pure.bool(false),
           // metadata (empty JSON object)
-          txb.pure.string('{}')
+          txb.pure.string('{}'),
         ],
       });
 
@@ -84,7 +86,7 @@ describe('Sui Testnet NFT Creation', () => {
       const createdNft = response.effects?.created?.find(
         obj => obj.objectType && obj.objectType.includes('TodoNFT')
       );
-      
+
       expect(createdNft).toBeDefined();
       // console.log('Created NFT ID:', createdNft?.reference.objectId); // Removed console statement
       // console.log('Transaction digest:', response.digest); // Removed console statement
@@ -102,7 +104,7 @@ describe('Sui Testnet NFT Creation', () => {
   test('should create and set metadata on an NFT', async () => {
     try {
       const txb = new Transaction();
-      
+
       // Create NFT
       const [nft] = txb.moveCall({
         target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
@@ -117,7 +119,7 @@ describe('Sui Testnet NFT Creation', () => {
           txb.pure.string('https://walrus.testnet/assets/metadata-image.jpg'),
           txb.pure.bool(false),
           txb.pure.bool(false),
-          txb.pure.string('{"custom": "initial"}')
+          txb.pure.string('{"custom": "initial"}'),
         ],
       });
 
@@ -126,7 +128,9 @@ describe('Sui Testnet NFT Creation', () => {
         target: `${PACKAGE_ID}::todo_nft::update_metadata`,
         arguments: [
           nft,
-          txb.pure.string('{"custom": "updated", "tags": ["important", "test"]}')
+          txb.pure.string(
+            '{"custom": "updated", "tags": ["important", "test"]}'
+          ),
         ],
       });
 
@@ -141,21 +145,21 @@ describe('Sui Testnet NFT Creation', () => {
       });
 
       expect(response.effects?.status.status).toBe('success');
-      
+
       // Find the created NFT
       const createdNft = response.effects?.created?.find(
         obj => obj.objectType && obj.objectType.includes('TodoNFT')
       );
-      
+
       expect(createdNft).toBeDefined();
-      
+
       if (createdNft) {
         // Fetch the NFT object to verify metadata
         const nftObject = await suiClient.getObject({
           id: createdNft.reference.objectId,
           options: { showContent: true },
         });
-        
+
         expect(nftObject.data?.content).toBeDefined();
         // console.log('NFT with metadata created:', createdNft.reference.objectId); // Removed console statement
       }
@@ -168,10 +172,11 @@ describe('Sui Testnet NFT Creation', () => {
   test('should create and transfer an NFT', async () => {
     try {
       // Get a test recipient address (could be another test wallet)
-      const recipientAddress = '0x0000000000000000000000000000000000000000000000000000000000000002';
-      
+      const recipientAddress =
+        '0x0000000000000000000000000000000000000000000000000000000000000002';
+
       const txb = new Transaction();
-      
+
       // Create NFT
       const [nft] = txb.moveCall({
         target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
@@ -186,7 +191,7 @@ describe('Sui Testnet NFT Creation', () => {
           txb.pure.string('https://walrus.testnet/assets/transfer-image.jpg'),
           txb.pure.bool(false),
           txb.pure.bool(false),
-          txb.pure.string('{}')
+          txb.pure.string('{}'),
         ],
       });
 
@@ -204,19 +209,19 @@ describe('Sui Testnet NFT Creation', () => {
       });
 
       expect(response.effects?.status.status).toBe('success');
-      
+
       // Verify the NFT was transferred
       const mutatedObject = response.effects?.mutatedObjects?.find(
         obj => obj.objectType && obj.objectType.includes('TodoNFT')
       );
-      
+
       if (mutatedObject) {
         // Verify ownership changed
         const nftObject = await suiClient.getObject({
           id: mutatedObject.reference.objectId,
           options: { showOwner: true },
         });
-        
+
         expect(nftObject.data?.owner).toBeDefined();
         // console.log('NFT transferred to:', nftObject.data?.owner); // Removed console statement
       }
@@ -230,7 +235,7 @@ describe('Sui Testnet NFT Creation', () => {
     try {
       const txb = new Transaction();
       const nftCount = 3;
-      
+
       // Create multiple NFTs in a single transaction
       for (let i = 0; i < nftCount; i++) {
         txb.moveCall({
@@ -242,11 +247,15 @@ describe('Sui Testnet NFT Creation', () => {
             txb.pure.u8(i + 1),
             txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
             txb.pure.string(`test-blob-id-batch-${i + 1}`),
-            txb.pure.string(`https://walrus.testnet/test-blob-id-batch-${i + 1}`),
-            txb.pure.string(`https://walrus.testnet/assets/batch-image-${i + 1}.jpg`),
+            txb.pure.string(
+              `https://walrus.testnet/test-blob-id-batch-${i + 1}`
+            ),
+            txb.pure.string(
+              `https://walrus.testnet/assets/batch-image-${i + 1}.jpg`
+            ),
             txb.pure.bool(false),
             txb.pure.bool(false),
-            txb.pure.string('{}')
+            txb.pure.string('{}'),
           ],
         });
       }
@@ -262,15 +271,15 @@ describe('Sui Testnet NFT Creation', () => {
       });
 
       expect(response.effects?.status.status).toBe('success');
-      
+
       // Count created NFTs
       const createdNfts = response.effects?.created?.filter(
         obj => obj.objectType && obj.objectType.includes('TodoNFT')
       );
-      
+
       expect(createdNfts?.length).toBe(nftCount);
       // console.log(`Created ${createdNfts?.length} NFTs in batch`); // Removed console statement
-      
+
       createdNfts?.forEach((nft, index) => {
         // console.log(`NFT ${index + 1} ID:`, nft.reference.objectId); // Removed console statement
       });
@@ -283,15 +292,15 @@ describe('Sui Testnet NFT Creation', () => {
   test('should create an AI-enhanced NFT', async () => {
     try {
       const txb = new Transaction();
-      
+
       // Create an AI-enhanced NFT with special metadata
       const aiMetadata = {
         ai_provider: 'xai',
         ai_operations: ['summarize', 'categorize', 'prioritize'],
         ai_suggestions: ['Complete by end of week', 'High priority task'],
-        enhancement_timestamp: Date.now()
+        enhancement_timestamp: Date.now(),
       };
-      
+
       txb.moveCall({
         target: `${PACKAGE_ID}::todo_nft::create_todo_nft`,
         arguments: [
@@ -302,10 +311,12 @@ describe('Sui Testnet NFT Creation', () => {
           txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
           txb.pure.string('test-blob-id-ai-enhanced'),
           txb.pure.string('https://walrus.testnet/test-blob-id-ai-enhanced'),
-          txb.pure.string('https://walrus.testnet/assets/ai-enhanced-image.jpg'),
+          txb.pure.string(
+            'https://walrus.testnet/assets/ai-enhanced-image.jpg'
+          ),
           txb.pure.bool(true), // AI enhanced
           txb.pure.bool(false),
-          txb.pure.string(JSON.stringify(aiMetadata))
+          txb.pure.string(JSON.stringify(aiMetadata)),
         ],
       });
 
@@ -320,20 +331,20 @@ describe('Sui Testnet NFT Creation', () => {
       });
 
       expect(response.effects?.status.status).toBe('success');
-      
+
       const createdNft = response.effects?.created?.find(
         obj => obj.objectType && obj.objectType.includes('TodoNFT')
       );
-      
+
       expect(createdNft).toBeDefined();
-      
+
       if (createdNft) {
         // Fetch the NFT to verify AI enhancement flag
         const nftObject = await suiClient.getObject({
           id: createdNft.reference.objectId,
           options: { showContent: true },
         });
-        
+
         const content = nftObject.data?.content;
         if (content && 'fields' in content) {
           expect(content.fields.ai_enhanced).toBe(true);

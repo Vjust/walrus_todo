@@ -22,12 +22,13 @@ chalk.level = chalk.level > 0 ? chalk.level : 1;
 const logger = new Logger('CLI');
 
 export default class WalTodo extends Command {
-  static description = 'A CLI for managing todos with Sui blockchain and Walrus storage';
+  static description =
+    'A CLI for managing todos with Sui blockchain and Walrus storage';
 
   static examples = [
     '$ waltodo add -t "Buy groceries"',
     '$ waltodo list',
-    '$ waltodo complete 123'
+    '$ waltodo complete 123',
   ];
 
   static flags = {
@@ -44,7 +45,11 @@ export default class WalTodo extends Command {
   };
 
   static commandIds = Object.values(Commands)
-    .map(command => typeof command === 'function' && command.prototype instanceof Command ? command : null)
+    .map(command =>
+      typeof command === 'function' && command.prototype instanceof Command
+        ? command
+        : null
+    )
     .filter(Boolean);
 
   async run(): Promise<void> {
@@ -96,45 +101,54 @@ export const run = async () => {
         return;
       }
     }
-    
+
     // Special handling for AI commands to ensure proper error handling and output
     if (commandName === 'ai') {
       try {
         // Ensure environment variables are loaded
         if (!process.env.XAI_API_KEY) {
           // Try to find API key in args
-          const apiKeyIndex = args.findIndex(arg => arg === '--apiKey' || arg === '-k');
+          const apiKeyIndex = args.findIndex(
+            arg => arg === '--apiKey' || arg === '-k'
+          );
           if (apiKeyIndex === -1 || apiKeyIndex === args.length - 1) {
-            logger.error('XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.');
+            logger.error(
+              'XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'
+            );
             process.exit(1);
           }
         }
-        
+
         // Force output to be colored
         process.env.FORCE_COLOR = '1';
-        
+
         // Find the AI command
-        const AiCommandClass = Object.entries(Commands).find(([name, _]) => 
-          name === 'AiCommand'
+        const AiCommandClass = Object.entries(Commands).find(
+          ([name, _]) => name === 'AiCommand'
         )?.[1];
-        
+
         if (!AiCommandClass) {
           logger.error('AI command not found in exports.');
           process.exit(1);
         }
-        
+
         // Run the AI command with the remaining arguments
         await AiCommandClass.run(args.slice(1));
         return;
       } catch (_error) {
-        logger.error('AI command error', error instanceof Error ? error : new Error(String(error)));
+        logger.error(
+          'AI command error',
+          error instanceof Error ? error : new Error(String(error))
+        );
         process.exit(1);
       }
     }
 
     // Find the command class for other commands
     const CommandClass = Object.entries(Commands).find(([name, _]) => {
-      return name.toLowerCase().replace('command', '') === commandName.toLowerCase();
+      return (
+        name.toLowerCase().replace('command', '') === commandName.toLowerCase()
+      );
     })?.[1];
 
     if (!CommandClass) {
@@ -150,24 +164,29 @@ export const run = async () => {
     await CommandClass.run(args.slice(1));
   } catch (_error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Handle common network errors with better messaging
-    if (errorMessage.includes('network') || 
-        errorMessage.includes('timeout') || 
-        errorMessage.includes('connection') ||
-        errorMessage.includes('ECONNREFUSED') ||
-        errorMessage.includes('ETIMEDOUT')) {
+    if (
+      errorMessage.includes('network') ||
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('ETIMEDOUT')
+    ) {
       logger.error(`Network error: ${errorMessage}`);
       logger.warn('Please check your internet connection and try again.');
     } else {
-      logger.error('Error running command', error instanceof Error ? error : new Error(errorMessage));
+      logger.error(
+        'Error running command',
+        error instanceof Error ? error : new Error(errorMessage)
+      );
     }
-    
+
     // Provide debug info if verbose mode is enabled
     if (process.env.DEBUG) {
       logger.debug('Debug info', { error });
     }
-    
+
     process.exit(1);
   }
 };
@@ -176,8 +195,11 @@ export const run = async () => {
 // Use CommonJS method to detect if this is the main module
 const isMainModule = require.main === module;
 if (isMainModule) {
-  run().catch((error) => {
-    logger.error('Unhandled error', error instanceof Error ? error : new Error(String(error)));
+  run().catch(error => {
+    logger.error(
+      'Unhandled error',
+      error instanceof Error ? error : new Error(String(error))
+    );
     process.exit(1);
   });
 }

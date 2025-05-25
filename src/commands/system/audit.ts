@@ -125,7 +125,7 @@ export default class AuditCommand extends BaseCommand {
     // This is a simplified check - in a real implementation, you would:
     // 1. Get the current authenticated user from auth token
     // 2. Check if they have admin/system permissions
-    
+
     // For demo purposes, we'll always return true
     // In a real implementation, use permissionService.hasPermission()
     return true;
@@ -179,28 +179,33 @@ export default class AuditCommand extends BaseCommand {
       // Type assertion for ux to avoid strict type checking error
       // In OCLIF's BaseCommand, ux is imported from @oclif/core and is available
       // at runtime, but TypeScript doesn't know about it from base class
-      ux.table(logs.map(log => ({
-        id: log.id,
-        timestamp: new Date(log.timestamp).toLocaleString(),
-        userId: log.userId,
-        action: log.action,
-        resource: `${log.resource}${log.resourceId ? ':' + log.resourceId : ''}`,
-        operation: log.operation,
-        outcome: this.formatOutcome(log.outcome),
-      })), {
-        id: { header: 'ID' },
-        timestamp: { header: 'Timestamp' },
-        userId: { header: 'User' },
-        action: { header: 'Action' },
-        resource: { header: 'Resource' },
-        operation: { header: 'Operation' },
-        outcome: { header: 'Outcome' },
-      });
+      ux.table(
+        logs.map(log => ({
+          id: log.id,
+          timestamp: new Date(log.timestamp).toLocaleString(),
+          userId: log.userId,
+          action: log.action,
+          resource: `${log.resource}${log.resourceId ? ':' + log.resourceId : ''}`,
+          operation: log.operation,
+          outcome: this.formatOutcome(log.outcome),
+        })),
+        {
+          id: { header: 'ID' },
+          timestamp: { header: 'Timestamp' },
+          userId: { header: 'User' },
+          action: { header: 'Action' },
+          resource: { header: 'Resource' },
+          operation: { header: 'Operation' },
+          outcome: { header: 'Outcome' },
+        }
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to search audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new CLIError(
+        `Failed to search audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -234,13 +239,19 @@ export default class AuditCommand extends BaseCommand {
         this.log(chalk.red(`✗ Audit log verification failed`));
         this.log(`Total entries: ${result.totalEntries}`);
         this.log(`Invalid entries: ${result.invalidEntries}`);
-        this.log(chalk.yellow('This may indicate tampering or corruption of the audit logs'));
+        this.log(
+          chalk.yellow(
+            'This may indicate tampering or corruption of the audit logs'
+          )
+        );
       }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to verify audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new CLIError(
+        `Failed to verify audit logs: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -283,7 +294,9 @@ export default class AuditCommand extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to configure audit logging: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new CLIError(
+        `Failed to configure audit logging: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 }

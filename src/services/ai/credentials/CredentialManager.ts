@@ -27,20 +27,27 @@ export class CredentialManager {
     verify: boolean = false
   ): Promise<void> {
     this.validateApiKey(apiKey);
-    
+
     // First store the credential securely
     await this.vault.storeSecret(`${provider}-api-key`, apiKey);
     this.logger.info(`Stored API key for ${provider}`);
-    
+
     // Optionally verify the credential on-chain
     if (verify) {
       try {
         // Create a hash of the API key for verification without exposing the key
-        const verificationId = await this.verifier.registerCredential(provider, apiKey);
-        this.logger.info(`Verified API key for ${provider} on blockchain with ID: ${verificationId}`);
+        const verificationId = await this.verifier.registerCredential(
+          provider,
+          apiKey
+        );
+        this.logger.info(
+          `Verified API key for ${provider} on blockchain with ID: ${verificationId}`
+        );
       } catch (_error) {
         // We still keep the credential even if verification fails
-        this.logger.error(`Failed to verify credential on blockchain: ${error.message}`);
+        this.logger.error(
+          `Failed to verify credential on blockchain: ${error.message}`
+        );
         throw new CLIError(
           `API key was stored securely but blockchain verification failed: ${error.message}`,
           'CREDENTIAL_VERIFICATION_FAILED'
@@ -59,7 +66,7 @@ export class CredentialManager {
     try {
       // Retrieve from secure storage
       const apiKey = await this.vault.getSecret(`${provider}-api-key`);
-      
+
       // Optionally verify the credential's status on-chain
       if (verifyOnChain) {
         const isValid = await this.verifier.verifyCredential(provider, apiKey);
@@ -70,7 +77,7 @@ export class CredentialManager {
           );
         }
       }
-      
+
       return apiKey;
     } catch (_error) {
       if (error.code === 'CREDENTIAL_INVALID') {
@@ -90,17 +97,19 @@ export class CredentialManager {
     try {
       // First check if credential exists
       await this.vault.getSecret(`${provider}-api-key`);
-      
+
       // If it exists, remove it
       await this.vault.removeSecret(`${provider}-api-key`);
       this.logger.info(`Removed API key for ${provider}`);
-      
+
       // Attempt to revoke on-chain if possible
       try {
         await this.verifier.revokeCredential(provider);
         this.logger.info(`Revoked ${provider} credential on blockchain`);
       } catch (_error) {
-        this.logger.warn(`Could not revoke credential on blockchain: ${error.message}`);
+        this.logger.warn(
+          `Could not revoke credential on blockchain: ${error.message}`
+        );
       }
     } catch (_error) {
       throw new CLIError(
@@ -113,10 +122,12 @@ export class CredentialManager {
   /**
    * List all available provider credentials
    */
-  async listCredentials(): Promise<{ provider: AIProvider; verified: boolean }[]> {
+  async listCredentials(): Promise<
+    { provider: AIProvider; verified: boolean }[]
+  > {
     const credentialKeys = await this.vault.listSecrets();
     const result = [];
-    
+
     for (const key of credentialKeys) {
       // Extract provider from key format
       const match = key.match(/^(.+)-api-key$/);
@@ -124,19 +135,21 @@ export class CredentialManager {
         const provider = match[1] as AIProvider;
         // apiKey would be used for credential verification
         // const apiKey = await this.vault.getSecret(key);
-        
+
         // Check if the credential is verified on-chain
         let verified = false;
         try {
           verified = await this.verifier.isRegistered(provider);
         } catch (_error) {
-          this.logger.debug(`Error checking verification status: ${error.message}`);
+          this.logger.debug(
+            `Error checking verification status: ${error.message}`
+          );
         }
-        
+
         result.push({ provider, verified });
       }
     }
-    
+
     return result;
   }
 

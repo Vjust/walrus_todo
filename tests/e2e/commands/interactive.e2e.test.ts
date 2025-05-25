@@ -59,15 +59,17 @@ describe('interactive command e2e tests', () => {
 
     // Mock TodoService
     const mockTodoService = {
-      getList: sandbox.stub().resolves({ name: 'mylist', todos: [] })
+      getList: sandbox.stub().resolves({ name: 'mylist', todos: [] }),
     };
-    
+
     // Mock the TodoService
-    sandbox.stub(TodoService.prototype, 'getList').callsFake(mockTodoService.getList);
+    sandbox
+      .stub(TodoService.prototype, 'getList')
+      .callsFake(mockTodoService.getList);
 
     // Mock child_process.spawn for command execution
     mockSpawn = sandbox.stub(childProcess, 'spawn');
-    
+
     // Mock process.exit to prevent test runner from exiting
     sandbox.stub(process, 'exit');
   });
@@ -82,17 +84,17 @@ describe('interactive command e2e tests', () => {
       const mockChildProcess = {
         on: sandbox.stub(),
         stderr: { on: sandbox.stub() },
-        stdout: { on: sandbox.stub() }
+        stdout: { on: sandbox.stub() },
       };
-      
+
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
       mockChildProcess.on.withArgs('error').returns(mockChildProcess);
-      
+
       mockSpawn.returns(mockChildProcess as any);
 
       // Instantiate the command
       const cmd = new InteractiveCommand([], {});
-      
+
       // Run the command in a promise
       const runPromise = cmd.run();
 
@@ -109,30 +111,39 @@ describe('interactive command e2e tests', () => {
       await runPromise;
 
       // Verify output
-      expect(outputLines.some(line => line.includes('Welcome to Walrus Todo Interactive Mode!'))).to.be.true;
-      expect(outputLines.some(line => line.includes('Interactive Mode Commands:'))).to.be.true;
-      expect(outputLines.some(line => line.includes('Current list set to: mylist'))).to.be.true;
-      
+      expect(
+        outputLines.some(line =>
+          line.includes('Welcome to Walrus Todo Interactive Mode!')
+        )
+      ).to.be.true;
+      expect(
+        outputLines.some(line => line.includes('Interactive Mode Commands:'))
+      ).to.be.true;
+      expect(
+        outputLines.some(line => line.includes('Current list set to: mylist'))
+      ).to.be.true;
+
       // Verify CLI command was executed
       expect(mockSpawn.calledOnce).to.be.true;
       const spawnArgs = mockSpawn.firstCall.args;
-      expect(spawnArgs[1].some((arg: string) => arg.includes('add'))).to.be.true;
+      expect(spawnArgs[1].some((arg: string) => arg.includes('add'))).to.be
+        .true;
     });
 
     it('handles tab completion', async () => {
       const completer = readline.createInterface.getCall(0).args[0].completer;
-      
+
       // Test partial command completion
       let [completions, line] = completer('li');
       expect(completions).to.include('list');
       expect(line).to.equal('li');
-      
+
       // Test multiple matches
       [completions, line] = completer('s');
       expect(completions).to.include('suggest');
       expect(completions).to.include('set-list');
       expect(completions).to.include('store');
-      
+
       // Test no matches returns all commands
       [completions, line] = completer('xyz');
       expect(completions.length).to.be.greaterThan(5);
@@ -145,16 +156,18 @@ describe('interactive command e2e tests', () => {
       const mockChildProcess = {
         on: sandbox.stub(),
         stderr: { on: sandbox.stub() },
-        stdout: { on: sandbox.stub() }
+        stdout: { on: sandbox.stub() },
       };
-      
+
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 1);
-      mockChildProcess.on.withArgs('error').callsArgWith(1, new Error('Command failed'));
-      
+      mockChildProcess.on
+        .withArgs('error')
+        .callsArgWith(1, new Error('Command failed'));
+
       mockSpawn.returns(mockChildProcess as any);
 
       const cmd = new InteractiveCommand([], {});
-      
+
       const runPromise = cmd.run();
 
       setTimeout(async () => {
@@ -170,10 +183,12 @@ describe('interactive command e2e tests', () => {
 
     it('handles invalid list on startup', async () => {
       const cmd = new InteractiveCommand(['--start-list', 'invalidlist'], {});
-      
+
       // Mock the list validation to throw error
-      sandbox.stub(cmd, 'validateList').rejects(new Error('List "invalidlist" not found'));
-      
+      sandbox
+        .stub(cmd, 'validateList')
+        .rejects(new Error('List "invalidlist" not found'));
+
       try {
         await cmd.run();
       } catch (error: any) {
@@ -187,49 +202,51 @@ describe('interactive command e2e tests', () => {
       const mockChildProcess = {
         on: sandbox.stub(),
         stderr: { on: sandbox.stub() },
-        stdout: { on: sandbox.stub() }
+        stdout: { on: sandbox.stub() },
       };
-      
+
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
       mockSpawn.returns(mockChildProcess as any);
 
       const cmd = new InteractiveCommand([], {});
-      
+
       const runPromise = cmd.run();
 
       setTimeout(async () => {
-        await lineHandlers.line('l');  // Should expand to 'list'
-        await lineHandlers.line('a Test todo');  // Should expand to 'add'
-        await lineHandlers.line('?');  // Should show help
-        await lineHandlers.line('quit');  // Should exit
+        await lineHandlers.line('l'); // Should expand to 'list'
+        await lineHandlers.line('a Test todo'); // Should expand to 'add'
+        await lineHandlers.line('?'); // Should show help
+        await lineHandlers.line('quit'); // Should exit
       }, 100);
 
       await runPromise;
 
       // Verify shortcuts were expanded
       expect(mockSpawn.callCount).to.be.at.least(2);
-      
+
       // Check 'l' expanded to 'list'
-      const listCall = mockSpawn.getCalls().find(call => 
-        call.args[1].includes('list')
-      );
+      const listCall = mockSpawn
+        .getCalls()
+        .find(call => call.args[1].includes('list'));
       expect(listCall).to.exist;
-      
+
       // Check 'a' expanded to 'add'
-      const addCall = mockSpawn.getCalls().find(call => 
-        call.args[1].includes('add')
-      );
+      const addCall = mockSpawn
+        .getCalls()
+        .find(call => call.args[1].includes('add'));
       expect(addCall).to.exist;
-      
+
       // Check '?' showed help
-      expect(outputLines.some(line => line.includes('Interactive Mode Commands:'))).to.be.true;
+      expect(
+        outputLines.some(line => line.includes('Interactive Mode Commands:'))
+      ).to.be.true;
     });
   });
 
   describe('clear and exit behavior', () => {
     it('handles clear command', async () => {
       const cmd = new InteractiveCommand([], {});
-      
+
       const runPromise = cmd.run();
 
       setTimeout(async () => {
@@ -241,9 +258,9 @@ describe('interactive command e2e tests', () => {
 
       // Console.clear should have been called
       expect(console.clear).to.have.been.called;
-      
+
       // Welcome message should appear twice (initial + after clear)
-      const welcomeCount = outputLines.filter(line => 
+      const welcomeCount = outputLines.filter(line =>
         line.includes('Welcome to Walrus Todo Interactive Mode!')
       ).length;
       expect(welcomeCount).to.equal(2);
@@ -251,7 +268,7 @@ describe('interactive command e2e tests', () => {
 
     it('shows goodbye message on exit', async () => {
       const cmd = new InteractiveCommand([], {});
-      
+
       const runPromise = cmd.run();
 
       setTimeout(async () => {
@@ -261,8 +278,12 @@ describe('interactive command e2e tests', () => {
       await runPromise;
 
       // Should show goodbye message
-      expect(outputLines.some(line => line.includes('Thanks for using Walrus Todo!'))).to.be.true;
-      expect(outputLines.some(line => line.includes('See you later, alligator!'))).to.be.true;
+      expect(
+        outputLines.some(line => line.includes('Thanks for using Walrus Todo!'))
+      ).to.be.true;
+      expect(
+        outputLines.some(line => line.includes('See you later, alligator!'))
+      ).to.be.true;
     });
   });
 
@@ -271,43 +292,50 @@ describe('interactive command e2e tests', () => {
       const mockChildProcess = {
         on: sandbox.stub(),
         stderr: { on: sandbox.stub() },
-        stdout: { on: sandbox.stub() }
+        stdout: { on: sandbox.stub() },
       };
-      
+
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
       mockSpawn.returns(mockChildProcess as any);
 
       const cmd = new InteractiveCommand([], {});
-      
+
       const runPromise = cmd.run();
 
       setTimeout(async () => {
         await lineHandlers.line('sl mylist');
-        await lineHandlers.line('cl');  // Check current list
+        await lineHandlers.line('cl'); // Check current list
         await lineHandlers.line('a Buy groceries');
-        await lineHandlers.line('l');   // List with context
+        await lineHandlers.line('l'); // List with context
         await lineHandlers.line('exit');
       }, 100);
 
       await runPromise;
 
       // Check list was set
-      expect(outputLines.some(line => line.includes('Current list set to: mylist'))).to.be.true;
-      
+      expect(
+        outputLines.some(line => line.includes('Current list set to: mylist'))
+      ).to.be.true;
+
       // Check current list display
-      expect(outputLines.some(line => line.includes('Current list: mylist'))).to.be.true;
-      
+      expect(outputLines.some(line => line.includes('Current list: mylist'))).to
+        .be.true;
+
       // Verify commands used the list context
-      const addCall = mockSpawn.getCalls().find(call => 
-        call.args[1].includes('add') && 
-        call.args[1].includes('mylist')
-      );
+      const addCall = mockSpawn
+        .getCalls()
+        .find(
+          call =>
+            call.args[1].includes('add') && call.args[1].includes('mylist')
+        );
       expect(addCall).to.exist;
-      
-      const listCall = mockSpawn.getCalls().find(call => 
-        call.args[1].includes('list') && 
-        call.args[1].includes('mylist')
-      );
+
+      const listCall = mockSpawn
+        .getCalls()
+        .find(
+          call =>
+            call.args[1].includes('list') && call.args[1].includes('mylist')
+        );
       expect(listCall).to.exist;
     });
   });
@@ -315,7 +343,7 @@ describe('interactive command e2e tests', () => {
   describe('empty input handling', () => {
     it('handles empty lines gracefully', async () => {
       const cmd = new InteractiveCommand([], {});
-      
+
       const runPromise = cmd.run();
 
       setTimeout(async () => {
@@ -329,7 +357,7 @@ describe('interactive command e2e tests', () => {
 
       // Should not have any errors
       expect(outputLines.some(line => line.includes('Error:'))).to.be.false;
-      
+
       // Should continue prompting
       expect(mockReadline.prompt.callCount).to.be.at.least(4);
     });

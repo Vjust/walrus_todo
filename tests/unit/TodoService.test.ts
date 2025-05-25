@@ -1,4 +1,3 @@
-
 import { Todo } from '../../src/types/todo';
 
 describe('TodoService', () => {
@@ -32,7 +31,7 @@ describe('TodoService', () => {
       title: 'Test Todo',
       description: 'Test Description',
       priority: 'high',
-      tags: ['test']
+      tags: ['test'],
     };
 
     const newTodo = await todoService.addTodo(testListName, todo);

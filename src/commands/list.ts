@@ -15,7 +15,8 @@ const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
  * The output is formatted with color-coded status indicators for better readability.
  */
 export default class ListCommand extends BaseCommand {
-  static description = 'Display todo items or available todo lists (compact view by default)';
+  static description =
+    'Display todo items or available todo lists (compact view by default)';
 
   static examples = [
     `<%= config.bin %> list                     # Show all available lists`,
@@ -23,41 +24,41 @@ export default class ListCommand extends BaseCommand {
     `<%= config.bin %> list my-list --detailed  # Show todos with full details`,
     `<%= config.bin %> list my-list --completed # Show only completed todos`,
     `<%= config.bin %> list my-list --pending   # Show only pending todos`,
-    `<%= config.bin %> list my-list --sort priority # Sort todos by priority`
+    `<%= config.bin %> list my-list --sort priority # Sort todos by priority`,
   ];
 
   static flags = {
     ...BaseCommand.flags,
     completed: Flags.boolean({
       description: 'Show only completed items',
-      exclusive: ['pending']
+      exclusive: ['pending'],
     }),
     pending: Flags.boolean({
       description: 'Show only pending items',
-      exclusive: ['completed']
+      exclusive: ['completed'],
     }),
     sort: Flags.string({
       description: 'Sort todos by field',
-      options: ['priority', 'dueDate']
+      options: ['priority', 'dueDate'],
     }),
     compact: Flags.boolean({
       description: 'Display in compact format without details (default)',
       char: 'c',
-      default: true
+      default: true,
     }),
     detailed: Flags.boolean({
       description: 'Display in detailed format with full information',
       char: 'd',
-      exclusive: ['compact']
-    })
+      exclusive: ['compact'],
+    }),
   };
 
   static args = {
     listName: Args.string({
       name: 'listName',
       description: 'Name of the todo list to display',
-      required: false
-    })
+      required: false,
+    }),
   };
 
   private todoService = new TodoService();
@@ -82,7 +83,6 @@ export default class ListCommand extends BaseCommand {
         // Show all available lists
         await this.showAllLists();
       }
-
     } catch (error) {
       this.debugLog(`Error: ${error}`);
 
@@ -109,11 +109,17 @@ export default class ListCommand extends BaseCommand {
   /**
    * Handle JSON output format
    */
-  private async handleJsonOutput(args: { listName?: string }, flags: Record<string, unknown>): Promise<void> {
+  private async handleJsonOutput(
+    args: { listName?: string },
+    flags: Record<string, unknown>
+  ): Promise<void> {
     if (args.listName) {
       const list = await this.todoService.getList(args.listName);
       if (!list) {
-        throw new CLIError(`List "${args.listName}" not found`, 'LIST_NOT_FOUND');
+        throw new CLIError(
+          `List "${args.listName}" not found`,
+          'LIST_NOT_FOUND'
+        );
       }
 
       let todos = list.todos;
@@ -128,25 +134,25 @@ export default class ListCommand extends BaseCommand {
         totalCount: list.todos.length,
         filteredCount: todos.length,
         completedCount: todos.filter((t: Todo) => t.completed).length,
-        todos: todos
+        todos: todos,
       });
     } else {
       const lists = await this.todoService.getAllLists();
       const listsWithDetails = await Promise.all(
-        lists.map(async (listName) => {
+        lists.map(async listName => {
           const list = await this.todoService.getList(listName);
           if (!list) return null;
           return {
             name: list.name,
             todoCount: list.todos.length,
-            completedCount: list.todos.filter(t => t.completed).length
+            completedCount: list.todos.filter(t => t.completed).length,
           };
         })
       );
 
       await this.jsonOutput({
         totalLists: lists.length,
-        lists: listsWithDetails.filter(Boolean)
+        lists: listsWithDetails.filter(Boolean),
       });
     }
   }
@@ -166,7 +172,10 @@ export default class ListCommand extends BaseCommand {
    * @param listName Name of the list to display
    * @param flags Command flags affecting display format and filtering
    */
-  private async showSpecificList(listName: string, flags: Record<string, unknown>): Promise<void> {
+  private async showSpecificList(
+    listName: string,
+    flags: Record<string, unknown>
+  ): Promise<void> {
     this.debugLog(`Getting list: ${listName}`);
     const list = await this.todoService.getList(listName);
 
@@ -183,7 +192,9 @@ export default class ListCommand extends BaseCommand {
     // Create a header with list name and progress bar
     const progressBarWidth = 20;
     const filledCount = Math.round((percent / 100) * progressBarWidth);
-    const progressBar = chalk.green('█'.repeat(filledCount)) + chalk.gray('░'.repeat(progressBarWidth - filledCount));
+    const progressBar =
+      chalk.green('█'.repeat(filledCount)) +
+      chalk.gray('░'.repeat(progressBarWidth - filledCount));
 
     // Construct a formatted box header with list name and completion statistics
     // The header includes:
@@ -192,14 +203,14 @@ export default class ListCommand extends BaseCommand {
     // 3. A visual progress bar representing completion percentage
     const headerContent = [
       `${chalk.bold(listName)}`,
-      `${chalk.blue(`${completed}/${total} completed`)} ${chalk.dim(`(${percent}%)`)}`
+      `${chalk.blue(`${completed}/${total} completed`)} ${chalk.dim(`(${percent}%)`)}`,
     ].join('\n');
 
     const headerBox = [
       `${ICONS.BOX_TL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_TR}`, // Top border
       `${ICONS.BOX_V} ${ICONS.LIST} ${headerContent}${' '.repeat(35 - listName.length)}${ICONS.BOX_V}`, // Content with padding
       `${ICONS.BOX_V} ${progressBar} ${ICONS.BOX_V}`, // Progress bar
-      `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_BR}` // Bottom border
+      `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(40)}${ICONS.BOX_BR}`, // Bottom border
     ].join('\n');
 
     this.log('\n' + headerBox + '\n');
@@ -218,11 +229,23 @@ export default class ListCommand extends BaseCommand {
 
       // Show helpful hint
       if (flags.completed && completed === 0) {
-        this.log(chalk.dim(`\nTip: Mark todos as completed with '${this.config.bin} complete --id <todo-id>'`));
+        this.log(
+          chalk.dim(
+            `\nTip: Mark todos as completed with '${this.config.bin} complete --id <todo-id>'`
+          )
+        );
       } else if (flags.pending && completed === total) {
-        this.log(chalk.dim(`\nTip: Add new todos with '${this.config.bin} add "${listName}" -t "Your todo title"'`));
+        this.log(
+          chalk.dim(
+            `\nTip: Add new todos with '${this.config.bin} add "${listName}" -t "Your todo title"'`
+          )
+        );
       } else if (total === 0) {
-        this.log(chalk.dim(`\nTip: Add your first todo with '${this.config.bin} add "${listName}" -t "Your todo title"'`));
+        this.log(
+          chalk.dim(
+            `\nTip: Add your first todo with '${this.config.bin} add "${listName}" -t "Your todo title"'`
+          )
+        );
       }
     } else {
       // Determine display mode: detailed provides comprehensive information,
@@ -231,8 +254,16 @@ export default class ListCommand extends BaseCommand {
 
       // Display column headers in detailed view for better visual organization
       if (useDetailedView) {
-        this.log(chalk.dim(`${' '.repeat(4)}ID${' '.repeat(10)}STATUS${' '.repeat(6)}PRIORITY${' '.repeat(4)}TITLE`));
-        this.log(chalk.dim(`${' '.repeat(4)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(8)}${' '.repeat(2)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(30)}`));
+        this.log(
+          chalk.dim(
+            `${' '.repeat(4)}ID${' '.repeat(10)}STATUS${' '.repeat(6)}PRIORITY${' '.repeat(4)}TITLE`
+          )
+        );
+        this.log(
+          chalk.dim(
+            `${' '.repeat(4)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(8)}${' '.repeat(2)}${ICONS.LINE.repeat(10)}${' '.repeat(2)}${ICONS.LINE.repeat(30)}`
+          )
+        );
       }
 
       // Display each todo
@@ -246,7 +277,8 @@ export default class ListCommand extends BaseCommand {
           : chalk.yellow(ICONS.PENDING);
 
         // Format priority
-        const priority = PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
+        const priority =
+          PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
         const priorityDisplay = priority.color(priority.label);
 
         // Format dueDate
@@ -272,13 +304,19 @@ export default class ListCommand extends BaseCommand {
 
         // Choose between compact and detailed view
         if (!useDetailedView) {
-          this.log(`${status} [${chalk.dim(shortId)}] ${priorityDisplay} ${todo.title}`);
+          this.log(
+            `${status} [${chalk.dim(shortId)}] ${priorityDisplay} ${todo.title}`
+          );
         } else {
           // Full display with details
-          this.log(`${status} [${chalk.dim(shortId)}] ${priorityDisplay.padEnd(12)} ${todo.title}`);
+          this.log(
+            `${status} [${chalk.dim(shortId)}] ${priorityDisplay.padEnd(12)} ${todo.title}`
+          );
 
           // Show details if they exist
-          const details = [dueDateDisplay, tagsDisplay, privateDisplay].filter(Boolean);
+          const details = [dueDateDisplay, tagsDisplay, privateDisplay].filter(
+            Boolean
+          );
           if (details.length) {
             this.log(chalk.dim(`    ${details.join(' | ')}`));
           }
@@ -293,7 +331,9 @@ export default class ListCommand extends BaseCommand {
       // Add helpful tips
       if (useDetailedView) {
         this.log('');
-        this.log(chalk.dim(`Tip: Compact view is default. To disable use --no-compact`));
+        this.log(
+          chalk.dim(`Tip: Compact view is default. To disable use --no-compact`)
+        );
       }
     }
   }
@@ -310,12 +350,14 @@ export default class ListCommand extends BaseCommand {
    * If no lists exist, displays a quick start guide for creating lists
    */
   private async showAllLists(): Promise<void> {
-    this.debugLog("Getting all lists");
-    
+    this.debugLog('Getting all lists');
+
     // Check cache for all lists first
     const cacheKey = 'lists:all';
-    const lists = await this.getCachedTodos(cacheKey, async () => this.todoService.getAllLists()) as string[];
-    
+    const lists = (await this.getCachedTodos(cacheKey, async () =>
+      this.todoService.getAllLists()
+    )) as string[];
+
     if (CACHE_DEBUG) {
       if (lists) {
         this.debugLog('Cache hit for all lists');
@@ -347,12 +389,14 @@ export default class ListCommand extends BaseCommand {
 
     // Format header for lists display
     this.log('');
-    this.log(chalk.blue(`${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}`));
+    this.log(
+      chalk.blue(`${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}`)
+    );
     this.log(chalk.dim(`${ICONS.LINE.repeat(50)}`));
 
     // Process all lists to get more detailed information
     const listDetails = await Promise.all(
-      (lists as string[]).map(async (listName) => {
+      (lists as string[]).map(async listName => {
         const list = await this.todoService.getList(listName);
         if (!list) return null;
 
@@ -364,13 +408,15 @@ export default class ListCommand extends BaseCommand {
         // Create a mini progress bar
         const progressWidth = 10;
         const filled = Math.round((percent / 100) * progressWidth);
-        const progressBar = chalk.green('█'.repeat(filled)) + chalk.gray('░'.repeat(progressWidth - filled));
+        const progressBar =
+          chalk.green('█'.repeat(filled)) +
+          chalk.gray('░'.repeat(progressWidth - filled));
 
         // Get priority distribution
         const priorities = {
           high: list.todos.filter(t => t.priority === 'high').length,
           medium: list.todos.filter(t => t.priority === 'medium').length,
-          low: list.todos.filter(t => t.priority === 'low').length
+          low: list.todos.filter(t => t.priority === 'low').length,
         };
 
         return {
@@ -381,13 +427,15 @@ export default class ListCommand extends BaseCommand {
           percent,
           progressBar,
           priorities,
-          updatedAt: list.updatedAt
+          updatedAt: list.updatedAt,
         };
       })
     );
 
     // Filter out any null results
-    const validLists = listDetails.filter((list): list is NonNullable<typeof list> => list !== null);
+    const validLists = listDetails.filter(
+      (list): list is NonNullable<typeof list> => list !== null
+    );
 
     // Sort lists by most recently updated
     validLists.sort((a, b) => {
@@ -400,15 +448,20 @@ export default class ListCommand extends BaseCommand {
       this.log(`${chalk.white(ICONS.BULLET)} ${chalk.bold(list.name)}`);
 
       // Show progress statistics
-      this.log(`  ${list.progressBar} ${chalk.blue(`${list.completed}/${list.total} completed`)} ${chalk.dim(`(${list.percent}%)`)}`);
+      this.log(
+        `  ${list.progressBar} ${chalk.blue(`${list.completed}/${list.total} completed`)} ${chalk.dim(`(${list.percent}%)`)}`
+      );
 
       // Show priority breakdown if there are todos
       if (list.total > 0) {
         const priorityDisplay = [
           list.priorities.high > 0 && chalk.red(`${list.priorities.high} high`),
-          list.priorities.medium > 0 && chalk.yellow(`${list.priorities.medium} medium`),
-          list.priorities.low > 0 && chalk.green(`${list.priorities.low} low`)
-        ].filter(Boolean).join(', ');
+          list.priorities.medium > 0 &&
+            chalk.yellow(`${list.priorities.medium} medium`),
+          list.priorities.low > 0 && chalk.green(`${list.priorities.low} low`),
+        ]
+          .filter(Boolean)
+          .join(', ');
 
         if (priorityDisplay) {
           this.log(`  ${chalk.dim(`Priorities: ${priorityDisplay}`)}`);
@@ -423,8 +476,16 @@ export default class ListCommand extends BaseCommand {
 
     // Add helpful command tips
     this.log('');
-    this.log(chalk.dim(`Tip: View a specific list with '${this.config.bin} list <list-name>'`));
-    this.log(chalk.dim(`Tip: Add a new todo with '${this.config.bin} add <list-name> -t "Todo title"'`));
+    this.log(
+      chalk.dim(
+        `Tip: View a specific list with '${this.config.bin} list <list-name>'`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `Tip: Add a new todo with '${this.config.bin} add <list-name> -t "Todo title"'`
+      )
+    );
   }
 
   /**
@@ -442,8 +503,10 @@ export default class ListCommand extends BaseCommand {
       case 'priority':
         todos.sort((a, b) => {
           const priorityOrder = { high: 3, medium: 2, low: 1 };
-          const aVal = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
-          const bVal = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+          const aVal =
+            priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
+          const bVal =
+            priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
           return bVal - aVal;
         });
         break;

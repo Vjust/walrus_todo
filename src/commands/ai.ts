@@ -8,7 +8,7 @@ import { Logger } from '../utils/Logger';
 import {
   requireEnvironment,
   aiFlags,
-  setEnvFromFlags
+  setEnvFromFlags,
 } from '../utils/CommandValidationMiddleware';
 import { getEnv, hasEnv } from '../utils/environment-config';
 import { TodoService } from '../services/todoService';
@@ -25,7 +25,8 @@ const logger = new Logger('AI');
  * optional blockchain verification of AI results for enhanced trust and traceability.
  */
 export default class AI extends BaseCommand {
-  static description = 'Perform AI-powered operations like summarize, categorize, prioritize and analyze todos';
+  static description =
+    'Perform AI-powered operations like summarize, categorize, prioritize and analyze todos';
 
   static examples = [
     '<%= config.bin %> ai suggest                                     # Get task suggestions',
@@ -66,8 +67,16 @@ export default class AI extends BaseCommand {
       description: 'AI operation to perform',
       required: false,
       default: 'status',
-      options: ['status', 'help', 'summarize', 'categorize', 'prioritize', 'suggest', 'analyze'],
-    })
+      options: [
+        'status',
+        'help',
+        'summarize',
+        'categorize',
+        'prioritize',
+        'suggest',
+        'analyze',
+      ],
+    }),
   };
 
   /**
@@ -79,7 +88,7 @@ export default class AI extends BaseCommand {
    * 3. Handle special operations (status, help)
    * 4. Configure AI provider from environment settings
    * 5. Execute the requested core AI operation
-   * 
+   *
    * @returns {Promise<void>}
    */
   async run() {
@@ -99,14 +108,14 @@ export default class AI extends BaseCommand {
     // Load environment variables from .env files
     loadEnvironment({
       envFile: '.env',
-      loadDefaultEnvInDev: true
+      loadDefaultEnvInDev: true,
     });
 
     // Only log API key info in development mode
     if (process.env.NODE_ENV === 'development') {
       logger.debug('Environment XAI_API_KEY after loading', {
         apiKeyPresent: !!process.env.XAI_API_KEY,
-        keyLength: process.env.XAI_API_KEY?.length || 0
+        keyLength: process.env.XAI_API_KEY?.length || 0,
       });
     }
 
@@ -133,19 +142,17 @@ export default class AI extends BaseCommand {
       const provider = getEnv('AI_DEFAULT_PROVIDER') as AIProvider;
       const model = getEnv('AI_DEFAULT_MODEL');
       const temperature = getEnv('AI_TEMPERATURE');
-      
-      await aiService.setProvider(
-        provider,
-        model,
-        {
-          temperature: temperature,
-        }
-      );
+
+      await aiService.setProvider(provider, model, {
+        temperature: temperature,
+      });
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to set AI provider: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `Failed to set AI provider: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     // Use environment-based verification setting
@@ -181,14 +188,14 @@ export default class AI extends BaseCommand {
    * 3. API key availability for all supported providers
    * 4. Stored credential information with verification status and expiry
    * 5. Available AI commands and configuration options
-   * 
+   *
    * @param {Record<string, unknown>} flags Command flags
    * @returns {Promise<void>}
    */
   private async showStatus(_flags: Record<string, unknown>) {
     // Check credential status
     const credentials = await secureCredentialService.listCredentials();
-    
+
     // Get current provider info
     const currentProvider = getEnv('AI_DEFAULT_PROVIDER');
     const currentModel = getEnv('AI_DEFAULT_MODEL');
@@ -197,54 +204,84 @@ export default class AI extends BaseCommand {
     this.log(chalk.bold('AI Service Status:'));
     this.log(`${chalk.green('Active provider:')} ${currentProvider}`);
     this.log(`${chalk.green('Active model:')} ${currentModel}`);
-    this.log(`${chalk.green('Blockchain verification:')} ${verificationEnabled ? 'enabled' : 'disabled'}`);
-    
+    this.log(
+      `${chalk.green('Blockchain verification:')} ${verificationEnabled ? 'enabled' : 'disabled'}`
+    );
+
     // Display API key status
     this.log(chalk.bold('\nAPI Key Status:'));
     const providers = ['XAI', 'OPENAI', 'ANTHROPIC', 'OLLAMA'];
-    
+
     for (const provider of providers) {
       const hasKey = hasEnv(`${provider}_API_KEY` as keyof typeof process.env);
-      const status = hasKey ? chalk.green('✓ available') : chalk.gray('not configured');
-      
+      const status = hasKey
+        ? chalk.green('✓ available')
+        : chalk.gray('not configured');
+
       this.log(`${chalk.cyan(provider.padEnd(10))} | ${status}`);
     }
-    
+
     // Display credential status
     if (credentials.length > 0) {
       this.log(chalk.bold('\nStored Credentials:'));
       for (const cred of credentials) {
-        const expiry = cred.expiresAt ? `expires ${new Date(cred.expiresAt).toLocaleDateString()}` : 'no expiry';
-        const verified = cred.verified ? chalk.green('✓ verified') : chalk.gray('not verified');
-        
-        this.log(`${chalk.cyan(cred.provider.padEnd(10))} | ${verified.padEnd(15)} | ${chalk.blue(expiry)}`);
-        
+        const expiry = cred.expiresAt
+          ? `expires ${new Date(cred.expiresAt).toLocaleDateString()}`
+          : 'no expiry';
+        const verified = cred.verified
+          ? chalk.green('✓ verified')
+          : chalk.gray('not verified');
+
+        this.log(
+          `${chalk.cyan(cred.provider.padEnd(10))} | ${verified.padEnd(15)} | ${chalk.blue(expiry)}`
+        );
+
         if (cred.rotationDue) {
           const now = new Date();
           const rotationDate = new Date(cred.rotationDue);
-          const daysToRotation = Math.ceil((rotationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-          
+          const daysToRotation = Math.ceil(
+            (rotationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
           if (daysToRotation <= 0) {
             this.log(`  ${chalk.red('⚠ Rotation overdue')}`);
           } else if (daysToRotation < 7) {
-            this.log(`  ${chalk.yellow(`⚠ Rotation due in ${daysToRotation} days`)}`);
+            this.log(
+              `  ${chalk.yellow(`⚠ Rotation due in ${daysToRotation} days`)}`
+            );
           }
         }
       }
     }
-    
+
     this.log(chalk.bold('\nAvailable Commands:'));
-    this.log(`${chalk.cyan('walrus_todo ai summarize')}    - Generate a summary of your todos`);
-    this.log(`${chalk.cyan('walrus_todo ai categorize')}   - Organize todos into categories`);
-    this.log(`${chalk.cyan('walrus_todo ai prioritize')}   - Sort todos by priority`);
-    this.log(`${chalk.cyan('walrus_todo ai suggest')}      - Get suggestions for new todos`);
-    this.log(`${chalk.cyan('walrus_todo ai analyze')}      - Analyze todos for patterns and insights`);
-    this.log(`${chalk.cyan('walrus_todo ai credentials')}  - Manage AI provider credentials`);
-    
+    this.log(
+      `${chalk.cyan('walrus_todo ai summarize')}    - Generate a summary of your todos`
+    );
+    this.log(
+      `${chalk.cyan('walrus_todo ai categorize')}   - Organize todos into categories`
+    );
+    this.log(
+      `${chalk.cyan('walrus_todo ai prioritize')}   - Sort todos by priority`
+    );
+    this.log(
+      `${chalk.cyan('walrus_todo ai suggest')}      - Get suggestions for new todos`
+    );
+    this.log(
+      `${chalk.cyan('walrus_todo ai analyze')}      - Analyze todos for patterns and insights`
+    );
+    this.log(
+      `${chalk.cyan('walrus_todo ai credentials')}  - Manage AI provider credentials`
+    );
+
     // Show configuration instructions
     this.log(chalk.bold('\nConfiguration:'));
-    this.log(`Run ${chalk.cyan('walrus_todo configure --section ai')} to update AI settings`);
-    this.log(`Or set environment variables: ${chalk.gray('XAI_API_KEY, AI_DEFAULT_PROVIDER, etc.')}`);
+    this.log(
+      `Run ${chalk.cyan('walrus_todo configure --section ai')} to update AI settings`
+    );
+    this.log(
+      `Or set environment variables: ${chalk.gray('XAI_API_KEY, AI_DEFAULT_PROVIDER, etc.')}`
+    );
   }
 
   /**
@@ -254,57 +291,107 @@ export default class AI extends BaseCommand {
    * 2. Command options for each operation
    * 3. Global configuration options
    * 4. Environment variables affecting AI functionality
-   * 
+   *
    * @param {Record<string, unknown>} flags Command flags
    * @returns {void}
    */
   private showHelp(_flags: Record<string, unknown>) {
     this.log(chalk.bold('AI Command Help:'));
-    this.log(`${chalk.cyan('walrus_todo ai summarize')} - Generate a concise summary of your todos`);
-    this.log(`  ${chalk.gray('Example:')} walrus_todo ai summarize --list work`);
-    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
-    
-    this.log(`\n${chalk.cyan('walrus_todo ai categorize')} - Organize todos into logical categories`);
-    this.log(`  ${chalk.gray('Example:')} walrus_todo ai categorize --list personal`);
-    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
-    
-    this.log(`\n${chalk.cyan('walrus_todo ai prioritize')} - Assign priority scores to todos`);
-    this.log(`  ${chalk.gray('Example:')} walrus_todo ai prioritize --list work`);
-    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
-    
-    this.log(`\n${chalk.cyan('walrus_todo ai suggest')} - Get suggestions for new todos`);
-    this.log(`  ${chalk.gray('Example:')} walrus_todo ai suggest --list personal`);
-    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
-    
-    this.log(`\n${chalk.cyan('walrus_todo ai analyze')} - Get detailed analysis of todos`);
+    this.log(
+      `${chalk.cyan('walrus_todo ai summarize')} - Generate a concise summary of your todos`
+    );
+    this.log(
+      `  ${chalk.gray('Example:')} walrus_todo ai summarize --list work`
+    );
+    this.log(
+      `  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`
+    );
+
+    this.log(
+      `\n${chalk.cyan('walrus_todo ai categorize')} - Organize todos into logical categories`
+    );
+    this.log(
+      `  ${chalk.gray('Example:')} walrus_todo ai categorize --list personal`
+    );
+    this.log(
+      `  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`
+    );
+
+    this.log(
+      `\n${chalk.cyan('walrus_todo ai prioritize')} - Assign priority scores to todos`
+    );
+    this.log(
+      `  ${chalk.gray('Example:')} walrus_todo ai prioritize --list work`
+    );
+    this.log(
+      `  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`
+    );
+
+    this.log(
+      `\n${chalk.cyan('walrus_todo ai suggest')} - Get suggestions for new todos`
+    );
+    this.log(
+      `  ${chalk.gray('Example:')} walrus_todo ai suggest --list personal`
+    );
+    this.log(
+      `  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`
+    );
+
+    this.log(
+      `\n${chalk.cyan('walrus_todo ai analyze')} - Get detailed analysis of todos`
+    );
     this.log(`  ${chalk.gray('Example:')} walrus_todo ai analyze --list work`);
-    this.log(`  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`);
-    
-    this.log(`\n${chalk.cyan('walrus_todo ai credentials')} - Manage AI provider credentials`);
-    this.log(`  ${chalk.gray('Example:')} walrus_todo ai credentials add xai --key YOUR_API_KEY`);
+    this.log(
+      `  ${chalk.gray('Options:')} --list, --provider, --model, --temperature, --verify, --json`
+    );
+
+    this.log(
+      `\n${chalk.cyan('walrus_todo ai credentials')} - Manage AI provider credentials`
+    );
+    this.log(
+      `  ${chalk.gray('Example:')} walrus_todo ai credentials add xai --key YOUR_API_KEY`
+    );
     this.log(`  ${chalk.gray('Example:')} walrus_todo ai credentials list`);
-    this.log(`  ${chalk.gray('Example:')} walrus_todo ai credentials remove openai`);
-    
+    this.log(
+      `  ${chalk.gray('Example:')} walrus_todo ai credentials remove openai`
+    );
+
     this.log(chalk.bold('\nGlobal Options:'));
-    this.log(`  ${chalk.cyan('--provider')} - AI provider to use (xai, openai, anthropic, ollama)`);
-    this.log(`  ${chalk.cyan('--model')} - Model name to use with the provider`);
-    this.log(`  ${chalk.cyan('--temperature')} - Control randomness (0.0-1.0, lower is more deterministic)`);
-    this.log(`  ${chalk.cyan('--verify')} - Enable blockchain verification of AI results`);
+    this.log(
+      `  ${chalk.cyan('--provider')} - AI provider to use (xai, openai, anthropic, ollama)`
+    );
+    this.log(
+      `  ${chalk.cyan('--model')} - Model name to use with the provider`
+    );
+    this.log(
+      `  ${chalk.cyan('--temperature')} - Control randomness (0.0-1.0, lower is more deterministic)`
+    );
+    this.log(
+      `  ${chalk.cyan('--verify')} - Enable blockchain verification of AI results`
+    );
     this.log(`  ${chalk.cyan('--json')} - Output results in JSON format`);
-    
+
     this.log(chalk.bold('\nEnvironment Configuration:'));
-    this.log(`  ${chalk.cyan('XAI_API_KEY')}, ${chalk.cyan('OPENAI_API_KEY')}, etc. - API keys for providers`);
-    this.log(`  ${chalk.cyan('AI_DEFAULT_PROVIDER')} - Default provider (xai, openai, anthropic, ollama)`);
+    this.log(
+      `  ${chalk.cyan('XAI_API_KEY')}, ${chalk.cyan('OPENAI_API_KEY')}, etc. - API keys for providers`
+    );
+    this.log(
+      `  ${chalk.cyan('AI_DEFAULT_PROVIDER')} - Default provider (xai, openai, anthropic, ollama)`
+    );
     this.log(`  ${chalk.cyan('AI_DEFAULT_MODEL')} - Default model name`);
-    this.log(`  ${chalk.cyan('AI_TEMPERATURE')} - Default temperature setting (0.0-1.0)`);
-    this.log(`  ${chalk.cyan('ENABLE_BLOCKCHAIN_VERIFICATION')} - Enable verification by default`);
+    this.log(
+      `  ${chalk.cyan('AI_TEMPERATURE')} - Default temperature setting (0.0-1.0)`
+    );
+    this.log(
+      `  ${chalk.cyan('ENABLE_BLOCKCHAIN_VERIFICATION')} - Enable verification by default`
+    );
   }
 
   /**
    * Get todo data from the specified list for AI operations
    * Loads todos from the TodoService and verifies that at least one todo exists.
    * If no todos are found, returns an error directing the user to add todos first.
-   * 
+   *
    * @param {string} [listName] Optional name of the todo list to retrieve
    * @returns {Promise<any[]>} Array of todos from the specified list
    * @throws {Error} If no todos are found
@@ -316,7 +403,10 @@ export default class AI extends BaseCommand {
     const todos = await todoService.listTodos();
 
     if (todos.length === 0) {
-      this.error('No todos found. Add some todos first with "walrus_todo add"', { exit: 1 });
+      this.error(
+        'No todos found. Add some todos first with "walrus_todo add"',
+        { exit: 1 }
+      );
     }
 
     return todos;
@@ -326,7 +416,7 @@ export default class AI extends BaseCommand {
    * Generate a summary of todos using AI
    * Uses the AI service to create a concise overview of all todos in the specified list.
    * This is useful for getting a quick understanding of all current tasks.
-   * 
+   *
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
@@ -364,7 +454,13 @@ export default class AI extends BaseCommand {
           }
 
           // For other object formats, try to extract a sensible text representation
-          for (const key of ['result', 'text', 'message', 'summary', 'output']) {
+          for (const key of [
+            'result',
+            'text',
+            'message',
+            'summary',
+            'output',
+          ]) {
             if (response[key] && typeof response[key] === 'string') {
               return response[key];
             }
@@ -379,7 +475,7 @@ export default class AI extends BaseCommand {
         }
 
         // Default fallback summary
-        return "Your todos include a mix of tasks with varying priorities. Some appear to be financial or project-related, while others are more general.";
+        return 'Your todos include a mix of tasks with varying priorities. Some appear to be financial or project-related, while others are more general.';
       }
 
       // Extract the actual summary text
@@ -400,7 +496,9 @@ export default class AI extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`AI summarization failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `AI summarization failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -408,7 +506,7 @@ export default class AI extends BaseCommand {
    * Categorize todos using AI
    * Uses AI to automatically group todos into logical categories based on content and context.
    * This helps organize todos and identify related tasks.
-   * 
+   *
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
@@ -422,15 +520,21 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        logger.debug('Categories response type', { type: typeof categoriesResponse });
+        logger.debug('Categories response type', {
+          type: typeof categoriesResponse,
+        });
         logger.debug('Categories response', { response: categoriesResponse });
       }
 
       // Extract the categories from various response formats
       function extractCategoriesData(response: any): Record<string, string[]> {
         // If it's already the right structure, return it directly
-        if (response && typeof response === 'object' && !Array.isArray(response) &&
-            Object.values(response).every(val => Array.isArray(val))) {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          Object.values(response).every(val => Array.isArray(val))
+        ) {
           return response as Record<string, string[]>;
         }
 
@@ -457,23 +561,33 @@ export default class AI extends BaseCommand {
           }
 
           // Check for result property
-          if (response.result && typeof response.result === 'object' && !Array.isArray(response.result)) {
+          if (
+            response.result &&
+            typeof response.result === 'object' &&
+            !Array.isArray(response.result)
+          ) {
             return response.result;
           }
         }
 
         // Default fallback categories
         return {
-          'work': todos.filter(t =>
-            t.title.toLowerCase().includes('financial') ||
-            t.title.toLowerCase().includes('budget') ||
-            t.title.toLowerCase().includes('report')
-          ).map(t => t.id),
-          'personal': todos.filter(t =>
-            !t.title.toLowerCase().includes('financial') &&
-            !t.title.toLowerCase().includes('budget') &&
-            !t.title.toLowerCase().includes('report')
-          ).map(t => t.id)
+          work: todos
+            .filter(
+              t =>
+                t.title.toLowerCase().includes('financial') ||
+                t.title.toLowerCase().includes('budget') ||
+                t.title.toLowerCase().includes('report')
+            )
+            .map(t => t.id),
+          personal: todos
+            .filter(
+              t =>
+                !t.title.toLowerCase().includes('financial') &&
+                !t.title.toLowerCase().includes('budget') &&
+                !t.title.toLowerCase().includes('report')
+            )
+            .map(t => t.id),
         };
       }
 
@@ -506,7 +620,9 @@ export default class AI extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`AI categorization failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `AI categorization failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -514,7 +630,7 @@ export default class AI extends BaseCommand {
    * Prioritize todos using AI
    * Analyzes todos and assigns priority scores (1-10) based on urgency, importance, and complexity.
    * Results are displayed in descending priority order with color-coded scores.
-   * 
+   *
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
@@ -528,15 +644,21 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        logger.debug('Priorities response type', { type: typeof prioritiesResponse });
+        logger.debug('Priorities response type', {
+          type: typeof prioritiesResponse,
+        });
         logger.debug('Priorities response', { response: prioritiesResponse });
       }
 
       // Extract priorities from various response formats
       function extractPrioritiesData(response: any): Record<string, number> {
         // If it's already the right structure, return it directly
-        if (response && typeof response === 'object' && !Array.isArray(response) &&
-            Object.values(response).every(val => typeof val === 'number')) {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response) &&
+          Object.values(response).every(val => typeof val === 'number')
+        ) {
           return response as Record<string, number>;
         }
 
@@ -563,7 +685,11 @@ export default class AI extends BaseCommand {
           }
 
           // Check for result property
-          if (response.result && typeof response.result === 'object' && !Array.isArray(response.result)) {
+          if (
+            response.result &&
+            typeof response.result === 'object' &&
+            !Array.isArray(response.result)
+          ) {
             return response.result;
           }
         }
@@ -575,17 +701,21 @@ export default class AI extends BaseCommand {
           let priority = 5; // default medium priority
 
           // Boost priority for urgent/important sounding tasks
-          if (todo.title.toLowerCase().includes('urgent') ||
-              todo.title.toLowerCase().includes('important') ||
-              todo.title.toLowerCase().includes('critical') ||
-              todo.title.toLowerCase().includes('deadline')) {
+          if (
+            todo.title.toLowerCase().includes('urgent') ||
+            todo.title.toLowerCase().includes('important') ||
+            todo.title.toLowerCase().includes('critical') ||
+            todo.title.toLowerCase().includes('deadline')
+          ) {
             priority += 3;
           }
 
           // Boost for financial tasks
-          if (todo.title.toLowerCase().includes('financial') ||
-              todo.title.toLowerCase().includes('budget') ||
-              todo.title.toLowerCase().includes('report')) {
+          if (
+            todo.title.toLowerCase().includes('financial') ||
+            todo.title.toLowerCase().includes('budget') ||
+            todo.title.toLowerCase().includes('report')
+          ) {
             priority += 2;
           }
 
@@ -608,7 +738,7 @@ export default class AI extends BaseCommand {
       const prioritizedTodos = todos
         .map(todo => ({
           todo,
-          priority: priorities[todo.id] || 0
+          priority: priorities[todo.id] || 0,
         }))
         .sort((a, b) => b.priority - a.priority);
 
@@ -631,7 +761,9 @@ export default class AI extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`AI prioritization failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `AI prioritization failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -639,7 +771,7 @@ export default class AI extends BaseCommand {
    * Generate todo suggestions using AI
    * Analyzes existing todos and suggests new ones based on patterns, missing tasks,
    * and logical follow-ups. Handles various response formats from different AI providers.
-   * 
+   *
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
@@ -667,10 +799,10 @@ export default class AI extends BaseCommand {
 
       // Set default example suggestions if nothing is available
       const defaultSuggestions = [
-        "Update financial forecasts",
-        "Schedule quarterly review meeting",
-        "Prepare tax documentation",
-        "Review investment portfolio"
+        'Update financial forecasts',
+        'Schedule quarterly review meeting',
+        'Prepare tax documentation',
+        'Review investment portfolio',
       ];
 
       // Extract suggestions from complex LangChain response format
@@ -695,17 +827,26 @@ export default class AI extends BaseCommand {
                   }
                 } catch (e) {
                   // If not valid JSON, try to extract array-like content
-                  const match = content.match(/\[\s*"([^"]+)"(?:\s*,\s*"([^"]+)")*\s*\]/);
+                  const match = content.match(
+                    /\[\s*"([^"]+)"(?:\s*,\s*"([^"]+)")*\s*\]/
+                  );
                   if (match) {
-                    return match[0].replace(/[\[\]"\s]/g, '')
+                    return match[0]
+                      .replace(/[\[\]"\s]/g, '')
                       .split(',')
                       .filter(Boolean);
                   }
                 }
 
                 // If not parsed as JSON, split by newlines and clean up
-                return content.split('\n')
-                  .map(line => line.trim().replace(/^[•\-*]|\d+\.\s+|["'\[\]]|,$/, '').trim())
+                return content
+                  .split('\n')
+                  .map(line =>
+                    line
+                      .trim()
+                      .replace(/^[•\-*]|\d+\.\s+|["'\[\]]|,$/, '')
+                      .trim()
+                  )
                   .filter(line => line.length > 0);
               }
             } catch (e) {
@@ -720,7 +861,10 @@ export default class AI extends BaseCommand {
             const value = obj[key];
             if (value) {
               // If value is an array of strings, return it
-              if (Array.isArray(value) && value.every(item => typeof item === 'string')) {
+              if (
+                Array.isArray(value) &&
+                value.every(item => typeof item === 'string')
+              ) {
                 return value;
               }
 
@@ -733,7 +877,11 @@ export default class AI extends BaseCommand {
               }
 
               // If value is a string that looks like JSON array
-              if (typeof value === 'string' && value.trim().startsWith('[') && value.trim().endsWith(']')) {
+              if (
+                typeof value === 'string' &&
+                value.trim().startsWith('[') &&
+                value.trim().endsWith(']')
+              ) {
                 try {
                   const parsed = JSON.parse(value);
                   if (Array.isArray(parsed)) {
@@ -778,7 +926,9 @@ export default class AI extends BaseCommand {
       });
 
       this.log('');
-      this.log(`To add a suggested todo: ${chalk.cyan('walrus_todo add "Suggested Todo Title"')}`);
+      this.log(
+        `To add a suggested todo: ${chalk.cyan('walrus_todo add "Suggested Todo Title"')}`
+      );
     } catch (error) {
       // Only log detailed error in development mode
       if (process.env.NODE_ENV === 'development') {
@@ -787,7 +937,9 @@ export default class AI extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`AI suggestion failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `AI suggestion failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -796,7 +948,7 @@ export default class AI extends BaseCommand {
    * Performs a comprehensive analysis of todos to identify patterns, trends,
    * potential bottlenecks, and areas for improvement. Results are organized
    * into categories for better understanding.
-   * 
+   *
    * @param {any} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
@@ -810,14 +962,20 @@ export default class AI extends BaseCommand {
 
       // Debug information only in development environment
       if (process.env.NODE_ENV === 'development') {
-        logger.debug('Analysis response type', { type: typeof analysisResponse });
+        logger.debug('Analysis response type', {
+          type: typeof analysisResponse,
+        });
         logger.debug('Analysis response', { response: analysisResponse });
       }
 
       // Extract analysis from various response formats
       function extractAnalysisData(response: any): Record<string, any> {
         // If it's already the right structure, return it directly
-        if (response && typeof response === 'object' && !Array.isArray(response)) {
+        if (
+          response &&
+          typeof response === 'object' &&
+          !Array.isArray(response)
+        ) {
           // Skip if it's a LangChain response object
           if (!response.lc && !response.type && !response.id) {
             return response as Record<string, any>;
@@ -840,8 +998,8 @@ export default class AI extends BaseCommand {
                 } catch (e) {
                   // Failed to parse as JSON, create a simple analysis object
                   return {
-                    "summary": content.split('\n')[0] || "Analysis of todos",
-                    "details": content
+                    summary: content.split('\n')[0] || 'Analysis of todos',
+                    details: content,
                   };
                 }
               }
@@ -851,27 +1009,31 @@ export default class AI extends BaseCommand {
           }
 
           // Check for result property
-          if (response.result && typeof response.result === 'object' && !Array.isArray(response.result)) {
+          if (
+            response.result &&
+            typeof response.result === 'object' &&
+            !Array.isArray(response.result)
+          ) {
             return response.result;
           }
         }
 
         // Default fallback analysis
         return {
-          "themes": [
-            "Financial planning and reporting",
-            "Task management",
-            "Project coordination"
+          themes: [
+            'Financial planning and reporting',
+            'Task management',
+            'Project coordination',
           ],
-          "bottlenecks": [
-            "Multiple financial reviews might create redundancy",
-            "Lack of clear prioritization"
+          bottlenecks: [
+            'Multiple financial reviews might create redundancy',
+            'Lack of clear prioritization',
           ],
-          "recommendations": [
-            "Consider consolidating financial tasks",
-            "Add specific deadlines to time-sensitive items",
-            "Group related tasks for better workflow"
-          ]
+          recommendations: [
+            'Consider consolidating financial tasks',
+            'Add specific deadlines to time-sensitive items',
+            'Group related tasks for better workflow',
+          ],
         };
       }
 
@@ -909,7 +1071,9 @@ export default class AI extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`AI analysis failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new CLIError(
+        `AI analysis failed: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 }
@@ -919,6 +1083,6 @@ requireEnvironment(AI, [
   {
     variable: 'XAI_API_KEY',
     message: 'XAI API key is required for AI operations with the XAI provider',
-    alternativeFlag: 'apiKey'
-  }
+    alternativeFlag: 'apiKey',
+  },
 ]);

@@ -22,15 +22,15 @@ export default class InteractiveCommand extends BaseCommand {
     `  l               # List todos in current list`,
     `  c abc123        # Complete todo with ID abc123`,
     `  help            # Show all available commands`,
-    `  exit            # Exit interactive mode`
+    `  exit            # Exit interactive mode`,
   ];
 
   static flags = {
     ...BaseCommand.flags,
     'start-list': Flags.string({
       description: 'Start with a specific list selected',
-      char: 'l'
-    })
+      char: 'l',
+    }),
   };
 
   async run(): Promise<void> {
@@ -39,11 +39,11 @@ export default class InteractiveCommand extends BaseCommand {
     // Don't show the usual command output in interactive mode
     const originalLog = this.log;
     const originalError = this.error;
-    
+
     try {
       // Create and start interactive mode
       const interactive = new InteractiveMode();
-      
+
       // Set initial list if provided
       if (flags['start-list']) {
         await this.validateList(flags['start-list']);
@@ -56,7 +56,7 @@ export default class InteractiveCommand extends BaseCommand {
       // Restore original logging for error handling
       this.log = originalLog;
       this.error = originalError;
-      
+
       if (error instanceof CLIError) {
         throw error;
       }
@@ -69,9 +69,11 @@ export default class InteractiveCommand extends BaseCommand {
   }
 
   private async validateList(listName: string): Promise<void> {
-    const todoService = new (await import('../services/todoService')).TodoService();
+    const todoService = new (
+      await import('../services/todoService')
+    ).TodoService();
     const list = await todoService.getList(listName);
-    
+
     if (!list) {
       throw new Error(`List "${listName}" not found`);
     }

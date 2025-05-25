@@ -4,24 +4,35 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Secp256k1Keypair } from '@mysten/sui/keypairs/secp256k1';
-import { 
-  type Signer, 
-  type PublicKey, 
+import {
+  type Signer,
+  type PublicKey,
   type SignatureScheme,
-  type IntentScope, 
-  messageWithIntent 
+  type IntentScope,
+  messageWithIntent,
 } from '@mysten/sui/cryptography';
-import { fromB64, toB64 } from '@mysten/sui/utils';
+import { toB64 } from '@mysten/sui/utils';
 import { TransactionBlock, Transaction } from '@mysten/sui/transactions';
-import { SuiClient, type SuiClientOptions, SuiTransactionBlockResponse } from '@mysten/sui/client';
-import { SignerAdapter, SuiSDKVersion, SignatureWithBytes } from '../types/adapters/SignerAdapter';
+import {
+  SuiClient,
+  type SuiClientOptions,
+  SuiTransactionBlockResponse,
+} from '@mysten/sui/client';
+import {
+  SignerAdapter,
+  SuiSDKVersion,
+  SignatureWithBytes,
+} from '../types/adapters/SignerAdapter';
 import { TransactionType } from '../types/transaction';
-import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
+// TransactionBlockAdapter import removed - not used in current implementation
 
 export type KeyType = SignatureScheme;
 
 export class KeystoreError extends Error {
-  constructor(message: string, public readonly code: string) {
+  constructor(
+    message: string,
+    public readonly code: string
+  ) {
     super(message);
     this.name = 'KeystoreError';
   }
@@ -56,22 +67,36 @@ export class KeystoreSigner implements SignerAdapter {
 
   constructor(private suiClient: SuiClient) {
     // Get active address
-    const activeAddressOutput = execSync('sui client active-address').toString().trim();
+    const activeAddressOutput = execSync('sui client active-address')
+      .toString()
+      .trim();
     const activeAddress = activeAddressOutput.trim();
     if (!activeAddress) {
-      throw new KeystoreError('No active Sui address found', 'NO_ACTIVE_ADDRESS');
+      throw new KeystoreError(
+        'No active Sui address found',
+        'NO_ACTIVE_ADDRESS'
+      );
     }
 
     // Read keystore file
     const homeDir = os.homedir();
-    const keystorePath = path.join(homeDir, '.sui', 'sui_config', 'sui.keystore');
+    const keystorePath = path.join(
+      homeDir,
+      '.sui',
+      'sui_config',
+      'sui.keystore'
+    );
     let keystore;
     try {
       const keystoreData = fs.readFileSync(keystorePath, 'utf-8');
       keystore = JSON.parse(keystoreData); // Array of base64 strings
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new KeystoreError(`Failed to read keystore file: ${errorMessage}`, 'KEYSTORE_READ_ERROR');
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new KeystoreError(
+        `Failed to read keystore file: ${errorMessage}`,
+        'KEYSTORE_READ_ERROR'
+      );
     }
 
     // Find the key that matches the active address
@@ -80,25 +105,33 @@ export class KeystoreSigner implements SignerAdapter {
       try {
         // Try Ed25519 first
         try {
-          const tmpKeypair = Ed25519Keypair.fromSecretKey(keyBuffer.subarray(1));
+          const tmpKeypair = Ed25519Keypair.fromSecretKey(
+            keyBuffer.subarray(1)
+          );
           const tmpAddress = tmpKeypair.getPublicKey().toSuiAddress();
           if (tmpAddress === activeAddress) {
             this.keypair = tmpKeypair;
             this.keyScheme = 'ED25519';
             break;
           }
-        } catch (error: unknown) {}
+        } catch (error: unknown) {
+          // Ed25519 key doesn't match, continue to try Secp256k1
+        }
 
         // Try Secp256k1 if Ed25519 fails
         try {
-          const tmpKeypair = Secp256k1Keypair.fromSecretKey(keyBuffer.subarray(1));
+          const tmpKeypair = Secp256k1Keypair.fromSecretKey(
+            keyBuffer.subarray(1)
+          );
           const tmpAddress = tmpKeypair.getPublicKey().toSuiAddress();
           if (tmpAddress === activeAddress) {
             this.keypair = tmpKeypair;
             this.keyScheme = 'Secp256k1';
             break;
           }
-        } catch (error: unknown) {}
+        } catch (error: unknown) {
+          // Secp256k1 key doesn't match, continue to next key
+        }
       } catch (e) {
         // Skip invalid keys
         continue;
@@ -106,7 +139,10 @@ export class KeystoreSigner implements SignerAdapter {
     }
 
     if (!this.keypair) {
-      throw new KeystoreError(`No key found in keystore for address ${activeAddress}`, 'KEY_NOT_FOUND');
+      throw new KeystoreError(
+        `No key found in keystore for address ${activeAddress}`,
+        'KEY_NOT_FOUND'
+      );
     }
   }
 
@@ -118,38 +154,43 @@ export class KeystoreSigner implements SignerAdapter {
   async sign(messageBytes: Uint8Array): Promise<Uint8Array> {
     return await this.signData(messageBytes);
   }
-  
+
   /**
    * Signs data with a specific intent
    * @param messageBytes The message to sign
    * @param intent The intent scope for the signature
    * @returns A Promise resolving to a SignatureWithBytes object
    */
-  async signWithIntent(messageBytes: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
+  async signWithIntent(
+    messageBytes: Uint8Array,
+    intent: IntentScope
+  ): Promise<SignatureWithBytes> {
     const intentMessage = messageWithIntent(intent, messageBytes);
     const signature = await this.signData(intentMessage);
-    
+
     // Return in the format expected by the SignatureWithBytes interface
     return {
       signature: toB64(signature),
-      bytes: toB64(messageBytes)
+      bytes: toB64(messageBytes),
     };
   }
-  
+
   /**
    * Signs data and returns a signature
    * @param data The data to sign
    * @returns A Promise resolving to the signature for the given data
    */
   async signData(data: Uint8Array): Promise<Uint8Array> {
-    if ('signData' in this.keypair && typeof this.keypair.signData === 'function') {
+    if (
+      'signData' in this.keypair &&
+      typeof this.keypair.signData === 'function'
+    ) {
       return await this.keypair.signData(data);
     }
     // Fallback for keypairs that don't have signData
     const signature = await this.keypair.sign(data);
     return signature;
   }
-  
 
   /**
    * Signs a transaction block
@@ -165,20 +206,28 @@ export class KeystoreSigner implements SignerAdapter {
    * @param transaction The transaction to sign
    * @returns A Promise resolving to a SignatureWithBytes object
    */
-  async signTransaction(transaction: TransactionType): Promise<SignatureWithBytes> {
+  async signTransaction(
+    transaction: TransactionType
+  ): Promise<SignatureWithBytes> {
     // Serialize the transaction and sign the bytes
     let bytes: Uint8Array;
     if (transaction instanceof TransactionBlock) {
       const serialized = await transaction.serialize();
       bytes = new Uint8Array(Buffer.from(serialized, 'base64'));
-    } else if ((transaction as any).serialize && typeof (transaction as any).serialize === 'function') {
+    } else if (
+      (transaction as any).serialize &&
+      typeof (transaction as any).serialize === 'function'
+    ) {
       // TransactionBlockAdapter type
       const serialized = await (transaction as any).serialize();
       bytes = new Uint8Array(Buffer.from(serialized, 'base64'));
     } else {
-      throw new KeystoreError('Unknown transaction type', 'INVALID_TRANSACTION_TYPE');
+      throw new KeystoreError(
+        'Unknown transaction type',
+        'INVALID_TRANSACTION_TYPE'
+      );
     }
-    
+
     return this.signTransactionBlock(bytes);
   }
 
@@ -210,9 +259,9 @@ export class KeystoreSigner implements SignerAdapter {
 
   async signAndExecuteTransaction(
     transactionBlock: TransactionBlock | Transaction,
-    options?: { 
-      requestType?: 'WaitForLocalExecution'; 
-      showEffects?: boolean; 
+    options?: {
+      requestType?: 'WaitForLocalExecution';
+      showEffects?: boolean;
       showObjectChanges?: boolean;
       showEvents?: boolean;
       showBalanceChanges?: boolean;
@@ -223,18 +272,19 @@ export class KeystoreSigner implements SignerAdapter {
         throw new Error('Invalid transaction block');
       }
 
-      const { bytes, signature } = await this.signedTransactionBlock(transactionBlock);
+      const { bytes, signature } =
+        await this.signedTransactionBlock(transactionBlock);
 
       const response = await this.suiClient.executeTransactionBlock({
         transactionBlock: bytes,
         signature,
         requestType: options?.requestType || 'WaitForLocalExecution',
-        options: { 
+        options: {
           showEffects: options?.showEffects ?? true,
           showObjectChanges: options?.showObjectChanges,
           showEvents: options?.showEvents,
-          showBalanceChanges: options?.showBalanceChanges
-        }
+          showBalanceChanges: options?.showBalanceChanges,
+        },
       });
 
       if (!response) {
@@ -243,7 +293,8 @@ export class KeystoreSigner implements SignerAdapter {
 
       return response;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       throw new Error(`Transaction execution failed: ${errorMessage}`);
     }
   }
@@ -264,16 +315,19 @@ export class KeystoreSigner implements SignerAdapter {
       bytes = await (transactionBlock as any).build({ client: this.suiClient });
     }
     const signatureResult = await this.signTransactionBlock(bytes);
-    
+
     // Convert the signature to base64 string for serialization
     // Handle case when signature is already a string or is a Uint8Array
-    const signatureBase64 = typeof signatureResult.signature === 'string' 
-      ? signatureResult.signature 
-      : toB64(Buffer.from(signatureResult.signature as unknown as string, 'utf-8'));
-    
+    const signatureBase64 =
+      typeof signatureResult.signature === 'string'
+        ? signatureResult.signature
+        : toB64(
+            Buffer.from(signatureResult.signature as unknown as string, 'utf-8')
+          );
+
     return {
       bytes,
-      signature: [signatureBase64]
+      signature: [signatureBase64],
     };
   }
 

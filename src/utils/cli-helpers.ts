@@ -11,20 +11,23 @@ const logger = new Logger('cli-helpers');
  */
 export class SpinnerManager {
   private spinner: Ora;
-  
+
   constructor(text: string) {
     // Handle both CommonJS and ES module imports
-    const oraFn = typeof ora === 'function' ? ora : (ora as { default: typeof ora }).default;
+    const oraFn =
+      typeof ora === 'function'
+        ? ora
+        : (ora as { default: typeof ora }).default;
     this.spinner = oraFn(text);
   }
-  
+
   start(text?: string): void {
     if (text) {
       this.spinner.text = text;
     }
     this.spinner.start();
   }
-  
+
   succeed(text?: string): void {
     if (text) {
       this.spinner.succeed(text);
@@ -32,7 +35,7 @@ export class SpinnerManager {
       this.spinner.succeed();
     }
   }
-  
+
   fail(text?: string): void {
     if (text) {
       this.spinner.fail(text);
@@ -40,19 +43,19 @@ export class SpinnerManager {
       this.spinner.fail();
     }
   }
-  
+
   info(text: string): void {
     this.spinner.info(text);
   }
-  
+
   warn(text: string): void {
     this.spinner.warn(text);
   }
-  
+
   stop(): void {
     this.spinner.stop();
   }
-  
+
   update(text: string): void {
     this.spinner.text = text;
   }
@@ -66,18 +69,18 @@ export class ErrorHandler {
     if (error instanceof CLIError) {
       throw error;
     }
-    
+
     const message = error instanceof Error ? error.message : String(error);
     throw new CLIError(`${context}: ${message}`, 'CLI_ERROR');
   }
-  
+
   static formatError(error: unknown): string {
     if (error instanceof Error) {
       return error.message;
     }
     return String(error);
   }
-  
+
   static exit(message: string, code: number = 1): never {
     logger.error(chalk.red(`Error: ${message}`));
     process.exit(code);
@@ -91,21 +94,24 @@ export class FlagValidator {
   static validatePositiveNumber(value: string, name: string): number {
     const num = parseInt(value, 10);
     if (isNaN(num) || num <= 0) {
-      throw new CLIError(`${name} must be a positive number`, 'VALIDATION_ERROR');
+      throw new CLIError(
+        `${name} must be a positive number`,
+        'VALIDATION_ERROR'
+      );
     }
     return num;
   }
-  
+
   static validateNonEmpty(value: string, name: string): string {
     if (!value || value.trim().length === 0) {
       throw new CLIError(`${name} cannot be empty`, 'VALIDATION_ERROR');
     }
     return value.trim();
   }
-  
+
   static validateEnum<T extends string>(
-    value: string, 
-    validValues: T[], 
+    value: string,
+    validValues: T[],
     name: string
   ): T {
     if (!validValues.includes(value as T)) {
@@ -116,7 +122,7 @@ export class FlagValidator {
     }
     return value as T;
   }
-  
+
   static validatePath(path: string, name: string): string {
     if (!path || path.trim().length === 0) {
       throw new CLIError(`${name} cannot be empty`, 'VALIDATION_ERROR');
@@ -147,35 +153,35 @@ export class RetryManager {
       initialDelay = 1000,
       maxDelay = 10000,
       backoffFactor = 2,
-      onRetry
+      onRetry,
     } = options;
-    
+
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         if (attempt < maxAttempts) {
           const delay = Math.min(
             initialDelay * Math.pow(backoffFactor, attempt - 1),
             maxDelay
           );
-          
+
           if (onRetry) {
             onRetry(attempt, lastError);
           }
-          
+
           await this.delay(delay);
         }
       }
     }
-    
+
     throw lastError!;
   }
-  
+
   private static delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -188,25 +194,25 @@ export class Logger {
   static success(message: string): void {
     logger.info(chalk.green(`✓ ${message}`));
   }
-  
+
   static error(message: string): void {
     logger.error(chalk.red(`✗ ${message}`));
   }
-  
+
   static warning(message: string): void {
     logger.warn(chalk.yellow(`⚠ ${message}`));
   }
-  
+
   static info(message: string): void {
     logger.info(chalk.blue(`ℹ ${message}`));
   }
-  
+
   static debug(message: string): void {
     if (process.env.DEBUG) {
       logger.info(chalk.gray(`[DEBUG] ${message}`));
     }
   }
-  
+
   static step(step: number, total: number, message: string): void {
     logger.info(chalk.dim(`[${step}/${total}]`) + ` ${message}`);
   }
@@ -222,19 +228,19 @@ export class Formatter {
       .map(([key, value]) => `${key.padEnd(maxKeyLength)} : ${value}`)
       .join('\n');
   }
-  
+
   static list(items: string[], bullet = '•'): string {
     return items.map(item => `${bullet} ${item}`).join('\n');
   }
-  
+
   static code(text: string): string {
     return chalk.cyan(text);
   }
-  
+
   static highlight(text: string): string {
     return chalk.bold(text);
   }
-  
+
   static dim(text: string): string {
     return chalk.dim(text);
   }

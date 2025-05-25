@@ -1,7 +1,14 @@
 import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
-import { AIProvider, AIModelOptions, AIModelAdapter } from '../../src/types/adapters/AIModelAdapter';
-import { AIPrivacyLevel, AIVerifierAdapter } from '../../src/types/adapters/AIVerifierAdapter';
+import {
+  AIProvider,
+  AIModelOptions,
+  AIModelAdapter,
+} from '../../src/types/adapters/AIModelAdapter';
+import {
+  AIPrivacyLevel,
+  AIVerifierAdapter,
+} from '../../src/types/adapters/AIVerifierAdapter';
 import { Todo } from '../../src/types/todo';
 
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
@@ -12,19 +19,21 @@ import { createSampleTodos } from '../helpers/ai-test-utils';
 jest.mock('../../src/services/ai/AIProviderFactory', () => {
   return {
     AIProviderFactory: {
-      createProvider: jest.fn().mockImplementation(() => createMockAIModelAdapter()),
+      createProvider: jest
+        .fn()
+        .mockImplementation(() => createMockAIModelAdapter()),
       getDefaultProvider: jest.fn().mockImplementation(() => ({
         provider: 'xai',
-        modelName: 'grok-beta'
-      }))
-    }
+        modelName: 'grok-beta',
+      })),
+    },
   };
 });
 
 describe('AI Service Error Handling', () => {
   const sampleTodos: Todo[] = createSampleTodos(3);
   let mockAdapter: ReturnType<typeof createMockAIModelAdapter>;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockAdapter = createMockAIModelAdapter();
@@ -34,50 +43,66 @@ describe('AI Service Error Handling', () => {
   describe('API Connection Errors', () => {
     it('should handle API timeout errors', async () => {
       // Mock a timeout error
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('Request timed out after 30000ms')
-      );
-      
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(new Error('Request timed out after 30000ms'));
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Request timed out');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        'Request timed out'
+      );
     });
 
     it('should handle API authentication errors', async () => {
       // Mock an auth error
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('401 Unauthorized: Invalid API key')
-      );
-      
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(new Error('401 Unauthorized: Invalid API key'));
+
       const aiService = new AIService('invalid-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('401 Unauthorized');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        '401 Unauthorized'
+      );
     });
 
     it('should handle API rate limit errors', async () => {
       // Mock a rate limit error
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('429 Too Many Requests: Rate limit exceeded')
-      );
-      
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('429 Too Many Requests: Rate limit exceeded')
+        );
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('429 Too Many Requests');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        '429 Too Many Requests'
+      );
     });
 
     it('should handle API server errors', async () => {
       // Mock a server error
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('500 Internal Server Error: Something went wrong')
-      );
-      
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('500 Internal Server Error: Something went wrong')
+        );
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('500 Internal Server Error');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        '500 Internal Server Error'
+      );
     });
   });
 
@@ -85,8 +110,9 @@ describe('AI Service Error Handling', () => {
   describe('Input Validation Errors', () => {
     it('should handle empty todo lists', async () => {
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
       const result = await aiService.summarize([]);
       expect(result).toBe('No todos to summarize.');
       expect(mockAdapter.processWithPromptTemplate).not.toHaveBeenCalled();
@@ -94,27 +120,32 @@ describe('AI Service Error Handling', () => {
 
     it('should handle extremely large input', async () => {
       // Create an extremely large todo list
-      const largeTodos: Todo[] = Array.from({ length: 1000 }).map((_, index) => ({
-        id: `todo-${index}`,
-        title: `Todo ${index}`,
-        description: 'a'.repeat(1000), // Large description
-        completed: false,
-        priority: 'medium' as const,
-        tags: [],
-        private: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }));
-      
-      // Mock a token limit error
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('Input exceeds maximum token limit')
+      const largeTodos: Todo[] = Array.from({ length: 1000 }).map(
+        (_, index) => ({
+          id: `todo-${index}`,
+          title: `Todo ${index}`,
+          description: 'a'.repeat(1000), // Large description
+          completed: false,
+          priority: 'medium' as const,
+          tags: [],
+          private: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
       );
-      
+
+      // Mock a token limit error
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(new Error('Input exceeds maximum token limit'));
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(largeTodos)).rejects.toThrow('exceeds maximum token limit');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(largeTodos)).rejects.toThrow(
+        'exceeds maximum token limit'
+      );
     });
 
     it('should handle malformed todos', async () => {
@@ -124,20 +155,21 @@ describe('AI Service Error Handling', () => {
         { title: 'Just a title' }, // Missing ID
         null, // Null entry
         undefined, // Undefined entry
-        {} // Empty object
+        {}, // Empty object
       ];
-      
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
       // Should filter out invalid todos
       await aiService.summarize(malformedTodos as Todo[]);
-      
+
       // Verify that only valid-enough todos are passed to the adapter
       expect(mockAdapter.processWithPromptTemplate).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          todos: expect.stringContaining('Just a title')
+          todos: expect.stringContaining('Just a title'),
         })
       );
     });
@@ -151,15 +183,16 @@ describe('AI Service Error Handling', () => {
         result: 'Not a valid JSON object',
         modelName: 'mock-model',
         provider: AIProvider.XAI,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
-      
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
       // For categorize which expects a Record<string, string[]>
       const result = await aiService.categorize(sampleTodos);
-      
+
       // Should return an empty object as a fallback
       expect(result).toEqual({});
     });
@@ -170,14 +203,15 @@ describe('AI Service Error Handling', () => {
         result: '',
         modelName: 'mock-model',
         provider: AIProvider.XAI,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
-      
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
       const result = await aiService.summarize(sampleTodos);
-      
+
       // Should return a default message
       expect(result).toBe('');
     });
@@ -188,14 +222,15 @@ describe('AI Service Error Handling', () => {
         result: null,
         modelName: 'mock-model',
         provider: AIProvider.XAI,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
-      
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
       const result = await aiService.summarize(sampleTodos);
-      
+
       // Should return an empty string as a fallback
       expect(result).toBe('');
     });
@@ -204,15 +239,15 @@ describe('AI Service Error Handling', () => {
   // SECTION: Verification errors
   describe('Verification Errors', () => {
     let mockVerificationService: AIVerificationService;
-    
+
     beforeEach(() => {
       const mockVerifierAdapter = createMockAIVerifierAdapter();
       mockVerificationService = new AIVerificationService(mockVerifierAdapter);
     });
-    
+
     it('should handle verification service initialization errors', async () => {
       const aiService = new AIService('test-api-key');
-      
+
       await expect(
         aiService.summarizeWithVerification(sampleTodos)
       ).rejects.toThrow('Verification service not initialized');
@@ -220,11 +255,14 @@ describe('AI Service Error Handling', () => {
 
     it('should handle verification creation failures', async () => {
       // Mock a verification service that throws an error
-      const createVerificationSpy = jest.spyOn(mockVerificationService, 'createVerification');
+      const createVerificationSpy = jest.spyOn(
+        mockVerificationService,
+        'createVerification'
+      );
       createVerificationSpy.mockRejectedValue(
         new Error('Failed to create verification record')
       );
-      
+
       const aiService = new AIService(
         'test-api-key',
         AIProvider.XAI,
@@ -232,7 +270,7 @@ describe('AI Service Error Handling', () => {
         {},
         mockVerificationService
       );
-      
+
       await expect(
         aiService.summarizeWithVerification(sampleTodos)
       ).rejects.toThrow('Failed to create verification record');
@@ -249,19 +287,25 @@ describe('AI Service Error Handling', () => {
         provider: 'mock-provider',
         privacyLevel: AIPrivacyLevel.HASH_ONLY,
         metadata: { todoCount: '3' },
-        signature: 'mock-sig'
+        signature: 'mock-sig',
       };
-      
+
       // Mock the verification service to return a record but fail validation
-      const createVerifiedSummarySpy = jest.spyOn(mockVerificationService, 'createVerifiedSummary');
+      const createVerifiedSummarySpy = jest.spyOn(
+        mockVerificationService,
+        'createVerifiedSummary'
+      );
       createVerifiedSummarySpy.mockResolvedValue({
         result: 'Summary text',
-        verification: mockVerification
+        verification: mockVerification,
       });
-      
-      const verifyRecordSpy = jest.spyOn(mockVerificationService, 'verifyRecord');
+
+      const verifyRecordSpy = jest.spyOn(
+        mockVerificationService,
+        'verifyRecord'
+      );
       verifyRecordSpy.mockResolvedValue(false); // Validation fails
-      
+
       const aiService = new AIService(
         'test-api-key',
         AIProvider.XAI,
@@ -269,20 +313,20 @@ describe('AI Service Error Handling', () => {
         {},
         mockVerificationService
       );
-      
+
       // The verification is created but validation would fail if checked
       const result = await aiService.summarizeWithVerification(sampleTodos);
-      
+
       expect(result.result).toBe('Summary text');
       expect(result.verification).toBe(mockVerification);
-      
+
       // If we manually verify it after the fact
       const isValid = await mockVerificationService.verifyRecord(
         mockVerification,
         sampleTodos,
         'Summary text'
       );
-      
+
       expect(isValid).toBe(false);
     });
   });
@@ -292,40 +336,59 @@ describe('AI Service Error Handling', () => {
     it('should handle XAI specific errors', async () => {
       // Mock an XAI-specific error
       mockAdapter.getProviderName = jest.fn().mockReturnValue(AIProvider.XAI);
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('XAI: Model grok-beta is currently unavailable')
-      );
-      
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('XAI: Model grok-beta is currently unavailable')
+        );
+
       const aiService = new AIService('test-api-key', AIProvider.XAI);
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('currently unavailable');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        'currently unavailable'
+      );
     });
 
     it('should handle OpenAI specific errors', async () => {
       // Mock an OpenAI-specific error
-      mockAdapter.getProviderName = jest.fn().mockReturnValue(AIProvider.OPENAI);
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('OpenAI API Error: Content policy violation')
-      );
-      
+      mockAdapter.getProviderName = jest
+        .fn()
+        .mockReturnValue(AIProvider.OPENAI);
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('OpenAI API Error: Content policy violation')
+        );
+
       const aiService = new AIService('test-api-key', AIProvider.OPENAI);
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Content policy violation');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        'Content policy violation'
+      );
     });
 
     it('should handle Anthropic specific errors', async () => {
       // Mock an Anthropic-specific error
-      mockAdapter.getProviderName = jest.fn().mockReturnValue(AIProvider.ANTHROPIC);
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('Anthropic: Request canceled due to quota exceeded')
-      );
-      
+      mockAdapter.getProviderName = jest
+        .fn()
+        .mockReturnValue(AIProvider.ANTHROPIC);
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('Anthropic: Request canceled due to quota exceeded')
+        );
+
       const aiService = new AIService('test-api-key', AIProvider.ANTHROPIC);
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('quota exceeded');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        'quota exceeded'
+      );
     });
   });
 
@@ -333,26 +396,36 @@ describe('AI Service Error Handling', () => {
   describe('Network and System Errors', () => {
     it('should handle network connectivity issues', async () => {
       // Mock a network error
-      mockAdapter.processWithPromptTemplate = jest.fn().mockRejectedValue(
-        new Error('Network error: Unable to connect to the API')
-      );
-      
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockRejectedValue(
+          new Error('Network error: Unable to connect to the API')
+        );
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Network error');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        'Network error'
+      );
     });
 
     it('should handle unexpected system errors', async () => {
       // Mock a system error
-      mockAdapter.processWithPromptTemplate = jest.fn().mockImplementation(() => {
-        throw new Error('Unexpected system error');
-      });
-      
+      mockAdapter.processWithPromptTemplate = jest
+        .fn()
+        .mockImplementation(() => {
+          throw new Error('Unexpected system error');
+        });
+
       const aiService = new AIService('test-api-key');
-      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter = mockAdapter;
-      
-      await expect(aiService.summarize(sampleTodos)).rejects.toThrow('Unexpected system error');
+      (aiService as { modelAdapter: AIModelAdapter }).modelAdapter =
+        mockAdapter;
+
+      await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
+        'Unexpected system error'
+      );
     });
   });
 });

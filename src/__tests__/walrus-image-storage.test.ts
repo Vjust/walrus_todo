@@ -1,8 +1,7 @@
-import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
 import { WalrusClient } from '@mysten/walrus';
-import type { BlobObject } from '../types/walrus';
-import { createWalrusImageStorage, type ClientWithExtensions } from '../utils/walrus-image-storage';
+import {
+  createWalrusImageStorage,
+} from '../utils/walrus-image-storage';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -14,8 +13,8 @@ jest.mock('@mysten/walrus', () => ({
     readBlob: jest.fn(),
     writeBlob: jest.fn(),
     getBlobObject: jest.fn(),
-    verifyPoA: jest.fn()
-  }))
+    verifyPoA: jest.fn(),
+  })),
 }));
 
 jest.mock('@mysten/sui/client', () => ({
@@ -25,37 +24,36 @@ jest.mock('@mysten/sui/client', () => ({
     getLatestSuiSystemState: jest.fn(),
     getOwnedObjects: jest.fn(),
     signAndExecuteTransactionBlock: jest.fn(),
-    executeTransactionBlock: jest.fn()
-  }))
+    executeTransactionBlock: jest.fn(),
+  })),
 }));
 
 jest.mock('fs', () => ({
   existsSync: jest.fn(),
-  readFileSync: jest.fn()
+  readFileSync: jest.fn(),
 }));
 
 jest.mock('path', () => ({
-  basename: jest.fn()
+  basename: jest.fn(),
 }));
 
 jest.mock('../utils/sui-keystore', () => ({
-  KeystoreSigner: jest.fn()
+  KeystoreSigner: jest.fn(),
 }));
 
 jest.mock('child_process', () => ({
-  execSync: jest.fn()
+  execSync: jest.fn(),
 }));
-
 
 describe('WalrusImageStorage', () => {
   let mockSuiClient: any;
   let mockWalrusClient: any;
   let mockKeystoreSigner: any;
   let storage: ReturnType<typeof createWalrusImageStorage>;
-  
+
   const mockImagePath = '/path/to/image.jpg';
   const mockImageBuffer = Buffer.from('mock image data');
-  const mockJpegHeader = Buffer.from([0xFF, 0xD8]); // JPEG magic numbers
+  const mockJpegHeader = Buffer.from([0xff, 0xd8]); // JPEG magic numbers
 
   beforeEach(async () => {
     // Reset all mocks
@@ -66,7 +64,7 @@ describe('WalrusImageStorage', () => {
       readBlob: jest.fn(),
       writeBlob: jest.fn(),
       getBlobObject: jest.fn(),
-      verifyPoA: jest.fn()
+      verifyPoA: jest.fn(),
     } as any;
 
     mockSuiClient = {
@@ -75,7 +73,7 @@ describe('WalrusImageStorage', () => {
       getLatestSuiSystemState: jest.fn(),
       getOwnedObjects: jest.fn(),
       signAndExecuteTransactionBlock: jest.fn(),
-      executeTransactionBlock: jest.fn()
+      executeTransactionBlock: jest.fn(),
     } as any;
 
     mockKeystoreSigner = {
@@ -84,35 +82,41 @@ describe('WalrusImageStorage', () => {
         getAddress: jest.fn().mockResolvedValue('0xtest-address'),
         getPublicKey: jest.fn().mockReturnValue({
           toSuiAddress: () => '0xtest-address',
-          scheme: 'ED25519'
+          scheme: 'ED25519',
         }),
-        sign: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
-        signData: jest.fn().mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
-        signDataAsync: jest.fn().mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+        sign: jest
+          .fn()
+          .mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
+        signData: jest
+          .fn()
+          .mockImplementation(() => new Uint8Array([0, 1, 2, 3, 4])),
+        signDataAsync: jest
+          .fn()
+          .mockImplementation(async () => new Uint8Array([0, 1, 2, 3, 4])),
         signDataWithBytes: jest.fn().mockImplementation(() => ({
           signature: new Uint8Array([0, 1, 2, 3, 4]),
-          bytes: new Uint8Array([0, 1, 2, 3, 4])
+          bytes: new Uint8Array([0, 1, 2, 3, 4]),
         })),
         signWithIntent: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
-          bytes: 'mock-bytes'
+          bytes: 'mock-bytes',
         }),
         signTransactionBlock: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
-          bytes: 'mock-bytes'
+          bytes: 'mock-bytes',
         }),
         signTransaction: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
-          bytes: 'mock-bytes'
+          bytes: 'mock-bytes',
         }),
         signPersonalMessage: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
-          bytes: 'mock-bytes'
+          bytes: 'mock-bytes',
         }),
         getKeyScheme: jest.fn().mockReturnValue('ED25519'),
         toSuiAddress: jest.fn().mockReturnValue('0xtest-address'),
-        keyScheme: 'ED25519'
-      })
+        keyScheme: 'ED25519',
+      }),
     };
 
     // Mock constructor implementations
@@ -131,40 +135,42 @@ describe('WalrusImageStorage', () => {
       totalBalance: BigInt(1000),
       coinObjectCount: 1,
       lockedBalance: { number: BigInt(0) },
-      coinObjectId: 'mock-coin-object-id'
+      coinObjectId: 'mock-coin-object-id',
     });
 
     mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '1' });
     mockSuiClient.getOwnedObjects.mockResolvedValue({
-      data: [{
-        data: {
-          objectId: 'existing-storage',
-          digest: '0xdigest',
-          version: '1',
-          type: '0x2::storage::Storage',
-          owner: { AddressOwner: 'owner' },
-          content: {
-            dataType: 'moveObject',
+      data: [
+        {
+          data: {
+            objectId: 'existing-storage',
+            digest: '0xdigest',
+            version: '1',
             type: '0x2::storage::Storage',
-            hasPublicTransfer: true,
-            fields: {
-              storage_size: '2000000',
-              used_size: '100000',
-              end_epoch: '100',
-              id: { id: 'storage1' },
-              start_epoch: '50',
-              deletable: true
-            }
-          }
-        }
-      }],
+            owner: { AddressOwner: 'owner' },
+            content: {
+              dataType: 'moveObject',
+              type: '0x2::storage::Storage',
+              hasPublicTransfer: true,
+              fields: {
+                storage_size: '2000000',
+                used_size: '100000',
+                end_epoch: '100',
+                id: { id: 'storage1' },
+                start_epoch: '50',
+                deletable: true,
+              },
+            },
+          },
+        },
+      ],
       hasNextPage: false,
-      nextCursor: null
+      nextCursor: null,
     });
-    
-    mockSuiClient.signAndExecuteTransactionBlock.mockResolvedValue({ 
-      digest: 'test-digest', 
-      effects: { status: { status: 'success' } } 
+
+    mockSuiClient.signAndExecuteTransactionBlock.mockResolvedValue({
+      digest: 'test-digest',
+      effects: { status: { status: 'success' } },
     });
 
     mockWalrusClient.writeBlob.mockResolvedValue({
@@ -181,10 +187,10 @@ describe('WalrusImageStorage', () => {
           start_epoch: 100,
           end_epoch: 200,
           storage_size: BigInt(2048),
-          used_size: BigInt(1024)
+          used_size: BigInt(1024),
         },
-        deletable: true
-      }
+        deletable: true,
+      },
     });
 
     mockWalrusClient.getBlobObject.mockResolvedValue({
@@ -199,15 +205,17 @@ describe('WalrusImageStorage', () => {
         start_epoch: 100,
         end_epoch: 200,
         storage_size: BigInt(2048),
-        used_size: BigInt(1024)
+        used_size: BigInt(1024),
       },
-      deletable: true
+      deletable: true,
     });
 
     mockWalrusClient.verifyPoA.mockResolvedValue(true);
 
     (fs.existsSync as jest.Mock).mockReturnValue(true);
-    (fs.readFileSync as jest.Mock).mockReturnValue(Buffer.concat([mockJpegHeader, mockImageBuffer]));
+    (fs.readFileSync as jest.Mock).mockReturnValue(
+      Buffer.concat([mockJpegHeader, mockImageBuffer])
+    );
     (path.basename as jest.Mock).mockReturnValue('image.jpg');
 
     storage = createWalrusImageStorage(mockSuiClient, true);
@@ -217,20 +225,26 @@ describe('WalrusImageStorage', () => {
   describe('uploadImage', () => {
     it('should validate input path', async () => {
       (fs.existsSync as jest.Mock).mockReturnValue(false);
-      await expect(storage.uploadImage('')).rejects.toThrow(/Image path is required/);
-      await expect(storage.uploadImage('nonexistent.jpg')).rejects.toThrow(/Image not found/);
+      await expect(storage.uploadImage('')).rejects.toThrow(
+        /Image path is required/
+      );
+      await expect(storage.uploadImage('nonexistent.jpg')).rejects.toThrow(
+        /Image not found/
+      );
     });
 
     it('should validate image format', async () => {
       // Invalid magic numbers
       (fs.readFileSync as jest.Mock).mockReturnValue(Buffer.from('invalid'));
-      await expect(storage.uploadImage(mockImagePath))
-        .rejects.toThrow(/Unsupported image format/);
+      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+        /Unsupported image format/
+      );
 
       // Too small
-      (fs.readFileSync as jest.Mock).mockReturnValue(Buffer.from([0xFF]));
-      await expect(storage.uploadImage(mockImagePath))
-        .rejects.toThrow(/File too small/);
+      (fs.readFileSync as jest.Mock).mockReturnValue(Buffer.from([0xff]));
+      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+        /File too small/
+      );
     });
 
     it('should validate image size', async () => {
@@ -239,8 +253,9 @@ describe('WalrusImageStorage', () => {
       largeBuffer.write('\xFF\xD8'); // JPEG header
       (fs.readFileSync as jest.Mock).mockReturnValue(largeBuffer);
 
-      await expect(storage.uploadImage(mockImagePath))
-        .rejects.toThrow(/exceeds maximum allowed size/);
+      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+        /exceeds maximum allowed size/
+      );
     });
 
     it('should handle upload failures with retries', async () => {
@@ -260,13 +275,15 @@ describe('WalrusImageStorage', () => {
               id: { id: 'storage1' },
               start_epoch: 100,
               end_epoch: 200,
-              storage_size: '2048'
+              storage_size: '2048',
             },
-            deletable: true
-          }
+            deletable: true,
+          },
         });
 
-      mockWalrusClient.readBlob.mockResolvedValueOnce(Buffer.concat([mockJpegHeader, mockImageBuffer]));
+      mockWalrusClient.readBlob.mockResolvedValueOnce(
+        Buffer.concat([mockJpegHeader, mockImageBuffer])
+      );
 
       const result = await storage.uploadImage(mockImagePath);
       expect(result).toBe('https://testnet.wal.app/blob/test-blob-id');
@@ -288,17 +305,20 @@ describe('WalrusImageStorage', () => {
             id: { id: 'storage1' },
             start_epoch: 100,
             end_epoch: 200,
-            storage_size: '2048'
+            storage_size: '2048',
           },
-          deletable: true
-        }
+          deletable: true,
+        },
       });
 
       // Mock verification returning different content
-      mockWalrusClient.readBlob.mockResolvedValueOnce(Buffer.from('different content'));
+      mockWalrusClient.readBlob.mockResolvedValueOnce(
+        Buffer.from('different content')
+      );
 
-      await expect(storage.uploadImage(mockImagePath))
-        .rejects.toThrow(/Content integrity check failed/);
+      await expect(storage.uploadImage(mockImagePath)).rejects.toThrow(
+        /Content integrity check failed/
+      );
     });
 
     it('should upload successfully with metadata', async () => {
@@ -318,15 +338,19 @@ describe('WalrusImageStorage', () => {
             id: { id: 'storage1' },
             start_epoch: 100,
             end_epoch: 200,
-            storage_size: '2048'
+            storage_size: '2048',
           },
-          deletable: true
-        }
+          deletable: true,
+        },
       });
 
       mockWalrusClient.readBlob.mockResolvedValueOnce(imageBuffer);
 
-      const result = await storage.uploadTodoImage(mockImagePath, 'Test Todo', true);
+      const result = await storage.uploadTodoImage(
+        mockImagePath,
+        'Test Todo',
+        true
+      );
       expect(result).toBe('https://testnet.wal.app/blob/test-blob-id');
 
       // Verify metadata was included
@@ -348,8 +372,8 @@ describe('WalrusImageStorage', () => {
             height: expect.any(String),
             size: expect.any(String),
             checksum: expect.any(String),
-            uploadedAt: expect.any(String)
-          })
+            uploadedAt: expect.any(String),
+          }),
         })
       );
     });

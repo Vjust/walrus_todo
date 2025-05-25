@@ -22,10 +22,13 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
     // Ensure we're on testnet
     logger.info('Checking Sui environment...');
     const envInfo = execSync('sui client active-env').toString().trim();
-    const network = envInfo.includes('testnet') ? 'testnet'
-                 : envInfo.includes('mainnet') ? 'mainnet'
-                 : envInfo.includes('devnet') ? 'devnet'
-                 : 'local';
+    const network = envInfo.includes('testnet')
+      ? 'testnet'
+      : envInfo.includes('mainnet')
+        ? 'mainnet'
+        : envInfo.includes('devnet')
+          ? 'devnet'
+          : 'local';
 
     // Check for testnet and switch if needed
     if (network !== 'testnet') {
@@ -50,13 +53,17 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
     const defaultImagePath = path.join(__dirname, '../assets/todo_bottle.jpeg');
     if (!fs.existsSync(defaultImagePath)) {
       logger.error(`❌ Error: Default image not found at ${defaultImagePath}`);
-      logger.error('Please ensure the image exists before running this script.');
+      logger.error(
+        'Please ensure the image exists before running this script.'
+      );
       return null;
     }
     logger.info(`✓ Default image found at ${defaultImagePath}`);
 
     // Create Walrus storage client for testnet
-    logger.info(`Creating Walrus storage client in ${useMockMode ? 'MOCK' : 'REAL'} mode...`);
+    logger.info(
+      `Creating Walrus storage client in ${useMockMode ? 'MOCK' : 'REAL'} mode...`
+    );
     const walrusStorage = createWalrusImageStorage(suiClient, useMockMode);
 
     // Connect to get active address and initialize WalrusClient
@@ -65,13 +72,17 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
     const activeAddress = walrusStorage.getActiveAddress();
 
     if (!activeAddress) {
-      throw new Error('No active address found. Ensure connect() was successful.');
+      throw new Error(
+        'No active address found. Ensure connect() was successful.'
+      );
     }
     logger.info(`✓ Connected to Sui with address: ${activeAddress}`);
 
     // Note: Skipping WAL balance check as the coin type format may vary between Sui versions
     // The Walrus client will handle errors if there are insufficient WAL tokens
-    logger.info('Proceeding to upload - make sure you have WAL tokens in your wallet...');
+    logger.info(
+      'Proceeding to upload - make sure you have WAL tokens in your wallet...'
+    );
 
     // Upload the default image
     logger.info('\nUploading default image to Walrus...');
@@ -82,11 +93,17 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
 
     // Display formatted response for easy copy/paste into NFT metadata
     logger.info('\nJSON metadata format for your NFT:');
-    logger.info(JSON.stringify({
-      name: "Todo NFT",
-      description: "A decentralized todo item",
-      image_url: imageUrl
-    }, null, 2));
+    logger.info(
+      JSON.stringify(
+        {
+          name: 'Todo NFT',
+          description: 'A decentralized todo item',
+          image_url: imageUrl,
+        },
+        null,
+        2
+      )
+    );
 
     return imageUrl;
   } catch (error) {
@@ -101,9 +118,16 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
         logger.error('sui client switch --address <YOUR_ADDRESS>');
       }
 
-      if (errorMsg.includes('insufficient balance') || errorMsg.includes('WAL')) {
-        logger.error('\nYou need WAL tokens in your active address for this operation.');
-        logger.error('You can get WAL tokens from the Walrus faucet or Discord.');
+      if (
+        errorMsg.includes('insufficient balance') ||
+        errorMsg.includes('WAL')
+      ) {
+        logger.error(
+          '\nYou need WAL tokens in your active address for this operation.'
+        );
+        logger.error(
+          'You can get WAL tokens from the Walrus faucet or Discord.'
+        );
       }
 
       if (errorMsg.includes('network') || errorMsg.includes('connection')) {
@@ -118,7 +142,9 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
 
 // Execute the script - using real mode which requires WAL tokens
 const useMockMode = false; // Using real mode with actual WAL tokens
-logger.info(`\nStarting default image upload process in ${useMockMode ? 'MOCK' : 'REAL'} mode...`);
+logger.info(
+  `\nStarting default image upload process in ${useMockMode ? 'MOCK' : 'REAL'} mode...`
+);
 uploadDefaultImageToWalrus(useMockMode).then(imageUrl => {
   if (imageUrl) {
     logger.info('\n🎉 Process completed successfully!');

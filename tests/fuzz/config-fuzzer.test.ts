@@ -3,9 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { FuzzGenerator } from '../helpers/fuzz-generator';
+import { CLIError } from '../../src/types/errors/consolidated';
 
-import { loadConfigFile, saveConfigToFile } from '../../src/utils/config-loader';
-
+import {
+  loadConfigFile,
+  saveConfigToFile,
+} from '../../src/utils/config-loader';
 
 describe('Config Fuzzer Tests', () => {
   const fuzzer = new FuzzGenerator('config-test-seed');
@@ -19,7 +22,7 @@ describe('Config Fuzzer Tests', () => {
       fs.rmSync(testConfigDir, { recursive: true, force: true });
     }
     fs.mkdirSync(testConfigDir, { recursive: true });
-    
+
     // Reset environment
     process.env = { ...originalEnv };
     process.env.HOME = testConfigDir;
@@ -55,11 +58,11 @@ describe('Config Fuzzer Tests', () => {
 
       malformedJSONs.forEach((json, index) => {
         fs.writeFileSync(testConfigPath, json);
-        
+
         expect(() => {
           loadConfigFile(testConfigPath);
         }).toThrow(CLIError);
-        
+
         // Separate test for error object validation
         let thrownError: CLIError | null = null;
         try {
@@ -67,7 +70,7 @@ describe('Config Fuzzer Tests', () => {
         } catch (error) {
           thrownError = error as CLIError;
         }
-        
+
         expect(thrownError).toBeInstanceOf(CLIError);
         expect((thrownError as CLIError).code).toBe('CONFIG_FILE_LOAD_FAILED');
       });
@@ -82,22 +85,28 @@ describe('Config Fuzzer Tests', () => {
         { network: true }, // Boolean instead of string
         { network: [] }, // Array instead of string
         { network: {} }, // Object instead of string
-        
+
         // Valid JSON with extra or missing fields
         { extraField: 'value' },
         { nested: { deep: { object: 'value' } } },
-        
+
         // Very large or deeply nested objects
-        { network: 'testnet', ...fuzzer.object(
-          Object.fromEntries(
-            Array.from({ length: 1000 }, (_, i) => [`key${i}`, () => fuzzer.string()])
-          )
-        ) },
+        {
+          network: 'testnet',
+          ...fuzzer.object(
+            Object.fromEntries(
+              Array.from({ length: 1000 }, (_, i) => [
+                `key${i}`,
+                () => fuzzer.string(),
+              ])
+            )
+          ),
+        },
       ];
 
       partiallyCorruptConfigs.forEach((config, index) => {
         fs.writeFileSync(testConfigPath, JSON.stringify(config));
-        
+
         // Should not throw, but might not load all fields correctly
         const loaded = loadConfigFile(testConfigPath);
         expect(loaded).toBeDefined();
@@ -113,17 +122,26 @@ describe('Config Fuzzer Tests', () => {
           network: () => fuzzer.string({ minLength: 0, maxLength: 50 }),
           walletAddress: () => fuzzer.string({ minLength: 0, maxLength: 100 }),
           encryptedStorage: () => fuzzer.boolean(),
-          packageId: () => fuzzer.boolean() ? fuzzer.string({ minLength: 0, maxLength: 66 }) : undefined,
-          registryId: () => fuzzer.boolean() ? fuzzer.string({ minLength: 0, maxLength: 66 }) : undefined,
-          lastDeployment: () => fuzzer.boolean() ? {
-            packageId: fuzzer.string({ minLength: 0, maxLength: 66 }),
-            timestamp: fuzzer.date().toISOString(),
-            digest: fuzzer.string({ minLength: 0, maxLength: 64 }),
-          } : undefined,
+          packageId: () =>
+            fuzzer.boolean()
+              ? fuzzer.string({ minLength: 0, maxLength: 66 })
+              : undefined,
+          registryId: () =>
+            fuzzer.boolean()
+              ? fuzzer.string({ minLength: 0, maxLength: 66 })
+              : undefined,
+          lastDeployment: () =>
+            fuzzer.boolean()
+              ? {
+                  packageId: fuzzer.string({ minLength: 0, maxLength: 66 }),
+                  timestamp: fuzzer.date().toISOString(),
+                  digest: fuzzer.string({ minLength: 0, maxLength: 64 }),
+                }
+              : undefined,
         });
 
         fs.writeFileSync(testConfigPath, JSON.stringify(randomConfig));
-        
+
         const loaded = loadConfigFile(testConfigPath);
         expect(loaded).toBeDefined();
         expect(typeof loaded).toBe('object');
@@ -147,18 +165,18 @@ describe('Config Fuzzer Tests', () => {
         },
         {
           network: 'test"net',
-          walletAddress: 'wallet\'address',
+          walletAddress: "wallet'address",
           path: 'C:\\Windows\\System32\\',
           url: 'https://test.com/path?param=value&other=123',
         },
       ];
 
-      specialConfigs.forEach((config) => {
+      specialConfigs.forEach(config => {
         fs.writeFileSync(testConfigPath, JSON.stringify(config));
-        
+
         const loaded = loadConfigFile(testConfigPath);
         expect(loaded).toBeDefined();
-        
+
         // Test round-trip
         saveConfigToFile(loaded, testConfigPath);
         const reloaded = loadConfigFile(testConfigPath);
@@ -179,9 +197,9 @@ describe('Config Fuzzer Tests', () => {
         { network: [], walletAddress: {} }, // Arrays/objects
       ];
 
-      malformedConfigs.forEach((config) => {
+      malformedConfigs.forEach(config => {
         fs.writeFileSync(testConfigPath, JSON.stringify(config));
-        
+
         // ConfigService should handle malformed configs gracefully
         expect(() => {
           new ConfigService();
@@ -190,10 +208,17 @@ describe('Config Fuzzer Tests', () => {
     });
 
     it('should handle fuzzed environment variables', () => {
-      const fuzzedEnvVariables = fuzzer.array(() => ({
-        name: fuzzer.string({ minLength: 1, maxLength: 20 }),
-        value: fuzzer.string({ minLength: 0, maxLength: 100, includeSpecialChars: true }),
-      }), { minLength: 10, maxLength: 50 });
+      const fuzzedEnvVariables = fuzzer.array(
+        () => ({
+          name: fuzzer.string({ minLength: 1, maxLength: 20 }),
+          value: fuzzer.string({
+            minLength: 0,
+            maxLength: 100,
+            includeSpecialChars: true,
+          }),
+        }),
+        { minLength: 10, maxLength: 50 }
+      );
 
       fuzzedEnvVariables.forEach(({ name, value }) => {
         process.env[name] = value;
@@ -201,9 +226,15 @@ describe('Config Fuzzer Tests', () => {
 
       // Set some relevant environment variables with fuzzed values
       process.env.NETWORK = fuzzer.string({ minLength: 0, maxLength: 50 });
-      process.env.WALLET_ADDRESS = fuzzer.string({ minLength: 0, maxLength: 100 });
+      process.env.WALLET_ADDRESS = fuzzer.string({
+        minLength: 0,
+        maxLength: 100,
+      });
       process.env.ENCRYPTED_STORAGE = fuzzer.string();
-      process.env.TODO_PACKAGE_ID = fuzzer.string({ minLength: 0, maxLength: 66 });
+      process.env.TODO_PACKAGE_ID = fuzzer.string({
+        minLength: 0,
+        maxLength: 66,
+      });
       process.env.REGISTRY_ID = fuzzer.string({ minLength: 0, maxLength: 66 });
 
       // ConfigService should handle fuzzed environment variables
@@ -219,9 +250,9 @@ describe('Config Fuzzer Tests', () => {
       const largeConfig = {
         data: fuzzer.string({ minLength: 1000000, maxLength: 1000000 }), // 1MB string
       };
-      
+
       fs.writeFileSync(testConfigPath, JSON.stringify(largeConfig));
-      
+
       expect(() => {
         loadConfigFile(testConfigPath);
       }).not.toThrow();
@@ -231,40 +262,46 @@ describe('Config Fuzzer Tests', () => {
       // Write a config file then make it read-only
       fs.writeFileSync(testConfigPath, JSON.stringify({ network: 'testnet' }));
       fs.chmodSync(testConfigPath, 0o444); // Read-only
-      
+
       // Loading should work
       expect(() => {
         loadConfigFile(testConfigPath);
       }).not.toThrow();
-      
+
       // Saving should fail
       expect(() => {
         saveConfigToFile({ network: 'mainnet' }, testConfigPath);
       }).toThrow(CLIError);
-      
+
       // Reset permissions
       fs.chmodSync(testConfigPath, 0o644);
     });
 
     it('should handle non-existent paths', () => {
-      const nonExistentPath = path.join(testConfigDir, 'does', 'not', 'exist', 'config.json');
-      
+      const nonExistentPath = path.join(
+        testConfigDir,
+        'does',
+        'not',
+        'exist',
+        'config.json'
+      );
+
       // Loading non-existent file should return empty object
       const loaded = loadConfigFile(nonExistentPath);
       expect(loaded).toEqual({});
-      
+
       // Saving to non-existent directory should work (creates directory)
       expect(() => {
         saveConfigToFile({ network: 'testnet' }, nonExistentPath);
       }).not.toThrow();
-      
+
       expect(fs.existsSync(nonExistentPath)).toBe(true);
     });
 
     it('should handle cyclic references', () => {
       const config: any = { network: 'testnet' };
       config.self = config; // Create cyclic reference
-      
+
       // JSON.stringify will throw on cyclic references
       expect(() => {
         saveConfigToFile(config, testConfigPath);
@@ -280,12 +317,12 @@ describe('Config Fuzzer Tests', () => {
         { network: true, walletAddress: false, encryptedStorage: 123 },
       ];
 
-      typeMismatchConfigs.forEach((config) => {
+      typeMismatchConfigs.forEach(config => {
         fs.writeFileSync(testConfigPath, JSON.stringify(config));
-        
+
         const service = new ConfigService();
         const loadedConfig = service.getConfig();
-        
+
         // Service should handle type mismatches and provide defaults
         expect(typeof loadedConfig.network).toBe('string');
         expect(typeof loadedConfig.walletAddress).toBe('string');
@@ -302,12 +339,12 @@ describe('Config Fuzzer Tests', () => {
         { unknownField: 'value' },
       ];
 
-      incompleteConfigs.forEach((config) => {
+      incompleteConfigs.forEach(config => {
         fs.writeFileSync(testConfigPath, JSON.stringify(config));
-        
+
         const service = new ConfigService();
         const loadedConfig = service.getConfig();
-        
+
         // Service should provide defaults for missing fields
         expect(loadedConfig.network).toBeDefined();
         expect(typeof loadedConfig.network).toBe('string');
@@ -325,7 +362,7 @@ describe('Config Fuzzer Tests', () => {
       fs.writeFileSync(testConfigPath, JSON.stringify(initialConfig));
 
       const promises = Array.from({ length: 10 }, (_, i) => {
-        return new Promise<void>((resolve) => {
+        return new Promise<void>(resolve => {
           setTimeout(() => {
             const config = loadConfigFile(testConfigPath);
             config.walletAddress = `0x${fuzzer.string({ minLength: 40, maxLength: 40 })}`;

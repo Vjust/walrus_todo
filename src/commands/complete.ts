@@ -43,7 +43,7 @@ export default class CompleteCommand extends BaseCommand {
     '<%= config.bin %> complete my-list -i "Buy groceries"      # Complete todo by title',
     '<%= config.bin %> complete -i task-456                     # Complete from default list',
     '<%= config.bin %> complete work -i "Finish report"         # Complete specific todo',
-    '<%= config.bin %> complete personal -i todo-789 --network testnet  # Use specific network'
+    '<%= config.bin %> complete personal -i todo-789 --network testnet  # Use specific network',
   ];
 
   static flags = {
@@ -51,21 +51,21 @@ export default class CompleteCommand extends BaseCommand {
     id: Flags.string({
       char: 'i',
       description: 'Todo ID or title to mark as completed',
-      required: true
+      required: true,
     }),
     network: Flags.string({
       char: 'n',
       description: 'Network to use (defaults to configured network)',
       options: ['localnet', 'devnet', 'testnet', 'mainnet'],
-    })
+    }),
   };
 
   static args = {
     list: Args.string({
       name: 'list',
       description: 'List name',
-      default: 'default'
-    })
+      default: 'default',
+    }),
   };
 
   private todoService = new TodoService();
@@ -74,7 +74,7 @@ export default class CompleteCommand extends BaseCommand {
   /**
    * Validates the specified network against allowed network options
    * and retrieves the corresponding network URL.
-   * 
+   *
    * @param network The network name to validate
    * @returns The network URL for the specified network
    * @throws CLIError if the network is invalid
@@ -93,7 +93,7 @@ export default class CompleteCommand extends BaseCommand {
   /**
    * Checks that the smart contract has been deployed to the specified network.
    * This is required before we can interact with NFTs on the blockchain.
-   * 
+   *
    * @param network The network to validate deployment on
    * @throws CLIError if the contract is not deployed
    */
@@ -101,7 +101,9 @@ export default class CompleteCommand extends BaseCommand {
     const config = await configService.getConfig();
     if (!config.lastDeployment?.packageId) {
       throw new CLIError(
-        'Contract not deployed. Run "waltodo deploy --network ' + network + '" first.',
+        'Contract not deployed. Run "waltodo deploy --network ' +
+          network +
+          '" first.',
         'NOT_DEPLOYED'
       );
     }
@@ -110,7 +112,7 @@ export default class CompleteCommand extends BaseCommand {
   /**
    * Checks that we can connect to the specified network and retrieves
    * the current protocol version for informational purposes.
-   * 
+   *
    * @param suiClient Connected Sui client instance
    * @returns Protocol version string
    * @throws CLIError if connection fails
@@ -133,18 +135,21 @@ export default class CompleteCommand extends BaseCommand {
    * 1. Verifies the NFT exists and can be fetched
    * 2. Confirms the NFT has the expected type/structure
    * 3. Checks that the NFT is not already marked as completed
-   * 
+   *
    * @param suiClient Connected Sui client instance
    * @param nftObjectId ID of the NFT object to validate
    * @throws CLIError for various NFT-related validation failures
    */
-  private async validateNftState(suiClient: SuiClient, nftObjectId: string): Promise<void> {
+  private async validateNftState(
+    suiClient: SuiClient,
+    nftObjectId: string
+  ): Promise<void> {
     try {
       const result = await suiClient.getObject({
         id: nftObjectId,
-        options: { showContent: true }
+        options: { showContent: true },
       });
-      
+
       if (result.error) {
         throw new CLIError(
           `Failed to fetch NFT: ${result.error.code}`,
@@ -160,8 +165,11 @@ export default class CompleteCommand extends BaseCommand {
       }
 
       // Check if NFT is already completed
-      const content = result.data.content as { type?: string; fields?: { completed?: boolean } };
-      
+      const content = result.data.content as {
+        type?: string;
+        fields?: { completed?: boolean };
+      };
+
       // Verify NFT type
       const expectedType = `${TODO_NFT_CONFIG.MODULE_ADDRESS}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`;
       if (content.type !== expectedType) {
@@ -190,28 +198,32 @@ export default class CompleteCommand extends BaseCommand {
    * Performs a dry run of the NFT completion transaction to estimate
    * gas costs before actual execution. This allows users to see expected
    * costs before proceeding with the transaction.
-   * 
+   *
    * @param suiClient Connected Sui client instance
    * @param nftObjectId ID of the NFT object to update
    * @param packageId ID of the deployed smart contract package
    * @returns Object containing computation and storage gas costs
    * @throws CLIError if gas estimation fails
    */
-  private async estimateGasForNftUpdate(suiClient: SuiClient, nftObjectId: string, packageId: string): Promise<{ computationCost: string; storageCost: string; }> {
+  private async estimateGasForNftUpdate(
+    suiClient: SuiClient,
+    nftObjectId: string,
+    packageId: string
+  ): Promise<{ computationCost: string; storageCost: string }> {
     try {
       const txb = new TransactionBlock();
       txb.moveCall({
         target: `${packageId}::${TODO_NFT_CONFIG.MODULE_NAME}::complete_todo`,
-        arguments: [txb.object(nftObjectId)]
+        arguments: [txb.object(nftObjectId)],
       });
 
       const dryRunResult = await suiClient.dryRunTransactionBlock({
-        transactionBlock: txb.serialize().toString()
+        transactionBlock: txb.serialize().toString(),
       });
 
       return {
         computationCost: dryRunResult.effects.gasUsed.computationCost,
-        storageCost: dryRunResult.effects.gasUsed.storageCost
+        storageCost: dryRunResult.effects.gasUsed.storageCost,
       };
     } catch (error) {
       throw new CLIError(
@@ -224,68 +236,72 @@ export default class CompleteCommand extends BaseCommand {
   /**
    * Updates configuration with information about completed todos.
    * Tracks completion statistics for reporting and analytics purposes.
-   * 
+   *
    * @param todo The todo item being marked as completed
    * @returns Promise that resolves when config update is complete
    */
   private async updateConfigWithCompletion(todo: Todo): Promise<void> {
     try {
       const config = await configService.getConfig();
-      
+
       // Initialize completed todos tracking if not exists
       if (!config.completedTodos) {
         config.completedTodos = {
           count: 0,
           lastCompleted: null,
           history: [],
-          byCategory: {}
+          byCategory: {},
         };
       }
-      
+
       // Update statistics
       config.completedTodos.count++;
       config.completedTodos.lastCompleted = new Date().toISOString();
-      
+
       // Add to history with proper metadata for tracking
       config.completedTodos.history = config.completedTodos.history || [];
       config.completedTodos.history.push({
         id: todo.id,
         title: todo.title,
         completedAt: new Date().toISOString(),
-        listName: todo.listName || 'default'
+        listName: todo.listName || 'default',
       });
-      
+
       // Limit history size to prevent config file growth
       if (config.completedTodos.history.length > 100) {
-        config.completedTodos.history = config.completedTodos.history.slice(-100);
+        config.completedTodos.history =
+          config.completedTodos.history.slice(-100);
       }
-      
+
       // Track by category if available
       if (todo.category) {
-        config.completedTodos.byCategory[todo.category] = 
+        config.completedTodos.byCategory[todo.category] =
           (config.completedTodos.byCategory[todo.category] || 0) + 1;
       }
-      
+
       // Add tags tracking if available
       if (todo.tags && todo.tags.length > 0) {
         config.completedTodos.byTag = config.completedTodos.byTag || {};
         for (const tag of todo.tags) {
-          config.completedTodos.byTag[tag] = (config.completedTodos.byTag[tag] || 0) + 1;
+          config.completedTodos.byTag[tag] =
+            (config.completedTodos.byTag[tag] || 0) + 1;
         }
       }
-      
+
       // Write the config, using our custom wrapper to allow mocking in tests
       await this.writeConfigSafe(config);
     } catch (error) {
       // Non-blocking error - log but don't fail the command
-      this.warning(`Failed to update completion statistics: ${error instanceof Error ? error.message : String(error)}`);
+      this.warning(
+        `Failed to update completion statistics: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
-  
+
   /**
    * Write configuration safely with ability to mock in tests
    * This allows test code to count the number of calls to fs.writeFileSync
-   * 
+   *
    * @param config Configuration to write
    */
   private async writeConfigSafe(config: any): Promise<void> {
@@ -295,33 +311,39 @@ export default class CompleteCommand extends BaseCommand {
         await configService.saveConfig(config);
         return;
       }
-      
+
       // Fallback to direct file writing with wrapper
       const configDir = this.getConfigDir();
       const configPath = path.join(configDir, 'config.json');
-      
+
       // Write config using our wrapper that can be mocked
       // ALWAYS use writeFileSafe to ensure consistent behavior
       this.writeFileSafe(configPath, JSON.stringify(config, null, 2), 'utf8');
     } catch (error) {
-      throw new Error(`Failed to save config: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to save config: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
-  
+
   /**
    * Wrapper for fs.writeFileSync that can be mocked in tests
    * Always delegates to writeFileSafe method for consistent behavior and testability
-   * 
+   *
    * @param filePath Path to file
    * @param data Data to write
    * @param options Write options
    */
-  private writeFileSyncWrapper(filePath: string, data: string, options: any): void {
+  private writeFileSyncWrapper(
+    filePath: string,
+    data: string,
+    options: any
+  ): void {
     // Only use the centralized writeFileSafe method from BaseCommand
     // DO NOT call fs.writeFileSync directly to allow proper mocking in tests
     this.writeFileSafe(filePath, data, options);
   }
-  
+
   /**
    * Save a mapping between todo ID and blob ID
    * This method uses the writeFileSafe method for consistent behavior
@@ -333,7 +355,7 @@ export default class CompleteCommand extends BaseCommand {
       // Use the centralized getConfigDir method from BaseCommand
       const configDir = this.getConfigDir();
       const blobMappingsFile = path.join(configDir, 'blob-mappings.json');
-      
+
       // Read existing mappings or create empty object
       let mappings: Record<string, string> = {};
       if (fs.existsSync(blobMappingsFile)) {
@@ -341,27 +363,35 @@ export default class CompleteCommand extends BaseCommand {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           mappings = JSON.parse(content);
         } catch (error) {
-          this.warning(`Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`);
+          this.warning(
+            `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`
+          );
           // Continue with empty mappings
         }
       }
-      
+
       // Add or update mapping
       mappings[todoId] = blobId;
-      
+
       // Write mappings back to file using our centralized method
       // This ensures directory creation and consistent error handling
-      this.writeFileSafe(blobMappingsFile, JSON.stringify(mappings, null, 2), 'utf8');
+      this.writeFileSafe(
+        blobMappingsFile,
+        JSON.stringify(mappings, null, 2),
+        'utf8'
+      );
       this.debugLog(`Saved blob mapping: ${todoId} -> ${blobId}`);
     } catch (error) {
-      this.warning(`Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`);
+      this.warning(
+        `Failed to save blob mapping: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
   /**
    * Main command execution method. Handles the complete workflow for marking
    * a todo as completed across all relevant storage systems.
-   * 
+   *
    * Execution flow:
    * 1. Parse and validate command arguments
    * 2. Find the specified todo in the specified list
@@ -378,10 +408,10 @@ export default class CompleteCommand extends BaseCommand {
 
     try {
       const { args, flags } = await this.parse(CompleteCommand);
-      
+
       // Get config once to avoid redeclaration issues
       const config = await configService.getConfig();
-      
+
       // Validate network
       const network = flags.network || config.network || 'testnet';
       const networkUrl = this.validateNetwork(network);
@@ -393,21 +423,29 @@ export default class CompleteCommand extends BaseCommand {
       }
 
       // Find todo by ID or title
-      const todo = await this.todoService.getTodoByTitleOrId(flags.id, args.list);
+      const todo = await this.todoService.getTodoByTitleOrId(
+        flags.id,
+        args.list
+      );
       if (!todo) {
-        throw new CLIError(`Todo "${flags.id}" not found in list "${args.list}"`, 'TODO_NOT_FOUND');
+        throw new CLIError(
+          `Todo "${flags.id}" not found in list "${args.list}"`,
+          'TODO_NOT_FOUND'
+        );
       }
 
       // Verify not already completed
       if (todo.completed) {
-        this.log(chalk.yellow(`Todo "${todo.title}" is already marked as completed`));
+        this.log(
+          chalk.yellow(`Todo "${todo.title}" is already marked as completed`)
+        );
         return;
       }
 
       // Initialize blockchain clients if needed
       let suiClient: SuiClient | undefined;
       let suiNftStorage: SuiNftStorage | undefined;
-      
+
       if (todo.nftObjectId || todo.walrusBlobId) {
         // Validate deployment config first
         await this.validateBlockchainConfig(network);
@@ -415,23 +453,34 @@ export default class CompleteCommand extends BaseCommand {
         // Initialize and check network connection
         suiClient = new SuiClient({ url: networkUrl });
         const protocolVersion = await this.getNetworkStatus(suiClient);
-        this.log(chalk.dim(`Connected to ${network} (protocol version ${protocolVersion})`));
+        this.log(
+          chalk.dim(
+            `Connected to ${network} (protocol version ${protocolVersion})`
+          )
+        );
 
         // Validate NFT state and estimate gas if NFT exists
         if (todo.nftObjectId) {
           await this.validateNftState(suiClient, todo.nftObjectId);
-          
+
           // Initialize NFT storage
           const signer = {} as Ed25519Keypair;
-          suiNftStorage = new SuiNftStorage(
-            suiClient,
-            signer,
-            { address: config.lastDeployment.packageId, packageId: config.lastDeployment.packageId }
-          );
+          suiNftStorage = new SuiNftStorage(suiClient, signer, {
+            address: config.lastDeployment.packageId,
+            packageId: config.lastDeployment.packageId,
+          });
 
           // Estimate gas for the operation
-          const gasEstimate = await this.estimateGasForNftUpdate(suiClient, todo.nftObjectId, config.lastDeployment.packageId);
-          this.log(chalk.dim(`Estimated gas cost: ${Number(gasEstimate.computationCost) + Number(gasEstimate.storageCost)} MIST`));
+          const gasEstimate = await this.estimateGasForNftUpdate(
+            suiClient,
+            todo.nftObjectId,
+            config.lastDeployment.packageId
+          );
+          this.log(
+            chalk.dim(
+              `Estimated gas cost: ${Number(gasEstimate.computationCost) + Number(gasEstimate.storageCost)} MIST`
+            )
+          );
         }
       }
 
@@ -439,7 +488,7 @@ export default class CompleteCommand extends BaseCommand {
       this.log(chalk.blue(`Marking todo "${todo.title}" as completed...`));
       await this.todoService.toggleItemStatus(args.list, todo.id, true);
       this.log(chalk.green('\u2713 Local update successful'));
-      
+
       // Update configuration to record completion
       await this.updateConfigWithCompletion(todo);
 
@@ -448,59 +497,89 @@ export default class CompleteCommand extends BaseCommand {
         try {
           this.log(chalk.blue('Updating NFT on blockchain...'));
           const txDigest = await RetryManager.retry(
-            () => suiNftStorage.updateTodoNftCompletionStatus(todo.nftObjectId!),
+            () =>
+              suiNftStorage.updateTodoNftCompletionStatus(todo.nftObjectId!),
             {
               maxRetries: 3,
               initialDelay: 1000,
               onRetry: (error, attempt, _delay) => {
-                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
-                this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
-              }
+                const errorMessage = error
+                  ? typeof error === 'object' && error && 'message' in error
+                    ? (error as Error).message
+                    : String(error)
+                  : 'Unknown error';
+                this.log(
+                  chalk.yellow(
+                    `Retry attempt ${attempt} after error: ${errorMessage}`
+                  )
+                );
+              },
             }
           );
           this.log(chalk.green('\u2713 Todo NFT updated on blockchain'));
           this.log(chalk.dim(`Transaction: ${txDigest}`));
-          
+
           // Verify NFT update with proper error handling
-          await RetryManager.retry(async () => {
-            try {
-              // Add timeout for verification to prevent hanging
-              let timeoutId: NodeJS.Timeout;
-              const verificationPromise = suiClient.getObject({
-                id: todo.nftObjectId!,
-                options: { showContent: true }
-              });
+          await RetryManager.retry(
+            async () => {
+              try {
+                // Add timeout for verification to prevent hanging
+                let timeoutId: NodeJS.Timeout;
+                const verificationPromise = suiClient.getObject({
+                  id: todo.nftObjectId!,
+                  options: { showContent: true },
+                });
 
-              const timeoutPromise = new Promise<never>((_, reject) => {
-                timeoutId = setTimeout(() => {
-                  reject(new Error('NFT verification timed out after 10 seconds'));
-                }, 10000);
-              });
+                const timeoutPromise = new Promise<never>((_, reject) => {
+                  timeoutId = setTimeout(() => {
+                    reject(
+                      new Error('NFT verification timed out after 10 seconds')
+                    );
+                  }, 10000);
+                });
 
-              const result = await Promise.race([verificationPromise, timeoutPromise]);
-              clearTimeout(timeoutId);
+                const result = await Promise.race([
+                  verificationPromise,
+                  timeoutPromise,
+                ]);
+                clearTimeout(timeoutId);
 
-              const content = result.data?.content as { fields?: { completed?: boolean } };
-              if (!content?.fields?.completed) {
-                throw new Error('NFT update verification failed: completed flag not set');
+                const content = result.data?.content as {
+                  fields?: { completed?: boolean };
+                };
+                if (!content?.fields?.completed) {
+                  throw new Error(
+                    'NFT update verification failed: completed flag not set'
+                  );
+                }
+              } catch (verifyError) {
+                const error =
+                  verifyError instanceof Error
+                    ? verifyError
+                    : new Error(String(verifyError));
+
+                throw new Error(`NFT verification error: ${error.message}`);
               }
-            } catch (verifyError) {
-              const error = verifyError instanceof Error
-                ? verifyError
-                : new Error(String(verifyError));
-
-              throw new Error(
-                `NFT verification error: ${error.message}`
-              );
+            },
+            {
+              maxRetries: 3,
+              initialDelay: 2000,
+              onRetry: (error, attempt, _delay) => {
+                const errorMessage =
+                  error &&
+                  typeof error === 'object' &&
+                  error &&
+                  'message' in error
+                    ? (error as Error).message
+                    : String(error);
+                this.log(
+                  chalk.yellow(
+                    `Verification retry ${attempt} after error: ${errorMessage}`
+                  )
+                );
+              },
             }
-          }, {
-            maxRetries: 3,
-            initialDelay: 2000,
-            onRetry: (error, attempt, _delay) => {
-              const errorMessage = error && typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error);
-              this.log(chalk.yellow(`Verification retry ${attempt} after error: ${errorMessage}`));
-            }
-          });
+          );
         } catch (blockchainError) {
           // Keep local update but throw error for blockchain update
           throw new CLIError(
@@ -519,18 +598,20 @@ export default class CompleteCommand extends BaseCommand {
             let timeoutId: NodeJS.Timeout;
             const timeout = new Promise<never>((_, reject) => {
               timeoutId = setTimeout(() => {
-                reject(new Error('Walrus operation timed out after 30 seconds'));
+                reject(
+                  new Error('Walrus operation timed out after 30 seconds')
+                );
               }, 30000);
             });
 
             // Update todo on Walrus with retries
             this.log(chalk.blue('Updating todo on Walrus...'));
 
-            const updatedTodo = { 
-              ...todo, 
-              completed: true, 
+            const updatedTodo = {
+              ...todo,
+              completed: true,
               completedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+              updatedAt: new Date().toISOString(),
             };
 
             // Try update with retries
@@ -541,10 +622,13 @@ export default class CompleteCommand extends BaseCommand {
                 // Use Promise.race with proper cleanup in both success and error cases
                 let newBlobId: string | undefined;
                 try {
-                  newBlobId = await Promise.race([
-                    this.walrusStorage.updateTodo(todo.walrusBlobId || '', updatedTodo),
-                    timeout
-                  ]) as string | undefined;
+                  newBlobId = (await Promise.race([
+                    this.walrusStorage.updateTodo(
+                      todo.walrusBlobId || '',
+                      updatedTodo
+                    ),
+                    timeout,
+                  ])) as string | undefined;
                   clearTimeout(timeoutId); // Clear timeout on success
                 } catch (raceError) {
                   clearTimeout(timeoutId); // Always clear timeout
@@ -556,28 +640,45 @@ export default class CompleteCommand extends BaseCommand {
                   await this.todoService.updateTodo(args.list, todo.id, {
                     walrusBlobId: newBlobId,
                     completedAt: updatedTodo.completedAt,
-                    updatedAt: updatedTodo.updatedAt
+                    updatedAt: updatedTodo.updatedAt,
                   });
-                  
+
                   // Save blob mapping for future reference
                   this.saveBlobMapping(todo.id, newBlobId);
 
                   this.log(chalk.green('\u2713 Todo updated on Walrus'));
                   this.log(chalk.dim(`New blob ID: ${newBlobId}`));
-                  this.log(chalk.dim(`Public URL: https://testnet.wal.app/blob/${newBlobId}`));
+                  this.log(
+                    chalk.dim(
+                      `Public URL: https://testnet.wal.app/blob/${newBlobId}`
+                    )
+                  );
                   break;
                 } else {
                   throw new Error('Invalid blob ID returned from Walrus');
                 }
               } catch (error) {
-                lastWalrusError = error instanceof Error ? error : new Error(String(error));
+                lastWalrusError =
+                  error instanceof Error ? error : new Error(String(error));
                 if (attempt === maxRetries) {
-                  this.log(chalk.yellow('\u26a0\ufe0f Failed to update Walrus storage after all retries'));
-                  this.log(chalk.yellow('The todo has been marked as completed locally and on-chain, but Walrus blob is out of sync.'));
+                  this.log(
+                    chalk.yellow(
+                      '\u26a0\ufe0f Failed to update Walrus storage after all retries'
+                    )
+                  );
+                  this.log(
+                    chalk.yellow(
+                      'The todo has been marked as completed locally and on-chain, but Walrus blob is out of sync.'
+                    )
+                  );
                   break;
                 }
-                this.log(chalk.yellow(`Attempt ${attempt} failed, retrying...`));
-                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                this.log(
+                  chalk.yellow(`Attempt ${attempt} failed, retrying...`)
+                );
+                await new Promise(resolve =>
+                  setTimeout(resolve, 1000 * attempt)
+                );
               }
             }
           } finally {
@@ -596,19 +697,24 @@ export default class CompleteCommand extends BaseCommand {
       this.log(chalk.green('\n\u2713 Todo completion summary:'));
       this.log(chalk.dim('Title:'));
       this.log(`  ${chalk.bold(todo.title)}`);
-      
+
       this.log(chalk.dim('\nUpdates:'));
       this.log(`  ${chalk.green('\u2713')} Local storage`);
       if (todo.nftObjectId) {
         this.log(`  ${chalk.green('\u2713')} Blockchain NFT`);
         this.log(chalk.blue('\nView your updated NFT:'));
-        this.log(chalk.cyan(`  https://explorer.sui.io/object/${todo.nftObjectId}?network=${network}`));
+        this.log(
+          chalk.cyan(
+            `  https://explorer.sui.io/object/${todo.nftObjectId}?network=${network}`
+          )
+        );
       }
       if (todo.walrusBlobId) {
-        const walrusUpdateStatus = lastWalrusError ? chalk.yellow('\u26a0\ufe0f') : chalk.green('\u2713');
+        const walrusUpdateStatus = lastWalrusError
+          ? chalk.yellow('\u26a0\ufe0f')
+          : chalk.green('\u2713');
         this.log(`  ${walrusUpdateStatus} Walrus storage`);
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

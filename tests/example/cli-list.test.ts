@@ -1,17 +1,18 @@
 /**
  * Tests for the 'list' command in WalTodo CLI
- * 
+ *
  * This test file demonstrates how to test the 'list' command using Jest
  * and the test environment setup utilities.
  */
 
 import { test } from '@oclif/test';
-import * as fs from 'fs';
-import { 
-  setupTestEnvironment, 
-  cleanupTestEnvironment, 
-  createTestTodo, 
-  createTestTodoList 
+// import * as fs from 'fs';
+import { execSync } from 'child_process';
+import {
+  setupTestEnvironment,
+  cleanupTestEnvironment,
+  createTestTodo,
+  createTestTodoList,
 } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
@@ -21,24 +22,24 @@ jest.mock('../../src/services/todoService');
 describe('WalTodo list command', () => {
   // Sample test list with multiple todos
   const testTodos = [
-    createTestTodo({ 
-      id: 'todo-1', 
-      title: 'First test todo', 
-      priority: 'medium' 
+    createTestTodo({
+      id: 'todo-1',
+      title: 'First test todo',
+      priority: 'medium',
     }),
-    createTestTodo({ 
-      id: 'todo-2', 
-      title: 'High priority todo', 
-      priority: 'high' 
+    createTestTodo({
+      id: 'todo-2',
+      title: 'High priority todo',
+      priority: 'high',
     }),
-    createTestTodo({ 
-      id: 'todo-3', 
-      title: 'Completed todo', 
-      completed: true, 
-      completedAt: new Date().toISOString() 
-    })
+    createTestTodo({
+      id: 'todo-3',
+      title: 'Completed todo',
+      completed: true,
+      completedAt: new Date().toISOString(),
+    }),
   ];
-  
+
   const testList = createTestTodoList('default', testTodos);
 
   // Set up the test environment before all tests
@@ -54,19 +55,19 @@ describe('WalTodo list command', () => {
   // Reset mocks before each test
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Set up specific mocks for the TodoService
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue(testList);
-    
+
     (TodoService.prototype.getAllLists as jest.Mock).mockResolvedValue([
       testList,
       createTestTodoList('work', [
         createTestTodo({ title: 'Work todo 1' }),
-        createTestTodo({ title: 'Work todo 2', priority: 'high' })
+        createTestTodo({ title: 'Work todo 2', priority: 'high' }),
       ]),
       createTestTodoList('personal', [
-        createTestTodo({ title: 'Personal todo' })
-      ])
+        createTestTodo({ title: 'Personal todo' }),
+      ]),
     ]);
   });
 
@@ -174,7 +175,9 @@ describe('WalTodo list command', () => {
         return Buffer.from(JSON.stringify(testList.todos));
       }
       if (command.includes('list --format json')) {
-        return Buffer.from(JSON.stringify([testList, createTestTodoList('work')]));
+        return Buffer.from(
+          JSON.stringify([testList, createTestTodoList('work')])
+        );
       }
       return Buffer.from('Command executed successfully');
     });
@@ -184,7 +187,9 @@ describe('WalTodo list command', () => {
     expect(todos).toHaveLength(3);
     expect(todos[0].title).toBe('First test todo');
 
-    const allListsResult = execSync('node bin/run.js list --format json').toString();
+    const allListsResult = execSync(
+      'node bin/run.js list --format json'
+    ).toString();
     const lists = JSON.parse(allListsResult);
     expect(lists).toHaveLength(2);
     expect(lists[0].name).toBe('default');

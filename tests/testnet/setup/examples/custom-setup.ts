@@ -18,12 +18,25 @@ async function runCustomSetup() {
     const config: WalletSetupConfig = {
       network: 'testnet',
       walletType: 'ed25519',
-      keystorePath: path.join(process.cwd(), '.test-wallets', 'custom.keystore'),
-      configPath: path.join(process.cwd(), '.test-wallets', 'custom-config.yaml'),
+      keystorePath: path.join(
+        process.cwd(),
+        '.test-wallets',
+        'custom.keystore'
+      ),
+      configPath: path.join(
+        process.cwd(),
+        '.test-wallets',
+        'custom-config.yaml'
+      ),
       enableFaucet: true,
       faucetAmount: '5000000000', // Request 5 SUI
       backupWallet: true,
-      backupPath: path.join(process.cwd(), '.test-wallets', 'backups', `backup-${Date.now()}`),
+      backupPath: path.join(
+        process.cwd(),
+        '.test-wallets',
+        'backups',
+        `backup-${Date.now()}`
+      ),
     };
 
     // Run setup with custom configuration
@@ -36,7 +49,7 @@ async function runCustomSetup() {
     logger.info(`Balance: ${formatSuiBalance(result.wallet.balance)} SUI`);
     logger.info(`Custom Keystore: ${result.keystorePath}`);
     logger.info(`Custom Config: ${result.configPath}`);
-    
+
     if (result.backupPath) {
       logger.info(`Backup Location: ${result.backupPath}`);
     }
@@ -47,7 +60,7 @@ async function runCustomSetup() {
     logger.info(`RPC URL: ${result.wallet.networkUrl}`);
 
     logger.info('\n✅ Custom setup successful!');
-    
+
     return result;
   } catch (_error) {
     logger.error('❌ Setup failed:', error);

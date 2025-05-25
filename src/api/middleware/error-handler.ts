@@ -26,7 +26,7 @@ export function errorHandler(
     method: req.method,
     path: req.path,
     error: err.message,
-    stack: err.stack
+    stack: err.stack,
   });
 
   // Determine status code
@@ -66,7 +66,7 @@ export function errorHandler(
     error: err.name || 'Error',
     message: err.message || 'An unexpected error occurred',
     code,
-    status
+    status,
   };
 
   // Add details if available

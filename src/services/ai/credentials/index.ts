@@ -1,4 +1,7 @@
-import { SecureCredentialStore, secureCredentialStore } from './SecureCredentialStore';
+import {
+  SecureCredentialStore,
+  secureCredentialStore,
+} from './SecureCredentialStore';
 import { EnhancedCredentialManager } from './EnhancedCredentialManager';
 import { CredentialVerifier } from './CredentialVerifier';
 import { ApiKeyValidator } from './ApiKeyValidator';
@@ -14,5 +17,5 @@ export {
   SecureCredentialStore,
   EnhancedCredentialManager,
   CredentialVerifier,
-  ApiKeyValidator
+  ApiKeyValidator,
 };

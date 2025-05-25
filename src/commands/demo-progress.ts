@@ -29,7 +29,10 @@ export default class DemoProgress extends BaseCommand {
     const { flags } = await this.parse(DemoProgress);
     const demoType = flags.type;
 
-    this.section('Progress Indicators Demo', 'Let\'s see some fancy progress indicators! 🎨');
+    this.section(
+      'Progress Indicators Demo',
+      "Let's see some fancy progress indicators! 🎨"
+    );
 
     switch (demoType) {
       case 'spinner':
@@ -68,15 +71,17 @@ export default class DemoProgress extends BaseCommand {
     ]);
 
     // Basic spinner styles
-    const styles = Object.keys(SPINNER_STYLES) as Array<keyof typeof SPINNER_STYLES>;
-    
+    const styles = Object.keys(SPINNER_STYLES) as Array<
+      keyof typeof SPINNER_STYLES
+    >;
+
     for (const style of styles.slice(0, 6)) {
       await this.withSpinner(
         `Testing ${style} spinner style`,
         async () => {
           await this.delay(1500);
         },
-'Complete'
+        'Complete'
       );
     }
 
@@ -99,7 +104,7 @@ export default class DemoProgress extends BaseCommand {
     const infoSpinner = this.createSpinner('Gathering information...');
     infoSpinner.start();
     await this.delay(1000);
-    infoSpinner.info('Info: Here\'s something you should know');
+    infoSpinner.info("Info: Here's something you should know");
   }
 
   private async demoProgressBars(): Promise<void> {
@@ -110,15 +115,12 @@ export default class DemoProgress extends BaseCommand {
     ]);
 
     // Basic progress bar
-    await this.withProgressBar(
-      100,
-      async (progress) => {
-        for (let i = 0; i <= 100; i += 5) {
-          progress.update(i, { task: 'Processing items' });
-          await this.delay(100);
-        }
+    await this.withProgressBar(100, async progress => {
+      for (let i = 0; i <= 100; i += 5) {
+        progress.update(i, { task: 'Processing items' });
+        await this.delay(100);
       }
-    );
+    });
 
     // Gradient progress bar
     const gradientBar = this.createGradientProgressBar({
@@ -127,7 +129,7 @@ export default class DemoProgress extends BaseCommand {
 
     gradientBar.start(100, 0, { task: 'Downloading' });
     for (let i = 0; i <= 100; i += 10) {
-      gradientBar.update(i, { task: `Downloading chunk ${i/10 + 1}/10` });
+      gradientBar.update(i, { task: `Downloading chunk ${i / 10 + 1}/10` });
       await this.delay(200);
     }
     gradientBar.stop();
@@ -166,7 +168,7 @@ export default class DemoProgress extends BaseCommand {
       operations.map(({ name, total }) => ({
         name,
         total,
-        operation: async (bar) => {
+        operation: async bar => {
           const increment = Math.floor(total / 10);
           for (let i = 0; i <= total; i += increment) {
             bar.update(i);
@@ -189,12 +191,16 @@ export default class DemoProgress extends BaseCommand {
     mainSpinner.start();
     await this.delay(1000);
 
-    const subSpinner1 = mainSpinner.nested({ text: 'Processing sub-task 1...' });
+    const subSpinner1 = mainSpinner.nested({
+      text: 'Processing sub-task 1...',
+    });
     subSpinner1.start();
     await this.delay(1500);
     subSpinner1.succeed('Sub-task 1 complete');
 
-    const subSpinner2 = mainSpinner.nested({ text: 'Processing sub-task 2...' });
+    const subSpinner2 = mainSpinner.nested({
+      text: 'Processing sub-task 2...',
+    });
     subSpinner2.start();
     await this.delay(1500);
     subSpinner2.succeed('Sub-task 2 complete');
@@ -211,13 +217,19 @@ export default class DemoProgress extends BaseCommand {
     ]);
 
     // Walrus spinner
-    const walrusSpinner = this.createFunSpinner('Loading with Walrus power...', 'walrus');
+    const walrusSpinner = this.createFunSpinner(
+      'Loading with Walrus power...',
+      'walrus'
+    );
     walrusSpinner.start();
     await this.delay(3000);
     walrusSpinner.succeed('Walrus is happy! 🦭');
 
     // Sparkle spinner
-    const sparkleSpinner = this.createFunSpinner('Adding some sparkle...', 'sparkle');
+    const sparkleSpinner = this.createFunSpinner(
+      'Adding some sparkle...',
+      'sparkle'
+    );
     sparkleSpinner.start();
     await this.delay(2000);
     sparkleSpinner.succeed('Sparkles added! ✨');
@@ -229,7 +241,10 @@ export default class DemoProgress extends BaseCommand {
     moonSpinner.succeed('Moon cycle complete! 🌙');
 
     // Star spinner
-    const starSpinner = this.createFunSpinner('Reaching for the stars...', 'star');
+    const starSpinner = this.createFunSpinner(
+      'Reaching for the stars...',
+      'star'
+    );
     starSpinner.start();
     await this.delay(2000);
     starSpinner.succeed('Stars aligned! ⭐');

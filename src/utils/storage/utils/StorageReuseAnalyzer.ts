@@ -50,7 +50,7 @@ export interface StorageAnalysis {
   inactiveStorageCount: number;
   /** Whether any viable storage objects were found that meet the requirements */
   hasViableStorage: boolean;
-  /** 
+  /**
    * Recommended action based on analysis:
    * - 'use-existing': Reuse an existing storage object
    * - 'allocate-new': Create a new storage allocation
@@ -63,14 +63,14 @@ export interface StorageAnalysis {
  * Utility class that analyzes and optimizes Walrus blockchain storage usage.
  */
 export class StorageReuseAnalyzer {
-  /** Minimum buffer space that must remain in storage after use (1MB) */
-  private minRemainingBuffer = 1024 * 1024; // 1MB minimum remaining buffer
+  /** Minimum buffer space that must remain in storage after use (1MB) - Reserved for future use */
+  private _minRemainingBuffer = 1024 * 1024; // 1MB minimum remaining buffer
   /** Minimum number of epochs that must remain before storage expiration */
   private minEpochsRemaining = 10; // Minimum epochs remaining
-  
+
   /**
    * Creates a new StorageReuseAnalyzer instance.
-   * 
+   *
    * @param suiClient - Client for interacting with the Sui blockchain
    * @param walrusClient - Client for interacting with Walrus storage service
    * @param userAddress - Address of the user whose storage will be analyzed
@@ -80,17 +80,17 @@ export class StorageReuseAnalyzer {
     private walrusClient: WalrusClientAdapter,
     private userAddress: string
   ) {}
-  
+
   /**
    * Finds the best storage object for reuse based on required size using a best-fit algorithm.
-   * 
+   *
    * @param requiredSize - The size in bytes needed for storage
    * @param bufferSize - Optional additional buffer to ensure (defaults to 10KB)
    * @returns Analysis result with detailed metrics and recommendation
    * @throws {ValidationError} if storage analysis fails
    */
   async findBestStorageForReuse(
-    requiredSize: number, 
+    requiredSize: number,
     bufferSize: number = 10240
   ): Promise<StorageAnalysis> {
     try {
@@ -99,53 +99,57 @@ export class StorageReuseAnalyzer {
         () => this.suiClient.getLatestSuiSystemState(),
         { operation: 'get epoch for storage analysis' }
       );
-      
+
       if (!epochResult.success || !epochResult.data?.epoch) {
         throw new ValidationError('Failed to get current epoch', {
           operation: 'storage analysis',
           recoverable: true,
-          cause: epochResult.error
+          cause: epochResult.error,
         });
       }
-      
+
       const currentEpoch = Number(epochResult.data.epoch);
-      
+
       // Fetch all storage objects owned by this address from the blockchain
       const objectsResult = await StorageOperationHandler.execute(
-        () => this.suiClient.getOwnedObjects({
-          owner: this.userAddress,
-          filter: { StructType: '0x2::storage::Storage' },
-          options: { showContent: true }
-        }),
+        () =>
+          this.suiClient.getOwnedObjects({
+            owner: this.userAddress,
+            filter: { StructType: '0x2::storage::Storage' },
+            options: { showContent: true },
+          }),
         { operation: 'get storage objects for analysis' }
       );
-      
+
       if (!objectsResult.success) {
         throw new ValidationError('Failed to get storage objects', {
           operation: 'storage analysis',
           recoverable: true,
-          cause: objectsResult.error
+          cause: objectsResult.error,
         });
       }
-      
+
       // Initialize counters and collection for storage metrics
       const storageObjects: StorageObject[] = [];
       let totalStorage = 0;
       let usedStorage = 0;
       let activeCount = 0;
       let inactiveCount = 0;
-      
+
       // Process and extract data from each storage object
       for (const item of objectsResult.data.data) {
         // Skip if no content or not a move object
-        if (!item.data?.content || (item.data.content as any).dataType !== 'moveObject') {
+        if (
+          !item.data?.content ||
+          (item.data.content as any).dataType !== 'moveObject'
+        ) {
           continue;
         }
-        
+
         // Parse storage fields from the move object
         const content = item.data.content as any;
         if (!content.fields) continue;
-        
+
         const fields = content.fields;
         const totalSize = Number(fields.storage_size);
         const usedSize = Number(fields.used_size || 0);
@@ -153,13 +157,13 @@ export class StorageReuseAnalyzer {
         const startEpoch = Number(fields.start_epoch || 0);
         const remaining = totalSize - usedSize;
         const active = endEpoch > currentEpoch;
-        
+
         // Accumulate totals for the analysis metrics
         totalStorage += totalSize;
         usedStorage += usedSize;
         if (active) activeCount++;
         else inactiveCount++;
-        
+
         // Add parsed storage object to our collection
         storageObjects.push({
           id: item.data.objectId,
@@ -168,59 +172,61 @@ export class StorageReuseAnalyzer {
           endEpoch,
           startEpoch,
           remaining,
-          active
+          active,
         });
       }
-      
+
       // Filter for viable storage using three criteria:
       // 1. Must be active (not expired)
       // 2. Must have sufficient remaining space (including buffer)
       // 3. Must have sufficient time remaining before expiration
-      const viableStorage = storageObjects.filter(storage => 
-        storage.active && 
-        storage.remaining >= (requiredSize + bufferSize) &&
-        (storage.endEpoch - currentEpoch) >= this.minEpochsRemaining
+      const viableStorage = storageObjects.filter(
+        storage =>
+          storage.active &&
+          storage.remaining >= requiredSize + bufferSize &&
+          storage.endEpoch - currentEpoch >= this.minEpochsRemaining
       );
-      
+
       // Sort viable storage using a best-fit algorithm
       // This prioritizes storage objects that minimize wasted space
       viableStorage.sort((a, b) => {
         // Calculate how much space would remain after use
         const aFit = a.remaining - (requiredSize + bufferSize);
         const bFit = b.remaining - (requiredSize + bufferSize);
-        
+
         // If both storage objects have sufficient space,
         // prefer the one with less wasted space (best fit)
         if (aFit >= 0 && bFit >= 0) {
           return aFit - bFit; // Smallest remaining goes first (best fit)
         }
-        
+
         // If only one has sufficient space, prefer that one
         if (aFit >= 0) return -1;
         if (bFit >= 0) return 1;
-        
+
         // If neither has sufficient space, prefer the one with more space
         return b.remaining - a.remaining;
       });
-      
+
       // Select the best match (first item after sorting)
       const bestMatch = viableStorage.length > 0 ? viableStorage[0] : null;
-      
+
       // Determine recommendation based on analysis
       let recommendation: 'use-existing' | 'allocate-new' | 'extend-existing';
-      
+
       if (bestMatch) {
         // Found a viable storage to reuse - most efficient option
         recommendation = 'use-existing';
       } else {
         // No viable storage with sufficient space
         // Check if there's an active storage that could be extended
-        const extendableStorage = storageObjects.filter(storage => 
-          storage.active && 
-          storage.remaining < (requiredSize + bufferSize) && 
-          storage.remaining > 0
+        const extendableStorage = storageObjects.filter(
+          storage =>
+            storage.active &&
+            storage.remaining < requiredSize + bufferSize &&
+            storage.remaining > 0
         );
-        
+
         if (extendableStorage.length > 0) {
           // Found active storage with some space - could be extended
           recommendation = 'extend-existing';
@@ -229,7 +235,7 @@ export class StorageReuseAnalyzer {
           recommendation = 'allocate-new';
         }
       }
-      
+
       // Return complete analysis with metrics and recommendation
       return {
         bestMatch,
@@ -239,34 +245,32 @@ export class StorageReuseAnalyzer {
         activeStorageCount: activeCount,
         inactiveStorageCount: inactiveCount,
         hasViableStorage: viableStorage.length > 0,
-        recommendation
+        recommendation,
       };
     } catch (error) {
       if (error instanceof ValidationError) {
         throw error;
       }
-      
+
       throw new ValidationError(
         `Failed to analyze storage for reuse: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'storage analysis',
           recoverable: true,
-          cause: error instanceof Error ? error : undefined
+          cause: error instanceof Error ? error : undefined,
         }
       );
     }
   }
-  
+
   /**
    * Analyzes the efficiency and cost savings of reusing storage vs creating new storage.
-   * 
+   *
    * @param requiredSize - Size in bytes needed for storage
    * @returns Detailed analysis with cost comparisons and recommendations
    * @throws {ValidationError} if efficiency analysis fails
    */
-  async analyzeStorageEfficiency(
-    requiredSize: number
-  ): Promise<{
+  async analyzeStorageEfficiency(requiredSize: number): Promise<{
     /** Full storage analysis result */
     analysisResult: StorageAnalysis;
     /** Cost comparison metrics in WAL tokens */
@@ -284,75 +288,80 @@ export class StorageReuseAnalyzer {
     try {
       // Find the best storage to reuse based on our best-fit algorithm
       const analysisResult = await this.findBestStorageForReuse(requiredSize);
-      
+
       // Get cost estimate for allocating new storage from Walrus
       // Default to 52 epochs (approximately 6 months)
       const costResult = await StorageOperationHandler.execute(
-        async () => this.walrusClient.storageCost(
-          requiredSize,
-          52 // Default to 52 epochs (approximately 6 months)
-        ),
+        async () =>
+          this.walrusClient.storageCost(
+            requiredSize,
+            52 // Default to 52 epochs (approximately 6 months)
+          ),
         { operation: 'calculate storage cost' }
       );
-      
+
       if (!costResult.success) {
         throw new ValidationError('Failed to calculate storage cost', {
           operation: 'cost analysis',
           recoverable: true,
-          cause: costResult.error
+          cause: costResult.error,
         });
       }
-      
-      const { storageCost, writeCost, totalCost } = costResult.data;
+
+      const { storageCost, totalCost } = costResult.data;
       const newStorageCost = BigInt(totalCost);
-      
+
       // Calculate potential savings if we reuse existing storage
       let reuseExistingSavings = BigInt(0);
       let reuseExistingPercentSaved = 0;
-      
+
       if (analysisResult.hasViableStorage) {
         // When reusing storage, we only pay the write cost, not the storage allocation cost
         // This is where the significant savings come from
         reuseExistingSavings = BigInt(storageCost);
-        reuseExistingPercentSaved = Number((BigInt(100) * reuseExistingSavings) / newStorageCost);
+        reuseExistingPercentSaved = Number(
+          (BigInt(100) * reuseExistingSavings) / newStorageCost
+        );
       }
-      
+
       // Generate a human-readable recommendation with financial justification
       let detailedRecommendation = '';
-      
+
       switch (analysisResult.recommendation) {
         case 'use-existing':
           detailedRecommendation = `Reuse existing storage ${analysisResult.bestMatch?.id} to save ${reuseExistingSavings} WAL (${reuseExistingPercentSaved}%).`;
           break;
         case 'extend-existing':
-          detailedRecommendation = 'Extend an existing storage allocation to accommodate the required size.';
+          detailedRecommendation =
+            'Extend an existing storage allocation to accommodate the required size.';
           break;
         case 'allocate-new':
-          detailedRecommendation = 'Allocate new storage as no suitable existing storage was found.';
+          detailedRecommendation =
+            'Allocate new storage as no suitable existing storage was found.';
           break;
       }
-      
+
       // Return the complete analysis with cost comparisons
       return {
         analysisResult,
         costComparison: {
           newStorageCost,
           reuseExistingSavings,
-          reuseExistingPercentSaved
+          reuseExistingPercentSaved,
         },
-        detailedRecommendation
+        detailedRecommendation,
       };
     } catch (error) {
       if (error instanceof ValidationError) {
         throw error;
       }
-      
+
       throw new ValidationError(
         `Failed to analyze storage efficiency: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'efficiency analysis',
           recoverable: true,
-          cause: error instanceof Error ? error : undefined
+          cause: error instanceof Error ? error : undefined,
         }
       );
     }

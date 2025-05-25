@@ -13,7 +13,7 @@ async function main() {
 
     // Create and start server
     const server = await createApiServer({ port });
-    
+
     // Handle graceful shutdown
     process.on('SIGTERM', async () => {
       logger.info('SIGTERM signal received: closing HTTP server');
@@ -26,7 +26,6 @@ async function main() {
       await server.stop();
       process.exit(0);
     });
-
   } catch (error) {
     logger.error('Failed to start API server', error);
     process.exit(1);

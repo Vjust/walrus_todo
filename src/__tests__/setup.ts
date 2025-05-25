@@ -19,36 +19,8 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-// Configure Jest matchers
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toContain(expected: string): R;
-      toHaveBeenCalled(): R;
-      toHaveBeenCalledWith(...args: any[]): R;
-      toMatchObject(expected: any): R;
-      toBeTrue(): R;
-      toBeFalse(): R;
-      toBeUndefined(): R;
-      toBeNull(): R;
-      toBeDefined(): R;
-      toBeInstanceOf(expected: any): R;
-      toEqual(expected: any): R;
-      toBe(expected: any): R;
-      toMatch(expected: string | RegExp): R;
-      toThrow(expected?: string | RegExp | Error): R;
-      toHaveLength(expected: number): R;
-      toContainEqual(expected: any): R;
-      toStrictEqual(expected: any): R;
-      objectContaining<E extends {}>(expected: E): R;
-      contain(expected: any): R;
-    }
-  }
-
-  interface ExpectStatic {
-    objectContaining<E = {}>(actual: E): E;
-  }
-}
+// Configure Jest matchers - these are already included with Jest types
+// Remove custom declarations to avoid conflicts
 
 // Setup test
 describe('Setup Test', () => {

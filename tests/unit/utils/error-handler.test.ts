@@ -1,4 +1,8 @@
-import { handleError, withRetry, assert } from '../../../src/utils/error-handler';
+import {
+  handleError,
+  withRetry,
+  assert,
+} from '../../../src/utils/error-handler';
 
 import * as errorMessages from '../../../src/utils/error-messages';
 import chalk from 'chalk';
@@ -28,12 +32,17 @@ describe('Error Handler', () => {
     it('should handle Error instances', () => {
       const error = new Error('Test error');
       const mockFriendlyError = 'Friendly error message';
-      
-      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(mockFriendlyError);
-      
+
+      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(
+        mockFriendlyError
+      );
+
       handleError(error);
-      
-      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(error, undefined);
+
+      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(
+        error,
+        undefined
+      );
       expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
     });
 
@@ -41,40 +50,49 @@ describe('Error Handler', () => {
       const error = new Error('Test error');
       const context = 'Creating todo';
       const mockFriendlyError = 'Friendly error message';
-      
-      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(mockFriendlyError);
-      
-      handleError(context, error);
-      
-      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(
-        error, 
-        { operation: context }
+
+      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(
+        mockFriendlyError
       );
+
+      handleError(context, error);
+
+      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(error, {
+        operation: context,
+      });
       expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
     });
 
     it('should handle CLIError instances', () => {
       const error = new CLIError('CLI specific error', 'TEST_ERROR');
       const mockFriendlyError = 'Friendly CLI error message';
-      
-      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(mockFriendlyError);
-      
+
+      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(
+        mockFriendlyError
+      );
+
       handleError(error);
-      
-      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(error, undefined);
+
+      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(
+        error,
+        undefined
+      );
       expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
     });
 
     it('should handle objects with message property', () => {
       const error = { message: 'Error from object' };
       const mockFriendlyError = 'Friendly object error message';
-      
-      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(mockFriendlyError);
-      
+
+      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(
+        mockFriendlyError
+      );
+
       handleError(error);
-      
+
       expect(errorMessages.displayFriendlyError).toHaveBeenCalled();
-      const calledError = (errorMessages.displayFriendlyError as jest.Mock).mock.calls[0][0];
+      const calledError = (errorMessages.displayFriendlyError as jest.Mock).mock
+        .calls[0][0];
       expect(calledError).toBeInstanceOf(Error);
       expect(calledError.message).toBe('Error from object');
       expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
@@ -83,13 +101,16 @@ describe('Error Handler', () => {
     it('should handle string errors', () => {
       const error = 'String error';
       const mockFriendlyError = 'Friendly string error message';
-      
-      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(mockFriendlyError);
-      
+
+      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(
+        mockFriendlyError
+      );
+
       handleError(error);
-      
+
       expect(errorMessages.displayFriendlyError).toHaveBeenCalled();
-      const calledError = (errorMessages.displayFriendlyError as jest.Mock).mock.calls[0][0];
+      const calledError = (errorMessages.displayFriendlyError as jest.Mock).mock
+        .calls[0][0];
       expect(calledError).toBeInstanceOf(Error);
       expect(calledError.message).toBe('String error');
       expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
@@ -97,12 +118,14 @@ describe('Error Handler', () => {
 
     it('should handle null and undefined errors', () => {
       const mockFriendlyError = 'Friendly error message';
-      
-      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(mockFriendlyError);
-      
+
+      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(
+        mockFriendlyError
+      );
+
       handleError(null);
       expect(errorMessages.displayFriendlyError).toHaveBeenCalled();
-      
+
       handleError(undefined);
       expect(errorMessages.displayFriendlyError).toHaveBeenCalledTimes(2);
     });
@@ -110,12 +133,17 @@ describe('Error Handler', () => {
     it('should handle single parameter correctly when only error is passed', () => {
       const error = new Error('Single param error');
       const mockFriendlyError = 'Friendly error message';
-      
-      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(mockFriendlyError);
-      
+
+      (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(
+        mockFriendlyError
+      );
+
       handleError(error);
-      
-      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(error, undefined);
+
+      expect(errorMessages.displayFriendlyError).toHaveBeenCalledWith(
+        error,
+        undefined
+      );
       expect(mockConsoleError).toHaveBeenCalledWith(mockFriendlyError);
     });
   });
@@ -123,81 +151,83 @@ describe('Error Handler', () => {
   describe('withRetry', () => {
     it('should execute function successfully on first try', async () => {
       const fn = jest.fn().mockResolvedValue('success');
-      
+
       const result = await withRetry(fn);
-      
+
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(1);
     });
 
     it('should retry on transient error and succeed', async () => {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValue('success');
-      
+
       jest.useFakeTimers();
-      
+
       const retryPromise = withRetry(fn, 3, 100);
-      
+
       // Fast-forward through first retry delay
       await jest.advanceTimersByTimeAsync(100);
-      
+
       const result = await retryPromise;
-      
+
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(2);
       expect(mockConsoleError).toHaveBeenCalledWith(
         expect.stringContaining('Request failed, retrying (1/3)')
       );
-      
+
       jest.useRealTimers();
     });
 
     it('should retry multiple times with exponential backoff', async () => {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error('timeout'))
         .mockRejectedValueOnce(new Error('Connection refused'))
         .mockResolvedValue('success');
-      
+
       jest.useFakeTimers();
-      
+
       const retryPromise = withRetry(fn, 3, 100);
-      
+
       // Fast-forward through delays (100ms for first retry, 200ms for second)
       await jest.advanceTimersByTimeAsync(100);
       await jest.advanceTimersByTimeAsync(200);
-      
+
       const result = await retryPromise;
-      
+
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(3);
       expect(mockConsoleError).toHaveBeenCalledTimes(2);
-      
+
       jest.useRealTimers();
     });
 
     it('should throw after max retries', async () => {
       const error = new Error('Network error');
       const fn = jest.fn().mockRejectedValue(error);
-      
+
       jest.useFakeTimers();
-      
+
       const retryPromise = withRetry(fn, 2, 100);
-      
+
       // Fast-forward through all retry delays
       await jest.advanceTimersByTimeAsync(100);
       await jest.advanceTimersByTimeAsync(200);
-      
+
       await expect(retryPromise).rejects.toThrow(error);
       expect(fn).toHaveBeenCalledTimes(2);
-      
+
       jest.useRealTimers();
     });
 
     it('should not retry on non-transient errors', async () => {
       const error = new Error('Validation error');
       const fn = jest.fn().mockRejectedValue(error);
-      
+
       await expect(withRetry(fn)).rejects.toThrow(error);
       expect(fn).toHaveBeenCalledTimes(1);
       expect(mockConsoleError).not.toHaveBeenCalled();
@@ -210,48 +240,50 @@ describe('Error Handler', () => {
         'Connection refused',
         'ECONNREFUSED',
         'ECONNRESET',
-        'HTTP 429 Too Many Requests'
+        'HTTP 429 Too Many Requests',
       ];
-      
+
       for (const errorMessage of transientErrors) {
         jest.clearAllMocks();
-        
-        const fn = jest.fn()
+
+        const fn = jest
+          .fn()
           .mockRejectedValueOnce(new Error(errorMessage))
           .mockResolvedValue('success');
-        
+
         jest.useFakeTimers();
-        
+
         const retryPromise = withRetry(fn, 2, 100);
         await jest.advanceTimersByTimeAsync(100);
-        
+
         const result = await retryPromise;
-        
+
         expect(result).toBe('success');
         expect(fn).toHaveBeenCalledTimes(2);
         expect(mockConsoleError).toHaveBeenCalled();
-        
+
         jest.useRealTimers();
       }
     });
 
     it('should use custom retry count and delay', async () => {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error('network'))
         .mockResolvedValue('success');
-      
+
       jest.useFakeTimers();
-      
+
       const retryPromise = withRetry(fn, 5, 200);
-      
+
       // Fast-forward through custom delay
       await jest.advanceTimersByTimeAsync(200);
-      
+
       const result = await retryPromise;
-      
+
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(2);
-      
+
       jest.useRealTimers();
     });
   });
@@ -276,10 +308,10 @@ describe('Error Handler', () => {
 
     it('should work with type predicates', () => {
       const value: unknown = 'test';
-      
+
       // This demonstrates TypeScript type narrowing
       assert(typeof value === 'string', 'Value must be a string');
-      
+
       // TypeScript now knows value is a string
       expect(value.length).toBe(4);
     });
@@ -291,7 +323,7 @@ describe('Error Handler', () => {
       const transientPatterns = [
         'network',
         'NETWORK',
-        'timeout', 
+        'timeout',
         'TIMEOUT',
         'connection',
         'CONNECTION',
@@ -299,27 +331,28 @@ describe('Error Handler', () => {
         'ECONNREFUSED',
         'econnreset',
         'ECONNRESET',
-        '429'
+        '429',
       ];
-      
+
       for (const pattern of transientPatterns) {
         jest.clearAllMocks();
-        
-        const fn = jest.fn()
+
+        const fn = jest
+          .fn()
           .mockRejectedValueOnce(new Error(`Error with ${pattern} in message`))
           .mockResolvedValue('success');
-        
+
         jest.useFakeTimers();
-        
+
         const retryPromise = withRetry(fn, 2, 100);
         await jest.advanceTimersByTimeAsync(100);
-        
+
         const result = await retryPromise;
-        
+
         expect(result).toBe('success');
         expect(fn).toHaveBeenCalledTimes(2);
         expect(mockConsoleError).toHaveBeenCalled();
-        
+
         jest.useRealTimers();
       }
     });
@@ -330,14 +363,14 @@ describe('Error Handler', () => {
         'Unauthorized',
         'Not found',
         'Validation failed',
-        'Permission denied'
+        'Permission denied',
       ];
-      
+
       for (const message of nonTransientMessages) {
         jest.clearAllMocks();
-        
+
         const fn = jest.fn().mockRejectedValue(new Error(message));
-        
+
         await expect(withRetry(fn)).rejects.toThrow(message);
         expect(fn).toHaveBeenCalledTimes(1);
         expect(mockConsoleError).not.toHaveBeenCalled();

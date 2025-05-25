@@ -1,7 +1,4 @@
 /**
-import { Logger } from '../Logger';
-
-const logger = new Logger('error-handler');
  * @file Centralized error handling utilities
  * Provides consistent error handling, logging, and display throughout the application.
  */
@@ -9,6 +6,9 @@ const logger = new Logger('error-handler');
 import * as chalkModule from 'chalk';
 import { BaseError } from '../../types/errors/consolidated/BaseError';
 import { CLIError } from '../../types/errors/consolidated/CLIError';
+import { Logger } from '../Logger';
+
+const logger = new Logger('error-handler');
 // Import or define error utility functions
 const isRetryableError = (error: unknown): boolean => {
   // Check if it's a network-related error based on the message
@@ -25,33 +25,23 @@ const isRetryableError = (error: unknown): boolean => {
   return false;
 };
 
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  try {
-    return String(error);
-  } catch (error: unknown) {
-    return 'Unknown error';
-  }
-};
 
 const toBaseError = (error: unknown): BaseError => {
   if (error instanceof BaseError) {
     return error;
   }
-  
+
   if (error instanceof Error) {
     return new BaseError({
       message: error.message,
       code: 'ERROR',
-      cause: error
+      cause: error,
     });
   }
-  
+
   return new BaseError({
     message: error instanceof Error ? error.message : 'Unknown error',
-    code: 'UNKNOWN_ERROR'
+    code: 'UNKNOWN_ERROR',
   });
 };
 
@@ -64,16 +54,16 @@ const chalk = chalkModule.default || chalkModule;
 interface ErrorHandlerOptions {
   /** Whether to exit the process */
   exit?: boolean;
-  
+
   /** Exit code to use when exiting (defaults to 1) */
   exitCode?: number;
-  
+
   /** Whether to log the error stack trace (defaults to false) */
   logStack?: boolean;
-  
+
   /** Custom prefix for the error message */
   prefix?: string;
-  
+
   /** Context to include with the error */
   context?: Record<string, unknown>;
 }
@@ -92,62 +82,71 @@ export function handleError(
   // Handle function overloads
   let context = '';
   let handlerOptions: ErrorHandlerOptions;
-  
+
   if (typeof contextOrOptions === 'string') {
     context = contextOrOptions;
     handlerOptions = options;
   } else {
     handlerOptions = contextOrOptions;
   }
-  
+
   const {
     exit = false,
     exitCode: configuredExitCode,
     logStack = false,
     prefix = '',
-    context: additionalContext = {}
+    context: _additionalContext = {},
   } = handlerOptions;
-  
+
   // Normalize the error
   const baseError = toBaseError(error);
-  
+
   // Get exit code (CLI errors have their own exit code)
-  const exitCode = configuredExitCode ?? (error instanceof CLIError ? error.exitCode : 1);
-  
+  const exitCode =
+    configuredExitCode ?? (error instanceof CLIError ? error.exitCode : 1);
+
   // Format the context string
   const contextPrefix = context ? `${context}: ` : '';
-  
+
   // Format the error prefix
   const errorPrefix = prefix || '❌';
-  
+
   // Display the error
-  logger.error(`\n${errorPrefix} ${contextPrefix}${chalk.red(baseError.message)}`);
-  
+  logger.error(
+    `\n${errorPrefix} ${contextPrefix}${chalk.red(baseError.message)}`
+  );
+
   // Display additional information for BaseError instances
   if (baseError instanceof BaseError) {
     logger.error(`${chalk.dim('Error Code:')} ${chalk.yellow(baseError.code)}`);
-    
+
     // Display cause if available and requested
     if (baseError.cause && logStack) {
-      logger.error(`${chalk.dim('Caused by:')} ${chalk.red(baseError.cause.message)}`);
+      logger.error(
+        `${chalk.dim('Caused by:')} ${chalk.red(baseError.cause.message)}`
+      );
     }
-    
+
     // Display context if available and requested
     if (baseError.context && Object.keys(baseError.context).length > 0) {
       logger.error(`${chalk.dim('Context:')}`, baseError.context);
     }
-    
+
     // Display recovery information
     if (baseError.recoverable) {
-      logger.error(`${chalk.green('This error is recoverable.')}${baseError.shouldRetry ? ' You can retry the operation.' : ''}`);
+      logger.error(
+        `${chalk.green('This error is recoverable.')}${baseError.shouldRetry ? ' You can retry the operation.' : ''}`
+      );
     }
   }
-  
+
   // Display stack trace if requested
   if (logStack && baseError.stack) {
-    logger.error(`\n${chalk.dim('Stack trace:')}\n${chalk.dim(baseError.stack)}`);
+    logger.error(
+      `\n${chalk.dim('Stack trace:')}\n${chalk.dim(baseError.stack)}`
+    );
   }
-  
+
   // Exit if requested
   if (exit) {
     process.exit(exitCode);
@@ -168,7 +167,7 @@ export function assert(
   if (!condition) {
     throw new BaseError({
       message,
-      code
+      code,
     });
   }
 }
@@ -194,36 +193,36 @@ export async function withRetry<T>(
     baseDelay = 1000,
     maxDelay = 30000,
     retryIf = isRetryableError,
-    onRetry = defaultOnRetry
+    onRetry = defaultOnRetry,
   } = options;
-  
+
   let lastError: unknown;
-  
+
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error;
-      
+
       // Don't retry on the last attempt
       if (attempt > maxRetries || !retryIf(error)) {
         throw error;
       }
-      
+
       // Calculate delay with exponential backoff and jitter
       const delay = Math.min(
         baseDelay * Math.pow(2, attempt - 1) * (0.5 + Math.random()),
         maxDelay
       );
-      
+
       // Call the onRetry callback
       onRetry(error, attempt, delay);
-      
+
       // Wait for the delay
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
-  
+
   // This should never happen due to the throw in the catch block
   throw lastError;
 }

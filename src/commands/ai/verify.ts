@@ -8,7 +8,8 @@ import chalk from 'chalk';
 import { getAIVerifierAddress } from '../../services/ai/credentials/module-address';
 
 export default class Verify extends BaseCommand {
-  static description = 'Check and verify AI operation results on blockchain for integrity and authenticity';
+  static description =
+    'Check and verify AI operation results on blockchain for integrity and authenticity';
 
   static flags = {
     ...BaseCommand.flags,
@@ -20,7 +21,7 @@ export default class Verify extends BaseCommand {
     todo: Flags.string({
       char: 't',
       description: 'Todo ID to check verifications for',
-      required: false, 
+      required: false,
     }),
     operation: Flags.string({
       char: 'o',
@@ -35,7 +36,7 @@ export default class Verify extends BaseCommand {
         'group',
         'schedule',
         'detect_dependencies',
-        'estimate_effort'
+        'estimate_effort',
       ],
     }),
     provider: Flags.string({
@@ -52,7 +53,7 @@ export default class Verify extends BaseCommand {
       description: 'Action to perform (check, list, verify)',
       required: true,
       options: ['check', 'list', 'verify'],
-    })
+    }),
   };
 
   static examples = [
@@ -69,23 +70,25 @@ export default class Verify extends BaseCommand {
 
   async run() {
     const { args, flags } = await this.parse(Verify);
-    
+
     // Initialize services
     this.verificationService = new AIVerificationService();
-    
+
     // Initialize SUI client
     const client = new SuiClient({
       url: process.env.SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443',
     });
-    
+
     // Module addresses would typically come from configuration
     const aiVerifierAddress = getAIVerifierAddress();
     const todoAIModuleAddress = getAIVerifierAddress(); // Usually this would be different
-    const todoAIRegistry = process.env.TODO_AI_REGISTRY || 
-                         '0x0000000000000000000000000000000000000000000000000000000000000123';
-    const verificationRegistry = process.env.VERIFICATION_REGISTRY || 
-                              '0x0000000000000000000000000000000000000000000000000000000000000456';
-    
+    const todoAIRegistry =
+      process.env.TODO_AI_REGISTRY ||
+      '0x0000000000000000000000000000000000000000000000000000000000000123';
+    const verificationRegistry =
+      process.env.VERIFICATION_REGISTRY ||
+      '0x0000000000000000000000000000000000000000000000000000000000000456';
+
     // Initialize the adapter
     this.todoAIAdapter = new TodoAIAdapter(
       client,
@@ -123,13 +126,18 @@ export default class Verify extends BaseCommand {
     }
 
     try {
-      const isValid = await this.verificationService.verifyExistingOperation(verificationId);
-      
+      const isValid =
+        await this.verificationService.verifyExistingOperation(verificationId);
+
       if (isValid) {
-        this.log(`${chalk.green('\u2713')} Verification ${chalk.cyan(verificationId)} is valid`);
+        this.log(
+          `${chalk.green('\u2713')} Verification ${chalk.cyan(verificationId)} is valid`
+        );
         this.log('This AI operation has been verified on the blockchain.');
       } else {
-        this.log(`${chalk.red('\u2717')} Verification ${chalk.cyan(verificationId)} is invalid or not found`);
+        this.log(
+          `${chalk.red('\u2717')} Verification ${chalk.cyan(verificationId)} is invalid or not found`
+        );
         this.log('This verification ID does not exist on the blockchain.');
       }
     } catch (error) {
@@ -144,21 +152,27 @@ export default class Verify extends BaseCommand {
     }
 
     try {
-      const verifications = await this.todoAIAdapter.getVerificationsForTodo(todoId);
-      
+      const verifications =
+        await this.todoAIAdapter.getVerificationsForTodo(todoId);
+
       if (verifications.length === 0) {
-        this.log(`${chalk.yellow('\u26a0')} No verifications found for todo ${chalk.cyan(todoId)}`);
+        this.log(
+          `${chalk.yellow('\u26a0')} No verifications found for todo ${chalk.cyan(todoId)}`
+        );
         return;
       }
-      
+
       this.log(`Verifications for todo ${chalk.cyan(todoId)}:`);
-      
+
       for (const verificationId of verifications) {
-        const isValid = await this.verificationService.verifyExistingOperation(verificationId);
-        const status = isValid 
-          ? chalk.green('\u2713 valid') 
+        const isValid =
+          await this.verificationService.verifyExistingOperation(
+            verificationId
+          );
+        const status = isValid
+          ? chalk.green('\u2713 valid')
           : chalk.red('\u2717 invalid');
-        
+
         this.log(`  ${chalk.cyan(verificationId)}: ${status}`);
       }
     } catch (error) {
@@ -166,28 +180,43 @@ export default class Verify extends BaseCommand {
     }
   }
 
-  private async verifyTodoOperation(todoId?: string, operation?: TodoAIOperation, provider?: AIProvider) {
+  private async verifyTodoOperation(
+    todoId?: string,
+    operation?: TodoAIOperation,
+    provider?: AIProvider
+  ) {
     // Validate inputs
     if (!todoId) {
       this.error('Todo ID is required');
     }
-    
+
     if (!operation) {
       this.error('Operation is required');
     }
 
     try {
-      const isValid = await this.todoAIAdapter.verifyTodoOperation(todoId, operation);
-      
+      const isValid = await this.todoAIAdapter.verifyTodoOperation(
+        todoId,
+        operation
+      );
+
       if (isValid) {
-        this.log(`${chalk.green('\u2713')} Todo ${chalk.cyan(todoId)} has a verified ${chalk.cyan(operation)} operation`);
+        this.log(
+          `${chalk.green('\u2713')} Todo ${chalk.cyan(todoId)} has a verified ${chalk.cyan(operation)} operation`
+        );
       } else {
-        this.log(`${chalk.red('\u2717')} Todo ${chalk.cyan(todoId)} does not have a verified ${chalk.cyan(operation)} operation`);
-        
+        this.log(
+          `${chalk.red('\u2717')} Todo ${chalk.cyan(todoId)} does not have a verified ${chalk.cyan(operation)} operation`
+        );
+
         if (provider) {
-          this.log(`You can create a verification with: ${chalk.cyan(`walrus_todo ai ${operation} ${todoId} --verify --provider ${provider}`)}`);
+          this.log(
+            `You can create a verification with: ${chalk.cyan(`walrus_todo ai ${operation} ${todoId} --verify --provider ${provider}`)}`
+          );
         } else {
-          this.log(`You can create a verification with: ${chalk.cyan(`walrus_todo ai ${operation} ${todoId} --verify`)}`);
+          this.log(
+            `You can create a verification with: ${chalk.cyan(`walrus_todo ai ${operation} ${todoId} --verify`)}`
+          );
         }
       }
     } catch (error) {

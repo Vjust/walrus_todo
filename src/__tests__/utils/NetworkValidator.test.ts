@@ -14,16 +14,19 @@ describe('NetworkValidator', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockExecSync = jest.spyOn(execSync as any, 'default');
-    
+
     mockWalrusClient = {
       getConfig: jest.fn().mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
-        maxSize: 1000000
+        maxSize: 1000000,
       }),
       // Core WalrusClient methods
       readBlob: jest.fn(),
-      writeBlob: jest.fn().mockResolvedValue({ blobId: 'mock-blob-id', blobObject: { blob_id: 'mock-blob-id' } }),
+      writeBlob: jest.fn().mockResolvedValue({
+        blobId: 'mock-blob-id',
+        blobObject: { blob_id: 'mock-blob-id' },
+      }),
       getBlobInfo: jest.fn(),
       getStorageUsage: jest.fn(),
       getWalBalance: jest.fn(),
@@ -44,27 +47,28 @@ describe('NetworkValidator', () => {
       getStorageProviders: jest.fn(),
       reset: jest.fn(),
       experimental: {
-        getBlobData: jest.fn().mockResolvedValue({})
-      }
+        getBlobData: jest.fn().mockResolvedValue({}),
+      },
     } as jest.Mocked<WalrusClientExt>;
 
     validator = new NetworkValidator({
       expectedEnvironment: 'testnet',
-      autoSwitch: false
+      autoSwitch: false,
     });
   });
 
   describe('Environment Validation', () => {
     it('should validate matching environments', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ 
+      mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
-        maxSize: 1000000
+        maxSize: 1000000,
       });
 
-      await expect(validator.validateEnvironment(mockWalrusClient))
-        .resolves.not.toThrow();
+      await expect(
+        validator.validateEnvironment(mockWalrusClient)
+      ).resolves.not.toThrow();
     });
 
     it('should throw on Sui environment mismatch without auto-switch', async () => {
@@ -72,18 +76,20 @@ describe('NetworkValidator', () => {
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
-        maxSize: 1000000
+        maxSize: 1000000,
       });
 
-      await expect(validator.validateEnvironment(mockWalrusClient))
-        .rejects
-        .toThrow('Sui environment mismatch. Expected: testnet, got: devnet');
+      await expect(
+        validator.validateEnvironment(mockWalrusClient)
+      ).rejects.toThrow(
+        'Sui environment mismatch. Expected: testnet, got: devnet'
+      );
     });
 
     it('should auto-switch Sui environment when enabled', async () => {
       validator = new NetworkValidator({
         expectedEnvironment: 'testnet',
-        autoSwitch: true
+        autoSwitch: true,
       });
 
       mockExecSync
@@ -92,7 +98,10 @@ describe('NetworkValidator', () => {
 
       await validator.validateEnvironment(mockWalrusClient);
 
-      expect(mockExecSync).toHaveBeenCalledWith('sui client switch --env testnet', { encoding: 'utf8' });
+      expect(mockExecSync).toHaveBeenCalledWith(
+        'sui client switch --env testnet',
+        { encoding: 'utf8' }
+      );
     });
 
     it('should throw on Walrus environment mismatch', async () => {
@@ -100,20 +109,22 @@ describe('NetworkValidator', () => {
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'devnet',
         version: '1.0.0',
-        maxSize: 1000000
+        maxSize: 1000000,
       });
 
-      await expect(validator.validateEnvironment(mockWalrusClient))
-        .rejects
-        .toThrow('Walrus environment mismatch. Expected: testnet, got: devnet');
+      await expect(
+        validator.validateEnvironment(mockWalrusClient)
+      ).rejects.toThrow(
+        'Walrus environment mismatch. Expected: testnet, got: devnet'
+      );
     });
 
     it('should throw on invalid Sui environment', async () => {
       mockExecSync.mockReturnValue('invalid-env');
 
-      await expect(validator.validateEnvironment(mockWalrusClient))
-        .rejects
-        .toThrow('Invalid Sui environment: invalid-env');
+      await expect(
+        validator.validateEnvironment(mockWalrusClient)
+      ).rejects.toThrow('Invalid Sui environment: invalid-env');
     });
 
     it('should throw on invalid Walrus environment', async () => {
@@ -121,12 +132,12 @@ describe('NetworkValidator', () => {
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'invalid-env',
         version: '1.0.0',
-        maxSize: 1000000
+        maxSize: 1000000,
       });
 
-      await expect(validator.validateEnvironment(mockWalrusClient))
-        .rejects
-        .toThrow('Invalid Walrus environment: invalid-env');
+      await expect(
+        validator.validateEnvironment(mockWalrusClient)
+      ).rejects.toThrow('Invalid Walrus environment: invalid-env');
     });
 
     it('should handle Sui CLI errors', async () => {
@@ -134,18 +145,18 @@ describe('NetworkValidator', () => {
         throw new Error('CLI error');
       });
 
-      await expect(validator.validateEnvironment(mockWalrusClient))
-        .rejects
-        .toThrow('Failed to get Sui environment: CLI error');
+      await expect(
+        validator.validateEnvironment(mockWalrusClient)
+      ).rejects.toThrow('Failed to get Sui environment: CLI error');
     });
 
     it('should handle Walrus client errors', async () => {
       mockExecSync.mockReturnValue('testnet');
       mockWalrusClient.getConfig.mockRejectedValue(new Error('Client error'));
 
-      await expect(validator.validateEnvironment(mockWalrusClient))
-        .rejects
-        .toThrow('Failed to get Walrus environment: Client error');
+      await expect(
+        validator.validateEnvironment(mockWalrusClient)
+      ).rejects.toThrow('Failed to get Walrus environment: Client error');
     });
   });
 
@@ -155,7 +166,7 @@ describe('NetworkValidator', () => {
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
-        maxSize: 1000000
+        maxSize: 1000000,
       });
 
       const status = await validator.getNetworkStatus(mockWalrusClient);
@@ -163,7 +174,7 @@ describe('NetworkValidator', () => {
       expect(status).toEqual({
         suiEnvironment: 'testnet',
         walrusEnvironment: 'testnet',
-        isValid: true
+        isValid: true,
       });
     });
 
@@ -172,7 +183,7 @@ describe('NetworkValidator', () => {
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
-        maxSize: 1000000
+        maxSize: 1000000,
       });
 
       const status = await validator.getNetworkStatus(mockWalrusClient);
@@ -180,7 +191,7 @@ describe('NetworkValidator', () => {
       expect(status).toEqual({
         suiEnvironment: 'devnet',
         walrusEnvironment: 'testnet',
-        isValid: false
+        isValid: false,
       });
     });
 
@@ -189,9 +200,9 @@ describe('NetworkValidator', () => {
         throw new Error('CLI error');
       });
 
-      await expect(validator.getNetworkStatus(mockWalrusClient))
-        .rejects
-        .toThrow('Failed to get Sui environment: CLI error');
+      await expect(
+        validator.getNetworkStatus(mockWalrusClient)
+      ).rejects.toThrow('Failed to get Sui environment: CLI error');
     });
   });
 });

@@ -30,21 +30,25 @@ export class ApiServer {
   private setupMiddleware(): void {
     // Security middleware
     this.app.use(helmet());
-    
+
     // CORS configuration
-    this.app.use(cors({
-      origin: this.config.cors.origins,
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
-    }));
+    this.app.use(
+      cors({
+        origin: this.config.cors.origins,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+      })
+    );
 
     // Compression
     this.app.use(compression());
 
     // Body parsing
     this.app.use(express.json({ limit: this.config.bodyLimit }));
-    this.app.use(express.urlencoded({ extended: true, limit: this.config.bodyLimit }));
+    this.app.use(
+      express.urlencoded({ extended: true, limit: this.config.bodyLimit })
+    );
 
     // Request logging
     if (this.config.logging.enabled) {
@@ -60,10 +64,10 @@ export class ApiServer {
   private setupRoutes(): void {
     // Health check
     this.app.get('/health', (req, res) => {
-      res.json({ 
-        status: 'ok', 
+      res.json({
+        status: 'ok',
         timestamp: new Date().toISOString(),
-        version: this.config.version 
+        version: this.config.version,
       });
     });
 
@@ -73,9 +77,9 @@ export class ApiServer {
 
     // 404 handler
     this.app.use((req, res) => {
-      res.status(404).json({ 
-        error: 'Not Found', 
-        message: `Route ${req.method} ${req.path} not found` 
+      res.status(404).json({
+        error: 'Not Found',
+        message: `Route ${req.method} ${req.path} not found`,
       });
     });
   }
@@ -85,12 +89,14 @@ export class ApiServer {
   }
 
   public async start(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.server.listen(this.config.port, () => {
         logger.info(`API Server started on port ${this.config.port}`);
         logger.info(`Environment: ${this.config.env}`);
         if (this.config.env === 'development') {
-          logger.info(`API Documentation: http://localhost:${this.config.port}/api-docs`);
+          logger.info(
+            `API Documentation: http://localhost:${this.config.port}/api-docs`
+          );
         }
         resolve();
       });
@@ -98,7 +104,7 @@ export class ApiServer {
   }
 
   public async stop(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.server.close(() => {
         logger.info('API Server stopped');
         resolve();
@@ -112,7 +118,9 @@ export class ApiServer {
 }
 
 // Export function to create and start server
-export async function createApiServer(config?: Partial<ApiConfig>): Promise<ApiServer> {
+export async function createApiServer(
+  config?: Partial<ApiConfig>
+): Promise<ApiServer> {
   const fullConfig = new ApiConfig(config);
   const server = new ApiServer(fullConfig);
   await server.start();

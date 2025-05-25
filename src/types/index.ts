@@ -16,11 +16,11 @@ export interface Config {
 
 export * from './todo';
 // Export only specific items from error to avoid conflicts
-export { 
+export {
   ErrorWithMessage,
   isErrorWithMessage as isErrorWithMessageLegacy,
   toErrorWithMessage as toErrorWithMessageLegacy,
-  getErrorMessage as getErrorMessageLegacy
+  getErrorMessage as getErrorMessageLegacy,
 } from './error';
 // Export all from consolidated (this is the new preferred location)
 export * from './errors/consolidated';

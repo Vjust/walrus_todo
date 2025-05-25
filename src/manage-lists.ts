@@ -13,7 +13,7 @@ async function main() {
   // Create a new list with multiple todos
   const newListName = 'work-tasks';
   Logger.getInstance().info(`Creating new list: ${newListName}`);
-  
+
   try {
     await todoService.createList(newListName, 'test-user'); // Removed unused newList variable assignment
     Logger.getInstance().info('New list created');
@@ -24,20 +24,20 @@ async function main() {
         title: 'Write documentation',
         description: 'Document the new features',
         priority: 'high' as const,
-        tags: ['docs', 'urgent']
+        tags: ['docs', 'urgent'],
       },
       {
         title: 'Code review',
         description: 'Review pull requests',
         priority: 'medium' as const,
-        tags: ['review', 'collaboration']
+        tags: ['review', 'collaboration'],
       },
       {
         title: 'Weekly planning',
-        description: 'Plan next week\'s tasks',
+        description: "Plan next week's tasks",
         priority: 'low' as const,
-        tags: ['planning']
-      }
+        tags: ['planning'],
+      },
     ];
 
     Logger.getInstance().info('Adding todos to new list...');
@@ -58,7 +58,12 @@ async function main() {
       Logger.getInstance().info(`${list.name} (${list.todos.length} todos):`);
       list.todos.forEach(todo => {
         const status = todo.completed ? '✓' : '☐';
-        const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+        const priority =
+          todo.priority === 'high'
+            ? '⚠️'
+            : todo.priority === 'medium'
+              ? '•'
+              : '○';
         Logger.getInstance().info(`${status} ${priority} ${todo.title}`);
         Logger.getInstance().info(`   Tags: ${todo.tags.join(', ')}`);
       });
@@ -73,7 +78,12 @@ async function main() {
         Logger.getInstance().info(`${list.name} (${list.todos.length} todos):`);
         list.todos.forEach(todo => {
           const status = todo.completed ? '✓' : '☐';
-          const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+          const priority =
+            todo.priority === 'high'
+              ? '⚠️'
+              : todo.priority === 'medium'
+                ? '•'
+                : '○';
           Logger.getInstance().info(`${status} ${priority} ${todo.title}`);
           Logger.getInstance().info(`   Tags: ${todo.tags.join(', ')}`);
         });
@@ -84,4 +94,4 @@ async function main() {
   }
 }
 
-main().catch((error) => Logger.getInstance().error('Error in main:', error));
+main().catch(error => Logger.getInstance().error('Error in main:', error));

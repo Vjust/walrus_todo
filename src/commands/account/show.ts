@@ -8,13 +8,17 @@ import { configService } from '../../services/config-service';
  * It retrieves the address from the configuration settings and provides feedback if no address is set.
  */
 export default class AccountShowCommand extends BaseCommand {
-  static description = 'Display the currently configured Sui wallet address for blockchain operations';
+  static description =
+    'Display the currently configured Sui wallet address for blockchain operations';
 
   async run(): Promise<void> {
     try {
       const config = await configService.getConfig();
       if (!config.walletAddress) {
-        throw new CLIError('No wallet address configured. Please run "waltodo configure" first.', 'NO_WALLET_ADDRESS');
+        throw new CLIError(
+          'No wallet address configured. Please run "waltodo configure" first.',
+          'NO_WALLET_ADDRESS'
+        );
       }
       this.log(`Current active Sui address: ${config.walletAddress}`);
     } catch (error) {

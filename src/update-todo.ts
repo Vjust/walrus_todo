@@ -18,7 +18,8 @@ async function main() {
   logger.info('\nCurrent todos:');
   list.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
-    const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+    const priority =
+      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
     logger.info(`${status} ${priority} ${todo.title}`);
     logger.info(`   Description: ${todo.description}`);
     logger.info(`   Tags: ${todo.tags.join(', ')}\n`);
@@ -28,14 +29,15 @@ async function main() {
   if (list.todos.length > 0) {
     const todoToUpdate = list.todos[0];
     logger.info(`Updating todo: ${todoToUpdate.title}`);
-    
-    await todoService.updateTodo(listName, todoToUpdate.id, { // Removed unused updatedTodo variable assignment
+
+    await todoService.updateTodo(listName, todoToUpdate.id, {
+      // Removed unused updatedTodo variable assignment
       title: 'Updated Todo Title',
       description: 'This todo has been updated',
       priority: 'medium',
-      tags: ['test', 'demo', 'updated']
+      tags: ['test', 'demo', 'updated'],
     });
-    
+
     logger.info('Todo updated');
   }
 
@@ -44,7 +46,8 @@ async function main() {
   const updatedList = await todoService.getList(listName);
   updatedList?.todos.forEach(todo => {
     const status = todo.completed ? '✓' : '☐';
-    const priority = todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
+    const priority =
+      todo.priority === 'high' ? '⚠️' : todo.priority === 'medium' ? '•' : '○';
     logger.info(`${status} ${priority} ${todo.title}`);
     logger.info(`   Description: ${todo.description}`);
     logger.info(`   Tags: ${todo.tags.join(', ')}\n`);

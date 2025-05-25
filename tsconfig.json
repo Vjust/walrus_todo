@@ -9,7 +9,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@tests/*": ["src/__tests__/*"], 
+      "@tests/*": ["src/__tests__/*"],
       "@types/*": ["src/types/*"],
       "@utils/*": ["src/utils/*"],
       "@services/*": ["src/services/*"],
@@ -17,10 +17,7 @@
       "@adapters/*": ["src/types/adapters/*"],
       "@errors/*": ["src/types/errors/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": ["node", "jest", "cli-progress", "express"],
     "resolveJsonModule": true,
     "outDir": "./dist",
@@ -47,24 +44,22 @@
     "useUnknownInCatchVariables": false,
     "noErrorTruncation": false,
     "skipDefaultLibCheck": true,
-    
+
     /* Build compatibility options */
     "allowJs": true,
-    "isolatedModules": true,      /* Added for better module boundary handling */
-    "preserveSymlinks": true,     /* Added to preserve npm link resolutions */
-    "allowUmdGlobalAccess": true, /* Allow accessing UMD globals from modules */
-    
+    "isolatedModules": true /* Added for better module boundary handling */,
+    "preserveSymlinks": true /* Added to preserve npm link resolutions */,
+    "allowUmdGlobalAccess": true /* Allow accessing UMD globals from modules */,
+
     /* Enhanced compatibility settings */
     /* Removed deprecated options suppressImplicitAnyIndexErrors and suppressExcessPropertyErrors */
-    "importsNotUsedAsValues": "remove",     /* Remove imports only used for types */
-    
+    "importsNotUsedAsValues": "remove" /* Remove imports only used for types */,
+
     /* Type checking optimizations */
-    "assumeChangesOnlyAffectDirectDependencies": true, /* Optimize incremental builds */
-    
+    "assumeChangesOnlyAffectDirectDependencies": true /* Optimize incremental builds */,
+
     /* ttypescript plugin configuration */
-    "plugins": [
-      { "transform": "typescript-transform-paths" }
-    ]
+    "plugins": [{ "transform": "typescript-transform-paths" }]
   },
   "ts-node": {
     "transpileOnly": true,
@@ -72,17 +67,6 @@
       "module": "commonjs"
     }
   },
-  "include": [
-    "src/**/*",
-    "scripts/**/*",
-    "tests/**/*",
-    "*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "backup",
-    "waltodo-frontend",
-    "frontend-demo"
-  ]
+  "include": ["src/**/*", "scripts/**/*", "tests/**/*", "*.ts"],
+  "exclude": ["node_modules", "dist", "backup", "waltodo-frontend", "frontend-demo"]
 }

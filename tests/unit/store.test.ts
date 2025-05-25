@@ -1,4 +1,3 @@
-
 // TODO: This test file requires refactoring to work without mocks
 // The following jest.mock calls were removed during mock cleanup:
 // - jest.mock('../../src/utils/walrus-storage')
@@ -21,7 +20,7 @@ describe('store command', () => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: true,
-    storageLocation: 'local' as const
+    storageLocation: 'local' as const,
   });
 
   // Test that can work without mocks:

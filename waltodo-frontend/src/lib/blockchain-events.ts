@@ -47,7 +47,7 @@ export class BlockchainEventManager {
       this.listeners.set(eventType, []);
     }
     this.listeners.get(eventType)!.push(listener);
-    
+
     return () => {
       const listeners = this.listeners.get(eventType);
       if (listeners) {
@@ -76,7 +76,7 @@ export class BlockchainEventManager {
       error: null,
       lastReconnectAttempt: 0,
       reconnectAttempts: 0,
-      subscriptionCount: this.listeners.size
+      subscriptionCount: this.listeners.size,
     };
   }
 
@@ -89,7 +89,9 @@ export class BlockchainEventManager {
 // Global event manager instance
 let eventManager: BlockchainEventManager | null = null;
 
-export function getEventManager(options?: { autoReconnect?: boolean }): BlockchainEventManager {
+export function getEventManager(options?: {
+  autoReconnect?: boolean;
+}): BlockchainEventManager {
   if (!eventManager) {
     console.log('Creating new blockchain event manager instance');
     eventManager = new BlockchainEventManager();
@@ -106,6 +108,6 @@ export function transformEventToTodoUpdate(event: TodoNFTEvent): any {
     owner: event.data.owner,
     blockchainStored: true,
     objectId: event.data.todo_id,
-    updatedAt: new Date(event.data.timestamp).getTime()
+    updatedAt: new Date(event.data.timestamp).getTime(),
   };
 }

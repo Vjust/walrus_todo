@@ -22,7 +22,7 @@ if (!ora) {
     start: () => ({ stop: () => {}, succeed: () => {}, fail: () => {} }),
     stop: () => {},
     succeed: () => {},
-    fail: () => {}
+    fail: () => {},
   });
 }
 
@@ -31,18 +31,25 @@ if (!cliProgress) {
   // @ts-expect-error - Mock cli-progress for testing when import fails
   cliProgress = {
     SingleBar: class MockSingleBar {
-      start() { return this; }
-      update() { return this; }
-      stop() { return this; }
+      start() {
+        return this;
+      }
+      update() {
+        return this;
+      }
+      stop() {
+        return this;
+      }
     },
     MultiBar: class MockMultiBar {
-      create() { return new cliProgress.SingleBar({}); }
+      create() {
+        return new cliProgress.SingleBar({});
+      }
       remove() {}
       stop() {}
-    }
+    },
   };
 }
-
 
 /**
  * Configuration for spinner animation styles
@@ -50,36 +57,67 @@ if (!cliProgress) {
 export const SPINNER_STYLES = {
   dots: {
     interval: 80,
-    frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   },
   dots12: {
     interval: 80,
-    frames: ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷']
+    frames: ['⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷'],
   },
   line: {
     interval: 130,
-    frames: ['-', '\\', '|', '/']
+    frames: ['-', '\\', '|', '/'],
   },
   star: {
     interval: 70,
-    frames: ['✶', '✸', '✹', '✺', '✹', '✸']
+    frames: ['✶', '✸', '✹', '✺', '✹', '✸'],
   },
   moon: {
     interval: 80,
-    frames: ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘']
+    frames: ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'],
   },
   walrus: {
     interval: 300,
-    frames: ['🦭', '🦭 ', '🦭  ', '🦭   ', '🦭    ', '🦭   ', '🦭  ', '🦭 ']
+    frames: ['🦭', '🦭 ', '🦭  ', '🦭   ', '🦭    ', '🦭   ', '🦭  ', '🦭 '],
   },
   sparkle: {
     interval: 100,
-    frames: ['✨', '💫', '⭐', '🌟', '⭐', '💫']
+    frames: ['✨', '💫', '⭐', '🌟', '⭐', '💫'],
   },
   bounce: {
     interval: 120,
-    frames: ['▐⠂       ▌', '▐⠈       ▌', '▐ ⠂      ▌', '▐ ⠠      ▌', '▐  ⡀     ▌', '▐  ⠠     ▌', '▐   ⠂    ▌', '▐   ⠈    ▌', '▐    ⠂   ▌', '▐    ⠠   ▌', '▐     ⡀  ▌', '▐     ⠠  ▌', '▐      ⠂ ▌', '▐      ⠈ ▌', '▐       ⠂▌', '▐       ⠠▌', '▐       ⡀▌', '▐      ⠠ ▌', '▐      ⠂ ▌', '▐     ⠈  ▌', '▐     ⠂  ▌', '▐    ⠠   ▌', '▐    ⡀   ▌', '▐   ⠠    ▌', '▐   ⠂    ▌', '▐  ⠈     ▌', '▐  ⠂     ▌', '▐ ⠠      ▌', '▐ ⡀      ▌', '▐⠠       ▌']
-  }
+    frames: [
+      '▐⠂       ▌',
+      '▐⠈       ▌',
+      '▐ ⠂      ▌',
+      '▐ ⠠      ▌',
+      '▐  ⡀     ▌',
+      '▐  ⠠     ▌',
+      '▐   ⠂    ▌',
+      '▐   ⠈    ▌',
+      '▐    ⠂   ▌',
+      '▐    ⠠   ▌',
+      '▐     ⡀  ▌',
+      '▐     ⠠  ▌',
+      '▐      ⠂ ▌',
+      '▐      ⠈ ▌',
+      '▐       ⠂▌',
+      '▐       ⠠▌',
+      '▐       ⡀▌',
+      '▐      ⠠ ▌',
+      '▐      ⠂ ▌',
+      '▐     ⠈  ▌',
+      '▐     ⠂  ▌',
+      '▐    ⠠   ▌',
+      '▐    ⡀   ▌',
+      '▐   ⠠    ▌',
+      '▐   ⠂    ▌',
+      '▐  ⠈     ▌',
+      '▐  ⠂     ▌',
+      '▐ ⠠      ▌',
+      '▐ ⡀      ▌',
+      '▐⠠       ▌',
+    ],
+  },
 } as const;
 
 /**
@@ -117,8 +155,16 @@ export interface ProgressBarOptions {
   autopadding?: boolean;
   autopaddingChar?: string;
   formatBar?: (progress: number, options: ProgressBarOptions) => string;
-  formatValue?: (value: number, options: ProgressBarOptions, type: string) => string;
-  formatTime?: (time: number, options: ProgressBarOptions, roundToMultipleOf?: number) => string;
+  formatValue?: (
+    value: number,
+    options: ProgressBarOptions,
+    type: string
+  ) => string;
+  formatTime?: (
+    time: number,
+    options: ProgressBarOptions,
+    roundToMultipleOf?: number
+  ) => string;
   barGlue?: string;
   stream?: NodeJS.WritableStream;
   align?: 'left' | 'center' | 'right';
@@ -138,20 +184,29 @@ export class SpinnerManager {
     this.options = {
       style: 'dots',
       color: 'cyan',
-      ...options
+      ...options,
     };
 
     const spinnerStyle = SPINNER_STYLES[this.options.style || 'dots'];
-    
+
     // Ensure stream has columns defined
     const stream = this.options.stream || process.stdout;
     if (stream && !('columns' in stream)) {
       (stream as unknown as { columns: number }).columns = 80;
     }
-    
+
     this.spinner = ora({
       text: this.options.text,
-      color: this.options.color as 'black' | 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white' | 'gray',
+      color: this.options.color as
+        | 'black'
+        | 'red'
+        | 'green'
+        | 'yellow'
+        | 'blue'
+        | 'magenta'
+        | 'cyan'
+        | 'white'
+        | 'gray',
       spinner: spinnerStyle,
       prefixText: this.options.prefixText,
       indent: this.options.indent,
@@ -229,7 +284,16 @@ export class SpinnerManager {
    * Update spinner color
    */
   color(color: string): this {
-    this.spinner.color = color as 'black' | 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white' | 'gray';
+    this.spinner.color = color as
+      | 'black'
+      | 'red'
+      | 'green'
+      | 'yellow'
+      | 'blue'
+      | 'magenta'
+      | 'cyan'
+      | 'white'
+      | 'gray';
     return this;
   }
 
@@ -248,16 +312,16 @@ export class SpinnerManager {
   nested(options: SpinnerOptions = {}): SpinnerManager {
     // Stop current spinner temporarily
     this.spinner.stop();
-    
+
     const nestedOptions = {
       ...options,
-      indent: (this.options.indent || 0) + 2
+      indent: (this.options.indent || 0) + 2,
     };
-    
+
     const nested = new SpinnerManager(nestedOptions);
     nested.parent = this;
     this.nestedSpinners.push(nested);
-    
+
     return nested;
   }
 
@@ -269,7 +333,7 @@ export class SpinnerManager {
     if (index > -1) {
       this.nestedSpinners.splice(index, 1);
     }
-    
+
     // Resume parent spinner if no more nested spinners
     if (this.nestedSpinners.length === 0) {
       this.spinner.start();
@@ -319,7 +383,7 @@ export class ProgressBar {
       autopaddingChar: ' ',
       align: 'left',
       gracefulExit: true,
-      ...options
+      ...options,
     };
 
     // Create custom formatter if not provided
@@ -349,7 +413,11 @@ export class ProgressBar {
   /**
    * Start the progress bar
    */
-  start(total: number, startValue: number = 0, payload?: Record<string, unknown>): void {
+  start(
+    total: number,
+    startValue: number = 0,
+    payload?: Record<string, unknown>
+  ): void {
     this.startTime = Date.now();
     this.totalValue = total;
     this.currentValue = startValue;
@@ -383,7 +451,9 @@ export class ProgressBar {
    * Get current progress percentage
    */
   getProgress(): number {
-    return this.totalValue > 0 ? (this.currentValue / this.totalValue) * 100 : 0;
+    return this.totalValue > 0
+      ? (this.currentValue / this.totalValue) * 100
+      : 0;
   }
 
   /**
@@ -392,9 +462,9 @@ export class ProgressBar {
   getETA(): number {
     const elapsed = Date.now() - this.startTime;
     const progress = this.getProgress();
-    
+
     if (progress === 0) return 0;
-    
+
     const total = (elapsed / progress) * 100;
     return Math.max(0, (total - elapsed) / 1000);
   }
@@ -402,13 +472,16 @@ export class ProgressBar {
   /**
    * Create gradient color bar based on progress
    */
-  private createGradientBar(progress: number, options: ProgressBarOptions): string {
+  private createGradientBar(
+    progress: number,
+    options: ProgressBarOptions
+  ): string {
     const barSize = options.barsize || 40;
     const completeSize = Math.round(progress * barSize);
     const incompleteSize = barSize - completeSize;
-    
+
     let bar = '';
-    
+
     // Create gradient effect
     for (let i = 0; i < completeSize; i++) {
       const ratio = i / barSize;
@@ -420,9 +493,9 @@ export class ProgressBar {
         bar += chalk.green(this.options.barCompleteChar);
       }
     }
-    
+
     bar += chalk.gray(this.options.barIncompleteChar?.repeat(incompleteSize));
-    
+
     return bar;
   }
 
@@ -451,14 +524,18 @@ export class MultiProgress {
       clearOnComplete: false,
       hideCursor: true,
       format: ' {name} | {bar} | {percentage}% | {eta}s | {value}/{total}',
-      ...options
+      ...options,
     });
   }
 
   /**
    * Create a new progress bar
    */
-  create(name: string, total: number, startValue: number = 0): cliProgress.SingleBar {
+  create(
+    name: string,
+    total: number,
+    startValue: number = 0
+  ): cliProgress.SingleBar {
     const bar = this.multiBar.create(total, startValue, { name });
     this.bars.set(name, bar);
     return bar;
@@ -503,31 +580,38 @@ export class MultiProgress {
 /**
  * Helper function to create a spinner with command defaults
  */
-export function createSpinner(text: string, options: SpinnerOptions = {}): SpinnerManager {
+export function createSpinner(
+  text: string,
+  options: SpinnerOptions = {}
+): SpinnerManager {
   return new SpinnerManager({
     text,
     color: 'cyan',
     style: 'dots',
-    ...options
+    ...options,
   });
 }
 
 /**
  * Helper function to create a progress bar with command defaults
  */
-export function createProgressBar(options: ProgressBarOptions = {}): ProgressBar {
+export function createProgressBar(
+  options: ProgressBarOptions = {}
+): ProgressBar {
   return new ProgressBar({
     format: ' {spinner} {bar} {percentage}% | ETA: {eta}s | {value}/{total}',
     barCompleteChar: '█',
     barIncompleteChar: '░',
-    ...options
+    ...options,
   });
 }
 
 /**
  * Helper function to create a multi-progress manager
  */
-export function createMultiProgress(options: ProgressBarOptions = {}): MultiProgress {
+export function createMultiProgress(
+  options: ProgressBarOptions = {}
+): MultiProgress {
   return new MultiProgress(options);
 }
 
@@ -541,7 +625,7 @@ export async function withSpinner<T>(
 ): Promise<T> {
   const spinner = createSpinner(text, options);
   spinner.start();
-  
+
   try {
     const result = await operation();
     spinner.succeed();
@@ -562,7 +646,7 @@ export async function withProgressBar<T>(
 ): Promise<T> {
   const progress = createProgressBar(options);
   progress.start(total);
-  
+
   try {
     const result = await operation(progress);
     progress.stop();

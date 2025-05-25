@@ -1,4 +1,9 @@
-import { AIVerifierAdapter, AIActionType, AIPrivacyLevel, VerificationRecord } from '../../types/adapters/AIVerifierAdapter';
+import {
+  AIVerifierAdapter,
+  AIActionType,
+  AIPrivacyLevel,
+  VerificationRecord,
+} from '../../types/adapters/AIVerifierAdapter';
 import { Todo } from '../../types/todo';
 
 export interface VerifiedAIResult<T> {
@@ -24,17 +29,19 @@ export class AIVerificationService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerificationRecord> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr =
+      typeof request === 'string' ? request : JSON.stringify(request);
+    const responseStr =
+      typeof response === 'string' ? response : JSON.stringify(response);
 
     // Create verification
     return this.verifierAdapter.createVerification({
-      actionType: verificationType,  // Map to the expected parameter name in the adapter
+      actionType: verificationType, // Map to the expected parameter name in the adapter
       request: requestStr,
       response: responseStr,
       metadata,
       privacyLevel,
-      provider: 'default_provider'
+      provider: 'default_provider',
     });
   }
 
@@ -97,8 +104,10 @@ export class AIVerificationService {
     response: any
   ): Promise<boolean> {
     // Stringify request and response if they're not already strings
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
+    const requestStr =
+      typeof request === 'string' ? request : JSON.stringify(request);
+    const responseStr =
+      typeof response === 'string' ? response : JSON.stringify(response);
 
     return this.verifierAdapter.verifyRecord(record, requestStr, responseStr);
   }
@@ -107,7 +116,8 @@ export class AIVerificationService {
    * Verify an existing operation by its verification ID
    */
   async verifyExistingOperation(verificationId: string): Promise<boolean> {
-    const verification = await this.verifierAdapter.getVerification(verificationId);
+    const verification =
+      await this.verifierAdapter.getVerification(verificationId);
 
     if (!verification) {
       return false;

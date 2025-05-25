@@ -18,11 +18,14 @@ export class CredentialVerifier {
   private logger: Logger;
   private networkValidator: NetworkValidator;
   private moduleAddress: string;
-  
+
   constructor() {
     this.logger = new Logger('CredentialVerifier');
     // Initialize with devnet as expected environment and auto-switch disabled
-    this.networkValidator = new NetworkValidator({ expectedEnvironment: 'devnet', autoSwitch: false });
+    this.networkValidator = new NetworkValidator({
+      expectedEnvironment: 'devnet',
+      autoSwitch: false,
+    });
     // Get the deployed AI verifier module address
     this.moduleAddress = getAIVerifierAddress();
     this.initializeClient();
@@ -41,14 +44,17 @@ export class CredentialVerifier {
   /**
    * Register a new credential on the blockchain without exposing the actual key
    */
-  async registerCredential(provider: AIProvider, apiKey: string): Promise<string> {
+  async registerCredential(
+    provider: AIProvider,
+    apiKey: string
+  ): Promise<string> {
     // Create a one-way hash of the API key to store on-chain
     const keyHash = this.hashCredential(apiKey);
-    
+
     try {
       // Prepare keypair for transaction
       const keypair = this.getKeypair();
-      
+
       // Build transaction to call the register_credential function
       // Create a transaction block and cast to the expected type
       // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
@@ -61,15 +67,17 @@ export class CredentialVerifier {
           tx.pure(new Date().toISOString()), // registration timestamp
         ],
       });
-      
+
       // Execute transaction
       // Need to cast to any to bypass type checking issues
       const result = await this.client.signAndExecuteTransaction({
         transaction: tx as any,
         signer: keypair,
       });
-      
-      this.logger.info(`Credential registered on blockchain with digest: ${result.digest}`);
+
+      this.logger.info(
+        `Credential registered on blockchain with digest: ${result.digest}`
+      );
       return result.digest;
     } catch (_error) {
       this.logger.error(`Failed to register credential: ${error.message}`);
@@ -83,9 +91,12 @@ export class CredentialVerifier {
   /**
    * Verify if a credential is valid on the blockchain
    */
-  async verifyCredential(provider: AIProvider, apiKey: string): Promise<boolean> {
+  async verifyCredential(
+    provider: AIProvider,
+    apiKey: string
+  ): Promise<boolean> {
     const keyHash = this.hashCredential(apiKey);
-    
+
     try {
       // Query the blockchain to check if this credential exists and is valid
       const tx = this.buildVerifyTx(provider, keyHash);
@@ -93,7 +104,7 @@ export class CredentialVerifier {
         sender: this.getKeypair().getPublicKey().toSuiAddress(),
         transactionBlock: tx as any,
       });
-      
+
       // Parse the result to get boolean value
       if (result && result.results && result.results[0]) {
         const returnValue = result.results[0].returnValues[0][0];
@@ -101,7 +112,7 @@ export class CredentialVerifier {
         const isValid = bcs.Bool.parse(Uint8Array.from(returnValue));
         return isValid;
       }
-      
+
       return false;
     } catch (_error) {
       this.logger.error(`Failed to verify credential: ${error.message}`);
@@ -121,20 +132,22 @@ export class CredentialVerifier {
         target: `${this.moduleAddress}::ai_verifier::is_provider_registered`,
         arguments: [tx.pure(provider)],
       });
-      
+
       const result = await this.client.devInspectTransactionBlock({
         sender: this.getKeypair().getPublicKey().toSuiAddress(),
         transactionBlock: tx as any,
       });
-      
+
       if (result && result.results && result.results[0]) {
         const returnValue = result.results[0].returnValues[0][0];
         return bcs.Bool.parse(Uint8Array.from(returnValue));
       }
-      
+
       return false;
     } catch (_error) {
-      this.logger.error(`Failed to check registration status: ${error.message}`);
+      this.logger.error(
+        `Failed to check registration status: ${error.message}`
+      );
       return false;
     }
   }
@@ -145,7 +158,7 @@ export class CredentialVerifier {
   async revokeCredential(provider: AIProvider): Promise<void> {
     try {
       const keypair = this.getKeypair();
-      
+
       // Create a transaction block and cast to the expected type
       // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
       const tx = new TransactionBlock() as unknown as TransactionBlock;
@@ -153,12 +166,12 @@ export class CredentialVerifier {
         target: `${this.moduleAddress}::ai_verifier::revoke_credential`,
         arguments: [tx.pure(provider)],
       });
-      
+
       await this.client.signAndExecuteTransaction({
         signer: keypair,
         transaction: tx as any,
       });
-      
+
       this.logger.info(`Credential for ${provider} revoked successfully`);
     } catch (_error) {
       this.logger.error(`Failed to revoke credential: ${error.message}`);
@@ -172,18 +185,18 @@ export class CredentialVerifier {
   /**
    * Build a transaction block for verification
    */
-  private buildVerifyTx(provider: AIProvider, keyHash: string): TransactionBlock {
+  private buildVerifyTx(
+    provider: AIProvider,
+    keyHash: string
+  ): TransactionBlock {
     // Create a transaction block and cast to the expected type
     // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
     const tx = new TransactionBlock() as unknown as TransactionBlock;
     tx.moveCall({
       target: `${this.moduleAddress}::ai_verifier::verify_credential`,
-      arguments: [
-        tx.pure(provider),
-        tx.pure(keyHash),
-      ],
+      arguments: [tx.pure(provider), tx.pure(keyHash)],
     });
-    
+
     return tx;
   }
 
@@ -193,9 +206,10 @@ export class CredentialVerifier {
   private getKeypair(): Ed25519Keypair {
     // In a real implementation, this would use the user's actual keypair
     // For simplicity, we're creating a keypair from an environment variable
-    const privateKey = process.env.SUI_PRIVATE_KEY || 
-                      '0000000000000000000000000000000000000000000000000000000000000001';
-    
+    const privateKey =
+      process.env.SUI_PRIVATE_KEY ||
+      '0000000000000000000000000000000000000000000000000000000000000001';
+
     return Ed25519Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
   }
 

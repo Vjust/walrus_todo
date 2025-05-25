@@ -2,7 +2,10 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { CLIError } from '../../types/errors/consolidated';
 import { TodoService } from '../../services/todoService';
-import { createWalrusImageStorage, WalrusImageStorage } from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
+import {
+  createWalrusImageStorage,
+  WalrusImageStorage,
+} from '../../utils/walrus-image-storage'; // Import WalrusImageStorage type
 import { NETWORK_URLS } from '../../constants';
 import { SuiClient } from '@mysten/sui/client';
 // Removed unused chalk import
@@ -21,13 +24,14 @@ import { configService } from '../../services/config-service';
  * @param {boolean} [show-url=false] - If true, displays only the image URL after upload. (Optional flag: --show-url)
  */
 export default class UploadCommand extends BaseCommand {
-  static description = 'Upload and attach a custom image to a todo item using Walrus decentralized storage';
+  static description =
+    'Upload and attach a custom image to a todo item using Walrus decentralized storage';
 
   static examples = [
     '<%= config.bin %> image upload --todo 123 --list my-todos --image ./custom.png    # Upload PNG',
     '<%= config.bin %> image upload --todo "Buy milk" --list shopping --image photo.jpg  # Upload JPG',
     '<%= config.bin %> image upload -t task-456 -l work -i ./logo.svg                  # Short flags',
-    '<%= config.bin %> image upload --todo 789 --list personal --image pic.webp --compress  # Compress'
+    '<%= config.bin %> image upload --todo 789 --list personal --image pic.webp --compress  # Compress',
   ];
 
   static flags = {
@@ -62,14 +66,18 @@ export default class UploadCommand extends BaseCommand {
       // Get the todo item
       const todoItem = await todoService.getTodo(flags.todo, flags.list);
       if (!todoItem) {
-        throw new CLIError(`Todo with ID ${flags.todo} not found in list ${flags.list}`);
+        throw new CLIError(
+          `Todo with ID ${flags.todo} not found in list ${flags.list}`
+        );
       }
 
       // Setup SuiClient with type assertion for network
-      const suiClient = new SuiClient({ url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS] });
+      const suiClient = new SuiClient({
+        url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS],
+      });
 
       // Initialize WalrusImageStorage - ensuring variable is defined and assigned correctly
-      walrusImageStorage = createWalrusImageStorage(suiClient);  // No change, but confirming assignment
+      walrusImageStorage = createWalrusImageStorage(suiClient); // No change, but confirming assignment
 
       // Connect to Walrus
       this.log('Connecting to Walrus storage...');
@@ -78,7 +86,11 @@ export default class UploadCommand extends BaseCommand {
 
       // Upload image
       this.log('Uploading image to Walrus...');
-      const imageUrl = await walrusImageStorage.uploadTodoImage(path.resolve(process.cwd(), flags.image), todoItem.title, todoItem.completed);
+      const imageUrl = await walrusImageStorage.uploadTodoImage(
+        path.resolve(process.cwd(), flags.image),
+        todoItem.title,
+        todoItem.completed
+      );
 
       // Extract blob ID from URL
       const blobId = imageUrl.split('/').pop() || '';
@@ -99,7 +111,10 @@ export default class UploadCommand extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(`Failed to upload image: ${error instanceof Error ? error.message : String(error)}`, 'IMAGE_UPLOAD_FAILED');
+      throw new CLIError(
+        `Failed to upload image: ${error instanceof Error ? error.message : String(error)}`,
+        'IMAGE_UPLOAD_FAILED'
+      );
     } finally {
       // Check if walrusImageStorage was initialized before trying to use it
       if (walrusImageStorage) {

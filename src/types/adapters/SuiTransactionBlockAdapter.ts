@@ -43,7 +43,7 @@ export interface TransactionResponse {
 
 /**
  * SuiTransactionBlockAdapter - Interface for creating and executing Sui transaction blocks
- * 
+ *
  * This adapter provides a simpler interface for working with Sui transaction blocks,
  * abstracting away some of the complexity and providing reliable error handling.
  */
@@ -52,7 +52,7 @@ export interface SuiTransactionBlockAdapter {
    * Create a new transaction block
    */
   createTransactionBlock(): TransactionBlock;
-  
+
   /**
    * Execute a transaction block
    */
@@ -60,7 +60,7 @@ export interface SuiTransactionBlockAdapter {
     transactionBlock: TransactionBlock,
     options?: TransactionOptions
   ): Promise<TransactionResponse>;
-  
+
   /**
    * Execute a move call
    */
@@ -70,14 +70,12 @@ export interface SuiTransactionBlockAdapter {
     typeArgs?: string[],
     options?: TransactionOptions
   ): Promise<TransactionResponse>;
-  
+
   /**
    * Inspect a transaction block without executing it
    */
-  dryRunTransactionBlock(
-    transactionBlock: TransactionBlock
-  ): Promise<unknown>;
-  
+  dryRunTransactionBlock(transactionBlock: TransactionBlock): Promise<unknown>;
+
   /**
    * Get the Sui client
    */
@@ -87,22 +85,24 @@ export interface SuiTransactionBlockAdapter {
 /**
  * DefaultSuiTransactionBlockAdapter - Default implementation of SuiTransactionBlockAdapter
  */
-export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAdapter {
+export class DefaultSuiTransactionBlockAdapter
+  implements SuiTransactionBlockAdapter
+{
   private signer: SignerAdapter;
   private client: SuiClient;
-  
+
   constructor(signer: SignerAdapter) {
     this.signer = signer;
     this.client = signer.getClient();
   }
-  
+
   /**
    * Create a new transaction block
    */
   createTransactionBlock(): TransactionBlock {
     return new TransactionBlock();
   }
-  
+
   /**
    * Execute a transaction block
    */
@@ -116,14 +116,16 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
       const result = await this.signer.signAndExecuteTransaction(
         transactionBlock as any
       );
-      
+
       return result as TransactionResponse;
     } catch (_error) {
       logger.error('Transaction execution failed:', error);
-      throw new Error(`Transaction execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Transaction execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
-  
+
   /**
    * Execute a move call
    */
@@ -134,18 +136,18 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
     options: TransactionOptions = {}
   ): Promise<TransactionResponse> {
     const tx = new TransactionBlock();
-    
+
     // Create the move call with proper type handling
     tx.moveCall({
       target: target as `${string}::${string}::${string}`,
       arguments: args as any[],
-      typeArguments: typeArgs
+      typeArguments: typeArgs,
     });
-    
+
     // Execute the transaction
     return this.executeTransactionBlock(tx, options);
   }
-  
+
   /**
    * Inspect a transaction block without executing it
    */
@@ -155,16 +157,18 @@ export class DefaultSuiTransactionBlockAdapter implements SuiTransactionBlockAda
     try {
       const result = await this.client.devInspectTransactionBlock({
         transactionBlock: transactionBlock as any,
-        sender: this.signer.toSuiAddress()
+        sender: this.signer.toSuiAddress(),
       });
-      
+
       return result;
     } catch (_error) {
       logger.error('Transaction inspection failed:', error);
-      throw new Error(`Transaction inspection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Transaction inspection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
-  
+
   /**
    * Get the Sui client
    */

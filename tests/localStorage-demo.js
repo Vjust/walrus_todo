@@ -33,16 +33,16 @@ const wallet1Todos = {
           title: 'Wallet 1 - Buy groceries',
           completed: false,
           priority: 'medium',
-          blockchainStored: false
+          blockchainStored: false,
         },
         {
-          id: '2', 
+          id: '2',
           title: 'Wallet 1 - Learn Web3',
           completed: false,
           priority: 'high',
-          blockchainStored: false
-        }
-      ]
+          blockchainStored: false,
+        },
+      ],
     },
     work: {
       name: 'Work',
@@ -52,11 +52,11 @@ const wallet1Todos = {
           title: 'Wallet 1 - Deploy smart contract',
           completed: false,
           priority: 'high',
-          blockchainStored: false
-        }
-      ]
-    }
-  }
+          blockchainStored: false,
+        },
+      ],
+    },
+  },
 };
 
 localStorage.setItem('walrusTodoLists', JSON.stringify(wallet1Todos));
@@ -70,23 +70,23 @@ const wallet2Todos = {
   ...wallet1Todos, // Keep wallet 1 data
   [wallet2.toLowerCase()]: {
     default: {
-      name: 'Default', 
+      name: 'Default',
       todos: [
         {
           id: '4',
           title: 'Wallet 2 - Plan vacation',
           completed: false,
           priority: 'low',
-          blockchainStored: false
+          blockchainStored: false,
         },
         {
           id: '5',
           title: 'Wallet 2 - Review DeFi protocols',
           completed: true,
           priority: 'medium',
-          blockchainStored: false
-        }
-      ]
+          blockchainStored: false,
+        },
+      ],
     },
     personal: {
       name: 'Personal',
@@ -96,11 +96,11 @@ const wallet2Todos = {
           title: 'Wallet 2 - Exercise routine',
           completed: false,
           priority: 'high',
-          blockchainStored: false
-        }
-      ]
-    }
-  }
+          blockchainStored: false,
+        },
+      ],
+    },
+  },
 };
 
 localStorage.setItem('walrusTodoLists', JSON.stringify(wallet2Todos));
@@ -129,7 +129,7 @@ wallet1WorkTodos.forEach(todo => {
   logger.info(`  - ${todo.title} (${todo.priority} priority)`);
 });
 
-// Show wallet 2 todos  
+// Show wallet 2 todos
 const wallet2DefaultTodos = getTodosForWallet(wallet2, 'default');
 const wallet2PersonalTodos = getTodosForWallet(wallet2, 'personal');
 
@@ -168,7 +168,13 @@ logger.info('Each connected wallet will see only their own personal todos.');
 
 // Show final localStorage state
 logger.info('\n📊 Final localStorage State:');
-logger.info(JSON.stringify(JSON.parse(localStorage.getItem('walrusTodoLists') || '{}'), null, 2));
+logger.info(
+  JSON.stringify(
+    JSON.parse(localStorage.getItem('walrusTodoLists') || '{}'),
+    null,
+    2
+  )
+);
 
 logger.info('\n💡 To test in the UI:');
 logger.info('1. Refresh the page to see the dashboard');

@@ -16,7 +16,9 @@ console.log(`Using tsconfig: ${configPath}`);
 // Parse the tsconfig.json
 const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
 if (configFile.error) {
-  throw new Error(`Error reading tsconfig.json: ${configFile.error.messageText}`);
+  throw new Error(
+    `Error reading tsconfig.json: ${configFile.error.messageText}`
+  );
 }
 
 // Parse the parsed config
@@ -37,21 +39,24 @@ if (!fs.existsSync(outDir)) {
 // Get all source files from the file system
 const getSourceFiles = (dir: string, fileList: string[] = []): string[] => {
   const files = fs.readdirSync(dir);
-  
+
   files.forEach(file => {
     const filePath = path.join(dir, file);
-    
+
     if (fs.statSync(filePath).isDirectory()) {
       // Skip node_modules
       if (file === 'node_modules' || file === 'dist' || file === '.git') {
         return;
       }
       fileList = getSourceFiles(filePath, fileList);
-    } else if ((file.endsWith('.ts') || file.endsWith('.tsx')) && !file.endsWith('.d.ts')) {
+    } else if (
+      (file.endsWith('.ts') || file.endsWith('.tsx')) &&
+      !file.endsWith('.d.ts')
+    ) {
       fileList.push(filePath);
     }
   });
-  
+
   return fileList;
 };
 
@@ -69,7 +74,7 @@ sourceFiles.forEach(fileName => {
   try {
     // Read the file
     const sourceText = fs.readFileSync(fileName, 'utf8');
-    
+
     // Transpile the file (no type checking)
     const { outputText } = ts.transpileModule(sourceText, {
       compilerOptions: {
@@ -89,13 +94,13 @@ sourceFiles.forEach(fileName => {
     const outputPath = fileName
       .replace(path.resolve(root, 'src'), path.join(outDir, 'src'))
       .replace(/\.tsx?$/, '.js');
-    
+
     // Create output directory if it doesn't exist
     const outputDir = path.dirname(outputPath);
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-    
+
     // Write the transpiled file
     fs.writeFileSync(outputPath, outputText);
     filesProcessed++;
@@ -107,4 +112,6 @@ sourceFiles.forEach(fileName => {
 });
 
 // eslint-disable-next-line no-console
-console.log(`Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.`);
+console.log(
+  `Build completed with ${filesProcessed} files successfully transpiled and ${errors} errors.`
+);

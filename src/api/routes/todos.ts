@@ -14,11 +14,7 @@ router.get(
 );
 
 // GET /todos/:id - Get specific todo
-router.get(
-  '/:id',
-  validateId(),
-  asyncHandler(controller.get)
-);
+router.get('/:id', validateId(), asyncHandler(controller.get));
 
 // POST /todos - Create new todo
 router.post(
@@ -44,37 +40,18 @@ router.patch(
 );
 
 // DELETE /todos/:id - Delete todo
-router.delete(
-  '/:id',
-  validateId(),
-  asyncHandler(controller.delete)
-);
+router.delete('/:id', validateId(), asyncHandler(controller.delete));
 
 // POST /todos/:id/complete - Mark todo as complete
-router.post(
-  '/:id/complete',
-  validateId(),
-  asyncHandler(controller.complete)
-);
+router.post('/:id/complete', validateId(), asyncHandler(controller.complete));
 
 // POST /todos/:id/store - Store todo on blockchain
-router.post(
-  '/:id/store',
-  validateId(),
-  asyncHandler(controller.store)
-);
+router.post('/:id/store', validateId(), asyncHandler(controller.store));
 
 // GET /todos/:id/retrieve - Retrieve todo from blockchain
-router.get(
-  '/:id/retrieve',
-  validateId(),
-  asyncHandler(controller.retrieve)
-);
+router.get('/:id/retrieve', validateId(), asyncHandler(controller.retrieve));
 
 // POST /todos/batch - Batch operations
-router.post(
-  '/batch',
-  asyncHandler(controller.batch)
-);
+router.post('/batch', asyncHandler(controller.batch));
 
 export default router;

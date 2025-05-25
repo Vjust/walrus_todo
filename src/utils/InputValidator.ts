@@ -61,7 +61,7 @@ export class InputValidator {
     const {
       throwOnFirstError = true,
       collectAllErrors = false,
-      customErrorClass = ValidationError
+      customErrorClass = ValidationError,
     } = options;
 
     const errors: ValidationResult['errors'] = [];
@@ -69,13 +69,15 @@ export class InputValidator {
     for (const rule of rules) {
       if (!rule.test(value)) {
         const errorField = rule.field || fieldName;
-        const errorMessage = fieldName ? `${fieldName}: ${rule.message}` : rule.message;
-        
+        const errorMessage = fieldName
+          ? `${fieldName}: ${rule.message}`
+          : rule.message;
+
         const error = {
           field: errorField,
           message: errorMessage,
           code: rule.code,
-          value
+          value,
         };
 
         errors.push(error);
@@ -85,7 +87,7 @@ export class InputValidator {
             field: errorField,
             value,
             constraint: rule.code,
-            recoverable: false
+            recoverable: false,
           });
         }
       }
@@ -93,7 +95,7 @@ export class InputValidator {
 
     const result: ValidationResult = {
       valid: errors.length === 0,
-      errors
+      errors,
     };
 
     if (!result.valid && throwOnFirstError) {
@@ -102,7 +104,7 @@ export class InputValidator {
         field: fieldName,
         value,
         constraint: 'MULTIPLE_VIOLATIONS',
-        recoverable: false
+        recoverable: false,
       });
     }
 
@@ -116,7 +118,7 @@ export class InputValidator {
    * @param options Validation options (defaults: throwOnFirstError=false, collectAllErrors=true)
    * @returns Validation result with valid boolean and errors array
    * @throws ValidationError if throwOnFirstError is true and validation fails
-   * 
+   *
    * @example
    * const result = InputValidator.validateObject(userData, {
    *   email: [CommonValidationRules.email],
@@ -126,7 +128,10 @@ export class InputValidator {
   static validateObject<T extends Record<string, any>>(
     data: T,
     schema: ValidationSchema,
-    options: ValidationOptions = { throwOnFirstError: false, collectAllErrors: true }
+    options: ValidationOptions = {
+      throwOnFirstError: false,
+      collectAllErrors: true,
+    }
   ): ValidationResult {
     // collectAllErrors would be used for error accumulation
     // const { collectAllErrors = true } = options;
@@ -137,9 +142,9 @@ export class InputValidator {
         const result = this.validate(data[field], rules, field, {
           ...options,
           throwOnFirstError: false,
-          collectAllErrors: true
+          collectAllErrors: true,
         });
-        
+
         if (!result.valid) {
           allErrors.push(...result.errors);
         }
@@ -148,14 +153,16 @@ export class InputValidator {
 
     const result: ValidationResult = {
       valid: allErrors.length === 0,
-      errors: allErrors
+      errors: allErrors,
     };
 
     if (!result.valid && options.throwOnFirstError) {
-      const errorMessage = allErrors.map(e => `${e.field}: ${e.message}`).join('\n');
+      const errorMessage = allErrors
+        .map(e => `${e.field}: ${e.message}`)
+        .join('\n');
       throw new ValidationError(errorMessage, {
         constraint: 'OBJECT_VALIDATION_FAILED',
-        recoverable: false
+        recoverable: false,
       });
     }
 
@@ -180,9 +187,9 @@ export class InputValidator {
    */
   static requiredRule(fieldName: string): ValidationRule<any> {
     return {
-      test: (value) => this.required(value),
+      test: value => this.required(value),
       message: `${fieldName} is required`,
-      code: 'REQUIRED_FIELD'
+      code: 'REQUIRED_FIELD',
     };
   }
 
@@ -199,9 +206,9 @@ export class InputValidator {
     code: string
   ): ValidationRule<string> {
     return {
-      test: (value) => regex.test(value),
+      test: value => regex.test(value),
       message,
-      code
+      code,
     };
   }
 
@@ -220,9 +227,9 @@ export class InputValidator {
     code: string
   ): ValidationRule<number> {
     return {
-      test: (value) => value >= min && value <= max,
+      test: value => value >= min && value <= max,
       message,
-      code
+      code,
     };
   }
 
@@ -241,10 +248,12 @@ export class InputValidator {
     code: string
   ): ValidationRule<T[]> {
     return {
-      test: (value) => 
-        Array.isArray(value) && value.length >= minLength && value.length <= maxLength,
+      test: value =>
+        Array.isArray(value) &&
+        value.length >= minLength &&
+        value.length <= maxLength,
       message,
-      code
+      code,
     };
   }
 
@@ -261,9 +270,9 @@ export class InputValidator {
     code: string
   ): ValidationRule<T> {
     return {
-      test: (value) => allowedValues.includes(value),
+      test: value => allowedValues.includes(value),
       message,
-      code
+      code,
     };
   }
 
@@ -275,27 +284,27 @@ export class InputValidator {
    */
   static sanitizeString(input: string): string {
     if (!input) return '';
-    
+
     // Escape HTML entities first
     let sanitized = input
-      .replace(/&/g, '&amp;')     // & -> &amp;
-      .replace(/</g, '&lt;')      // < -> &lt;
-      .replace(/>/g, '&gt;')      // > -> &gt;
-      .replace(/"/g, '&quot;')    // " -> &quot;
-      .replace(/'/g, '&#x27;');   // ' -> &#x27;
-    
+      .replace(/&/g, '&amp;') // & -> &amp;
+      .replace(/</g, '&lt;') // < -> &lt;
+      .replace(/>/g, '&gt;') // > -> &gt;
+      .replace(/"/g, '&quot;') // " -> &quot;
+      .replace(/'/g, '&#x27;'); // ' -> &#x27;
+
     // Escape shell metacharacters comprehensively
     // This includes all shell special characters that could be used for injection
     // Now also includes backticks, dollar signs, and other shell expansion characters
     const shellMetaChars = /([\\$'"`;|&<>(){}[\]!#*?~^])/g;
     sanitized = sanitized.replace(shellMetaChars, '\\$1');
-    
+
     // Remove null bytes and other control characters
     sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
-    
+
     // Normalize whitespace but preserve intentional spacing
     sanitized = sanitized.replace(/\s+/g, ' ').trim();
-    
+
     return sanitized;
   }
 
@@ -306,9 +315,9 @@ export class InputValidator {
    */
   static combineRules<T>(...rules: ValidationRule<T>[]): ValidationRule<T> {
     return {
-      test: (value) => rules.every(rule => rule.test(value)),
+      test: value => rules.every(rule => rule.test(value)),
       message: 'Value must satisfy all constraints',
-      code: 'COMPOSITE_VALIDATION_FAILED'
+      code: 'COMPOSITE_VALIDATION_FAILED',
     };
   }
 
@@ -323,9 +332,9 @@ export class InputValidator {
     rule: ValidationRule<T>
   ): ValidationRule<T> {
     return {
-      test: (value) => !condition(value) || rule.test(value),
+      test: value => !condition(value) || rule.test(value),
       message: rule.message,
-      code: rule.code
+      code: rule.code,
     };
   }
 
@@ -342,13 +351,15 @@ export class InputValidator {
     mutuallyExclusive: string[][] = []
   ): void {
     // Check required flags - properly handle false values
-    const missingFlags = requiredFlags.filter(flag => flags[flag] === undefined);
+    const missingFlags = requiredFlags.filter(
+      flag => flags[flag] === undefined
+    );
     if (missingFlags.length > 0) {
       throw new ValidationError(
         `Missing required flags: ${missingFlags.join(', ')}`,
         {
           constraint: 'MISSING_REQUIRED_FLAGS',
-          recoverable: false
+          recoverable: false,
         }
       );
     }
@@ -361,7 +372,7 @@ export class InputValidator {
           `Cannot use these flags together: ${presentFlags.join(', ')}`,
           {
             constraint: 'MUTUALLY_EXCLUSIVE_FLAGS',
-            recoverable: false
+            recoverable: false,
           }
         );
       }
@@ -383,7 +394,7 @@ export class InputValidator {
     return {
       test: testFn,
       message,
-      code
+      code,
     };
   }
 
@@ -414,7 +425,7 @@ export class InputValidator {
         `Missing required environment variables: ${missing.join(', ')}`,
         {
           constraint: 'MISSING_ENV_VARS',
-          recoverable: false
+          recoverable: false,
         }
       );
     }
@@ -470,5 +481,5 @@ export const CommonValidationRules = {
     ['local', 'blockchain', 'both'],
     'Storage location must be local, blockchain, or both',
     'INVALID_STORAGE_LOCATION'
-  )
+  ),
 };

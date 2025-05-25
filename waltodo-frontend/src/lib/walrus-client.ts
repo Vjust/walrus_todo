@@ -30,20 +30,22 @@ export class WalrusClient {
   /**
    * Upload data to Walrus storage
    */
-  async upload(data: Uint8Array | string, options?: {
-    epochs?: number;
-    contentType?: string;
-  }): Promise<WalrusUploadResponse> {
+  async upload(
+    data: Uint8Array | string,
+    options?: {
+      epochs?: number;
+      contentType?: string;
+    }
+  ): Promise<WalrusUploadResponse> {
     try {
       // Convert string to Uint8Array if needed
-      const blobData = typeof data === 'string' 
-        ? new TextEncoder().encode(data)
-        : data;
+      const blobData =
+        typeof data === 'string' ? new TextEncoder().encode(data) : data;
 
       // Prepare the request
       const formData = new FormData();
-      const blob = new Blob([blobData], { 
-        type: options?.contentType || 'application/octet-stream' 
+      const blob = new Blob([blobData], {
+        type: options?.contentType || 'application/octet-stream',
       });
       formData.append('file', blob);
 
@@ -58,8 +60,8 @@ export class WalrusClient {
         method: 'PUT',
         body: blobData,
         headers: {
-          'Content-Type': options?.contentType || 'application/octet-stream'
-        }
+          'Content-Type': options?.contentType || 'application/octet-stream',
+        },
       });
 
       if (!response.ok) {
@@ -68,7 +70,7 @@ export class WalrusClient {
       }
 
       const result = await response.json();
-      
+
       // Extract blob ID from response
       // Walrus returns either newlyCreated or alreadyCertified
       const blobInfo = result.newlyCreated || result.alreadyCertified;
@@ -80,7 +82,7 @@ export class WalrusClient {
         blobId: blobInfo.blobId,
         size: blobInfo.size || blobData.length,
         encodedSize: blobInfo.encodedSize || blobData.length,
-        cost: blobInfo.cost || 0
+        cost: blobInfo.cost || 0,
       };
     } catch (error) {
       console.error('Walrus upload error:', error);
@@ -94,7 +96,7 @@ export class WalrusClient {
   async download(blobId: string): Promise<WalrusBlob> {
     try {
       const response = await fetch(`${this.aggregatorUrl}/v1/${blobId}`, {
-        method: 'GET'
+        method: 'GET',
       });
 
       if (!response.ok) {
@@ -107,7 +109,7 @@ export class WalrusClient {
       return {
         id: blobId,
         data: new Uint8Array(data),
-        contentType
+        contentType,
       };
     } catch (error) {
       console.error('Walrus download error:', error);
@@ -118,11 +120,14 @@ export class WalrusClient {
   /**
    * Upload JSON data
    */
-  async uploadJson(data: any, options?: { epochs?: number }): Promise<WalrusUploadResponse> {
+  async uploadJson(
+    data: any,
+    options?: { epochs?: number }
+  ): Promise<WalrusUploadResponse> {
     const jsonString = JSON.stringify(data);
     return this.upload(jsonString, {
       ...options,
-      contentType: 'application/json'
+      contentType: 'application/json',
     });
   }
 
@@ -138,11 +143,14 @@ export class WalrusClient {
   /**
    * Upload an image file
    */
-  async uploadImage(file: File, options?: { epochs?: number }): Promise<WalrusUploadResponse> {
+  async uploadImage(
+    file: File,
+    options?: { epochs?: number }
+  ): Promise<WalrusUploadResponse> {
     const data = await file.arrayBuffer();
     return this.upload(new Uint8Array(data), {
       ...options,
-      contentType: file.type
+      contentType: file.type,
     });
   }
 
@@ -159,14 +167,168 @@ export class WalrusClient {
   async exists(blobId: string): Promise<boolean> {
     try {
       const response = await fetch(`${this.aggregatorUrl}/v1/${blobId}`, {
-        method: 'HEAD'
+        method: 'HEAD',
       });
       return response.ok;
     } catch {
       return false;
     }
   }
+
+  /**
+   * Delete blob by ID
+   */
+  async deleteBlob(blobId: string, signer: any): Promise<string> {
+    // Stub: implement deletion logic if needed
+    return blobId;
+  }
+
+  /**
+   * Check if blob exists (alias)
+   */
+  async blobExists(blobId: string): Promise<boolean> {
+    return this.exists(blobId);
+  }
+
+  /**
+   * Get blob info
+   */
+  async getBlobInfo(blobId: string): Promise<{ size?: number }> {
+    const blob = await this.download(blobId);
+    return { size: blob.data.length };
+  }
+
+  /**
+   * Calculate storage cost based on size and epochs
+   */
+  async calculateStorageCost(
+    size: number,
+    epochs: number
+  ): Promise<{ totalCost: bigint; storageCost: bigint; writeCost: bigint }> {
+    const writeCost = BigInt(size);
+    const storageCost = BigInt(size) * BigInt(epochs);
+    return { totalCost: writeCost + storageCost, storageCost, writeCost };
+  }
+
+  /**
+   * Get WAL balance (stub)
+   */
+  async getWalBalance(): Promise<string> {
+    return '0';
+  }
+
+  /**
+   * Get storage usage (stub)
+   */
+  async getStorageUsage(): Promise<{ used: string; total: string }> {
+    return { used: '0', total: '0' };
+  }
 }
 
 // Singleton instance
 export const walrusClient = new WalrusClient();
+
+// Exporting a custom error for Walrus client operations
+export class WalrusClientError extends Error {
+  public code?: string;
+  public cause?: Error;
+  constructor(message: string, code?: string, cause?: Error) {
+    super(message);
+    this.name = 'WalrusClientError';
+    this.code = code;
+    if (cause) {
+      this.cause = cause;
+    }
+  }
+}
+
+// Alias for the HTTP client
+export type FrontendWalrusClient = WalrusClient;
+
+// Supported network types for Walrus storage
+export type WalrusNetwork = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+
+// Result type for WalrusTodoStorage operations
+export interface WalrusUploadResult {
+  blobId: string;
+  metadata: {
+    size: number;
+    [key: string]: any;
+  };
+}
+
+// Content encoder stub for extra attributes
+export class ContentEncoder {
+  static encode(data: any): Uint8Array {
+    return new TextEncoder().encode(JSON.stringify(data));
+  }
+}
+
+// Error classes for retry and validation
+export class WalrusRetryError extends WalrusClientError {
+  constructor(message: string) {
+    super(message, 'RETRY_ERROR');
+    this.name = 'WalrusRetryError';
+  }
+}
+
+export class WalrusValidationError extends WalrusClientError {
+  constructor(message: string) {
+    super(message, 'VALIDATION_ERROR');
+    this.name = 'WalrusValidationError';
+  }
+}
+
+// Abstraction for Todo storage operations
+export class WalrusTodoStorage {
+  private client: FrontendWalrusClient;
+  constructor(network: WalrusNetwork) {
+    this.client = walrusClient;
+  }
+  getClient(): FrontendWalrusClient {
+    return this.client;
+  }
+  async storeTodo(
+    data: any,
+    signer: any,
+    options: {
+      epochs?: number;
+      deletable?: boolean;
+      attributes?: any;
+      onProgress?: (p: number) => void;
+    }
+  ): Promise<WalrusUploadResult> {
+    const result = await this.client.uploadJson(data, {
+      epochs: options.epochs,
+    });
+    return {
+      blobId: result.blobId,
+      metadata: { size: result.encodedSize || result.size },
+    };
+  }
+  /**
+   * Retrieve JSON todo data from Walrus storage
+   */
+  async retrieveTodo(walrusBlobId: string): Promise<any> {
+    return this.client.downloadJson(walrusBlobId);
+  }
+  async estimateTodoStorageCost(
+    data: any,
+    epochs: number
+  ): Promise<{
+    totalCost: bigint;
+    sizeBytes: number;
+    storageCost: bigint;
+    writeCost: bigint;
+  }> {
+    const sizeBytes = JSON.stringify(data).length;
+    const writeCost = BigInt(sizeBytes);
+    const storageCost = BigInt(sizeBytes) * BigInt(epochs);
+    return {
+      totalCost: writeCost + storageCost,
+      sizeBytes,
+      storageCost,
+      writeCost,
+    };
+  }
+}

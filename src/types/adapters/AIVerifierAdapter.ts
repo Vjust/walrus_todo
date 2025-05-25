@@ -8,13 +8,13 @@ export enum AIActionType {
   CATEGORIZE = 1,
   PRIORITIZE = 2,
   SUGGEST = 3,
-  ANALYZE = 4
+  ANALYZE = 4,
 }
 
 export enum AIPrivacyLevel {
-  PUBLIC = 'public',     // Full request/response on-chain
+  PUBLIC = 'public', // Full request/response on-chain
   HASH_ONLY = 'hash_only', // Only hashes on-chain, content on Walrus
-  PRIVATE = 'private'    // Only verification record on-chain, encrypted content
+  PRIVATE = 'private', // Only verification record on-chain, encrypted content
 }
 
 export interface VerificationParams {
@@ -53,23 +53,30 @@ export interface VerificationRecord {
 
 export interface AIVerifierAdapter {
   createVerification(_params: VerificationParams): Promise<VerificationRecord>;
-  verifyRecord(_record: VerificationRecord, request: string, response: string): Promise<boolean>;
+  verifyRecord(
+    _record: VerificationRecord,
+    request: string,
+    response: string
+  ): Promise<boolean>;
   getProviderInfo(_providerAddress: string): Promise<ProviderInfo>;
   listVerifications(userAddress?: string): Promise<VerificationRecord[]>;
   getRegistryAddress(): Promise<string>;
   registerProvider(_params: ProviderRegistrationParams): Promise<string>;
   getVerification(_verificationId: string): Promise<VerificationRecord>;
   getSigner(): SignerAdapter;
-  
+
   // Generate a cryptographic proof for a verification record
   generateProof(_verificationId: string): Promise<string>;
-  
+
   // Export user verification records in the specified format
-  exportVerifications(_userAddress: string, format?: 'json' | 'csv'): Promise<string>;
-  
+  exportVerifications(
+    _userAddress: string,
+    format?: 'json' | 'csv'
+  ): Promise<string>;
+
   // Enforce data retention policy, deleting records older than the threshold
   enforceRetentionPolicy(retentionDays?: number): Promise<number>;
-  
+
   // Securely destroy data, ensuring it cannot be recovered
   securelyDestroyData(_verificationId: string): Promise<boolean>;
 }
@@ -100,7 +107,9 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     throw new Error('Method not implemented.');
   }
 
-  async createVerification(_params: VerificationParams): Promise<VerificationRecord> {
+  async createVerification(
+    _params: VerificationParams
+  ): Promise<VerificationRecord> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
@@ -119,7 +128,9 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     throw new Error('Method not implemented.');
   }
 
-  async listVerifications(_userAddress?: string): Promise<VerificationRecord[]> {
+  async listVerifications(
+    _userAddress?: string
+  ): Promise<VerificationRecord[]> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
@@ -136,22 +147,25 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   getSigner(): SignerAdapter {
     return this.signer;
   }
-  
+
   async generateProof(_verificationId: string): Promise<string> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
-  
-  async exportVerifications(_userAddress: string, _format?: 'json' | 'csv'): Promise<string> {
+
+  async exportVerifications(
+    _userAddress: string,
+    _format?: 'json' | 'csv'
+  ): Promise<string> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
-  
+
   async enforceRetentionPolicy(_retentionDays?: number): Promise<number> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
-  
+
   async securelyDestroyData(_verificationId: string): Promise<boolean> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');

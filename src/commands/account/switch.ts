@@ -12,12 +12,14 @@ import { ValidationRules, validateInput } from '../../utils/input-validator';
  * @param {string} address - The Sui wallet address to switch to. (Required argument)
  */
 export default class AccountSwitchCommand extends BaseCommand {
-  static description = 'Change the active Sui wallet address for blockchain transactions';
+  static description =
+    'Change the active Sui wallet address for blockchain transactions';
 
   static args = {
     address: Args.string({
       name: 'address',
-      description: 'Address to switch to (must be a valid 0x-prefixed hex address)',
+      description:
+        'Address to switch to (must be a valid 0x-prefixed hex address)',
       required: true,
     }),
   };

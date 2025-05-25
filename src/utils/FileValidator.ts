@@ -34,12 +34,12 @@ export class FileValidator {
 
     const fileBuffer = fs.readFileSync(filePath);
     const extension = filePath.split('.').pop()?.toLowerCase() || '';
-    
+
     const metadata: FileMetadata = {
       size: fileBuffer.length,
       mimeType: this.detectMimeType(fileBuffer),
       checksum: this.calculateChecksum(fileBuffer),
-      extension
+      extension,
     };
 
     // Validate file type
@@ -50,8 +50,10 @@ export class FileValidator {
     }
 
     // Validate extension if needed
-    if (this.config.allowedExtensions && 
-        !this.config.allowedExtensions.includes(extension)) {
+    if (
+      this.config.allowedExtensions &&
+      !this.config.allowedExtensions.includes(extension)
+    ) {
       throw new WalrusError(
         `File extension .${extension} not allowed. Allowed extensions: ${this.config.allowedExtensions.join(', ')}`
       );
@@ -92,7 +94,10 @@ export class FileValidator {
           );
         }
 
-        if (this.config.minHeight && dimensions.height < this.config.minHeight) {
+        if (
+          this.config.minHeight &&
+          dimensions.height < this.config.minHeight
+        ) {
           throw new WalrusError(
             `Image height ${dimensions.height}px below minimum ${this.config.minHeight}px`
           );
@@ -104,7 +109,10 @@ export class FileValidator {
           );
         }
 
-        if (this.config.maxHeight && dimensions.height > this.config.maxHeight) {
+        if (
+          this.config.maxHeight &&
+          dimensions.height > this.config.maxHeight
+        ) {
           throw new WalrusError(
             `Image height ${dimensions.height}px exceeds maximum ${this.config.maxHeight}px`
           );

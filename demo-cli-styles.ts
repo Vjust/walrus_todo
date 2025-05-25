@@ -19,11 +19,11 @@ class StyleDemo extends BaseCommand {
     this.success('Task completed successfully!');
     this.info('Here is some helpful information');
     this.warning('Be careful with this operation');
-    
+
     try {
       this.errorWithHelp(
-        'Something went wrong', 
-        'Could not connect to the server', 
+        'Something went wrong',
+        'Could not connect to the server',
         'Try checking your internet connection or try again later'
       );
     } catch (error) {
@@ -33,11 +33,12 @@ class StyleDemo extends BaseCommand {
 
     // Demo the fun section boxes
     this.log(chalk.bold.underline('\nFun Section Boxes:'));
-    this.section('Quick Tips', 
+    this.section(
+      'Quick Tips',
       'Here are some helpful tips for using the CLI:\n' +
-      '- Use "list" to see all your todos\n' +
-      '- Use "add" to create new todos\n' +
-      '- Use "complete" to mark todos as done'
+        '- Use "list" to see all your todos\n' +
+        '- Use "add" to create new todos\n' +
+        '- Use "complete" to mark todos as done'
     );
 
     // Demo the simple list with new bullet points
@@ -47,46 +48,46 @@ class StyleDemo extends BaseCommand {
       'list - Show all todos',
       'complete - Mark a todo as done',
       'delete - Remove a todo',
-      'update - Edit a todo'
+      'update - Edit a todo',
     ]);
 
     // Demo the todo formatting with new priority labels
     this.log(chalk.bold.underline('\nTodo Formatting:'));
-    
+
     const todos = [
-      { 
-        id: '123', 
-        title: 'Finish project presentation', 
-        completed: false, 
+      {
+        id: '123',
+        title: 'Finish project presentation',
+        completed: false,
         priority: 'high' as const,
         dueDate: '2025-05-15',
         tags: ['work', 'important'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        private: false
+        private: false,
       },
-      { 
-        id: '456', 
-        title: 'Buy groceries', 
-        completed: false, 
+      {
+        id: '456',
+        title: 'Buy groceries',
+        completed: false,
         priority: 'medium' as const,
         tags: ['personal'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        private: false
+        private: false,
       },
-      { 
-        id: '789', 
-        title: 'Call Mom', 
-        completed: true, 
+      {
+        id: '789',
+        title: 'Call Mom',
+        completed: true,
         priority: 'low' as const,
         tags: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        private: true
-      }
+        private: true,
+      },
     ];
-    
+
     todos.forEach(todo => {
       this.log(this.formatTodo(todo));
       this.log(''); // Add spacing
@@ -100,44 +101,66 @@ class StyleDemo extends BaseCommand {
 
     // Demo debug output
     this.log(chalk.bold.underline('\nDebug Output:'));
-    this.debugLog('Processing todo list data', { count: 5, lastUpdated: '2025-05-11' });
+    this.debugLog('Processing todo list data', {
+      count: 5,
+      lastUpdated: '2025-05-11',
+    });
 
     // Demo all the icons
     this.log(chalk.bold.underline('\nFun Icons:'));
-    
+
     // Group the icons by category
     const iconGroups = {
       'Status Icons': [
-        'SUCCESS', 'ERROR', 'WARNING', 'INFO', 
-        'PENDING', 'ACTIVE', 'LOADING', 'DEBUG'
+        'SUCCESS',
+        'ERROR',
+        'WARNING',
+        'INFO',
+        'PENDING',
+        'ACTIVE',
+        'LOADING',
+        'DEBUG',
       ],
       'Object Icons': [
-        'TODO', 'LIST', 'LISTS', 'TAG', 
-        'PRIORITY', 'DATE', 'TIME'
+        'TODO',
+        'LIST',
+        'LISTS',
+        'TAG',
+        'PRIORITY',
+        'DATE',
+        'TIME',
       ],
       'Feature Icons': [
-        'BLOCKCHAIN', 'WALRUS', 'LOCAL', 'HYBRID', 
-        'AI', 'STORAGE', 'CONFIG', 'USER', 
-        'SEARCH', 'SECURE', 'INSECURE'
-      ]
+        'BLOCKCHAIN',
+        'WALRUS',
+        'LOCAL',
+        'HYBRID',
+        'AI',
+        'STORAGE',
+        'CONFIG',
+        'USER',
+        'SEARCH',
+        'SECURE',
+        'INSECURE',
+      ],
     };
 
     // Display all icon groups
     Object.entries(iconGroups).forEach(([groupName, iconNames]) => {
       this.log(chalk.yellow(`\n${groupName}:`));
-      
+
       let line = '';
       iconNames.forEach(name => {
         const icon = ICONS[name as keyof typeof ICONS];
         line += `${icon} ${name.padEnd(12)}`;
-        
+
         // Break into multiple lines for readability
         if (line.length > 50) {
           this.log(line);
           line = '';
         }
       });
-      
+
       if (line) this.log(line);
     });
 
@@ -148,22 +171,22 @@ class StyleDemo extends BaseCommand {
 // Run the demo using OCLIF's run method
 StyleDemo.run([], {
   root: __dirname,
-  pjson: { 
-    name: 'demo', 
-    version: '1.0.0', 
+  pjson: {
+    name: 'demo',
+    version: '1.0.0',
     oclif: {
       update: {
         node: {
           version: '18.0.0',
-          targets: ['node18']
+          targets: ['node18'],
         },
         s3: {
           bucket: 'demo-bucket',
-          templates: {} as any
-        }
-      }
-    }
-  }
+          templates: {} as any,
+        },
+      },
+    },
+  },
 }).catch(_error => {
   logger.error('Error running demo:', _error);
   process.exit(1);

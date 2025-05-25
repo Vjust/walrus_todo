@@ -49,7 +49,7 @@ export class CommandRegistry {
    */
   registerCommand(metadata: CommandMetadata): void {
     this.commands.set(metadata.name, metadata);
-    
+
     // Register aliases
     if (metadata.aliases) {
       metadata.aliases.forEach(alias => {
@@ -92,7 +92,7 @@ export class CommandRegistry {
   getGroupCommands(groupName: string): CommandMetadata[] {
     const group = this.groups.get(groupName);
     if (!group) return [];
-    
+
     return Object.keys(group.commands)
       .map(cmdName => this.commands.get(cmdName))
       .filter((cmd): cmd is CommandMetadata => cmd !== undefined);
@@ -107,10 +107,10 @@ export class CommandRegistry {
     if (index !== -1) {
       this.commandHistory.splice(index, 1);
     }
-    
+
     // Add to beginning
     this.commandHistory.unshift(command);
-    
+
     // Maintain max size
     if (this.commandHistory.length > this.maxHistorySize) {
       this.commandHistory.pop();
@@ -127,29 +127,33 @@ export class CommandRegistry {
   /**
    * Suggest commands based on input
    */
-  suggestCommands(input: string, maxSuggestions: number = 5): CommandMetadata[] {
+  suggestCommands(
+    input: string,
+    maxSuggestions: number = 5
+  ): CommandMetadata[] {
     const suggestions: Array<{ command: CommandMetadata; score: number }> = [];
-    
+
     // Check exact matches first
     const exactMatch = this.commands.get(input);
     if (exactMatch) {
       return [exactMatch];
     }
-    
+
     // Check alias matches
     const aliasedCommand = this.resolveAlias(input);
     if (aliasedCommand !== input) {
       const cmd = this.commands.get(aliasedCommand);
       if (cmd) return [cmd];
     }
-    
+
     // Calculate fuzzy matches
     this.commands.forEach(command => {
       const score = this.calculateSimilarity(input, command.name);
-      if (score > 0.3) { // Threshold for similarity
+      if (score > 0.3) {
+        // Threshold for similarity
         suggestions.push({ command, score });
       }
-      
+
       // Check aliases too
       if (command.aliases) {
         command.aliases.forEach(alias => {
@@ -160,7 +164,7 @@ export class CommandRegistry {
         });
       }
     });
-    
+
     // Sort by score and return top suggestions
     return suggestions
       .sort((a, b) => b.score - a.score)
@@ -174,24 +178,24 @@ export class CommandRegistry {
   private calculateSimilarity(str1: string, str2: string): number {
     const s1 = str1.toLowerCase();
     const s2 = str2.toLowerCase();
-    
+
     if (s1 === s2) return 1;
     if (s1.length === 0) return 0;
     if (s2.length === 0) return 0;
-    
+
     // Create matrix
     const matrix: number[][] = [];
-    
+
     // Initialize first column
     for (let i = 0; i <= s2.length; i++) {
       matrix[i] = [i];
     }
-    
+
     // Initialize first row
     for (let j = 0; j <= s1.length; j++) {
       matrix[0][j] = j;
     }
-    
+
     // Fill matrix
     for (let i = 1; i <= s2.length; i++) {
       for (let j = 1; j <= s1.length; j++) {
@@ -200,16 +204,16 @@ export class CommandRegistry {
         } else {
           matrix[i][j] = Math.min(
             matrix[i - 1][j - 1] + 1, // substitution
-            matrix[i][j - 1] + 1,     // insertion
-            matrix[i - 1][j] + 1      // deletion
+            matrix[i][j - 1] + 1, // insertion
+            matrix[i - 1][j] + 1 // deletion
           );
         }
       }
     }
-    
+
     const distance = matrix[s2.length][s1.length];
     const maxLength = Math.max(s1.length, s2.length);
-    return 1 - (distance / maxLength);
+    return 1 - distance / maxLength;
   }
 
   /**
@@ -218,21 +222,21 @@ export class CommandRegistry {
   getAutocompletions(partial: string): string[] {
     const completions: string[] = [];
     const lowerPartial = partial.toLowerCase();
-    
+
     // Check command names
     this.commands.forEach(command => {
       if (command.name.toLowerCase().startsWith(lowerPartial)) {
         completions.push(command.name);
       }
     });
-    
+
     // Check aliases
     this.aliases.forEach((commandName, alias) => {
       if (alias.toLowerCase().startsWith(lowerPartial)) {
         completions.push(alias);
       }
     });
-    
+
     // Sort alphabetically and remove duplicates
     return [...new Set(completions)].sort();
   }
@@ -242,19 +246,21 @@ export class CommandRegistry {
    */
   generateGroupHelp(): string {
     const lines: string[] = [];
-    
+
     this.groups.forEach(group => {
       lines.push(`\n${group.name.toUpperCase()} - ${group.description}`);
-      
+
       Object.entries(group.commands).forEach(([cmdName, _cmdInfo]) => {
         const command = this.commands.get(cmdName);
         if (command) {
-          const aliases = command.aliases ? ` (${command.aliases.join(', ')})` : '';
+          const aliases = command.aliases
+            ? ` (${command.aliases.join(', ')})`
+            : '';
           lines.push(`  ${cmdName}${aliases} - ${command.description}`);
         }
       });
     });
-    
+
     return lines.join('\n');
   }
 }

@@ -22,14 +22,15 @@ import { RetryManager } from '../utils/retry-manager';
  * @param {string} [list='default'] - The name of the local todo list to save the retrieved todo to. (Optional flag: -l, --list)
  */
 export default class FetchCommand extends BaseCommand {
-  static description = 'Fetch todos directly from blockchain or Walrus storage using IDs';
+  static description =
+    'Fetch todos directly from blockchain or Walrus storage using IDs';
 
   static examples = [
     '<%= config.bin %> fetch --blob-id QmXyz --list my-todos            # Fetch by blob ID',
     '<%= config.bin %> fetch --object-id 0x123 --list my-todos          # Fetch by NFT object ID',
     '<%= config.bin %> fetch --blob-id abc123 --list work --save        # Fetch and save locally',
     '<%= config.bin %> fetch --object-id 0x456 --network testnet        # Fetch from testnet',
-    '<%= config.bin %> fetch --blob-id xyz789 --list personal --verify  # Fetch with verification'
+    '<%= config.bin %> fetch --blob-id xyz789 --list personal --verify  # Fetch with verification',
   ];
 
   static flags = {
@@ -45,21 +46,21 @@ export default class FetchCommand extends BaseCommand {
     list: Flags.string({
       char: 'l',
       description: 'Save to this todo list',
-      default: 'default'
+      default: 'default',
     }),
     'dry-run': Flags.boolean({
       description: 'Simulate operation without making network calls',
-      default: false
+      default: false,
     }),
   };
 
   private todoService = new TodoService();
   private walrusStorage = createWalrusStorage('testnet', true); // Use mock mode for testing
   private parsedFlags!: Record<string, any>; // Will be populated after parsing
-  
+
   /**
    * Creates a SuiClient instance for the specified network
-   * 
+   *
    * @param network Network name to connect to (mainnet, testnet, devnet, local)
    * @returns Configured SuiClient instance
    */
@@ -71,23 +72,23 @@ export default class FetchCommand extends BaseCommand {
         url: NETWORK_URLS[network as keyof typeof NETWORK_URLS],
         core: {},
         jsonRpc: {},
-        signAndExecuteTransaction: async () => { },
+        signAndExecuteTransaction: async () => {},
         getEpochMetrics: async () => null,
         getObject: async () => null,
-        getTransactionBlock: async () => null
+        getTransactionBlock: async () => null,
       } as unknown as SuiClient;
     }
-    
+
     // For actual implementation, this would create a real client
     throw new CLIError(
       'Real network operations not supported in this version. Use --dry-run flag.',
       'NETWORK_NOT_SUPPORTED'
     );
   }
-  
+
   /**
    * Gets a signer for blockchain transactions
-   * 
+   *
    * @returns Ed25519Keypair for signing transactions
    */
   private async getSigner(): Promise<Ed25519Keypair> {
@@ -96,7 +97,7 @@ export default class FetchCommand extends BaseCommand {
     if (this.parsedFlags['dry-run']) {
       return {} as Ed25519Keypair;
     }
-    
+
     // For actual implementation, this would load a keypair from the keystore
     throw new CLIError(
       'Real signers not supported in this version. Use --dry-run flag.',
@@ -111,45 +112,63 @@ export default class FetchCommand extends BaseCommand {
 
       // Validate input
       if (!flags['blob-id'] && !flags['object-id']) {
-        throw new CLIError('Either --blob-id or --object-id must be specified', 'MISSING_PARAMETER');
+        throw new CLIError(
+          'Either --blob-id or --object-id must be specified',
+          'MISSING_PARAMETER'
+        );
       }
 
       // Get config for Sui client
-      const configInner = await configService.getConfig();  // Changed to avoid redeclaration
+      const configInner = await configService.getConfig(); // Changed to avoid redeclaration
       if (!configInner?.lastDeployment?.packageId) {
-        throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
+        throw new CLIError(
+          'Contract not deployed. Please run "waltodo deploy" first.',
+          'NOT_DEPLOYED'
+        );
       }
 
       if (flags['blob-id']) {
         let todo;
-        
+
         try {
           // Initialize Walrus storage
           await this.walrusStorage.connect();
-  
+
           // Retrieve todo from Walrus with retry
-          this.log(chalk.blue(`Retrieving todo from Walrus (blob ID: ${flags['blob-id']})...`));
+          this.log(
+            chalk.blue(
+              `Retrieving todo from Walrus (blob ID: ${flags['blob-id']})...`
+            )
+          );
           todo = await RetryManager.retry(
             () => this.walrusStorage.retrieveTodo(flags['blob-id']),
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
               onRetry: (error, attempt, _delay) => {
-                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
-                this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
-              }
+                const errorMessage = error
+                  ? typeof error === 'object' && error && 'message' in error
+                    ? (error as Error).message
+                    : String(error)
+                  : 'Unknown error';
+                this.log(
+                  chalk.yellow(
+                    `Retry attempt ${attempt} after error: ${errorMessage}`
+                  )
+                );
+              },
             }
           );
-  
+
           // Save to local list
           await this.todoService.addTodo(flags.list, todo);
-  
-          this.log(chalk.green("✓ Todo retrieved successfully"));
-          this.log(chalk.dim("Details:"));
+
+          this.log(chalk.green('✓ Todo retrieved successfully'));
+          this.log(chalk.dim('Details:'));
           this.log(`  Title: ${todo.title}`);
           this.log(`  Status: ${todo.completed ? 'Completed' : 'Pending'}`);
           this.log(`  Priority: ${todo.priority}`);
-          
+
           if (todo.tags?.length) {
             this.log(`  Tags: ${todo.tags.join(', ')}`);
           }
@@ -160,87 +179,121 @@ export default class FetchCommand extends BaseCommand {
           } catch (disconnectError) {
             this.debug(`Error during disconnect: ${disconnectError}`);
           }
-          
+
           throw error;
         }
-        
+
         // Cleanup
         await this.walrusStorage.disconnect();
       } else if (flags['object-id']) {
         // Initialize Sui client first - in a real implementation, this would use a proper client
         // This is a placeholder that should be replaced with a real implementation or dry-run flag
         const suiClient = this.createSuiClient(configInner.network);
-        
+
         // Initialize Sui NFT storage
         if (!configInner.lastDeployment) {
-          throw new CLIError('Contract not deployed. Please run "waltodo deploy" first.', 'NOT_DEPLOYED');
+          throw new CLIError(
+            'Contract not deployed. Please run "waltodo deploy" first.',
+            'NOT_DEPLOYED'
+          );
         }
-        
+
         // A proper implementation would load the signer from a keystore
         const signer = await this.getSigner();
-        
+
         // Use constants for empty strings
         const EMPTY_COLLECTION_ID = '';
-        
+
         const suiNftStorage = new SuiNftStorage(suiClient, signer, {
           address: configInner.lastDeployment.packageId,
           packageId: configInner.lastDeployment.packageId,
-          collectionId: EMPTY_COLLECTION_ID
+          collectionId: EMPTY_COLLECTION_ID,
         });
-        
+
         let todo;
         let nftData;
-        
+
         try {
           // Retrieve NFT from blockchain with retry
-          this.log(chalk.blue(`Retrieving NFT from blockchain (object ID: ${flags['object-id']})...`));
+          this.log(
+            chalk.blue(
+              `Retrieving NFT from blockchain (object ID: ${flags['object-id']})...`
+            )
+          );
           nftData = await RetryManager.retry(
             () => suiNftStorage.getTodoNft(flags['object-id']),
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               onRetry: (error, attempt, _delay) => {
-                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
-                this.log(chalk.yellow(`Retry attempt ${attempt} fetching NFT after error: ${errorMessage}`));
-              }
+                const errorMessage = error
+                  ? typeof error === 'object' && error && 'message' in error
+                    ? (error as Error).message
+                    : String(error)
+                  : 'Unknown error';
+                this.log(
+                  chalk.yellow(
+                    `Retry attempt ${attempt} fetching NFT after error: ${errorMessage}`
+                  )
+                );
+              },
             }
           );
-          
+
           if (!nftData.walrusBlobId) {
-            throw new CLIError('NFT does not contain a Walrus blob ID', 'INVALID_NFT');
+            throw new CLIError(
+              'NFT does not contain a Walrus blob ID',
+              'INVALID_NFT'
+            );
           }
-          
+
           // Initialize Walrus storage
           await this.walrusStorage.connect();
-          
+
           // Retrieve todo data from Walrus with retry
-          this.log(chalk.blue(`Retrieving todo data from Walrus (blob ID: ${nftData.walrusBlobId})...`));
+          this.log(
+            chalk.blue(
+              `Retrieving todo data from Walrus (blob ID: ${nftData.walrusBlobId})...`
+            )
+          );
           todo = await RetryManager.retry(
             () => this.walrusStorage.retrieveTodo(nftData.walrusBlobId),
             {
               maxRetries: RETRY_CONFIG.ATTEMPTS,
               retryableErrors: [/NETWORK_ERROR/, /CONNECTION_REFUSED/],
               onRetry: (error, attempt, _delay) => {
-                const errorMessage = error ? (typeof error === 'object' && error && 'message' in error ? (error as Error).message : String(error)) : 'Unknown error';
-                this.log(chalk.yellow(`Retry attempt ${attempt} after error: ${errorMessage}`));
-              }
+                const errorMessage = error
+                  ? typeof error === 'object' && error && 'message' in error
+                    ? (error as Error).message
+                    : String(error)
+                  : 'Unknown error';
+                this.log(
+                  chalk.yellow(
+                    `Retry attempt ${attempt} after error: ${errorMessage}`
+                  )
+                );
+              },
             }
           );
-          
+
           // Save to local list
-          await this.todoService.addTodo(flags.list, { 
+          await this.todoService.addTodo(flags.list, {
             ...todo,
             nftObjectId: flags['object-id'],
-            walrusBlobId: nftData.walrusBlobId
+            walrusBlobId: nftData.walrusBlobId,
           });
-          
-          this.log(chalk.green(`✓ Todo retrieved successfully from blockchain and Walrus`));
+
+          this.log(
+            chalk.green(
+              `✓ Todo retrieved successfully from blockchain and Walrus`
+            )
+          );
           this.log(chalk.dim('Details:'));
           this.log(`  Title: ${todo.title}`);
           this.log(`  Status: ${todo.completed ? 'Completed' : 'Pending'}`);
           this.log(`  Priority: ${todo.priority}`);
           this.log(`  NFT Object ID: ${flags['object-id']}`);
           this.log(`  Walrus Blob ID: ${nftData.walrusBlobId}`);
-          
+
           if (todo.tags?.length) {
             this.log(`  Tags: ${todo.tags.join(', ')}`);
           }
@@ -251,14 +304,13 @@ export default class FetchCommand extends BaseCommand {
           } catch (disconnectError) {
             this.debug(`Error during disconnect: ${disconnectError}`);
           }
-          
+
           throw error;
         }
-        
+
         // Cleanup
         await this.walrusStorage.disconnect();
       }
-      
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

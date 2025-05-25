@@ -1,11 +1,12 @@
 /**
-import { Logger } from '../../../utils/Logger';
-
-const logger = new Logger('XAIModelAdapter');
  * XAIModelAdapter - Implementation of AIModelAdapter for the XAI service
  *
  * This adapter provides integration with XAI (Grok) models via LangChain.
  */
+
+import { Logger } from '../../../utils/Logger';
+
+const logger = new Logger('XAIModelAdapter');
 
 // Import the real ChatXAI implementation when available
 import { ChatXAI as RealChatXAI } from '@langchain/xai';
@@ -16,11 +17,21 @@ type StringPromptValueInterface = {
   toString(): string;
 };
 
-interface RunnableInterface<InputType, OutputType, CallOptions extends Record<string, unknown> = Record<string, unknown>> {
+interface RunnableInterface<
+  InputType,
+  OutputType,
+  CallOptions extends Record<string, unknown> = Record<string, unknown>,
+> {
   lc_serializable: boolean;
   invoke(input: InputType, options?: CallOptions): Promise<OutputType>;
-  batch(inputs: InputType[], options?: CallOptions & { batchOptions?: Record<string, unknown> }): Promise<OutputType[]>;
-  stream(input: InputType, options?: CallOptions): Promise<AsyncIterable<OutputType>>;
+  batch(
+    inputs: InputType[],
+    options?: CallOptions & { batchOptions?: Record<string, unknown> }
+  ): Promise<OutputType[]>;
+  stream(
+    input: InputType,
+    options?: CallOptions
+  ): Promise<AsyncIterable<OutputType>>;
   transform<NewOutput>(
     transformer: (output: OutputType) => NewOutput | Promise<NewOutput>
   ): RunnableInterface<InputType, NewOutput, CallOptions>;
@@ -38,7 +49,14 @@ type ChatXAIOptions = {
 };
 
 // Mock implementation of ChatXAI as fallback
-class MockChatXAI implements RunnableInterface<string | StringPromptValueInterface, string, Record<string, unknown>> {
+class MockChatXAI
+  implements
+    RunnableInterface<
+      string | StringPromptValueInterface,
+      string,
+      Record<string, unknown>
+    >
+{
   private options: ChatXAIOptions;
   lc_serializable: boolean = true;
 
@@ -47,65 +65,90 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
   }
 
   getName(): string {
-    return "MockChatXAI";
+    return 'MockChatXAI';
   }
 
-  async invoke(prompt: string | StringPromptValueInterface, _options?: { temperature?: number; maxTokens?: number }): Promise<string> {
+  async invoke(
+    prompt: string | StringPromptValueInterface,
+    _options?: { temperature?: number; maxTokens?: number }
+  ): Promise<string> {
     // Handle both string and StringPromptValueInterface
     const promptStr = typeof prompt === 'string' ? prompt : prompt.toString();
-    logger.info('Mocked XAI model invoked with prompt:', promptStr.substring(0, 20) + '...');
+    logger.info(
+      'Mocked XAI model invoked with prompt:',
+      promptStr.substring(0, 20) + '...'
+    );
 
     // Generate a more helpful mock response based on the prompt content
-    if (promptStr.toLowerCase().includes('json') || promptStr.includes('valid JSON')) {
+    if (
+      promptStr.toLowerCase().includes('json') ||
+      promptStr.includes('valid JSON')
+    ) {
       // Determine operation type from prompt text
       if (promptStr.toLowerCase().includes('categor')) {
         return JSON.stringify({
-          "work": ["todo-1", "todo-2"],
-          "personal": ["todo-3", "todo-4"],
-          "errands": ["todo-5"]
+          work: ['todo-1', 'todo-2'],
+          personal: ['todo-3', 'todo-4'],
+          errands: ['todo-5'],
         });
       } else if (promptStr.toLowerCase().includes('priorit')) {
         return JSON.stringify({
-          "todo-1": 9,
-          "todo-2": 7,
-          "todo-3": 5,
-          "todo-4": 3
+          'todo-1': 9,
+          'todo-2': 7,
+          'todo-3': 5,
+          'todo-4': 3,
         });
       } else if (promptStr.toLowerCase().includes('suggest')) {
         return JSON.stringify([
-          "Complete documentation for project",
-          "Schedule team review meeting",
-          "Prepare presentation slides",
-          "Update progress report"
+          'Complete documentation for project',
+          'Schedule team review meeting',
+          'Prepare presentation slides',
+          'Update progress report',
         ]);
       } else if (promptStr.toLowerCase().includes('analy')) {
         return JSON.stringify({
-          "themes": ["work", "documentation", "meetings"],
-          "bottlenecks": ["waiting for feedback", "external dependencies"],
-          "recommendations": ["focus on high-priority items first", "schedule regular review sessions"]
+          themes: ['work', 'documentation', 'meetings'],
+          bottlenecks: ['waiting for feedback', 'external dependencies'],
+          recommendations: [
+            'focus on high-priority items first',
+            'schedule regular review sessions',
+          ],
         });
       } else if (promptStr.toLowerCase().includes('tag')) {
-        return JSON.stringify(["work", "documentation", "important", "deadline"]);
+        return JSON.stringify([
+          'work',
+          'documentation',
+          'important',
+          'deadline',
+        ]);
       } else {
         // Generic JSON response
-        return JSON.stringify({ "result": "mocked response", "confidence": 0.85 });
+        return JSON.stringify({ result: 'mocked response', confidence: 0.85 });
       }
     } else if (promptStr.toLowerCase().includes('summar')) {
-      return "Your todo list contains 5 items: 3 are work-related and 2 are personal tasks. The highest priority items are related to documentation and presentations. Most tasks are due within the next week.";
+      return 'Your todo list contains 5 items: 3 are work-related and 2 are personal tasks. The highest priority items are related to documentation and presentations. Most tasks are due within the next week.';
     } else if (promptStr.toLowerCase().includes('priorit')) {
-      return "high";
+      return 'high';
     } else {
       return 'This is a mocked response from the XAI model. To see a real response, please provide a valid API key.';
     }
   }
 
-  async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<string[]> {
+  async batch(
+    inputs: (string | StringPromptValueInterface)[],
+    options?: Record<string, unknown>
+  ): Promise<string[]> {
     // Process multiple inputs in parallel
-    const results = await Promise.all(inputs.map(input => this.invoke(input, options)));
+    const results = await Promise.all(
+      inputs.map(input => this.invoke(input, options))
+    );
     return results;
   }
 
-  async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<string>> {
+  async stream(
+    input: string | StringPromptValueInterface,
+    options?: Record<string, unknown>
+  ): Promise<AsyncIterable<string>> {
     // Mock implementation of streaming interface
     const result = await this.invoke(input, options);
 
@@ -125,59 +168,99 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
 
   transform<NewOutput>(
     transformer: (output: string) => NewOutput | Promise<NewOutput>
-  ): RunnableInterface<string | StringPromptValueInterface, NewOutput, Record<string, any>> {
+  ): RunnableInterface<
+    string | StringPromptValueInterface,
+    NewOutput,
+    Record<string, any>
+  > {
     // Create a new runnable that applies the transformation
     const self = this;
     return {
       lc_serializable: true,
       getName: () => `${self.getName()}_transform`,
-      async invoke(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<NewOutput> {
+      async invoke(
+        input: string | StringPromptValueInterface,
+        options?: Record<string, unknown>
+      ): Promise<NewOutput> {
         const output = await self.invoke(input, options);
         return await transformer(output);
       },
-      async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<NewOutput[]> {
+      async batch(
+        inputs: (string | StringPromptValueInterface)[],
+        options?: Record<string, unknown>
+      ): Promise<NewOutput[]> {
         const outputs = await self.batch(inputs, options);
         return await Promise.all(outputs.map(output => transformer(output)));
       },
-      async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<NewOutput>> {
+      async stream(
+        input: string | StringPromptValueInterface,
+        options?: Record<string, unknown>
+      ): Promise<AsyncIterable<NewOutput>> {
         const outputStream = await self.stream(input, options);
         // Implementation would transform each chunk as it comes in
         // This is a simplified mock version
         async function* generate() {
           for await (const chunk of outputStream) {
-            yield await transformer(chunk) as NewOutput;
+            yield (await transformer(chunk)) as NewOutput;
           }
         }
         return generate();
       },
-      transform<T>(nextTransformer: (output: NewOutput) => T | Promise<T>): RunnableInterface<string | StringPromptValueInterface, T, Record<string, any>> {
-        return self.transform(async (output) => nextTransformer(await transformer(output)));
+      transform<T>(
+        nextTransformer: (output: NewOutput) => T | Promise<T>
+      ): RunnableInterface<
+        string | StringPromptValueInterface,
+        T,
+        Record<string, any>
+      > {
+        return self.transform(async output =>
+          nextTransformer(await transformer(output))
+        );
       },
-      pipe<T>(runnable: RunnableInterface<NewOutput, T, any>): RunnableInterface<string | StringPromptValueInterface, T, any> {
+      pipe<T>(
+        runnable: RunnableInterface<NewOutput, T, any>
+      ): RunnableInterface<string | StringPromptValueInterface, T, any> {
         const transformed = self.transform(transformer);
         return {
           lc_serializable: true,
           getName: () => `${transformed.getName()}_pipe_${runnable.getName()}`,
-          async invoke(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<T> {
+          async invoke(
+            input: string | StringPromptValueInterface,
+            options?: Record<string, unknown>
+          ): Promise<T> {
             const output = await transformed.invoke(input, options);
             return await runnable.invoke(output, options);
           },
-          async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<T[]> {
+          async batch(
+            inputs: (string | StringPromptValueInterface)[],
+            options?: Record<string, unknown>
+          ): Promise<T[]> {
             const outputs = await transformed.batch(inputs, options);
             return await runnable.batch(outputs, options);
           },
-          async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<T>> {
+          async stream(
+            input: string | StringPromptValueInterface,
+            options?: Record<string, unknown>
+          ): Promise<AsyncIterable<T>> {
             const output = await transformed.invoke(input, options);
             return await runnable.stream(output, options);
           },
-          transform<U>(nextTransformer: (output: T) => U | Promise<U>): RunnableInterface<string | StringPromptValueInterface, U, Record<string, any>> {
+          transform<U>(
+            nextTransformer: (output: T) => U | Promise<U>
+          ): RunnableInterface<
+            string | StringPromptValueInterface,
+            U,
+            Record<string, any>
+          > {
             return transformed.pipe(runnable.transform(nextTransformer));
           },
-          pipe<U>(nextRunnable: RunnableInterface<T, U, any>): RunnableInterface<string | StringPromptValueInterface, U, any> {
+          pipe<U>(
+            nextRunnable: RunnableInterface<T, U, any>
+          ): RunnableInterface<string | StringPromptValueInterface, U, any> {
             return transformed.pipe(runnable.pipe(nextRunnable));
-          }
+          },
         };
-      }
+      },
     };
   }
 
@@ -188,24 +271,41 @@ class MockChatXAI implements RunnableInterface<string | StringPromptValueInterfa
     return {
       lc_serializable: true,
       getName: () => `${self.getName()}_pipe_${runnable.getName()}`,
-      async invoke(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<NewOutput> {
+      async invoke(
+        input: string | StringPromptValueInterface,
+        options?: Record<string, unknown>
+      ): Promise<NewOutput> {
         const output = await self.invoke(input, options);
         return await runnable.invoke(output, options);
       },
-      async batch(inputs: (string | StringPromptValueInterface)[], options?: Record<string, unknown>): Promise<NewOutput[]> {
+      async batch(
+        inputs: (string | StringPromptValueInterface)[],
+        options?: Record<string, unknown>
+      ): Promise<NewOutput[]> {
         const outputs = await self.batch(inputs, options);
         return await runnable.batch(outputs, options);
       },
-      async stream(input: string | StringPromptValueInterface, options?: Record<string, unknown>): Promise<AsyncIterable<NewOutput>> {
+      async stream(
+        input: string | StringPromptValueInterface,
+        options?: Record<string, unknown>
+      ): Promise<AsyncIterable<NewOutput>> {
         const output = await self.invoke(input, options);
         return await runnable.stream(output, options);
       },
-      transform<T>(transformer: (output: NewOutput) => T | Promise<T>): RunnableInterface<string | StringPromptValueInterface, T, Record<string, any>> {
+      transform<T>(
+        transformer: (output: NewOutput) => T | Promise<T>
+      ): RunnableInterface<
+        string | StringPromptValueInterface,
+        T,
+        Record<string, any>
+      > {
         return self.pipe(runnable.transform(transformer));
       },
-      pipe<T>(nextRunnable: RunnableInterface<NewOutput, T, any>): RunnableInterface<string | StringPromptValueInterface, T, any> {
+      pipe<T>(
+        nextRunnable: RunnableInterface<NewOutput, T, any>
+      ): RunnableInterface<string | StringPromptValueInterface, T, any> {
         return self.pipe(runnable.pipe(nextRunnable));
-      }
+      },
     };
   }
 }
@@ -219,12 +319,16 @@ import {
   AICompletionParams,
   AIResponse,
   AIProvider,
-  AIModelOptions
+  AIModelOptions,
 } from '../../../types/adapters/AIModelAdapter';
 import { ResponseParser } from '../ResponseParser';
 
 export class XAIModelAdapter extends BaseModelAdapter {
-  private client: RunnableInterface<string | StringPromptValueInterface, string, Record<string, any>>;
+  private client: RunnableInterface<
+    string | StringPromptValueInterface,
+    string,
+    Record<string, any>
+  >;
   private useMock: boolean = false;
 
   constructor(
@@ -239,23 +343,31 @@ export class XAIModelAdapter extends BaseModelAdapter {
     // 1. It is a non-empty string longer than 10 characters
     // 2. It is not obviously a placeholder (like 'mock' or 'missing-key')
     // 3. Special case: we'll accept our test key format (xai_test_key_*)
-    const isTestKey = apiKey &&
-                      typeof apiKey === 'string' &&
-                      apiKey.startsWith('xai_test_key_');
+    const isTestKey =
+      apiKey &&
+      typeof apiKey === 'string' &&
+      apiKey.startsWith('xai_test_key_');
 
-    const isValidKey = (apiKey &&
-                      typeof apiKey === 'string' &&
-                      apiKey.length > 10 &&
-                      !apiKey.includes('mock') &&
-                      apiKey !== 'missing-key') || isTestKey;
+    const isValidKey =
+      (apiKey &&
+        typeof apiKey === 'string' &&
+        apiKey.length > 10 &&
+        !apiKey.includes('mock') &&
+        apiKey !== 'missing-key') ||
+      isTestKey;
 
     // Log detected key status for debugging only in development mode
     if (process.env.NODE_ENV === 'development') {
-      logger.info(`XAIModelAdapter initialized with apiKey length: ${apiKey ? apiKey.length : 0}`);
-      logger.info(`Key validity check result: ${isValidKey ? 'valid' : 'invalid'}`);
+      logger.info(
+        `XAIModelAdapter initialized with apiKey length: ${apiKey ? apiKey.length : 0}`
+      );
+      logger.info(
+        `Key validity check result: ${isValidKey ? 'valid' : 'invalid'}`
+      );
 
       // Log first 10 chars of the key to help debug without revealing the full key
-      const keyPrefix = apiKey && apiKey.length > 10 ? apiKey.substring(0, 10) : 'none';
+      const keyPrefix =
+        apiKey && apiKey.length > 10 ? apiKey.substring(0, 10) : 'none';
       logger.info(`Key prefix: ${keyPrefix}...`);
     }
 
@@ -292,9 +404,9 @@ export class XAIModelAdapter extends BaseModelAdapter {
         this.useMock = false;
       } else {
         // Fall back to mock implementation with clear logging about the reason
-        const reason = !isValidKey ?
-          "invalid API key" :
-          "RealChatXAI implementation unavailable";
+        const reason = !isValidKey
+          ? 'invalid API key'
+          : 'RealChatXAI implementation unavailable';
 
         // Only log in development mode
         if (process.env.NODE_ENV === 'development') {
@@ -311,12 +423,17 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
         // Only log warning when we're falling back with what should be a valid key
         if (isValidKey) {
-          logger.warn('Falling back to mock XAI implementation despite having what appears to be a valid key');
+          logger.warn(
+            'Falling back to mock XAI implementation despite having what appears to be a valid key'
+          );
         }
       }
     } catch (_error) {
       // If real implementation fails, fall back to mock
-      logger.error('Error initializing real XAI client, falling back to mock:', _error);
+      logger.error(
+        'Error initializing real XAI client, falling back to mock:',
+        _error
+      );
       this.client = new MockChatXAI({
         apiKey,
         modelName: this.modelName,
@@ -339,7 +456,9 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
       // Log when using mock implementation, but only in development mode
       if (this.useMock && process.env.NODE_ENV === 'development') {
-        logger.info(`Using mock XAI implementation for completion (real API key not available)`);
+        logger.info(
+          `Using mock XAI implementation for completion (real API key not available)`
+        );
       }
 
       const response = await this.client.invoke(resolvedPrompt, {
@@ -354,7 +473,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
         baseResponse.metadata = {
           ...(baseResponse.metadata || {}),
           isMocked: true,
-          mockReason: 'No valid API key available'
+          mockReason: 'No valid API key available',
         };
       }
 
@@ -367,17 +486,24 @@ export class XAIModelAdapter extends BaseModelAdapter {
   /**
    * Generate a structured response from the AI model
    */
-  public async completeStructured<T>(params: AICompletionParams): Promise<AIResponse<T>> {
+  public async completeStructured<T>(
+    params: AICompletionParams
+  ): Promise<AIResponse<T>> {
     await this.enforceRateLimit();
 
     try {
       const options = { ...this.defaultOptions, ...params.options };
       // Pass the input parameter to resolvePrompt
-      const resolvedPrompt = await this.resolvePrompt(params.prompt, params.input);
+      const resolvedPrompt = await this.resolvePrompt(
+        params.prompt,
+        params.input
+      );
 
       // Log when using mock implementation, but only in development mode
       if (this.useMock && process.env.NODE_ENV === 'development') {
-        logger.info(`Using mock XAI implementation for structured completion (real API key not available)`);
+        logger.info(
+          `Using mock XAI implementation for structured completion (real API key not available)`
+        );
       }
 
       // For structured responses, we modify the prompt to request JSON format
@@ -396,7 +522,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
         baseResponse.metadata = {
           ...(baseResponse.metadata || {}),
           isMocked: true,
-          mockReason: 'No valid API key available'
+          mockReason: 'No valid API key available',
         };
       }
 
@@ -420,7 +546,9 @@ export class XAIModelAdapter extends BaseModelAdapter {
 
       // Log when using mock implementation, but only in development mode
       if (this.useMock && process.env.NODE_ENV === 'development') {
-        logger.info(`Using mock XAI implementation for prompt template processing (real API key not available)`);
+        logger.info(
+          `Using mock XAI implementation for prompt template processing (real API key not available)`
+        );
       }
 
       // First format the prompt template with input values
@@ -437,7 +565,7 @@ export class XAIModelAdapter extends BaseModelAdapter {
         baseResponse.metadata = {
           ...(baseResponse.metadata || {}),
           isMocked: true,
-          mockReason: 'No valid API key available'
+          mockReason: 'No valid API key available',
         };
       }
 

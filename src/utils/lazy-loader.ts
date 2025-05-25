@@ -22,7 +22,7 @@ export class LazyLoader {
   private readonly preloadQueue: Set<string> = new Set();
   private preloadTimer?: NodeJS.Timeout;
   private readonly PRELOAD_DELAY = 100; // ms
-  
+
   // Use cache manager for persistent caching
   private persistentCache?: PerformanceCache<ModuleInfo>;
 
@@ -31,7 +31,7 @@ export class LazyLoader {
       this.persistentCache = createCache<ModuleInfo>('lazy-modules', {
         strategy: 'LRU',
         maxSize: 50,
-        ttlMs: 86400000 // 24 hours
+        ttlMs: 86400000, // 24 hours
       });
     }
 
@@ -52,7 +52,7 @@ export class LazyLoader {
     if (cached) {
       cached.lastAccessed = Date.now();
       this.logger.debug(`Module loaded from memory cache: ${modulePath}`, {
-        loadTime: `${Date.now() - startTime}ms`
+        loadTime: `${Date.now() - startTime}ms`,
       });
       return cached.module;
     }
@@ -62,9 +62,12 @@ export class LazyLoader {
       const persistentCached = await this.persistentCache.get(modulePath);
       if (persistentCached) {
         this.moduleCache.set(modulePath, persistentCached);
-        this.logger.debug(`Module loaded from persistent cache: ${modulePath}`, {
-          loadTime: `${Date.now() - startTime}ms`
-        });
+        this.logger.debug(
+          `Module loaded from persistent cache: ${modulePath}`,
+          {
+            loadTime: `${Date.now() - startTime}ms`,
+          }
+        );
         return persistentCached.module;
       }
     }
@@ -93,13 +96,19 @@ export class LazyLoader {
   /**
    * Load a module with timeout
    */
-  private async loadModule<T>(modulePath: string, startTime: number): Promise<T> {
+  private async loadModule<T>(
+    modulePath: string,
+    startTime: number
+  ): Promise<T> {
     const timeout = this.options.loadTimeout || 5000;
-    
+
     try {
       const loadPromise = import(modulePath);
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error(`Module load timeout: ${modulePath}`)), timeout);
+        setTimeout(
+          () => reject(new Error(`Module load timeout: ${modulePath}`)),
+          timeout
+        );
       });
 
       const module = await Promise.race([loadPromise, timeoutPromise]);
@@ -110,19 +119,19 @@ export class LazyLoader {
         module,
         loadTime,
         lastAccessed: Date.now(),
-        preloaded: false
+        preloaded: false,
       };
 
       // Cache the module
       this.moduleCache.set(modulePath, moduleInfo);
-      
+
       if (this.persistentCache) {
         await this.persistentCache.set(modulePath, moduleInfo);
       }
 
       this.logger.info(`Module loaded: ${modulePath}`, {
         loadTime: `${loadTime}ms`,
-        cacheSize: this.moduleCache.size
+        cacheSize: this.moduleCache.size,
       });
 
       return module;
@@ -173,7 +182,10 @@ export class LazyLoader {
     // Preload in background
     this.loadModuleInBackground(modulePath).finally(() => {
       // Schedule next preload
-      this.preloadTimer = setTimeout(() => this.scheduleNextPreload(), this.PRELOAD_DELAY);
+      this.preloadTimer = setTimeout(
+        () => this.scheduleNextPreload(),
+        this.PRELOAD_DELAY
+      );
     });
   }
 
@@ -191,17 +203,17 @@ export class LazyLoader {
         module,
         loadTime,
         lastAccessed: Date.now(),
-        preloaded: true
+        preloaded: true,
       };
 
       this.moduleCache.set(modulePath, moduleInfo);
-      
+
       if (this.persistentCache) {
         await this.persistentCache.set(modulePath, moduleInfo);
       }
 
       this.logger.debug(`Module preloaded: ${modulePath}`, {
-        loadTime: `${loadTime}ms`
+        loadTime: `${loadTime}ms`,
       });
     } catch (error) {
       this.logger.warn(`Failed to preload module: ${modulePath}`, error);
@@ -213,11 +225,11 @@ export class LazyLoader {
    */
   async clear(modulePath: string): Promise<void> {
     this.moduleCache.delete(modulePath);
-    
+
     if (this.persistentCache) {
       await this.persistentCache.delete(modulePath);
     }
-    
+
     this.logger.debug(`Module cleared from cache: ${modulePath}`);
   }
 
@@ -226,11 +238,11 @@ export class LazyLoader {
    */
   async clearAll(): Promise<void> {
     this.moduleCache.clear();
-    
+
     if (this.persistentCache) {
       await this.persistentCache.clear();
     }
-    
+
     this.logger.info('All modules cleared from cache');
   }
 
@@ -251,7 +263,8 @@ export class LazyLoader {
     const modules = Array.from(this.moduleCache.values());
     const preloadedCount = modules.filter(m => m.preloaded).length;
     const totalLoadTime = modules.reduce((sum, m) => sum + m.loadTime, 0);
-    const averageLoadTime = modules.length > 0 ? totalLoadTime / modules.length : 0;
+    const averageLoadTime =
+      modules.length > 0 ? totalLoadTime / modules.length : 0;
 
     return {
       memoryCacheSize: this.moduleCache.size,
@@ -261,8 +274,8 @@ export class LazyLoader {
         path: m.path,
         loadTime: m.loadTime,
         preloaded: m.preloaded,
-        lastAccessed: new Date(m.lastAccessed)
-      }))
+        lastAccessed: new Date(m.lastAccessed),
+      })),
     };
   }
 
@@ -287,15 +300,12 @@ let globalLazyLoader: LazyLoader | null = null;
 
 export function getGlobalLazyLoader(options?: LazyLoadOptions): LazyLoader {
   if (!globalLazyLoader) {
-    globalLazyLoader = new LazyLoader(options || {
-      cacheModules: true,
-      preloadHints: [
-        '@mysten/sui/client',
-        '@mysten/walrus',
-        'chalk',
-        'ora'
-      ]
-    });
+    globalLazyLoader = new LazyLoader(
+      options || {
+        cacheModules: true,
+        preloadHints: ['@mysten/sui/client', '@mysten/walrus', 'chalk', 'ora'],
+      }
+    );
   }
   return globalLazyLoader;
 }

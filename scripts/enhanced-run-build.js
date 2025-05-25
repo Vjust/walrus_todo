@@ -2,9 +2,9 @@
 
 // Simple logger for build script
 const logger = {
-  info: (msg) => console.log(msg),
-  error: (msg) => console.error(msg),
-  warn: (msg) => console.warn(msg)
+  info: msg => console.log(msg),
+  error: msg => console.error(msg),
+  warn: msg => console.warn(msg),
 };
 
 /**
@@ -26,7 +26,7 @@ const colors = {
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
-  gray: '\x1b[90m'
+  gray: '\x1b[90m',
 };
 
 // Print a colored message
@@ -38,7 +38,7 @@ function print(color, message) {
 function parseArgs() {
   const args = process.argv.slice(2);
   const options = { ...buildConfig.defaults };
-  
+
   // Check for predefined modes
   const modeArg = args.find(arg => arg.startsWith('--mode='));
   if (modeArg) {
@@ -50,7 +50,7 @@ function parseArgs() {
       print('yellow', `Unknown build mode: ${mode}, using defaults`);
     }
   }
-  
+
   // Process individual args
   args.forEach(arg => {
     if (arg === '--transpile-only') {
@@ -80,7 +80,7 @@ function parseArgs() {
       process.exit(0);
     }
   });
-  
+
   return options;
 }
 
@@ -121,54 +121,54 @@ function runBuild(options) {
   Object.entries(options).forEach(([key, value]) => {
     logger.info(`  ${key}: ${value}`);
   });
-  
+
   // Map our options to the ts-node arguments
   const tsNodeArgs = ['scripts/unified-build.ts'];
-  
+
   if (options.transpileOnly) {
     tsNodeArgs.push('--transpile-only');
   }
-  
+
   if (options.skipTypeCheck) {
     tsNodeArgs.push('--skip-typecheck');
   }
-  
+
   if (options.clean) {
     tsNodeArgs.push('--clean');
   }
-  
+
   if (options.verbose) {
     tsNodeArgs.push('--verbose');
   }
-  
+
   if (options.manifestOnly) {
     tsNodeArgs.push('--manifest-only');
   }
-  
+
   if (options.binPermissionFix) {
     tsNodeArgs.push('--fix-permissions');
   } else {
     tsNodeArgs.push('--no-fix-permissions');
   }
-  
+
   print('blue', `Running: npx ts-node ${tsNodeArgs.join(' ')}`);
   console.time('Build completed in');
-  
+
   try {
     // Run the build script
     const result = spawnSync('npx', ['ts-node', ...tsNodeArgs], {
       stdio: 'inherit',
       shell: true,
-      cwd: path.resolve(__dirname, '..')
+      cwd: path.resolve(__dirname, '..'),
     });
-    
+
     console.timeEnd('Build completed in');
-    
+
     if (result.status !== 0) {
       print('red', 'Build failed!');
       return false;
     }
-    
+
     print('green', 'Build completed successfully!');
     return true;
   } catch (error) {
@@ -181,19 +181,19 @@ function runBuild(options) {
 // Fix permissions for bin and script files
 function fixPermissions() {
   print('blue', 'Fixing file permissions...');
-  
+
   try {
     const fixResult = spawnSync('node', ['scripts/fix-permissions.js'], {
       stdio: 'inherit',
       shell: true,
-      cwd: path.resolve(__dirname, '..')
+      cwd: path.resolve(__dirname, '..'),
     });
-    
+
     if (fixResult.status !== 0) {
       print('yellow', 'Warning: Permission fix script failed');
       return false;
     }
-    
+
     return true;
   } catch (error) {
     print('yellow', `Warning: Error running permission fix: ${error.message}`);
@@ -205,8 +205,14 @@ function fixPermissions() {
 function updateManifest() {
   print('blue', 'Updating OCLIF manifest...');
 
-  const manifestPath = path.join(path.resolve(__dirname, '..'), buildConfig.paths.manifest);
-  const generateScript = path.join(path.resolve(__dirname, '..'), 'scripts/generate-manifest.js');
+  const manifestPath = path.join(
+    path.resolve(__dirname, '..'),
+    buildConfig.paths.manifest
+  );
+  const generateScript = path.join(
+    path.resolve(__dirname, '..'),
+    'scripts/generate-manifest.js'
+  );
 
   try {
     if (fs.existsSync(generateScript)) {
@@ -216,11 +222,14 @@ function updateManifest() {
       const result = spawnSync('node', [generateScript], {
         stdio: 'inherit',
         shell: true,
-        cwd: path.resolve(__dirname, '..')
+        cwd: path.resolve(__dirname, '..'),
       });
 
       if (result.status !== 0) {
-        print('yellow', 'Warning: Manifest generator script failed, using fallback method');
+        print(
+          'yellow',
+          'Warning: Manifest generator script failed, using fallback method'
+        );
         // Create an empty manifest file if it doesn't exist
         if (!fs.existsSync(manifestPath)) {
           fs.writeFileSync(manifestPath, '{}', 'utf8');
@@ -231,7 +240,10 @@ function updateManifest() {
         }
       }
     } else {
-      print('yellow', 'Warning: Improved manifest generator not found, using fallback method');
+      print(
+        'yellow',
+        'Warning: Improved manifest generator not found, using fallback method'
+      );
       // Create an empty manifest file if it doesn't exist
       if (!fs.existsSync(manifestPath)) {
         fs.writeFileSync(manifestPath, '{}', 'utf8');
@@ -245,7 +257,10 @@ function updateManifest() {
     print('green', 'Manifest file updated successfully');
     return true;
   } catch (error) {
-    print('yellow', `Warning: Failed to update manifest file: ${error.message}`);
+    print(
+      'yellow',
+      `Warning: Failed to update manifest file: ${error.message}`
+    );
     return false;
   }
 }
@@ -253,9 +268,12 @@ function updateManifest() {
 // Clean the dist directory
 function cleanDist() {
   print('blue', 'Cleaning dist directory...');
-  
-  const distPath = path.join(path.resolve(__dirname, '..'), buildConfig.paths.dist);
-  
+
+  const distPath = path.join(
+    path.resolve(__dirname, '..'),
+    buildConfig.paths.dist
+  );
+
   if (fs.existsSync(distPath)) {
     try {
       fs.rmSync(distPath, { recursive: true, force: true });
@@ -275,12 +293,12 @@ function cleanDist() {
 function main() {
   // Parse command line arguments
   const options = parseArgs();
-  
+
   // Handle --clean-only separately
   if (options.clean && options.manifestOnly) {
     const cleanResult = cleanDist();
     const manifestResult = updateManifest();
-    
+
     if (cleanResult && manifestResult) {
       print('green', 'Clean operation completed successfully');
       process.exit(0);
@@ -290,7 +308,7 @@ function main() {
     }
     return;
   }
-  
+
   // Handle --manifest-only separately
   if (options.manifestOnly) {
     if (updateManifest()) {
@@ -302,7 +320,7 @@ function main() {
     }
     return;
   }
-  
+
   // Clean if requested
   if (options.clean) {
     if (!cleanDist()) {
@@ -310,24 +328,24 @@ function main() {
       process.exit(1);
     }
   }
-  
+
   // Run the build
   const buildSuccess = runBuild(options);
-  
+
   // Fix permissions if requested
   if (buildSuccess && options.binPermissionFix) {
     fixPermissions();
   }
-  
+
   // Update manifest
   updateManifest();
-  
+
   // Return appropriate exit code
   if (!buildSuccess) {
     print('red', 'Build process failed');
     process.exit(1);
   }
-  
+
   print('green', 'Build process completed successfully');
 }
 

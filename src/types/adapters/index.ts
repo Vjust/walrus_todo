@@ -16,21 +16,19 @@ export * from './AIVerifierAdapter';
 // to the implementation classes
 export {
   SignerAdapterImpl,
-  createSignerAdapter
+  createSignerAdapter,
 } from '../../utils/adapters/signer-adapter';
 
 // Export unified types for convenience
-export type {
-  UnifiedSigner
-} from './SignerAdapter';
+export type { UnifiedSigner } from './SignerAdapter';
 export type {
   UnifiedTransactionBlock,
-  TransactionResult
+  TransactionResult,
 } from './TransactionBlockAdapter';
 export type {
   NormalizedBlobObject,
   NormalizedWriteBlobResponse,
-  UnifiedWalrusClient
+  UnifiedWalrusClient,
 } from './WalrusClientAdapter';
 export type {
   AIModelAdapter,
@@ -38,5 +36,5 @@ export type {
   AIModelOptions,
   AICompletionParams,
   AIResponse,
-  AIRequestMetadata
+  AIRequestMetadata,
 } from './AIModelAdapter';

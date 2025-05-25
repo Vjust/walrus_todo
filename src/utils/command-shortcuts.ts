@@ -24,7 +24,7 @@ export class CommandShortcuts {
     ['p', 'deploy'],
     ['g', 'suggest'],
     ['v', 'verify'],
-    
+
     // Common abbreviations
     ['del', 'delete'],
     ['comp', 'complete'],
@@ -44,20 +44,20 @@ export class CommandShortcuts {
     ['sync', 'sync'],
     ['tmpl', 'template'],
     ['tpl', 'template'],
-    
+
     // Smart shortcuts for common operations
-    ['todo', 'add'],           // "todo Get groceries" -> "add Get groceries"
-    ['done', 'complete'],      // "done 1" -> "complete 1"
-    ['new', 'create'],        // "new template" -> "create template"
-    ['show', 'list'],         // "show all" -> "list all"
-    ['all', 'list'],          // "all" -> "list"
-    ['status', 'list'],       // "status" -> "list"
-    ['upload', 'store'],      // "upload" -> "store"
+    ['todo', 'add'], // "todo Get groceries" -> "add Get groceries"
+    ['done', 'complete'], // "done 1" -> "complete 1"
+    ['new', 'create'], // "new template" -> "create template"
+    ['show', 'list'], // "show all" -> "list all"
+    ['all', 'list'], // "all" -> "list"
+    ['status', 'list'], // "status" -> "list"
+    ['upload', 'store'], // "upload" -> "store"
     ['download', 'retrieve'], // "download" -> "retrieve"
-    ['fetch', 'retrieve'],    // "fetch" -> "retrieve"
-    ['share', 'share'],       // Already short enough
+    ['fetch', 'retrieve'], // "fetch" -> "retrieve"
+    ['share', 'share'], // Already short enough
     ['nft', 'image:create-nft'], // Direct to NFT creation
-    
+
     // AI shortcuts
     ['analyze', 'ai:analyze'],
     ['suggest', 'ai:suggest'],
@@ -65,7 +65,7 @@ export class CommandShortcuts {
     ['categorize', 'ai:categorize'],
     ['prioritize', 'ai:prioritize'],
     ['enhance', 'ai:enhance'],
-    
+
     // Account shortcuts
     ['login', 'account:auth'],
     ['auth', 'account:auth'],
@@ -73,12 +73,12 @@ export class CommandShortcuts {
     ['perms', 'account:permissions'],
     ['switch', 'account:switch'],
     ['whoami', 'account:show'],
-    
+
     // Storage shortcuts
     ['local', 'store:simple'],
     ['chain', 'store:list'],
     ['blockchain', 'store:list'],
-    
+
     // System shortcuts
     ['audit', 'system:audit'],
     ['log', 'system:audit'],
@@ -105,15 +105,15 @@ export class CommandShortcuts {
    */
   static getAllShortcuts(): ShortcutMapping[] {
     const mappings: ShortcutMapping[] = [];
-    
+
     this.shortcuts.forEach((command, shortcut) => {
       mappings.push({
         shortcut,
         command,
-        description: this.getShortcutDescription(shortcut)
+        description: this.getShortcutDescription(shortcut),
       });
     });
-    
+
     // Sort by command name, then by shortcut length (shorter first)
     return mappings.sort((a, b) => {
       if (a.command !== b.command) {
@@ -128,13 +128,13 @@ export class CommandShortcuts {
    */
   static getShortcutsForCommand(command: string): string[] {
     const shortcuts: string[] = [];
-    
+
     this.shortcuts.forEach((cmd, shortcut) => {
       if (cmd === command) {
         shortcuts.push(shortcut);
       }
     });
-    
+
     return shortcuts.sort((a, b) => a.length - b.length);
   }
 
@@ -146,26 +146,26 @@ export class CommandShortcuts {
     if (shortcut.length === 1) {
       return 'Single-letter shortcut';
     }
-    
+
     // Special descriptions for smart shortcuts
     const smartDescriptions: Record<string, string> = {
-      'todo': 'Natural language for adding todos',
-      'done': 'Mark todo as complete',
-      'new': 'Create new items',
-      'show': 'Display items',
-      'all': 'Show all todos',
-      'status': 'Show todo status',
-      'upload': 'Upload to storage',
-      'download': 'Download from storage',
-      'fetch': 'Retrieve from storage',
-      'nft': 'Create NFT directly',
-      'whoami': 'Show current account',
-      'local': 'Use local storage',
-      'chain': 'Use blockchain storage',
-      'ls': 'Unix-style list',
-      'rm': 'Unix-style remove',
+      todo: 'Natural language for adding todos',
+      done: 'Mark todo as complete',
+      new: 'Create new items',
+      show: 'Display items',
+      all: 'Show all todos',
+      status: 'Show todo status',
+      upload: 'Upload to storage',
+      download: 'Download from storage',
+      fetch: 'Retrieve from storage',
+      nft: 'Create NFT directly',
+      whoami: 'Show current account',
+      local: 'Use local storage',
+      chain: 'Use blockchain storage',
+      ls: 'Unix-style list',
+      rm: 'Unix-style remove',
     };
-    
+
     return smartDescriptions[shortcut] || 'Common abbreviation';
   }
 
@@ -175,26 +175,26 @@ export class CommandShortcuts {
   static suggest(partial: string): ShortcutMapping[] {
     const lowerPartial = partial.toLowerCase();
     const suggestions: ShortcutMapping[] = [];
-    
+
     this.shortcuts.forEach((command, shortcut) => {
       if (shortcut.startsWith(lowerPartial) && shortcut !== lowerPartial) {
         suggestions.push({
           shortcut,
           command,
-          description: this.getShortcutDescription(shortcut)
+          description: this.getShortcutDescription(shortcut),
         });
       }
     });
-    
+
     return suggestions.sort((a, b) => {
       // Prioritize exact length matches
       const aLengthDiff = Math.abs(a.shortcut.length - partial.length);
       const bLengthDiff = Math.abs(b.shortcut.length - partial.length);
-      
+
       if (aLengthDiff !== bLengthDiff) {
         return aLengthDiff - bLengthDiff;
       }
-      
+
       return a.shortcut.localeCompare(b.shortcut);
     });
   }
@@ -204,15 +204,15 @@ export class CommandShortcuts {
    */
   static processInput(input: string[]): string[] {
     if (input.length === 0) return input;
-    
+
     const [command, ...args] = input;
     const expandedCommand = this.expand(command);
-    
+
     // If it was a shortcut, return expanded version
     if (expandedCommand !== command) {
       return [expandedCommand, ...args];
     }
-    
+
     return input;
   }
 
@@ -222,7 +222,7 @@ export class CommandShortcuts {
   static formatShortcutsTable(): string {
     const shortcuts = this.getAllShortcuts();
     const byCommand = new Map<string, string[]>();
-    
+
     // Group by command
     shortcuts.forEach(({ shortcut, command }) => {
       if (!byCommand.has(command)) {
@@ -233,21 +233,21 @@ export class CommandShortcuts {
         cmdShortcuts.push(shortcut);
       }
     });
-    
+
     // Format table
     let table = '\n# Command Shortcuts\n\n';
     table += '| Command | Shortcuts | Type |\n';
     table += '|---------|-----------|------|\n';
-    
+
     const sortedCommands = Array.from(byCommand.keys()).sort();
-    
+
     sortedCommands.forEach(command => {
       const shortcuts = byCommand.get(command) || [];
       const shortcutList = shortcuts.join(', ');
       const type = this.getCommandType(command);
       table += `| ${command} | ${shortcutList} | ${type} |\n`;
     });
-    
+
     return table;
   }
 
@@ -259,15 +259,15 @@ export class CommandShortcuts {
       const [category] = command.split(':');
       return category.charAt(0).toUpperCase() + category.slice(1);
     }
-    
+
     const coreCommands = ['add', 'list', 'complete', 'delete', 'update'];
     const storageCommands = ['store', 'retrieve', 'share'];
     const configCommands = ['config', 'configure', 'env'];
-    
+
     if (coreCommands.includes(command)) return 'Core';
     if (storageCommands.includes(command)) return 'Storage';
     if (configCommands.includes(command)) return 'Config';
-    
+
     return 'Other';
   }
 }
@@ -275,8 +275,12 @@ export class CommandShortcuts {
 // Export convenience functions
 export const expandShortcut = CommandShortcuts.expand.bind(CommandShortcuts);
 export const isShortcut = CommandShortcuts.isShortcut.bind(CommandShortcuts);
-export const getAllShortcuts = CommandShortcuts.getAllShortcuts.bind(CommandShortcuts);
-export const getShortcutsForCommand = CommandShortcuts.getShortcutsForCommand.bind(CommandShortcuts);
+export const getAllShortcuts =
+  CommandShortcuts.getAllShortcuts.bind(CommandShortcuts);
+export const getShortcutsForCommand =
+  CommandShortcuts.getShortcutsForCommand.bind(CommandShortcuts);
 export const suggestShortcuts = CommandShortcuts.suggest.bind(CommandShortcuts);
-export const processInput = CommandShortcuts.processInput.bind(CommandShortcuts);
-export const formatShortcutsTable = CommandShortcuts.formatShortcutsTable.bind(CommandShortcuts);
+export const processInput =
+  CommandShortcuts.processInput.bind(CommandShortcuts);
+export const formatShortcutsTable =
+  CommandShortcuts.formatShortcutsTable.bind(CommandShortcuts);

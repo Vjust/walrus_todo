@@ -21,7 +21,7 @@ export default class StoreSimpleCommand extends BaseCommand {
   static examples = [
     '<%= config.bin %> store-simple --todo 123 --list my-todos',
     '<%= config.bin %> store-simple --todo "Buy groceries" --list my-todos',
-    '<%= config.bin %> store-simple --todo 123 --list my-todos --epochs 10'
+    '<%= config.bin %> store-simple --todo 123 --list my-todos --epochs 10',
   ];
 
   static flags = {
@@ -34,18 +34,18 @@ export default class StoreSimpleCommand extends BaseCommand {
     list: Flags.string({
       char: 'l',
       description: 'Todo list name',
-      default: 'default'
+      default: 'default',
     }),
     epochs: Flags.integer({
       char: 'e',
       description: 'Number of epochs to store for',
-      default: 5
+      default: 5,
     }),
     network: Flags.string({
       char: 'n',
       description: 'Network to use',
       options: ['testnet', 'mainnet'],
-      default: 'testnet'
+      default: 'testnet',
     }),
   };
 
@@ -62,9 +62,14 @@ export default class StoreSimpleCommand extends BaseCommand {
         throw new CLIError(`List "${flags.list}" not found`, 'LIST_NOT_FOUND');
       }
 
-      const todo = list.todos.find(t => t.id === flags.todo || t.title === flags.todo);
+      const todo = list.todos.find(
+        t => t.id === flags.todo || t.title === flags.todo
+      );
       if (!todo) {
-        throw new CLIError(`Todo "${flags.todo}" not found in list "${flags.list}"`, 'TODO_NOT_FOUND');
+        throw new CLIError(
+          `Todo "${flags.todo}" not found in list "${flags.list}"`,
+          'TODO_NOT_FOUND'
+        );
       }
 
       this.log(chalk.green(`✓ Found todo: ${todo.title}`));
@@ -86,7 +91,7 @@ export default class StoreSimpleCommand extends BaseCommand {
         createdAt: todo.createdAt,
         updatedAt: todo.updatedAt,
         private: todo.private,
-        storageLocation: 'walrus'
+        storageLocation: 'walrus',
       };
 
       fs.writeFileSync(tempFile, JSON.stringify(todoData, null, 2));
@@ -106,22 +111,19 @@ export default class StoreSimpleCommand extends BaseCommand {
 
       // Step 4: Store the todo on Walrus
       this.log(chalk.blue(`Storing todo on Walrus ${flags.network}...`));
-      
+
       const walrusCommand = `~/.local/bin/walrus --context ${flags.network} store --epochs ${flags.epochs} ${tempFile}`;
-      
+
       try {
         const { stdout } = await execAsync(walrusCommand);
-        
+
         // Parse the output to extract blob ID and transaction info
         const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
         const suiObjectIdMatch = stdout.match(/Sui object ID: (0x[a-f0-9]+)/);
         const costMatch = stdout.match(/Cost \(excluding gas\): ([0-9.]+) WAL/);
-        
+
         if (!blobIdMatch || !suiObjectIdMatch) {
-          throw new CLIError(
-            'Failed to parse Walrus response',
-            'PARSE_ERROR'
-          );
+          throw new CLIError('Failed to parse Walrus response', 'PARSE_ERROR');
         }
 
         const blobId = blobIdMatch[1];
@@ -132,7 +134,7 @@ export default class StoreSimpleCommand extends BaseCommand {
         await this.todoService.updateTodo(flags.list, todo.id, {
           walrusBlobId: blobId,
           nftObjectId: suiObjectId,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         });
 
         // Step 6: Display success information
@@ -148,24 +150,33 @@ export default class StoreSimpleCommand extends BaseCommand {
         this.log(chalk.white(`  Epochs: ${chalk.cyan(flags.epochs)}`));
         this.log('');
         this.log(chalk.white.bold('Access your todo:'));
-        this.log(chalk.white(`  Walrus URL: ${chalk.cyan(`https://blob.wal.app/${blobId}`)}`));
-        
+        this.log(
+          chalk.white(
+            `  Walrus URL: ${chalk.cyan(`https://blob.wal.app/${blobId}`)}`
+          )
+        );
+
         // Get transaction ID by querying the Sui object
         try {
-          const { stdout: objectOutput } = await execAsync(`sui client object ${suiObjectId}`);
+          const { stdout: objectOutput } = await execAsync(
+            `sui client object ${suiObjectId}`
+          );
           const txIdMatch = objectOutput.match(/prevTx\s*│\s*([^\s]+)/);
           if (txIdMatch) {
-            this.log(chalk.white(`  Transaction ID: ${chalk.yellow(txIdMatch[1])}`));
+            this.log(
+              chalk.white(`  Transaction ID: ${chalk.yellow(txIdMatch[1])}`)
+            );
           }
         } catch (_error) {
           // Ignore if we can't get the transaction ID
         }
-
       } catch (error) {
         // Check if it's a WAL balance issue
         if (error.message.includes('could not find WAL coins')) {
           throw new CLIError(
-            'Insufficient WAL balance. Run "walrus --context ' + flags.network + ' get-wal" to acquire WAL tokens.',
+            'Insufficient WAL balance. Run "walrus --context ' +
+              flags.network +
+              ' get-wal" to acquire WAL tokens.',
             'INSUFFICIENT_WAL'
           );
         }
@@ -177,7 +188,6 @@ export default class StoreSimpleCommand extends BaseCommand {
 
       // Clean up temp file
       fs.unlinkSync(tempFile);
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

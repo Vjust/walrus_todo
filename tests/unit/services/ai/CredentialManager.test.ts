@@ -16,27 +16,29 @@ describe('CredentialManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock fs.existsSync
     mockFs.existsSync.mockReturnValue(true);
-    
+
     // Mock fs.mkdirSync
     mockFs.mkdirSync.mockImplementation(() => undefined);
-    
+
     // Mock crypto functions
     mockCrypto.randomBytes.mockReturnValue(Buffer.from('mockiv12345678901234'));
-    
+
     // Create mock secure store
     mockSecureStore = {
       saveCredentials: jest.fn(),
       getCredentials: jest.fn(),
       deleteCredentials: jest.fn(),
-      validateApiKey: jest.fn()
+      validateApiKey: jest.fn(),
     } as any;
-    
+
     // Mock the SecureCredentialStore constructor
-    (SecureCredentialStore as jest.MockedClass<typeof SecureCredentialStore>).mockImplementation(() => mockSecureStore);
-    
+    (
+      SecureCredentialStore as jest.MockedClass<typeof SecureCredentialStore>
+    ).mockImplementation(() => mockSecureStore);
+
     credentialManager = new CredentialManager();
   });
 
@@ -44,7 +46,7 @@ describe('CredentialManager', () => {
     it('should create credential directory if it does not exist', () => {
       mockFs.existsSync.mockReturnValue(false);
       new CredentialManager();
-      
+
       expect(mockFs.mkdirSync).toHaveBeenCalledWith(
         expect.stringContaining('.walrus-todo/credentials'),
         { recursive: true }
@@ -79,7 +81,7 @@ describe('CredentialManager', () => {
         ...additionalData,
         createdAt: expect.any(Date),
         lastUsed: expect.any(Date),
-        usageCount: 0
+        usageCount: 0,
       });
     });
 
@@ -122,7 +124,7 @@ describe('CredentialManager', () => {
         apiKey: 'test-api-key',
         createdAt: new Date(),
         lastUsed: new Date(),
-        usageCount: 5
+        usageCount: 5,
       };
 
       mockSecureStore.getCredentials.mockResolvedValue(mockCredentials);
@@ -149,7 +151,7 @@ describe('CredentialManager', () => {
         apiKey: 'test-api-key',
         createdAt: new Date(),
         lastUsed: new Date(Date.now() - 86400000), // 1 day ago
-        usageCount: 5
+        usageCount: 5,
       };
 
       mockSecureStore.getCredentials.mockResolvedValue(mockCredentials);
@@ -160,7 +162,7 @@ describe('CredentialManager', () => {
       expect(mockSecureStore.saveCredentials).toHaveBeenCalledWith({
         ...mockCredentials,
         lastUsed: expect.any(Date),
-        usageCount: 6
+        usageCount: 6,
       });
     });
 
@@ -170,9 +172,9 @@ describe('CredentialManager', () => {
 
       mockSecureStore.getCredentials.mockRejectedValue(error);
 
-      await expect(
-        credentialManager.getCredentials(provider)
-      ).rejects.toThrow('Failed to retrieve credentials');
+      await expect(credentialManager.getCredentials(provider)).rejects.toThrow(
+        'Failed to retrieve credentials'
+      );
     });
   });
 
@@ -211,13 +213,15 @@ describe('CredentialManager', () => {
   describe('listProviders', () => {
     it('should list all configured providers', async () => {
       const mockProviders = ['openai', 'anthropic', 'xai'];
-      
+
       // Mock file reading and parsing
-      mockFs.readFileSync.mockReturnValue(JSON.stringify({
-        openai: { encrypted: true },
-        anthropic: { encrypted: true },
-        xai: { encrypted: true }
-      }));
+      mockFs.readFileSync.mockReturnValue(
+        JSON.stringify({
+          openai: { encrypted: true },
+          anthropic: { encrypted: true },
+          xai: { encrypted: true },
+        })
+      );
 
       const providers = await credentialManager.listProviders();
 
@@ -250,10 +254,16 @@ describe('CredentialManager', () => {
 
       mockSecureStore.validateApiKey.mockResolvedValue(true);
 
-      const result = await credentialManager.validateCredentials(provider, apiKey);
+      const result = await credentialManager.validateCredentials(
+        provider,
+        apiKey
+      );
 
       expect(result).toBe(true);
-      expect(mockSecureStore.validateApiKey).toHaveBeenCalledWith(provider, apiKey);
+      expect(mockSecureStore.validateApiKey).toHaveBeenCalledWith(
+        provider,
+        apiKey
+      );
     });
 
     it('should return false for invalid credentials', async () => {
@@ -262,7 +272,10 @@ describe('CredentialManager', () => {
 
       mockSecureStore.validateApiKey.mockResolvedValue(false);
 
-      const result = await credentialManager.validateCredentials(provider, apiKey);
+      const result = await credentialManager.validateCredentials(
+        provider,
+        apiKey
+      );
 
       expect(result).toBe(false);
     });
@@ -343,14 +356,14 @@ describe('CredentialManager', () => {
   describe('error handling', () => {
     it('should handle corrupted credential files', async () => {
       const provider = 'openai';
-      
+
       mockSecureStore.getCredentials.mockImplementation(() => {
         throw new Error('Invalid JSON');
       });
 
-      await expect(
-        credentialManager.getCredentials(provider)
-      ).rejects.toThrow('Failed to retrieve credentials');
+      await expect(credentialManager.getCredentials(provider)).rejects.toThrow(
+        'Failed to retrieve credentials'
+      );
     });
 
     it('should handle permission errors gracefully', async () => {
@@ -393,7 +406,7 @@ describe('CredentialManager', () => {
         createdAt: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), // 1 year ago
         lastUsed: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
         usageCount: 100,
-        expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000) // Expired yesterday
+        expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Expired yesterday
       };
 
       mockSecureStore.getCredentials.mockResolvedValue(expiredCredentials);
@@ -413,7 +426,7 @@ describe('CredentialManager', () => {
         apiKey: oldKey,
         createdAt: new Date(),
         lastUsed: new Date(),
-        usageCount: 50
+        usageCount: 50,
       });
 
       mockSecureStore.saveCredentials.mockResolvedValue(undefined);
@@ -427,7 +440,7 @@ describe('CredentialManager', () => {
         lastUsed: expect.any(Date),
         usageCount: 0,
         previousKey: oldKey,
-        rotatedAt: expect.any(Date)
+        rotatedAt: expect.any(Date),
       });
     });
   });

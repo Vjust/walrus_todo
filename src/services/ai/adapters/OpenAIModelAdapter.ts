@@ -4,11 +4,11 @@
 
 import { PromptTemplate } from '@langchain/core/prompts';
 import { BaseModelAdapter } from './BaseModelAdapter';
-import { 
-  AICompletionParams, 
-  AIResponse, 
+import {
+  AICompletionParams,
+  AIResponse,
   AIProvider,
-  AIModelOptions
+  AIModelOptions,
 } from '../../../types/adapters/AIModelAdapter';
 import { ResponseParser } from '../ResponseParser';
 
@@ -49,20 +49,20 @@ interface OpenAIAPIOptions {
 
 export class OpenAIModelAdapter extends BaseModelAdapter {
   private apiEndpoint: string;
-  
+
   constructor(
-    apiKey: string, 
+    apiKey: string,
     modelName: string = 'gpt-3.5-turbo',
     options: AIModelOptions = {}
   ) {
     super(AIProvider.OPENAI, apiKey, modelName, options);
-    
+
     this.apiEndpoint = 'https://api.openai.com/v1/chat/completions';
-    
+
     // Chat completion models need different API endpoints than older completion models
     if (
-      !modelName.startsWith('gpt-') && 
-      !modelName.includes('instruct') && 
+      !modelName.startsWith('gpt-') &&
+      !modelName.includes('instruct') &&
       !modelName.includes('turbo')
     ) {
       this.apiEndpoint = 'https://api.openai.com/v1/completions';
@@ -90,10 +90,12 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
 
       // Set the appropriate prompt format based on API endpoint
       if (isChatModel) {
-        requestOptions.messages = [{
-          role: 'user',
-          content: resolvedPrompt
-        }];
+        requestOptions.messages = [
+          {
+            role: 'user',
+            content: resolvedPrompt,
+          },
+        ];
       } else {
         requestOptions.prompt = resolvedPrompt;
       }
@@ -105,16 +107,16 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestOptions)
+          body: JSON.stringify(requestOptions),
         },
         {
           timeout: options.timeout,
           retries: options.retries,
           operation: 'OpenAI completion',
-          parseJson: true
+          parseJson: true,
         }
       );
 
@@ -130,16 +132,18 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
         result: content,
         modelName: data.model || this.modelName,
         provider: this.provider,
-        tokenUsage: data.usage ? {
-          prompt: data.usage.prompt_tokens,
-          completion: data.usage.completion_tokens,
-          total: data.usage.total_tokens
-        } : undefined,
+        tokenUsage: data.usage
+          ? {
+              prompt: data.usage.prompt_tokens,
+              completion: data.usage.completion_tokens,
+              total: data.usage.total_tokens,
+            }
+          : undefined,
         timestamp: Date.now(),
         metadata: {
           requestId: data.id,
-          finishReason: data.choices[0]?.finish_reason
-        }
+          finishReason: data.choices[0]?.finish_reason,
+        },
       };
 
       return aiResponse;
@@ -151,7 +155,9 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
   /**
    * Generate a structured response from the AI model
    */
-  public async completeStructured<T>(params: AICompletionParams): Promise<AIResponse<T>> {
+  public async completeStructured<T>(
+    params: AICompletionParams
+  ): Promise<AIResponse<T>> {
     try {
       const options = { ...this.defaultOptions, ...params.options };
       const resolvedPrompt = await this.resolvePrompt(params.prompt);
@@ -175,12 +181,13 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
         requestOptions.messages = [
           {
             role: 'system',
-            content: 'You are a helpful assistant that always responds with valid JSON.'
+            content:
+              'You are a helpful assistant that always responds with valid JSON.',
           },
           {
             role: 'user',
-            content: jsonPrompt
-          }
+            content: jsonPrompt,
+          },
         ];
       } else {
         requestOptions.prompt = jsonPrompt;
@@ -193,16 +200,16 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestOptions)
+          body: JSON.stringify(requestOptions),
         },
         {
           timeout: options.timeout,
           retries: options.retries,
           operation: 'OpenAI structured completion',
-          parseJson: true
+          parseJson: true,
         }
       );
 
@@ -220,16 +227,18 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
         result: parsedResult,
         modelName: data.model || this.modelName,
         provider: this.provider,
-        tokenUsage: data.usage ? {
-          prompt: data.usage.prompt_tokens,
-          completion: data.usage.completion_tokens,
-          total: data.usage.total_tokens
-        } : undefined,
+        tokenUsage: data.usage
+          ? {
+              prompt: data.usage.prompt_tokens,
+              completion: data.usage.completion_tokens,
+              total: data.usage.total_tokens,
+            }
+          : undefined,
         timestamp: Date.now(),
         metadata: {
           requestId: data.id,
-          finishReason: data.choices[0]?.finish_reason
-        }
+          finishReason: data.choices[0]?.finish_reason,
+        },
       };
 
       return aiResponse;
@@ -240,22 +249,22 @@ export class OpenAIModelAdapter extends BaseModelAdapter {
 
   /**
    * Process a prompt through a LangChain chain
-   * 
+   *
    * Note: This is a simplified implementation. In a real-world scenario,
    * you would use LangChain's OpenAI integration directly.
    */
   public async processWithPromptTemplate(
-    promptTemplate: PromptTemplate, 
+    promptTemplate: PromptTemplate,
     input: Record<string, unknown>
   ): Promise<AIResponse> {
     await this.enforceRateLimit();
-    
+
     try {
       const formattedPrompt = await promptTemplate.format(input);
-      
+
       // Use the complete method internally
       return this.complete({
-        prompt: formattedPrompt
+        prompt: formattedPrompt,
       });
     } catch (_error) {
       return this.handleError(_error, 'prompt template processing');

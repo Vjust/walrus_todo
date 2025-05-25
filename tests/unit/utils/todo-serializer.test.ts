@@ -21,20 +21,23 @@ describe('TodoSerializer', () => {
       storageLocation: 'local',
       walrusBlobId: 'blob-456',
       nftObjectId: 'nft-789',
-      imageUrl: 'https://example.com/image.jpg'
+      imageUrl: 'https://example.com/image.jpg',
     };
 
     sampleTodoList = {
       id: 'list-123',
       name: 'Test List',
       owner: '0x1234567890abcdef',
-      todos: [sampleTodo, {...sampleTodo, id: 'todo-456', title: 'Another Todo'}],
+      todos: [
+        sampleTodo,
+        { ...sampleTodo, id: 'todo-456', title: 'Another Todo' },
+      ],
       version: 1,
       collaborators: ['0xabcdef1234567890', '0x9876543210fedcba'],
       createdAt: '2024-01-01T10:00:00.000Z',
       updatedAt: '2024-01-01T11:00:00.000Z',
       walrusBlobId: 'list-blob-123',
-      suiObjectId: 'sui-obj-456'
+      suiObjectId: 'sui-obj-456',
     };
 
     emptyTodoList = {
@@ -44,7 +47,7 @@ describe('TodoSerializer', () => {
       todos: [],
       version: 0,
       createdAt: '2024-01-01T09:00:00.000Z',
-      updatedAt: '2024-01-01T09:00:00.000Z'
+      updatedAt: '2024-01-01T09:00:00.000Z',
     };
   });
 
@@ -52,7 +55,7 @@ describe('TodoSerializer', () => {
     it('should serialize and deserialize a complete todo', () => {
       const buffer = TodoSerializer.todoToBuffer(sampleTodo);
       expect(buffer).toBeInstanceOf(Buffer);
-      
+
       const deserializedTodo = TodoSerializer.bufferToTodo(buffer);
       expect(deserializedTodo).toEqual(sampleTodo);
     });
@@ -66,7 +69,7 @@ describe('TodoSerializer', () => {
         tags: [],
         createdAt: '2024-01-01T08:00:00.000Z',
         updatedAt: '2024-01-01T08:00:00.000Z',
-        private: true
+        private: true,
       };
 
       const buffer = TodoSerializer.todoToBuffer(minimalTodo);
@@ -79,7 +82,7 @@ describe('TodoSerializer', () => {
         ...sampleTodo,
         title: 'Test "Todo" with \'quotes\' & symbols <>&',
         description: 'Unicode: 🎉 Emoji test\n\rNewlines\tTabs',
-        tags: ['tag-with-dash', 'tag_with_underscore', '日本語']
+        tags: ['tag-with-dash', 'tag_with_underscore', '日本語'],
       };
 
       const buffer = TodoSerializer.todoToBuffer(specialCharTodo);
@@ -91,7 +94,7 @@ describe('TodoSerializer', () => {
       const completedTodo: Todo = {
         ...sampleTodo,
         completed: true,
-        completedAt: '2024-01-01T13:00:00.000Z'
+        completedAt: '2024-01-01T13:00:00.000Z',
       };
 
       const buffer = TodoSerializer.todoToBuffer(completedTodo);
@@ -101,12 +104,16 @@ describe('TodoSerializer', () => {
 
     it('should throw error when deserializing invalid JSON', () => {
       const invalidBuffer = Buffer.from('invalid json string');
-      expect(() => TodoSerializer.bufferToTodo(invalidBuffer)).toThrow(SyntaxError);
+      expect(() => TodoSerializer.bufferToTodo(invalidBuffer)).toThrow(
+        SyntaxError
+      );
     });
 
     it('should throw error when deserializing empty buffer', () => {
       const emptyBuffer = Buffer.from('');
-      expect(() => TodoSerializer.bufferToTodo(emptyBuffer)).toThrow(SyntaxError);
+      expect(() => TodoSerializer.bufferToTodo(emptyBuffer)).toThrow(
+        SyntaxError
+      );
     });
 
     it('should handle todo with null/undefined optional fields correctly', () => {
@@ -117,12 +124,12 @@ describe('TodoSerializer', () => {
         completedAt: undefined,
         walrusBlobId: undefined,
         nftObjectId: undefined,
-        imageUrl: undefined
+        imageUrl: undefined,
       };
 
       const buffer = TodoSerializer.todoToBuffer(todoWithNulls);
       const deserializedTodo = TodoSerializer.bufferToTodo(buffer);
-      
+
       // JavaScript serialization omits undefined values
       expect(deserializedTodo).not.toHaveProperty('description');
       expect(deserializedTodo).not.toHaveProperty('dueDate');
@@ -137,7 +144,7 @@ describe('TodoSerializer', () => {
     it('should serialize and deserialize a complete todo list', () => {
       const buffer = TodoSerializer.todoListToBuffer(sampleTodoList);
       expect(buffer).toBeInstanceOf(Buffer);
-      
+
       const deserializedList = TodoSerializer.bufferToTodoList(buffer);
       expect(deserializedList).toEqual(sampleTodoList);
     });
@@ -153,7 +160,7 @@ describe('TodoSerializer', () => {
         ...sampleTodoList,
         name: 'List with "quotes" & symbols™',
         owner: '0xCAFE42BABE',
-        collaborators: ['0x"quoted"', '0x<special>']
+        collaborators: ['0x"quoted"', '0x<special>'],
       };
 
       const buffer = TodoSerializer.todoListToBuffer(specialCharList);
@@ -166,12 +173,12 @@ describe('TodoSerializer', () => {
         ...sampleTodo,
         id: `todo-${i}`,
         title: `Todo ${i}`,
-        description: `Description for todo ${i}`.repeat(10)
+        description: `Description for todo ${i}`.repeat(10),
       }));
 
       const largeTodoList: TodoList = {
         ...sampleTodoList,
-        todos: largeTodos
+        todos: largeTodos,
       };
 
       const buffer = TodoSerializer.todoListToBuffer(largeTodoList);
@@ -182,7 +189,9 @@ describe('TodoSerializer', () => {
 
     it('should throw error when deserializing invalid JSON', () => {
       const invalidBuffer = Buffer.from('{ invalid json }');
-      expect(() => TodoSerializer.bufferToTodoList(invalidBuffer)).toThrow(SyntaxError);
+      expect(() => TodoSerializer.bufferToTodoList(invalidBuffer)).toThrow(
+        SyntaxError
+      );
     });
 
     it('should handle todo list without optional fields', () => {
@@ -193,7 +202,7 @@ describe('TodoSerializer', () => {
         todos: [],
         version: 0,
         createdAt: '2024-01-01T07:00:00.000Z',
-        updatedAt: '2024-01-01T07:00:00.000Z'
+        updatedAt: '2024-01-01T07:00:00.000Z',
       };
 
       const buffer = TodoSerializer.todoListToBuffer(minimalList);
@@ -210,7 +219,7 @@ describe('TodoSerializer', () => {
       const largeTodo: Todo = {
         ...sampleTodo,
         description: 'x'.repeat(10000), // Very long description
-        tags: Array.from({ length: 1000 }, (_, i) => `tag-${i}`)
+        tags: Array.from({ length: 1000 }, (_, i) => `tag-${i}`),
       };
 
       const buffer = TodoSerializer.todoToBuffer(largeTodo);
@@ -222,7 +231,7 @@ describe('TodoSerializer', () => {
       const utf8Todo: Todo = {
         ...sampleTodo,
         title: 'UTF-8: 🌍 世界 мир',
-        description: 'Various encodings: €£¥'
+        description: 'Various encodings: €£¥',
       };
 
       const buffer = TodoSerializer.todoToBuffer(utf8Todo);
@@ -233,20 +242,20 @@ describe('TodoSerializer', () => {
     it('should create different buffers for different todos', () => {
       const todo1 = { ...sampleTodo, id: '1' };
       const todo2 = { ...sampleTodo, id: '2' };
-      
+
       const buffer1 = TodoSerializer.todoToBuffer(todo1);
       const buffer2 = TodoSerializer.todoToBuffer(todo2);
-      
+
       expect(buffer1.equals(buffer2)).toBe(false);
     });
 
     it('should create identical buffers for identical todos', () => {
       const todo1 = { ...sampleTodo };
       const todo2 = { ...sampleTodo };
-      
+
       const buffer1 = TodoSerializer.todoToBuffer(todo1);
       const buffer2 = TodoSerializer.todoToBuffer(todo2);
-      
+
       expect(buffer1.equals(buffer2)).toBe(true);
     });
   });
@@ -262,14 +271,18 @@ describe('TodoSerializer', () => {
 
     it('should throw error when invalid buffer is passed to bufferToTodo', () => {
       const invalidBuffer = Buffer.from('definitely not valid JSON!@#$');
-      expect(() => TodoSerializer.bufferToTodo(invalidBuffer)).toThrow(SyntaxError);
+      expect(() => TodoSerializer.bufferToTodo(invalidBuffer)).toThrow(
+        SyntaxError
+      );
     });
 
     it('should handle circular references gracefully', () => {
       const circularTodo: any = { ...sampleTodo };
       circularTodo.self = circularTodo; // Create circular reference
-      
-      expect(() => TodoSerializer.todoToBuffer(circularTodo)).toThrow(TypeError);
+
+      expect(() => TodoSerializer.todoToBuffer(circularTodo)).toThrow(
+        TypeError
+      );
     });
   });
 
@@ -280,12 +293,12 @@ describe('TodoSerializer', () => {
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-12-31T23:59:59.999Z',
         completedAt: '2024-06-15T12:30:45.123Z',
-        dueDate: '2024-07-01'
+        dueDate: '2024-07-01',
       };
 
       const buffer = TodoSerializer.todoToBuffer(dateFormats);
       const deserializedTodo = TodoSerializer.bufferToTodo(buffer);
-      
+
       expect(deserializedTodo.createdAt).toBe(dateFormats.createdAt);
       expect(deserializedTodo.updatedAt).toBe(dateFormats.updatedAt);
       expect(deserializedTodo.completedAt).toBe(dateFormats.completedAt);
@@ -293,8 +306,12 @@ describe('TodoSerializer', () => {
     });
 
     it('should preserve all priority values', () => {
-      const priorities: Array<'high' | 'medium' | 'low'> = ['high', 'medium', 'low'];
-      
+      const priorities: Array<'high' | 'medium' | 'low'> = [
+        'high',
+        'medium',
+        'low',
+      ];
+
       priorities.forEach(priority => {
         const todo: Todo = { ...sampleTodo, priority };
         const buffer = TodoSerializer.todoToBuffer(todo);
@@ -304,8 +321,12 @@ describe('TodoSerializer', () => {
     });
 
     it('should preserve all storage location values', () => {
-      const locations: Array<'local' | 'blockchain' | 'both'> = ['local', 'blockchain', 'both'];
-      
+      const locations: Array<'local' | 'blockchain' | 'both'> = [
+        'local',
+        'blockchain',
+        'both',
+      ];
+
       locations.forEach(location => {
         const todo: Todo = { ...sampleTodo, storageLocation: location };
         const buffer = TodoSerializer.todoToBuffer(todo);
@@ -319,7 +340,7 @@ describe('TodoSerializer', () => {
         { completed: true, private: true },
         { completed: true, private: false },
         { completed: false, private: true },
-        { completed: false, private: false }
+        { completed: false, private: false },
       ];
 
       booleanTests.forEach(test => {

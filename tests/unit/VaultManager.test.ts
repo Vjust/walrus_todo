@@ -21,7 +21,6 @@ interface BlobRecord {
   vaultId: string;
 }
 
-
 jest.mock('fs');
 jest.mock('path');
 
@@ -32,7 +31,7 @@ describe('VaultManager', () => {
     name: 'Test Vault',
     maxSize: 1024 * 1024 * 10, // 10MB
     allowedTypes: ['image/jpeg', 'image/png'],
-    retentionPeriod: 30 // days
+    retentionPeriod: 30, // days
   };
 
   beforeEach(() => {
@@ -50,25 +49,35 @@ describe('VaultManager', () => {
       const vaultId = vaultManager.createVault(mockVaultConfig);
 
       expect(vaultId).toMatch(/^[a-f0-9]{32}$/);
-      expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining(vaultId));
-      expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('metadata'));
-      expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('blobs'));
+      expect(fs.mkdirSync).toHaveBeenCalledWith(
+        expect.stringContaining(vaultId)
+      );
+      expect(fs.mkdirSync).toHaveBeenCalledWith(
+        expect.stringContaining('metadata')
+      );
+      expect(fs.mkdirSync).toHaveBeenCalledWith(
+        expect.stringContaining('blobs')
+      );
     });
 
     it('should save vault metadata', () => {
       const vaultId = vaultManager.createVault(mockVaultConfig);
-      
+
       // Get the last writeFileSync call as there might be multiple calls
-      const lastWriteCall = (fs.writeFileSync as jest.Mock).mock.calls.slice(-1)[0];
+      const lastWriteCall = (fs.writeFileSync as jest.Mock).mock.calls.slice(
+        -1
+      )[0];
       const savedData = JSON.parse(lastWriteCall[1]);
 
-      expect(savedData.vaults[0]).toEqual(expect.objectContaining({
-        id: vaultId,
-        name: mockVaultConfig.name,
-        totalFiles: 0,
-        totalSize: 0,
-        config: mockVaultConfig
-      }));
+      expect(savedData.vaults[0]).toEqual(
+        expect.objectContaining({
+          id: vaultId,
+          name: mockVaultConfig.name,
+          totalFiles: 0,
+          totalSize: 0,
+          config: mockVaultConfig,
+        })
+      );
     });
   });
 
@@ -86,7 +95,7 @@ describe('VaultManager', () => {
         checksum: 'test-checksum',
         uploadedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
-        vaultId
+        vaultId,
       };
     });
 
@@ -109,7 +118,9 @@ describe('VaultManager', () => {
 
     it('should throw error for invalid vault ID', () => {
       mockBlobRecord.vaultId = 'invalid-vault-id';
-      expect(() => vaultManager.saveBlobRecord(mockBlobRecord)).toThrow(WalrusError);
+      expect(() => vaultManager.saveBlobRecord(mockBlobRecord)).toThrow(
+        WalrusError
+      );
     });
   });
 
@@ -121,8 +132,12 @@ describe('VaultManager', () => {
     });
 
     it('should validate file size', () => {
-      expect(() => 
-        vaultManager.validateFileForVault(vaultId, mockVaultConfig.maxSize + 1, 'image/jpeg')
+      expect(() =>
+        vaultManager.validateFileForVault(
+          vaultId,
+          mockVaultConfig.maxSize + 1,
+          'image/jpeg'
+        )
       ).toThrow(/exceeds vault limit/);
     });
 
@@ -141,7 +156,7 @@ describe('VaultManager', () => {
         checksum: 'test-checksum',
         uploadedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
-        vaultId
+        vaultId,
       };
 
       vaultManager.saveBlobRecord(mockBlobRecord);
@@ -164,7 +179,10 @@ describe('VaultManager', () => {
     beforeEach(() => {
       vaultId = vaultManager.createVault(mockVaultConfig);
       (fs.existsSync as jest.Mock).mockReturnValue(true);
-      (fs.readdirSync as jest.Mock).mockReturnValue(['blob1.json', 'blob2.json']);
+      (fs.readdirSync as jest.Mock).mockReturnValue([
+        'blob1.json',
+        'blob2.json',
+      ]);
     });
 
     it('should find expiring blobs', () => {
@@ -176,13 +194,13 @@ describe('VaultManager', () => {
         'blob1.json': {
           blobId: 'a'.repeat(64),
           expiresAt: expiredDate.toISOString(),
-          vaultId
+          vaultId,
         },
         'blob2.json': {
           blobId: 'b'.repeat(64),
           expiresAt: futureDate.toISOString(),
-          vaultId
-        }
+          vaultId,
+        },
       };
 
       (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
@@ -211,16 +229,22 @@ describe('VaultManager', () => {
         checksum: 'test-checksum',
         uploadedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 86400000).toISOString(),
-        vaultId
+        vaultId,
       };
 
       (fs.existsSync as jest.Mock).mockReturnValue(true);
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockBlobRecord));
+      (fs.readFileSync as jest.Mock).mockReturnValue(
+        JSON.stringify(mockBlobRecord)
+      );
     });
 
     it('should update expiry date', () => {
       const newExpiryDate = new Date(Date.now() + 86400000 * 7).toISOString();
-      vaultManager.updateBlobExpiry(mockBlobRecord.blobId, vaultId, newExpiryDate);
+      vaultManager.updateBlobExpiry(
+        mockBlobRecord.blobId,
+        vaultId,
+        newExpiryDate
+      );
 
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         expect.stringContaining(mockBlobRecord.blobId),
@@ -231,7 +255,11 @@ describe('VaultManager', () => {
     it('should throw error for non-existent blob', () => {
       (fs.existsSync as jest.Mock).mockReturnValue(false);
       expect(() =>
-        vaultManager.updateBlobExpiry('nonexistent', vaultId, new Date().toISOString())
+        vaultManager.updateBlobExpiry(
+          'nonexistent',
+          vaultId,
+          new Date().toISOString()
+        )
       ).toThrow(/Blob record not found/);
     });
   });

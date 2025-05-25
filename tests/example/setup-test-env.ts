@@ -11,6 +11,7 @@ const logger = new Logger('setup-test-env');
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -32,7 +33,7 @@ const TEST_TODO_LIST = 'test-todo-list';
 
 /**
  * Creates a test todo item with optional overrides
- * 
+ *
  * @param overrides - Optional properties to override in the default todo
  * @returns A todo object for testing
  */
@@ -48,13 +49,13 @@ export function createTestTodo(overrides = {}) {
     updatedAt: new Date().toISOString(),
     private: false,
     storageLocation: 'local',
-    ...overrides
+    ...overrides,
   };
 }
 
 /**
  * Creates a test todo list with optional todos
- * 
+ *
  * @param listName - Name of the todo list to create
  * @param todos - Optional array of todos to include in the list
  * @returns A todo list object for testing
@@ -65,7 +66,11 @@ export function createTestTodoList(listName = TEST_TODO_LIST, todos = []) {
     todos = [
       createTestTodo({ title: 'First test todo' }),
       createTestTodo({ title: 'Second test todo', priority: 'high' }),
-      createTestTodo({ title: 'Completed todo', completed: true, completedAt: new Date().toISOString() })
+      createTestTodo({
+        title: 'Completed todo',
+        completed: true,
+        completedAt: new Date().toISOString(),
+      }),
     ];
   }
 
@@ -76,13 +81,13 @@ export function createTestTodoList(listName = TEST_TODO_LIST, todos = []) {
     todos,
     version: 1,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   };
 }
 
 /**
  * Sets up the test environment before tests
- * 
+ *
  * @param options - Optional configuration options
  */
 export function setupTestEnvironment(options = {}) {
@@ -119,7 +124,7 @@ export function setupTestEnvironment(options = {}) {
     if (command.includes('waltodo complete')) {
       return Buffer.from('Todo completed successfully');
     }
-    
+
     return Buffer.from('Command executed successfully');
   });
 }
@@ -138,7 +143,7 @@ export function cleanupTestEnvironment() {
 
 /**
  * Helper to run a CLI command for testing
- * 
+ *
  * @param command - The command to run (without the waltodo prefix)
  * @returns The command output
  */

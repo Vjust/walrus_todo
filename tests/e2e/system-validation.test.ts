@@ -1,12 +1,13 @@
 /**
  * Quick System Validation Test
- * 
+ *
  * Performs basic validation of the Waltodo system to ensure
  * all components are properly set up before running comprehensive E2E tests.
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 
 jest.setTimeout(120000); // 2 minutes
 
@@ -25,7 +26,7 @@ describe('System Validation Tests', () => {
         'src/move/sources/todo_nft.move',
         'waltodo-frontend/package.json',
         'waltodo-frontend/src/app/page.tsx',
-        'tests/e2e'
+        'tests/e2e',
       ];
 
       const missingPaths: string[] = [];
@@ -46,7 +47,10 @@ describe('System Validation Tests', () => {
 
     test('should have valid package.json configurations', () => {
       const mainPackageJson = path.join(projectRoot, 'package.json');
-      const frontendPackageJson = path.join(projectRoot, 'waltodo-frontend/package.json');
+      const frontendPackageJson = path.join(
+        projectRoot,
+        'waltodo-frontend/package.json'
+      );
 
       // Check main package.json
       const mainPkg = JSON.parse(fs.readFileSync(mainPackageJson, 'utf8'));
@@ -56,7 +60,9 @@ describe('System Validation Tests', () => {
 
       // Check frontend package.json if it exists
       if (fs.existsSync(frontendPackageJson)) {
-        const frontendPkg = JSON.parse(fs.readFileSync(frontendPackageJson, 'utf8'));
+        const frontendPkg = JSON.parse(
+          fs.readFileSync(frontendPackageJson, 'utf8')
+        );
         expect(frontendPkg.name).toBeTruthy();
         expect(frontendPkg.scripts).toHaveProperty('dev');
         expect(frontendPkg.scripts).toHaveProperty('build');
@@ -72,7 +78,7 @@ describe('System Validation Tests', () => {
         const buildOutput = execSync('pnpm run build:dev', {
           cwd: projectRoot,
           encoding: 'utf8',
-          timeout: 60000
+          timeout: 60000,
         });
 
         // Check that build completed
@@ -94,7 +100,7 @@ describe('System Validation Tests', () => {
         const versionOutput = execSync('pnpm run cli -- --version', {
           cwd: projectRoot,
           encoding: 'utf8',
-          timeout: 30000
+          timeout: 30000,
         });
 
         expect(versionOutput).toBeTruthy();
@@ -121,7 +127,10 @@ describe('System Validation Tests', () => {
     });
 
     test('should have valid smart contract source', () => {
-      const todoNftPath = path.join(projectRoot, 'src/move/sources/todo_nft.move');
+      const todoNftPath = path.join(
+        projectRoot,
+        'src/move/sources/todo_nft.move'
+      );
       const contractContent = fs.readFileSync(todoNftPath, 'utf8');
 
       // Check for essential contract components
@@ -137,7 +146,7 @@ describe('System Validation Tests', () => {
   describe('Frontend Validation', () => {
     test('should have frontend structure in place', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
-      
+
       if (!fs.existsSync(frontendPath)) {
         // console.log('⚠️ Frontend directory not found - frontend tests will be skipped'); // Removed console statement
         return;
@@ -148,11 +157,11 @@ describe('System Validation Tests', () => {
         'src/app/page.tsx',
         'src/components/navbar.tsx',
         'tailwind.config.js',
-        'next.config.js'
+        'next.config.js',
       ];
 
-      const missingFiles = frontendCriticalFiles.filter(file => 
-        !fs.existsSync(path.join(frontendPath, file))
+      const missingFiles = frontendCriticalFiles.filter(
+        file => !fs.existsSync(path.join(frontendPath, file))
       );
 
       if (missingFiles.length > 0) {
@@ -164,7 +173,7 @@ describe('System Validation Tests', () => {
 
     test('should be able to install frontend dependencies', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
-      
+
       if (!fs.existsSync(frontendPath)) {
         // console.log('⚠️ Skipping frontend dependency test - frontend not found'); // Removed console statement
         return;
@@ -174,7 +183,7 @@ describe('System Validation Tests', () => {
         execSync('pnpm install', {
           cwd: frontendPath,
           stdio: 'inherit',
-          timeout: 120000
+          timeout: 120000,
         });
 
         const nodeModulesPath = path.join(frontendPath, 'node_modules');
@@ -193,15 +202,15 @@ describe('System Validation Tests', () => {
       const tools = [
         { name: 'Node.js', command: 'node --version' },
         { name: 'pnpm', command: 'pnpm --version' },
-        { name: 'Sui CLI', command: 'sui --version' }
+        { name: 'Sui CLI', command: 'sui --version' },
       ];
 
       const results = tools.map(tool => {
         try {
-          const output = execSync(tool.command, { 
+          const output = execSync(tool.command, {
             encoding: 'utf8',
             timeout: 10000,
-            stdio: 'pipe'
+            stdio: 'pipe',
           });
           return { name: tool.name, available: true, version: output.trim() };
         } catch (_error) {
@@ -212,7 +221,7 @@ describe('System Validation Tests', () => {
       // Check Node.js and pnpm (required)
       const nodeResult = results.find(r => r.name === 'Node.js');
       const pnpmResult = results.find(r => r.name === 'pnpm');
-      
+
       expect(nodeResult).toBeDefined();
       expect(nodeResult!.available).toBe(true);
       expect(pnpmResult).toBeDefined();
@@ -232,15 +241,15 @@ describe('System Validation Tests', () => {
     test('should check for optional tools', () => {
       const optionalTools = [
         { name: 'Walrus CLI', command: 'walrus --version' },
-        { name: 'Git', command: 'git --version' }
+        { name: 'Git', command: 'git --version' },
       ];
 
       optionalTools.forEach(tool => {
         try {
-          const output = execSync(tool.command, { 
+          const output = execSync(tool.command, {
             encoding: 'utf8',
             timeout: 10000,
-            stdio: 'pipe'
+            stdio: 'pipe',
           });
           // console.log(`✅ ${tool.name} available: ${output.trim() // Removed console statement}`);
         } catch (_error) {
@@ -257,7 +266,7 @@ describe('System Validation Tests', () => {
         const configOutput = execSync('pnpm run cli -- config', {
           cwd: projectRoot,
           encoding: 'utf8',
-          timeout: 30000
+          timeout: 30000,
         });
 
         // Should not error out completely
@@ -277,7 +286,7 @@ describe('System Validation Tests', () => {
   describe('Test Framework Validation', () => {
     test('should have Jest configured properly', () => {
       const jestConfigPath = path.join(projectRoot, 'jest.config.js');
-      
+
       if (fs.existsSync(jestConfigPath)) {
         const jestConfig = fs.readFileSync(jestConfigPath, 'utf8');
         expect(jestConfig).toContain('module.exports');
@@ -290,11 +299,14 @@ describe('System Validation Tests', () => {
     test('should be able to run a simple test', () => {
       try {
         // Try to run a basic test to verify Jest is working
-        execSync('pnpm test -- --testPathPattern=system-validation.test.ts --verbose', {
-          cwd: projectRoot,
-          encoding: 'utf8',
-          timeout: 60000
-        });
+        execSync(
+          'pnpm test -- --testPathPattern=system-validation.test.ts --verbose',
+          {
+            cwd: projectRoot,
+            encoding: 'utf8',
+            timeout: 60000,
+          }
+        );
 
         // console.log('✅ Test framework is functional'); // Removed console statement
       } catch (_error) {
@@ -307,16 +319,18 @@ describe('System Validation Tests', () => {
   describe('System Readiness Summary', () => {
     test('should provide overall system readiness assessment', () => {
       // console.log('\n🔍 System Readiness Assessment:'); // Removed console statement
-      
+
       const checks = [
         { name: 'Project Structure', status: true },
         { name: 'Build System', status: true },
         { name: 'Smart Contracts', status: true },
-        { name: 'CLI Functionality', status: true }
+        { name: 'CLI Functionality', status: true },
       ];
 
       // Check frontend
-      const frontendExists = fs.existsSync(path.join(projectRoot, 'waltodo-frontend'));
+      const frontendExists = fs.existsSync(
+        path.join(projectRoot, 'waltodo-frontend')
+      );
       checks.push({ name: 'Frontend', status: frontendExists });
 
       // Check Sui CLI
@@ -349,8 +363,10 @@ describe('System Validation Tests', () => {
       }
 
       // Minimum requirements check
-      const minRequirements = checks.filter(c => 
-        ['Project Structure', 'Build System', 'CLI Functionality'].includes(c.name)
+      const minRequirements = checks.filter(c =>
+        ['Project Structure', 'Build System', 'CLI Functionality'].includes(
+          c.name
+        )
       );
       const minReady = minRequirements.every(c => c.status);
 

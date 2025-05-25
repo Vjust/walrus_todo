@@ -25,17 +25,19 @@ async function runBasicSetup() {
     logger.info(`\nFiles Created:`);
     logger.info(`- Keystore: ${result.keystorePath}`);
     logger.info(`- Config: ${result.configPath}`);
-    
+
     if (result.backupPath) {
       logger.info(`- Backup: ${result.backupPath}`);
     }
-    
+
     if (result.fundingTxDigest) {
       logger.info(`\nFunding Transaction: ${result.fundingTxDigest}`);
     }
 
-    logger.info('\n✅ Setup successful! You can now use this wallet for testing.');
-    
+    logger.info(
+      '\n✅ Setup successful! You can now use this wallet for testing.'
+    );
+
     return result;
   } catch (_error) {
     logger.error('❌ Setup failed:', error);

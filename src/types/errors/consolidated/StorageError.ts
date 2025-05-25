@@ -12,13 +12,13 @@ import { BaseError, BaseErrorOptions } from './BaseError';
 export interface StorageErrorOptions extends BaseErrorOptions {
   /** Storage operation being performed */
   operation?: string;
-  
+
   /** ID of the storage item (blob, file, etc.) */
   itemId?: string;
-  
+
   /** Type of storage (local, blockchain, walrus) */
   storageType?: 'local' | 'blockchain' | 'walrus' | string;
-  
+
   /** Path to the file or resource if applicable */
   path?: string;
 }
@@ -29,34 +29,31 @@ export interface StorageErrorOptions extends BaseErrorOptions {
 export class StorageError extends BaseError {
   /** Storage operation being performed */
   public readonly operation?: string;
-  
+
   /** ID of the storage item */
   public readonly itemId?: string;
-  
+
   /** Type of storage */
   public readonly storageType?: string;
-  
+
   /** Path to the file or resource */
   public readonly path?: string;
-  
+
   /**
    * Create a new StorageError
    * @param message Error message
    * @param options Options for the error
    */
-  constructor(
-    message: string,
-    options: Partial<StorageErrorOptions> = {}
-  ) {
+  constructor(message: string, options: Partial<StorageErrorOptions> = {}) {
     const {
       operation = 'unknown',
       itemId,
       storageType = 'unknown',
       path,
-      recoverable = true,  // Storage errors are often recoverable
+      recoverable = true, // Storage errors are often recoverable
       ...restOptions
     } = options;
-    
+
     // Build context with storage details
     const context = {
       ...(options.context || {}),
@@ -65,13 +62,13 @@ export class StorageError extends BaseError {
       // Avoid including actual paths/IDs in context for security
       // They're stored as properties of the error object instead
     };
-    
+
     // Generate code based on operation
     const code = `STORAGE_${operation.toUpperCase()}_ERROR`;
-    
+
     // Generate public message
     const publicMessage = `A storage operation failed`;
-    
+
     // Call BaseError constructor
     super({
       message,
@@ -80,35 +77,35 @@ export class StorageError extends BaseError {
       recoverable,
       shouldRetry: recoverable,
       publicMessage,
-      ...restOptions
+      ...restOptions,
     });
-    
+
     // Store operation
     this.operation = operation;
-    
+
     // Store sensitive properties privately with non-enumerable descriptors
     Object.defineProperties(this, {
       itemId: {
         value: itemId,
         enumerable: false,
         writable: false,
-        configurable: false
+        configurable: false,
       },
       storageType: {
         value: storageType,
         enumerable: false,
         writable: false,
-        configurable: false
+        configurable: false,
       },
       path: {
         value: path,
         enumerable: false,
         writable: false,
-        configurable: false
-      }
+        configurable: false,
+      },
     });
   }
-  
+
   /**
    * Create a StorageError for file not found
    * @param path File path
@@ -117,17 +114,20 @@ export class StorageError extends BaseError {
    */
   static fileNotFound(
     path: string,
-    options: Omit<StorageErrorOptions, 'path' | 'operation' | 'storageType' | 'message'> = {}
+    options: Omit<
+      StorageErrorOptions,
+      'path' | 'operation' | 'storageType' | 'message'
+    > = {}
   ): StorageError {
     return new StorageError(`File not found: ${path}`, {
       ...options,
       path,
       operation: 'read',
       storageType: 'local',
-      recoverable: false
+      recoverable: false,
     });
   }
-  
+
   /**
    * Create a StorageError for permission denied
    * @param path File path
@@ -142,10 +142,10 @@ export class StorageError extends BaseError {
       ...options,
       path,
       operation: 'access',
-      recoverable: false
+      recoverable: false,
     });
   }
-  
+
   /**
    * Create a StorageError for blob not found
    * @param blobId Blob ID
@@ -154,14 +154,17 @@ export class StorageError extends BaseError {
    */
   static blobNotFound(
     blobId: string,
-    options: Omit<StorageErrorOptions, 'itemId' | 'operation' | 'storageType' | 'message'> = {}
+    options: Omit<
+      StorageErrorOptions,
+      'itemId' | 'operation' | 'storageType' | 'message'
+    > = {}
   ): StorageError {
     return new StorageError(`Blob not found: ${blobId}`, {
       ...options,
       itemId: blobId,
       operation: 'read',
       storageType: 'walrus',
-      recoverable: false
+      recoverable: false,
     });
   }
 }

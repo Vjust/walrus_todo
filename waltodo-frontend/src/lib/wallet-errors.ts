@@ -21,9 +21,11 @@ export class WalletNotSelectedError extends WalletError {
 // Error when wallet is not installed
 export class WalletNotInstalledError extends WalletError {
   walletName: string;
-  
+
   constructor(walletName: string) {
-    super(`${walletName} wallet is not installed. Please install the extension first.`);
+    super(
+      `${walletName} wallet is not installed. Please install the extension first.`
+    );
     this.name = 'WalletNotInstalledError';
     this.walletName = walletName;
   }
@@ -33,7 +35,7 @@ export class WalletNotInstalledError extends WalletError {
 export class WalletNotSupportedError extends WalletError {
   walletName: string;
   environment: string;
-  
+
   constructor(walletName: string, environment: string) {
     super(`${walletName} wallet is not supported in ${environment}.`);
     this.name = 'WalletNotSupportedError';
@@ -64,37 +66,57 @@ export function categorizeWalletError(error: unknown): WalletError {
   if (error instanceof WalletError) {
     return error;
   }
-  
+
   // Convert to string for pattern matching
   const message = error instanceof Error ? error.message : String(error);
   const lowerMessage = message.toLowerCase();
-  
+
   // Common error patterns
-  if (lowerMessage.includes('user rejected') || lowerMessage.includes('user denied')) {
+  if (
+    lowerMessage.includes('user rejected') ||
+    lowerMessage.includes('user denied')
+  ) {
     return new WalletConnectionRejectedError();
   }
-  
-  if (lowerMessage.includes('not selected') || lowerMessage.includes('no wallet selected')) {
+
+  if (
+    lowerMessage.includes('not selected') ||
+    lowerMessage.includes('no wallet selected')
+  ) {
     return new WalletNotSelectedError();
   }
-  
-  if (lowerMessage.includes('not installed') || lowerMessage.includes('not detected')) {
-    const walletName = lowerMessage.includes('phantom') ? 'Phantom' : 
-                       lowerMessage.includes('sui') ? 'Sui' : 'Wallet';
+
+  if (
+    lowerMessage.includes('not installed') ||
+    lowerMessage.includes('not detected')
+  ) {
+    const walletName = lowerMessage.includes('phantom')
+      ? 'Phantom'
+      : lowerMessage.includes('sui')
+        ? 'Sui'
+        : 'Wallet';
     return new WalletNotInstalledError(walletName);
   }
-  
+
   // Check for Backpack-specific errors
   if (lowerMessage.includes('backpack') || lowerMessage.includes('xnft')) {
-    if (lowerMessage.includes('not installed') || lowerMessage.includes('not found') || lowerMessage.includes('undefined')) {
+    if (
+      lowerMessage.includes('not installed') ||
+      lowerMessage.includes('not found') ||
+      lowerMessage.includes('undefined')
+    ) {
       return new WalletNotInstalledError('Backpack');
     }
-    
-    if (lowerMessage.includes('rejected') || lowerMessage.includes('denied') || lowerMessage.includes('declined')) {
+
+    if (
+      lowerMessage.includes('rejected') ||
+      lowerMessage.includes('denied') ||
+      lowerMessage.includes('declined')
+    ) {
       return new WalletConnectionRejectedError();
     }
   }
-  
+
   // If we can't categorize, return a generic WalletError
   return new WalletError(
     error instanceof Error ? error.message : 'Unknown wallet error occurred'
@@ -103,64 +125,65 @@ export function categorizeWalletError(error: unknown): WalletError {
 
 // Get user-friendly error message and suggested action
 export function getWalletErrorMessage(error: WalletError): {
-  message: string; 
+  message: string;
   suggestion: string;
 } {
   if (error instanceof WalletNotSelectedError) {
     return {
       message: 'No wallet selected',
-      suggestion: 'Please select a wallet before connecting'
+      suggestion: 'Please select a wallet before connecting',
     };
   }
-  
+
   if (error instanceof WalletNotInstalledError) {
     // Provide wallet-specific installation instructions
     const walletName = error.walletName;
     let installUrl = '';
     let suggestion = `Please install the ${walletName} browser extension first`;
-    
+
     // Provide specific installation URLs based on wallet type
     if (walletName.includes('Phantom')) {
       installUrl = 'https://phantom.app/download';
       suggestion = `Please install the Phantom browser extension from ${installUrl}`;
     } else if (walletName.includes('Sui') || walletName.includes('Slush')) {
-      installUrl = 'https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil';
+      installUrl =
+        'https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil';
       suggestion = `Please install the Sui/Slush browser extension from the Chrome Web Store`;
     } else if (walletName.includes('Backpack')) {
       installUrl = 'https://www.backpack.app/download';
       suggestion = `Please install the Backpack browser extension from ${installUrl}`;
     }
-    
+
     return {
       message: `${walletName} wallet not installed`,
-      suggestion: suggestion
+      suggestion: suggestion,
     };
   }
-  
+
   if (error instanceof WalletNotSupportedError) {
     return {
       message: `${error.walletName} not supported`,
-      suggestion: `Try using a different browser or environment`
+      suggestion: `Try using a different browser or environment`,
     };
   }
-  
+
   if (error instanceof WalletConnectionRejectedError) {
     return {
       message: 'Connection rejected',
-      suggestion: 'Please approve the connection request in your wallet'
+      suggestion: 'Please approve the connection request in your wallet',
     };
   }
-  
+
   if (error instanceof WalletAlreadyConnectedError) {
     return {
       message: 'Already connected',
-      suggestion: 'Your wallet is already connected'
+      suggestion: 'Your wallet is already connected',
     };
   }
-  
+
   // Default case
   return {
     message: error.message || 'Wallet error',
-    suggestion: 'Please try again or use a different wallet'
+    suggestion: 'Please try again or use a different wallet',
   };
 }

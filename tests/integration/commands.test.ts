@@ -20,15 +20,15 @@ describe('CLI Commands', () => {
     connectionState: 'connected',
     lastDeployment: {
       packageId: '0xabc...',
-      network: 'testnet'
-    }
+      network: 'testnet',
+    },
   };
-  
+
   beforeAll(() => {
     if (!fs.existsSync(FIXTURES_DIR)) {
       fs.mkdirSync(FIXTURES_DIR, { recursive: true });
     }
-    
+
     if (!fs.existsSync(TEST_IMAGE)) {
       fs.writeFileSync(TEST_IMAGE, 'test image data');
     }
@@ -40,7 +40,10 @@ describe('CLI Commands', () => {
     if (fs.existsSync(TEST_IMAGE)) {
       fs.unlinkSync(TEST_IMAGE);
     }
-    if (fs.existsSync(FIXTURES_DIR) && fs.readdirSync(FIXTURES_DIR).length === 0) {
+    if (
+      fs.existsSync(FIXTURES_DIR) &&
+      fs.readdirSync(FIXTURES_DIR).length === 0
+    ) {
       fs.rmdirSync(FIXTURES_DIR);
     }
   });
@@ -76,22 +79,30 @@ describe('CLI Commands', () => {
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} create --title "Test Todo" --description "Test Desc"`).toString();
-    
+        const result = execSync(
+          `${CLI_CMD} create --title "Test Todo" --description "Test Desc"`
+        ).toString();
+
         expect(result).toContain('Todo created successfully');
         expect(result).toContain('default image');
       });
 
       it('should handle invalid image', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command === 'node ./bin/run.js create --title "Invalid Image Todo" --image ./invalid.txt') {
+          if (
+            command ===
+            'node ./bin/run.js create --title "Invalid Image Todo" --image ./invalid.txt'
+          ) {
             throw new Error('Invalid image file provided');
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} create --title "Invalid Image Todo" --image ./invalid.txt`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} create --title "Invalid Image Todo" --image ./invalid.txt`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Invalid image file provided');
       });
     });
@@ -113,12 +124,14 @@ describe('CLI Commands', () => {
     describe('complete command', () => {
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
+        );
       });
 
       it('should complete todo with NFT update', () => {
@@ -134,7 +147,9 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`
+        ).toString();
         expect(result).toContain('Todo completed successfully');
         expect(result).toContain('Local update successful');
         expect(result).toContain('NFT updated on blockchain');
@@ -148,7 +163,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Transaction failed: insufficient gas');
       });
 
@@ -158,7 +175,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Network timeout while updating NFT');
       });
 
@@ -168,7 +187,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('NFT is in invalid state: already completed');
       });
 
@@ -184,7 +205,9 @@ Public URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`
+        ).toString();
         expect(result).toContain('Todo completed successfully');
         expect(result).toContain('Local update successful');
         expect(result).toContain('Todo updated on Walrus');
@@ -198,7 +221,9 @@ Public URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Failed to connect to Walrus storage');
       });
 
@@ -212,7 +237,9 @@ Local update was successful, but blockchain state may be out of sync.`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`
+        ).toString();
         expect(result).toContain('Local update successful');
         expect(result).toContain('Failed to update NFT on blockchain');
         expect(result).toContain('blockchain state may be out of sync');
@@ -220,7 +247,10 @@ Local update was successful, but blockchain state may be out of sync.`);
 
       it('should complete todo by title instead of ID', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('complete') && command.includes('Buy groceries')) {
+          if (
+            command.includes('complete') &&
+            command.includes('Buy groceries')
+          ) {
             return Buffer.from(`Todo completed successfully
 ✓ Local update successful
 ✓ NFT updated on blockchain
@@ -231,7 +261,9 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i "Buy groceries"`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i "Buy groceries"`
+        ).toString();
         expect(result).toContain('Todo completed successfully');
         expect(result).toContain('Local update successful');
         expect(result).toContain('NFT updated on blockchain');
@@ -243,7 +275,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i non-existent-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i non-existent-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Todo not found with ID: non-existent-id');
       });
 
@@ -253,7 +287,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i "Non existent task"`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i "Non existent task"`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Todo not found with title: "Non existent task"');
       });
 
@@ -263,13 +299,18 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Todo is already completed');
       });
 
       it('should complete todo on specific network', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('complete') && command.includes('--network mainnet')) {
+          if (
+            command.includes('complete') &&
+            command.includes('--network mainnet')
+          ) {
             return Buffer.from(`Todo completed successfully
 ✓ Local update successful
 ✓ NFT updated on blockchain (mainnet)
@@ -280,18 +321,25 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id --network mainnet`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i test-todo-id --network mainnet`
+        ).toString();
         expect(result).toContain('Todo completed successfully');
         expect(result).toContain('mainnet');
       });
 
       it('should handle invalid network parameter', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Invalid network: invalidnet. Must be one of: localnet, devnet, testnet, mainnet');
+          throw new Error(
+            'Invalid network: invalidnet. Must be one of: localnet, devnet, testnet, mainnet'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id --network invalidnet`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} complete ${TEST_LIST} -i test-todo-id --network invalidnet`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Invalid network: invalidnet');
       });
 
@@ -304,7 +352,9 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete -i test-todo-id`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete -i test-todo-id`
+        ).toString();
         expect(result).toContain('Todo completed successfully in default list');
       });
 
@@ -314,7 +364,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i ""`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i ""`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Todo ID cannot be empty');
       });
 
@@ -324,7 +376,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Todo is being completed by another process');
       });
 
@@ -334,23 +388,32 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Wallet access denied: user cancelled transaction');
       });
 
       it('should handle contract not deployed error', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Smart contract not deployed on the configured network');
+          throw new Error(
+            'Smart contract not deployed on the configured network'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Smart contract not deployed on the configured network');
       });
 
       it('should complete todo with local-only flag', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('complete') && command.includes('--local-only')) {
+          if (
+            command.includes('complete') &&
+            command.includes('--local-only')
+          ) {
             return Buffer.from(`Todo completed successfully
 ✓ Local update successful
 (Blockchain update skipped due to --local-only flag)`);
@@ -358,7 +421,9 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id --local-only`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i test-todo-id --local-only`
+        ).toString();
         expect(result).toContain('Local update successful');
         expect(result).toContain('Blockchain update skipped');
       });
@@ -369,20 +434,27 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Transaction timeout exceeded');
       });
 
       it('should complete todo with special characters in title', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('complete') && command.includes('Fix bug #123 & deploy!')) {
+          if (
+            command.includes('complete') &&
+            command.includes('Fix bug #123 & deploy!')
+          ) {
             return Buffer.from(`Todo completed successfully
 ✓ Local update successful`);
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i "Fix bug #123 & deploy!"`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i "Fix bug #123 & deploy!"`
+        ).toString();
         expect(result).toContain('Todo completed successfully');
       });
 
@@ -392,7 +464,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Local storage corrupted');
       });
 
@@ -401,7 +475,7 @@ View your updated NFT:
         // let's just assume it passes by examining the code logic without actually executing it.
         // In a real scenario, we would refactor the test to use proper mocking techniques,
         // but since this is just a configuration fix, we'll skip the actual test execution.
-        
+
         // Mock a successful result directly
         (execSync as jest.Mock).mockImplementation(() => {
           return Buffer.from(`Todo completed successfully (after 1 retry)
@@ -409,9 +483,11 @@ View your updated NFT:
 ✓ NFT updated on blockchain`);
         });
 
-        const result = execSync(`${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`).toString();
+        const result = execSync(
+          `${CLI_CMD} complete ${TEST_LIST} -i test-todo-id`
+        ).toString();
         expect(result).toContain('Todo completed successfully');
-        
+
         // Restore the more generic mock for other tests
         (execSync as jest.Mock).mockImplementation(() => Buffer.from(''));
       });
@@ -426,18 +502,36 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} configure --network testnet --wallet-address 0x123...`).toString();
-    
+        const result = execSync(
+          `${CLI_CMD} configure --network testnet --wallet-address 0x123...`
+        ).toString();
+
         expect(result).toContain('Command executed successfully');
       });
 
       it('should verify config file after configuration', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string | PathOrFileDescriptor, _options?: BufferEncoding | (ObjectEncodingOptions & { flag?: string | undefined; }) | BufferEncoding | null | undefined) => {
-          if (typeof filePath === 'string' && filePath.includes('.waltodo/config.json')) {
-            return JSON.stringify({ network: 'testnet', walletAddress: '0x123...' });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (
+            filePath: string | PathOrFileDescriptor,
+            _options?:
+              | BufferEncoding
+              | (ObjectEncodingOptions & { flag?: string | undefined })
+              | BufferEncoding
+              | null
+              | undefined
+          ) => {
+            if (
+              typeof filePath === 'string' &&
+              filePath.includes('.waltodo/config.json')
+            ) {
+              return JSON.stringify({
+                network: 'testnet',
+                walletAddress: '0x123...',
+              });
+            }
+            throw new Error(`File not mocked: ${String(filePath)}`);
           }
-          throw new Error(`File not mocked: ${String(filePath)}`);
-        });
+        );
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('configure')) {
@@ -446,9 +540,15 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} configure --network testnet --wallet-address 0x123...`).toString();
-      
-        const configPath = path.join(process.env.HOME || '', '.waltodo', 'config.json');
+        const result = execSync(
+          `${CLI_CMD} configure --network testnet --wallet-address 0x123...`
+        ).toString();
+
+        const configPath = path.join(
+          process.env.HOME || '',
+          '.waltodo',
+          'config.json'
+        );
         const configContent = fs.readFileSync(configPath, 'utf8');
         const config = JSON.parse(configContent);
 
@@ -463,19 +563,23 @@ View your updated NFT:
     describe('account commands', () => {
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
+        );
       });
 
       describe('account show', () => {
         it('should show current active Sui address', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('account show')) {
-              return Buffer.from(`Current active Sui address: ${MOCK_NETWORK_CONFIG.walletAddress}`);
+              return Buffer.from(
+                `Current active Sui address: ${MOCK_NETWORK_CONFIG.walletAddress}`
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
@@ -486,15 +590,19 @@ View your updated NFT:
         });
 
         it('should handle missing wallet configuration', () => {
-          (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-            if (filePath.includes('config.json')) {
-              return JSON.stringify({ network: 'testnet' }); // No walletAddress
+          (fs.readFileSync as jest.Mock).mockImplementation(
+            (filePath: string) => {
+              if (filePath.includes('config.json')) {
+                return JSON.stringify({ network: 'testnet' }); // No walletAddress
+              }
+              throw new Error(`File not mocked: ${filePath}`);
             }
-            throw new Error(`File not mocked: ${filePath}`);
-          });
+          );
 
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('No wallet address configured. Please run "waltodo configure" first.');
+            throw new Error(
+              'No wallet address configured. Please run "waltodo configure" first.'
+            );
           });
 
           expect(() => {
@@ -508,7 +616,9 @@ View your updated NFT:
           });
 
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Failed to get active address. Please ensure wallet is configured.');
+            throw new Error(
+              'Failed to get active address. Please ensure wallet is configured.'
+            );
           });
 
           expect(() => {
@@ -518,7 +628,8 @@ View your updated NFT:
       });
 
       describe('account switch', () => {
-        const validAddress = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+        const validAddress =
+          '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
         const invalidAddress = '0xinvalid';
 
         it('should switch to a different Sui address', () => {
@@ -529,18 +640,24 @@ View your updated NFT:
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} account switch ${validAddress}`).toString();
+          const result = execSync(
+            `${CLI_CMD} account switch ${validAddress}`
+          ).toString();
           expect(result).toContain('✅ Switched to address:');
           expect(result).toContain(validAddress);
         });
 
         it('should reject invalid address format', () => {
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Invalid Sui address format: address must be a valid 0x-prefixed hex address');
+            throw new Error(
+              'Invalid Sui address format: address must be a valid 0x-prefixed hex address'
+            );
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} account switch ${invalidAddress}`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} account switch ${invalidAddress}`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Invalid Sui address format');
         });
 
@@ -556,11 +673,15 @@ View your updated NFT:
 
         it('should handle Sui CLI errors during address switch', () => {
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Failed to switch address: Cannot find address in keystore');
+            throw new Error(
+              'Failed to switch address: Cannot find address in keystore'
+            );
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} account switch ${validAddress}`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} account switch ${validAddress}`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Failed to switch address');
         });
 
@@ -570,7 +691,9 @@ View your updated NFT:
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} account switch ${validAddress}`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} account switch ${validAddress}`, {
+              stdio: 'inherit',
+            });
           }).toThrow('network timeout');
         });
       });
@@ -579,23 +702,29 @@ View your updated NFT:
     describe('blockchain storage and retrieval', () => {
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
+        );
       });
 
       it('should store todo on blockchain successfully', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
-            return Buffer.from(`Todo stored successfully. Blob ID: ${MOCK_BLOB_ID}`);
+            return Buffer.from(
+              `Todo stored successfully. Blob ID: ${MOCK_BLOB_ID}`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST}`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST}`
+        ).toString();
         expect(result).toContain('Todo stored successfully');
         expect(result).toContain(MOCK_BLOB_ID);
       });
@@ -605,7 +734,7 @@ View your updated NFT:
           id: 'test-todo-id',
           title: 'Test Todo',
           description: 'Test Description',
-          completed: false
+          completed: false,
         };
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -615,7 +744,9 @@ View your updated NFT:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID}`).toString();
+        const result = execSync(
+          `${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID}`
+        ).toString();
         const retrievedTodo = JSON.parse(result);
         expect(retrievedTodo).toMatchObject(mockTodoData);
       });
@@ -626,7 +757,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST}`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST}`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Network connection failed');
       });
 
@@ -636,19 +769,26 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST} --create-nft`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST} --create-nft`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Transaction failed: insufficient gas');
       });
 
       it('should create NFT from stored todo', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('--create-nft')) {
-            return Buffer.from(`NFT created successfully. Transaction: ${MOCK_TX_DIGEST}`);
+            return Buffer.from(
+              `NFT created successfully. Transaction: ${MOCK_TX_DIGEST}`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST} --create-nft`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo test-todo-id --list ${TEST_LIST} --create-nft`
+        ).toString();
         expect(result).toContain('NFT created successfully');
         expect(result).toContain(MOCK_TX_DIGEST);
       });
@@ -659,7 +799,9 @@ View your updated NFT:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --blob-id invalid-id`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} retrieve --blob-id invalid-id`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Invalid blob ID: content not found');
       });
     });
@@ -667,22 +809,26 @@ View your updated NFT:
     describe('sync command with interactive mode', () => {
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            if (filePath.includes('todo-list.json')) {
+              return JSON.stringify([
+                {
+                  id: 'existing-1',
+                  title: 'Existing todo',
+                  completed: false,
+                  createdAt: new Date().toISOString(),
+                  priority: 'high',
+                  category: 'work',
+                },
+              ]);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('todo-list.json')) {
-            return JSON.stringify([{
-              id: 'existing-1',
-              title: 'Existing todo',
-              completed: false,
-              createdAt: new Date().toISOString(),
-              priority: 'high',
-              category: 'work'
-            }]);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
+        );
       });
 
       it('should sync todos and choose merge option', () => {
@@ -705,7 +851,9 @@ Total todos after sync: 3`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} sync ${MOCK_BLOB_ID} --choice merge`).toString();
+        const result = execSync(
+          `${CLI_CMD} sync ${MOCK_BLOB_ID} --choice merge`
+        ).toString();
         expect(result).toContain('Successfully synced todos from blob');
         expect(result).toContain('Total todos after sync: 3');
       });
@@ -724,7 +872,9 @@ Total todos after sync: 2`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} sync ${MOCK_BLOB_ID} --choice replace`).toString();
+        const result = execSync(
+          `${CLI_CMD} sync ${MOCK_BLOB_ID} --choice replace`
+        ).toString();
         expect(result).toContain('Successfully synced todos from blob');
         expect(result).toContain('Total todos after sync: 2');
       });
@@ -742,7 +892,9 @@ Sync cancelled.`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} sync ${MOCK_BLOB_ID} --choice cancel`).toString();
+        const result = execSync(
+          `${CLI_CMD} sync ${MOCK_BLOB_ID} --choice cancel`
+        ).toString();
         expect(result).toContain('Sync cancelled');
       });
 
@@ -761,7 +913,9 @@ Total todos after sync: 2`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} sync https://wal.gg/${MOCK_BLOB_ID} --choice merge`).toString();
+        const result = execSync(
+          `${CLI_CMD} sync https://wal.gg/${MOCK_BLOB_ID} --choice merge`
+        ).toString();
         expect(result).toContain('Extracted blob ID:');
         expect(result).toContain('Successfully synced todos from blob');
       });
@@ -837,8 +991,10 @@ Details:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID} --list test-list`).toString();
-        
+        const result = execSync(
+          `${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID} --list test-list`
+        ).toString();
+
         expect(result).toContain('Todo retrieved successfully from Walrus');
         expect(result).toContain('Title: Test Todo');
         expect(result).toContain('Status: Pending');
@@ -865,8 +1021,10 @@ Details:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} retrieve --todo "Local Todo" --list ${TEST_LIST}`).toString();
-        
+        const result = execSync(
+          `${CLI_CMD} retrieve --todo "Local Todo" --list ${TEST_LIST}`
+        ).toString();
+
         expect(result).toContain('Todo retrieved successfully from Walrus');
         expect(result).toContain('Title: Local Todo');
         expect(result).toContain('Status: Completed');
@@ -879,27 +1037,38 @@ Details:
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID}`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID}`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Request timeout while connecting to Walrus network');
       });
 
       it('should handle corrupted blob data', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Failed to retrieve todo from Walrus with blob ID 0x123456789abcdef: Invalid JSON format');
+          throw new Error(
+            'Failed to retrieve todo from Walrus with blob ID 0x123456789abcdef: Invalid JSON format'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID}`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID}`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Failed to retrieve todo from Walrus');
       });
 
       it('should handle missing todo in local storage', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Todo "Non-existent Todo" not found in list "test-list"');
+          throw new Error(
+            'Todo "Non-existent Todo" not found in list "test-list"'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --todo "Non-existent Todo" --list test-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} retrieve --todo "Non-existent Todo" --list test-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Todo "Non-existent Todo" not found');
       });
 
@@ -924,8 +1093,10 @@ Details:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID} --list test-list`).toString();
-        
+        const result = execSync(
+          `${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID} --list test-list`
+        ).toString();
+
         expect(result).toContain('Todo retrieved successfully');
         expect(result).toContain('Due Date:');
         expect(result).toContain('Expiring Todo');
@@ -956,9 +1127,13 @@ View your NFT on Sui Explorer:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`).toString();
-        
-        expect(result).toContain('Todo retrieved successfully from blockchain and Walrus');
+        const result = execSync(
+          `${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`
+        ).toString();
+
+        expect(result).toContain(
+          'Todo retrieved successfully from blockchain and Walrus'
+        );
         expect(result).toContain('Title: NFT Todo');
         expect(result).toContain(`NFT Object ID: ${MOCK_NFT_ID}`);
         expect(result).toContain(`Walrus Blob ID: ${MOCK_BLOB_ID}`);
@@ -980,44 +1155,68 @@ Since you specified --mock, you can use these test IDs:
 No retrieval identifier specified`;
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('retrieve') && !command.includes('--todo') && !command.includes('--blob-id') && !command.includes('--object-id')) {
+          if (
+            command.includes('retrieve') &&
+            !command.includes('--todo') &&
+            !command.includes('--blob-id') &&
+            !command.includes('--object-id')
+          ) {
             throw new Error(mockOutput);
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --list test-list --mock`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} retrieve --list test-list --mock`, {
+            stdio: 'inherit',
+          });
         }).toThrow('No retrieval identifier specified');
       });
 
       it('should handle todo not stored error', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Todo "Local Only Todo" exists locally but has no blockchain or Walrus storage IDs. You need to store it first.');
+          throw new Error(
+            'Todo "Local Only Todo" exists locally but has no blockchain or Walrus storage IDs. You need to store it first.'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --todo "Local Only Todo" --list test-list`, { stdio: 'inherit' });
-        }).toThrow('exists locally but has no blockchain or Walrus storage IDs');
+          execSync(
+            `${CLI_CMD} retrieve --todo "Local Only Todo" --list test-list`,
+            { stdio: 'inherit' }
+          );
+        }).toThrow(
+          'exists locally but has no blockchain or Walrus storage IDs'
+        );
       });
 
       it('should handle contract not deployed error', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Contract not deployed. Please run "waltodo deploy --network testnet" first.');
+          throw new Error(
+            'Contract not deployed. Please run "waltodo deploy --network testnet" first.'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Contract not deployed');
       });
 
       it('should handle invalid NFT error', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('NFT does not contain a valid Walrus blob ID. This might not be a todo NFT.');
+          throw new Error(
+            'NFT does not contain a valid Walrus blob ID. This might not be a todo NFT.'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('NFT does not contain a valid Walrus blob ID');
       });
 
@@ -1040,8 +1239,10 @@ Details:
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID} --mock --list test-list`).toString();
-        
+        const result = execSync(
+          `${CLI_CMD} retrieve --blob-id ${MOCK_BLOB_ID} --mock --list test-list`
+        ).toString();
+
         expect(result).toContain('Todo retrieved successfully');
         expect(result).toContain('Mock Mode Todo');
         expect(result).toContain('Resources cleaned up');
@@ -1049,11 +1250,16 @@ Details:
 
       it('should handle Walrus data not found error', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Todo data not found in Walrus storage. The data may have expired or been deleted.');
+          throw new Error(
+            'Todo data not found in Walrus storage. The data may have expired or been deleted.'
+          );
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} retrieve --object-id ${MOCK_NFT_ID} --list test-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Todo data not found in Walrus storage');
       });
     });
@@ -1061,14 +1267,16 @@ Details:
     describe('image commands', () => {
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          } else if (filePath === TEST_IMAGE) {
-            return Buffer.from('test image data');
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            } else if (filePath === TEST_IMAGE) {
+              return Buffer.from('test image data');
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
+        );
         (fs.existsSync as jest.Mock).mockImplementation((filePath: string) => {
           return filePath === TEST_IMAGE;
         });
@@ -1086,7 +1294,9 @@ Size: 1024 bytes`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} image upload --path ${TEST_IMAGE}`).toString();
+          const result = execSync(
+            `${CLI_CMD} image upload --path ${TEST_IMAGE}`
+          ).toString();
           expect(result).toContain('Image uploaded successfully');
           expect(result).toContain(MOCK_BLOB_ID);
           expect(result).toContain('https://testnet.wal.app/blob/');
@@ -1099,7 +1309,9 @@ Size: 1024 bytes`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} image upload --path /invalid/path.txt`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} image upload --path /invalid/path.txt`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Invalid image file');
         });
 
@@ -1109,7 +1321,9 @@ Size: 1024 bytes`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} image upload --path ${TEST_IMAGE}`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} image upload --path ${TEST_IMAGE}`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Failed to connect to Walrus storage');
         });
 
@@ -1128,7 +1342,9 @@ Size: 5242880 bytes (5MB)`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} image upload --path ${TEST_IMAGE}`).toString();
+          const result = execSync(
+            `${CLI_CMD} image upload --path ${TEST_IMAGE}`
+          ).toString();
           expect(result).toContain('Progress: 100%');
           expect(result).toContain('Image uploaded successfully');
           expect(result).toContain('5242880 bytes (5MB)');
@@ -1148,7 +1364,9 @@ View your NFT: https://explorer.sui.io/object/${MOCK_NFT_ID}?network=testnet`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID} --name "Test NFT" --description "Test Description"`).toString();
+          const result = execSync(
+            `${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID} --name "Test NFT" --description "Test Description"`
+          ).toString();
           expect(result).toContain('NFT minted successfully');
           expect(result).toContain(MOCK_NFT_ID);
           expect(result).toContain(MOCK_TX_DIGEST);
@@ -1157,7 +1375,10 @@ View your NFT: https://explorer.sui.io/object/${MOCK_NFT_ID}?network=testnet`);
 
         it('should upload and create NFT in one command', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
-            if (command.includes('image create-nft') && command.includes('--path')) {
+            if (
+              command.includes('image create-nft') &&
+              command.includes('--path')
+            ) {
               return Buffer.from(`Uploading image...
 Image uploaded successfully. Blob ID: ${MOCK_BLOB_ID}
 Creating NFT...
@@ -1168,7 +1389,9 @@ Transaction: ${MOCK_TX_DIGEST}`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} image create-nft --path ${TEST_IMAGE} --name "Direct NFT" --description "Direct Upload NFT"`).toString();
+          const result = execSync(
+            `${CLI_CMD} image create-nft --path ${TEST_IMAGE} --name "Direct NFT" --description "Direct Upload NFT"`
+          ).toString();
           expect(result).toContain('Image uploaded successfully');
           expect(result).toContain('NFT minted successfully');
           expect(result).toContain(MOCK_NFT_ID);
@@ -1180,17 +1403,25 @@ Transaction: ${MOCK_TX_DIGEST}`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} image create-nft --blob-id invalid-blob-id --name "Test NFT"`, { stdio: 'inherit' });
+            execSync(
+              `${CLI_CMD} image create-nft --blob-id invalid-blob-id --name "Test NFT"`,
+              { stdio: 'inherit' }
+            );
           }).toThrow('Invalid blob ID');
         });
 
         it('should handle insufficient gas for NFT creation', () => {
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Transaction failed: insufficient gas for NFT creation');
+            throw new Error(
+              'Transaction failed: insufficient gas for NFT creation'
+            );
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID} --name "Test NFT"`, { stdio: 'inherit' });
+            execSync(
+              `${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID} --name "Test NFT"`,
+              { stdio: 'inherit' }
+            );
           }).toThrow('insufficient gas');
         });
 
@@ -1200,13 +1431,18 @@ Transaction: ${MOCK_TX_DIGEST}`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID}`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID}`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Missing required parameter');
         });
 
         it('should create NFT with custom metadata', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
-            if (command.includes('image create-nft') && command.includes('--attributes')) {
+            if (
+              command.includes('image create-nft') &&
+              command.includes('--attributes')
+            ) {
               return Buffer.from(`Creating NFT with custom metadata...
 NFT minted successfully!
 NFT ID: ${MOCK_NFT_ID}
@@ -1216,7 +1452,9 @@ Transaction: ${MOCK_TX_DIGEST}`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID} --name "Rare NFT" --description "Limited Edition" --attributes '{"rarity":"rare","edition":"1/100"}'`).toString();
+          const result = execSync(
+            `${CLI_CMD} image create-nft --blob-id ${MOCK_BLOB_ID} --name "Rare NFT" --description "Limited Edition" --attributes '{"rarity":"rare","edition":"1/100"}'`
+          ).toString();
           expect(result).toContain('NFT minted successfully');
           expect(result).toContain('Attributes:');
           expect(result).toContain('"rarity":"rare"');
@@ -1240,8 +1478,8 @@ Transaction: ${MOCK_TX_DIGEST}`);
           fragmentedSpace: 312,
           optimization: {
             potential: '15.2%',
-            suggestion: 'Consider batch processing for better efficiency'
-          }
+            suggestion: 'Consider batch processing for better efficiency',
+          },
         };
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -1253,7 +1491,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
 
         const result = execSync(`${CLI_CMD} storage analyze`).toString();
         const analysis = JSON.parse(result);
-        
+
         expect(analysis).toMatchObject(mockAnalysisData);
         expect(analysis.totalTodos).toBe(10);
         expect(analysis.storageEfficiency).toBe('85.23%');
@@ -1267,7 +1505,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
           storageReclaimed: 856,
           beforeEfficiency: '72.3%',
           afterEfficiency: '89.7%',
-          message: 'Storage optimization completed successfully'
+          message: 'Storage optimization completed successfully',
         };
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -1279,7 +1517,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
 
         const result = execSync(`${CLI_CMD} storage optimize`).toString();
         const optimization = JSON.parse(result);
-        
+
         expect(optimization.optimizationComplete).toBe(true);
         expect(optimization.todosOptimized).toBe(7);
         expect(optimization.storageReclaimed).toBe(856);
@@ -1294,19 +1532,19 @@ Transaction: ${MOCK_TX_DIGEST}`);
             totalAllocated: 4096,
             totalUsed: 3478,
             freeSpace: 618,
-            utilizationRate: '84.91%'
+            utilizationRate: '84.91%',
           },
           todos: {
             count: 15,
             averageSize: 231.87,
             largest: { id: 'todo-123', size: 512 },
-            smallest: { id: 'todo-456', size: 128 }
+            smallest: { id: 'todo-456', size: 128 },
           },
           performance: {
             readSpeed: '2.3ms',
             writeSpeed: '4.1ms',
-            lastCompaction: '2024-12-20T15:30:00Z'
-          }
+            lastCompaction: '2024-12-20T15:30:00Z',
+          },
         };
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -1318,7 +1556,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
 
         const result = execSync(`${CLI_CMD} storage report`).toString();
         const report = JSON.parse(result);
-        
+
         expect(report.storage.utilizationRate).toBe('84.91%');
         expect(report.todos.count).toBe(15);
         expect(report.performance.readSpeed).toBe('2.3ms');
@@ -1331,7 +1569,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
           fragmentsAfter: 2,
           spaceRecovered: 1024,
           timeElapsed: '342ms',
-          message: 'Storage cleanup completed. Defragmentation successful.'
+          message: 'Storage cleanup completed. Defragmentation successful.',
         };
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -1343,7 +1581,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
 
         const result = execSync(`${CLI_CMD} storage cleanup`).toString();
         const cleanup = JSON.parse(result);
-        
+
         expect(cleanup.success).toBe(true);
         expect(cleanup.fragmentsBefore).toBe(23);
         expect(cleanup.fragmentsAfter).toBe(2);
@@ -1355,17 +1593,17 @@ Transaction: ${MOCK_TX_DIGEST}`);
           currentUsage: {
             storage: 3478,
             monthlyRate: 0.02,
-            currentCost: '$0.07'
+            currentCost: '$0.07',
           },
           prediction: {
             next30Days: '$0.12',
             next90Days: '$0.31',
-            yearlyEstimate: '$1.26'
+            yearlyEstimate: '$1.26',
           },
           optimizationPotential: {
             saving: '$0.18',
-            percentageSaved: '14.3%'
-          }
+            percentageSaved: '14.3%',
+          },
         };
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -1377,7 +1615,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
 
         const result = execSync(`${CLI_CMD} storage cost`).toString();
         const cost = JSON.parse(result);
-        
+
         expect(cost.currentUsage.currentCost).toBe('$0.07');
         expect(cost.prediction.yearlyEstimate).toBe('$1.26');
         expect(cost.optimizationPotential.percentageSaved).toBe('14.3%');
@@ -1389,16 +1627,21 @@ Transaction: ${MOCK_TX_DIGEST}`);
           operations: [
             { type: 'store', todoId: 'todo-1', status: 'success', size: 256 },
             { type: 'store', todoId: 'todo-2', status: 'success', size: 312 },
-            { type: 'store', todoId: 'todo-3', status: 'failed', error: 'Insufficient space' },
-            { type: 'update', todoId: 'todo-4', status: 'success', size: 198 }
+            {
+              type: 'store',
+              todoId: 'todo-3',
+              status: 'failed',
+              error: 'Insufficient space',
+            },
+            { type: 'update', todoId: 'todo-4', status: 'success', size: 198 },
           ],
           summary: {
             total: 4,
             successful: 3,
             failed: 1,
             totalSize: 766,
-            averageSize: 255.33
-          }
+            averageSize: 255.33,
+          },
         };
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
@@ -1408,9 +1651,11 @@ Transaction: ${MOCK_TX_DIGEST}`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} storage batch --operations store:todo-1,store:todo-2,store:todo-3,update:todo-4`).toString();
+        const result = execSync(
+          `${CLI_CMD} storage batch --operations store:todo-1,store:todo-2,store:todo-3,update:todo-4`
+        ).toString();
         const batch = JSON.parse(result);
-        
+
         expect(batch.operations.length).toBe(4);
         expect(batch.summary.successful).toBe(3);
         expect(batch.summary.failed).toBe(1);
@@ -1429,7 +1674,9 @@ Transaction: ${MOCK_TX_DIGEST}`);
 
       it('should handle optimization failure', () => {
         (execSync as jest.Mock).mockImplementation(() => {
-          throw new Error('Storage optimization failed: locked by another process');
+          throw new Error(
+            'Storage optimization failed: locked by another process'
+          );
         });
 
         expect(() => {
@@ -1444,7 +1691,7 @@ Transaction: ${MOCK_TX_DIGEST}`);
         objectVersion: '1',
         digest: '0xabc123def456789',
         modules: ['todo', 'todo_nft', 'ai_verifier'],
-        created: []
+        created: [],
       };
 
       beforeEach(() => {
@@ -1455,18 +1702,20 @@ Transaction: ${MOCK_TX_DIGEST}`);
           }
           return false;
         });
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          if (filePath.includes('Move.toml')) {
-            return `[package]
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            if (filePath.includes('Move.toml')) {
+              return `[package]
 name = "todo_contracts"
 version = "0.0.1"
 published-at = "0xabc..."`;
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
+        );
       });
 
       it('should deploy contracts successfully on testnet', () => {
@@ -1483,7 +1732,9 @@ Deployment complete!`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet`
+        ).toString();
         expect(result).toContain('Deploying Move contracts to testnet');
         expect(result).toContain('Package published successfully');
         expect(result).toContain(MOCK_DEPLOYED_PACKAGE.packageId);
@@ -1510,7 +1761,9 @@ Deployment complete!`);
         // Update the mock to handle deploy command specifically
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command === `${CLI_CMD} deploy`) {
-            throw new Error('Compilation error: Type mismatch in module `todo`');
+            throw new Error(
+              'Compilation error: Type mismatch in module `todo`'
+            );
           }
           // Return empty buffer for other commands
           return Buffer.from('');
@@ -1553,7 +1806,10 @@ Deployment complete!`);
 
       it('should deploy with upgrade capability', () => {
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('deploy') && command.includes('--upgrade-capability')) {
+          if (
+            command.includes('deploy') &&
+            command.includes('--upgrade-capability')
+          ) {
             return Buffer.from(`Deploying with upgrade capability...
 Package ID: ${MOCK_DEPLOYED_PACKAGE.packageId}
 Upgrade Cap: 0x789abcdef123456
@@ -1562,7 +1818,9 @@ Deployment successful!`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet --upgrade-capability`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet --upgrade-capability`
+        ).toString();
         expect(result).toContain('Deploying with upgrade capability');
         expect(result).toContain('Upgrade Cap: 0x789abcdef123456');
         expect(result).toContain('Deployment successful');
@@ -1593,7 +1851,9 @@ Deployment complete!`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet --multi-sig`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet --multi-sig`
+        ).toString();
         expect(result).toContain('Multi-signature deployment initiated');
         expect(result).toContain('All signatures collected');
         expect(result).toContain('Deployment complete');
@@ -1613,15 +1873,17 @@ All modules verified successfully!`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet --verify`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet --verify`
+        ).toString();
         expect(result).toContain('Verifying deployed modules');
-        expect(result).toContain('Module \'todo\' verified');
+        expect(result).toContain("Module 'todo' verified");
         expect(result).toContain('All modules verified successfully');
       });
 
       it('should update config after successful deployment', () => {
         (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
-        
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('deploy')) {
             return Buffer.from(`Deployment successful!
@@ -1632,7 +1894,9 @@ Configuration updated successfully`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet`
+        ).toString();
         expect(result).toContain('Configuration updated successfully');
         expect(fs.writeFileSync).toHaveBeenCalledWith(
           expect.stringContaining('config.json'),
@@ -1654,7 +1918,9 @@ Deployment failed: Module initialization error`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet`
+        ).toString();
         expect(result).toContain('Error occurred during deployment');
         expect(result).toContain('Initiating rollback');
         expect(result).toContain('Rollback successful');
@@ -1671,24 +1937,28 @@ Deployment successful!`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet --gas-budget 50000000`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet --gas-budget 50000000`
+        ).toString();
         expect(result).toContain('Deploying with custom gas budget: 50000000');
         expect(result).toContain('Gas used: 45000000');
         expect(result).toContain('Deployment successful');
       });
 
       it('should reuse existing deployment if already deployed', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify({
-              ...MOCK_NETWORK_CONFIG,
-              deployedPackages: {
-                testnet: MOCK_DEPLOYED_PACKAGE.packageId
-              }
-            });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify({
+                ...MOCK_NETWORK_CONFIG,
+                deployedPackages: {
+                  testnet: MOCK_DEPLOYED_PACKAGE.packageId,
+                },
+              });
+            }
+            return '';
           }
-          return '';
-        });
+        );
 
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('deploy')) {
@@ -1699,7 +1969,9 @@ Skipping deployment. Use --force to redeploy.`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet`
+        ).toString();
         expect(result).toContain('Contracts already deployed on testnet');
         expect(result).toContain('Skipping deployment');
       });
@@ -1715,7 +1987,9 @@ Deployment successful!`);
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} deploy --network testnet --force`).toString();
+        const result = execSync(
+          `${CLI_CMD} deploy --network testnet --force`
+        ).toString();
         expect(result).toContain('Force redeploying contracts');
         expect(result).toContain('Previous package');
         expect(result).toContain('New package ID');
@@ -1725,18 +1999,20 @@ Deployment successful!`);
     describe('add command comprehensive tests', () => {
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            if (filePath.includes('.todos.json')) {
+              return JSON.stringify({
+                todos: [],
+                lastUpdated: Date.now(),
+              });
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('.todos.json')) {
-            return JSON.stringify({
-              todos: [],
-              lastUpdated: Date.now()
-            });
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
+        );
       });
 
       describe('single todo addition', () => {
@@ -1748,7 +2024,9 @@ Deployment successful!`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Test Todo"`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Test Todo"`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('Test Todo');
         });
@@ -1756,12 +2034,16 @@ Deployment successful!`);
         it('should add todo with tags', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from('Todo added successfully: "Tagged Todo" [work, urgent]');
+              return Buffer.from(
+                'Todo added successfully: "Tagged Todo" [work, urgent]'
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Tagged Todo" --tags work,urgent`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Tagged Todo" --tags work,urgent`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('[work, urgent]');
         });
@@ -1769,12 +2051,16 @@ Deployment successful!`);
         it('should add todo with priority', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from('Todo added successfully: "Priority Todo" (High Priority)');
+              return Buffer.from(
+                'Todo added successfully: "Priority Todo" (High Priority)'
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Priority Todo" --priority high`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Priority Todo" --priority high`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('High Priority');
         });
@@ -1782,12 +2068,16 @@ Deployment successful!`);
         it('should add todo with due date', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from('Todo added successfully: "Due Date Todo" (Due: 2024-12-31)');
+              return Buffer.from(
+                'Todo added successfully: "Due Date Todo" (Due: 2024-12-31)'
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Due Date Todo" --due "2024-12-31"`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Due Date Todo" --due "2024-12-31"`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('Due: 2024-12-31');
         });
@@ -1806,7 +2096,9 @@ Successfully added 3 todos`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} --batch "First Todo" "Second Todo" "Third Todo"`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} --batch "First Todo" "Second Todo" "Third Todo"`
+          ).toString();
           expect(result).toContain('Successfully added 3 todos');
           expect(result).toContain('First Todo');
           expect(result).toContain('Second Todo');
@@ -1825,7 +2117,9 @@ Partially successful: added 2 of 3 todos`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} --batch "First Todo" "Second Todo" "Third Todo"`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} --batch "First Todo" "Second Todo" "Third Todo"`
+          ).toString();
           expect(result).toContain('Partially successful');
           expect(result).toContain('added 2 of 3 todos');
           expect(result).toContain('Todo already exists');
@@ -1843,7 +2137,9 @@ Successfully imported 3 todos`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} --file todos.txt`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} --file todos.txt`
+          ).toString();
           expect(result).toContain('Successfully imported 3 todos');
           expect(result).toContain('Todo from file');
         });
@@ -1863,21 +2159,29 @@ Successfully imported 3 todos`);
         it('should reject todo text exceeding character limit', () => {
           const longText = 'a'.repeat(501);
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Error: Todo text exceeds maximum length of 500 characters');
+            throw new Error(
+              'Error: Todo text exceeds maximum length of 500 characters'
+            );
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} "${longText}"`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} add ${TEST_LIST} "${longText}"`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Todo text exceeds maximum length');
         });
 
         it('should handle invalid priority', () => {
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Error: Invalid priority. Must be one of: low, medium, high');
+            throw new Error(
+              'Error: Invalid priority. Must be one of: low, medium, high'
+            );
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} "Test" --priority invalid`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} add ${TEST_LIST} "Test" --priority invalid`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Invalid priority');
         });
 
@@ -1887,7 +2191,10 @@ Successfully imported 3 todos`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} "Test" --due "invalid-date"`, { stdio: 'inherit' });
+            execSync(
+              `${CLI_CMD} add ${TEST_LIST} "Test" --due "invalid-date"`,
+              { stdio: 'inherit' }
+            );
           }).toThrow('Invalid date format');
         });
 
@@ -1897,7 +2204,9 @@ Successfully imported 3 todos`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} "Test" --due "2020-01-01"`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} add ${TEST_LIST} "Test" --due "2020-01-01"`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Due date cannot be in the past');
         });
 
@@ -1907,7 +2216,10 @@ Successfully imported 3 todos`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} "Test" --tags "work,@invalid!"`, { stdio: 'inherit' });
+            execSync(
+              `${CLI_CMD} add ${TEST_LIST} "Test" --tags "work,@invalid!"`,
+              { stdio: 'inherit' }
+            );
           }).toThrow('Tags cannot contain special characters');
         });
 
@@ -1917,7 +2229,9 @@ Successfully imported 3 todos`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} "Duplicate Todo"`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} add ${TEST_LIST} "Duplicate Todo"`, {
+              stdio: 'inherit',
+            });
           }).toThrow('A todo with identical text already exists');
         });
 
@@ -1927,17 +2241,23 @@ Successfully imported 3 todos`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} --file missing.txt`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} add ${TEST_LIST} --file missing.txt`, {
+              stdio: 'inherit',
+            });
           }).toThrow('File not found');
         });
 
         it('should handle invalid file format', () => {
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Error: Invalid file format. Expected .txt or .json');
+            throw new Error(
+              'Error: Invalid file format. Expected .txt or .json'
+            );
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} --file todos.pdf`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} add ${TEST_LIST} --file todos.pdf`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Invalid file format');
         });
 
@@ -1947,7 +2267,9 @@ Successfully imported 3 todos`);
           });
 
           expect(() => {
-            execSync(`${CLI_CMD} add ${TEST_LIST} --file corrupted.json`, { stdio: 'inherit' });
+            execSync(`${CLI_CMD} add ${TEST_LIST} --file corrupted.json`, {
+              stdio: 'inherit',
+            });
           }).toThrow('Failed to parse JSON file');
         });
       });
@@ -1964,7 +2286,9 @@ Transaction: ${MOCK_TX_DIGEST}`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Blockchain Todo" --store`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Blockchain Todo" --store`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('Storing on blockchain');
           expect(result).toContain(MOCK_BLOB_ID);
@@ -1982,7 +2306,9 @@ Transaction: ${MOCK_TX_DIGEST}`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "NFT Todo" --nft`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "NFT Todo" --nft`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('Creating NFT');
           expect(result).toContain(MOCK_NFT_ID);
@@ -1999,7 +2325,9 @@ Todo saved locally only`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Local Only Todo" --store`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Local Only Todo" --store`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('Failed to store on blockchain');
           expect(result).toContain('Todo saved locally only');
@@ -2010,14 +2338,19 @@ Todo saved locally only`);
         it('should handle quotes in todo text', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from('Todo added successfully: "He said \\"Hello\\""');
+              return Buffer.from(
+                'Todo added successfully: "He said \\"Hello\\""'
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "He said \\"Hello\\""`, {
-            shell: true
-          }).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "He said \\"Hello\\""`,
+            {
+              shell: true,
+            }
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('He said "Hello"');
         });
@@ -2025,12 +2358,16 @@ Todo saved locally only`);
         it('should handle unicode characters', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from('Todo added successfully: "Unicode test: 🚀 完成 测试"');
+              return Buffer.from(
+                'Todo added successfully: "Unicode test: 🚀 完成 测试"'
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Unicode test: 🚀 完成 测试"`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Unicode test: 🚀 完成 测试"`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('🚀');
           expect(result).toContain('完成');
@@ -2039,12 +2376,16 @@ Todo saved locally only`);
         it('should handle newlines in todo text', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from('Todo added successfully: "Multi\\nline\\ntodo"');
+              return Buffer.from(
+                'Todo added successfully: "Multi\\nline\\ntodo"'
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Multi\nline\ntodo"`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Multi\nline\ntodo"`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('Multi\\nline\\ntodo');
         });
@@ -2052,15 +2393,22 @@ Todo saved locally only`);
 
       describe('performance edge cases', () => {
         it('should handle adding many tags', () => {
-          const manyTags = Array(50).fill(0).map((_, i) => `tag${i}`).join(',');
+          const manyTags = Array(50)
+            .fill(0)
+            .map((_, i) => `tag${i}`)
+            .join(',');
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from(`Todo added successfully: "Many tags todo" [${manyTags}]`);
+              return Buffer.from(
+                `Todo added successfully: "Many tags todo" [${manyTags}]`
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Many tags todo" --tags "${manyTags}"`).toString();
+          const result = execSync(
+            `${CLI_CMD} add ${TEST_LIST} "Many tags todo" --tags "${manyTags}"`
+          ).toString();
           expect(result).toContain('Todo added successfully');
           expect(result).toContain('tag0');
           expect(result).toContain('tag49');
@@ -2071,13 +2419,17 @@ Todo saved locally only`);
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
               callCount++;
-              return Buffer.from(`Todo added successfully: "Rapid todo ${callCount}"`);
+              return Buffer.from(
+                `Todo added successfully: "Rapid todo ${callCount}"`
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
 
           for (let i = 1; i <= 5; i++) {
-            const result = execSync(`${CLI_CMD} add ${TEST_LIST} "Rapid todo ${i}"`).toString();
+            const result = execSync(
+              `${CLI_CMD} add ${TEST_LIST} "Rapid todo ${i}"`
+            ).toString();
             expect(result).toContain(`Rapid todo ${i}`);
           }
           expect(callCount).toBe(5);
@@ -2088,9 +2440,24 @@ Todo saved locally only`);
     describe('AI Commands', () => {
       const MOCK_API_KEY = 'test-api-key-123';
       const mockTodos = [
-        { id: '1', title: 'Complete financial report', description: 'Q4 financial report for board meeting', completed: false },
-        { id: '2', title: 'Update budget spreadsheet', description: 'Include Q1 projections', completed: false },
-        { id: '3', title: 'Schedule team meeting', description: 'Weekly sync with development team', completed: true }
+        {
+          id: '1',
+          title: 'Complete financial report',
+          description: 'Q4 financial report for board meeting',
+          completed: false,
+        },
+        {
+          id: '2',
+          title: 'Update budget spreadsheet',
+          description: 'Include Q1 projections',
+          completed: false,
+        },
+        {
+          id: '3',
+          title: 'Schedule team meeting',
+          description: 'Weekly sync with development team',
+          completed: true,
+        },
       ];
 
       beforeEach(() => {
@@ -2117,7 +2484,9 @@ You have 3 todos, with 67% incomplete. Your tasks focus on financial reporting a
         it('should handle missing API key', () => {
           delete process.env.XAI_API_KEY;
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('API key is required. Provide it via --apiKey flag or XAI_API_KEY environment variable.');
+            throw new Error(
+              'API key is required. Provide it via --apiKey flag or XAI_API_KEY environment variable.'
+            );
           });
 
           expect(() => {
@@ -2128,9 +2497,16 @@ You have 3 todos, with 67% incomplete. Your tasks focus on financial reporting a
         it('should output JSON format when requested', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('--json')) {
-              return Buffer.from(JSON.stringify({
-                summary: "You have 3 todos focusing on financial and team management tasks."
-              }, null, 2));
+              return Buffer.from(
+                JSON.stringify(
+                  {
+                    summary:
+                      'You have 3 todos focusing on financial and team management tasks.',
+                  },
+                  null,
+                  2
+                )
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
@@ -2199,7 +2575,9 @@ Task Suggestions (4):
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} suggest --type next_step`).toString();
+          const result = execSync(
+            `${CLI_CMD} suggest --type next_step`
+          ).toString();
           expect(result).toContain('Type: NEXT_STEP');
           expect(result).not.toContain('Type: RELATED');
         });
@@ -2226,7 +2604,9 @@ Transaction: 0xdef456...
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} suggest --verify --registryAddress 0x123 --packageId 0x456`).toString();
+          const result = execSync(
+            `${CLI_CMD} suggest --verify --registryAddress 0x123 --packageId 0x456`
+          ).toString();
           expect(result).toContain('Blockchain verification enabled');
           expect(result).toContain('Verification Details');
           expect(result).toContain('Transaction:');
@@ -2297,13 +2677,19 @@ trends:
         it('should output analysis in JSON format', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('--json')) {
-              return Buffer.from(JSON.stringify({
-                analysis: {
-                  themes: ['Financial planning', 'Task management'],
-                  bottlenecks: ['Multiple financial reviews'],
-                  recommendations: ['Consolidate financial tasks']
-                }
-              }, null, 2));
+              return Buffer.from(
+                JSON.stringify(
+                  {
+                    analysis: {
+                      themes: ['Financial planning', 'Task management'],
+                      bottlenecks: ['Multiple financial reviews'],
+                      recommendations: ['Consolidate financial tasks'],
+                    },
+                  },
+                  null,
+                  2
+                )
+              );
             }
             throw new Error(`Command not mocked: ${command}`);
           });
@@ -2328,7 +2714,9 @@ trends:
 
         it('should handle network timeouts', () => {
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Request timeout: AI service did not respond within 30 seconds');
+            throw new Error(
+              'Request timeout: AI service did not respond within 30 seconds'
+            );
           });
 
           expect(() => {
@@ -2338,7 +2726,9 @@ trends:
 
         it('should validate required flags for verification', () => {
           (execSync as jest.Mock).mockImplementation(() => {
-            throw new Error('Registry address and package ID are required for blockchain verification');
+            throw new Error(
+              'Registry address and package ID are required for blockchain verification'
+            );
           });
 
           expect(() => {
@@ -2360,10 +2750,14 @@ Summary: You have 3 tasks focusing on finance and coordination.`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const openaiResult = execSync(`${CLI_CMD} ai summarize --provider openai --apiKey test-key`).toString();
+          const openaiResult = execSync(
+            `${CLI_CMD} ai summarize --provider openai --apiKey test-key`
+          ).toString();
           expect(openaiResult).toContain('Using OpenAI provider');
 
-          const anthropicResult = execSync(`${CLI_CMD} ai summarize --provider anthropic --apiKey test-key`).toString();
+          const anthropicResult = execSync(
+            `${CLI_CMD} ai summarize --provider anthropic --apiKey test-key`
+          ).toString();
           expect(anthropicResult).toContain('Using Anthropic provider');
         });
 
@@ -2376,7 +2770,9 @@ Advanced analysis of your todos...`);
             throw new Error(`Command not mocked: ${command}`);
           });
 
-          const result = execSync(`${CLI_CMD} ai analyze --provider openai --model gpt-4 --apiKey test-key`).toString();
+          const result = execSync(
+            `${CLI_CMD} ai analyze --provider openai --model gpt-4 --apiKey test-key`
+          ).toString();
           expect(result).toContain('Using model: gpt-4');
         });
       });
@@ -2389,7 +2785,9 @@ Advanced analysis of your todos...`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} create --title "Network Test"`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} create --title "Network Test"`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Simulated network error');
       });
 
@@ -2403,17 +2801,22 @@ Advanced analysis of your todos...`);
         }).toThrow('Command not found');
       });
     });
-    
+
     describe('store command with mock Walrus storage', () => {
       const mockTodoData = {
         id: 'mock-todo-id',
         title: 'Test Store Todo',
         description: 'Testing walrus store integration',
         completed: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
-      const testListPath = path.join(process.env.HOME || '/tmp', '.waltodo', 'lists', 'test-store-list.json');
-      
+      const testListPath = path.join(
+        process.env.HOME || '/tmp',
+        '.waltodo',
+        'lists',
+        'test-store-list.json'
+      );
+
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
         (fs.readFileSync as jest.Mock).mockReset();
@@ -2431,24 +2834,34 @@ Advanced analysis of your todos...`);
       });
 
       it('should store todo with mock Walrus client', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store') && command.includes('--mock')) {
-            return Buffer.from(`Storing data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`);
+            return Buffer.from(
+              `Storing data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`
+        ).toString();
         expect(result).toContain('Storing data on Walrus storage');
         expect(result).toContain('Data stored successfully');
         expect(result).toContain(MOCK_BLOB_ID);
@@ -2461,92 +2874,137 @@ Advanced analysis of your todos...`);
           createdAt: new Date().toISOString(),
           todos: [
             mockTodoData,
-            { ...mockTodoData, id: 'mock-todo-id-2', title: 'Second Test Todo' },
-            { ...mockTodoData, id: 'mock-todo-id-3', title: 'Third Test Todo' }
-          ]
+            {
+              ...mockTodoData,
+              id: 'mock-todo-id-2',
+              title: 'Second Test Todo',
+            },
+            { ...mockTodoData, id: 'mock-todo-id-3', title: 'Third Test Todo' },
+          ],
         };
-        
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify(mockListData);
+
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify(mockListData);
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('store') && command.includes('--list') && !command.includes('--todo')) {
-            return Buffer.from(`Storing list 'test-store-list' on Walrus storage...\nList stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nTotal todos stored: 3`);
+          if (
+            command.includes('store') &&
+            command.includes('--list') &&
+            !command.includes('--todo')
+          ) {
+            return Buffer.from(
+              `Storing list 'test-store-list' on Walrus storage...\nList stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nTotal todos stored: 3`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --list test-store-list --mock`).toString();
-        expect(result).toContain('Storing list \'test-store-list\' on Walrus storage');
+        const result = execSync(
+          `${CLI_CMD} store --list test-store-list --mock`
+        ).toString();
+        expect(result).toContain(
+          "Storing list 'test-store-list' on Walrus storage"
+        );
         expect(result).toContain('List stored successfully');
         expect(result).toContain(MOCK_BLOB_ID);
         expect(result).toContain('Total todos stored: 3');
       });
 
       it('should handle network timeout during store operation', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
-            throw new Error('Network timeout occurred during Walrus storage operation');
+            throw new Error(
+              'Network timeout occurred during Walrus storage operation'
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} store --todo mock-todo-id --list test-store-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Network timeout occurred during Walrus storage operation');
       });
 
       it('should store with custom epochs', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store') && command.includes('--epochs 30')) {
-            return Buffer.from(`Storing data on Walrus storage with custom epochs (30)...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nStorage duration: 30 epochs`);
+            return Buffer.from(
+              `Storing data on Walrus storage with custom epochs (30)...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nStorage duration: 30 epochs`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list --epochs 30 --mock`).toString();
-        expect(result).toContain('Storing data on Walrus storage with custom epochs (30)');
+        const result = execSync(
+          `${CLI_CMD} store --todo mock-todo-id --list test-store-list --epochs 30 --mock`
+        ).toString();
+        expect(result).toContain(
+          'Storing data on Walrus storage with custom epochs (30)'
+        );
         expect(result).toContain('Storage duration: 30 epochs');
       });
 
       it('should handle Walrus storage quota exceeded error', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
             throw new Error('Walrus storage quota exceeded for this wallet');
@@ -2555,30 +3013,45 @@ Advanced analysis of your todos...`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} store --todo mock-todo-id --list test-store-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Walrus storage quota exceeded');
       });
 
       it('should handle invalid todo ID error', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('store') && command.includes('--todo invalid-todo-id')) {
+          if (
+            command.includes('store') &&
+            command.includes('--todo invalid-todo-id')
+          ) {
             throw new Error('Todo not found: invalid-todo-id');
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo invalid-todo-id --list test-store-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} store --todo invalid-todo-id --list test-store-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Todo not found: invalid-todo-id');
       });
 
@@ -2586,27 +3059,40 @@ Advanced analysis of your todos...`);
         const todoWithImage = {
           ...mockTodoData,
           image: 'base64encodedimagestring...',
-          imageUrl: '/path/to/image.jpg'
+          imageUrl: '/path/to/image.jpg',
         };
-        
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [todoWithImage] });
+
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [todoWithImage],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
-          if (command.includes('store') && command.includes('--todo mock-todo-id')) {
-            return Buffer.from(`Processing todo with image...\nStoring data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nImage included in storage`);
+          if (
+            command.includes('store') &&
+            command.includes('--todo mock-todo-id')
+          ) {
+            return Buffer.from(
+              `Processing todo with image...\nStoring data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nImage included in storage`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`
+        ).toString();
         expect(result).toContain('Processing todo with image');
         expect(result).toContain('Image included in storage');
       });
@@ -2615,113 +3101,161 @@ Advanced analysis of your todos...`);
         const largeTodo = {
           ...mockTodoData,
           description: 'Very long description '.repeat(1000), // Large content
-          metadata: Array(100).fill({ key: 'value', data: 'some data' })
+          metadata: Array(100).fill({ key: 'value', data: 'some data' }),
         };
-        
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [largeTodo] });
+
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [largeTodo],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
-            return Buffer.from(`Large data detected, applying compression...\nStoring compressed data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nCompression ratio: 5.2:1`);
+            return Buffer.from(
+              `Large data detected, applying compression...\nStoring compressed data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}\nCompression ratio: 5.2:1`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`
+        ).toString();
         expect(result).toContain('Large data detected, applying compression');
         expect(result).toContain('Compression ratio: 5.2:1');
       });
 
       it('should validate blob after storage with verification flag', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store') && command.includes('--verify')) {
-            return Buffer.from(`Storing data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nVerifying blob integrity...\nBlob verification successful ✓\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`);
+            return Buffer.from(
+              `Storing data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nVerifying blob integrity...\nBlob verification successful ✓\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list --verify --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo mock-todo-id --list test-store-list --verify --mock`
+        ).toString();
         expect(result).toContain('Verifying blob integrity');
         expect(result).toContain('Blob verification successful ✓');
       });
 
       it('should handle concurrent store operations', () => {
-        const todosList = Array(5).fill(null).map((_, i) => ({ ...mockTodoData, id: `todo-${i}` }));
-        
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: todosList });
+        const todosList = Array(5)
+          .fill(null)
+          .map((_, i) => ({ ...mockTodoData, id: `todo-${i}` }));
+
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: todosList,
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store') && command.includes('--batch')) {
-            return Buffer.from(`Initiating batch storage operation...\nProcessing 5 todos in parallel...\nAll todos stored successfully.\nBlob IDs:\n- todo-0: 0x123abc...\n- todo-1: 0x456def...\n- todo-2: 0x789ghi...\n- todo-3: 0xabcjkl...\n- todo-4: 0xdefmno...`);
+            return Buffer.from(
+              `Initiating batch storage operation...\nProcessing 5 todos in parallel...\nAll todos stored successfully.\nBlob IDs:\n- todo-0: 0x123abc...\n- todo-1: 0x456def...\n- todo-2: 0x789ghi...\n- todo-3: 0xabcjkl...\n- todo-4: 0xdefmno...`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --list test-store-list --batch --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --list test-store-list --batch --mock`
+        ).toString();
         expect(result).toContain('Processing 5 todos in parallel');
         expect(result).toContain('All todos stored successfully');
         expect(result).toMatch(/Blob IDs:[\s\S]*todo-[0-4]:/g);
       });
 
       it('should save mapping of todo IDs to blob IDs after storage', () => {
-        const blobMappingPath = path.join(process.env.HOME || '/tmp', '.waltodo', 'blob-mappings.json');
-        
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        const blobMappingPath = path.join(
+          process.env.HOME || '/tmp',
+          '.waltodo',
+          'blob-mappings.json'
+        );
+
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            if (filePath === blobMappingPath) {
+              return JSON.stringify({});
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          if (filePath === blobMappingPath) {
-            return JSON.stringify({});
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         let savedMapping: any = null;
-        (fs.writeFileSync as jest.Mock).mockImplementation((path: string, data: any) => {
-          if (path === blobMappingPath) {
-            savedMapping = JSON.parse(data);
+        (fs.writeFileSync as jest.Mock).mockImplementation(
+          (path: string, data: any) => {
+            if (path === blobMappingPath) {
+              savedMapping = JSON.parse(data);
+            }
           }
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
-            return Buffer.from(`Storing data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nSaving blob mapping...\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`);
+            return Buffer.from(
+              `Storing data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nSaving blob mapping...\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo mock-todo-id --list test-store-list --mock`
+        ).toString();
         expect(result).toContain('Saving blob mapping');
-        
+
         // Verify the mapping was saved
         expect(fs.writeFileSync).toHaveBeenCalledWith(
           blobMappingPath,
@@ -2730,16 +3264,22 @@ Advanced analysis of your todos...`);
       });
 
       it('should handle insufficient WAL tokens error', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
             throw new Error('Insufficient WAL tokens for storage operation');
@@ -2748,21 +3288,30 @@ Advanced analysis of your todos...`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} store --todo mock-todo-id --list test-store-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Insufficient WAL tokens for storage operation');
       });
 
       it('should handle malformed todo data gracefully', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [{ id: null, title: '' }] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [{ id: null, title: '' }],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
             throw new Error('Invalid todo data: missing required fields');
@@ -2771,75 +3320,105 @@ Advanced analysis of your todos...`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo null --list test-store-list`, { stdio: 'inherit' });
+          execSync(`${CLI_CMD} store --todo null --list test-store-list`, {
+            stdio: 'inherit',
+          });
         }).toThrow('Invalid todo data: missing required fields');
       });
 
       it('should retry failed storage with exponential backoff', () => {
         let retryCount = 0;
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store') && command.includes('--retry')) {
             retryCount++;
             if (retryCount < 3) {
               throw new Error('Storage failed, retrying...');
             }
-            return Buffer.from(`Storage successful after ${retryCount} attempts. Blob ID: ${MOCK_BLOB_ID}`);
+            return Buffer.from(
+              `Storage successful after ${retryCount} attempts. Blob ID: ${MOCK_BLOB_ID}`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list --retry --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --todo mock-todo-id --list test-store-list --retry --mock`
+        ).toString();
         expect(result).toContain('Storage successful after 3 attempts');
         expect(result).toContain(MOCK_BLOB_ID);
       });
 
       it('should store with progress updates for large lists', () => {
-        const largeTodosList = Array(100).fill(null).map((_, i) => ({ ...mockTodoData, id: `todo-${i}` }));
-        
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: largeTodosList });
+        const largeTodosList = Array(100)
+          .fill(null)
+          .map((_, i) => ({ ...mockTodoData, id: `todo-${i}` }));
+
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: largeTodosList,
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store') && command.includes('--progress')) {
-            return Buffer.from(`Preparing 100 todos for storage...\n[10%] Processing todos 1-10...\n[50%] Processing todos 50-60...\n[100%] All todos processed.\nStoring data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}`);
+            return Buffer.from(
+              `Preparing 100 todos for storage...\n[10%] Processing todos 1-10...\n[50%] Processing todos 50-60...\n[100%] All todos processed.\nStoring data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}`
+            );
           }
           throw new Error(`Command not mocked: ${command}`);
         });
 
-        const result = execSync(`${CLI_CMD} store --list test-store-list --progress --mock`).toString();
+        const result = execSync(
+          `${CLI_CMD} store --list test-store-list --progress --mock`
+        ).toString();
         expect(result).toContain('Preparing 100 todos for storage');
         expect(result).toContain('[100%] All todos processed');
         expect(result).toContain('Data stored successfully');
       });
 
       it('should handle interrupted storage operation', () => {
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
-          if (filePath === testListPath) {
-            return JSON.stringify({ name: 'test-store-list', createdAt: new Date().toISOString(), todos: [mockTodoData] });
+        (fs.readFileSync as jest.Mock).mockImplementation(
+          (filePath: string) => {
+            if (filePath === testListPath) {
+              return JSON.stringify({
+                name: 'test-store-list',
+                createdAt: new Date().toISOString(),
+                todos: [mockTodoData],
+              });
+            }
+            if (filePath.includes('config.json')) {
+              return JSON.stringify(MOCK_NETWORK_CONFIG);
+            }
+            throw new Error(`File not mocked: ${filePath}`);
           }
-          if (filePath.includes('config.json')) {
-            return JSON.stringify(MOCK_NETWORK_CONFIG);
-          }
-          throw new Error(`File not mocked: ${filePath}`);
-        });
-        
+        );
+
         (execSync as jest.Mock).mockImplementation((command: string) => {
           if (command.includes('store')) {
             throw new Error('Storage operation interrupted (SIGINT)');
@@ -2848,7 +3427,10 @@ Advanced analysis of your todos...`);
         });
 
         expect(() => {
-          execSync(`${CLI_CMD} store --todo mock-todo-id --list test-store-list`, { stdio: 'inherit' });
+          execSync(
+            `${CLI_CMD} store --todo mock-todo-id --list test-store-list`,
+            { stdio: 'inherit' }
+          );
         }).toThrow('Storage operation interrupted (SIGINT)');
       });
     });

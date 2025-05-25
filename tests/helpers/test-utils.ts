@@ -11,7 +11,7 @@ const execPromise = promisify(exec);
 
 /**
  * Utility type that makes all properties of a type optional and recursive
- * 
+ *
  * @template T - The type to make partially optional
  * @example
  * ```typescript
@@ -22,7 +22,7 @@ const execPromise = promisify(exec);
  *     age: number;
  *   };
  * }
- * 
+ *
  * // Can be used like:
  * const partialUser: DeepPartial<User> = {
  *   profile: { name: 'John' } // age is optional
@@ -35,15 +35,15 @@ export type DeepPartial<T> = {
 
 /**
  * Creates a mock Todo object with default values that can be overridden
- * 
+ *
  * @param overrides - Optional partial Todo properties to override default values
  * @returns A complete Todo object with default values for unspecified properties
- * 
+ *
  * @example
  * ```typescript
  * // Create a basic todo with defaults
  * const basicTodo = createMockTodo();
- * 
+ *
  * // Create a completed high priority todo
  * const completedTodo = createMockTodo({
  *   completed: true,
@@ -63,13 +63,13 @@ export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => ({
   updatedAt: new Date().toISOString(),
   private: true,
   storageLocation: 'local' as StorageLocation,
-  ...overrides
+  ...overrides,
 });
 
 /**
  * Utility type that converts all methods of a class/interface into Jest mock functions
  * while preserving non-method properties.
- * 
+ *
  * @template T - The type to create mocks for
  * @example
  * ```typescript
@@ -77,7 +77,7 @@ export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => ({
  *   getUser(id: string): Promise<User>;
  *   isAdmin: boolean;
  * }
- * 
+ *
  * // Usage:
  * const mockUserService: MockOf<UserService> = {
  *   getUser: jest.fn().mockResolvedValue({ id: '123', name: 'Test User' }),
@@ -100,56 +100,58 @@ export class TestService {
    * Run a CLI command and return the output.
    * In test environment, this will mock the command execution.
    * In non-test environment, this will execute the actual CLI command.
-   * 
+   *
    * @param args - Array of command arguments (first element is the command name, remaining are options)
    * @returns Object containing stdout and stderr output strings
    * @throws Will throw an error if command execution fails
-   * 
+   *
    * @example
    * ```typescript
    * // Run 'list' command with '--all' flag
    * const result = await TestService.runCommand(['list', '--all']);
    * expect(result.stdout).toContain('Task list:');
-   * 
+   *
    * // Run 'add' command with title and description
    * const addResult = await TestService.runCommand([
-   *   'add', 
-   *   '--title', 'New test todo', 
+   *   'add',
+   *   '--title', 'New test todo',
    *   '--description', 'Testing add command'
    * ]);
    * ```
    */
-  static async runCommand(args: string[]): Promise<{ stdout: string; stderr: string }> {
+  static async runCommand(
+    args: string[]
+  ): Promise<{ stdout: string; stderr: string }> {
     // Mock implementation for Jest tests
     if (process.env.NODE_ENV === 'test') {
       // This is simplified for testing purposes
       // In a real implementation, you would use oclif test utilities
       const command = args[0];
-      
+
       try {
         // Dynamically import the command module
         const CommandClass = await import(`../../src/commands/${command}`);
         const instance = new CommandClass.default();
-        
+
         // Mock stdout
         let stdout = '';
-        instance.log = jest.fn().mockImplementation((msg: string) => { 
+        instance.log = jest.fn().mockImplementation((msg: string) => {
           stdout += msg + '\n';
         });
-        
+
         // Run the command with the remaining args
         await instance.run(args.slice(1));
-        
+
         return { stdout, stderr: '' };
       } catch (_error) {
         throw error;
       }
     }
-    
+
     // Actual CLI execution for integration tests
     const projectRoot = path.resolve(__dirname, '../../');
     const cmd = `node ${projectRoot}/bin/run ${args.join(' ')}`;
-    
+
     return execPromise(cmd);
   }
 }

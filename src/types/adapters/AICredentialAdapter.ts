@@ -1,6 +1,6 @@
 /**
  * AICredentialAdapter
- * 
+ *
  * This file defines the interfaces for the AI credential management system
  * which provides secure and blockchain-verified access to AI providers.
  */
@@ -16,18 +16,18 @@ export enum CredentialType {
   API_KEY = 'api_key',
   OAUTH_TOKEN = 'oauth_token',
   CERTIFICATE = 'certificate',
-  BLOCKCHAIN_KEY = 'blockchain_key'
+  BLOCKCHAIN_KEY = 'blockchain_key',
 }
 
 /**
  * Permission levels for AI operations
  */
 export enum AIPermissionLevel {
-  NO_ACCESS = 0,      // No access to AI operations
-  READ_ONLY = 1,      // Can only use non-modifying operations (_read, _analyze)
-  STANDARD = 2,       // Standard access level (most operations)
-  ADVANCED = 3,       // Advanced access (including training, fine-tuning)
-  ADMIN = 4           // Admin level (full access)
+  NO_ACCESS = 0, // No access to AI operations
+  READ_ONLY = 1, // Can only use non-modifying operations (_read, _analyze)
+  STANDARD = 2, // Standard access level (most operations)
+  ADVANCED = 3, // Advanced access (including training, fine-tuning)
+  ADMIN = 4, // Admin level (full access)
 }
 
 /**
@@ -154,7 +154,9 @@ export interface AICredentialAdapter {
   /**
    * Verify a credential on the blockchain
    */
-  verifyCredential(_params: CredentialVerificationParams): Promise<CredentialVerificationResult>;
+  verifyCredential(
+    _params: CredentialVerificationParams
+  ): Promise<CredentialVerificationResult>;
 
   /**
    * Check if a credential verification is still valid
@@ -211,7 +213,9 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     throw new Error('Method not implemented.');
   }
 
-  async getCredentialByProvider(_providerName: string): Promise<AIProviderCredential> {
+  async getCredentialByProvider(
+    _providerName: string
+  ): Promise<AIProviderCredential> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }
@@ -231,7 +235,9 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     throw new Error('Method not implemented.');
   }
 
-  async verifyCredential(_params: CredentialVerificationParams): Promise<CredentialVerificationResult> {
+  async verifyCredential(
+    _params: CredentialVerificationParams
+  ): Promise<CredentialVerificationResult> {
     // Implementation will be provided in the adapter implementation
     throw new Error('Method not implemented.');
   }

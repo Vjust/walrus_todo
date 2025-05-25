@@ -4,7 +4,10 @@ import path from 'path';
 import * as configServiceModule from '../../../src/services/config-service';
 
 import { envConfig, getEnv } from '../../../src/utils/environment-config';
-import { loadConfigFile, saveConfigToFile } from '../../../src/utils/config-loader';
+import {
+  loadConfigFile,
+  saveConfigToFile,
+} from '../../../src/utils/config-loader';
 import type { Config, Todo, TodoList } from '../../../src/types';
 import type { Mock } from 'jest';
 // Using jest fs mock directly
@@ -29,12 +32,12 @@ describe('ConfigService', () => {
     walletAddress: '0x123',
     encryptedStorage: false,
     packageId: '0xpackage',
-    registryId: '0xregistry'
+    registryId: '0xregistry',
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup basic fs mocks
     mockFs.existsSync.mockReturnValue(true);
     mockFs.readFileSync.mockReturnValue('{}');
@@ -42,7 +45,7 @@ describe('ConfigService', () => {
     mockFs.writeFileSync.mockImplementation(() => {});
     mockFs.mkdirSync.mockImplementation(() => {});
     mockFs.unlinkSync.mockImplementation(() => {});
-    
+
     // Setup fs.promises mock
     if (!mockFs.promises) {
       mockFs.promises = {} as typeof fs.promises;
@@ -52,13 +55,13 @@ describe('ConfigService', () => {
     mockFs.promises.readdir = jest.fn().mockResolvedValue([]);
     mockFs.promises.mkdir = jest.fn().mockResolvedValue(undefined);
     mockFs.promises.unlink = jest.fn().mockResolvedValue(undefined);
-    
+
     // Setup default mocks
     mockFs.existsSync.mockReturnValue(false);
     mockGetEnv.mockReturnValue('');
     mockEnvConfig.updateConfig.mockReturnValue(undefined);
     mockLoadConfigFile.mockReturnValue({});
-    
+
     // Mock HOME environment
     process.env.HOME = '/home/user';
   });
@@ -70,7 +73,7 @@ describe('ConfigService', () => {
   describe('constructor', () => {
     test('should use current directory config if it exists', () => {
       const currentDirConfig = path.join(process.cwd(), '.waltodo.json');
-      mockFs.existsSync.mockImplementation((path) => {
+      mockFs.existsSync.mockImplementation(path => {
         return path === currentDirConfig;
       });
       mockLoadConfigFile.mockReturnValue(mockConfig);
@@ -82,7 +85,7 @@ describe('ConfigService', () => {
     });
 
     test('should use home directory config if current directory config does not exist', () => {
-      mockFs.existsSync.mockImplementation((path) => {
+      mockFs.existsSync.mockImplementation(path => {
         return path === mockConfigPath;
       });
       mockLoadConfigFile.mockReturnValue(mockConfig);
@@ -93,7 +96,7 @@ describe('ConfigService', () => {
     });
 
     test('should use environment storage path if set', () => {
-      mockGetEnv.mockImplementation((key) => {
+      mockGetEnv.mockImplementation(key => {
         if (key === 'STORAGE_PATH') return '/custom/path';
         return '';
       });
@@ -108,7 +111,7 @@ describe('ConfigService', () => {
       mockFsPromises.mkdir.mockResolvedValue(undefined);
 
       configService = new ConfigService();
-      
+
       // Wait for the async directory creation to complete
       await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -121,19 +124,21 @@ describe('ConfigService', () => {
     test('should handle error if todos directory creation fails without throwing in constructor', async () => {
       mockFsPromises.access.mockRejectedValue(new Error('ENOENT'));
       mockFsPromises.mkdir.mockRejectedValue(new Error('Permission denied'));
-      
+
       // Spy on console.error to verify error handling
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       configService = new ConfigService();
-      
+
       // Wait for the async directory creation to complete
       await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Error creating todos directory')
       );
-      
+
       consoleErrorSpy.mockRestore();
     });
   });
@@ -144,7 +149,7 @@ describe('ConfigService', () => {
       mockLoadConfigFile.mockReturnValue({
         network: 'mainnet',
         walletAddress: '0x456',
-        encryptedStorage: true
+        encryptedStorage: true,
       });
 
       configService = new ConfigService();
@@ -157,7 +162,7 @@ describe('ConfigService', () => {
 
     test('should fall back to environment variables', () => {
       mockFs.existsSync.mockReturnValue(false);
-      mockGetEnv.mockImplementation((key) => {
+      mockGetEnv.mockImplementation(key => {
         if (key === 'NETWORK') return 'devnet';
         if (key === 'WALLET_ADDRESS') return '0x789';
         if (key === 'ENCRYPTED_STORAGE') return 'true';
@@ -200,21 +205,37 @@ describe('ConfigService', () => {
 
       configService = new ConfigService();
 
-      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith('NETWORK', 'testnet', 'config');
-      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith('WALLET_ADDRESS', '0x123', 'config');
-      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith('ENCRYPTED_STORAGE', false, 'config');
+      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith(
+        'NETWORK',
+        'testnet',
+        'config'
+      );
+      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith(
+        'WALLET_ADDRESS',
+        '0x123',
+        'config'
+      );
+      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith(
+        'ENCRYPTED_STORAGE',
+        false,
+        'config'
+      );
     });
 
     test('should update package ID from config', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockLoadConfigFile.mockReturnValue({
         ...mockConfig,
-        packageId: '0xnewpackage'
+        packageId: '0xnewpackage',
       });
 
       configService = new ConfigService();
 
-      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith('TODO_PACKAGE_ID', '0xnewpackage', 'config');
+      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith(
+        'TODO_PACKAGE_ID',
+        '0xnewpackage',
+        'config'
+      );
     });
 
     test('should update package ID from lastDeployment', () => {
@@ -222,24 +243,32 @@ describe('ConfigService', () => {
       mockLoadConfigFile.mockReturnValue({
         ...mockConfig,
         packageId: undefined,
-        lastDeployment: { packageId: '0xdeployedpackage' }
+        lastDeployment: { packageId: '0xdeployedpackage' },
       });
 
       configService = new ConfigService();
 
-      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith('TODO_PACKAGE_ID', '0xdeployedpackage', 'config');
+      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith(
+        'TODO_PACKAGE_ID',
+        '0xdeployedpackage',
+        'config'
+      );
     });
 
     test('should update registry ID if present', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockLoadConfigFile.mockReturnValue({
         ...mockConfig,
-        registryId: '0xnewregistry'
+        registryId: '0xnewregistry',
       });
 
       configService = new ConfigService();
 
-      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith('REGISTRY_ID', '0xnewregistry', 'config');
+      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith(
+        'REGISTRY_ID',
+        '0xnewregistry',
+        'config'
+      );
     });
   });
 
@@ -256,7 +285,7 @@ describe('ConfigService', () => {
       expect(mockSaveConfigToFile).toHaveBeenCalledWith(
         expect.objectContaining({
           network: 'mainnet',
-          walletAddress: '0x123'
+          walletAddress: '0x123',
         }),
         mockConfigPath
       );
@@ -264,10 +293,14 @@ describe('ConfigService', () => {
 
     test('should update environment config after saving', async () => {
       jest.clearAllMocks();
-      
+
       await configService.saveConfig({ walletAddress: '0xnew' });
 
-      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith('WALLET_ADDRESS', '0xnew', 'config');
+      expect(mockEnvConfig.updateConfig).toHaveBeenCalledWith(
+        'WALLET_ADDRESS',
+        '0xnew',
+        'config'
+      );
     });
 
     test('should throw error if save fails', async () => {
@@ -275,8 +308,9 @@ describe('ConfigService', () => {
         throw new Error('Write permission denied');
       });
 
-      await expect(configService.saveConfig({ network: 'mainnet' }))
-        .rejects.toThrow(CLIError);
+      await expect(
+        configService.saveConfig({ network: 'mainnet' })
+      ).rejects.toThrow(CLIError);
     });
   });
 
@@ -290,14 +324,14 @@ describe('ConfigService', () => {
       todos: [],
       version: 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     const mockTodo: Todo = {
       id: 'todo-1',
       title: 'Test Todo',
       description: 'Description',
       completed: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     beforeEach(() => {
@@ -321,8 +355,9 @@ describe('ConfigService', () => {
       test('should throw error if save fails', async () => {
         mockFsPromises.writeFile.mockRejectedValue(new Error('Write failed'));
 
-        await expect(configService.saveListData(mockListName, mockTodoList))
-          .rejects.toThrow(CLIError);
+        await expect(
+          configService.saveListData(mockListName, mockTodoList)
+        ).rejects.toThrow(CLIError);
       });
     });
 
@@ -334,7 +369,10 @@ describe('ConfigService', () => {
         const result = await configService.getLocalTodos(mockListName);
 
         expect(result).toEqual(mockTodoList);
-        expect(mockFsPromises.readFile).toHaveBeenCalledWith(mockListPath, 'utf-8');
+        expect(mockFsPromises.readFile).toHaveBeenCalledWith(
+          mockListPath,
+          'utf-8'
+        );
       });
 
       test('should return null if list does not exist', async () => {
@@ -349,8 +387,9 @@ describe('ConfigService', () => {
         mockFs.existsSync.mockReturnValue(true);
         mockFsPromises.readFile.mockRejectedValue(new Error('Read failed'));
 
-        await expect(configService.getLocalTodos(mockListName))
-          .rejects.toThrow(CLIError);
+        await expect(configService.getLocalTodos(mockListName)).rejects.toThrow(
+          CLIError
+        );
       });
     });
 
@@ -359,7 +398,7 @@ describe('ConfigService', () => {
         mockFsPromises.readdir.mockResolvedValue([
           'list1.json',
           'list2.json',
-          'other.txt'
+          'other.txt',
         ]);
 
         const result = await configService.getAllLists();
@@ -370,8 +409,7 @@ describe('ConfigService', () => {
       test('should throw error if readdir fails', async () => {
         mockFsPromises.readdir.mockRejectedValue(new Error('Read failed'));
 
-        await expect(configService.getAllLists())
-          .rejects.toThrow(CLIError);
+        await expect(configService.getAllLists()).rejects.toThrow(CLIError);
       });
     });
 
@@ -406,7 +444,7 @@ describe('ConfigService', () => {
       test('should update existing todo', async () => {
         const existingList = {
           ...mockTodoList,
-          todos: [mockTodo]
+          todos: [mockTodo],
         };
         const updatedTodo = { ...mockTodo, completed: true };
 
@@ -425,16 +463,20 @@ describe('ConfigService', () => {
       test('should throw error if list not found', async () => {
         mockFs.existsSync.mockReturnValue(false);
 
-        await expect(configService.updateLocalTodo(mockListName, mockTodo))
-          .rejects.toThrow('List "test-list" not found');
+        await expect(
+          configService.updateLocalTodo(mockListName, mockTodo)
+        ).rejects.toThrow('List "test-list" not found');
       });
 
       test('should throw error if todo not found', async () => {
         mockFs.existsSync.mockReturnValue(true);
         mockFsPromises.readFile.mockResolvedValue(JSON.stringify(mockTodoList));
 
-        await expect(configService.updateLocalTodo(mockListName, mockTodo))
-          .rejects.toThrow(`Todo "${mockTodo.id}" not found in list "${mockListName}"`);
+        await expect(
+          configService.updateLocalTodo(mockListName, mockTodo)
+        ).rejects.toThrow(
+          `Todo "${mockTodo.id}" not found in list "${mockListName}"`
+        );
       });
     });
 
@@ -442,7 +484,7 @@ describe('ConfigService', () => {
       test('should delete todo from list', async () => {
         const existingList = {
           ...mockTodoList,
-          todos: [mockTodo]
+          todos: [mockTodo],
         };
 
         mockFs.existsSync.mockReturnValue(true);
@@ -459,16 +501,18 @@ describe('ConfigService', () => {
       test('should throw error if list not found', async () => {
         mockFs.existsSync.mockReturnValue(false);
 
-        await expect(configService.deleteLocalTodo(mockListName, mockTodo.id))
-          .rejects.toThrow('List "test-list" not found');
+        await expect(
+          configService.deleteLocalTodo(mockListName, mockTodo.id)
+        ).rejects.toThrow('List "test-list" not found');
       });
 
       test('should throw error if todo not found', async () => {
         mockFs.existsSync.mockReturnValue(true);
         mockFsPromises.readFile.mockResolvedValue(JSON.stringify(mockTodoList));
 
-        await expect(configService.deleteLocalTodo(mockListName, 'non-existent'))
-          .rejects.toThrow('Todo "non-existent" not found in list "test-list"');
+        await expect(
+          configService.deleteLocalTodo(mockListName, 'non-existent')
+        ).rejects.toThrow('Todo "non-existent" not found in list "test-list"');
       });
     });
 
@@ -485,16 +529,18 @@ describe('ConfigService', () => {
       test('should not throw if list does not exist', async () => {
         mockFsPromises.access.mockRejectedValue({ code: 'ENOENT' });
 
-        await expect(configService.deleteList(mockListName))
-          .resolves.not.toThrow();
+        await expect(
+          configService.deleteList(mockListName)
+        ).resolves.not.toThrow();
       });
 
       test('should throw error if unlink fails', async () => {
         mockFsPromises.access.mockResolvedValue(undefined);
         mockFsPromises.unlink.mockRejectedValue(new Error('Permission denied'));
 
-        await expect(configService.deleteList(mockListName))
-          .rejects.toThrow(CLIError);
+        await expect(configService.deleteList(mockListName)).rejects.toThrow(
+          CLIError
+        );
       });
     });
 
@@ -504,10 +550,12 @@ describe('ConfigService', () => {
         mockFs.existsSync.mockReturnValue(true);
         mockFsPromises.readFile
           .mockResolvedValueOnce(JSON.stringify(mockTodoList))
-          .mockResolvedValueOnce(JSON.stringify({
-            ...mockTodoList,
-            todos: [mockTodo]
-          }));
+          .mockResolvedValueOnce(
+            JSON.stringify({
+              ...mockTodoList,
+              todos: [mockTodo],
+            })
+          );
 
         const result = await configService.getLocalTodoById(mockTodo.id);
 
@@ -533,7 +581,7 @@ describe('ConfigService', () => {
       });
 
       test('should update config from environment variables', () => {
-        mockGetEnv.mockImplementation((key) => {
+        mockGetEnv.mockImplementation(key => {
           if (key === 'NETWORK') return 'mainnet';
           if (key === 'WALLET_ADDRESS') return '0xnewaddress';
           return '';
@@ -545,14 +593,14 @@ describe('ConfigService', () => {
         expect(mockSaveConfigToFile).toHaveBeenCalledWith(
           expect.objectContaining({
             network: 'mainnet',
-            walletAddress: '0xnewaddress'
+            walletAddress: '0xnewaddress',
           }),
           mockConfigPath
         );
       });
 
       test('should not save if no changes', () => {
-        mockGetEnv.mockImplementation((key) => {
+        mockGetEnv.mockImplementation(key => {
           if (key === 'NETWORK') return 'testnet';
           if (key === 'WALLET_ADDRESS') return '0x123';
           return '';
@@ -564,7 +612,7 @@ describe('ConfigService', () => {
       });
 
       test('should update encrypted storage', () => {
-        mockGetEnv.mockImplementation((key) => {
+        mockGetEnv.mockImplementation(key => {
           if (key === 'ENCRYPTED_STORAGE') return true;
           return '';
         });
@@ -573,14 +621,14 @@ describe('ConfigService', () => {
 
         expect(mockSaveConfigToFile).toHaveBeenCalledWith(
           expect.objectContaining({
-            encryptedStorage: true
+            encryptedStorage: true,
           }),
           mockConfigPath
         );
       });
 
       test('should update package and registry IDs', () => {
-        mockGetEnv.mockImplementation((key) => {
+        mockGetEnv.mockImplementation(key => {
           if (key === 'TODO_PACKAGE_ID') return '0xnewpackage';
           if (key === 'REGISTRY_ID') return '0xnewregistry';
           return '';
@@ -591,7 +639,7 @@ describe('ConfigService', () => {
         expect(mockSaveConfigToFile).toHaveBeenCalledWith(
           expect.objectContaining({
             packageId: '0xnewpackage',
-            registryId: '0xnewregistry'
+            registryId: '0xnewregistry',
           }),
           mockConfigPath
         );
@@ -603,7 +651,7 @@ describe('ConfigService', () => {
     test('should export singleton instance', () => {
       // Import the singleton
       const { configService: singleton } = configServiceModule;
-      
+
       expect(singleton).toBeDefined();
       expect(singleton).toBeInstanceOf(ConfigService);
     });

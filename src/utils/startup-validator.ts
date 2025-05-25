@@ -25,12 +25,18 @@ interface StartupCheckResult {
  * Performs all startup validation checks
  * @returns True if all checks passed successfully
  */
-export function validateStartup(options: {
-  throwOnError?: boolean;
-  showBanner?: boolean;
-  exitOnCritical?: boolean;
-} = {}): boolean {
-  const { throwOnError = true, showBanner = true, exitOnCritical = true } = options;
+export function validateStartup(
+  options: {
+    throwOnError?: boolean;
+    showBanner?: boolean;
+    exitOnCritical?: boolean;
+  } = {}
+): boolean {
+  const {
+    throwOnError = true,
+    showBanner = true,
+    exitOnCritical = true,
+  } = options;
   let isValid = true;
   let critical = false;
   const errors: string[] = [];
@@ -46,23 +52,31 @@ export function validateStartup(options: {
     const envResult = validateEnvironmentFull();
     if (!envResult.isValid) {
       isValid = false;
-      
+
       if (envResult.missingVars.length > 0) {
         critical = true;
-        errors.push(`Missing required environment variables: ${envResult.missingVars.join(', ')}`);
+        errors.push(
+          `Missing required environment variables: ${envResult.missingVars.join(', ')}`
+        );
       }
-      
+
       if (envResult.invalidVars.length > 0) {
         critical = true;
-        errors.push(`Invalid environment variables:\n- ${envResult.invalidVars.join('\n- ')}`);
+        errors.push(
+          `Invalid environment variables:\n- ${envResult.invalidVars.join('\n- ')}`
+        );
       }
-      
+
       if (envResult.deprecatedVars.length > 0) {
-        warnings.push(`Deprecated environment variables:\n- ${envResult.deprecatedVars.join('\n- ')}`);
+        warnings.push(
+          `Deprecated environment variables:\n- ${envResult.deprecatedVars.join('\n- ')}`
+        );
       }
-      
+
       if (envResult.warnings.length > 0) {
-        warnings.push(`Environment warnings:\n- ${envResult.warnings.join('\n- ')}`);
+        warnings.push(
+          `Environment warnings:\n- ${envResult.warnings.join('\n- ')}`
+        );
       }
     }
 
@@ -72,9 +86,13 @@ export function validateStartup(options: {
       isValid = false;
       if (storageDirCheck.critical) {
         critical = true;
-        errors.push(storageDirCheck.message || 'Storage directory check failed');
+        errors.push(
+          storageDirCheck.message || 'Storage directory check failed'
+        );
       } else {
-        warnings.push(storageDirCheck.message || 'Storage directory check warning');
+        warnings.push(
+          storageDirCheck.message || 'Storage directory check warning'
+        );
       }
     }
 
@@ -86,7 +104,9 @@ export function validateStartup(options: {
         critical = true;
         errors.push(tempDirCheck.message || 'Temporary directory check failed');
       } else {
-        warnings.push(tempDirCheck.message || 'Temporary directory check warning');
+        warnings.push(
+          tempDirCheck.message || 'Temporary directory check warning'
+        );
       }
     }
 
@@ -96,12 +116,14 @@ export function validateStartup(options: {
         logger.error(chalk.red('\nStartup validation errors:'));
         errors.forEach(error => logger.error(chalk.red(`  - ${error}`)));
       }
-      
+
       if (warnings.length > 0) {
         logger.warn(chalk.yellow('\nStartup validation warnings:'));
-        warnings.forEach(warning => logger.warn(chalk.yellow(`  - ${warning}`)));
+        warnings.forEach(warning =>
+          logger.warn(chalk.yellow(`  - ${warning}`))
+        );
       }
-      
+
       if (throwOnError && critical) {
         throw new CLIError(
           'Startup validation failed with critical errors. See above for details.',
@@ -113,7 +135,9 @@ export function validateStartup(options: {
     } else {
       if (warnings.length > 0) {
         logger.warn(chalk.yellow('\nStartup validation warnings:'));
-        warnings.forEach(warning => logger.warn(chalk.yellow(`  - ${warning}`)));
+        warnings.forEach(warning =>
+          logger.warn(chalk.yellow(`  - ${warning}`))
+        );
       }
     }
 
@@ -123,7 +147,11 @@ export function validateStartup(options: {
       throw error;
     } else {
       logger.error(chalk.red('\nUnexpected startup validation error:'));
-      logger.error(chalk.red(`  - ${error instanceof Error ? error.message : String(error)}`));
+      logger.error(
+        chalk.red(
+          `  - ${error instanceof Error ? error.message : String(error)}`
+        )
+      );
       if (exitOnCritical) {
         process.exit(1);
       }
@@ -142,7 +170,10 @@ function showStartupBanner(): void {
   const env = envConfig.get('NODE_ENV');
 
   // Convert app name to string and uppercase it safely
-  const appNameUpper = typeof appName === 'string' ? appName.toUpperCase() : String(appName).toUpperCase();
+  const appNameUpper =
+    typeof appName === 'string'
+      ? appName.toUpperCase()
+      : String(appName).toUpperCase();
 
   logger.info(chalk.blue('\n======================================'));
   logger.info(chalk.blue(`  ${appNameUpper} v${version}`));
@@ -158,8 +189,9 @@ function checkStorageDirectory(): StartupCheckResult {
   if (!storagePath) {
     return {
       success: false,
-      message: 'Storage path is not defined. Set the STORAGE_PATH environment variable.',
-      critical: true
+      message:
+        'Storage path is not defined. Set the STORAGE_PATH environment variable.',
+      critical: true,
     };
   }
 
@@ -170,13 +202,13 @@ function checkStorageDirectory(): StartupCheckResult {
         return {
           success: true,
           message: `Created storage directory at ${storagePath}`,
-          critical: false
+          critical: false,
         };
       } catch (error) {
         return {
           success: false,
           message: `Failed to create storage directory at ${storagePath}: ${error instanceof Error ? error.message : String(error)}`,
-          critical: true
+          critical: true,
         };
       }
     }
@@ -185,16 +217,16 @@ function checkStorageDirectory(): StartupCheckResult {
     const testFile = path.join(storagePath, '.write-test');
     fs.writeFileSync(testFile, 'test');
     fs.unlinkSync(testFile);
-    
+
     return {
       success: true,
-      critical: false
+      critical: false,
     };
   } catch (error) {
     return {
       success: false,
       message: `Storage directory at ${storagePath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
-      critical: true
+      critical: true,
     };
   }
 }
@@ -207,8 +239,9 @@ function checkTemporaryDirectory(): StartupCheckResult {
   if (!tempPath) {
     return {
       success: false,
-      message: 'Temporary storage path is not defined. Set the TEMPORARY_STORAGE environment variable.',
-      critical: false // Not critical as it might not be used immediately
+      message:
+        'Temporary storage path is not defined. Set the TEMPORARY_STORAGE environment variable.',
+      critical: false, // Not critical as it might not be used immediately
     };
   }
 
@@ -219,13 +252,13 @@ function checkTemporaryDirectory(): StartupCheckResult {
         return {
           success: true,
           message: `Created temporary directory at ${tempPath}`,
-          critical: false
+          critical: false,
         };
       } catch (error) {
         return {
           success: false,
           message: `Failed to create temporary directory at ${tempPath}: ${error instanceof Error ? error.message : String(error)}`,
-          critical: false // Not critical as it might not be used immediately
+          critical: false, // Not critical as it might not be used immediately
         };
       }
     }
@@ -234,16 +267,16 @@ function checkTemporaryDirectory(): StartupCheckResult {
     const testFile = path.join(tempPath, '.write-test');
     fs.writeFileSync(testFile, 'test');
     fs.unlinkSync(testFile);
-    
+
     return {
       success: true,
-      critical: false
+      critical: false,
     };
   } catch (error) {
     return {
       success: false,
       message: `Temporary directory at ${tempPath} is not writable: ${error instanceof Error ? error.message : String(error)}`,
-      critical: false // Not critical as it might not be used immediately
+      critical: false, // Not critical as it might not be used immediately
     };
   }
 }

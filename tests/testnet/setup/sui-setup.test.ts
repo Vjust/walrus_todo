@@ -7,13 +7,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import axios from 'axios';
-import { 
-  SuiTestnetSetup, 
-  setupTestnet, 
+import {
+  SuiTestnetSetup,
+  setupTestnet,
   quickSetup,
   restoreFromBackup,
   WalletSetupConfig,
-  TestnetSetupResult
+  TestnetSetupResult,
 } from './sui-setup';
 
 // Mock dependencies
@@ -39,21 +39,25 @@ describe('SuiTestnetSetup', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup default mocks
     mockedFs.existsSync.mockReturnValue(false);
     mockedFs.mkdirSync.mockReturnValue(undefined);
     mockedFs.writeFileSync.mockReturnValue(undefined);
-    mockedFs.readFileSync.mockReturnValue(JSON.stringify(['mock-keystore-data']));
+    mockedFs.readFileSync.mockReturnValue(
+      JSON.stringify(['mock-keystore-data'])
+    );
     mockedFs.copyFileSync.mockReturnValue(undefined);
 
     // Mock axios for faucet requests
     mockedAxios.post.mockResolvedValue({
       data: {
-        transferredGasObjects: [{
-          transferTxDigest: 'mock-tx-digest'
-        }]
-      }
+        transferredGasObjects: [
+          {
+            transferTxDigest: 'mock-tx-digest',
+          },
+        ],
+      },
     });
   });
 
@@ -69,7 +73,7 @@ describe('SuiTestnetSetup', () => {
         walletType: 'secp256k1',
         enableFaucet: false,
       };
-      
+
       const setup = new SuiTestnetSetup(config);
       expect(setup).toBeDefined();
     });
@@ -86,15 +90,16 @@ describe('SuiTestnetSetup', () => {
 
     beforeEach(() => {
       setup = new SuiTestnetSetup();
-      
+
       // Mock network check
-      jest.spyOn(setup['client'], 'getLatestCheckpointSequenceNumber')
+      jest
+        .spyOn(setup['client'], 'getLatestCheckpointSequenceNumber')
         .mockResolvedValue('12345' as any);
     });
 
     it('should complete full setup successfully', async () => {
       // Mock that keystore doesn't exist (new wallet)
-      mockedFs.existsSync.mockImplementation((path) => {
+      mockedFs.existsSync.mockImplementation(path => {
         if (path.toString().includes('keystore')) return false;
         return true;
       });
@@ -109,7 +114,7 @@ describe('SuiTestnetSetup', () => {
 
     it('should restore existing wallet if keystore exists', async () => {
       // Mock that keystore exists
-      mockedFs.existsSync.mockImplementation((path) => {
+      mockedFs.existsSync.mockImplementation(path => {
         if (path.toString().includes('keystore')) return true;
         return false;
       });
@@ -122,7 +127,7 @@ describe('SuiTestnetSetup', () => {
 
     it('should skip faucet if disabled', async () => {
       setup = new SuiTestnetSetup({ enableFaucet: false });
-      
+
       const result = await setup.setup();
 
       expect(result.fundingTxDigest).toBeUndefined();
@@ -178,7 +183,7 @@ describe('SuiTestnetSetup', () => {
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.stringContaining('faucet'),
         expect.objectContaining({
-          FixedAmountRequest: expect.any(Object)
+          FixedAmountRequest: expect.any(Object),
         }),
         expect.any(Object)
       );
@@ -189,10 +194,12 @@ describe('SuiTestnetSetup', () => {
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValueOnce({
           data: {
-            transferredGasObjects: [{
-              transferTxDigest: 'mock-tx-digest'
-            }]
-          }
+            transferredGasObjects: [
+              {
+                transferTxDigest: 'mock-tx-digest',
+              },
+            ],
+          },
         });
 
       const txDigest = await setup['fundWalletFromFaucet']('0xtest-address');
@@ -240,10 +247,10 @@ describe('SuiTestnetSetup', () => {
     it('should not save private key in wallet info', async () => {
       await setup['backupWallet'](mockWalletInfo);
 
-      const writeCall = mockedFs.writeFileSync.mock.calls.find(
-        call => call[0].toString().includes('wallet-info.json')
+      const writeCall = mockedFs.writeFileSync.mock.calls.find(call =>
+        call[0].toString().includes('wallet-info.json')
       );
-      
+
       expect(writeCall).toBeDefined();
       const savedData = JSON.parse(writeCall![1] as string);
       expect(savedData.privateKey).toBe('[REDACTED]');
@@ -277,12 +284,11 @@ describe('SuiTestnetSetup', () => {
   describe('static helpers', () => {
     it('should provide quick setup', async () => {
       // Mock the setup process
-      jest.spyOn(SuiTestnetSetup.prototype, 'setup')
-        .mockResolvedValue({
-          wallet: mockWalletInfo,
-          keystorePath: '/mock/keystore',
-          configPath: '/mock/config',
-        } as TestnetSetupResult);
+      jest.spyOn(SuiTestnetSetup.prototype, 'setup').mockResolvedValue({
+        wallet: mockWalletInfo,
+        keystorePath: '/mock/keystore',
+        configPath: '/mock/config',
+      } as TestnetSetupResult);
 
       const result = await quickSetup();
       expect(result).toBeDefined();
@@ -291,7 +297,7 @@ describe('SuiTestnetSetup', () => {
 
     it('should restore from backup', async () => {
       mockedFs.existsSync.mockReturnValue(true);
-      
+
       const wallet = await restoreFromBackup('/mock/backup');
       expect(wallet).toBeDefined();
       expect(mockedFs.copyFileSync).toHaveBeenCalled();
@@ -314,7 +320,8 @@ describe('SuiTestnetSetup', () => {
     });
 
     it('should handle network connection failure', async () => {
-      jest.spyOn(setup['client'], 'getLatestCheckpointSequenceNumber')
+      jest
+        .spyOn(setup['client'], 'getLatestCheckpointSequenceNumber')
         .mockRejectedValue(new Error('Connection failed'));
 
       await expect(setup.setup()).rejects.toThrow('Failed to connect to Sui');
@@ -324,8 +331,9 @@ describe('SuiTestnetSetup', () => {
       mockedFs.existsSync.mockReturnValue(true);
       mockedFs.readFileSync.mockReturnValue('invalid-json');
 
-      await expect(setup['restoreWalletFromKeystore']())
-        .rejects.toThrow('Failed to restore wallet from keystore');
+      await expect(setup['restoreWalletFromKeystore']()).rejects.toThrow(
+        'Failed to restore wallet from keystore'
+      );
     });
 
     it('should handle backup directory creation failure', async () => {
@@ -333,8 +341,9 @@ describe('SuiTestnetSetup', () => {
         throw new Error('Permission denied');
       });
 
-      await expect(setup['backupWallet'](mockWalletInfo))
-        .rejects.toThrow('Failed to backup wallet');
+      await expect(setup['backupWallet'](mockWalletInfo)).rejects.toThrow(
+        'Failed to backup wallet'
+      );
     });
   });
 });
@@ -368,7 +377,9 @@ describe('Integration Examples', () => {
       configPath: 'mock-config',
     });
 
-    jest.spyOn(SuiTestnetSetup.prototype, 'setup').mockImplementation(mockSetup);
+    jest
+      .spyOn(SuiTestnetSetup.prototype, 'setup')
+      .mockImplementation(mockSetup);
 
     const wallets = await Promise.all(
       walletConfigs.map(config => setupTestnet(config))

@@ -29,7 +29,7 @@ export default class UpdateCommand extends BaseCommand {
     '<%= config.bin %> update my-list -i task-123 -d 2024-05-01               # Update due date',
     '<%= config.bin %> update -i todo-456 -t "New title" -p low               # Multiple updates',
     '<%= config.bin %> update work -i "Old task" -t "Revised task" -g "urgent,important"  # Update with tags',
-    '<%= config.bin %> update personal -i todo-789 --clear-due                # Clear due date'
+    '<%= config.bin %> update personal -i todo-789 --clear-due                # Clear due date',
   ];
 
   static flags = {
@@ -37,36 +37,36 @@ export default class UpdateCommand extends BaseCommand {
     id: Flags.string({
       char: 'i',
       description: 'Todo ID or title to update',
-      required: true
+      required: true,
     }),
     task: Flags.string({
       char: 't',
-      description: 'New task description'
+      description: 'New task description',
     }),
     priority: Flags.string({
       char: 'p',
       description: 'New priority (high, medium, low)',
-      options: ['high', 'medium', 'low']
+      options: ['high', 'medium', 'low'],
     }),
     due: Flags.string({
       char: 'd',
-      description: 'New due date (YYYY-MM-DD)'
+      description: 'New due date (YYYY-MM-DD)',
     }),
     tags: Flags.string({
       char: 'g',
-      description: 'New comma-separated tags'
+      description: 'New comma-separated tags',
     }),
     private: Flags.boolean({
-      description: 'Mark todo as private'
-    })
+      description: 'Mark todo as private',
+    }),
   };
 
   static args = {
     listName: Args.string({
       name: 'listName',
       description: 'Name of the todo list',
-      required: true
-    })
+      required: true,
+    }),
   };
 
   async run(): Promise<void> {
@@ -80,9 +80,15 @@ export default class UpdateCommand extends BaseCommand {
       }
 
       // Find todo by title or ID
-      const todo = await todoService.getTodoByTitleOrId(flags.id, args.listName);
+      const todo = await todoService.getTodoByTitleOrId(
+        flags.id,
+        args.listName
+      );
       if (!todo) {
-        throw new CLIError(`Todo "${flags.id}" not found in list "${args.listName}"`, 'INVALID_TASK_ID');
+        throw new CLIError(
+          `Todo "${flags.id}" not found in list "${args.listName}"`,
+          'INVALID_TASK_ID'
+        );
       }
 
       let changes = 0;
@@ -96,7 +102,10 @@ export default class UpdateCommand extends BaseCommand {
       // Update priority if provided
       if (flags.priority) {
         if (!validatePriority(flags.priority)) {
-          throw new CLIError("Invalid priority. Must be high, medium, or low", 'INVALID_PRIORITY');  // Changed to double quotes for consistency
+          throw new CLIError(
+            'Invalid priority. Must be high, medium, or low',
+            'INVALID_PRIORITY'
+          ); // Changed to double quotes for consistency
         }
         todo.priority = flags.priority as Todo['priority'];
         changes++;
@@ -105,7 +114,10 @@ export default class UpdateCommand extends BaseCommand {
       // Update due date if provided
       if (flags.due) {
         if (!validateDate(flags.due)) {
-          throw new CLIError('Invalid date format. Use YYYY-MM-DD', 'INVALID_DATE');
+          throw new CLIError(
+            'Invalid date format. Use YYYY-MM-DD',
+            'INVALID_DATE'
+          );
         }
         todo.dueDate = flags.due;
         changes++;
@@ -124,7 +136,9 @@ export default class UpdateCommand extends BaseCommand {
       }
 
       if (changes === 0) {
-        this.log(chalk.yellow('No changes specified. Use -h to see available options.'));
+        this.log(
+          chalk.yellow('No changes specified. Use -h to see available options.')
+        );
         return;
       }
 
@@ -135,7 +149,6 @@ export default class UpdateCommand extends BaseCommand {
       this.log(chalk.dim('List: ') + args.listName);
       this.log(chalk.dim('ID: ') + todo.id);
       this.log(chalk.dim(`Changes made: ${changes}`));
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

@@ -5,22 +5,25 @@ module.exports = {
   testTimeout: 30000, // 30 seconds for e2e tests
   setupFilesAfterEnv: ['<rootDir>/setup.ts'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        esModuleInterop: true,
-        allowJs: true,
-        allowSyntheticDefaultImports: true
-      }
-    }]
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          esModuleInterop: true,
+          allowJs: true,
+          allowSyntheticDefaultImports: true,
+        },
+      },
+    ],
   },
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/../../src/$1'
+    '^@/(.*)$': '<rootDir>/../../src/$1',
   },
   collectCoverageFrom: [
     '../../src/**/*.{js,ts}',
     '!../../src/types/**',
     '!../../src/**/*.d.ts',
-    '!../../src/**/__mocks__/**'
+    '!../../src/**/__mocks__/**',
   ],
-  verbose: true
+  verbose: true,
 };

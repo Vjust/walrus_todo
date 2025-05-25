@@ -25,10 +25,10 @@ const logger = new Logger('config-service');
 export class ConfigService {
   /** Path to the configuration file */
   private configPath: string;
-  
+
   /** Path to the directory where Todo lists are stored */
   private todosPath: string;
-  
+
   /** The loaded configuration object */
   private config: Config;
 
@@ -40,7 +40,7 @@ export class ConfigService {
   constructor() {
     // Check for config directory from environment variable
     const configDir = getEnv('WALRUS_TODO_CONFIG_DIR') as string | undefined;
-    
+
     if (configDir && configDir.trim() !== '') {
       // If environment variable is set, use it directly
       this.configPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
@@ -51,11 +51,16 @@ export class ConfigService {
       const homeDirConfig = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
 
       // Use current directory config if it exists, otherwise use home directory
-      this.configPath = fs.existsSync(currentDirConfig) ? currentDirConfig : homeDirConfig;
+      this.configPath = fs.existsSync(currentDirConfig)
+        ? currentDirConfig
+        : homeDirConfig;
     }
 
     // Get storage path from environment configuration or use default
-    this.todosPath = path.resolve(process.cwd(), getEnv('STORAGE_PATH') || 'Todos');
+    this.todosPath = path.resolve(
+      process.cwd(),
+      getEnv('STORAGE_PATH') || 'Todos'
+    );
 
     // Load initial configuration
     this.config = this.loadConfig();
@@ -66,7 +71,9 @@ export class ConfigService {
     // Ensure the todos directory exists - calling async function from constructor
     // We need to handle this properly
     this.ensureTodosDirectory().catch((error: unknown) => {
-      logger.error(`Error creating todos directory: ${error instanceof Error ? error.message : String(error)}`);
+      logger.error(
+        `Error creating todos directory: ${error instanceof Error ? error.message : String(error)}`
+      );
       // Not throwing here as constructor can't be async
     });
   }
@@ -75,21 +82,37 @@ export class ConfigService {
    * Updates the environment configuration with values from the loaded config.
    * This ensures that environment variables reflect the current configuration
    * settings, which might come from the config file or environment variables.
-   * 
+   *
    * @private
    * @returns {void}
    */
   private updateEnvironmentConfig(): void {
     // Update environment configuration with values from config file
     envConfig.updateConfig('NETWORK', this.config.network, 'config');
-    envConfig.updateConfig('WALLET_ADDRESS', this.config.walletAddress, 'config');
-    envConfig.updateConfig('ENCRYPTED_STORAGE', this.config.encryptedStorage, 'config');
+    envConfig.updateConfig(
+      'WALLET_ADDRESS',
+      this.config.walletAddress,
+      'config'
+    );
+    envConfig.updateConfig(
+      'ENCRYPTED_STORAGE',
+      this.config.encryptedStorage,
+      'config'
+    );
 
     // If we have custom package ID from deployment or directly in config, use it
     if (this.config.packageId) {
-      envConfig.updateConfig('TODO_PACKAGE_ID', this.config.packageId, 'config');
+      envConfig.updateConfig(
+        'TODO_PACKAGE_ID',
+        this.config.packageId,
+        'config'
+      );
     } else if (this.config.lastDeployment?.packageId) {
-      envConfig.updateConfig('TODO_PACKAGE_ID', this.config.lastDeployment.packageId, 'config');
+      envConfig.updateConfig(
+        'TODO_PACKAGE_ID',
+        this.config.lastDeployment.packageId,
+        'config'
+      );
     }
 
     // If we have registry ID, use it
@@ -101,7 +124,7 @@ export class ConfigService {
   /**
    * Ensures that the todos directory exists.
    * Creates the directory if it doesn't exist.
-   * 
+   *
    * @private
    * @throws {CLIError} If the directory cannot be created
    * @returns {void}
@@ -125,7 +148,7 @@ export class ConfigService {
 
   /**
    * Constructs the full path to a Todo list file.
-   * 
+   *
    * @private
    * @param {string} listName - The name of the Todo list
    * @returns {string} The full path to the Todo list file
@@ -138,7 +161,7 @@ export class ConfigService {
    * Loads the configuration from the config file.
    * Falls back to environment variables and defaults if the file doesn't exist
    * or if specific values are missing.
-   * 
+   *
    * @private
    * @throws {CLIError} If the configuration file exists but cannot be loaded
    * @returns {Config} The loaded configuration object
@@ -153,11 +176,17 @@ export class ConfigService {
 
         return {
           network: loadedConfig.network || getEnv('NETWORK') || 'testnet',
-          walletAddress: loadedConfig.walletAddress || getEnv('WALLET_ADDRESS') || '',
-          encryptedStorage: loadedConfig.encryptedStorage || getEnv('ENCRYPTED_STORAGE') || false,
+          walletAddress:
+            loadedConfig.walletAddress || getEnv('WALLET_ADDRESS') || '',
+          encryptedStorage:
+            loadedConfig.encryptedStorage ||
+            getEnv('ENCRYPTED_STORAGE') ||
+            false,
           lastDeployment: loadedConfig.lastDeployment || undefined,
-          packageId: loadedConfig.packageId || getEnv('TODO_PACKAGE_ID') || undefined,
-          registryId: loadedConfig.registryId || getEnv('REGISTRY_ID') || undefined
+          packageId:
+            loadedConfig.packageId || getEnv('TODO_PACKAGE_ID') || undefined,
+          registryId:
+            loadedConfig.registryId || getEnv('REGISTRY_ID') || undefined,
         };
       }
     } catch (error: unknown) {
@@ -173,33 +202,33 @@ export class ConfigService {
       walletAddress: getEnv('WALLET_ADDRESS') || '',
       encryptedStorage: getEnv('ENCRYPTED_STORAGE') || false,
       packageId: getEnv('TODO_PACKAGE_ID') || undefined,
-      registryId: getEnv('REGISTRY_ID') || undefined
+      registryId: getEnv('REGISTRY_ID') || undefined,
     };
   }
 
   /**
    * Returns the current configuration.
-   * 
+   *
    * @public
    * @returns {Config} The current configuration object
    */
   public getConfig(): Config {
     return this.config;
   }
-  
+
   /**
    * Returns the path to the todos directory.
-   * 
+   *
    * @public
    * @returns {string} The path to the todos directory
    */
   public getTodosDirectory(): string {
     return this.todosPath;
   }
-  
+
   /**
    * Returns the path to the configuration file.
-   * 
+   *
    * @public
    * @returns {string} The path to the configuration file
    */
@@ -211,7 +240,7 @@ export class ConfigService {
    * Updates and saves the configuration.
    * Merges the provided partial configuration with the existing configuration
    * and saves it to the config file.
-   * 
+   *
    * @public
    * @param {Partial<Config>} config - The partial configuration to merge with the existing configuration
    * @throws {CLIError} If the configuration cannot be saved
@@ -233,12 +262,12 @@ export class ConfigService {
       );
     }
   }
-  
+
   /**
    * Merges and saves the configuration to the appropriate config path.
    * Uses WALRUS_TODO_CONFIG_DIR environment variable to determine config path if set,
    * otherwise follows the default path resolution rules.
-   * 
+   *
    * @public
    * @param {Partial<Config>} config - The partial configuration to merge with the existing configuration
    * @throws {CLIError} If the configuration cannot be saved
@@ -247,10 +276,10 @@ export class ConfigService {
   public async mergeAndSaveConfig(config: Partial<Config>): Promise<void> {
     // Get the configured directory path from environment
     const configDir = getEnv('WALRUS_TODO_CONFIG_DIR') as string | undefined;
-    
+
     // Determine the target path for saving
     let targetConfigPath = this.configPath;
-    
+
     if (configDir && configDir.trim() !== '') {
       // Ensure the directory exists
       try {
@@ -260,7 +289,7 @@ export class ConfigService {
           await fsPromises.mkdir(configDir, { recursive: true });
         }
         targetConfigPath = path.join(configDir, CLI_CONFIG.CONFIG_FILE);
-        
+
         // IMPORTANT: Update the configPath for future saves
         this.configPath = targetConfigPath;
       } catch (error: unknown) {
@@ -270,14 +299,14 @@ export class ConfigService {
         );
       }
     }
-    
+
     // Merge the config
     this.config = { ...this.config, ...config };
-    
+
     try {
       // Save to the determined path
       saveConfigToFile(this.config, targetConfigPath);
-      
+
       // Update environment configuration with new values
       this.updateEnvironmentConfig();
     } catch (error: unknown) {
@@ -290,7 +319,7 @@ export class ConfigService {
 
   /**
    * Loads the data for a specific Todo list.
-   * 
+   *
    * @private
    * @param {string} listName - The name of the Todo list to load
    * @throws {CLIError} If the list exists but cannot be loaded
@@ -327,14 +356,17 @@ export class ConfigService {
 
   /**
    * Saves a Todo list to the file system.
-   * 
+   *
    * @public
    * @param {string} listName - The name of the Todo list to save
    * @param {TodoList} list - The Todo list data to save
    * @throws {CLIError} If the list cannot be saved
    * @returns {Promise<TodoList>} The saved Todo list
    */
-  public async saveListData(listName: string, list: TodoList): Promise<TodoList> {
+  public async saveListData(
+    listName: string,
+    list: TodoList
+  ): Promise<TodoList> {
     const listPath = this.getListPath(listName);
     try {
       await fsPromises.writeFile(listPath, JSON.stringify(list, null, 2));
@@ -349,7 +381,7 @@ export class ConfigService {
 
   /**
    * Retrieves a Todo list from local storage.
-   * 
+   *
    * @public
    * @param {string} listName - The name of the Todo list to retrieve
    * @returns {Promise<TodoList | null>} The Todo list, or null if it doesn't exist
@@ -360,7 +392,7 @@ export class ConfigService {
 
   /**
    * Gets the names of all Todo lists in local storage.
-   * 
+   *
    * @public
    * @throws {CLIError} If the Todo lists directory cannot be read
    * @returns {Promise<string[]>} An array of Todo list names
@@ -382,7 +414,7 @@ export class ConfigService {
   /**
    * Saves a new Todo to a list.
    * Creates the list if it doesn't exist.
-   * 
+   *
    * @public
    * @param {string} listName - The name of the Todo list
    * @param {Todo} todo - The Todo to save
@@ -399,7 +431,7 @@ export class ConfigService {
         todos: [],
         version: 1,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
     }
     list.todos.push(todo);
@@ -408,7 +440,7 @@ export class ConfigService {
 
   /**
    * Updates an existing Todo in a list.
-   * 
+   *
    * @public
    * @param {string} listName - The name of the Todo list
    * @param {Todo} todo - The updated Todo
@@ -423,7 +455,10 @@ export class ConfigService {
 
     const index = list.todos.findIndex(t => t.id === todo.id);
     if (index === -1) {
-      throw new CLIError(`Todo "${todo.id}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
+      throw new CLIError(
+        `Todo "${todo.id}" not found in list "${listName}"`,
+        'TODO_NOT_FOUND'
+      );
     }
 
     list.todos[index] = todo;
@@ -433,14 +468,17 @@ export class ConfigService {
 
   /**
    * Deletes a Todo from a list.
-   * 
+   *
    * @public
    * @param {string} listName - The name of the Todo list
    * @param {string} todoId - The ID of the Todo to delete
    * @throws {CLIError} If the list or Todo doesn't exist
    * @returns {Promise<void>}
    */
-  public async deleteLocalTodo(listName: string, todoId: string): Promise<void> {
+  public async deleteLocalTodo(
+    listName: string,
+    todoId: string
+  ): Promise<void> {
     const list = await this.loadListData(listName);
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
@@ -448,7 +486,10 @@ export class ConfigService {
 
     const todoIndex = list.todos.findIndex(t => t.id === todoId);
     if (todoIndex === -1) {
-      throw new CLIError(`Todo "${todoId}" not found in list "${listName}"`, 'TODO_NOT_FOUND');
+      throw new CLIError(
+        `Todo "${todoId}" not found in list "${listName}"`,
+        'TODO_NOT_FOUND'
+      );
     }
 
     list.todos = list.todos.filter(t => t.id !== todoId);
@@ -458,7 +499,7 @@ export class ConfigService {
 
   /**
    * Deletes an entire Todo list.
-   * 
+   *
    * @public
    * @param {string} listName - The name of the Todo list to delete
    * @throws {CLIError} If the list exists but cannot be deleted
@@ -472,7 +513,12 @@ export class ConfigService {
         await fsPromises.unlink(listPath);
       } catch (error: unknown) {
         // If file doesn't exist, that's fine - nothing to delete
-        if (error && typeof error === 'object' && 'code' in error && error.code !== 'ENOENT') {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          error.code !== 'ENOENT'
+        ) {
           throw error;
         }
       }
@@ -486,7 +532,7 @@ export class ConfigService {
 
   /**
    * Finds a Todo by its ID across all lists.
-   * 
+   *
    * @public
    * @param {string} todoId - The ID of the Todo to find
    * @returns {Promise<Todo | null>} The found Todo, or null if it doesn't exist
@@ -507,7 +553,7 @@ export class ConfigService {
    * Updates local configuration based on environment variables.
    * If environment variables have changed since the config was loaded,
    * this method updates the config and saves it to the config file.
-   * 
+   *
    * @public
    * @returns {void}
    */
@@ -533,7 +579,10 @@ export class ConfigService {
       configChanged = true;
     }
 
-    if (envEncryptedStorage !== undefined && this.config.encryptedStorage !== envEncryptedStorage) {
+    if (
+      envEncryptedStorage !== undefined &&
+      this.config.encryptedStorage !== envEncryptedStorage
+    ) {
       this.config.encryptedStorage = envEncryptedStorage;
       configChanged = true;
     }

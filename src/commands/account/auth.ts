@@ -12,7 +12,8 @@ import * as os from 'os';
  * Manage authentication and user accounts
  */
 export default class AuthCommand extends BaseCommand {
-  static description = 'Handle user authentication including login, logout, registration and API key management';
+  static description =
+    'Handle user authentication including login, logout, registration and API key management';
 
   static examples = [
     '$ walrus account:auth --register username',
@@ -30,23 +31,60 @@ export default class AuthCommand extends BaseCommand {
     ...BaseCommand.flags,
     register: Flags.string({
       description: 'Register a new user',
-      exclusive: ['login', 'logout', 'status', 'change-password', 'create-apikey', 'revoke-apikey', 'list-apikeys'],
+      exclusive: [
+        'login',
+        'logout',
+        'status',
+        'change-password',
+        'create-apikey',
+        'revoke-apikey',
+        'list-apikeys',
+      ],
     }),
     login: Flags.string({
       description: 'Login with username',
-      exclusive: ['register', 'logout', 'change-password', 'create-apikey', 'revoke-apikey', 'list-apikeys'],
+      exclusive: [
+        'register',
+        'logout',
+        'change-password',
+        'create-apikey',
+        'revoke-apikey',
+        'list-apikeys',
+      ],
     }),
     'create-apikey': Flags.string({
       description: 'Create a new API key with the given name',
-      exclusive: ['register', 'login', 'logout', 'status', 'change-password', 'revoke-apikey'],
+      exclusive: [
+        'register',
+        'login',
+        'logout',
+        'status',
+        'change-password',
+        'revoke-apikey',
+      ],
     }),
     'revoke-apikey': Flags.string({
       description: 'Revoke an API key',
-      exclusive: ['register', 'login', 'logout', 'status', 'change-password', 'create-apikey', 'list-apikeys'],
+      exclusive: [
+        'register',
+        'login',
+        'logout',
+        'status',
+        'change-password',
+        'create-apikey',
+        'list-apikeys',
+      ],
     }),
     'list-apikeys': Flags.boolean({
       description: 'List all API keys for the current user',
-      exclusive: ['register', 'login', 'logout', 'change-password', 'create-apikey', 'revoke-apikey'],
+      exclusive: [
+        'register',
+        'login',
+        'logout',
+        'change-password',
+        'create-apikey',
+        'revoke-apikey',
+      ],
     }),
     role: Flags.string({
       description: 'Role for the new user',
@@ -68,15 +106,38 @@ export default class AuthCommand extends BaseCommand {
     }),
     logout: Flags.boolean({
       description: 'Logout current user',
-      exclusive: ['register', 'login', 'change-password', 'create-apikey', 'revoke-apikey', 'list-apikeys'],
+      exclusive: [
+        'register',
+        'login',
+        'change-password',
+        'create-apikey',
+        'revoke-apikey',
+        'list-apikeys',
+      ],
     }),
     status: Flags.boolean({
       description: 'Show current authentication status',
-      exclusive: ['register', 'login', 'logout', 'change-password', 'create-apikey', 'revoke-apikey', 'list-apikeys'],
+      exclusive: [
+        'register',
+        'login',
+        'logout',
+        'change-password',
+        'create-apikey',
+        'revoke-apikey',
+        'list-apikeys',
+      ],
     }),
     'change-password': Flags.boolean({
       description: 'Change password for current user',
-      exclusive: ['register', 'login', 'logout', 'status', 'create-apikey', 'revoke-apikey', 'list-apikeys'],
+      exclusive: [
+        'register',
+        'login',
+        'logout',
+        'status',
+        'create-apikey',
+        'revoke-apikey',
+        'list-apikeys',
+      ],
     }),
     expiry: Flags.integer({
       description: 'Expiry in days for API key',
@@ -98,7 +159,12 @@ export default class AuthCommand extends BaseCommand {
     }
 
     if (flags.register) {
-      await this.registerUser(flags.register, flags.password, flags.role as UserRole, flags.address);
+      await this.registerUser(
+        flags.register,
+        flags.password,
+        flags.role as UserRole,
+        flags.address
+      );
     } else if (flags.login) {
       await this.login(flags.login, flags.password);
     } else if (flags.logout) {
@@ -121,12 +187,19 @@ export default class AuthCommand extends BaseCommand {
   /**
    * Register a new user
    */
-  private async registerUser(username: string, password?: string, role: UserRole = UserRole.USER, address?: string): Promise<void> {
+  private async registerUser(
+    username: string,
+    password?: string,
+    role: UserRole = UserRole.USER,
+    address?: string
+  ): Promise<void> {
     try {
       // Prompt for password if not provided
       if (!password) {
         password = await this.ux.prompt('Enter password', { type: 'hide' });
-        const confirm = await this.ux.prompt('Confirm password', { type: 'hide' });
+        const confirm = await this.ux.prompt('Confirm password', {
+          type: 'hide',
+        });
         if (password !== confirm) {
           this.error('Passwords do not match');
           return;
@@ -134,7 +207,12 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Create user
-      const user = await authenticationService.createUserAccount(username, password, address, [role]);
+      const user = await authenticationService.createUserAccount(
+        username,
+        password,
+        address,
+        [role]
+      );
 
       this.log(chalk.green(`User ${username} created successfully`));
       this.log(`User ID: ${user.id}`);
@@ -146,7 +224,9 @@ export default class AuthCommand extends BaseCommand {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
-        this.error(`Failed to register user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.error(
+          `Failed to register user: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
   }
@@ -162,19 +242,31 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Login
-      const authResult = await authenticationService.authenticateWithCredentials(username, password);
+      const authResult =
+        await authenticationService.authenticateWithCredentials(
+          username,
+          password
+        );
 
       // Store token
-      this.saveAuthToken(authResult.token, authResult.refreshToken, authResult.expiresAt);
+      this.saveAuthToken(
+        authResult.token,
+        authResult.refreshToken,
+        authResult.expiresAt
+      );
 
       this.log(chalk.green(`Logged in as ${username}`));
       this.log(`Roles: ${authResult.user.roles.join(', ')}`);
-      this.log(`Session expires at: ${new Date(authResult.expiresAt).toLocaleString()}`);
+      this.log(
+        `Session expires at: ${new Date(authResult.expiresAt).toLocaleString()}`
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
-        this.error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.error(
+          `Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
   }
@@ -198,7 +290,9 @@ export default class AuthCommand extends BaseCommand {
 
       this.log(chalk.green('Logged out successfully'));
     } catch (error) {
-      this.error(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.error(
+        `Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -214,11 +308,15 @@ export default class AuthCommand extends BaseCommand {
 
     try {
       // Validate token
-      const validation = await authenticationService.validateToken(authInfo.token);
+      const validation = await authenticationService.validateToken(
+        authInfo.token
+      );
 
       if (!validation.valid) {
         if (validation.expired) {
-          this.log(chalk.yellow('Your session has expired. Please login again.'));
+          this.log(
+            chalk.yellow('Your session has expired. Please login again.')
+          );
         } else {
           this.log(chalk.red('Your session is invalid. Please login again.'));
         }
@@ -232,16 +330,23 @@ export default class AuthCommand extends BaseCommand {
       if (user.address) {
         this.log(`Wallet Address: ${user.address}`);
       }
-      this.log(`Session expires at: ${new Date(authInfo.expiresAt).toLocaleString()}`);
+      this.log(
+        `Session expires at: ${new Date(authInfo.expiresAt).toLocaleString()}`
+      );
     } catch (error) {
-      this.error(`Failed to check status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.error(
+        `Failed to check status: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Change password for current user
    */
-  private async changePassword(currentPassword?: string, newPassword?: string): Promise<void> {
+  private async changePassword(
+    currentPassword?: string,
+    newPassword?: string
+  ): Promise<void> {
     const authInfo = this.getAuthToken();
     if (!authInfo) {
       this.error('You must be logged in to change your password');
@@ -250,7 +355,9 @@ export default class AuthCommand extends BaseCommand {
 
     try {
       // Validate token
-      const validation = await authenticationService.validateToken(authInfo.token);
+      const validation = await authenticationService.validateToken(
+        authInfo.token
+      );
 
       if (!validation.valid) {
         if (validation.expired) {
@@ -263,13 +370,19 @@ export default class AuthCommand extends BaseCommand {
 
       // Prompt for current password if not provided
       if (!currentPassword) {
-        currentPassword = await this.ux.prompt('Enter current password', { type: 'hide' });
+        currentPassword = await this.ux.prompt('Enter current password', {
+          type: 'hide',
+        });
       }
 
       // Prompt for new password if not provided
       if (!newPassword) {
-        newPassword = await this.ux.prompt('Enter new password', { type: 'hide' });
-        const confirm = await this.ux.prompt('Confirm new password', { type: 'hide' });
+        newPassword = await this.ux.prompt('Enter new password', {
+          type: 'hide',
+        });
+        const confirm = await this.ux.prompt('Confirm new password', {
+          type: 'hide',
+        });
         if (newPassword !== confirm) {
           this.error('Passwords do not match');
           return;
@@ -277,17 +390,27 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Change password
-      await authenticationService.changePassword(validation.user.id, currentPassword, newPassword);
+      await authenticationService.changePassword(
+        validation.user.id,
+        currentPassword,
+        newPassword
+      );
 
       // Remove token since all sessions are invalidated
       fs.unlinkSync(this.authTokenFilePath);
 
-      this.log(chalk.green('Password changed successfully. Please login again with your new password.'));
+      this.log(
+        chalk.green(
+          'Password changed successfully. Please login again with your new password.'
+        )
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
-        this.error(`Failed to change password: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.error(
+          `Failed to change password: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
   }
@@ -304,7 +427,9 @@ export default class AuthCommand extends BaseCommand {
 
     try {
       // Validate token
-      const validation = await authenticationService.validateToken(authInfo.token);
+      const validation = await authenticationService.validateToken(
+        authInfo.token
+      );
 
       if (!validation.valid) {
         if (validation.expired) {
@@ -316,18 +441,26 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Create API key
-      const apiKey = await authenticationService.createApiKey(validation.user.id, name, expiryDays);
+      const apiKey = await authenticationService.createApiKey(
+        validation.user.id,
+        name,
+        expiryDays
+      );
 
       this.log(chalk.green(`API key created successfully`));
       this.log(`Key: ${apiKey}`);
       this.log(`Name: ${name}`);
       this.log(`Expiry: ${expiryDays === 0 ? 'Never' : `${expiryDays} days`}`);
-      this.log(chalk.yellow('Please save this key now, it will not be shown again!'));
+      this.log(
+        chalk.yellow('Please save this key now, it will not be shown again!')
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
-        this.error(`Failed to create API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.error(
+          `Failed to create API key: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
   }
@@ -344,7 +477,9 @@ export default class AuthCommand extends BaseCommand {
 
     try {
       // Validate token
-      const validation = await authenticationService.validateToken(authInfo.token);
+      const validation = await authenticationService.validateToken(
+        authInfo.token
+      );
 
       if (!validation.valid) {
         if (validation.expired) {
@@ -363,7 +498,9 @@ export default class AuthCommand extends BaseCommand {
       if (error instanceof CLIError) {
         this.error(error.message);
       } else {
-        this.error(`Failed to revoke API key: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        this.error(
+          `Failed to revoke API key: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
   }
@@ -380,11 +517,15 @@ export default class AuthCommand extends BaseCommand {
   /**
    * Save authentication token to file
    */
-  private saveAuthToken(token: string, refreshToken: string, expiresAt: number): void {
+  private saveAuthToken(
+    token: string,
+    refreshToken: string,
+    expiresAt: number
+  ): void {
     const authInfo = {
       token,
       refreshToken,
-      expiresAt
+      expiresAt,
     };
 
     fs.writeFileSync(this.authTokenFilePath, JSON.stringify(authInfo, null, 2));
@@ -394,7 +535,11 @@ export default class AuthCommand extends BaseCommand {
   /**
    * Get authentication token from file
    */
-  private getAuthToken(): { token: string; refreshToken: string; expiresAt: number } | null {
+  private getAuthToken(): {
+    token: string;
+    refreshToken: string;
+    expiresAt: number;
+  } | null {
     if (!fs.existsSync(this.authTokenFilePath)) {
       return null;
     }

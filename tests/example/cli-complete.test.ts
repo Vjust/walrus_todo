@@ -1,17 +1,18 @@
 /**
  * Tests for the 'complete' command in WalTodo CLI
- * 
+ *
  * This test file demonstrates how to test the 'complete' command using Jest
  * and the test environment setup utilities.
  */
 
 import { test } from '@oclif/test';
-import * as fs from 'fs';
-import { 
-  setupTestEnvironment, 
-  cleanupTestEnvironment, 
-  createTestTodo, 
-  createTestTodoList 
+// import * as fs from 'fs';
+import { execSync } from 'child_process';
+import {
+  setupTestEnvironment,
+  cleanupTestEnvironment,
+  createTestTodo,
+  createTestTodoList,
 } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
@@ -26,9 +27,9 @@ describe('WalTodo complete command', () => {
   // Sample test todo
   const testTodo = createTestTodo({
     id: 'test-todo-id-123',
-    title: 'Test Todo for Completion'
+    title: 'Test Todo for Completion',
   });
-  
+
   // Sample test list with the test todo
   const testList = createTestTodoList('default', [testTodo]);
 
@@ -45,18 +46,18 @@ describe('WalTodo complete command', () => {
   // Reset mocks before each test
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock the TodoService methods
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue(testList);
-    
+
     (TodoService.prototype.getTodo as jest.Mock).mockResolvedValue(testTodo);
-    
+
     (TodoService.prototype.completeTodo as jest.Mock).mockImplementation(
       async (listName, todoId) => ({
         ...testTodo,
         completed: true,
         completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       })
     );
 
@@ -66,14 +67,14 @@ describe('WalTodo complete command', () => {
       disconnect: jest.fn().mockResolvedValue(undefined),
       storeTodo: jest.fn().mockResolvedValue({
         blobId: 'test-blob-id',
-        url: 'https://testnet.wal.app/blob/test-blob-id'
+        url: 'https://testnet.wal.app/blob/test-blob-id',
       }),
       write: jest.fn().mockResolvedValue({ blobId: 'test-blob-id' }),
       read: jest.fn().mockResolvedValue(testTodo),
       verify: jest.fn().mockResolvedValue(true),
-      delete: jest.fn()
+      delete: jest.fn(),
     };
-    
+
     (createWalrusStorage as jest.Mock).mockReturnValue(mockStorageMethods);
   });
 
@@ -113,7 +114,13 @@ describe('WalTodo complete command', () => {
   // Test blockchain storage (tests the error path when blockchain is unavailable)
   test
     .stdout()
-    .command(['complete', '--id', 'test-todo-id-123', '--storage', 'blockchain'])
+    .command([
+      'complete',
+      '--id',
+      'test-todo-id-123',
+      '--storage',
+      'blockchain',
+    ])
     .it('attempts to complete a todo with blockchain storage', ctx => {
       expect(ctx.stdout).toContain('Todo completion');
       expect(createWalrusStorage).toHaveBeenCalled();
@@ -153,29 +160,35 @@ describe('WalTodo complete command', () => {
       write: jest.fn().mockRejectedValue(new Error('Write failed')),
       read: jest.fn(),
       verify: jest.fn(),
-      delete: jest.fn()
+      delete: jest.fn(),
     };
-    
+
     (createWalrusStorage as jest.Mock).mockReturnValue(mockStorageMethods);
-    
+
     // Mock execSync to test command execution
     (execSync as jest.Mock).mockImplementation((command: string) => {
       if (command.includes('--storage blockchain')) {
         throw new Error('Failed to update blockchain: Network error');
       }
-      return Buffer.from('Local update successful, but blockchain update failed');
+      return Buffer.from(
+        'Local update successful, but blockchain update failed'
+      );
     });
 
     // This should throw error due to blockchain issues
     try {
-      const result = execSync('node bin/run.js complete --id test-todo-id-123 --storage blockchain').toString();
+      const result = execSync(
+        'node bin/run.js complete --id test-todo-id-123 --storage blockchain'
+      ).toString();
       fail('Should have thrown an error');
     } catch (_error) {
       expect(error.message).toContain('Network error');
     }
-    
+
     // But with local storage it should work
-    const result = execSync('node bin/run.js complete --id test-todo-id-123 --storage local').toString();
+    const result = execSync(
+      'node bin/run.js complete --id test-todo-id-123 --storage local'
+    ).toString();
     expect(result).toContain('Local update successful');
   });
 });

@@ -5,17 +5,17 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:jest/recommended'
+    'plugin:jest/recommended',
   ],
   env: {
     node: true,
     jest: true,
-    es2021: true
+    es2021: true,
   },
   parserOptions: {
     ecmaVersion: 2021,
     sourceType: 'module',
-    project: './tsconfig.json'
+    project: './tsconfig.json',
   },
   rules: {
     '@typescript-eslint/no-explicit-any': 'warn',
@@ -25,7 +25,7 @@ module.exports = {
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'jest/no-disabled-tests': 'warn',
     'jest/no-focused-tests': 'error',
-    'jest/valid-expect': 'error'
+    'jest/valid-expect': 'error',
   },
   ignorePatterns: [
     'dist/',
@@ -35,6 +35,6 @@ module.exports = {
     'frontend-demo/',
     'backup/',
     'servers/',
-    '*.js'
-  ]
+    '*.js',
+  ],
 };

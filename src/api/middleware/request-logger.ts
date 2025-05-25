@@ -14,7 +14,11 @@ export interface RequestLog {
   size?: number;
 }
 
-export function requestLogger(req: Request, res: Response, next: NextFunction): void {
+export function requestLogger(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   const startTime = Date.now();
   const timestamp = new Date().toISOString();
 
@@ -23,19 +27,21 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
   const chunks: Buffer[] = [];
 
   // Override end function to capture response details
-  res.end = function(...args: any[]): any {
+  res.end = function (...args: any[]): any {
     // Restore original
     res.end = originalEnd;
-    
+
     // Calculate duration
     const duration = Date.now() - startTime;
-    
+
     // Get response size
     let size = 0;
     if (chunks.length > 0) {
       size = Buffer.concat(chunks).length;
     } else if (args[0]) {
-      size = Buffer.isBuffer(args[0]) ? args[0].length : Buffer.byteLength(args[0]);
+      size = Buffer.isBuffer(args[0])
+        ? args[0].length
+        : Buffer.byteLength(args[0]);
     }
 
     // Create log entry
@@ -47,7 +53,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
       timestamp,
       duration,
       status: res.statusCode,
-      size
+      size,
     };
 
     // Log based on status code
@@ -65,7 +71,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
 
   // Capture response chunks for size calculation
   const originalWrite = res.write;
-  res.write = function(...args: any[]): any {
+  res.write = function (...args: any[]): any {
     if (args[0]) {
       chunks.push(Buffer.isBuffer(args[0]) ? args[0] : Buffer.from(args[0]));
     }

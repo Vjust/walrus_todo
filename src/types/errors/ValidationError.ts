@@ -11,25 +11,25 @@ import { BaseError } from './BaseError';
 export interface ValidationErrorOptions {
   /** Field that failed validation */
   field?: string;
-  
+
   /** Value that failed validation (will be sanitized in logs) */
   value?: unknown;
-  
+
   /** Validation constraint that was violated */
   constraint?: string;
-  
+
   /** Whether the operation can be recovered from this error */
   recoverable?: boolean;
-  
+
   /** Operation that was being performed when validation failed */
   operation?: string;
-  
+
   /** Additional context information */
   context?: Record<string, unknown>;
-  
+
   /** Original error that caused this error */
   cause?: Error;
-  
+
   /** Attempt number for retryable operations */
   attempt?: number;
 }
@@ -44,7 +44,7 @@ export class ValidationError extends BaseError {
    * @private Stored privately to prevent sensitive data exposure
    */
   private readonly _field?: string;
-  
+
   /**
    * Create a new ValidationError
    * @param message Error message
@@ -57,18 +57,18 @@ export class ValidationError extends BaseError {
   ) {
     // Handle both constructor signatures (for backward compatibility)
     let options: ValidationErrorOptions = {};
-    
+
     if (typeof optionsOrField === 'string') {
       // Support previous signature: (message, field, context)
       options = {
         field: optionsOrField,
-        context: additionalContext
+        context: additionalContext,
       };
     } else if (optionsOrField && typeof optionsOrField === 'object') {
       // Support object-based options
       options = optionsOrField;
     }
-    
+
     const {
       field,
       value,
@@ -77,23 +77,23 @@ export class ValidationError extends BaseError {
       operation,
       context,
       cause,
-      attempt
+      attempt,
     } = options;
-    
+
     // Build context object
     const errorContext: Record<string, unknown> = {
       ...(context || {}),
       ...(value !== undefined ? { value } : {}),
       ...(constraint !== undefined ? { constraint } : {}),
       ...(operation !== undefined ? { operation } : {}),
-      ...(attempt !== undefined ? { attempt } : {})
+      ...(attempt !== undefined ? { attempt } : {}),
     };
-    
+
     // Ensure message includes field if provided
-    const errorMessage = field 
+    const errorMessage = field
       ? `Validation error for ${field}: ${message}`
       : `Validation error: ${message}`;
-    
+
     // Call BaseError constructor
     super({
       message: errorMessage,
@@ -101,16 +101,16 @@ export class ValidationError extends BaseError {
       context: errorContext,
       cause,
       recoverable,
-      shouldRetry: recoverable
+      shouldRetry: recoverable,
     });
-    
+
     // Store field privately
     this._field = field;
-    
+
     // Set error name
     this.name = 'ValidationError';
   }
-  
+
   /**
    * Get the field that failed validation
    * @returns Field name if available, undefined otherwise
@@ -118,7 +118,7 @@ export class ValidationError extends BaseError {
   get field(): string | undefined {
     return this._field;
   }
-  
+
   /**
    * Create a ValidationError with a field prefix
    * @param message Error message
@@ -133,7 +133,7 @@ export class ValidationError extends BaseError {
   ): ValidationError {
     return new ValidationError(message, {
       ...options,
-      field
+      field,
     });
   }
 }
