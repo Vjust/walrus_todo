@@ -57,7 +57,7 @@ export const ArgumentValidators = {
    * Validate todo title argument
    * @param args Command arguments
    */
-  todoTitle: (args: Record<string, any>) => {
+  todoTitle: (args: Record<string, unknown>) => {
     const title = args.title;
     if (title !== undefined) {
       InputValidator.validate(
@@ -83,7 +83,7 @@ export const ArgumentValidators = {
    * Validate list name argument
    * @param args Command arguments
    */
-  listName: (args: Record<string, any>) => {
+  listName: (args: Record<string, unknown>) => {
     const name = args.name;
     if (name !== undefined) {
       InputValidator.validate(

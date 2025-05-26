@@ -20,6 +20,14 @@ export interface TransactionBlock extends SuiTransaction {
 }
 
 /**
+ * Discriminated union types for different transaction implementations
+ */
+export type TransactionVariant = 
+  | { kind: 'sui'; transaction: SuiTransaction }
+  | { kind: 'adapter'; transaction: TransactionBlockAdapter }
+  | { kind: 'legacy'; transaction: TransactionBlock };
+
+/**
  * Enhanced transaction type that combines Transaction and TransactionBlockAdapter
  */
 export type TransactionType = SuiTransaction | TransactionBlockAdapter;
@@ -36,7 +44,43 @@ export function isTransactionBlock(obj: unknown): obj is TransactionBlock {
 }
 
 export function isSuiTransaction(obj: unknown): obj is SuiTransaction {
-  return obj && typeof obj === 'object' && typeof obj.serialize === 'function';
+  return obj && typeof obj === 'object' && obj !== null && 'serialize' in obj && typeof (obj as Record<string, unknown>).serialize === 'function';
+}
+
+/**
+ * Type guard for TransactionVariant discriminated union
+ */
+export function isTransactionVariant(obj: unknown): obj is TransactionVariant {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    obj !== null &&
+    'kind' in obj &&
+    'transaction' in obj &&
+    ['sui', 'adapter', 'legacy'].includes((obj as Record<string, unknown>).kind as string)
+  );
+}
+
+/**
+ * Type narrowing functions for TransactionVariant
+ */
+export function isSuiVariant(variant: TransactionVariant): variant is { kind: 'sui'; transaction: SuiTransaction } {
+  return variant.kind === 'sui';
+}
+
+export function isAdapterVariant(variant: TransactionVariant): variant is { kind: 'adapter'; transaction: TransactionBlockAdapter } {
+  return variant.kind === 'adapter';
+}
+
+export function isLegacyVariant(variant: TransactionVariant): variant is { kind: 'legacy'; transaction: TransactionBlock } {
+  return variant.kind === 'legacy';
+}
+
+/**
+ * Type predicate for union type narrowing
+ */
+export function isTransactionType(obj: unknown): obj is TransactionType {
+  return isSuiTransaction(obj) || (obj && typeof obj === 'object' && obj !== null && 'getUnderlyingImplementation' in obj);
 }
 
 /**
@@ -87,6 +131,66 @@ export function asStringUint8ArrayOrTransactionBlock(
 
   // For Transaction objects, return a string representation
   return JSON.stringify(data);
+}
+
+/**
+ * Factory functions for creating discriminated union variants
+ */
+export function createSuiVariant(transaction: SuiTransaction): TransactionVariant {
+  return { kind: 'sui', transaction };
+}
+
+export function createAdapterVariant(transaction: TransactionBlockAdapter): TransactionVariant {
+  return { kind: 'adapter', transaction };
+}
+
+export function createLegacyVariant(transaction: TransactionBlock): TransactionVariant {
+  return { kind: 'legacy', transaction };
+}
+
+/**
+ * Safe transaction variant extraction with type narrowing
+ */
+export function extractTransaction(variant: TransactionVariant): SuiTransaction | TransactionBlockAdapter | TransactionBlock {
+  switch (variant.kind) {
+    case 'sui':
+      return variant.transaction;
+    case 'adapter':
+      return variant.transaction;
+    case 'legacy':
+      return variant.transaction;
+    default: {
+      // TypeScript exhaustiveness check
+      const _exhaustive: never = variant;
+      throw new Error(`Unknown transaction variant: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
+
+/**
+ * Safe transaction processing with pattern matching
+ */
+export function processTransactionVariant<T>(
+  variant: TransactionVariant,
+  handlers: {
+    sui: (tx: SuiTransaction) => T;
+    adapter: (tx: TransactionBlockAdapter) => T;
+    legacy: (tx: TransactionBlock) => T;
+  }
+): T {
+  switch (variant.kind) {
+    case 'sui':
+      return handlers.sui(variant.transaction);
+    case 'adapter':
+      return handlers.adapter(variant.transaction);
+    case 'legacy':
+      return handlers.legacy(variant.transaction);
+    default: {
+      // TypeScript exhaustiveness check
+      const _exhaustive: never = variant;
+      throw new Error(`Unknown transaction variant: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
 }
 
 /**

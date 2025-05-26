@@ -98,7 +98,7 @@ export class StorageValidator {
           }
         } catch (error) {
           errors.push(
-            `Cannot connect to blockchain: ${(error as Error).message}`
+            `Cannot connect to blockchain: ${error instanceof Error ? error.message : String(error)}`
           );
         }
         break;

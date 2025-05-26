@@ -1,11 +1,12 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('env-validator');
  * Environment Variable Validation Service
  * 
  * Provides robust validation and diagnostic functions for environment variables.
  */
+
+import { Logger } from './Logger';
+
+const logger = new Logger('env-validator');
 
 import chalk from 'chalk';
 import { CLIError } from '../types/errors/consolidated';
@@ -166,7 +167,7 @@ export function generateEnvironmentDocs(): string {
     'This document describes the environment variables used by the application.\n\n';
 
   // Group variables by category
-  const categories: Record<string, EnvVariable<any>[]> = {
+  const categories: Record<string, EnvVariable<unknown>[]> = {
     Common: [],
     Blockchain: [],
     Storage: [],

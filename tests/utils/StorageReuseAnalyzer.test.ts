@@ -1,6 +1,7 @@
 import { StorageReuseAnalyzer } from '../../src/utils/storage-reuse-analyzer';
-import { SuiClient } from '../../src/utils/adapters/sui-client-adapter';
-import { WalrusClient } from '@mysten/walrus';
+import { SuiClient, type SuiClientType } from '../../src/utils/adapters/sui-client-compatibility';
+import { WalrusClient } from '../../src/types/client';
+import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../src/__tests__/helpers/walrus-client-mock';
 
 // Mock the SuiClient and WalrusClient
 jest.mock('@mysten/sui/client');
@@ -8,8 +9,8 @@ jest.mock('@mysten/walrus');
 
 describe('StorageReuseAnalyzer', () => {
   let storageReuseAnalyzer: StorageReuseAnalyzer;
-  let mockSuiClient: jest.Mocked<SuiClient>;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
+  let mockSuiClient: jest.Mocked<SuiClientType>;
+  let mockWalrusClient: MockWalrusClient;
 
   beforeEach(() => {
     // Reset all mocks
@@ -18,27 +19,28 @@ describe('StorageReuseAnalyzer', () => {
     // Setup mock implementations
     mockSuiClient = new SuiClient({
       url: 'mock-url',
-    }) as jest.Mocked<SuiClient>;
-    mockWalrusClient = new WalrusClient({
-      network: 'testnet',
-    }) as unknown as jest.Mocked<WalrusClient>;
+    }) as jest.Mocked<typeof SuiClient>;
+    
+    // Create proper WalrusClient mock
+    mockWalrusClient = createWalrusClientMock();
+    setupDefaultWalrusClientMocks(mockWalrusClient);
 
     // Mock the getLatestSuiSystemState method
     mockSuiClient.getLatestSuiSystemState = jest.fn().mockResolvedValue({
       epoch: '1000',
     });
 
-    // Mock the storageCost method
-    mockWalrusClient.storageCost = jest.fn().mockResolvedValue({
-      storageCost: '5000',
-      writeCost: '1000',
-      totalCost: '6000',
+    // Override storageCost with proper bigint values
+    mockWalrusClient.storageCost.mockResolvedValue({
+      storageCost: BigInt(5000),
+      writeCost: BigInt(1000),
+      totalCost: BigInt(6000),
     });
 
     // Create the analyzer instance
     storageReuseAnalyzer = new StorageReuseAnalyzer(
       mockSuiClient,
-      mockWalrusClient,
+      mockWalrusClient as unknown as WalrusClient,
       '0xmockAddress'
     );
   });
@@ -184,7 +186,7 @@ describe('StorageReuseAnalyzer', () => {
     it('should calculate cost savings when reusing existing storage', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as any, 'findBestStorageForReuse')
+        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: () => Promise<unknown> }, 'findBestStorageForReuse')
         .mockResolvedValue({
           bestMatch: {
             id: 'storage-1',
@@ -225,7 +227,7 @@ describe('StorageReuseAnalyzer', () => {
     it('should recommend allocating new storage when no viable storage exists', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as any, 'findBestStorageForReuse')
+        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: () => Promise<unknown> }, 'findBestStorageForReuse')
         .mockResolvedValue({
           bestMatch: null,
           totalStorage: 1000000,

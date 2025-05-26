@@ -47,18 +47,17 @@ export class ValidationError extends BaseError {
     additionalContext?: Record<string, unknown>
   ) {
     // Handle both constructor signatures (for backward compatibility)
-    let options: ValidationErrorOptions = { message };
+    let options: ValidationErrorOptions = {};
 
     if (typeof optionsOrField === 'string') {
       // Support previous signature: (message, field, context)
       options = {
-        message,
         field: optionsOrField,
         context: additionalContext,
       };
     } else if (optionsOrField && typeof optionsOrField === 'object') {
       // Support object-based options
-      options = { message, ...optionsOrField };
+      options = { ...optionsOrField };
     }
 
     const {
@@ -116,11 +115,10 @@ export class ValidationError extends BaseError {
   static forField(
     message: string,
     field: string,
-    options: Omit<ValidationErrorOptions, 'field' | 'message'> = {}
+    options: Omit<ValidationErrorOptions, 'field'> = {}
   ): ValidationError {
     return new ValidationError(message, {
       ...options,
-      message,
       field,
     });
   }

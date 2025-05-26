@@ -107,7 +107,7 @@ describe('Blockchain Verification Security', () => {
       getRegistryAddress: jest.fn(),
       registerProvider: jest.fn(),
       getVerification: jest.fn(),
-    } as any;
+    };
 
     const verificationService = new AIVerificationService(mockVerifierAdapter);
 
@@ -158,7 +158,7 @@ describe('Blockchain Verification Security', () => {
       getRegistryAddress: jest.fn(),
       registerProvider: jest.fn(),
       getVerification: jest.fn(),
-    } as any;
+    };
 
     const verificationService = new AIVerificationService(mockVerifierAdapter);
 
@@ -231,9 +231,9 @@ describe('Blockchain Verification Security', () => {
 
     // Create the service with signature verification
     const verificationService = new BlockchainAIVerificationService(
-      mockBlockchainVerifier as any,
-      mockPermissionManager as any,
-      mockCredentialManager as any,
+      mockBlockchainVerifier,
+      mockPermissionManager,
+      mockCredentialManager,
       'xai'
     );
 
@@ -299,7 +299,7 @@ describe('Blockchain Verification Security', () => {
       getRegistryAddress: jest.fn(),
       registerProvider: jest.fn(),
       getVerification: jest.fn(),
-    } as any;
+    };
 
     const verificationService = new AIVerificationService(mockVerifierAdapter);
 
@@ -356,9 +356,9 @@ describe('Blockchain Verification Security', () => {
 
     // Create the service
     const verificationService = new BlockchainAIVerificationService(
-      mockBlockchainVerifier as any,
-      mockPermissionManager as any,
-      mockCredentialManager as any,
+      mockBlockchainVerifier,
+      mockPermissionManager,
+      mockCredentialManager,
       'xai'
     );
 
@@ -429,7 +429,7 @@ describe('Blockchain Verification Security', () => {
       getRegistryAddress: jest.fn(),
       registerProvider: jest.fn(),
       getVerification: jest.fn(),
-    } as any;
+    };
 
     const verificationService = new AIVerificationService(mockVerifierAdapter);
 
@@ -540,7 +540,7 @@ describe('Blockchain Verification Security', () => {
       getRegistryAddress: jest.fn(),
       registerProvider: jest.fn(),
       getVerification: jest.fn(),
-    } as any;
+    };
 
     const verificationService = new AIVerificationService(mockVerifierAdapter);
 
@@ -551,7 +551,7 @@ describe('Blockchain Verification Security', () => {
       AIPrivacyLevel.PUBLIC
     );
     expect(publicResult.verification.privacyLevel).toBe(AIPrivacyLevel.PUBLIC);
-    expect((publicResult.verification as any).requestData).toBeDefined();
+    expect(((publicResult.verification as VerificationRecord & { requestData?: string }).requestData)).toBeDefined();
 
     const hashResult = await verificationService.createVerifiedSummary(
       sampleTodos,
@@ -560,7 +560,7 @@ describe('Blockchain Verification Security', () => {
     );
     expect(hashResult.verification.privacyLevel).toBe(AIPrivacyLevel.HASH_ONLY);
     expect(hashResult.verification.requestHash).toBeDefined();
-    expect((hashResult.verification as any).requestData).toBeUndefined();
+    expect(((hashResult.verification as VerificationRecord & { requestData?: string }).requestData)).toBeUndefined();
 
     const privateResult = await verificationService.createVerifiedSummary(
       sampleTodos,
@@ -570,7 +570,7 @@ describe('Blockchain Verification Security', () => {
     expect(privateResult.verification.privacyLevel).toBe(
       AIPrivacyLevel.PRIVATE
     );
-    expect((privateResult.verification as any).encryptedRequest).toBeDefined();
+    expect(((privateResult.verification as VerificationRecord & { encryptedRequest?: string }).encryptedRequest)).toBeDefined();
   });
 
   it('should enforce secure error handling for blockchain operations', async () => {
@@ -581,7 +581,7 @@ describe('Blockchain Verification Security', () => {
         const sensitiveError = new Error(
           'Transaction failed: user address 0x123...abc with nonce 42 and gas 1000'
         );
-        (sensitiveError as any).details = {
+        (sensitiveError as Error & { details?: Record<string, unknown> }).details = {
           transactionId: 'tx-123',
           userAddress: '0x123...abc',
           nonce: 42,
@@ -596,7 +596,7 @@ describe('Blockchain Verification Security', () => {
       getRegistryAddress: jest.fn(),
       registerProvider: jest.fn(),
       getVerification: jest.fn(),
-    } as any;
+    };
 
     // Spy on console.error to check sanitized error logging
     const consoleErrorSpy = jest
@@ -612,7 +612,7 @@ describe('Blockchain Verification Security', () => {
         'Test summary',
         AIPrivacyLevel.HASH_ONLY
       );
-      fail('Should have thrown an error');
+      throw new Error('Should have thrown an error');
     } catch (_error) {
       // Error message should not contain sensitive details
       expect(String(error)).not.toContain('0x123...abc');
@@ -620,7 +620,7 @@ describe('Blockchain Verification Security', () => {
       expect(String(error)).not.toContain('0xdeadbeef');
 
       // Error object should not contain sensitive fields
-      expect((error as any).details).toBeUndefined();
+      expect((error as Error & { details?: unknown }).details).toBeUndefined();
     }
 
     consoleErrorSpy.mockRestore();

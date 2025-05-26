@@ -13,6 +13,8 @@ import { createMockTodo } from '../helpers/test-utils';
 import type { Config } from '../../src/types/config';
 
 // Mock services
+// Unused imports removed during TypeScript cleanup
+// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 // TODO: jest.mock call removed during mock cleanup
 // TODO: jest.mock call removed during mock cleanup
 // TODO: jest.mock call removed during mock cleanup

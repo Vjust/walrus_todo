@@ -1,6 +1,6 @@
-import { Command, Interfaces } from '@oclif/core';
+/* eslint-disable jest/no-conditional-expect */
 import { describe, it, expect } from '@jest/globals';
-import path from 'path';
+import * as path from 'path';
 import { execSync } from 'child_process';
 
 // Helper to safely execute CLI commands
@@ -18,11 +18,12 @@ function executeCLI(args: string[]): {
       }
     );
     return { stdout, stderr: '', exitCode: 0 };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const execError = error as { stdout?: string; stderr?: string; status?: number };
     return {
-      stdout: error.stdout || '',
-      stderr: error.stderr || '',
-      exitCode: error.status || 1,
+      stdout: execError.stdout || '',
+      stderr: execError.stderr || '',
+      exitCode: execError.status || 1,
     };
   }
 }
@@ -253,10 +254,8 @@ describe('CLI Argument Fuzzing Tests', () => {
       // Should handle gracefully
       expect([0, 1, 2]).toContain(result.exitCode);
 
-      // Should provide meaningful error messages
-      if (result.exitCode !== 0) {
-        expect(result.stdout + result.stderr).toBeTruthy();
-      }
+      // Should provide meaningful error messages for failures
+      expect(result.exitCode === 0 || (result.stdout + result.stderr).length > 0).toBe(true);
     }
   });
 
@@ -360,10 +359,8 @@ describe('CLI Argument Fuzzing Tests', () => {
 
       expect([0, 1, 2]).toContain(result.exitCode);
 
-      // Very long arguments should be rejected
-      if (length > 10000) {
-        expect(result.exitCode).toBe(1);
-      }
+      // Very long arguments should be rejected or handled appropriately
+      expect(length <= 10000 || result.exitCode === 1).toBe(true);
     }
   });
 
@@ -377,10 +374,8 @@ describe('CLI Argument Fuzzing Tests', () => {
 
       expect([0, 1, 2]).toContain(result.exitCode);
 
-      // Too many arguments should be rejected
-      if (count > 100) {
-        expect(result.exitCode).toBe(1);
-      }
+      // Too many arguments should be rejected or handled appropriately
+      expect(count <= 100 || result.exitCode === 1).toBe(true);
     }
   });
 

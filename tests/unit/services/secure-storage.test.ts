@@ -1,5 +1,4 @@
 import {
-  CipherGCMTypes,
   createCipheriv,
   createDecipheriv,
   randomBytes,
@@ -30,20 +29,20 @@ jest.mock('../../../src/utils/Logger', () => ({
 
 describe('SecureStorageService', () => {
   let service: SecureStorageService;
-  let mockRandomBytes: jest.Mock;
-  let mockCreateCipheriv: jest.Mock;
-  let mockCreateDecipheriv: jest.Mock;
-  let mockCreateHash: jest.Mock;
+  let mockRandomBytes: jest.MockedFunction<typeof randomBytes>;
+  let mockCreateCipheriv: jest.MockedFunction<typeof createCipheriv>;
+  let mockCreateDecipheriv: jest.MockedFunction<typeof createDecipheriv>;
+  let mockCreateHash: jest.MockedFunction<typeof createHash>;
 
   beforeEach(() => {
     jest.clearAllMocks();
     service = new SecureStorageService();
 
     // Get mock functions
-    mockRandomBytes = randomBytes as jest.Mock;
-    mockCreateCipheriv = createCipheriv as jest.Mock;
-    mockCreateDecipheriv = createDecipheriv as jest.Mock;
-    mockCreateHash = createHash as jest.Mock;
+    mockRandomBytes = randomBytes as jest.MockedFunction<typeof randomBytes>;
+    mockCreateCipheriv = createCipheriv as jest.MockedFunction<typeof createCipheriv>;
+    mockCreateDecipheriv = createDecipheriv as jest.MockedFunction<typeof createDecipheriv>;
+    mockCreateHash = createHash as jest.MockedFunction<typeof createHash>;
   });
 
   describe('encrypt', () => {
@@ -277,9 +276,9 @@ describe('SecureStorageService', () => {
       const invalidData = {
         encrypted: 'base64string',
         // Missing iv and authTag
-      } as any;
+      } as { encrypted: string; iv?: string; authTag?: string };
 
-      await expect(service.decrypt(invalidData, 'key')).rejects.toThrow();
+      await expect(service.decrypt(invalidData as { encrypted: string; iv: string; authTag: string }, 'key')).rejects.toThrow();
     });
 
     it('should handle large data encryption', async () => {

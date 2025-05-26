@@ -3,7 +3,7 @@
  * Implements blob upload/download without backend dependency
  */
 
-import testnetConfig from '@/config/testnet.json';
+import { loadAppConfig } from '@/lib/config-loader';
 
 export interface WalrusUploadResponse {
   blobId: string;
@@ -21,10 +21,29 @@ export interface WalrusBlob {
 export class WalrusClient {
   private publisherUrl: string;
   private aggregatorUrl: string;
+  private configPromise: Promise<void>;
 
   constructor() {
-    this.publisherUrl = testnetConfig.walrus.publisherUrl;
-    this.aggregatorUrl = testnetConfig.walrus.aggregatorUrl;
+    // Set fallback URLs initially
+    this.publisherUrl = 'https://publisher-testnet.walrus.space';
+    this.aggregatorUrl = 'https://aggregator-testnet.walrus.space';
+    
+    // Load configuration asynchronously
+    this.configPromise = this.loadConfig();
+  }
+
+  private async loadConfig(): Promise<void> {
+    try {
+      const config = await loadAppConfig();
+      this.publisherUrl = config.walrus.publisherUrl;
+      this.aggregatorUrl = config.walrus.aggregatorUrl;
+    } catch (error) {
+      console.warn('Failed to load Walrus config, using fallback URLs:', error);
+    }
+  }
+
+  private async ensureConfigLoaded(): Promise<void> {
+    await this.configPromise;
   }
 
   /**
@@ -37,6 +56,7 @@ export class WalrusClient {
       contentType?: string;
     }
   ): Promise<WalrusUploadResponse> {
+    await this.ensureConfigLoaded();
     try {
       // Convert string to Uint8Array if needed
       const blobData =
@@ -94,6 +114,7 @@ export class WalrusClient {
    * Download data from Walrus storage
    */
   async download(blobId: string): Promise<WalrusBlob> {
+    await this.ensureConfigLoaded();
     try {
       const response = await fetch(`${this.aggregatorUrl}/v1/${blobId}`, {
         method: 'GET',
@@ -121,7 +142,7 @@ export class WalrusClient {
    * Upload JSON data
    */
   async uploadJson(
-    data: any,
+    data: unknown,
     options?: { epochs?: number }
   ): Promise<WalrusUploadResponse> {
     const jsonString = JSON.stringify(data);
@@ -134,7 +155,7 @@ export class WalrusClient {
   /**
    * Download and parse JSON data
    */
-  async downloadJson<T = any>(blobId: string): Promise<T> {
+  async downloadJson<T = unknown>(blobId: string): Promise<T> {
     const blob = await this.download(blobId);
     const text = new TextDecoder().decode(blob.data);
     return JSON.parse(text);
@@ -165,6 +186,7 @@ export class WalrusClient {
    * Check if a blob exists
    */
   async exists(blobId: string): Promise<boolean> {
+    await this.ensureConfigLoaded();
     try {
       const response = await fetch(`${this.aggregatorUrl}/v1/${blobId}`, {
         method: 'HEAD',
@@ -178,7 +200,7 @@ export class WalrusClient {
   /**
    * Delete blob by ID
    */
-  async deleteBlob(blobId: string, signer: any): Promise<string> {
+  async deleteBlob(blobId: string, signer: unknown): Promise<string> {
     // Stub: implement deletion logic if needed
     return blobId;
   }
@@ -253,13 +275,13 @@ export interface WalrusUploadResult {
   blobId: string;
   metadata: {
     size: number;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
 // Content encoder stub for extra attributes
 export class ContentEncoder {
-  static encode(data: any): Uint8Array {
+  static encode(data: unknown): Uint8Array {
     return new TextEncoder().encode(JSON.stringify(data));
   }
 }
@@ -289,12 +311,12 @@ export class WalrusTodoStorage {
     return this.client;
   }
   async storeTodo(
-    data: any,
-    signer: any,
+    data: unknown,
+    signer: unknown,
     options: {
       epochs?: number;
       deletable?: boolean;
-      attributes?: any;
+      attributes?: unknown;
       onProgress?: (p: number) => void;
     }
   ): Promise<WalrusUploadResult> {
@@ -309,11 +331,11 @@ export class WalrusTodoStorage {
   /**
    * Retrieve JSON todo data from Walrus storage
    */
-  async retrieveTodo(walrusBlobId: string): Promise<any> {
+  async retrieveTodo(walrusBlobId: string): Promise<unknown> {
     return this.client.downloadJson(walrusBlobId);
   }
   async estimateTodoStorageCost(
-    data: any,
+    data: unknown,
     epochs: number
   ): Promise<{
     totalCost: bigint;

@@ -4,7 +4,7 @@
 
 import { jest } from '@jest/globals';
 import * as fs from 'fs';
-import * as path from 'path';
+// import * as path from 'path';
 import * as childProcess from 'child_process';
 import axios from 'axios';
 import {
@@ -15,6 +15,7 @@ import {
   WalletSetupConfig,
   TestnetSetupResult,
 } from './sui-setup';
+import { NetworkType } from '../../../src/types/network';
 
 // Mock dependencies
 jest.mock('fs');
@@ -80,7 +81,7 @@ describe('SuiTestnetSetup', () => {
 
     it('should throw error for invalid network', () => {
       expect(() => {
-        new SuiTestnetSetup({ network: 'invalid' as any });
+        new SuiTestnetSetup({ network: 'invalid' as NetworkType });
       }).toThrow('Invalid network');
     });
   });
@@ -94,7 +95,7 @@ describe('SuiTestnetSetup', () => {
       // Mock network check
       jest
         .spyOn(setup['client'], 'getLatestCheckpointSequenceNumber')
-        .mockResolvedValue('12345' as any);
+        .mockResolvedValue('12345' as string);
     });
 
     it('should complete full setup successfully', async () => {
@@ -351,11 +352,9 @@ describe('SuiTestnetSetup', () => {
 describe('Integration Examples', () => {
   it('should work with testing frameworks', async () => {
     // Mock a simple test scenario
-    let testWallet: any;
-
     // Simulate beforeAll hook
     const setupResult = await quickSetup();
-    testWallet = setupResult.wallet;
+    const testWallet = setupResult.wallet;
 
     // Simulate test assertions
     expect(testWallet).toBeDefined();

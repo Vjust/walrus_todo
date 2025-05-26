@@ -5,6 +5,8 @@ import { AuthorizationError } from '../../types/errors/consolidated/Authorizatio
 export interface AuthenticatedRequest extends Request {
   apiKey?: string;
   userId?: string;
+  headers: Record<string, string | string[] | undefined>;
+  query: Record<string, string | string[] | undefined>;
 }
 
 export function validateApiKey(
@@ -16,33 +18,36 @@ export function validateApiKey(
 
   // Skip auth in development if no keys are configured
   if (config.isDevelopment() && config.auth.apiKeys.length === 0) {
-    return next();
+    (next as any)();
+    return;
   }
 
   // Extract API key from header or query param
   const apiKey =
     (req.headers['x-api-key'] as string) ||
-    req.headers['authorization']?.replace('Bearer ', '') ||
+    (req.headers['authorization'] as string)?.replace('Bearer ', '') ||
     (req.query.apiKey as string);
 
   if (!apiKey) {
-    return next(new AuthorizationError('API key required', {
+    (next as any)(new AuthorizationError('API key required', {
       code: 'AUTHORIZATION_UNAUTHENTICATED',
       isLoginRequired: true
     }));
+    return;
   }
 
   // Validate API key
   if (!config.auth.apiKeys.includes(apiKey)) {
-    return next(new AuthorizationError('Invalid API key', {
+    (next as any)(new AuthorizationError('Invalid API key', {
       code: 'AUTHORIZATION_INVALID_CREDENTIALS'
     }));
+    return;
   }
 
   // Attach API key to request for logging
   req.apiKey = apiKey;
 
-  next();
+  (next as any)();
 }
 
 // Optional middleware for specific routes that require user authentication
@@ -52,10 +57,11 @@ export function requireUser(
   next: NextFunction
 ): void {
   if (!req.userId) {
-    return next(new AuthorizationError('User authentication required', {
+    (next as any)(new AuthorizationError('User authentication required', {
       code: 'AUTHORIZATION_UNAUTHENTICATED',
       isLoginRequired: true
     }));
+    return;
   }
-  next();
+  (next as any)();
 }

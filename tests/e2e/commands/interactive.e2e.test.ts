@@ -10,15 +10,20 @@ import { expect } from 'chai';
 import * as childProcess from 'child_process';
 
 import InteractiveCommand from '../../../src/commands/interactive';
+import { TodoService } from '../../../src/services/todo-service';
 
 describe('interactive command e2e tests', () => {
   let sandbox: sinon.SinonSandbox;
-  let mockReadline: any;
+  let mockReadline: {
+    prompt: sinon.SinonStub;
+    setPrompt: sinon.SinonStub;
+    on: sinon.SinonStub;
+    close: sinon.SinonStub;
+  };
   let mockSpawn: sinon.SinonStub;
-  let stdinMock: any;
   let outputLines: string[] = [];
-  let lineHandlers: any = {};
-  let closeHandlers: any[] = [];
+  let lineHandlers: Record<string, (input: string) => void> = {};
+  let closeHandlers: (() => void)[] = [];
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -30,7 +35,7 @@ describe('interactive command e2e tests', () => {
     mockReadline = {
       prompt: sandbox.stub(),
       setPrompt: sandbox.stub(),
-      on: sandbox.stub().callsFake((event: string, handler: any) => {
+      on: sandbox.stub().callsFake((event: string, handler: (input?: string) => void) => {
         if (event === 'line') {
           lineHandlers.line = handler;
         } else if (event === 'close') {
@@ -90,7 +95,7 @@ describe('interactive command e2e tests', () => {
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
       mockChildProcess.on.withArgs('error').returns(mockChildProcess);
 
-      mockSpawn.returns(mockChildProcess as any);
+      mockSpawn.returns(mockChildProcess as childProcess.ChildProcess);
 
       // Instantiate the command
       const cmd = new InteractiveCommand([], {});
@@ -164,7 +169,7 @@ describe('interactive command e2e tests', () => {
         .withArgs('error')
         .callsArgWith(1, new Error('Command failed'));
 
-      mockSpawn.returns(mockChildProcess as any);
+      mockSpawn.returns(mockChildProcess as childProcess.ChildProcess);
 
       const cmd = new InteractiveCommand([], {});
 
@@ -191,8 +196,9 @@ describe('interactive command e2e tests', () => {
 
       try {
         await cmd.run();
-      } catch (error: any) {
-        expect(error.message).to.include('Failed to start interactive mode');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        expect(errorMessage).to.include('Failed to start interactive mode');
       }
     });
   });
@@ -206,7 +212,7 @@ describe('interactive command e2e tests', () => {
       };
 
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
-      mockSpawn.returns(mockChildProcess as any);
+      mockSpawn.returns(mockChildProcess as childProcess.ChildProcess);
 
       const cmd = new InteractiveCommand([], {});
 
@@ -257,7 +263,9 @@ describe('interactive command e2e tests', () => {
       await runPromise;
 
       // Console.clear should have been called
-      expect(console.clear).to.have.been.called;
+      // eslint-disable-next-line no-console
+      const consoleClearStub = console.clear as sinon.SinonStub;
+      expect(consoleClearStub.called).to.be.true;
 
       // Welcome message should appear twice (initial + after clear)
       const welcomeCount = outputLines.filter(line =>
@@ -296,7 +304,7 @@ describe('interactive command e2e tests', () => {
       };
 
       mockChildProcess.on.withArgs('exit').callsArgWith(1, 0);
-      mockSpawn.returns(mockChildProcess as any);
+      mockSpawn.returns(mockChildProcess as childProcess.ChildProcess);
 
       const cmd = new InteractiveCommand([], {});
 

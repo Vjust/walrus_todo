@@ -8,8 +8,8 @@
 
 import { Todo, TodoList } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -206,6 +206,59 @@ export class WalrusStorage {
    */
   async storeTodoList(list: TodoList, epochs: number = 5): Promise<string> {
     return this.storeList(list, epochs);
+  }
+
+  /**
+   * Store arbitrary blob data on Walrus
+   * @param {Buffer | string} data - The data to store
+   * @param {object} options - Storage options
+   * @param {number} options.epochs - Number of epochs for storage
+   * @param {string} options.fileName - Optional file name for the blob
+   */
+  async storeBlob(
+    data: Buffer | string,
+    options: { epochs?: number; fileName?: string } = {}
+  ): Promise<string> {
+    await this.connect();
+
+    const epochs = options.epochs || 5;
+    const fileName = options.fileName || `blob-${Date.now()}`;
+
+    if (this.useMock) {
+      // Return a mock blob ID
+      return `mock-blob-${fileName}-${Date.now()}`;
+    }
+
+    // Create a temporary file with the data
+    const tempFile = path.join(this.tempDir, fileName);
+
+    try {
+      if (Buffer.isBuffer(data)) {
+        fs.writeFileSync(tempFile, data);
+      } else {
+        fs.writeFileSync(tempFile, data, 'utf8');
+      }
+
+      // Store using Walrus CLI
+      const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
+      const { stdout } = await execAsync(command);
+
+      // Parse blob ID from output
+      const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
+      if (!blobIdMatch) {
+        throw new CLIError(
+          'Failed to parse blob ID from Walrus output',
+          'PARSE_ERROR'
+        );
+      }
+
+      return blobIdMatch[1];
+    } finally {
+      // Clean up temp file
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
+    }
   }
 
   /**

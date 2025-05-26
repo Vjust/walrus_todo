@@ -72,12 +72,12 @@ function addLoggerImport(content: string, filePath: string): string {
   let importIndex = 0;
 
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('import')) {
+    if (lines[i]?.startsWith('import')) {
       importIndex = i + 1;
     } else if (
-      lines[i].trim() !== '' &&
-      !lines[i].startsWith('//') &&
-      !lines[i].startsWith('/*')
+      lines[i]?.trim() !== '' &&
+      !lines[i]?.startsWith('//') &&
+      !lines[i]?.startsWith('/*')
     ) {
       if (importIndex === 0) importIndex = i;
       break;
@@ -137,7 +137,8 @@ function processTestFile(content: string): string {
 // Process a single file
 async function processFile(filePath: string): Promise<boolean> {
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    const content = typeof fileContent === 'string' ? fileContent : fileContent.toString();
     let modified = content;
     let hasChanges = false;
 

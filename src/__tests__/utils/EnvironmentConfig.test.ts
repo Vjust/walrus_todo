@@ -187,8 +187,8 @@ describe('EnvironmentConfigManager', () => {
       const metadata = manager.getMetadata();
 
       expect(metadata).toHaveProperty('XAI_API_KEY');
-      expect(metadata.XAI_API_KEY.required).toBe(true);
-      expect(metadata.LOG_LEVEL.required).toBe(false);
+      expect(metadata.XAI_API_KEY?.required).toBe(true);
+      expect(metadata.LOG_LEVEL?.required).toBe(false);
     });
   });
 });

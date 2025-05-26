@@ -14,10 +14,11 @@ import {
   createTestTodo,
   createTestTodoList,
 } from './setup-test-env';
+import { TodoService } from '../../src/services/todoService';
 
 // Mock the TodoService to avoid actual file system operations
-
 jest.mock('../../src/services/todoService');
+jest.mock('child_process');
 
 describe('WalTodo list command', () => {
   // Sample test list with multiple todos
@@ -72,100 +73,114 @@ describe('WalTodo list command', () => {
   });
 
   // Test listing all available todo lists
-  test
-    .stdout()
-    .command(['list'])
-    .it('lists all available todo lists', ctx => {
-      expect(ctx.stdout).toContain('default');
-      expect(ctx.stdout).toContain('work');
-      expect(ctx.stdout).toContain('personal');
-      expect(TodoService.prototype.getAllLists).toHaveBeenCalled();
-    });
+  it('lists all available todo lists', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['list'])
+      .run();
+    
+    expect(stdout).toContain('default');
+    expect(stdout).toContain('work');
+    expect(stdout).toContain('personal');
+    expect(TodoService.prototype.getAllLists).toHaveBeenCalled();
+  });
 
   // Test listing todos in a specific list
-  test
-    .stdout()
-    .command(['list', 'default'])
-    .it('lists todos in the default list', ctx => {
-      expect(ctx.stdout).toContain('First test todo');
-      expect(ctx.stdout).toContain('High priority todo');
-      expect(ctx.stdout).toContain('Completed todo');
-      expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
-    });
+  it('lists todos in the default list', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['list', 'default'])
+      .run();
+    
+    expect(stdout).toContain('First test todo');
+    expect(stdout).toContain('High priority todo');
+    expect(stdout).toContain('Completed todo');
+    expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
+  });
 
   // Test detailed view
-  test
-    .stdout()
-    .command(['list', 'default', '--detailed'])
-    .it('shows detailed view of todos', ctx => {
-      expect(ctx.stdout).toContain('First test todo');
-      expect(ctx.stdout).toContain('High priority todo');
-      expect(ctx.stdout).toContain('Completed todo');
-      // Detailed view should include more information
-      expect(ctx.stdout).toContain('STATUS');
-      expect(ctx.stdout).toContain('PRIORITY');
-      expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
-    });
+  it('shows detailed view of todos', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['list', 'default', '--detailed'])
+      .run();
+    
+    expect(stdout).toContain('First test todo');
+    expect(stdout).toContain('High priority todo');
+    expect(stdout).toContain('Completed todo');
+    // Detailed view should include more information
+    expect(stdout).toContain('STATUS');
+    expect(stdout).toContain('PRIORITY');
+    expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
+  });
 
   // Test filtering by completion status
-  test
-    .stdout()
-    .command(['list', 'default', '--pending'])
-    .it('shows only pending todos', ctx => {
-      expect(ctx.stdout).toContain('First test todo');
-      expect(ctx.stdout).toContain('High priority todo');
-      expect(ctx.stdout).not.toContain('Completed todo');
-      expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
-    });
+  it('shows only pending todos', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['list', 'default', '--pending'])
+      .run();
+    
+    expect(stdout).toContain('First test todo');
+    expect(stdout).toContain('High priority todo');
+    expect(stdout).not.toContain('Completed todo');
+    expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
+  });
 
-  test
-    .stdout()
-    .command(['list', 'default', '--completed'])
-    .it('shows only completed todos', ctx => {
-      expect(ctx.stdout).not.toContain('First test todo');
-      expect(ctx.stdout).not.toContain('High priority todo');
-      expect(ctx.stdout).toContain('Completed todo');
-      expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
-    });
+  it('shows only completed todos', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['list', 'default', '--completed'])
+      .run();
+    
+    expect(stdout).not.toContain('First test todo');
+    expect(stdout).not.toContain('High priority todo');
+    expect(stdout).toContain('Completed todo');
+    expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
+  });
 
   // Test filtering by priority
-  test
-    .stdout()
-    .command(['list', 'default', '--priority', 'high'])
-    .it('shows only high priority todos', ctx => {
-      expect(ctx.stdout).not.toContain('First test todo');
-      expect(ctx.stdout).toContain('High priority todo');
-      expect(ctx.stdout).not.toContain('Completed todo');
-      expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
-    });
+  it('shows only high priority todos', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['list', 'default', '--priority', 'high'])
+      .run();
+    
+    expect(stdout).not.toContain('First test todo');
+    expect(stdout).toContain('High priority todo');
+    expect(stdout).not.toContain('Completed todo');
+    expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
+  });
 
   // Test JSON output format
-  test
-    .stdout()
-    .command(['list', 'default', '--format', 'json'])
-    .it('outputs todos in JSON format', ctx => {
-      const output = JSON.parse(ctx.stdout);
-      expect(output).toHaveLength(3);
-      expect(output[0].title).toBe('First test todo');
-      expect(output[1].title).toBe('High priority todo');
-      expect(output[2].title).toBe('Completed todo');
-      expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
-    });
+  it('outputs todos in JSON format', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['list', 'default', '--format', 'json'])
+      .run();
+    
+    const output = JSON.parse(stdout);
+    expect(output).toHaveLength(3);
+    expect(output[0].title).toBe('First test todo');
+    expect(output[1].title).toBe('High priority todo');
+    expect(output[2].title).toBe('Completed todo');
+    expect(TodoService.prototype.getList).toHaveBeenCalledWith('default');
+  });
 
   // Test error handling for non-existent list
-  test
-    .stdout()
-    .do(() => {
-      // Override the implementation to simulate a missing list
-      (TodoService.prototype.getList as jest.Mock).mockRejectedValue(
-        new Error('List not found')
-      );
-    })
-    .command(['list', 'non-existent-list'])
-    .catch(_error => {
-      expect(error.message).toContain('List not found');
-    })
-    .it('errors when list does not exist');
+  it('errors when list does not exist', async () => {
+    // Override the implementation to simulate a missing list
+    (TodoService.prototype.getList as jest.Mock).mockRejectedValue(
+      new Error('List not found')
+    );
+    
+    await expect(
+      test
+        .stdout()
+        .command(['list', 'non-existent-list'])
+        .run()
+    ).rejects.toThrow('List not found');
+  });
 
   // Test using direct execSync mock for command execution
   it('handles listing todos with execSync', () => {

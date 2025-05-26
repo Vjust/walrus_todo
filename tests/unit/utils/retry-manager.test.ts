@@ -1,4 +1,5 @@
 import { RetryManager } from '../../../src/utils/retry-manager';
+import '../../../src/utils/polyfills/aggregate-error';
 
 describe('RetryManager', () => {
   let retryManager: RetryManager;
@@ -389,16 +390,17 @@ describe('RetryManager', () => {
         .mockRejectedValue(error3);
 
       await expect(
-        retryManager.execute(operation, {
+        retryManager.execute(operation, 'operation-name', {
           maxRetries: 2,
           aggregateErrors: true,
         })
-      ).rejects.toSatisfy((error: any) => {
-        expect(error).toBeInstanceOf(AggregateError);
-        const aggError = error as AggregateError;
-        expect(aggError.errors).toHaveLength(3);
-        expect(aggError.errors).toEqual([error1, error2, error3]);
-        expect(aggError.message).toContain('Failed after 3 attempts');
+      ).rejects.toSatisfy((error: unknown) => {
+        expect(error).toBeInstanceOf((globalThis as any).AggregateError || Error);
+        if ((globalThis as any).AggregateError && error instanceof (globalThis as any).AggregateError) {
+          expect((error as any).errors).toHaveLength(3);
+          expect((error as any).errors).toEqual([error1, error2, error3]);
+          expect((error as Error).message).toContain('Failed after 3 attempts');
+        }
         return true;
       });
     });
@@ -412,7 +414,7 @@ describe('RetryManager', () => {
         .mockRejectedValue(finalError);
 
       await expect(
-        retryManager.execute(operation, {
+        retryManager.execute(operation, 'operation-name', {
           maxRetries: 2,
           aggregateErrors: false,
         })

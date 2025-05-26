@@ -1,0 +1,1767 @@
+
+> waltodo@1.0.0 lint
+> eslint . --ext .ts,.js
+
+
+/Users/angel/Documents/Projects/walrus_todo/demo-cli-styles.ts
+  185:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/fix-case-declarations.ts
+  46:9  warning  Unexpected console statement  no-console
+
+/Users/angel/Documents/Projects/walrus_todo/simple-style-demo.ts
+  185:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/FileValidator.test.ts
+  90:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/VaultManager.test.ts
+   67:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  201:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/commands/complete.test.ts
+  30:6  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/integration/StorageAllocation.test.ts
+  140:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/retry-manager.test.ts
+  379:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  379:42  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  382:30  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  383:46  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/setup.ts
+  5:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  6:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/store.test.ts
+  145:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/sui-test-types.ts
+   8:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  73:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/unit/SafeAIService.test.ts
+  128:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  251:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  279:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  311:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  345:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  369:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  407:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  442:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  468:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/utils/BatchUploader.test.ts
+  6:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  6:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/utils/ExpiryMonitor.test.ts
+  30:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/utils/Logger.test.ts
+   16:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/utils/NetworkValidator.test.ts
+  16:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/utils/StorageManager.test.ts
+   23:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/utils/promise-utils.test.ts
+   80:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/__tests__/utils/storage-allocation.test.ts
+   20:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   21:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/ai/credentials.ts
+  124:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  303:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  359:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  389:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  429:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  451:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/ai/enhance-credentials.ts
+  150:12   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:22   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:107  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  411:12   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  438:22   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/ai/keys.ts
+  256:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  256:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/ai/permissions.ts
+   97:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  273:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  357:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  474:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  557:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/complete.ts
+  139:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  520:59  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  546:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  547:23  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/configure.ts
+  254:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  341:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  392:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  558:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  578:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  579:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  673:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/fetch.ts
+   59:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  213:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/provider.ts
+  224:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/retrieve.ts
+  74:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/storage.ts
+  105:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:86  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  283:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  287:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/store-file.ts
+   95:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  174:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/store.ts
+  157:47  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  158:47  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  529:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/suggest.ts
+   26:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  581:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  581:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  627:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/sync.ts
+  64:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/system/audit.ts
+  137:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  263:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/commands/verify.ts
+  211:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  271:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/constants.ts
+   81:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/lib/sui-client-utils.ts
+  103:9   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  173:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/middleware/authorization.ts
+   80:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/SuiTestService.ts
+  204:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/AIService.consolidated.ts
+  353:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  640:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  647:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  678:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  704:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/AIVerificationService 3.ts
+   26:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   27:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   53:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/AIVerificationService.ts
+  239:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  241:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/BlockchainAIVerificationService.ts
+  296:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  299:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  352:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/ResponseParser.ts
+  137:102  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:141  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:107  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:149  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:106  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:147  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:106  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:147  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/ResultCache.ts
+   30:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  217:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/SecureCredentialManager.ts
+  214:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  251:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  338:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/SecureCredentialService.ts
+  45:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  93:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/TaskSuggestionService.ts
+  628:43  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/adapters/SuiAICredentialAdapter.ts
+  112:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  206:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  224:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  229:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  236:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  364:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  368:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  413:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  414:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/adapters/SuiAIVerifierAdapter.ts
+  201:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  206:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  211:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  213:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:13  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  259:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  277:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  279:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  281:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  326:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  328:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  343:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  344:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  345:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  348:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  351:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  628:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/credentials/CredentialManager.ts
+  83:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/credentials/CredentialVerificationService.ts
+  278:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/credentials/CredentialVerifier.ts
+   74:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/credentials/EnhancedCredentialManager.ts
+   26:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:14  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  534:26  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/ai/credentials/SecureCredentialStore.ts
+   31:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  191:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  192:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  531:21  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/src/services/permission-service.ts
+  616:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/adapters/AICredentialAdapter.ts
+  86:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/adapters/AIModelAdapter.ts
+  108:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  258:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/adapters/SignerAdapter.ts
+  185:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/adapters/SuiTransactionBlockAdapter.ts
+  117:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/adapters/TransactionBlockAdapter.ts
+  309:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  856:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  857:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/client.ts
+  118:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/errors/compatibility.ts
+  175:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/index.ts
+  14:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/permissions.ts
+   58:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  303:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/todo.ts
+  189:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/types/transaction.ts
+  47:97  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/CommandSanitizer.ts
+  18:16  error  Unexpected control character(s) in regular expression: \x01, \x1f  no-control-regex
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/ConnectionManager.ts
+  176:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/EnhancedVaultManager.ts
+   24:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  232:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/FileHandleManager.ts
+  164:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/FileValidator.ts
+  24:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/InputValidator.ts
+  303:35  error  Unexpected control character(s) in regular expression: \x01, \x1f  no-control-regex
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/NetworkManager.ts
+   34:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  387:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  392:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  399:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/StorageManager.ts
+  186:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  287:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  347:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  371:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  374:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  374:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  378:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  378:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/ValidationMiddleware.ts
+  60:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/adapters/signer-adapter.ts
+   68:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  205:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  275:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  298:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  492:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  575:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  599:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  603:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  614:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/adapters/sui-client-compatibility.ts
+  23:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/adapters/transaction-compatibility.ts
+   15:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   24:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   38:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/adapters/walrus-client-adapter.ts
+    46:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    55:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    99:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   181:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   286:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   330:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   412:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   511:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   556:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   638:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   807:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   928:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   972:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1003:4   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1024:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1058:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1123:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1176:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/cli-helpers.ts
+  182:11  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/env-validator.ts
+  170:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/error-messages-extension-guide.ts
+  172:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/lazy-loader.ts
+  317:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/polyfills/aggregate-error.ts
+  22:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/retry-manager.ts
+  486:24  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  496:24  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  502:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  636:13  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/storage/adapters/BackwardCompatibilityAdapter.ts
+   75:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   78:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  213:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  239:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  338:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/storage/core/StorageClient.ts
+  203:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/storage/core/StorageTypes.ts
+  137:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/storage/implementations/BlobStorage.ts
+  238:21  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  639:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  739:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  914:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  961:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  992:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/storage/utils/StorageReuseAnalyzer.ts
+  144:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/sui-keystore.ts
+  219:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  279:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/sui-nft-storage.ts
+   71:49   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:108  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   72:44   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:52   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:49   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:50   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  330:40   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/union-type-utils.ts
+   20:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  177:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/src/utils/walrus-image-storage.ts
+  212:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  213:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/test-imports.ts
+  5:1  warning  Unexpected console statement  no-console
+  6:1  warning  Unexpected console statement  no-console
+
+/Users/angel/Documents/Projects/walrus_todo/tests/commands/add.test.ts
+  79:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/commands/ai-operations.test.ts
+  8:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  9:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/commands/store-batch.test.ts
+  14:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/commands/sync.test.ts
+   67:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   74:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  294:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/commands/verify.test.ts
+  175:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  176:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  177:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  178:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  179:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  186:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  187:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  188:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  201:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  215:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  216:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  219:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  220:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  228:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  228:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  247:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  256:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  257:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  260:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  261:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  273:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  274:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  275:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  287:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  288:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  289:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  297:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  297:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  307:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  308:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  309:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  316:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  317:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  318:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  327:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  328:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  329:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  330:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  342:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+  343:9  error  Expect must be inside of a test block  jest/no-standalone-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/batch-operations.e2e.test.ts
+   82:26  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  145:26  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  206:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  313:26  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/commands/add.e2e.test.ts
+   33:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  344:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/commands/complete.e2e.test.ts
+   19:21  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+   96:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  112:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  128:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  144:47  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  168:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  182:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  294:13  error    '_todoId1' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  329:49  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  336:49  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  353:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  367:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  391:44  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/commands/interactive.e2e.test.ts
+   16:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   19:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   20:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  166:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:14  warning  Unexpected console statement              no-console
+  298:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/commands/store-file.e2e.test.ts
+  230:17  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/error-scenarios.e2e.test.ts
+  148:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:5   warning  Test has no assertions                    jest/expect-expect
+  246:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  451:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  452:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  453:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  514:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  515:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  516:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  548:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  549:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  550:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  575:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  576:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  577:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  578:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  579:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  605:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  606:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  607:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  608:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  609:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  610:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/frontend-cli-integration.e2e.test.ts
+  109:22  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  110:19  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  111:26  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  200:5   warning  Test has no assertions                 jest/expect-expect
+  273:11  error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  274:11  error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  327:21  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  361:14  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  377:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  378:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  379:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  399:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  405:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  429:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  430:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  452:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  478:13  error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  501:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/helpers/cli-executor.ts
+   58:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   60:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/helpers/slush-wallet-mock.ts
+  54:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  96:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  97:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  98:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/performance.e2e.test.ts
+  229:9   error    Avoid calling `expect` conditionally`        jest/no-conditional-expect
+  247:9   error    Avoid calling `expect` conditionally`        jest/no-conditional-expect
+  322:9   error    Avoid calling `expect` conditionally`        jest/no-conditional-expect
+  384:5   warning  Test has no assertions                       jest/expect-expect
+  397:15  error    'metric' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  445:13  error    Avoid calling `expect` conditionally`        jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/real-user-workflow.test.ts
+   40:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  102:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  121:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/system-validation.test.ts
+   18:5   warning  Test has no assertions                 jest/expect-expect
+   66:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+   67:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+   68:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  147:5   warning  Test has no assertions                 jest/expect-expect
+  226:14  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  228:14  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  241:5   warning  Test has no assertions                 jest/expect-expect
+  292:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  299:5   warning  Test has no assertions                 jest/expect-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/wallet-integration.spec.ts
+  40:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/walrus-integration.e2e.test.ts
+  156:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  256:5   warning  Test has no assertions                    jest/expect-expect
+  340:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  362:7   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  363:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  447:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  469:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  503:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  504:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  547:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/e2e/workflows/todo-lifecycle.e2e.test.ts
+   23:21  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   76:16  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  162:15  error    '_output' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  184:22  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  237:16  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  276:21  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  300:22  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  313:15  error    '_output' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  319:15  error    '_output' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  325:15  error    '_output' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  333:18  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  352:22  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  389:32  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/edge-cases/transaction-edge-cases.test.ts
+    5:7   error    '_MockTodoListContract' is defined but never used  @typescript-eslint/no-unused-vars
+   51:5   warning  Test has no assertions                             jest/expect-expect
+   90:13  error    Avoid calling `expect` conditionally`              jest/no-conditional-expect
+   91:13  error    Avoid calling `expect` conditionally`              jest/no-conditional-expect
+  112:11  error    Avoid calling `expect` conditionally`              jest/no-conditional-expect
+  113:11  error    Avoid calling `expect` conditionally`              jest/no-conditional-expect
+  206:13  error    Avoid calling `expect` conditionally`              jest/no-conditional-expect
+  207:13  error    Avoid calling `expect` conditionally`              jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/error-handling/ai-service-errors.test.ts
+   98:25  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  161:27  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  218:29  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  365:13  error    '_withFallbackSpy' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  366:29  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  370:27  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  376:42  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  403:29  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  412:51  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  415:25  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  416:32  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  486:27  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/error-handling/blockchain-errors.test.ts
+  102:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  161:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  162:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  188:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  364:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  365:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  366:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  499:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  500:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  528:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  543:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  544:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  545:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  610:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  690:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/error-handling/network-errors.test.ts
+  264:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  267:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  309:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/error-handling/storage-errors.test.ts
+   21:25  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   58:21  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   59:24  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   83:23  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   84:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+   85:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+  125:55  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  131:50  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  132:23  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  133:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+  156:23  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  157:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+  158:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+  164:13  error    '_checkSizeSpy' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  165:34  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  188:23  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  189:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+  190:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+  210:23  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  211:9   error    Avoid calling `expect` conditionally`               jest/no-conditional-expect
+  217:13  error    '_verifyingSpy' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  218:33  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  252:27  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  297:34  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  344:25  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/example/cli-add.test.ts
+   68:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   69:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   76:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   77:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   78:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   91:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   92:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  105:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  106:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  119:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  119:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/example/cli-complete.test.ts
+   86:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   87:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   97:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   98:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  109:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  110:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  111:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  125:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  126:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  140:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  140:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  149:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  149:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  185:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/example/cli-list.test.ts
+   79:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   80:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   81:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   82:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   90:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   91:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   92:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+   93:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  101:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  102:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  103:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  105:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  106:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  107:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  115:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  116:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  117:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  118:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  125:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  126:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  127:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  128:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  136:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  137:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  138:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  139:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  148:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  149:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  150:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  151:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  152:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+  166:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  166:7  error  Expect must be inside of a test block  jest/no-standalone-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/example/setup-test-env.ts
+  93:38  error  'options' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/ai-prompt-fuzzer.test.ts
+  91:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/batch-operation-fuzzer.test.ts
+   19:15  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   24:7   error    'batchProcessor' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   77:23  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  190:22  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  191:21  warning  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/cli-argument-fuzzer.test.ts
+   20:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  364:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  381:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/config-fuzzer.test.ts
+  302:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/input-validation-fuzzer.test.ts
+   77:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  172:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  187:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  190:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  200:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  224:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  266:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  303:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  306:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  344:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  364:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  391:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/network-retry-fuzzer.test.ts
+   63:23  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   86:11  error    Avoid calling `expect` conditionally`            jest/no-conditional-expect
+   87:11  error    Avoid calling `expect` conditionally`            jest/no-conditional-expect
+  228:31  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  270:13  error    '_nodeUsage' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  345:11  error    Avoid calling `expect` conditionally`            jest/no-conditional-expect
+  346:11  error    Avoid calling `expect` conditionally`            jest/no-conditional-expect
+  407:23  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  419:13  error    '_results' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/permission-fuzzer.test.ts
+    7:7   error    '_permissionManager' is defined but never used    @typescript-eslint/no-unused-vars
+    8:7   error    '_aiPermissionManager' is defined but never used  @typescript-eslint/no-unused-vars
+   66:11  error    Avoid calling `expect` conditionally`             jest/no-conditional-expect
+  220:32  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  221:37  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  223:50  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  228:46  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/serialization-fuzzer.test.ts
+  202:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  303:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  377:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  578:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  627:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/storage-fuzzer.test.ts
+  101:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  102:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  128:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  159:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  190:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  245:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  415:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  418:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  423:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  426:19  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  426:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  430:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  431:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  466:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  474:17  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  528:15  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  602:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  603:11  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/fuzz/transaction-fuzzer.test.ts
+    6:7    error    'MockTodoListContract' is defined but never used  @typescript-eslint/no-unused-vars
+   36:5    warning  Test has no assertions                            jest/expect-expect
+  158:104  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/helpers/AITestFactory.ts
+   90:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  275:6   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  351:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  352:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  377:11  error    Expect must be inside of a test block     jest/no-standalone-expect
+  378:11  error    Expect must be inside of a test block     jest/no-standalone-expect
+  382:13  error    Expect must be inside of a test block     jest/no-standalone-expect
+  383:13  error    Expect must be inside of a test block     jest/no-standalone-expect
+  384:13  error    Expect must be inside of a test block     jest/no-standalone-expect
+  390:11  error    Expect must be inside of a test block     jest/no-standalone-expect
+  391:11  error    Expect must be inside of a test block     jest/no-standalone-expect
+  395:13  error    Expect must be inside of a test block     jest/no-standalone-expect
+  396:13  error    Expect must be inside of a test block     jest/no-standalone-expect
+  402:11  error    Expect must be inside of a test block     jest/no-standalone-expect
+  403:11  error    Expect must be inside of a test block     jest/no-standalone-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/helpers/ai-test-utils.ts
+  176:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/helpers/error-simulator.ts
+   50:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   64:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  192:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  236:25  error    'T' is defined but never used             @typescript-eslint/no-unused-vars
+  237:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  280:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  297:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  311:17  error    '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/helpers/fsMock.ts
+  22:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  29:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/StorageAllocation.test.ts
+  13:7  error  'monitor' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/ai-commands.test.ts
+  19:9  error  '_mockTodos' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/blob-mappings-path.test.ts
+  52:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  76:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  79:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/blockchain-verification/BlobVerificationManager.test.ts
+   37:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/blockchain-verification/CredentialVerificationService.test.ts
+   39:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   46:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  154:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  258:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  318:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  367:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  412:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  453:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/blockchain-verification/ErrorHandling.test.ts
+   50:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  344:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  347:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  607:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  610:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  611:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/blockchain-verification/TodoAIExtension.test.ts
+   44:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  282:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  363:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  538:14  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  539:14  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/blockchain-verification/VerificationFlow.test.ts
+  278:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  359:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  464:14  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  466:14  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  539:14  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/commands.test.ts
+  2442:13  error    '_mockTodos' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  3236:13  error    'savedMapping' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  3236:27  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  3238:32  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/integration/error-recovery.test.ts
+    8:3   error    '_NetworkError' is defined but never used       @typescript-eslint/no-unused-vars
+   10:3   error    '_BlockchainError' is defined but never used    @typescript-eslint/no-unused-vars
+   53:20  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   62:19  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  104:49  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  105:24  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  146:38  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  176:13  error    '_failures' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  216:46  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  251:32  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  279:39  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  483:51  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  483:65  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/AISecurityAudit.test.ts
+     3:8   error    'path' is defined but never used                                               @typescript-eslint/no-unused-vars
+     4:8   error    'crypto' is defined but never used                                             @typescript-eslint/no-unused-vars
+    26:10  error    '_CLI_CONFIG' is defined but never used                                        @typescript-eslint/no-unused-vars
+   142:27  warning  Unexpected console statement                                                   no-console
+   144:7   warning  Unexpected console statement                                                   no-console
+   154:13  error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+   158:9   warning  Unexpected console statement                                                   no-console
+   190:11  error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+   270:56  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   280:21  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   339:21  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   539:35  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   579:12  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   663:29  error    'provider' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+   696:12  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   740:12  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   781:16  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   782:67  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   783:72  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   827:35  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   866:48  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   867:36  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   868:72  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+   972:12  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  1143:13  error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+  1144:13  error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+  1147:13  error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+  1148:13  error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+  1156:32  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  1281:12  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  1293:57  error    'userAddress' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  1297:55  error    'id' is defined but never used. Allowed unused args must match /^_/u           @typescript-eslint/no-unused-vars
+  1310:32  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  1337:12  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  1463:38  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  1473:9   error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+  1474:9   error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+  1477:9   error    Avoid calling `expect` conditionally`                                          jest/no-conditional-expect
+  1477:26  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/APISecurity.test.ts
+    5:3   error    '_AIModelOptions' is defined but never used   @typescript-eslint/no-unused-vars
+   10:8   error    'crypto' is defined but never used            @typescript-eslint/no-unused-vars
+  116:11  error    Avoid calling `expect` conditionally`         jest/no-conditional-expect
+  131:17  error    '_apiKey' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  168:73  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  175:17  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  207:39  warning  Forbidden non-null assertion                  @typescript-eslint/no-non-null-assertion
+  288:12  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  470:21  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  471:35  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  567:21  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  688:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  701:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  764:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  777:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  794:48  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  797:53  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  801:47  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  856:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  869:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  884:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  932:25  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  933:25  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/AuditLogSecurity.test.ts
+    8:10  error    '_AIProvider' is defined but never used                                     @typescript-eslint/no-unused-vars
+   38:66  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   89:25  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   99:44  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  112:26  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  116:32  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  125:28  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  125:34  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  142:36  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  145:23  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  227:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  305:21  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  428:35  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  430:31  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  467:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  470:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  519:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  539:21  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  579:29  error    'filePath' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/AuditLogVerification.test.ts
+   12:41  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   21:66  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   26:66  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  199:13  error    '_logFilePath' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  431:34  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  444:32  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/BlockchainVerification.test.ts
+  110:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  235:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  236:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  302:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  359:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  360:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  361:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  432:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  543:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  554:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  563:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  573:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  584:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  599:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  618:7   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  619:7   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  620:7   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  623:7   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  623:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/DataPrivacy.test.ts
+    5:3   error    '_AIModelOptions' is defined but never used                           @typescript-eslint/no-unused-vars
+   15:10  error    '_secureCredentialManager' is defined but never used                  @typescript-eslint/no-unused-vars
+  179:33  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  223:32  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  250:44  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  251:44  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  268:42  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  283:40  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  285:45  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  288:45  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  345:12  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  391:32  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  459:32  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  593:27  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  622:9   error    Avoid calling `expect` conditionally`                                 jest/no-conditional-expect
+  623:9   error    Avoid calling `expect` conditionally`                                 jest/no-conditional-expect
+  626:9   error    Avoid calling `expect` conditionally`                                 jest/no-conditional-expect
+  626:26  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  631:11  error    Avoid calling `expect` conditionally`                                 jest/no-conditional-expect
+  632:11  error    Avoid calling `expect` conditionally`                                 jest/no-conditional-expect
+  698:55  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  699:28  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  700:61  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  710:53  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  775:12  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  778:21  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  782:21  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  786:21  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  820:31  error    'id' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  837:32  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  861:59  error    'id' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  869:32  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  934:14  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+  950:14  warning  Unexpected any. Specify a different type                              @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/InputValidationSecurity.test.ts
+    9:3   error    '_AIPermissionManager' is defined but never used  @typescript-eslint/no-unused-vars
+   54:46  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  280:35  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  427:21  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  428:35  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  469:21  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  526:48  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  529:53  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  533:47  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  631:35  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  799:35  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  862:21  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  932:35  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  933:34  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  934:34  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  949:24  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/PermissionSecurity.test.ts
+     9:10  error    '_AIVerificationService' is defined but never used                          @typescript-eslint/no-unused-vars
+    15:3   error    '_AIOperationPermission' is defined but never used                          @typescript-eslint/no-unused-vars
+    52:7   error    'mockVerificationRecord' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+   101:10  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   109:10  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   174:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   179:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   184:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   189:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   194:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   199:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   204:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   209:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   340:15  error    'provider' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   345:15  error    'params' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+   357:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   419:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   457:15  error    'provider' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   465:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   504:29  error    'todos' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+   520:37  error    'todos' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+   618:30  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   635:30  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   712:15  error    'params' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+   727:15  error    'provider' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   735:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   781:15  error    'provider' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   793:65  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   800:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   801:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   858:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   859:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   911:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+   912:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+  1086:28  warning  Forbidden non-null assertion                                                @typescript-eslint/no-non-null-assertion
+  1107:28  warning  Forbidden non-null assertion                                                @typescript-eslint/no-non-null-assertion
+  1145:15  error    'provider' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  1159:29  warning  Unexpected any. Specify a different type                                    @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/security/SecureCredentialStorage.test.ts
+    3:8   error    'path' is defined but never used          @typescript-eslint/no-unused-vars
+   10:10  error    '_CLI_CONFIG' is defined but never used   @typescript-eslint/no-unused-vars
+   27:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  304:7   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/setup.ts
+  27:35  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  28:29  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  34:30  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  35:23  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  36:20  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  40:30  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  41:29  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  42:32  error    Don't use `{}` as a type. `{}` actually means "any non-nullish value".
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead.
+- If you want a type meaning "empty object", you probably want `Record<string, never>` instead.
+- If you really want a type meaning "any non-nullish value", you probably want `NonNullable<unknown>` instead  @typescript-eslint/ban-types
+  43:23  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  49:26  error    Don't use `{}` as a type. `{}` actually means "any non-nullish value".
+- If you want a type meaning "any object", you probably want `object` instead.
+- If you want a type meaning "any value", you probably want `unknown` instead.
+- If you want a type meaning "empty object", you probably want `Record<string, never>` instead.
+- If you really want a type meaning "any non-nullish value", you probably want `NonNullable<unknown>` instead  @typescript-eslint/ban-types
+
+/Users/angel/Documents/Projects/walrus_todo/tests/stress/StressTestReportGenerator.ts
+   21:20  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   22:17  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   33:11  error    '_timestamp' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  636:20  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  637:17  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/sui-test-types.ts
+   9:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/cleanup.test.ts
+  8:10  error  '_Logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/cleanup.ts
+  164:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/cross-platform.test.ts
+  254:13  error  '_read' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  266:13  error  '_read' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  381:20  error  'step' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/data-retrieval.test.ts
+   17:8   error  'path' is defined but never used                   @typescript-eslint/no-unused-vars
+  159:11  error  'tempFilePath' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/monitoring.ts
+   15:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  286:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  314:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  391:7   warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  464:10  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/nft-creation.test.ts
+    7:8   error    'path' is defined but never used                        @typescript-eslint/no-unused-vars
+   28:7   error    'storageContractId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   81:14  warning  Forbidden non-null assertion                            @typescript-eslint/no-non-null-assertion
+   82:14  warning  Forbidden non-null assertion                            @typescript-eslint/no-non-null-assertion
+   83:14  warning  Forbidden non-null assertion                            @typescript-eslint/no-non-null-assertion
+   83:14  warning  Forbidden non-null assertion                            @typescript-eslint/no-non-null-assertion
+  163:9   error    Avoid calling `expect` conditionally`                   jest/no-conditional-expect
+  225:9   error    Avoid calling `expect` conditionally`                   jest/no-conditional-expect
+  350:11  error    Avoid calling `expect` conditionally`                   jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/setup/sui-setup.test.ts
+    7:13  error    'path' is defined but never used          @typescript-eslint/no-unused-vars
+   83:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  255:36  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/setup/sui-setup.ts
+  27:10  error  '_bcs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/utils/retry-wrapper.ts
+   69:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   73:21  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  125:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  140:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  157:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  161:21  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  188:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  213:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  219:21  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  254:14  warning  Forbidden non-null assertion                                            @typescript-eslint/no-non-null-assertion
+  254:46  warning  Forbidden non-null assertion                                            @typescript-eslint/no-non-null-assertion
+  255:14  warning  Forbidden non-null assertion                                            @typescript-eslint/no-non-null-assertion
+  262:11  error    '_poisonedAttempts' is assigned a value but never used                  @typescript-eslint/no-unused-vars
+  279:11  error    '_successCount' is assigned a value but never used                      @typescript-eslint/no-unused-vars
+  368:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  409:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  421:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  455:39  error    'node' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/testnet/walrus-storage.test.ts
+  186:13  error    '_duration' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  224:9   error    Avoid calling `expect` conditionally`           jest/no-conditional-expect
+  238:5   warning  Test has no assertions                          jest/expect-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/AICredentialManager.test.ts
+  290:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/AIErrorHandling.test.ts
+   5:3  error  '_AIModelOptions' is defined but never used     @typescript-eslint/no-unused-vars
+  10:3  error  '_AIVerifierAdapter' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/AIMockingFramework.test.ts
+  174:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  262:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  278:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  297:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  305:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  331:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  344:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/AIProviderAbstraction.test.ts
+  121:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/AIServiceOperations.test.ts
+    5:3   error    '_AIModelOptions' is defined but never used  @typescript-eslint/no-unused-vars
+  103:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  122:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  141:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  160:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  179:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  244:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  309:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  367:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  423:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  482:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  513:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  530:21  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/AIVerificationService.test.ts
+    1:33  error    '_VerifiedAIResult' is defined but never used    @typescript-eslint/no-unused-vars
+    6:3   error    '_VerificationRecord' is defined but never used  @typescript-eslint/no-unused-vars
+  127:30  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  344:61  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  346:65  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/ConsolidatedAIService.test.ts
+   10:3   error  '_AIModelAdapter' is defined but never used                                      @typescript-eslint/no-unused-vars
+  281:42  error  'componentName' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/ConsolidatedTodoService.test.ts
+    3:8   error  'path' is defined but never used                   @typescript-eslint/no-unused-vars
+  140:13  error  '_getListMock' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/EnhancedAIService.test.ts
+   20:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   24:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   67:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   67:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:28  error    'T' is defined but never used             @typescript-eslint/no-unused-vars
+   94:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/ExpiryMonitor.test.ts
+  2:24  error  '_BlobRecord' is defined but never used       @typescript-eslint/no-unused-vars
+  9:7   error  'monitor' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/FileValidator.test.ts
+  94:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/KeyRotationSecurity.test.ts
+  2:8  error  'path' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/VaultManager.test.ts
+  220:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/aggregate-test-reports.test.ts
+  4:13  error  'path' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/aiService.test.ts
+  79:11  error  '_aiService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/blob-verification.test.ts
+   26:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  177:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  312:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  442:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  491:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/retry-manager.test.ts
+  330:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  365:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/ai/AIService.test.ts
+    9:3   error  '_AIOperation' is defined but never used                @typescript-eslint/no-unused-vars
+   10:3   error  '_AIModelType' is defined but never used                @typescript-eslint/no-unused-vars
+  100:15  error  '_customCategories' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  128:15  error  '_context' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  344:13  error  '_timeoutPromise' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/ai/BlockchainVerifier.test.ts
+   45:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:5   warning  Test has no assertions                    jest/expect-expect
+  506:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/ai/CredentialManager.test.ts
+    4:13  error    'path' is defined but never used              @typescript-eslint/no-unused-vars
+   35:10  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  271:13  error    '_apiKey' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  299:13  error    '_apiKey' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  302:72  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  314:72  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  374:22  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  389:22  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/ai/TaskSuggestionService.test.ts
+   13:3   error    '_TaskSuggestionResult' is defined but never used     @typescript-eslint/no-unused-vars
+   18:3   error    '_VerifiedAIResult' is defined but never used         @typescript-eslint/no-unused-vars
+  298:5   warning  Disabled test                                         jest/no-disabled-tests
+  309:29  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  323:13  error    '_allSuggestions' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  791:35  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/authentication-service.test.ts
+    3:3   error    '_PermissionService' is defined but never used      @typescript-eslint/no-unused-vars
+    6:10  error    '_AuditLogger' is defined but never used            @typescript-eslint/no-unused-vars
+   11:3   error    '_TokenValidationResult' is defined but never used  @typescript-eslint/no-unused-vars
+   15:13  error    'crypto' is defined but never used                  @typescript-eslint/no-unused-vars
+  297:9   warning  Forbidden non-null assertion                        @typescript-eslint/no-non-null-assertion
+  312:13  error    '_apiKey' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  344:13  error    '_apiKey' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  570:13  error    '_auth1' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  574:13  error    '_auth2' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  656:43  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  753:40  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/key-management.test.ts
+  206:13  error  '_generatedKeypair' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/permission-service.test.ts
+  34:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/secure-storage.test.ts
+    2:3   error    '_CipherGCMTypes' is defined but never used  @typescript-eslint/no-unused-vars
+  280:12  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/services/todo-service.test.ts
+  146:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/store.test.ts
+  7:10  error  '_TodoService' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/sui-nft-storage.test.ts
+   1:20  error  '_it' is defined but never used                                                @typescript-eslint/no-unused-vars
+   1:25  error  '_expect' is defined but never used                                            @typescript-eslint/no-unused-vars
+  13:10  error  '_Todo' is defined but never used                                              @typescript-eslint/no-unused-vars
+  15:3   error  '_createMockSuiObjectResponse' is defined but never used                       @typescript-eslint/no-unused-vars
+  16:3   error  '_createMockTransactionResponse' is defined but never used                     @typescript-eslint/no-unused-vars
+  40:7   error  'storage' is assigned a value but never used                                   @typescript-eslint/no-unused-vars
+  47:20  error  'data' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+  62:9   error  'transaction' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  67:24  error  'data' is defined but never used. Allowed unused args must match /^_/u         @typescript-eslint/no-unused-vars
+  70:9   error  'transaction' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/command-shortcuts.test.ts
+  184:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/error-handler.test.ts
+    8:8  error  'chalk' is defined but never used      @typescript-eslint/no-unused-vars
+  304:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  305:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/input-validator.test.ts
+  234:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  307:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  339:5   warning  Test has no assertions                    jest/expect-expect
+  345:5   warning  Test has no assertions                    jest/expect-expect
+  365:5   warning  Test has no assertions                    jest/expect-expect
+  371:5   warning  Test has no assertions                    jest/expect-expect
+  545:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/interactive-mode.test.ts
+   23:23  warning  Forbidden non-null assertion              @typescript-eslint/no-non-null-assertion
+  170:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  192:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  205:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  277:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  293:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  303:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  317:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  342:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  363:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  377:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  384:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  394:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  415:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  426:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  429:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/path-utils.test.ts
+  259:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  263:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  267:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/retry-manager.test.ts
+  396:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/todo-serializer.test.ts
+  265:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  280:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/todo-size-calculator.test.ts
+  183:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/walrus-image-storage.test.ts
+  47:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  73:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/unit/walrus-storage.test.ts
+  74:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  83:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/utils/BatchUploader.test.ts
+  88:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/utils/Logger.test.ts
+   15:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   15:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/utils/StorageManager.test.ts
+   24:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/utils/StorageReuseAnalyzer.test.ts
+   11:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/utils/TransactionHelper.test.ts
+  89:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/angel/Documents/Projects/walrus_todo/tests/utils/storage-allocation.test.ts
+   30:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 1322 problems (380 errors, 942 warnings)
+

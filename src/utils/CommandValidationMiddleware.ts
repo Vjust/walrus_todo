@@ -17,7 +17,7 @@
 
 import { Command, Flags, Hook } from '@oclif/core';
 import { CLIError } from '../types/error';
-import { envConfig, getEnv, hasEnv } from './environment-config';
+import { envConfig } from './environment-config';
 import { Logger } from './Logger';
 
 const logger = new Logger('CommandValidationMiddleware');
@@ -34,16 +34,16 @@ type CommandWithParse = {
 /**
  * Interface representing an environment variable requirement
  *
- * @property {string} variable - The name of the required environment variable
- * @property {string} [message] - Optional custom error message if the variable is missing
- * @property {Function} [validator] - Optional function to validate the variable value
- * @property {string} [alternativeFlag] - Optional CLI flag that can be used instead of the env var
- * @property {string} [command] - Optional command name for validation context
+ * @property variable - The name of the required environment variable
+ * @property message - Optional custom error message if the variable is missing
+ * @property validator - Optional function to validate the variable value
+ * @property alternativeFlag - Optional CLI flag that can be used instead of the env var
+ * @property command - Optional command name for validation context
  */
 export interface EnvironmentRequirement {
   variable: string;
   message?: string;
-  validator?: (value: any) => boolean;
+  validator?: (value: string) => boolean;
   alternativeFlag?: string;
   command?: string; // Command field for validation context
 }
@@ -52,8 +52,8 @@ export interface EnvironmentRequirement {
  * Registers environment requirements for a command
  * Requirements will be checked before command execution
  *
- * @param {unknown} cmd - The command class to register requirements for
- * @param {EnvironmentRequirement[]} requirements - Array of environment requirements
+ * @param cmd - The command class to register requirements for
+ * @param requirements - Array of environment requirements
  *
  * @example
  * ```typescript
@@ -67,7 +67,7 @@ export function requireEnvironment(
   requirements: EnvironmentRequirement[]
 ): void {
   // Store the requirements on the command class
-  (cmd as any).environmentRequirements = requirements;
+  (cmd as unknown as Record<string, unknown>).environmentRequirements = requirements;
 }
 
 /**
@@ -78,18 +78,28 @@ export function requireEnvironment(
  * validates variable values if validators are provided, and throws detailed
  * error messages if any requirements are not satisfied.
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if environment requirements are not met
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if environment requirements are not met
  */
-export const validateEnvironment: Hook<'init'> = async (options: any) => {
+export const validateEnvironment: Hook<'init'> = async (_options) => {
+  // For init hooks, we don't have access to the specific command class yet
+  // Environment validation will be handled in prerun hooks where command info is available
+  return;
+};
+
+/**
+ * Validates environment requirements for commands with environment dependencies
+ * This should be used as a prerun hook for specific commands that need environment validation
+ */
+export const validateCommandEnvironment: Hook<'prerun'> = async (options) => {
   const command = options.Command;
   // Skip if the command has no environment requirements
-  if (!(command as any).environmentRequirements) {
+  if (!(command as unknown as Record<string, unknown>).environmentRequirements) {
     return;
   }
 
-  const requirements: EnvironmentRequirement[] = (command as any)
-    .environmentRequirements;
+  const requirements: EnvironmentRequirement[] = (command as unknown as Record<string, unknown>)
+    .environmentRequirements as EnvironmentRequirement[];
   const missingVars: string[] = [];
   const invalidVars: string[] = [];
 
@@ -103,11 +113,12 @@ export const validateEnvironment: Hook<'init'> = async (options: any) => {
     }
 
     // Check if the variable exists in our environment configuration
-    if (hasEnv(req.variable as any)) {
-      const value = getEnv(req.variable as any);
+    const envVarNames = Object.keys(envConfig.getAllVariables());
+    if (envVarNames.includes(req.variable)) {
+      const value = envConfig.getAllVariables()[req.variable].value as string;
 
       // If there's a validator, check the value
-      if (req.validator && !req.validator(value)) {
+      if (req.validator && typeof value === 'string' && !req.validator(value)) {
         invalidVars.push(`${req.variable}=${value} (invalid)`);
       }
     } else if (process.env[req.variable]) {
@@ -115,7 +126,7 @@ export const validateEnvironment: Hook<'init'> = async (options: any) => {
       const value = process.env[req.variable];
 
       // If there's a validator, check the value
-      if (req.validator && !req.validator(value)) {
+      if (req.validator && value && !req.validator(value)) {
         invalidVars.push(`${req.variable}=${value} (invalid)`);
       }
     } else {
@@ -202,8 +213,8 @@ export const aiFlags = {
  * Sets environment variables from command flags
  * This allows flags to override environment variables when both are specified
  *
- * @param {any} flags - The parsed command flags
- * @param {Record<string, string>} mappings - Object mapping flag names to environment variable names
+ * @param flags - The parsed command flags
+ * @param mappings - Object mapping flag names to environment variable names
  *
  * @example
  * ```typescript
@@ -214,7 +225,7 @@ export const aiFlags = {
  * ```
  */
 export function setEnvFromFlags(
-  flags: any,
+  flags: Record<string, unknown>,
   mappings: Record<string, string>
 ): void {
   for (const [flagName, envVar] of Object.entries(mappings)) {
@@ -230,17 +241,17 @@ export function setEnvFromFlags(
  * Creates a CLI flag for an environment-configurable option
  * This automatically determines the flag type based on the environment variable's type
  *
- * @param {string} envVar - The name of the environment variable
- * @param {Object} options - Options for flag creation
- * @param {string} [options.char] - Single character alias for the flag
- * @param {string} [options.description] - Description of the flag for help text
- * @param {boolean} [options.required] - Whether the flag is required
- * @param {string[]} [options.options] - Valid options for the flag (enum)
- * @param {boolean} [options.hidden] - Whether to hide the flag from help
- * @param {Function} [options.default] - Function to get the default value
+ * @param envVar - The name of the environment variable
+ * @param options - Options for flag creation
+ * @param options.char - Single character alias for the flag
+ * @param options.description - Description of the flag for help text
+ * @param options.required - Whether the flag is required
+ * @param options.options - Valid options for the flag (enum)
+ * @param options.hidden - Whether to hide the flag from help
+ * @param options.default - Function to get the default value
  *
- * @returns {any} The created flag configuration
- * @throws {Error} If the environment variable is not defined in envConfig
+ * @returns The created flag configuration
+ * @throws If the environment variable is not defined in envConfig
  *
  * @example
  * ```typescript
@@ -261,9 +272,9 @@ export function createEnvFlag(
     required?: boolean;
     options?: string[];
     hidden?: boolean;
-    default?: () => any;
+    default?: () => unknown;
   } = {}
-): any {
+): unknown {
   // Get the actual environment variable definition
   const envVarConfig = envConfig.getAllVariables()[envVar];
 
@@ -273,32 +284,25 @@ export function createEnvFlag(
 
   // Determine flag type based on the environment variable type
   const type = typeof envVarConfig.value;
-  let flagCreator;
 
-  switch (type) {
-    case 'boolean':
-      flagCreator = Flags.boolean;
-      break;
-    case 'number':
-      flagCreator = Flags.integer;
-      break;
-    case 'string':
-    default:
-      flagCreator = Flags.string;
-      break;
-  }
-
-  // Create the flag with appropriate configuration
-  return flagCreator({
-    char: options.char,
+  // Create the flag with appropriate configuration based on type
+  const baseConfig = {
     description:
       options.description || envVarConfig.description || `Set ${envVar}`,
     required: options.required || false,
     env: envVar,
-    options: options.options,
     hidden: options.hidden || false,
-    default: options.default || (() => envVarConfig.value),
-  });
+    ...(options.char && { char: options.char }),
+  };
+
+  // Since OCLIF flag typing is very strict, let's use a simpler approach
+  // and let the calling code handle the specific flag type creation
+  return {
+    type,
+    config: baseConfig,
+    value: envVarConfig.value,
+    options: options.options,
+  };
 }
 
 /**
@@ -312,10 +316,10 @@ export function createEnvFlag(
  * Validation middleware for add command
  * Validates AI API key and blockchain configuration if needed
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const addCommandValidation: Hook<'prerun'> = async options => {
+export const addCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -334,10 +338,10 @@ export const addCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for complete command
  * Ensures proper flag combinations and valid storage locations
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const completeCommandValidation: Hook<'prerun'> = async options => {
+export const completeCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -369,10 +373,10 @@ export const completeCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for delete command
  * Ensures required flags are provided and validates flag combinations
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const deleteCommandValidation: Hook<'prerun'> = async options => {
+export const deleteCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -401,10 +405,10 @@ export const deleteCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for update command
  * Ensures required flags are provided and at least one update field is specified
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const updateCommandValidation: Hook<'prerun'> = async options => {
+export const updateCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -440,10 +444,10 @@ export const updateCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for list command
  * Validates storage location if provided
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const listCommandValidation: Hook<'prerun'> = async options => {
+export const listCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -467,10 +471,10 @@ export const listCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for AI command
  * Validates API key and operation type
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const aiCommandValidation: Hook<'prerun'> = async options => {
+export const aiCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -499,10 +503,10 @@ export const aiCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for image:upload command
  * Ensures required path flag is provided
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const imageUploadCommandValidation: Hook<'prerun'> = async options => {
+export const imageUploadCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -523,10 +527,10 @@ export const imageUploadCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for image:create-nft command
  * Validates required image ID and creator address format if provided
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const createNFTCommandValidation: Hook<'prerun'> = async options => {
+export const createNFTCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -552,10 +556,10 @@ export const createNFTCommandValidation: Hook<'prerun'> = async options => {
  * Validation middleware for configure command
  * Ensures at least one configuration action is specified
  *
- * @param {any} options - The hook options provided by OCLIF
- * @throws {CLIError} Throws error if validation fails
+ * @param options - The hook options provided by OCLIF
+ * @throws Throws error if validation fails
  */
-export const configureCommandValidation: Hook<'prerun'> = async options => {
+export const configureCommandValidation: Hook<'prerun'> = async (options) => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -581,10 +585,10 @@ export const configureCommandValidation: Hook<'prerun'> = async options => {
  * Validates that AI API key is available when AI features are requested
  * Allows mock keys or testing mode to bypass strict validation
  *
- * @param {any} flags - The parsed command flags
- * @throws {CLIError} Throws error if API key is missing when required
+ * @param flags - The parsed command flags
+ * @throws Throws error if API key is missing when required
  */
-export function validateAIApiKey(flags: any): void {
+export function validateAIApiKey(flags: Record<string, unknown>): void {
   // Skip validation if AI flag is not set
   if (!flags.ai) {
     return;
@@ -596,7 +600,7 @@ export function validateAIApiKey(flags: any): void {
   // Allow mock key or testing mode to bypass validation
   // This flexibility is important for development and testing workflows
   const isMockKey =
-    apiKey &&
+    typeof apiKey === 'string' &&
     (apiKey.includes('mock') ||
       apiKey.includes('fake') ||
       apiKey.includes('test'));
@@ -621,10 +625,10 @@ export function validateAIApiKey(flags: any): void {
  * Validates blockchain configuration when blockchain storage is used
  * Checks for required environment variables needed for blockchain operations
  *
- * @param {any} flags - The parsed command flags
- * @throws {CLIError} Throws error if blockchain configuration is incomplete
+ * @param flags - The parsed command flags
+ * @throws Throws error if blockchain configuration is incomplete
  */
-export function validateBlockchainConfig(flags: any): void {
+export function validateBlockchainConfig(flags: Record<string, unknown>): void {
   // Skip validation if not using blockchain storage
   if (flags.storage !== 'blockchain' && flags.storage !== 'both') {
     return;

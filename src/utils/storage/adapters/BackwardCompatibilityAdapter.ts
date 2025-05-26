@@ -71,11 +71,11 @@ export class LegacyWalrusStorageAdapter {
   getActiveAddress(): string {
     // This is equivalent to calling client.getAddress() in our new implementation
     // but we simulate the old behavior
-    const config = this.todoStorage.getConfig();
-    if (!config || !(config as any).address) {
+    const config = this.todoStorage.getConfig() as { address?: string };
+    if (!config || !config.address) {
       throw new CLIError('No active address set: WALRUS_NO_ADDRESS');
     }
-    return (config as any).address;
+    return config.address;
   }
 
   /**
@@ -116,7 +116,15 @@ export class LegacyWalrusStorageAdapter {
   /**
    * Ensures storage is allocated.
    */
-  async ensureStorageAllocated(sizeBytes = 1073741824): Promise<any> {
+  async ensureStorageAllocated(sizeBytes = 1073741824): Promise<{
+    id: { id: string };
+    storage_size: string;
+    used_size: string;
+    end_epoch: string;
+    start_epoch: string;
+    content: null;
+    data: undefined;
+  }> {
     const result = await this.todoStorage.ensureStorageAllocated(sizeBytes);
 
     // Convert to format expected by old code
@@ -134,7 +142,15 @@ export class LegacyWalrusStorageAdapter {
   /**
    * Checks existing storage.
    */
-  async checkExistingStorage(): Promise<any> {
+  async checkExistingStorage(): Promise<{
+    id: { id: string };
+    storage_size: string;
+    used_size: string;
+    end_epoch: string;
+    start_epoch: string;
+    content: null;
+    data: undefined;
+  } | null> {
     const usage = await this.todoStorage.getStorageUsage();
     if (usage.storageObjects.length === 0) {
       return null;
@@ -144,6 +160,10 @@ export class LegacyWalrusStorageAdapter {
     const bestObject = usage.storageObjects.sort(
       (a, b) => b.remainingBytes - a.remainingBytes
     )[0];
+
+    if (!bestObject) {
+      return null;
+    }
 
     // Convert to format expected by old code
     return {
@@ -210,7 +230,7 @@ export class LegacyWalrusImageStorageAdapter {
     imageData: Uint8Array,
     filename: string,
     contentType: string,
-    options?: any
+    options?: { metadata?: Record<string, string> }
   ): Promise<string> {
     return this.imageStorage.storeImage(
       imageData,
@@ -236,7 +256,15 @@ export class LegacyWalrusImageStorageAdapter {
   /**
    * Ensures storage is allocated.
    */
-  async ensureStorageAllocated(sizeBytes = 20971520): Promise<any> {
+  async ensureStorageAllocated(sizeBytes = 20971520): Promise<{
+    id: { id: string };
+    storage_size: string;
+    used_size: string;
+    end_epoch: string;
+    start_epoch: string;
+    content: null;
+    data: undefined;
+  }> {
     const result = await this.imageStorage.ensureStorageAllocated(sizeBytes);
 
     // Convert to format expected by old code
@@ -266,7 +294,11 @@ export class LegacySuiNftStorageAdapter {
    * @param signer - Transaction signer
    * @param config - NFT configuration
    */
-  constructor(suiClient: any, signer: TransactionSigner, config: any) {
+  constructor(
+    suiClient: unknown,
+    signer: TransactionSigner,
+    config: { address: string; packageId: string; collectionId?: string }
+  ) {
     this.nftStorage = new NFTStorage(config.address, config.packageId, {
       collectionId: config.collectionId,
     });
@@ -286,7 +318,13 @@ export class LegacySuiNftStorageAdapter {
   /**
    * Gets a Todo NFT.
    */
-  async getTodoNft(nftId: string): Promise<any> {
+  async getTodoNft(nftId: string): Promise<{
+    objectId: string;
+    title: string;
+    description: string;
+    completed: boolean;
+    walrusBlobId: string;
+  }> {
     const result = await this.nftStorage.getTodoNFT(nftId);
 
     // Convert to format expected by old code
@@ -333,9 +371,9 @@ export function createLegacyWalrusImageStorage(
  * Factory function to create a legacy SuiNftStorage adapter.
  */
 export function createLegacySuiNftStorage(
-  suiClient: any,
+  suiClient: unknown,
   signer: TransactionSigner,
-  config: any
+  config: { address: string; packageId: string; collectionId?: string }
 ): LegacySuiNftStorageAdapter {
   return new LegacySuiNftStorageAdapter(suiClient, signer, config);
 }

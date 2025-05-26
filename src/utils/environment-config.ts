@@ -1,12 +1,13 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('environment-config');
  * Environment Configuration Manager
  * 
  * This module provides centralized management of environment variables 
  * with validation, type checking, and fallback values.
  */
+
+import { Logger } from './Logger';
+
+const logger = new Logger('environment-config');
 
 import { CLIError } from '../types/errors/consolidated';
 
@@ -191,10 +192,45 @@ function getNumberValue(
   return isNaN(parsed) ? defaultValue : parsed;
 }
 
+
+/**
+ * Safely converts a value to match the expected type
+ */
+function safeTypeConversion<T>(value: string | number | boolean, expectedValue: T): T {
+  if (typeof expectedValue === 'boolean') {
+    if (typeof value === 'boolean') return value as T;
+    if (typeof value === 'string') {
+      return getBooleanValue(value, expectedValue as boolean) as T;
+    }
+    return expectedValue;
+  }
+  
+  if (typeof expectedValue === 'number') {
+    if (typeof value === 'number' && !isNaN(value)) return value as T;
+    if (typeof value === 'string') {
+      return getNumberValue(value, expectedValue as number) as T;
+    }
+    return expectedValue;
+  }
+  
+  if (typeof expectedValue === 'string') {
+    if (typeof value === 'string') return value as T;
+    if (value != null) return String(value) as T;
+    return expectedValue;
+  }
+  
+  // For complex types or when types match
+  if (typeof value === typeof expectedValue) {
+    return value as T;
+  }
+  
+  return expectedValue;
+}
+
 export class EnvironmentConfigManager {
   private static instance: EnvironmentConfigManager;
   private config: EnvironmentConfig;
-  private extensionVars: Record<string, EnvVariable<unknown>> = {};
+  private extensionVars: Record<string, EnvVariable<string | number | boolean>> = {};
   private variableWarnings: string[] = [];
 
   private constructor() {
@@ -668,11 +704,11 @@ export class EnvironmentConfigManager {
   /**
    * Get all environment variables including extensions
    */
-  public getAllVariables(): Record<string, EnvVariable<unknown>> {
+  public getAllVariables(): Record<string, EnvVariable<any>> {
     return {
       ...this.config,
       ...this.extensionVars,
-    };
+    } as Record<string, EnvVariable<any>>;
   }
 
   /**
@@ -711,7 +747,7 @@ export class EnvironmentConfigManager {
    */
   public getExtension<T>(key: string, defaultValue?: T): T | undefined {
     if (key in this.extensionVars) {
-      return this.extensionVars[key].value as T;
+      return this.extensionVars[key]?.value as T;
     }
     return defaultValue;
   }
@@ -748,12 +784,12 @@ export class EnvironmentConfigManager {
       if (key in this.config) {
         // Standard config key
         const configKey = key as keyof EnvironmentConfig;
-        // Use type assertion to bypass TypeScript issues with never type
-        (this.config[configKey] as EnvVariable<unknown>).required = true;
+        // Set required flag safely
+        this.config[configKey].required = true;
       } else if (key in this.extensionVars) {
         // Extension variable
-        // Use type assertion to bypass TypeScript issues with never type
-        (this.extensionVars[key] as EnvVariable<unknown>).required = true;
+        // Set required flag safely
+        this.extensionVars[key].required = true;
       }
     }
   }
@@ -792,16 +828,17 @@ export class EnvironmentConfigManager {
     }
 
     // Get the environment value if it exists
-    let value: unknown =
-      process.env[key] !== undefined ? process.env[key] : defaultValue;
-    const source: 'environment' | 'default' =
-      process.env[key] !== undefined ? 'environment' : 'default';
+    const envValue = (process.env as Record<string, string | undefined>)[key];
+    let value: string | number | boolean;
+    const source: 'environment' | 'default' = envValue !== undefined ? 'environment' : 'default';
 
     // Convert to the right type based on the defaultValue
     if (typeof defaultValue === 'boolean') {
-      value = getBooleanValue(process.env[key], defaultValue as boolean);
+      value = getBooleanValue(envValue, defaultValue);
     } else if (typeof defaultValue === 'number') {
-      value = getNumberValue(process.env[key], defaultValue as number);
+      value = getNumberValue(envValue, defaultValue);
+    } else {
+      value = envValue ?? (defaultValue as string);
     }
 
     // Register the extension variable
@@ -812,7 +849,7 @@ export class EnvironmentConfigManager {
       source,
       description: options.description,
       example: options.example,
-      validationFn: options.validationFn,
+      validationFn: options.validationFn as ((value: string | number | boolean) => boolean) | undefined,
       validationError: options.validationError,
       sensitive: options.sensitive,
       deprecated: options.deprecated,
@@ -954,10 +991,10 @@ export class EnvironmentConfigManager {
     // Reload all environment variables
     for (const [key, config] of Object.entries(this.config)) {
       const envKey = key as keyof EnvironmentConfig;
-      const envValue = process.env[key];
+      const envValue = (process.env as Record<string, string | undefined>)[key];
 
       if (envValue !== undefined) {
-        let typedValue: unknown = envValue;
+        let typedValue: string | number | boolean = envValue;
 
         // Convert the string value to the appropriate type based on the default value
         if (typeof config.value === 'boolean') {
@@ -966,16 +1003,18 @@ export class EnvironmentConfigManager {
           typedValue = getNumberValue(envValue, config.value);
         }
 
-        this.updateConfig(envKey, typedValue, 'environment');
+        // Safe type conversion with proper validation
+        const safeValue = safeTypeConversion(typedValue, config.value);
+        this.updateConfig(envKey, safeValue, 'environment');
       }
     }
 
     // Reload all extension variables
     for (const [key, config] of Object.entries(this.extensionVars)) {
-      const envValue = process.env[key];
+      const envValue = (process.env as Record<string, string | undefined>)[key];
 
       if (envValue !== undefined) {
-        let typedValue: unknown = envValue;
+        let typedValue: string | number | boolean = envValue;
 
         // Convert the string value to the appropriate type based on the default value
         if (typeof config.value === 'boolean') {
@@ -996,12 +1035,15 @@ export class EnvironmentConfigManager {
   /**
    * Load configuration from a JSON object (e.g., from a config file)
    */
-  public loadFromObject(obj: Record<string, unknown>): void {
+  public loadFromObject(obj: Record<string, string | number | boolean>): void {
     for (const [key, value] of Object.entries(obj)) {
       // Check if it's a core config key
       if (key in this.config) {
         const configKey = key as keyof EnvironmentConfig;
-        this.updateConfig(configKey, value, 'config');
+        // Safe type conversion with proper validation
+        const configValue = this.config[configKey].value;
+        const safeValue = safeTypeConversion(value, configValue);
+        this.updateConfig(configKey, safeValue, 'config');
       }
       // Check if it's an extension variable
       else if (key in this.extensionVars) {
@@ -1056,8 +1098,8 @@ export class EnvironmentConfigManager {
   /**
    * Get all environment variables in a serializable format
    */
-  public toJSON(): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
+  public toJSON(): Record<string, string | number | boolean> {
+    const result: Record<string, string | number | boolean> = {};
 
     // Add core variables
     for (const [key, config] of Object.entries(this.config)) {
@@ -1201,7 +1243,7 @@ export const registerEnvExtension = <T>(
   } = {}
 ): T => {
   envConfig.registerExtension(key, defaultValue, options);
-  return envConfig.getExtension<T>(key, defaultValue);
+  return envConfig.getExtension<T>(key, defaultValue) ?? defaultValue;
 };
 
 /**

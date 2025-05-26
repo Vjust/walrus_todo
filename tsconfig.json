@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "dom", "DOM.Iterable"],
+    "target": "ES2020",
+    "lib": ["ES2020", "dom"],
     "module": "commonjs",
     "rootDir": ".",
-    "moduleResolution": "node",
+    "moduleResolution": "node10",
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
@@ -30,30 +30,33 @@
     "declaration": false,
     "noEmitOnError": false,
     "ignoreDeprecations": "5.0",
-    "noImplicitAny": false,
-    "noImplicitThis": false,
-    "noImplicitReturns": false,
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "strictNullChecks": false,
-    "strictFunctionTypes": false,
-    "strictBindCallApply": false,
-    "strictPropertyInitialization": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
     "downlevelIteration": true,
     "useDefineForClassFields": true,
-    "useUnknownInCatchVariables": false,
+    "useUnknownInCatchVariables": true,
     "noErrorTruncation": false,
-    "skipDefaultLibCheck": true,
+    "skipDefaultLibCheck": false,
+    "maxNodeModuleJsDepth": 1,
 
     /* Build compatibility options */
     "allowJs": true,
-    "isolatedModules": true /* Added for better module boundary handling */,
+    "isolatedModules": true /* Required by @mysten SDK */,
     "preserveSymlinks": true /* Added to preserve npm link resolutions */,
     "allowUmdGlobalAccess": true /* Allow accessing UMD globals from modules */,
 
     /* Enhanced compatibility settings */
     /* Removed deprecated options suppressImplicitAnyIndexErrors and suppressExcessPropertyErrors */
-    "importsNotUsedAsValues": "remove" /* Remove imports only used for types */,
+    "verbatimModuleSyntax": false /* Replace deprecated importsNotUsedAsValues */,
 
     /* Type checking optimizations */
     "assumeChangesOnlyAffectDirectDependencies": true /* Optimize incremental builds */,

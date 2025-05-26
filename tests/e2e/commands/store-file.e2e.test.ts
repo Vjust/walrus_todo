@@ -1,5 +1,5 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import { existsSync, mkdirSync, rmSync, writeFileSync, chmodSync } from 'fs';
 import { join } from 'path';
 
@@ -219,25 +219,44 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
 
   describe('Error Handling', () => {
     it('should handle permission errors gracefully', async () => {
-      const restrictedFile = join(testDir, 'restricted.json');
-      writeFileSync(restrictedFile, JSON.stringify({ data: 'test' }));
+      // Use platform-specific test implementation
+      if (process.platform === 'win32') {
+        await testWindowsPermissions();
+      } else {
+        await testUnixPermissions();
+      }
 
-      // Remove read permissions (Unix-like systems only)
-      if (process.platform !== 'win32') {
+      async function testWindowsPermissions() {
+        const restrictedFile = join(testDir, 'restricted.json');
+        writeFileSync(restrictedFile, JSON.stringify({ data: 'test' }));
+
+        // Windows permission test - just verify the command runs
+        const { stdout } = await execAsync(
+          `WALRUS_USE_MOCK=true ${cliPath} store-file ${restrictedFile}`
+        );
+        expect(stdout).toContain('MOCK_');
+      }
+
+      async function testUnixPermissions() {
+        const restrictedFile = join(testDir, 'restricted.json');
+        writeFileSync(restrictedFile, JSON.stringify({ data: 'test' }));
+
+        // Unix-like systems - test permission errors
         chmodSync(restrictedFile, 0o000);
 
         try {
-          await execAsync(
-            `WALRUS_USE_MOCK=true ${cliPath} store-file ${restrictedFile}`
-          );
-        } catch (error: any) {
-          expect(error.message).toContain('Permission denied');
+          await expect(
+            execAsync(
+              `WALRUS_USE_MOCK=true ${cliPath} store-file ${restrictedFile}`
+            )
+          ).rejects.toThrow(/Permission denied/);
         } finally {
           // Restore permissions
           chmodSync(restrictedFile, 0o644);
         }
       }
     });
+
 
     it('should handle large file warning', async () => {
       const largeFile = join(testDir, 'large.json');
@@ -267,14 +286,12 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
       expect(mockStdout).toContain('MOCK_');
 
       // Test without mock (would fail in test environment without real Walrus)
-      try {
-        await execAsync(
+      // Expected to fail without real Walrus connection
+      await expect(
+        execAsync(
           `WALRUS_USE_MOCK=false ${cliPath} store-file ${testFile}`
-        );
-      } catch (error: any) {
-        // Expected to fail without real Walrus connection
-        expect(error.message).toBeTruthy();
-      }
+        )
+      ).rejects.toThrow();
     });
 
     it('should prioritize --mock flag over environment variable', async () => {

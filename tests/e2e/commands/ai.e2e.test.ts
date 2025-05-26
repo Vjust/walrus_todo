@@ -1,5 +1,5 @@
-import { runCommand, mockProviderResponses } from '../../helpers/test-utils';
-import { Todo } from '../../../src/types/todo';
+import { runCommand } from '../../helpers/test-utils';
+// import { Todo } from '../../../src/types/todo';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AIProviderFactory } from '../../../src/services/ai/AIProviderFactory';
@@ -20,10 +20,10 @@ jest.mock('../../../src/services/ai/AIProviderFactory', () => ({
         .mockResolvedValue({ result: 'Mock fallback response' }),
       completeStructured: jest.fn().mockResolvedValue({ result: {} }),
     }),
-    createProvider: jest.fn().mockImplementation(({ provider }) => ({
+    createProvider: jest.fn().mockImplementation(({ provider: _provider }) => ({
       processWithPromptTemplate: jest
         .fn()
-        .mockImplementation((prompt, input) => {
+        .mockImplementation((_prompt, _input) => {
           // Mock responses based on operation type
           if (prompt.template.includes('Summarize')) {
             return Promise.resolve({
@@ -34,7 +34,7 @@ jest.mock('../../../src/services/ai/AIProviderFactory', () => ({
         }),
       completeStructured: jest
         .fn()
-        .mockImplementation(({ prompt, metadata }) => {
+        .mockImplementation(({ prompt: _prompt, metadata }) => {
           // Mock structured responses based on operation
           if (metadata?.operation === 'categorize') {
             return Promise.resolve({

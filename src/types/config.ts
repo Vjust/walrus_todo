@@ -5,12 +5,27 @@
  * across library versions.
  */
 
-import type { Transaction, TransactionBlock } from '@mysten/sui/transactions';
+import type { Transaction } from '@mysten/sui/transactions';
 import type { Signer } from '@mysten/sui/cryptography';
 import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { SignerAdapter } from './adapters/SignerAdapter';
 import type { TransactionBlockAdapter } from './adapters/TransactionBlockAdapter';
 import type { WalrusClientAdapter } from './adapters/WalrusClientAdapter';
+
+/**
+ * Basic configuration interface for the application
+ */
+export interface Config {
+  network: string;
+  walletAddress: string;
+  encryptedStorage: boolean;
+  lastDeployment?: {
+    packageId: string;
+    timestamp: string;
+  };
+  packageId?: string;
+  registryId?: string;
+}
 
 /**
  * NetworkConfig defines the configuration for a blockchain network
@@ -224,7 +239,7 @@ export function assertDefined<T>(
  */
 export function assertType<T>(
   value: unknown,
-  typeGuard: (val: unknown) => boolean,
+  typeGuard: (val: unknown) => val is T,
   message?: string
 ): T {
   if (!typeGuard(value)) {
@@ -272,10 +287,10 @@ export function safeGet<T, K extends keyof T>(
 /**
  * Type compatibility checker for runtime type validation
  */
-export function isCompatibleType<T>(
+export function isCompatibleType<T extends Record<PropertyKey, unknown>>(
   value: unknown,
   properties: (keyof T)[],
-  typeGuard?: (val: unknown) => boolean
+  typeGuard?: (val: unknown) => val is T
 ): value is T {
   if (!value || typeof value !== 'object') {
     return false;
@@ -293,12 +308,12 @@ export function isCompatibleType<T>(
  */
 export function applyIfDefined<T, R>(
   value: T | undefined | null,
-  fn: (val: T) => R
+  fn: (val: NonNullable<T>) => R
 ): R | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }
-  return fn(value);
+  return fn(value as NonNullable<T>);
 }
 
 /**

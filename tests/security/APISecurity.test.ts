@@ -2,12 +2,10 @@ import { jest } from '@jest/globals';
 import { AIService } from '../../src/services/ai/aiService';
 import {
   AIProvider,
-  AIModelOptions,
 } from '../../src/types/adapters/AIModelAdapter';
 import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
 import { Todo } from '../../src/types/todo';
 import { initializePermissionManager } from '../../src/services/ai/AIPermissionManager';
-import crypto from 'crypto';
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
@@ -128,7 +126,7 @@ describe('API Security Tests', () => {
       (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           // Extract API key from params
-          const _apiKey = params.apiKey;
+          // const _apiKey = params.apiKey;
 
           // Check API key format if present
           if (apiKey) {
@@ -165,14 +163,14 @@ describe('API Security Tests', () => {
       // Too short API key should fail
       const shortKeyService = new AIService('short');
       await expect(
-        shortKeyService['modelAdapter'].processWithPromptTemplate({} as any, {})
+        shortKeyService['modelAdapter'].processWithPromptTemplate({}, {})
       ).rejects.toThrow('API key is too short');
 
       // Invalid characters in API key should fail
       const invalidCharsService = new AIService('invalid!@#$%^&*()');
       await expect(
         invalidCharsService['modelAdapter'].processWithPromptTemplate(
-          {} as any,
+          {},
           {}
         )
       ).rejects.toThrow('API key contains invalid characters');
@@ -285,7 +283,7 @@ describe('API Security Tests', () => {
       const aiService = new AIService('test-api-key', AIProvider.XAI, 'model', {
         retries: maxRetries,
         retryDelay: 10, // Short delay for tests
-      } as any);
+      });
 
       // Should eventually succeed after retries
       const result = await aiService.summarize(sampleTodos);
@@ -467,8 +465,8 @@ describe('API Security Tests', () => {
       await aiService.summarize(maliciousTodos);
 
       // Verify prototype isn't polluted
-      expect(({} as any).polluted).toBeUndefined();
-      expect((Object.prototype as any).polluted).toBeUndefined();
+      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
+      expect(((Object.prototype as Record<string, unknown>).polluted)).toBeUndefined();
     });
 
     it('should validate and limit input size to prevent DoS', async () => {
@@ -564,7 +562,7 @@ describe('API Security Tests', () => {
       expect(result.constructor).toBeUndefined();
 
       // Global prototype should not be polluted
-      expect(({} as any).polluted).toBeUndefined();
+      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
     });
 
     it('should detect and prevent prompt injection attacks', async () => {
@@ -685,7 +683,7 @@ describe('API Security Tests', () => {
         'model',
         {
           baseUrl: 'https://api.example.com',
-        } as any
+        }
       );
 
       // Should succeed with HTTPS
@@ -698,7 +696,7 @@ describe('API Security Tests', () => {
         'model',
         {
           baseUrl: 'http://api.example.com',
-        } as any
+        }
       );
 
       // Should fail with HTTP
@@ -761,7 +759,7 @@ describe('API Security Tests', () => {
             'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
             'X-Frame-Options': 'DENY',
           },
-        } as any
+        }
       );
 
       // Should succeed with secure headers
@@ -774,7 +772,7 @@ describe('API Security Tests', () => {
         'model',
         {
           headers: {},
-        } as any
+        }
       );
 
       // Should fail without secure headers
@@ -791,14 +789,14 @@ describe('API Security Tests', () => {
       await expect(aiService.summarize([])).rejects.toThrow();
 
       // Null todos should be rejected
-      await expect(aiService.summarize(null as any)).rejects.toThrow();
+      await expect(aiService.summarize(null as never)).rejects.toThrow();
 
       // Undefined todos should be rejected
-      await expect(aiService.summarize(undefined as any)).rejects.toThrow();
+      await expect(aiService.summarize(undefined as never)).rejects.toThrow();
 
       // Non-array todos should be rejected
       await expect(
-        aiService.summarize('not an array' as any)
+        aiService.summarize('not an array' as never)
       ).rejects.toThrow();
 
       // Valid todos should be accepted
@@ -853,7 +851,7 @@ describe('API Security Tests', () => {
         {
           minVersion: 'TLSv1.2',
           rejectUnauthorized: true,
-        } as any
+        }
       );
 
       // Should succeed with secure TLS config
@@ -866,7 +864,7 @@ describe('API Security Tests', () => {
         'model',
         {
           rejectUnauthorized: false,
-        } as any
+        }
       );
 
       // Should fail with insecure TLS config
@@ -881,7 +879,7 @@ describe('API Security Tests', () => {
         'model',
         {
           minVersion: 'TLSv1.0',
-        } as any
+        }
       );
 
       // Should fail with insecure TLS version
@@ -929,8 +927,8 @@ describe('API Security Tests', () => {
 
       // Debug information should not be exposed in the result
       expect(result.debug).toBeUndefined();
-      expect((result as any).request).toBeUndefined();
-      expect((result as any).response).toBeUndefined();
+      expect((result as Record<string, unknown>).request).toBeUndefined();
+      expect((result as Record<string, unknown>).response).toBeUndefined();
 
       // Sensitive data should not be in the result
       const resultStr = JSON.stringify(result);

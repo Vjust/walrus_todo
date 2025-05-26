@@ -61,17 +61,22 @@ function createMockInputStream(): Readable {
   return stream;
 }
 
-function createMockOutputStream(): Writable {
+interface MockWritableStream extends Writable {
+  getOutput: () => string;
+  chunks: string[];
+}
+
+function createMockOutputStream(): MockWritableStream {
   const chunks: string[] = [];
   const stream = new Writable({
     write(chunk, encoding, callback) {
       chunks.push(chunk.toString());
       callback();
     },
-  });
-  (stream as { getOutput: () => string; chunks: string[] }).getOutput = () =>
-    chunks.join('');
-  (stream as { chunks: string[] }).chunks = chunks;
+  }) as MockWritableStream;
+  
+  stream.getOutput = () => chunks.join('');
+  stream.chunks = chunks;
   return stream;
 }
 
@@ -122,6 +127,21 @@ describe('InteractiveMode', () => {
       getSuggestions: jest
         .fn()
         .mockReturnValue(['add "Suggested todo"', 'list --all', 'complete 1']),
+      getAllCommands: jest.fn().mockReturnValue([
+        { command: 'add', description: 'Add a new todo' },
+        { command: 'list', description: 'List all todos' },
+        { command: 'help', description: 'Show help' },
+        { command: 'exit', description: 'Exit interactive mode' },
+      ]),
+      getCommand: jest.fn().mockImplementation((cmd: string) => {
+        const commands = [
+          { command: 'add', description: 'Add a new todo' },
+          { command: 'list', description: 'List all todos' },
+          { command: 'help', description: 'Show help' },
+          { command: 'exit', description: 'Exit interactive mode' },
+        ];
+        return commands.find((c) => c.command === cmd);
+      }),
     };
 
     // Mock process.stdin and process.stdout
@@ -144,10 +164,22 @@ describe('InteractiveMode', () => {
     jest.restoreAllMocks();
   });
 
+  // Define a test interface to access private methods for testing
+  interface TestableInteractiveMode extends InteractiveMode {
+    promptUser?: () => Promise<void>;
+    executeCommand?: (command: string) => Promise<void>;
+    parseCommand?: (input: string) => { command: string; args: string[] };
+    showHelp?: () => void;
+    showHistory?: () => void;
+    autocomplete?: (line: string, callback: (err: null, hits: [string[], string]) => void) => void;
+    execute?: (command: string, args: string[]) => Promise<void>;
+  }
+
   describe('start', () => {
     it('should display welcome message and start interactive prompt', async () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-      const promptSpy = jest.spyOn(interactiveMode as any, 'promptUser');
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      const promptSpy = jest.spyOn(testableMode, 'promptUser').mockImplementation();
 
       await interactiveMode.start();
 
@@ -168,8 +200,9 @@ describe('InteractiveMode', () => {
 
   describe('promptUser', () => {
     it('should process valid commands', async () => {
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
       const executeCommandSpy = jest
-        .spyOn(interactiveMode as any, 'executeCommand')
+        .spyOn(testableMode, 'executeCommand')
         .mockResolvedValue(undefined);
       // Use the imported readline module
 
@@ -182,7 +215,8 @@ describe('InteractiveMode', () => {
       };
       readline.createInterface.mockReturnValue(mockRl);
 
-      await (interactiveMode as any).promptUser();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      await testableMode.promptUser?.();
 
       expect(executeCommandSpy).toHaveBeenCalledWith('add "Test todo"');
       expect(mockRl.close).toHaveBeenCalled();
@@ -200,15 +234,17 @@ describe('InteractiveMode', () => {
       };
       readline.createInterface.mockReturnValue(mockRl);
 
-      await (interactiveMode as any).promptUser();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      await testableMode.promptUser?.();
 
       expect(consoleLogSpy).toHaveBeenCalledWith('Exiting interactive mode...');
       expect(mockRl.close).toHaveBeenCalled();
     });
 
     it('should handle empty input', async () => {
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
       const executeCommandSpy = jest.spyOn(
-        interactiveMode as any,
+        testableMode,
         'executeCommand'
       );
       // Use the imported readline module
@@ -221,7 +257,8 @@ describe('InteractiveMode', () => {
       };
       readline.createInterface.mockReturnValue(mockRl);
 
-      await (interactiveMode as any).promptUser();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      await testableMode.promptUser?.();
 
       expect(executeCommandSpy).not.toHaveBeenCalled();
       expect(mockRl.close).toHaveBeenCalled();
@@ -230,11 +267,12 @@ describe('InteractiveMode', () => {
 
   describe('executeCommand', () => {
     it('should add command to history and execute it', async () => {
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
       const executeSpy = jest
-        .spyOn(interactiveMode as any, 'execute')
+        .spyOn(testableMode, 'execute')
         .mockResolvedValue(undefined);
 
-      await (interactiveMode as any).executeCommand('add "New todo"');
+      await testableMode.executeCommand?.('add "New todo"');
 
       expect(mockCommandHistory.add).toHaveBeenCalledWith('add "New todo"');
       expect(executeSpy).toHaveBeenCalledWith('add', ['"New todo"']);
@@ -242,8 +280,9 @@ describe('InteractiveMode', () => {
 
     it('should handle command parsing errors', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
 
-      await (interactiveMode as any).executeCommand('invalid command syntax');
+      await testableMode.executeCommand?.('invalid command syntax');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Error parsing command:',
@@ -254,7 +293,8 @@ describe('InteractiveMode', () => {
 
   describe('parseCommand', () => {
     it('should parse simple commands', () => {
-      const result = (interactiveMode as any).parseCommand('list');
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      const result = testableMode.parseCommand?.('list');
       expect(result).toEqual({
         command: 'list',
         args: [],
@@ -262,7 +302,8 @@ describe('InteractiveMode', () => {
     });
 
     it('should parse commands with arguments', () => {
-      const result = (interactiveMode as any).parseCommand('add "Test todo"');
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      const result = testableMode.parseCommand?.('add "Test todo"');
       expect(result).toEqual({
         command: 'add',
         args: ['"Test todo"'],
@@ -270,7 +311,8 @@ describe('InteractiveMode', () => {
     });
 
     it('should parse commands with multiple arguments', () => {
-      const result = (interactiveMode as any).parseCommand(
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      const result = testableMode.parseCommand?.(
         'update 123 --title "New title"'
       );
       expect(result).toEqual({
@@ -280,7 +322,8 @@ describe('InteractiveMode', () => {
     });
 
     it('should handle commands with special characters', () => {
-      const result = (interactiveMode as any).parseCommand(
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      const result = testableMode.parseCommand?.(
         'add "Test with @#$ chars"'
       );
       expect(result).toEqual({
@@ -293,8 +336,9 @@ describe('InteractiveMode', () => {
   describe('showHelp', () => {
     it('should display available commands', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
 
-      (interactiveMode as any).showHelp();
+      testableMode.showHelp?.();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Available commands:')
@@ -318,8 +362,9 @@ describe('InteractiveMode', () => {
   describe('showHistory', () => {
     it('should display command history', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
 
-      (interactiveMode as any).showHistory();
+      testableMode.showHistory?.();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Command history:')
@@ -339,8 +384,9 @@ describe('InteractiveMode', () => {
     it('should handle empty history', () => {
       const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
       mockCommandHistory.getHistory.mockReturnValue([]);
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
 
-      (interactiveMode as any).showHistory();
+      testableMode.showHistory?.();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Command history:')
@@ -354,14 +400,16 @@ describe('InteractiveMode', () => {
   describe('autocomplete', () => {
     it('should provide command suggestions', () => {
       const callback = jest.fn();
-      (interactiveMode as any).autocomplete('ad', callback);
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      testableMode.autocomplete?.('ad', callback);
 
       expect(callback).toHaveBeenCalledWith(null, [['add'], 'ad']);
     });
 
     it('should handle no matches', () => {
       const callback = jest.fn();
-      (interactiveMode as any).autocomplete(
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      testableMode.autocomplete?.(
         'xyz',
         callback
       );
@@ -371,7 +419,8 @@ describe('InteractiveMode', () => {
 
     it('should provide all commands for empty input', () => {
       const callback = jest.fn();
-      (interactiveMode as any).autocomplete('', callback);
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      testableMode.autocomplete?.('', callback);
 
       expect(callback).toHaveBeenCalled();
       const [error, [suggestions]] = callback.mock.calls[0];
@@ -392,7 +441,8 @@ describe('InteractiveMode', () => {
         throw new Error('Failed to create interface');
       });
 
-      await (interactiveMode as any).promptUser();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      await testableMode.promptUser?.();
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Error in interactive mode:',
@@ -402,11 +452,12 @@ describe('InteractiveMode', () => {
 
     it('should handle command execution errors', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
       jest
-        .spyOn(interactiveMode as any, 'execute')
+        .spyOn(testableMode, 'execute')
         .mockRejectedValue(new Error('Execution failed'));
 
-      await (interactiveMode as any).executeCommand('add "Test"');
+      await testableMode.executeCommand?.('add "Test"');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Error executing command:',

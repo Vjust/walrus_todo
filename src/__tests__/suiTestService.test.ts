@@ -1,12 +1,41 @@
 import { describe, it, expect } from '@jest/globals';
 import { SuiTestService } from '../services/SuiTestService';
-import { Config } from '../types';
+import { AppConfig } from '../types/config';
 
 describe('SuiTestService (in‑memory)', () => {
-  const mockConfig: Config = {
-    network: 'testnet',
-    walletAddress: '0xabc',
-    encryptedStorage: false,
+  const mockConfig: AppConfig = {
+    activeNetwork: {
+      name: 'testnet',
+      fullnode: 'https://fullnode.testnet.sui.io:443',
+    },
+    activeAccount: {
+      address: '0xabc',
+    },
+    storage: {
+      defaultSize: 1000,
+      defaultEpochs: 1,
+      replicationFactor: 1,
+      directory: '/tmp',
+      temporaryDirectory: '/tmp',
+      maxRetries: 3,
+      retryDelay: 1000,
+    },
+    todo: {
+      localStoragePath: '/tmp/todos',
+      defaultCategories: [],
+      defaultPriority: 'medium',
+      maxTitleLength: 100,
+      maxDescriptionLength: 500,
+      defaultDueDateOffsetDays: 7,
+      expiryCheckInterval: 3600000,
+    },
+    walrus: {
+      network: 'testnet',
+    },
+    logging: {
+      level: 'info',
+      console: true,
+    },
   };
 
   const service = new SuiTestService(mockConfig);
@@ -30,8 +59,9 @@ describe('SuiTestService (in‑memory)', () => {
     const todoId = await service.addTodo(listId, 'initial');
     await service.updateTodo(listId, todoId, { completed: true });
 
-    const [item] = await service.getTodos(listId);
-    expect(item.completed).toBe(true);
+    const todos = await service.getTodos(listId);
+    const item = todos[0];
+    expect(item?.completed).toBe(true);
   });
 
   it('deletes a todo list', async () => {

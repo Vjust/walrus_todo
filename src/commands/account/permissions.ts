@@ -266,7 +266,7 @@ export default class PermissionsCommand extends BaseCommand {
         if (!byResource[permission.resource]) {
           byResource[permission.resource] = [];
         }
-        byResource[permission.resource].push(permission.action);
+        byResource[permission.resource]?.push(permission.action);
       }
 
       // Display permissions

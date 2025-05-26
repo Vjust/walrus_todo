@@ -2,7 +2,7 @@ import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
 import {
   AIProvider,
-  AIModelOptions,
+  AIModelAdapter,
 } from '../../src/types/adapters/AIModelAdapter';
 import { AIPrivacyLevel } from '../../src/types/adapters/AIVerifierAdapter';
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
@@ -12,6 +12,11 @@ import {
   expectedResults,
   verificationHelper,
 } from '../helpers/ai-test-utils';
+
+// Test interface for accessing private properties
+interface TestableAIService extends AIService {
+  getProvider(): AIModelAdapter;
+}
 
 // Mock the AIProviderFactory
 jest.mock('../../src/services/ai/AIProviderFactory', () => {
@@ -99,8 +104,13 @@ describe('AIService Operations', () => {
       });
 
       // Create service with mock adapter
-      const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      const aiService = new AIService('test-api-key') as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.summarize(sampleTodos);
 
@@ -118,8 +128,13 @@ describe('AIService Operations', () => {
       });
 
       // Create service with mock adapter
-      const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      const aiService = new AIService('test-api-key') as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.categorize(sampleTodos);
 
@@ -137,8 +152,13 @@ describe('AIService Operations', () => {
       });
 
       // Create service with mock adapter
-      const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      const aiService = new AIService('test-api-key') as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.prioritize(sampleTodos);
 
@@ -156,8 +176,13 @@ describe('AIService Operations', () => {
       });
 
       // Create service with mock adapter
-      const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      const aiService = new AIService('test-api-key') as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.suggest(sampleTodos);
 
@@ -175,8 +200,13 @@ describe('AIService Operations', () => {
       });
 
       // Create service with mock adapter
-      const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      const aiService = new AIService('test-api-key') as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.analyze(sampleTodos);
 
@@ -240,8 +270,13 @@ describe('AIService Operations', () => {
         'mock-model',
         {},
         mockVerificationService
-      );
-      (aiService as any).modelAdapter = mockAdapter;
+      ) as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       // Test
       const result = await aiService.summarizeWithVerification(
@@ -305,8 +340,13 @@ describe('AIService Operations', () => {
         'mock-model',
         {},
         mockVerificationService
-      );
-      (aiService as any).modelAdapter = mockAdapter;
+      ) as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       // Test
       const result = await aiService.categorizeWithVerification(
@@ -363,8 +403,13 @@ describe('AIService Operations', () => {
         'mock-model',
         {},
         mockVerificationService
-      );
-      (aiService as any).modelAdapter = mockAdapter;
+      ) as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.prioritizeWithVerification(
         sampleTodos,
@@ -419,8 +464,13 @@ describe('AIService Operations', () => {
         'mock-model',
         {},
         mockVerificationService
-      );
-      (aiService as any).modelAdapter = mockAdapter;
+      ) as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.suggestWithVerification(
         sampleTodos,
@@ -478,8 +528,13 @@ describe('AIService Operations', () => {
         'mock-model',
         {},
         mockVerificationService
-      );
-      (aiService as any).modelAdapter = mockAdapter;
+      ) as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       const result = await aiService.analyzeWithVerification(
         sampleTodos,
@@ -509,8 +564,13 @@ describe('AIService Operations', () => {
         .fn()
         .mockRejectedValue(new Error('API connection error'));
 
-      const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      const aiService = new AIService('test-api-key') as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
         'API connection error'
@@ -526,8 +586,13 @@ describe('AIService Operations', () => {
         timestamp: Date.now(),
       });
 
-      const aiService = new AIService('test-api-key');
-      (aiService as any).modelAdapter = mockAdapter;
+      const aiService = new AIService('test-api-key') as TestableAIService;
+      // Replace the provider with our mock
+      Object.defineProperty(aiService, 'modelAdapter', {
+        value: mockAdapter,
+        writable: true,
+        configurable: true
+      });
 
       // Should return empty object rather than throwing
       const result = await aiService.categorize(sampleTodos);

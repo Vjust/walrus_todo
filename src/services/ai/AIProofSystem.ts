@@ -3,8 +3,8 @@ import { VerificationRecord } from '../../types/adapters/AIVerifierAdapter';
 import { CLIError } from '../../types/errors/consolidated';
 import { createHash } from 'crypto';
 import { WalrusClientAdapter } from '../../types/adapters/WalrusClientAdapter';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { CLI_CONFIG } from '../../constants';
 import { Logger } from '../../utils/Logger';
 

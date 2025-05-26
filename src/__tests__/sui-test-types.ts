@@ -5,7 +5,7 @@ import type {
 } from '@mysten/sui/client';
 
 export const createMockSuiObjectResponse = (
-  fields: Record<string, any>
+  fields: Record<string, unknown>
 ): SuiObjectResponse =>
   ({
     data: {
@@ -15,7 +15,7 @@ export const createMockSuiObjectResponse = (
         hasPublicTransfer: true,
         fields,
       },
-    } as any,
+    } as NonNullable<SuiObjectResponse['data']>,
   }) as SuiObjectResponse;
 
 export const createMockTransactionResponse = (
@@ -70,7 +70,7 @@ export const createMockTransactionResponse = (
         sender: '0xsender',
       },
     },
-  } as any;
+  } as Partial<SuiTransactionBlockResponse> as SuiTransactionBlockResponse;
 };
 
 // Cast to SuiSystemStateSummary since we can't match the exact shape

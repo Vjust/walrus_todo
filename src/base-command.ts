@@ -4,6 +4,7 @@ import * as path from 'path';
 import { Command, Flags } from '@oclif/core';
 import { ux } from '@oclif/core';
 import * as cliProgress from 'cli-progress';
+import chalk from 'chalk';
 import { CLIError, WalrusError } from './types/error';
 import { Todo } from './types/todo';
 import { NetworkError } from './types/errors/consolidated/NetworkError';
@@ -26,50 +27,7 @@ if (process.stdout && !process.stdout.columns) {
   process.stdout.columns = 80;
 }
 
-// To avoid circular imports, declare chalk inline
-interface ChalkInstance {
-  red: (text: string) => string;
-  yellow: (text: string) => string;
-  green: (text: string) => string;
-  blue: (text: string) => string;
-  gray: (text: string) => string;
-  bold: ((text: string) => string) & {
-    cyan: (text: string) => string;
-    green: (text: string) => string;
-    yellow: (text: string) => string;
-  };
-  cyan: (text: string) => string;
-  magenta: (text: string) => string;
-  dim: (text: string) => string;
-}
-
-let chalk: ChalkInstance;
-try {
-  chalk = require('chalk');
-} catch (e) {
-  const boldFn = (s: string) => s;
-  Object.assign(boldFn, {
-    cyan: (s: string) => s,
-    green: (s: string) => s,
-    yellow: (s: string) => s,
-  });
-
-  chalk = {
-    red: (s: string) => s,
-    yellow: (s: string) => s,
-    green: (s: string) => s,
-    blue: (s: string) => s,
-    gray: (s: string) => s,
-    bold: boldFn as ((text: string) => string) & {
-      cyan: (text: string) => string;
-      green: (text: string) => string;
-      yellow: (text: string) => string;
-    },
-    cyan: (s: string) => s,
-    magenta: (s: string) => s,
-    dim: (s: string) => s,
-  };
-}
+// Chalk is imported directly above
 
 /** Command flags accessible within base command */
 export interface BaseFlags {
@@ -360,7 +318,7 @@ export abstract class BaseCommand extends Command {
       isRetryable = () => true,
     } = options;
 
-    let lastError: Error;
+    let lastError: Error = new Error('Unknown error');
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -397,7 +355,7 @@ export abstract class BaseCommand extends Command {
     throw new NetworkError('Operation failed after all retries', {
       operation: operationName,
       recoverable: false,
-      cause: lastError || new Error('Unknown error'),
+      cause: lastError,
     });
   }
 
@@ -730,7 +688,7 @@ export abstract class BaseCommand extends Command {
       operationName = 'operation',
     } = options;
 
-    let lastError: Error;
+    let lastError: Error = new Error('Unknown error');
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -749,7 +707,7 @@ export abstract class BaseCommand extends Command {
     }
 
     throw new Error(
-      `${operationName} failed after ${maxRetries} attempts: ${lastError.message}`
+      `${operationName} failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
     );
   }
 

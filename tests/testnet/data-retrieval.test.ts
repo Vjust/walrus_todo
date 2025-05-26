@@ -11,10 +11,10 @@ import {
 } from '../../src/utils/walrus-storage';
 import { Todo, TodoList } from '../../src/types/todo';
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs';
-import path from 'path';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import * as fs from 'fs';
+// import path from 'path';
 import os from 'os';
 
 // Mock the child_process module for testing CLI interactions
@@ -156,7 +156,7 @@ describe('Walrus Testnet Data Retrieval', () => {
       execAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockFs.readFileSync.mockReturnValueOnce(JSON.stringify(sampleTodo));
 
-      let tempFilePath: string = '';
+      // let tempFilePath: string = '';
       mockFs.existsSync.mockImplementation(path => {
         if (typeof path === 'string' && path.includes('retrieved-')) {
           tempFilePath = path;

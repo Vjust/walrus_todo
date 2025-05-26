@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '../utils/adapters/sui-client-adapter';
+import { SuiClient } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
@@ -71,7 +71,7 @@ export default class RetrieveCommand extends BaseCommand {
   };
 
   private todoService = new TodoService();
-  private spinner: any = null;
+  private spinner: unknown = null;
 
   protected startSpinner(text: string) {
     if (this.spinner) {
@@ -269,8 +269,8 @@ export default class RetrieveCommand extends BaseCommand {
           // Initialize Sui NFT storage with the packageId from config
           const signer = {} as Ed25519Keypair;
           const suiNftStorage = new SuiNftStorage(suiClient, signer, {
-            address: config.lastDeployment.packageId,
-            packageId: config.lastDeployment.packageId,
+            address: config.lastDeployment?.packageId ?? '',
+            packageId: config.lastDeployment?.packageId ?? '',
             collectionId: '',
           });
 

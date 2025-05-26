@@ -1,9 +1,8 @@
-import { AIVerificationService, VerifiedAIResult } from '../../src/services/ai';
+import { AIVerificationService } from '../../src/services/ai';
 import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
 import {
   AIActionType,
   AIPrivacyLevel,
-  VerificationRecord,
 } from '../../src/types/adapters/AIVerifierAdapter';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';
@@ -124,7 +123,7 @@ describe('AI Verification Services', () => {
   // SECTION: Basic Verification Service
   describe('Basic Verification Service', () => {
     let verificationService: AIVerificationService;
-    let mockVerifierAdapter: any;
+    let mockVerifierAdapter: ReturnType<typeof createMockAIVerifierAdapter>;
 
     beforeEach(() => {
       mockVerifierAdapter = createMockAIVerifierAdapter();
@@ -341,9 +340,9 @@ describe('AI Verification Services', () => {
     let blockchainVerificationService: BlockchainAIVerificationService;
 
     beforeEach(() => {
-      const blockchainVerifier = new (BlockchainVerifier as any)();
+      const blockchainVerifier = new (BlockchainVerifier as new (...args: unknown[]) => InstanceType<typeof BlockchainVerifier>)();
       const permissionManager = getPermissionManager();
-      const credentialManager = new (SecureCredentialManager as any)(
+      const credentialManager = new (SecureCredentialManager as new (...args: unknown[]) => InstanceType<typeof SecureCredentialManager>)(
         '/mock/keys'
       );
 

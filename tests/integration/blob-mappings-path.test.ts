@@ -6,7 +6,7 @@
  */
 
 import fs from 'fs-extra';
-import path from 'path';
+import * as path from 'path';
 import {
   describe,
   it,
@@ -49,10 +49,10 @@ describe('Blob Mappings Path Test', () => {
 
   it('should write blob mappings to the directory specified by WALRUS_TODO_CONFIG_DIR', () => {
     // Create an instance of CompleteCommand
-    const command = new CompleteCommand([], {} as any);
+    const command = new CompleteCommand([], {});
 
     // Access private method using type assertion
-    const saveBlobMapping = (command as any).saveBlobMapping.bind(command);
+    const saveBlobMapping = (command as unknown as { saveBlobMapping: (todoId: string, blobId: string) => void }).saveBlobMapping.bind(command);
 
     // Call the method with test data
     saveBlobMapping('test-todo-id', 'test-blob-id');
@@ -73,10 +73,10 @@ describe('Blob Mappings Path Test', () => {
     );
 
     // Create an instance of CompleteCommand
-    const command = new CompleteCommand([], {} as any);
+    const command = new CompleteCommand([], {});
 
     // Access private method using type assertion
-    const saveBlobMapping = (command as any).saveBlobMapping.bind(command);
+    const saveBlobMapping = (command as unknown as { saveBlobMapping: (todoId: string, blobId: string) => void }).saveBlobMapping.bind(command);
 
     // Call the method with test data
     saveBlobMapping('another-todo-id', 'another-blob-id');

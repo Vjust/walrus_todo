@@ -5,7 +5,9 @@ import { Logger } from './Logger';
 const logger = new Logger('walrus-image-storage');
 
 // Define compatible SignatureWithBytes interface for local usage
-import { WalrusClient, type ReadBlobOptions } from '@mysten/walrus';
+// Use adapter for WalrusClient since concrete implementation is not available
+import { createWalrusClientAdapter } from './adapters/walrus-client-adapter';
+import { type ReadBlobOptions } from '@mysten/walrus';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getAssetPath } from './path-utils';
@@ -133,8 +135,7 @@ export class WalrusImageStorage {
           blob: '', // Will be auto-discovered by WalrusClient
         },
       };
-      const walrusClient = new WalrusClient(compatibleConfig);
-      this.walrusClient = createWalrusClientAdapter(walrusClient);
+      this.walrusClient = createWalrusClientAdapter(compatibleConfig);
 
       // Initialize KeystoreSigner and adapt it to the expected interface
       const keystoreSigner = new KeystoreSigner(this.suiClient);
@@ -176,7 +177,8 @@ export class WalrusImageStorage {
         this.walrusClient.reset();
       } catch (error) {
         // Log but don't throw since we're cleaning up
-        logger.error('Error resetting Walrus client:', error);
+        const errorObj = error instanceof Error ? error : new Error(String(error));
+        logger.error('Error resetting Walrus client:', errorObj);
       }
     }
 
@@ -193,7 +195,8 @@ export class WalrusImageStorage {
       }
     } catch (cleanupError) {
       // Just log errors during cleanup, don't throw
-      logger.error('Error during connection cleanup:', cleanupError);
+      const errorObj = cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError));
+      logger.error('Error during connection cleanup:', errorObj);
     }
 
     // Create a minimal WalrusClientAdapter with a functional getUnderlyingClient method
@@ -209,16 +212,24 @@ export class WalrusImageStorage {
         blobId: string;
         blobObject: { blob_id: string };
       }> => ({ blobId: '', blobObject: { blob_id: '' } }),
-      getBlobInfo: async (): Promise<any> => ({ blob_id: '' }),
-      getBlobObject: async (): Promise<any> => ({ blob_id: '' }),
-      getBlobMetadata: async (): Promise<any> => ({ blob_id: '' }),
+      getBlobInfo: async (): Promise<{ blob_id: string }> => ({ blob_id: '' }),
+      getBlobObject: async (): Promise<{ blob_id: string }> => ({ blob_id: '' }),
+      getBlobMetadata: async (): Promise<{ blob_id: string }> => ({ blob_id: '' }),
       getStorageUsage: async (): Promise<{ used: string; total: string }> => ({
         used: '0',
         total: '0',
       }),
       getWalBalance: async (): Promise<string> => '0',
       verifyPoA: async (): Promise<boolean> => false,
-      executeCreateStorageTransaction: async (): Promise<any> => ({
+      executeCreateStorageTransaction: async (): Promise<{
+        digest: string;
+        storage: {
+          id: { id: string };
+          start_epoch: number;
+          end_epoch: number;
+          storage_size: string;
+        };
+      }> => ({
         digest: '',
         storage: {
           id: { id: '' },
@@ -647,7 +658,7 @@ export class WalrusImageStorage {
                   success: false,
                   error: err,
                 })),
-              ]);
+              ]) as { success: boolean; data?: Uint8Array; error?: Error };
 
               // Check if the result indicates failure
               if (

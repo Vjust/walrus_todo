@@ -19,34 +19,34 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-// Configure Jest matchers
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toContain(expected: string): R;
-      toHaveBeenCalled(): R;
-      toHaveBeenCalledWith(...args: any[]): R;
-      toMatchObject(expected: any): R;
-      toBeTrue(): R;
-      toBeFalse(): R;
-      toBeUndefined(): R;
-      toBeNull(): R;
-      toBeDefined(): R;
-      toBeInstanceOf(expected: any): R;
-      toEqual(expected: any): R;
-      toBe(expected: any): R;
-      toMatch(expected: string | RegExp): R;
-      toThrow(expected?: string | RegExp | Error): R;
-      toHaveLength(expected: number): R;
-      toContainEqual(expected: any): R;
-      toStrictEqual(expected: any): R;
-      objectContaining<E extends {}>(expected: E): R;
-      contain(expected: any): R;
-    }
+// Configure Jest matchers - using module augmentation instead of namespace
+declare module '@jest/expect' {
+  interface Matchers<R> {
+    toContain(expected: string): R;
+    toHaveBeenCalled(): R;
+    toHaveBeenCalledWith(...args: unknown[]): R;
+    toMatchObject(expected: unknown): R;
+    toBeTrue(): R;
+    toBeFalse(): R;
+    toBeUndefined(): R;
+    toBeNull(): R;
+    toBeDefined(): R;
+    toBeInstanceOf(expected: unknown): R;
+    toEqual(expected: unknown): R;
+    toBe(expected: unknown): R;
+    toMatch(expected: string | RegExp): R;
+    toThrow(expected?: string | RegExp | Error): R;
+    toHaveLength(expected: number): R;
+    toContainEqual(expected: unknown): R;
+    toStrictEqual(expected: unknown): R;
+    objectContaining<E extends Record<string, unknown>>(expected: E): R;
+    contain(expected: unknown): R;
   }
+}
 
+declare global {
   interface ExpectStatic {
-    objectContaining<E = {}>(actual: E): E;
+    objectContaining<E = Record<string, unknown>>(actual: E): E;
   }
 }
 

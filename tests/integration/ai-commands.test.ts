@@ -16,32 +16,6 @@ describe('AI Commands Integration Tests', () => {
   const CLI_CMD = 'node ./bin/run.js';
   const MOCK_API_KEY = 'test-api-key-123';
 
-  const _mockTodos = [
-    {
-      id: '1',
-      title: 'Complete financial report',
-      description: 'Q4 financial report for board meeting',
-      completed: false,
-      tags: ['finance', 'urgent'],
-      priority: 'high',
-    },
-    {
-      id: '2',
-      title: 'Update budget spreadsheet',
-      description: 'Include Q1 projections',
-      completed: false,
-      tags: ['finance', 'planning'],
-      priority: 'medium',
-    },
-    {
-      id: '3',
-      title: 'Schedule team meeting',
-      description: 'Weekly sync with development team',
-      completed: true,
-      tags: ['management', 'recurring'],
-      priority: 'low',
-    },
-  ];
 
   beforeEach(() => {
     (execSync as jest.Mock).mockReset();

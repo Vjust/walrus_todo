@@ -71,7 +71,7 @@ describe('Cross-Platform Compatibility Tests', () => {
         const command = `${process.execPath} ${path.join(__dirname, '../../src/index.js')} add "Windows test"`;
 
         const mockExecSync = jest.fn(() => 'Todo added successfully');
-        const originalExecSync = execSync;
+        const _originalExecSync = execSync;
 
         // Mock execSync to simulate Windows command execution
         jest.spyOn(childProcess, 'execSync').mockImplementation(mockExecSync);
@@ -86,21 +86,21 @@ describe('Cross-Platform Compatibility Tests', () => {
           // Restore original execSync
           jest
             .spyOn(childProcess, 'execSync')
-            .mockImplementation(originalExecSync);
+            .mockImplementation(_originalExecSync);
         }
       });
     });
 
     describe('Unix-like Systems', () => {
       ['darwin', 'linux'].forEach(platform => {
-        describe(platform, () => {
+        describe(`${platform}`, () => {
           beforeEach(() => mockPlatform(platform as NodeJS.Platform));
 
           it(`should execute commands on ${platform}`, () => {
             const command = `${process.execPath} ${path.join(__dirname, '../../src/index.js')} add "${platform} test"`;
 
             const mockExecSync = jest.fn(() => 'Todo added successfully');
-            const originalExecSync = execSync;
+            const _originalExecSync = execSync;
 
             // Mock execSync to simulate Unix command execution
             jest
@@ -119,7 +119,7 @@ describe('Cross-Platform Compatibility Tests', () => {
               // Restore original execSync
               jest
                 .spyOn(childProcess, 'execSync')
-                .mockImplementation(originalExecSync);
+                .mockImplementation(_originalExecSync);
             }
           });
         });
@@ -251,7 +251,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       const file = path.join(tempDir, 'windows.txt');
 
       fs.writeFileSync(file, content);
-      const _read = fs.readFileSync(file, 'utf8');
+      const read = fs.readFileSync(file, 'utf8');
 
       expect(read).toContain('\r\n');
     });
@@ -263,7 +263,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       const file = path.join(tempDir, 'unix.txt');
 
       fs.writeFileSync(file, content);
-      const _read = fs.readFileSync(file, 'utf8');
+      const read = fs.readFileSync(file, 'utf8');
 
       expect(read).not.toContain('\r\n');
       expect(read).toContain('\n');
@@ -385,6 +385,7 @@ describe('Cross-Platform Compatibility Tests', () => {
 
           expect(shellCommand).toBeDefined();
           expect(commandFormat).toBeDefined();
+          expect(step).toBeDefined();
         }
       }
     });

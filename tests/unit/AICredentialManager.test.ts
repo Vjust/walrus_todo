@@ -287,14 +287,21 @@ describe('Secure Credential Manager', () => {
     it('should throw a specific error type when credential is not found', () => {
       const credentialManager = new SecureCredentialManager(keysDir);
 
-      let thrownError: any;
+      expect(() => {
+        credentialManager.getCredential(AIProvider.ANTHROPIC);
+      }).toThrow(CLIError);
+    });
+
+    it('should throw CLIError with CREDENTIAL_NOT_FOUND code when credential is not found', () => {
+      const credentialManager = new SecureCredentialManager(keysDir);
+
+      let thrownError: unknown;
       try {
         credentialManager.getCredential(AIProvider.ANTHROPIC);
-        throw new Error('Expected error was not thrown');
       } catch (error) {
         thrownError = error;
       }
-      
+
       expect(thrownError).toBeInstanceOf(CLIError);
       expect((thrownError as CLIError).code).toBe('CREDENTIAL_NOT_FOUND');
     });

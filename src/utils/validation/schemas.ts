@@ -131,7 +131,27 @@ export const TodoListSchema = z.object(
       .max(500, 'TodoList description too long (max 500 characters)')
       .optional(),
 
+    owner: z
+      .string()
+      .min(1, 'TodoList owner cannot be empty')
+      .max(100, 'TodoList owner too long (max 100 characters)'),
+
     todos: z.array(TodoSchema).max(1000, 'Too many todos in list (max 1000)'),
+
+    version: z
+      .number()
+      .int('Version must be an integer')
+      .min(0, 'Version cannot be negative'),
+
+    collaborators: z
+      .array(
+        z
+          .string()
+          .min(1, 'Collaborator address cannot be empty')
+          .max(100, 'Collaborator address too long (max 100 characters)')
+      )
+      .max(50, 'Too many collaborators (max 50)')
+      .optional(),
 
     createdAt: z
       .string()
@@ -141,6 +161,16 @@ export const TodoListSchema = z.object(
       .string()
       .datetime('Invalid updated date format (must be ISO 8601)'),
 
+    walrusBlobId: z
+      .string()
+      .min(1, 'Walrus blob ID cannot be empty')
+      .optional(),
+
+    suiObjectId: z
+      .string()
+      .min(1, 'Sui object ID cannot be empty')
+      .optional(),
+
     tags: z
       .array(
         z
@@ -149,6 +179,11 @@ export const TodoListSchema = z.object(
           .max(50, 'List tag too long (max 50 characters)')
       )
       .max(10, 'Too many list tags (max 10)')
+      .optional(),
+
+    syncedAt: z
+      .string()
+      .datetime('Invalid synced date format (must be ISO 8601)')
       .optional(),
   },
   {

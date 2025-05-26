@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import { WalrusClient } from '@mysten/walrus';
 import { StorageManager } from '../../utils/StorageManager';
 import {
   StorageError,
@@ -7,28 +6,26 @@ import {
   BlockchainError,
 } from '../../types/errors/consolidated/index';
 import { Logger } from '../../utils/Logger';
-// MockWalrusClient is automatically available via jest.mock
+import { getMockWalrusClient, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
+import { WalrusClient } from '../../types/client';
 
 jest.mock('@mysten/walrus');
 jest.mock('../../utils/Logger');
 
 describe('StorageManager', () => {
   let manager: StorageManager;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
+  let mockWalrusClient: CompleteWalrusClientMock;
   let mockLogger: jest.MockedObject<Logger>;
 
   const testConfig = {
     minAllocation: 1000n,
     checkThreshold: 20,
-    client: {} as any,
+    client: {} as CompleteWalrusClientMock,
   };
 
   beforeEach(() => {
-    mockWalrusClient = {
-      getWalBalance: jest.fn(),
-      getStorageUsage: jest.fn(),
-      // Add other required methods as needed
-    } as unknown as jest.Mocked<WalrusClient>;
+    // Use the complete mock implementation
+    mockWalrusClient = getMockWalrusClient();
 
     mockLogger = {
       debug: jest.fn(),
@@ -87,7 +84,7 @@ describe('StorageManager', () => {
 
     // Fix the constructor call to match the StorageManager signature
     manager = new StorageManager(
-      mockSuiClient as any,
+      mockSuiClient as unknown,
       mockWalrusClient as unknown as WalrusClient,
       mockAddress,
       {
@@ -150,7 +147,7 @@ describe('StorageManager', () => {
     });
 
     it('should handle missing balance data', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue(null as any);
+      mockWalrusClient.getWalBalance.mockResolvedValue('0');
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '100',
         total: '1000',

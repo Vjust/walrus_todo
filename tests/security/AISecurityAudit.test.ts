@@ -1,7 +1,5 @@
 import { jest } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import * as fs from 'fs';
 import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
 import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
@@ -23,7 +21,6 @@ import {
 } from '../../src/types/adapters/AICredentialAdapter';
 import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
 import { initializePermissionManager } from '../../src/services/ai/AIPermissionManager';
-import { CLI_CONFIG } from '../../src/constants';
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
@@ -185,7 +182,7 @@ describe('AI Security Audit', () => {
 
       // Check that API key is not stored in the AIService instance properties
       const serviceProps = Object.entries(mockAIService);
-      serviceProps.forEach(([key, value]) => {
+      serviceProps.forEach(([_key, value]) => {
         if (typeof value === 'string') {
           expect(value).not.toBe('test-api-key-sensitive');
         }
@@ -267,7 +264,7 @@ describe('AI Security Audit', () => {
       jest
         .spyOn(mockAIService['modelAdapter'], 'completeStructured')
         .mockResolvedValue({
-          result: { __proto__: { polluted: true } } as any,
+          result: { __proto__: { polluted: true } },
           modelName: 'test',
           provider: AIProvider.XAI,
           timestamp: Date.now(),
@@ -536,7 +533,7 @@ describe('AI Security Audit', () => {
 
       // Create mock AI service with verification
       const mockVerificationService = new AIVerificationService(
-        mockBlockchainVerifier as any
+        mockBlockchainVerifier
       );
       const mockAIService = new AIService(
         'test-api-key',
@@ -576,7 +573,7 @@ describe('AI Security Audit', () => {
       secureCredentialManager.setBlockchainAdapter({
         checkVerificationStatus: jest.fn().mockResolvedValue(false),
         signer: { toSuiAddress: jest.fn().mockResolvedValue('addr-123') },
-      } as any);
+      });
 
       // Should reject if blockchain verification fails
       await expect(
@@ -660,7 +657,7 @@ describe('AI Security Audit', () => {
       // Mock credential manager
       secureCredentialManager.getCredential = jest
         .fn()
-        .mockImplementation(provider => {
+        .mockImplementation(_provider => {
           // console.log(`AUDIT: Credential access attempt for provider ${provider}`); // Removed console statement
           return 'test-api-key';
         });
@@ -693,7 +690,7 @@ describe('AI Security Audit', () => {
         getRegistryAddress: jest.fn(),
         registerProvider: jest.fn(),
         getVerification: jest.fn(),
-      } as any;
+      };
 
       const mockVerificationService = new AIVerificationService(
         mockVerifierAdapter
@@ -737,7 +734,7 @@ describe('AI Security Audit', () => {
         getRegistryAddress: jest.fn(),
         registerProvider: jest.fn(),
         getVerification: jest.fn(),
-      } as any;
+      };
 
       const mockVerificationService = new AIVerificationService(
         mockVerifierAdapter
@@ -778,9 +775,9 @@ describe('AI Security Audit', () => {
             createVerification: jest
               .fn()
               .mockResolvedValue(mockVerificationRecord),
-          } as any,
-          { checkPermission: jest.fn().mockReturnValue(true) } as any,
-          { getCredential: jest.fn().mockResolvedValue('api-key') } as any,
+          },
+          { checkPermission: jest.fn().mockReturnValue(true) },
+          { getCredential: jest.fn().mockResolvedValue('api-key') },
           'xai'
         );
 
@@ -824,7 +821,7 @@ describe('AI Security Audit', () => {
       };
 
       const mockVerificationService = new AIVerificationService(
-        mockBlockchainVerifier as any
+        mockBlockchainVerifier
       );
 
       // Current timestamp should work
@@ -863,9 +860,9 @@ describe('AI Security Audit', () => {
 
       const mockBlockchainVerificationService =
         new BlockchainAIVerificationService(
-          { createVerification: jest.fn() } as any,
-          mockPermissionManager as any,
-          { getCredential: jest.fn().mockResolvedValue('api-key') } as any,
+          { createVerification: jest.fn() },
+          mockPermissionManager,
+          { getCredential: jest.fn().mockResolvedValue('api-key') },
           'xai'
         );
 
@@ -969,7 +966,7 @@ describe('AI Security Audit', () => {
       // Create AI service with disabled certificate validation (should fail)
       const insecureService = new AIService('key', AIProvider.XAI, 'model', {
         rejectUnauthorized: false,
-      } as any);
+      });
       await expect(insecureService.summarize(sampleTodos)).rejects.toThrow(
         'Invalid SSL configuration'
       );
@@ -1153,7 +1150,7 @@ describe('AI Security Audit', () => {
       };
 
       const mockVerificationService = new AIVerificationService(
-        mockVerifierAdapter as any
+        mockVerifierAdapter
       );
 
       // Test private mode
@@ -1278,7 +1275,7 @@ describe('AI Security Audit', () => {
       // Create AI service with differential privacy
       const aiService = new AIService('key', AIProvider.XAI, 'model', {
         differentialPrivacy: true,
-      } as any);
+      });
 
       // Run operation that should have differential privacy applied
       const result = await aiService.categorize(sampleTodos);
@@ -1290,11 +1287,11 @@ describe('AI Security Audit', () => {
     it('should handle data subject access requests', async () => {
       // Mock verification service that supports retrieving user data
       const mockVerifierAdapter = {
-        listVerifications: jest.fn().mockImplementation(userAddress => {
+        listVerifications: jest.fn().mockImplementation(_userAddress => {
           // In production, would filter by the user
           return [mockVerificationRecord];
         }),
-        getVerification: jest.fn().mockImplementation(id => {
+        getVerification: jest.fn().mockImplementation(_id => {
           return mockVerificationRecord;
         }),
         deleteVerification: jest.fn().mockImplementation((id, userAddress) => {
@@ -1307,7 +1304,7 @@ describe('AI Security Audit', () => {
       };
 
       const mockVerificationService = new AIVerificationService(
-        mockVerifierAdapter as any
+        mockVerifierAdapter
       );
 
       // User should be able to list their data
@@ -1334,7 +1331,7 @@ describe('AI Security Audit', () => {
       const aiService = new AIService('key', AIProvider.XAI, 'model', {
         collectUsageData: false,
         storePromptHistory: false,
-      } as any);
+      });
 
       // Mock the provider adapter
       jest
@@ -1467,14 +1464,14 @@ describe('AI Security Audit', () => {
       // Should sanitize the error
       try {
         await aiService.summarize(sampleTodos);
-        fail('Should have thrown an error');
+        throw new Error('Should have thrown an error');
       } catch (_error) {
         // Error message should be sanitized
         expect(String(error)).not.toContain('test-api-key');
         expect(String(error)).not.toContain('user@example.com');
 
         // Error object should not contain sensitive data
-        expect((error as any).sensitiveData).toBeUndefined();
+        expect((error as Error & { sensitiveData?: unknown }).sensitiveData).toBeUndefined();
       }
     });
 

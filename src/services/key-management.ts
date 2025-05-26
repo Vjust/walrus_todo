@@ -44,7 +44,7 @@ export class KeyManagementService {
       return this.keypairCache;
     } catch (_error) {
       throw new CLIError(
-        `Failed to load keypair: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to load keypair: ${_error instanceof Error ? _error.message : String(_error)}`,
         'KEYPAIR_LOAD_FAILED'
       );
     }
@@ -60,7 +60,7 @@ export class KeyManagementService {
       this.keypairCache = keypair;
     } catch (_error) {
       throw new CLIError(
-        `Invalid private key format: ${error instanceof Error ? error.message : String(error)}`,
+        `Invalid private key format: ${_error instanceof Error ? _error.message : String(_error)}`,
         'INVALID_PRIVATE_KEY'
       );
     }

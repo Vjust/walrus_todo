@@ -16,7 +16,7 @@ import {
 } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
-
+import { TodoService } from '../../src/services/todoService';
 jest.mock('../../src/services/todoService');
 
 // Mock walrus-storage module for blockchain testing
@@ -53,7 +53,7 @@ describe('WalTodo complete command', () => {
     (TodoService.prototype.getTodo as jest.Mock).mockResolvedValue(testTodo);
 
     (TodoService.prototype.completeTodo as jest.Mock).mockImplementation(
-      async (listName, todoId) => ({
+      async (_listName, _todoId) => ({
         ...testTodo,
         completed: true,
         completedAt: new Date().toISOString(),
@@ -79,76 +79,85 @@ describe('WalTodo complete command', () => {
   });
 
   // Test using @oclif/test library for command testing
-  test
-    .stdout()
-    .command(['complete', '--id', 'test-todo-id-123'])
-    .it('completes a todo by ID', ctx => {
-      expect(ctx.stdout).toContain('Todo completion');
-      expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
-        'default',
-        'test-todo-id-123'
-      );
-    });
+  it('completes a todo by ID', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['complete', '--id', 'test-todo-id-123'])
+      .run();
+    
+    expect(stdout).toContain('Todo completion');
+    expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
+      'default',
+      'test-todo-id-123'
+    );
+  });
 
-  test
-    .stdout()
-    .command(['complete', '--id', 'test-todo-id-123', '--list', 'work'])
-    .it('completes a todo in a specific list', ctx => {
-      expect(ctx.stdout).toContain('Todo completion');
-      expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
-        'work',
-        'test-todo-id-123'
-      );
-    });
+  it('completes a todo in a specific list', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['complete', '--id', 'test-todo-id-123', '--list', 'work'])
+      .run();
+    
+    expect(stdout).toContain('Todo completion');
+    expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
+      'work',
+      'test-todo-id-123'
+    );
+  });
 
   // Test local storage completion
-  test
-    .stdout()
-    .command(['complete', '--id', 'test-todo-id-123', '--storage', 'local'])
-    .it('completes a todo with local storage only', ctx => {
-      expect(ctx.stdout).toContain('Todo completion');
-      expect(TodoService.prototype.completeTodo).toHaveBeenCalled();
-      expect(createWalrusStorage).not.toHaveBeenCalled();
-    });
+  it('completes a todo with local storage only', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['complete', '--id', 'test-todo-id-123', '--storage', 'local'])
+      .run();
+    
+    expect(stdout).toContain('Todo completion');
+    expect(TodoService.prototype.completeTodo).toHaveBeenCalled();
+    expect(createWalrusStorage).not.toHaveBeenCalled();
+  });
 
   // Test blockchain storage (tests the error path when blockchain is unavailable)
-  test
-    .stdout()
-    .command([
-      'complete',
-      '--id',
-      'test-todo-id-123',
-      '--storage',
-      'blockchain',
-    ])
-    .it('attempts to complete a todo with blockchain storage', ctx => {
-      expect(ctx.stdout).toContain('Todo completion');
-      expect(createWalrusStorage).toHaveBeenCalled();
-    });
+  it('attempts to complete a todo with blockchain storage', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command([
+        'complete',
+        '--id',
+        'test-todo-id-123',
+        '--storage',
+        'blockchain',
+      ])
+      .run();
+    
+    expect(stdout).toContain('Todo completion');
+    expect(createWalrusStorage).toHaveBeenCalled();
+  });
 
   // Test error handling for non-existent todo
-  test
-    .stdout()
-    .do(() => {
-      // Override the implementation to simulate a missing todo
-      (TodoService.prototype.getTodo as jest.Mock).mockRejectedValue(
-        new Error('Todo not found')
-      );
-    })
-    .command(['complete', '--id', 'non-existent-id'])
-    .catch(_error => {
-      expect(error.message).toContain('Todo not found');
-    })
-    .it('errors when todo does not exist');
+  it('errors when todo does not exist', async () => {
+    // Override the implementation to simulate a missing todo
+    (TodoService.prototype.getTodo as jest.Mock).mockRejectedValue(
+      new Error('Todo not found')
+    );
+    
+    await expect(
+      test
+        .stdout()
+        .command(['complete', '--id', 'non-existent-id'])
+        .run()
+    ).rejects.toThrow('Todo not found');
+  });
 
   // Test error handling for missing ID
-  test
-    .stdout()
-    .command(['complete'])
-    .catch(_error => {
-      expect(error.message).toContain('Missing required flag');
-    })
-    .it('errors when no ID is provided');
+  it('errors when no ID is provided', async () => {
+    await expect(
+      test
+        .stdout()
+        .command(['complete'])
+        .run()
+    ).rejects.toThrow('Missing required flag');
+  });
 
   // Integration style test that mocks the CLI execution
   it('should handle blockchain errors gracefully', async () => {
@@ -176,14 +185,11 @@ describe('WalTodo complete command', () => {
     });
 
     // This should throw error due to blockchain issues
-    try {
-      const result = execSync(
+    expect(() => {
+      execSync(
         'node bin/run.js complete --id test-todo-id-123 --storage blockchain'
       ).toString();
-      fail('Should have thrown an error');
-    } catch (_error) {
-      expect(error.message).toContain('Network error');
-    }
+    }).toThrow('Network error');
 
     // But with local storage it should work
     const result = execSync(

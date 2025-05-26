@@ -7,7 +7,6 @@
 
 import { AIService, aiService } from '../../src/services/ai';
 import {
-  AIModelAdapter,
   AIProvider,
 } from '../../src/types/adapters/AIModelAdapter';
 import { Todo } from '../../src/types/todo';
@@ -278,7 +277,7 @@ jest.spyOn(AIConfigManager, 'getInstance').mockReturnValue({
 
 jest.mock('../../src/utils/Logger', () => {
   return {
-    Logger: jest.fn().mockImplementation(componentName => ({
+    Logger: jest.fn().mockImplementation(() => ({
       debug: jest.fn(),
       info: jest.fn(),
       warn: jest.fn(),
@@ -297,6 +296,8 @@ jest.mock('../../src/utils/Logger', () => {
 import { Logger } from '../../src/utils/Logger';
 
 // Add a getInstance mock to Logger
+// Unused imports removed during TypeScript cleanup
+// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 jest.spyOn(Logger, 'getInstance').mockReturnValue({
   debug: jest.fn(),
   info: jest.fn(),

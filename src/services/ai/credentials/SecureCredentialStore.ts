@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import crypto from 'crypto';
 import { randomUUID } from 'crypto';
 import { CLIError } from '../../../types/errors/consolidated';
@@ -28,7 +28,7 @@ export interface CredentialMetadata {
   verificationId?: string;
   authFailCount: number;
   rotationRequired: boolean;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 /**
@@ -46,7 +46,7 @@ export interface StoreCredentialOptions {
   permissionLevel?: AIPermissionLevel;
   type?: CredentialType;
   expiryDays?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   verify?: boolean;
 }
 
@@ -188,8 +188,8 @@ export class SecureCredentialStore {
       this.credentials = new Map();
       for (const [key, value] of Object.entries(credentials)) {
         this.credentials.set(key, {
-          metadata: (value as any).metadata,
-          encryptedValue: Buffer.from((value as any).encryptedValue.data),
+          metadata: (value as Record<string, unknown>).metadata as CredentialMetadata,
+          encryptedValue: Buffer.from(((value as Record<string, unknown>).encryptedValue as {data: number[]}).data),
         });
       }
     } catch (_error) {

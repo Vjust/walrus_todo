@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
 import crypto from 'crypto';
 import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
 import {
@@ -84,7 +83,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
 
     // Mock reading files
     (fs.readFileSync as jest.Mock).mockImplementation(
-      (path: string, encoding?: string) => {
+      (path: string, _encoding?: string) => {
         if (path === mockKeyPath) return Buffer.from('mockencryptionkey');
         if (path === mockMetadataPath)
           return JSON.stringify({

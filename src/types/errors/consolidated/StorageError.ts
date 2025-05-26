@@ -16,6 +16,9 @@ export interface StorageErrorOptions extends BaseErrorOptions {
   /** ID of the storage item (blob, file, etc.) */
   itemId?: string;
 
+  /** Legacy: ID of the blob (use itemId instead) */
+  blobId?: string;
+
   /** Type of storage (local, blockchain, walrus) */
   storageType?: 'local' | 'blockchain' | 'walrus' | string;
 
@@ -33,6 +36,9 @@ export class StorageError extends BaseError {
   /** ID of the storage item */
   public readonly itemId?: string;
 
+  /** Legacy: ID of the blob (for backward compatibility) */
+  public readonly blobId?: string;
+
   /** Type of storage */
   public readonly storageType?: string;
 
@@ -48,11 +54,15 @@ export class StorageError extends BaseError {
     const {
       operation = 'unknown',
       itemId,
+      blobId, // Support legacy blobId parameter
       storageType = 'unknown',
       path,
       recoverable = true, // Storage errors are often recoverable
       ...restOptions
     } = options;
+
+    // Use blobId as itemId if itemId is not provided (backward compatibility)
+    const finalItemId = itemId || blobId;
 
     // Build context with storage details
     const context = {
@@ -86,7 +96,13 @@ export class StorageError extends BaseError {
     // Store sensitive properties privately with non-enumerable descriptors
     Object.defineProperties(this, {
       itemId: {
-        value: itemId,
+        value: finalItemId,
+        enumerable: false,
+        writable: false,
+        configurable: false,
+      },
+      blobId: {
+        value: finalItemId, // For backward compatibility
         enumerable: false,
         writable: false,
         configurable: false,

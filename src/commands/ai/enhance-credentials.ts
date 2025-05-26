@@ -147,7 +147,7 @@ export default class Credentials extends BaseCommand {
     provider: AIProvider,
     permissionLevel: AIPermissionLevel,
     type: CredentialType,
-    flags: any
+    flags: { verify?: boolean; expiry?: number; rotation?: number; permission: string }
   ) {
     // Validate provider
     if (!provider) {
@@ -159,7 +159,7 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Create options object from flags
-      const options: any = {
+      const options: { verify?: boolean; expiryDays?: number; rotationReminder?: number } = {
         verify: flags.verify,
       };
 
@@ -200,7 +200,7 @@ export default class Credentials extends BaseCommand {
 
       if (flags.expiry) {
         this.log(
-          `${chalk.green('\u2713')} API key will expire in ${chalk.yellow(flags.expiry)} days (${new Date(result.expiresAt!).toLocaleDateString()})`
+          `${chalk.green('\u2713')} API key will expire in ${chalk.yellow(flags.expiry)} days (${new Date(result.expiresAt || new Date()).toLocaleDateString()})`
         );
       }
 
@@ -408,7 +408,7 @@ export default class Credentials extends BaseCommand {
     provider: AIProvider,
     permissionLevel: AIPermissionLevel,
     type: CredentialType,
-    flags: any
+    flags: { verify?: boolean; key?: string }
   ) {
     // Validate provider
     if (!provider) {
@@ -435,7 +435,7 @@ export default class Credentials extends BaseCommand {
       const sanitizedKey = ApiKeyValidator.sanitize(newApiKey);
 
       // Create options object from flags
-      const options: any = {
+      const options: { verify?: boolean; preserveMetadata: boolean } = {
         verify: flags.verify,
         preserveMetadata: true,
       };

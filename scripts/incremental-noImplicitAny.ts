@@ -154,12 +154,22 @@ fileIssues.forEach((diagnostics, filePath) => {
 });
 
 // Create incremental progress tracking
+interface ProgressData {
+  [directory: string]: {
+    lastChecked: string;
+    fileCount: number;
+    issueCount: number;
+    fileWithIssues: string[];
+  };
+}
+
 const progressFile = path.resolve(process.cwd(), 'noImplicitAny-progress.json');
-let progressData: any = {};
+let progressData: ProgressData = {};
 
 if (fs.existsSync(progressFile)) {
   try {
-    progressData = JSON.parse(fs.readFileSync(progressFile, 'utf-8'));
+    const fileContent = fs.readFileSync(progressFile, 'utf-8');
+    progressData = JSON.parse(typeof fileContent === 'string' ? fileContent : fileContent.toString());
   } catch (error) {
     logger.error(`Error reading progress file: ${error}`);
     progressData = {};

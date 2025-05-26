@@ -1,13 +1,15 @@
 /**
-import { Logger } from '../../Logger';
-
-const logger = new Logger('NFTStorage');
  * @fileoverview NFT Storage - Implementation for NFT creation and management
  *
  * This class provides functionality for creating and managing NFTs on the Sui blockchain,
  * integrated with blob storage for the NFT content. It extends AbstractStorage
  * to provide a consistent interface while adding NFT-specific capabilities.
  */
+
+import { Logger } from '../../Logger';
+import { TransactionBlock } from '@mysten/sui/transactions';
+
+const logger = new Logger('NFTStorage');
 
 import { AbstractStorage } from '../core/AbstractStorage';
 import {
@@ -18,10 +20,10 @@ import {
 import { StorageClient } from '../core/StorageClient';
 import { StorageTransaction } from '../core/StorageTransaction';
 import { StorageOperationHandler } from '../utils/StorageOperationHandler';
-import { StorageError, BlockchainError, TransactionError } from '@errors';
-import { ValidationError } from '@errors/ValidationError';
-import { TransactionSigner } from '@types/signer';
-import { Todo } from '@types/todo';
+import { StorageError, BlockchainError, TransactionError } from '../../../types/errors/consolidated';
+import { ValidationError } from '../../../types/errors/ValidationError';
+import { TransactionSigner } from '../../../types/signer';
+import { Todo } from '../../../types/todo';
 import { BlobStorage } from './BlobStorage';
 import { TransactionBlock } from '@mysten/sui/transactions';
 
@@ -76,7 +78,7 @@ export interface NFTInfo {
   /** ID of the blob containing the NFT content */
   walrusBlobId: string;
   /** Raw blockchain object data */
-  rawData?: any;
+  rawData?: Record<string, unknown>;
 }
 
 /**
@@ -405,7 +407,7 @@ export class NFTStorage extends AbstractStorage {
     description: string,
     blobId: string,
     completed: boolean
-  ): Promise<any> {
+  ): Promise<TransactionBlock> {
     // Validate transaction manager
     if (!this.transaction) {
       throw new ValidationError('Transaction manager not initialized', {
@@ -414,21 +416,21 @@ export class NFTStorage extends AbstractStorage {
     }
 
     try {
-      const tx = {}; // Create transaction block
+      const tx = new TransactionBlock(); // Create transaction block
 
-      // Must use 'as any' since we're dealing with a generic transaction wrapper
-      (tx as any).moveCall({
+      // Transaction operations
+      tx.moveCall({
         target: `${this.packageId}::todo_nft::create_todo_nft`,
         arguments: [
-          (tx as any).pure(title),
-          (tx as any).pure(description),
-          (tx as any).pure(blobId),
-          (tx as any).pure(completed),
-          (tx as any).object(this.collectionId),
+          tx.pure(title),
+          tx.pure(description),
+          tx.pure(blobId),
+          tx.pure(completed),
+          tx.object(this.collectionId),
         ],
       });
 
-      return tx;
+      return tx as TransactionBlock;
     } catch (error) {
       throw new BlockchainError(
         `Failed to create NFT transaction: ${error instanceof Error ? error.message : String(error)}`,
@@ -504,7 +506,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Extract NFT details from the response
-      const content = result.data.data.content as any;
+      const content = result.data.data.content as Record<string, unknown>;
       if (!content || !content.fields) {
         throw new BlockchainError('Invalid NFT data format', {
           operation: 'get todo NFT',
@@ -790,7 +792,7 @@ export class NFTStorage extends AbstractStorage {
 
       // Find NFT object in created objects
       const nftObject = txResult.data.effects.created.find(obj => {
-        const reference = (obj as any)?.reference;
+        const reference = (obj as { reference?: { objectId: string } })?.reference;
         return reference && reference.objectId;
       });
 
@@ -800,7 +802,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Extract object ID from reference
-      const objectId = (nftObject as any)?.reference?.objectId;
+      const objectId = (nftObject as { reference?: { objectId: string } })?.reference?.objectId;
       if (!objectId) {
         return idOrDigest;
       }

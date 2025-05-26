@@ -1,5 +1,18 @@
-import { execa, type Options as ExecaOptions } from 'execa';
-import path from 'path';
+import { execa, type Options as ExecaOptions, ExecaError } from 'execa';
+import * as path from 'path';
+
+// E2E CLI execution result interfaces
+interface CLIExecutionResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  failed: boolean;
+  error?: Error;
+}
+
+interface JSONParsableData {
+  [key: string]: unknown;
+}
 
 /**
  * CLI executor helper for E2E tests
@@ -33,7 +46,7 @@ export class CLIExecutor {
     command: string,
     args: string[] = [],
     options: Partial<ExecaOptions> = {}
-  ) {
+  ): Promise<CLIExecutionResult> {
     const mergedOptions = {
       ...this.defaultOptions,
       ...options,
@@ -51,13 +64,14 @@ export class CLIExecutor {
         exitCode: result.exitCode,
         failed: result.failed,
       };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof Error) {
+        const execaError = error as ExecaError;
         // Return the error result for failed commands
         return {
-          stdout: (error as any).stdout || '',
-          stderr: (error as any).stderr || error.message,
-          exitCode: (error as any).exitCode || 1,
+          stdout: execaError.stdout || '',
+          stderr: execaError.stderr || error.message,
+          exitCode: execaError.exitCode || 1,
           failed: true,
           error,
         };
@@ -103,7 +117,7 @@ export class CLIExecutor {
   /**
    * Execute a CLI command with JSON output
    */
-  async executeJSON<T = any>(
+  async executeJSON<T = JSONParsableData>(
     command: string,
     args: string[] = [],
     options: Partial<ExecaOptions> = {}

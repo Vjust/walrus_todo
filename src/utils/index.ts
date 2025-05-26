@@ -8,6 +8,7 @@ export * from './lazy-loader';
 export * from './progress-indicators';
 export * from './interactive-mode';
 export * from './error-messages';
+export * from './union-type-utils';
 
 export function validateDate(dateStr: string): boolean {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -49,4 +50,85 @@ export function formatDate(date: Date = new Date()): string {
 
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Type guards and null safety utilities
+ */
+
+/**
+ * Safe array access with optional fallback
+ * @param array Array to access
+ * @param index Index to access
+ * @param fallback Optional fallback value
+ * @returns Element at index or fallback
+ */
+export function safeArrayAccess<T>(
+  array: T[] | undefined | null,
+  index: number,
+  fallback?: T
+): T | undefined {
+  if (!array || index < 0 || index >= array.length) {
+    return fallback;
+  }
+  return array[index];
+}
+
+/**
+ * Safe property access with type checking
+ * @param obj Object to access
+ * @param key Property key
+ * @returns Property value or undefined
+ */
+export function safePropertyAccess<T, K extends keyof T>(
+  obj: T | undefined | null,
+  key: K
+): T[K] | undefined {
+  return obj?.[key];
+}
+
+/**
+ * Type guard to check if value is not null or undefined
+ * @param value Value to check
+ * @returns True if value is defined
+ */
+export function isDefined<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
+
+/**
+ * Type guard to check if value is a non-empty string
+ * @param value Value to check
+ * @returns True if value is a non-empty string
+ */
+export function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+/**
+ * Type guard to check if value is a non-empty array
+ * @param value Value to check
+ * @returns True if value is a non-empty array
+ */
+export function isNonEmptyArray<T>(value: T[] | undefined | null): value is T[] {
+  return Array.isArray(value) && value.length > 0;
+}
+
+/**
+ * Safe object merge with null checks
+ * @param target Target object
+ * @param source Source object
+ * @returns Merged object
+ */
+export function safeMerge<T extends Record<string, unknown>>(
+  target: T | undefined | null,
+  source: Partial<T> | undefined | null
+): T {
+  if (!target) {
+    return (source as T) || ({} as T);
+  }
+  if (!source) {
+    return target;
+  }
+  return { ...target, ...source };
 }

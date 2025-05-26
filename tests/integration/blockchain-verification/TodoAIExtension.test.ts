@@ -2,6 +2,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../../../src/types/client';
+import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
 import { CLIError } from '../../../src/types/errors/consolidated';
@@ -41,7 +42,7 @@ class TodoAIExtension {
   ): Promise<{
     insights: Array<{ category: string; content: string }>;
     verified: boolean;
-    todoContent: any;
+    todoContent: unknown;
     blobId?: string;
   }> {
     const { verifyBlockchain = true } = options;
@@ -88,7 +89,7 @@ class TodoAIExtension {
         todoContent,
         blobId: todoId,
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Todo analysis failed: ${error instanceof Error ? error.message : String(error)}`,
         'AI_ANALYSIS_ERROR'
@@ -183,7 +184,7 @@ class TodoAIExtension {
           tokens: prompt.split(' ').length * 2, // Mocked token count
         },
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Todo generation failed: ${error instanceof Error ? error.message : String(error)}`,
         'AI_GENERATION_ERROR'
@@ -221,7 +222,7 @@ class TodoAIExtension {
       const metadata = await this.walrusClient.getBlobMetadata({
         blobId: todoId,
       });
-      const metadataObj = metadata?.V1 || {};
+      const metadataObj = metadata?.V1 || {} as Record<string, unknown>;
 
       // 4. Verify content integrity
       const contentIntact = true; // Mocked in tests
@@ -241,7 +242,7 @@ class TodoAIExtension {
           metadata: metadataObj,
         },
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Todo verification failed: ${error instanceof Error ? error.message : String(error)}`,
         'TODO_VERIFICATION_ERROR'
@@ -279,14 +280,14 @@ const mockSigner = {
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
   signTransactionBlock: async (
-    _transaction: any
+    _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: any): Promise<SignatureWithBytes> => ({
+  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -296,91 +297,16 @@ const mockSigner = {
 
 describe('TodoAIExtension Integration', () => {
   let aiExtension: TodoAIExtension;
-  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
+  let mockWalrusClient: CompleteWalrusClientMock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Create inline mock for WalrusClient with all required methods
-    mockWalrusClient = {
-      // Basic methods
-      getConfig: jest.fn().mockResolvedValue({
-        network: 'testnet',
-        version: '1.0.0',
-        maxSize: 1000000,
-      }),
-      getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest
-        .fn()
-        .mockResolvedValue({ used: '500', total: '2000' }),
-
-      // Blob operations - these will be set up specifically in each test
-      getBlobInfo: jest.fn(),
-      getBlobObject: jest
-        .fn()
-        .mockResolvedValue({ content: 'test', metadata: {} }),
-      verifyPoA: jest.fn(),
-      readBlob: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      writeBlob: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn().mockResolvedValue(1024),
-
-      // Storage operations
-      storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
-      }),
-      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
-        digest: 'test',
-        storage: {
-          id: { id: 'test' },
-          start_epoch: 0,
-          end_epoch: 52,
-          storage_size: '1000',
-        },
-      }),
-      executeCertifyBlobTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'cert-digest' }),
-      executeWriteBlobAttributesTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'attr-digest' }),
-      deleteBlob: jest
-        .fn()
-        .mockReturnValue(
-          jest.fn().mockResolvedValue({ digest: 'delete-digest' })
-        ),
-      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
-        blob: { blob_id: 'test' },
-        digest: 'register-digest',
-      }),
-      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
-        primary_verification: true,
-        provider: 'test-provider',
-      }),
-      createStorageBlock: jest.fn().mockResolvedValue({} as any),
-      createStorage: jest.fn().mockReturnValue(
-        jest.fn().mockResolvedValue({
-          digest: 'storage-digest',
-          storage: {
-            id: { id: 'storage-id' },
-            start_epoch: 0,
-            end_epoch: 52,
-            storage_size: '1000',
-          },
-        })
-      ),
-
-      // Utility methods
-      reset: jest.fn(),
-
-      // Optional experimental API
-      experimental: {
-        getBlobData: jest.fn().mockResolvedValue({}),
-      },
-    } as jest.Mocked<WalrusClientExt>;
+    mockWalrusClient = getMockWalrusClient();
+    
+    // Override specific methods for this test as needed
+    // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
 
     aiExtension = new TodoAIExtension(
       mockSuiClient,
@@ -535,8 +461,10 @@ describe('TodoAIExtension Integration', () => {
       expect(result.todo.priority).toBe('high');
       expect(result.todo.deadline).toBe(deadline.toISOString());
       expect(result.todo.blockchain).toBeDefined();
-      expect(result.todo.blockchain!.registered).toBe(true);
-      expect(result.todo.blockchain!.blobId).toBe('blockchain-todo-id');
+      if (result.todo.blockchain) {
+        expect(result.todo.blockchain.registered).toBe(true);
+        expect(result.todo.blockchain.blobId).toBe('blockchain-todo-id');
+      }
 
       // Verify generation details
       expect(result.generationDetails.model).toBe('advanced-model');

@@ -97,6 +97,23 @@ export interface StorageCommandFlags extends ParsedFlags {
 }
 
 /**
+ * Store command specific types
+ */
+export interface StoreCommandFlags extends ParsedFlags {
+  mock?: boolean;
+  todo?: string;
+  all?: boolean;
+  list?: string;
+  epochs?: number;
+  network?: string;
+  'batch-size'?: number;
+  retry?: boolean;
+  reuse?: boolean;
+  json?: boolean;
+  verbose?: boolean;
+}
+
+/**
  * Store file command specific types
  */
 export interface StoreFileCommandArgs extends ParsedArgs {

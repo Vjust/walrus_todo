@@ -1,10 +1,11 @@
 /**
-import { Logger } from '../../../src/utils/Logger';
-
-const logger = new Logger('walrus-setup');
  * Walrus Setup Configuration for Tests
  * Configures Walrus binary paths and API endpoints
  */
+
+import { Logger } from '../../../src/utils/Logger';
+
+const logger = new Logger('walrus-setup');
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -72,7 +73,7 @@ export function setupWalrusTestnet(): WalrusTestConfig {
         if (binaryExists && !config.mock) {
           try {
             fs.accessSync(config.binaryPath, fs.constants.X_OK);
-          } catch (_error) {
+          } catch (error) {
             logger.warn(
               `Walrus binary is not executable: ${config.binaryPath}`
             );
@@ -81,7 +82,7 @@ export function setupWalrusTestnet(): WalrusTestConfig {
         }
 
         return true;
-      } catch (_error) {
+      } catch (error) {
         logger.error('Error verifying Walrus setup:', error);
         return false;
       }
@@ -192,7 +193,7 @@ export async function cleanupTestEnvironment(
     if (config.mock && config.configPath.includes('test')) {
       await fs.promises.unlink(config.configPath).catch(() => {});
     }
-  } catch (_error) {
+  } catch (error) {
     logger.warn('Error cleaning up test environment:', error);
   }
 }

@@ -24,7 +24,7 @@ import axios from 'axios';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Secp256k1Keypair } from '@mysten/sui/keypairs/secp256k1';
 
-import { bcs } from '@mysten/sui/bcs';
+// import { _bcs } from '@mysten/sui/bcs';
 import { fromB64, toB64 } from '@mysten/sui/utils';
 
 import { NetworkType } from '../../../src/types/network';
@@ -147,9 +147,9 @@ export class SuiTestnetSetup {
         backupPath,
         fundingTxDigest,
       };
-    } catch (_error) {
-      logger.error('❌ Sui testnet setup failed:', _error);
-      throw _error;
+    } catch (error) {
+      logger.error('❌ Sui testnet setup failed:', error);
+      throw error;
     }
   }
 
@@ -165,9 +165,9 @@ export class SuiTestnetSetup {
         throw new Error('Invalid health check response');
       }
       logger.info('✅ Network connection successful');
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
-        `Failed to connect to Sui ${this.config.network}: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to connect to Sui ${this.config.network}: ${error instanceof Error ? error.message : String(error)}`,
         'NETWORK_CONNECTION_FAILED'
       );
     }
@@ -284,9 +284,9 @@ export class SuiTestnetSetup {
         networkUrl: NETWORK_URLS[this.config.network],
         balance: await this.getBalance(address),
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
-        `Failed to restore wallet from keystore: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to restore wallet from keystore: ${error instanceof Error ? error.message : String(error)}`,
         'KEYSTORE_RESTORE_FAILED'
       );
     }
@@ -337,9 +337,9 @@ export class SuiTestnetSetup {
 
         logger.info(`✅ Faucet request successful! Tx: ${txDigest}`);
         return txDigest;
-      } catch (_error) {
+      } catch (error) {
         lastError =
-          _error instanceof Error ? _error : new Error(String(_error));
+          error instanceof Error ? error : new Error(String(error));
 
         if (attempt < RETRY_ATTEMPTS) {
           logger.warn(`Faucet request attempt ${attempt} failed, retrying...`);
@@ -393,8 +393,8 @@ export class SuiTestnetSetup {
       });
 
       return balance.totalBalance;
-    } catch (_error) {
-      logger.warn('Failed to get balance:', _error);
+    } catch (error) {
+      logger.warn('Failed to get balance:', error);
       return '0';
     }
   }
@@ -445,10 +445,10 @@ export class SuiTestnetSetup {
 
       logger.info(`✅ Wallet backed up to: ${this.config.backupPath}`);
       return this.config.backupPath;
-    } catch (_error) {
-      logger.error('Failed to backup wallet:', _error);
+    } catch (error) {
+      logger.error('Failed to backup wallet:', error);
       throw new CLIError(
-        `Failed to backup wallet: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to backup wallet: ${error instanceof Error ? error.message : String(error)}`,
         'WALLET_BACKUP_FAILED'
       );
     }
@@ -500,9 +500,9 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
       fs.writeFileSync(envPath, envContent);
 
       logger.info('✅ Configuration files saved successfully');
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
-        `Failed to save configuration: ${_error instanceof Error ? _error.message : String(_error)}`,
+        `Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`,
         'CONFIG_SAVE_FAILED'
       );
     }
@@ -579,7 +579,7 @@ SUI_KEY_SCHEME=${wallet.keyScheme}
       );
 
       logger.info('✅ Sui CLI installed successfully');
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         'Failed to install Sui CLI. Please install Rust and try again.',
         'SUI_CLI_INSTALL_FAILED'
@@ -620,8 +620,8 @@ if (require.main === module) {
       if (result.backupPath) {
         logger.info('Backup:', result.backupPath);
       }
-    } catch (_error) {
-      logger.error('Setup failed:', _error);
+    } catch (error) {
+      logger.error('Setup failed:', error);
       process.exit(1);
     }
   })();

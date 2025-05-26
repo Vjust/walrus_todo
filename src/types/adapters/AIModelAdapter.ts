@@ -105,7 +105,7 @@ export interface AIRequestMetadata {
   timestamp?: number;
 
   /** Optional context data relevant to the request */
-  additionalContext?: Record<string, any>;
+  additionalContext?: Record<string, unknown>;
 
   /** Type of operation being performed (e.g., 'summarize', 'categorize') */
   operation?: string;
@@ -122,7 +122,7 @@ export interface AICompletionParams {
   prompt: string | PromptTemplate;
 
   /** Input variables to be used with a PromptTemplate */
-  input?: Record<string, any>;
+  input?: Record<string, unknown>;
 
   /** Configuration options for the AI model and request handling */
   options?: AIModelOptions;
@@ -165,7 +165,7 @@ export interface AIResponse<T = string> {
   timestamp: number;
 
   /** Additional metadata about the response */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -255,7 +255,7 @@ export interface AIModelAdapter {
    */
   processWithPromptTemplate(
     promptTemplate: PromptTemplate,
-    input: Record<string, any>
+    input: Record<string, unknown>
   ): Promise<AIResponse>;
 
   /**

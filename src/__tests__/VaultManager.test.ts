@@ -1,4 +1,4 @@
-import { VaultManager } from '../utils/VaultManager';
+import { VaultManager, BlobRecord } from '../utils/VaultManager';
 import * as fs from 'fs';
 import * as path from 'path';
 import { WalrusError } from '../types/error';
@@ -64,7 +64,7 @@ describe('VaultManager', () => {
   });
 
   describe('saveBlobRecord', () => {
-    let mockBlobRecord: any;
+    let mockBlobRecord: BlobRecord;
     let vaultId: string;
 
     beforeEach(() => {
@@ -192,13 +192,13 @@ describe('VaultManager', () => {
 
       const expiringBlobs = vaultManager.getExpiringBlobs(3); // Check next 3 days
       expect(expiringBlobs).toHaveLength(1);
-      expect(expiringBlobs[0].blobId).toBe('a'.repeat(64));
+      expect(expiringBlobs[0]?.blobId).toBe('a'.repeat(64));
     });
   });
 
   describe('updateBlobExpiry', () => {
     let vaultId: string;
-    let mockBlobRecord: any;
+    let mockBlobRecord: BlobRecord;
 
     beforeEach(() => {
       vaultId = vaultManager.createVault(mockVaultConfig);

@@ -161,7 +161,7 @@ export class Validator<T> {
     try {
       this.validate(value, context);
       return { valid: true };
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof ValidationError) {
         return { valid: false, error };
       }

@@ -115,7 +115,7 @@ export interface WalrusClientExt {
 
   // Experimental API for newer features
   experimental?: {
-    getBlobData: () => Promise<any>;
+    getBlobData: () => Promise<Uint8Array | BlobObject>;
   };
 }
 
@@ -131,10 +131,20 @@ export interface WalrusClient {
 
   // Blob operations
   readBlob(params: ReadBlobOptions): Promise<Uint8Array>;
-  writeBlob(options: any): Promise<any>;
-  getBlobInfo(blobId: string): Promise<any>;
-  getBlobObject(params: { blobId: string }): Promise<any>;
-  getBlobMetadata(params: ReadBlobOptions): Promise<any>;
+  writeBlob(options: {
+    blob: Uint8Array;
+    signer: Signer | Ed25519Keypair;
+    deletable?: boolean;
+    epochs?: number;
+    attributes?: Record<string, string>;
+    transaction?: Transaction;
+  }): Promise<{
+    blobId: string;
+    blobObject: BlobObject;
+  }>;
+  getBlobInfo(blobId: string): Promise<BlobInfo>;
+  getBlobObject(params: { blobId: string }): Promise<BlobObject>;
+  getBlobMetadata(params: ReadBlobOptions): Promise<BlobMetadataShape>;
   verifyPoA(params: { blobId: string }): Promise<boolean>;
   getBlobSize(blobId: string): Promise<number>;
 

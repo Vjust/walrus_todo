@@ -118,13 +118,14 @@ describe('AI Provider Abstraction', () => {
 
     // Common tests for all provider adapters
     const runProviderTests = (providerName: AIProvider, modelName: string) => {
-      let adapter: any;
+      let adapter: XAIModelAdapter | OpenAIModelAdapter;
 
       beforeEach(() => {
         // Create the appropriate adapter type
         if (providerName === AIProvider.XAI) {
           adapter = new XAIModelAdapter({ modelName, ...testOptions });
-        } else if (providerName === AIProvider.OPENAI) {
+        } else {
+          // Default to OpenAI for all other cases
           adapter = new OpenAIModelAdapter({ modelName, ...testOptions });
         }
       });

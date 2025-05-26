@@ -73,8 +73,9 @@ class ComprehensiveE2ETestRunner {
         )
       );
     } catch (error) {
-      logger.error(chalk.bold.red('\n❌ E2E Test Suite Failed:'), error);
-      this.generateFailureReport(error);
+      const errorObj = error instanceof Error ? error : new Error(String(error));
+      logger.error(chalk.bold.red('\n❌ E2E Test Suite Failed:'), errorObj);
+      this.generateFailureReport(errorObj);
       process.exit(1);
     }
   }
@@ -234,13 +235,13 @@ class ComprehensiveE2ETestRunner {
           failed: 1,
           skipped: 0,
           duration,
-          errors: [error.toString()],
+          errors: [error instanceof Error ? error.message : String(error)],
         };
         this.testResults.push(result);
 
         logger.info(chalk.red(`✗ ${testConfig.name} failed`));
         logger.info(
-          chalk.red(`  Error: ${error.toString().substring(0, 200)}...`)
+          chalk.red(`  Error: ${(error instanceof Error ? error.message : String(error)).substring(0, 200)}...`)
         );
       }
     }
@@ -268,9 +269,10 @@ class ComprehensiveE2ETestRunner {
         logger.info(chalk.green('✓ Smart contract deployment successful'));
         this.systemStatus.smartContract = true;
       } catch (error) {
+        const errorStr = error instanceof Error ? error.message : String(error);
         if (
-          error.toString().includes('already deployed') ||
-          error.toString().includes('Package ID already exists')
+          errorStr.includes('already deployed') ||
+          errorStr.includes('Package ID already exists')
         ) {
           logger.info(
             chalk.yellow(
@@ -354,9 +356,9 @@ class ComprehensiveE2ETestRunner {
     const failedMatch = output.match(/(\d+) failing/);
     const skippedMatch = output.match(/(\d+) pending/);
 
-    if (passedMatch) result.passed = parseInt(passedMatch[1]);
-    if (failedMatch) result.failed = parseInt(failedMatch[1]);
-    if (skippedMatch) result.skipped = parseInt(skippedMatch[1]);
+    if (passedMatch && passedMatch[1]) result.passed = parseInt(passedMatch[1], 10);
+    if (failedMatch && failedMatch[1]) result.failed = parseInt(failedMatch[1], 10);
+    if (skippedMatch && skippedMatch[1]) result.skipped = parseInt(skippedMatch[1], 10);
 
     // Extract error messages
     const errorLines = output
@@ -492,11 +494,12 @@ class ComprehensiveE2ETestRunner {
     logger.info(chalk.dim(`\n📝 Detailed report saved to: ${reportPath}`));
   }
 
-  private generateFailureReport(error: any): void {
+  private generateFailureReport(error: Error | unknown): void {
     logger.info(chalk.bold.red('\n💥 FAILURE REPORT\n'));
 
     logger.info(chalk.red('Error Details:'));
-    logger.info(chalk.red(`  ${error.message || error.toString()}`));
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.info(chalk.red(`  ${errorMessage}`));
 
     logger.info(chalk.yellow('\nSystem Status at Failure:'));
     Object.entries(this.systemStatus).forEach(([key, value]) => {

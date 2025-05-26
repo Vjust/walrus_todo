@@ -2,12 +2,10 @@ import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
 import {
   AIProvider,
-  AIModelOptions,
   AIModelAdapter,
 } from '../../src/types/adapters/AIModelAdapter';
 import {
   AIPrivacyLevel,
-  AIVerifierAdapter,
 } from '../../src/types/adapters/AIVerifierAdapter';
 import { Todo } from '../../src/types/todo';
 

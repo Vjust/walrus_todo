@@ -31,7 +31,7 @@ export interface EnhancedFetchOptions extends RequestInit {
 /**
  * Enhanced fetch response with additional metadata
  */
-export interface EnhancedFetchResponse<T = any> {
+export interface EnhancedFetchResponse<T = unknown> {
   /** Whether the request was successful */
   ok: boolean;
   /** The response data (parsed if parseJson was true) */
@@ -82,7 +82,7 @@ export class NetworkManager {
   /**
    * Enhanced fetch implementation with robust error handling, timeouts, and retries
    */
-  public static async fetch<T = any>(
+  public static async fetch<T = unknown>(
     url: string,
     options: EnhancedFetchOptions = {}
   ): Promise<EnhancedFetchResponse<T>> {
@@ -183,16 +183,16 @@ export class NetworkManager {
         }
 
         // Check if operation was aborted due to timeout
-        if (_error instanceof Error && _error.name === 'AbortError') {
-          throw new NetworkError(`Request aborted: ${_error.message}`, {
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new NetworkError(`Request aborted: ${error.message}`, {
             operation: operationName || 'fetch',
             recoverable: true,
-            cause: _error,
+            cause: error,
           });
         }
 
         // Rethrow other errors to be handled by AsyncOperationHandler
-        throw _error;
+        throw error;
       }
     };
 
@@ -238,7 +238,7 @@ export class NetworkManager {
       // This will only be reached if AsyncOperationHandler has an internal error
       const errorResponse: EnhancedFetchResponse<T> = {
         ok: false,
-        error: _error instanceof Error ? _error : new Error(String(_error)),
+        error: error instanceof Error ? error : new Error(String(error)),
         attempts: 1,
         timeTaken: 0,
       };
@@ -262,7 +262,7 @@ export class NetworkManager {
    * @param options Options for concurrent execution
    * @returns Array of fetch responses in the same order as the operations
    */
-  public static async fetchAll<T = any[]>(
+  public static async fetchAll<T = unknown[]>(
     operations: Array<{
       url: string;
       options?: EnhancedFetchOptions;
@@ -358,13 +358,13 @@ export class NetworkManager {
       return results;
     } catch (error) {
       if (throwErrors) {
-        throw _error;
+        throw error;
       }
 
       // Return error responses if not throwing
       return operations.map(() => ({
         ok: false,
-        error: _error instanceof Error ? _error : new Error(String(_error)),
+        error: error instanceof Error ? error : new Error(String(error)),
         attempts: 0,
         timeTaken: 0,
       }));
@@ -384,19 +384,19 @@ export class NetworkManager {
   /**
    * Creates a cancellable fetch operation that can be executed later
    */
-  public static createCancellableFetch<T = any>(
+  public static createCancellableFetch<T = unknown>(
     url: string,
     options: EnhancedFetchOptions = {}
   ): {
     execute: () => Promise<EnhancedFetchResponse<T>>;
-    abort: (reason?: any) => void;
+    abort: (reason?: unknown) => void;
   } {
     const controller = new AbortController();
 
     return {
       execute: () =>
         this.fetch<T>(url, { ...options, signal: controller.signal }),
-      abort: (reason?: any) => controller.abort(reason),
+      abort: (reason?: unknown) => controller.abort(reason),
     };
   }
 }

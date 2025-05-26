@@ -1,13 +1,13 @@
 import { jest } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+// import path from 'path';
 import crypto from 'crypto';
 import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
 import {
   CredentialType,
   AIPermissionLevel,
 } from '../../src/types/adapters/AICredentialAdapter';
-import { CLI_CONFIG } from '../../src/constants';
+// import { _CLI_CONFIG } from '../../src/constants';
 
 // Mock fs module
 jest.mock('fs', () => {
@@ -24,7 +24,7 @@ jest.mock('fs', () => {
     }),
     writeFileSync: jest
       .fn()
-      .mockImplementation((path: string, data: Buffer, options: any) => {
+      .mockImplementation((path: string, data: Buffer, _options: unknown) => {
         mockFileContent.set(path, data);
       }),
     readFileSync: jest.fn().mockImplementation((path: string) => {
@@ -241,7 +241,7 @@ describe('SecureCredentialStorage', () => {
     };
 
     // Set blockchain adapter
-    manager.setBlockchainAdapter(mockBlockchainAdapter as any);
+    manager.setBlockchainAdapter(mockBlockchainAdapter as unknown);
 
     // Create credential with blockchain verification
     await manager.setCredential(
@@ -281,12 +281,12 @@ describe('SecureCredentialStorage', () => {
       checkVerificationStatus: jest.fn().mockImplementation(() => {
         throw new Error(`Failed with key: sensitive-api-key-123`);
       }),
-    } as any);
+    } as unknown);
 
     // Get credential object for a verified credential to trigger verification
     try {
       // Mock credential object as verified
-      (manager as any).credentials['test-provider'] = {
+      (manager as unknown as { credentials: Record<string, unknown> }).credentials['test-provider'] = {
         id: 'cred-123',
         providerName: 'test-provider',
         credentialType: CredentialType.API_KEY,
@@ -299,7 +299,7 @@ describe('SecureCredentialStorage', () => {
       };
 
       await manager.getCredential('test-provider');
-    } catch (_error) {
+    } catch (error) {
       // Error should not contain the API key
       expect(String(error)).not.toContain('sensitive-api-key-123');
     }

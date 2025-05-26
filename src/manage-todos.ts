@@ -26,9 +26,11 @@ async function main() {
   // Complete the first todo
   if (list.todos.length > 0) {
     const firstTodo = list.todos[0];
-    Logger.getInstance().info(`Completing todo: ${firstTodo.title}`);
-    await todoService.toggleItemStatus(listName, firstTodo.id, true);
-    Logger.getInstance().info('Todo marked as completed');
+    if (firstTodo) {
+      Logger.getInstance().info(`Completing todo: ${firstTodo.title}`);
+      await todoService.toggleItemStatus(listName, firstTodo.id, true);
+      Logger.getInstance().info('Todo marked as completed');
+    }
   }
 
   // Show updated list

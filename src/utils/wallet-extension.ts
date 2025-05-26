@@ -6,9 +6,9 @@ import {
   messageWithIntent,
   SignatureWithBytes,
 } from '@mysten/sui/cryptography';
-import { type TransactionBlock } from '@mysten/sui/transactions';
+import { type Transaction } from '@mysten/sui/transactions';
 import { toB64 } from '@mysten/sui/utils';
-import { blake2b } from '@mysten/sui/cryptography/utils';
+import { blake2b } from '@mysten/sui/utils';
 
 /**
  * A simplified wallet extension signer that satisfies the Signer interface
@@ -89,7 +89,7 @@ export class WalletExtensionSigner extends Signer {
   }
 
   async signTransactionBlock(
-    transaction: TransactionBlock
+    transaction: Transaction
   ): Promise<SignatureWithBytes> {
     const bytes = await transaction.build({
       client: undefined,
@@ -123,5 +123,13 @@ export class WalletExtensionSigner extends Signer {
 
   getPublicKey(): PublicKey {
     return this.mockPublicKey;
+  }
+
+  async sign(data: Uint8Array): Promise<Uint8Array> {
+    return this.generateSignature(data);
+  }
+
+  getKeyScheme(): SignatureScheme {
+    return this._keyScheme;
   }
 }

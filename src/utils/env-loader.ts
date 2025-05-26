@@ -8,8 +8,8 @@
  * - Environment variables
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import dotenv from 'dotenv';
 import { envConfig } from './environment-config';
 import { Logger } from './Logger';
@@ -193,8 +193,8 @@ export function saveConfigToFile(configFile: string): void {
     for (const [key, meta] of Object.entries(metadata)) {
       if (meta.sensitive) {
         // If it's sensitive, save an empty string or asterisks to indicate the value exists
-        if (configData[key]) {
-          configData[key] = '********';
+        if (key in configData && configData[key]) {
+          (configData as Record<string, unknown>)[key] = '********';
         }
       }
     }

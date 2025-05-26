@@ -37,7 +37,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
         execSync('sui client switch --env testnet');
         logger.info('✓ Successfully switched to testnet');
       } catch (error) {
-        logger.error('❌ Failed to switch to testnet:', error);
+        logger.error('❌ Failed to switch to testnet:', error instanceof Error ? error : new Error(String(error)));
         logger.error('Please run: sui client switch --env testnet');
         return null;
       }
@@ -107,7 +107,7 @@ async function uploadDefaultImageToWalrus(useMockMode: boolean = false) {
 
     return imageUrl;
   } catch (error) {
-    logger.error('\n❌ Operation failed:', error);
+    logger.error('\n❌ Operation failed:', error instanceof Error ? error : new Error(String(error)));
 
     // Provide helpful error messages based on error type
     if (error instanceof Error) {

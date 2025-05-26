@@ -290,7 +290,7 @@ Local update was successful, but blockchain state may be out of sync.`);
                 walletAddress: '0x123...',
               });
             }
-            throw new Error(`File not mocked: ${String(filePath)}`);
+            throw new Error(`File not mocked: ${filePath}`);
           }
         );
 
@@ -310,7 +310,7 @@ Local update was successful, but blockchain state may be out of sync.`);
           '.waltodo',
           'config.json'
         );
-        const configContent = fs.readFileSync(configPath, 'utf8');
+        const configContent = fs.readFileSync(configPath, 'utf8') as string;
         const config = JSON.parse(configContent);
 
         expect(result).toContain('Command executed successfully');

@@ -55,7 +55,7 @@ export interface Permission {
    * Optional conditions that must be satisfied for the permission to apply.
    * Examples include time restrictions, IP limitations, or context-specific rules.
    */
-  conditions?: Record<string, any>;
+  conditions?: Record<string, string | number | boolean | null>;
 }
 
 /**
@@ -220,7 +220,7 @@ export interface PermissionUser {
   directPermissions: Permission[];
 
   /** Additional user-related data and settings */
-  metadata: Record<string, any>;
+  metadata: Record<string, string | number | boolean | null>;
 
   /** Unix timestamp when the user account was created */
   createdAt: number;
@@ -300,7 +300,7 @@ export interface AuditLogEntry {
   outcome: 'SUCCESS' | 'DENIED' | 'FAILED';
 
   /** Additional contextual information about the event */
-  metadata: Record<string, any>;
+  metadata: Record<string, string | number | boolean | null>;
 
   /** Source IP address of the user performing the action */
   ipAddress?: string;
@@ -333,7 +333,7 @@ export interface PermissionContext {
   action: ActionType | string;
 
   /** Additional contextual data for conditional permission evaluation */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 /**

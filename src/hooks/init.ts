@@ -6,7 +6,7 @@ import { validateStartup } from '../utils/startup-validator';
 // chalk imported but not used
 import { commandHistory } from '../utils/CommandHistory';
 import { commandRegistry } from '../utils/CommandRegistry';
-import { todoGroup } from '../commands/todos';
+// import { todoGroup } from '../commands/todos';
 import { Logger } from '../utils/Logger';
 
 /**
@@ -76,16 +76,19 @@ const commandRegistryHook: Hook<'init'> = async function (opts) {
   }
 
   // Register todo commands and groups
-  commandRegistry.registerGroup(todoGroup);
+  // TODO: Re-enable when todoGroup is available
+  // commandRegistry.registerGroup(todoGroup);
 
-  // Register all commands in the todo group
-  Object.entries(todoGroup.commands).forEach(([cmdName, cmdInfo]) => {
-    commandRegistry.registerCommand({
-      name: cmdName,
-      description: cmdInfo.description,
-      aliases: cmdInfo.aliases,
-      group: 'todos',
-    });
+  // Register basic commands manually
+  const basicCommands = [
+    { name: 'add', description: 'Add a new todo', aliases: ['a'], group: 'todos' },
+    { name: 'list', description: 'List todos', aliases: ['ls'], group: 'todos' },
+    { name: 'complete', description: 'Complete a todo', aliases: ['done'], group: 'todos' },
+    { name: 'delete', description: 'Delete a todo', aliases: ['del'], group: 'todos' },
+  ];
+  
+  basicCommands.forEach(cmd => {
+    commandRegistry.registerCommand(cmd);
   });
 
   // Register other common commands

@@ -8,6 +8,26 @@
 
 import { Logger } from '../../utils/Logger';
 
+// Define response object types
+interface ResponseWithText {
+  text: string;
+}
+
+interface ResponseWithContent {
+  content: string;
+}
+
+interface ResponseWithAnswer {
+  answer: string;
+}
+
+interface ResponseWithResult {
+  result: string;
+}
+
+// Remove unused type that was causing the error
+// type ResponseObject = ResponseWithText | ResponseWithContent | ResponseWithAnswer | ResponseWithResult;
+
 const logger = new Logger('ResponseParser');
 
 export class ResponseParser {
@@ -41,7 +61,7 @@ export class ResponseParser {
         // String representation to help with debugging
         logger.info(
           'Received non-string, non-matching type:',
-          typeof jsonStringOrObject
+          { type: typeof jsonStringOrObject }
         );
         return defaultValue;
       }
@@ -61,7 +81,8 @@ export class ResponseParser {
         processed = match[1].trim();
       }
 
-      return JSON.parse(processed) as T;
+      const parsed: unknown = JSON.parse(processed);
+      return parsed as T;
     } catch (_error) {
       logger.error('Error parsing JSON response:', _error);
       return defaultValue;
@@ -103,7 +124,8 @@ export class ResponseParser {
         // Try each match until we find valid JSON
         for (const match of matches) {
           try {
-            return JSON.parse(match) as T;
+            const parsed: unknown = JSON.parse(match);
+            return parsed as T;
           } catch (e) {
             // Continue to next match
           }
@@ -134,10 +156,10 @@ export class ResponseParser {
         case 'string':
           return typeof response === 'string'
             ? (response as unknown as T)
-            : response.text ||
-                response.content ||
-                response.answer ||
-                response.result ||
+            : (response && typeof response === 'object' && 'text' in response && typeof (response as ResponseWithText).text === 'string') ? (response as ResponseWithText).text :
+                (response && typeof response === 'object' && 'content' in response && typeof (response as ResponseWithContent).content === 'string') ? (response as ResponseWithContent).content :
+                (response && typeof response === 'object' && 'answer' in response && typeof (response as ResponseWithAnswer).answer === 'string') ? (response as ResponseWithAnswer).answer :
+                (response && typeof response === 'object' && 'result' in response && typeof (response as ResponseWithResult).result === 'string') ? (response as ResponseWithResult).result :
                 null;
 
         case 'array':
@@ -185,7 +207,8 @@ export class ResponseParser {
         continue;
       }
 
-      const value = response[key];
+      const responseRecord = response as Record<string, unknown>;
+      const value = responseRecord[key];
 
       // Check if the value exists and matches the expected type
       if (value === undefined) {

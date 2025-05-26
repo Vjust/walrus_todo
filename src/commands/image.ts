@@ -6,7 +6,7 @@ import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';
 import { NETWORK_URLS } from '../constants';
-import { SuiClient } from '../utils/adapters/sui-client-adapter';
+import { SuiClient } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // Removed unused chalk import
 import * as path from 'path';
@@ -74,13 +74,13 @@ export default class ImageCommand extends BaseCommand {
       // Setup SuiClient
       const suiClient = {
         url: NETWORK_URLS[config.network as keyof typeof NETWORK_URLS],
-        core: {},
-        jsonRpc: {},
+        core: Record<string, unknown>,
+        jsonRpc: Record<string, unknown>,
         signAndExecuteTransaction: async () => {},
         getEpochMetrics: async () => null,
         getObject: async () => null,
         getTransactionBlock: async () => null,
-      } as unknown as SuiClient;
+      } as unknown as typeof SuiClient;
 
       // Initialize WalrusImageStorage
       const walrusImageStorage = new WalrusImageStorage(suiClient);

@@ -1,14 +1,14 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('ResourceManager');
  * Resource Manager - Manages lifecycle of resources requiring explicit cleanup
  * Ensures resources are properly disposed even in error scenarios
  */
 
 import './polyfills/aggregate-error';
+import { Logger } from './Logger';
 import { BaseAdapter, isBaseAdapter } from '../types/adapters/BaseAdapter';
 import { ResourceManagerError } from '../types/errors/ResourceManagerError';
+
+const logger = new Logger('ResourceManager');
 
 /**
  * Types of managed resources
@@ -84,7 +84,7 @@ export class ResourceManager {
     if (this.autoDispose) {
       // Handle normal exit
       process.on('exit', () => {
-        this.disposeAll().catch(err => {
+        void this.disposeAll().catch(err => {
           logger.error('Error during resource cleanup on exit:', err);
         });
       });
@@ -92,7 +92,7 @@ export class ResourceManager {
       // Handle signals
       ['SIGINT', 'SIGTERM'].forEach(signal => {
         process.on(signal, () => {
-          this.disposeAll()
+          void this.disposeAll()
             .then(() => {
               process.exit(0);
             })
@@ -106,7 +106,7 @@ export class ResourceManager {
       // Handle uncaught exceptions
       process.on('uncaughtException', err => {
         logger.error('Uncaught exception:', err);
-        this.disposeAll()
+        void this.disposeAll()
           .then(() => {
             process.exit(1);
           })
@@ -122,7 +122,7 @@ export class ResourceManager {
       // Handle unhandled promise rejections
       process.on('unhandledRejection', reason => {
         logger.error('Unhandled promise rejection:', reason);
-        this.disposeAll()
+        void this.disposeAll()
           .then(() => {
             process.exit(1);
           })
@@ -342,9 +342,12 @@ export class ResourceManager {
 
     // If we collected errors and should throw, create an aggregate error
     if (errors.length > 0 && options.throwOnError) {
+      const aggregateError = typeof (globalThis as any).AggregateError !== 'undefined'
+        ? new (globalThis as any).AggregateError(errors)
+        : new Error(`Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`);
       throw new ResourceManagerError(
         `Failed to dispose ${errors.length} out of ${resources.length} resources of type "${type}"`,
-        new AggregateError(errors)
+        aggregateError
       );
     }
 
@@ -423,9 +426,12 @@ export class ResourceManager {
 
     // If we collected errors and should throw, create an aggregate error
     if (errors.length > 0 && options.throwOnError) {
+      const aggregateError = typeof (globalThis as any).AggregateError !== 'undefined'
+        ? new (globalThis as any).AggregateError(errors)
+        : new Error(`Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`);
       throw new ResourceManagerError(
         `Failed to dispose ${errors.length} resources during disposeAll`,
-        new AggregateError(errors)
+        aggregateError
       );
     }
   }

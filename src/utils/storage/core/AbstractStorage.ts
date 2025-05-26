@@ -1,7 +1,4 @@
 /**
-import { Logger } from '../../Logger';
-
-const logger = new Logger('AbstractStorage');
  * @fileoverview Abstract Storage Implementation - Base class for storage implementations
  *
  * This abstract class provides common functionality for all storage implementations,
@@ -9,6 +6,7 @@ const logger = new Logger('AbstractStorage');
  * for some methods. Storage implementations can extend this class to avoid duplicating code.
  */
 
+import { Logger } from '../../Logger';
 import { IStorage } from './IStorage';
 import {
   StorageInfo,
@@ -18,6 +16,8 @@ import {
 } from './StorageTypes';
 import { ValidationError } from '../../../types/errors/ValidationError';
 import crypto from 'crypto';
+
+const logger = new Logger('AbstractStorage');
 
 /**
  * Abstract base class for storage implementations that provides common functionality.

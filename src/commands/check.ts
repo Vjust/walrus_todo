@@ -9,7 +9,6 @@ import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 import chalk from 'chalk';
-import { CLIError } from '../types/errors/consolidated';
 import dotenv from 'dotenv';
 
 dotenv.config();

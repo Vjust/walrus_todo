@@ -87,9 +87,10 @@ export class LazyLoader {
       const module = await loadPromise;
       this.loadingPromises.delete(modulePath);
       return module;
-    } catch (error) {
+    } catch (error: unknown) {
       this.loadingPromises.delete(modulePath);
-      throw error;
+      const typedError = error instanceof Error ? error : new Error(String(error));
+      throw typedError;
     }
   }
 
@@ -111,7 +112,7 @@ export class LazyLoader {
         );
       });
 
-      const module = await Promise.race([loadPromise, timeoutPromise]);
+      const module = await Promise.race<T>([loadPromise, timeoutPromise]);
       const loadTime = Date.now() - startTime;
 
       const moduleInfo: ModuleInfo = {
@@ -135,9 +136,10 @@ export class LazyLoader {
       });
 
       return module;
-    } catch (error) {
-      this.logger.error(`Failed to load module: ${modulePath}`, error);
-      throw error;
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`Failed to load module: ${modulePath}`, typedError);
+      throw typedError;
     }
   }
 
@@ -180,7 +182,7 @@ export class LazyLoader {
     this.preloadQueue.delete(modulePath);
 
     // Preload in background
-    this.loadModuleInBackground(modulePath).finally(() => {
+    void this.loadModuleInBackground(modulePath).finally(() => {
       // Schedule next preload
       this.preloadTimer = setTimeout(
         () => this.scheduleNextPreload(),
@@ -215,8 +217,9 @@ export class LazyLoader {
       this.logger.debug(`Module preloaded: ${modulePath}`, {
         loadTime: `${loadTime}ms`,
       });
-    } catch (error) {
-      this.logger.warn(`Failed to preload module: ${modulePath}`, error);
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
+      this.logger.warn(`Failed to preload module: ${modulePath}`, typedError);
     }
   }
 
@@ -311,7 +314,7 @@ export function getGlobalLazyLoader(options?: LazyLoadOptions): LazyLoader {
 }
 
 // Export convenience functions
-export async function lazyLoad<T = any>(modulePath: string): Promise<T> {
+export async function lazyLoad<T = unknown>(modulePath: string): Promise<T> {
   const loader = getGlobalLazyLoader();
   return loader.load<T>(modulePath);
 }

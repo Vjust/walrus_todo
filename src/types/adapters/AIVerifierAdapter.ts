@@ -1,5 +1,4 @@
 import { SuiClient } from '@mysten/sui/client';
-// TransactionBlock imported but not used
 import { SignerAdapter } from './SignerAdapter';
 import { WalrusClientAdapter } from './WalrusClientAdapter';
 

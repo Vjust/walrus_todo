@@ -134,7 +134,7 @@ export default class AuditCommand extends BaseCommand {
   /**
    * Search audit logs
    */
-  private async searchLogs(flags: any): Promise<void> {
+  private async searchLogs(flags: Record<string, unknown>): Promise<void> {
     try {
       // Parse date filters
       let startDate: Date | undefined;
@@ -162,7 +162,7 @@ export default class AuditCommand extends BaseCommand {
         action: flags.action,
         resource: flags.resource,
         resourceId: flags['resource-id'],
-        outcome: flags.outcome as any,
+        outcome: flags.outcome as string,
         startDate,
         endDate,
         limit: flags.limit,
@@ -258,9 +258,9 @@ export default class AuditCommand extends BaseCommand {
   /**
    * Configure audit logging
    */
-  private async configureLogs(flags: any): Promise<void> {
+  private async configureLogs(flags: Record<string, unknown>): Promise<void> {
     try {
-      const config: any = {};
+      const config: Record<string, unknown> = {};
 
       if (flags['storage-type']) {
         config.storage = {

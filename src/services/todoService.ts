@@ -1,6 +1,6 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
-import path from 'path';
+import * as path from 'path';
 import { Todo, TodoList } from '../types/todo';
 import { STORAGE_CONFIG } from '../constants';
 import { generateId } from '../utils/id-generator';

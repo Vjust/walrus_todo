@@ -2439,26 +2439,27 @@ Todo saved locally only`);
 
     describe('AI Commands', () => {
       const MOCK_API_KEY = 'test-api-key-123';
-      const mockTodos = [
-        {
-          id: '1',
-          title: 'Complete financial report',
-          description: 'Q4 financial report for board meeting',
-          completed: false,
-        },
-        {
-          id: '2',
-          title: 'Update budget spreadsheet',
-          description: 'Include Q1 projections',
-          completed: false,
-        },
-        {
-          id: '3',
-          title: 'Schedule team meeting',
-          description: 'Weekly sync with development team',
-          completed: true,
-        },
-      ];
+      // Mock todos for testing (commented out unused variable)
+      // const _mockTodos = [
+      //   {
+      //     id: '1',
+      //     title: 'Complete financial report',
+      //     description: 'Q4 financial report for board meeting',
+      //     completed: false,
+      //   },
+      //   {
+      //     id: '2',
+      //     title: 'Update budget spreadsheet',
+      //     description: 'Include Q1 projections',
+      //     completed: false,
+      //   },
+      //   {
+      //     id: '3',
+      //     title: 'Schedule team meeting',
+      //     description: 'Weekly sync with development team',
+      //     completed: true,
+      //   },
+      // ];
 
       beforeEach(() => {
         (execSync as jest.Mock).mockReset();
@@ -3233,11 +3234,11 @@ Advanced analysis of your todos...`);
           }
         );
 
-        let savedMapping: any = null;
+        // Removed unused variable: let savedMapping: any = null;
         (fs.writeFileSync as jest.Mock).mockImplementation(
-          (path: string, data: any) => {
+          (path: string, _data: any) => {
             if (path === blobMappingPath) {
-              savedMapping = JSON.parse(data);
+              // savedMapping = JSON.parse(data); // Commented out unused assignment
             }
           }
         );

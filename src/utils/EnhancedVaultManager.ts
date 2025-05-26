@@ -1,18 +1,18 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('EnhancedVaultManager');
  * EnhancedVaultManager.ts
  * 
  * An improved secure storage system for API keys and sensitive credentials
  * with enhanced encryption, key rotation, and security features.
  */
 
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
+import { Logger } from './Logger';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as crypto from 'crypto';
 import { CLIError } from '../types/error';
 import { AI_CONFIG } from '../constants';
+
+const logger = new Logger('EnhancedVaultManager');
 
 interface SecretMetadata {
   id: string;
@@ -20,7 +20,7 @@ interface SecretMetadata {
   createdAt: number;
   updatedAt: number;
   expiresAt?: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   rotationDue?: number;
   rotationCount?: number;
   accessCount?: number;
@@ -228,7 +228,7 @@ export class EnhancedVaultManager {
     options: {
       expiryDays?: number;
       rotationDays?: number;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     } = {}
   ): Promise<string> {
     // Check for lockout
@@ -396,7 +396,8 @@ export class EnhancedVaultManager {
     }
 
     // Return a copy without the ID (to prevent direct file access)
-    const { id: _id, ...metadataCopy } = metadata; // eslint-disable-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, ...metadataCopy } = metadata;
     return metadataCopy;
   }
 

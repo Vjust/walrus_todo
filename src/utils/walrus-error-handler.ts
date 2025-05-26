@@ -189,7 +189,7 @@ export function mapToWalrusError(
 
     case ErrorCategory.VALIDATION:
       return new ValidationError(errorMessage, {
-        code: getErrorCode(category, operation),
+        message: errorMessage,
         recoverable: false, // Validation errors typically require user intervention
         cause: error instanceof Error ? error : undefined,
       });

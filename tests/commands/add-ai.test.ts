@@ -1,6 +1,7 @@
 import { aiService } from '../../src/services/ai';
 import AddCommand from '../../src/commands/add';
 import { TodoService } from '../../src/services/todoService';
+import { AddCommandArgs, AddCommandFlags, ParsedOutput } from '../../src/types/command-types';
 
 // Mock aiService
 jest.mock('../../src/services/ai', () => {
@@ -64,14 +65,14 @@ describe('Add Command with AI', () => {
 
   test('should add a todo with AI suggestions', async () => {
     // Mock parse to return ai flag as true
-    command.parse = jest.fn().mockResolvedValue({
-      args: { title: 'Test todo with AI' },
+    jest.spyOn(command, 'parse').mockResolvedValue({
+      args: { listOrTitle: 'Test todo with AI' } as AddCommandArgs,
       flags: {
         list: 'default',
         priority: 'medium',
         ai: true,
-      },
-    });
+      } as AddCommandFlags,
+    } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
 
     await command.run();
 
@@ -95,14 +96,14 @@ describe('Add Command with AI', () => {
     );
 
     // Mock parse to return ai flag as true
-    command.parse = jest.fn().mockResolvedValue({
-      args: { title: 'Test todo with AI error' },
+    jest.spyOn(command, 'parse').mockResolvedValue({
+      args: { listOrTitle: 'Test todo with AI error' } as AddCommandArgs,
       flags: {
         list: 'default',
         priority: 'medium',
         ai: true,
-      },
-    });
+      } as AddCommandFlags,
+    } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
 
     await command.run();
 
@@ -115,15 +116,15 @@ describe('Add Command with AI', () => {
 
   test('should use custom API key when provided', async () => {
     // Mock parse to return ai flag and apiKey
-    command.parse = jest.fn().mockResolvedValue({
-      args: { title: 'Test todo with custom API key' },
+    jest.spyOn(command, 'parse').mockResolvedValue({
+      args: { listOrTitle: 'Test todo with custom API key' } as AddCommandArgs,
       flags: {
         list: 'default',
         priority: 'medium',
         ai: true,
         apiKey: 'custom-api-key',
-      },
-    });
+      } as AddCommandFlags,
+    } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
 
     await command.run();
 

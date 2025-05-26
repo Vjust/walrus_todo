@@ -18,7 +18,7 @@ test.describe('Wallet Integration', () => {
 
   test('should detect wallet availability', async ({ page }) => {
     // Test without wallet extension
-    const noWalletMessage = await page.getByText('No wallets detected');
+    // const _noWalletMessage = await page.getByText('No wallets detected');
 
     // In a real test environment, this might show the "No wallets" message
     // or actual wallet buttons depending on the test setup
@@ -37,7 +37,7 @@ test.describe('Wallet Integration', () => {
     // Mock wallet connection
     await page.evaluate(() => {
       // Simulate Sui wallet injection
-      (window as any).suiWallet = {
+      (window as unknown as { suiWallet: object }).suiWallet = {
         hasPermissions: async () => true,
         requestPermissions: async () => true,
       };

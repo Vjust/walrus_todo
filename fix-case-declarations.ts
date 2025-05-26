@@ -3,63 +3,6 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-interface CaseFixPattern {
-  file: string;
-  line: number;
-  pattern: string;
-  replacement: string;
-}
-
-const patterns: CaseFixPattern[] = [
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts',
-    line: 84,
-    pattern: 'case \'truncated\':\n              const validBuffer',
-    replacement: 'case \'truncated\': {\n              const validBuffer'
-  },
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts', 
-    line: 193,
-    pattern: 'case \'malformed\':\n              const malformedData',
-    replacement: 'case \'malformed\': {\n              const malformedData'
-  },
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts',
-    line: 290,
-    pattern: 'case \'injection\':\n              const injectionData',
-    replacement: 'case \'injection\': {\n              const injectionData'
-  },
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts',
-    line: 303,
-    pattern: 'case \'overflow\':\n              const overflowBuffer',
-    replacement: 'case \'overflow\': {\n              const overflowBuffer'
-  },
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts',
-    line: 437,
-    pattern: 'case \'large\':\n              const largeTodo',
-    replacement: 'case \'large\': {\n              const largeTodo'
-  },
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts',
-    line: 452,
-    pattern: 'case \'special\':\n              const specialTodo',
-    replacement: 'case \'special\': {\n              const specialTodo'
-  },
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts',
-    line: 556,
-    pattern: 'case \'malformed\':\n              const malformedInput',
-    replacement: 'case \'malformed\': {\n              const malformedInput'
-  },
-  {
-    file: 'tests/fuzz/serialization-fuzzer.test.ts',
-    line: 568,
-    pattern: 'case \'truncated\':\n              const validJson',
-    replacement: 'case \'truncated\': {\n              const validJson'
-  }
-];
 
 function fixCaseDeclarations() {
   // Read the eslint output to get the exact files and lines
@@ -75,13 +18,13 @@ function fixCaseDeclarations() {
   for (const file of files) {
     try {
       const filePath = join(process.cwd(), file);
-      let content = readFileSync(filePath, 'utf8');
+      let content: string = readFileSync(filePath, 'utf8').toString();
       let modified = false;
       
       // Add block scopes for case declarations
       content = content.replace(
         /(case\s+[^:]+:\s*\n\s*)(const|let|function|class)\s/g,
-        (match, caseStart, declaration) => {
+        (match: string, caseStart: string, declaration: string) => {
           modified = true;
           return caseStart.slice(0, -1) + ' {\n' + caseStart.slice(-1) + declaration + ' ';
         }
@@ -100,7 +43,7 @@ function fixCaseDeclarations() {
 
       if (modified) {
         writeFileSync(filePath, content);
-        console.log(`Fixed case declarations in ${file}`);
+        // Fixed case declarations in file
       }
     } catch (error) {
       console.error(`Error processing ${file}:`, error);

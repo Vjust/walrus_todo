@@ -1,6 +1,5 @@
 import { execSync } from 'child_process';
 // Using compatibility adapter for SuiClient
-import { WalrusClient } from '@mysten/walrus';
 import {
   CLIError,
   StorageError,
@@ -10,7 +9,8 @@ import {
 import { handleError } from './error-handler';
 import { WalrusClientAdapter } from './adapters/walrus-client-adapter';
 import { Logger } from './Logger';
-import { WalrusClientExt } from '../types/client';
+import { WalrusClient, WalrusClientExt } from '../types/client';
+import { SuiClientType } from './adapters/sui-client-adapter';
 
 interface MoveStruct {
   [key: string]: unknown;
@@ -44,6 +44,36 @@ interface StorageVerification {
   };
 }
 
+interface SuiBalanceResponse {
+  totalBalance: string;
+}
+
+interface SuiSystemState {
+  epoch: number;
+}
+
+interface SuiOwnedObjectsResponse {
+  data: Array<{
+    data?: {
+      objectId: string;
+      content?: SuiParsedData;
+    };
+  }>;
+}
+
+interface StorageObjectFields {
+  storage_size: string;
+  used_size?: string;
+  end_epoch: number;
+}
+
+interface StorageUsageSummary {
+  id: string;
+  totalSize: number;
+  usedSize: number;
+  endEpoch: number;
+}
+
 export class StorageManager {
   private readonly logger = console;
   private readonly MIN_WAL_BALANCE = BigInt(100); // Minimum WAL tokens needed
@@ -52,7 +82,7 @@ export class StorageManager {
   private readonly MIN_EPOCH_BUFFER = 10; // Minimum remaining epochs
 
   constructor(
-    private suiClient: unknown,
+    private suiClient: SuiClientType,
     private walrusClient: WalrusClient | WalrusClientAdapter | WalrusClientExt,
     private address: string,
     private config?: {
@@ -107,13 +137,13 @@ export class StorageManager {
   }> {
     try {
       // Check WAL token balance
-      const walBalance: { totalBalance: string } = await (this.suiClient as { getBalance: (params: { owner: string; coinType: string }) => Promise<{ totalBalance: string }> }).getBalance({
+      const walBalance: SuiBalanceResponse = await this.suiClient.getBalance({
         owner: this.address,
         coinType: 'WAL',
       });
 
       // Get Storage Fund balance
-      const storageFundBalance: { totalBalance: string } = await (this.suiClient as { getBalance: (params: { owner: string; coinType: string }) => Promise<{ totalBalance: string }> }).getBalance({
+      const storageFundBalance: SuiBalanceResponse = await this.suiClient.getBalance({
         owner: this.address,
         coinType: '0x2::storage::Storage',
       });
@@ -183,7 +213,7 @@ export class StorageManager {
     currentEpoch: number
   ): Promise<StorageVerification> {
     try {
-      const response = await (this.suiClient as any).getOwnedObjects({
+      const response: SuiOwnedObjectsResponse = await this.suiClient.getOwnedObjects({
         owner: this.address,
         filter: { StructType: '0x2::storage::Storage' },
         options: { showContent: true },
@@ -197,11 +227,7 @@ export class StorageManager {
             return false;
 
           const moveContent = content as SuiParsedData & {
-            fields: {
-              storage_size: string;
-              used_size?: string;
-              end_epoch: number;
-            };
+            fields: StorageObjectFields;
           };
           if (!moveContent.fields) return false;
 
@@ -219,11 +245,11 @@ export class StorageManager {
           // Sort by remaining size (descending)
           const aContent =
             (a.data?.content as SuiParsedData & {
-              fields: { storage_size: string };
+              fields: Pick<StorageObjectFields, 'storage_size'>;
             }) || undefined;
           const bContent =
             (b.data?.content as SuiParsedData & {
-              fields: { storage_size: string };
+              fields: Pick<StorageObjectFields, 'storage_size'>;
             }) || undefined;
           const aSize = Number(aContent?.fields?.storage_size || 0);
           const bSize = Number(bContent?.fields?.storage_size || 0);
@@ -236,11 +262,7 @@ export class StorageManager {
 
       const fields = (
         suitableStorage.data.content as SuiParsedData & {
-          fields: {
-            storage_size: string;
-            used_size?: string;
-            end_epoch: number;
-          };
+          fields: StorageObjectFields;
         }
       ).fields;
       const remainingSize =
@@ -284,7 +306,7 @@ export class StorageManager {
       const balances = await this.checkBalances();
 
       // 3. Get current epoch
-      const systemState = await (this.suiClient as any).getLatestSuiSystemState();
+      const systemState: SuiSystemState = await this.suiClient.getLatestSuiSystemState();
       const epoch = systemState?.epoch;
       const currentEpoch = Number(epoch);
 
@@ -323,7 +345,7 @@ export class StorageManager {
   }
 
   async getSuiBalance(address: string): Promise<string> {
-    const balance = await (this.suiClient as { getBalance: (params: { owner: string; coinType: string }) => Promise<{ totalBalance: string }> }).getBalance({
+    const balance: SuiBalanceResponse = await this.suiClient.getBalance({
       owner: address,
       coinType: 'WAL',
     });
@@ -344,7 +366,7 @@ export class StorageManager {
     }>;
   }> {
     try {
-      const response = await (this.suiClient as any).getOwnedObjects({
+      const response: SuiOwnedObjectsResponse = await this.suiClient.getOwnedObjects({
         owner: address,
         filter: { StructType: '0x2::storage::Storage' },
         options: { showContent: true },
@@ -353,11 +375,7 @@ export class StorageManager {
       const storageObjects = response.data
         .map(item => {
           const content = item.data?.content as SuiParsedData & {
-            fields: {
-              storage_size: string;
-              used_size?: string;
-              end_epoch: number;
-            };
+            fields: StorageObjectFields;
           };
           if (!content?.fields) return null;
 
@@ -368,14 +386,14 @@ export class StorageManager {
             endEpoch: Number(content.fields.end_epoch),
           };
         })
-        .filter((item: any): item is NonNullable<typeof item> => item !== null);
+        .filter((item): item is StorageUsageSummary => item !== null);
 
       const totalAllocated = storageObjects.reduce(
-        (sum: any, obj: any) => sum + obj.totalSize,
+        (sum: number, obj: StorageUsageSummary) => sum + obj.totalSize,
         0
       );
       const totalUsed = storageObjects.reduce(
-        (sum: any, obj: any) => sum + obj.usedSize,
+        (sum: number, obj: StorageUsageSummary) => sum + obj.usedSize,
         0
       );
 

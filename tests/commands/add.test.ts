@@ -6,6 +6,7 @@ import { expect, describe, test, beforeEach } from '@jest/globals';
 import { createWalrusStorage } from '../../src/utils/walrus-storage';
 import { TodoService } from '../../src/services/todoService';
 import { CLIError } from '../../src/types/errors/consolidated';
+import { Todo } from '../../src/types/todo';
 
 import { createMockTodo } from '../helpers/test-utils';
 
@@ -14,17 +15,6 @@ import { createMockTodo } from '../helpers/test-utils';
 const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
 
 // Mock WalrusStorage
-const mockStorageError = new Error('Storage failed');
-// Future storage mocking infrastructure
-const _mockStorageMethods = {
-  connect: jest.fn().mockResolvedValue(undefined),
-  disconnect: jest.fn().mockResolvedValue(undefined),
-  storeTodo: jest.fn().mockRejectedValue(mockStorageError),
-  write: jest.fn().mockResolvedValue({ blobId: 'test-blob-id' }),
-  read: jest.fn(),
-  verify: jest.fn().mockResolvedValue(true),
-  delete: jest.fn(),
-};
 
 // TypeScript needs the correct mock return type here
 // Mock command implementation

@@ -36,7 +36,7 @@ export interface ValidationResult {
     field: string;
     message: string;
     code: string;
-    value?: any;
+    value?: unknown;
   }>;
 }
 
@@ -125,7 +125,7 @@ export class InputValidator {
    *   age: [InputValidator.inRange(18, 100, 'Age must be between 18-100', 'INVALID_AGE')]
    * });
    */
-  static validateObject<T extends Record<string, any>>(
+  static validateObject<T extends Record<string, unknown>>(
     data: T,
     schema: ValidationSchema,
     options: ValidationOptions = {
@@ -139,7 +139,7 @@ export class InputValidator {
 
     for (const [field, rules] of Object.entries(schema)) {
       if (field in data) {
-        const result = this.validate(data[field], rules, field, {
+        const result = this.validate((data as Record<string, unknown>)[field], rules, field, {
           ...options,
           throwOnFirstError: false,
           collectAllErrors: true,
@@ -185,7 +185,7 @@ export class InputValidator {
    * @param fieldName Name of the field
    * @returns Validation rule for required field
    */
-  static requiredRule(fieldName: string): ValidationRule<any> {
+  static requiredRule<T = unknown>(fieldName: string): ValidationRule<T> {
     return {
       test: value => this.required(value),
       message: `${fieldName} is required`,
@@ -300,7 +300,7 @@ export class InputValidator {
     sanitized = sanitized.replace(shellMetaChars, '\\$1');
 
     // Remove null bytes and other control characters
-    sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
+    sanitized = sanitized.replace(new RegExp('[' + String.fromCharCode(1) + '-' + String.fromCharCode(31) + String.fromCharCode(127) + ']', 'g'), '');
 
     // Normalize whitespace but preserve intentional spacing
     sanitized = sanitized.replace(/\s+/g, ' ').trim();
@@ -346,13 +346,13 @@ export class InputValidator {
    * @throws ValidationError if validation fails
    */
   static validateCommandFlags(
-    flags: Record<string, any>,
+    flags: Record<string, unknown>,
     requiredFlags: string[] = [],
     mutuallyExclusive: string[][] = []
   ): void {
     // Check required flags - properly handle false values
     const missingFlags = requiredFlags.filter(
-      flag => flags[flag] === undefined
+      flag => (flags as Record<string, unknown>)[flag] === undefined
     );
     if (missingFlags.length > 0) {
       throw new ValidationError(
@@ -366,7 +366,7 @@ export class InputValidator {
 
     // Check mutually exclusive flags - only consider defined values
     for (const group of mutuallyExclusive) {
-      const presentFlags = group.filter(flag => flags[flag] !== undefined);
+      const presentFlags = group.filter(flag => (flags as Record<string, unknown>)[flag] !== undefined);
       if (presentFlags.length > 1) {
         throw new ValidationError(
           `Cannot use these flags together: ${presentFlags.join(', ')}`,
@@ -413,10 +413,10 @@ export class InputValidator {
 
     // Check required vars
     for (const varName of required) {
-      if (!process.env[varName]) {
+      if (!(process.env as Record<string, string | undefined>)[varName]) {
         missing.push(varName);
       } else {
-        env[varName] = process.env[varName]!;
+        env[varName] = (process.env as Record<string, string>)[varName];
       }
     }
 
@@ -432,7 +432,7 @@ export class InputValidator {
 
     // Set optional vars with defaults
     for (const [varName, defaultValue] of Object.entries(optional)) {
-      env[varName] = process.env[varName] || defaultValue;
+      env[varName] = (process.env as Record<string, string | undefined>)[varName] || defaultValue;
     }
 
     return env;

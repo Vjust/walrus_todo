@@ -95,8 +95,8 @@ describe('AI Service Error Handling', () => {
         try {
           const result = await aiService.summarize(sampleTodos);
           results.push({ success: true, result });
-        } catch (error: any) {
-          results.push({ success: false, error: error.message });
+        } catch (error: unknown) {
+          results.push({ success: false, error: error instanceof Error ? error.message : String(error) });
         }
       }
 
@@ -158,8 +158,8 @@ describe('AI Service Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await aiService.summarize(sampleTodos);
-          } catch (error: any) {
-            if (attempts < maxAttempts - 1 && error.message?.includes('429')) {
+          } catch (error: unknown) {
+            if (attempts < maxAttempts - 1 && error instanceof Error && error.message?.includes('429')) {
               attempts++;
               await new Promise(resolve => setTimeout(resolve, backoffMs));
               backoffMs *= 2; // Exponential backoff
@@ -215,7 +215,7 @@ describe('AI Service Error Handling', () => {
     it('should truncate large inputs to prevent token limit errors', async () => {
       // Mock the tokenizer/truncator method
       const truncateSpy = jest
-        .spyOn(aiService as any, 'truncateInputForTokenLimit')
+        .spyOn(aiService as AIService & { truncateInputForTokenLimit: (todos: unknown[]) => unknown[] }, 'truncateInputForTokenLimit')
         .mockImplementation(todos => {
           // Return only first 3 todos with truncated descriptions
           return todos.slice(0, 3).map(todo => ({
@@ -233,7 +233,7 @@ describe('AI Service Error Handling', () => {
       }));
 
       // Make API call with truncation
-      const result = await aiService.summarize(largeTodos);
+      // const _result = await aiService.summarize(largeTodos); // Unused variable commented out
 
       // Verify truncation was used
       expect(truncateSpy).toHaveBeenCalled();
@@ -362,18 +362,14 @@ describe('AI Service Error Handling', () => {
       );
 
       // Implement fallback method on service
-      const withFallbackSpy = jest
-        .spyOn(aiService as any, 'withFallback')
+      jest
+        .spyOn(aiService as AIService & { withFallback: <T>(operation: () => Promise<T>, fallbackValue: T) => Promise<T> }, 'withFallback')
         .mockImplementation(async (operation, fallbackValue) => {
-          try {
-            return await operation();
-          } catch (error: any) {
-            return fallbackValue;
-          }
+          return operation().catch(() => fallbackValue);
         });
 
       // Call with fallback
-      const result = await (aiService as any).withFallback(
+      const result = await (aiService as AIService & { withFallback: <T>(operation: () => Promise<T>, fallbackValue: T) => Promise<T> }).withFallback(
         () => aiService.summarize(sampleTodos),
         'Fallback summary when AI is unavailable'
       );
@@ -400,7 +396,7 @@ describe('AI Service Error Handling', () => {
 
       // Implement local processing fallback
       const localProcessingSpy = jest
-        .spyOn(aiService as any, 'localProcessing')
+        .spyOn(aiService as AIService & { localProcessing: (todos: unknown[]) => string }, 'localProcessing')
         .mockImplementation(todos => {
           // Basic local processing implementation
           const completed = todos.filter(t => t.completed).length;
@@ -409,11 +405,11 @@ describe('AI Service Error Handling', () => {
         });
 
       // Create method with local fallback
-      const summarizeWithFallback = async (todos: any[]) => {
+      const summarizeWithFallback = async (todos: unknown[]) => {
         try {
           return await aiService.summarize(todos);
-        } catch (error: any) {
-          return (aiService as any).localProcessing(todos);
+        } catch (error: unknown) {
+          return (aiService as AIService & { localProcessing: (todos: unknown[]) => string }).localProcessing(todos);
         }
       };
 
@@ -483,7 +479,7 @@ describe('AI Service Error Handling', () => {
         while (attempts < maxAttempts) {
           try {
             return await aiService.summarize(sampleTodos);
-          } catch (error: any) {
+          } catch (error: unknown) {
             attempts++;
             if (attempts >= maxAttempts) throw error;
             await new Promise(resolve => setTimeout(resolve, 10));

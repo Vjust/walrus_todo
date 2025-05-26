@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+// Types imported for completeness but may not be used in current implementation
 import { AIService } from '../../services/ai/AIService.consolidated';
 import { TodoService } from '../../services/todoService';
 import { BaseError } from '../../types/errors/consolidated/BaseError';

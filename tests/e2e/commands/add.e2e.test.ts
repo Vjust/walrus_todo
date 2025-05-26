@@ -30,10 +30,11 @@ describe('Add Command E2E Tests', () => {
         encoding: 'utf8',
       });
       return { stdout, stderr: '' };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const execError = error as { stdout?: string; stderr?: string };
       return {
-        stdout: error.stdout || '',
-        stderr: error.stderr || '',
+        stdout: execError.stdout || '',
+        stderr: execError.stderr || '',
         error,
       };
     }
@@ -341,7 +342,7 @@ describe('Add Command E2E Tests', () => {
       const results = await Promise.all(promises);
 
       // All should succeed
-      results.forEach((result: any) => {
+      results.forEach((result: { error?: Error }) => {
         expect(result.error).toBeUndefined();
       });
 

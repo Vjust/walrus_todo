@@ -1,5 +1,4 @@
 // Import statements with CommonJS compatibility
-import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../types/client';
 import type {
   BlobMetadata,
@@ -8,6 +7,7 @@ import { CLIError } from '../types/errors/consolidated';
 import { handleError } from './error-handler';
 import { RetryManager, NetworkNode } from './retry-manager';
 import type { TransactionSigner } from '../types/signer';
+import { SuiClientType } from './adapters/sui-client-compatibility';
 import * as crypto from 'crypto';
 import { Logger } from './Logger';
 
@@ -58,7 +58,7 @@ export class BlobVerificationManager {
   private signer: TransactionSigner | null = null;
 
   constructor(
-    private suiClient: SuiClient,
+    private suiClient: SuiClientType,
     private walrusClient: WalrusClientExt,
     signer?: TransactionSigner
   ) {
@@ -299,7 +299,7 @@ export class BlobVerificationManager {
       const defaultMetadata = this.createDefaultMetadata();
       return {
         valid: false,
-        actualAttributes: {},
+        actualAttributes: {} as Record<string, never>,
         mismatches: [],
         metadata: defaultMetadata,
       };
@@ -436,7 +436,7 @@ export class BlobVerificationManager {
         // 5. Verify metadata if requested
         let metadataVerification = {
           valid: true,
-          actualAttributes: {} as Record<string, unknown>,
+          actualAttributes: {} as Record<string, never>,
           mismatches: [] as Array<{
             key: string;
             expected: unknown;

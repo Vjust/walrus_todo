@@ -2,13 +2,6 @@ import { SuiTestService } from '@/services/SuiTestService';
 // Mock contracts
 jest.mock('@/services/SuiTestService');
 
-class MockTodoListContract {
-  constructor(public address: string) {}
-  createList = jest.fn().mockResolvedValue({ id: 'list-123' });
-  addTodo = jest.fn().mockResolvedValue({ id: 'todo-123' });
-  updateTodo = jest.fn().mockResolvedValue({ success: true });
-  deleteTodo = jest.fn().mockResolvedValue({ success: true });
-}
 
 class MockNFTStorageContract {
   constructor(public address: string) {}
@@ -21,7 +14,6 @@ import { FuzzGenerator } from '../helpers/fuzz-generator';
 describe('Transaction Edge Cases', () => {
   const fuzzer = new FuzzGenerator();
   let suiService: SuiTestService;
-  let todoContract: MockTodoListContract;
   let nftContract: MockNFTStorageContract;
 
   beforeEach(() => {
@@ -30,7 +22,6 @@ describe('Transaction Edge Cases', () => {
       walletAddress: fuzzer.blockchainData().address(),
       encryptedStorage: false,
     });
-    todoContract = new MockTodoListContract('0x123');
     nftContract = new MockNFTStorageContract('0x456');
   });
 
@@ -63,6 +54,10 @@ describe('Transaction Edge Cases', () => {
       for (const todo of largeTodos) {
         await suiService.addTodo(listId, todo.text);
       }
+
+      // Verify all large todos were created successfully
+      const todos = await suiService.getTodos(listId);
+      expect(todos.length).toBe(largeTodos.length);
     });
   });
 
@@ -83,16 +78,15 @@ describe('Transaction Edge Cases', () => {
         );
 
       await Promise.all(
-        users.map(user =>
-          Promise.all([
-            user.addTodo(listId, fuzzer.string()),
-            user.getTodos(listId),
-            user.updateTodo(listId, fuzzer.string(), { completed: true }),
-          ]).catch((error: unknown) => {
-            expect(error).toBeInstanceOf(Error);
-            expect((error as Error).message).toContain('Unauthorized');
-          })
-        )
+        users.map(async user => {
+          await expect(
+            Promise.all([
+              user.addTodo(listId, fuzzer.string()),
+              user.getTodos(listId),
+              user.updateTodo(listId, fuzzer.string(), { completed: true }),
+            ])
+          ).rejects.toThrow(/Unauthorized/);
+        })
       );
     });
   });
@@ -103,17 +97,14 @@ describe('Transaction Edge Cases', () => {
 
       // Simulate network interruptions during operations
       const operations = async () => {
-        try {
-          await Promise.race([
+        await expect(
+          Promise.race([
             suiService.addTodo(listId, fuzzer.string()),
             new Promise((_, reject) =>
               setTimeout(() => reject(new Error('Network timeout')), 100)
             ),
-          ]);
-        } catch (error: unknown) {
-          expect(error).toBeInstanceOf(Error);
-          expect((error as Error).message).toMatch(/timeout|failed|error/i);
-        }
+          ])
+        ).rejects.toThrow(/timeout|failed|error/i);
       };
 
       await Promise.all(Array(10).fill(null).map(operations));
@@ -199,15 +190,12 @@ describe('Transaction Edge Cases', () => {
 
       await Promise.all(
         newOwners.map(async owner => {
-          try {
+          await expect(async () => {
             await nftContract.entry_transfer_nft(sender, nftId, owner);
             await nftContract.entry_update_metadata({ sender: owner }, nftId, {
               description: fuzzer.string(),
             });
-          } catch (error: unknown) {
-            expect(error).toBeInstanceOf(Error);
-            expect((error as Error).message).toMatch(/Unauthorized|not found/i);
-          }
+          }).rejects.toThrow(/Unauthorized|not found/i);
         })
       );
     });

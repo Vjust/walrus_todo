@@ -6,8 +6,6 @@ import {
 } from '../../../helpers/ai-test-utils';
 // MockXAIProvider is available through mocking
 import {
-  AIOperation,
-  AIModelType,
   AIProviderType,
 } from '../../../../src/services/ai/types';
 import type { Todo } from '../../../../src/types/todo';
@@ -97,7 +95,6 @@ describe('AIService', () => {
       });
 
       it('should handle categorization with custom categories', async () => {
-        const customCategories = ['Urgent', 'Later', 'Maybe'];
         mockProvider.setResponse('Urgent: Test Todo 2\nLater: Test Todo 1');
 
         await service.categorizeTodos(sampleTodos);
@@ -125,7 +122,6 @@ describe('AIService', () => {
       });
 
       it('should handle prioritization with context', async () => {
-        const context = 'Focus on work-related tasks';
         mockProvider.setResponse(
           '1. Test Todo 1 (Work-related)\n2. Test Todo 2'
         );
@@ -340,10 +336,6 @@ Line 3: Conclusion`;
 
     it('should handle operation timeouts', async () => {
       jest.useFakeTimers();
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Operation timeout')), 30000);
-      });
 
       const operationPromise = service.analyzeTodos(sampleTodos);
 

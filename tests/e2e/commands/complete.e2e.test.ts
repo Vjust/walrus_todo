@@ -3,6 +3,20 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 
+interface Todo {
+  id: string;
+  title: string;
+  completed: boolean;
+  status: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+interface CommandResult {
+  stdout: string;
+  stderr: string;
+}
+
 describe('E2E: complete command', () => {
   const testConfigDir = path.join(__dirname, '..', '..', '.test-config');
   const testDataFile = path.join(testConfigDir, 'todos.json');
@@ -16,16 +30,17 @@ describe('E2E: complete command', () => {
         env: { ...process.env, TODO_CONFIG_DIR: testConfigDir },
       });
       return { stdout, stderr: '' };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const execError = error as { stdout?: string; stderr?: string; message?: string };
       return {
-        stdout: error.stdout || '',
-        stderr: error.stderr || error.message,
+        stdout: execError.stdout || '',
+        stderr: execError.stderr || execError.message || '',
       };
     }
   };
 
   // Helper to add a test todo and get its ID
-  const addTodo = (title: string, aiGenerated: boolean = false): string => {
+  const addTodo = (title: string, _aiGenerated: boolean = false): string => {
     const result = runCommand(`walrus-todo add "${title}"`);
     const match = result.stdout.match(/Todo added with ID: ([\w-]+)/);
     if (!match) {
@@ -92,8 +107,8 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain(todoId);
 
       // Verify the todo is marked as completed
-      const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const todos: Todo[] = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
       expect(completedTodo.completed).toBe(true);
       expect(completedTodo.status).toBe('completed');
       expect(completedTodo.completedAt).toBeDefined();
@@ -109,7 +124,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain(todoId);
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
       expect(completedTodo.completed).toBe(true);
     });
 
@@ -125,7 +140,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain(todoId);
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
       expect(completedTodo.completed).toBe(true);
     });
 
@@ -141,7 +156,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('3 todos completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodos = todos.filter((t: any) => t.completed);
+      const completedTodos = todos.filter((t: Todo) => t.completed);
       expect(completedTodos).toHaveLength(3);
     });
 
@@ -165,7 +180,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
       expect(completedTodo.completionNote).toBe('Completed ahead of schedule');
     });
 
@@ -179,7 +194,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
       expect(completedTodo.category).toBe('work');
     });
   });
@@ -291,7 +306,7 @@ describe('E2E: complete command', () => {
     });
 
     it('should integrate with list command', () => {
-      const todoId1 = addTodo('Active todo');
+      addTodo('Active todo');
       const todoId2 = addTodo('To be completed');
 
       // Complete one todo
@@ -326,14 +341,14 @@ describe('E2E: complete command', () => {
       );
 
       return Promise.all(promises).then(results => {
-        const successCount = results.filter((r: any) =>
+        const successCount = results.filter((r: CommandResult) =>
           r.stdout.includes('completed successfully')
         ).length;
         expect(successCount).toBe(5);
 
         // Verify all todos are completed
         const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-        const completedCount = todos.filter((t: any) => t.completed).length;
+        const completedCount = todos.filter((t: Todo) => t.completed).length;
         expect(completedCount).toBe(5);
       });
     });
@@ -350,7 +365,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
       expect(completedTodo.title).toBe(specialTitle);
       expect(completedTodo.completed).toBe(true);
     });
@@ -364,7 +379,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
       expect(completedTodo.completed).toBe(true);
     });
 
@@ -388,7 +403,7 @@ describe('E2E: complete command', () => {
       expect(result.stdout).toContain('Todo completed successfully');
 
       const todos = JSON.parse(fs.readFileSync(testDataFile, 'utf8'));
-      const completedTodo = todos.find((t: any) => t.id === todoId);
+      const completedTodo = todos.find((t: Todo) => t.id === todoId);
 
       expect(completedTodo.completed).toBe(true);
       expect(completedTodo.aiGenerated).toBe(true);

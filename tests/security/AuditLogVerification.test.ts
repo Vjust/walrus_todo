@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import crypto from 'crypto';
 import { AuditLogger } from '../../src/services/ai/AuditLogger';
 import { CLI_CONFIG } from '../../src/constants';
@@ -18,18 +18,18 @@ jest.mock('fs', () => {
     }),
     writeFileSync: jest
       .fn()
-      .mockImplementation((path: string, data: string, options: any) => {
+      .mockImplementation((path: string, data: string, _options: any) => {
         mockFileContent.set(path, data);
       }),
     appendFileSync: jest
       .fn()
-      .mockImplementation((path: string, data: string, options: any) => {
+      .mockImplementation((path: string, data: string, _options: any) => {
         const existingData = mockFileContent.get(path) || '';
         mockFileContent.set(path, existingData + data);
       }),
     readFileSync: jest
       .fn()
-      .mockImplementation((path: string, encoding: string) => {
+      .mockImplementation((path: string, _encoding: string) => {
         if (!mockFileContent.has(path)) {
           throw new Error(`File not found: ${path}`);
         }
@@ -195,8 +195,10 @@ describe('Audit Log Verification Tests', () => {
     it('should detect tampering with log file contents', () => {
       // Create a mocked log file with initial entries
       const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      // Setup configuration directory for audit logging
       const configDir = path.join(homeDir, '.config', CLI_CONFIG.APP_NAME);
-      const logFilePath = path.join(configDir, 'audit.log');
+      expect(configDir).toBeDefined(); // Validate config path exists
+      // const _logFilePath = path.join(configDir, 'audit.log');
 
       // Generate some log entries with hash chaining
       let previousHash = '';

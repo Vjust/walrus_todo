@@ -1,7 +1,7 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
-import * as chalk from 'chalk';
+import chalk from 'chalk';
 import { CLIError } from '../../types/errors/consolidated';
 
 /**
@@ -203,7 +203,11 @@ export default class AIKeysCommand extends BaseCommand {
       });
 
       const selectedIndex = parseInt(response.backupIndex, 10) - 1;
-      backupId = backups[selectedIndex].id;
+      const selectedBackup = backups[selectedIndex];
+      if (!selectedBackup) {
+        throw new CLIError('Invalid backup selection', 'VALIDATION_ERROR');
+      }
+      backupId = selectedBackup.id;
     }
 
     const confirm = await this.confirm(
@@ -249,8 +253,8 @@ export default class AIKeysCommand extends BaseCommand {
   /**
    * Prompt for input - override BaseCommand method
    */
-  protected async promptInquirer(options: any): Promise<any> {
+  protected async promptInquirer(options: unknown): Promise<unknown> {
     const { default: inquirer } = await import('inquirer');
-    return inquirer.prompt(options);
+    return inquirer.prompt(options as Parameters<typeof inquirer.prompt>[0]);
   }
 }

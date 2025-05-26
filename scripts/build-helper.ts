@@ -73,7 +73,8 @@ let errors = 0;
 sourceFiles.forEach(fileName => {
   try {
     // Read the file
-    const sourceText = fs.readFileSync(fileName, 'utf8');
+    const fileContent = fs.readFileSync(fileName, 'utf8');
+    const sourceText = typeof fileContent === 'string' ? fileContent : fileContent.toString();
 
     // Transpile the file (no type checking)
     const { outputText } = ts.transpileModule(sourceText, {

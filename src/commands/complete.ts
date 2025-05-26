@@ -1,7 +1,6 @@
 import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '../utils/adapters/sui-client-adapter';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
@@ -14,7 +13,24 @@ import { RetryManager } from '../utils/retry-manager';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Todo } from '../types/todo';
-import { BufferEncoding } from 'node:fs';
+import { AppConfig } from '../types/config';
+
+// Define interface for parsed flags to fix property access
+interface CompleteCommandFlags {
+  id: string;
+  network?: string;
+  debug?: boolean;
+  verbose?: boolean;
+  output?: string;
+  mock?: boolean;
+  apiKey?: string;
+  help?: void;
+  timeout?: number;
+  force?: boolean;
+  quiet?: boolean;
+}
+
+// BufferEncoding type definition
 
 /**
  * @class CompleteCommand
@@ -118,9 +134,9 @@ export default class CompleteCommand extends BaseCommand {
    * @returns Protocol version string
    * @throws CLIError if connection fails
    */
-  private async getNetworkStatus(suiClient: unknown): Promise<string> {
+  private async getNetworkStatus(suiClient: { getLatestSuiSystemState: () => Promise<{ protocolVersion?: { toString(): string } }> }): Promise<string> {
     try {
-      const state = await (suiClient as any).getLatestSuiSystemState();
+      const state = await suiClient.getLatestSuiSystemState();
       return state?.protocolVersion?.toString() || 'unknown';
     } catch (error) {
       throw new CLIError(
@@ -146,7 +162,7 @@ export default class CompleteCommand extends BaseCommand {
     nftObjectId: string
   ): Promise<void> {
     try {
-      const result = await (suiClient as any).getObject({
+      const result = await (suiClient as { getObject: (params: { id: string; options: { showContent: boolean } }) => Promise<{ error?: { code: string }; data?: { content?: unknown } }> }).getObject({
         id: nftObjectId,
         options: { showContent: true },
       });
@@ -212,13 +228,13 @@ export default class CompleteCommand extends BaseCommand {
     packageId: string
   ): Promise<{ computationCost: string; storageCost: string }> {
     try {
-      const txb = new TransactionBlock();
+      const txb = new Transaction();
       txb.moveCall({
         target: `${packageId}::${TODO_NFT_CONFIG.MODULE_NAME}::complete_todo`,
         arguments: [txb.object(nftObjectId)],
       });
 
-      const dryRunResult = await (suiClient as any).dryRunTransactionBlock({
+      const dryRunResult = await (suiClient as { dryRunTransactionBlock: (params: { transactionBlock: string }) => Promise<{ effects?: { gasUsed?: { computationCost?: string; storageCost?: string } } }> }).dryRunTransactionBlock({
         transactionBlock: txb.serialize().toString(),
       });
 
@@ -243,7 +259,16 @@ export default class CompleteCommand extends BaseCommand {
    */
   private async updateConfigWithCompletion(todo: Todo): Promise<void> {
     try {
-      const config = await configService.getConfig();
+      const rawConfig = await configService.getConfig();
+      const config: AppConfig = {
+        activeNetwork: rawConfig.activeNetwork || 'testnet',
+        activeAccount: rawConfig.activeAccount || '',
+        storage: rawConfig.storage || { blobMappings: {}, allocation: {} },
+        todo: rawConfig.todo || { lists: [] },
+        walrus: rawConfig.walrus || {} as Record<string, unknown>,
+        sui: rawConfig.sui || {} as Record<string, unknown>,
+        ...rawConfig
+      } as AppConfig;
 
       // Initialize completed todos tracking if not exists
       if (!config.completedTodos) {
@@ -251,7 +276,7 @@ export default class CompleteCommand extends BaseCommand {
           count: 0,
           lastCompleted: null,
           history: [],
-          byCategory: {},
+          byCategory: {} as Record<string, number>,
         };
       }
 
@@ -266,6 +291,7 @@ export default class CompleteCommand extends BaseCommand {
         title: todo.title,
         completedAt: new Date().toISOString(),
         listName: todo.listName || 'default',
+        category: todo.category,
       });
 
       // Limit history size to prevent config file growth
@@ -280,17 +306,8 @@ export default class CompleteCommand extends BaseCommand {
           (config.completedTodos.byCategory[todo.category] || 0) + 1;
       }
 
-      // Add tags tracking if available
-      if (todo.tags && todo.tags.length > 0) {
-        config.completedTodos.byTag = config.completedTodos.byTag || {};
-        for (const tag of todo.tags) {
-          config.completedTodos.byTag[tag] =
-            (config.completedTodos.byTag[tag] || 0) + 1;
-        }
-      }
-
       // Write the config, using our custom wrapper to allow mocking in tests
-      await this.writeConfigSafe(config);
+      await this.writeConfigSafe(config as AppConfig);
     } catch (error) {
       // Non-blocking error - log but don't fail the command
       this.warning(
@@ -305,7 +322,7 @@ export default class CompleteCommand extends BaseCommand {
    *
    * @param config Configuration to write
    */
-  private async writeConfigSafe(config: Record<string, unknown>): Promise<void> {
+  private async writeConfigSafe(config: AppConfig): Promise<void> {
     try {
       // First try the standard config service method
       if (typeof configService.saveConfig === 'function') {
@@ -409,12 +426,14 @@ export default class CompleteCommand extends BaseCommand {
 
     try {
       const { args, flags } = await this.parse(CompleteCommand);
+      // Type assertion for flags to fix property access
+      const typedFlags = flags as CompleteCommandFlags;
 
       // Get config once to avoid redeclaration issues
       const config = await configService.getConfig();
 
       // Validate network
-      const network = flags.network || config.network || 'testnet';
+      const network = typedFlags.network || config.network || 'testnet';
       const networkUrl = this.validateNetwork(network);
 
       // Check list exists
@@ -425,12 +444,12 @@ export default class CompleteCommand extends BaseCommand {
 
       // Find todo by ID or title
       const todo = await this.todoService.getTodoByTitleOrId(
-        flags.id,
+        typedFlags.id,
         args.list
       );
       if (!todo) {
         throw new CLIError(
-          `Todo "${flags.id}" not found in list "${args.list}"`,
+          `Todo "${typedFlags.id}" not found in list "${args.list}"`,
           'TODO_NOT_FOUND'
         );
       }
@@ -467,15 +486,15 @@ export default class CompleteCommand extends BaseCommand {
           // Initialize NFT storage
           const signer = {} as Ed25519Keypair;
           suiNftStorage = new SuiNftStorage(suiClient, signer, {
-            address: config.lastDeployment.packageId,
-            packageId: config.lastDeployment.packageId,
+            address: config.lastDeployment?.packageId ?? '',
+            packageId: config.lastDeployment?.packageId ?? '',
           });
 
           // Estimate gas for the operation
           const gasEstimate = await this.estimateGasForNftUpdate(
             suiClient,
             todo.nftObjectId,
-            config.lastDeployment.packageId
+            config.lastDeployment?.packageId ?? ''
           );
           this.log(
             chalk.dim(
@@ -499,16 +518,16 @@ export default class CompleteCommand extends BaseCommand {
           this.log(chalk.blue('Updating NFT on blockchain...'));
           const txDigest = await RetryManager.retry(
             () =>
-              suiNftStorage.updateTodoNftCompletionStatus(todo.nftObjectId!),
+              suiNftStorage.updateTodoNftCompletionStatus(todo.nftObjectId || ''),
             {
               maxRetries: 3,
               initialDelay: 1000,
               onRetry: (error, attempt, _delay) => {
-                const errorMessage = error
-                  ? typeof error === 'object' && error && 'message' in error
-                    ? (error as Error).message
-                    : String(error)
-                  : 'Unknown error';
+                const errorMessage = error instanceof Error
+                  ? error.message
+                  : typeof error === 'object' && error !== null && 'message' in error && typeof (error as Record<string, unknown>).message === 'string'
+                    ? (error as Record<string, unknown>).message as string
+                    : String(error);
                 this.log(
                   chalk.yellow(
                     `Retry attempt ${attempt} after error: ${errorMessage}`
@@ -525,12 +544,12 @@ export default class CompleteCommand extends BaseCommand {
             async () => {
               try {
                 // Add timeout for verification to prevent hanging
-                let timeoutId: NodeJS.Timeout;
-                const verificationPromise = suiClient.getObject({
-                  id: todo.nftObjectId!,
+                const verificationPromise = (suiClient as { getObject: (params: { id: string; options: { showContent: boolean } }) => Promise<{ data?: { content?: unknown } }> }).getObject({
+                  id: todo.nftObjectId || '',
                   options: { showContent: true },
                 });
 
+                let timeoutId: NodeJS.Timeout;
                 const timeoutPromise = new Promise<never>((_, reject) => {
                   timeoutId = setTimeout(() => {
                     reject(
@@ -566,12 +585,10 @@ export default class CompleteCommand extends BaseCommand {
               maxRetries: 3,
               initialDelay: 2000,
               onRetry: (error, attempt, _delay) => {
-                const errorMessage =
-                  error &&
-                  typeof error === 'object' &&
-                  error &&
-                  'message' in error
-                    ? (error as Error).message
+                const errorMessage = error instanceof Error
+                  ? error.message
+                  : typeof error === 'object' && error !== null && 'message' in error && typeof (error as Record<string, unknown>).message === 'string'
+                    ? (error as Record<string, unknown>).message as string
                     : String(error);
                 this.log(
                   chalk.yellow(

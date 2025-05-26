@@ -92,20 +92,21 @@ export default class StoreFileCommand extends BaseCommand {
     }
   }
 
-  private async initializeStorage(flags: any): Promise<any> {
+  private async initializeStorage(flags: { mock?: boolean; verbose?: boolean }): Promise<import('../utils/walrus-storage-cli').WalrusStorage> {
     if (flags.verbose) {
       this.log(
         chalk.blue('Using mock storage') + (flags.mock ? ' (mock mode)' : '')
       );
     }
 
-    const storage = createWalrusStorage(flags.network, flags.mock);
+    const storage = createWalrusStorage(undefined, flags.mock);
 
     if (!flags.mock) {
       try {
         await storage.connect();
       } catch (error) {
-        if (error.code === 'WALRUS_CLI_NOT_FOUND') {
+        const errorObj = error as { code?: string };
+      if (errorObj.code === 'WALRUS_CLI_NOT_FOUND') {
           throw new CLIError(
             'Walrus CLI not found. Please install it from https://docs.wal.app',
             'WALRUS_CLI_NOT_FOUND'
@@ -120,8 +121,8 @@ export default class StoreFileCommand extends BaseCommand {
 
   private async storeSingleFile(
     filePath: string,
-    walrusStorage: any,
-    flags: any
+    walrusStorage: import('../utils/walrus-storage-cli').WalrusStorage,
+    flags: { verbose?: boolean; output?: string; epochs?: number }
   ): Promise<void> {
     if (flags.verbose) {
       this.log(chalk.gray(`Reading file: ${filePath}`));
@@ -170,8 +171,8 @@ export default class StoreFileCommand extends BaseCommand {
 
   private async storeBatchFiles(
     files: string[],
-    walrusStorage: any,
-    flags: any
+    walrusStorage: import('../utils/walrus-storage-cli').WalrusStorage,
+    flags: { verbose?: boolean; output?: string; epochs?: number }
   ): Promise<void> {
     const results = [];
 
@@ -199,13 +200,14 @@ export default class StoreFileCommand extends BaseCommand {
 
         this.log(`✓ ${fileName} → ${blobId} (Success)`);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         results.push({
           fileName,
-          error: error.message,
+          error: errorMessage,
           status: 'error',
         });
 
-        this.log(`✗ ${fileName} (Error: ${error.message})`);
+        this.log(`✗ ${fileName} (Error: ${errorMessage})`);
       }
     }
 

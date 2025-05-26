@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '../utils/adapters/sui-client-adapter';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { SuiClient } from '@mysten/sui.js/client';
+import { Transaction } from '@mysten/sui/transactions';
 import * as fs from 'fs';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import chalk from 'chalk';
@@ -127,7 +127,7 @@ export default class CreateCommand extends BaseCommand {
       }
 
       // Create todo NFT transaction with correct TransactionBlock
-      const txb = new TransactionBlock();
+      const txb = new Transaction();
       const args = [
         txb.pure(isPrivate ? 'Untitled' : title),
         txb.pure(description),

@@ -4,8 +4,9 @@
 
 import { Signer } from '@mysten/sui/cryptography';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { Transaction as TransactionBlock } from '@mysten/sui/transactions';
-import { Transaction } from './transaction';
+// Transaction types for future use
+// import { Transaction as SuiTransaction } from '@mysten/sui/transactions';
+// import { Transaction } from './transaction';
 
 // Walrus blob object structure
 export interface BlobObject {
@@ -135,7 +136,7 @@ export interface WriteBlobOptions {
   deletable?: boolean;
   epochs?: number;
   attributes?: Record<string, string>;
-  transaction?: TransactionBlock | Transaction;
+  transaction?: any; // TransactionBlock or Transaction type to be defined
   signal?: AbortSignal;
 }
 

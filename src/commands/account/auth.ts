@@ -324,6 +324,10 @@ export default class AuthCommand extends BaseCommand {
       }
 
       const user = validation.user;
+      if (!user) {
+        this.log(chalk.red('User information not available.'));
+        return;
+      }
       this.log(chalk.green(`Logged in as ${user.username}`));
       this.log(`User ID: ${user.id}`);
       this.log(`Roles: ${user.roles.join(', ')}`);
@@ -390,6 +394,10 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Change password
+      if (!validation.user) {
+        this.error('User not authenticated');
+        return;
+      }
       await authenticationService.changePassword(
         validation.user.id,
         currentPassword,
@@ -441,6 +449,10 @@ export default class AuthCommand extends BaseCommand {
       }
 
       // Create API key
+      if (!validation.user) {
+        this.error('User not authenticated');
+        return;
+      }
       const apiKey = await authenticationService.createApiKey(
         validation.user.id,
         name,
@@ -546,7 +558,7 @@ export default class AuthCommand extends BaseCommand {
 
     try {
       const data = fs.readFileSync(this.authTokenFilePath, 'utf-8');
-      return JSON.parse(data);
+      return JSON.parse(String(data));
     } catch (_error) {
       return null;
     }

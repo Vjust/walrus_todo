@@ -4,7 +4,7 @@ import { CLIError } from '../../types/errors/consolidated';
 import { TodoService } from '../../services/todoService';
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { NETWORK_URLS } from '../../constants';
-import { SuiClient } from '../../utils/adapters/sui-client-adapter';
+import { SuiClient } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 // Removed unused chalk import
 import { configService } from '../../services/config-service';

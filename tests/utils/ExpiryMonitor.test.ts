@@ -1,10 +1,12 @@
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient } from '../../src/types/client';
 import { ExpiryMonitor } from '../../src/utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../src/utils/VaultManager';
 import { StorageError } from '../../src/types/errors/consolidated';
 import { Signer } from '@mysten/sui/cryptography';
 // import * as childProcess from 'child_process';
 import { Logger } from '../../src/utils/Logger';
+// Unused imports removed during TypeScript cleanup
+// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
@@ -30,7 +32,7 @@ describe('ExpiryMonitor', () => {
     //   .mockReturnValue(Buffer.from('testnet\n'));
   });
 
-  const testConfig = {
+  const getTestConfig = () => ({
     checkInterval: 1000,
     warningThreshold: 7,
     autoRenewThreshold: 3,
@@ -40,7 +42,7 @@ describe('ExpiryMonitor', () => {
       checkThreshold: 20,
     },
     signer: mockSigner,
-  };
+  });
 
   beforeEach(() => {
     mockVaultManager = {
@@ -103,6 +105,16 @@ describe('ExpiryMonitor', () => {
           storage_size: '1000000',
         },
       }),
+      // Additional required methods
+      readBlob: jest.fn(),
+      writeBlob: jest.fn(),
+      getBlobInfo: jest.fn(),
+      storageCost: jest.fn(),
+      connect: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn(),
+      reset: jest.fn(),
     } as unknown as jest.Mocked<WalrusClient>;
 
     mockSigner = {
@@ -153,7 +165,7 @@ describe('ExpiryMonitor', () => {
       mockWarningHandler,
       mockRenewalHandler,
       {
-        ...testConfig,
+        ...getTestConfig(),
         signer: mockSigner,
       }
     );
@@ -401,7 +413,7 @@ describe('ExpiryMonitor', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to check blob expiry',
         expect.any(Error),
-        expect.objectContaining({ config: testConfig })
+        expect.objectContaining({ config: getTestConfig() })
       );
     });
   });

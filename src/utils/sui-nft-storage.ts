@@ -1,10 +1,12 @@
 import { 
-  SuiObjectResponse
+  SuiObjectResponse,
+  SuiTransactionBlockResponse,
+  SuiClientType
 } from './adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
-import { signTransactionCompatible } from './adapters/transaction-compatibility';
-// bcs import removed - not used in current implementation
+import { signTransactionCompatible, executeTransactionCompatible } from './adapters/transaction-compatibility';
+import { bcs } from '@mysten/sui/bcs';
 import { CLIError } from '../types/errors/consolidated';
 import { Todo } from '../types/todo';
 import { Logger } from './Logger';
@@ -49,14 +51,14 @@ interface TodoNftContent {
  *                                      and optional collection ID for NFT operations.
  */
 export class SuiNftStorage {
-  private readonly client: unknown;
+  private readonly client: SuiClientType;
   private readonly signer: Ed25519Keypair;
   private readonly config: SuiNFTStorageConfig;
   private readonly retryAttempts = 3;
   private readonly retryDelay = 1000; // ms
 
   constructor(
-    client: unknown,
+    client: SuiClientType,
     signer: Ed25519Keypair,
     config: SuiNFTStorageConfig
   ) {
@@ -67,15 +69,27 @@ export class SuiNftStorage {
 
   private async checkConnectionHealth(): Promise<boolean> {
     try {
-      // Try to get system state with compatibility handling
-      const systemState = await (this.client as any)?.getLatestSuiSystemState?.() || await (this.client as any)?.getSystemState?.();
-      if (!systemState || !(systemState as any)?.epoch) {
+      // Try to get system state with proper typing
+      const getLatestSuiSystemState = (this.client as any).getLatestSuiSystemState;
+      const getSystemState = (this.client as any).getSystemState;
+      
+      let systemState: any;
+      if (typeof getLatestSuiSystemState === 'function') {
+        systemState = await getLatestSuiSystemState();
+      } else if (typeof getSystemState === 'function') {
+        systemState = await getSystemState();
+      } else {
+        logger.warn('No system state method available');
+        return false;
+      }
+      
+      if (!systemState || !systemState.epoch) {
         logger.warn('Invalid system state response:', systemState);
         return false;
       }
       return true;
     } catch (error) {
-      logger.warn('Failed to check network health:', error);
+      logger.warn('Failed to check network health:', { error: error as any });
       return false;
     }
   }
@@ -140,8 +154,8 @@ export class SuiNftStorage {
     }
 
     logger.info('Preparing Todo NFT creation...');
-    logger.info('Title:', todo.title);
-    logger.info('Walrus Blob ID:', walrusBlobId);
+    logger.info('Title:', { title: todo.title });
+    logger.info('Walrus Blob ID:', { walrusBlobId });
 
     try {
       // Create a transaction block instance
@@ -149,10 +163,10 @@ export class SuiNftStorage {
       tx.moveCall({
         target: `${this.config.packageId}::todo_nft::create_todo_nft`,
         arguments: [
-          tx.pure(todo.title, 'string'),
-          tx.pure(todo.description || '', 'string'),
-          tx.pure(walrusBlobId, 'string'),
-          tx.pure(false),
+          tx.pure(bcs.string().serialize(todo.title).toBytes()),
+          tx.pure(bcs.string().serialize(todo.description || '').toBytes()),
+          tx.pure(bcs.string().serialize(walrusBlobId).toBytes()),
+          tx.pure(bcs.bool().serialize(false).toBytes()),
           tx.object(this.config.collectionId || ''),
         ],
       });
@@ -164,27 +178,25 @@ export class SuiNftStorage {
             const serializedTx = await tx.build({ client: this.client });
 
             // Sign the transaction block with compatibility handling
-            const signature = await signTransactionCompatible(this.signer, serializedTx);
+            const signature = await signTransactionCompatible(this.signer as any, serializedTx);
 
-            // Get transaction bytes for execution
-            const txBytes = await tx.serialize();
-
-            const response = await (this.client as any).executeTransactionBlock({
-              transactionBlock: txBytes,
+            // Execute the transaction with compatibility handling
+            const response = await executeTransactionCompatible(this.client as any, {
+              transactionBlock: serializedTx,
               signature: signature.signature,
               requestType: 'WaitForLocalExecution',
               options: {
                 showEffects: true,
                 showEvents: true,
               },
-            });
+            }) as SuiTransactionBlockResponse;
 
             if (
               !response.effects?.status?.status ||
               response.effects.status.status !== 'success'
             ) {
               throw new Error(
-                response.effects?.status?.error || 'Unknown error'
+                (response.effects?.status as { error?: string })?.error || 'Unknown error'
               );
             }
 
@@ -192,7 +204,7 @@ export class SuiNftStorage {
               throw new Error('NFT creation failed: no NFT was created');
             }
 
-            return response.digest;
+            return response.digest || '';
           } catch (error) {
             throw new CLIError(
               `Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`,
@@ -223,19 +235,24 @@ export class SuiNftStorage {
     }
 
     const objectId = await this.normalizeObjectId(nftId);
-    logger.info('Retrieving Todo NFT with object ID:', objectId);
+    logger.info('Retrieving Todo NFT with object ID:', { objectId });
     logger.info('Retrieving NFT object data...');
 
     return await this.executeWithRetry(
       async () => {
-        const response = (await (this.client as any).getObject({
+        const getObject = (this.client as any).getObject;
+        if (typeof getObject !== 'function') {
+          throw new Error('getObject method not available on client');
+        }
+        
+        const response = await getObject({
           id: objectId,
           options: {
             showDisplay: true,
             showContent: true,
             showType: true,
           },
-        })) as SuiObjectResponse;
+        }) as SuiObjectResponse;
 
         if (!response.data) {
           throw new CLIError(
@@ -272,7 +289,10 @@ export class SuiNftStorage {
     const tx = new Transaction();
     tx.moveCall({
       target: `${this.config.packageId}::todo_nft::update_completion_status`,
-      arguments: [tx.object(nftId), tx.pure(true, 'bool')],
+      arguments: [
+        tx.object(nftId), 
+        tx.pure(bcs.bool().serialize(true).toBytes())
+      ],
     });
 
     return await this.executeWithRetry(
@@ -282,28 +302,26 @@ export class SuiNftStorage {
           const serializedTx = await tx.build({ client: this.client });
 
           // Sign the transaction block with compatibility handling
-          const signature = await signTransactionCompatible(this.signer, serializedTx);
+          const signature = await signTransactionCompatible(this.signer as any, serializedTx);
 
-          // Get transaction bytes for execution
-          const txBytes = await tx.serialize();
-
-          const response = await (this.client as any).executeTransactionBlock({
-            transactionBlock: txBytes,
+          // Execute the transaction with compatibility handling
+          const response = await executeTransactionCompatible(this.client as any, {
+            transactionBlock: serializedTx,
             signature: signature.signature,
             requestType: 'WaitForLocalExecution',
             options: {
               showEffects: true,
             },
-          });
+          }) as SuiTransactionBlockResponse;
 
           if (
             !response.effects?.status?.status ||
             response.effects.status.status !== 'success'
           ) {
-            throw new Error(response.effects?.status?.error || 'Unknown error');
+            throw new Error((response.effects?.status as { error?: string })?.error || 'Unknown error');
           }
 
-          return response.digest;
+          return response.digest || '';
         } catch (error) {
           throw new CLIError(
             `Failed to execute transaction: ${error instanceof Error ? error.message : String(error)}`,
@@ -319,37 +337,41 @@ export class SuiNftStorage {
   private async normalizeObjectId(idOrDigest: string): Promise<string> {
     if (idOrDigest.length === 44) {
       logger.info(
-        'Object ID',
-        idOrDigest,
-        'appears to be a transaction digest, not an object ID'
+        `Object ID ${idOrDigest} appears to be a transaction digest, not an object ID`
       );
       logger.info(
         'Attempting to get the actual object ID from the transaction effects...'
       );
 
-      const tx = await (this.client as any).getTransactionBlock({
+      const getTransactionBlock = (this.client as any).getTransactionBlock;
+      if (typeof getTransactionBlock !== 'function') {
+        throw new CLIError('getTransactionBlock method not available on client', 'SUI_CLIENT_ERROR');
+      }
+      
+      const tx = await getTransactionBlock({
         digest: idOrDigest,
         options: {
           showEffects: true,
         },
-      });
+      }) as Record<string, any>;
 
-      if (!tx.effects?.created?.length) {
+      const effects = tx.effects as { created?: Array<Record<string, unknown>> };
+      if (!effects?.created?.length) {
         throw new CLIError(
           'No NFT was created in this transaction',
           'SUI_INVALID_TRANSACTION'
         );
       }
 
-      const nftObject = tx.effects.created.find((obj: unknown) => {
+      const nftObject = effects.created.find((obj: Record<string, unknown>) => {
         return (
           obj &&
-          typeof obj === 'object' &&
           'reference' in obj &&
           obj.reference &&
           typeof obj.reference === 'object' &&
+          obj.reference !== null &&
           'objectId' in obj.reference &&
-          typeof obj.reference.objectId === 'string'
+          typeof (obj.reference as Record<string, unknown>).objectId === 'string'
         );
       });
 
@@ -357,7 +379,9 @@ export class SuiNftStorage {
         !nftObject ||
         !('reference' in nftObject) ||
         !nftObject.reference ||
-        !('objectId' in nftObject.reference)
+        typeof nftObject.reference !== 'object' ||
+        nftObject.reference === null ||
+        !('objectId' in (nftObject.reference as Record<string, unknown>))
       ) {
         throw new CLIError(
           'Could not find created NFT in transaction',
@@ -365,8 +389,8 @@ export class SuiNftStorage {
         );
       }
 
-      const objectId = nftObject.reference.objectId;
-      logger.info('Found TodoNFT object:', objectId);
+      const objectId = (nftObject.reference as Record<string, unknown>).objectId as string;
+      logger.info('Found TodoNFT object:', { objectId });
       return objectId;
     }
 

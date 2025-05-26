@@ -1,8 +1,11 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
+import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../../../src/types/client';
+import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 import { BlobVerificationManager } from '../../../src/utils/blob-verification';
+import { CLIError } from '../../../src/types/errors/consolidated';
 
 // Mock Verification Flow Controller
 class VerificationFlowController {
@@ -95,7 +98,7 @@ class VerificationFlowController {
       if (Object.keys(metadata).length > 0) {
         // console.log('Adding metadata...'); // Removed console statement
 
-        const tx = new TransactionBlock();
+        const tx = new Transaction();
         await this.walrusClient.executeWriteBlobAttributesTransaction({
           blobId,
           attributes: metadata,
@@ -139,7 +142,7 @@ class VerificationFlowController {
           };
 
           // console.log('Monitoring completed successfully.'); // Removed console statement
-        } catch (_error) {
+        } catch (error) {
           monitoringResult = {
             successful: false,
             attempts: 3,
@@ -157,7 +160,7 @@ class VerificationFlowController {
         monitoringResult,
         registrationTransaction: 'mock-transaction-digest',
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Verification flow failed: ${error instanceof Error ? error.message : String(error)}`,
         'VERIFICATION_FLOW_ERROR'
@@ -232,7 +235,7 @@ class VerificationFlowController {
           size: parseInt(blobInfo.size),
         },
       };
-    } catch (_error) {
+    } catch (error) {
       throw new CLIError(
         `Verification of existing data failed: ${error instanceof Error ? error.message : String(error)}`,
         'VERIFICATION_ERROR'
@@ -275,14 +278,14 @@ const mockSigner = {
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
   signTransactionBlock: async (
-    _transaction: any
+    _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: any): Promise<SignatureWithBytes> => ({
+  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -292,91 +295,16 @@ const mockSigner = {
 
 describe('Verification Flow End-to-End', () => {
   let flowController: VerificationFlowController;
-  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
+  let mockWalrusClient: CompleteWalrusClientMock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Create inline mock for WalrusClient with all required methods
-    mockWalrusClient = {
-      // Basic methods
-      getConfig: jest.fn().mockResolvedValue({
-        network: 'testnet',
-        version: '1.0.0',
-        maxSize: 1000000,
-      }),
-      getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest
-        .fn()
-        .mockResolvedValue({ used: '500', total: '2000' }),
-
-      // Blob operations - these will be set up specifically in each test
-      getBlobInfo: jest.fn(),
-      getBlobObject: jest
-        .fn()
-        .mockResolvedValue({ content: 'test', metadata: {} }),
-      verifyPoA: jest.fn(),
-      readBlob: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      writeBlob: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn().mockResolvedValue(1024),
-
-      // Storage operations
-      storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
-      }),
-      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
-        digest: 'test',
-        storage: {
-          id: { id: 'test' },
-          start_epoch: 0,
-          end_epoch: 52,
-          storage_size: '1000',
-        },
-      }),
-      executeCertifyBlobTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'cert-digest' }),
-      executeWriteBlobAttributesTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'attr-digest' }),
-      deleteBlob: jest
-        .fn()
-        .mockReturnValue(
-          jest.fn().mockResolvedValue({ digest: 'delete-digest' })
-        ),
-      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
-        blob: { blob_id: 'test' },
-        digest: 'register-digest',
-      }),
-      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
-        primary_verification: true,
-        provider: 'test-provider',
-      }),
-      createStorageBlock: jest.fn().mockResolvedValue({} as any),
-      createStorage: jest.fn().mockReturnValue(
-        jest.fn().mockResolvedValue({
-          digest: 'storage-digest',
-          storage: {
-            id: { id: 'storage-id' },
-            start_epoch: 0,
-            end_epoch: 52,
-            storage_size: '1000',
-          },
-        })
-      ),
-
-      // Utility methods
-      reset: jest.fn(),
-
-      // Optional experimental API
-      experimental: {
-        getBlobData: jest.fn().mockResolvedValue({}),
-      },
-    } as jest.Mocked<WalrusClientExt>;
+    mockWalrusClient = getMockWalrusClient();
+    
+    // Override specific methods for this test as needed
+    // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
 
     flowController = new VerificationFlowController(
       mockSuiClient,
@@ -461,9 +389,13 @@ describe('Verification Flow End-to-End', () => {
       expect(result.uploadResult.poaComplete).toBe(true);
       expect(result.uploadResult.hasMinProviders).toBe(true);
       expect(result.verificationResult).toBeDefined();
-      expect(result.verificationResult!.success).toBe(true);
+      if (result.verificationResult) {
+        expect(result.verificationResult.success).toBe(true);
+      }
       expect(result.monitoringResult).toBeDefined();
-      expect(result.monitoringResult!.successful).toBe(true);
+      if (result.monitoringResult) {
+        expect(result.monitoringResult.successful).toBe(true);
+      }
 
       // Verify client calls
       expect(mockWalrusClient.writeBlob).toHaveBeenCalled();
@@ -536,7 +468,9 @@ describe('Verification Flow End-to-End', () => {
 
       // Data verification should fail because content is modified
       expect(result.verificationResult).toBeDefined();
-      expect(result.verificationResult!.success).toBe(false);
+      if (result.verificationResult) {
+        expect(result.verificationResult.success).toBe(false);
+      }
     });
 
     it('should handle errors during the verification flow', async () => {

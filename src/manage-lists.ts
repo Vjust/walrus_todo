@@ -68,7 +68,7 @@ async function main() {
         Logger.getInstance().info(`   Tags: ${todo.tags.join(', ')}`);
       });
     }
-  } catch (_error) {
+  } catch (error) {
     if (error instanceof Error && error.message.includes('already exists')) {
       Logger.getInstance().info('List already exists, skipping creation');
 

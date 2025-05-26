@@ -1,6 +1,30 @@
 import chalk from 'chalk';
-import ora from 'ora';
 import type { Ora } from 'ora';
+
+// Safe ora import with fallback
+let ora: typeof import('ora').default | (() => { start: () => { succeed: () => void; fail: () => void; stop: () => void }; succeed: () => void; fail: () => void; stop: () => void });
+try {
+  // Using import instead of require - still dynamic for safety
+  void import('ora').then(module => {
+    ora = module.default || module;
+  }).catch(() => {
+    // Fallback for missing ora
+    ora = () => ({
+      start: () => ({ succeed: () => {}, fail: () => {}, stop: () => {} }),
+      succeed: () => {},
+      fail: () => {},
+      stop: () => {}
+    });
+  });
+} catch {
+  // Fallback for missing ora
+  ora = () => ({
+    start: () => ({ succeed: () => {}, fail: () => {}, stop: () => {} }),
+    succeed: () => {},
+    fail: () => {},
+    stop: () => {}
+  });
+}
 import { CLIError } from './error-handler';
 import { Logger } from './Logger';
 
@@ -17,7 +41,7 @@ export class SpinnerManager {
     const oraFn =
       typeof ora === 'function'
         ? ora
-        : (ora as { default: typeof ora }).default;
+        : (ora as { default: typeof import('ora').default }).default;
     this.spinner = oraFn(text);
   }
 
@@ -156,7 +180,7 @@ export class RetryManager {
       onRetry,
     } = options;
 
-    let lastError: Error;
+    let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -179,7 +203,7 @@ export class RetryManager {
       }
     }
 
-    throw lastError!;
+    throw lastError || new Error('Operation failed after retries');
   }
 
   private static delay(ms: number): Promise<void> {

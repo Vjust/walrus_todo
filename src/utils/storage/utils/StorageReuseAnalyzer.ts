@@ -7,7 +7,7 @@
  * wasted space and token costs.
  */
 
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClientType } from '../../adapters/sui-client-compatibility';
 import { WalrusClientAdapter } from '../../adapters/walrus-client-adapter';
 import { StorageOperationHandler } from './StorageOperationHandler';
 import { ValidationError } from '../../../types/errors/consolidated';
@@ -76,7 +76,7 @@ export class StorageReuseAnalyzer {
    * @param userAddress - Address of the user whose storage will be analyzed
    */
   constructor(
-    private suiClient: SuiClient,
+    private suiClient: SuiClientType,
     private walrusClient: WalrusClientAdapter,
     private userAddress: string
   ) {}
@@ -141,13 +141,13 @@ export class StorageReuseAnalyzer {
         // Skip if no content or not a move object
         if (
           !item.data?.content ||
-          (item.data.content as any).dataType !== 'moveObject'
+          (item.data.content as { dataType?: string }).dataType !== 'moveObject'
         ) {
           continue;
         }
 
         // Parse storage fields from the move object
-        const content = item.data.content as any;
+        const content = item.data.content as { fields?: { storage_size?: string; used_size?: string; end_epoch?: string; start_epoch?: string } };
         if (!content.fields) continue;
 
         const fields = content.fields;

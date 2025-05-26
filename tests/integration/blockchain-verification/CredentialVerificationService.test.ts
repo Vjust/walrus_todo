@@ -2,8 +2,11 @@ import { CLIError } from '../../../src/types/errors/consolidated';
 
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
-import { SuiClient } from '@mysten/sui/client';
-import type { WalrusClientExt } from '../../../src/types/client';
+// Unused imports removed during TypeScript cleanup
+// import { SuiClient } from '@mysten/sui/client';
+// import type { WalrusClientExt } from '../../../src/types/client';
+import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import { SuiClientType } from '../../../src/utils/adapters/sui-client-compatibility';
 
 import { CredentialVerificationService } from '../../../src/services/ai/credentials/CredentialVerificationService';
 
@@ -15,7 +18,7 @@ const mockGetObject = jest.fn();
 const mockSuiClient = {
   getLatestSuiSystemState: mockGetLatestSuiSystemState,
   getObject: mockGetObject,
-} as unknown as jest.Mocked<SuiClient>;
+} as unknown as jest.Mocked<SuiClientType>;
 
 // Create a mock transaction signer
 const mockSigner = {
@@ -36,14 +39,14 @@ const mockSigner = {
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
   signTransactionBlock: async (
-    _transaction: any
+    _transaction: unknown
   ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: any): Promise<SignatureWithBytes> => ({
+  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -53,91 +56,16 @@ const mockSigner = {
 
 describe('CredentialVerificationService Integration', () => {
   let service: CredentialVerificationService;
-  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
+  let mockWalrusClient: CompleteWalrusClientMock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Create inline mock for WalrusClient with all required methods
-    mockWalrusClient = {
-      // Basic methods
-      getConfig: jest.fn().mockResolvedValue({
-        network: 'testnet',
-        version: '1.0.0',
-        maxSize: 1000000,
-      }),
-      getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest
-        .fn()
-        .mockResolvedValue({ used: '500', total: '2000' }),
-
-      // Blob operations - these will be set up specifically in each test
-      getBlobInfo: jest.fn(),
-      getBlobObject: jest
-        .fn()
-        .mockResolvedValue({ content: 'test', metadata: {} }),
-      verifyPoA: jest.fn(),
-      readBlob: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      writeBlob: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn().mockResolvedValue(1024),
-
-      // Storage operations
-      storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
-      }),
-      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
-        digest: 'test',
-        storage: {
-          id: { id: 'test' },
-          start_epoch: 0,
-          end_epoch: 52,
-          storage_size: '1000',
-        },
-      }),
-      executeCertifyBlobTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'cert-digest' }),
-      executeWriteBlobAttributesTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'attr-digest' }),
-      deleteBlob: jest
-        .fn()
-        .mockReturnValue(
-          jest.fn().mockResolvedValue({ digest: 'delete-digest' })
-        ),
-      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
-        blob: { blob_id: 'test' },
-        digest: 'register-digest',
-      }),
-      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
-        primary_verification: true,
-        provider: 'test-provider',
-      }),
-      createStorageBlock: jest.fn().mockResolvedValue({} as any),
-      createStorage: jest.fn().mockReturnValue(
-        jest.fn().mockResolvedValue({
-          digest: 'storage-digest',
-          storage: {
-            id: { id: 'storage-id' },
-            start_epoch: 0,
-            end_epoch: 52,
-            storage_size: '1000',
-          },
-        })
-      ),
-
-      // Utility methods
-      reset: jest.fn(),
-
-      // Optional experimental API
-      experimental: {
-        getBlobData: jest.fn().mockResolvedValue({}),
-      },
-    } as jest.Mocked<WalrusClientExt>;
+    mockWalrusClient = getMockWalrusClient();
+    
+    // Override specific methods for this test as needed
+    // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
 
     service = new CredentialVerificationService(
       mockSuiClient,
@@ -147,11 +75,11 @@ describe('CredentialVerificationService Integration', () => {
 
     // Spy on private methods but ensure they return proper boolean types
     jest
-      .spyOn(service as any, 'verifyDigitalSignature')
+      .spyOn(service as unknown as { verifyDigitalSignature: () => Promise<boolean> }, 'verifyDigitalSignature')
       .mockResolvedValue(true);
-    jest.spyOn(service as any, 'verifyTimestamps').mockReturnValue(true);
-    jest.spyOn(service as any, 'checkRevocationStatus').mockResolvedValue(true);
-    jest.spyOn(service as any, 'validateSchema').mockReturnValue(true);
+    jest.spyOn(service as unknown as { verifyTimestamps: () => boolean }, 'verifyTimestamps').mockReturnValue(true);
+    jest.spyOn(service as unknown as { checkRevocationStatus: () => Promise<boolean> }, 'checkRevocationStatus').mockResolvedValue(true);
+    jest.spyOn(service as unknown as { validateSchema: () => boolean }, 'validateSchema').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -254,10 +182,16 @@ describe('CredentialVerificationService Integration', () => {
       expect(mockWalrusClient.getBlobInfo).toHaveBeenCalledWith(credentialId);
 
       // Verify private method calls with proper types
-      expect((service as any).verifyDigitalSignature).toHaveBeenCalled();
-      expect((service as any).verifyTimestamps).toHaveBeenCalled();
-      expect((service as any).checkRevocationStatus).toHaveBeenCalled();
-      expect((service as any).validateSchema).toHaveBeenCalled();
+      const serviceMethods = service as unknown as {
+        verifyDigitalSignature: jest.Mock;
+        verifyTimestamps: jest.Mock;
+        checkRevocationStatus: jest.Mock;
+        validateSchema: jest.Mock;
+      };
+      expect(serviceMethods.verifyDigitalSignature).toHaveBeenCalled();
+      expect(serviceMethods.verifyTimestamps).toHaveBeenCalled();
+      expect(serviceMethods.checkRevocationStatus).toHaveBeenCalled();
+      expect(serviceMethods.validateSchema).toHaveBeenCalled();
     });
 
     it('should fail verification when credential has invalid signature', async () => {
@@ -315,7 +249,13 @@ describe('CredentialVerificationService Integration', () => {
       });
 
       // Mock private methods to simulate signature failure - return boolean false
-      (service as any).verifyDigitalSignature.mockResolvedValue(false);
+      const serviceMethods = service as unknown as {
+        verifyDigitalSignature: jest.Mock;
+        verifyTimestamps: jest.Mock;
+        checkRevocationStatus: jest.Mock;
+        validateSchema: jest.Mock;
+      };
+      serviceMethods.verifyDigitalSignature.mockResolvedValue(false);
       // Keep other validations as true
 
       // Execute the verification
@@ -364,7 +304,10 @@ describe('CredentialVerificationService Integration', () => {
       );
 
       // Mock timestamp verification to return false for expired credential
-      (service as any).verifyTimestamps.mockReturnValue(false);
+      const serviceMethods = service as unknown as {
+        verifyTimestamps: jest.Mock;
+      };
+      serviceMethods.verifyTimestamps.mockReturnValue(false);
 
       // Execute the verification
       const result = await service.verifyCredential(credentialId);
@@ -409,7 +352,10 @@ describe('CredentialVerificationService Integration', () => {
       );
 
       // Mock revocation check to return false
-      (service as any).checkRevocationStatus.mockResolvedValue(false);
+      const serviceMethods = service as unknown as {
+        checkRevocationStatus: jest.Mock;
+      };
+      serviceMethods.checkRevocationStatus.mockResolvedValue(false);
       // Keep other validations as true
 
       // Execute the verification
@@ -450,7 +396,10 @@ describe('CredentialVerificationService Integration', () => {
       );
 
       // Mock schema validation to return false
-      (service as any).validateSchema.mockReturnValue(false);
+      const serviceMethods = service as unknown as {
+        validateSchema: jest.Mock;
+      };
+      serviceMethods.validateSchema.mockReturnValue(false);
 
       // Execute the verification
       const result = await service.verifyCredential(credentialId);

@@ -61,7 +61,7 @@ export default class SyncCommand extends BaseCommand {
   private walrusStorage = createWalrusStorage('testnet', false);
   private validator: StorageValidator;
 
-  constructor(argv: string[], config: any) {
+  constructor(argv: string[], config: unknown) {
     super(argv, config);
     this.validator = new StorageValidator(this.walrusStorage);
   }
@@ -259,7 +259,7 @@ export default class SyncCommand extends BaseCommand {
     }>,
     resolveStrategy: string
   ): Promise<void> {
-    const spinner = this.startSpinner('Syncing todos...');
+    this.startSpinner('Syncing todos...');
     let successCount = 0;
     let failCount = 0;
 
@@ -269,16 +269,12 @@ export default class SyncCommand extends BaseCommand {
 
         // Determine resolution strategy
         if (resolveStrategy === 'ask') {
-          if (spinner) {
-            this.stopSpinnerSuccess(spinner, '');
-          }
           resolution = await this.askResolution(
             todo,
             Boolean(localNewer),
             Boolean(blockchainNewer)
           );
-          // @ts-expect-error - startSpinner may return undefined in tests
-          spinner = this.startSpinner('Continuing sync...');
+          this.startSpinner('Continuing sync...');
         } else if (resolveStrategy === 'newest') {
           resolution = localNewer ? 'local' : 'blockchain';
         } else if (resolveStrategy === 'oldest') {
@@ -308,16 +304,15 @@ export default class SyncCommand extends BaseCommand {
         }
 
         successCount++;
-      } catch (_error) {
+      } catch (error) {
         failCount++;
-        this.warning(`Failed to sync "${todo.title}": ${_error.message}`);
+        this.warning(`Failed to sync "${todo.title}": ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
-    this.stopSpinnerSuccess(
-      spinner,
-      `Synced ${successCount} todo${successCount !== 1 ? 's' : ''}, ${failCount} failed`
-    );
+    this.log(chalk.green(
+      `✓ Synced ${successCount} todo${successCount !== 1 ? 's' : ''}, ${failCount} failed`
+    ));
 
     // Display summary
     this.section(

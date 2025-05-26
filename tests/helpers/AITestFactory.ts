@@ -9,11 +9,9 @@ import { AIVerificationService } from '../../src/services/ai/AIVerificationServi
 import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
 import {
   AIProvider,
-  AIModelOptions,
 } from '../../src/types/adapters/AIModelAdapter';
 import {
   AIVerifierAdapter,
-  AIPrivacyLevel,
 } from '../../src/types/adapters/AIVerifierAdapter';
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
@@ -89,7 +87,7 @@ export class AITestFactory {
             ? params.prompt
             : JSON.stringify(params.prompt);
 
-        let result: any;
+        let result: unknown;
 
         // Determine the operation type from prompt contents
         if (
@@ -274,7 +272,7 @@ export class AITestFactory {
   public static generateMockResponses(
     operationType: string,
     todoCount: number = 3
-  ): any {
+  ): unknown {
     switch (operationType.toLowerCase()) {
       case 'summarize':
         return `This is a mock summary of ${todoCount} todos. The todos appear to be related to work and personal tasks.`;
@@ -350,8 +348,8 @@ export class AITestFactory {
    */
   public static createOperationValidator(
     operationType: string
-  ): (result: any, todos: Todo[]) => void {
-    return (result: any, todos: Todo[]) => {
+  ): (result: unknown, todos: Todo[]) => void {
+    return (result: unknown, _todos: Todo[]) => {
       expect(result).toBeDefined();
 
       switch (operationType.toLowerCase()) {
@@ -360,7 +358,6 @@ export class AITestFactory {
           expect(typeof result).toBe('string');
           expect(result.length).toBeGreaterThan(0);
           break;
-      }
 
         case 'categorize':
           // Categorize operations should return an object with category keys
@@ -373,7 +370,6 @@ export class AITestFactory {
             expect(Array.isArray(todoIds)).toBe(true);
           });
           break;
-      }
 
         case 'prioritize':
           // Prioritize operations should return an object mapping todo IDs
@@ -382,13 +378,12 @@ export class AITestFactory {
           expect(Object.keys(result).length).toBeGreaterThan(0);
 
           // Each todo ID should have a numeric priority
-          Object.entries(result).forEach(([todoId, priority]) => {
+          Object.entries(result).forEach(([_todoId, priority]) => {
             expect(typeof priority).toBe('number');
             expect(priority).toBeGreaterThanOrEqual(1);
             expect(priority).toBeLessThanOrEqual(10);
           });
           break;
-      }
 
         case 'suggest':
           // Suggest operations should return an array of string suggestions
@@ -401,14 +396,12 @@ export class AITestFactory {
             expect(suggestion.length).toBeGreaterThan(0);
           });
           break;
-      }
 
         case 'analyze':
           // Analyze operations should return a structured object with analysis results
           expect(typeof result).toBe('object');
           expect(Object.keys(result).length).toBeGreaterThan(0);
           break;
-      }
 
         default:
           throw new Error(`Unknown operation type: ${operationType}`);

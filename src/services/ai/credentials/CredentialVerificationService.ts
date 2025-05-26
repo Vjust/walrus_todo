@@ -59,6 +59,7 @@ export interface DigitalCredential {
     verificationMethod: string;
     proofPurpose: string;
     jws: string;
+    proofValue?: string;
   };
   [key: string]: unknown;
 }
@@ -168,7 +169,7 @@ export class CredentialVerificationService {
     try {
       // Get the signature from the proof
       const { proof } = credential;
-      if (!proof || !proof.proofValue) {
+      if (!proof || !proof.jws) {
         this.logger.error('Missing proof in credential');
         return false;
       }
@@ -176,7 +177,7 @@ export class CredentialVerificationService {
       // Verify the signature using blockchain verification
       // In a real implementation, we would verify the signature cryptographically
       // For now, we'll perform a basic check
-      const signatureBytes = Buffer.from(proof.proofValue, 'base64');
+      const signatureBytes = Buffer.from(proof.jws, 'base64');
       if (signatureBytes.length < 64) {
         this.logger.error('Invalid signature length');
         return false;
@@ -274,7 +275,7 @@ export class CredentialVerificationService {
     type: string[];
     issuer: string;
     subject: string;
-    claims: Record<string, any>;
+    claims: Record<string, unknown>;
     expirationDate?: Date;
   }): Promise<{
     credentialId: string;
@@ -285,14 +286,16 @@ export class CredentialVerificationService {
     try {
       // 1. Create credential document
       const now = new Date();
-      const credential = {
+      const credential: DigitalCredential = {
         '@context': [
           'https://www.w3.org/2018/credentials/v1',
           'https://w3id.org/security/suites/ed25519-2020/v1',
         ],
         id: `uuid:${this.generateUuid()}`,
         type: ['VerifiableCredential', ...data.type],
-        issuer: data.issuer,
+        issuer: {
+          id: data.issuer,
+        },
         issuanceDate: now.toISOString(),
         expirationDate: data.expirationDate?.toISOString(),
         credentialSubject: {
@@ -366,6 +369,7 @@ export class CredentialVerificationService {
         created: now.toISOString(),
         verificationMethod: `${credential.issuer}#key-1`,
         proofPurpose: 'assertionMethod',
+        jws: Buffer.from(signatureBytes).toString('base64'),
         proofValue: Buffer.from(signatureBytes).toString('base64'),
       },
     };

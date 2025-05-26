@@ -1,7 +1,4 @@
 /**
-import { Logger } from '../../src/utils/Logger';
-
-const logger = new Logger('setup-test-env');
  * Test environment setup utilities for WalTodo CLI testing
  * 
  * This file provides utility functions for setting up a clean test environment
@@ -12,6 +9,9 @@ const logger = new Logger('setup-test-env');
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('setup-test-env');
 
 // Mock dependencies
 jest.mock('fs', () => ({
@@ -90,7 +90,7 @@ export function createTestTodoList(listName = TEST_TODO_LIST, todos = []) {
  *
  * @param options - Optional configuration options
  */
-export function setupTestEnvironment(options = {}) {
+export function setupTestEnvironment(_options = {}) {
   // Ensure fixtures directory exists
   if (!fs.existsSync(FIXTURES_DIR)) {
     fs.mkdirSync(FIXTURES_DIR, { recursive: true });
@@ -152,7 +152,7 @@ export function runCliCommand(command: string): string {
     const fullCommand = `node bin/run.js ${command}`;
     const output = execSync(fullCommand).toString();
     return output;
-  } catch (_error) {
+  } catch (error) {
     logger.error('Error running CLI command:', error);
     throw error;
   }

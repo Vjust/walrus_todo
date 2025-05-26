@@ -1,7 +1,4 @@
 /**
-import { Logger } from '../../Logger';
-
-const logger = new Logger('BlobStorage');
  * @fileoverview Blob Storage - Implementation for general blob storage on Walrus
  *
  * This class provides a concrete implementation of IStorage for general blob storage
@@ -27,6 +24,9 @@ import {
 import { ValidationError } from '../../../types/errors/ValidationError';
 import { TransactionSigner } from '../../../types/signer';
 import { StorageReuseAnalyzer } from '../utils/StorageReuseAnalyzer';
+import { Logger } from '../../Logger';
+
+const logger = new Logger('BlobStorage');
 
 /**
  * Default configuration for blob storage
@@ -183,7 +183,7 @@ export class BlobStorage extends AbstractStorage {
 
       return isHealthy;
     } catch (error) {
-      logger.warn('Health check failed:', error);
+      logger.warn('Health check failed:', error as Record<string, unknown>);
       return false;
     }
   }
@@ -230,12 +230,17 @@ export class BlobStorage extends AbstractStorage {
       const result = await StorageOperationHandler.execute(
         async () => {
           const walrusClient = this.client.getWalrusClient();
+          
+          // We know signer is valid because validateSigner was called above
+          if (!this.signer) {
+            throw new ValidationError('Signer not available');
+          }
 
           return walrusClient.writeBlob({
             blob: content,
             deletable: false,
             epochs: this.config.defaultEpochDuration,
-            signer: this.signer!,
+            signer: this.signer,
             attributes: fullMetadata,
           });
         },
@@ -393,12 +398,20 @@ export class BlobStorage extends AbstractStorage {
           this.extractMetadataAttributes(metadataResult.data) || {};
 
         // Cache the result
-        this.cacheContent(id, contentResult.data, attributes);
+        if (contentResult.data) {
+          this.cacheContent(id, contentResult.data, attributes);
 
-        return {
-          content: contentResult.data,
-          metadata: attributes,
-        };
+          return {
+            content: contentResult.data,
+            metadata: attributes,
+          };
+        } else {
+          throw new StorageError('No content data received', {
+            operation: 'retrieve blob',
+            blobId: id,
+            recoverable: false,
+          });
+        }
       } catch (error) {
         // Cancel the retrieval if something goes wrong
         retrievalAbortController.abort();
@@ -523,7 +536,7 @@ export class BlobStorage extends AbstractStorage {
         );
       }
 
-      const currentEpoch = Number(epochResult.data?.epoch || 0);
+      const currentEpoch = Number((epochResult.data as { epoch?: string })?.epoch || 0);
 
       // Check WAL balance
       const walBalance = await this.client.getWalBalance();
@@ -560,7 +573,7 @@ export class BlobStorage extends AbstractStorage {
 
       // Calculate required balance with 10% buffer
       const requiredBalance =
-        (BigInt(costResult.data.totalCost) * BigInt(110)) / BigInt(100);
+        (BigInt((costResult.data as { totalCost: number }).totalCost) * BigInt(110)) / BigInt(100);
 
       if (walBalance < requiredBalance) {
         throw new BlockchainError(
@@ -614,6 +627,12 @@ export class BlobStorage extends AbstractStorage {
       }
 
       const storageId = txResult.createdObjects[0];
+      if (!storageId) {
+        throw new StorageError('Invalid storage object ID', {
+          operation: 'storage allocation',
+          recoverable: false,
+        });
+      }
 
       // Verify the created storage
       const objectResult = await StorageOperationHandler.execute(
@@ -627,7 +646,7 @@ export class BlobStorage extends AbstractStorage {
         { operation: 'get storage object' }
       );
 
-      if (!objectResult.success || !objectResult.data?.data?.content) {
+      if (!objectResult.success || !objectResult.data || !(objectResult.data as { data?: { content?: unknown } }).data?.content) {
         throw new StorageError('Failed to verify created storage', {
           operation: 'verify storage',
           recoverable: false,
@@ -636,7 +655,10 @@ export class BlobStorage extends AbstractStorage {
       }
 
       // Extract storage details
-      const content = objectResult.data.data.content as any;
+      const content = objectResult.data.data.content as {
+        dataType: string;
+        fields?: Record<string, unknown>;
+      };
       const fields = content?.fields;
 
       if (!fields) {
@@ -707,7 +729,7 @@ export class BlobStorage extends AbstractStorage {
         );
       }
 
-      const currentEpoch = Number(epochResult.data?.epoch || 0);
+      const currentEpoch = Number((epochResult.data as { epoch?: string })?.epoch || 0);
 
       // Get owned storage objects
       const objectsResult = await StorageOperationHandler.execute(
@@ -736,7 +758,10 @@ export class BlobStorage extends AbstractStorage {
       let inactiveCount = 0;
 
       for (const item of objectsResult.data.data) {
-        const content = item.data?.content as any;
+        const content = item.data?.content as {
+          dataType: string;
+          fields?: Record<string, unknown>;
+        };
         if (!content || content.dataType !== 'moveObject' || !content.fields) {
           continue;
         }
@@ -911,7 +936,7 @@ export class BlobStorage extends AbstractStorage {
    * @param response - The response from writeBlob
    * @returns The extracted blob ID or null if not found
    */
-  private extractBlobId(response: any): string | null {
+  private extractBlobId(response: unknown): string | null {
     if (!response) {
       return null;
     }
@@ -921,29 +946,36 @@ export class BlobStorage extends AbstractStorage {
       return response;
     }
 
-    if (response.blobId) {
-      return response.blobId;
-    }
-
-    if (response.blobObject) {
-      const blobObject = response.blobObject;
-
-      if (typeof blobObject === 'string') {
-        return blobObject;
+    if (typeof response === 'object' && response !== null) {
+      const obj = response as Record<string, unknown>;
+      
+      if (obj.blobId && typeof obj.blobId === 'string') {
+        return obj.blobId;
       }
 
-      if (blobObject && typeof blobObject === 'object') {
-        if (blobObject.blob_id) {
-          return blobObject.blob_id;
+      if (obj.blobObject) {
+        const blobObject = obj.blobObject;
+
+        if (typeof blobObject === 'string') {
+          return blobObject;
         }
 
-        if (blobObject.id) {
-          if (typeof blobObject.id === 'string') {
-            return blobObject.id;
+        if (blobObject && typeof blobObject === 'object') {
+          const blobObj = blobObject as Record<string, unknown>;
+          
+          if (blobObj.blob_id && typeof blobObj.blob_id === 'string') {
+            return blobObj.blob_id;
           }
 
-          if (typeof blobObject.id === 'object' && blobObject.id !== null) {
-            return blobObject.id.id || null;
+          if (blobObj.id) {
+            if (typeof blobObj.id === 'string') {
+              return blobObj.id;
+            }
+
+            if (typeof blobObj.id === 'object' && blobObj.id !== null) {
+              const idObj = blobObj.id as Record<string, unknown>;
+              return (idObj.id as string) || null;
+            }
           }
         }
       }
@@ -958,26 +990,33 @@ export class BlobStorage extends AbstractStorage {
    * @param metadata - The metadata response from getBlobMetadata
    * @returns The extracted attributes or empty object if not found
    */
-  private extractMetadataAttributes(metadata: any): Record<string, string> {
-    if (!metadata) {
+  private extractMetadataAttributes(metadata: unknown): Record<string, string> {
+    if (!metadata || typeof metadata !== 'object') {
       return {};
     }
 
+    const obj = metadata as Record<string, unknown>;
+
     // Try different possible formats
-    if (metadata.attributes) {
-      return metadata.attributes;
+    if (obj.attributes && typeof obj.attributes === 'object') {
+      return obj.attributes as Record<string, string>;
     }
 
-    if (metadata.V1 && metadata.V1.attributes) {
-      return metadata.V1.attributes;
+    if (obj.V1 && typeof obj.V1 === 'object') {
+      const v1 = obj.V1 as Record<string, unknown>;
+      if (v1.attributes && typeof v1.attributes === 'object') {
+        return v1.attributes as Record<string, string>;
+      }
     }
 
-    if (
-      metadata.metadata &&
-      metadata.metadata.V1 &&
-      metadata.metadata.V1.attributes
-    ) {
-      return metadata.metadata.V1.attributes;
+    if (obj.metadata && typeof obj.metadata === 'object') {
+      const metadataObj = obj.metadata as Record<string, unknown>;
+      if (metadataObj.V1 && typeof metadataObj.V1 === 'object') {
+        const v1 = metadataObj.V1 as Record<string, unknown>;
+        if (v1.attributes && typeof v1.attributes === 'object') {
+          return v1.attributes as Record<string, string>;
+        }
+      }
     }
 
     return {};
@@ -989,7 +1028,17 @@ export class BlobStorage extends AbstractStorage {
    * @param storage - The storage object
    * @returns The converted StorageInfo
    */
-  private convertToStorageInfo(storage: any): StorageInfo {
+  private convertToStorageInfo(storage: {
+    id: string;
+    totalSize: number;
+    usedSize: number;
+    endEpoch: number;
+    startEpoch: number;
+    remaining?: number;
+    remainingBytes?: number;
+    active?: boolean;
+    isActive?: boolean;
+  }): StorageInfo {
     return {
       id: storage.id,
       totalSize: storage.totalSize,

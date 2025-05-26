@@ -1,6 +1,5 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
-import path from 'path';
 import {
   TodoService,
   todoService,
@@ -137,7 +136,7 @@ describe('Consolidated TodoService', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      const getListMock = jest
+      jest
         .spyOn(todoService, 'getList')
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockList);

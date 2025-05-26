@@ -15,7 +15,7 @@ export class CommandSanitizer {
     return input
       .replace(/<[^>]*>/g, '') // Remove HTML tags
       .replace(/[\\$'"`;(){}[\]|&*?~<>]/g, '\\$&') // Escape shell and special metacharacters
-      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+      .replace(new RegExp('[' + String.fromCharCode(1) + '-' + String.fromCharCode(31) + String.fromCharCode(127) + '-' + String.fromCharCode(159) + ']', 'g'), '') // Remove control characters (excluding \u0000)
       .replace(/\r\n|\r|\n/g, ' ') // Normalize line breaks
       .trim();
   }
@@ -158,7 +158,7 @@ export class CommandSanitizer {
     if (!apiKey) return '';
 
     // Keep only alphanumeric and common special characters
-    return apiKey.trim().replace(/[^a-zA-Z0-9_\-\.]/g, '');
+    return apiKey.trim().replace(/[^a-zA-Z0-9_\-.]/g, '');
   }
 
   /**
@@ -185,7 +185,7 @@ export class CommandSanitizer {
 
     // Replace potentially dangerous characters
     return filename
-      .replace(/[\/\\:*?"<>|]/g, '_') // Replace unsafe filename chars with underscore
+      .replace(/[/\\:*?"<>|]/g, '_') // Replace unsafe filename chars with underscore
       .trim();
   }
 

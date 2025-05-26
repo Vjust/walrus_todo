@@ -613,7 +613,7 @@ export class PermissionService {
     userId: string,
     resource: string,
     action: string,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, unknown> = {}
   ): Promise<boolean> {
     const hasPermission = await this.hasPermission(userId, resource, action);
 

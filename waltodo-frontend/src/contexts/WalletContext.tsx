@@ -95,9 +95,9 @@ interface WalletContextValue {
   resetActivityTimer: () => void;
 
   // Wallet capabilities
-  signTransaction?: (transaction: any) => Promise<any>;
-  signAndExecuteTransaction?: (transaction: any) => Promise<any>;
-  signMessage?: (message: Uint8Array) => Promise<any>;
+  signTransaction?: (transaction: unknown) => Promise<{ signature: Uint8Array; transactionBlockBytes: Uint8Array }>;
+  signAndExecuteTransaction?: (transaction: unknown) => Promise<{ digest: string; effects?: unknown }>;
+  signMessage?: (message: Uint8Array) => Promise<{ signature: Uint8Array }>;
 }
 
 // Create context with default values
@@ -482,7 +482,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
 
       // Wallet capabilities - prioritize dApp Kit when available
       signTransaction: currentAccount ? undefined : suietWallet.signTransaction,
-      signAndExecuteTransaction: async (transaction: any) => {
+      signAndExecuteTransaction: async (transaction: unknown) => {
         // Use the appropriate wallet provider for transaction execution
         if (currentAccount) {
           // For dApp Kit, we need to use the signAndExecuteTransactionBlock from the hooks

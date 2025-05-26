@@ -4,7 +4,6 @@
 // - jest.mock('../../src/services/config-service')
 
 import type { Todo } from '../../src/types/todo';
-import { TodoService } from '../../src/services/todoService';
 
 describe('store command', () => {
   // TODO: All tests in this suite require mocks and need to be refactored

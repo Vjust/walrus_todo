@@ -1,10 +1,10 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
-import path from 'path';
-import { Config } from '../types/config';
+import * as path from 'path';
 import { Todo, TodoList } from '../types/todo';
 import { CLI_CONFIG, STORAGE_CONFIG } from '../constants';
 import { CLIError } from '../types/errors/consolidated';
+import { Config } from '../types/config';
 import { envConfig, getEnv } from '../utils/environment-config';
 import { loadConfigFile, saveConfigToFile } from '../utils/config-loader';
 import { Logger } from '../utils/Logger';
@@ -39,7 +39,7 @@ export class ConfigService {
    */
   constructor() {
     // Check for config directory from environment variable
-    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR') as string | undefined;
+    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR');
 
     if (configDir && configDir.trim() !== '') {
       // If environment variable is set, use it directly
@@ -138,7 +138,7 @@ export class ConfigService {
         // If directory doesn't exist, create it
         await fsPromises.mkdir(this.todosPath, { recursive: true });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       throw new CLIError(
         `Failed to create Todos directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'DIRECTORY_CREATE_FAILED'
@@ -275,7 +275,7 @@ export class ConfigService {
    */
   public async mergeAndSaveConfig(config: Partial<Config>): Promise<void> {
     // Get the configured directory path from environment
-    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR') as string | undefined;
+    const configDir = getEnv('WALRUS_TODO_CONFIG_DIR');
 
     // Determine the target path for saving
     let targetConfigPath = this.configPath;
@@ -332,14 +332,15 @@ export class ConfigService {
         const data = await fsPromises.readFile(listPath, 'utf-8');
         try {
           return JSON.parse(data);
-        } catch (parseError) {
+        } catch (parseError: unknown) {
           if (parseError instanceof SyntaxError) {
             throw new CLIError(
               `Invalid JSON format in list "${listName}": ${parseError.message}`,
               'INVALID_JSON_FORMAT'
             );
           }
-          throw parseError;
+          const typedError = parseError instanceof Error ? parseError : new Error(String(parseError));
+          throw typedError;
         }
       }
     } catch (error: unknown) {

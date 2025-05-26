@@ -173,7 +173,7 @@ export class ConnectionManager<T extends ManagedConnection> {
       }
 
       // Create a new connection with retry logic using the instance retry manager
-      const connectFnWithNode = (_node: any) => this.connectFn();
+      const connectFnWithNode = (_node: string) => this.connectFn();
       this.connection = await this.retryManager.execute(
         connectFnWithNode,
         'connection_establishment'
@@ -271,8 +271,8 @@ export class ConnectionManager<T extends ManagedConnection> {
     const idleTime = Date.now() - this.lastUsed;
     if (idleTime > (this.options.maxIdleTime || 60000)) {
       logger.debug(`Closing idle connection (idle for ${idleTime}ms)`);
-      this.closeConnection().catch(_error => {
-        logger.warn('Error closing idle connection', { error: String(error) });
+      void this.closeConnection().catch((_error) => {
+        logger.warn('Error closing idle connection', { error: String(_error) });
       });
     }
   }
@@ -289,10 +289,10 @@ export class ConnectionManager<T extends ManagedConnection> {
     // Set up a new reconnect timer
     this.reconnectTimer = setTimeout(() => {
       logger.debug('Attempting reconnection...');
-      this.getConnection().catch(_error => {
+      void this.getConnection().catch((_error) => {
         logger.error(
           'Reconnection failed',
-          error instanceof Error ? error : new Error(String(error)),
+          _error instanceof Error ? _error : new Error(String(_error)),
           { network: 'unknown' } as Record<string, unknown>
         );
       });

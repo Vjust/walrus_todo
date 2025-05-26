@@ -20,6 +20,8 @@ import {
   AIProvider as AIProviderEnum,
   AIModelOptions,
   AIProviderCreationParams,
+  AICompletionParams,
+  AIResponse,
 } from '../../types/adapters/AIModelAdapter';
 import { OpenAIModelAdapter } from './adapters/OpenAIModelAdapter';
 import { XAIModelAdapter } from './adapters/XAIModelAdapter';
@@ -111,9 +113,9 @@ export class AIProviderFactory {
           timestamp: Date.now(),
         };
       },
-      completeStructured: async () => {
+      completeStructured: async <T>(_params: AICompletionParams): Promise<AIResponse<T>> => {
         return {
-          result: {} as unknown,
+          result: {} as T,
           modelName: 'fallback-model',
           provider: AIProviderEnum.XAI,
           timestamp: Date.now(),

@@ -1,4 +1,4 @@
-import { WalrusError } from '../types/error';
+import { WalrusError } from '../types/errors/consolidated';
 
 export enum LogLevel {
   DEBUG = 'debug',

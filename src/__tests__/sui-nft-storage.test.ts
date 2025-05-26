@@ -1,14 +1,14 @@
+/* eslint-disable jest/expect-expect, @typescript-eslint/no-unused-vars */
 import { describe, beforeEach, jest } from '@jest/globals';
-import { SuiClient } from '../utils/adapters/sui-client-adapter';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { SuiClient, type SuiClientType } from '../utils/adapters/sui-client-compatibility';
+// import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type {
   SuiTransactionBlockResponse,
   SuiObjectResponse,
-} from '@mysten/sui/client';
+} from '../utils/adapters/sui-client-compatibility';
 import { IntentScope } from '@mysten/sui/cryptography';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { SuiNftStorage } from '../utils/sui-nft-storage';
+// import { SuiNftStorage } from '../utils/sui-nft-storage';
 // CLIError imported but not used
 // Todo imported but not used
 import { createMockSystemStateResponse } from './sui-test-types';
@@ -16,7 +16,7 @@ import { createMockSystemStateResponse } from './sui-test-types';
 
 // Setup Jest mocks with proper types
 const mockSignAndExecuteTransactionBlock = jest.fn() as jest.MockedFunction<
-  (transaction: TransactionBlock) => Promise<SuiTransactionBlockResponse>
+  (transaction: Transaction) => Promise<SuiTransactionBlockResponse>
 >;
 const mockGetObject = jest.fn() as jest.MockedFunction<
   (id: string) => Promise<SuiObjectResponse>
@@ -26,8 +26,7 @@ const mockGetLatestSuiSystemState = jest
   .mockResolvedValue(createMockSystemStateResponse());
 
 // Create a properly typed mock SuiClient (for future use)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _mockSuiClient: jest.MockedObject<SuiClient> = {
+const _mockSuiClient = {
   signAndExecuteTransactionBlock: mockSignAndExecuteTransactionBlock,
   waitForTransactionBlock: jest.fn().mockResolvedValue(null),
   getObject: mockGetObject,
@@ -54,11 +53,10 @@ const _mockSuiClient: jest.MockedObject<SuiClient> = {
   devInspectTransactionBlock: jest.fn(),
   multiGetObjects: jest.fn(),
   multiGetTransactionBlocks: jest.fn(),
-} as unknown as jest.MockedObject<SuiClient>;
+} as unknown as jest.MockedObject<InstanceType<typeof SuiClient>>;
 
 describe('SuiNftStorage', () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _moduleAddress = '0x123';
+  // const _moduleAddress = '0x123';
   // let storage: SuiNftStorage; // Commented out - will be used when tests are implemented
 
   beforeEach(() => {
@@ -85,12 +83,12 @@ describe('SuiNftStorage', () => {
           bytes: Buffer.from(_data).toString('base64'),
           signature: Buffer.from(new Uint8Array(64)).toString('base64'),
         }),
-      signTransactionBlock: (_transaction: TransactionBlock) =>
+      signTransactionBlock: (_transaction: Transaction) =>
         Promise.resolve({
           bytes: 'mock-transaction-bytes',
           signature: Buffer.from(new Uint8Array(64)).toString('base64'),
         }),
-      signTransaction: (_transaction: TransactionBlock) =>
+      signTransaction: (_transaction: Transaction) =>
         Promise.resolve({
           bytes: 'mock-transaction-bytes',
           signature: Buffer.from(new Uint8Array(64)).toString('base64'),
@@ -111,6 +109,9 @@ describe('SuiNftStorage', () => {
     // storage = new SuiNftStorage(mockSuiClient, mockSigner, { address: moduleAddress, packageId: '0x123' }); // Will be used when tests are implemented
   });
 
-  // Your existing test cases remain the same
-  // ...
+  test('should setup mock infrastructure correctly', () => {
+    expect(mockSignAndExecuteTransactionBlock).toBeDefined();
+    expect(mockGetObject).toBeDefined();
+    expect(mockGetLatestSuiSystemState).toBeDefined();
+  });
 });

@@ -1,5 +1,31 @@
-import { SuiClient, SuiTransactionBlockResponse } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
+// Use compatible type to match SignerAdapter expectations
+type SuiTransactionBlockResponse = Record<string, unknown>;
+
+// Define types for Sui object content structures
+interface SuiCredentialFields {
+  credential_id: string;
+  provider_name: string;
+  credential_type: string;
+  permission_level: string;
+  created_at: string;
+  expires_at: string;
+  is_verified: boolean;
+  verification_proof?: string;
+  metadata?: string;
+}
+
+interface SuiVerificationFields {
+  is_valid: boolean;
+  expiry_timestamp: string;
+  timestamp: string;
+  verifier: string;
+}
+
+interface SuiObjectContent {
+  fields: SuiCredentialFields | SuiVerificationFields;
+}
+import { SuiClient } from '@mysten/sui.js/client';
+import { Transaction } from '@mysten/sui/transactions';
 import { createHash } from 'crypto';
 import { SignerAdapter } from '../../../types/adapters/SignerAdapter';
 import { WalrusClientAdapter } from '../../../types/adapters/WalrusClientAdapter';
@@ -47,7 +73,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async storeCredential(credential: AIProviderCredential): Promise<string> {
     try {
       // Create a transaction to store the credential
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
 
       // Convert metadata to strings
       const metadataEntries = Object.entries(credential.metadata || {}).map(
@@ -108,11 +134,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const content = credential.data.content;
 
       // Parse metadata if available
-      const metadata: Record<string, any> = {};
-      if ((content as any).fields.metadata) {
+      const metadata: Record<string, unknown> = {};
+      const credentialFields = (content as SuiObjectContent).fields as SuiCredentialFields;
+      if (credentialFields.metadata) {
         try {
-          const metadataStr = (content as any).fields.metadata;
-          const metadataEntries = JSON.parse(metadataStr);
+          const metadataStr = credentialFields.metadata;
+          const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
 
           // Convert array of {key, value} objects to a Record
           metadataEntries.forEach((entry: { key: string; value: string }) => {
@@ -126,20 +153,20 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Create an AIProviderCredential object
       // Note: The actual credential value is not stored on-chain, only the hash
       const providerCredential: AIProviderCredential = {
-        id: (content as any).fields.credential_id || credentialId,
-        providerName: (content as any).fields.provider_name || 'unknown',
+        id: credentialFields.credential_id || credentialId,
+        providerName: credentialFields.provider_name || 'unknown',
         credentialType:
-          (content as any).fields.credential_type || CredentialType.API_KEY,
+          (credentialFields.credential_type as CredentialType) || CredentialType.API_KEY,
         credentialValue: '', // Not stored on-chain
         metadata,
-        isVerified: (content as any).fields.is_verified || false,
+        isVerified: credentialFields.is_verified || false,
         verificationProof:
-          (content as any).fields.verification_proof || undefined,
+          credentialFields.verification_proof || undefined,
         storageOptions: { encrypt: true },
-        createdAt: parseInt((content as any).fields.created_at || '0'),
-        expiresAt: parseInt((content as any).fields.expires_at || '0'),
+        createdAt: parseInt(credentialFields.created_at || '0'),
+        expiresAt: parseInt(credentialFields.expires_at || '0'),
         permissionLevel: parseInt(
-          (content as any).fields.permission_level || '0'
+          credentialFields.permission_level || '0'
         ),
       };
 
@@ -202,11 +229,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         const content = obj.data.content;
 
         // Parse metadata if available
-        const metadata: Record<string, any> = {};
-        if ((content as any).fields.metadata) {
+        const metadata: Record<string, unknown> = {};
+        const credentialFields = (content as SuiObjectContent).fields as SuiCredentialFields;
+        if (credentialFields.metadata) {
           try {
-            const metadataStr = (content as any).fields.metadata;
-            const metadataEntries = JSON.parse(metadataStr);
+            const metadataStr = credentialFields.metadata;
+            const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
 
             // Convert array of {key, value} objects to a Record
             metadataEntries.forEach((entry: { key: string; value: string }) => {
@@ -219,20 +247,20 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
         // Create a credential object
         const credential: AIProviderCredential = {
-          id: (content as any).fields.credential_id || obj.data.objectId,
-          providerName: (content as any).fields.provider_name || 'unknown',
+          id: credentialFields.credential_id || obj.data.objectId,
+          providerName: credentialFields.provider_name || 'unknown',
           credentialType:
-            (content as any).fields.credential_type || CredentialType.API_KEY,
+            (credentialFields.credential_type as CredentialType) || CredentialType.API_KEY,
           credentialValue: '', // Not stored on-chain
           metadata,
-          isVerified: (content as any).fields.is_verified || false,
+          isVerified: credentialFields.is_verified || false,
           verificationProof:
-            (content as any).fields.verification_proof || undefined,
+            credentialFields.verification_proof || undefined,
           storageOptions: { encrypt: true },
-          createdAt: parseInt((content as any).fields.created_at || '0'),
-          expiresAt: parseInt((content as any).fields.expires_at || '0'),
+          createdAt: parseInt(credentialFields.created_at || '0'),
+          expiresAt: parseInt(credentialFields.expires_at || '0'),
           permissionLevel: parseInt(
-            (content as any).fields.permission_level || '0'
+            credentialFields.permission_level || '0'
           ),
         };
 
@@ -265,7 +293,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async deleteCredential(credentialId: string): Promise<boolean> {
     try {
       // Create a transaction to delete the credential
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
 
       // Call the delete_credential function
       tx.moveCall({
@@ -294,7 +322,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   ): Promise<CredentialVerificationResult> {
     try {
       // Create a transaction to verify the credential
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
 
       // Convert metadata to strings
       const metadataEntries = Object.entries(params.metadata || {}).map(
@@ -360,11 +388,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const content = verification.data.content;
 
       // Check if verification is still valid
-      const isValid = (content as any).fields.is_valid || false;
+      const fields = (content as SuiObjectContent).fields as SuiVerificationFields;
+      const isValid = fields.is_valid || false;
 
       // Check if verification has expired
       const expiryTimestamp = parseInt(
-        (content as any).fields.expiry_timestamp || '0'
+        fields.expiry_timestamp || '0'
       );
       if (expiryTimestamp > 0 && expiryTimestamp < Date.now()) {
         return false;
@@ -409,8 +438,8 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         providerName: credential.providerName,
         credentialType: credential.credentialType,
         permissionLevel: credential.permissionLevel,
-        timestamp: parseInt((content as any).fields.timestamp || '0'),
-        verifier: (content as any).fields.verifier || '',
+        timestamp: parseInt(((content as SuiObjectContent).fields as SuiVerificationFields).timestamp || '0'),
+        verifier: ((content as SuiObjectContent).fields as SuiVerificationFields).verifier || '',
         chainInfo: {
           network: 'sui',
           objectId: credential.verificationProof,
@@ -432,7 +461,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
   async revokeVerification(verificationId: string): Promise<boolean> {
     try {
       // Create a transaction to revoke the verification
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
 
       // Call the revoke_verification function
       tx.moveCall({
@@ -467,7 +496,8 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     response: SuiTransactionBlockResponse
   ): string {
     // Find the first created object in the transaction
-    const created = response.effects?.created;
+    const effects = response.effects as { created?: Array<{ reference: { objectId: string } }> } | undefined;
+    const created = effects?.created;
 
     if (!created || created.length === 0) {
       throw new Error('No objects created in transaction');
