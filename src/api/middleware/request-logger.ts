@@ -23,13 +23,14 @@ export function requestLogger(
   const timestamp = new Date().toISOString();
 
   // Capture original end function
-  const originalEnd = (res as any).end;
+  const resWithEnd = res as unknown as { end: (chunk?: unknown, encoding?: BufferEncoding, cb?: () => void) => Response };
+  const originalEnd = resWithEnd.end;
   const chunks: Buffer[] = [];
 
   // Override end function to capture response details
-  (res as any).end = function (chunk?: unknown, encoding?: BufferEncoding, cb?: () => void): Response {
+  resWithEnd.end = function (chunk?: unknown, encoding?: BufferEncoding, cb?: () => void): Response {
     // Restore original
-    (res as any).end = originalEnd;
+    resWithEnd.end = originalEnd;
 
     // Calculate duration
     const duration = Date.now() - startTime;
@@ -46,20 +47,20 @@ export function requestLogger(
 
     // Create log entry
     const logEntry: RequestLog = {
-      method: (req as any).method,
-      url: (req as any).originalUrl || (req as any).url,
-      ip: (req as any).ip || (req as any).socket?.remoteAddress || 'unknown',
-      userAgent: (req as any).headers['user-agent'],
+      method: req.method,
+      url: req.originalUrl || req.url,
+      ip: req.ip || (req.socket?.remoteAddress ?? 'unknown'),
+      userAgent: req.headers['user-agent'],
       timestamp,
       duration,
-      status: (res as any).statusCode,
+      status: res.statusCode,
       size,
     };
 
     // Log based on status code
-    if ((res as any).statusCode >= 500) {
+    if (res.statusCode >= 500) {
       logger.error('Request failed', undefined, logEntry);
-    } else if ((res as any).statusCode >= 400) {
+    } else if (res.statusCode >= 400) {
       logger.warn('Request error', logEntry);
     } else {
       logger.info('Request completed', logEntry);
@@ -70,13 +71,14 @@ export function requestLogger(
   };
 
   // Capture response chunks for size calculation
-  const originalWrite = (res as any).write;
-  (res as any).write = function (chunk: unknown, encoding?: BufferEncoding, cb?: (error?: Error | null) => void): boolean {
+  const resWithWrite = res as unknown as { write: (chunk: unknown, encoding?: BufferEncoding, cb?: (error?: Error | null) => void) => boolean };
+  const originalWrite = resWithWrite.write;
+  resWithWrite.write = function (chunk: unknown, encoding?: BufferEncoding, cb?: (error?: Error | null) => void): boolean {
     if (chunk) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
     }
     return originalWrite.call(res, chunk, encoding, cb);
   };
 
-  (next as any)();
+  next();
 }

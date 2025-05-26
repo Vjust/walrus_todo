@@ -8,6 +8,9 @@
 import type { Transaction } from '@mysten/sui/transactions';
 import type { Signer } from '@mysten/sui/cryptography';
 import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+
+// Type alias for compatibility
+type TransactionBlock = Transaction;
 import type { SignerAdapter } from './adapters/SignerAdapter';
 import type { TransactionBlockAdapter } from './adapters/TransactionBlockAdapter';
 import type { WalrusClientAdapter } from './adapters/WalrusClientAdapter';

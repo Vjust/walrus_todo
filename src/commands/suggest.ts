@@ -4,6 +4,7 @@ import {
   TaskSuggestionService,
   SuggestionType,
   SuggestionContext,
+  SuggestedTask,
 } from '../services/ai/TaskSuggestionService';
 import { AIVerificationService } from '../services/ai/AIVerificationService';
 import { BlockchainAIVerificationService } from '../services/ai/BlockchainAIVerificationService';

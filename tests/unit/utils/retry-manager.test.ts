@@ -395,12 +395,18 @@ describe('RetryManager', () => {
           aggregateErrors: true,
         })
       ).rejects.toSatisfy((error: unknown) => {
-        expect(error).toBeInstanceOf((globalThis as any).AggregateError || Error);
-        if ((globalThis as any).AggregateError && error instanceof (globalThis as any).AggregateError) {
-          expect((error as any).errors).toHaveLength(3);
-          expect((error as any).errors).toEqual([error1, error2, error3]);
-          expect((error as Error).message).toContain('Failed after 3 attempts');
-        }
+        const AggregateErrorClass = (globalThis as { AggregateError?: typeof Error }).AggregateError;
+        expect(error).toBeInstanceOf(AggregateErrorClass || Error);
+        
+        const isAggregateError = AggregateErrorClass && error instanceof AggregateErrorClass;
+        const errors = isAggregateError ? (error as { errors: Error[] }).errors : [];
+        const message = (error as Error).message;
+        
+        // Verify aggregate error properties when available
+        expect(!isAggregateError || errors.length === 3).toBe(true);
+        expect(!isAggregateError || JSON.stringify(errors) === JSON.stringify([error1, error2, error3])).toBe(true);
+        expect(!isAggregateError || message.includes('Failed after 3 attempts')).toBe(true);
+        
         return true;
       });
     });

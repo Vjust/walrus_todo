@@ -131,77 +131,32 @@
   232:14  warning  Unexpected console statement  no-console
 
 /Users/angel/Documents/Projects/walrus_todo/tests/e2e/error-scenarios.e2e.test.ts
-  131:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  162:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  163:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  164:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  165:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  197:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  198:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  199:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  200:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  230:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  231:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  232:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  233:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  263:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  269:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  270:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  298:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  304:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  305:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  332:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  338:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  339:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  364:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  370:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  371:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  400:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  401:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  429:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  430:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  519:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  525:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  526:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  591:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  597:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  598:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  634:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  640:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  641:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  670:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  676:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  677:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  707:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  713:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  714:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  154:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  155:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  187:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  188:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  218:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  219:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
 
 /Users/angel/Documents/Projects/walrus_todo/tests/e2e/frontend-cli-integration.e2e.test.ts
-  154:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  155:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  331:28  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
-  373:37  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  289:15  error    'response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  337:28  warning  Forbidden non-null assertion                   @typescript-eslint/no-non-null-assertion
+  379:37  warning  Forbidden non-null assertion                   @typescript-eslint/no-non-null-assertion
 
 /Users/angel/Documents/Projects/walrus_todo/tests/e2e/real-user-workflow.test.ts
   109:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  113:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  115:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  140:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  144:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  146:9  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  112:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  136:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  139:7  error  Avoid calling `expect` conditionally`  jest/no-conditional-expect
 
 /Users/angel/Documents/Projects/walrus_todo/tests/e2e/system-validation.test.ts
   243:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
   245:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
 
 /Users/angel/Documents/Projects/walrus_todo/tests/e2e/walrus-integration.e2e.test.ts
-  156:20  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
-  205:22  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
-  232:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  267:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  354:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  372:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
-  375:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  199:22  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  342:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
+  345:9   error    Avoid calling `expect` conditionally`  jest/no-conditional-expect
 
 /Users/angel/Documents/Projects/walrus_todo/tests/e2e/workflows/todo-lifecycle.e2e.test.ts
    77:16  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
@@ -260,17 +215,13 @@
    154:9   warning  Unexpected console statement              no-console
    277:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
    336:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  1143:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  1144:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  1149:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  1150:13  error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  1464:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  1474:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  1461:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1471:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
+  1472:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
   1475:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
-  1478:9   error    Avoid calling `expect` conditionally`     jest/no-conditional-expect
 
 /Users/angel/Documents/Projects/walrus_todo/tests/security/APISecurity.test.ts
-  208:39  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  204:39  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
 
 /Users/angel/Documents/Projects/walrus_todo/tests/security/AuditLogSecurity.test.ts
   226:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -320,5 +271,5 @@
 /Users/angel/Documents/Projects/walrus_todo/tests/unit/utils/interactive-mode.test.ts
   23:23  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
 
-✖ 237 problems (55 errors, 182 warnings)
+✖ 188 problems (10 errors, 178 warnings)
 

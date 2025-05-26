@@ -9,7 +9,7 @@
 
 import { execSync } from 'child_process';
 import { SuiClient } from '@mysten/sui/client';
-import { WalrusClient } from '../../../types/client';
+import { WalrusClient } from '@mysten/walrus';
 import { AsyncOperationHandler } from '../../walrus-error-handler';
 import {
   NetworkError,

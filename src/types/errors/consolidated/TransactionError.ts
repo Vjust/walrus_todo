@@ -69,7 +69,7 @@ export class TransactionError extends BaseError {
 
     // Build context with transaction details
     const context = {
-      ...(options.context || {}),
+      ...(options.context || {} as Record<string, unknown>),
       ...(transactionHash ? { transactionHash } : {}),
       ...(gasLimit ? { gasLimit } : {}),
       ...(gasPrice ? { gasPrice } : {}),
@@ -161,7 +161,7 @@ export class TransactionError extends BaseError {
     if (!context) return undefined;
 
     // First apply base sanitization
-    const sanitized = super.sanitizeContext(context) || {};
+    const sanitized = super.sanitizeContext(context) || {} as Record<string, unknown>;
 
     // Additional transaction-specific sanitization
     const txSpecificKeys = [

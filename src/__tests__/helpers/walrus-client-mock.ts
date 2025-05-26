@@ -171,7 +171,7 @@ export function setupDefaultWalrusClientMocks(mockClient: MockWalrusClient): voi
     getDigest: () => Promise.resolve('test-digest'),
     pure: jest.fn(),
     object: jest.fn(),
-  } as Transaction);
+  } as unknown as Transaction);
   
   mockClient.createStorage.mockReturnValue(
     jest.fn().mockResolvedValue({

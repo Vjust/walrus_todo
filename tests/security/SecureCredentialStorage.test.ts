@@ -284,6 +284,7 @@ describe('SecureCredentialStorage', () => {
     } as unknown);
 
     // Get credential object for a verified credential to trigger verification
+    let errorMessage = '';
     try {
       // Mock credential object as verified
       (manager as unknown as { credentials: Record<string, unknown> }).credentials['test-provider'] = {
@@ -300,8 +301,10 @@ describe('SecureCredentialStorage', () => {
 
       await manager.getCredential('test-provider');
     } catch (error) {
-      // Error should not contain the API key
-      expect(String(error)).not.toContain('sensitive-api-key-123');
+      errorMessage = String(error);
     }
+    
+    // Error should not contain the API key
+    expect(errorMessage).not.toContain('sensitive-api-key-123');
   });
 });

@@ -66,7 +66,7 @@ export class StorageError extends BaseError {
 
     // Build context with storage details
     const context = {
-      ...(options.context || {}),
+      ...(options.context || {} as Record<string, unknown>),
       ...(operation ? { operation } : {}),
       ...(storageType ? { storageType } : {}),
       // Avoid including actual paths/IDs in context for security

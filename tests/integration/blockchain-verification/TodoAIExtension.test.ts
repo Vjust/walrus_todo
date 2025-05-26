@@ -461,10 +461,9 @@ describe('TodoAIExtension Integration', () => {
       expect(result.todo.priority).toBe('high');
       expect(result.todo.deadline).toBe(deadline.toISOString());
       expect(result.todo.blockchain).toBeDefined();
-      if (result.todo.blockchain) {
-        expect(result.todo.blockchain.registered).toBe(true);
-        expect(result.todo.blockchain.blobId).toBe('blockchain-todo-id');
-      }
+      const blockchain = result.todo.blockchain!;
+      expect(blockchain.registered).toBe(true);
+      expect(blockchain.blobId).toBe('blockchain-todo-id');
 
       // Verify generation details
       expect(result.generationDetails.model).toBe('advanced-model');

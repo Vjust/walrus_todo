@@ -1,13 +1,14 @@
 /**
-import { Logger } from '../../Logger';
-
-const logger = new Logger('ImageStorage');
  * @fileoverview Image Storage - Specialized storage implementation for images
  *
  * This class extends the BlobStorage implementation to provide specialized
  * functionality for storing, retrieving, and managing image files. It adds
  * image-specific validation, format handling, and metadata management.
  */
+
+import { Logger } from '../../Logger';
+
+const logger = new Logger('ImageStorage');
 
 import { BlobStorage } from './BlobStorage';
 import { StorageConfig } from '../core/StorageTypes';
@@ -437,7 +438,7 @@ export class ImageStorage extends BlobStorage {
 
       // If we had an image library, we would use code like this:
       /*
-      const sharp = require('sharp');
+      import sharp from 'sharp';
       const metadata = await sharp(imageData).metadata();
       return {
         width: metadata.width,

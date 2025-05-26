@@ -24,7 +24,7 @@ interface SuiVerificationFields {
 interface SuiObjectContent {
   fields: SuiCredentialFields | SuiVerificationFields;
 }
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '../../../utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { createHash } from 'crypto';
 import { SignerAdapter } from '../../../types/adapters/SignerAdapter';

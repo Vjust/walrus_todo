@@ -89,8 +89,8 @@ export function errorHandler(
 ): void {
   // Log the error
   logger.error('API Error:', err, {
-    requestMethod: (req as any).method,
-    requestPath: (req as any).path,
+    requestMethod: req.method,
+    requestPath: req.path,
   });
 
   // Determine status code
@@ -147,7 +147,7 @@ export function errorHandler(
   }
 
   // Send response
-  (res as any).status(status).json(errorResponse);
+  res.status(status).json(errorResponse);
 }
 
 // Async error wrapper
@@ -157,7 +157,7 @@ export function asyncHandler(
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch((error: unknown) => {
       const typedError = error instanceof Error ? error : new Error(String(error));
-      (next as any)(typedError);
+      next(typedError);
     });
   };
 }

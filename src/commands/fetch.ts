@@ -9,6 +9,7 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { configService } from '../services/config-service';
 import chalk from 'chalk';
 import { RetryManager } from '../utils/retry-manager';
+import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 
 /**
  * @class FetchCommand
@@ -63,7 +64,7 @@ export default class FetchCommand extends BaseCommand {
    * @param network Network name to connect to (mainnet, testnet, devnet, local)
    * @returns Configured SuiClient instance
    */
-  private createSuiClient(network: string): typeof SuiClient {
+  private createSuiClient(network: string): SuiClient {
     // In a proper implementation, this would create a real SuiClient
     // For now, we stub it for testing purposes
     if (this.parsedFlags['dry-run']) {
@@ -75,7 +76,7 @@ export default class FetchCommand extends BaseCommand {
         getEpochMetrics: async () => null,
         getObject: async () => null,
         getTransactionBlock: async () => null,
-      } as unknown as typeof SuiClient;
+      } as unknown as SuiClient;
     }
 
     // For actual implementation, this would create a real client

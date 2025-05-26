@@ -65,13 +65,15 @@ describe('Batch Operations E2E Tests', () => {
       process.env.WALRUS_SIMULATE_ERROR = 'true';
 
       let errorThrown = false;
+      let errorMessage = '';
       try {
         execSync(`${walrusCLI} store-list --mock`);
       } catch (error) {
         errorThrown = true;
-        expect(error.toString()).toMatch(/Failed to store todos/);
+        errorMessage = error.toString();
       }
       expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Failed to store todos/);
 
       // Clean up error simulation
       delete process.env.WALRUS_SIMULATE_ERROR;
@@ -212,13 +214,11 @@ describe('Batch Operations E2E Tests', () => {
       
       expect(errorCaught).toBe(true);
       
-      // Test error output - proper testing without conditional expects
-      if (errorCaught) {
-        expect(output).toContain('Partial batch failure');
-        expect(output).toContain('Successfully stored: 2 todos');
-        expect(output).toContain('Failed: 1 todo');
-        expect(output).toContain('Remaining: 2 todos');
-      }
+      // Test error output - assertions moved outside conditional
+      expect(output).toContain('Partial batch failure');
+      expect(output).toContain('Successfully stored: 2 todos');
+      expect(output).toContain('Failed: 1 todo');
+      expect(output).toContain('Remaining: 2 todos');
 
       // Clean up
       delete process.env.WALRUS_FAIL_ON_THIRD;

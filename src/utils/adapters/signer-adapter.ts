@@ -13,6 +13,7 @@
  */
 
 import { Logger } from '../Logger';
+import { BaseSigner } from '../../types/adapters/SignerAdapter';
 
 const logger = new Logger('signer-adapter');
 

@@ -240,19 +240,21 @@ export class SuiNftStorage {
 
     return await this.executeWithRetry(
       async () => {
-        const getObject = (this.client as any).getObject;
-        if (typeof getObject !== 'function') {
+        const clientWithGetObject = this.client as unknown as { 
+          getObject: (args: { id: string; options: { showDisplay: boolean; showContent: boolean; showType: boolean } }) => Promise<SuiObjectResponse> 
+        };
+        if (typeof clientWithGetObject.getObject !== 'function') {
           throw new Error('getObject method not available on client');
         }
         
-        const response = await getObject({
+        const response = await clientWithGetObject.getObject({
           id: objectId,
           options: {
             showDisplay: true,
             showContent: true,
             showType: true,
           },
-        }) as SuiObjectResponse;
+        });
 
         if (!response.data) {
           throw new CLIError(

@@ -109,7 +109,8 @@ describe('End-to-End Error Scenarios', () => {
         .stub(global, 'fetch')
         .rejects(new Error('ETIMEDOUT'));
 
-      expect(() => {
+      let thrownError = null;
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`,
           {
@@ -122,7 +123,14 @@ describe('End-to-End Error Scenarios', () => {
             timeout: 5000,
           }
         );
-      }).toThrow();
+      } catch (error) {
+        thrownError = error;
+      }
+
+      // Restructured to avoid conditional expects
+      expect(thrownError).toBeTruthy();
+      expect(thrownError).toBeInstanceOf(Error);
+
 
       fetchStub.restore();
     });
@@ -151,10 +159,8 @@ describe('End-to-End Error Scenarios', () => {
 
       expect(caughtError).not.toBeNull();
       expect(caughtError).toBeInstanceOf(Error);
-      expect(caughtError!.message).toContain('Rate limit exceeded');
-      expect(caughtError!.message).toContain(
-        'Please wait before retrying'
-      );
+      expect(caughtError?.message).toContain('Rate limit exceeded');
+      expect(caughtError?.message).toContain('Please wait before retrying');
 
       fetchStub.restore();
     });
@@ -184,10 +190,8 @@ describe('End-to-End Error Scenarios', () => {
 
       expect(caughtError).not.toBeNull();
       expect(caughtError).toBeInstanceOf(Error);
-      expect(caughtError!.message).toContain('DNS lookup failed');
-      expect(caughtError!.message).toContain(
-        'Unable to resolve host'
-      );
+      expect(caughtError?.message).toContain('DNS lookup failed');
+      expect(caughtError?.message).toContain('Unable to resolve host');
 
       fetchStub.restore();
     });
@@ -215,10 +219,8 @@ describe('End-to-End Error Scenarios', () => {
 
       expect(caughtError).not.toBeNull();
       expect(caughtError).toBeInstanceOf(Error);
-      expect(caughtError!.message).toContain('Insufficient balance');
-      expect(caughtError!.message).toContain(
-        'Please fund your wallet'
-      );
+      expect(caughtError?.message).toContain('Insufficient balance');
+      expect(caughtError?.message).toContain('Please fund your wallet');
 
       execStub.restore();
     });
@@ -231,7 +233,9 @@ describe('End-to-End Error Scenarios', () => {
       // Mock transaction failure
       const execStub = sinon.stub(exec).callsArgWith(1, transactionError);
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`,
           {
@@ -243,22 +247,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow();
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
       
-      // Verify the error details separately
-      expect(() => {
-        execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`,
-          {
-            env: {
-              ...process.env,
-              WALRUS_TODO_CONFIG_DIR: testDir,
-              WALRUS_USE_MOCK: 'false',
-            },
-            encoding: 'utf8',
-          }
-        );
-      }).toThrow(/Transaction validation failed/);
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Transaction validation failed/);
+
 
       execStub.restore();
     });
@@ -269,7 +266,9 @@ describe('End-to-End Error Scenarios', () => {
 
       const execStub = sinon.stub(exec).callsArgWith(1, contractError);
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} update 1 --title "Updated" --storageMode blockchain`,
           {
@@ -281,7 +280,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow(/Smart contract execution failed.*Contract error code/);
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Smart contract execution failed.*Contract error code/);
+
 
       execStub.restore();
     });
@@ -295,7 +302,9 @@ describe('End-to-End Error Scenarios', () => {
         json: async () => ({ error: 'Invalid API key' }),
       } as Response);
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} ai suggest --apiKey invalid-key`,
           {
@@ -303,7 +312,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow(/Invalid API key.*Check your AI provider credentials/);
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Invalid API key.*Check your AI provider credentials/);
+
 
       fetchStub.restore();
     });
@@ -315,7 +332,9 @@ describe('End-to-End Error Scenarios', () => {
         json: async () => ({ error: 'Model processing failed' }),
       } as Response);
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} ai analyze --apiKey test-key`,
           {
@@ -323,7 +342,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow(/AI service error.*Try again later/);
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/AI service error.*Try again later/);
+
 
       fetchStub.restore();
     });
@@ -348,8 +375,10 @@ describe('End-to-End Error Scenarios', () => {
         }
       );
 
+      // Restructured to avoid conditional expects
       expect(result).toContain('Restored configuration from backup');
       expect(result).toContain('Todo list');
+
     });
 
     it('should retry failed network requests', () => {
@@ -374,7 +403,10 @@ describe('End-to-End Error Scenarios', () => {
       );
 
       expect(callCount).toBe(3);
-      expect(result).toContain('Successfully connected after retry');
+      expect(result).toBeDefined();
+      // Check result content unconditionally
+      const resultContainsRetryMessage = result.includes('Successfully connected after retry');
+      expect(resultContainsRetryMessage).toBe(true);
 
       fetchStub.restore();
     });
@@ -450,7 +482,9 @@ describe('End-to-End Error Scenarios', () => {
     });
 
     it('should handle invalid command combinations', () => {
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} add --complete --delete`,
           {
@@ -458,7 +492,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow(/Conflicting options/);
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Conflicting options/);
+
     });
   });
 
@@ -510,7 +552,9 @@ describe('End-to-End Error Scenarios', () => {
           })
         );
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} update 1 --title "My update"`,
           {
@@ -518,7 +562,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow(/Concurrent modification|File lock|operation failed/);
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Concurrent modification|File lock|operation failed/);
+
 
       stub.restore();
     });
@@ -544,12 +596,22 @@ describe('End-to-End Error Scenarios', () => {
     it('should handle invalid environment variable values', () => {
       process.env.WALRUS_NETWORK = 'invalid-network';
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(`node ${path.join(__dirname, '../../src/index.ts')} deploy`, {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
         });
-      }).toThrow(/Invalid network|Valid networks/);
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Invalid network|Valid networks/);
+
 
       delete process.env.WALRUS_NETWORK;
     });
@@ -565,7 +627,9 @@ describe('End-to-End Error Scenarios', () => {
         .stub(fs, 'writeFileSync')
         .throws(new Error('Disk full'));
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} ai enhance --apiKey test-key --save`,
           {
@@ -573,7 +637,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow(/Multiple errors|Network error|Disk full|Operation.*completed/);
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Multiple errors|Network error|Disk full|Operation.*completed/);
+
 
       fetchStub.restore();
       fsStub.restore();
@@ -586,7 +658,9 @@ describe('End-to-End Error Scenarios', () => {
 
       const fetchStub = sinon.stub(global, 'fetch').rejects(error);
 
-      expect(() => {
+      let errorThrown = false;
+      let errorMessage = '';
+      try {
         execSync(
           `node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`,
           {
@@ -598,9 +672,15 @@ describe('End-to-End Error Scenarios', () => {
             encoding: 'utf8',
           }
         );
-      }).toThrow(expect.objectContaining({
-        message: expect.stringMatching(/Connection refused.*Troubleshooting steps:.*1\. Check if the service is running.*2\. Verify the network configuration.*3\. Check firewall settings/s)
-      }));
+      } catch (error: any) {
+        errorThrown = true;
+        errorMessage = error.message || '';
+      }
+
+      // Restructured to avoid conditional expects
+      expect(errorThrown).toBe(true);
+      expect(errorMessage).toMatch(/Connection refused.*Troubleshooting steps:.*1\. Check if the service is running.*2\. Verify the network configuration.*3\. Check firewall settings/s);
+
 
       fetchStub.restore();
     });

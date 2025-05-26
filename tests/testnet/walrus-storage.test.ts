@@ -19,19 +19,12 @@ import { join } from 'path';
 describe('Walrus Testnet Integration', () => {
   const isTestnetEnabled = process.env.WALRUS_TEST_ENABLE_TESTNET === 'true';
   
-  describe(isTestnetEnabled ? 'TodoStorage on Testnet' : 'TodoStorage on Testnet (Skipped - Set WALRUS_TEST_ENABLE_TESTNET=true to enable)', () => {
-    beforeEach(() => {
-      if (!isTestnetEnabled) {
-        pending('Testnet tests disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.');
-      }
-    });
+  const describeIfEnabled = isTestnetEnabled ? describe : describe.skip;
+  
+  describeIfEnabled('TodoStorage on Testnet', () => {
     let todoStorage: TodoStorage;
 
     beforeAll(() => {
-      if (!isTestnetEnabled) {
-        // console.log('Testnet tests are disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.'); // Removed console statement
-        return;
-      }
       // Use real Walrus CLI (not mock)
       const previousMockSetting = process.env.WALRUS_USE_MOCK;
       process.env.WALRUS_USE_MOCK = 'false';
@@ -100,19 +93,11 @@ describe('Walrus Testnet Integration', () => {
     }, 30000);
   });
 
-  describe(isTestnetEnabled ? 'ImageStorage on Testnet' : 'ImageStorage on Testnet (Skipped - Set WALRUS_TEST_ENABLE_TESTNET=true to enable)', () => {
-    beforeEach(() => {
-      if (!isTestnetEnabled) {
-        pending('Testnet tests disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.');
-      }
-    });
+  describeIfEnabled('ImageStorage on Testnet', () => {
     let imageStorage: ImageStorage;
     const testImagePath = join(__dirname, '../../test-image.jpeg');
 
     beforeAll(() => {
-      if (!isTestnetEnabled) {
-        return;
-      }
       process.env.WALRUS_USE_MOCK = 'false';
       imageStorage = new ImageStorage();
     });
@@ -148,18 +133,10 @@ describe('Walrus Testnet Integration', () => {
     }, 90000); // Extended timeout for image operations
   });
 
-  describe(isTestnetEnabled ? 'Batch operations on Testnet' : 'Batch operations on Testnet (Skipped - Set WALRUS_TEST_ENABLE_TESTNET=true to enable)', () => {
-    beforeEach(() => {
-      if (!isTestnetEnabled) {
-        pending('Testnet tests disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.');
-      }
-    });
+  describeIfEnabled('Batch operations on Testnet', () => {
     let storageClient: StorageClient;
 
     beforeAll(() => {
-      if (!isTestnetEnabled) {
-        return;
-      }
       process.env.WALRUS_USE_MOCK = 'false';
       storageClient = new StorageClient();
     });
@@ -212,18 +189,10 @@ describe('Walrus Testnet Integration', () => {
     }, 90000); // Extended timeout for batch operations
   });
 
-  describe(isTestnetEnabled ? 'Network error handling' : 'Network error handling (Skipped - Set WALRUS_TEST_ENABLE_TESTNET=true to enable)', () => {
-    beforeEach(() => {
-      if (!isTestnetEnabled) {
-        pending('Testnet tests disabled. Set WALRUS_TEST_ENABLE_TESTNET=true to enable.');
-      }
-    });
+  describeIfEnabled('Network error handling', () => {
     let todoStorage: TodoStorage;
 
     beforeAll(() => {
-      if (!isTestnetEnabled) {
-        return;
-      }
       process.env.WALRUS_USE_MOCK = 'false';
       todoStorage = new TodoStorage();
     });

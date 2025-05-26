@@ -226,8 +226,9 @@ export class AggregateOperationError extends Error {
     this.errors = errors;
     
     // Use AggregateError if available, otherwise fall back to custom implementation
-    if (typeof (globalThis as any).AggregateError !== 'undefined') {
-      const aggregateError = new (globalThis as any).AggregateError(errors, message);
+    const globalWithAggregateError = globalThis as unknown as { AggregateError?: new (errors: Error[], message: string) => Error };
+    if (typeof globalWithAggregateError.AggregateError !== 'undefined') {
+      const aggregateError = new globalWithAggregateError.AggregateError(errors, message);
       this.stack = aggregateError.stack;
     }
   }

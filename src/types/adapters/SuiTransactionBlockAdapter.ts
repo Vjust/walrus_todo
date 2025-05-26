@@ -1,8 +1,11 @@
 import { Transaction } from '@mysten/sui/transactions';
 import { SignerAdapter } from './SignerAdapter';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../utils/adapters/sui-client-compatibility';
 import { Logger } from '../../utils/Logger';
 import { TransactionType } from '../transaction';
+
+// Type alias for compatibility
+type TransactionBlock = Transaction;
 
 const logger = new Logger('SuiTransactionBlockAdapter');
 

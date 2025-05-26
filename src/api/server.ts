@@ -29,10 +29,10 @@ export class ApiServer {
 
   private setupMiddleware(): void {
     // Security middleware
-    (this.app as any).use(helmet());
+    this.app.use(helmet());
 
     // CORS configuration
-    (this.app as any).use(
+    this.app.use(
       cors({
         origin: this.config.cors.origins,
         credentials: true,
@@ -42,29 +42,29 @@ export class ApiServer {
     );
 
     // Compression
-    (this.app as any).use(compression());
+    this.app.use(compression());
 
     // Body parsing
-    (this.app as any).use(express.json({ limit: this.config.bodyLimit }));
-    (this.app as any).use(
+    this.app.use(express.json({ limit: this.config.bodyLimit }));
+    this.app.use(
       express.urlencoded({ extended: true, limit: this.config.bodyLimit })
     );
 
     // Request logging
     if (this.config.logging.enabled) {
-      (this.app as any).use(requestLogger);
+      this.app.use(requestLogger);
     }
 
     // API key validation (can be disabled for development)
     if (this.config.auth.required) {
-      (this.app as any).use(validateApiKey);
+      this.app.use(validateApiKey);
     }
   }
 
   private setupRoutes(): void {
     // Health check
-    (this.app as any).get('/health', (req: express.Request, res: express.Response) => {
-      (res as any).json({
+    this.app.get('/health', (req: express.Request, res: express.Response) => {
+      res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
         version: this.config.version,
@@ -72,20 +72,20 @@ export class ApiServer {
     });
 
     // API routes
-    (this.app as any).use('/api/v1/todos', todoRoutes);
-    (this.app as any).use('/api/v1/sync', syncRoutes);
+    this.app.use('/api/v1/todos', todoRoutes);
+    this.app.use('/api/v1/sync', syncRoutes);
 
     // 404 handler
-    (this.app as any).use((req: express.Request, res: express.Response) => {
-      (res as any).status(404).json({
+    this.app.use((req: express.Request, res: express.Response) => {
+      res.status(404).json({
         error: 'Not Found',
-        message: `Route ${(req as any).method} ${(req as any).path} not found`,
+        message: `Route ${req.method} ${req.path} not found`,
       });
     });
   }
 
   private setupErrorHandling(): void {
-    (this.app as any).use(errorHandler);
+    this.app.use(errorHandler);
   }
 
   public async start(): Promise<void> {
