@@ -1,7 +1,4 @@
 /**
-import { Logger } from '../../utils/Logger';
-
-const logger = new Logger('WalrusClientAdapter');
  * WalrusClientAdapter
  *
  * This adapter reconciles differences between WalrusClient interface versions
@@ -49,6 +46,7 @@ import {
   type GetStorageConfirmationOptions, // Options for confirming storage allocation
   type ReadBlobOptions, // Options for reading blob data
 } from '@mysten/walrus';
+
 
 /**
  * Import custom client interfaces defined in the project.
@@ -152,7 +150,7 @@ export interface NormalizedBlobObject {
   storage_cost?: {
     value: string;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
   deletable?: boolean;
   size?: number | string;
 }
@@ -296,7 +294,7 @@ export interface UnifiedWalrusClient {
    * @returns {Promise<any>} Promise resolving to the blob metadata
    * @throws {WalrusClientAdapterError} If the blob cannot be found or there's a network error
    */
-  getBlobMetadata(options: ReadBlobOptions): Promise<any>;
+  getBlobMetadata(options: ReadBlobOptions): Promise<Record<string, unknown>>;
 
   /**
    * Verifies proof of availability for a blob
@@ -520,7 +518,7 @@ export interface UnifiedWalrusClient {
    * @property {Function} getBlobData - Retrieves specialized blob data in an implementation-specific format
    */
   experimental?: {
-    getBlobData: () => Promise<any>;
+    getBlobData: () => Promise<Record<string, unknown>>;
   };
 
   /**
@@ -605,17 +603,20 @@ export interface WalrusClientAdapter extends UnifiedWalrusClient {
  * ```
  */
 export function isOriginalWalrusClient(
-  client: any
+  client: unknown
 ): client is OriginalWalrusClient {
+  if (client === null || client === undefined || typeof client !== 'object') {
+    return false;
+  }
+  
+  const clientObj = client as Record<string, unknown>;
   return (
-    client &&
-    typeof client === 'object' &&
-    typeof client.getBlobInfo === 'function' &&
-    typeof client.readBlob === 'function' &&
-    typeof client.writeBlob === 'function' &&
-    typeof client.getConfig === 'function' &&
-    typeof client.getWalBalance === 'function' &&
-    typeof client.getStorageUsage === 'function'
+    typeof clientObj.getBlobInfo === 'function' &&
+    typeof clientObj.readBlob === 'function' &&
+    typeof clientObj.writeBlob === 'function' &&
+    typeof clientObj.getConfig === 'function' &&
+    typeof clientObj.getWalBalance === 'function' &&
+    typeof clientObj.getStorageUsage === 'function'
   );
 }
 
@@ -626,7 +627,7 @@ export function isOriginalWalrusClient(
  * interface defined in the project, which extends the original SDK interface with
  * additional methods.
  *
- * @param {any} client - The object to check for interface compatibility
+ * @param {unknown} client - The object to check for interface compatibility
  * @returns {boolean} True if the object implements WalrusClient
  * @example
  * ```typescript
@@ -636,11 +637,15 @@ export function isOriginalWalrusClient(
  * }
  * ```
  */
-export function isWalrusClient(client: any): client is WalrusClient {
+export function isWalrusClient(client: unknown): client is WalrusClient {
+  if (!isOriginalWalrusClient(client)) {
+    return false;
+  }
+  
+  const clientObj = client as Record<string, unknown>;
   return (
-    isOriginalWalrusClient(client) &&
-    typeof client.getBlobObject === 'function' &&
-    typeof client.verifyPoA === 'function'
+    typeof clientObj.getBlobObject === 'function' &&
+    typeof clientObj.verifyPoA === 'function'
   );
 }
 
@@ -650,7 +655,7 @@ export function isWalrusClient(client: any): client is WalrusClient {
  * This function verifies if the provided object implements the extended WalrusClientExt
  * interface, which adds advanced functionality beyond the basic WalrusClient interface.
  *
- * @param {any} client - The object to check for interface compatibility
+ * @param {unknown} client - The object to check for interface compatibility
  * @returns {boolean} True if the object implements WalrusClientExt
  * @example
  * ```typescript
@@ -660,8 +665,13 @@ export function isWalrusClient(client: any): client is WalrusClient {
  * }
  * ```
  */
-export function isWalrusClientExt(client: any): client is WalrusClientExt {
-  return isWalrusClient(client) && typeof client.getBlobSize === 'function';
+export function isWalrusClientExt(client: unknown): client is WalrusClientExt {
+  if (!isWalrusClient(client)) {
+    return false;
+  }
+  
+  const clientObj = client as Record<string, unknown>;
+  return typeof clientObj.getBlobSize === 'function';
 }
 
 /**
@@ -678,7 +688,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
   /**
    * The underlying Walrus client being adapted
    */
-  protected walrusClient: any;
+  protected walrusClient: OriginalWalrusClient | WalrusClient | WalrusClientExt;
 
   /**
    * The detected version of the Walrus client
@@ -691,10 +701,10 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * Initializes the adapter with a Walrus client instance and automatically
    * detects its version to determine available functionality.
    *
-   * @param {any} walrusClient - The Walrus client instance to adapt
+   * @param {OriginalWalrusClient | WalrusClient | WalrusClientExt} walrusClient - The Walrus client instance to adapt
    * @throws {WalrusClientAdapterError} If the client is null or undefined
    */
-  constructor(walrusClient: any) {
+  constructor(walrusClient: OriginalWalrusClient | WalrusClient | WalrusClientExt) {
     if (!walrusClient) {
       throw new WalrusClientAdapterError(
         'Cannot initialize WalrusClientAdapter with null or undefined client'
@@ -709,9 +719,9 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    *
    * Provides access to the original client instance being adapted.
    *
-   * @returns {any} The underlying client implementation
+   * @returns {OriginalWalrusClient | WalrusClient | WalrusClientExt} The underlying client implementation
    */
-  public getUnderlyingClient(): any {
+  public getUnderlyingClient(): OriginalWalrusClient | WalrusClient | WalrusClientExt {
     return this.walrusClient;
   }
 
@@ -732,11 +742,11 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * Uses type guards and feature detection to determine which version
    * of the Walrus client interface is implemented by the provided client.
    *
-   * @param {any} client - The client to detect the version of
+   * @param {unknown} client - The client to detect the version of
    * @returns {WalrusClientVersion} The detected client version
    * @throws {WalrusClientAdapterError} If the client is null or undefined
    */
-  protected detectClientVersion(client: any): WalrusClientVersion {
+  protected detectClientVersion(client: unknown): WalrusClientVersion {
     if (!client) {
       throw new WalrusClientAdapterError(
         'Cannot detect version of null or undefined client'
@@ -760,17 +770,23 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
 
     // If types don't match exactly, use method detection as a fallback
     if (
-      ('getBlobSize' in client && typeof client.getBlobSize === 'function') ||
-      ('experimental' in client && client.experimental)
+      client !== null &&
+      client !== undefined &&
+      typeof client === 'object' &&
+      (('getBlobSize' in client && typeof (client as Record<string, unknown>).getBlobSize === 'function') ||
+      ('experimental' in client && (client as Record<string, unknown>).experimental))
     ) {
       return WalrusClientVersion.EXTENDED;
     }
 
     if (
+      client !== null &&
+      client !== undefined &&
+      typeof client === 'object' &&
       'getBlobObject' in client &&
-      typeof client.getBlobObject === 'function' &&
+      typeof (client as Record<string, unknown>).getBlobObject === 'function' &&
       'verifyPoA' in client &&
-      typeof client.verifyPoA === 'function'
+      typeof (client as Record<string, unknown>).verifyPoA === 'function'
     ) {
       return WalrusClientVersion.CUSTOM;
     }
@@ -799,11 +815,11 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * Handles conversion of different numeric representations (number, string, object)
    * to the bigint type used in blockchain calculations.
    *
-   * @param {any} value - The value to convert to bigint
+   * @param {unknown} value - The value to convert to bigint
    * @returns {bigint} The converted bigint value
    * @throws {WalrusClientAdapterError} If the value cannot be converted to bigint
    */
-  protected toBigInt(value: any): bigint {
+  protected toBigInt(value: unknown): bigint {
     if (typeof value === 'bigint') {
       return value;
     }
@@ -850,9 +866,9 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * extracting the underlying transaction block for use with the Walrus client.
    *
    * @param {TransactionType} tx - The transaction or transaction adapter
-   * @returns {any} The extracted underlying transaction block
+   * @returns {unknown} The extracted underlying transaction block
    */
-  protected extractTransaction(tx: TransactionType): any {
+  protected extractTransaction(tx: TransactionType): unknown {
     if (!tx) return undefined;
 
     if (typeof tx === 'object' && tx !== null) {
@@ -888,29 +904,29 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * extracting the underlying signer for use with the Walrus client.
    *
    * @param {Signer|Ed25519Keypair|SignerAdapter} signer - The signer or signer adapter
-   * @returns {any} The extracted underlying signer
+   * @returns {Signer | Ed25519Keypair | undefined} The extracted underlying signer
    */
   protected extractSigner(
     signer: Signer | Ed25519Keypair | SignerAdapter
-  ): any {
+  ): Signer | Ed25519Keypair | undefined {
     if (!signer) return undefined;
 
     if (typeof signer === 'object' && signer !== null) {
       // Check for adapter interfaces
       if (
         'getUnderlyingSigner' in signer &&
-        typeof signer.getUnderlyingSigner === 'function'
+        typeof (signer as Record<string, unknown>).getUnderlyingSigner === 'function'
       ) {
-        return signer.getUnderlyingSigner();
+        return (signer as SignerAdapter).getUnderlyingSigner();
       }
 
-      if ('getSigner' in signer && typeof signer.getSigner === 'function') {
-        return signer.getSigner();
+      if ('getSigner' in signer && typeof (signer as Record<string, unknown>).getSigner === 'function') {
+        return (signer as SignerAdapter).getSigner();
       }
     }
 
     // Return as-is if no adapter methods found
-    return signer;
+    return signer as Signer | Ed25519Keypair;
   }
 
   /**
@@ -923,7 +939,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * @param {T} options - The options object potentially containing adapters
    * @returns {T} The processed options with adapters extracted
    */
-  protected extractAdapters<T extends Record<string, any>>(options: T): T {
+  protected extractAdapters<T extends Record<string, unknown>>(options: T): T {
     const result = { ...options } as T & {
       transaction?: TransactionType;
       signer?: Signer | Ed25519Keypair | SignerAdapter;
@@ -937,7 +953,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       result.transaction
     ) {
       // Extract the transaction object from the adapter
-      result.transaction = this.extractTransaction(
+      (result as { transaction?: unknown }).transaction = this.extractTransaction(
         result.transaction as TransactionType
       );
     }
@@ -949,7 +965,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       result.signer
     ) {
       // Extract the signer object from the adapter
-      result.signer = this.extractSigner(
+      (result as { signer?: unknown }).signer = this.extractSigner(
         result.signer as Signer | Ed25519Keypair | SignerAdapter
       );
     }
@@ -964,10 +980,10 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * ensure they conform to the NormalizedBlobObject interface, providing
    * consistent property access regardless of the original format.
    *
-   * @param {any} blob - The blob object to normalize
+   * @param {Record<string, unknown> | null | undefined} blob - The blob object to normalize
    * @returns {NormalizedBlobObject} The normalized blob object
    */
-  protected normalizeBlobObject(blob: any): NormalizedBlobObject {
+  protected normalizeBlobObject(blob: Record<string, unknown> | null | undefined): NormalizedBlobObject {
     if (!blob) {
       return {
         blob_id: '',
@@ -992,14 +1008,14 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     } else if (
       blob.id &&
       typeof blob.id === 'object' &&
-      typeof blob.id.id === 'string'
+      typeof (blob.id as Record<string, unknown>).id === 'string'
     ) {
-      normalizedBlob.blob_id = blob.id.id;
+      normalizedBlob.blob_id = (blob.id as Record<string, unknown>).id as string;
     }
 
     // Extract id
     if (blob.id && typeof blob.id === 'object') {
-      normalizedBlob.id = blob.id;
+      normalizedBlob.id = blob.id as { id: string };
     } else if (typeof blob.blob_id === 'string') {
       normalizedBlob.id = { id: blob.blob_id };
     }
@@ -1012,11 +1028,11 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     }
 
     if (blob.storage_cost && typeof blob.storage_cost === 'object') {
-      normalizedBlob.storage_cost = blob.storage_cost;
+      normalizedBlob.storage_cost = blob.storage_cost as { value: string };
     }
 
     if (blob.metadata && typeof blob.metadata === 'object') {
-      normalizedBlob.metadata = blob.metadata;
+      normalizedBlob.metadata = blob.metadata as Record<string, string | number | boolean>;
     }
 
     normalizedBlob.deletable = Boolean(blob.deletable);
@@ -1038,12 +1054,12 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * ensure they conform to the NormalizedWriteBlobResponse interface, providing
    * consistent property access regardless of the original format.
    *
-   * @param {any} response - The write blob response to normalize
+   * @param {Record<string, unknown> | string} response - The write blob response to normalize
    * @returns {NormalizedWriteBlobResponse} The normalized write blob response
    * @throws {WalrusClientAdapterError} If the response is empty or missing required data
    */
   protected normalizeWriteBlobResponse(
-    response: any
+    response: Record<string, unknown> | string
   ): NormalizedWriteBlobResponse {
     if (!response) {
       throw new WalrusClientAdapterError(
@@ -1060,18 +1076,18 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       blobId = response.blobId;
     } else if (
       response.blobObject &&
-      typeof response.blobObject.blob_id === 'string'
+      typeof (response.blobObject as Record<string, unknown>).blob_id === 'string'
     ) {
-      blobId = response.blobObject.blob_id;
+      blobId = (response.blobObject as Record<string, unknown>).blob_id as string;
     } else if (typeof response.blob_id === 'string') {
       blobId = response.blob_id;
     } else if (
       response.blobObject &&
-      response.blobObject.id &&
-      typeof response.blobObject.id === 'object' &&
-      typeof response.blobObject.id.id === 'string'
+      (response.blobObject as Record<string, unknown>).id &&
+      typeof (response.blobObject as Record<string, unknown>).id === 'object' &&
+      typeof ((response.blobObject as Record<string, unknown>).id as Record<string, unknown>).id === 'string'
     ) {
-      blobId = response.blobObject.id.id;
+      blobId = ((response.blobObject as Record<string, unknown>).id as Record<string, unknown>).id as string;
     }
 
     if (!blobId) {
@@ -1083,8 +1099,8 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     // Prepare the normalized blob object
     let blobObject: NormalizedBlobObject;
 
-    if (response.blobObject) {
-      blobObject = this.normalizeBlobObject(response.blobObject);
+    if (typeof response === 'object' && response.blobObject) {
+      blobObject = this.normalizeBlobObject(response.blobObject as Record<string, unknown>);
     } else {
       blobObject = { blob_id: blobId, deletable: false };
     }
@@ -1092,7 +1108,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
     return {
       blobId,
       blobObject,
-      digest: typeof response.digest === 'string' ? response.digest : '',
+      digest: typeof response === 'object' && typeof response.digest === 'string' ? response.digest : '',
     };
   }
 
@@ -1122,12 +1138,19 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
   /**
    * Writes a blob to Walrus storage
    *
-   * @param {any} options - Options for writing the blob
+   * @param {WriteBlobOptions | {blob: Uint8Array; signer: Signer | Ed25519Keypair | SignerAdapter; deletable?: boolean; epochs?: number; attributes?: Record<string, string>; transaction?: TransactionType}} options - Options for writing the blob
    * @returns {Promise<{blobId: string, blobObject: NormalizedBlobObject}>} Promise resolving to blob info
    * @abstract
    */
   abstract writeBlob(
-    options: any
+    options: WriteBlobOptions | {
+      blob: Uint8Array;
+      signer: Signer | Ed25519Keypair | SignerAdapter;
+      deletable?: boolean;
+      epochs?: number;
+      attributes?: Record<string, string>;
+      transaction?: TransactionType;
+    }
   ): Promise<{ blobId: string; blobObject: NormalizedBlobObject }>;
 
   /**
@@ -1162,10 +1185,10 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
    * Gets blob metadata
    *
    * @param {ReadBlobOptions} options - Options for reading the blob metadata
-   * @returns {Promise<any>} Promise resolving to the metadata
+   * @returns {Promise<Record<string, unknown>>} Promise resolving to the metadata
    * @abstract
    */
-  abstract getBlobMetadata(options: ReadBlobOptions): Promise<any>;
+  abstract getBlobMetadata(options: ReadBlobOptions): Promise<Record<string, unknown>>;
 
   /**
    * Verifies proof of availability
@@ -1208,7 +1231,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
  * detected version of the provided client. The actual implementation is in
  * walrus-client-adapter.ts, which should be imported by client code.
  *
- * @param {OriginalWalrusClient|WalrusClient|WalrusClientExt|any} client - The client to adapt
+ * @param {OriginalWalrusClient|WalrusClient|WalrusClientExt} client - The client to adapt
  * @returns {WalrusClientAdapter} The adapter instance for the provided client
  * @throws {Error} If called directly (should be imported from implementation file)
  * @example
@@ -1225,7 +1248,7 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
  * ```
  */
 export function createWalrusClientAdapter(
-  _client: OriginalWalrusClient | WalrusClient | WalrusClientExt | any
+  _client: OriginalWalrusClient | WalrusClient | WalrusClientExt
 ): WalrusClientAdapter {
   // This is just a placeholder - the actual implementation will be in walrus-client-adapter.ts
   throw new Error('Implementation moved to walrus-client-adapter.ts');

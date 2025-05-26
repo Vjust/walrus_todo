@@ -5,9 +5,9 @@
  * which provides secure and blockchain-verified access to AI providers.
  */
 
-import { SuiClient } from '@mysten/sui/client';
 import { SignerAdapter } from './SignerAdapter';
 import { WalrusClientAdapter } from './WalrusClientAdapter';
+import type { SuiClientType } from '../../utils/adapters/sui-client-adapter';
 
 /**
  * Types of credentials that can be stored
@@ -83,7 +83,7 @@ export interface AIProviderCredential {
   providerName: string;
   credentialType: CredentialType;
   credentialValue: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   isVerified: boolean;
   verificationProof?: string;
   storageOptions: CredentialStorageOptions;
@@ -183,14 +183,14 @@ export interface AICredentialAdapter {
  * Blockchain-based implementation of the AICredentialAdapter
  */
 export class SuiAICredentialAdapter implements AICredentialAdapter {
-  private client: SuiClient;
+  private client: SuiClientType;
   private signer: SignerAdapter;
   private packageId: string;
   private registryId: string;
   private walrusAdapter?: WalrusClientAdapter;
 
   constructor(
-    client: SuiClient,
+    client: SuiClientType,
     signer: SignerAdapter,
     packageId: string,
     registryId: string,
