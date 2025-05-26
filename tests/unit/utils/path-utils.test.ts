@@ -1,15 +1,14 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { jest } from '@jest/globals';
-import { getAssetPath, getProjectPath } from '../../../src/utils/path-utils';
 
 // Mock the fs module
 jest.mock('fs');
 
-// Mock the entire path-utils module to control PROJECT_ROOT
 const mockProjectRoot = '/test/project/root';
-jest.mock('../../../src/utils/path-utils', () => {
 
+// Mock the path-utils module
+jest.mock('../../../src/utils/path-utils', () => {
   const findProjectRoot = (startPath: string): string => {
     let currentPath = startPath;
     const mockedFs = jest.requireMock('fs') as typeof fs;
@@ -46,6 +45,9 @@ jest.mock('../../../src/utils/path-utils', () => {
     findProjectRoot,
   };
 });
+
+// Import the mocked functions
+import { getAssetPath, getProjectPath } from '../../../src/utils/path-utils';
 
 describe('path-utils', () => {
   const mockedFs = fs as jest.Mocked<typeof fs>;
@@ -256,18 +258,18 @@ describe('path-utils', () => {
 
       // TypeScript would normally prevent these, but testing runtime behavior
       expect(() => {
-        pathUtils.getAssetPath(null as any);
+        pathUtils.getAssetPath(null as unknown as string);
       }).toThrow();
 
       expect(() => {
-        pathUtils.getAssetPath(undefined as any);
+        pathUtils.getAssetPath(undefined as unknown as string);
       }).toThrow();
 
       // getProjectPath would concatenate null/undefined as string
-      const resultNull = pathUtils.getProjectPath(null as any);
+      const resultNull = pathUtils.getProjectPath(null as unknown as string);
       expect(resultNull).toBe(path.join(mockProjectRoot, String(null)));
 
-      const resultUndefined = pathUtils.getProjectPath(undefined as any);
+      const resultUndefined = pathUtils.getProjectPath(undefined as unknown as string);
       expect(resultUndefined).toBe(
         path.join(mockProjectRoot, String(undefined))
       );

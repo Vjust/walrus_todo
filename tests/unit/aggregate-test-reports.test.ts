@@ -1,7 +1,7 @@
 import { TestReportAggregator } from '../../scripts/aggregate-test-reports';
 import type { AggregatedResults } from '../../scripts/aggregate-test-reports';
 import * as fs from 'fs';
-import * as path from 'path';
+// path module imported but not used in current tests
 
 // Mock fs module
 jest.mock('fs');
@@ -64,6 +64,7 @@ describe('TestReportAggregator', () => {
         expect(stats).toHaveProperty('totalDuration');
         expect(stats).toHaveProperty('successRate');
         expect(stats).toHaveProperty('avgResponseTime');
+        expect(op).toBeDefined();
       });
     });
   });

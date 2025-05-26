@@ -19,7 +19,7 @@ import {
 import {
   TransactionError,
   CLIError,
-} from '../types/errors/consolidated';
+} from '../types/errors';
 
 // Mock implementations for basic utility functions
 export function initializeSuiClient(): unknown {
@@ -44,29 +44,35 @@ export function handleSuiOperationError(
   context: ErrorContext
 ): never {
   const timestamp = Date.now();
-  const errorContext = { ...context, timestamp, error: String(error) };
+  const errorContext = { 
+    ...context, 
+    metadata: { 
+      ...context.metadata, 
+      timestamp, 
+      error: String(error) 
+    } 
+  };
 
   // Log error with context for debugging
-  logger.error('Sui operation failed:', {
-    error,
+  logger.error('Sui operation failed:', error instanceof Error ? error : new Error(String(error)), {
     context: errorContext,
   });
 
   if (error instanceof TransactionError) {
     throw new CLIError(
       `Transaction failed: ${error.message}`,
-      'TRANSACTION_ERROR'
+      { operation: 'transaction', recoverable: false }
     );
   }
 
   if (error instanceof Error) {
     throw new CLIError(
       `Unexpected error: ${error.message}`,
-      'OPERATION_ERROR'
+      { operation: 'execution', recoverable: false }
     );
   }
 
-  throw new CLIError('An unknown error occurred', 'UNKNOWN_ERROR');
+  throw new CLIError('An unknown error occurred', { operation: 'unknown', recoverable: false });
 }
 
 /**
@@ -77,7 +83,7 @@ export async function retryOperation<T>(
   maxRetries: number = 3,
   delayMs: number = 1000
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error | undefined;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -94,7 +100,7 @@ export async function retryOperation<T>(
     }
   }
 
-  throw lastError!;
+  throw lastError || new Error('Operation failed after retries');
 }
 
 /**
@@ -136,9 +142,11 @@ export async function createTodoSafely(
 ): Promise<TransactionResult> {
   const context: ErrorContext = {
     operation: 'create_todo',
-    address,
     network: getCurrentNetwork(),
-    timestamp: Date.now(),
+    metadata: {
+      address,
+      timestamp: Date.now(),
+    },
   };
 
   try {
@@ -147,7 +155,7 @@ export async function createTodoSafely(
     if (validationErrors.length > 0) {
       throw new CLIError(
         `Validation failed: ${validationErrors.join(', ')}`,
-        'VALIDATION_ERROR'
+        { operation: 'validation', recoverable: false }
       );
     }
 
@@ -155,14 +163,14 @@ export async function createTodoSafely(
     const txb = {};
 
     // Mock transaction construction
-    logger.info('Creating todo with params:', params);
+    logger.info('Creating todo with params:', { title: params.title, description: params.description });
 
     // Execute transaction
     const result = await signAndExecuteTransaction(txb);
 
     return {
       success: true,
-      digest: result?.digest || 'mock-digest',
+      digest: (result as { digest?: string })?.digest || 'mock-digest',
     };
   } catch (error) {
     handleSuiOperationError(error, context);
@@ -187,7 +195,7 @@ export async function waitForTransactionConfirmation(
       }
 
       if (status.status === 'failure') {
-        throw new TransactionError('Transaction failed', digest);
+        throw new TransactionError('Transaction failed', { operation: 'execution', transactionId: digest, recoverable: false });
       }
 
       // Wait 1 second before checking again
@@ -219,7 +227,7 @@ export async function checkNetworkHealth(): Promise<{
     const client = initializeSuiClient();
 
     // Try to get chain identifier as a health check
-    await (client as any)?.getChainIdentifier?.();
+    await (client as { getChainIdentifier?: () => Promise<string> })?.getChainIdentifier?.();
 
     const latency = Date.now() - startTime;
 

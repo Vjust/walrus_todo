@@ -47,7 +47,7 @@ export interface ErrorSimulationConfig {
   errorCode?: string; // Custom error code
   shouldRetry?: boolean; // Should the error be retryable
   delay?: number; // Delay in ms before error occurs
-  additionalContext?: Record<string, any>; // Extra context data
+  additionalContext?: Record<string, unknown>; // Extra context data
   recoveryProbability?: number; // Chance of recovery in 0.0 to 1.0, default 0.0
   recoveryDelay?: number; // How long until recovery in ms
   errorFactory?: () => Error; // Custom error factory
@@ -61,9 +61,9 @@ export class ErrorSimulator {
   private simulatedMethods: Map<
     string,
     {
-      object: any;
+      object: unknown;
       methodName: string;
-      originalMethod: (...args: any[]) => any;
+      originalMethod: (...args: unknown[]) => unknown;
     }
   > = new Map();
 
@@ -86,7 +86,7 @@ export class ErrorSimulator {
     };
 
     // If disabled, restore original methods
-    if (config.hasOwnProperty('enabled') && !config.enabled) {
+    if (Object.prototype.hasOwnProperty.call(config, 'enabled') && !config.enabled) {
       this.restoreAllMethods();
     }
   }
@@ -153,7 +153,7 @@ export class ErrorSimulator {
         const rateLimitError = new Error(
           '429 Too Many Requests: Rate limit exceeded'
         );
-        (rateLimitError as any).status = 429;
+        (rateLimitError as { status: number }).status = 429;
         return rateLimitError;
       }
 
@@ -161,8 +161,9 @@ export class ErrorSimulator {
         const serverError = new Error(
           '500 Internal Server Error: Something went wrong'
         );
-        (serverError as any).status = 500;
+        (serverError as { status: number }).status = 500;
         return serverError;
+      }
 
       case ErrorType.RESOURCE_EXHAUSTED:
         return new StorageError('Insufficient storage allocation', {
@@ -198,6 +199,7 @@ export class ErrorSimulator {
         );
         (conflictError as any).status = 409;
         return conflictError;
+      }
 
       default:
         return new Error(message);
@@ -231,8 +233,8 @@ export class ErrorSimulator {
   /**
    * Simulate error on a specific method
    */
-  simulateErrorOnMethod<T>(
-    object: any,
+  simulateErrorOnMethod(
+    object: Record<string, unknown>,
     methodName: string,
     operationName?: string
   ): void {
@@ -247,7 +249,7 @@ export class ErrorSimulator {
     });
 
     // Replace method with error-injecting version using arrow function
-    object[methodName] = async (...args: any[]) => {
+    object[methodName] = async (...args: unknown[]) => {
       if (this.shouldTriggerError(operationName)) {
         if (this.config.delay) {
           await new Promise(resolve => setTimeout(resolve, this.config.delay));
@@ -275,7 +277,7 @@ export class ErrorSimulator {
    */
   simulateErrorOnMethods(
     methods: Array<{
-      object: any;
+      object: Record<string, unknown>;
       methodName: string;
       operationName?: string;
     }>
@@ -292,7 +294,7 @@ export class ErrorSimulator {
   /**
    * Restore original method implementation
    */
-  restoreMethod(object: any, methodName: string): void {
+  restoreMethod(object: Record<string, unknown>, methodName: string): void {
     const methodKey = `${object.constructor?.name || 'unknown'}.${methodName}`;
     const savedMethod = this.simulatedMethods.get(methodKey);
 
@@ -306,7 +308,7 @@ export class ErrorSimulator {
    * Restore all overridden methods
    */
   restoreAllMethods(): void {
-    for (const [_, method] of this.simulatedMethods.entries()) {
+    for (const [, method] of this.simulatedMethods.entries()) {
       method.object[method.methodName] = method.originalMethod;
     }
     this.simulatedMethods.clear();

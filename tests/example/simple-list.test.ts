@@ -2,6 +2,9 @@
  * Simplified test for the list command without using @oclif/test
  */
 
+import { execSync } from 'child_process';
+import { TodoService } from '../../src/services/todoService';
+
 jest.mock('../../src/services/todoService');
 
 // Mock command execution

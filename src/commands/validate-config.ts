@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import chalk from 'chalk';
-import { createConfigValidator } from '../utils/config-validator';
+import { createConfigValidator, ConfigValidator } from '../utils/config-validator';
 import { CLIError } from '../types/errors/consolidated';
 
 /**
@@ -118,7 +118,7 @@ export default class ValidateConfigCommand extends BaseCommand {
   /**
    * Shows detailed configuration information
    */
-  private async showDetailedInfo(validator: any): Promise<void> {
+  private async showDetailedInfo(validator: ConfigValidator): Promise<void> {
     this.log(chalk.blue('📋 Detailed Information:'));
 
     // Show available configurations

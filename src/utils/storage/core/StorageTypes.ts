@@ -134,7 +134,7 @@ export interface VerificationResult {
   checksum?: string;
 
   /** Any additional details about the verification */
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 /**

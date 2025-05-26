@@ -212,7 +212,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
     // Fallback: try to extract metadata from getBlobInfo
     try {
       const blobInfo = await this.getBlobInfo(options.blobId);
-      return blobInfo.metadata || {};
+      return blobInfo.metadata || {} as Record<string, unknown>;
     } catch (error) {
       throw new WalrusClientAdapterError(
         `getBlobMetadata not supported and fallback failed: ${error instanceof Error ? error.message : String(error)}`

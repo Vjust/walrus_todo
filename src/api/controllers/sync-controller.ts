@@ -1,7 +1,20 @@
 import type { Request, Response } from 'express';
+import { 
+  PullRequestBody, 
+  PullResponse, 
+  PushRequestBody, 
+  PushResponse, 
+  StatusResponse,
+  ResolveConflictRequestBody,
+  ResolveConflictResponse,
+  ConflictsResponse,
+  FullSyncRequestBody,
+  FullSyncResponse
+} from '../../types/express';
 import { TodoService } from '../../services/todoService';
 import { Logger } from '../../utils/Logger';
 import { BaseError } from '../../types/errors/consolidated/BaseError';
+import type { Todo } from '../../types/todo';
 
 const logger = new Logger('SyncController');
 
@@ -15,8 +28,8 @@ interface SyncStatus {
 interface SyncConflict {
   id: string;
   todoId: string;
-  localVersion: any;
-  remoteVersion: any;
+  localVersion: Todo;
+  remoteVersion: Todo;
   detectedAt: Date;
 }
 
@@ -36,10 +49,10 @@ export class SyncController {
     this.conflicts = [];
   }
 
-  pull = async (req: Request, res: Response): Promise<void> => {
-    const { lastSync, force } = req.body;
+  pull = async (req: Request<Record<string, never>, PullResponse, PullRequestBody>, res: Response<PullResponse>): Promise<void> => {
+    const { force } = req.body;
 
-    logger.info('Pulling changes from blockchain', { lastSync, force });
+    logger.info('Pulling changes from blockchain', { force });
 
     // Simulate pulling changes
     const pulledTodos = [];
@@ -60,7 +73,7 @@ export class SyncController {
     });
   };
 
-  push = async (req: Request, res: Response): Promise<void> => {
+  push = async (req: Request<Record<string, never>, PushResponse, PushRequestBody>, res: Response<PushResponse>): Promise<void> => {
     const { todoIds, includeAll } = req.body;
 
     logger.info('Pushing changes to blockchain', { todoIds, includeAll });
@@ -88,7 +101,7 @@ export class SyncController {
     });
   };
 
-  status = async (req: Request, res: Response): Promise<void> => {
+  status = async (req: Request<Record<string, never>, StatusResponse>, res: Response<StatusResponse>): Promise<void> => {
     const todos = await this.todoService.listTodos();
 
     // Calculate pending changes (todos not synced)
@@ -103,7 +116,7 @@ export class SyncController {
     });
   };
 
-  resolveConflict = async (req: Request, res: Response): Promise<void> => {
+  resolveConflict = async (req: Request<Record<string, never>, ResolveConflictResponse, ResolveConflictRequestBody>, res: Response<ResolveConflictResponse>): Promise<void> => {
     const { conflictId, resolution, mergedData } = req.body;
 
     const conflictIndex = this.conflicts.findIndex(c => c.id === conflictId);
@@ -116,6 +129,12 @@ export class SyncController {
     }
 
     const conflict = this.conflicts[conflictIndex];
+    if (!conflict) {
+      throw new BaseError({
+        message: `Conflict with id ${conflictId} not found`,
+        code: 'NOT_FOUND',
+      });
+    }
 
     logger.info('Resolving conflict', { conflictId, resolution });
 
@@ -146,7 +165,7 @@ export class SyncController {
     res.json({
       data: {
         resolved: true,
-        todoId: conflict.todoId,
+        todoId: conflict?.todoId,
         resolution,
         resolvedData,
       },
@@ -154,17 +173,17 @@ export class SyncController {
     });
   };
 
-  getConflicts = async (req: Request, res: Response): Promise<void> => {
+  getConflicts = async (req: Request<Record<string, never>, ConflictsResponse>, res: Response<ConflictsResponse>): Promise<void> => {
     res.json({
       data: this.conflicts,
       count: this.conflicts.length,
     });
   };
 
-  fullSync = async (req: Request, res: Response): Promise<void> => {
-    const { direction, resolveStrategy } = req.body;
+  fullSync = async (req: Request<Record<string, never>, FullSyncResponse, FullSyncRequestBody>, res: Response<FullSyncResponse>): Promise<void> => {
+    const { direction } = req.body;
 
-    logger.info('Performing full sync', { direction, resolveStrategy });
+    logger.info('Performing full sync', { direction });
 
     const todos = await this.todoService.listTodos();
 

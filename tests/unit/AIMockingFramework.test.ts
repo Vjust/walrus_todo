@@ -11,6 +11,35 @@ jest.mock('../../src/services/ai/aiService');
 type MockErrorType = 'AUTHENTICATION' | 'RATE_LIMIT' | 'NETWORK';
 type RecordingMode = 'RECORD' | 'REPLAY';
 
+interface MockProvider {
+  invoke: jest.MockedFunction<(...args: unknown[]) => Promise<unknown>>;
+  saveRecordings: jest.MockedFunction<(path: string) => void>;
+  loadRecordings: jest.MockedFunction<(path: string) => void>;
+}
+
+interface MockConfiguration {
+  errors?: {
+    enabled: boolean;
+    errorType: MockErrorType;
+    probability: number;
+  };
+  latency?: {
+    enabled: boolean;
+    minLatencyMs: number;
+    maxLatencyMs: number;
+    jitterEnabled: boolean;
+    timeoutProbability: number;
+    timeoutAfterMs: number;
+  };
+  recordingMode?: RecordingMode;
+}
+
+interface MockAIProviderFactoryType {
+  createProvider: jest.MockedFunction<(provider: AIProvider) => MockProvider>;
+  configureProvider: jest.MockedFunction<(provider: MockProvider, config: MockConfiguration) => void>;
+  createProviderForScenario: jest.MockedFunction<(scenario: string) => MockProvider>;
+}
+
 const MockErrorTypes = {
   AUTHENTICATION: 'AUTHENTICATION' as MockErrorType,
   RATE_LIMIT: 'RATE_LIMIT' as MockErrorType,
@@ -26,7 +55,7 @@ const RecordingModes = {
 const setupAIMocks = jest.fn();
 const teardownAIMocks = jest.fn();
 
-const MockAIProviderFactory = {
+const MockAIProviderFactory: MockAIProviderFactoryType = {
   createProvider: jest.fn().mockReturnValue({
     invoke: jest.fn(),
     saveRecordings: jest.fn(),
@@ -171,7 +200,7 @@ describe('AI Mocking Framework', () => {
       });
 
       // Override the service's provider with our configured mock
-      (aiService as any).modelAdapter = mockProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = mockProvider;
 
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
         /401 Unauthorized/
@@ -190,7 +219,7 @@ describe('AI Mocking Framework', () => {
       });
 
       // Override the service's provider with our configured mock
-      (aiService as any).modelAdapter = mockProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = mockProvider;
 
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
         /429 Too Many Requests/
@@ -209,7 +238,7 @@ describe('AI Mocking Framework', () => {
       });
 
       // Override the service's provider with our configured mock
-      (aiService as any).modelAdapter = mockProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = mockProvider;
 
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
         /Network error/
@@ -234,7 +263,7 @@ describe('AI Mocking Framework', () => {
       });
 
       const aiService = new AIService('mock-api-key');
-      (aiService as any).modelAdapter = mockProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = mockProvider;
 
       const startTime = Date.now();
       await aiService.summarize(sampleTodos);
@@ -259,7 +288,7 @@ describe('AI Mocking Framework', () => {
       });
 
       const aiService = new AIService('mock-api-key');
-      (aiService as any).modelAdapter = mockProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = mockProvider;
 
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
         /timed out/
@@ -275,14 +304,14 @@ describe('AI Mocking Framework', () => {
       // Set up recording
       const recordingProvider = MockAIProviderFactory.createProvider(
         AIProvider.XAI
-      ) as any;
+      ) as MockProvider;
       MockAIProviderFactory.configureProvider(recordingProvider, {
         recordingMode: RecordingModes.RECORD,
       });
 
       // Use the recording provider
       const aiService = new AIService('mock-api-key');
-      (aiService as any).modelAdapter = recordingProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = recordingProvider;
 
       // Perform operations to record
       await aiService.summarize(sampleTodos);
@@ -294,7 +323,7 @@ describe('AI Mocking Framework', () => {
       // Set up replay
       const replayProvider = MockAIProviderFactory.createProvider(
         AIProvider.XAI
-      ) as any;
+      ) as MockProvider;
       replayProvider.loadRecordings(recordingPath);
       MockAIProviderFactory.configureProvider(replayProvider, {
         recordingMode: RecordingModes.REPLAY,
@@ -302,7 +331,7 @@ describe('AI Mocking Framework', () => {
 
       // Use the replay provider
       const replayService = new AIService('mock-api-key');
-      (replayService as any).modelAdapter = replayProvider;
+      (replayService as unknown as { modelAdapter: MockProvider }).modelAdapter = replayProvider;
 
       // The operations should work with the recorded data
       const summary = await replayService.summarize(sampleTodos);
@@ -311,11 +340,13 @@ describe('AI Mocking Framework', () => {
       expect(summary).toBeTruthy();
       expect(categories).toBeTruthy();
 
-      // Clean up recording file
-      try {
-        fs.unlinkSync(recordingPath);
-      } catch (e) {
-        // Ignore errors
+      // Clean up recording file if it exists
+      if (fs.existsSync && fs.existsSync(recordingPath)) {
+        try {
+          fs.unlinkSync(recordingPath);
+        } catch (e: unknown) {
+          // Ignore cleanup errors
+        }
       }
     });
   });
@@ -328,7 +359,7 @@ describe('AI Mocking Framework', () => {
         MockAIProviderFactory.createProviderForScenario('authError');
 
       const aiService = new AIService('mock-api-key');
-      (aiService as any).modelAdapter = mockProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = mockProvider;
 
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow(
         /401 Unauthorized/
@@ -341,7 +372,7 @@ describe('AI Mocking Framework', () => {
         MockAIProviderFactory.createProviderForScenario('minimalResponses');
 
       const aiService = new AIService('mock-api-key');
-      (aiService as any).modelAdapter = mockProvider;
+      (aiService as unknown as { modelAdapter: MockProvider }).modelAdapter = mockProvider;
 
       const summary = await aiService.summarize(sampleTodos);
       expect(summary).toBe(

@@ -12,7 +12,7 @@ export interface TestResult {
   error?: Error;
   timestamp: Date;
   category: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface NetworkMetrics {
@@ -23,12 +23,52 @@ export interface NetworkMetrics {
   timestamp: Date;
 }
 
+export interface AggregatedNetworkMetrics {
+  averageLatency: number;
+  averageThroughput: number;
+  averageSuccessRate: number;
+  averageErrorRate: number;
+  samples: number;
+}
+
+export interface AggregatedResourceMetrics {
+  averageCpu: number;
+  averageMemory: number;
+  averageNetworkIO: number;
+  averageDiskIO: number;
+  samples: number;
+}
+
+export interface TestReportData {
+  summary: {
+    startTime: Date;
+    endTime: Date;
+    duration: number;
+  } & TestMetrics;
+  testResults: TestResult[];
+  networkMetrics: AggregatedNetworkMetrics | null;
+  resourceUsage: AggregatedResourceMetrics | null;
+  failedTests: Array<{
+    name: string;
+    category: string;
+    error: string;
+    stack?: string;
+  }>;
+}
+
 export interface ResourceUsage {
   cpu: number;
   memory: number;
   networkIO: number;
   diskIO: number;
   timestamp: Date;
+}
+
+export interface CategoryStats {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
 }
 
 export interface TestMetrics {
@@ -39,15 +79,7 @@ export interface TestMetrics {
   averageDuration: number;
   totalDuration: number;
   successRate: number;
-  categories: Record<
-    string,
-    {
-      total: number;
-      passed: number;
-      failed: number;
-      skipped: number;
-    }
-  >;
+  categories: Record<string, CategoryStats>;
 }
 
 export class TestMonitor extends EventEmitter {
@@ -90,7 +122,7 @@ export class TestMonitor extends EventEmitter {
   }
 
   getTestMetrics(): TestMetrics {
-    const categories: Record<string, any> = {};
+    const categories: Record<string, CategoryStats> = {};
 
     this.results.forEach(result => {
       if (!categories[result.category]) {
@@ -165,7 +197,7 @@ export class TestMonitor extends EventEmitter {
     logger.info(`Test report generated: ${reportPath}`);
   }
 
-  private aggregateNetworkMetrics(): any {
+  private aggregateNetworkMetrics(): AggregatedNetworkMetrics | null {
     if (this.networkMetrics.length === 0) return null;
 
     const avgLatency =
@@ -190,7 +222,7 @@ export class TestMonitor extends EventEmitter {
     };
   }
 
-  private aggregateResourceUsage(): any {
+  private aggregateResourceUsage(): AggregatedResourceMetrics | null {
     if (this.resourceUsage.length === 0) return null;
 
     const avgCpu =
@@ -215,7 +247,7 @@ export class TestMonitor extends EventEmitter {
     };
   }
 
-  private generateHTMLReport(report: any): void {
+  private generateHTMLReport(report: TestReportData): void {
     const html = `
 <!DOCTYPE html>
 <html>
@@ -283,7 +315,7 @@ export class TestMonitor extends EventEmitter {
       <tbody>
         ${report.failedTests
           .map(
-            (test: any) => `
+            (test) => `
           <tr>
             <td>${test.name}</td>
             <td>${test.category}</td>
@@ -311,7 +343,7 @@ export class TestMonitor extends EventEmitter {
     <tbody>
       ${Object.entries(report.summary.categories)
         .map(
-          ([category, stats]: [string, any]) => `
+          ([category, stats]: [string, CategoryStats]) => `
         <tr>
           <td>${category}</td>
           <td>${stats.total}</td>

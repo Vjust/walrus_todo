@@ -7,23 +7,30 @@ export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 
-export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => ({
-  id: 'test-todo-id',
-  title: 'Test Todo',
-  description: '',
-  completed: false,
-  priority: 'medium',
-  tags: [] as string[],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  private: true,
-  storageLocation: 'local' as StorageLocation,
-  ...overrides,
-});
+export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => {
+  const base = {
+    id: 'test-todo-id',
+    title: 'Test Todo',
+    description: '',
+    completed: false,
+    priority: 'medium' as const,
+    tags: [] as string[],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    private: true,
+    storageLocation: 'local' as StorageLocation,
+  };
+  
+  return {
+    ...base,
+    ...overrides,
+    tags: (overrides?.tags?.filter((tag): tag is string => tag != null) ?? base.tags),
+  } as Todo;
+};
 
 export type MockOf<T> = {
-  [P in keyof T]: T[P] extends (...args: any[]) => any
-    ? jest.Mock<ReturnType<T[P]>, Parameters<T[P]>>
+  [P in keyof T]: T[P] extends (...args: unknown[]) => unknown
+    ? jest.Mock<ReturnType<T[P] extends (...args: unknown[]) => infer R ? () => R : never>, Parameters<T[P] extends (...args: infer P) => unknown ? (...args: P) => unknown : never>>
     : T[P];
 };
 
@@ -84,17 +91,17 @@ export async function runCommand(
 
   if (mockStdout) {
     // eslint-disable-next-line no-console
-    console.log = (...args: any[]) => {
+    console.log = (...args: unknown[]) => {
       // Capture stdout
-      stdout += args.map(arg => String(arg)).join(' ') + '\n';
+      stdout += args.map(arg => `${arg}`).join(' ') + '\n';
     };
   }
 
   if (mockStderr) {
     // eslint-disable-next-line no-console
-    console.error = (...args: any[]) => {
+    console.error = (...args: unknown[]) => {
       // Capture stderr
-      stderr += args.map(arg => String(arg)).join(' ') + '\n';
+      stderr += args.map(arg => `${arg}`).join(' ') + '\n';
     };
   }
 
@@ -121,19 +128,21 @@ export async function runCommand(
     return new Promise<never>(() => {});
   };
 
-  process.exit = handleExit as any;
+  process.exit = handleExit as never;
 
   let error: Error | undefined;
 
   // Set test environment
-  Object.keys(testEnv).forEach(key => {
-    process.env[key] = testEnv[key];
+  Object.entries(testEnv).forEach(([key, value]) => {
+    if (value !== undefined) {
+      process.env[key] = `${value}`;
+    }
   });
 
   try {
     // Run with timeout
     await Promise.race([
-      run().catch(err => {
+      run().catch((err: Error) => {
         // Catch non-exit errors
         if (!err.message?.startsWith('EXIT_CODE_')) {
           error = err;

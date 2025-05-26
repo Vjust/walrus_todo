@@ -12,20 +12,13 @@ import {
   messageWithIntent,
 } from '@mysten/sui/cryptography';
 import { toB64 } from '@mysten/sui/utils';
-import { TransactionBlock, Transaction } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import {
   createCompatibleSuiClient,
   CompatibleSuiClientOptions,
 } from './adapters/sui-client-compatibility';
 
 // Import the real types if available, otherwise use fallbacks
-interface SuiTransactionBlockResponse {
-  digest?: string;
-  effects?: {
-    status?: { status: string; error?: string };
-    created?: Array<{ reference?: { objectId: string } }>;
-  };
-}
 import {
   SignerAdapter,
   SuiSDKVersion,
@@ -223,11 +216,11 @@ export class KeystoreSigner implements SignerAdapter {
       const serialized = await transaction.serialize();
       bytes = new Uint8Array(Buffer.from(serialized, 'base64'));
     } else if (
-      (transaction as any).serialize &&
-      typeof (transaction as any).serialize === 'function'
+      'serialize' in transaction &&
+      typeof transaction.serialize === 'function'
     ) {
       // TransactionBlockAdapter type
-      const serialized = await (transaction as any).serialize();
+      const serialized = await transaction.serialize();
       bytes = new Uint8Array(Buffer.from(serialized, 'base64'));
     } else {
       throw new KeystoreError(
@@ -274,7 +267,7 @@ export class KeystoreSigner implements SignerAdapter {
       showEvents?: boolean;
       showBalanceChanges?: boolean;
     }
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
       if (!transactionBlock) {
         throw new Error('Invalid transaction block');
@@ -283,7 +276,7 @@ export class KeystoreSigner implements SignerAdapter {
       const { bytes, signature } =
         await this.signedTransactionBlock(transactionBlock);
 
-      const response = await (this.suiClient as any).executeTransactionBlock({
+      const response = await (this.suiClient as Record<string, unknown>).executeTransactionBlock({
         transactionBlock: bytes,
         signature,
         requestType: options?.requestType || 'WaitForLocalExecution',

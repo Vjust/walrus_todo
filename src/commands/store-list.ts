@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '../utils/adapters/sui-client-adapter';
+// import { SuiClient } from '../utils/adapters/sui-client-adapter';
 // Ed25519Keypair imported but not used
 import chalk from 'chalk';
 import * as fs from 'fs';
@@ -173,20 +173,13 @@ export default class StoreListCommand extends BaseCommand {
       const networkUrl = NETWORK_URLS[network as keyof typeof NETWORK_URLS];
 
       /**
-       * SUI client object for blockchain interactions
-       * In mock mode, this is a minimal mock implementation
+       * SUI client initialization for blockchain interactions
+       * Currently disabled in mock mode
        */
-      // suiClient would be used in real implementation
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const _suiClient = {
-        url: networkUrl,
-        core: {},
-        jsonRpc: {},
-        signAndExecuteTransaction: async () => {},
-        getEpochMetrics: async () => null,
-        getObject: async () => null,
-        getTransactionBlock: async () => null,
-      } as unknown as SuiClient;
+      if (!mockMode) {
+        // Real SUI client would be initialized here for production use
+        console.log(`Would connect to SUI network at: ${networkUrl}`);
+      }
 
       // Initialize and validate Walrus storage connection
       this.startSpinner('Connecting to Walrus storage...');

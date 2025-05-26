@@ -129,33 +129,39 @@ function showSection(title: string, content: string): void {
     chalk.yellow,
     chalk.blue,
   ];
-  const boxColor = boxColors[Math.floor(Math.random() * boxColors.length)];
+  const boxColor = boxColors[Math.floor(Math.random() * boxColors.length)] || chalk.cyan;
 
   // Random decorative emoji for the section title
   const decorations = ['✨', '🌟', '💫', '🚀', '💥', '🔮', '🧩', '🎯'];
   const decoration =
-    decorations[Math.floor(Math.random() * decorations.length)];
+    decorations[Math.floor(Math.random() * decorations.length)] || '✨';
 
   // Top border with title and decoration
-  process.stdout.write(
-    boxColor(
-      `${ICONS.BOX_TL}${ICONS.BOX_H}[ ${decoration} ${chalk.bold.white(title)} ${decoration} ]${ICONS.BOX_H.repeat(width - title.length - 8)}${ICONS.BOX_TR}`
-    ) + '\n'
-  );
+  if (process.stdout.write) {
+    process.stdout.write(
+      boxColor(
+        `${ICONS.BOX_TL}${ICONS.BOX_H}[ ${decoration} ${chalk.bold.white(title)} ${decoration} ]${ICONS.BOX_H.repeat(width - title.length - 8)}${ICONS.BOX_TR}`
+      ) + '\n'
+    );
+  }
 
   // Content with colorful borders
   lines.forEach(line => {
     const padding = width - line.length;
-    process.stdout.write(
-      `${boxColor(ICONS.BOX_V)} ${line}${' '.repeat(padding)} ${boxColor(ICONS.BOX_V)}\n`
-    );
+    if (process.stdout.write) {
+      process.stdout.write(
+        `${boxColor(ICONS.BOX_V)} ${line}${' '.repeat(padding)} ${boxColor(ICONS.BOX_V)}\n`
+      );
+    }
   });
 
   // Bottom border
-  process.stdout.write(
-    boxColor(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`) +
-      '\n'
-  );
+  if (process.stdout.write) {
+    process.stdout.write(
+      boxColor(`${ICONS.BOX_BL}${ICONS.BOX_H.repeat(width + 2)}${ICONS.BOX_BR}`) +
+        '\n'
+    );
+  }
 }
 
 function showSimpleList(title: string, items: string[]): void {
@@ -176,7 +182,14 @@ function showSimpleList(title: string, items: string[]): void {
   process.stdout.write('\n');
 }
 
-function formatTodo(todo: any): string {
+function formatTodo(todo: { 
+  completed: boolean; 
+  title: string; 
+  priority?: string;
+  dueDate?: string;
+  tags?: string[];
+  private?: boolean;
+}): string {
   // Status indicators with more personality
   const status = todo.completed
     ? chalk.green.bold(`${ICONS.SUCCESS} `) // Celebration

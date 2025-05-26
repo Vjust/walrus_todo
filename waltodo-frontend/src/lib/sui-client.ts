@@ -3,12 +3,9 @@
  * Enhanced implementation with full Sui SDK integration and auto-generated configuration
  */
 
-import { 
-  createCompatibleSuiClient, 
-  type CompatibleSuiClient,
-  Transaction,
-  Ed25519Keypair 
-} from '../../../src/utils/adapters/sui-client-adapter';
+import { SuiClient } from '@mysten/sui/client';
+import { Transaction } from '@mysten/sui/transactions';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromB64 } from '@mysten/sui/utils';
 import { bcs } from '@mysten/sui/bcs';
 import { loadAppConfig, type AppConfig } from './config-loader';
@@ -343,7 +340,7 @@ export function createTodoNFTTransaction(
  */
 export async function storeTodoOnBlockchain(
   params: CreateTodoParams,
-  signAndExecuteTransaction: (txb: Transaction) => Promise<any>,
+  signAndExecuteTransaction: (txb: Transaction) => Promise<{ digest: string; effects?: unknown }>,
   walletAddress: string
 ): Promise<TransactionResult> {
   try {
@@ -460,7 +457,7 @@ export function deleteTodoNFTTransaction(
  */
 export async function updateTodoOnBlockchain(
   params: UpdateTodoParams,
-  signAndExecuteTransaction: (txb: Transaction) => Promise<any>,
+  signAndExecuteTransaction: (txb: Transaction) => Promise<{ digest: string; effects?: unknown }>,
   walletAddress: string
 ): Promise<TransactionResult> {
   try {
@@ -493,7 +490,7 @@ export async function updateTodoOnBlockchain(
  */
 export async function completeTodoOnBlockchain(
   objectId: string,
-  signAndExecuteTransaction: (txb: Transaction) => Promise<any>,
+  signAndExecuteTransaction: (txb: Transaction) => Promise<{ digest: string; effects?: unknown }>,
   walletAddress: string
 ): Promise<TransactionResult> {
   try {
@@ -526,7 +523,7 @@ export async function completeTodoOnBlockchain(
  */
 export async function deleteTodoOnBlockchain(
   objectId: string,
-  signAndExecuteTransaction: (txb: Transaction) => Promise<any>,
+  signAndExecuteTransaction: (txb: Transaction) => Promise<{ digest: string; effects?: unknown }>,
   walletAddress: string
 ): Promise<TransactionResult> {
   try {

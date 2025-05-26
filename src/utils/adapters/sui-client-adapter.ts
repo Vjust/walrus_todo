@@ -1,33 +1,38 @@
 // SuiClient Compatibility Adapter
 // Provides a unified SuiClient interface across different SDK versions
 
-let SuiClientImpl: any;
-let getFullnodeUrlImpl: any;
+// Try requiring the CJS module directly
+const { SuiClient: SuiClientClass, getFullnodeUrl: getFullnodeUrlFn } = require('@mysten/sui/client');
+const { Ed25519Keypair: Ed25519KeypairClass } = require('@mysten/sui/keypairs/ed25519');
 
-try {
-  // Try the correct import path that we verified works
-  const suiClient = require('@mysten/sui/client');
-  SuiClientImpl = suiClient.SuiClient;
-  getFullnodeUrlImpl = suiClient.getFullnodeUrl;
-} catch (error) {
-  console.warn('Failed to import from @mysten/sui/client, using fallback');
-  // Fallback to mock implementation
-  SuiClientImpl = class MockSuiClient {
-    constructor(_options: any) {
-      console.warn('Using mock SuiClient');
-    }
-  };
-  getFullnodeUrlImpl = (network: string) => `https://${network}.sui.io:443`;
+// Define proper interface for SUI client options
+export interface SuiClientOptions {
+  url?: string;
+  transport?: unknown;
+  rpcTimeout?: number;
+  websocketTimeout?: number;
+  requestTimeout?: number;
+  faucetURL?: string;
 }
 
-// Re-export with compatibility wrapper
-export const SuiClient = SuiClientImpl;
-export const getFullnodeUrl = getFullnodeUrlImpl;
+// Export the actual SuiClient constructor
+export const SuiClient = SuiClientClass;
+export const getFullnodeUrl = getFullnodeUrlFn;
 
 // Create factory function for compatibility
-export function createSuiClient(options: any) {
+export function createSuiClient(options: SuiClientOptions): SuiClientClass {
   return new SuiClient(options);
 }
 
-// Export commonly needed types
-export type SuiClientType = InstanceType<typeof SuiClient>;
+// Alias for compatibility
+export const createCompatibleSuiClient = createSuiClient;
+
+// Re-export Ed25519Keypair
+export const Ed25519Keypair = Ed25519KeypairClass;
+
+// Export the correct instance type - this is what should be used for type annotations
+export type SuiClientType = SuiClientClass;
+
+// Export SuiClient as both value and type for compatibility
+export { SuiClient as SuiClientConstructor };
+export type SuiClientInterface = SuiClientClass;

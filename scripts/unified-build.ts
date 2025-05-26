@@ -79,7 +79,7 @@ function cleanDist(): void {
     } catch (error) {
       logger.error(
         `${colors.red}✗ Failed to clean dist directory:${colors.reset}`,
-        error
+        error instanceof Error ? error : new Error(String(error))
       );
       process.exit(1);
     }
@@ -122,7 +122,7 @@ function fixBinPermissions(): void {
           } catch (error) {
             logger.warn(
               `${colors.yellow}⚠ Could not change permissions for ${filePath}:${colors.reset}`,
-              error
+              { error: error instanceof Error ? error.message : String(error) }
             );
           }
         }
@@ -139,7 +139,7 @@ function fixBinPermissions(): void {
   } catch (error) {
     logger.error(
       `${colors.red}✗ Failed to fix bin directory permissions:${colors.reset}`,
-      error
+      error instanceof Error ? error : new Error(String(error))
     );
   }
 }
@@ -169,7 +169,7 @@ function touchManifest(): void {
   } catch (error) {
     logger.error(
       `${colors.red}✗ Failed to create/touch manifest file:${colors.reset}`,
-      error
+      error instanceof Error ? error : new Error(String(error))
     );
   }
 }
@@ -210,7 +210,7 @@ function runTypeScriptCompiler(): void {
   } catch (error) {
     logger.error(
       `${colors.red}✗ Failed to run TypeScript compiler:${colors.reset}`,
-      error
+      error instanceof Error ? error : new Error(String(error))
     );
     if (!options.skipTypeCheck) {
       process.exit(1);
@@ -296,7 +296,8 @@ function runTranspileOnly(): void {
     allFiles.forEach(fileName => {
       try {
         // Read the file
-        const sourceText = fs.readFileSync(fileName, 'utf8');
+        const fileContent = fs.readFileSync(fileName, 'utf8');
+        const sourceText = typeof fileContent === 'string' ? fileContent : fileContent.toString();
 
         // Transpile the file (no type checking)
         const { outputText } = ts.transpileModule(sourceText, {
@@ -348,7 +349,7 @@ function runTranspileOnly(): void {
       } catch (error) {
         logger.error(
           `${colors.red}Error processing ${fileName}:${colors.reset}`,
-          error
+          error instanceof Error ? error : new Error(String(error))
         );
         errors++;
       }
@@ -366,7 +367,7 @@ function runTranspileOnly(): void {
   } catch (error) {
     logger.error(
       `${colors.red}✗ Failed to run transpile-only build:${colors.reset}`,
-      error
+      error instanceof Error ? error : new Error(String(error))
     );
     process.exit(1);
   }
@@ -423,7 +424,7 @@ function build(): void {
     logger.info(`${colors.green}✓ Build completed successfully${colors.reset}`);
     console.timeEnd('Build completed in');
   } catch (error) {
-    logger.error(`${colors.red}✗ Build failed:${colors.reset}`, error);
+    logger.error(`${colors.red}✗ Build failed:${colors.reset}`, error instanceof Error ? error : new Error(String(error)));
     process.exit(1);
   }
 }

@@ -181,8 +181,8 @@ describe('ShortcutRegistry', () => {
     });
 
     it('should handle null/undefined input', () => {
-      expect(registry.resolveCommand(null as any)).toBeNull();
-      expect(registry.resolveCommand(undefined as any)).toBeNull();
+      expect(registry.resolveCommand(null as unknown as string)).toBeNull();
+      expect(registry.resolveCommand(undefined as unknown as string)).toBeNull();
     });
 
     it('should handle very long input', () => {

@@ -5,7 +5,7 @@
  * different wallets, ensuring proper data isolation and wallet switching.
  */
 
-import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 const FRONTEND_URL = 'http://localhost:3000';
 
@@ -97,7 +97,8 @@ async function getTodoTitles(page: Page): Promise<string[]> {
 
   for (const element of todoElements) {
     const titleElement = element.locator('[data-testid="todo-title"]');
-    if ((await titleElement.count()) > 0) {
+    const titleCount = await titleElement.count();
+    if (titleCount > 0) {
       const title = await titleElement.textContent();
       if (title) titles.push(title.trim());
     }

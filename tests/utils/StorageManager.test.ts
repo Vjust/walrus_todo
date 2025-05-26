@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient } from '../../src/types/client';
 import { StorageManager } from '../../src/utils/StorageManager';
 import {
   StorageError,
@@ -7,28 +7,31 @@ import {
   BlockchainError,
 } from '../../src/types/errors/consolidated';
 import { Logger } from '../../src/utils/Logger';
-// MockWalrusClient is automatically available via jest.mock
+import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../src/__tests__/helpers/walrus-client-mock';
 
 jest.mock('@mysten/walrus');
 jest.mock('../../src/utils/Logger');
 
 describe('StorageManager', () => {
   let manager: StorageManager;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
+  let mockWalrusClient: MockWalrusClient;
+  let mockSuiClient: unknown;
   let mockLogger: jest.MockedObject<Logger>;
 
   const testConfig = {
     minAllocation: 1000n,
     checkThreshold: 20,
-    client: {} as any,
+    client: {} as Record<string, unknown>,
   };
 
   beforeEach(() => {
-    mockWalrusClient = {
-      getWalBalance: jest.fn(),
-      getStorageUsage: jest.fn(),
-      // Add other required methods as needed
-    } as unknown as jest.Mocked<WalrusClient>;
+    mockSuiClient = {
+      // Add any required sui client methods here
+    };
+
+    // Create proper WalrusClient mock with all required methods
+    mockWalrusClient = createWalrusClientMock();
+    setupDefaultWalrusClientMocks(mockWalrusClient);
 
     mockLogger = {
       debug: jest.fn(),
@@ -39,8 +42,22 @@ describe('StorageManager', () => {
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
+    // Override default mock return values for StorageManager tests
+    mockWalrusClient.getWalBalance.mockResolvedValue('1000');
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '100',
+      total: '1000',
+    });
+    mockWalrusClient.storageCost.mockResolvedValue({
+      storageCost: BigInt(100),
+      writeCost: BigInt(50),
+      totalCost: BigInt(150),
+    });
+
     manager = new StorageManager(
+      mockSuiClient,
       mockWalrusClient as unknown as WalrusClient,
+      'test-address',
       testConfig
     );
   });
@@ -98,11 +115,22 @@ describe('StorageManager', () => {
     });
 
     it('should handle missing balance data', async () => {
-      mockWalrusClient.getWalBalance.mockResolvedValue(null as any);
+      // Mock getWalBalance to return null to simulate missing data
+      mockWalrusClient.getWalBalance.mockResolvedValue(null as unknown as string);
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '100',
         total: '1000',
       });
+
+      await expect(manager.ensureStorageAllocated(100n)).rejects.toThrow(
+        ValidationError
+      );
+    });
+
+    it('should handle missing storage usage data', async () => {
+      mockWalrusClient.getWalBalance.mockResolvedValue('1500');
+      // Mock getStorageUsage to return null to simulate missing data
+      mockWalrusClient.getStorageUsage.mockResolvedValue(null as unknown as { used: string; total: string });
 
       await expect(manager.ensureStorageAllocated(100n)).rejects.toThrow(
         ValidationError

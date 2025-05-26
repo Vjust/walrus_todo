@@ -12,8 +12,8 @@ import chalk from 'chalk';
 import { CLIError } from '../types/error';
 import { envConfig } from './environment-config';
 import { validateEnvironmentFull } from './env-validator';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface StartupCheckResult {
   success: boolean;

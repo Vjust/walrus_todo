@@ -1,7 +1,4 @@
 /**
-import { Logger } from '../../src/utils/Logger';
-
-const logger = new Logger('StressTestReportGenerator');
  * Stress Test Report Generator
  * 
  * This utility generates HTML and text reports from stress test metrics.
@@ -10,7 +7,65 @@ const logger = new Logger('StressTestReportGenerator');
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { StressTestMetrics } from './AIStressTestFramework';
+import { Logger } from '../../src/utils/Logger';
+
+const logger = new Logger('StressTestReportGenerator');
+
+export interface StressTestMetrics {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  avgResponseTime: number;
+  minResponseTime: number;
+  maxResponseTime: number;
+  p50ResponseTime: number;
+  p90ResponseTime: number;
+  p95ResponseTime: number;
+  p99ResponseTime: number;
+  timeouts: number;
+  rateLimitHits: number;
+  networkErrors: number;
+  otherErrors: number;
+  totalDuration: number;
+  requestsPerSecond: number;
+  concurrentRequestsMax: number;
+}
+
+export interface ResourceUsagePoint {
+  timestamp: number;
+  memory: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+    arrayBuffers: number;
+  };
+  cpu: {
+    user: number;
+    system: number;
+  };
+}
+
+export interface SystemInfo {
+  [key: string]: string | number;
+}
+
+export interface HtmlReportOptions {
+  title?: string;
+  outputPath?: string;
+  includeCharts?: boolean;
+}
+
+export interface TextReportOptions {
+  title?: string;
+  detailed?: boolean;
+}
+
+export interface ReportPackageOptions {
+  title?: string;
+  outputDir?: string;
+  includeCharts?: boolean;
+}
 
 export class StressTestReportGenerator {
   /**
@@ -18,19 +73,15 @@ export class StressTestReportGenerator {
    */
   static generateHtmlReport(
     metrics: Record<string, StressTestMetrics>,
-    resourceUsage: any[] = [],
-    systemInfo: any = {},
-    options: {
-      title?: string;
-      outputPath?: string;
-      includeCharts?: boolean;
-    } = {}
+    resourceUsage: ResourceUsagePoint[] = [],
+    systemInfo: SystemInfo = {},
+    options: HtmlReportOptions = {}
   ): string {
     const title = options.title || 'AI Service Stress Test Report';
     const includeCharts = options.includeCharts !== false;
 
     // Format timestamp
-    const timestamp = new Date().toISOString();
+    // const _timestamp = new Date().toISOString();
     const formattedDate = new Date().toLocaleString();
 
     // Calculate overall statistics
@@ -485,10 +536,7 @@ export class StressTestReportGenerator {
    */
   static generateTextReport(
     metrics: Record<string, StressTestMetrics>,
-    options: {
-      title?: string;
-      detailed?: boolean;
-    } = {}
+    options: TextReportOptions = {}
   ): string {
     const title = options.title || 'AI Service Stress Test Report';
     const detailed = options.detailed !== false;
@@ -633,13 +681,9 @@ OPERATIONS PERFORMANCE
    */
   static generateReportPackage(
     metrics: Record<string, StressTestMetrics>,
-    resourceUsage: any[] = [],
-    systemInfo: any = {},
-    options: {
-      title?: string;
-      outputDir?: string;
-      includeCharts?: boolean;
-    } = {}
+    resourceUsage: ResourceUsagePoint[] = [],
+    systemInfo: SystemInfo = {},
+    options: ReportPackageOptions = {}
   ): void {
     const title = options.title || 'AI Service Stress Test Report';
     const timestamp = new Date()

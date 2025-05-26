@@ -54,8 +54,7 @@ export default class Verify extends BaseCommand {
     await super.init();
 
     // Initialize the verifier adapter
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const config = await this.configService.getConfig();
+    // const _config = await this.configService.getConfig();
     // packageId and registryId would be used in real implementation
     // const packageId = config.packageId || '';
     // const registryId = config.registryId || '';
@@ -208,7 +207,7 @@ export default class Verify extends BaseCommand {
       };
 
       // Add mock content if requested
-      const exportData: any = { ...verification };
+      const exportData: Record<string, unknown> = { ...verification };
 
       if (includeContent) {
         exportData.content = {
@@ -268,7 +267,7 @@ export default class Verify extends BaseCommand {
     return types[type] || `UNKNOWN(${type})`;
   }
 
-  private formatTable(data: Record<string, any>[]): string {
+  private formatTable(data: Record<string, unknown>[]): string {
     if (data.length === 0) return 'No data';
 
     // Extract column names

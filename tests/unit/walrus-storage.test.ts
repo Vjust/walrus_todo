@@ -1,27 +1,10 @@
 import { createWalrusStorage } from '../../src/utils/walrus-storage';
 import type { WalrusStorage } from '../../src/utils/walrus-storage';
 import { Todo } from '../../src/types/todo';
+import { walrusModuleMock, type MockWalrusClient } from '../helpers/walrus-client-mock';
 
 // Mock the external dependencies
-jest.mock('@mysten/walrus', () => ({
-  WalrusClient: jest.fn().mockImplementation(() => ({
-    readBlob: jest.fn(),
-    writeBlob: jest.fn(),
-    storageCost: jest.fn(),
-    executeCreateStorageTransaction: jest.fn(),
-    connect: jest.fn(),
-    getConfig: jest.fn(),
-    getWalBalance: jest.fn(),
-    getStorageUsage: jest.fn(),
-    getBlobInfo: jest.fn(),
-    getBlobObject: jest.fn(),
-    verifyPoA: jest.fn(),
-    getBlobMetadata: jest.fn(),
-    getStorageProviders: jest.fn(),
-    getBlobSize: jest.fn(),
-    reset: jest.fn(),
-  })),
-}));
+jest.mock('@mysten/walrus', () => walrusModuleMock);
 
 jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
@@ -47,7 +30,7 @@ import { execSync } from 'child_process';
 describe('WalrusStorage', () => {
   let storage: WalrusStorage;
   let mockTodo: Todo;
-  let mockWalrusClient: jest.Mocked<InstanceType<typeof WalrusClient>>;
+  let mockWalrusClient: MockWalrusClient;
   let mockSuiClient: jest.Mocked<InstanceType<typeof SuiClient>>;
 
   beforeEach(() => {
@@ -55,23 +38,7 @@ describe('WalrusStorage', () => {
     jest.clearAllMocks();
 
     // Setup mock implementations
-    mockWalrusClient = {
-      readBlob: jest.fn(),
-      writeBlob: jest.fn(),
-      storageCost: jest.fn(),
-      executeCreateStorageTransaction: jest.fn(),
-      connect: jest.fn(),
-      getConfig: jest.fn(),
-      getWalBalance: jest.fn(),
-      getStorageUsage: jest.fn(),
-      getBlobInfo: jest.fn(),
-      getBlobObject: jest.fn(),
-      verifyPoA: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn(),
-      reset: jest.fn(),
-    } as any;
+    mockWalrusClient = (WalrusClient as jest.Mock)() as MockWalrusClient;
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -80,7 +47,7 @@ describe('WalrusStorage', () => {
       getOwnedObjects: jest.fn(),
       signAndExecuteTransactionBlock: jest.fn(),
       executeTransactionBlock: jest.fn(),
-    } as any;
+    } as jest.Mocked<InstanceType<typeof SuiClient>>;
 
     // Mock constructor implementations
     (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
@@ -336,9 +303,9 @@ describe('WalrusStorage', () => {
         nextCursor: null,
       });
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: '100',
-        writeCost: '50',
-        totalCost: '150',
+        storageCost: BigInt(100),
+        writeCost: BigInt(50),
+        totalCost: BigInt(150),
       });
       mockWalrusClient.executeCreateStorageTransaction.mockResolvedValue({
         storage: {
@@ -411,9 +378,9 @@ describe('WalrusStorage', () => {
 
     it('should calculate storage costs correctly', async () => {
       mockWalrusClient.storageCost.mockResolvedValue({
-        storageCost: '100',
-        writeCost: '50',
-        totalCost: '150',
+        storageCost: BigInt(100),
+        writeCost: BigInt(50),
+        totalCost: BigInt(150),
       });
 
       await storage.ensureStorageAllocated(1000000);

@@ -27,7 +27,7 @@ interface CacheConfig {
 
 export class ResultCache {
   private static instance: ResultCache;
-  private cache: Map<string, CacheEntry<any>> = new Map();
+  private cache: Map<string, CacheEntry<unknown>> = new Map();
   private config: CacheConfig = {
     enabled: true,
     ttlMs: 15 * 60 * 1000, // 15 minutes default TTL
@@ -77,7 +77,7 @@ export class ResultCache {
   public get<T>(
     operation: string,
     todos: Todo[],
-    additionalParams: Record<string, any> = {}
+    additionalParams: Record<string, unknown> = {}
   ): AIResponse<T> | null {
     if (!this.config.enabled) {
       return null;
@@ -111,7 +111,7 @@ export class ResultCache {
     operation: string,
     todos: Todo[],
     result: AIResponse<T>,
-    additionalParams: Record<string, any> = {}
+    additionalParams: Record<string, unknown> = {}
   ): void {
     if (!this.config.enabled) {
       return;
@@ -214,7 +214,7 @@ export class ResultCache {
   private createHash(
     operation: string,
     todos: Todo[],
-    additionalParams: Record<string, any> = {}
+    additionalParams: Record<string, unknown> = {}
   ): string {
     // Normalize todos - sort by ID to ensure consistent ordering
     const normalizedTodos = [...todos].sort((a, b) => a.id.localeCompare(b.id));

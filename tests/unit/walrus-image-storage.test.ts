@@ -1,21 +1,17 @@
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient } from '../../src/types/client';
 import { createWalrusImageStorage } from '../../src/utils/walrus-image-storage';
 import { SuiClient } from '@mysten/sui/client';
 // import { TransactionBlock } from '@mysten/sui/transactions';
 import { KeystoreSigner } from '../../src/utils/sui-keystore';
+import { walrusModuleMock } from '../helpers/walrus-client-mock';
 
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Mock the external dependencies
-jest.mock('@mysten/walrus', () => ({
-  WalrusClient: jest.fn().mockImplementation(() => ({
-    readBlob: jest.fn(),
-    writeBlob: jest.fn(),
-    getBlobObject: jest.fn(),
-    verifyPoA: jest.fn(),
-  })),
-}));
+// Unused imports removed during TypeScript cleanup
+// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+jest.mock('@mysten/walrus', () => walrusModuleMock);
 
 jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
@@ -44,7 +40,7 @@ jest.mock('../../src/utils/sui-keystore', () => ({
 describe('WalrusImageStorage', () => {
   let mockWalrusClient: jest.Mocked<InstanceType<typeof WalrusClient>>;
   let mockSuiClient: jest.Mocked<InstanceType<typeof SuiClient>>;
-  let mockKeystoreSigner: any;
+  let mockKeystoreSigner: jest.MockedObject<typeof KeystoreSigner>;
   let storage: ReturnType<typeof createWalrusImageStorage>;
 
   const mockImagePath = '/path/to/image.jpg';
@@ -61,7 +57,18 @@ describe('WalrusImageStorage', () => {
       writeBlob: jest.fn(),
       getBlobObject: jest.fn(),
       verifyPoA: jest.fn(),
-    } as any;
+      getBlobInfo: jest.fn(),
+      storageCost: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      connect: jest.fn(),
+      getConfig: jest.fn(),
+      getWalBalance: jest.fn(),
+      getStorageUsage: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn(),
+      reset: jest.fn(),
+    } as jest.Mocked<InstanceType<typeof WalrusClient>>;
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -70,7 +77,7 @@ describe('WalrusImageStorage', () => {
       getOwnedObjects: jest.fn(),
       signAndExecuteTransactionBlock: jest.fn(),
       executeTransactionBlock: jest.fn(),
-    } as any;
+    } as jest.Mocked<InstanceType<typeof SuiClient>>;
 
     mockKeystoreSigner = {
       fromPath: jest.fn().mockResolvedValue({

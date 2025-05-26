@@ -13,8 +13,49 @@ import {
 import { getEnv, hasEnv } from '../utils/environment-config';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
+import { Todo } from '../types/todo';
 
 const logger = new Logger('AI');
+
+// Define interface for parsed flags to fix property access
+interface AICommandFlags {
+  list?: string;
+  verify?: boolean;
+  json?: boolean;
+  apiKey?: string;
+  provider?: string;
+  model?: string;
+  temperature?: number;
+  debug?: boolean;
+  network?: string;
+  verbose?: boolean;
+}
+
+// Define interfaces for AI response handling
+interface AIResponse {
+  kwargs?: {
+    content: string;
+  };
+  content?: string;
+  result?: string;
+  text?: string;
+  message?: string;
+  summary?: string;
+  output?: string;
+  toString?(): string;
+}
+
+interface AIObjectResponse extends Record<string, unknown> {
+  kwargs?: {
+    content: string;
+  };
+  content?: unknown;
+  output?: string;
+  mock?: boolean;
+  timeout?: number;
+  force?: boolean;
+  quiet?: boolean;
+}
 
 /**
  * @class AI
@@ -93,6 +134,8 @@ export default class AI extends BaseCommand {
    */
   async run() {
     const { args, flags } = await this.parse(AI);
+    // Type assertion for flags to fix property access
+    const typedFlags = flags as AICommandFlags;
 
     // Always set AI features flag for AI command
     AIProviderFactory.setAIFeatureRequested(true);
@@ -120,8 +163,8 @@ export default class AI extends BaseCommand {
     }
 
     // Set environment variables from flags
-    setEnvFromFlags(flags, {
-      apiKey: `${typeof flags.provider === 'string' ? flags.provider.toUpperCase() : 'XAI'}_API_KEY`,
+    setEnvFromFlags(typedFlags as Record<string, unknown>, {
+      apiKey: `${typeof typedFlags.provider === 'string' ? typedFlags.provider.toUpperCase() : 'XAI'}_API_KEY`,
       provider: 'AI_DEFAULT_PROVIDER',
       model: 'AI_DEFAULT_MODEL',
       temperature: 'AI_TEMPERATURE',
@@ -129,12 +172,12 @@ export default class AI extends BaseCommand {
 
     // Handle special status operation
     if (args.operation === 'status') {
-      return this.showStatus(flags);
+      return this.showStatus(typedFlags);
     }
 
     // Handle help operation
     if (args.operation === 'help') {
-      return this.showHelp(flags);
+      return this.showHelp(typedFlags);
     }
 
     // Configure AI provider from environment
@@ -156,24 +199,24 @@ export default class AI extends BaseCommand {
     }
 
     // Use environment-based verification setting
-    flags.verify = flags.verify || getEnv('ENABLE_BLOCKCHAIN_VERIFICATION');
+    typedFlags.verify = typedFlags.verify || getEnv('ENABLE_BLOCKCHAIN_VERIFICATION');
 
     // Perform the requested operation
     switch (args.operation) {
       case 'summarize':
-        return this.summarizeTodos(flags);
+        return this.summarizeTodos(typedFlags);
 
       case 'categorize':
-        return this.categorizeTodos(flags);
+        return this.categorizeTodos(typedFlags);
 
       case 'prioritize':
-        return this.prioritizeTodos(flags);
+        return this.prioritizeTodos(typedFlags);
 
       case 'suggest':
-        return this.suggestTodos(flags);
+        return this.suggestTodos(typedFlags);
 
       case 'analyze':
-        return this.analyzeTodos(flags);
+        return this.analyzeTodos(typedFlags);
 
       default:
         this.error(`Unknown AI operation: ${args.operation}`);
@@ -189,10 +232,10 @@ export default class AI extends BaseCommand {
    * 4. Stored credential information with verification status and expiry
    * 5. Available AI commands and configuration options
    *
-   * @param {Record<string, unknown>} flags Command flags
+   * @param {AICommandFlags} flags Command flags
    * @returns {Promise<void>}
    */
-  private async showStatus(_flags: Record<string, unknown>) {
+  private async showStatus(_flags: AICommandFlags) {
     // Check credential status
     const credentials = await secureCredentialService.listCredentials();
 
@@ -292,10 +335,10 @@ export default class AI extends BaseCommand {
    * 3. Global configuration options
    * 4. Environment variables affecting AI functionality
    *
-   * @param {Record<string, unknown>} flags Command flags
+   * @param {AICommandFlags} flags Command flags
    * @returns {void}
    */
-  private showHelp(_flags: Record<string, unknown>) {
+  private showHelp(_flags: AICommandFlags) {
     this.log(chalk.bold('AI Command Help:'));
     this.log(
       `${chalk.cyan('walrus_todo ai summarize')} - Generate a concise summary of your todos`
@@ -393,10 +436,10 @@ export default class AI extends BaseCommand {
    * If no todos are found, returns an error directing the user to add todos first.
    *
    * @param {string} [listName] Optional name of the todo list to retrieve
-   * @returns {Promise<any[]>} Array of todos from the specified list
+   * @returns {Promise<Todo[]>} Array of todos from the specified list
    * @throws {Error} If no todos are found
    */
-  private async getTodos(_listName?: string) {
+  private async getTodos(_listName?: string): Promise<Todo[]> {
     // Import TodoService here to avoid circular dependencies
     const todoService = new TodoService();
 
@@ -417,11 +460,11 @@ export default class AI extends BaseCommand {
    * Uses the AI service to create a concise overview of all todos in the specified list.
    * This is useful for getting a quick understanding of all current tasks.
    *
-   * @param {any} flags Command flags including list name and output format
+   * @param {AICommandFlags} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async summarizeTodos(flags: Record<string, unknown>) {
-    const todos = await this.getTodos(flags.list as string);
+  private async summarizeTodos(flags: AICommandFlags) {
+    const todos = await this.getTodos(flags.list);
 
     this.log(chalk.bold('Generating AI summary...'));
 
@@ -443,14 +486,15 @@ export default class AI extends BaseCommand {
 
         // Check for LangChain AIMessage format
         if (response && typeof response === 'object') {
+          const responseObj = response as AIResponse;
           // Check for content in kwargs (LangChain format)
-          if (response.kwargs && response.kwargs.content) {
-            return response.kwargs.content;
+          if (responseObj.kwargs && typeof responseObj.kwargs === 'object' && responseObj.kwargs.content && typeof responseObj.kwargs.content === 'string') {
+            return responseObj.kwargs.content;
           }
 
           // Check for content directly on the object (some AI models)
-          if (response.content) {
-            return response.content;
+          if (typeof responseObj.content === 'string') {
+            return responseObj.content;
           }
 
           // For other object formats, try to extract a sensible text representation
@@ -461,16 +505,20 @@ export default class AI extends BaseCommand {
             'summary',
             'output',
           ]) {
-            if (response[key] && typeof response[key] === 'string') {
-              return response[key];
+            const responseRecord = response as Record<string, unknown>;
+            const value = responseRecord[key];
+            if (typeof value === 'string' && value.length > 0) {
+              return value;
             }
           }
 
           // If we have a toString method that doesn't return [object Object],
           // use that as a last resort
-          const stringRep = response.toString();
-          if (stringRep && !stringRep.includes('[object Object]')) {
-            return stringRep;
+          if (typeof response === 'object' && response !== null && 'toString' in response && typeof response.toString === 'function') {
+            const stringRep = response.toString();
+            if (stringRep && !stringRep.includes('[object Object]')) {
+              return stringRep;
+            }
           }
         }
 
@@ -507,11 +555,11 @@ export default class AI extends BaseCommand {
    * Uses AI to automatically group todos into logical categories based on content and context.
    * This helps organize todos and identify related tasks.
    *
-   * @param {any} flags Command flags including list name and output format
+   * @param {AICommandFlags} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async categorizeTodos(flags: Record<string, unknown>) {
-    const todos = await this.getTodos(flags.list as string);
+  private async categorizeTodos(flags: AICommandFlags) {
+    const todos = await this.getTodos(flags.list);
 
     this.log(chalk.bold('Categorizing todos...'));
 
@@ -540,16 +588,17 @@ export default class AI extends BaseCommand {
 
         // Check for LangChain AIMessage format
         if (response && typeof response === 'object') {
+          const responseObj = response as AIObjectResponse;
           // Check for content in kwargs (LangChain format)
-          if (response.kwargs && response.kwargs.content) {
+          if (responseObj.kwargs && responseObj.kwargs.content) {
             try {
               // Try to parse the content as JSON
-              const content = response.kwargs.content;
+              const content = responseObj.kwargs.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content);
-                  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-                    return parsed;
+                  const parsed = JSON.parse(content) as unknown;
+                  if (typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null) {
+                    return parsed as Record<string, string[]>;
                   }
                 } catch (e) {
                   // Failed to parse as JSON
@@ -562,11 +611,11 @@ export default class AI extends BaseCommand {
 
           // Check for result property
           if (
-            response.result &&
-            typeof response.result === 'object' &&
-            !Array.isArray(response.result)
+            responseObj.result &&
+            typeof responseObj.result === 'object' &&
+            !Array.isArray(responseObj.result)
           ) {
-            return response.result;
+            return responseObj.result as Record<string, string[]>;
           }
         }
 
@@ -631,11 +680,11 @@ export default class AI extends BaseCommand {
    * Analyzes todos and assigns priority scores (1-10) based on urgency, importance, and complexity.
    * Results are displayed in descending priority order with color-coded scores.
    *
-   * @param {any} flags Command flags including list name and output format
+   * @param {AICommandFlags} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async prioritizeTodos(flags: Record<string, unknown>) {
-    const todos = await this.getTodos(flags.list as string);
+  private async prioritizeTodos(flags: AICommandFlags) {
+    const todos = await this.getTodos(flags.list);
 
     this.log(chalk.bold('Prioritizing todos...'));
 
@@ -664,16 +713,17 @@ export default class AI extends BaseCommand {
 
         // Check for LangChain AIMessage format
         if (response && typeof response === 'object') {
+          const responseObj = response as AIObjectResponse;
           // Check for content in kwargs (LangChain format)
-          if (response.kwargs && response.kwargs.content) {
+          if (responseObj.kwargs && responseObj.kwargs.content) {
             try {
               // Try to parse the content as JSON
-              const content = response.kwargs.content;
+              const content = responseObj.kwargs.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content);
-                  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-                    return parsed;
+                  const parsed = JSON.parse(content) as unknown;
+                  if (typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null) {
+                    return parsed as Record<string, number>;
                   }
                 } catch (e) {
                   // Failed to parse as JSON
@@ -686,11 +736,11 @@ export default class AI extends BaseCommand {
 
           // Check for result property
           if (
-            response.result &&
-            typeof response.result === 'object' &&
-            !Array.isArray(response.result)
+            responseObj.result &&
+            typeof responseObj.result === 'object' &&
+            !Array.isArray(responseObj.result)
           ) {
-            return response.result;
+            return responseObj.result as Record<string, number>;
           }
         }
 
@@ -772,11 +822,11 @@ export default class AI extends BaseCommand {
    * Analyzes existing todos and suggests new ones based on patterns, missing tasks,
    * and logical follow-ups. Handles various response formats from different AI providers.
    *
-   * @param {any} flags Command flags including list name and output format
+   * @param {AICommandFlags} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async suggestTodos(flags: Record<string, unknown>) {
-    const todos = await this.getTodos(flags.list as string);
+  private async suggestTodos(flags: AICommandFlags) {
+    const todos = await this.getTodos(flags.list);
 
     this.log(chalk.bold('Generating todo suggestions...'));
 
@@ -814,11 +864,12 @@ export default class AI extends BaseCommand {
 
         // Check for LangChain response format
         if (obj && typeof obj === 'object') {
+          const objAny = obj as AIObjectResponse;
           // Check for direct content in kwargs.content (LangChain format)
-          if (obj.kwargs && obj.kwargs.content) {
+          if (objAny.kwargs && typeof objAny.kwargs === 'object' && objAny.kwargs.content) {
             try {
               // Try to parse the content as JSON
-              const content = obj.kwargs.content;
+              const content = objAny.kwargs.content;
               if (typeof content === 'string') {
                 try {
                   const parsed = JSON.parse(content);
@@ -832,7 +883,7 @@ export default class AI extends BaseCommand {
                   );
                   if (match) {
                     return match[0]
-                      .replace(/[\[\]"\s]/g, '')
+                      .replace(/[[\]"\s]/g, '')
                       .split(',')
                       .filter(Boolean);
                   }
@@ -844,7 +895,7 @@ export default class AI extends BaseCommand {
                   .map(line =>
                     line
                       .trim()
-                      .replace(/^[•\-*]|\d+\.\s+|["'\[\]]|,$/, '')
+                      .replace(/^[•\-*]|\d+\.\s+|["'[\]]|,$/, '')
                       .trim()
                   )
                   .filter(line => line.length > 0);
@@ -855,10 +906,11 @@ export default class AI extends BaseCommand {
           }
 
           // Check all other properties recursively
-          for (const key of Object.keys(obj)) {
+          const objRecord = obj as Record<string, unknown>;
+          for (const key of Object.keys(objRecord)) {
             if (key === 'lc' || key === 'type' || key === 'id') continue; // Skip LangChain metadata fields
 
-            const value = obj[key];
+            const value = objRecord[key];
             if (value) {
               // If value is an array of strings, return it
               if (
@@ -949,11 +1001,11 @@ export default class AI extends BaseCommand {
    * potential bottlenecks, and areas for improvement. Results are organized
    * into categories for better understanding.
    *
-   * @param {any} flags Command flags including list name and output format
+   * @param {AICommandFlags} flags Command flags including list name and output format
    * @returns {Promise<void>}
    */
-  private async analyzeTodos(flags: Record<string, unknown>) {
-    const todos = await this.getTodos(flags.list as string);
+  private async analyzeTodos(flags: AICommandFlags) {
+    const todos = await this.getTodos(flags.list);
 
     this.log(chalk.bold('Analyzing todos...'));
 
@@ -976,24 +1028,26 @@ export default class AI extends BaseCommand {
           typeof response === 'object' &&
           !Array.isArray(response)
         ) {
+          const responseObj = response as AIObjectResponse;
           // Skip if it's a LangChain response object
-          if (!response.lc && !response.type && !response.id) {
-            return response as Record<string, any>;
+          if (!responseObj.lc && !responseObj.type && !responseObj.id) {
+            return response as Record<string, unknown>;
           }
         }
 
         // Check for LangChain AIMessage format
         if (response && typeof response === 'object') {
+          const responseObj = response as AIObjectResponse;
           // Check for content in kwargs (LangChain format)
-          if (response.kwargs && response.kwargs.content) {
+          if (responseObj.kwargs && responseObj.kwargs.content) {
             try {
               // Try to parse the content as JSON
-              const content = response.kwargs.content;
+              const content = responseObj.kwargs.content;
               if (typeof content === 'string') {
                 try {
-                  const parsed = JSON.parse(content);
-                  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-                    return parsed;
+                  const parsed = JSON.parse(content) as unknown;
+                  if (typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null) {
+                    return parsed as Record<string, unknown>;
                   }
                 } catch (e) {
                   // Failed to parse as JSON, create a simple analysis object
@@ -1010,11 +1064,11 @@ export default class AI extends BaseCommand {
 
           // Check for result property
           if (
-            response.result &&
-            typeof response.result === 'object' &&
-            !Array.isArray(response.result)
+            responseObj.result &&
+            typeof responseObj.result === 'object' &&
+            !Array.isArray(responseObj.result)
           ) {
-            return response.result;
+            return responseObj.result as Record<string, unknown>;
           }
         }
 

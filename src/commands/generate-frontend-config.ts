@@ -138,7 +138,7 @@ export default class GenerateFrontendConfigCommand extends BaseCommand {
       await frontendConfigGenerator.generateConfig(
         network,
         packageId,
-        config.lastDeployment?.digest || 'unknown',
+        config.lastDeployment?.timestamp || 'unknown',
         deployerAddress,
         {
           aiEnabled: flags['ai-enabled'],

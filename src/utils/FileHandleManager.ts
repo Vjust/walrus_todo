@@ -146,7 +146,9 @@ export class FileHandleManager {
       // Create directory if needed and writing
       if (this.autoCreateDirs && (flags.includes('w') || flags.includes('a'))) {
         const dir = path.dirname(resolvedPath);
-        await fsPromises.mkdir(dir, { recursive: true }).catch(() => {});
+        await fsPromises.mkdir(dir, { recursive: true }).catch(() => {
+          // Directory creation failed, but we'll continue and let the file operation handle it
+        });
       }
 
       fd = await open(resolvedPath, flags);
@@ -161,7 +163,7 @@ export class FileHandleManager {
       if (this.throwErrors) {
         throw error;
       }
-      return null as any;
+      return null as T;
     } finally {
       if (fd !== null) {
         try {
@@ -271,7 +273,9 @@ export class FileHandleManager {
     // Create directory if needed
     if (this.autoCreateDirs) {
       const dir = path.dirname(resolvedPath);
-      await fsPromises.mkdir(dir, { recursive: true }).catch(() => {});
+      await fsPromises.mkdir(dir, { recursive: true }).catch(() => {
+        // Directory creation failed, but we'll continue and let the file operation handle it
+      });
     }
 
     return new Promise((resolve, reject) => {
@@ -383,7 +387,8 @@ export class FileHandleManager {
           fs.mkdirSync(dir, { recursive: true });
         }
       } catch (error) {
-        this.logger.error(`Failed to create directory ${dir}`, error);
+        const errorObj = error instanceof Error ? error : new Error(String(error));
+        this.logger.error(`Failed to create directory ${dir}`, errorObj);
       }
     }
 

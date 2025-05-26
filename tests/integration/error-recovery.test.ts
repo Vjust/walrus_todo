@@ -5,9 +5,9 @@
  */
 
 import {
-  NetworkError,
+  // _NetworkError,  // Unused import
   StorageError,
-  BlockchainError,
+  // _BlockchainError,  // Unused import
 } from '../../src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
@@ -50,7 +50,7 @@ describe('Error Recovery Integration Tests', () => {
   // Create service instances
   let walrusStorage: WalrusStorage;
   let aiService: AIService;
-  let mockAdapter: any;
+  let mockAdapter: unknown;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -59,7 +59,7 @@ describe('Error Recovery Integration Tests', () => {
 
     mockAdapter = createMockAIModelAdapter();
     aiService = new AIService('test-api-key');
-    (aiService as any).modelAdapter = mockAdapter;
+    (aiService as { modelAdapter: unknown }).modelAdapter = mockAdapter;
   });
 
   afterEach(() => {
@@ -112,11 +112,11 @@ describe('Error Recovery Integration Tests', () => {
             status: 'success',
             data: suggestions,
           });
-        } catch (_error) {
+        } catch (error) {
           results.steps.push({
             name: 'ai',
             status: 'failed',
-            error: error.message,
+            error: (error as Error).message,
           });
           // Continue despite AI failure
         }
@@ -130,11 +130,11 @@ describe('Error Recovery Integration Tests', () => {
             data: storageId,
           });
           results.storageId = storageId;
-        } catch (_error) {
+        } catch (error) {
           results.steps.push({
             name: 'storage',
             status: 'failed',
-            error: error.message,
+            error: (error as Error).message,
           });
           throw error; // Storage failure is critical
         }
@@ -166,14 +166,14 @@ describe('Error Recovery Integration Tests', () => {
         try {
           const result = await withRetry(testTodo);
           allResults.push({ success: true, result });
-        } catch (_error) {
-          allResults.push({ success: false, error: error.message });
+        } catch (error) {
+          allResults.push({ success: false, error: (error as Error).message });
         }
       }
 
       // Analyze results
       const fullSuccesses = allResults.filter(r => r.success).length;
-      const failures = allResults.filter(r => !r.success).length;
+      // const _failures = allResults.filter(r => !r.success).length;
 
       // Should have at least some successes
       expect(fullSuccesses).toBeGreaterThan(0);
@@ -220,7 +220,7 @@ describe('Error Recovery Integration Tests', () => {
             id: await walrusStorage.store(data),
             storage: 'primary',
           };
-        } catch (_error) {
+        } catch (error) {
           // console.log('Primary storage failed, using fallback'); // Removed console statement
           // On failure, try fallback storage
           return {
@@ -285,7 +285,7 @@ describe('Error Recovery Integration Tests', () => {
             executedSteps.push(step);
           }
           return results;
-        } catch (_error) {
+        } catch (error) {
           // Compensating transaction - rollback in reverse order
           // console.log(`Transaction failed at step ${executedSteps.length}, rolling back`); // Removed console statement
 
@@ -308,13 +308,13 @@ describe('Error Recovery Integration Tests', () => {
         while (attempts < maxAttempts) {
           try {
             return await executeTransaction(steps);
-          } catch (_error) {
+          } catch (error) {
             attempts++;
             // console.log(`Attempt ${attempts} failed, retrying...`); // Removed console statement
 
             if (attempts >= maxAttempts) {
               throw new Error(
-                `Transaction failed after ${maxAttempts} attempts: ${error.message}`
+                `Transaction failed after ${maxAttempts} attempts: ${(error as Error).message}`
               );
             }
 
@@ -382,7 +382,7 @@ describe('Error Recovery Integration Tests', () => {
             this.failureCount = 0;
 
             return result;
-          } catch (_error) {
+          } catch (error) {
             // Record failure
             this.failureCount++;
             this.lastFailure = Date.now();
@@ -435,8 +435,8 @@ describe('Error Recovery Integration Tests', () => {
             mockFallbackOperation
           );
           results.push({ success: true, result });
-        } catch (_error) {
-          results.push({ success: false, error: error.message });
+        } catch (error) {
+          results.push({ success: false, error: (error as Error).message });
         }
       }
 
@@ -491,7 +491,7 @@ describe('Error Recovery Integration Tests', () => {
           let suggestions = [];
           try {
             suggestions = await this.aiService.suggest([todoData]);
-          } catch (_error) {
+          } catch (error) {
             // console.log('AI suggestions unavailable, continuing without them'); // Removed console statement
             capabilities.ai = false;
           }
@@ -500,7 +500,7 @@ describe('Error Recovery Integration Tests', () => {
           let storageId;
           try {
             storageId = await this.storage.store(todoData);
-          } catch (_error) {
+          } catch (error) {
             // console.log('Storage failed, operation cannot proceed'); // Removed console statement
             capabilities.storage = false;
             throw error;

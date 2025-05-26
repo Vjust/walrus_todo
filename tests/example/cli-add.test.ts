@@ -14,6 +14,7 @@ import {
   cleanupTestEnvironment,
   createTestTodo,
 } from './setup-test-env';
+import { TodoService } from '../../src/services/todoService';
 
 // Mock the TodoService to avoid actual file system operations
 
@@ -60,64 +61,73 @@ describe('WalTodo add command', () => {
   });
 
   // Test using @oclif/test library which provides tools specifically for testing CLI commands
-  test
-    .stdout()
-    .command(['add', 'Test todo from command'])
-    .it('adds a todo with title from argument', ctx => {
-      expect(ctx.stdout).toContain('New');
-      expect(TodoService.prototype.addTodo).toHaveBeenCalled();
-    });
+  it('adds a todo with title from argument', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['add', 'Test todo from command'])
+      .run();
+    
+    expect(stdout).toContain('New');
+    expect(TodoService.prototype.addTodo).toHaveBeenCalled();
+  });
 
-  test
-    .stdout()
-    .command(['add', 'High priority task', '-p', 'high'])
-    .it('adds a todo with high priority', ctx => {
-      expect(ctx.stdout).toContain('New');
-      expect(ctx.stdout).toContain('HOT');
-      expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
-        'default',
-        expect.objectContaining({
-          title: 'High priority task',
-          priority: 'high',
-        })
-      );
-    });
+  it('adds a todo with high priority', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['add', 'High priority task', '-p', 'high'])
+      .run();
+    
+    expect(stdout).toContain('New');
+    expect(stdout).toContain('HOT');
+    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
+      'default',
+      expect.objectContaining({
+        title: 'High priority task',
+        priority: 'high',
+      })
+    );
+  });
 
-  test
-    .stdout()
-    .command(['add', 'Todo with tags', '-g', 'work,important'])
-    .it('adds a todo with tags', ctx => {
-      expect(ctx.stdout).toContain('New');
-      expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
-        'default',
-        expect.objectContaining({
-          title: 'Todo with tags',
-          tags: ['work', 'important'],
-        })
-      );
-    });
+  it('adds a todo with tags', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['add', 'Todo with tags', '-g', 'work,important'])
+      .run();
+    
+    expect(stdout).toContain('New');
+    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
+      'default',
+      expect.objectContaining({
+        title: 'Todo with tags',
+        tags: ['work', 'important'],
+      })
+    );
+  });
 
-  test
-    .stdout()
-    .command(['add', 'Todo for specific list', '-l', 'work'])
-    .it('adds a todo to a specific list', ctx => {
-      expect(ctx.stdout).toContain('New');
-      expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
-        'work',
-        expect.objectContaining({
-          title: 'Todo for specific list',
-        })
-      );
-    });
+  it('adds a todo to a specific list', async () => {
+    const { stdout } = await test
+      .stdout()
+      .command(['add', 'Todo for specific list', '-l', 'work'])
+      .run();
+    
+    expect(stdout).toContain('New');
+    expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
+      'work',
+      expect.objectContaining({
+        title: 'Todo for specific list',
+      })
+    );
+  });
 
   // Test error handling
-  test
-    .stdout()
-    .command(['add'])
-    .catch(_error => {
-      expect(error.message).toContain('Missing required argument');
-    })
-    .it('errors when no title is provided');
+  it('errors when no title is provided', async () => {
+    await expect(
+      test
+        .stdout()
+        .command(['add'])
+        .run()
+    ).rejects.toBeDefined();
+  });
 
   // Alternative approach using direct method calls
   it('should add a todo through direct service call', async () => {

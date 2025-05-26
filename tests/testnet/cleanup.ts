@@ -1,5 +1,5 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Logger } from '../../src/utils/Logger';
@@ -161,10 +161,10 @@ async function cleanupTestTodos(patterns: string[]): Promise<void> {
     const todos = JSON.parse(data);
 
     // Filter out test todos based on patterns
-    const filteredTodos = todos.filter((todo: any) => {
+    const filteredTodos = todos.filter((todo: Record<string, unknown>) => {
       const isTestTodo = patterns.some(pattern => {
         const regex = new RegExp(pattern.replace('*', '.*'));
-        return regex.test(todo.id) || regex.test(todo.title);
+        return regex.test(String(todo.id)) || regex.test(String(todo.title));
       });
 
       if (isTestTodo) {

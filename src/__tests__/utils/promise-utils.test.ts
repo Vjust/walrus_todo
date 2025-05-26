@@ -77,8 +77,8 @@ describe('Promise Utilities', () => {
       const mockSetTimeout = jest.fn().mockImplementation(() => 123);
       const mockClearTimeout = jest.fn();
 
-      global.setTimeout = mockSetTimeout as any;
-      global.clearTimeout = mockClearTimeout as any;
+      global.setTimeout = mockSetTimeout as unknown as typeof setTimeout;
+      global.clearTimeout = mockClearTimeout;
 
       try {
         // Success case
@@ -146,7 +146,7 @@ describe('Promise Utilities', () => {
         Promise.resolve('success'),
       ];
 
-      let thrownError: any;
+      let thrownError: unknown;
       try {
         await safeParallel(promises, 'multiple-failures');
         throw new Error('Expected safeParallel to throw');
@@ -160,9 +160,9 @@ describe('Promise Utilities', () => {
       
       // Check that the errors are properly captured and transformed
       expect(aggregateError.errors[0]).toBeInstanceOf(OperationError);
-      expect(aggregateError.errors[0].message).toContain('error1');
+      expect(aggregateError.errors[0]?.message).toContain('error1');
       expect(aggregateError.errors[1]).toBeInstanceOf(OperationError);
-      expect(aggregateError.errors[1].message).toContain('error2');
+      expect(aggregateError.errors[1]?.message).toContain('error2');
     });
   });
 

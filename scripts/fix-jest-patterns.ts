@@ -33,8 +33,8 @@ class JestPatternFixer {
         if (line.includes('.test.ts') || line.includes('.e2e.ts')) {
           const parts = line.split(':');
           if (parts.length >= 3) {
-            currentFile = parts[0];
-            const lineNum = parseInt(parts[1]);
+            currentFile = parts[0] || '';
+            const lineNum = parseInt(parts[1] || '0', 10);
             const content = parts.slice(3).join(':');
             
             if (line.includes('jest/no-conditional-expect')) {
@@ -85,12 +85,12 @@ class JestPatternFixer {
       
       if (tryMatch && catchMatch) {
         const tryBlock = tryMatch[1];
-        const catchParam = catchMatch[1].split(':')[0].trim();
+        const catchParam = catchMatch[1]?.split(':')[0]?.trim() || 'error';
         const catchBlock = catchMatch[2];
         
         // Move expects outside of catch block
-        const expects = catchBlock.match(/expect\([^;]*;/g) || [];
-        const otherCode = catchBlock.replace(/expect\([^;]*;/g, '').trim();
+        const expects = catchBlock?.match(/expect\([^;]*;/g) || [];
+        const otherCode = catchBlock?.replace(/expect\([^;]*;/g, '').trim() || '';
         
         return `let thrownError: any;
         try {${tryBlock}
@@ -167,7 +167,8 @@ class JestPatternFixer {
     }
 
     try {
-      let content = readFileSync(filePath, 'utf8');
+      const fileContent = readFileSync(filePath, 'utf8');
+      let content = typeof fileContent === 'string' ? fileContent : fileContent.toString();
       const originalContent = content;
 
       // Apply all fixes

@@ -80,7 +80,7 @@ async function createAndStoreTodoForAJ() {
     process.stdout.write(`Created: ${todo.createdAt}\n`);
     process.stdout.write('Description:\n');
     process.stdout.write(
-      todo.description
+      (todo.description || '')
         .split('\n')
         .map(line => `  ${line}`)
         .join('\n') + '\n'

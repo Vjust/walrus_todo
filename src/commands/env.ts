@@ -9,8 +9,8 @@ import {
   validateEnvironmentFull,
   validateOrThrow,
 } from '../utils/env-validator';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Environment Management Command
@@ -197,7 +197,7 @@ export default class EnvironmentCommand extends BaseCommand {
       const metaData = envConfig.getMetadata();
 
       // Group variables by category
-      const categories: Record<string, any[]> = {
+      const categories: Record<string, Array<{name: string; value: unknown; source: string; required: string; sensitive: string}>> = {
         Common: [],
         Blockchain: [],
         Storage: [],
@@ -249,13 +249,16 @@ export default class EnvironmentCommand extends BaseCommand {
           displayValue = chalk.gray('<empty string>');
         }
 
-        categories[category].push({
-          name: key,
-          value: displayValue,
-          source: metaData[key].source,
-          required: metaData[key].required ? chalk.red('Yes') : 'No',
-          sensitive: metaData[key].sensitive ? chalk.yellow('Yes') : 'No',
-        });
+        const envMetadata = (metaData as Record<string, {source: string; required: boolean; sensitive?: boolean}>)[key];
+        if (envMetadata) {
+          categories[category]?.push({
+            name: key,
+            value: displayValue,
+            source: envMetadata.source,
+            required: envMetadata.required ? chalk.red('Yes') : 'No',
+            sensitive: envMetadata.sensitive ? chalk.yellow('Yes') : 'No',
+          });
+        }
       }
 
       // Display each category

@@ -9,10 +9,12 @@ import { SafeAIService } from '../../services/ai/SafeAIService';
 import { Todo } from '../../types/todo';
 import { AIService } from '../../services/ai/aiService';
 import { Logger } from '../../utils/Logger';
+import { AIProvider } from '../../types/adapters/AIModelAdapter';
 
 // Mock dependencies
 jest.mock('../../services/ai/aiService');
 jest.mock('../../utils/Logger');
+
 
 describe('SafeAIService', () => {
   let safeAIService: SafeAIService;
@@ -54,8 +56,10 @@ describe('SafeAIService', () => {
       info: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
+      addHandler: jest.fn(),
+      clearHandlers: jest.fn(),
       getInstance: jest.fn(() => mockLogger),
-    } as any;
+    } as unknown as jest.Mocked<Logger>;
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
@@ -69,13 +73,15 @@ describe('SafeAIService', () => {
       suggestTags: jest.fn(),
       suggestPriority: jest.fn(),
       setProvider: jest.fn(),
+      getProvider: jest.fn(),
       cancelAllOperations: jest.fn(),
+      setOperationType: jest.fn(),
       summarizeWithVerification: jest.fn(),
       categorizeWithVerification: jest.fn(),
       prioritizeWithVerification: jest.fn(),
       suggestWithVerification: jest.fn(),
       analyzeWithVerification: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<AIService>;
 
     (AIService as jest.Mock).mockImplementation(() => mockAIService);
 
@@ -120,8 +126,8 @@ describe('SafeAIService', () => {
     it('should return false when AI service is not initialized', async () => {
       const newSafeService = new SafeAIService();
       // Force uninitialized state
-      (newSafeService as any).isInitialized = false;
-      (newSafeService as any).aiService = null;
+      (newSafeService as unknown as { isInitialized: boolean; aiService: unknown }).isInitialized = false;
+      (newSafeService as unknown as { isInitialized: boolean; aiService: unknown }).aiService = null;
 
       const available = await newSafeService.isAIAvailable();
       expect(available).toBe(false);
@@ -159,7 +165,7 @@ describe('SafeAIService', () => {
     });
 
     it('should return fallback when AI is unavailable', async () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
       const result = await safeAIService.summarize(sampleTodos);
 
@@ -243,7 +249,7 @@ describe('SafeAIService', () => {
     });
 
     it('should return fallback priorities based on existing todo priorities', async () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
       const result = await safeAIService.prioritize(sampleTodos);
 
@@ -271,7 +277,7 @@ describe('SafeAIService', () => {
     });
 
     it('should return default suggestions when AI fails', async () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
       const result = await safeAIService.suggest(sampleTodos);
 
@@ -303,7 +309,7 @@ describe('SafeAIService', () => {
     });
 
     it('should return default analysis when AI fails', async () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
       const result = await safeAIService.analyze(sampleTodos);
 
@@ -328,7 +334,7 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.suggestTags.mockResolvedValue(expectedTags);
 
-      const result = await safeAIService.suggestTags(sampleTodos[0]);
+      const result = await safeAIService.suggestTags(sampleTodos[0] as Todo);
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(expectedTags);
@@ -337,9 +343,9 @@ describe('SafeAIService', () => {
     });
 
     it('should return default tags when AI fails', async () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.suggestTags(sampleTodos[0]);
+      const result = await safeAIService.suggestTags(sampleTodos[0] as Todo);
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(['general', 'task']);
@@ -352,7 +358,7 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.suggestPriority.mockResolvedValue('high');
 
-      const result = await safeAIService.suggestPriority(sampleTodos[0]);
+      const result = await safeAIService.suggestPriority(sampleTodos[0] as Todo);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('high');
@@ -361,9 +367,9 @@ describe('SafeAIService', () => {
     });
 
     it('should return default priority when AI fails', async () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.suggestPriority(sampleTodos[0]);
+      const result = await safeAIService.suggestPriority(sampleTodos[0] as Todo);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('medium');
@@ -376,12 +382,12 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.setProvider.mockResolvedValue(undefined);
 
-      const result = await safeAIService.setProvider('openai' as any);
+      const result = await safeAIService.setProvider(AIProvider.OPENAI);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe(true);
       expect(mockAIService.setProvider).toHaveBeenCalledWith(
-        'openai',
+        AIProvider.OPENAI,
         undefined,
         undefined
       );
@@ -392,16 +398,16 @@ describe('SafeAIService', () => {
         new Error('Provider change failed')
       );
 
-      const result = await safeAIService.setProvider('openai' as any);
+      const result = await safeAIService.setProvider(AIProvider.OPENAI);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Provider change failed');
     });
 
     it('should fail gracefully when AI service not initialized', async () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.setProvider('openai' as any);
+      const result = await safeAIService.setProvider(AIProvider.OPENAI);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('AI service not initialized');
@@ -434,7 +440,7 @@ describe('SafeAIService', () => {
     });
 
     it('should handle cancellation when AI service is null', () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
       expect(() => {
         safeAIService.cancelAllOperations();
@@ -460,7 +466,7 @@ describe('SafeAIService', () => {
     });
 
     it('should return null when AI service is not initialized', () => {
-      (safeAIService as any).aiService = null;
+      (safeAIService as unknown as { aiService: unknown }).aiService = null;
       const underlying = safeAIService.getUnderlyingService();
       expect(underlying).toBeNull();
     });

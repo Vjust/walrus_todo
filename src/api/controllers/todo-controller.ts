@@ -1,8 +1,33 @@
 import type { Request, Response } from 'express';
+import { 
+  ListQueryParams, ListResponse, GetResponse, CreateResponse, 
+  UpdateResponse, DeleteResponse, CompleteResponse, StoreResponse, 
+  RetrieveResponse, BatchRequestBody, BatchResponse 
+} from '../../types/express';
 import { TodoService } from '../../services/todoService';
 import { BaseError } from '../../types/errors/consolidated/BaseError';
 import { Logger } from '../../utils/Logger';
 import { Todo } from '../../types/todo';
+
+// Define interface for todo creation body
+interface CreateTodoBody {
+  content: string;
+  priority?: 'high' | 'medium' | 'low';
+  category?: string;
+  tags?: string[];
+}
+
+// Define interface for batch operations - reserved for future use
+// interface BatchOperation {
+//   action: 'create' | 'update' | 'delete' | 'complete';
+//   id?: string;
+//   data?: CreateTodoBody;
+// }
+
+// interface BatchOperationResult {
+//   success: boolean;
+//   [key: string]: unknown;
+// }
 
 const logger = new Logger('TodoController');
 
@@ -13,8 +38,8 @@ export class TodoController {
     this.todoService = new TodoService();
   }
 
-  list = async (req: Request, res: Response): Promise<void> => {
-    const { page = 1, limit = 10 } = (req as any).query;
+  list = async (req: Request<Record<string, never>, ListResponse, Record<string, never>, ListQueryParams>, res: Response<ListResponse>): Promise<void> => {
+    const { page = '1', limit = '10' } = req.query;
 
     const todos = await this.todoService.listTodos();
 
@@ -25,7 +50,7 @@ export class TodoController {
     const endIndex = startIndex + limitNum;
     const paginatedTodos = todos.slice(startIndex, endIndex);
 
-    (res as any).json({
+    res.json({
       data: paginatedTodos,
       pagination: {
         page: pageNum,
@@ -36,7 +61,7 @@ export class TodoController {
     });
   };
 
-  get = async (req: Request, res: Response): Promise<void> => {
+  get = async (req: Request<{ id: string }, GetResponse>, res: Response<GetResponse>): Promise<void> => {
     const { id } = req.params;
 
     const todos = await this.todoService.listTodos();
@@ -52,7 +77,7 @@ export class TodoController {
     res.json({ data: todo });
   };
 
-  create = async (req: Request, res: Response): Promise<void> => {
+  create = async (req: Request<Record<string, never>, CreateResponse, CreateTodoBody>, res: Response<CreateResponse>): Promise<void> => {
     const { content, priority, category, tags } = req.body;
 
     const todo = await this.todoService.addTodo(content, {
@@ -69,7 +94,7 @@ export class TodoController {
     });
   };
 
-  update = async (req: Request, res: Response): Promise<void> => {
+  update = async (req: Request<{ id: string }, UpdateResponse, Partial<CreateTodoBody>>, res: Response<UpdateResponse>): Promise<void> => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -86,9 +111,9 @@ export class TodoController {
     // Apply updates
     const updatedTodo: Todo = {
       ...todos[todoIndex],
-      ...updates,
-      updatedAt: new Date(),
-    };
+      ...updates as Partial<Todo>,
+      updatedAt: new Date().toISOString(),
+    } as Todo;
 
     todos[todoIndex] = updatedTodo;
     // TODO: Need to save back to the appropriate list
@@ -101,7 +126,7 @@ export class TodoController {
     });
   };
 
-  delete = async (req: Request, res: Response): Promise<void> => {
+  delete = async (req: Request<{ id: string }, DeleteResponse>, res: Response<DeleteResponse>): Promise<void> => {
     const { id } = req.params;
 
     const todos = await this.todoService.listTodos();
@@ -126,7 +151,7 @@ export class TodoController {
     });
   };
 
-  complete = async (req: Request, res: Response): Promise<void> => {
+  complete = async (req: Request<{ id: string }, CompleteResponse>, res: Response<CompleteResponse>): Promise<void> => {
     const { id } = req.params;
 
     // Find todo in all lists and complete it
@@ -157,7 +182,7 @@ export class TodoController {
     });
   };
 
-  store = async (req: Request, res: Response): Promise<void> => {
+  store = async (req: Request<{ id: string }, StoreResponse>, res: Response<StoreResponse>): Promise<void> => {
     const { id } = req.params;
 
     // Store todo on blockchain (implementation would call blockchain storage service)
@@ -171,7 +196,7 @@ export class TodoController {
     });
   };
 
-  retrieve = async (req: Request, res: Response): Promise<void> => {
+  retrieve = async (req: Request<{ id: string }, RetrieveResponse>, res: Response<RetrieveResponse>): Promise<void> => {
     const { id } = req.params;
 
     // Retrieve todo from blockchain (implementation would call blockchain storage service)
@@ -188,7 +213,7 @@ export class TodoController {
     });
   };
 
-  batch = async (req: Request, res: Response): Promise<void> => {
+  batch = async (req: Request<Record<string, never>, BatchResponse, BatchRequestBody>, res: Response<BatchResponse>): Promise<void> => {
     const { operations } = req.body;
 
     if (!Array.isArray(operations)) {
@@ -205,9 +230,23 @@ export class TodoController {
         let result;
 
         switch (op.action) {
-          case 'create':
-            result = await this.todoService.addTodo(op.data.content, op.data);
+          case 'create': {
+            if (!op.data) {
+              throw new BaseError({
+                message: 'Missing data for create operation',
+                code: 'VALIDATION_ERROR',
+              });
+            }
+            // Convert CreateTodoBody to Partial<Todo>
+            const todoData: Partial<Todo> = {
+              title: op.data.content,
+              priority: op.data.priority,
+              category: op.data.category,
+              tags: op.data.tags,
+            };
+            result = await this.todoService.addTodo(op.data.content, todoData);
             break;
+          }
           case 'update':
             // Update logic
             result = { id: op.id, updated: true };
@@ -228,10 +267,11 @@ export class TodoController {
         }
 
         results.push({ success: true, ...result });
-      } catch (error) {
+      } catch (error: unknown) {
+        const typedError = error instanceof Error ? error : new Error(String(error));
         results.push({
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: typedError.message,
           operation: op,
         });
       }

@@ -55,7 +55,7 @@ async function uploadImageWithWalrusCLI() {
       .trim();
     // Extract blob ID from output (assuming format like "Blob ID: XYZ")
     const blobId = blobIdOutput.includes('Blob ID:')
-      ? blobIdOutput.split('Blob ID:')[1].trim()
+      ? blobIdOutput.split('Blob ID:')[1]?.trim() || ''
       : blobIdOutput.trim();
 
     logger.info(`✓ Generated blob ID: ${blobId}`);
@@ -108,7 +108,7 @@ async function uploadImageWithWalrusCLI() {
     if (uploadOutput.includes('Blob ID:')) {
       const blobIdMatch = uploadOutput.match(/Blob ID: ([a-zA-Z0-9\-_]+)/);
       if (blobIdMatch) {
-        extractedBlobId = blobIdMatch[1];
+        extractedBlobId = blobIdMatch[1] ?? '';
         logger.info(`Blob ID: ${extractedBlobId}`);
       }
     }
@@ -116,7 +116,7 @@ async function uploadImageWithWalrusCLI() {
     if (uploadOutput.includes('Object ID:')) {
       const objectIdMatch = uploadOutput.match(/Object ID: (0x[a-fA-F0-9]+)/);
       if (objectIdMatch) {
-        objectId = objectIdMatch[1];
+        objectId = objectIdMatch[1] ?? '';
         logger.info(`Object ID: ${objectId}`);
       }
     }

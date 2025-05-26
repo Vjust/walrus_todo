@@ -47,31 +47,31 @@ export type TodoNFTEventData =
 export interface TodoNFTCreatedEvent {
   type: 'created';
   data: TodoNFTCreatedEventData;
-  rawEvent: any; // Original SuiEvent
+  rawEvent: unknown; // Original SuiEvent
 }
 
 export interface TodoNFTCompletedEvent {
   type: 'completed';
   data: TodoNFTCompletedEventData;
-  rawEvent: any;
+  rawEvent: unknown;
 }
 
 export interface TodoNFTUpdatedEvent {
   type: 'updated';
   data: TodoNFTUpdatedEventData;
-  rawEvent: any;
+  rawEvent: unknown;
 }
 
 export interface TodoNFTDeletedEvent {
   type: 'deleted';
   data: TodoNFTDeletedEventData;
-  rawEvent: any;
+  rawEvent: unknown;
 }
 
 export interface TodoNFTTransferredEvent {
   type: 'transferred';
   data: TodoNFTTransferredEventData;
-  rawEvent: any;
+  rawEvent: unknown;
 }
 
 // Union type for all events

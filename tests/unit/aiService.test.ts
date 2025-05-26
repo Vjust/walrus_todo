@@ -67,7 +67,7 @@ describe('AiService', () => {
   };
 
   it('should initialize with API key from constructor', () => {
-    const aiService = new AiService('test-api-key');
+      new AiService('test-api-key');
     expect(ChatXAI).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       model: 'grok-beta',
@@ -76,7 +76,7 @@ describe('AiService', () => {
   });
 
   it('should initialize with API key from environment variable', () => {
-    const aiService = new AiService();
+    new AiService();
     expect(ChatXAI).toHaveBeenCalledWith({
       apiKey: 'mock-api-key',
       model: 'grok-beta',

@@ -1,9 +1,7 @@
-// Fix import for chalk with esModuleInterop
-import chalkModule from 'chalk';
+import chalk from 'chalk';
 import { Logger } from './Logger';
 
 const logger = new Logger('error-handler');
-const chalk = chalkModule;
 import { CLIError } from '../types/errors/consolidated/CLIError';
 // Define utility functions directly to avoid import issues
 const getErrorMessage = (error: unknown): string => {

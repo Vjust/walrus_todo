@@ -231,7 +231,7 @@ describe('InputValidator', () => {
         'Must have 2-5 items',
         'INVALID_LENGTH'
       );
-      expect(rule.test('not an array' as any)).toBe(false);
+      expect(rule.test('not an array' as unknown as unknown[])).toBe(false);
     });
   });
 
@@ -251,7 +251,7 @@ describe('InputValidator', () => {
     it('should remove HTML tags', () => {
       expect(
         InputValidator.sanitizeString('<script>alert("XSS")</script>')
-      ).toBe('\\alert\\(\\\"XSS\\\"\\)\\');
+      ).toBe('\\alert\\(\\"XSS\\"\\)\\');
     });
 
     it('should escape shell metacharacters', () => {
@@ -304,7 +304,7 @@ describe('InputValidator', () => {
 
     it('should handle empty input', () => {
       expect(InputValidator.sanitizeString('')).toBe('');
-      expect(InputValidator.sanitizeString(null as any)).toBe('');
+      expect(InputValidator.sanitizeString(null as unknown as string)).toBe('');
     });
   });
 
@@ -339,13 +339,17 @@ describe('InputValidator', () => {
     it('should validate required flags', () => {
       const flags = { input: 'file.txt', output: 'result.txt' };
       // Should not throw
-      InputValidator.validateCommandFlags(flags, ['input', 'output']);
+      expect(() => {
+        InputValidator.validateCommandFlags(flags, ['input', 'output']);
+      }).not.toThrow();
     });
 
     it('should handle false values for required flags', () => {
       const flags = { verbose: false, input: 'test.txt' };
       // Should not throw - false is a valid value
-      InputValidator.validateCommandFlags(flags, ['verbose', 'input']);
+      expect(() => {
+        InputValidator.validateCommandFlags(flags, ['verbose', 'input']);
+      }).not.toThrow();
     });
 
     it('should throw for missing required flags', () => {
@@ -365,13 +369,17 @@ describe('InputValidator', () => {
     it('should allow non-conflicting flags', () => {
       const flags = { verbose: true };
       // Should not throw
-      InputValidator.validateCommandFlags(flags, [], [['verbose', 'quiet']]);
+      expect(() => {
+        InputValidator.validateCommandFlags(flags, [], [['verbose', 'quiet']]);
+      }).not.toThrow();
     });
 
     it('should handle undefined flags in mutually exclusive groups', () => {
       const flags = { verbose: true, debug: undefined };
       // Should not throw - undefined values are not considered present
-      InputValidator.validateCommandFlags(flags, [], [['verbose', 'debug']]);
+      expect(() => {
+        InputValidator.validateCommandFlags(flags, [], [['verbose', 'debug']]);
+      }).not.toThrow();
     });
   });
 
@@ -542,7 +550,7 @@ describe('InputValidator', () => {
     });
 
     it('should handle complex nested validation', () => {
-      const nestedRule: ValidationRule<any> = {
+      const nestedRule: ValidationRule<unknown> = {
         test: value => {
           if (typeof value !== 'object') return false;
           return value.nested && value.nested.field === 'valid';

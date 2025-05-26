@@ -46,10 +46,10 @@ export class CredentialManager {
       } catch (_error) {
         // We still keep the credential even if verification fails
         this.logger.error(
-          `Failed to verify credential on blockchain: ${error.message}`
+          `Failed to verify credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`
         );
         throw new CLIError(
-          `API key was stored securely but blockchain verification failed: ${error.message}`,
+          `API key was stored securely but blockchain verification failed: ${_error instanceof Error ? _error.message : String(_error)}`,
           'CREDENTIAL_VERIFICATION_FAILED'
         );
       }
@@ -80,8 +80,8 @@ export class CredentialManager {
 
       return apiKey;
     } catch (_error) {
-      if (error.code === 'CREDENTIAL_INVALID') {
-        throw error;
+      if (_error instanceof CLIError && _error.code === 'CREDENTIAL_INVALID') {
+        throw _error;
       }
       throw new CLIError(
         `No API key found for ${provider}. Use 'walrus_todo ai credentials add ${provider} --key YOUR_API_KEY' to add one.`,
@@ -108,7 +108,7 @@ export class CredentialManager {
         this.logger.info(`Revoked ${provider} credential on blockchain`);
       } catch (_error) {
         this.logger.warn(
-          `Could not revoke credential on blockchain: ${error.message}`
+          `Could not revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`
         );
       }
     } catch (_error) {
@@ -142,7 +142,7 @@ export class CredentialManager {
           verified = await this.verifier.isRegistered(provider);
         } catch (_error) {
           this.logger.debug(
-            `Error checking verification status: ${error.message}`
+            `Error checking verification status: ${_error instanceof Error ? _error.message : String(_error)}`
           );
         }
 

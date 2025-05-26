@@ -42,7 +42,7 @@ interface CredentialMetadata {
   verificationDate?: string;
   securityScore?: number;
   lastRotated?: string;
-  customMetadata?: Record<string, any>;
+  customMetadata?: Record<string, unknown>;
 }
 
 export class SecureCredentialService {
@@ -90,7 +90,7 @@ export class SecureCredentialService {
       expiryDays?: number;
       verifyOnChain?: boolean;
       rotationDays?: number;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     } = {}
   ): Promise<CredentialInfo> {
     // Validate the API key format

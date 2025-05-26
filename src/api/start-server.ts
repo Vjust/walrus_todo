@@ -9,7 +9,7 @@ async function main() {
     // Parse command line arguments
     const args = process.argv.slice(2);
     const portArg = args.find(arg => arg.startsWith('--port='));
-    const port = portArg ? parseInt(portArg.split('=')[1], 10) : undefined;
+    const port = portArg ? parseInt(portArg.split('=')[1] || '3000', 10) : 3000;
 
     // Create and start server
     const server = await createApiServer({ port });
@@ -27,7 +27,7 @@ async function main() {
       process.exit(0);
     });
   } catch (error) {
-    logger.error('Failed to start API server', error);
+    logger.error('Failed to start API server', error instanceof Error ? error : new Error(String(error)));
     process.exit(1);
   }
 }

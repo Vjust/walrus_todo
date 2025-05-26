@@ -293,10 +293,10 @@ export class BlockchainAIVerificationService extends AIVerificationService {
    */
   public async createVerifiedAnalysis(
     todos: Todo[],
-    analysis: Record<string, any>,
+    analysis: Record<string, unknown>,
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY,
     provider: string = this.defaultProvider
-  ): Promise<BlockchainVerifiedResult<Record<string, any>>> {
+  ): Promise<BlockchainVerifiedResult<Record<string, unknown>>> {
     return this.createBlockchainVerification(
       AIActionType.ANALYZE,
       todos,
@@ -320,7 +320,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
         await this.proofSystem.verifyProof(exportedProof);
       return verificationResult.isValid;
     } catch (_error) {
-      logger.error('Failed to verify proof:', error);
+      logger.error('Failed to verify proof:', _error);
       return false;
     }
   }
@@ -330,7 +330,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
    */
   public async getVerification(
     verificationId: string
-  ): Promise<BlockchainVerifiedResult<any>> {
+  ): Promise<BlockchainVerifiedResult<unknown>> {
     // Get verification from blockchain
     const verification =
       await this.blockchainVerifier.getVerification(verificationId);
@@ -349,7 +349,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
   /**
    * List all verifications for the current user
    */
-  public async listVerifications(): Promise<BlockchainVerifiedResult<any>[]> {
+  public async listVerifications(): Promise<BlockchainVerifiedResult<unknown>[]> {
     const verifications = await this.blockchainVerifier.listVerifications();
 
     return verifications.map(verification => ({
@@ -380,10 +380,12 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     };
   }> {
     // Create verification first
+    const requestData: unknown = JSON.parse(request);
+    const responseData: unknown = JSON.parse(response);
     const verification = await this.createBlockchainVerification(
       actionType,
-      JSON.parse(request),
-      JSON.parse(response),
+      requestData as Todo[],
+      responseData,
       this.defaultProvider
     );
 
@@ -391,7 +393,10 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     const proofString = await this.blockchainVerifier.generateProof(
       verification.verification.id
     );
-    const proofData = JSON.parse(Buffer.from(proofString, 'base64').toString());
+    const proofData = JSON.parse(Buffer.from(proofString, 'base64').toString()) as {
+      id: string;
+      signature?: { signature: string };
+    };
 
     return {
       proofId: proofData.id,
@@ -461,7 +466,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
 
       return result.isValid;
     } catch (_error) {
-      logger.error('Failed to verify proof:', error);
+      logger.error('Failed to verify proof:', _error);
       return false;
     }
   }

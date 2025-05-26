@@ -76,6 +76,10 @@ export default class StoreCommand extends BaseCommand {
       description: 'Enable retry logic with exponential backoff',
       default: false,
     }),
+    reuse: Flags.boolean({
+      description: 'Reuse existing blob IDs when possible',
+      default: false,
+    }),
   };
 
   private todoService = new TodoService();
@@ -150,8 +154,9 @@ export default class StoreCommand extends BaseCommand {
       const walrusStorage = await this.withSpinner(
         'Connecting to Walrus storage...',
         async () => {
-          const storage = createWalrusStorage(flags.network, flags.mock);
-          await this.connectToWalrus(storage, flags.network);
+          const network = flags.network || 'testnet';
+          const storage = createWalrusStorage(network, flags.mock);
+          await this.connectToWalrus(storage, network);
           return storage;
         }
       );
@@ -162,15 +167,20 @@ export default class StoreCommand extends BaseCommand {
         await this.storeSingleTodo(todosToStore[0], walrusStorage, {
           epochs: flags.epochs,
           json: flags.json,
-          reuse: flags.reuse
+          reuse: flags.reuse,
+          retry: flags.retry,
+          mock: flags.mock,
+          list: flags.list,
+          network: flags.network
         });
       } else {
         // Batch upload
         await this.storeBatchTodos(todosToStore, walrusStorage, {
           'batch-size': flags['batch-size'],
           epochs: flags.epochs,
-          json: flags.json,
-          reuse: flags.reuse
+          reuse: flags.reuse,
+          list: flags.list,
+          network: flags.network
         });
       }
 
@@ -228,7 +238,7 @@ export default class StoreCommand extends BaseCommand {
   private async storeSingleTodo(
     todo: Todo,
     walrusStorage: ReturnType<typeof createWalrusStorage>,
-    flags: { epochs: number; json: boolean; reuse: boolean }
+    flags: { epochs: number; json: boolean; reuse: boolean; retry?: boolean; mock?: boolean; list: string; network?: string }
   ): Promise<void> {
     let blobId: string;
     let attemptCount = 0;
@@ -292,7 +302,7 @@ export default class StoreCommand extends BaseCommand {
         }
       );
     } catch (error) {
-      this.handleStorageError(error, flags.network);
+      this.handleStorageError(error, flags.network || 'testnet');
     }
 
     // Update local todo with blob ID
@@ -314,8 +324,9 @@ export default class StoreCommand extends BaseCommand {
     flags: {
       'batch-size': number;
       epochs: number;
-      json: boolean;
       reuse: boolean;
+      list: string;
+      network?: string;
     }
   ): Promise<void> {
     const startTime = Date.now();
@@ -328,28 +339,28 @@ export default class StoreCommand extends BaseCommand {
       total: 100,
       operation: async (bar: { increment: (delta: number) => void }) => {
         try {
-          bar.update(10, { status: 'Checking cache...' });
+          bar.increment(10);
 
           // Check cache first
           const hash = this.getTodoHash(todo);
           const cachedBlobId = await this.uploadCache.get(hash);
 
           if (cachedBlobId) {
-            bar.update(100, { status: 'Cached' });
+            bar.increment(90);
             return { todo, blobId: cachedBlobId, cached: true };
           }
 
-          bar.update(30, { status: 'Uploading to Walrus...' });
+          bar.increment(20);
 
           // Upload to Walrus
           const blobId = await walrusStorage.storeTodo(todo, flags.epochs);
 
-          bar.update(70, { status: 'Caching result...' });
+          bar.increment(40);
 
           // Cache the result
           await this.uploadCache.set(hash, blobId);
 
-          bar.update(90, { status: 'Updating local todo...' });
+          bar.increment(20);
 
           // Update local todo
           await this.todoService.updateTodo(flags.list, todo.id, {
@@ -361,8 +372,11 @@ export default class StoreCommand extends BaseCommand {
           // Save blob mapping for future reference
           this.saveBlobMapping(todo.id, blobId);
 
-          bar.update(100, { status: 'Complete' });
+          bar.increment(10);
           return { todo, blobId, cached: false };
+        } catch (error) {
+          bar.increment(100);
+          throw error;
         }
       },
     }));
@@ -385,8 +399,8 @@ export default class StoreCommand extends BaseCommand {
         `Failed: ${chalk.red(failedCount)}`,
         `Cache hits: ${chalk.yellow(cacheHits)}`,
         `Time taken: ${chalk.cyan(this.formatDuration(duration))}`,
-        `Network: ${chalk.cyan(flags.network)}`,
-        `Epochs: ${chalk.cyan(flags.epochs)}`,
+        `Network: ${chalk.cyan(flags.network || 'testnet')}`,
+        `Epochs: ${chalk.cyan(flags.epochs || 5)}`,
       ].join('\n')
     );
 
@@ -449,12 +463,12 @@ export default class StoreCommand extends BaseCommand {
   private displaySuccessInfo(
     todo: Todo,
     blobId: string,
-    flags: { json: boolean },
+    flags: { json: boolean; retry?: boolean; mock?: boolean; network?: string; epochs?: number },
     attemptCount?: number
   ): void {
     this.log('');
 
-    // Display retry success message if retries were used
+    // Display retry success message if retries were used  
     if (flags.retry && attemptCount && attemptCount > 1) {
       this.log(
         chalk.green(`Storage successful after ${attemptCount} attempts`)
@@ -466,8 +480,8 @@ export default class StoreCommand extends BaseCommand {
     this.log(chalk.white.bold('Storage Details:'));
     this.log(chalk.white(`  Todo: ${chalk.cyan(todo.title)}`));
     this.log(chalk.white(`  Blob ID: ${chalk.yellow(blobId)}`));
-    this.log(chalk.white(`  Network: ${chalk.cyan(flags.network)}`));
-    this.log(chalk.white(`  Epochs: ${chalk.cyan(flags.epochs)}`));
+    this.log(chalk.white(`  Network: ${chalk.cyan(flags.network || 'testnet')}`));
+    this.log(chalk.white(`  Epochs: ${chalk.cyan(flags.epochs || 5)}`));
 
     if (!flags.mock) {
       this.log('');
@@ -511,7 +525,8 @@ export default class StoreCommand extends BaseCommand {
    * Handle storage errors
    */
   private handleStorageError(error: unknown, network: string): never {
-    if (error.message?.includes('could not find WAL coins')) {
+    const errorObj = error as { message?: string };
+    if (errorObj?.message?.includes('could not find WAL coins')) {
       throw new CLIError(
         `Insufficient WAL balance. Run "walrus --context ${network} get-wal" to acquire WAL tokens.`,
         'INSUFFICIENT_WAL'

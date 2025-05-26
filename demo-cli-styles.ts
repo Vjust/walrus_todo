@@ -182,7 +182,7 @@ StyleDemo.run([], {
         },
         s3: {
           bucket: 'demo-bucket',
-          templates: {} as any,
+          templates: { target: {}, vanilla: {} },
         },
       },
     },

@@ -2,9 +2,10 @@ import { BlobVerificationManager } from '../../src/utils/blob-verification';
 import { SuiClient } from '@mysten/sui/client';
 import type { WalrusClientExt } from '../../src/types/client';
 import type { BlobMetadataShape, BlobInfo } from '../../src/types/walrus';
+import { createWalrusModuleMock, getMockWalrusClient } from '../helpers/walrus-client-mock';
 
 jest.mock('@mysten/sui/client');
-jest.mock('@mysten/walrus');
+jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 jest.mock('blake3');
 
 describe('BlobVerificationManager', () => {
@@ -23,7 +24,7 @@ describe('BlobVerificationManager', () => {
   };
   const mockMetadata: BlobMetadataShape = {
     V1: {
-      encoding_type: { RedStuff: true as any, $kind: 'RedStuff' },
+      encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
       unencoded_length: '1024',
       hashes: [
         {
@@ -62,84 +63,24 @@ describe('BlobVerificationManager', () => {
 
     _mockSuiClient = mockSuiClient;
 
-    // Create a more complete mock that matches the WalrusClientExt interface
-    const walrusClientMock = {
-      getConfig: jest.fn().mockResolvedValue({
-        network: 'testnet',
-        version: '1.0.0',
-        maxSize: 1000000,
-      }),
-      getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest
-        .fn()
-        .mockResolvedValue({ used: '500', total: '2000' }),
-      getBlobInfo: jest.fn(),
-      getBlobObject: jest.fn(),
-      verifyPoA: jest.fn().mockResolvedValue(true),
-      writeBlob: jest.fn().mockResolvedValue({
-        blobId: mockBlobId,
-        blobObject: { blob_id: mockBlobId },
-      }),
-      readBlob: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      storageCost: jest.fn().mockResolvedValue({
-        storageCost: BigInt(1000),
-        writeCost: BigInt(500),
-        totalCost: BigInt(1500),
-      }),
-      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
-        digest: 'test-digest',
-        storage: {
-          id: { id: 'test-storage-id' },
-          start_epoch: 40,
-          end_epoch: 52,
-          storage_size: '1000000',
-        },
-      }),
-      executeCertifyBlobTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'test-digest' }),
-      executeWriteBlobAttributesTransaction: jest
-        .fn()
-        .mockResolvedValue({ digest: 'test-digest' }),
-      deleteBlob: jest
-        .fn()
-        .mockReturnValue(
-          jest.fn().mockResolvedValue({ digest: 'test-digest' })
-        ),
-      executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
-        blob: { blob_id: mockBlobId },
-        digest: 'test-digest',
-      }),
-      getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
-        primary_verification: true,
-        provider: 'test-provider',
-        signature: 'test-signature',
-      }),
-      createStorageBlock: jest.fn().mockResolvedValue({}),
-      createStorage: jest.fn().mockReturnValue(
-        jest.fn().mockResolvedValue({
-          digest: 'test-digest',
-          storage: {
-            id: { id: 'test-storage-id' },
-            start_epoch: 40,
-            end_epoch: 52,
-            storage_size: '1000000',
-          },
-        })
-      ),
-      getBlobSize: jest.fn().mockResolvedValue(1024),
-      getStorageProviders: jest
-        .fn()
-        .mockResolvedValue(['provider1', 'provider2']),
-      getSuiBalance: jest.fn().mockResolvedValue('1000'),
-      reset: jest.fn(),
-      experimental: {
-        getBlobData: jest.fn().mockResolvedValue({}),
-      },
-    } as unknown as jest.Mocked<WalrusClientExt>;
-
-    mockWalrusClient = walrusClientMock;
+    // Use the centralized complete mock
+    mockWalrusClient = getMockWalrusClient();
+    
+    // Override specific values for this test
+    mockWalrusClient.getConfig.mockResolvedValue({
+      network: 'testnet',
+      version: '1.0.0',
+      maxSize: 1000000,
+    });
+    mockWalrusClient.getWalBalance.mockResolvedValue('2000');
+    mockWalrusClient.getStorageUsage.mockResolvedValue({ 
+      used: '500', 
+      total: '2000' 
+    });
+    mockWalrusClient.writeBlob.mockResolvedValue({
+      blobId: mockBlobId,
+      blobObject: { blob_id: mockBlobId } as any,
+    });
 
     verificationManager = new BlobVerificationManager(
       _mockSuiClient,
@@ -157,7 +98,7 @@ describe('BlobVerificationManager', () => {
         blob_id: mockBlobId,
         certified_epoch: 41,
         registered_epoch: 40,
-        encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+        encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
         unencoded_length: '1024',
         size: '1024',
         hashes: [
@@ -174,7 +115,7 @@ describe('BlobVerificationManager', () => {
         ],
         metadata: {
           V1: {
-            encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+            encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
             unencoded_length: '1024',
             hashes: [
               {
@@ -256,7 +197,7 @@ describe('BlobVerificationManager', () => {
         blob_id: mockBlobId,
         certified_epoch: undefined,
         registered_epoch: 40,
-        encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+        encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
         unencoded_length: '1024',
         size: '1024',
         hashes: [
@@ -273,7 +214,7 @@ describe('BlobVerificationManager', () => {
         ],
         metadata: {
           V1: {
-            encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+            encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
             unencoded_length: '1024',
             hashes: [
               {
@@ -309,7 +250,7 @@ describe('BlobVerificationManager', () => {
           blob_id: mockBlobId,
           certified_epoch: undefined,
           registered_epoch: 40,
-          encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+          encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
           unencoded_length: '1024',
           size: '1024',
           hashes: [
@@ -333,7 +274,7 @@ describe('BlobVerificationManager', () => {
           blob_id: mockBlobId,
           certified_epoch: 43,
           registered_epoch: 42,
-          encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+          encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
           unencoded_length: '1024',
           size: '1024',
           hashes: [
@@ -439,7 +380,7 @@ describe('BlobVerificationManager', () => {
         blob_id: mockBlobId,
         certified_epoch: 41,
         registered_epoch: 40,
-        encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+        encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
         unencoded_length: '1024',
         size: '1024',
         hashes: [
@@ -488,7 +429,7 @@ describe('BlobVerificationManager', () => {
         blob_id: mockBlobId,
         certified_epoch: undefined,
         registered_epoch: 40,
-        encoding_type: { RedStuff: {} as any, $kind: 'RedStuff' },
+        encoding_type: { RedStuff: {}, $kind: 'RedStuff' },
         unencoded_length: '1024',
         size: '1024',
         hashes: [

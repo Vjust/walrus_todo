@@ -1,6 +1,5 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '../utils/adapters/sui-client-adapter';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { SuiNftStorage } from '../utils/sui-nft-storage';
@@ -56,7 +55,7 @@ export default class FetchCommand extends BaseCommand {
 
   private todoService = new TodoService();
   private walrusStorage = createWalrusStorage('testnet', true); // Use mock mode for testing
-  private parsedFlags!: Record<string, any>; // Will be populated after parsing
+  private parsedFlags!: Record<string, unknown>; // Will be populated after parsing
 
   /**
    * Creates a SuiClient instance for the specified network
@@ -64,19 +63,19 @@ export default class FetchCommand extends BaseCommand {
    * @param network Network name to connect to (mainnet, testnet, devnet, local)
    * @returns Configured SuiClient instance
    */
-  private createSuiClient(network: string): SuiClient {
+  private createSuiClient(network: string): typeof SuiClient {
     // In a proper implementation, this would create a real SuiClient
     // For now, we stub it for testing purposes
     if (this.parsedFlags['dry-run']) {
       return {
         url: NETWORK_URLS[network as keyof typeof NETWORK_URLS],
-        core: {},
-        jsonRpc: {},
+        core: {} as Record<string, never>,
+        jsonRpc: {} as Record<string, never>,
         signAndExecuteTransaction: async () => {},
         getEpochMetrics: async () => null,
         getObject: async () => null,
         getTransactionBlock: async () => null,
-      } as unknown as SuiClient;
+      } as unknown as typeof SuiClient;
     }
 
     // For actual implementation, this would create a real client
@@ -95,7 +94,7 @@ export default class FetchCommand extends BaseCommand {
     // In a proper implementation, this would load a keypair from the keystore
     // For now, we stub it for testing purposes
     if (this.parsedFlags['dry-run']) {
-      return {} as Ed25519Keypair;
+      return {} as Record<string, never> as Ed25519Keypair;
     }
 
     // For actual implementation, this would load a keypair from the keystore
@@ -210,8 +209,8 @@ export default class FetchCommand extends BaseCommand {
           collectionId: EMPTY_COLLECTION_ID,
         });
 
-        let todo: any;
-        let nftData: any;
+        let todo: unknown;
+        let nftData: unknown;
 
         try {
           // Retrieve NFT from blockchain with retry

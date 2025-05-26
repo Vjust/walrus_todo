@@ -12,7 +12,7 @@ const logger = new Logger('transaction-compatibility');
 /**
  * Creates a compatible signer that works with both old and new API versions
  */
-export function createCompatibleSigner(signer: any) {
+export function createCompatibleSigner(signer: Record<string, unknown>) {
   if (!signer) {
     throw new Error('Signer is required');
   }
@@ -21,7 +21,7 @@ export function createCompatibleSigner(signer: any) {
     ...signer,
     
     // Provide both old and new method names for transaction signing
-    async signTransaction(transaction: any) {
+    async signTransaction(transaction: unknown) {
       // Try new method first
       if (typeof signer.signTransaction === 'function') {
         return await signer.signTransaction(transaction);
@@ -35,7 +35,7 @@ export function createCompatibleSigner(signer: any) {
       throw new Error('No compatible signing method found on signer');
     },
     
-    async signTransactionBlock(transaction: any) {
+    async signTransactionBlock(transaction: unknown) {
       // Try old method first for backward compatibility
       if (typeof signer.signTransactionBlock === 'function') {
         return await signer.signTransactionBlock(transaction);
@@ -63,7 +63,7 @@ export function createCompatibleSigner(signer: any) {
 /**
  * Helper function to sign a transaction with compatibility handling
  */
-export async function signTransactionCompatible(signer: any, transaction: any) {
+export async function signTransactionCompatible(signer: Record<string, unknown>, transaction: unknown) {
   const compatibleSigner = createCompatibleSigner(signer);
   
   try {
@@ -76,7 +76,10 @@ export async function signTransactionCompatible(signer: any, transaction: any) {
       // Fallback to old method
       return await compatibleSigner.signTransactionBlock(transaction);
     } catch (fallbackError) {
-      logger.error('Both signing methods failed:', { error, fallbackError });
+      logger.error('Both signing methods failed:', { 
+        primaryError: error instanceof Error ? error.message : String(error), 
+        fallbackError: fallbackError instanceof Error ? fallbackError.message : String(fallbackError) 
+      });
       throw new Error(`Transaction signing failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -85,12 +88,12 @@ export async function signTransactionCompatible(signer: any, transaction: any) {
 /**
  * Compatibility wrapper for transaction execution
  */
-export async function executeTransactionCompatible(client: any, options: {
-  transaction?: any;
-  transactionBlock?: any;
-  signature: any;
+export async function executeTransactionCompatible(client: Record<string, unknown>, options: {
+  transaction?: unknown;
+  transactionBlock?: unknown;
+  signature: unknown;
   requestType?: string;
-  options?: any;
+  options?: Record<string, unknown>;
 }) {
   if (!client || typeof client.executeTransactionBlock !== 'function') {
     throw new Error('Invalid client or executeTransactionBlock method not available');
@@ -124,14 +127,14 @@ export async function executeTransactionCompatible(client: any, options: {
 /**
  * Helper function to check if a signer has a specific method
  */
-export function hasSigningMethod(signer: any, methodName: string): boolean {
+export function hasSigningMethod(signer: Record<string, unknown>, methodName: string): boolean {
   return signer && typeof signer[methodName] === 'function';
 }
 
 /**
  * Get the appropriate signing method name for the given signer
  */
-export function getSigningMethodName(signer: any): string | null {
+export function getSigningMethodName(signer: Record<string, unknown>): string | null {
   if (hasSigningMethod(signer, 'signTransaction')) {
     return 'signTransaction';
   }

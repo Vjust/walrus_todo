@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
-import { SuiClient } from '@mysten/sui/client';
-import { WalrusClient } from '@mysten/walrus';
+import { type SuiClientType } from './adapters/sui-client-compatibility';
+import { WalrusClient } from '../types/client';
 import { CLIError } from '../types/errors/consolidated';
 import { handleError } from './error-handler';
 
@@ -42,7 +42,7 @@ export class StorageManager {
   private readonly MIN_EPOCH_BUFFER = 10; // Minimum remaining epochs
 
   constructor(
-    private suiClient: SuiClient,
+    private suiClient: SuiClientType,
     private walrusClient: WalrusClient,
     private address: string
   ) {}
@@ -69,10 +69,11 @@ export class StorageManager {
           'WALRUS_NETWORK_ERROR'
         );
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
+      const typedError = error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
-        `Network verification failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Network verification failed: ${typedError.message}`,
         'WALRUS_NETWORK_ERROR'
       );
     }
@@ -116,10 +117,11 @@ export class StorageManager {
         storageFundBalance: BigInt(storageFundBalance.totalBalance),
         isStorageFundSufficient,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
+      const typedError = error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
-        `Failed to check balances: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to check balances: ${typedError.message}`,
         'WALRUS_BALANCE_CHECK_FAILED'
       );
     }
@@ -128,7 +130,7 @@ export class StorageManager {
   /**
    * Estimates storage costs including buffer and epoch requirements
    */
-  async estimateStorageCost(sizeBytes: number): Promise<StorageCostEstimate> {
+  public async estimateStorageCost(sizeBytes: number): Promise<StorageCostEstimate> {
     try {
       // Add buffer to requested size
       const sizeWithBuffer = BigInt(sizeBytes) + this.MIN_STORAGE_BUFFER;
@@ -150,9 +152,10 @@ export class StorageManager {
         requiredBalance,
         epochs: this.DEFAULT_EPOCH_DURATION,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
-        `Failed to estimate storage cost: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to estimate storage cost: ${typedError.message}`,
         'WALRUS_COST_ESTIMATION_FAILED'
       );
     }
@@ -161,7 +164,7 @@ export class StorageManager {
   /**
    * Verifies if existing storage can be reused
    */
-  async verifyExistingStorage(
+  public async verifyExistingStorage(
     requiredSize: number,
     currentEpoch: number
   ): Promise<StorageVerification> {
@@ -222,7 +225,7 @@ export class StorageManager {
           endEpoch: Number(fields.end_epoch),
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       handleError('Failed to verify existing storage', error);
       return { isValid: false, remainingSize: 0, remainingEpochs: 0 };
     }
@@ -231,7 +234,7 @@ export class StorageManager {
   /**
    * Comprehensive storage check including network, balance, and allocation
    */
-  async validateStorageRequirements(sizeBytes: number): Promise<{
+  public async validateStorageRequirements(sizeBytes: number): Promise<{
     canProceed: boolean;
     existingStorage?: StorageVerification;
     requiredCost?: StorageCostEstimate;
@@ -276,10 +279,11 @@ export class StorageManager {
         requiredCost,
         balances,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
+      const typedError = error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
-        `Storage validation failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Storage validation failed: ${typedError.message}`,
         'WALRUS_STORAGE_VALIDATION_FAILED'
       );
     }

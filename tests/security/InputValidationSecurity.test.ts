@@ -6,7 +6,7 @@ import {
 } from '../../src/types/adapters/AIModelAdapter';
 import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
 import {
-  AIPermissionManager,
+  // _AIPermissionManager,
   initializePermissionManager,
 } from '../../src/services/ai/AIPermissionManager';
 import { Todo } from '../../src/types/todo';
@@ -28,6 +28,9 @@ const sampleTodo: Todo = {
   title: 'Test Todo',
   description: 'This is a test todo',
   completed: false,
+  priority: 'medium',
+  tags: [],
+  private: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
@@ -39,13 +42,16 @@ const sampleTodos: Todo[] = [
     title: 'Another Todo',
     description: 'This is another test todo',
     completed: false,
+    priority: 'low',
+    tags: ['test'],
+    private: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
 ];
 
 // Helper function to create malicious inputs
-function createMaliciousInput(type: string): any {
+function createMaliciousInput(type: string): Todo[] {
   switch (type) {
     case 'xss':
       return [
@@ -96,7 +102,7 @@ function createMaliciousInput(type: string): any {
           updatedAt: new Date().toISOString(),
         },
       ];
-    case 'prototype':
+    case 'prototype': {
       const maliciousTodo = {
         id: 'todo-proto-1',
         title: 'Prototype Pollution Todo',
@@ -108,6 +114,7 @@ function createMaliciousInput(type: string): any {
       // @ts-expect-error - intentional for testing
       maliciousTodo.__proto__ = { polluted: true };
       return [maliciousTodo];
+    }
     case 'large':
       return Array(100)
         .fill(null)
@@ -270,7 +277,7 @@ describe('Input Validation Security Tests', () => {
 
       // Create verification service
       const verificationService = new AIVerificationService(
-        mockBlockchainVerifier as any
+        mockBlockchainVerifier
       );
 
       // Create malicious todos with XSS attempts
@@ -417,8 +424,8 @@ describe('Input Validation Security Tests', () => {
       await aiService.summarize(maliciousTodos);
 
       // Verify prototype isn't polluted
-      expect(({} as any).polluted).toBeUndefined();
-      expect((Object.prototype as any).polluted).toBeUndefined();
+      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
+      expect(((Object.prototype as Record<string, unknown>).polluted)).toBeUndefined();
     });
 
     it('should validate and sanitize structured AI responses', async () => {
@@ -459,7 +466,7 @@ describe('Input Validation Security Tests', () => {
       expect(result.constructor).toBeUndefined();
 
       // Global prototype should not be polluted
-      expect(({} as any).polluted).toBeUndefined();
+      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
     });
   });
 
@@ -516,14 +523,14 @@ describe('Input Validation Security Tests', () => {
       await expect(aiService.summarize([])).rejects.toThrow();
 
       // Test null input
-      await expect(aiService.summarize(null as any)).rejects.toThrow();
+      await expect(aiService.summarize(null as never)).rejects.toThrow();
 
       // Test undefined input
-      await expect(aiService.summarize(undefined as any)).rejects.toThrow();
+      await expect(aiService.summarize(undefined as never)).rejects.toThrow();
 
       // Test non-array input
       await expect(
-        aiService.summarize('not an array' as any)
+        aiService.summarize('not an array' as never)
       ).rejects.toThrow();
     });
   });
@@ -621,7 +628,7 @@ describe('Input Validation Security Tests', () => {
 
       // Create verification service
       const verificationService = new AIVerificationService(
-        mockBlockchainVerifier as any
+        mockBlockchainVerifier
       );
 
       // Create todos with prompt injection attempts
@@ -789,7 +796,7 @@ describe('Input Validation Security Tests', () => {
       };
 
       const verificationService = new AIVerificationService(
-        mockBlockchainVerifier as any
+        mockBlockchainVerifier
       );
 
       // Test with valid input
@@ -852,7 +859,7 @@ describe('Input Validation Security Tests', () => {
       );
 
       // Check prototype pollution
-      expect(({} as any).injected).toBeUndefined();
+      expect((({} as Record<string, unknown>).injected)).toBeUndefined();
 
       // Verify options were sanitized
       expect(mockAIService['options'].temperature).toBe(0.7);
@@ -922,9 +929,9 @@ describe('Input Validation Security Tests', () => {
 
       // Create verification service with strict validation
       const blockchainService = new BlockchainAIVerificationService(
-        mockBlockchainVerifier as any,
-        mockPermissionManager as any,
-        mockCredentialManager as any,
+        mockBlockchainVerifier,
+        mockPermissionManager,
+        mockCredentialManager,
         'xai'
       );
 
@@ -939,7 +946,7 @@ describe('Input Validation Security Tests', () => {
       // Invalid actionType should be rejected
       await expect(
         blockchainService.createVerification(
-          undefined as any,
+          undefined as never,
           'Valid request',
           'Valid response',
           { timestamp: Date.now().toString() }

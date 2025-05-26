@@ -170,18 +170,18 @@ export default class AddCommand extends BaseCommand {
       if (
         args.listOrTitle &&
         flags.task &&
-        (flags.task as string[]).length > 0
+        (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0
       ) {
         // First argument is treated as the list name when tasks are provided with -t
         listName = CommandSanitizer.sanitizeString(args.listOrTitle);
-        todoTitles = (flags.task as string[]).map(t =>
+        todoTitles = (flags.task as string[]).map((t: string) =>
           CommandSanitizer.sanitizeString(t)
         );
       }
       // Pattern 2: argument but no task flags
       else if (
         args.listOrTitle &&
-        (!flags.task || (flags.task as string[]).length === 0)
+        (!flags.task || (Array.isArray(flags.task) ? flags.task : [flags.task]).length === 0)
       ) {
         // Pattern 2a: With explicit list flag - argument is title
         if (flags.list) {
@@ -195,12 +195,12 @@ export default class AddCommand extends BaseCommand {
         }
       }
       // Pattern 3: Only task flags, no argument
-      else if (flags.task && (flags.task as string[]).length > 0) {
+      else if (flags.task && (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0) {
         // Use the list flag if provided, otherwise default
         listName = CommandSanitizer.sanitizeString(
           (flags.list as string) || 'default'
         );
-        todoTitles = (flags.task as string[]).map(t =>
+        todoTitles = (Array.isArray(flags.task) ? flags.task : [flags.task]).map((t: string) =>
           CommandSanitizer.sanitizeString(t)
         );
       }
@@ -229,9 +229,9 @@ export default class AddCommand extends BaseCommand {
 
       // Extract attribute arrays for the todos
       const storageLocation = flags.storage as StorageLocation;
-      const priorities = flags.priority || ['medium']; // Default to medium priority if not specified
-      const dueDates = flags.due || [];
-      const tagSets = flags.tags || [];
+      const priorities = (Array.isArray(flags.priority) ? flags.priority : flags.priority ? [flags.priority] : ['medium']); // Default to medium priority if not specified
+      const dueDates = (Array.isArray(flags.due) ? flags.due : flags.due ? [flags.due] : []);
+      const tagSets = (Array.isArray(flags.tags) ? flags.tags : flags.tags ? [flags.tags] : []);
 
       // Create warning messages for attribute mismatches
       if (todoTitles.length > 1) {
@@ -306,11 +306,11 @@ export default class AddCommand extends BaseCommand {
             : priorities[priorities.length - 1];
         const dueDate =
           dueDates[i] !== undefined
-            ? CommandSanitizer.sanitizeDate(dueDates[i])
+            ? CommandSanitizer.sanitizeDate(dueDates[i] || '')
             : undefined;
         const tags =
           tagSets[i] !== undefined
-            ? CommandSanitizer.sanitizeTags(tagSets[i])
+            ? CommandSanitizer.sanitizeTags(tagSets[i] || '')
             : [];
 
         // Initialize todo object with sanitized inputs
@@ -325,7 +325,7 @@ export default class AddCommand extends BaseCommand {
 
         // Use AI if requested
         if (flags.ai) {
-          await this.enhanceWithAI(todo, todoTitle, flags);
+          await this.enhanceWithAI(todo, todoTitle || '', flags);
         }
 
         // Add todo to the list
@@ -450,24 +450,24 @@ export default class AddCommand extends BaseCommand {
    */
   private async handleJsonOutput(
     args: { listOrTitle?: string },
-    flags: Record<string, unknown>
+    flags: Record<string, string | boolean | string[] | undefined>
   ): Promise<void> {
     // Determine the list name and titles based on arguments and flags
     let todoTitles: string[] = [];
     let listName: string;
 
     // Check if there's an argument and task flags
-    if (args.listOrTitle && flags.task && (flags.task as string[]).length > 0) {
+    if (args.listOrTitle && flags.task && (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0) {
       // First argument is the list name
       listName = CommandSanitizer.sanitizeString(args.listOrTitle);
-      todoTitles = (flags.task as string[]).map((t: string) =>
+      todoTitles = (Array.isArray(flags.task) ? flags.task : [flags.task]).map((t: string) =>
         CommandSanitizer.sanitizeString(t)
       );
     }
     // Check if there's an argument but no task flags
     else if (
       args.listOrTitle &&
-      (!flags.task || (flags.task as string[]).length === 0)
+      (!flags.task || (Array.isArray(flags.task) ? flags.task : [flags.task]).length === 0)
     ) {
       if (flags.list) {
         // Explicit list flag, argument is title
@@ -480,11 +480,11 @@ export default class AddCommand extends BaseCommand {
       }
     }
     // Only task flags
-    else if (flags.task && (flags.task as string[]).length > 0) {
+    else if (flags.task && (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0) {
       listName = CommandSanitizer.sanitizeString(
         (flags.list as string) || 'default'
       );
-      todoTitles = (flags.task as string[]).map((t: string) =>
+      todoTitles = (Array.isArray(flags.task) ? flags.task : [flags.task]).map((t: string) =>
         CommandSanitizer.sanitizeString(t)
       );
     }
@@ -497,9 +497,9 @@ export default class AddCommand extends BaseCommand {
     }
 
     // Get attribute arrays
-    const priorities = (flags.priority as string[]) || ['medium'];
-    const dueDates = (flags.due as string[]) || [];
-    const tagSets = (flags.tags as string[]) || [];
+    const priorities = (Array.isArray(flags.priority) ? flags.priority : flags.priority ? [flags.priority] : ['medium']);
+    const dueDates = (Array.isArray(flags.due) ? flags.due : flags.due ? [flags.due] : []);
+    const tagSets = (Array.isArray(flags.tags) ? flags.tags : flags.tags ? [flags.tags] : []);
     const storageLocation = flags.storage as StorageLocation;
 
     // Create list if it doesn't exist
@@ -530,11 +530,11 @@ export default class AddCommand extends BaseCommand {
           : priorities[priorities.length - 1];
       const dueDate =
         dueDates[i] !== undefined
-          ? CommandSanitizer.sanitizeDate(dueDates[i] as string)
+          ? CommandSanitizer.sanitizeDate(dueDates[i])
           : undefined;
       const tags =
         tagSets[i] !== undefined
-          ? CommandSanitizer.sanitizeTags(tagSets[i] as string)
+          ? CommandSanitizer.sanitizeTags(tagSets[i])
           : [];
 
       // Prepare the todo object
@@ -576,9 +576,9 @@ export default class AddCommand extends BaseCommand {
   private async enhanceWithAI(
     todo: Partial<Todo>,
     todoTitle: string,
-    flags: Record<string, unknown>
+    flags: Record<string, string | boolean | string[] | undefined>
   ): Promise<void> {
-    let aiSpinner: unknown;
+    let aiSpinner: ReturnType<typeof this.startSpinner> | undefined;
 
     try {
       this.debugLog('AI flag detected in add command');
@@ -612,7 +612,7 @@ export default class AddCommand extends BaseCommand {
 
       // Get AI suggestions with retry for network errors
       const [suggestedTags, suggestedPriority] = await this.executeWithRetry(
-        async () =>
+        async (): Promise<[string[], 'high' | 'medium' | 'low']> =>
           Promise.all([
             this.aiServiceInstance.suggestTags(tempTodo),
             this.aiServiceInstance.suggestPriority(tempTodo),
@@ -776,8 +776,6 @@ export default class AddCommand extends BaseCommand {
       // Start storage spinner
       const storeSpinner = this.startSpinner('Storing todo on blockchain...');
 
-      // Variable already declared at method level
-
       // Store todo on Walrus with retry and transaction handling
       blobId = await this.executeTransaction(
         async () => {
@@ -880,7 +878,7 @@ export default class AddCommand extends BaseCommand {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           try {
-            mappings = JSON.parse(content);
+            mappings = JSON.parse(content.toString());
           } catch (parseError) {
             if (parseError instanceof SyntaxError) {
               this.warning(
@@ -941,7 +939,7 @@ export default class AddCommand extends BaseCommand {
       todo.tags &&
         todo.tags.length > 0 &&
         `${ICONS.tag} Tags: ${chalk.cyan(todo.tags.join(', '))}`,
-      `${ICONS.storage} Storage: ${this.formatStorage(todo.storageLocation)}`,
+      `${ICONS.storage} Storage: ${this.formatStorage(todo.storageLocation || 'local')}`,
     ].filter(Boolean);
 
     // Display compact details on a single line
@@ -966,7 +964,7 @@ export default class AddCommand extends BaseCommand {
    */
   private performPreExecutionValidation(
     args: { listOrTitle?: string },
-    flags: Record<string, unknown>
+    flags: Record<string, string | boolean | string[] | undefined>
   ): void {
     // Validate mutually exclusive flags
     if (flags.task && args.listOrTitle) {
@@ -996,7 +994,7 @@ export default class AddCommand extends BaseCommand {
     if (flags.priority) {
       const priorities = Array.isArray(flags.priority)
         ? flags.priority
-        : [flags.priority];
+        : [flags.priority as string];
       priorities.forEach((priority: string) => {
         this.validateFlag.enum(priority, ['high', 'medium', 'low'], 'priority');
       });
@@ -1018,25 +1016,23 @@ export default class AddCommand extends BaseCommand {
 
     // Validate list name
     if (flags.list) {
-      InputValidator.validate(
-        flags.list,
-        [
-          InputValidator.requiredRule('List name'),
-          InputValidator.custom(
-            (value: string) => /^[a-zA-Z0-9-_]+$/.test(value),
-            'List name can only contain letters, numbers, hyphens, and underscores',
-            'INVALID_LIST_NAME'
-          ),
-        ],
-        'List name'
-      );
+      const listName: string = String(flags.list || 'default');
+      const rules = [
+        InputValidator.requiredRule('List name'),
+        InputValidator.custom(
+          (value: string) => /^[a-zA-Z0-9-_]+$/.test(value),
+          'List name can only contain letters, numbers, hyphens, and underscores',
+          'INVALID_LIST_NAME'
+        ),
+      ];
+      InputValidator.validate(listName, rules, 'List name');
     }
 
     // Validate priority values
     if (flags.priority) {
       const priorities = Array.isArray(flags.priority)
         ? flags.priority
-        : [flags.priority];
+        : [flags.priority as string];
       priorities.forEach((priority: string, index: number) => {
         InputValidator.validate(
           priority,
@@ -1048,7 +1044,7 @@ export default class AddCommand extends BaseCommand {
 
     // Validate due dates
     if (flags.due) {
-      const dueDates = Array.isArray(flags.due) ? flags.due : [flags.due];
+      const dueDates = Array.isArray(flags.due) ? flags.due : [flags.due as string];
       dueDates.forEach((dueDate: string, index: number) => {
         InputValidator.validate(
           dueDate,
@@ -1060,7 +1056,7 @@ export default class AddCommand extends BaseCommand {
 
     // Validate tags
     if (flags.tags) {
-      const tagSets = Array.isArray(flags.tags) ? flags.tags : [flags.tags];
+      const tagSets = Array.isArray(flags.tags) ? flags.tags : [flags.tags as string];
       tagSets.forEach((tagSet: string, index: number) => {
         InputValidator.validate(
           tagSet,
@@ -1085,11 +1081,9 @@ export default class AddCommand extends BaseCommand {
 
     // Validate storage location
     if (flags.storage) {
-      InputValidator.validate(
-        flags.storage,
-        [CommonValidationRules.storageLocation],
-        'Storage location'
-      );
+      const storageLocation: string = String(flags.storage || 'local');
+      const rules = [CommonValidationRules.storageLocation];
+      InputValidator.validate(storageLocation, rules, 'Storage location');
     }
   }
 

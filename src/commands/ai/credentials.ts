@@ -81,21 +81,36 @@ export default class Credentials extends BaseCommand {
 
     switch (args.action) {
       case 'add':
+        if (!args.provider) {
+          this.error('Provider is required for add action');
+        }
         return this.addCredential(args.provider, flags);
 
       case 'list':
         return this.listCredentials(flags);
 
       case 'remove':
+        if (!args.provider) {
+          this.error('Provider is required for remove action');
+        }
         return this.removeCredential(args.provider);
 
       case 'verify':
+        if (!args.provider) {
+          this.error('Provider is required for verify action');
+        }
         return this.verifyCredential(args.provider);
 
       case 'rotate':
+        if (!args.provider) {
+          this.error('Provider is required for rotate action');
+        }
         return this.rotateCredential(args.provider, flags);
 
       case 'permissions':
+        if (!args.provider) {
+          this.error('Provider is required for permissions action');
+        }
         return this.updatePermissions(args.provider, flags);
 
       default:
@@ -106,7 +121,7 @@ export default class Credentials extends BaseCommand {
   /**
    * Add a new credential
    */
-  private async addCredential(provider: string, flags: any) {
+  private async addCredential(provider: string, flags: { key?: string; verify?: boolean; permission?: string; expiry?: number; rotation?: number; json?: boolean }) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -138,7 +153,7 @@ export default class Credentials extends BaseCommand {
       // The type cast is needed because the AIProvider in SecureCredentialService
       // is different from the AIProvider enum in AIModelAdapter
       const result = await secureCredentialService.storeCredential(
-        providerString as any,
+        providerString as 'openai' | 'anthropic' | 'xai',
         apiKey,
         {
           permissionLevel,
@@ -189,7 +204,7 @@ export default class Credentials extends BaseCommand {
   /**
    * List all credentials
    */
-  private async listCredentials(flags: any) {
+  private async listCredentials(flags: { json?: boolean }) {
     try {
       // listCredentials doesn't need any type conversion because it returns an array of credentials
       // that already have the correct AIProvider type
@@ -270,7 +285,7 @@ export default class Credentials extends BaseCommand {
       // First check if credential exists
       const providerString = getProviderString(providerEnum);
       if (
-        !(await secureCredentialService.hasCredential(providerString as any))
+        !(await secureCredentialService.hasCredential(providerString as 'openai' | 'anthropic' | 'xai'))
       ) {
         throw new CLIError(`No credential found for ${provider}`);
       }
@@ -285,7 +300,7 @@ export default class Credentials extends BaseCommand {
       }
 
       const removed = await secureCredentialService.removeCredential(
-        providerString as any
+        providerString as 'openai' | 'anthropic' | 'xai'
       );
 
       if (removed) {
@@ -318,7 +333,7 @@ export default class Credentials extends BaseCommand {
       const providerEnum = getProviderEnum(provider);
       const providerString = getProviderString(providerEnum);
       const verified = await secureCredentialService.verifyCredential(
-        providerString as any
+        providerString as 'openai' | 'anthropic' | 'xai'
       );
 
       if (verified) {
@@ -341,7 +356,7 @@ export default class Credentials extends BaseCommand {
   /**
    * Rotate a credential
    */
-  private async rotateCredential(provider: string, flags: any) {
+  private async rotateCredential(provider: string, flags: { key?: string; json?: boolean }) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -371,7 +386,7 @@ export default class Credentials extends BaseCommand {
       }
 
       const result = await secureCredentialService.rotateCredential(
-        providerString as any,
+        providerString as 'openai' | 'anthropic' | 'xai',
         newApiKey
       );
 
@@ -411,7 +426,7 @@ export default class Credentials extends BaseCommand {
   /**
    * Update credential permissions
    */
-  private async updatePermissions(provider: string, flags: any) {
+  private async updatePermissions(provider: string, flags: { permission?: string; json?: boolean }) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -433,7 +448,7 @@ export default class Credentials extends BaseCommand {
       const providerEnum = getProviderEnum(provider);
       const providerString = getProviderString(providerEnum);
       const result = await secureCredentialService.updatePermissions(
-        providerString as any,
+        providerString as 'openai' | 'anthropic' | 'xai',
         permissionLevel
       );
 

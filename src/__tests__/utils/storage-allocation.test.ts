@@ -17,8 +17,34 @@ interface CoinBalance {
 
 describe('StorageManager - Allocation Tests', () => {
   let storageManager: StorageManager;
-  let mockSuiClient: any;
-  let mockWalrusClient: any;
+  let mockSuiClient: {
+    getLatestSuiSystemState: jest.Mock;
+    getBalance: jest.Mock;
+    getOwnedObjects: jest.Mock;
+  };
+  let mockWalrusClient: {
+    upload: jest.Mock;
+    downloadBlob: jest.Mock;
+    storageCost: jest.Mock;
+    getConfig: jest.Mock;
+    getWalBalance: jest.Mock;
+    getStorageUsage: jest.Mock;
+    getBlobInfo: jest.Mock;
+    getBlobObject: jest.Mock;
+    getBlobSize: jest.Mock;
+    verifyPoA: jest.Mock;
+    writeBlob: jest.Mock;
+    readBlob: jest.Mock;
+    getBlobMetadata: jest.Mock;
+    executeCreateStorageTransaction: jest.Mock;
+    executeCertifyBlobTransaction: jest.Mock;
+    executeWriteBlobAttributesTransaction: jest.Mock;
+    deleteBlob: jest.Mock;
+    executeRegisterBlobTransaction: jest.Mock;
+    getStorageConfirmationFromNode: jest.Mock;
+    createStorageBlock: jest.Mock;
+    createStorage: jest.Mock;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -30,7 +56,27 @@ describe('StorageManager - Allocation Tests', () => {
     };
 
     mockWalrusClient = {
+      upload: jest.fn(),
+      downloadBlob: jest.fn(),
       storageCost: jest.fn(),
+      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getWalBalance: jest.fn().mockResolvedValue('2000'),
+      getStorageUsage: jest.fn().mockResolvedValue({ used: '500', total: '2000' }),
+      getBlobInfo: jest.fn(),
+      getBlobObject: jest.fn(),
+      getBlobSize: jest.fn(),
+      verifyPoA: jest.fn(),
+      writeBlob: jest.fn(),
+      readBlob: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      executeCertifyBlobTransaction: jest.fn(),
+      executeWriteBlobAttributesTransaction: jest.fn(),
+      deleteBlob: jest.fn(),
+      executeRegisterBlobTransaction: jest.fn(),
+      getStorageConfirmationFromNode: jest.fn(),
+      createStorageBlock: jest.fn(),
+      createStorage: jest.fn(),
     };
 
     storageManager = new StorageManager(
@@ -52,7 +98,7 @@ describe('StorageManager - Allocation Tests', () => {
           coinObjectCount: 1,
           lockedBalance: {
             aggregate: BigInt(0).toString(),
-            coinBalances: {} as Record<string, string>,
+            coinBalances: {},
           },
         } as unknown as CoinBalance)
         .mockResolvedValueOnce({
@@ -61,7 +107,7 @@ describe('StorageManager - Allocation Tests', () => {
           coinObjectCount: 1,
           lockedBalance: {
             aggregate: BigInt(0).toString(),
-            coinBalances: {} as Record<string, string>,
+            coinBalances: {},
           },
         } as unknown as CoinBalance);
 
@@ -133,7 +179,7 @@ describe('StorageManager - Allocation Tests', () => {
         systemStakeSubsidy: {},
         satInCirculation: '1000000',
         epochDurationMs: '86400000',
-      } as any);
+      });
 
       // Mock successful balance check
       mockSuiClient.getBalance
@@ -143,7 +189,7 @@ describe('StorageManager - Allocation Tests', () => {
           coinObjectCount: 1,
           lockedBalance: {
             aggregate: BigInt(0).toString(),
-            coinBalances: {} as Record<string, string>,
+            coinBalances: {},
           },
         } as unknown as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
@@ -152,7 +198,7 @@ describe('StorageManager - Allocation Tests', () => {
           coinObjectCount: 1,
           lockedBalance: {
             aggregate: BigInt(0).toString(),
-            coinBalances: {} as Record<string, string>,
+            coinBalances: {},
           },
         } as unknown as CoinBalance); // Storage balance
 
@@ -190,7 +236,7 @@ describe('StorageManager - Allocation Tests', () => {
           coinObjectCount: 1,
           lockedBalance: {
             aggregate: BigInt(0).toString(),
-            coinBalances: {} as Record<string, string>,
+            coinBalances: {},
           },
         } as unknown as CoinBalance) // WAL balance
         .mockResolvedValueOnce({
@@ -199,7 +245,7 @@ describe('StorageManager - Allocation Tests', () => {
           coinObjectCount: 1,
           lockedBalance: {
             aggregate: BigInt(0).toString(),
-            coinBalances: {} as Record<string, string>,
+            coinBalances: {},
           },
         } as unknown as CoinBalance); // Storage balance
 
@@ -247,7 +293,7 @@ describe('StorageManager - Allocation Tests', () => {
           },
         ],
         nextCursor: null,
-      } as any;
+      };
 
       mockSuiClient.getOwnedObjects.mockResolvedValue(mockStorage);
 

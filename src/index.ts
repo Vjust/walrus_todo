@@ -97,8 +97,10 @@ export const run = async () => {
       const cmdIndex = args.findIndex(arg => !arg.startsWith('-'));
       if (cmdIndex !== -1) {
         const cmd = args[cmdIndex];
-        await WalTodo.run([cmd, '--help']);
-        return;
+        if (cmd) {
+          await WalTodo.run([cmd, '--help']);
+          return;
+        }
       }
     }
 
@@ -138,7 +140,7 @@ export const run = async () => {
       } catch (_error) {
         logger.error(
           'AI command error',
-          error instanceof Error ? error : new Error(String(error))
+          _error instanceof Error ? _error : new Error(String(_error))
         );
         process.exit(1);
       }
@@ -147,7 +149,7 @@ export const run = async () => {
     // Find the command class for other commands
     const CommandClass = Object.entries(Commands).find(([name, _]) => {
       return (
-        name.toLowerCase().replace('command', '') === commandName.toLowerCase()
+        name.toLowerCase().replace('command', '') === commandName?.toLowerCase()
       );
     })?.[1];
 
@@ -163,7 +165,7 @@ export const run = async () => {
     // Run the command with the remaining arguments
     await CommandClass.run(args.slice(1));
   } catch (_error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = _error instanceof Error ? _error.message : String(_error);
 
     // Handle common network errors with better messaging
     if (
@@ -178,13 +180,13 @@ export const run = async () => {
     } else {
       logger.error(
         'Error running command',
-        error instanceof Error ? error : new Error(errorMessage)
+        _error instanceof Error ? _error : new Error(errorMessage)
       );
     }
 
     // Provide debug info if verbose mode is enabled
     if (process.env.DEBUG) {
-      logger.debug('Debug info', { error });
+      logger.debug('Debug info', { error: _error });
     }
 
     process.exit(1);

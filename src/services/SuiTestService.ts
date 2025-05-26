@@ -1,8 +1,9 @@
-import { createCompatibleSuiClient, type CompatibleSuiClient } from '../utils/adapters/sui-client-adapter';
+import { createCompatibleSuiClient } from '../utils/adapters/sui-client-adapter';
 import { NETWORK_URLS } from '../constants';
-import { Config } from '../types/config';
+import { AppConfig } from '../types/config';
 import { NetworkType } from '../types/network';
 import { CLIError } from '../types/errors/consolidated';
+// Using proper types for Sui transaction handling
 
 // SUI_DECIMALS constant removed as it was unused
 
@@ -48,15 +49,15 @@ export interface ISuiService {
 }
 
 export class SuiTestService implements ISuiService {
-  private client: CompatibleSuiClient;
+  private client: ReturnType<typeof createCompatibleSuiClient>;
   private walletAddress?: string;
 
   // In-memory state management
   private todoLists: Map<string, TodoList> = new Map();
   private counter = 0;
 
-  constructor(private config: Config) {
-    const network = config.network as NetworkType;
+  constructor(private config: AppConfig) {
+    const network = config.activeNetwork.name as NetworkType;
     const url = NETWORK_URLS[network];
 
     if (!url) {
@@ -64,6 +65,8 @@ export class SuiTestService implements ISuiService {
     }
 
     this.client = createCompatibleSuiClient({ url });
+    // Initialize wallet address from config
+    this.walletAddress = config.activeAccount.address;
   }
 
   /**
@@ -81,17 +84,24 @@ export class SuiTestService implements ISuiService {
   }
 
   /**
-   * Get wallet address from environment
+   * Get wallet address from config or environment
    */
   async getWalletAddress(): Promise<string> {
     if (this.walletAddress) {
       return this.walletAddress;
     }
 
+    // Try config first, then environment
+    const configAddress = this.config.activeAccount.address;
+    if (configAddress) {
+      this.walletAddress = configAddress;
+      return configAddress;
+    }
+
     const address = process.env.WALLET_ADDRESS;
     if (!address) {
       throw new CLIError(
-        'Wallet address not found in environment',
+        'Wallet address not found in config or environment',
         'WALLET_NOT_FOUND'
       );
     }
@@ -191,14 +201,15 @@ export class SuiTestService implements ISuiService {
    * Verify transaction execution and effects
    */
   private async verifyTransaction(
-    result: SuiTransactionBlockResponse
+    result: { digest: string; effects?: { status?: { status?: string; error?: string } } }
   ): Promise<void> {
+    const effects = result.effects as { status?: { status?: string; error?: string } } | undefined;
     if (
-      !result.effects?.status?.status ||
-      result.effects.status.status !== 'success'
+      !effects?.status?.status ||
+      effects.status.status !== 'success'
     ) {
       throw new CLIError(
-        `Transaction failed: ${result.effects?.status?.error || 'Unknown error'}`,
+        `Transaction failed: ${effects?.status?.error || 'Unknown error'}`,
         'TRANSACTION_FAILED'
       );
     }
@@ -218,7 +229,7 @@ export class SuiTestService implements ISuiService {
           });
 
           // Verify effects match expected changes
-          const effects = await this.client.getTransactionBlock({
+          const transactionData = await this.client.getTransactionBlock({
             digest: result.digest,
             options: {
               showEffects: true,
@@ -226,7 +237,8 @@ export class SuiTestService implements ISuiService {
             },
           });
 
-          if (effects.effects?.status?.status !== 'success') {
+          const transactionEffects = transactionData.effects as { status?: { status?: string } } | undefined;
+          if (transactionEffects?.status?.status !== 'success') {
             throw new CLIError(
               'Transaction verification failed: effects do not match expected state',
               'VERIFICATION_FAILED'

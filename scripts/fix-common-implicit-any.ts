@@ -109,7 +109,8 @@ const patterns = [
 files.forEach(filePath => {
   try {
     const relativePath = path.relative(path.resolve(__dirname, '..'), filePath);
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const content = typeof fileContent === 'string' ? fileContent : fileContent.toString();
     let updated = content;
     let fileChangeCount = 0;
 

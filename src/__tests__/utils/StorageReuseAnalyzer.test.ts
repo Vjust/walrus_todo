@@ -6,8 +6,33 @@ jest.mock('@mysten/walrus');
 
 describe('StorageReuseAnalyzer', () => {
   let storageReuseAnalyzer: StorageReuseAnalyzer;
-  let mockSuiClient: any;
-  let mockWalrusClient: any;
+  let mockSuiClient: {
+    getLatestSuiSystemState: jest.Mock;
+    getOwnedObjects: jest.Mock;
+  };
+  let mockWalrusClient: {
+    storageCost: jest.Mock;
+    upload: jest.Mock;
+    downloadBlob: jest.Mock;
+    getConfig: jest.Mock;
+    getWalBalance: jest.Mock;
+    getStorageUsage: jest.Mock;
+    readBlob: jest.Mock;
+    writeBlob: jest.Mock;
+    getBlobInfo: jest.Mock;
+    getBlobObject: jest.Mock;
+    getBlobMetadata: jest.Mock;
+    verifyPoA: jest.Mock;
+    getBlobSize: jest.Mock;
+    executeCreateStorageTransaction: jest.Mock;
+    executeCertifyBlobTransaction: jest.Mock;
+    executeWriteBlobAttributesTransaction: jest.Mock;
+    deleteBlob: jest.Mock;
+    executeRegisterBlobTransaction: jest.Mock;
+    getStorageConfirmationFromNode: jest.Mock;
+    createStorageBlock: jest.Mock;
+    createStorage: jest.Mock;
+  };
 
   beforeEach(() => {
     // Reset all mocks
@@ -23,13 +48,33 @@ describe('StorageReuseAnalyzer', () => {
 
     mockWalrusClient = {
       storageCost: jest.fn(),
+      upload: jest.fn(),
+      downloadBlob: jest.fn(),
+      getConfig: jest.fn(),
+      getWalBalance: jest.fn(),
+      getStorageUsage: jest.fn(),
+      readBlob: jest.fn(),
+      writeBlob: jest.fn(),
+      getBlobInfo: jest.fn(),
+      getBlobObject: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      verifyPoA: jest.fn(),
+      getBlobSize: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      executeCertifyBlobTransaction: jest.fn(),
+      executeWriteBlobAttributesTransaction: jest.fn(),
+      deleteBlob: jest.fn(),
+      executeRegisterBlobTransaction: jest.fn(),
+      getStorageConfirmationFromNode: jest.fn(),
+      createStorageBlock: jest.fn(),
+      createStorage: jest.fn(),
     };
 
     // Mock the storageCost method
     mockWalrusClient.storageCost = jest.fn().mockResolvedValue({
-      storageCost: '5000',
-      writeCost: '1000',
-      totalCost: '6000',
+      storageCost: BigInt(5000),
+      writeCost: BigInt(1000),
+      totalCost: BigInt(6000),
     });
 
     // Create the analyzer instance
@@ -181,7 +226,7 @@ describe('StorageReuseAnalyzer', () => {
     it('should calculate cost savings when reusing existing storage', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as any, 'findBestStorageForReuse')
+        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: jest.Mock }, 'findBestStorageForReuse')
         .mockResolvedValue({
           bestMatch: {
             id: 'storage-1',
@@ -222,7 +267,7 @@ describe('StorageReuseAnalyzer', () => {
     it('should recommend allocating new storage when no viable storage exists', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as any, 'findBestStorageForReuse')
+        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: jest.Mock }, 'findBestStorageForReuse')
         .mockResolvedValue({
           bestMatch: null,
           totalStorage: 1000000,

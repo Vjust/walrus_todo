@@ -11,12 +11,42 @@ declare global {
   }
 
   interface AggregateErrorConstructor {
-    new (errors: Iterable<any>, message?: string): AggregateError;
-    (errors: Iterable<any>, message?: string): AggregateError;
+    new (errors: Iterable<unknown>, message?: string): AggregateError;
+    (errors: Iterable<unknown>, message?: string): AggregateError;
     readonly prototype: AggregateError;
   }
 
   const AggregateError: AggregateErrorConstructor;
+
+  // Global console interface enhancement
+  interface Console {
+    error(...args: unknown[]): void;
+    log(...args: unknown[]): void;
+    warn(...args: unknown[]): void;
+    info(...args: unknown[]): void;
+    debug(...args: unknown[]): void;
+  }
+
+  // Global Error handling interface
+  interface Error {
+    name: string;
+    message: string;
+    stack?: string;
+    cause?: unknown;
+  }
+
+  // Process environment interface
+  // Use module augmentation instead of namespace
+  interface NodeJSProcessEnv {
+    [key: string]: string | undefined;
+    NODE_ENV?: 'development' | 'production' | 'test';
+    CI?: string;
+  }
+
+  // Augment NodeJS process env
+  var process: {
+    env: NodeJSProcessEnv;
+  };
 }
 
 // Declare the SerializedMessage from keystore
@@ -38,13 +68,13 @@ declare module '@mysten/sui/transactions' {
   export interface TransactionObjectArgument {
     kind: string;
     index: number;
-    value?: any;
+    value?: unknown;
     type?: string;
   }
 
   export interface TransactionPureArgument {
     kind: string;
-    value: any;
+    value: unknown;
     type?: string;
   }
 
@@ -52,7 +82,7 @@ declare module '@mysten/sui/transactions' {
   export interface Transaction {
     // Core methods for serialization and building
     serialize(): Promise<string> | string;
-    build(options?: { client?: any }): Promise<Uint8Array>;
+    build(options?: { client?: unknown }): Promise<Uint8Array>;
     getDigest(): Promise<string>;
 
     // Core TransactionBlock methods
@@ -138,7 +168,7 @@ declare module '@mysten/walrus' {
     size?: string;
     deletable?: boolean;
     cert_epoch?: number;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
     provider_count?: number;
     slivers?: number;
     attributes?: Record<string, string>;
@@ -166,7 +196,7 @@ declare module '@mysten/walrus' {
     }>;
 
     readBlob(params: ReadBlobOptions): Promise<Uint8Array>;
-    getBlobMetadata(params: { blobId: string } | ReadBlobOptions): Promise<any>;
+    getBlobMetadata(params: { blobId: string } | ReadBlobOptions): Promise<Record<string, unknown>>;
 
     // Cost calculation with bigint return type
     storageCost(
@@ -249,8 +279,8 @@ declare module '@mysten/walrus' {
 
     // Optional experimental methods
     experimental?: {
-      getBlobData?: () => Promise<any>;
-      [key: string]: any;
+      getBlobData?: () => Promise<unknown>;
+      [key: string]: unknown;
     };
   }
 
@@ -280,14 +310,14 @@ declare module '@mysten/walrus' {
   export interface StorageWithSizeOptions {
     size: number;
     epochs: number;
-    walCoin?: any;
+    walCoin?: unknown;
   }
 
   export interface RegisterBlobOptions {
     blobId: string;
     rootHash: Uint8Array;
     deletable: boolean;
-    walCoin?: any;
+    walCoin?: unknown;
     attributes?: Record<string, string>;
     size: number;
     epochs: number;
@@ -342,4 +372,68 @@ declare module '@mysten/walrus' {
     signal?: AbortSignal;
     timeout?: number;
   }
+}
+
+// Playwright module declarations
+declare module '@playwright/test' {
+  export function defineConfig(config: unknown): unknown;
+  export const devices: Record<string, unknown>;
+  export const test: unknown;
+  export const expect: unknown;
+  export type Page = unknown;
+  export type Browser = unknown;
+  export type BrowserContext = unknown;
+  export type PlaywrightTestConfig = unknown;
+}
+
+// Node.js built-in module declarations for better compatibility
+declare module 'fs' {
+  export function existsSync(path: string): boolean;
+  export function readFileSync(path: string, encoding?: BufferEncoding): string | Buffer;
+  export function writeFileSync(path: string, data: string | Buffer, options?: unknown): void;
+  export function mkdirSync(path: string, options?: unknown): void;
+  export function readdirSync(path: string): string[];
+  export function statSync(path: string): { isFile(): boolean; isDirectory(): boolean };
+  export const promises: {
+    readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer>;
+    writeFile(path: string, data: string | Buffer, options?: unknown): Promise<void>;
+    access(path: string): Promise<void>;
+    stat(path: string): Promise<{ isFile(): boolean; isDirectory(): boolean }>;
+    mkdir(path: string, options?: unknown): Promise<void>;
+    readdir(path: string): Promise<string[]>;
+    unlink(path: string): Promise<void>;
+  };
+}
+
+declare module 'path' {
+  export function join(...paths: string[]): string;
+  export function resolve(...paths: string[]): string;
+  export function dirname(path: string): string;
+  export function basename(path: string, ext?: string): string;
+  export function extname(path: string): string;
+  export function isAbsolute(path: string): boolean;
+  export const sep: string;
+}
+
+declare module 'os' {
+  export function platform(): string;
+  export function homedir(): string;
+  export function tmpdir(): string;
+  export function type(): string;
+}
+
+// CLI Progress module declaration
+declare module 'cli-progress' {
+  export class SingleBar {
+    constructor(options?: unknown, preset?: unknown);
+    start(total: number, startValue?: number, payload?: unknown): void;
+    update(current: number, payload?: unknown): void;
+    increment(step?: number, payload?: unknown): void;
+    stop(): void;
+  }
+  export const Presets: {
+    shades_classic: unknown;
+    shades_grey: unknown;
+    legacy: unknown;
+  };
 }

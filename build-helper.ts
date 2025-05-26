@@ -49,7 +49,7 @@ let errors = 0;
 sourceFileNames.forEach(fileName => {
   try {
     // Read the file
-    const sourceText = fs.readFileSync(fileName, 'utf8');
+    const sourceText = fs.readFileSync(fileName, 'utf8') as string;
 
     // Transpile the file (no type checking)
     const { outputText } = ts.transpileModule(sourceText, {

@@ -217,7 +217,7 @@ describe('VaultManager', () => {
 
   describe('updateBlobExpiry', () => {
     let vaultId: string;
-    let mockBlobRecord: any;
+    let mockBlobRecord: BlobRecord;
 
     beforeEach(() => {
       vaultId = vaultManager.createVault(mockVaultConfig);

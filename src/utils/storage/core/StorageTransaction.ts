@@ -6,12 +6,12 @@
  * signing, and execution, providing a consistent API for various storage operations.
  */
 
-import { SuiClient } from '@mysten/sui/client';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import { TransactionSigner } from '../../../types/signer';
 import { BlockchainError, TransactionError } from '../../../types/errors';
 import { AsyncOperationHandler } from '../../walrus-error-handler';
 import { createTransactionBlockAdapter } from '../../adapters/transaction-adapter';
+import { SuiClientType } from '../../adapters/sui-client-compatibility';
 
 /**
  * Transaction operation types
@@ -43,7 +43,7 @@ export interface TransactionResult {
   updatedObjects?: string[];
 
   /** The raw transaction response */
-  rawResponse?: any;
+  rawResponse?: Record<string, unknown>;
 }
 
 /**
@@ -77,7 +77,7 @@ export class StorageTransaction {
    * @param signer - Signer for transaction authorization
    */
   constructor(
-    private suiClient: SuiClient,
+    private suiClient: SuiClientType,
     private signer: TransactionSigner
   ) {}
 
@@ -94,7 +94,7 @@ export class StorageTransaction {
     epochs: number
   ): Promise<TransactionBlock> {
     try {
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
 
       tx.moveCall({
         target: '0x2::storage::create_storage',
@@ -133,7 +133,7 @@ export class StorageTransaction {
     additionalEpochs: number
   ): Promise<TransactionBlock> {
     try {
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
 
       tx.moveCall({
         target: '0x2::storage::extend_storage',
@@ -198,7 +198,16 @@ export class StorageTransaction {
             const txBytes = await txAdapter.serialize();
 
             // Set gas budget if provided
-            const transactionBlockParams: any = {
+            const transactionBlockParams: {
+              transactionBlock: Uint8Array;
+              signature: string;
+              requestType: string;
+              options: {
+                showEffects: boolean;
+                showEvents: boolean;
+                showInput?: boolean;
+              };
+            } = {
               transactionBlock: txBytes,
               signature: signature.signature,
               requestType: waitForLocalExecution
@@ -215,9 +224,9 @@ export class StorageTransaction {
               // Apply gas budget if API version supports it
               if (
                 'gasConfig' in txAdapter &&
-                typeof (txAdapter as any).gasConfig === 'function'
+                typeof (txAdapter as { gasConfig?: (config: { budget: number }) => void }).gasConfig === 'function'
               ) {
-                (txAdapter as any).gasConfig({ budget: gasBudget });
+                (txAdapter as { gasConfig: (config: { budget: number }) => void }).gasConfig({ budget: gasBudget });
               }
             }
 
@@ -301,7 +310,7 @@ export class StorageTransaction {
    * @param error - The error to check
    * @returns Whether the error is likely transient
    */
-  private isTransientError(error: any): boolean {
+  private isTransientError(error: unknown): boolean {
     const errorMsg = error instanceof Error ? error.message : String(error);
 
     // Common transient errors to retry

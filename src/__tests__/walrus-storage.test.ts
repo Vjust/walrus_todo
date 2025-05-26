@@ -1,30 +1,13 @@
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient } from '../types/client';
 import type { BlobObject } from '../types/walrus';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import type { WalrusStorage } from '../utils/walrus-storage';
 import { Todo } from '../types/todo';
 import { execSync } from 'child_process';
+import { walrusModuleMock, type MockWalrusClient } from './helpers/walrus-client-mock';
 
 // Mock the external dependencies
-jest.mock('@mysten/walrus', () => ({
-  WalrusClient: jest.fn().mockImplementation(() => ({
-    readBlob: jest.fn(),
-    writeBlob: jest.fn(),
-    storageCost: jest.fn(),
-    executeCreateStorageTransaction: jest.fn(),
-    connect: jest.fn(),
-    getConfig: jest.fn(),
-    getWalBalance: jest.fn(),
-    getStorageUsage: jest.fn(),
-    getBlobInfo: jest.fn(),
-    getBlobObject: jest.fn(),
-    verifyPoA: jest.fn(),
-    getBlobMetadata: jest.fn(),
-    getStorageProviders: jest.fn(),
-    getBlobSize: jest.fn(),
-    reset: jest.fn(),
-  })),
-}));
+jest.mock('@mysten/walrus', () => walrusModuleMock);
 
 jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
@@ -41,8 +24,15 @@ jest.mock('child_process', () => ({
   execSync: jest.fn(),
 }));
 describe('WalrusStorage', () => {
-  let mockSuiClient: any;
-  let mockWalrusClient: any;
+  let mockSuiClient: {
+    connect: jest.Mock;
+    getBalance: jest.Mock;
+    getLatestSuiSystemState: jest.Mock;
+    getOwnedObjects: jest.Mock;
+    signAndExecuteTransactionBlock: jest.Mock;
+    executeTransactionBlock: jest.Mock;
+  };
+  let mockWalrusClient: MockWalrusClient;
   let storage: WalrusStorage;
   let mockTodo: Todo;
 
@@ -51,23 +41,7 @@ describe('WalrusStorage', () => {
     jest.clearAllMocks();
 
     // Setup mock implementations
-    mockWalrusClient = {
-      readBlob: jest.fn(),
-      writeBlob: jest.fn(),
-      storageCost: jest.fn(),
-      executeCreateStorageTransaction: jest.fn(),
-      connect: jest.fn(),
-      getConfig: jest.fn(),
-      getWalBalance: jest.fn(),
-      getStorageUsage: jest.fn(),
-      getBlobInfo: jest.fn(),
-      getBlobObject: jest.fn(),
-      verifyPoA: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn(),
-      reset: jest.fn(),
-    } as any;
+    mockWalrusClient = walrusModuleMock.WalrusClient() as MockWalrusClient;
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -76,10 +50,10 @@ describe('WalrusStorage', () => {
       getOwnedObjects: jest.fn(),
       signAndExecuteTransactionBlock: jest.fn(),
       executeTransactionBlock: jest.fn(),
-    } as any;
+    };
 
     // Mock constructor implementations
-    (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
+    // WalrusClient mock already set up in module mock
     // SuiClient mock already set up in module mock
 
     // Mock execSync
@@ -125,9 +99,9 @@ describe('WalrusStorage', () => {
       blobObject: {} as BlobObject,
     });
     mockWalrusClient.storageCost.mockResolvedValue({
-      storageCost: '100',
-      writeCost: '50',
-      totalCost: '150',
+      storageCost: BigInt(100),
+      writeCost: BigInt(50),
+      totalCost: BigInt(150),
     });
     mockWalrusClient.executeCreateStorageTransaction.mockResolvedValue({
       storage: {
@@ -265,7 +239,7 @@ describe('WalrusStorage', () => {
           ok: true,
           arrayBuffer: async () => Buffer.from(JSON.stringify(mockTodo)),
         } as unknown as Response);
-      global.fetch = mockFetch;
+      (global as unknown as { fetch: jest.Mock }).fetch = mockFetch;
 
       const result = await storage.retrieveTodo('test-blob-id');
       expect(result).toEqual(mockTodo);
@@ -288,7 +262,7 @@ describe('WalrusStorage', () => {
       mockWalrusClient.readBlob.mockResolvedValueOnce(new Uint8Array());
 
       // Mock aggregator failures
-      global.fetch = jest
+      (global as unknown as { fetch: jest.Mock }).fetch = jest
         .fn<Promise<Response>, [string, RequestInit?]>()
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Network error'))

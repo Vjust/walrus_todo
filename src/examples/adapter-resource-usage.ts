@@ -6,7 +6,7 @@ import { Logger } from '../utils/Logger';
 
 const logger = new Logger('adapter-resource-usage');
 
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import { TransactionBlockAdapter } from '../types/adapters/TransactionBlockAdapter';
 import {
   getResourceManager,
@@ -32,7 +32,7 @@ async function adapterResourceExample(): Promise<void> {
 
     // Create and register 5 transaction adapters
     for (let i = 0; i < 5; i++) {
-      const txBlock = new TransactionBlock();
+      const txBlock = new Transaction();
       const adapter = new TransactionBlockAdapter(txBlock);
 
       // Register the adapter with the resource manager
@@ -54,31 +54,35 @@ async function adapterResourceExample(): Promise<void> {
 
     // Use one of the adapters
     const firstAdapter = transactionAdapters[0];
-    logger.info('\nUsing first adapter to create a move call...');
-    // result would be used in a real implementation
-    firstAdapter.moveCall({
-      target: 'example::module::function',
-      arguments: [],
-    });
-    logger.info('Move call result created successfully.');
+    if (firstAdapter) {
+      logger.info('\nUsing first adapter to create a move call...');
+      // result would be used in a real implementation
+      firstAdapter.moveCall({
+        target: 'example::module::function',
+        arguments: [],
+      });
+      logger.info('Move call result created successfully.');
 
-    // Dispose one adapter manually
-    logger.info('\nDisposing one adapter manually...');
-    await firstAdapter.dispose();
-    logger.info('First adapter disposed manually.');
+      // Dispose one adapter manually
+      logger.info('\nDisposing one adapter manually...');
+      await firstAdapter.dispose();
+      logger.info('First adapter disposed manually.');
+    }
 
     // Show resource statistics again
     logger.info('\nResource Manager Statistics after manual disposal:');
     logger.info(JSON.stringify(resourceManager.getStats(), null, 2));
 
     // Try to use the disposed adapter (should throw an error)
-    logger.info('\nTrying to use disposed adapter...');
-    try {
-      firstAdapter.setGasBudget(20_000_000);
-    } catch (_error) {
-      logger.info(
-        `Error caught as expected: ${_error instanceof Error ? _error.message : String(_error)}`
-      );
+    if (firstAdapter) {
+      logger.info('\nTrying to use disposed adapter...');
+      try {
+        firstAdapter.setGasBudget(20_000_000);
+      } catch (_error) {
+        logger.info(
+          `Error caught as expected: ${_error instanceof Error ? _error.message : String(_error)}`
+        );
+      }
     }
 
     // Dispose all remaining adapters

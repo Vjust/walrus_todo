@@ -2,15 +2,19 @@ import { test } from '@oclif/test';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { TodoService } from '../../src/services/todoService';
+import * as fs from 'fs';
+import StoreCommand from '../../src/commands/store';
 
 import * as walrusStorage from '../../src/utils/walrus-storage';
 import * as performanceCache from '../../src/utils/performance-cache';
+import { WalrusStorage } from '../../src/utils/walrus-storage';
+import { PerformanceCache } from '../../src/utils/performance-cache';
 
 describe('store command batch processing', () => {
   let sandbox: sinon.SinonSandbox;
   let todoServiceStub: sinon.SinonStubbedInstance<TodoService>;
-  let walrusStorageStub: any;
-  let cacheStub: any;
+  let walrusStorageStub: WalrusStorage;
+  let cacheStub: PerformanceCache<unknown>;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -190,7 +194,7 @@ describe('store command batch processing', () => {
       )
       .do(() => {
         // Mock filesystem operations
-        const fs = require('fs');
+        // Use imported fs module
         const fsStub = sandbox.stub(fs, 'existsSync');
         sandbox.stub(fs, 'writeFileSync');
         const fsReadStub = sandbox.stub(fs, 'readFileSync');
@@ -201,14 +205,14 @@ describe('store command batch processing', () => {
         fsReadStub.returns('{}');
 
         // Mock BaseCommand methods
-        const StoreCommand = require('../../src/commands/store').default;
-        sandbox.spy(StoreCommand.prototype, 'writeFileSafe');
-        sandbox.spy(StoreCommand.prototype, 'getConfigDir');
+        // Use imported StoreCommand - cast to any for protected methods
+        sandbox.spy(StoreCommand.prototype as unknown as { writeFileSafe: unknown }, 'writeFileSafe');
+        sandbox.spy(StoreCommand.prototype as unknown as { getConfigDir: unknown }, 'getConfigDir');
       })
       .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
       .it('calls writeFileSafe to save blob mappings', ctx => {
-        const StoreCommand = require('../../src/commands/store').default;
-        expect(StoreCommand.prototype.writeFileSafe.called).to.be.true;
+        // Use imported StoreCommand - cast to any for protected methods
+        expect((StoreCommand.prototype as unknown as { writeFileSafe: { called: boolean } }).writeFileSafe.called).to.be.true;
         expect(ctx.stdout).to.contain('Todo stored successfully on Walrus');
       });
   });
@@ -217,20 +221,20 @@ describe('store command batch processing', () => {
     test
       .stderr()
       .command(['store'])
-      .catch(err => {
-        expect(err.message).to.contain(
+      .exit(1)
+      .it('requires either --todo or --all flag', ctx => {
+        expect(ctx.stderr).to.contain(
           'Either --todo or --all must be specified'
         );
-      })
-      .it('requires either --todo or --all flag');
+      });
 
     test
       .stderr()
       .command(['store', '--todo', 'test', '--all'])
-      .catch(err => {
-        expect(err.message).to.contain('Cannot specify both --todo and --all');
-      })
-      .it('prevents using both --todo and --all flags');
+      .exit(1)
+      .it('prevents using both --todo and --all flags', ctx => {
+        expect(ctx.stderr).to.contain('Cannot specify both --todo and --all');
+      });
 
     test
       .stderr()
@@ -239,9 +243,9 @@ describe('store command batch processing', () => {
         todoServiceStub.getList.resolves({ name: 'empty-list', todos: [] });
       })
       .command(['store', '--all', '--list', 'empty-list'])
-      .catch(err => {
-        expect(err.message).to.contain('No todos found in list');
-      })
-      .it('errors when no todos are found with --all flag');
+      .exit(1)
+      .it('errors when no todos are found with --all flag', ctx => {
+        expect(ctx.stderr).to.contain('No todos found in list');
+      });
   });
 });

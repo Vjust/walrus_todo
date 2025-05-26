@@ -1,9 +1,13 @@
 import { expect, jest } from '@jest/globals';
 import { TextDecoder, TextEncoder } from 'util';
 
-// Setup TextDecoder/TextEncoder for image-size
-global.TextDecoder = TextDecoder;
-global.TextEncoder = TextEncoder;
+// Setup TextDecoder/TextEncoder for image-size with proper typing
+if (!global.TextDecoder) {
+  (global as typeof globalThis).TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
+}
+if (!global.TextEncoder) {
+  (global as typeof globalThis).TextEncoder = TextEncoder as typeof globalThis.TextEncoder;
+}
 
 // Configure Jest timeout
 jest.setTimeout(10000);

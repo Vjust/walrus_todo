@@ -501,7 +501,7 @@ export class AuthenticationService {
       });
 
       return authResult;
-    } catch (_error) {
+    } catch (_error: unknown) {
       // Log failed login
       auditLogger.log({
         id: uuidv4(),
@@ -513,14 +513,14 @@ export class AuthenticationService {
         outcome: 'FAILED',
         metadata: {
           address,
-          reason: error instanceof Error ? error.message : 'Unknown error',
+          reason: _error instanceof Error ? _error.message : 'Unknown error',
           ipAddress,
           userAgent,
         },
       });
 
-      if (error instanceof CLIError) {
-        throw error;
+      if (_error instanceof CLIError) {
+        throw _error;
       }
 
       throw new CLIError('Wallet authentication failed', 'WALLET_AUTH_FAILED');
@@ -777,17 +777,17 @@ export class AuthenticationService {
         expired: false,
         user,
       };
-    } catch (_error) {
+    } catch (_error: unknown) {
       // Handle specific JWT verification errors
-      if (error instanceof jwt.TokenExpiredError) {
+      if (_error instanceof jwt.TokenExpiredError) {
         return {
           valid: false,
           expired: true,
         };
       }
 
-      // For any other error, token is invalid
-      this.logger.error('Token validation failed', error);
+      // For other errors, token is invalid
+      this.logger.error('Token validation failed', _error as Error);
       return {
         valid: false,
         expired: false,
@@ -912,9 +912,9 @@ export class AuthenticationService {
           sessionCount: sessionIds.length,
         },
       });
-    } catch (_error) {
+    } catch (_error: unknown) {
       // Silently fail for invalid tokens
-      this.logger.debug('Failed to invalidate session', { error });
+      this.logger.debug('Failed to invalidate session', { error: _error instanceof Error ? _error.message : String(_error) });
     }
   }
 

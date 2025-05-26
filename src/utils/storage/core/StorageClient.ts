@@ -9,7 +9,7 @@
 
 import { execSync } from 'child_process';
 import { SuiClient } from '@mysten/sui/client';
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient } from '../../../types/client';
 import { AsyncOperationHandler } from '../../walrus-error-handler';
 import {
   NetworkError,
@@ -200,7 +200,7 @@ export class StorageClient {
 
       // Verify network connectivity
       const systemStateResult = await AsyncOperationHandler.execute(
-        () => (this.suiClient as any).getLatestSuiSystemState(),
+        () => (this.suiClient as { getLatestSuiSystemState: () => Promise<{ epoch: string }> }).getLatestSuiSystemState(),
         {
           operation: 'network check',
           maxRetries: 2,
@@ -209,7 +209,7 @@ export class StorageClient {
 
       if (
         !systemStateResult.success ||
-        !(systemStateResult.data as any)?.epoch
+        !(systemStateResult.data as { epoch?: string })?.epoch
       ) {
         throw new NetworkError(
           'Failed to verify network state. Check your connection.',
@@ -372,7 +372,7 @@ export class StorageClient {
           `Failed to retrieve blob: ${result.error?.message}`,
           {
             operation: 'blob retrieval',
-            blobId,
+            itemId: blobId,
             recoverable: true,
             cause: result.error,
           }
@@ -389,7 +389,7 @@ export class StorageClient {
         `Failed to retrieve blob: ${error instanceof Error ? error.message : String(error)}`,
         {
           operation: 'blob retrieval',
-          blobId,
+          itemId: blobId,
           recoverable: true,
           cause: error instanceof Error ? error : undefined,
         }
@@ -408,6 +408,7 @@ export class StorageClient {
       throw new ValidationError(
         'StorageClient not initialized. Call init() first.',
         {
+          message: 'StorageClient not initialized. Call init() first.',
           operation,
         }
       );

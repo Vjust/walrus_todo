@@ -133,7 +133,7 @@ describe('RetryManager', () => {
       await expect(retryManager.execute(operation, 'test')).rejects.toThrow();
 
       const health = retryManager.getNodesHealth();
-      expect(health[0].consecutiveFailures).toBeGreaterThan(0);
+      expect(health[0]?.consecutiveFailures).toBeGreaterThan(0);
     });
   });
 
@@ -346,7 +346,7 @@ describe('RetryManager', () => {
 
       // Verify retry delays were adjusted based on error type
       const delays = onRetry.mock.calls.map(call => call[2]);
-      expect(delays[1]).toBeGreaterThan(delays[0]); // Rate limit causes longer delay
+      expect(delays[1] || 0).toBeGreaterThan(delays[0] || 0); // Rate limit causes longer delay
       expect(delays[2]).toBeGreaterThan(delays[1]); // Storage error causes longest delay
     });
 
@@ -363,8 +363,8 @@ describe('RetryManager', () => {
       const node = health[0];
 
       // Basic timestamp tracking
-      expect(node.lastFailure).toBeDefined();
-      expect(node.lastFailure).toBeInstanceOf(Date);
+      expect(node?.lastFailure).toBeDefined();
+      expect(node?.lastFailure).toBeInstanceOf(Date);
 
       // Error pattern analysis
       const errorLogs = mockLogger.warn.mock.calls
@@ -374,13 +374,13 @@ describe('RetryManager', () => {
       // Should see increasing delays due to repeated timeout errors
       const delays = errorLogs.map(log => {
         const match = log.match(/Retrying in (\d+)ms/);
-        return parseInt(match?.[1] || '0');
+        return parseInt(match?.[1] || '0', 10);
       });
-      expect(delays[1]).toBeGreaterThan(delays[0]);
+      expect(delays[1] || 0).toBeGreaterThan(delays[0] || 0);
 
       // Should see higher delay for rate limit error
       const rateLimitDelay = delays[delays.length - 1];
-      expect(rateLimitDelay).toBeGreaterThan(delays[delays.length - 2]);
+      expect(rateLimitDelay || 0).toBeGreaterThan(delays[delays.length - 2] || 0);
     });
 
     it('should log long retry delays with context', async () => {

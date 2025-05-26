@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { SuiClient } from '../../src/utils/adapters/sui-client-adapter';
+import { SuiClient as SuiClientClass } from '@mysten/sui/client';
 
 // Define CoinBalance type locally since it's not exported
 interface CoinBalance {
@@ -19,7 +19,7 @@ jest.mock('child_process', () => ({
 
 describe('StorageManager - Allocation Tests', () => {
   let storageManager: StorageManager;
-  let mockSuiClient: jest.Mocked<SuiClient>;
+  let mockSuiClient: jest.Mocked<SuiClientClass>;
   let mockWalrusClient: jest.Mocked<WalrusClient>;
 
   beforeEach(() => {
@@ -27,11 +27,11 @@ describe('StorageManager - Allocation Tests', () => {
       getBalance: jest.fn(),
       getLatestSuiSystemState: jest.fn(),
       getOwnedObjects: jest.fn(),
-    } as any;
+    } as jest.Mocked<SuiClientClass>;
 
     mockWalrusClient = {
       storageCost: jest.fn(),
-    } as any;
+    } as jest.Mocked<WalrusClient>;
 
     storageManager = new StorageManager(
       mockSuiClient,
@@ -127,7 +127,7 @@ describe('StorageManager - Allocation Tests', () => {
         systemStakeSubsidy: {},
         satInCirculation: '1000000',
         epochDurationMs: '86400000',
-      } as any);
+      });
 
       // Mock successful balance check
       mockSuiClient.getBalance

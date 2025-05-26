@@ -12,6 +12,7 @@ import {
   createResourceIdentifier,
   Permission,
 } from '../../../src/types/permissions';
+import { CLIError } from '../../../src/types/errors';
 
 import { v4 as uuidv4 } from 'uuid';
 
@@ -28,10 +29,10 @@ describe('PermissionService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (uuidv4 as jest.Mock).mockReturnValue(mockUserId);
+    (uuidv4 as jest.MockedFunction<typeof uuidv4>).mockReturnValue(mockUserId);
 
     // Clear the singleton instance
-    (PermissionService as any).instance = undefined;
+    (PermissionService as unknown as { instance?: PermissionService }).instance = undefined;
     permissionService = PermissionService.getInstance();
   });
 

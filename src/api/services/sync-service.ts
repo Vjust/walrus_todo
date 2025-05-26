@@ -1,11 +1,12 @@
 import { Todo } from '../../types/todo';
 import { TodoService } from '../../services/todoService';
-import { createWalrusStorage } from '../../utils/walrus-storage';
+import { createWalrusStorage, WalrusStorage } from '../../utils/walrus-storage';
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { Logger } from '../../utils/Logger';
 import { CLIError } from '../../types/errors/consolidated';
 import { configService } from '../../services/config-service';
 import { SuiClient } from '../../utils/adapters/sui-client-adapter';
+import { KeyManagementService } from '../../services/key-management';
 
 export interface SyncStatus {
   todoId: string;
@@ -18,7 +19,7 @@ export interface SyncStatus {
 
 export class SyncService {
   private todoService: TodoService;
-  private walrusStorage: any;
+  private walrusStorage: WalrusStorage | null = null;
   private suiStorage: SuiNftStorage | null = null;
   private logger = Logger.getInstance();
   private syncStatusMap: Map<string, SyncStatus> = new Map();
@@ -31,20 +32,24 @@ export class SyncService {
   private async initializeServices() {
     try {
       // Initialize Walrus storage
-      this.walrusStorage = await createWalrusStorage();
+      this.walrusStorage = createWalrusStorage();
 
       // Initialize Sui storage if network configured
       const config = configService.getConfig();
-      if (config.network && config.keypair) {
+      if (config.network && config.walletAddress) {
         const client = new SuiClient({ url: config.network });
-        this.suiStorage = new SuiNftStorage(client, config.keypair, {
-          address: config.walletAddress || '',
-          packageId: config.packageId || '',
-          collectionId: config.registryId
-        });
+        const keyPair = await KeyManagementService.getInstance().getKeypair();
+        if (keyPair) {
+          this.suiStorage = new SuiNftStorage(client, keyPair, {
+            address: config.walletAddress || '',
+            packageId: config.packageId || '',
+            collectionId: config.registryId
+          });
+        }
       }
-    } catch (error) {
-      this.logger.error('Failed to initialize sync services', error);
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
+      this.logger.error('Failed to initialize sync services', typedError);
     }
   }
 
@@ -53,6 +58,10 @@ export class SyncService {
    */
   async syncTodoToWalrus(todo: Todo): Promise<string> {
     try {
+      if (!this.walrusStorage) {
+        throw new CLIError('Walrus storage not initialized', 'WALRUS_NOT_INITIALIZED');
+      }
+
       this.updateSyncStatus(todo.id, { syncStatus: 'pending' });
 
       // Check if already stored
@@ -77,13 +86,14 @@ export class SyncService {
       });
 
       return blobId;
-    } catch (error) {
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
       this.updateSyncStatus(todo.id, {
         syncStatus: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: typedError.message,
       });
       throw new CLIError(
-        `Failed to sync todo to Walrus: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to sync todo to Walrus: ${typedError.message}`,
         'SYNC_WALRUS_ERROR'
       );
     }
@@ -94,6 +104,10 @@ export class SyncService {
    */
   async syncListToWalrus(listName: string): Promise<string> {
     try {
+      if (!this.walrusStorage) {
+        throw new CLIError('Walrus storage not initialized', 'WALRUS_NOT_INITIALIZED');
+      }
+
       const list = await this.todoService.getList(listName);
       if (!list) {
         throw new CLIError(`List ${listName} not found`, 'LIST_NOT_FOUND');
@@ -107,9 +121,10 @@ export class SyncService {
       await this.todoService.saveList(listName, list);
 
       return blobId;
-    } catch (error) {
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
-        `Failed to sync list to Walrus: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to sync list to Walrus: ${typedError.message}`,
         'SYNC_WALRUS_ERROR'
       );
     }
@@ -120,6 +135,10 @@ export class SyncService {
    */
   async syncFromWalrus(blobId: string): Promise<Todo> {
     try {
+      if (!this.walrusStorage) {
+        throw new CLIError('Walrus storage not initialized', 'WALRUS_NOT_INITIALIZED');
+      }
+
       this.logger.info(`Retrieving todo from Walrus blob ${blobId}...`);
       const todo = await this.walrusStorage.retrieveTodo(blobId);
 
@@ -145,9 +164,10 @@ export class SyncService {
       });
 
       return todo;
-    } catch (error) {
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
-        `Failed to sync from Walrus: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to sync from Walrus: ${typedError.message}`,
         'SYNC_WALRUS_ERROR'
       );
     }
@@ -198,13 +218,14 @@ export class SyncService {
       });
 
       return nftObjectId;
-    } catch (error) {
+    } catch (error: unknown) {
+      const typedError = error instanceof Error ? error : new Error(String(error));
       this.updateSyncStatus(todo.id, {
         syncStatus: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: typedError.message,
       });
       throw new CLIError(
-        `Failed to sync to blockchain: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to sync to blockchain: ${typedError.message}`,
         'SYNC_BLOCKCHAIN_ERROR'
       );
     }
@@ -223,8 +244,9 @@ export class SyncService {
           const blobId = await this.syncTodoToWalrus(todo);
           results.set(todoId, blobId);
         }
-      } catch (error) {
-        this.logger.error(`Failed to sync todo ${todoId}:`, error);
+      } catch (error: unknown) {
+        const typedError = error instanceof Error ? error : new Error(String(error));
+        this.logger.error(`Failed to sync todo ${todoId}:`, typedError);
         results.set(todoId, 'failed');
       }
     }

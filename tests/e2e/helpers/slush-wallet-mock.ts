@@ -7,6 +7,38 @@
 
 import { Page } from '@playwright/test';
 
+// E2E Slush wallet mock interfaces
+interface SlushWalletWindow {
+  slushProvider?: SlushProvider;
+  stashedProvider?: SlushProvider;
+  stashed?: SlushAdapter;
+}
+
+interface SlushProvider {
+  hasPermissions(): Promise<boolean>;
+  requestPermissions(): Promise<boolean>;
+  getAccounts(): Promise<MockSlushAccount[]>;
+}
+
+interface SlushAdapter {
+  connect(): Promise<MockSlushAccount>;
+  disconnect(): Promise<void>;
+  signTransaction(): Promise<Record<string, unknown>>;
+  signMessage(): Promise<Record<string, unknown>>;
+}
+
+interface SlushWalletOptions {
+  connected?: boolean;
+  rejectConnection?: boolean;
+  failDisconnect?: boolean;
+}
+
+interface WalletContextChangeDetail {
+  walletType: string;
+  connected: boolean;
+  slushAccount: MockSlushAccount;
+}
+
 /**
  * Account object representing a Slush wallet account
  */
@@ -36,11 +68,7 @@ export const DEFAULT_SLUSH_ACCOUNT: MockSlushAccount = {
 export async function injectSlushWallet(
   page: Page,
   account: MockSlushAccount = DEFAULT_SLUSH_ACCOUNT,
-  options: {
-    connected?: boolean;
-    rejectConnection?: boolean;
-    failDisconnect?: boolean;
-  } = {}
+  options: SlushWalletOptions = {}
 ) {
   await page.evaluate(
     ({ account, options }) => {
@@ -50,8 +78,10 @@ export async function injectSlushWallet(
         failDisconnect = false,
       } = options;
 
+      const walletWindow = window as unknown as SlushWalletWindow;
+      
       // Mock Slush provider (previously Stashed)
-      (window as any).slushProvider = {
+      walletWindow.slushProvider = {
         hasPermissions: async () => connected,
         requestPermissions: async () => {
           if (rejectConnection) {
@@ -63,7 +93,7 @@ export async function injectSlushWallet(
       };
 
       // Mock Slush adapter (standard interface)
-      (window as any).stashed = {
+      walletWindow.stashed = {
         connect: async () => {
           if (rejectConnection) {
             throw new Error('User rejected the request');
@@ -80,7 +110,7 @@ export async function injectSlushWallet(
       };
 
       // For legacy support, also mock stashedProvider
-      (window as any).stashedProvider = (window as any).slushProvider;
+      walletWindow.stashedProvider = walletWindow.slushProvider;
     },
     { account, options }
   );
@@ -92,10 +122,11 @@ export async function injectSlushWallet(
  */
 export async function removeSlushWallet(page: Page) {
   await page.evaluate(() => {
+    const walletWindow = window as unknown as SlushWalletWindow;
     // Remove all Slush/Stashed wallet-related objects
-    delete (window as any).slushProvider;
-    delete (window as any).stashedProvider;
-    delete (window as any).stashed;
+    delete walletWindow.slushProvider;
+    delete walletWindow.stashedProvider;
+    delete walletWindow.stashed;
   });
 }
 
@@ -120,14 +151,16 @@ export async function simulateSlushConnection(
   page: Page,
   account: MockSlushAccount = DEFAULT_SLUSH_ACCOUNT
 ) {
-  await page.evaluate(acc => {
+  await page.evaluate((acc: MockSlushAccount) => {
     // This simulates what happens in the wallet context after a successful connection
+    const detail: WalletContextChangeDetail = {
+      walletType: 'slush',
+      connected: true,
+      slushAccount: acc,
+    };
+    
     const walletContextEvent = new CustomEvent('walletContextChange', {
-      detail: {
-        walletType: 'slush',
-        connected: true,
-        slushAccount: acc,
-      },
+      detail,
     });
 
     document.dispatchEvent(walletContextEvent);

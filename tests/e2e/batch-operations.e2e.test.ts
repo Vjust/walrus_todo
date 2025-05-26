@@ -4,6 +4,7 @@
  */
 
 import * as fs from 'fs-extra';
+import * as os from 'os';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { execSync } from 'child_process';
@@ -42,7 +43,7 @@ describe('Batch Operations E2E Tests', () => {
       expect(output).toMatch(/Blob ID: [a-fA-F0-9]{64}/);
     });
 
-    it('should handle empty todo list gracefully', () => {
+    it('should handle empty todo list gracefully', async () => {
       // Clear todos
       const todosPath =
         process.env.WALRUS_CLI_DEV_TODOS_PATH ||
@@ -63,16 +64,14 @@ describe('Batch Operations E2E Tests', () => {
       // Force an error by using invalid environment
       process.env.WALRUS_SIMULATE_ERROR = 'true';
 
-      await expect(async () => {
-        execSync(`${walrusCLI} store-list --mock`);
-      }).rejects.toThrow();
-      
+      let errorThrown = false;
       try {
         execSync(`${walrusCLI} store-list --mock`);
-        throw new Error('Expected command to throw error');
-      } catch (error: any) {
-        expect(error.message).toContain('Failed to store todos');
+      } catch (error) {
+        errorThrown = true;
+        expect(error.toString()).toMatch(/Failed to store todos/);
       }
+      expect(errorThrown).toBe(true);
 
       // Clean up error simulation
       delete process.env.WALRUS_SIMULATE_ERROR;
@@ -82,7 +81,7 @@ describe('Batch Operations E2E Tests', () => {
   describe('Store Batch Command', () => {
     beforeEach(async () => {
       // Clear todos for each test
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH!, { todos: [] });
+      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', { todos: [] });
     });
 
     it('should batch store todos efficiently', async () => {
@@ -145,7 +144,7 @@ describe('Batch Operations E2E Tests', () => {
   describe('Batch Operations with Filters', () => {
     beforeEach(async () => {
       // Set up variety of todos for filtering
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH!, { todos: [] });
+      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', { todos: [] });
 
       execSync(`${walrusCLI} add "High priority task 1" --priority high`);
       execSync(`${walrusCLI} add "High priority task 2" --priority high`);
@@ -206,16 +205,20 @@ describe('Batch Operations E2E Tests', () => {
       let output = '';
       try {
         execSync(`${walrusCLI} store-batch --mock`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         errorCaught = true;
-        output = error.stdout.toString();
+        output = (error as { stdout: Buffer }).stdout.toString();
       }
       
       expect(errorCaught).toBe(true);
-      expect(output).toContain('Partial batch failure');
-      expect(output).toContain('Successfully stored: 2 todos');
-      expect(output).toContain('Failed: 1 todo');
-      expect(output).toContain('Remaining: 2 todos');
+      
+      // Test error output - proper testing without conditional expects
+      if (errorCaught) {
+        expect(output).toContain('Partial batch failure');
+        expect(output).toContain('Successfully stored: 2 todos');
+        expect(output).toContain('Failed: 1 todo');
+        expect(output).toContain('Remaining: 2 todos');
+      }
 
       // Clean up
       delete process.env.WALRUS_FAIL_ON_THIRD;
@@ -313,7 +316,7 @@ describe('Batch Operations E2E Tests', () => {
       execSync(`${walrusCLI} store-list --mock`);
 
       // Clear local and retrieve from storage
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH!, { todos: [] });
+      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', { todos: [] });
       execSync(`${walrusCLI} retrieve --mock`);
 
       // Verify data integrity

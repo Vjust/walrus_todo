@@ -1,55 +1,28 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
-import { execSync } from 'child_process';
 import { NetworkValidator } from '../../utils/NetworkValidator';
-import { WalrusClientExt } from '../../types/client';
+import { getMockWalrusClient, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
 
 describe('NetworkValidator', () => {
   let validator: NetworkValidator;
-  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
-  let mockExecSync: jest.SpyInstance;
-
+  let mockWalrusClient: CompleteWalrusClientMock;
   beforeEach(() => {
     jest.clearAllMocks();
-    mockExecSync = jest.spyOn(execSync as any, 'default');
+    // Mock child_process module
+    jest.doMock('child_process', () => ({
+      execSync: jest.fn()
+    }));
 
-    mockWalrusClient = {
-      getConfig: jest.fn().mockResolvedValue({
-        network: 'testnet',
-        version: '1.0.0',
-        maxSize: 1000000,
-      }),
-      // Core WalrusClient methods
-      readBlob: jest.fn(),
-      writeBlob: jest.fn().mockResolvedValue({
-        blobId: 'mock-blob-id',
-        blobObject: { blob_id: 'mock-blob-id' },
-      }),
-      getBlobInfo: jest.fn(),
-      getStorageUsage: jest.fn(),
-      getWalBalance: jest.fn(),
-      // WalrusClientExt methods
-      getBlobObject: jest.fn(),
-      verifyPoA: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      storageCost: jest.fn(),
-      executeCreateStorageTransaction: jest.fn(),
-      executeCertifyBlobTransaction: jest.fn(),
-      executeWriteBlobAttributesTransaction: jest.fn(),
-      deleteBlob: jest.fn(),
-      executeRegisterBlobTransaction: jest.fn(),
-      getStorageConfirmationFromNode: jest.fn(),
-      createStorageBlock: jest.fn(),
-      createStorage: jest.fn(),
-      getBlobSize: jest.fn(),
-      getStorageProviders: jest.fn(),
-      reset: jest.fn(),
-      experimental: {
-        getBlobData: jest.fn().mockResolvedValue({}),
-      },
-    } as jest.Mocked<WalrusClientExt>;
+    // Use the complete mock implementation
+    mockWalrusClient = getMockWalrusClient();
+    // Override the default network config for these tests
+    mockWalrusClient.getConfig.mockResolvedValue({
+      network: 'testnet',
+      version: '1.0.0',
+      maxSize: 1000000,
+    });
 
     validator = new NetworkValidator({
       expectedEnvironment: 'testnet',
@@ -59,7 +32,8 @@ describe('NetworkValidator', () => {
 
   describe('Environment Validation', () => {
     it('should validate matching environments', async () => {
-      mockExecSync.mockReturnValue('testnet');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('testnet');
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
@@ -72,7 +46,8 @@ describe('NetworkValidator', () => {
     });
 
     it('should throw on Sui environment mismatch without auto-switch', async () => {
-      mockExecSync.mockReturnValue('devnet');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('devnet');
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
@@ -92,20 +67,22 @@ describe('NetworkValidator', () => {
         autoSwitch: true,
       });
 
-      mockExecSync
+      const { execSync } = jest.requireMock('child_process');
+      execSync
         .mockReturnValueOnce('devnet') // First call for checking environment
         .mockReturnValueOnce(''); // Second call for switching environment
 
       await validator.validateEnvironment(mockWalrusClient);
 
-      expect(mockExecSync).toHaveBeenCalledWith(
+      expect(execSync).toHaveBeenCalledWith(
         'sui client switch --env testnet',
         { encoding: 'utf8' }
       );
     });
 
     it('should throw on Walrus environment mismatch', async () => {
-      mockExecSync.mockReturnValue('testnet');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('testnet');
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'devnet',
         version: '1.0.0',
@@ -120,7 +97,8 @@ describe('NetworkValidator', () => {
     });
 
     it('should throw on invalid Sui environment', async () => {
-      mockExecSync.mockReturnValue('invalid-env');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('invalid-env');
 
       await expect(
         validator.validateEnvironment(mockWalrusClient)
@@ -128,7 +106,8 @@ describe('NetworkValidator', () => {
     });
 
     it('should throw on invalid Walrus environment', async () => {
-      mockExecSync.mockReturnValue('testnet');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('testnet');
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'invalid-env',
         version: '1.0.0',
@@ -141,7 +120,8 @@ describe('NetworkValidator', () => {
     });
 
     it('should handle Sui CLI errors', async () => {
-      mockExecSync.mockImplementation(() => {
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockImplementation(() => {
         throw new Error('CLI error');
       });
 
@@ -151,7 +131,8 @@ describe('NetworkValidator', () => {
     });
 
     it('should handle Walrus client errors', async () => {
-      mockExecSync.mockReturnValue('testnet');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('testnet');
       mockWalrusClient.getConfig.mockRejectedValue(new Error('Client error'));
 
       await expect(
@@ -162,7 +143,8 @@ describe('NetworkValidator', () => {
 
   describe('Network Status', () => {
     it('should return correct network status when valid', async () => {
-      mockExecSync.mockReturnValue('testnet');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('testnet');
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
@@ -179,7 +161,8 @@ describe('NetworkValidator', () => {
     });
 
     it('should return invalid status on environment mismatch', async () => {
-      mockExecSync.mockReturnValue('devnet');
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockReturnValue('devnet');
       mockWalrusClient.getConfig.mockResolvedValue({
         network: 'testnet',
         version: '1.0.0',
@@ -196,7 +179,8 @@ describe('NetworkValidator', () => {
     });
 
     it('should handle errors in status check', async () => {
-      mockExecSync.mockImplementation(() => {
+      const { execSync } = jest.requireMock('child_process');
+      execSync.mockImplementation(() => {
         throw new Error('CLI error');
       });
 

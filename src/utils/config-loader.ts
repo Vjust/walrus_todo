@@ -6,8 +6,8 @@
  * and integrating them into the centralized environment configuration.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { CLIError } from '../types/error';
 import { envConfig, EnvironmentConfigManager } from './environment-config';
 import { CLI_CONFIG } from '../constants';
@@ -17,15 +17,19 @@ interface DotenvModule {
   config: (options?: { path?: string; override?: boolean }) => void;
 }
 
-let dotenv: DotenvModule | null;
-try {
-  // Try to load dotenv if available
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  dotenv = require('dotenv');
-} catch (error) {
-  // dotenv is not installed, will fall back to manual parsing
-  dotenv = null;
-}
+// Optional dotenv import - use dynamic import since it's optional
+let dotenv: DotenvModule | null = null;
+
+// Initialize dotenv asynchronously since we're not in an async context
+Promise.resolve().then(async () => {
+  try {
+    const dotenvModule = await import('dotenv');
+    dotenv = dotenvModule.default || dotenvModule;
+  } catch (error) {
+    // dotenv is not installed, will fall back to manual parsing
+    dotenv = null;
+  }
+});
 
 /**
  * Parse a .env file manually if dotenv is not available
@@ -56,7 +60,7 @@ function parseEnvFile(filePath: string): Record<string, string> {
         value = quoteMatch[2];
       }
 
-      result[key] = value;
+      (result as Record<string, string>)[key] = value;
     }
   });
 
@@ -77,8 +81,8 @@ export function loadEnvFile(filePath: string, override = false): void {
         const envVars = parseEnvFile(filePath);
 
         for (const [key, value] of Object.entries(envVars)) {
-          if (override || process.env[key] === undefined) {
-            process.env[key] = value;
+          if (override || (process.env as Record<string, string | undefined>)[key] === undefined) {
+            (process.env as Record<string, string>)[key] = value;
           }
         }
       }

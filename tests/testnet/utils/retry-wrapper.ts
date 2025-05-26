@@ -1,4 +1,5 @@
 import { RetryManager } from '../../../src/utils/retry-manager';
+import { CLIError } from '../../../src/types/errors';
 
 describe('Testnet Retry Wrapper - Network Resilience', () => {
   // Testnet configuration with realistic URLs
@@ -35,12 +36,12 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
   describe('Network Resilience Patterns', () => {
     it('should handle intermittent network failures', async () => {
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts <= 3) {
           throw new Error('ECONNRESET');
         }
-        return { success: true, node: node.url };
+        return { success: true, node: _node.url };
       });
 
       const result = await retryManager.execute(operation, 'network-test');
@@ -50,7 +51,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
     it('should rotate through nodes on failures', async () => {
       const usedNodes = new Set<string>();
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (node) => {
         usedNodes.add(node.url);
         if (usedNodes.size < 3) {
           throw new Error('network timeout');
@@ -66,11 +67,11 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
     it('should handle rate limiting gracefully', async () => {
       let attempts = 0;
       const startTime = Date.now();
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts <= 2) {
           const error = new Error('Too Many Requests');
-          (error as any).status = 429;
+          (error as unknown as { status: number }).status = 429;
           throw error;
         }
         return {
@@ -87,7 +88,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
     it('should open circuit breaker after repeated failures', async () => {
       const failures = new Map<string, number>();
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (node) => {
         const count = (failures.get(node.url) || 0) + 1;
         failures.set(node.url, count);
 
@@ -122,7 +123,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
   describe('Testnet-Specific Error Handling', () => {
     it('should handle storage allocation errors', async () => {
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts <= 2) {
           throw new Error('insufficient storage allocation');
@@ -137,7 +138,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
     it('should handle blob certification timeouts', async () => {
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts === 1) {
           throw new Error('certification pending');
@@ -154,11 +155,11 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
     it('should handle temporary blob unavailability', async () => {
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts <= 2) {
           const error = new Error('blob not found');
-          (error as any).statusCode = 460;
+          (error as unknown as { statusCode: number }).statusCode = 460;
           throw error;
         }
         return { success: true, blob: 'available' };
@@ -185,7 +186,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         startTimes.push(Date.now());
         attempts++;
         if (attempts <= 3) {
@@ -210,13 +211,13 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts === 1) {
           throw new Error('timeout error');
         } else if (attempts === 2) {
           const error = new Error('rate limit exceeded');
-          (error as any).status = 429;
+          (error as unknown as { status: number }).status = 429;
           throw error;
         } else if (attempts === 3) {
           throw new Error('insufficient storage');
@@ -236,7 +237,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
   describe('Node Health Tracking', () => {
     it('should update node health scores', async () => {
       let failCount = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (node) => {
         if (node.url === testnetNodes[0] && failCount < 3) {
           failCount++;
           throw new Error('connection failed');
@@ -259,10 +260,8 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const nodeUsage = new Map<string, number>();
 
       // Poison first node
-      let _poisonedAttempts = 0; // For future monitoring
-      const poisonOperation = jest.fn(async node => {
+      const poisonOperation = jest.fn(async (node) => {
         if (node.url === testnetNodes[0]) {
-          _poisonedAttempts++;
           throw new Error('always fails');
         }
         return { success: true };
@@ -276,11 +275,9 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       }
 
       // Now do normal operations and track node usage
-      let _successCount = 0; // For future metrics
-      const normalOperation = jest.fn(async node => {
+      const normalOperation = jest.fn(async (node) => {
         const count = (nodeUsage.get(node.url) || 0) + 1;
         nodeUsage.set(node.url, count);
-        _successCount++;
         return { success: true, node: node.url };
       });
 
@@ -309,7 +306,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       const nodeUsage: string[] = [];
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (node) => {
         nodeUsage.push(node.url);
         return { success: true };
       });
@@ -340,7 +337,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       });
 
       const nodeUsage: string[] = [];
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (node) => {
         nodeUsage.push(node.url);
         return { success: true };
       });
@@ -365,7 +362,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         outageActive = false;
       }, 100);
 
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         if (outageActive) {
           throw new Error('network unreachable');
         }
@@ -378,7 +375,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
     it('should handle cascading failures', async () => {
       const failureCount = new Map<string, number>();
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (node) => {
         const count = (failureCount.get(node.url) || 0) + 1;
         failureCount.set(node.url, count);
 
@@ -406,7 +403,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         maxRetries: 2,
       });
 
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         await new Promise(resolve => setTimeout(resolve, 200));
         return { success: true };
       });
@@ -418,7 +415,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
 
     it('should retry after timeouts', async () => {
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts === 1) {
           await new Promise(resolve => setTimeout(resolve, 200));
@@ -446,13 +443,13 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
       const errors: Error[] = [];
       const retryManager = new RetryManager(testnetNodes, {
         ...testnetConfig,
-        onRetry: (error, attempt, _delay) => {
+        onRetry: (error, _attempt, _delay) => {
           errors.push(error);
         },
       });
 
       let attempts = 0;
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (_node) => {
         attempts++;
         if (attempts === 1) {
           throw new Error('first error: connection reset');
@@ -479,7 +476,7 @@ describe('Testnet Retry Wrapper - Network Resilience', () => {
         maxRetries: 3,
       });
 
-      const operation = jest.fn(async node => {
+      const operation = jest.fn(async (node) => {
         throw new Error(`consistent failure on ${node.url}`);
       });
 

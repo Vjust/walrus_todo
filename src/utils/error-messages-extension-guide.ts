@@ -1,13 +1,13 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('error-messages-extension-guide');
  * Guide for extending the enhanced error messaging system
  * Shows how to add new error types and custom messages
  */
 
+import { Logger } from './Logger';
 import { WalrusError } from '../types/errors';
 import { ErrorContext } from './error-messages';
+
+const logger = new Logger('error-messages-extension-guide');
 
 /**
  * Example: Adding a new error type for AI operations
@@ -169,7 +169,7 @@ export class AICommandExample {
     });
   }
 
-  private async callAIService(_prompt: string, _apiKey: string): Promise<any> {
+  private async callAIService(_prompt: string, _apiKey: string): Promise<unknown> {
     // Mock AI service call
     throw new Error('Not implemented');
   }

@@ -241,9 +241,9 @@ export class ExpiryMonitor {
       // Verify existence of all blobs with added error handling
       let verificationResults: BlobVerification[];
       try {
-        verificationResults = await Promise.all(
+        verificationResults = await Promise.all<BlobVerification>(
           warningBlobs.map(blob =>
-            this.verifyBlobExistence(blob.blobId).catch(_error => {
+            this.verifyBlobExistence(blob.blobId).catch((_error: unknown) => {
               // Return a failed verification result on error
               this.logger.error(
                 `Blob verification failed for ${blob.blobId}`,
@@ -339,7 +339,7 @@ export class ExpiryMonitor {
       }
 
       // Wait for all pending operations to complete with tracking
-      const results = await Promise.allSettled(pendingOperations);
+      const results: PromiseSettledResult<void>[] = await Promise.allSettled(pendingOperations);
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           // This should not happen since each promise has its own catch handler,
@@ -362,7 +362,7 @@ export class ExpiryMonitor {
       // Ensure any unfinished operations complete
       if (pendingOperations.length > 0) {
         try {
-          const results = await Promise.allSettled(pendingOperations);
+          const results: PromiseSettledResult<void>[] = await Promise.allSettled(pendingOperations);
           const pendingErrors = results
             .filter(r => r.status === 'rejected')
             .map(r => (r.status === 'rejected' ? r.reason : null))
@@ -466,7 +466,7 @@ export class ExpiryMonitor {
             }, 10000);
           });
 
-          storageUsage = await Promise.race([storagePromise, timeoutPromise]);
+          storageUsage = await Promise.race<{ used: number; allocated: number }>([storagePromise, timeoutPromise]);
         } catch (storageError) {
           const error =
             storageError instanceof Error

@@ -92,7 +92,7 @@ export class BlockchainVerifier {
           storageType: 'walrus',
         };
       } catch (_error) {
-        logger.warn('Failed to store full data in Walrus:', error);
+        logger.warn('Failed to store full data in Walrus:', _error);
         // Continue with only hashes if off-chain storage fails
       }
     }
@@ -178,7 +178,7 @@ export class BlockchainVerifier {
 
       return { request, response };
     } catch (_error) {
-      throw new Error(`Failed to retrieve full data: ${error}`);
+      throw new Error(`Failed to retrieve full data: ${_error}`);
     }
   }
 
@@ -219,7 +219,12 @@ export class BlockchainVerifier {
     try {
       // Parse the proof
       const proofJson = Buffer.from(proofString, 'base64').toString('utf8');
-      const proof = JSON.parse(proofJson);
+      const proof = JSON.parse(proofJson) as {
+        verificationId: string;
+        requestHash: string;
+        responseHash: string;
+        timestamp: number;
+      };
 
       // Get the verification record from the blockchain
       const record = await this.verifierAdapter.getVerification(
@@ -243,7 +248,7 @@ export class BlockchainVerifier {
         record: isValid ? record : undefined,
       };
     } catch (_error) {
-      logger.error('Failed to verify proof:', error);
+      logger.error('Failed to verify proof:', _error);
       return { isValid: false };
     }
   }
@@ -348,7 +353,7 @@ export class BlockchainVerifier {
       // This is a stub - in a real implementation, would use proper verification
       return true;
     } catch (_error) {
-      logger.error('Signature verification failed:', error);
+      logger.error('Signature verification failed:', _error);
       return false;
     }
   }

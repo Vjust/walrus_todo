@@ -100,8 +100,8 @@ export class AIVerificationService {
    */
   async verifyRecord(
     record: VerificationRecord,
-    request: any,
-    response: any
+    request: unknown,
+    response: unknown
   ): Promise<boolean> {
     // Stringify request and response if they're not already strings
     const requestStr =
@@ -236,9 +236,9 @@ export class AIVerificationService {
    */
   public async createVerifiedAnalysis(
     todos: Todo[],
-    analysis: Record<string, any>,
+    analysis: Record<string, unknown>,
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
-  ): Promise<VerifiedAIResult<Record<string, any>>> {
+  ): Promise<VerifiedAIResult<Record<string, unknown>>> {
     const verification = await this.createVerification(
       AIActionType.ANALYZE,
       todos,

@@ -1,5 +1,5 @@
 import { SuiClient } from '@mysten/sui/client';
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient } from '../types/client';
 import { CLIError } from '../types/error';
 
 /**

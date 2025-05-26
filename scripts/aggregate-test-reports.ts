@@ -130,7 +130,7 @@ class TestReportAggregator {
           suite.name
         );
       } catch (error) {
-        logger.error(`Error running ${suite.name} tests:`, error);
+        logger.error(`Error running ${suite.name} tests:`, error instanceof Error ? error : new Error(String(error)));
       }
     }
 
@@ -175,7 +175,8 @@ class TestReportAggregator {
     suiteName: string
   ): Promise<void> {
     try {
-      const data = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+      const fileContent = fs.readFileSync(filepath, 'utf-8');
+      const data = JSON.parse(typeof fileContent === 'string' ? fileContent : fileContent.toString());
 
       const result: TestResult = {
         suite: suiteName,
@@ -193,7 +194,7 @@ class TestReportAggregator {
 
       this.results.push(result);
     } catch (error) {
-      logger.error(`Error loading ${filepath}:`, error);
+      logger.error(`Error loading ${filepath}:`, error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -243,8 +244,9 @@ class TestReportAggregator {
 
     for (const file of files) {
       try {
+        const fileContent = fs.readFileSync(path.join(stressReportDir, file), 'utf-8');
         const data = JSON.parse(
-          fs.readFileSync(path.join(stressReportDir, file), 'utf-8')
+          typeof fileContent === 'string' ? fileContent : fileContent.toString()
         ) as { metrics: { [key: string]: TestStats }; timestamp: string };
 
         // Convert stress test metrics to test result format
@@ -283,7 +285,7 @@ class TestReportAggregator {
           timestamp: data.timestamp,
         });
       } catch (error) {
-        logger.error(`Error loading stress test results:`, error);
+        logger.error(`Error loading stress test results:`, error instanceof Error ? error : new Error(String(error)));
       }
     }
   }
@@ -296,7 +298,10 @@ class TestReportAggregator {
     if (!fs.existsSync(coveragePath)) return undefined;
 
     try {
-      const data = JSON.parse(fs.readFileSync(coveragePath, 'utf-8'));
+      const fileContent = fs.readFileSync(coveragePath, 'utf-8');
+      const data = JSON.parse(
+        typeof fileContent === 'string' ? fileContent : fileContent.toString()
+      );
       return {
         lines: data.total.lines,
         statements: data.total.statements,
@@ -304,7 +309,7 @@ class TestReportAggregator {
         branches: data.total.branches,
       };
     } catch (error) {
-      logger.error('Error loading coverage data:', error);
+      logger.error('Error loading coverage data:', error instanceof Error ? error : new Error(String(error)));
       return undefined;
     }
   }
@@ -349,7 +354,7 @@ class TestReportAggregator {
         avgTestDuration: 0,
         slowestTests: [],
         fastestTests: [],
-        testsByDuration: {},
+        testsByDuration: {} as Record<string, never>,
       };
     }
 
@@ -366,11 +371,11 @@ class TestReportAggregator {
     };
 
     for (const test of testCases) {
-      if (test.duration < 100) buckets['<100ms']++;
-      else if (test.duration < 500) buckets['100-500ms']++;
-      else if (test.duration < 1000) buckets['500ms-1s']++;
-      else if (test.duration < 5000) buckets['1s-5s']++;
-      else buckets['>5s']++;
+      if (test.duration != null && test.duration < 100) (buckets['<100ms'] as number)++;
+      else if (test.duration != null && test.duration < 500) (buckets['100-500ms'] as number)++;
+      else if (test.duration != null && test.duration < 1000) (buckets['500ms-1s'] as number)++;
+      else if (test.duration != null && test.duration < 5000) (buckets['1s-5s'] as number)++;
+      else if (test.duration != null) (buckets['>5s'] as number)++;
     }
 
     return {
@@ -814,7 +819,7 @@ Branches: ${results.coverage.branches.pct.toFixed(2)}% (${results.coverage.branc
 
     const readmePath = path.join(process.cwd(), 'README.md');
     if (fs.existsSync(readmePath)) {
-      let readme = fs.readFileSync(readmePath, 'utf-8');
+      let readme: string = fs.readFileSync(readmePath, 'utf-8').toString();
 
       // Replace existing test badge or add new one
       const badgeRegex =
@@ -885,7 +890,7 @@ async function main() {
       process.exit(1);
     }
   } catch (error) {
-    logger.error('Error aggregating test reports:', error);
+    logger.error('Error aggregating test reports:', error instanceof Error ? error : new Error(String(error)));
     process.exit(1);
   }
 }

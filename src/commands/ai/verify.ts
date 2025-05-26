@@ -65,8 +65,8 @@ export default class Verify extends BaseCommand {
     '<%= config.bin %> ai verify verify --todo task-789 --operation categorize --blockchain',
   ];
 
-  private verificationService: AIVerificationService;
-  private todoAIAdapter: TodoAIAdapter;
+  private verificationService!: AIVerificationService;
+  private todoAIAdapter!: TodoAIAdapter;
 
   async run() {
     const { args, flags } = await this.parse(Verify);

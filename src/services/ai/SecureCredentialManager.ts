@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import crypto from 'crypto';
 import { CLIError } from '../../types/errors/consolidated';
 import { CLI_CONFIG } from '../../constants';
@@ -24,7 +24,12 @@ interface KeyMetadata {
   version: number;
   created: number;
   lastRotated: number;
+  keyId?: string;
+  lastRotatedAt?: number;
+  previousKeyId?: string;
   backupLocations?: BackupLocation[];
+  lastCredentialBackup?: number;
+  lastBackupPath?: string;
   [key: string]: unknown;
 }
 
@@ -41,7 +46,7 @@ import { randomUUID } from 'crypto';
  */
 export class SecureCredentialManager {
   private credentialsPath: string;
-  private encryptionKey: Buffer;
+  private encryptionKey!: Buffer;
   private credentials: Record<string, AIProviderCredential> = {};
   private initialized: boolean = false;
   private blockchainAdapter?: AICredentialAdapter;
@@ -208,7 +213,7 @@ export class SecureCredentialManager {
     if (!this.initialized) {
       const error = new Error('Credential manager not initialized');
       error.name = 'CredentialsNotInitializedError';
-      (error as any).code = 'CREDENTIALS_NOT_INITIALIZED';
+      (error as Error & { code?: string }).code = 'CREDENTIALS_NOT_INITIALIZED';
       throw error;
     }
 
@@ -244,8 +249,8 @@ export class SecureCredentialManager {
         `Failed to save credentials: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
       saveError.name = 'CredentialSaveError';
-      (saveError as any).code = 'CREDENTIALS_SAVE_FAILED';
-      (saveError as any).cause = _error;
+      (saveError as Error & { code?: string; cause?: unknown }).code = 'CREDENTIALS_SAVE_FAILED';
+      (saveError as Error & { code?: string; cause?: unknown }).cause = _error;
 
       // Log the error without sensitive information
       logger.error(
@@ -264,7 +269,7 @@ export class SecureCredentialManager {
       const metadata = this.getKeyMetadata();
       if (!metadata) return;
 
-      const lastBackup = (metadata as any).lastCredentialBackup || 0;
+      const lastBackup = (metadata as KeyMetadata & { lastCredentialBackup?: number }).lastCredentialBackup || 0;
       const currentTime = Date.now();
       const daysSinceLastBackup = Math.floor(
         (currentTime - lastBackup) / (1000 * 60 * 60 * 24)
@@ -332,7 +337,7 @@ export class SecureCredentialManager {
     credential: string,
     type: CredentialType = CredentialType.API_KEY,
     options: CredentialStorageOptions = { encrypt: true },
-    metadata: Record<string, any> = {},
+    metadata: Record<string, unknown> = {},
     permissionLevel: AIPermissionLevel = AIPermissionLevel.STANDARD
   ): Promise<AIProviderCredential> {
     if (!this.initialized) {
@@ -840,12 +845,12 @@ export class SecureCredentialManager {
       fs.writeFileSync(this.keyPath, newKey, { mode: 0o600 });
 
       // Update key metadata
-      const metadata = this.getKeyMetadata() || {};
+      const metadata = this.getKeyMetadata() || { keyId: undefined, version: 0 };
       this.updateKeyMetadata({
         keyId: randomUUID(),
         lastRotatedAt: Date.now(),
         previousKeyId: metadata.keyId,
-        version: (metadata.version || 1) + 1,
+        version: (metadata.version || 0) + 1,
       });
 
       // Re-encrypt with new key if we had data

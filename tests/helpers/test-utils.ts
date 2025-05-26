@@ -1,7 +1,7 @@
-import type { Mock } from 'jest-mock';
+// import type { _Mock } from 'jest-mock';
 import { StorageLocation, Todo } from '../../src/types/todo';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as path from 'path';
 
 /**
@@ -58,7 +58,7 @@ export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => ({
   description: '',
   completed: false,
   priority: 'medium',
-  tags: [] as string[],
+  tags: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   private: true,
@@ -128,24 +128,20 @@ export class TestService {
       // In a real implementation, you would use oclif test utilities
       const command = args[0];
 
-      try {
-        // Dynamically import the command module
-        const CommandClass = await import(`../../src/commands/${command}`);
-        const instance = new CommandClass.default();
+      // Dynamically import the command module
+      const CommandClass = await import(`../../src/commands/${command}`);
+      const instance = new CommandClass.default();
 
-        // Mock stdout
-        let stdout = '';
-        instance.log = jest.fn().mockImplementation((msg: string) => {
-          stdout += msg + '\n';
-        });
+      // Mock stdout
+      let stdout = '';
+      instance.log = jest.fn().mockImplementation((msg: string) => {
+        stdout += msg + '\n';
+      });
 
-        // Run the command with the remaining args
-        await instance.run(args.slice(1));
+      // Run the command with the remaining args
+      await instance.run(args.slice(1));
 
-        return { stdout, stderr: '' };
-      } catch (_error) {
-        throw error;
-      }
+      return { stdout, stderr: '' };
     }
 
     // Actual CLI execution for integration tests

@@ -68,7 +68,7 @@ export class EnvironmentValidator {
       const version = execSync('sui --version', { encoding: 'utf8' }).trim();
       logger.info(`✓ Sui CLI found: ${version}`);
       this.config.suiPath = execSync('which sui', { encoding: 'utf8' }).trim();
-    } catch (_error) {
+    } catch (error) {
       this.errors.push(
         'Sui CLI not found. Please install it from https://docs.sui.io/guides/developer/getting-started'
       );
@@ -82,7 +82,7 @@ export class EnvironmentValidator {
     try {
       const version = execSync('walrus --version', { encoding: 'utf8' }).trim();
       logger.info(`✓ Walrus CLI found: ${version}`);
-    } catch (_error) {
+    } catch (error) {
       this.errors.push(
         'Walrus CLI not found. Please install it from https://docs.wal.app'
       );
@@ -135,7 +135,7 @@ export class EnvironmentValidator {
           `Low Sui balance: ${balanceInSui} SUI. Consider getting more from the faucet.`
         );
       }
-    } catch (_error) {
+    } catch (error) {
       this.errors.push(
         'Failed to check Sui balance. Make sure you have active Sui client.'
       );
@@ -164,7 +164,7 @@ export class EnvironmentValidator {
             this.config.privateKey = 'keystore';
             return;
           }
-        } catch (_error) {
+        } catch (error) {
           // Ignore parse errors
         }
       }
@@ -216,7 +216,7 @@ export class EnvironmentValidator {
           );
         }
       }
-    } catch (_error) {
+    } catch (error) {
       this.warnings.push(
         'Failed to check Walrus balance. Make sure Walrus CLI is configured.'
       );
@@ -235,7 +235,7 @@ export class EnvironmentValidator {
       execSync(`curl -s -f ${networkUrl}`, { encoding: 'utf8' });
       logger.info(`✓ Network connectivity confirmed: ${networkUrl}`);
       this.config.networkUrl = networkUrl;
-    } catch (_error) {
+    } catch (error) {
       this.warnings.push(
         `Failed to connect to ${networkUrl}. Network may be slow or unavailable.`
       );
@@ -284,7 +284,7 @@ export class EnvironmentValidator {
           `High gas budget: ${gasInSui} SUI. Consider reducing to save costs.`
         );
       }
-    } catch (_error) {
+    } catch (error) {
       this.errors.push('Invalid GAS_BUDGET format. Must be a numeric string.');
     }
   }

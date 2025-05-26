@@ -1,4 +1,5 @@
 import { WalrusUrlManager } from '../../src/utils/WalrusUrlManager';
+import { WalrusError } from '../../src/types/errors';
 
 describe('WalrusUrlManager', () => {
   let urlManager: WalrusUrlManager;

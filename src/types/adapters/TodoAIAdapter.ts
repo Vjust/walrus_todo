@@ -8,8 +8,24 @@ import {
 } from '../../services/ai/types';
 import { Logger } from '../../utils/Logger';
 import { CLIError } from '../error';
-// createTransactionBlockAdapter imported but not used
-// asUint8ArrayOrTransactionBlock and asStringUint8ArrayOrTransactionBlock imported but not used
+
+// Define interfaces for SUI transaction responses
+interface SuiTransactionResponse {
+  digest: string;
+  transaction?: Transaction;
+  effects?: Record<string, unknown>;
+  events?: unknown[];
+}
+
+interface SuiInspectionResult {
+  results?: Array<{
+    returnValues?: Array<Array<unknown>>;
+    executionStatus?: {
+      status: string;
+      error?: string;
+    };
+  }>;
+}
 
 /**
  * Adapter for interacting with the Todo AI extension smart contract
@@ -64,22 +80,22 @@ export class TodoAIAdapter {
         ],
       });
 
-      // Cast to Uint8Array | Transaction to match the expected type
-      const result = await this.client.signAndExecuteTransaction({
+      const result: SuiTransactionResponse = await this.client.signAndExecuteTransaction({
         signer: keypair,
-        transaction: tx as any,
+        transaction: tx,
       });
 
       this.logger.info(
         `Linked verification ${verificationId} to todo ${todoId}`
       );
       return result.digest;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : `${error}`;
       this.logger.error(
-        `Failed to link verification to todo: ${error.message}`
+        `Failed to link verification to todo: ${errorMessage}`
       );
       throw new CLIError(
-        `Failed to link verification to todo: ${error.message}`,
+        `Failed to link verification to todo: ${errorMessage}`,
         'VERIFICATION_LINK_FAILED'
       );
     }
@@ -107,10 +123,9 @@ export class TodoAIAdapter {
         ],
       });
 
-      // Cast to string | Uint8Array | Transaction to match the expected type
-      const result = await this.client.devInspectTransactionBlock({
+      const result: SuiInspectionResult = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
-        transaction: tx as any,
+        transaction: tx,
       });
 
       if (result?.results?.[0]) {
@@ -121,8 +136,9 @@ export class TodoAIAdapter {
       }
 
       return false;
-    } catch (error: any) {
-      this.logger.error(`Failed to check verification: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : `${error}`;
+      this.logger.error(`Failed to check verification: ${errorMessage}`);
       return false;
     }
   }
@@ -142,10 +158,9 @@ export class TodoAIAdapter {
         arguments: [tx.object(this.todoAIRegistry), tx.pure(todoId)],
       });
 
-      // Cast to string | Uint8Array | Transaction to match the expected type
-      const result = await this.client.devInspectTransactionBlock({
+      const result: SuiInspectionResult = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
-        transaction: tx as any,
+        transaction: tx,
       });
 
       if (result?.results?.[0]) {
@@ -162,8 +177,9 @@ export class TodoAIAdapter {
       }
 
       return [];
-    } catch (error: any) {
-      this.logger.error(`Failed to get verifications: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : `${error}`;
+      this.logger.error(`Failed to get verifications: ${errorMessage}`);
       return [];
     }
   }
@@ -191,10 +207,9 @@ export class TodoAIAdapter {
         ],
       });
 
-      // Cast to string | Uint8Array | Transaction to match the expected type
-      const result = await this.client.devInspectTransactionBlock({
+      const result: SuiInspectionResult = await this.client.devInspectTransactionBlock({
         sender: '0x0', // Dummy address for read-only operation
-        transaction: tx as any,
+        transaction: tx,
       });
 
       if (result?.results?.[0]) {
@@ -205,8 +220,9 @@ export class TodoAIAdapter {
       }
 
       return false;
-    } catch (error: any) {
-      this.logger.error(`Failed to verify todo operation: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : `${error}`;
+      this.logger.error(`Failed to verify todo operation: ${errorMessage}`);
       return false;
     }
   }
@@ -263,14 +279,15 @@ export class TodoAIAdapter {
       });
 
       // Execute the transaction
-      // Cast to Uint8Array | Transaction to match the expected type
-      // result would be used to return transaction details
-      await this.client.signAndExecuteTransaction({
+      const txResult: SuiTransactionResponse = await this.client.signAndExecuteTransaction({
         signer: keypair,
-        transaction: tx as any,
+        transaction: tx,
       });
 
-      this.logger.info(`Created and linked verification to todo ${todoId}`);
+      this.logger.info(`Created and linked verification to todo ${todoId}`, {
+        transactionDigest: txResult.digest,
+        effects: txResult.effects?.status
+      });
 
       return {
         verified: true,
@@ -279,12 +296,13 @@ export class TodoAIAdapter {
         provider: provider as unknown as AIProvider,
         operation,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : `${error}`;
       this.logger.error(
-        `Failed to create and link verification: ${error.message}`
+        `Failed to create and link verification: ${errorMessage}`
       );
       throw new CLIError(
-        `Failed to create and link verification: ${error.message}`,
+        `Failed to create and link verification: ${errorMessage}`,
         'VERIFICATION_CREATION_FAILED'
       );
     }

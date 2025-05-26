@@ -13,7 +13,7 @@ interface LogEntry {
   level: LogLevel;
   message: string;
   error?: Error;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 describe('Logger', () => {
@@ -123,7 +123,7 @@ describe('Logger', () => {
     });
 
     it('should handle non-Error objects', () => {
-      logger.error('Error occurred', 'string error' as any);
+      logger.error('Error occurred', 'string error' as unknown as Error);
 
       expect(mockHandler).toHaveBeenCalledWith(
         expect.objectContaining({

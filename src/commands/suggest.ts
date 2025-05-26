@@ -17,20 +17,19 @@ import { EnhancedAIService } from '../services/ai/EnhancedAIService';
 import { createCache } from '../utils/performance-cache';
 import crypto from 'crypto';
 import { KeystoreSigner } from '../utils/sui-keystore';
-import { SignerAdapterImpl } from '../utils/adapters/signer-adapter';
 import { getPermissionManager } from '../services/ai/AIPermissionManager';
 import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
 import { checkbox } from '@inquirer/prompts';
 import { CLIError } from '../types/errors/consolidated';
 
 // Cache for AI suggestions, config, and API key validation
-const suggestionCache = createCache<any>('ai-suggestions', {
+const suggestionCache = createCache<import('../services/ai/TaskSuggestionService').SuggestedTask[]>('ai-suggestions', {
   strategy: 'TTL',
   ttlMs: 10 * 60 * 1000, // 10 minutes for suggestions
   maxSize: 100,
 });
 
-const configCache = createCache<any>('ai-config', {
+const configCache = createCache<Record<string, unknown>>('ai-config', {
   strategy: 'TTL',
   ttlMs: 30 * 60 * 1000, // 30 minutes for config
   maxSize: 10,
@@ -232,7 +231,8 @@ export default class Suggest extends BaseCommand {
         // Initialize blockchain components
         const keystoreSigner = await this.getSuiSigner();
         const suiClient = keystoreSigner.getClient();
-        const signer = new SignerAdapterImpl(keystoreSigner);
+        // KeystoreSigner already implements SignerAdapter, so use it directly
+        const signer = keystoreSigner;
 
         // Create verifier adapter
         const verifierAdapter = new SuiAIVerifierAdapter(
@@ -438,29 +438,47 @@ export default class Suggest extends BaseCommand {
       // Display results
       if (flags.format === 'json') {
         this.log(
-          JSON.stringify(flags.verify ? result : result.suggestions, null, 2)
+          JSON.stringify(flags.verify ? result : result, null, 2)
         );
         return;
       }
 
       // Display in table format
+      const resultData = result as {
+        result?: {
+          suggestions: SuggestedTask[];
+          contextInfo: {
+            analyzedTodoCount: number;
+            completionPercentage: number;
+            topContextualTags: string[];
+            detectedThemes: string[];
+          };
+        };
+        suggestions?: SuggestedTask[];
+        contextInfo?: {
+          analyzedTodoCount: number;
+          completionPercentage: number;
+          topContextualTags: string[];
+          detectedThemes: string[];
+        };
+      };
       const suggestions = flags.verify
-        ? result.result.suggestions
-        : result.suggestions;
+        ? resultData.result?.suggestions ?? []
+        : resultData.suggestions ?? [];
       const contextInfo = flags.verify
-        ? result.result.contextInfo
-        : result.contextInfo;
+        ? resultData.result?.contextInfo
+        : resultData.contextInfo;
 
       // Display context information
       this.log(chalk.cyan('\nContext Information:'));
       this.log(
-        `Analyzed ${chalk.bold(contextInfo.analyzedTodoCount.toString())} todos, ${chalk.bold(contextInfo.completionPercentage.toFixed(0))}% completed`
+        `Analyzed ${chalk.bold((contextInfo?.analyzedTodoCount ?? 0).toString())} todos, ${chalk.bold((contextInfo?.completionPercentage ?? 0).toFixed(0))}% completed`
       );
       this.log(
-        `Top tags: ${contextInfo.topContextualTags.map(tag => chalk.yellow(tag)).join(', ')}`
+        `Top tags: ${(contextInfo?.topContextualTags ?? []).map(tag => chalk.yellow(tag)).join(', ')}`
       );
       this.log(
-        `Detected themes: ${contextInfo.detectedThemes.map(theme => chalk.green(theme)).join(', ')}`
+        `Detected themes: ${(contextInfo?.detectedThemes ?? []).map(theme => chalk.green(theme)).join(', ')}`
       );
 
       // Display suggestions
@@ -528,7 +546,10 @@ export default class Suggest extends BaseCommand {
 
       // If verification was used, display verification details
       if (flags.verify) {
-        this.displayVerificationDetails(result.verification);
+        const verificationData = result as { verification?: { allowed: boolean; verificationId?: string; details?: Record<string, unknown> } };
+        if (verificationData.verification) {
+          this.displayVerificationDetails(verificationData.verification);
+        }
       }
 
       // Prompt to add suggestions as todos if requested
@@ -578,7 +599,7 @@ export default class Suggest extends BaseCommand {
   /**
    * Prompt user to add suggestions as todos
    */
-  private async promptToAddSuggestions(suggestions: any[], todoService: any) {
+  private async promptToAddSuggestions(suggestions: import('../services/ai/TaskSuggestionService').SuggestedTask[], todoService: TodoService) {
     // Ask which suggestions to add
     const selectedSuggestions = await checkbox({
       message: 'Select suggestions to add as todos:',
@@ -624,25 +645,29 @@ export default class Suggest extends BaseCommand {
   /**
    * Display verification details
    */
-  private displayVerificationDetails(verification: any) {
+  private displayVerificationDetails(verification: { allowed: boolean; verificationId?: string; details?: Record<string, unknown> }) {
     this.log(chalk.bold('\nVerification Details:'));
     this.log(chalk.dim('─'.repeat(50)));
-    this.log(`ID:        ${chalk.yellow(verification.id)}`);
-    this.log(`Provider:  ${verification.provider}`);
-    this.log(`Timestamp: ${new Date(verification.timestamp).toLocaleString()}`);
-    this.log(
-      `Privacy:   ${chalk.blue(verification.metadata.privacyLevel || 'hash_only')}`
-    );
-
-    // Display transaction ID if available
-    if (verification.transactionId) {
-      this.log(`Transaction: ${chalk.yellow(verification.transactionId)}`);
+    this.log(`ID:        ${chalk.yellow(verification.verificationId || 'unknown')}`);
+    this.log(`Allowed:   ${verification.allowed ? chalk.green('Yes') : chalk.red('No')}`);
+    
+    if (verification.details) {
+      this.log(`Privacy:   ${chalk.blue(String(verification.details.privacyLevel || 'hash_only'))}`);
+      
+      // Display transaction ID if available
+      if (verification.details.transactionId) {
+        this.log(`Transaction: ${chalk.yellow(String(verification.details.transactionId))}`);
+      }
+      
+      if (verification.details.timestamp) {
+        this.log(`Timestamp: ${new Date(Number(verification.details.timestamp)).toLocaleString()}`);
+      }
     }
 
     this.log(chalk.dim('─'.repeat(50)));
     this.log(
       chalk.dim(
-        `To view detailed verification information, run: ${chalk.cyan(`walrus_todo ai:verify show --id ${verification.id}`)}`
+        `To view detailed verification information, run: ${chalk.cyan(`walrus_todo ai:verify show --id ${verification.verificationId || 'unknown'}`)}`
       )
     );
   }

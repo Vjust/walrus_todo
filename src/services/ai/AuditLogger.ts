@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import crypto from 'crypto';
 import { CLI_CONFIG } from '../../constants';
 import { Logger } from '../../utils/Logger';
@@ -53,15 +53,15 @@ export class AuditLogger {
       if (fs.existsSync(this.logFilePath)) {
         // Read the last line of the log file to get the previous hash
         const fileContent = fs.readFileSync(this.logFilePath, 'utf8');
-        const lines = fileContent
+        const lines = String(fileContent)
           .split('\n')
           .filter(line => line.trim().length > 0);
 
         if (lines.length > 0) {
           const lastLine = lines[lines.length - 1];
           try {
-            const lastEntry = JSON.parse(lastLine);
-            if (lastEntry && lastEntry.hash) {
+            const lastEntry = JSON.parse(lastLine) as { hash?: string };
+            if (lastEntry && typeof lastEntry.hash === 'string') {
               this.hashChain = lastEntry.hash;
             }
           } catch (_error) {
@@ -75,7 +75,7 @@ export class AuditLogger {
         this.hashChain = this.generateInitialHash();
       }
     } catch (_error) {
-      logger.error('Failed to initialize hash chain:', error);
+      logger.error('Failed to initialize hash chain:', _error);
       this.hashChain = this.generateInitialHash();
     }
   }
@@ -132,7 +132,7 @@ export class AuditLogger {
       // Write to file
       this.writeToFile(entryWithHash);
     } catch (_error) {
-      logger.error('Failed to log audit event:', error);
+      logger.error('Failed to log audit event:', _error);
     }
   }
 
@@ -155,7 +155,7 @@ export class AuditLogger {
       const line = JSON.stringify(entry) + '\n';
       fs.appendFileSync(this.logFilePath, line, { mode: 0o600 }); // Restrict file permissions
     } catch (error: unknown) {
-      logger.error('Failed to write audit log:', error);
+      logger.error('Failed to write audit log:', error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -202,7 +202,7 @@ export class AuditLogger {
         }
       }
     } catch (_error) {
-      logger.error('Failed to check/perform log rotation:', error);
+      logger.error('Failed to check/perform log rotation:', _error);
     }
   }
 
@@ -255,7 +255,11 @@ export class AuditLogger {
         return obj;
       }
 
-      const result: Record<string, unknown> = Array.isArray(obj) ? [] : {};
+      if (Array.isArray(obj)) {
+        return obj.map(item => sanitizeObject(item));
+      }
+
+      const result: Record<string, unknown> = {};
 
       for (const [key, value] of Object.entries(obj)) {
         // Check if the key is sensitive
@@ -286,7 +290,7 @@ export class AuditLogger {
       return result;
     };
 
-    return sanitizeObject(sanitized);
+    return sanitizeObject(sanitized) as Record<string, unknown>;
   }
 
   /**
@@ -299,7 +303,7 @@ export class AuditLogger {
       }
 
       const fileContent = fs.readFileSync(this.logFilePath, 'utf8');
-      const lines = fileContent
+      const lines = String(fileContent)
         .split('\n')
         .filter(line => line.trim().length > 0);
 
@@ -312,9 +316,9 @@ export class AuditLogger {
 
       for (const line of lines) {
         try {
-          const entry = JSON.parse(line);
+          const entry = JSON.parse(line) as { hash?: string; [key: string]: unknown };
 
-          if (!entry.hash) {
+          if (!entry.hash || typeof entry.hash !== 'string') {
             return false; // Missing hash
           }
 
@@ -326,7 +330,7 @@ export class AuditLogger {
           }
 
           // Make a copy without the hash to verify
-          const entryWithoutHash = { ...entry };
+          const entryWithoutHash: Record<string, unknown> = { ...entry };
           delete entryWithoutHash.hash;
 
           // Calculate expected hash
@@ -349,7 +353,7 @@ export class AuditLogger {
 
       return true;
     } catch (_error) {
-      logger.error('Failed to verify log integrity:', error);
+      logger.error('Failed to verify log integrity:', _error);
       return false;
     }
   }

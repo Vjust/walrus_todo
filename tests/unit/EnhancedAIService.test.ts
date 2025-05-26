@@ -17,11 +17,11 @@ class MockAIModelAdapter implements AIModelAdapter {
   // For tracking calls to methods
   public callHistory: {
     method: string;
-    params: any;
+    params: unknown;
   }[] = [];
 
   // For controlling mock responses
-  public mockResponses: Record<string, any> = {
+  public mockResponses: Record<string, unknown> = {
     summarize: 'Mock summary of todos',
     categorize: { 'Category 1': ['todo1'], 'Category 2': ['todo2'] },
     prioritize: { todo1: 8, todo2: 5 },
@@ -64,12 +64,14 @@ class MockAIModelAdapter implements AIModelAdapter {
     return this.modelName;
   }
 
-  async complete(params: any): Promise<any> {
+  async complete(params: unknown): Promise<unknown> {
     this.callHistory.push({ method: 'complete', params });
 
     // Determine which operation is being called based on the prompt
     const promptStr =
-      typeof params.prompt === 'string' ? params.prompt : 'unknown';
+      typeof (params as { prompt?: string }).prompt === 'string' 
+        ? (params as { prompt?: string }).prompt 
+        : 'unknown';
 
     let operation = 'unknown';
     if (promptStr.includes('summarize')) operation = 'summarize';
@@ -91,16 +93,17 @@ class MockAIModelAdapter implements AIModelAdapter {
     };
   }
 
-  async completeStructured<T>(params: any): Promise<any> {
+  async completeStructured(params: unknown): Promise<unknown> {
     this.callHistory.push({ method: 'completeStructured', params });
 
     // Determine which operation is being called based on the prompt
+    const paramsObj = params as { prompt?: string; metadata?: { operation?: string } };
     const promptStr =
-      typeof params.prompt === 'string'
-        ? params.prompt
-        : params.metadata?.operation || 'unknown';
+      typeof paramsObj.prompt === 'string'
+        ? paramsObj.prompt
+        : paramsObj.metadata?.operation || 'unknown';
 
-    let operation = params.metadata?.operation || 'unknown';
+    let operation = paramsObj.metadata?.operation || 'unknown';
     if (!operation || operation === 'unknown') {
       if (promptStr.includes('categorize')) operation = 'categorize';
       else if (promptStr.includes('prioritize')) operation = 'prioritize';
@@ -122,16 +125,16 @@ class MockAIModelAdapter implements AIModelAdapter {
   }
 
   async processWithPromptTemplate(
-    promptTemplate: any,
-    input: Record<string, any>
-  ): Promise<any> {
+    promptTemplate: unknown,
+    input: Record<string, unknown>
+  ): Promise<unknown> {
     this.callHistory.push({
       method: 'processWithPromptTemplate',
       params: { promptTemplate, input },
     });
 
     // Try to determine the operation based on the prompt template format string
-    const formatStr = promptTemplate?.template || '';
+    const formatStr = (promptTemplate as { template?: string })?.template || '';
     let operation = 'unknown';
 
     if (formatStr.includes('summarize')) operation = 'summarize';
@@ -204,7 +207,7 @@ describe('EnhancedAIService', () => {
     AIConfigManager.getInstance().resetToDefaults();
 
     // Get the mock adapter
-    mockAdapter = (AIProviderFactory as any).__mockAdapter;
+    mockAdapter = (AIProviderFactory as { __mockAdapter: MockAIModelAdapter }).__mockAdapter;
     mockAdapter.callHistory = [];
 
     // Create a new service instance
@@ -392,7 +395,7 @@ describe('EnhancedAIService', () => {
       // The custom prompt should have been used
       const lastCall =
         mockAdapter.callHistory[mockAdapter.callHistory.length - 1];
-      expect(lastCall.params.promptTemplate?.template).toContain(
+      expect((lastCall.params as { promptTemplate?: { template?: string } }).promptTemplate?.template).toContain(
         'Custom summary prompt'
       );
     });

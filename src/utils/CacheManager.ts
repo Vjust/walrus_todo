@@ -34,14 +34,14 @@ interface CacheEntry<V> {
 /**
  * Memory-aware cache implementation with automatic resource cleanup
  */
-export class CacheManager<K extends string | number | symbol, V> {
+export class CacheManager<K extends PropertyKey, V> {
   private cache: Map<K, CacheEntry<V>> = new Map();
   private totalSize: number = 0;
   private gcTimer: NodeJS.Timeout | null = null;
   private readonly options: Required<CacheOptions<K, V>>;
 
   // Default cache options
-  private static readonly DEFAULT_OPTIONS: Required<CacheOptions<any, any>> = {
+  private static readonly DEFAULT_OPTIONS: Required<CacheOptions<PropertyKey, unknown>> = {
     maxSize: 1000,
     ttl: 5 * 60 * 1000, // 5 minutes
     memoryThreshold: 0.8, // 80% of available memory
@@ -49,13 +49,14 @@ export class CacheManager<K extends string | number | symbol, V> {
     onEviction: () => {},
     staleWhileRevalidate: false,
     gcInterval: 60 * 1000, // 1 minute
-    sizeCalculator: () => 1, // Default size is 1 unit per item
+    sizeCalculator: (_value: unknown) => 1, // Default size is 1 unit per item
   };
 
   constructor(options: CacheOptions<K, V> = {}) {
-    this.options = { ...CacheManager.DEFAULT_OPTIONS, ...options } as Required<
-      CacheOptions<K, V>
-    >;
+    this.options = { 
+      ...CacheManager.DEFAULT_OPTIONS, 
+      ...options 
+    } as Required<CacheOptions<K, V>>;
     this.startGarbageCollection();
 
     // Debug log on creation

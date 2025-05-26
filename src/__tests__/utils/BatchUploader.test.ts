@@ -1,8 +1,7 @@
 import { BatchUploader } from '../../utils/batch-uploader';
-// TodoSizeCalculator imported but not used
 import { WalrusStorage } from '../../utils/walrus-storage';
 import { Todo, TodoList } from '../../types/todo';
-// CLIError imported but not used
+import { jest } from '@jest/globals';
 
 // Mock the WalrusStorage class
 jest.mock('../../utils/walrus-storage');
@@ -57,31 +56,40 @@ describe('BatchUploader', () => {
   };
 
   // Mock implementation of WalrusStorage
-  let mockWalrusStorage: jest.Mocked<InstanceType<typeof WalrusStorage>>;
+  let mockWalrusStorage: jest.Mocked<WalrusStorage>;
   let batchUploader: BatchUploader;
 
   beforeEach(() => {
     // Setup mock implementations
-    mockWalrusStorage = new WalrusStorage('testnet', true) as jest.Mocked<
-      InstanceType<typeof WalrusStorage>
-    >;
-
-    // Mock the storage methods
-    mockWalrusStorage.ensureStorageAllocated = jest.fn().mockResolvedValue({
-      id: { id: 'mock-storage-id' },
-      storage_size: '1000000',
-      used_size: '0',
-      start_epoch: 100,
-      end_epoch: 200,
-    });
-
-    mockWalrusStorage.storeTodo = jest
-      .fn()
-      .mockImplementation((todo: Todo) => Promise.resolve(`blob-${todo.id}`));
-
-    mockWalrusStorage.storeTodoList = jest
-      .fn()
-      .mockResolvedValue('list-blob-123');
+    mockWalrusStorage = {
+      ensureStorageAllocated: jest.fn().mockResolvedValue({
+        id: { id: 'mock-storage-id' },
+        storage_size: '1000000',
+        used_size: '0',
+        start_epoch: '100',
+        end_epoch: '200',
+      }),
+      
+      storeTodo: jest.fn().mockImplementation((todo: Todo) => 
+        Promise.resolve(`blob-${todo.id}`)
+      ),
+      
+      storeTodoList: jest.fn().mockResolvedValue('list-blob-123'),
+      
+      // Add other required methods as no-ops for testing
+      init: jest.fn().mockResolvedValue(undefined),
+      connect: jest.fn().mockResolvedValue(undefined),
+      getConnectionStatus: jest.fn().mockReturnValue(true),
+      retrieveTodo: jest.fn(),
+      retrieveList: jest.fn(),
+      deleteBlob: jest.fn(),
+      checkExistingStorage: jest.fn(),
+      store: jest.fn(),
+      storeList: jest.fn(),
+      get: jest.fn(),
+      getList: jest.fn(),
+      getAllocation: jest.fn(),
+    } as unknown as jest.Mocked<WalrusStorage>;
 
     batchUploader = new BatchUploader(mockWalrusStorage);
   });
@@ -100,8 +108,8 @@ describe('BatchUploader', () => {
 
       // Check each result
       results.successful.forEach((result, index) => {
-        expect(result.id).toBe(sampleTodos[index].id);
-        expect(result.blobId).toBe(`blob-${sampleTodos[index].id}`);
+        expect(result.id).toBe(sampleTodos[index]?.id);
+        expect(result.blobId).toBe(`blob-${sampleTodos[index]?.id}`);
       });
     });
 
@@ -120,8 +128,8 @@ describe('BatchUploader', () => {
 
       expect(results.successful).toHaveLength(2);
       expect(results.failed).toHaveLength(1);
-      expect(results.failed[0].id).toBe('2');
-      expect(results.failed[0].error).toBe('Upload failed');
+      expect(results.failed[0]?.id).toBe('2');
+      expect(results.failed[0]?.error).toBe('Upload failed');
     });
 
     it('should handle empty batch', async () => {

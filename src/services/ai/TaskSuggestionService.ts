@@ -448,7 +448,7 @@ export class TaskSuggestionService {
         type: SuggestionType.NEXT_STEP,
         relatedTodoIds: todosToFocus.map(t => t.id),
       }));
-    } catch (_error) {
+    } catch (error) {
       this.logger.error(`Error generating next step tasks: ${error}`);
       return [];
     }
@@ -516,7 +516,7 @@ export class TaskSuggestionService {
         type: SuggestionType.DEPENDENCY,
         relatedTodoIds: todosWithoutDependencies.map(t => t.id),
       }));
-    } catch (_error) {
+    } catch (error) {
       this.logger.error(`Error generating dependency tasks: ${error}`);
       return [];
     }
@@ -576,7 +576,7 @@ export class TaskSuggestionService {
         completionPercentage,
         detectedThemes: Array.isArray(detectedThemes) ? detectedThemes : [],
       };
-    } catch (_error) {
+    } catch (error) {
       this.logger.error(`Error analyzing context: ${error}`);
       return {
         analyzedTodoCount: todos.length,
@@ -625,7 +625,7 @@ export class TaskSuggestionService {
     // Filter by minimum score
     if (context.minScore !== undefined) {
       filteredSuggestions = filteredSuggestions.filter(
-        suggestion => suggestion.score >= context.minScore!
+        suggestion => suggestion.score >= context.minScore
       );
     }
 

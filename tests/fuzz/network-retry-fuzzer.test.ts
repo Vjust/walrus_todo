@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-conditional-expect */
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 import { RetryManager, NetworkNode } from '../../src/utils/retry-manager';
 import { CLIError } from '../../src/types/errors/consolidated';
@@ -60,7 +61,7 @@ describe('Network Retry Fuzzing Tests', () => {
               () => new Error('Network timeout'),
               () => {
                 const e = new Error('HTTP Error');
-                (e as any).status = fuzzer.subset([
+                (e as Error & { status?: number }).status = fuzzer.subset([
                   408, 429, 500, 502, 503, 504,
                 ])[0];
                 return e;
@@ -81,15 +82,15 @@ describe('Network Retry Fuzzing Tests', () => {
         try {
           const result = await manager.execute(operation, 'fuzz-test');
           expect(result).toHaveProperty('success', true);
-        } catch (_error) {
+        } catch (error) {
           // Verify that final errors are meaningful
-          expect(_error).toBeInstanceOf(CLIError);
+          expect(error).toBeInstanceOf(CLIError);
           expect([
             'RETRY_MAX_ATTEMPTS',
             'RETRY_TIMEOUT',
             'RETRY_INSUFFICIENT_NODES',
             'RETRY_NON_RETRYABLE',
-          ]).toContain((_error as CLIError).code);
+          ]).toContain((error as CLIError).code);
         }
       }
     });
@@ -141,14 +142,17 @@ describe('Network Retry Fuzzing Tests', () => {
               switch (operationType) {
                 case 'broken':
                   throw new Error('Permanently broken');
-                case 'flaky':
+                case 'flaky': {
                   if (Math.random() < 0.6) throw fuzzer.networkError();
                   break;
-      }
-                case 'slow':
+                }
+                case 'slow': {
                   if (Math.random() < 0.2) throw new Error('Request timeout');
                   break;
-      }
+                }
+                default:
+                  // fast or other types complete successfully
+                  break;
               }
 
               return { type: operationType, node: node.url, latency };
@@ -222,7 +226,7 @@ describe('Network Retry Fuzzing Tests', () => {
       ];
 
       const startTime = Date.now();
-      const operationResults: any[] = [];
+      const operationResults: Array<{ node?: string; timestamp: number; success: boolean; error?: string }> = [];
 
       for (const phase of phases) {
         const phaseEnd = Date.now() + phase.duration;
@@ -248,9 +252,9 @@ describe('Network Retry Fuzzing Tests', () => {
           try {
             const result = await manager.execute(operation, 'adaptive-test');
             operationResults.push({ ...result, success: true });
-          } catch (_error) {
+          } catch (error) {
             operationResults.push({
-              error: _error.message,
+              error: error.message,
               timestamp: Date.now() - startTime,
               success: false,
             });
@@ -264,7 +268,7 @@ describe('Network Retry Fuzzing Tests', () => {
       }
 
       // Analyze node selection patterns
-      const nodeUsage = operationResults.reduce(
+      operationResults.reduce(
         (acc, result) => {
           if (result.node) {
             acc[result.node] = (acc[result.node] || 0) + 1;
@@ -337,10 +341,10 @@ describe('Network Retry Fuzzing Tests', () => {
 
         try {
           await manager.execute(testCase.operation, testCase.name);
-          fail(`Expected ${testCase.name} to throw ${testCase.expectedError}`);
-        } catch (_error) {
-          expect(_error).toBeInstanceOf(CLIError);
-          expect((_error as CLIError).code).toBe(testCase.expectedError);
+          throw new Error(`Expected ${testCase.name} to throw ${testCase.expectedError}`);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CLIError);
+          expect((error as CLIError).code).toBe(testCase.expectedError);
         }
       }
     });
@@ -384,23 +388,26 @@ describe('Network Retry Fuzzing Tests', () => {
             )[0];
 
             switch (conditions) {
-              case 'slow':
+              case 'slow': {
                 await new Promise(resolve =>
                   setTimeout(resolve, fuzzer.number(1000, 3000))
                 );
                 break;
-      }
-              case 'timeout':
+              }
+              case 'timeout': {
                 await new Promise(resolve => setTimeout(resolve, 10000));
                 throw new Error('Request timeout');
-              case 'error':
+              }
+              case 'error': {
                 throw new Error(
                   `5${fuzzer.number(0, 9)}${fuzzer.number(0, 9)}`
                 );
-              case 'rate_limit':
+              }
+              case 'rate_limit': {
                 const e = new Error('Too many requests');
-                (e as any).status = 429;
+                (e as Error & { status?: number }).status = 429;
                 throw e;
+              }
             }
 
             return { success: true, condition: conditions, node: node.url };
@@ -410,7 +417,7 @@ describe('Network Retry Fuzzing Tests', () => {
       );
 
       // Execute operations and track results
-      const results = await Promise.allSettled(
+      await Promise.allSettled(
         operations.map((op, index) =>
           manager.execute(op, `health-flux-${index}`)
         )

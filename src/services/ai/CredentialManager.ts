@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import crypto from 'crypto';
 import { CLIError } from '../../types/errors/consolidated';
 import { CLI_CONFIG } from '../../constants';
@@ -59,7 +59,7 @@ export class CredentialManager {
       }
       this.initialized = true;
     } catch (_error) {
-      logger.error('Failed to load credentials:', error);
+      logger.error('Failed to load credentials:', _error);
       // For security, initialize with empty credentials on error
       this.credentials = {};
       this.initialized = true;
@@ -83,7 +83,7 @@ export class CredentialManager {
       fs.writeFileSync(this.credentialsPath, encryptedData, { mode: 0o600 }); // Restrict file permissions
     } catch (_error) {
       throw new CLIError(
-        `Failed to save credentials: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to save credentials: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         'CREDENTIALS_SAVE_FAILED'
       );
     }
@@ -215,7 +215,7 @@ export class CredentialManager {
       );
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (_error) {
-      logger.error('Decryption failed:', error);
+      logger.error('Decryption failed:', _error);
       return null;
     }
   }

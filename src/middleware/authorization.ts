@@ -30,15 +30,18 @@ async function getAuthenticatedUser() {
     const data = fs.readFileSync(tokenPath, 'utf-8');
     const authInfo = JSON.parse(data);
 
-    // Validate token
-    const validation = await authenticationService.validateToken(
-      authInfo.token
-    );
-    if (!validation.valid || !validation.user) {
-      return null;
-    }
+    // Validate token - check for token property safely
+    if (typeof authInfo === 'object' && authInfo !== null && 'token' in authInfo && typeof (authInfo as Record<string, unknown>).token === 'string') {
+      const validation = await authenticationService.validateToken(
+        (authInfo as Record<string, unknown>).token as string
+      );
+      if (!validation.valid || !validation.user) {
+        return null;
+      }
 
-    return validation.user;
+      return validation.user;
+    }
+    return null;
   } catch (_error) {
     return null;
   }
@@ -77,7 +80,14 @@ export function requirePermission(
     errorMessage?: string;
   } = {}
 ) {
-  return async function (args: any) {
+  return async function (args: {
+    resourceId?: string | ((args: Record<string, unknown>) => Promise<string | undefined>);
+    id?: string;
+    todoId?: string;
+    listId?: string;
+    command?: string;
+    [key: string]: unknown;
+  }) {
     // If resource is a function, call it with args to get the actual resource
     // Fixed type issue by ensuring resource is not treated as a function type when it's not
     const resolvedResource =
@@ -128,7 +138,7 @@ export function requirePermission(
       action: 'AUTHORIZATION',
       resource:
         typeof resolvedResource === 'string'
-          ? resolvedResource.split(':')[0]
+          ? resolvedResource.split(':')[0] || resolvedResource
           : resolvedResource,
       resourceId,
       operation: action.toString(),
@@ -160,8 +170,20 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
     return;
   }
 
-  // Get required permissions from command
-  const requiredPermissions = (Command as any).requiredPermissions;
+  // Get required permissions from command safely
+  const commandWithPermissions = Command as unknown;
+  const requiredPermissions = 
+    typeof commandWithPermissions === 'object' && 
+    commandWithPermissions !== null && 
+    'requiredPermissions' in commandWithPermissions
+      ? (commandWithPermissions as { requiredPermissions?: {
+          resource: string | ResourceType | ((argv: string[]) => Promise<string | ResourceType>);
+          action: string | ActionType;
+          allowPublic?: boolean;
+          errorMessage?: string;
+          resourceId?: (args: Record<string, unknown>) => Promise<string | undefined>;
+        } }).requiredPermissions
+      : undefined;
   if (!requiredPermissions) {
     return;
   }
@@ -191,7 +213,7 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
 
     // In OCLIF hooks, we can't directly use Command.parse
     // Instead, parse the argv manually to extract args
-    const args = {
+    const args: Record<string, unknown> = {
       flags: {},
       args: {},
     };
@@ -205,7 +227,10 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
         argv[i] === '--listId'
       ) {
         if (i + 1 < argv.length && !argv[i + 1].startsWith('--')) {
-          parsedFlags[argv[i].substring(2)] = argv[i + 1];
+          const value = argv[i + 1];
+          if (value) {
+            parsedFlags[argv[i].substring(2)] = value;
+          }
         }
       }
     }
@@ -262,10 +287,18 @@ export function RequirePermission(
   options: {
     allowPublic?: boolean;
     errorMessage?: string;
-    resourceIdResolver?: (args: any) => string | undefined;
+    resourceIdResolver?: (args: Record<string, unknown>) => string | undefined;
   } = {}
 ) {
-  return function (target: any) {
+  return function (target: {
+    requiredPermissions?: {
+      resource: string | ResourceType;
+      action: string | ActionType;
+      allowPublic: boolean;
+      errorMessage?: string;
+      resourceId?: (args: Record<string, unknown>) => string | undefined;
+    };
+  }) {
     target.requiredPermissions = {
       resource,
       action,

@@ -169,8 +169,8 @@ export class AIPermissionManager {
 
       // Check if permission level is sufficient
       return credential.permissionLevel >= level;
-    } catch (_error) {
-      Logger.getInstance().warn(`Permission check failed: ${error}`);
+    } catch (err: unknown) {
+      Logger.getInstance().warn(`Permission check failed: ${err instanceof Error ? err.message : String(err)}`);
       return false;
     }
   }
@@ -192,8 +192,8 @@ export class AIPermissionManager {
         await this.credentialManager.getCredentialObject(provider);
 
       return credential.permissionLevel;
-    } catch (_error) {
-      Logger.getInstance().warn(`Failed to get permission level: ${error}`);
+    } catch (err: unknown) {
+      Logger.getInstance().warn(`Failed to get permission level: ${err instanceof Error ? err.message : String(err)}`);
       return AIPermissionLevel.NO_ACCESS;
     }
   }
@@ -209,7 +209,7 @@ export class AIPermissionManager {
       // Update permissions
       await this.credentialManager.updatePermissions(provider, level);
       return true;
-    } catch (_error) {
+    } catch (error) {
       Logger.getInstance().error(
         `Failed to set permission level: ${error instanceof Error ? error.message : String(error)}`
       );
@@ -285,7 +285,7 @@ export class AIPermissionManager {
         allowed: true,
         verificationId: verificationRecord.id,
       };
-    } catch (_error) {
+    } catch (error) {
       Logger.getInstance().error(
         `Failed to verify operation permission: ${error instanceof Error ? error.message : String(error)}`
       );

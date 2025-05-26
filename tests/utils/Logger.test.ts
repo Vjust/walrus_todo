@@ -12,7 +12,7 @@ describe('Logger', () => {
   let mockConsole: jest.SpyInstance[];
   let mockHandler: jest.Mock<
     void,
-    [{ level: LogLevel; message: string; context?: any; error?: any }]
+    [{ level: LogLevel; message: string; context?: unknown; error?: unknown }]
   >;
 
   beforeEach(() => {
@@ -114,7 +114,7 @@ describe('Logger', () => {
     });
 
     it('should handle non-Error objects', () => {
-      logger.error('Error occurred', 'string error' as any);
+      logger.error('Error occurred', 'string error' as unknown);
 
       expect(mockHandler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -122,7 +122,7 @@ describe('Logger', () => {
             name: 'Error',
             code: 'UNKNOWN_ERROR',
             message: 'string error',
-          }),
+          }) as Record<string, unknown>,
         })
       );
     });

@@ -49,7 +49,7 @@ const addCommand = {
         });
       } catch (_error) {
         throw new CLIError(
-          `Failed to store todo on blockchain: ${_error instanceof Error ? _error.message : _error ? String(_error) : 'Unknown error'}`,
+          `Failed to store todo on blockchain: ${_error instanceof Error ? _error.message : _error ? `${_error}` : 'Unknown error'}`,
           'STORAGE_FAILED'
         );
       }

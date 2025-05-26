@@ -37,7 +37,7 @@ export async function withTimeout<T>(
       clearTimeout(timeoutId);
     }
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     // Always clear the timeout to prevent memory leaks
     if (timeoutId) {
       clearTimeout(timeoutId);
@@ -47,9 +47,10 @@ export async function withTimeout<T>(
       throw error;
     }
 
+    const typedError = error instanceof Error ? error : new Error(String(error));
     throw new OperationError(
-      `Operation '${operationName}' failed: ${error instanceof Error ? error.message : String(error)}`,
-      { operationName, cause: error }
+      `Operation '${operationName}' failed: ${typedError.message}`,
+      { operationName, cause: typedError }
     );
   }
 }
@@ -69,7 +70,7 @@ export async function safeParallel<T>(
     return [];
   }
 
-  const results = await Promise.allSettled(promises);
+  const results: PromiseSettledResult<T>[] = await Promise.allSettled(promises);
   const successResults: T[] = [];
   const errors: Error[] = [];
 
@@ -124,7 +125,7 @@ export async function withRetry<T>(
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: unknown) {
       const typedError =
         error instanceof Error ? error : new Error(String(error));
 
@@ -144,7 +145,7 @@ export async function withRetry<T>(
       const jitteredDelay = delay * (0.8 + Math.random() * 0.4);
 
       // Wait before next retry
-      await new Promise(resolve => setTimeout(resolve, jitteredDelay));
+      await new Promise<void>(resolve => setTimeout(resolve, jitteredDelay));
     }
   }
 
@@ -174,6 +175,8 @@ export class TimeoutError extends Error {
  * Custom error for operation failures
  */
 export class OperationError extends Error {
+  public readonly cause?: unknown;
+  
   constructor(
     message: string,
     public readonly context: {
@@ -191,6 +194,8 @@ export class OperationError extends Error {
  * Custom error for retry failures
  */
 export class RetryError extends Error {
+  public readonly cause?: unknown;
+  
   constructor(
     message: string,
     public readonly context: {
@@ -208,13 +213,22 @@ export class RetryError extends Error {
 /**
  * Custom error for aggregating multiple failures
  */
-export class AggregateOperationError extends AggregateError {
+export class AggregateOperationError extends Error {
+  public readonly name = 'AggregateOperationError';
+  public readonly errors: Error[];
+  
   constructor(
     message: string,
     errors: Error[],
     public readonly context: { operationName: string }
   ) {
-    super(errors, message);
-    this.name = 'AggregateOperationError';
+    super(message);
+    this.errors = errors;
+    
+    // Use AggregateError if available, otherwise fall back to custom implementation
+    if (typeof (globalThis as any).AggregateError !== 'undefined') {
+      const aggregateError = new (globalThis as any).AggregateError(errors, message);
+      this.stack = aggregateError.stack;
+    }
   }
 }

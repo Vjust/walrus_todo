@@ -327,7 +327,7 @@ describe('RetryManager', () => {
       });
       (retryManager as { logger: typeof mockLogger }).logger = mockLogger;
 
-      let thrownError: any;
+      let thrownError: Error | undefined;
       try {
         await retryManager.execute(operation, 'test');
       } catch (error) {
@@ -362,7 +362,7 @@ describe('RetryManager', () => {
         .mockRejectedValueOnce(new Error('timeout'))
         .mockRejectedValueOnce(new Error('rate limit'));
 
-      let thrownError: any;
+      let thrownError: Error | undefined;
       try {
         await retryManager.execute(operation, 'test');
       } catch (error) {

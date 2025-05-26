@@ -1,11 +1,10 @@
 import { jest } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import crypto from 'crypto';
 import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
 import { AIService } from '../../src/services/ai/aiService';
 import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
 import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
 import {
   CredentialType,
@@ -35,7 +34,7 @@ jest.mock('fs', () => {
     }),
     writeFileSync: jest
       .fn()
-      .mockImplementation((path: string, data: Buffer, options: any) => {
+      .mockImplementation((path: string, data: Buffer, _options: unknown) => {
         mockFileContent.set(path, data);
       }),
     readFileSync: jest.fn().mockImplementation((path: string) => {
@@ -86,7 +85,7 @@ const sampleTodos: Todo[] = [
 const getAuditLogger = () => {
   // Create a basic implementation for tests
   class AuditLogger {
-    private logEntries: any[] = [];
+    private logEntries: unknown[] = [];
     private logFilePath: string;
     private enabled: boolean = true;
 
@@ -96,7 +95,7 @@ const getAuditLogger = () => {
       this.logFilePath = path.join(configDir, 'audit.log');
     }
 
-    public log(eventType: string, details: any): void {
+    public log(eventType: string, details: unknown): void {
       if (!this.enabled) return;
 
       const entry = {
@@ -109,11 +108,11 @@ const getAuditLogger = () => {
       this.writeToFile(entry);
     }
 
-    public getEntries(): any[] {
+    public getEntries(): unknown[] {
       return this.logEntries;
     }
 
-    private writeToFile(entry: any): void {
+    private writeToFile(entry: unknown): void {
       try {
         const line = JSON.stringify(entry) + '\n';
         fs.appendFileSync(this.logFilePath, line);
@@ -122,7 +121,7 @@ const getAuditLogger = () => {
       }
     }
 
-    private sanitize(data: any): any {
+    private sanitize(data: unknown): unknown {
       if (!data) return data;
 
       // Create a copy to avoid modifying the original
@@ -139,10 +138,10 @@ const getAuditLogger = () => {
       ];
 
       // Helper function to sanitize recursively
-      const sanitizeObject = (obj: any) => {
+      const sanitizeObject = (obj: unknown): unknown => {
         if (typeof obj !== 'object' || obj === null) return obj;
 
-        const result: any = Array.isArray(obj) ? [] : {};
+        const result: Record<string, unknown> = Array.isArray(obj) ? [] : {};
 
         for (const [key, value] of Object.entries(obj)) {
           // Check if the key is sensitive
@@ -576,7 +575,7 @@ describe('Audit Log Security', () => {
       // Mock file access checks
       const mockCheckFilePermissions = jest
         .fn()
-        .mockImplementation(filePath => {
+        .mockImplementation(_filePath => {
           // Check if file permissions are restricted
           const stats = { mode: 0o600 }; // Owner read/write only
           return stats;

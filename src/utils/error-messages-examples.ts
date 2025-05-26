@@ -1,13 +1,13 @@
 /**
-import { Logger } from './Logger';
-
-const logger = new Logger('error-messages-examples');
  * Example usage of the enhanced error messaging system
  * Demonstrates how the new error system provides better user experience
  */
 
+import { Logger } from './Logger';
 import { ValidationError, NetworkError, StorageError } from '../types/errors';
 import { displayFriendlyError, ErrorContext } from './error-messages';
+
+const logger = new Logger('error-messages-examples');
 
 // Example 1: Validation error with field context
 const validationExample = () => {

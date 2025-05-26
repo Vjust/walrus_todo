@@ -145,6 +145,8 @@ export interface CreateTodoParams {
   private?: boolean;
   /** Where the todo is stored (local, blockchain, or both) */
   storageLocation?: StorageLocation;
+  /** URL to the todo image stored on Walrus */
+  imageUrl?: string;
 }
 
 /**
@@ -184,7 +186,7 @@ export interface TransactionResult {
   /** Gas cost of the transaction */
   gasCost?: number;
   /** Additional metadata about the transaction */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 /**
@@ -205,5 +207,5 @@ export interface ErrorContext {
   /** List name if relevant */
   listName?: string;
   /** Additional context data */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean | null | undefined>;
 }

@@ -172,7 +172,7 @@ export function toErrorWithMessage(maybeError: unknown): { message: string } {
     typeof maybeError === 'object' &&
     maybeError !== null &&
     'message' in maybeError &&
-    typeof (maybeError as any).message === 'string'
+    typeof (maybeError as Record<string, unknown>).message === 'string'
   ) {
     return maybeError as { message: string };
   }

@@ -48,8 +48,7 @@ export default class Provider extends BaseCommand {
     await super.init();
 
     // Initialize the verifier adapter
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const config = await this.configService.getConfig();
+    // const _config = await this.configService.getConfig();
     // packageId and registryId would be used in real implementation
     // const packageId = config.packageId || '';
     // const registryId = config.registryId || '';
@@ -221,7 +220,7 @@ export default class Provider extends BaseCommand {
 
   // Helper methods
 
-  private formatTable(data: Record<string, any>[]): string {
+  private formatTable(data: Record<string, string | number | boolean>[]): string {
     if (data.length === 0) return 'No data';
 
     // Extract column names

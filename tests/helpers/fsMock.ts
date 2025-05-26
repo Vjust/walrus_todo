@@ -19,14 +19,14 @@ export interface MockedFs {
 }
 
 export interface MockedFsPromises {
-  readFile: jest.MockedFunction<any>;
-  writeFile: jest.MockedFunction<any>;
-  mkdir: jest.MockedFunction<any>;
-  unlink: jest.MockedFunction<any>;
-  rmdir: jest.MockedFunction<any>;
-  readdir: jest.MockedFunction<any>;
-  access: jest.MockedFunction<any>;
-  stat: jest.MockedFunction<any>;
+  readFile: jest.MockedFunction<(path: string, encoding?: BufferEncoding) => Promise<string | Buffer>>;
+  writeFile: jest.MockedFunction<(path: string, data: string | Buffer, options?: unknown) => Promise<void>>;
+  mkdir: jest.MockedFunction<(path: string, options?: unknown) => Promise<void>>;
+  unlink: jest.MockedFunction<(path: string) => Promise<void>>;
+  rmdir: jest.MockedFunction<(path: string) => Promise<void>>;
+  readdir: jest.MockedFunction<(path: string) => Promise<string[]>>;
+  access: jest.MockedFunction<(path: string) => Promise<void>>;
+  stat: jest.MockedFunction<(path: string) => Promise<{ isFile(): boolean; isDirectory(): boolean }>>;
 }
 
 // Global mock instances that all tests can use

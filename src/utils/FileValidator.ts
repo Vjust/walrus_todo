@@ -21,7 +21,7 @@ export interface FileMetadata {
   height?: number;
   checksum: string;
   extension: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class FileValidator {

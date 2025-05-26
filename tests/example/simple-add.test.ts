@@ -2,6 +2,9 @@
  * Simplified test for the add command without using @oclif/test
  */
 
+import { TodoService } from '../../src/services/todoService';
+import { execSync } from 'child_process';
+
 jest.mock('../../src/services/todoService');
 
 // Mock command execution
@@ -9,8 +12,8 @@ jest.mock('child_process', () => ({
   execSync: jest.fn(),
 }));
 
-// Sample test data
-const sampleTodo = {
+// Sample test data for add command
+const addTestTodo = {
   id: 'test-todo-id',
   title: 'Test Todo',
   description: 'Test Description',
@@ -28,12 +31,12 @@ describe('Add Command', () => {
     jest.clearAllMocks();
 
     // Mock TodoService methods
-    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(sampleTodo);
+    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(addTestTodo);
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
       id: 'default',
       name: 'default',
       owner: 'default-owner',
-      todos: [sampleTodo],
+      todos: [addTestTodo],
       version: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -78,6 +81,6 @@ describe('Add Command', () => {
       'default',
       newTodo
     );
-    expect(result).toEqual(sampleTodo); // Returns our mocked todo
+    expect(result).toEqual(addTestTodo); // Returns our mocked todo
   });
 });

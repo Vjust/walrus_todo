@@ -102,7 +102,8 @@ export class FuzzGenerator {
       new Error('Invalid response'),
       new Error('Server error'),
     ];
-    return errors[Math.floor(Math.random() * errors.length)];
+    const selectedError = errors[Math.floor(Math.random() * errors.length)];
+    return selectedError ?? new Error('Unknown network error');
   }
 
   // Generate random blockchain-specific data

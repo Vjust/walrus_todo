@@ -1,15 +1,9 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { PermissionManager } from '../../src/services/permission-service';
-import { AIPermissionManager } from '../../src/services/ai/AIPermissionManager';
 import { Permission, UserRole } from '../../src/types/permissions';
 
 describe('Permission Fuzzer Tests', () => {
-  let permissionManager: PermissionManager;
-  let aiPermissionManager: AIPermissionManager;
-
   beforeEach(() => {
-    permissionManager = new PermissionManager();
-    aiPermissionManager = new AIPermissionManager();
+    // Variables defined for potential use but not currently utilized
   });
 
   describe('Random Permission Combination Testing', () => {
@@ -53,19 +47,21 @@ describe('Permission Fuzzer Tests', () => {
 
         // Test permission check
         let hasPermission = false;
+        let error: unknown;
         try {
           if (user.role === 'admin' || user.permissions.includes('admin:all')) {
             hasPermission = true;
           } else {
             hasPermission = user.permissions.includes(requestedPermission);
           }
-
-          // Verify the result is a boolean
-          expect(typeof hasPermission).toBe('boolean');
-        } catch (_error) {
-          // Should not throw errors
-          expect(error).toBeUndefined();
+        } catch (caughtError) {
+          error = caughtError;
         }
+
+        // Verify the result is a boolean
+        expect(typeof hasPermission).toBe('boolean');
+        // Should not throw errors
+        expect(error).toBeUndefined();
       }
     });
 
@@ -143,7 +139,7 @@ describe('Permission Fuzzer Tests', () => {
         };
 
         // With parent permission, all children should be accessible
-        pattern.children.forEach(child => {
+        pattern.children.forEach(_child => {
           const hasPermission = user.permissions.includes(
             pattern.parent as Permission
           );
@@ -218,15 +214,15 @@ describe('Permission Fuzzer Tests', () => {
     it('should handle edge cases with empty or invalid permissions', () => {
       const edgeCases = [
         { permissions: [], check: 'read:todo', expected: false },
-        { permissions: null as any, check: 'read:todo', expected: false },
-        { permissions: undefined as any, check: 'read:todo', expected: false },
+        { permissions: null as unknown as Permission[], check: 'read:todo', expected: false },
+        { permissions: undefined as unknown as Permission[], check: 'read:todo', expected: false },
         {
-          permissions: ['invalid:permission'] as any,
+          permissions: ['invalid:permission'] as unknown as Permission[],
           check: 'read:todo',
           expected: false,
         },
         {
-          permissions: [123, 'read:todo'] as any,
+          permissions: [123, 'read:todo'] as unknown as Permission[],
           check: 'read:todo',
           expected: true,
         },
@@ -246,7 +242,7 @@ describe('Permission Fuzzer Tests', () => {
               testCase.check as Permission
             );
           }
-        } catch (_error) {
+        } catch (error) {
           hasPermission = false;
         }
 

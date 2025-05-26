@@ -3,7 +3,7 @@
  * Provides consistent error handling, logging, and display throughout the application.
  */
 
-import * as chalkModule from 'chalk';
+import chalk from 'chalk';
 import { BaseError } from '../../types/errors/consolidated/BaseError';
 import { CLIError } from '../../types/errors/consolidated/CLIError';
 import { Logger } from '../Logger';
@@ -45,8 +45,7 @@ const toBaseError = (error: unknown): BaseError => {
   });
 };
 
-// Use default export if available, otherwise use the module itself
-const chalk = chalkModule.default || chalkModule;
+// Chalk is imported directly above
 
 /**
  * Options for centralized error handling
@@ -95,8 +94,7 @@ export function handleError(
     exitCode: configuredExitCode,
     logStack = false,
     prefix = '',
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    context: _additionalContext = {}, // Context for future error handling
+    context: additionalContext = {}, // Context for future error handling
   } = handlerOptions;
 
   // Normalize the error
@@ -129,8 +127,9 @@ export function handleError(
     }
 
     // Display context if available and requested
-    if (baseError.context && Object.keys(baseError.context).length > 0) {
-      logger.error(`${chalk.dim('Context:')} ${JSON.stringify(baseError.context, null, 2)}`);
+    const combinedContext = { ...baseError.context, ...additionalContext };
+    if (Object.keys(combinedContext).length > 0) {
+      logger.error(`${chalk.dim('Context:')} ${JSON.stringify(combinedContext, null, 2)}`);
     }
 
     // Display recovery information

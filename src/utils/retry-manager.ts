@@ -431,6 +431,7 @@ export class RetryManager {
 
     let lastNode: NetworkNode | null = null;
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       retryContext.attempt++;
 
@@ -463,7 +464,7 @@ export class RetryManager {
         lastNode = node;
 
         const startTime = Date.now();
-        let timeoutId: NodeJS.Timeout;
+        let timeoutId: NodeJS.Timeout | undefined;
 
         // Execute with timeout and network quality monitoring
         try {
@@ -482,7 +483,9 @@ export class RetryManager {
           ]);
 
           // Operation succeeded
-          clearTimeout(timeoutId! as unknown as NodeJS.Timeout);
+          if (timeoutId) {
+            clearTimeout(timeoutId as unknown as NodeJS.Timeout);
+          }
           const responseTime = Date.now() - startTime;
 
           // Update node health and circuit breaker
@@ -492,13 +495,15 @@ export class RetryManager {
           return result;
         } catch (error) {
           // Always clear timeout to prevent memory leaks
-          clearTimeout(timeoutId! as unknown as NodeJS.Timeout);
+          if (timeoutId) {
+            clearTimeout(timeoutId as unknown as NodeJS.Timeout);
+          }
           throw error;
         }
       } catch (error) {
         const errorObj =
           error instanceof Error ? error : new Error(String(error));
-        const node = lastNode!;
+        const node = lastNode || { url: 'unknown', priority: 1 };
 
         // Update node health and circuit breaker
         this.updateNodeHealth(node.url, false);
@@ -632,7 +637,7 @@ export class RetryManager {
       // Adapt the onRetry callback to match instance method's parameter order
       onRetry: options.onRetry
         ? (error: Error, attempt: number, delay: number) => {
-            options.onRetry!(attempt, error, delay);
+            options.onRetry(attempt, error, delay);
           }
         : undefined,
     });

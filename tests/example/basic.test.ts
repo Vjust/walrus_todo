@@ -2,10 +2,12 @@
  * Basic test file to verify Jest is working correctly
  */
 
+import { TodoService } from '../../src/services/todoService';
+
 jest.mock('../../src/services/todoService');
 
-// Sample test data
-const sampleTodo = {
+// Sample test data for basic tests
+const basicTestTodo = {
   id: 'test-todo-id',
   title: 'Test Todo',
   description: 'Test Description',
@@ -23,12 +25,12 @@ describe('Basic Jest Test', () => {
     jest.clearAllMocks();
 
     // Mock TodoService methods
-    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(sampleTodo);
+    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(basicTestTodo);
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
       id: 'default',
       name: 'default',
       owner: 'default-owner',
-      todos: [sampleTodo],
+      todos: [basicTestTodo],
       version: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -41,12 +43,12 @@ describe('Basic Jest Test', () => {
 
   it('should mock TodoService correctly', async () => {
     const todoService = new TodoService();
-    const result = await todoService.addTodo('default', sampleTodo);
+    const result = await todoService.addTodo('default', basicTestTodo);
 
-    expect(result).toEqual(sampleTodo);
+    expect(result).toEqual(basicTestTodo);
     expect(TodoService.prototype.addTodo).toHaveBeenCalledWith(
       'default',
-      sampleTodo
+      basicTestTodo
     );
   });
 
@@ -61,7 +63,7 @@ describe('Basic Jest Test', () => {
     );
 
     const todoService = new TodoService();
-    const result = await todoService.addTodo('default', sampleTodo);
+    const result = await todoService.addTodo('default', basicTestTodo);
 
     expect(result.id).toEqual('new-id');
     expect(result.completed).toEqual(true);

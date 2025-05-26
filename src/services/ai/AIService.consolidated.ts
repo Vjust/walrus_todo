@@ -62,6 +62,24 @@ export interface EffortResult {
   [todoId: string]: EffortEstimate;
 }
 
+export interface TodoAnalysisResult {
+  productivity_insights: {
+    completion_rate: number;
+    average_duration: number;
+    peak_activity_periods: string[];
+  };
+  patterns: {
+    common_categories: string[];
+    recurring_themes: string[];
+    workflow_efficiency: number;
+  };
+  recommendations: {
+    optimization_suggestions: string[];
+    priority_adjustments: Record<string, number>;
+    time_management_tips: string[];
+  };
+}
+
 /**
  * Service responsible for AI-powered operations on todo items using various language models.
  * Provides a unified interface for todo-related AI operations with optional blockchain
@@ -146,7 +164,7 @@ export class AIService {
     try {
       const defaultAdapter = AIProviderFactory.createDefaultAdapter();
       this.modelAdapter = defaultAdapter;
-    } catch (_error) {
+    } catch (error) {
       this.logger.error('Failed to initialize with default adapter:', error);
       // Set a minimal fallback adapter to avoid null reference errors
       this.modelAdapter = AIProviderFactory.createFallbackAdapter();
@@ -187,9 +205,10 @@ export class AIService {
         options: this.options,
         credentialService: secureCredentialService,
       });
-    } catch (_error) {
-      this.logger.error('Failed to initialize model adapter:', error);
-      throw error;
+    } catch (err: unknown) {
+      const typedError = err instanceof Error ? err : new Error(String(err));
+      this.logger.error('Failed to initialize model adapter:', typedError);
+      throw typedError;
     }
   }
 
@@ -242,9 +261,9 @@ export class AIService {
         options: { ...this.options, ...options },
         credentialService: secureCredentialService,
       });
-    } catch (_error) {
+    } catch (err: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        err instanceof Error ? err : new Error(String(err));
       this.logger.error(`Failed to set provider ${provider}:`, typedError);
       // errorMessage would be used for more detailed error reporting
       // const errorMessage = `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`;
@@ -343,13 +362,13 @@ export class AIService {
       this.resultCache.set(operation, todos, response);
 
       return response.result;
-    } catch (_error) {
+    } catch (err: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        err instanceof Error ? err : new Error(String(err));
       const summaryError = new Error(
         `Failed to summarize todos: ${typedError.message}`
       );
-      (summaryError as any).cause = typedError;
+      (summaryError as Error & { cause?: unknown }).cause = typedError;
       throw summaryError;
     }
   }
@@ -636,14 +655,14 @@ export class AIService {
    * @param todos - Array of todo items to analyze
    * @returns Promise resolving to a structured analysis object
    */
-  async analyze(todos: Todo[]): Promise<Record<string, any>> {
+  async analyze(todos: Todo[]): Promise<TodoAnalysisResult> {
     const operation = 'analyze';
     this.logger.debug(
       `Starting ${operation} operation with ${todos.length} todos`
     );
 
     // Check cache first
-    const cachedResult = this.resultCache.get<Record<string, any>>(
+    const cachedResult = this.resultCache.get<TodoAnalysisResult>(
       operation,
       todos
     );
@@ -674,7 +693,7 @@ export class AIService {
     const modelOptions = this.configManager.getModelOptions(operation);
 
     const response = await this.modelAdapter.completeStructured<
-      Record<string, any>
+      TodoAnalysisResult
     >({
       prompt: promptTemplate,
       input: { todos: todoStr },
@@ -685,7 +704,23 @@ export class AIService {
     // Cache the result
     this.resultCache.set(operation, todos, response);
 
-    return response.result || {};
+    return response.result || {
+      productivity_insights: {
+        completion_rate: 0,
+        average_duration: 0,
+        peak_activity_periods: []
+      },
+      patterns: {
+        common_categories: [],
+        recurring_themes: [],
+        workflow_efficiency: 0
+      },
+      recommendations: {
+        optimization_suggestions: [],
+        priority_adjustments: {},
+        time_management_tips: []
+      }
+    };
   }
 
   /**
@@ -700,7 +735,7 @@ export class AIService {
   async analyzeWithVerification(
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
-  ): Promise<VerifiedAIResult<Record<string, any>>> {
+  ): Promise<VerifiedAIResult<TodoAnalysisResult>> {
     if (!this.verificationService) {
       throw new Error('Verification service not initialized');
     }
@@ -765,13 +800,14 @@ export class AIService {
         });
 
         return tags;
-      } catch (_error) {
-        this.logger.error('Failed to parse suggested tags:', error);
+      } catch (parseError: unknown) {
+        const typedParseError = parseError instanceof Error ? parseError : new Error(String(parseError));
+        this.logger.error('Failed to parse suggested tags:', typedParseError);
         throw new Error('Failed to parse tags response: ' + response.result);
       }
-    } catch (_error) {
+    } catch (err: unknown) {
       const typedError =
-        error instanceof Error ? error : new Error(String(error));
+        err instanceof Error ? err : new Error(String(err));
       this.logger.error(`Failed to suggest tags: ${typedError.message}`);
       throw typedError;
     }
@@ -839,8 +875,9 @@ export class AIService {
         );
         return 'medium';
       }
-    } catch (_error) {
-      this.logger.error('Priority suggestion error:', error);
+    } catch (err: unknown) {
+      const typedError = err instanceof Error ? err : new Error(String(err));
+      this.logger.error('Priority suggestion error:', typedError);
       return 'medium'; // Default to medium on error
     }
   }

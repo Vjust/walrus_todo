@@ -1,7 +1,8 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import * as configServiceModule from '../../../src/services/config-service';
+import { ConfigService } from '../../../src/services/config-service';
 
 import { envConfig, getEnv } from '../../../src/utils/environment-config';
 import {
@@ -9,8 +10,18 @@ import {
   saveConfigToFile,
 } from '../../../src/utils/config-loader';
 import type { Config, Todo, TodoList } from '../../../src/types';
-import type { Mock } from 'jest';
+import { CLIError } from '../../../src/types/errors';
 // Using jest fs mock directly
+const mockFsPromises = {
+  access: jest.fn(),
+  mkdir: jest.fn(),
+  writeFile: jest.fn(),
+  readFile: jest.fn(),
+  readdir: jest.fn(),
+  unlink: jest.fn(),
+};
+
+// Add to mockFs.promises in beforeEach
 
 // Mock dependencies
 jest.mock('fs');
@@ -19,9 +30,9 @@ jest.mock('../../../src/utils/config-loader');
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 const mockEnvConfig = envConfig as jest.Mocked<typeof envConfig>;
-const mockGetEnv = getEnv as Mock;
-const mockLoadConfigFile = loadConfigFile as Mock;
-const mockSaveConfigToFile = saveConfigToFile as Mock;
+const mockGetEnv = getEnv as jest.MockedFunction<typeof getEnv>;
+const mockLoadConfigFile = loadConfigFile as jest.MockedFunction<typeof loadConfigFile>;
+const mockSaveConfigToFile = saveConfigToFile as jest.MockedFunction<typeof saveConfigToFile>;
 
 describe('ConfigService', () => {
   let configService: ConfigService;
@@ -37,6 +48,11 @@ describe('ConfigService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock console methods to prevent output during tests
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // Setup basic fs mocks
     mockFs.existsSync.mockReturnValue(true);
@@ -125,21 +141,14 @@ describe('ConfigService', () => {
       mockFsPromises.access.mockRejectedValue(new Error('ENOENT'));
       mockFsPromises.mkdir.mockRejectedValue(new Error('Permission denied'));
 
-      // Spy on console.error to verify error handling
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
       configService = new ConfigService();
 
       // Wait for the async directory creation to complete
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('Error creating todos directory')
       );
-
-      consoleErrorSpy.mockRestore();
     });
   });
 

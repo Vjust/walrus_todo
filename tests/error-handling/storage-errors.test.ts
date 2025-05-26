@@ -15,10 +15,28 @@ import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 // Import the storage components to test
 import { WalrusStorage } from '../../src/utils/walrus-storage';
 import { StorageManager } from '../../src/utils/StorageManager';
+// Unused imports removed during TypeScript cleanup
+// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 
 describe('Storage Error Handling', () => {
   // Mock client for WalrusStorage
-  let mockWalrusClient: any;
+  let mockWalrusClient: {
+    writeBlob: jest.Mock;
+    readBlob: jest.Mock;
+    getBlobInfo: jest.Mock;
+    getBlobMetadata: jest.Mock;
+    getBlobObject: jest.Mock;
+    verifyPoA: jest.Mock;
+    storageCost: jest.Mock;
+    executeCreateStorageTransaction: jest.Mock;
+    connect: jest.Mock;
+    getConfig: jest.Mock;
+    getWalBalance: jest.Mock;
+    getStorageUsage: jest.Mock;
+    getStorageProviders: jest.Mock;
+    getBlobSize: jest.Mock;
+    reset: jest.Mock;
+  };
   let walrusStorage: WalrusStorage;
   let storageManager: StorageManager;
 
@@ -38,6 +56,18 @@ describe('Storage Error Handling', () => {
       getBlobMetadata: jest.fn().mockResolvedValue({
         contentType: 'application/json',
       }),
+      // Additional required methods
+      getBlobObject: jest.fn(),
+      verifyPoA: jest.fn(),
+      storageCost: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      connect: jest.fn(),
+      getConfig: jest.fn(),
+      getWalBalance: jest.fn(),
+      getStorageUsage: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn(),
+      reset: jest.fn(),
     };
 
     // Create storage instances
@@ -55,8 +85,14 @@ describe('Storage Error Handling', () => {
     };
 
     storageManager = new StorageManager(
-      mockConfig as any,
-      mockValidator as any
+      mockConfig as {
+        storagePath: string;
+        getStoragePath(): string;
+        getMaxStorageSize(): number;
+      },
+      mockValidator as {
+        validateFile(file: unknown): Promise<boolean>;
+      }
     );
   });
 
@@ -78,12 +114,10 @@ describe('Storage Error Handling', () => {
       await expect(walrusStorage.store(testData)).rejects.toThrow(StorageError);
 
       // Test specific error properties
-      try {
-        await walrusStorage.store(testData);
-      } catch (error: any) {
-        expect(error.code).toContain('STORAGE_');
-        expect(error.shouldRetry).toBe(true);
-      }
+      await expect(walrusStorage.store(testData)).rejects.toMatchObject({
+        code: expect.stringContaining('STORAGE_'),
+        shouldRetry: true,
+      });
     });
 
     it('should handle timeout errors during read operations', async () => {
@@ -122,16 +156,14 @@ describe('Storage Error Handling', () => {
         /* missing required fields */
       };
 
-      await expect(walrusStorage.store(invalidData as any)).rejects.toThrow(
+      await expect(walrusStorage.store(invalidData as Record<string, unknown>)).rejects.toThrow(
         ValidationError
       );
 
       // Test specific error properties
-      try {
-        await walrusStorage.store(invalidData as any);
-      } catch (error: any) {
-        expect(error.publicMessage).toContain('Invalid value for title');
-      }
+      await expect(walrusStorage.store(invalidData as Record<string, unknown>)).rejects.toMatchObject({
+        publicMessage: expect.stringContaining('Invalid value for title'),
+      });
     });
   });
 
@@ -150,19 +182,16 @@ describe('Storage Error Handling', () => {
       };
 
       // Attempt to store data
-      try {
-        await walrusStorage.store(largeTestData);
-        fail('Should have thrown an error');
-      } catch (error: any) {
-        expect(error).toBeInstanceOf(StorageError);
-        expect(error.code).toBe(WalrusErrorCode.WALRUS_INSUFFICIENT_TOKENS);
-      }
+      await expect(walrusStorage.store(largeTestData)).rejects.toMatchObject({
+        constructor: StorageError,
+        code: WalrusErrorCode.WALRUS_INSUFFICIENT_TOKENS,
+      });
     });
 
     it('should handle size limit constraints', async () => {
       // Setup storage manager with low size limit
-      const checkSizeSpy = jest
-        .spyOn(storageManager as any, 'checkStorageSize')
+      jest
+        .spyOn(storageManager as StorageManager & { checkStorageSize(): void }, 'checkStorageSize')
         .mockImplementation(() => {
           throw new ValidationError('Data exceeds maximum allowed size', {
             field: 'size',
@@ -183,12 +212,10 @@ describe('Storage Error Handling', () => {
       ).rejects.toThrow(ValidationError);
 
       // Verify error details
-      try {
-        await storageManager.storeObject('test-path', largeObject);
-      } catch (error: any) {
-        expect(error.code).toBe('VALIDATION_ERROR');
-        expect(error.recoverable).toBe(false);
-      }
+      await expect(storageManager.storeObject('test-path', largeObject)).rejects.toMatchObject({
+        code: 'VALIDATION_ERROR',
+        recoverable: false,
+      });
     });
   });
 
@@ -205,17 +232,15 @@ describe('Storage Error Handling', () => {
       );
 
       // Verify specific error details
-      try {
-        await walrusStorage.retrieve('corrupted-id');
-      } catch (error: any) {
-        expect(error.code).toContain('PARSE');
-      }
+      await expect(walrusStorage.retrieve('corrupted-id')).rejects.toMatchObject({
+        code: expect.stringContaining('PARSE'),
+      });
     });
 
     it('should detect and handle hash verification failures', async () => {
       // Create storage with verification
-      const verifyingSpy = jest
-        .spyOn(walrusStorage as any, 'verifyDataIntegrity')
+      jest
+        .spyOn(walrusStorage as WalrusStorage & { verifyDataIntegrity(): void }, 'verifyDataIntegrity')
         .mockImplementation(() => {
           throw new StorageError('Data integrity check failed: hash mismatch', {
             operation: 'verify',
@@ -249,19 +274,20 @@ describe('Storage Error Handling', () => {
               id: 'retry-test',
               title: 'Retry Test',
             });
-          } catch (error: any) {
+          } catch (error: unknown) {
+            attempts++;
             if (
               error instanceof StorageError &&
               error.shouldRetry &&
-              attempts < maxAttempts - 1
+              attempts < maxAttempts
             ) {
-              attempts++;
               await new Promise(resolve => setTimeout(resolve, 10));
             } else {
               throw error;
             }
           }
         }
+        throw new Error('Maximum retry attempts exceeded');
       };
 
       // Execute with retry
@@ -294,8 +320,8 @@ describe('Storage Error Handling', () => {
 
       // Mock the storage manager to use fallback
       const fallbackSpy = jest
-        .spyOn(storageManager as any, 'useFallbackStorage')
-        .mockImplementation(async data => {
+        .spyOn(storageManager as StorageManager & { useFallbackStorage(data: unknown): Promise<{ success: boolean; location: string; id: string }> }, 'useFallbackStorage')
+        .mockImplementation(async (data: { id: string }) => {
           // Simulate local storage success
           return { success: true, location: 'local', id: data.id };
         });
@@ -334,17 +360,15 @@ describe('Storage Error Handling', () => {
       errorSimulator.simulateErrorOnMethod(walrusStorage, 'store', 'storeData');
 
       // Make multiple store attempts
-      const results = [];
       const testData = { id: 'test-1', title: 'Test Todo' };
+      const promises = Array.from({ length: 10 }, () =>
+        walrusStorage.store(testData).then(
+          result => ({ success: true, result }),
+          error => ({ success: false, error: (error as Error).message })
+        )
+      );
 
-      for (let i = 0; i < 10; i++) {
-        try {
-          const result = await walrusStorage.store(testData);
-          results.push({ success: true, result });
-        } catch (error: any) {
-          results.push({ success: false, error: error.message });
-        }
-      }
+      const results = await Promise.all(promises);
 
       // Verify mix of successes and failures
       const successes = results.filter(r => r.success).length;

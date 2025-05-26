@@ -9,7 +9,7 @@ import { CommandSanitizer } from '../utils/CommandSanitizer';
 import { envConfig, getEnv } from '../utils/environment-config';
 import { saveConfigToFile } from '../utils/config-loader';
 import { CLI_CONFIG } from '../constants';
-import path from 'path';
+import * as path from 'path';
 
 /**
  * @class ConfigureCommand
@@ -251,7 +251,7 @@ export default class ConfigureCommand extends BaseCommand {
    */
   private logEnvVar(
     key: string,
-    envVars: Record<string, any>,
+    envVars: Record<string, { value: unknown; source: string }>,
     isSensitive = false
   ): void {
     const varInfo = envVars[key];
@@ -338,7 +338,7 @@ export default class ConfigureCommand extends BaseCommand {
       CommandSanitizer.sanitizeWalletAddress(walletAddress);
 
     // Save to config
-    const configObj: Record<string, any> = {
+    const configObj: Record<string, string | boolean> = {
       NETWORK: sanitizedNetwork,
       WALLET_ADDRESS: sanitizedWalletAddress,
     };
@@ -389,7 +389,7 @@ export default class ConfigureCommand extends BaseCommand {
     const sanitizedTempStorage = CommandSanitizer.sanitizePath(tempStorage);
 
     // Save to config
-    const configObj: Record<string, any> = {
+    const configObj: Record<string, string | boolean> = {
       STORAGE_PATH: sanitizedStoragePath,
       TEMPORARY_STORAGE: sanitizedTempStorage,
       ENCRYPTED_STORAGE: encryptedStorage,
@@ -555,7 +555,7 @@ export default class ConfigureCommand extends BaseCommand {
     if (ollamaApiKey === '*****') ollamaApiKey = getEnv('OLLAMA_API_KEY') || '';
 
     // Save to config
-    const configObj: Record<string, any> = {
+    const configObj: Record<string, string | number | boolean> = {
       AI_DEFAULT_PROVIDER: provider,
       AI_DEFAULT_MODEL: model,
       AI_TEMPERATURE: parseFloat(temperature),
@@ -575,8 +575,8 @@ export default class ConfigureCommand extends BaseCommand {
     const configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
 
     // Separate sensitive values from standard config
-    const sensitiveConfig: Record<string, any> = {};
-    const standardConfig: Record<string, any> = {};
+    const sensitiveConfig: Record<string, string | number | boolean> = {};
+    const standardConfig: Record<string, string | number | boolean> = {};
 
     for (const [key, value] of Object.entries(configObj)) {
       if (
@@ -670,7 +670,7 @@ export default class ConfigureCommand extends BaseCommand {
     });
 
     // Save to config
-    const configObj: Record<string, any> = {
+    const configObj: Record<string, string | number | boolean> = {
       REQUIRE_SIGNATURE_VERIFICATION: signatureVerification,
       ENABLE_BLOCKCHAIN_VERIFICATION: blockchainVerification,
       CREDENTIAL_KEY_ITERATIONS: parseInt(keyIterations),
@@ -729,7 +729,14 @@ export default class ConfigureCommand extends BaseCommand {
   /**
    * Configure all settings
    */
-  private async configureAll(flags: any): Promise<void> {
+  private async configureAll(flags: {
+    network?: string;
+    walletAddress?: string;
+    'env-only'?: boolean;
+    view?: boolean;
+    section?: string;
+    reset?: boolean;
+  }): Promise<void> {
     // Start with network settings
     let network = flags.network;
     let walletAddress = flags.walletAddress;

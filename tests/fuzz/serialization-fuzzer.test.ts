@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-conditional-expect */
 import { FuzzGenerator } from '../helpers/fuzz-generator';
 import { TodoSerializer } from '../../src/utils/todo-serializer';
 import { Todo, TodoList } from '../../src/types/todo';
@@ -97,21 +98,25 @@ describe('Serialization Fuzzing Tests', () => {
               );
             }
 
-            case 'invalid_utf8':
+            case 'invalid_utf8': {
               return Buffer.from([0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa]);
+            }
 
-            case 'random_bytes':
+            case 'random_bytes': {
               return Buffer.from(
                 Array.from({ length: fuzzer.number(10, 1000) }, () =>
                   fuzzer.number(0, 255)
                 )
               );
+            }
 
-            case 'empty':
+            case 'empty': {
               return Buffer.from([]);
+            }
 
-            default:
-              return Buffer.from('invalid');
+            default: {
+              return Buffer.from([]);
+            }
           }
         },
         { minLength: 20, maxLength: 50 }
@@ -136,15 +141,16 @@ describe('Serialization Fuzzing Tests', () => {
           ])[0];
 
           switch (type) {
-            case 'missing_required_fields':
+            case 'missing_required_fields': {
               return Buffer.from(
                 JSON.stringify({
                   title: fuzzer.string(),
                   // Missing id, completed, priority, etc.
                 })
               );
+            }
 
-            case 'wrong_types':
+            case 'wrong_types': {
               return Buffer.from(
                 JSON.stringify({
                   id: fuzzer.number(), // Should be string
@@ -157,8 +163,9 @@ describe('Serialization Fuzzing Tests', () => {
                   private: fuzzer.string(), // Should be boolean
                 })
               );
+            }
 
-            case 'extra_fields':
+            case 'extra_fields': {
               return Buffer.from(
                 JSON.stringify({
                   id: fuzzer.string(),
@@ -175,8 +182,9 @@ describe('Serialization Fuzzing Tests', () => {
                   randomField3: fuzzer.array(() => fuzzer.string()),
                 })
               );
+            }
 
-            case 'null_values':
+            case 'null_values': {
               return Buffer.from(
                 JSON.stringify({
                   id: null,
@@ -189,9 +197,10 @@ describe('Serialization Fuzzing Tests', () => {
                   private: null,
                 })
               );
+            }
 
             case 'circular_reference': {
-              const obj: any = {
+              const obj: Record<string, unknown> = {
                 id: fuzzer.string(),
                 title: fuzzer.string(),
                 completed: fuzzer.boolean(),
@@ -211,8 +220,9 @@ describe('Serialization Fuzzing Tests', () => {
               }
             }
 
-            default:
+            default: {
               return Buffer.from('not even json');
+            }
           }
         },
         { minLength: 30, maxLength: 100 }
@@ -252,7 +262,7 @@ describe('Serialization Fuzzing Tests', () => {
           ])[0];
 
           switch (size) {
-            case 'huge_string':
+            case 'huge_string': {
               return {
                 id: fuzzer.string({ minLength: 10000, maxLength: 100000 }),
                 title: fuzzer.string({
@@ -272,8 +282,9 @@ describe('Serialization Fuzzing Tests', () => {
                 updatedAt: new Date().toISOString(),
                 private: false,
               } as Todo;
+            }
 
-            case 'many_tags':
+            case 'many_tags': {
               return {
                 id: fuzzer.string(),
                 title: fuzzer.string(),
@@ -287,9 +298,10 @@ describe('Serialization Fuzzing Tests', () => {
                 updatedAt: new Date().toISOString(),
                 private: false,
               } as Todo;
+            }
 
             case 'deep_nesting': {
-              const todo: any = {
+              const todo: Todo & { customData?: Record<string, unknown> } = {
                 id: fuzzer.string(),
                 title: fuzzer.string(),
                 completed: false,
@@ -302,14 +314,15 @@ describe('Serialization Fuzzing Tests', () => {
               };
 
               // Create deep nesting
-              let current = todo.customData;
+              let current = todo.customData as Record<string, unknown>;
               for (let i = 0; i < 1000; i++) {
                 current.nested = { level: i };
-                current = current.nested;
+                current = current.nested as Record<string, unknown>;
               }
               return todo as Todo;
+            }
 
-            case 'max_unicode':
+            case 'max_unicode': {
               return {
                 id: fuzzer.string(),
                 title:
@@ -329,8 +342,9 @@ describe('Serialization Fuzzing Tests', () => {
                 updatedAt: new Date().toISOString(),
                 private: false,
               } as Todo;
+            }
 
-            default:
+            default: {
               return {
                 id: fuzzer.string(),
                 title: fuzzer.string(),
@@ -341,6 +355,7 @@ describe('Serialization Fuzzing Tests', () => {
                 updatedAt: new Date().toISOString(),
                 private: false,
               } as Todo;
+            }
           }
         },
         { minLength: 10, maxLength: 20 }
@@ -357,7 +372,7 @@ describe('Serialization Fuzzing Tests', () => {
           expect(deserialized).toHaveProperty('id');
           expect(deserialized).toHaveProperty('title');
           expect(deserialized).toHaveProperty('completed');
-        } catch (_error) {
+        } catch (error) {
           // Memory errors are expected for extreme sizes
           if (error instanceof RangeError || error instanceof Error) {
             expect(error.message).toMatch(/memory|size|Maximum|exceeded/i);
@@ -435,7 +450,7 @@ describe('Serialization Fuzzing Tests', () => {
           ])[0];
 
           switch (type) {
-            case 'truncated':
+            case 'truncated': {
               const validBuffer = TodoSerializer.todoListToBuffer({
                 id: '123',
                 name: 'Test List',
@@ -449,8 +464,9 @@ describe('Serialization Fuzzing Tests', () => {
                 0,
                 Math.floor(validBuffer.length * 0.3)
               );
+            }
 
-            case 'nested_corruption':
+            case 'nested_corruption': {
               const list = {
                 id: '123',
                 name: 'Test List',
@@ -468,12 +484,15 @@ describe('Serialization Fuzzing Tests', () => {
                 updatedAt: new Date().toISOString(),
               };
               return Buffer.from(JSON.stringify(list));
+            }
 
-            case 'partial_json':
+            case 'partial_json': {
               return Buffer.from('{"id": "123", "name": "Test", "owner": "0x');
+            }
 
-            default:
+            default: {
               return Buffer.from('invalid buffer data');
+            }
           }
         },
         { minLength: 20, maxLength: 50 }
@@ -496,7 +515,7 @@ describe('Serialization Fuzzing Tests', () => {
           ])[0];
 
           switch (type) {
-            case 'many_todos':
+            case 'many_todos': {
               return {
                 id: fuzzer.string(),
                 name: fuzzer.string(),
@@ -519,8 +538,9 @@ describe('Serialization Fuzzing Tests', () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               } as TodoList;
+            }
 
-            case 'huge_todos':
+            case 'huge_todos': {
               return {
                 id: fuzzer.string(),
                 name: fuzzer.string(),
@@ -553,9 +573,10 @@ describe('Serialization Fuzzing Tests', () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               } as TodoList;
+            }
 
-            case 'deep_nesting':
-              const list: any = {
+            case 'deep_nesting': {
+              const list: TodoList & { metadata?: Record<string, unknown> } = {
                 id: fuzzer.string(),
                 name: fuzzer.string(),
                 owner: fuzzer.blockchainData().address(),
@@ -567,14 +588,15 @@ describe('Serialization Fuzzing Tests', () => {
               };
 
               // Create deep nesting in metadata
-              let current = list.metadata;
+              let current = list.metadata as Record<string, unknown>;
               for (let i = 0; i < 500; i++) {
                 current.level = { depth: i, data: fuzzer.string() };
-                current = current.level;
+                current = current.level as Record<string, unknown>;
               }
               return list as TodoList;
+            }
 
-            default:
+            default: {
               return {
                 id: fuzzer.string(),
                 name: fuzzer.string(),
@@ -584,6 +606,7 @@ describe('Serialization Fuzzing Tests', () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               } as TodoList;
+            }
           }
         },
         { minLength: 5, maxLength: 10 }
@@ -599,7 +622,7 @@ describe('Serialization Fuzzing Tests', () => {
           expect(deserialized).toHaveProperty('name');
           expect(deserialized).toHaveProperty('owner');
           expect(Array.isArray(deserialized.todos)).toBe(true);
-        } catch (_error) {
+        } catch (error) {
           // Memory errors are expected for extreme sizes
           if (error instanceof RangeError || error instanceof Error) {
             expect(error.message).toMatch(/memory|size|Maximum|exceeded/i);
@@ -658,22 +681,27 @@ describe('Serialization Fuzzing Tests', () => {
           ])[0];
 
           switch (type) {
-            case 'empty_string':
+            case 'empty_string': {
               return Buffer.from('');
+            }
 
-            case 'null_byte':
+            case 'null_byte': {
               return Buffer.from('\0');
+            }
 
-            case 'utf16_surrogate':
+            case 'utf16_surrogate': {
               // Invalid UTF-16 surrogate pair
               return Buffer.from([0xdc, 0x00, 0xd8, 0x00]);
+            }
 
-            case 'invalid_unicode':
+            case 'invalid_unicode': {
               // Invalid unicode sequence
               return Buffer.from([0xc0, 0x80, 0xe0, 0x80, 0x80]);
+            }
 
-            default:
+            default: {
               return Buffer.from([]);
+            }
           }
         },
         { minLength: 10, maxLength: 30 }
@@ -716,7 +744,7 @@ describe('Serialization Fuzzing Tests', () => {
               const buffer = TodoSerializer.todoToBuffer(todo);
               const deserialized = TodoSerializer.bufferToTodo(buffer);
               resolve(deserialized);
-            } catch (_error) {
+            } catch (error) {
               reject(error);
             }
           })

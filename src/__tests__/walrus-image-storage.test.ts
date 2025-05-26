@@ -1,4 +1,3 @@
-import { WalrusClient } from '@mysten/walrus';
 import {
   createWalrusImageStorage,
 } from '../utils/walrus-image-storage';
@@ -6,16 +5,10 @@ import { KeystoreSigner } from '../utils/sui-keystore';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
+import { walrusModuleMock, type MockWalrusClient } from './helpers/walrus-client-mock';
 
 // Mock the external dependencies
-jest.mock('@mysten/walrus', () => ({
-  WalrusClient: jest.fn().mockImplementation(() => ({
-    readBlob: jest.fn(),
-    writeBlob: jest.fn(),
-    getBlobObject: jest.fn(),
-    verifyPoA: jest.fn(),
-  })),
-}));
+jest.mock('@mysten/walrus', () => walrusModuleMock);
 
 jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
@@ -46,9 +39,18 @@ jest.mock('child_process', () => ({
 }));
 
 describe('WalrusImageStorage', () => {
-  let mockSuiClient: any;
-  let mockWalrusClient: any;
-  let mockKeystoreSigner: any;
+  let mockSuiClient: {
+    connect: jest.Mock;
+    getBalance: jest.Mock;
+    getLatestSuiSystemState: jest.Mock;
+    getOwnedObjects: jest.Mock;
+    signAndExecuteTransactionBlock: jest.Mock;
+    executeTransactionBlock: jest.Mock;
+  };
+  let mockWalrusClient: MockWalrusClient;
+  let mockKeystoreSigner: {
+    fromPath: jest.Mock;
+  };
   let storage: ReturnType<typeof createWalrusImageStorage>;
 
   const mockImagePath = '/path/to/image.jpg';
@@ -60,12 +62,7 @@ describe('WalrusImageStorage', () => {
     jest.clearAllMocks();
 
     // Setup mock implementations
-    mockWalrusClient = {
-      readBlob: jest.fn(),
-      writeBlob: jest.fn(),
-      getBlobObject: jest.fn(),
-      verifyPoA: jest.fn(),
-    } as any;
+    mockWalrusClient = walrusModuleMock.WalrusClient() as MockWalrusClient;
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -74,7 +71,7 @@ describe('WalrusImageStorage', () => {
       getOwnedObjects: jest.fn(),
       signAndExecuteTransactionBlock: jest.fn(),
       executeTransactionBlock: jest.fn(),
-    } as any;
+    };
 
     mockKeystoreSigner = {
       fromPath: jest.fn().mockResolvedValue({
@@ -120,9 +117,9 @@ describe('WalrusImageStorage', () => {
     };
 
     // Mock constructor implementations
-    (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
+    // WalrusClient mock already set up in module mock
     // SuiClient mock already set up in module mock
-    (KeystoreSigner as any).mockImplementation(() => mockKeystoreSigner);
+    (KeystoreSigner as unknown as jest.Mock).mockImplementation(() => mockKeystoreSigner);
     (execSync as jest.Mock).mockImplementation((cmd: string): string => {
       if (cmd.includes('active-env')) return 'testnet';
       if (cmd.includes('active-address')) return '0xtest-address';

@@ -1,5 +1,4 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
-import { execSync } from 'child_process';
 import { ExpiryMonitor } from '../../utils/ExpiryMonitor';
 import { VaultManager, BlobRecord } from '../../utils/VaultManager';
 import { StorageError } from '../../types/errors/consolidated';
@@ -19,7 +18,6 @@ describe('ExpiryMonitor', () => {
   let mockWarningHandler: jest.Mock;
   let mockRenewalHandler: jest.Mock;
   let mockSigner: jest.Mocked<Signer>;
-  let mockExecSync: jest.SpyInstance;
   let mockLogger: jest.Mocked<Logger>;
 
   beforeEach(() => {
@@ -27,11 +25,13 @@ describe('ExpiryMonitor', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-    mockExecSync = jest.spyOn(execSync as any, 'default') as jest.SpyInstance;
-    mockExecSync.mockReturnValue(Buffer.from('testnet\n'));
+    // Mock execSync for network detection
+    jest.doMock('child_process', () => ({
+      execSync: jest.fn().mockReturnValue(Buffer.from('testnet\n'))
+    }));
   });
 
-  const testConfig = {
+  const getTestConfig = (signer: jest.Mocked<Signer>) => ({
     checkInterval: 1000,
     warningThreshold: 7,
     autoRenewThreshold: 3,
@@ -40,10 +40,50 @@ describe('ExpiryMonitor', () => {
       minAllocation: BigInt(1000),
       checkThreshold: 20,
     },
-    signer: mockSigner,
-  };
+    signer,
+  });
 
   beforeEach(() => {
+    mockSigner = {
+      signData: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
+      toSuiAddress: jest.fn().mockReturnValue('mock-address'),
+      getPublicKey: jest.fn().mockReturnValue({
+        toBase64: () => 'mock-base64',
+        toSuiAddress: () => 'mock-address',
+        equals: () => true,
+        verify: () => Promise.resolve(true),
+        verifyWithIntent: () => Promise.resolve(true),
+        flag: () => 0x00,
+        scheme: () => 'ED25519',
+        bytes: () => new Uint8Array([1, 2, 3]),
+      }),
+      getKeyScheme: jest.fn().mockReturnValue('ED25519'),
+      connect: jest.fn().mockReturnValue({
+        client: {},
+        signData: jest.fn(),
+        toSuiAddress: jest.fn(),
+        getPublicKey: jest.fn(),
+      }),
+      sign: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
+      signMessage: jest
+        .fn()
+        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
+      signTransaction: jest
+        .fn()
+        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
+      signAndExecuteTransaction: jest.fn().mockResolvedValue({
+        digest: 'mock-digest',
+        effects: {
+          status: { status: 'success' },
+          created: [{ reference: { objectId: 'mock-object-id' } }],
+        },
+      }),
+      signWithIntent: jest
+        .fn()
+        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
+      signPersonalMessage: jest.fn().mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
+    } as unknown as jest.Mocked<Signer>;
+
     mockVaultManager = {
       createVault: jest.fn(),
       saveBlobRecord: jest.fn(),
@@ -123,9 +163,9 @@ describe('ExpiryMonitor', () => {
       }),
       getBlobMetadata: jest.fn().mockResolvedValue({}),
       storageCost: jest.fn().mockResolvedValue({
-        storageCost: '100',
-        writeCost: '50',
-        totalCost: '150',
+        storageCost: BigInt(100),
+        writeCost: BigInt(50),
+        totalCost: BigInt(150),
       }),
       executeCertifyBlobTransaction: jest
         .fn()
@@ -156,45 +196,6 @@ describe('ExpiryMonitor', () => {
       ),
     } as unknown as jest.Mocked<WalrusClientExt>;
 
-    mockSigner = {
-      signData: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
-      toSuiAddress: jest.fn().mockReturnValue('mock-address'),
-      getPublicKey: jest.fn().mockReturnValue({
-        toBase64: () => 'mock-base64',
-        toSuiAddress: () => 'mock-address',
-        equals: () => true,
-        verify: () => Promise.resolve(true),
-        verifyWithIntent: () => Promise.resolve(true),
-        flag: () => 0x00,
-        scheme: () => 'ED25519',
-        bytes: () => new Uint8Array([1, 2, 3]),
-      }),
-      getKeyScheme: jest.fn().mockReturnValue('ED25519'),
-      connect: jest.fn().mockReturnValue({
-        client: {},
-        signData: jest.fn(),
-        toSuiAddress: jest.fn(),
-        getPublicKey: jest.fn(),
-      }),
-      sign: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),
-      signMessage: jest
-        .fn()
-        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
-      signTransaction: jest
-        .fn()
-        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
-      signAndExecuteTransaction: jest.fn().mockResolvedValue({
-        digest: 'mock-digest',
-        effects: {
-          status: { status: 'success' },
-          created: [{ reference: { objectId: 'mock-object-id' } }],
-        },
-      }),
-      signWithIntent: jest
-        .fn()
-        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
-    } as unknown as jest.Mocked<Signer>;
-
     mockWarningHandler = jest.fn().mockResolvedValue(undefined);
     mockRenewalHandler = jest.fn().mockResolvedValue(undefined);
 
@@ -203,10 +204,7 @@ describe('ExpiryMonitor', () => {
       mockWalrusClient,
       mockWarningHandler,
       mockRenewalHandler,
-      {
-        ...testConfig,
-        signer: mockSigner,
-      }
+      getTestConfig(mockSigner)
     );
   });
 
@@ -452,7 +450,7 @@ describe('ExpiryMonitor', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to check blob expiry',
         expect.any(Error),
-        expect.objectContaining({ config: testConfig })
+        expect.objectContaining({ config: getTestConfig(mockSigner) })
       );
     });
   });

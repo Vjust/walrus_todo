@@ -5,7 +5,6 @@ import {
 } from '../../../src/utils/error-handler';
 
 import * as errorMessages from '../../../src/utils/error-messages';
-import chalk from 'chalk';
 
 // Mock dependencies
 jest.mock('../../../src/utils/error-messages');
@@ -298,12 +297,16 @@ describe('Error Handler', () => {
     });
 
     it('should throw Error instance', () => {
+      let thrownError: unknown;
+      
       try {
         assert(false, 'Custom error message');
-      } catch (_error) {
-        expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toBe('Custom error message');
+      } catch (error) {
+        thrownError = error;
       }
+      
+      expect(thrownError).toBeInstanceOf(Error);
+      expect((thrownError as Error).message).toBe('Custom error message');
     });
 
     it('should work with type predicates', () => {

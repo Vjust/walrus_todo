@@ -6,13 +6,79 @@ import { Logger } from '../../utils/Logger';
 
 const logger = new Logger('ApiErrorHandler');
 
+/**
+ * Discriminated union for API error details
+ */
+export type ApiErrorDetails = 
+  | { kind: 'object'; data: Record<string, unknown> }
+  | { kind: 'array'; data: string[] }
+  | { kind: 'string'; data: string };
+
+/**
+ * API Error interface with better type safety
+ */
 export interface ApiError {
   error: string;
   message: string;
   code?: string;
   status?: number;
-  details?: any;
+  details?: ApiErrorDetails;
   stack?: string;
+}
+
+/**
+ * Legacy interface for backward compatibility
+ */
+export interface LegacyApiError {
+  error: string;
+  message: string;
+  code?: string;
+  status?: number;
+  details?: Record<string, unknown> | string[] | string;
+  stack?: string;
+}
+
+/**
+ * Type guards for error details
+ */
+export function isObjectDetails(details: ApiErrorDetails): details is { kind: 'object'; data: Record<string, unknown> } {
+  return details.kind === 'object';
+}
+
+export function isArrayDetails(details: ApiErrorDetails): details is { kind: 'array'; data: string[] } {
+  return details.kind === 'array';
+}
+
+export function isStringDetails(details: ApiErrorDetails): details is { kind: 'string'; data: string } {
+  return details.kind === 'string';
+}
+
+/**
+ * Factory functions for creating error details
+ */
+export function createObjectDetails(data: Record<string, unknown>): ApiErrorDetails {
+  return { kind: 'object', data };
+}
+
+export function createArrayDetails(data: string[]): ApiErrorDetails {
+  return { kind: 'array', data };
+}
+
+export function createStringDetails(data: string): ApiErrorDetails {
+  return { kind: 'string', data };
+}
+
+/**
+ * Normalize legacy details to discriminated union
+ */
+export function normalizeErrorDetails(details: Record<string, unknown> | string[] | string): ApiErrorDetails {
+  if (Array.isArray(details)) {
+    return createArrayDetails(details);
+  }
+  if (typeof details === 'string') {
+    return createStringDetails(details);
+  }
+  return createObjectDetails(details);
 }
 
 export function errorHandler(
@@ -22,22 +88,23 @@ export function errorHandler(
   _next: NextFunction
 ): void {
   // Log the error
-  logger.error('API Error:', {
-    method: req.method,
-    path: req.path,
-    error: err.message,
-    stack: err.stack,
+  logger.error('API Error:', err, {
+    requestMethod: (req as any).method,
+    requestPath: (req as any).path,
   });
 
   // Determine status code
   let status = 500;
   let code = 'INTERNAL_ERROR';
-  let details: any = undefined;
+  let details: ApiErrorDetails | undefined = undefined;
 
   if (err instanceof ValidationError) {
     status = 400;
     code = 'VALIDATION_ERROR';
-    details = (err as any).validationErrors;
+    const validationErrors = (err as ValidationError & { validationErrors?: Record<string, unknown> | string[] }).validationErrors;
+    if (validationErrors) {
+      details = normalizeErrorDetails(validationErrors);
+    }
   } else if (err instanceof NetworkError) {
     status = 503;
     code = 'NETWORK_ERROR';
@@ -80,14 +147,17 @@ export function errorHandler(
   }
 
   // Send response
-  res.status(status).json(errorResponse);
+  (res as any).status(status).json(errorResponse);
 }
 
 // Async error wrapper
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void | Response>
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req, res, next)).catch((error: unknown) => {
+      const typedError = error instanceof Error ? error : new Error(String(error));
+      (next as any)(typedError);
+    });
   };
 }

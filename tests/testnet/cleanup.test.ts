@@ -5,7 +5,7 @@ import {
 } from './cleanup';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Logger } from '../../src/utils/Logger';
+// import { _Logger } from '../../src/utils/Logger';
 
 /**
  * Tests for the cleanup utility

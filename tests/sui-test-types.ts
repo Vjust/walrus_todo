@@ -6,7 +6,7 @@ import type {
 import type { TransactionEffects } from '@mysten/sui/client';
 
 export const createMockSuiObjectResponse = (
-  fields: Record<string, any>
+  fields: Record<string, unknown>
 ): SuiObjectResponse =>
   ({
     data: {
@@ -16,7 +16,7 @@ export const createMockSuiObjectResponse = (
         hasPublicTransfer: true,
         fields,
       },
-    } as any,
+    } as const,
   }) as SuiObjectResponse;
 
 export const createMockTransactionResponse = (
@@ -115,7 +115,7 @@ export const createMockSystemStateResponse = (
   stakeSubsidyBalance: '0',
   stakeSubsidyCurrentDistributionAmount: '0',
   stakeSubsidyPeriodLength: '0',
-  stakeSubsidyDecreaseRate: '0',
+  stakeSubsidyDecreaseRate: 0,
   totalStake: '1000000',
   activeValidators: [],
   pendingActiveValidatorsId: '0x123',

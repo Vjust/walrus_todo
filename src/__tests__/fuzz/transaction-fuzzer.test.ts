@@ -20,9 +20,36 @@ describe('Transaction Fuzzing Tests', () => {
 
   beforeEach(() => {
     suiService = new SuiTestService({
-      network: 'testnet',
-      walletAddress: fuzzer.blockchainData().address(),
-      encryptedStorage: false,
+      activeNetwork: {
+        name: 'testnet',
+        fullnode: 'https://fullnode.testnet.sui.io'
+      },
+      activeAccount: {
+        address: fuzzer.blockchainData().address()
+      },
+      storage: {
+        defaultSize: 1024,
+        defaultEpochs: 5,
+        replicationFactor: 3,
+        directory: '/tmp',
+        temporaryDirectory: '/tmp',
+        maxRetries: 3,
+        retryDelay: 1000
+      },
+      todo: {
+        localStoragePath: '/tmp',
+        defaultCategories: [],
+        defaultPriority: 'medium' as const,
+        maxTitleLength: 100,
+        maxDescriptionLength: 1000,
+        defaultDueDateOffsetDays: 7,
+        expiryCheckInterval: 60000
+      },
+      walrus: {},
+      logging: {
+        level: 'info' as const,
+        console: false
+      }
     });
     nftContract = new MockNFTStorageContract('0x456');
   });
@@ -54,10 +81,12 @@ describe('Transaction Fuzzing Tests', () => {
               if (todos.length > 0) {
                 const randomTodo =
                   todos[Math.floor(Math.random() * todos.length)];
-                await suiService.updateTodo(listId, randomTodo.id, {
-                  text: op.text,
-                  completed: fuzzer.boolean(),
-                });
+                if (randomTodo) {
+                  await suiService.updateTodo(listId, randomTodo.id, {
+                    text: op.text,
+                    completed: fuzzer.boolean(),
+                  });
+                }
               }
               break;
             }

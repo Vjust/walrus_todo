@@ -23,13 +23,13 @@ export function requestLogger(
   const timestamp = new Date().toISOString();
 
   // Capture original end function
-  const originalEnd = res.end;
+  const originalEnd = (res as any).end;
   const chunks: Buffer[] = [];
 
   // Override end function to capture response details
-  res.end = function (...args: any[]): any {
+  (res as any).end = function (chunk?: unknown, encoding?: BufferEncoding, cb?: () => void): Response {
     // Restore original
-    res.end = originalEnd;
+    (res as any).end = originalEnd;
 
     // Calculate duration
     const duration = Date.now() - startTime;
@@ -38,45 +38,45 @@ export function requestLogger(
     let size = 0;
     if (chunks.length > 0) {
       size = Buffer.concat(chunks).length;
-    } else if (args[0]) {
-      size = Buffer.isBuffer(args[0])
-        ? args[0].length
-        : Buffer.byteLength(args[0]);
+    } else if (chunk) {
+      size = Buffer.isBuffer(chunk)
+        ? chunk.length
+        : Buffer.byteLength(String(chunk));
     }
 
     // Create log entry
     const logEntry: RequestLog = {
-      method: req.method,
-      url: req.originalUrl || req.url,
-      ip: req.ip || req.socket.remoteAddress || 'unknown',
-      userAgent: req.headers['user-agent'],
+      method: (req as any).method,
+      url: (req as any).originalUrl || (req as any).url,
+      ip: (req as any).ip || (req as any).socket?.remoteAddress || 'unknown',
+      userAgent: (req as any).headers['user-agent'],
       timestamp,
       duration,
-      status: res.statusCode,
+      status: (res as any).statusCode,
       size,
     };
 
     // Log based on status code
-    if (res.statusCode >= 500) {
+    if ((res as any).statusCode >= 500) {
       logger.error('Request failed', undefined, logEntry);
-    } else if (res.statusCode >= 400) {
+    } else if ((res as any).statusCode >= 400) {
       logger.warn('Request error', logEntry);
     } else {
       logger.info('Request completed', logEntry);
     }
 
     // Call original end
-    return originalEnd.call(res, ...args as any);
+    return originalEnd.call(res, chunk, encoding, cb);
   };
 
   // Capture response chunks for size calculation
-  const originalWrite = res.write;
-  res.write = function (...args: any[]): any {
-    if (args[0]) {
-      chunks.push(Buffer.isBuffer(args[0]) ? args[0] : Buffer.from(args[0]));
+  const originalWrite = (res as any).write;
+  (res as any).write = function (chunk: unknown, encoding?: BufferEncoding, cb?: (error?: Error | null) => void): boolean {
+    if (chunk) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
     }
-    return originalWrite.call(res, ...args as any);
+    return originalWrite.call(res, chunk, encoding, cb);
   };
 
-  next();
+  (next as any)();
 }

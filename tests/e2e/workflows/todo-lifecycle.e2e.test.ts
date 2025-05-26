@@ -20,10 +20,11 @@ describe('Todo Lifecycle E2E Workflow', () => {
         encoding: 'utf8',
       });
       return { output, error: '' };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const execError = error as { stdout?: string; stderr?: string; message?: string };
       return {
-        output: error.stdout || '',
-        error: error.stderr || error.message,
+        output: execError.stdout || '',
+        error: execError.stderr || execError.message || String(error),
       };
     }
   };
@@ -159,7 +160,7 @@ describe('Todo Lifecycle E2E Workflow', () => {
     });
 
     test('should not find deleted todo', () => {
-      const { output, error } = runCommand(`list ${todoId}`);
+      const { error } = runCommand(`list ${todoId}`);
 
       expect(error).toContain('Todo not found');
     });
@@ -310,19 +311,19 @@ describe('Todo Lifecycle E2E Workflow', () => {
 
   describe('Error Handling', () => {
     test('should handle invalid todo ID', () => {
-      const { output, error } = runCommand('complete invalid-id');
+      const { error } = runCommand('complete invalid-id');
 
       expect(error).toContain('Todo not found');
     });
 
     test('should handle missing required parameters', () => {
-      const { output, error } = runCommand('add');
+      const { error } = runCommand('add');
 
       expect(error).toContain('required');
     });
 
     test('should handle invalid priority', () => {
-      const { output, error } = runCommand('add "Test" --priority invalid');
+      const { error } = runCommand('add "Test" --priority invalid');
 
       expect(error).toContain('Invalid priority');
     });
@@ -386,7 +387,7 @@ describe('Todo Lifecycle E2E Workflow', () => {
       const results = await Promise.all(promises);
 
       // Verify all todos were created successfully
-      results.forEach((result: any) => {
+      results.forEach((result: { output: string; error: string; index: number }) => {
         expect(result.error).toBe('');
         expect(result.output).toContain('Todo added successfully');
       });

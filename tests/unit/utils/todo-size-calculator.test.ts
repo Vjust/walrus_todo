@@ -180,7 +180,7 @@ describe('TodoSizeCalculator', () => {
 
   describe('edge cases', () => {
     it('should handle circular references gracefully', () => {
-      const todo: any = {
+      const todo: Todo & { self?: unknown } = {
         id: '12345',
         title: 'Circular todo',
         completed: false,
@@ -189,7 +189,7 @@ describe('TodoSizeCalculator', () => {
       // Create circular reference
       todo.self = todo;
 
-      expect(() => calculator.calculateBytes(todo)).toThrow();
+      expect(() => calculator.calculateBytes(todo as Todo)).toThrow();
     });
 
     it('should handle very large strings', () => {
@@ -206,7 +206,7 @@ describe('TodoSizeCalculator', () => {
     });
 
     it('should handle special number values', () => {
-      const todo: any = {
+      const todo: Todo & { metadata?: Record<string, unknown> } = {
         id: '12345',
         title: 'Special numbers',
         completed: false,
@@ -222,7 +222,7 @@ describe('TodoSizeCalculator', () => {
 
       // JSON.stringify converts these to null or string representations
       const expectedSize = JSON.stringify(todo, null, 2).length;
-      const actualSize = calculator.calculateBytes(todo);
+      const actualSize = calculator.calculateBytes(todo as Todo);
 
       expect(actualSize).toBe(expectedSize);
     });

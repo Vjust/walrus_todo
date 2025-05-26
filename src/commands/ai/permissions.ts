@@ -10,7 +10,6 @@ import {
 } from '../../services/ai/AIPermissionManager';
 import chalk from 'chalk';
 import { KeystoreSigner } from '../../utils/sui-keystore';
-import { SignerAdapterImpl } from '../../utils/adapters/signer-adapter';
 import { createInterface } from 'readline';
 
 export default class AiPermissions extends BaseCommand {
@@ -96,7 +95,8 @@ export default class AiPermissions extends BaseCommand {
       // Initialize blockchain components
       const keystoreSigner = await this.getSuiSigner();
       const suiClient = keystoreSigner.getClient();
-      const signer = new SignerAdapterImpl(keystoreSigner);
+      // KeystoreSigner already implements SignerAdapter, so use it directly
+      const signer = keystoreSigner;
 
       // Create verifier adapter
       const verifierAdapter = new SuiAIVerifierAdapter(
@@ -132,12 +132,24 @@ export default class AiPermissions extends BaseCommand {
     const permissionManager = await this.initializePermissionManager();
 
     // For operations that don't require the permission manager, create a minimal one
-    const localPermissionManager =
-      permissionManager ||
-      initializePermissionManager(
-        secureCredentialManager,
-        new BlockchainVerifier({} as any) // Dummy verifier
-      );
+    let localPermissionManager = permissionManager;
+    
+    if (!localPermissionManager) {
+      try {
+        const keystoreSigner = await this.getSuiSigner();
+        localPermissionManager = initializePermissionManager(
+          secureCredentialManager,
+          new BlockchainVerifier(new SuiAIVerifierAdapter(keystoreSigner.getClient(), keystoreSigner, '', '')) // Dummy verifier
+        );
+      } catch (error) {
+        this.warn('Could not initialize permission manager with signer, using minimal setup');
+        // Use null values for minimal setup when signer is not available
+        localPermissionManager = initializePermissionManager(
+          secureCredentialManager,
+          new BlockchainVerifier(new SuiAIVerifierAdapter(null as never, null as never, '', ''))
+        );
+      }
+    }
 
     // Execute the requested operation
     switch (flags.operation) {
@@ -162,7 +174,7 @@ export default class AiPermissions extends BaseCommand {
   }
 
   private async listPermissions(
-    flags: any,
+    flags: { format?: string; provider?: string },
     permissionManager: AIPermissionManager
   ) {
     try {
@@ -270,7 +282,7 @@ export default class AiPermissions extends BaseCommand {
   }
 
   private async checkPermission(
-    flags: any,
+    flags: { provider?: string; aiOperation?: string; format?: string; verify?: boolean },
     permissionManager: AIPermissionManager
   ) {
     if (!flags.provider) {
@@ -354,7 +366,7 @@ export default class AiPermissions extends BaseCommand {
   }
 
   private async grantPermission(
-    flags: any,
+    flags: { provider?: string; permission?: string; aiOperation?: string; verify?: boolean },
     permissionManager: AIPermissionManager
   ) {
     if (!flags.provider) {
@@ -471,7 +483,7 @@ export default class AiPermissions extends BaseCommand {
   }
 
   private async revokePermission(
-    flags: any,
+    flags: { provider?: string; verify?: boolean },
     permissionManager: AIPermissionManager
   ) {
     if (!flags.provider) {
@@ -554,7 +566,7 @@ export default class AiPermissions extends BaseCommand {
   }
 
   private async registerOperation(
-    flags: any,
+    flags: { aiOperation?: string; permission?: string },
     permissionManager: AIPermissionManager | null
   ) {
     if (!permissionManager) {

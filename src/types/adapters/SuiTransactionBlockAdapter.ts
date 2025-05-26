@@ -1,7 +1,8 @@
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import { SignerAdapter } from './SignerAdapter';
 import { SuiClient } from '@mysten/sui/client';
 import { Logger } from '../../utils/Logger';
+import { TransactionType } from '../transaction';
 
 const logger = new Logger('SuiTransactionBlockAdapter');
 
@@ -100,7 +101,7 @@ export class DefaultSuiTransactionBlockAdapter
    * Create a new transaction block
    */
   createTransactionBlock(): TransactionBlock {
-    return new TransactionBlock();
+    return new Transaction();
   }
 
   /**
@@ -114,14 +115,14 @@ export class DefaultSuiTransactionBlockAdapter
       // Pass only valid transaction options
       // Cast the transaction directly to handle it correctly
       const result = await this.signer.signAndExecuteTransaction(
-        transactionBlock as any
+        transactionBlock as TransactionType
       );
 
       return result as TransactionResponse;
     } catch (_error) {
-      logger.error('Transaction execution failed:', error);
+      logger.error('Transaction execution failed:', _error);
       throw new Error(
-        `Transaction execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Transaction execution failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
     }
   }
@@ -135,12 +136,12 @@ export class DefaultSuiTransactionBlockAdapter
     typeArgs: string[] = [],
     options: TransactionOptions = {}
   ): Promise<TransactionResponse> {
-    const tx = new TransactionBlock();
+    const tx = new Transaction();
 
     // Create the move call with proper type handling
     tx.moveCall({
       target: target as `${string}::${string}::${string}`,
-      arguments: args as any[],
+      arguments: args as unknown[],
       typeArguments: typeArgs,
     });
 
@@ -156,15 +157,15 @@ export class DefaultSuiTransactionBlockAdapter
   ): Promise<unknown> {
     try {
       const result = await this.client.devInspectTransactionBlock({
-        transactionBlock: transactionBlock as any,
+        transactionBlock: transactionBlock as TransactionType,
         sender: this.signer.toSuiAddress(),
       });
 
       return result;
     } catch (_error) {
-      logger.error('Transaction inspection failed:', error);
+      logger.error('Transaction inspection failed:', _error);
       throw new Error(
-        `Transaction inspection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Transaction inspection failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
     }
   }

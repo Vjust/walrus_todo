@@ -1,5 +1,5 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -219,17 +219,16 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const { stdout } = await execAsync(`${cliPath} add "Todo to complete"`);
       const todoId = stdout.match(/ID:\s*(\d+)/)?.[1];
 
-      if (todoId) {
-        const metric = await measurePerformance(
-          `${cliPath} complete ${todoId}`,
-          'Complete command',
-          PERFORMANCE_THRESHOLDS.complete
-        );
+      expect(todoId).toBeDefined();
+      const metric = await measurePerformance(
+        `${cliPath} complete ${todoId}`,
+        'Complete command',
+        PERFORMANCE_THRESHOLDS.complete
+      );
 
-        expect(metric.executionTime).toBeLessThan(
-          PERFORMANCE_THRESHOLDS.complete.critical
-        );
-      }
+      expect(metric.executionTime).toBeLessThan(
+        PERFORMANCE_THRESHOLDS.complete.critical
+      );
     });
 
     it('should measure delete command performance', async () => {
@@ -237,17 +236,16 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const { stdout } = await execAsync(`${cliPath} add "Todo to delete"`);
       const todoId = stdout.match(/ID:\s*(\d+)/)?.[1];
 
-      if (todoId) {
-        const metric = await measurePerformance(
-          `${cliPath} delete ${todoId}`,
-          'Delete command',
-          PERFORMANCE_THRESHOLDS.delete
-        );
+      expect(todoId).toBeDefined();
+      const metric = await measurePerformance(
+        `${cliPath} delete ${todoId}`,
+        'Delete command',
+        PERFORMANCE_THRESHOLDS.delete
+      );
 
-        expect(metric.executionTime).toBeLessThan(
-          PERFORMANCE_THRESHOLDS.delete.critical
-        );
-      }
+      expect(metric.executionTime).toBeLessThan(
+        PERFORMANCE_THRESHOLDS.delete.critical
+      );
     });
   });
 
@@ -312,17 +310,16 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
       const { stdout } = await execAsync(`${cliPath} store --walrus --mock`);
       const blobId = stdout.match(/Blob ID:\s*([^\s]+)/)?.[1];
 
-      if (blobId) {
-        const metric = await measurePerformance(
-          `${cliPath} fetch ${blobId} --mock`,
-          'Fetch command (mock)',
-          PERFORMANCE_THRESHOLDS.fetch
-        );
+      expect(blobId).toBeDefined();
+      const metric = await measurePerformance(
+        `${cliPath} fetch ${blobId} --mock`,
+        'Fetch command (mock)',
+        PERFORMANCE_THRESHOLDS.fetch
+      );
 
-        expect(metric.executionTime).toBeLessThan(
-          PERFORMANCE_THRESHOLDS.fetch.critical
-        );
-      }
+      expect(metric.executionTime).toBeLessThan(
+        PERFORMANCE_THRESHOLDS.fetch.critical
+      );
     });
   });
 
@@ -332,14 +329,16 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
 
       // Measure adding many todos
       // console.log(`Adding ${todoCount} todos...`); // Removed console statement
-      const addStartTime = Date.now();
+      // Track timing for performance analysis
+      // const addStartTime = Date.now();
 
       for (let i = 0; i < todoCount; i++) {
         await execAsync(`${cliPath} add "Bulk test todo ${i}"`);
       }
 
-      const addEndTime = Date.now();
-      const bulkAddTime = addEndTime - addStartTime;
+      // const addEndTime = Date.now();
+      // Track bulk add time for potential future use
+      // const _bulkAddTime = addEndTime - addStartTime;
       // console.log(`Bulk add time: ${bulkAddTime}ms (${bulkAddTime / todoCount}ms per todo) // Removed console statement`);
 
       // Measure listing many todos
@@ -388,7 +387,8 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
         { cmd: 'delete --all --force', desc: 'Delete all todos' },
       ];
 
-      let previousMemory = process.memoryUsage();
+      // Track memory usage across operations
+      const metrics = [];
 
       for (const op of operations) {
         const metric = await measurePerformance(
@@ -396,11 +396,15 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
           op.desc,
           { warning: 5000, critical: 10000 }
         );
+        metrics.push(metric);
 
-        // console.log(`${op.desc} - Memory delta: ${(metric.memory.delta.heapUsed / 1024 / 1024) // Removed console statement.toFixed(2)}MB`);
-
-        previousMemory = metric.memory.after;
+        // Verify memory tracking is working
+        expect(metric.memory.delta).toBeDefined();
+        expect(metric.executionTime).toBeGreaterThan(0);
       }
+
+      // Verify all operations completed successfully
+      expect(metrics).toHaveLength(operations.length);
     });
   });
 
@@ -428,19 +432,31 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
         });
 
         // Compare with baseline if available
+        let percentChange = 0;
+        let hasBaselineMetric = false;
+        
         if (baseline) {
           const baselineMetric = baseline.results.find(r => r.command === cmd);
           if (baselineMetric) {
-            const percentChange =
+            percentChange =
               ((metric.executionTime - baselineMetric.executionTime) /
                 baselineMetric.executionTime) *
               100;
             // console.log(`${cmd}: ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2) // Removed console statement}% from baseline`);
-
-            // Fail if regression is more than 20%
-            expect(percentChange).toBeLessThan(20);
+            hasBaselineMetric = true;
           }
         }
+        
+        // Only check regression if we have baseline data
+        const checkRegression = () => {
+          if (hasBaselineMetric && percentChange >= 20) {
+            throw new Error(`Performance regression: ${percentChange.toFixed(2)}% slower than baseline`);
+          }
+        };
+        expect(checkRegression).not.toThrow();
+        
+        // Ensure baseline comparison is tracked
+        expect(baseline).toBeDefined();
       }
     });
   });

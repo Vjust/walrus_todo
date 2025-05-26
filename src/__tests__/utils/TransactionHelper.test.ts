@@ -10,8 +10,24 @@ import {
 jest.mock('../../utils/Logger');
 
 describe('TransactionHelper', () => {
-  let mockSigner: any;
-  let mockLogger: any;
+  let mockSigner: {
+    signData: jest.Mock;
+    toSuiAddress: jest.Mock;
+    getPublicKey: jest.Mock;
+    signTransaction: jest.Mock;
+    signMessage: jest.Mock;
+    sign: jest.Mock;
+    signWithIntent: jest.Mock;
+    signPersonalMessage: jest.Mock;
+    signAndExecuteTransaction: jest.Mock;
+    getKeyScheme: jest.Mock;
+  };
+  let mockLogger: {
+    debug: jest.Mock;
+    info: jest.Mock;
+    warn: jest.Mock;
+    error: jest.Mock;
+  };
   let helper: TransactionHelper;
 
   beforeEach(() => {
@@ -29,18 +45,32 @@ describe('TransactionHelper', () => {
         bytes: 'base64-encoded-bytes',
         messageBytes: new Uint8Array(64),
       }),
-    } as any;
+      sign: jest.fn().mockResolvedValue(new Uint8Array(32)),
+      signWithIntent: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'base64-encoded-bytes',
+      }),
+      signPersonalMessage: jest.fn().mockResolvedValue({
+        signature: 'mock-signature',
+        bytes: 'base64-encoded-bytes',
+      }),
+      signAndExecuteTransaction: jest.fn().mockResolvedValue({
+        digest: 'mock-digest',
+        effects: { status: { status: 'success' } },
+      }),
+      getKeyScheme: jest.fn().mockReturnValue('ed25519'),
+    };
 
     mockLogger = {
       debug: jest.fn().mockReturnValue(undefined),
       info: jest.fn().mockReturnValue(undefined),
       warn: jest.fn().mockReturnValue(undefined),
       error: jest.fn().mockReturnValue(undefined),
-    } as any;
+    };
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
-    helper = new TransactionHelper(mockSigner);
+    helper = new TransactionHelper(mockSigner as unknown as Signer);
   });
 
   describe('Retry Logic', () => {
@@ -65,7 +95,7 @@ describe('TransactionHelper', () => {
         .fn()
         .mockRejectedValue(new Error('Persistent error'));
 
-      helper = new TransactionHelper(mockSigner, {
+      helper = new TransactionHelper(mockSigner as unknown as Signer, {
         attempts: 2,
         baseDelay: 100,
       });
@@ -84,13 +114,13 @@ describe('TransactionHelper', () => {
       // Override setTimeout to capture delays
       jest
         .spyOn(global, 'setTimeout')
-        .mockImplementation((cb: (...args: any[]) => void, delay?: number) => {
+        .mockImplementation((cb: () => void, delay?: number) => {
           delays.push(delay || 0);
           cb();
           return undefined as unknown as NodeJS.Timeout;
         });
 
-      helper = new TransactionHelper(mockSigner, {
+      helper = new TransactionHelper(mockSigner as unknown as Signer, {
         attempts: 3,
         baseDelay: 100,
         maxDelay: 1000,
@@ -105,7 +135,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should cap retry delay at maxDelay', () => {
-      helper = new TransactionHelper(mockSigner, {
+      helper = new TransactionHelper(mockSigner as unknown as Signer, {
         baseDelay: 1000,
         maxDelay: 5000,
         exponential: true,
@@ -149,6 +179,7 @@ describe('TransactionHelper', () => {
           bytes: 'base64-encoded-bytes',
           messageBytes: new Uint8Array(64),
         }),
+        sign: jest.fn().mockResolvedValue(new Uint8Array(32)),
         signWithIntent: jest.fn().mockResolvedValue({
           signature: 'mock-signature',
           bytes: 'base64-encoded-bytes',
@@ -252,7 +283,7 @@ describe('TransactionHelper', () => {
     it('should merge retry configurations', async () => {
       const operation = jest.fn().mockRejectedValue(new Error('Test error'));
 
-      const customHelper = new TransactionHelper(mockSigner, {
+      const customHelper = new TransactionHelper(mockSigner as unknown as Signer, {
         attempts: 3,
         baseDelay: 100,
       });

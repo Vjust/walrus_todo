@@ -134,7 +134,7 @@ issues.forEach(issue => {
   if (!results.issuesByFile[issue.file]) {
     results.issuesByFile[issue.file] = [];
   }
-  results.issuesByFile[issue.file].push(issue);
+  results.issuesByFile[issue.file]?.push(issue);
 });
 
 // Group by category
@@ -142,7 +142,7 @@ issues.forEach(issue => {
   if (!results.issuesByCategory[issue.category]) {
     results.issuesByCategory[issue.category] = [];
   }
-  results.issuesByCategory[issue.category].push(issue);
+  results.issuesByCategory[issue.category]?.push(issue);
 });
 
 // Get top files with most issues

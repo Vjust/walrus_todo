@@ -3,7 +3,7 @@ import { TodoService } from '../../services/todoService';
 // WalrusStorage import removed - not used in this test file
 import { SuiNftStorage } from '../../utils/sui-nft-storage';
 import { configService } from '../../services/config-service';
-// import { SuiClient } from '@mysten/sui/client';
+// import { SuiClient } from '../../utils/adapters/sui-client-adapter';
 import { TodoList } from '../../types/todo';
 import { createMockTodo } from '../helpers/test-utils';
 import { createMockSystemStateResponse } from '../sui-test-types';
@@ -27,7 +27,11 @@ const mockSuiClient = {
   getBalance: jest.fn(),
   getOwnedObjects: jest.fn(),
   // Add other methods as needed
-} as any;
+} as {
+  getLatestSuiSystemState: jest.Mock;
+  getBalance: jest.Mock;
+  getOwnedObjects: jest.Mock;
+};
 
 // Mock getConfig with correct type for the mock config
 type MockConfig = Config & {
@@ -75,7 +79,7 @@ describe('complete', () => {
       async () => {}
     );
 
-    mockSuiClient.prototype.getLatestSuiSystemState.mockResolvedValue(
+    mockSuiClient.getLatestSuiSystemState.mockResolvedValue(
       createMockSystemStateResponse({
         epoch: '0',
         protocolVersion: '1',

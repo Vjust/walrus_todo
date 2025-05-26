@@ -11,12 +11,12 @@ import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
 describe('Network Error Handling', () => {
   // Mock network implementation
-  const mockNetworkNode = {
-    url: 'https://test-api.example.com',
-    priority: 0,
-    consecutiveFailures: 0,
-    healthScore: 1.0,
-  };
+  // const _mockNetworkNode = {
+  //   url: 'https://test-api.example.com',
+  //   priority: 0,
+  //   consecutiveFailures: 0,
+  //   healthScore: 1.0,
+  // };
 
   let retryManager: RetryManager;
 
@@ -255,17 +255,15 @@ describe('Network Error Handling', () => {
       const mockOperation = jest.fn().mockRejectedValue(customError);
 
       // Execute without retry for unrecoverable error
-      try {
-        await retryManager.execute(
+      await expect(
+        retryManager.execute(
           async () => mockOperation(),
           'custom-error-operation'
-        );
-        fail('Should have thrown an error');
-      } catch (error: any) {
-        // Verify error details are preserved
-        expect(error.code).toContain('NETWORK_CONNECT_ERROR');
-        expect(error.shouldRetry).toBe(false);
-      }
+        )
+      ).rejects.toMatchObject({
+        code: expect.stringContaining('NETWORK_CONNECT_ERROR'),
+        shouldRetry: false,
+      });
     });
   });
 
@@ -285,7 +283,7 @@ describe('Network Error Handling', () => {
         // Increase probability with each failure
         errorFactory: () => {
           simulator.updateConfig({
-            probability: Math.min(1.0, simulator.config.probability + 0.25),
+            probability: Math.min(1.0, (simulator as ErrorSimulator & { config: { probability: number } }).config.probability + 0.25),
           });
           return new NetworkError('Network degrading', {
             network: 'test',
@@ -299,17 +297,14 @@ describe('Network Error Handling', () => {
       simulator.simulateErrorOnMethod(task, 'performNetworkRequest');
 
       // Track successes and failures
-      const results = [];
+      const promises = Array.from({ length: 10 }, () =>
+        task.performNetworkRequest().then(
+          result => ({ success: true, result }),
+          error => ({ success: false, error: error instanceof Error ? error.message : String(error) })
+        )
+      );
 
-      // Make multiple requests
-      for (let i = 0; i < 10; i++) {
-        try {
-          const result = await task.performNetworkRequest();
-          results.push({ success: true, result });
-        } catch (error: any) {
-          results.push({ success: false, error: error.message });
-        }
-      }
+      const results = await Promise.all(promises);
 
       // Verify progressive failure pattern
       const successes = results.filter(r => r.success).length;
