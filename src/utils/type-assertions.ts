@@ -15,7 +15,7 @@
 export function assertHasMethod<T extends Record<string, unknown>>(
   obj: unknown,
   methodName: string
-): obj is T & { [K in string]: Function } {
+): obj is T & { [K in string]: (...args: any[]) => any } {
   if (!obj || typeof obj !== 'object' || !(methodName in obj)) {
     throw new Error(`Object does not have required method: ${methodName}`);
   }
@@ -140,12 +140,12 @@ export function toRecord(obj: unknown): Record<string, unknown> {
  * @param fnName - Optional function name for error messages
  * @returns The function
  */
-export function toFunction(fn: unknown, fnName = 'unknown'): Function {
+export function toFunction(fn: unknown, fnName = 'unknown'): (...args: any[]) => any {
   if (typeof fn !== 'function') {
     throw new Error(`${fnName} is not a function`);
   }
   
-  return fn;
+  return fn as (...args: any[]) => any;
 }
 
 /**
@@ -182,7 +182,7 @@ export function normalizeSignatureResponse(signature: unknown): { signature: str
   
   // Handle bytes if present
   if ('bytes' in sigObj) {
-    let bytesValue = sigObj.bytes;
+    const bytesValue = sigObj.bytes;
     if (bytesValue instanceof Uint8Array) {
       result.bytes = Buffer.from(bytesValue).toString('base64');
     } else if (typeof bytesValue === 'string') {

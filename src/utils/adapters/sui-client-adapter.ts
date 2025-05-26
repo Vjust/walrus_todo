@@ -1,9 +1,9 @@
 // SuiClient Compatibility Adapter
 // Provides a unified SuiClient interface across different SDK versions
 
-// Try requiring the CJS module directly
-const { SuiClient: SuiClientClass, getFullnodeUrl: getFullnodeUrlFn } = require('@mysten/sui/client');
-const { Ed25519Keypair: Ed25519KeypairClass } = require('@mysten/sui/keypairs/ed25519');
+// Import the modules using ES6 syntax
+import { SuiClient as SuiClientClass, getFullnodeUrl as getFullnodeUrlFn } from '@mysten/sui/client';
+import { Ed25519Keypair as Ed25519KeypairClass } from '@mysten/sui/keypairs/ed25519';
 
 // Define proper interface for SUI client options
 export interface SuiClientOptions {

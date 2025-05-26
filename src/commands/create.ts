@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import * as fs from 'fs';
 import { KeystoreSigner } from '../utils/sui-keystore';

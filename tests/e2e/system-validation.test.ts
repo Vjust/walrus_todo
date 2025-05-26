@@ -230,8 +230,8 @@ describe('System Validation Tests', () => {
             stdio: 'pipe',
           });
           return { name: tool.name, available: true, version: output.trim() };
-        } catch (_error) {
-          return { name: tool.name, available: false, error: error.toString() };
+        } catch (error) {
+          return { name: tool.name, available: false, error: (error as Error).toString() };
         }
       });
 

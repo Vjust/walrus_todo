@@ -72,7 +72,7 @@ export class AuthorizationError extends BaseError {
 
     // Build context with authorization details
     const context = {
-      ...(options.context || {}),
+      ...(options.context || {} as Record<string, unknown>),
       ...(resource ? { resource } : {}),
       ...(action ? { action } : {}),
       ...(subject ? { subject } : {}),

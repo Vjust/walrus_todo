@@ -79,7 +79,7 @@ describe('BlobVerificationManager', () => {
     });
     mockWalrusClient.writeBlob.mockResolvedValue({
       blobId: mockBlobId,
-      blobObject: { blob_id: mockBlobId } as any,
+      blobObject: { blob_id: mockBlobId } as BlobObject,
     });
 
     verificationManager = new BlobVerificationManager(

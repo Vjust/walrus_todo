@@ -137,7 +137,7 @@ export class BaseError extends Error {
       message: this.message,
       code: this.code,
       context: {
-        ...(this.context || {}),
+        ...(this.context || {} as Record<string, unknown>),
         ...context,
       },
       cause: this.cause,

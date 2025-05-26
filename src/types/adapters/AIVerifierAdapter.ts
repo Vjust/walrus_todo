@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../utils/adapters/sui-client-compatibility';
 import { SignerAdapter } from './SignerAdapter';
 import { WalrusClientAdapter } from './WalrusClientAdapter';
 

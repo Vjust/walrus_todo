@@ -13,20 +13,20 @@ export function validate(options: ValidationOptions) {
     try {
       // Validate body
       if (options.body) {
-        (req as any).body = await options.body.parseAsync((req as any).body);
+        req.body = await options.body.parseAsync(req.body);
       }
 
       // Validate query
       if (options.query) {
-        (req as any).query = await options.query.parseAsync((req as any).query);
+        req.query = await options.query.parseAsync(req.query) as any;
       }
 
       // Validate params
       if (options.params) {
-        (req as any).params = await options.params.parseAsync((req as any).params);
+        req.params = await options.params.parseAsync(req.params) as any;
       }
 
-      (next as any)();
+      next();
     } catch (error: unknown) {
       if (error instanceof ZodError) {
         const validationError = new ValidationError(
@@ -44,10 +44,10 @@ export function validate(options: ValidationOptions) {
             }
           }
         );
-        (next as any)(validationError);
+        next(validationError);
       } else {
         const typedError = error instanceof Error ? error : new Error(String(error));
-        (next as any)(typedError);
+        next(typedError);
       }
     }
   };

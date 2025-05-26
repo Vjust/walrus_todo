@@ -109,10 +109,10 @@ describe('API Security Tests', () => {
         ...consoleInfoSpy.mock.calls.flat(),
       ];
 
-      allLogs.forEach(log => {
-        if (typeof log === 'string') {
-          expect(log).not.toContain(sensitiveKey);
-        }
+      const stringLogs = allLogs.filter(log => typeof log === 'string');
+      // Check each log for sensitive key
+      stringLogs.forEach(log => {
+        expect(log).not.toContain(sensitiveKey);
       });
 
       consoleLogSpy.mockRestore();
@@ -128,17 +128,20 @@ describe('API Security Tests', () => {
           // Extract API key from params
           // const _apiKey = params.apiKey;
 
-          // Check API key format if present
-          if (apiKey) {
-            // Check if key is too short
-            if (apiKey.length < 10) {
-              throw new Error('API key is too short');
-            }
+          // Extract API key from params
+          const apiKey = params.apiKey;
 
-            // Check if key contains only valid characters
-            if (!/^[a-zA-Z0-9_-]+$/.test(apiKey)) {
-              throw new Error('API key contains invalid characters');
-            }
+          // Check API key format if present
+          const hasApiKey = !!apiKey;
+          const isTooShort = hasApiKey && apiKey.length < 10;
+          const hasInvalidChars = hasApiKey && !/^[a-zA-Z0-9_-]+$/.test(apiKey);
+
+          // Throw errors based on validation
+          if (isTooShort) {
+            throw new Error('API key is too short');
+          }
+          if (hasInvalidChars) {
+            throw new Error('API key contains invalid characters');
           }
 
           return {

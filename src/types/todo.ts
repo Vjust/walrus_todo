@@ -85,6 +85,64 @@ export interface Todo {
   syncedAt?: string;
 }
 
+// Additional types for API inputs and operations
+export interface CreateTodoInput {
+  title: string;
+  description?: string;
+  priority?: 'high' | 'medium' | 'low';
+  dueDate?: string;
+  tags?: string[];
+  category?: string;
+  listName?: string;
+}
+
+export interface UpdateTodoInput {
+  title?: string;
+  description?: string;
+  completed?: boolean;
+  priority?: 'high' | 'medium' | 'low';
+  dueDate?: string;
+  tags?: string[];
+  category?: string;
+}
+
+export type Priority = 'high' | 'medium' | 'low';
+export type TodoStatus = 'pending' | 'completed' | 'archived';
+
+export interface TodoMetadata {
+  totalCount: number;
+  completedCount: number;
+  pendingCount: number;
+  highPriorityCount: number;
+  overdueCount: number;
+}
+
+export interface TodoFilter {
+  completed?: boolean;
+  priority?: Priority;
+  tags?: string[];
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+  search?: string;
+}
+
+export type SortBy = 'createdAt' | 'updatedAt' | 'dueDate' | 'priority' | 'title';
+export type SortOrder = 'asc' | 'desc';
+
+export interface OfflineData {
+  todos: Todo[];
+  syncedAt?: string;
+  version: number;
+}
+
+export interface SyncData {
+  todos: Todo[];
+  deletedIds: string[];
+  lastSyncedAt: string;
+  version: number;
+}
+
 /**
  * Represents a collection of todo items with blockchain integration
  *
@@ -208,4 +266,81 @@ export interface ErrorContext {
   listName?: string;
   /** Additional context data */
   metadata?: Record<string, string | number | boolean | null | undefined>;
+}
+
+// Helper functions for todo operations
+export function createTodo(input: CreateTodoInput): Todo {
+  const now = new Date().toISOString();
+  return {
+    id: `todo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    title: input.title,
+    description: input.description,
+    completed: false,
+    priority: input.priority || 'medium',
+    dueDate: input.dueDate,
+    tags: input.tags || [],
+    createdAt: now,
+    updatedAt: now,
+    private: false,
+    category: input.category,
+    listName: input.listName
+  };
+}
+
+export function createTodoList(name: string, owner: string): TodoList {
+  const now = new Date().toISOString();
+  return {
+    id: `list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name,
+    owner,
+    todos: [],
+    version: 1,
+    createdAt: now,
+    updatedAt: now,
+    shared: false,
+    collaborators: [],
+    metadata: {},
+    description: ''
+  };
+}
+
+export function validateTodo(todo: unknown): todo is Todo {
+  if (!todo || typeof todo !== 'object') return false;
+  const t = todo as Record<string, unknown>;
+  return (
+    typeof t.id === 'string' &&
+    typeof t.title === 'string' &&
+    typeof t.completed === 'boolean' &&
+    ['high', 'medium', 'low'].includes(t.priority as string) &&
+    Array.isArray(t.tags) &&
+    typeof t.createdAt === 'string' &&
+    typeof t.updatedAt === 'string' &&
+    typeof t.private === 'boolean'
+  );
+}
+
+export function validateTodoList(list: unknown): list is TodoList {
+  if (!list || typeof list !== 'object') return false;
+  const l = list as Record<string, unknown>;
+  return (
+    typeof l.id === 'string' &&
+    typeof l.name === 'string' &&
+    typeof l.owner === 'string' &&
+    Array.isArray(l.todos) &&
+    typeof l.version === 'number' &&
+    typeof l.createdAt === 'string' &&
+    typeof l.updatedAt === 'string'
+  );
+}
+
+export function serializeTodo(todo: Todo): string {
+  return JSON.stringify(todo);
+}
+
+export function deserializeTodo(data: string): Todo {
+  const parsed = JSON.parse(data);
+  if (!validateTodo(parsed)) {
+    throw new Error('Invalid todo data');
+  }
+  return parsed;
 }

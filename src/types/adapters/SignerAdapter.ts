@@ -21,7 +21,7 @@ type SuiTransactionBlockResponseOptions = {
   showEvents?: boolean;
   showObjectChanges?: boolean;
 };
-import type { SuiClient } from '@mysten/sui/client';
+import type { SuiClient } from '../../utils/adapters/sui-client-compatibility';
 import { BaseAdapter, isBaseAdapter } from './BaseAdapter';
 import { BaseError } from '../errors/BaseError';
 

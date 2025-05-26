@@ -23,7 +23,7 @@ interface SuiVerificationFields {
 interface SuiObjectContent {
   fields: SuiProviderFields | SuiVerificationFields;
 }
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../../utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { createHash } from 'crypto';
 import { stringify } from 'csv-stringify/sync';

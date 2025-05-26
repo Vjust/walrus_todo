@@ -1,6 +1,6 @@
 import { SuiNftStorage } from './src/utils/sui-nft-storage';
 // Import compatibility adapters - skip if not available
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from './src/utils/adapters/sui-client-compatibility';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from './src/services';
 import { Todo } from './src/types/todo';

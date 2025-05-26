@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';

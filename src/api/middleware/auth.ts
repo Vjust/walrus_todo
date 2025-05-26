@@ -18,7 +18,7 @@ export function validateApiKey(
 
   // Skip auth in development if no keys are configured
   if (config.isDevelopment() && config.auth.apiKeys.length === 0) {
-    (next as any)();
+    next();
     return;
   }
 
@@ -29,7 +29,7 @@ export function validateApiKey(
     (req.query.apiKey as string);
 
   if (!apiKey) {
-    (next as any)(new AuthorizationError('API key required', {
+    next(new AuthorizationError('API key required', {
       code: 'AUTHORIZATION_UNAUTHENTICATED',
       isLoginRequired: true
     }));
@@ -38,7 +38,7 @@ export function validateApiKey(
 
   // Validate API key
   if (!config.auth.apiKeys.includes(apiKey)) {
-    (next as any)(new AuthorizationError('Invalid API key', {
+    next(new AuthorizationError('Invalid API key', {
       code: 'AUTHORIZATION_INVALID_CREDENTIALS'
     }));
     return;
@@ -47,7 +47,7 @@ export function validateApiKey(
   // Attach API key to request for logging
   req.apiKey = apiKey;
 
-  (next as any)();
+  next();
 }
 
 // Optional middleware for specific routes that require user authentication
@@ -57,11 +57,11 @@ export function requireUser(
   next: NextFunction
 ): void {
   if (!req.userId) {
-    (next as any)(new AuthorizationError('User authentication required', {
+    next(new AuthorizationError('User authentication required', {
       code: 'AUTHORIZATION_UNAUTHENTICATED',
       isLoginRequired: true
     }));
     return;
   }
-  (next as any)();
+  next();
 }

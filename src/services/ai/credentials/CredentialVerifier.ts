@@ -1,7 +1,7 @@
 import { CLIError } from '../../../types/errors/consolidated';
 import { AIProvider } from '../types';
-import { SuiClient } from '@mysten/sui.js/client';
-import { Transaction as TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient } from '../../../utils/adapters/sui-client-compatibility';
+import { Transaction as TransactionBlock } from '@mysten/sui/transactions';
 // asUint8ArrayOrTransactionBlock and asStringUint8ArrayOrTransactionBlock imported but not used
 import { bcs } from '@mysten/sui/bcs';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -190,7 +190,7 @@ export class CredentialVerifier {
   ): TransactionBlock {
     // Create a transaction block and cast to the expected type
     // This is necessary because TransactionBlock doesn't satisfy the TransactionBlock interface exactly
-    const tx = new Transaction() as TransactionBlock;
+    const tx = new TransactionBlock();
     tx.moveCall({
       target: `${this.moduleAddress}::ai_verifier::verify_credential`,
       arguments: [tx.pure(provider), tx.pure(keyHash)],

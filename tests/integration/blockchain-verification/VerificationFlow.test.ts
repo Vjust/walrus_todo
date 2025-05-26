@@ -389,13 +389,9 @@ describe('Verification Flow End-to-End', () => {
       expect(result.uploadResult.poaComplete).toBe(true);
       expect(result.uploadResult.hasMinProviders).toBe(true);
       expect(result.verificationResult).toBeDefined();
-      if (result.verificationResult) {
-        expect(result.verificationResult.success).toBe(true);
-      }
+      expect(result.verificationResult!.success).toBe(true);
       expect(result.monitoringResult).toBeDefined();
-      if (result.monitoringResult) {
-        expect(result.monitoringResult.successful).toBe(true);
-      }
+      expect(result.monitoringResult!.successful).toBe(true);
 
       // Verify client calls
       expect(mockWalrusClient.writeBlob).toHaveBeenCalled();
@@ -468,9 +464,7 @@ describe('Verification Flow End-to-End', () => {
 
       // Data verification should fail because content is modified
       expect(result.verificationResult).toBeDefined();
-      if (result.verificationResult) {
-        expect(result.verificationResult.success).toBe(false);
-      }
+      expect(result.verificationResult!.success).toBe(false);
     });
 
     it('should handle errors during the verification flow', async () => {

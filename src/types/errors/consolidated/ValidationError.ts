@@ -73,7 +73,7 @@ export class ValidationError extends BaseError {
 
     // Build context object
     const errorContext: Record<string, unknown> = {
-      ...(context || {}),
+      ...(context || {} as Record<string, unknown>),
       ...(value !== undefined ? { value } : {}),
       ...(constraint !== undefined ? { constraint } : {}),
       ...(operation !== undefined ? { operation } : {}),

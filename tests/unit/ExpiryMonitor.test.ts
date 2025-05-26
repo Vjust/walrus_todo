@@ -92,8 +92,8 @@ describe('ExpiryMonitor', () => {
     });
     
     // Add missing method mock if it's used in tests
-    (mockWalrusClient as any).getSuiBalance = jest.fn().mockResolvedValue('1000');
-    (mockWalrusClient as any).allocateStorage = jest.fn().mockResolvedValue({
+    (mockWalrusClient as unknown as { getSuiBalance: jest.Mock }).getSuiBalance = jest.fn().mockResolvedValue('1000');
+    (mockWalrusClient as unknown as { allocateStorage: jest.Mock }).allocateStorage = jest.fn().mockResolvedValue({
       digest: 'mock-storage-tx',
       storage: {
         id: { id: 'mock-storage-id' },

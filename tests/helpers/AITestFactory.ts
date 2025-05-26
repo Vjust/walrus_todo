@@ -326,86 +326,140 @@ export class AITestFactory {
   }
 
   /**
-   * Creates a test function that validates AI operation results against expected formats.
+   * Creates a validator for different AI operation types.
    *
-   * This factory method returns a Jest validator function that knows how to check
-   * the format and structure of responses for different operation types, ensuring
-   * that processed results match the expected output format.
+   * This factory method returns a validator object that can check
+   * the format and structure of responses for different operation types.
+   * The validator returns validation results that can be used in test assertions.
    *
    * @param operationType - The type of AI operation to create a validator for
    *                       ('summarize', 'categorize', 'prioritize', 'suggest', or 'analyze')
-   * @returns A function that validates results for the specified operation type
+   * @returns A validator object with validate() and getExpectedType() methods
    *
    * @example
    * // Create a validator for categorization results
-   * const validateCategories = AITestFactory.createOperationValidator('categorize');
+   * const validator = AITestFactory.createOperationValidator('categorize');
    *
    * // Use in a test
    * test('categorize should return valid categories', async () => {
    *   const result = await aiService.categorize(todos);
-   *   validateCategories(result, todos);
+   *   const validation = validator.validate(result, todos);
+   *   expect(validation.isValid).toBe(true);
+   *   expect(validation.errors).toEqual([]);
    * });
    */
   public static createOperationValidator(
     operationType: string
-  ): (result: unknown, todos: Todo[]) => void {
-    return (result: unknown, _todos: Todo[]) => {
-      expect(result).toBeDefined();
+  ): {
+    validate: (result: unknown, todos: Todo[]) => { isValid: boolean; errors: string[] };
+    getExpectedType: () => string;
+  } {
+    const getValidationResult = (result: unknown, _todos: Todo[]): { isValid: boolean; errors: string[] } => {
+      const errors: string[] = [];
+      
+      if (result === undefined || result === null) {
+        errors.push('Result is undefined or null');
+        return { isValid: false, errors };
+      }
 
       switch (operationType.toLowerCase()) {
         case 'summarize':
           // Summarize operations should return a non-empty string
-          expect(typeof result).toBe('string');
-          expect(result.length).toBeGreaterThan(0);
+          if (typeof result !== 'string') {
+            errors.push(`Expected string, got ${typeof result}`);
+          } else if (result.length === 0) {
+            errors.push('Summary string is empty');
+          }
           break;
 
         case 'categorize':
           // Categorize operations should return an object with category keys
           // and arrays of todo IDs as values
-          expect(typeof result).toBe('object');
-          expect(Object.keys(result).length).toBeGreaterThan(0);
-
-          // Each category should have an array of todo IDs
-          Object.values(result).forEach(todoIds => {
-            expect(Array.isArray(todoIds)).toBe(true);
-          });
+          if (typeof result !== 'object' || result === null) {
+            errors.push(`Expected object, got ${typeof result}`);
+          } else if (Object.keys(result).length === 0) {
+            errors.push('Categories object is empty');
+          } else {
+            // Each category should have an array of todo IDs
+            Object.entries(result).forEach(([category, todoIds]) => {
+              if (!Array.isArray(todoIds)) {
+                errors.push(`Category "${category}" does not contain an array`);
+              }
+            });
+          }
           break;
 
         case 'prioritize':
           // Prioritize operations should return an object mapping todo IDs
           // to numeric priority values (1-10)
-          expect(typeof result).toBe('object');
-          expect(Object.keys(result).length).toBeGreaterThan(0);
-
-          // Each todo ID should have a numeric priority
-          Object.entries(result).forEach(([_todoId, priority]) => {
-            expect(typeof priority).toBe('number');
-            expect(priority).toBeGreaterThanOrEqual(1);
-            expect(priority).toBeLessThanOrEqual(10);
-          });
+          if (typeof result !== 'object' || result === null) {
+            errors.push(`Expected object, got ${typeof result}`);
+          } else if (Object.keys(result).length === 0) {
+            errors.push('Priorities object is empty');
+          } else {
+            // Each todo ID should have a numeric priority
+            Object.entries(result).forEach(([todoId, priority]) => {
+              if (typeof priority !== 'number') {
+                errors.push(`Priority for todo "${todoId}" is not a number`);
+              } else if (priority < 1 || priority > 10) {
+                errors.push(`Priority for todo "${todoId}" is ${priority}, outside range 1-10`);
+              }
+            });
+          }
           break;
 
         case 'suggest':
           // Suggest operations should return an array of string suggestions
-          expect(Array.isArray(result)).toBe(true);
-          expect(result.length).toBeGreaterThan(0);
-
-          // Each suggestion should be a string
-          result.forEach(suggestion => {
-            expect(typeof suggestion).toBe('string');
-            expect(suggestion.length).toBeGreaterThan(0);
-          });
+          if (!Array.isArray(result)) {
+            errors.push(`Expected array, got ${typeof result}`);
+          } else if (result.length === 0) {
+            errors.push('Suggestions array is empty');
+          } else {
+            // Each suggestion should be a string
+            result.forEach((suggestion, index) => {
+              if (typeof suggestion !== 'string') {
+                errors.push(`Suggestion at index ${index} is not a string`);
+              } else if (suggestion.length === 0) {
+                errors.push(`Suggestion at index ${index} is empty`);
+              }
+            });
+          }
           break;
 
         case 'analyze':
           // Analyze operations should return a structured object with analysis results
-          expect(typeof result).toBe('object');
-          expect(Object.keys(result).length).toBeGreaterThan(0);
+          if (typeof result !== 'object' || result === null) {
+            errors.push(`Expected object, got ${typeof result}`);
+          } else if (Object.keys(result).length === 0) {
+            errors.push('Analysis object is empty');
+          }
           break;
 
         default:
           throw new Error(`Unknown operation type: ${operationType}`);
       }
+      
+      return { isValid: errors.length === 0, errors };
+    };
+    
+    const getExpectedType = (): string => {
+      switch (operationType.toLowerCase()) {
+        case 'summarize':
+          return 'string';
+        case 'categorize':
+        case 'prioritize':
+        case 'analyze':
+          return 'object';
+        case 'suggest':
+          return 'array';
+        default:
+          return 'unknown';
+      }
+    };
+    
+    return {
+      validate: getValidationResult,
+      getExpectedType
     };
   }
 }

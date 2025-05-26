@@ -63,7 +63,7 @@ export class BlockchainError extends BaseError {
 
     // Build context with blockchain details
     const context = {
-      ...(options.context || {}),
+      ...(options.context || {} as Record<string, unknown>),
       ...(operation ? { operation } : {}),
       ...(chain ? { chain } : {}),
       ...(gas !== undefined ? { gas } : {}),

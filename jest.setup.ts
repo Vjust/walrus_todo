@@ -10,7 +10,7 @@ import {
 } from '@jest/globals';
 
 // Import AggregateError polyfill
-import '../src/utils/polyfills/aggregate-error';
+import './src/utils/polyfills/aggregate-error';
 
 // AggregateError is now available globally through the polyfill
 

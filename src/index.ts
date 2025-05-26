@@ -194,9 +194,8 @@ export const run = async () => {
 };
 
 // Run the CLI if this file is executed directly
-// Use CommonJS method to detect if this is the main module
-const isMainModule = require.main === module;
-if (isMainModule) {
+// Check if this file is being run directly
+if (require.main === module) {
   run().catch(error => {
     logger.error(
       'Unhandled error',

@@ -5,7 +5,7 @@
  */
 
 import { CLIError } from '../../../types/errors/consolidated';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../../utils/adapters/sui-client-compatibility';
 import type { WalrusClientExt } from '../../../types/client';
 import { Logger } from '../../../utils/Logger';
 // createHash imported but not used

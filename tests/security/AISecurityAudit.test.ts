@@ -146,11 +146,10 @@ describe('AI Security Audit', () => {
 
         // Check if any logs contain the API key
         const logs = mockLog.mock.calls.flat();
-        logs.forEach(log => {
-          if (typeof log === 'string') {
-            expect(log).not.toContain('test-api-key-12345');
-          }
-        });
+        const stringLogs = logs.filter(log => typeof log === 'string');
+        // Check each log for API key
+        const containsApiKey = stringLogs.some(log => log.includes('test-api-key-12345'));
+        expect(containsApiKey).toBe(false);
       } finally {
         console.log = originalLog;
       }
@@ -182,11 +181,12 @@ describe('AI Security Audit', () => {
 
       // Check that API key is not stored in the AIService instance properties
       const serviceProps = Object.entries(mockAIService);
-      serviceProps.forEach(([_key, value]) => {
-        if (typeof value === 'string') {
-          expect(value).not.toBe('test-api-key-sensitive');
-        }
-      });
+      const stringValues = serviceProps
+        .map(([_key, value]) => value)
+        .filter(value => typeof value === 'string');
+      // Check each string value for sensitive key
+      const containsSensitiveKey = stringValues.some(value => value === 'test-api-key-sensitive');
+      expect(containsSensitiveKey).toBe(false);
 
       // Check that provider creation happened properly
       expect(createProviderSpy).toHaveBeenCalledWith(
@@ -1135,15 +1135,24 @@ describe('AI Security Audit', () => {
       const mockVerifierAdapter = {
         createVerification: jest.fn().mockImplementation(params => {
           // Check that privacy level is respected
-          if (params.privacyLevel === AIPrivacyLevel.PRIVATE) {
-            // In private mode, request and response should be hashed
-            expect(params.request).not.toBe(JSON.stringify(sampleTodos));
-            expect(params.response).not.toBe('Test summary');
-          } else if (params.privacyLevel === AIPrivacyLevel.PUBLIC) {
-            // In public mode, original content should be used
-            expect(params.request).toBe(JSON.stringify(sampleTodos));
-            expect(params.response).toBe('Test summary');
-          }
+          const isPrivate = params.privacyLevel === AIPrivacyLevel.PRIVATE;
+          const isPublic = params.privacyLevel === AIPrivacyLevel.PUBLIC;
+          
+          // In private mode, request and response should be hashed
+          // Check privacy level first
+          expect(isPrivate || isPublic).toBe(true);
+          
+          // Private mode validation
+          const privateRequestCheck = isPrivate ? params.request !== JSON.stringify(sampleTodos) : true;
+          const privateResponseCheck = isPrivate ? params.response !== 'Test summary' : true;
+          expect(privateRequestCheck).toBe(true);
+          expect(privateResponseCheck).toBe(true);
+          
+          // Public mode validation
+          const publicRequestCheck = isPublic ? params.request === JSON.stringify(sampleTodos) : true;
+          const publicResponseCheck = isPublic ? params.response === 'Test summary' : true;
+          expect(publicRequestCheck).toBe(true);
+          expect(publicResponseCheck).toBe(true);
 
           return mockVerificationRecord;
         }),
@@ -1195,9 +1204,8 @@ describe('AI Security Audit', () => {
                 ];
 
                 // Should not contain any PII
-                piiPatterns.forEach(pattern => {
-                  expect(todoStr).not.toMatch(pattern);
-                });
+                const containsPII = piiPatterns.some(pattern => pattern.test(todoStr));
+                expect(containsPII).toBe(false);
 
                 return {
                   result: 'Test result',
@@ -1465,13 +1473,22 @@ describe('AI Security Audit', () => {
       try {
         await aiService.summarize(sampleTodos);
         throw new Error('Should have thrown an error');
-      } catch (_error) {
+      } catch (error) {
+        // Validate error exists
+        const hasError = !!error;
+        expect(hasError).toBe(true);
+        
         // Error message should be sanitized
-        expect(String(error)).not.toContain('test-api-key');
-        expect(String(error)).not.toContain('user@example.com');
-
+        const errorString = String(error);
+        const containsApiKey = errorString.includes('test-api-key');
+        const containsEmail = errorString.includes('user@example.com');
+        expect(containsApiKey).toBe(false);
+        expect(containsEmail).toBe(false);
+        
         // Error object should not contain sensitive data
-        expect((error as Error & { sensitiveData?: unknown }).sensitiveData).toBeUndefined();
+        const errorWithData = error as Error & { sensitiveData?: unknown };
+        const hasSensitiveData = errorWithData.sensitiveData !== undefined;
+        expect(hasSensitiveData).toBe(false);
       }
     });
 
