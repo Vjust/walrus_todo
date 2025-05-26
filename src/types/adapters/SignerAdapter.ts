@@ -14,11 +14,14 @@ import {
   PublicKey,
 } from '@mysten/sui/cryptography';
 import { TransactionType } from '../transaction';
-import {
-  SuiTransactionBlockResponse,
-  type SuiTransactionBlockResponseOptions,
-  SuiClient,
-} from '@mysten/sui/client';
+// Type definitions for compatibility
+type SuiTransactionBlockResponse = Record<string, unknown>;
+type SuiTransactionBlockResponseOptions = {
+  showEffects?: boolean;
+  showEvents?: boolean;
+  showObjectChanges?: boolean;
+};
+import type { SuiClient } from '@mysten/sui/client';
 import { BaseAdapter, isBaseAdapter } from './BaseAdapter';
 import { BaseError } from '../errors/BaseError';
 
@@ -71,7 +74,7 @@ export interface SignatureWithBytes {
 export class SignerAdapterError extends BaseError {
   constructor(_message: string, cause?: Error) {
     super({
-      message: `SignerAdapter Error: ${message}`,
+      message: `SignerAdapter Error: ${_message}`,
       code: 'SIGNER_ADAPTER_ERROR',
       cause,
     });
@@ -127,6 +130,15 @@ export interface BaseSigner {
 }
 
 /**
+ * Discriminated union for different signer implementations
+ */
+export type SignerVariant = 
+  | { kind: 'v1'; signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } }
+  | { kind: 'v2'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> } }
+  | { kind: 'v2.5'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } }
+  | { kind: 'v3'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } };
+
+/**
  * Unified Signer interface that accommodates both Signer implementation variants
  */
 export interface UnifiedSigner extends BaseSigner {
@@ -160,6 +172,121 @@ export interface UnifiedSigner extends BaseSigner {
 }
 
 /**
+ * Type guards for SignerVariant discriminated union
+ */
+export function isSignerVariant(obj: unknown): obj is SignerVariant {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    obj !== null &&
+    'kind' in obj &&
+    'signer' in obj &&
+    ['v1', 'v2', 'v2.5', 'v3'].includes((obj as { kind: string }).kind)
+  );
+}
+
+/**
+ * Type narrowing functions for SignerVariant
+ */
+export function isV1SignerVariant(variant: SignerVariant): variant is { kind: 'v1'; signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } } {
+  return variant.kind === 'v1';
+}
+
+export function isV2SignerVariant(variant: SignerVariant): variant is { kind: 'v2'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> } } {
+  return variant.kind === 'v2';
+}
+
+export function isV25SignerVariant(variant: SignerVariant): variant is { kind: 'v2.5'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } } {
+  return variant.kind === 'v2.5';
+}
+
+export function isV3SignerVariant(variant: SignerVariant): variant is { kind: 'v3'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } } {
+  return variant.kind === 'v3';
+}
+
+/**
+ * Factory functions for creating SignerVariant instances
+ */
+export function createV1SignerVariant(signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }): SignerVariant {
+  return { kind: 'v1', signer };
+}
+
+export function createV2SignerVariant(signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> }): SignerVariant {
+  return { kind: 'v2', signer };
+}
+
+export function createV25SignerVariant(signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }): SignerVariant {
+  return { kind: 'v2.5', signer };
+}
+
+export function createV3SignerVariant(signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> }): SignerVariant {
+  return { kind: 'v3', signer };
+}
+
+/**
+ * Safe signer processing with pattern matching
+ */
+export function processSignerVariant<T>(
+  variant: SignerVariant,
+  handlers: {
+    v1: (signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }) => T;
+    v2: (signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> }) => T;
+    'v2.5': (signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }) => T;
+    v3: (signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> }) => T;
+  }
+): T {
+  switch (variant.kind) {
+    case 'v1':
+      return handlers.v1(variant.signer);
+    case 'v2':
+      return handlers.v2(variant.signer);
+    case 'v2.5':
+      return handlers['v2.5'](variant.signer);
+    case 'v3':
+      return handlers.v3(variant.signer);
+    default: {
+      // TypeScript exhaustiveness check
+      const _exhaustive: never = variant;
+      throw new Error(`Unknown signer variant: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
+
+/**
+ * Create SignerVariant from a detected signer and its SDK version
+ */
+export function createSignerVariantFromSDK(signer: unknown, sdkVersion: SuiSDKVersion): SignerVariant | null {
+  if (!isValidBaseSigner(signer)) {
+    return null;
+  }
+
+  switch (sdkVersion) {
+    case SuiSDKVersion.VERSION_1:
+      if (hasSignTransaction(signer)) {
+        return createV1SignerVariant(signer);
+      }
+      break;
+    case SuiSDKVersion.VERSION_2:
+      if (hasSignTransactionBlock(signer)) {
+        return createV2SignerVariant(signer);
+      }
+      break;
+    case SuiSDKVersion.VERSION_2_5:
+      if (hasSignTransactionBlock(signer) && hasSignTransaction(signer)) {
+        return createV25SignerVariant(signer);
+      }
+      break;
+    case SuiSDKVersion.VERSION_3:
+      if (hasSignTransactionBlock(signer) && hasSignTransaction(signer) && hasSignAndExecuteTransaction(signer)) {
+        return createV3SignerVariant(signer);
+      }
+      break;
+  }
+
+  return null;
+}
+
+/**
  * Type guards for Signer implementations
  */
 
@@ -167,28 +294,31 @@ export interface UnifiedSigner extends BaseSigner {
  * Checks if the input is a valid base signer object
  * with the minimum required methods
  */
-export function isValidBaseSigner(_signer: unknown): signer is BaseSigner {
+export function isValidBaseSigner(_signer: unknown): _signer is BaseSigner {
+  if (_signer === null || typeof _signer !== 'object' || _signer === undefined) {
+    return false;
+  }
+
+  const signerObj = _signer as Record<string, unknown>;
+  
+  // Core required methods with proper type checking
   return (
-    signer !== null &&
-    typeof signer === 'object' &&
-    signer !== undefined &&
-    // Core required methods
-    'signPersonalMessage' in signer &&
-    typeof (signer as any).signPersonalMessage === 'function' &&
-    'signWithIntent' in signer &&
-    typeof (signer as any).signWithIntent === 'function' &&
-    'getKeyScheme' in signer &&
-    typeof (signer as any).getKeyScheme === 'function' &&
-    'toSuiAddress' in signer &&
-    typeof (signer as any).toSuiAddress === 'function'
+    'signPersonalMessage' in signerObj &&
+    typeof signerObj.signPersonalMessage === 'function' &&
+    'signWithIntent' in signerObj &&
+    typeof signerObj.signWithIntent === 'function' &&
+    'getKeyScheme' in signerObj &&
+    typeof signerObj.getKeyScheme === 'function' &&
+    'toSuiAddress' in signerObj &&
+    typeof signerObj.toSuiAddress === 'function'
   );
 }
 
 /**
  * Checks if the input is a valid signer object
  */
-export function isValidSigner(_signer: unknown): signer is SignerSuiJs {
-  return isValidBaseSigner(signer);
+export function isValidSigner(_signer: unknown): _signer is SignerSuiJs {
+  return isValidBaseSigner(_signer);
 }
 
 /**
@@ -196,11 +326,15 @@ export function isValidSigner(_signer: unknown): signer is SignerSuiJs {
  */
 export function hasSignTransactionBlock(
   _signer: unknown
-): signer is BaseSigner & { signTransactionBlock: (_bytes: Uint8Array) => Promise<SignatureWithBytes> } {
+): _signer is BaseSigner & { signTransactionBlock: (_bytes: Uint8Array) => Promise<SignatureWithBytes> } {
+  if (!isValidBaseSigner(_signer)) {
+    return false;
+  }
+  
+  const signerObj = _signer as Record<string, unknown>;
   return (
-    isValidBaseSigner(signer) &&
-    'signTransactionBlock' in signer &&
-    typeof (signer as any).signTransactionBlock === 'function'
+    'signTransactionBlock' in signerObj &&
+    typeof signerObj.signTransactionBlock === 'function'
   );
 }
 
@@ -209,11 +343,15 @@ export function hasSignTransactionBlock(
  */
 export function hasSignTransaction(
   _signer: unknown
-): signer is BaseSigner & { signTransaction: (_transaction: TransactionType) => Promise<SignatureWithBytes> } {
+): _signer is BaseSigner & { signTransaction: (_transaction: TransactionType) => Promise<SignatureWithBytes> } {
+  if (!isValidBaseSigner(_signer)) {
+    return false;
+  }
+  
+  const signerObj = _signer as Record<string, unknown>;
   return (
-    isValidBaseSigner(signer) &&
-    'signTransaction' in signer &&
-    typeof (signer as any).signTransaction === 'function'
+    'signTransaction' in signerObj &&
+    typeof signerObj.signTransaction === 'function'
   );
 }
 
@@ -222,11 +360,15 @@ export function hasSignTransaction(
  */
 export function hasGetPublicKey(
   _signer: unknown
-): signer is BaseSigner & { getPublicKey: () => PublicKey } {
+): _signer is BaseSigner & { getPublicKey: () => PublicKey } {
+  if (!isValidBaseSigner(_signer)) {
+    return false;
+  }
+  
+  const signerObj = _signer as Record<string, unknown>;
   return (
-    isValidBaseSigner(signer) &&
-    'getPublicKey' in signer &&
-    typeof (signer as any).getPublicKey === 'function'
+    'getPublicKey' in signerObj &&
+    typeof signerObj.getPublicKey === 'function'
   );
 }
 
@@ -235,11 +377,15 @@ export function hasGetPublicKey(
  */
 export function hasSignAndExecuteTransaction(
   _signer: unknown
-): signer is BaseSigner & { signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } {
+): _signer is BaseSigner & { signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } {
+  if (!isValidBaseSigner(_signer)) {
+    return false;
+  }
+  
+  const signerObj = _signer as Record<string, unknown>;
   return (
-    isValidBaseSigner(signer) &&
-    'signAndExecuteTransaction' in signer &&
-    typeof (signer as any).signAndExecuteTransaction === 'function'
+    'signAndExecuteTransaction' in signerObj &&
+    typeof signerObj.signAndExecuteTransaction === 'function'
   );
 }
 
@@ -248,11 +394,15 @@ export function hasSignAndExecuteTransaction(
  */
 export function hasSignData(
   _signer: unknown
-): signer is BaseSigner & { signData: (_data: Uint8Array) => Promise<Uint8Array> } {
+): _signer is BaseSigner & { signData: (_data: Uint8Array) => Promise<Uint8Array> } {
+  if (!isValidBaseSigner(_signer)) {
+    return false;
+  }
+  
+  const signerObj = _signer as Record<string, unknown>;
   return (
-    isValidBaseSigner(signer) &&
-    'signData' in signer &&
-    typeof (signer as any).signData === 'function'
+    'signData' in signerObj &&
+    typeof signerObj.signData === 'function'
   );
 }
 
@@ -261,11 +411,15 @@ export function hasSignData(
  */
 export function hasSignPersonalMessage(
   _signer: unknown
-): signer is BaseSigner & { signPersonalMessage: (_message: Uint8Array) => Promise<{ signature: Uint8Array; bytes?: Uint8Array }> } {
+): _signer is BaseSigner & { signPersonalMessage: (_message: Uint8Array) => Promise<{ signature: Uint8Array; bytes?: Uint8Array }> } {
+  if (!isValidBaseSigner(_signer)) {
+    return false;
+  }
+  
+  const signerObj = _signer as Record<string, unknown>;
   return (
-    isValidBaseSigner(signer) &&
-    'signPersonalMessage' in signer &&
-    typeof (signer as any).signPersonalMessage === 'function'
+    'signPersonalMessage' in signerObj &&
+    typeof signerObj.signPersonalMessage === 'function'
   );
 }
 
@@ -274,11 +428,15 @@ export function hasSignPersonalMessage(
  */
 export function hasConnect(
   _signer: unknown
-): signer is BaseSigner & { connect: (_client: SuiClient) => SignerAdapter } {
+): _signer is BaseSigner & { connect: (_client: SuiClient) => SignerAdapter } {
+  if (!isValidBaseSigner(_signer)) {
+    return false;
+  }
+  
+  const signerObj = _signer as Record<string, unknown>;
   return (
-    isValidBaseSigner(signer) &&
-    'connect' in signer &&
-    typeof (signer as any).connect === 'function'
+    'connect' in signerObj &&
+    typeof signerObj.connect === 'function'
   );
 }
 
@@ -298,17 +456,17 @@ export interface SignerFeatures {
  * Function to detect and capture all available features of a signer
  */
 export function detectSignerFeatures(_signer: unknown): SignerFeatures | null {
-  if (!isValidBaseSigner(signer)) {
+  if (!isValidBaseSigner(_signer)) {
     return null;
   }
 
   return {
-    hasSignTransactionBlock: hasSignTransactionBlock(signer),
-    hasSignTransaction: hasSignTransaction(signer),
-    hasSignData: hasSignData(signer),
-    hasGetPublicKey: hasGetPublicKey(signer),
-    hasSignAndExecuteTransaction: hasSignAndExecuteTransaction(signer),
-    hasConnect: hasConnect(signer),
+    hasSignTransactionBlock: hasSignTransactionBlock(_signer),
+    hasSignTransaction: hasSignTransaction(_signer),
+    hasSignData: hasSignData(_signer),
+    hasGetPublicKey: hasGetPublicKey(_signer),
+    hasSignAndExecuteTransaction: hasSignAndExecuteTransaction(_signer),
+    hasConnect: hasConnect(_signer),
   };
 }
 
@@ -317,7 +475,7 @@ export function detectSignerFeatures(_signer: unknown): SignerFeatures | null {
  * This provides more accurate version detection than checking individual methods
  */
 export function detectSDKVersion(_signer: unknown): SuiSDKVersion {
-  const features = detectSignerFeatures(signer);
+  const features = detectSignerFeatures(_signer);
 
   if (!features) {
     return SuiSDKVersion.UNKNOWN;
@@ -351,38 +509,38 @@ export function detectSDKVersion(_signer: unknown): SuiSDKVersion {
  * A utility function to convert various signature formats to our consistent SignatureWithBytes type
  */
 export function normalizeSignature(_signature: unknown): SignatureWithBytes {
-  if (signature === null || signature === undefined) {
+  if (_signature === null || _signature === undefined) {
     throw new SignerAdapterError('Signature is null or undefined');
   }
 
   // Handle string signatures (base64 or hex)
-  if (typeof signature === 'string') {
+  if (typeof _signature === 'string') {
     // Convert Uint8Array to base64 string to match the return type expected
     return {
-      signature: signature,
+      signature: _signature,
       bytes: '', // Empty bytes when only signature string is provided
     };
   }
 
   // Handle direct Uint8Array signatures
-  if (signature instanceof Uint8Array) {
+  if (_signature instanceof Uint8Array) {
     // Convert Uint8Array to base64 string to match the return type expected
     return {
-      signature: Buffer.from(signature).toString('base64'),
+      signature: Buffer.from(_signature).toString('base64'),
       bytes: '', // Empty bytes when only signature Uint8Array is provided
     };
   }
 
   // Handle object format signatures
-  if (typeof signature === 'object') {
-    if (!('signature' in signature)) {
+  if (typeof _signature === 'object') {
+    if (!('signature' in _signature)) {
       throw new SignerAdapterError(
         'Invalid signature object: missing signature property'
       );
     }
 
     // Extract signature
-    const sigProp = signature.signature;
+    const sigProp = (_signature as Record<string, unknown>).signature;
     let signatureResult: string;
 
     if (typeof sigProp === 'string') {
@@ -408,8 +566,8 @@ export function normalizeSignature(_signature: unknown): SignatureWithBytes {
 
     // Extract bytes if present
     let bytesResult: string = '';
-    if ('bytes' in signature) {
-      const bytesProp = signature.bytes;
+    if ('bytes' in _signature) {
+      const bytesProp = (_signature as Record<string, unknown>).bytes;
       if (typeof bytesProp === 'string') {
         bytesResult = bytesProp;
       } else if (bytesProp instanceof Uint8Array) {
@@ -432,7 +590,7 @@ export function normalizeSignature(_signature: unknown): SignatureWithBytes {
   }
 
   throw new SignerAdapterError(
-    `Unsupported signature format: ${typeof signature}`
+    `Unsupported signature format: ${typeof _signature}`
   );
 }
 
@@ -442,18 +600,18 @@ export function normalizeSignature(_signature: unknown): SignatureWithBytes {
  */
 export function stringToBytes(_str: string): Uint8Array {
   // Check if it looks like base64
-  if (/^[A-Za-z0-9+/=]+$/.test(str) && str.length % 4 === 0) {
+  if (/^[A-Za-z0-9+/=]+$/.test(_str) && _str.length % 4 === 0) {
     try {
-      return base64ToBytes(str);
+      return base64ToBytes(_str);
     } catch (e) {
       // Fall through to next conversion method
     }
   }
 
   // Check if it looks like hex
-  if (/^[0-9A-Fa-f]+$/.test(str) && str.length % 2 === 0) {
+  if (/^[0-9A-Fa-f]+$/.test(_str) && _str.length % 2 === 0) {
     try {
-      return hexToBytes(str);
+      return hexToBytes(_str);
     } catch (e) {
       // Fall through to next conversion method
     }
@@ -461,7 +619,7 @@ export function stringToBytes(_str: string): Uint8Array {
 
   // Fall back to UTF-8 text encoding
   const encoder = new TextEncoder();
-  return encoder.encode(str);
+  return encoder.encode(_str);
 }
 
 /**
@@ -472,8 +630,8 @@ function base64ToBytes(_base64: string): Uint8Array {
     // Using atob for browser environments or Buffer for Node.js
     const binString =
       typeof atob === 'function'
-        ? atob(base64)
-        : Buffer.from(base64, 'base64').toString('binary');
+        ? atob(_base64)
+        : Buffer.from(_base64, 'base64').toString('binary');
 
     const bytes = new Uint8Array(binString.length);
     for (let i = 0; i < binString.length; i++) {
@@ -482,7 +640,7 @@ function base64ToBytes(_base64: string): Uint8Array {
     return bytes;
   } catch (e) {
     throw new SignerAdapterError(
-      `Invalid base64 string: ${e instanceof Error ? e.message : String(e)}`
+      `Invalid base64 string: ${e instanceof Error ? e.message : `${e}`}`
     );
   }
 }
@@ -492,15 +650,15 @@ function base64ToBytes(_base64: string): Uint8Array {
  */
 function hexToBytes(_hex: string): Uint8Array {
   // Ensure even number of characters
-  if (hex.length % 2 !== 0) {
+  if (_hex.length % 2 !== 0) {
     throw new SignerAdapterError(
       'Hex string must have an even number of characters'
     );
   }
 
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  const bytes = new Uint8Array(_hex.length / 2);
+  for (let i = 0; i < _hex.length; i += 2) {
+    bytes[i / 2] = parseInt(_hex.substring(i, i + 2), 16);
   }
   return bytes;
 }
@@ -510,14 +668,16 @@ function hexToBytes(_hex: string): Uint8Array {
  */
 export function isSignerAdapter(
   _obj: unknown
-): obj is BaseAdapter<SignerSuiJs> {
+): _obj is BaseAdapter<SignerSuiJs> {
+  if (!isBaseAdapter(_obj) || _obj === null || typeof _obj !== 'object') {
+    return false;
+  }
+  
+  const adapterObj = _obj as Record<string, unknown>;
   return (
-    isBaseAdapter(obj) &&
-    obj !== null &&
-    typeof obj === 'object' &&
-    'signWithIntent' in obj &&
-    typeof (obj as Record<string, unknown>).signWithIntent === 'function' &&
-    'toSuiAddress' in obj &&
-    typeof (obj as Record<string, unknown>).toSuiAddress === 'function'
+    'signWithIntent' in adapterObj &&
+    typeof adapterObj.signWithIntent === 'function' &&
+    'toSuiAddress' in adapterObj &&
+    typeof adapterObj.toSuiAddress === 'function'
   );
 }

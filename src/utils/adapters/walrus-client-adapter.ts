@@ -11,10 +11,6 @@ const logger = new Logger('walrus-client-adapter');
 
 import type {
   WalrusClient as OriginalWalrusClient,
-  StorageWithSizeOptions as OriginalStorageWithSizeOptions,
-  ReadBlobOptions as OriginalReadBlobOptions,
-  CertifyBlobOptions as OriginalCertifyBlobOptions,
-  WriteBlobAttributesOptions as OriginalWriteBlobAttributesOptions,
 } from '@mysten/walrus';
 import type {
   WriteBlobOptions,
@@ -27,7 +23,6 @@ import type { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type { Signer } from '@mysten/sui/cryptography';
 // BlobInfo and BlobMetadataShape types available for future use
 import { WalrusClient, WalrusClientExt } from '../../types/client';
-import { SignerAdapterImpl } from './signer-adapter';
 import { SignerAdapter } from '../../types/adapters/SignerAdapter';
 import { TransactionType } from '../../types/transaction';
 import {
@@ -75,7 +70,13 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
     this.ensureClientInitialized();
 
     try {
-      const result = await (this.walrusClient as any).getBlobInfo(blobId);
+      // Validate getBlobInfo method exists
+      if (!('getBlobInfo' in this.walrusClient) || typeof (this.walrusClient as Record<string, unknown>).getBlobInfo !== 'function') {
+        throw new WalrusClientAdapterError('getBlobInfo method not available on client');
+      }
+      
+      const getBlobInfoFn = (this.walrusClient as { getBlobInfo: (blobId: string) => Promise<unknown> }).getBlobInfo;
+      const result = await getBlobInfoFn(blobId);
       return this.normalizeBlobObject(result as Record<string, unknown>);
     } catch (error) {
       throw new WalrusClientAdapterError(
