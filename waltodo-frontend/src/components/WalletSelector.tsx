@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 import { WalletType } from '@/types/wallet';
 import { WalletErrorModal } from './WalletErrorModal';
 import { WalletNotInstalledError, WalletError } from '@/lib/wallet-errors';
+import { ClientOnly } from '@/components/ClientOnly';
 
 interface WalletOption {
   type: WalletType;
@@ -20,6 +21,12 @@ export function WalletSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<WalletType | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle client-side mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Show loading state during initialization
   if (isLoading) {

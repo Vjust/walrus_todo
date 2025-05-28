@@ -479,9 +479,9 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   public async waitForJob(jobId: string, timeoutMs: number = 30000): Promise<BackgroundJob> {
     return new Promise((resolve, reject) => {
       const checkInterval = 500; // Faster polling for tests
-      const startTime = Date.now();
-      let timeoutHandle: NodeJS.Timeout;
       let pollHandle: NodeJS.Timeout;
+      // eslint-disable-next-line prefer-const
+      let timeoutHandle: NodeJS.Timeout;
       
       const cleanup = () => {
         if (timeoutHandle) clearTimeout(timeoutHandle);
@@ -544,7 +544,9 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       
       try {
         const usage = this.getCurrentResourceUsage();
-        const memoryMB = (process.memoryUsage().heapUsed / 1024 / 1024);
+        const totalMem = os.totalmem();
+        const freeMem = os.freemem();
+        const usedMem = totalMem - freeMem;
         
         // Always emit resource updates in test environment, conditionally in production
         if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID || this.listenerCount('resourceUpdate') > 0) {
@@ -552,26 +554,26 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         }
         
         // More aggressive memory management
-        if (memoryMB > this.memoryThresholdMB && this.maxConcurrentJobs > 1) {
+        if (usedMem > this.memoryThresholdMB && this.maxConcurrentJobs > 1) {
           const newConcurrency = Math.max(1, Math.floor(this.maxConcurrentJobs * 0.7));
           if (newConcurrency !== this.maxConcurrentJobs) {
             this.maxConcurrentJobs = newConcurrency;
-            this.logger.warn(`High memory usage (${memoryMB.toFixed(1)}MB), reducing max concurrent jobs to ${this.maxConcurrentJobs}`);
+            this.logger.warn(`High memory usage (${(usedMem / 1024 / 1024).toFixed(1)}MB), reducing max concurrent jobs to ${this.maxConcurrentJobs}`);
           }
           
           // Force garbage collection if available
           if (global.gc) {
             global.gc();
           }
-        } else if (memoryMB < this.memoryThresholdMB * 0.5 && this.maxConcurrentJobs < 10) {
+        } else if (usedMem < this.memoryThresholdMB * 0.5 && this.maxConcurrentJobs < 10) {
           const newConcurrency = Math.min(10, this.maxConcurrentJobs + 1);
           if (newConcurrency !== this.maxConcurrentJobs) {
             this.maxConcurrentJobs = newConcurrency;
-            this.logger.debug(`Memory usage normal (${memoryMB.toFixed(1)}MB), increasing max concurrent jobs to ${this.maxConcurrentJobs}`);
+            this.logger.debug(`Memory usage normal (${(usedMem / 1024 / 1024).toFixed(1)}MB), increasing max concurrent jobs to ${this.maxConcurrentJobs}`);
           }
         }
       } catch (error) {
-        this.logger.error('Error in resource monitoring:', error);
+        this.logger.error('Error in resource monitoring:', error instanceof Error ? error : new Error(String(error)));
       }
     }, interval);
   }
@@ -580,7 +582,6 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Get current resource usage
    */
   private getCurrentResourceUsage(): ResourceUsage {
-    const memUsage = process.memoryUsage();
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;
@@ -618,7 +619,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         this.cleanupInactiveListeners();
         
       } catch (error) {
-        this.logger.error('Error in cleanup scheduler:', error);
+        this.logger.error('Error in cleanup scheduler:', error instanceof Error ? error : new Error(String(error)));
       }
     }, process.env.NODE_ENV === 'test' ? 30 * 1000 : 30 * 60 * 1000); // More frequent in tests
   }
@@ -648,7 +649,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   /**
    * Convert flags object to command line arguments
    */
-  private flattenFlags(flags: Record<string, any>): string[] {
+  private flattenFlags(flags: Record<string, unknown>): string[] {
     const args: string[] = [];
     
     Object.entries(flags).forEach(([key, value]) => {
@@ -715,7 +716,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       if (recentCompleted.length > 0) {
         report += chalk.bold('✅ Recent Completions:\n');
         recentCompleted.forEach(job => {
-          const duration = job.endTime! - job.startTime;
+          const duration = (job.endTime || Date.now()) - job.startTime;
           report += `  ✅ ${job.command} (${this.formatDuration(duration)})\n`;
         });
         report += '\n';
@@ -815,7 +816,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
       
       this.emit('shutdown');
     } catch (error) {
-      this.logger.error('Error during shutdown:', error);
+      this.logger.error('Error during shutdown:', error instanceof Error ? error : new Error(String(error)));
     }
   }
   
@@ -879,15 +880,15 @@ export async function resetBackgroundOrchestrator(): Promise<void> {
 
 // For backward compatibility with memory-safe operation
 export const backgroundOrchestrator = {
-  shouldRunInBackground: (...args: any[]) => {
+  shouldRunInBackground: (command: string, args: string[], flags: Record<string, unknown>) => {
     try {
-      return getBackgroundOrchestrator().shouldRunInBackground(...args);
+      return getBackgroundOrchestrator().shouldRunInBackground(command, args, flags);
     } catch {
       return false; // Disabled - never use background
     }
   },
-  executeInBackground: (...args: any[]) => {
-    return getBackgroundOrchestrator().executeInBackground(...args);
+  executeInBackground: (command: string, args: string[], flags: Record<string, unknown>, options?: BackgroundOptions) => {
+    return getBackgroundOrchestrator().executeInBackground(command, args, flags, options);
   },
   shutdown: async () => {
     await resetBackgroundOrchestrator();
