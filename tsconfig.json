@@ -20,7 +20,7 @@
     "typeRoots": ["./node_modules/@types", "./apps/cli/src/types"],
     "types": ["node", "jest", "cli-progress", "express"],
     "resolveJsonModule": true,
-    "outDir": "./dist",
+    "outDir": "./dist/root",
     "importHelpers": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

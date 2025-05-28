@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
 import {
   copyToClipboard,
@@ -13,7 +13,7 @@ import { WalletError } from '@/lib/wallet-errors';
 import { ErrorBoundary } from './ErrorBoundary';
 import { WalletSelector } from './WalletSelector';
 
-export function WalletConnectButton() {
+function WalletConnectButton() {
   const {
     connected,
     connecting,
@@ -46,7 +46,7 @@ export function WalletConnectButton() {
   };
 
   // Handle copying address to clipboard
-  const handleCopyAddress = async () => {
+  const handleCopyAddress = useCallback(async () => {
     // Prevent function execution if no address exists
     if (!address) {
       console.warn('Attempted to copy address but no address is available');
@@ -89,10 +89,10 @@ export function WalletConnectButton() {
 
       console.error('Copy operation failed:', error);
     }
-  };
+  }, [address]);
 
   // Add clipboard manual fallback option
-  const handleManualCopy = () => {
+  const handleManualCopy = useCallback(() => {
     try {
       // Prevent function execution if no address exists
       if (!address) {
@@ -132,10 +132,10 @@ export function WalletConnectButton() {
     } catch (error) {
       console.error('Error in manual copy function:', error);
     }
-  };
+  }, [address]);
 
   // Handle network switching
-  const handleNetworkSwitch = async (
+  const handleNetworkSwitch = useCallback(async (
     network: 'mainnet' | 'testnet' | 'devnet'
   ) => {
     if (isNetworkSwitching) return; // Prevent multiple clicks
@@ -151,10 +151,10 @@ export function WalletConnectButton() {
     } finally {
       setIsNetworkSwitching(false);
     }
-  };
+  }, [isNetworkSwitching, switchNetwork]);
 
   // Convert network string to display name
-  const getNetworkDisplayName = (networkId: string | null) => {
+  const getNetworkDisplayName = useCallback((networkId: string | null) => {
     if (networkId === null) return 'Unknown';
 
     // Convert network ID to readable name as needed
@@ -166,7 +166,7 @@ export function WalletConnectButton() {
 
     // Return formatted name or the original if not in our map
     return networkMap[String(networkId)] || String(networkId);
-  };
+  }, []);
 
   // Render the connected wallet UI
   const renderConnectedUI = () => {
@@ -405,3 +405,5 @@ export function WalletConnectButton() {
     </ErrorBoundary>
   );
 }
+
+export const WalletConnectButton = memo(WalletConnectButton);

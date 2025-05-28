@@ -1,0 +1,31 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/cli",
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@tests/*": ["./__tests__/*"],
+      "@types/*": ["./types/*"],
+      "@utils/*": ["./utils/*"],
+      "@services/*": ["./services/*"],
+      "@commands/*": ["./commands/*"],
+      "@adapters/*": ["./types/adapters/*"],
+      "@errors/*": ["./types/errors/*"]
+    },
+    "typeRoots": ["../../node_modules/@types", "./src/types"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "../../dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Todo } from '@/lib/sui-client';
 // import { useTodoStateSync } from '@/hooks/useBlockchainEvents'
 // import { BlockchainEventIndicator } from './BlockchainEventStatus'
@@ -17,7 +17,7 @@ type TodoListProps = {
   listName: string;
 };
 
-export default function TodoList({ listName }: TodoListProps) {
+function TodoList({ listName }: TodoListProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [blockchainTodos, setBlockchainTodos] = useState<Todo[]>([]);
@@ -88,28 +88,30 @@ export default function TodoList({ listName }: TodoListProps) {
   }, [listName, address, connected, loadBlockchainTodos]); // Re-load when wallet address changes
 
   // Merge local and blockchain todos, prioritizing blockchain todos
-  const mergedTodos = [...todos, ...blockchainTodos].reduce(
-    (acc: Todo[], todo) => {
-      // Remove duplicates based on objectId (blockchain todos take precedence)
-      const existing = acc.find(
-        t => t.objectId && t.objectId === todo.objectId
-      );
-      if (!existing) {
-        acc.push(todo);
-      } else if (todo.blockchainStored && !existing.blockchainStored) {
-        // Replace local todo with blockchain version
-        const index = acc.indexOf(existing);
-        acc[index] = todo;
-      }
-      return acc;
-    },
-    []
-  );
+  const mergedTodos = useMemo(() => {
+    return [...todos, ...blockchainTodos].reduce(
+      (acc: Todo[], todo) => {
+        // Remove duplicates based on objectId (blockchain todos take precedence)
+        const existing = acc.find(
+          t => t.objectId && t.objectId === todo.objectId
+        );
+        if (!existing) {
+          acc.push(todo);
+        } else if (todo.blockchainStored && !existing.blockchainStored) {
+          // Replace local todo with blockchain version
+          const index = acc.indexOf(existing);
+          acc[index] = todo;
+        }
+        return acc;
+      },
+      []
+    );
+  }, [todos, blockchainTodos]);
 
   // Use merged todos since blockchain events are disabled
-  const displayTodos = mergedTodos;
+  const displayTodos = useMemo(() => mergedTodos, [mergedTodos]);
 
-  const toggleTodoCompletion = async (id: string) => {
+  const toggleTodoCompletion = useCallback(async (id: string) => {
     const todo = displayTodos.find(t => t.id === id);
     if (!todo) return;
 
@@ -169,7 +171,7 @@ export default function TodoList({ listName }: TodoListProps) {
         await loadBlockchainTodos();
       }
     }
-  };
+  }, [displayTodos, signAndExecuteTransaction, address, loadBlockchainTodos, listName, connected]);
 
   if (isLoading) {
     return (
@@ -211,7 +213,7 @@ export default function TodoList({ listName }: TodoListProps) {
   }
 
   // Handle storing local todo on blockchain
-  const handleStoreOnBlockchain = async (todo: Todo) => {
+  const handleStoreOnBlockchain = useCallback(async (todo: Todo) => {
     if (!connected || !address || !signAndExecuteTransaction) return;
 
     try {
@@ -225,10 +227,10 @@ export default function TodoList({ listName }: TodoListProps) {
     } catch (error) {
       console.error('Failed to store todo on blockchain:', error);
     }
-  };
+  }, [connected, address, signAndExecuteTransaction]);
 
   // Handle deleting todo (local or blockchain)
-  const handleDeleteTodo = async (todo: Todo) => {
+  const handleDeleteTodo = useCallback(async (todo: Todo) => {
     if (!confirm(`Are you sure you want to delete "${todo.title}"?`)) return;
 
     try {
@@ -260,7 +262,7 @@ export default function TodoList({ listName }: TodoListProps) {
       console.error('Failed to delete todo:', error);
       alert('Failed to delete todo. Please try again.');
     }
-  };
+  }, [signAndExecuteTransaction, address, loadBlockchainTodos, todos]);
 
   return (
     <div className='space-y-4'>
@@ -428,3 +430,5 @@ export default function TodoList({ listName }: TodoListProps) {
     </div>
   );
 }
+
+export default memo(TodoList);

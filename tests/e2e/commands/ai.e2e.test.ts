@@ -1,5 +1,5 @@
 import { runCommand } from '../../helpers/test-utils';
-// import { Todo } from '../../../src/types/todo';
+// import { Todo } from '../../../apps/cli/src/types/todo';
 import * as fs from 'fs';
 import * as path from 'path';
 import { AIProviderFactory } from '../../../apps/cli/src/services/ai/AIProviderFactory';

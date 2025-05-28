@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error'],
+    } : false,
+  },
   images: {
     domains: ['localhost', '192.168.8.204'],
     remotePatterns: [
@@ -15,6 +21,8 @@ const nextConfig = {
         port: process.env.PORT || '3000',
       },
     ],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 3600,
   },
   // Disable standalone output to fix MIME type issues with static assets
   // output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
@@ -32,6 +40,39 @@ const nextConfig = {
         tls: false,
         encoding: false,
       };
+    }
+
+    // Performance optimizations
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\/]node_modules[\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          sui: {
+            test: /[\/]node_modules[\/]@mysten[\/]/,
+            name: 'sui-vendor',
+            chunks: 'all',
+            priority: 10,
+          },
+          wallet: {
+            test: /[\/]node_modules[\/](@suiet|@solana)[\/]/,
+            name: 'wallet-vendor',
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      },
+    };
+
+    // Tree shaking and dead code elimination
+    if (!dev) {
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = false;
     }
 
     // Suppress wallet extension console errors during development
@@ -52,6 +93,10 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // Enable PPR for better performance
+    ppr: 'incremental',
+    // Optimize font loading
+    optimizePackageImports: ['@heroicons/react', 'socket.io-client'],
   },
 
   // Allow development origins (dynamic port support)
@@ -84,6 +129,16 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Cache API responses
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=300, stale-while-revalidate=600',
           },
         ],
       },
