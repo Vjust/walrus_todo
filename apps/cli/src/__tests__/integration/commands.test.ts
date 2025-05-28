@@ -28,7 +28,7 @@ describe('CLI Commands Integration Tests', () => {
         priority: 'high',
       });
 
-      const addedTodo = await todoService.addTodo(newTodo);
+      const addedTodo = await todoService.addTodo('default', newTodo);
       expect(addedTodo.id).toBeDefined();
       expect(addedTodo.title).toBe(newTodo.title);
       expect(addedTodo.completed).toBe(false);
@@ -60,7 +60,7 @@ describe('CLI Commands Integration Tests', () => {
       // Add all todos
       const addedTodos: Todo[] = [];
       for (const todo of batchTodos) {
-        const added = await todoService.addTodo(todo);
+        const added = await todoService.addTodo('default', todo);
         addedTodos.push(added);
       }
 
@@ -74,8 +74,8 @@ describe('CLI Commands Integration Tests', () => {
       expect(foundBatchTodos).toHaveLength(3);
       
       // Complete some todos
-      await todoService.completeTodo(addedTodos[0].id);
-      await todoService.completeTodo(addedTodos[2].id);
+      await todoService.toggleItemStatus('default', addedTodos[0]!.id, true);
+      await todoService.toggleItemStatus('default', addedTodos[2]!.id, true);
 
       // Verify mixed completion states
       const finalTodos = await todoService.listTodos();
@@ -97,7 +97,7 @@ describe('CLI Commands Integration Tests', () => {
         description: 'Should survive service restart',
       });
 
-      const addedTodo = await todoService.addTodo(persistentTodo);
+      const addedTodo = await todoService.addTodo('default', persistentTodo);
       expect(addedTodo.id).toBeDefined();
 
       // Create new service instance (simulating restart)
@@ -123,7 +123,7 @@ describe('CLI Commands Integration Tests', () => {
       );
 
       // Add all todos concurrently
-      const addPromises = concurrentTodos.map(todo => todoService.addTodo(todo));
+      const addPromises = concurrentTodos.map(todo => todoService.addTodo('default', todo));
       const addedTodos = await Promise.all(addPromises);
 
       expect(addedTodos).toHaveLength(10);
@@ -160,7 +160,7 @@ describe('CLI Commands Integration Tests', () => {
     it('should handle invalid todo data gracefully', async () => {
       // Test with empty title
       const invalidTodo = createMockTodo({ title: '' });
-      await expect(todoService.addTodo(invalidTodo as Todo))
+      await expect(todoService.addTodo('default', invalidTodo as Todo))
         .rejects.toThrow();
 
       // Test with invalid priority
@@ -168,7 +168,7 @@ describe('CLI Commands Integration Tests', () => {
         ...createMockTodo(), 
         priority: 'invalid' as any 
       };
-      await expect(todoService.addTodo(invalidPriorityTodo))
+      await expect(todoService.addTodo('default', invalidPriorityTodo))
         .rejects.toThrow();
     });
 
@@ -179,20 +179,20 @@ describe('CLI Commands Integration Tests', () => {
 
       // Try to update non-existent todo
       const updateData = { title: 'Updated Title' };
-      await expect(todoService.updateTodo('non-existent-id', updateData))
+      await expect(todoService.updateTodo('default', 'non-existent-id', updateData))
         .rejects.toThrow();
     });
 
     it('should validate todo updates', async () => {
       // Create a valid todo first
       const validTodo = createMockTodo({ title: 'Valid Todo' });
-      const addedTodo = await todoService.addTodo(validTodo);
+      const addedTodo = await todoService.addTodo('default', validTodo);
 
       // Try invalid updates
-      await expect(todoService.updateTodo(addedTodo.id, { title: '' }))
+      await expect(todoService.updateTodo('default', addedTodo.id, { title: '' }))
         .rejects.toThrow();
 
-      await expect(todoService.updateTodo(addedTodo.id, { priority: 'invalid' as any }))
+      await expect(todoService.updateTodo('default', addedTodo.id, { priority: 'invalid' as any }))
         .rejects.toThrow();
     });
   });
@@ -208,7 +208,7 @@ describe('CLI Commands Integration Tests', () => {
       ];
 
       for (const todo of testTodos) {
-        await todoService.addTodo(todo);
+        await todoService.addTodo('default', todo);
       }
     });
 
