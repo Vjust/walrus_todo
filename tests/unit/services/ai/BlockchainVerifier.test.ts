@@ -1,17 +1,17 @@
-import { BlockchainVerifier } from '../../../../src/services/ai/BlockchainVerifier';
+import { BlockchainVerifier } from '../../../../apps/cli/src/services/ai/BlockchainVerifier';
 import {
   AIVerifierAdapter,
   VerificationParams,
   VerificationRecord,
   VerificationType,
-} from '../../../../src/types/adapters/AIVerifierAdapter';
+} from '../../../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import {
   AICredentialAdapter,
   CredentialVerificationParams,
   CredentialVerificationResult,
-} from '../../../../src/types/adapters/AICredentialAdapter';
-import { WalrusClientAdapter } from '../../../../src/types/adapters/WalrusClientAdapter';
-import { SignerAdapter } from '../../../../src/types/adapters/SignerAdapter';
+} from '../../../../apps/cli/src/types/adapters/AICredentialAdapter';
+import { WalrusClientAdapter } from '../../../../apps/cli/src/types/adapters/WalrusClientAdapter';
+import { SignerAdapter } from '../../../../apps/cli/src/types/adapters/SignerAdapter';
 
 describe('BlockchainVerifier', () => {
   let blockchainVerifier: BlockchainVerifier;

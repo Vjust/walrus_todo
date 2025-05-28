@@ -1,10 +1,10 @@
-import { CredentialManager } from '../../../../src/services/ai/credentials/CredentialManager';
-import { SecureCredentialStore } from '../../../../src/services/ai/credentials/SecureCredentialStore';
+import { CredentialManager } from '../../../../apps/cli/src/services/ai/credentials/CredentialManager';
+import { SecureCredentialStore } from '../../../../apps/cli/src/services/ai/credentials/SecureCredentialStore';
 import * as fs from 'fs';
 // path module available for future credential path tests
 import * as crypto from 'crypto';
 
-jest.mock('../../../../src/services/ai/credentials/SecureCredentialStore');
+jest.mock('../../../../apps/cli/src/services/ai/credentials/SecureCredentialStore');
 jest.mock('fs');
 jest.mock('crypto');
 

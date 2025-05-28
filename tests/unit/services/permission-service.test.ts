@@ -4,21 +4,21 @@
  * Tests role-based access control (RBAC), permission checks, and authorization logic.
  */
 
-import { PermissionService } from '../../../src/services/permission-service';
+import { PermissionService } from '../../../apps/cli/src/services/permission-service';
 import {
   UserRole,
   ActionType,
   ResourceType,
   createResourceIdentifier,
   Permission,
-} from '../../../src/types/permissions';
-import { CLIError } from '../../../src/types/errors';
+} from '../../../apps/cli/src/types/permissions';
+import { CLIError } from '../../../apps/cli/src/types/errors';
 
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock dependencies
-jest.mock('../../../src/utils/Logger');
-jest.mock('../../../src/utils/AuditLogger');
+jest.mock('../../../apps/cli/src/utils/Logger');
+jest.mock('../../../apps/cli/src/utils/AuditLogger');
 jest.mock('uuid');
 
 describe('PermissionService', () => {
