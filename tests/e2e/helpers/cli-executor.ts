@@ -1,4 +1,12 @@
-import { execa, type Options as ExecaOptions, ExecaError } from 'execa';
+const execa = require('execa');
+
+type ExecaOptions = any; // Use any for options to maintain compatibility
+interface ExecaError extends Error {
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  failed: boolean;
+}
 import * as path from 'path';
 
 // E2E CLI execution result interfaces
