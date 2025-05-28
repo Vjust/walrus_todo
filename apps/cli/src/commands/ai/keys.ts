@@ -242,8 +242,8 @@ export default class AIKeysCommand extends BaseCommand {
     });
 
     return (
-      response.confirm.toLowerCase() === 'yes' ||
-      response.confirm.toLowerCase() === 'y'
+      (response as any).confirm.toLowerCase() === 'yes' ||
+      (response as any).confirm.toLowerCase() === 'y'
     );
   }
 

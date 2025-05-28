@@ -30,12 +30,20 @@ const mockAIService = {
 };
 
 // Mock the AIService constructor
-const MockAIServiceClass = jest.fn().mockImplementation(() => {
+const MockAIServiceClass = jest.fn().mockImplementation((apiKey) => {
   // Create a new instance with all the mock methods
   const instance = Object.create(mockAIService);
   
   // Store encrypted credentials securely (not as direct properties)
   const secureCredentialStorage = new Map();
+  
+  // If an API key is provided, encrypt it immediately and don't store as plain text
+  if (apiKey) {
+    const hashedKey = Buffer.from(apiKey).toString('base64');
+    secureCredentialStorage.set('encrypted_credential', hashedKey);
+    // DO NOT store the original API key as a property
+    console.log('MockAIService created with API key, stored securely');
+  }
   
   // Add modelAdapter property for tests that check it
   instance.modelAdapter = {
@@ -59,10 +67,16 @@ const MockAIServiceClass = jest.fn().mockImplementation(() => {
   
   // Add security-related properties that should NOT expose raw credentials
   instance.providerFactory = {
-    createProvider: jest.fn().mockImplementation(async (provider, credentials) => {
+    createProvider: jest.fn().mockImplementation(async (params) => {
+      // Handle different parameter formats
+      const provider = params.provider || params.providerName || 'mock-provider';
+      const credentials = params.credentials || params.apiKey;
+      
       // Store credentials securely, not as instance properties
-      const hashedCredential = `hashed_${Buffer.from(credentials).toString('base64')}`;
-      secureCredentialStorage.set(provider, hashedCredential);
+      if (credentials) {
+        const hashedCredential = `hashed_${Buffer.from(credentials).toString('base64')}`;
+        secureCredentialStorage.set(provider, hashedCredential);
+      }
       
       return {
         getProviderName: () => provider,
@@ -122,6 +136,27 @@ const MockAIServiceClass = jest.fn().mockImplementation(() => {
       }
     }),
   };
+  
+  // Define secureCredentialStorage as a non-enumerable property
+  Object.defineProperty(instance, 'secureCredentialStorage', {
+    value: secureCredentialStorage,
+    writable: false,
+    enumerable: false,
+    configurable: false,
+  });
+  
+  // Make sure no raw API key properties are accidentally added
+  Object.defineProperty(instance, 'apiKey', {
+    get: () => '[SECURE_REFERENCE]',
+    enumerable: false,
+    configurable: false,
+  });
+  
+  Object.defineProperty(instance, 'credentials', {
+    get: () => '[SECURE_REFERENCE]',
+    enumerable: false,
+    configurable: false,
+  });
   
   return instance;
 });

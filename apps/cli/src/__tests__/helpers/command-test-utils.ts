@@ -106,9 +106,11 @@ export async function initializeCommandForTest<T extends Command>(
 
   // Mock parse method if requested
   if (options.mockParse) {
-    (command as any).parse = jest
-      .fn()
-      .mockResolvedValue(options.parseResult || { flags: {}, args: {} });
+    Object.defineProperty(command, 'parse', {
+      value: jest.fn().mockResolvedValue(options.parseResult || { flags: {}, args: {} }),
+      writable: true,
+      configurable: true
+    });
   }
 
   // Initialize the command
@@ -205,7 +207,11 @@ export function createMockCommand<T extends Command>(
   command.log = jest.fn();
   command.warn = jest.fn();
   (command as any).error = jest.fn();
-  (command as any).parse = jest.fn().mockResolvedValue({ flags: {}, args: {} });
+  Object.defineProperty(command, 'parse', {
+    value: jest.fn().mockResolvedValue({ flags: {}, args: {} }),
+    writable: true,
+    configurable: true
+  });
 
   // Apply any overrides
   Object.assign(command, overrides);

@@ -4,6 +4,10 @@ module.exports = {
   testMatch: ['**/*.e2e.test.ts'],
   testTimeout: 30000, // 30 seconds for e2e tests
   setupFilesAfterEnv: ['<rootDir>/setup.ts'],
+  // ESM Module Handling for E2E tests
+  transformIgnorePatterns: [
+    'node_modules/(?!(execa|p-retry|@mysten|delay|p-map|p-limit|p-queue|p-timeout|@langchain\/.*|langchain|langsmith|@walrus|retry|uuid|nanoid|jose|ky|got|chalk|glob|path-scurry)/)' 
+  ],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',

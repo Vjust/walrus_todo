@@ -101,6 +101,7 @@ export class SafeAIService {
   private logger: Logger;
   private isInitialized = false;
   private initializationError: string | null = null;
+  private initializationPromise: Promise<void> | null = null;
   private lastHealthCheck = 0;
   private readonly healthCheckInterval = 30000; // 30 seconds
   private aiHealthy = false;
@@ -108,7 +109,14 @@ export class SafeAIService {
 
   constructor() {
     this.logger = Logger.getInstance();
-    this.initializeAIService();
+    // Initialize AI service in background, but don't await it
+    // This prevents blocking the constructor while still ensuring 
+    // the logger is available for any early calls to initializeAIService
+    this.initializationPromise = this.initializeAIService().catch(error => {
+      // Error handling is already done in initializeAIService
+      // This catch just prevents unhandled promise rejections
+      return Promise.resolve();
+    });
   }
 
   /**
@@ -236,9 +244,20 @@ export class SafeAIService {
   }
 
   /**
+   * Ensures AI service is initialized (wait for constructor initialization)
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.isInitialized && this.initializationPromise) {
+      await this.initializationPromise;
+    }
+  }
+
+  /**
    * Checks if AI service is available and healthy
    */
   public async isAIAvailable(): Promise<boolean> {
+    await this.ensureInitialized();
+    
     if (!this.isInitialized || !this.aiService) {
       return false;
     }
@@ -272,6 +291,7 @@ export class SafeAIService {
     aiOperation: () => Promise<T>,
     fallbackResult: T
   ): Promise<SafeAIResult<T>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable) {
@@ -349,6 +369,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<string>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -443,6 +464,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<Record<string, string[]>>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -537,6 +559,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<Record<string, number>>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -629,6 +652,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<string[]>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -723,6 +747,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<Record<string, unknown>>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -831,6 +856,8 @@ export class SafeAIService {
     modelName?: string,
     options?: Record<string, unknown>
   ): Promise<SafeAIResult<boolean>> {
+    await this.ensureInitialized();
+    
     if (!this.aiService) {
       return {
         success: false,

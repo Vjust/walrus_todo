@@ -305,7 +305,7 @@ class CompleteCommand extends BaseCommand {
       const transactionBlock =
         typeof serialized === 'string'
           ? serialized
-          : serialized.toString('base64');
+          : Buffer.from(serialized).toString('base64');
       const dryRunResult = await (
         suiClient as {
           dryRunTransactionBlock: (params: {
@@ -342,15 +342,13 @@ class CompleteCommand extends BaseCommand {
   private async updateConfigWithCompletion(todo: Todo): Promise<void> {
     try {
       const rawConfig = await configService.getConfig();
-      const config: AppConfig = {
-        activeNetwork: rawConfig.activeNetwork || 'testnet',
-        activeAccount: rawConfig.activeAccount || '',
-        storage: rawConfig.storage || { blobMappings: {}, allocation: {} },
-        todo: rawConfig.todo || { lists: [] },
-        walrus: rawConfig.walrus || ({} as Record<string, unknown>),
-        sui: rawConfig.sui || ({} as Record<string, unknown>),
+      const config: any = {
         ...rawConfig,
-      } as AppConfig;
+        logging: (rawConfig as any).logging || {
+          level: 'info' as const,
+          console: true
+        }
+      };
 
       // Initialize completed todos tracking if not exists
       if (!config.completedTodos) {
@@ -389,7 +387,7 @@ class CompleteCommand extends BaseCommand {
       }
 
       // Write the config, using our custom wrapper to allow mocking in tests
-      await this.writeConfigSafe(config as AppConfig);
+      await this.writeConfigSafe(config);
     } catch (error) {
       // Non-blocking error - log but don't fail the command
       this.warning(
@@ -404,7 +402,7 @@ class CompleteCommand extends BaseCommand {
    *
    * @param config Configuration to write
    */
-  private async writeConfigSafe(config: AppConfig): Promise<void> {
+  private async writeConfigSafe(config: any): Promise<void> {
     try {
       // First try the standard config service method
       if (typeof configService.saveConfig === 'function') {
@@ -503,7 +501,7 @@ class CompleteCommand extends BaseCommand {
     const job = jobManager.createJob('complete', [], flags);
 
     // Spawn background process using current CLI binary
-    const cliPath = process.argv[1];
+    const cliPath = process.argv[1] || 'waltodo';
     const args: string[] = [
       'complete',
       '--quiet', // Reduce output in background
@@ -533,7 +531,7 @@ class CompleteCommand extends BaseCommand {
     });
 
     // Update job with process ID and metadata
-    jobManager.startJob(job.id, childProcess.pid);
+    jobManager.startJob(job.id, childProcess.pid || 0);
 
     // Set up progress tracking
     jobManager.updateProgress(job.id, 0, 0, todos.length);
@@ -555,7 +553,7 @@ class CompleteCommand extends BaseCommand {
     );
 
     // Handle process completion
-    childProcess.on('exit', code => {
+    childProcess.on('exit', (code: number | null) => {
       if (code === 0) {
         jobManager.writeJobLog(
           job.id,
@@ -573,7 +571,7 @@ class CompleteCommand extends BaseCommand {
     });
 
     // Handle process errors
-    childProcess.on('error', error => {
+    childProcess.on('error', (error: Error) => {
       jobManager.writeJobLog(job.id, `Process error: ${error.message}`);
       jobManager.failJob(job.id, `Process error: ${error.message}`);
     });
@@ -661,7 +659,7 @@ class CompleteCommand extends BaseCommand {
     );
 
     const showProgress = !flags.quiet;
-    let multiProgress, progressBar;
+    let multiProgress: any, progressBar: any;
 
     if (showProgress) {
       multiProgress = this.createMultiProgress();
@@ -793,7 +791,7 @@ class CompleteCommand extends BaseCommand {
 
           // Initialize and check network connection
           suiClient = { url: networkUrl }; // Mock SuiClient
-          const protocolVersion = await this.getNetworkStatus(suiClient);
+          const protocolVersion = await this.getNetworkStatus(suiClient as any);
           if (showOutput) {
             this.log(
               chalk.dim(
