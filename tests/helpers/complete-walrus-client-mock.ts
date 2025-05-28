@@ -1,12 +1,12 @@
 /**
  * Complete WalrusClient Mock Implementation for tests/ directory
  * 
- * This is a mirror of the complete mock from src/__tests__/helpers/
+ * This is a mirror of the complete mock from apps/cli/src/__tests__/helpers/
  * to ensure all test directories have access to the same comprehensive mock.
  */
 
 // Re-export everything from the main implementation
-export * from '../../src/__tests__/helpers/complete-walrus-client-mock';
+export * from '../../apps/cli/src/__tests__/helpers/complete-walrus-client-mock';
 
 // Direct import for convenience
 import { 
@@ -15,7 +15,7 @@ import {
   createWalrusModuleMock,
   getMockWalrusClient,
   type CompleteWalrusClientMock
-} from '../../src/__tests__/helpers/complete-walrus-client-mock';
+} from '../../apps/cli/src/__tests__/helpers/complete-walrus-client-mock';
 
 // Re-export for backward compatibility
 export {

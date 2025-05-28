@@ -3,7 +3,7 @@ import {
   SpinnerOptions,
   SPINNER_STYLES,
   SpinnerStyles,
-} from '../../../src/utils/progress-indicators';
+} from '../../../apps/cli/src/utils/progress-indicators';
 
 describe('progress-indicators', () => {
   describe('configuration and types', () => {

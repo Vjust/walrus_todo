@@ -1,5 +1,5 @@
-import { BlobVerificationManager } from '../../../src/utils/blob-verification';
-import { CLIError } from '../../../src/types/errors/consolidated';
+import { BlobVerificationManager } from '../../../apps/cli/src/utils/blob-verification';
+import { CLIError } from '../../../apps/cli/src/types/errors/consolidated';
 import crypto from 'crypto';
 
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
@@ -8,7 +8,7 @@ import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 // import { SuiClient } from '@mysten/sui/client';
 // import type { WalrusClientExt } from '../../../src/types/client';
 import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
-import { SuiClientType } from '../../../src/utils/adapters/sui-client-compatibility';
+import { SuiClientType } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 
 // Mock the SuiClient
 const mockGetLatestSuiSystemState = jest

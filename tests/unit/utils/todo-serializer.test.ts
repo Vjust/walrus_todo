@@ -1,5 +1,5 @@
-import { TodoSerializer } from '../../../src/utils/todo-serializer';
-import { Todo, TodoList } from '../../../src/types/todo';
+import { TodoSerializer } from '../../../apps/cli/src/utils/todo-serializer';
+import { Todo, TodoList } from '../../../apps/cli/src/types/todo';
 
 describe('TodoSerializer', () => {
   let sampleTodo: Todo;

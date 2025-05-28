@@ -1,8 +1,8 @@
-import { Todo, TodoList } from '../../../src/types/todo';
-import { TodoService } from '../../../src/services/todo-service';
-import { CLIError } from '../../../src/types/errors';
+import { Todo, TodoList } from '../../../apps/cli/src/types/todo';
+import { TodoService } from '../../../apps/cli/src/services/todo-service';
+import { CLIError } from '../../../apps/cli/src/types/errors';
 
-import { STORAGE_CONFIG } from '../../../src/constants';
+import { STORAGE_CONFIG } from '../../../apps/cli/src/constants';
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import * as path from 'path';
@@ -11,7 +11,7 @@ import * as path from 'path';
 jest.mock('fs');
 
 // Mock generateId to return predictable IDs
-jest.mock('../../../src/utils/id-generator', () => ({
+jest.mock('../../../apps/cli/src/utils/id-generator', () => ({
   generateId: jest.fn(() => 'test-id-123'),
 }));
 

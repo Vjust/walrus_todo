@@ -4,7 +4,7 @@ import {
   randomBytes,
 } from 'crypto';
 import { createHash } from 'crypto';
-import { SecureStorageService } from '../../../src/services/secure-storage';
+import { SecureStorageService } from '../../../apps/cli/src/services/secure-storage';
 
 // Mock crypto module
 jest.mock('crypto', () => ({
@@ -16,7 +16,7 @@ jest.mock('crypto', () => ({
 }));
 
 // Mock logger
-jest.mock('../../../src/utils/Logger', () => ({
+jest.mock('../../../apps/cli/src/utils/Logger', () => ({
   Logger: {
     getInstance: jest.fn().mockReturnValue({
       debug: jest.fn(),

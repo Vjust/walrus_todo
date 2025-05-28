@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { AIService } from '../../../../src/services/ai/aiService';
+import { AIService } from '../../../../apps/cli/src/services/ai/aiService';
 import {
   createMockAIService,
   mockXAIProvider,
@@ -7,8 +7,8 @@ import {
 // MockXAIProvider is available through mocking
 import {
   AIProviderType,
-} from '../../../../src/services/ai/types';
-import type { Todo } from '../../../../src/types/todo';
+} from '../../../../apps/cli/src/services/ai/types';
+import type { Todo } from '../../../../apps/cli/src/types/todo';
 
 describe('AIService', () => {
   let service: AIService;

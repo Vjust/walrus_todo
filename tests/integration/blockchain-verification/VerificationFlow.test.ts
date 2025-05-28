@@ -2,10 +2,10 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
-import type { WalrusClientExt } from '../../../src/types/client';
+import type { WalrusClientExt } from '../../../apps/cli/src/types/client';
 import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
-import { BlobVerificationManager } from '../../../src/utils/blob-verification';
-import { CLIError } from '../../../src/types/errors/consolidated';
+import { BlobVerificationManager } from '../../../apps/cli/src/utils/blob-verification';
+import { CLIError } from '../../../apps/cli/src/types/errors/consolidated';
 
 // Mock Verification Flow Controller
 class VerificationFlowController {

@@ -1,7 +1,7 @@
 import {
   generateId,
   generateDeterministicId,
-} from '../../../src/utils/id-generator';
+} from '../../../apps/cli/src/utils/id-generator';
 
 describe('id-generator', () => {
   describe('generateId', () => {

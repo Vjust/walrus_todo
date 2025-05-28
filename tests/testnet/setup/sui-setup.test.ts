@@ -15,7 +15,7 @@ import {
   WalletSetupConfig,
   TestnetSetupResult,
 } from './sui-setup';
-import { NetworkType } from '../../../src/types/network';
+import { NetworkType } from '../../../apps/cli/src/types/network';
 
 // Mock dependencies
 jest.mock('fs');

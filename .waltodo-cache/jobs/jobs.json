@@ -25,13 +25,14 @@
       "priority": "low",
       "backgroundMode": true
     },
-    "status": "running",
+    "status": "cancelled",
     "startTime": 1748374820598,
     "progress": 0,
     "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748374820594_2j0puw.log",
     "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748374820594_2j0puw.out",
     "metadata": {},
-    "pid": 62634
+    "pid": 62634,
+    "endTime": 1748394653138
   },
   {
     "id": "job_1748374855766_pt4fcy",
@@ -95,13 +96,14 @@
       "priority": "low",
       "backgroundMode": true
     },
-    "status": "running",
+    "status": "cancelled",
     "startTime": 1748374981550,
     "progress": 0,
     "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748374981549_5vftjw.log",
     "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748374981549_5vftjw.out",
     "metadata": {},
-    "pid": 63675
+    "pid": 63675,
+    "endTime": 1748394653137
   },
   {
     "id": "job_1748376364691_65dc4o",
@@ -135,13 +137,14 @@
       "silent": false,
       "backgroundMode": true
     },
-    "status": "running",
+    "status": "cancelled",
     "startTime": 1748376364694,
     "progress": 0,
     "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748376364691_65dc4o.log",
     "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748376364691_65dc4o.out",
     "metadata": {},
-    "pid": 67135
+    "pid": 67135,
+    "endTime": 1748394653133
   },
   {
     "id": "job_1748379002170_p10dga",

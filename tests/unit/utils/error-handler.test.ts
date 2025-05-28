@@ -2,13 +2,13 @@ import {
   handleError,
   withRetry,
   assert,
-} from '../../../src/utils/error-handler';
+} from '../../../apps/cli/src/utils/error-handler';
 
-import * as errorMessages from '../../../src/utils/error-messages';
-import { CLIError } from '../../../src/types/errors/consolidated';
+import * as errorMessages from '../../../apps/cli/src/utils/error-messages';
+import { CLIError } from '../../../apps/cli/src/types/errors/consolidated';
 
 // Mock dependencies
-jest.mock('../../../src/utils/error-messages');
+jest.mock('../../../apps/cli/src/utils/error-messages');
 jest.mock('chalk', () => ({
   default: {
     yellow: jest.fn((text: string) => text),

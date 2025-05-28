@@ -16,7 +16,10 @@
     "declarationMap": true,
     "sourceMap": true,
     "moduleResolution": "node",
-    "allowJs": true
+    "allowJs": true,
+    "noImplicitUseStrict": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "types": ["node", "express"]
   },
   "include": [
     "src/**/*"
