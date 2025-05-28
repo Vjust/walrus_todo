@@ -1,9 +1,9 @@
-import { Flags } from '@oclif/core';
+import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import findUp from 'find-up';
 import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
@@ -34,7 +34,7 @@ interface DeploymentInfo {
  * It handles the preparation of contract files, executes the deployment using the Sui CLI, and saves the deployment information for future use.
  * The command requires the Sui CLI to be installed and a wallet address to be configured or provided.
  *
- * @param {string} network - The blockchain network to deploy the contract to ('localnet', 'devnet', 'testnet', 'mainnet'). (Required flag: -n, --network)
+ * @param {string} [network] - The blockchain network to deploy the contract to ('localnet', 'devnet', 'testnet', 'mainnet'). Can be provided as a positional argument or flag. Defaults to 'testnet'.
  * @param {string} [address] - The Sui wallet address to use for deployment. If not provided, it attempts to use the active address from Sui CLI or saved configuration. (Optional flag: -a, --address)
  * @param {string} [gas-budget='100000000'] - The gas budget for the deployment transaction. (Optional flag: --gas-budget)
  */
@@ -69,24 +69,37 @@ export default class DeployCommand extends BaseCommand {
     );
   }
   static description =
-    'Deploy the Todo NFT smart contract to the Sui blockchain';
+    'Deploy Todo NFT smart contract with simplified syntax\n\nNEW SYNTAX:\n  waltodo deploy                          # Deploy to testnet (default)\n  waltodo deploy testnet                  # Explicitly deploy to testnet\n  waltodo deploy mainnet                  # Deploy to mainnet\n  waltodo deploy <network>                # Deploy to specified network\n\nThe new syntax uses the network as a simple positional argument,\nmaking deployment commands cleaner and more intuitive.\n\nLEGACY SYNTAX (still supported but hidden):\n  waltodo deploy --network <network>';
+
+  static usage = 'deploy [NETWORK]';
 
   static examples = [
-    '<%= config.bin %> deploy --network testnet                           # Deploy to testnet',
-    '<%= config.bin %> deploy --network devnet --address 0x123456...     # Deploy with specific address',
-    '<%= config.bin %> deploy --network localnet                         # Deploy locally',
-    '<%= config.bin %> deploy --network testnet --gas-budget 100000000  # Custom gas budget',
-    '<%= config.bin %> deploy --network mainnet --dry-run                # Preview deployment',
+    '<%= config.bin %> deploy                                            # Deploy to testnet (default)',
+    '<%= config.bin %> deploy testnet                                    # Deploy to testnet explicitly', 
+    '<%= config.bin %> deploy mainnet                                    # Deploy to mainnet',
+    '<%= config.bin %> deploy devnet --address 0x123456...              # Deploy to devnet with specific address',
+    '<%= config.bin %> deploy localnet                                   # Deploy locally',
+    '<%= config.bin %> deploy testnet --gas-budget 100000000            # Deploy with custom gas budget',
+    '<%= config.bin %> deploy --network mainnet                         # Legacy flag syntax (still supported)',
   ];
+
+  static args = {
+    network: Args.string({
+      description: 'Network to deploy to (localnet, devnet, testnet, mainnet). Defaults to testnet if not specified',
+      required: false,
+      options: ['localnet', 'devnet', 'testnet', 'mainnet'],
+      default: 'testnet',
+    }),
+  };
 
   static flags = {
     ...BaseCommand.flags,
     network: Flags.string({
       char: 'n',
-      description: 'Network to deploy to (localnet, devnet, testnet, mainnet)',
-      required: true,
+      description: 'Network to deploy to (localnet, devnet, testnet, mainnet) - overrides positional argument',
+      required: false,
       options: ['localnet', 'devnet', 'testnet', 'mainnet'],
-      default: 'devnet',
+      hidden: true, // Hide deprecated flag from help
     }),
     address: Flags.string({
       char: 'a',
@@ -118,13 +131,30 @@ export default class DeployCommand extends BaseCommand {
   }
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(DeployCommand);
+    const { args, flags } = await this.parse(DeployCommand);
     const {
-      network,
       address,
       'gas-budget': gasBudget,
       'skip-frontend-config': skipFrontendConfig,
     } = flags;
+
+    // Determine network: flag takes precedence over positional arg, already defaults to testnet
+    const network = flags.network || args.network;
+
+    // Show deprecation notice if using flag
+    if (flags.network) {
+      this.log(chalk.yellow('⚠️  The --network flag is deprecated. Use positional argument instead:'));
+      this.log(chalk.dim(`    waltodo deploy ${network}`));
+    }
+
+    // Validate network (redundant but kept for safety)
+    const validNetworks = ['localnet', 'devnet', 'testnet', 'mainnet'];
+    if (!validNetworks.includes(network)) {
+      throw new CLIError(
+        `Invalid network '${network}'. Valid options are: ${validNetworks.join(', ')}`,
+        'INVALID_NETWORK'
+      );
+    }
 
     // First verify the exact absolute path of Move.toml
     const absoluteProjectPath = process.cwd();
@@ -141,10 +171,14 @@ export default class DeployCommand extends BaseCommand {
       'sources'
     );
 
+    // Pre-deployment validation
+    this.log(chalk.blue('\n🔍 Checking prerequisites...'));
+    
     try {
       // Check if sui client is installed using the safe command executor
       try {
         safeExecFileSync('sui', ['--version'], { stdio: 'ignore' });
+        this.log(chalk.green('✓ Sui CLI found'));
       } catch (_error) {
         throw new CLIError(
           'Sui CLI not found. Please install it first: cargo install --locked --git https://github.com/MystenLabs/sui.git sui',
@@ -182,21 +216,34 @@ export default class DeployCommand extends BaseCommand {
       }
 
       if (!deployAddress) {
+        this.log(chalk.red('✗ No wallet address found'));
         throw new CLIError(
           'No wallet address configured. Please run "waltodo configure" first or provide --address flag.',
           'NO_WALLET_ADDRESS'
         );
+      } else {
+        this.log(chalk.green('✓ Wallet address configured'));
       }
 
-      this.log(
-        chalk.blue(
-          `\nDeploying to ${network} network with address ${deployAddress}...`
-        )
-      );
+      // Show deployment summary
+      this.log(chalk.blue('\n🚀 Starting Smart Contract Deployment'));
+      this.log(chalk.blue('━'.repeat(50)));
+      this.log(chalk.cyan(`📍 Network:     ${chalk.bold(network)}`));
+      this.log(chalk.cyan(`💳 Address:     ${chalk.bold(deployAddress)}`));
+      this.log(chalk.cyan(`⛽ Gas Budget:  ${chalk.bold(gasBudget)}`));
+      this.log(chalk.blue('━'.repeat(50)));
+      
+      // Warn for mainnet deployment
+      if (network === 'mainnet') {
+        this.log(chalk.yellow('\n⚠️  WARNING: Deploying to MAINNET'));
+        this.log(chalk.yellow('   This will use real SUI tokens and cannot be undone.'));
+        this.log(chalk.dim('   Press Ctrl+C to cancel, or wait 3 seconds to continue...\n'));
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
 
       // Get and log network URL
       const networkUrl = this.getNetworkUrl(network);
-      this.log(chalk.dim(`Network URL: ${networkUrl}`));
+      this.log(chalk.dim(`\nNetwork URL: ${networkUrl}`));
 
       // Verify files exist before proceeding
       if (!fs.existsSync(absoluteMoveTomlPath)) {
@@ -260,7 +307,16 @@ export default class DeployCommand extends BaseCommand {
         );
       }
 
-      this.log(chalk.blue('\nPublishing package to the Sui blockchain...'));
+      this.log(chalk.blue('\n📦 Publishing package to the Sui blockchain...'));
+      this.log(chalk.dim('⏳ This may take a few moments...'));
+      
+      // Show spinner-like progress
+      const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+      let spinnerIndex = 0;
+      const spinnerInterval = setInterval(() => {
+        process.stdout.write(`\r${chalk.yellow(spinner[spinnerIndex])} Deploying contract...`);
+        spinnerIndex = (spinnerIndex + 1) % spinner.length;
+      }, 100);
 
       try {
         // Validate the gas budget to prevent command injection
@@ -280,6 +336,11 @@ export default class DeployCommand extends BaseCommand {
           skipDependencyVerification: true,
           json: true,
         });
+        
+        // Clear the spinner
+        clearInterval(spinnerInterval);
+        process.stdout.write('\r' + ' '.repeat(30) + '\r'); // Clear the line
+        
         let publishResult;
 
         try {
@@ -360,17 +421,19 @@ export default class DeployCommand extends BaseCommand {
           lastDeployment: deploymentInfo,
         });
 
-        this.log(chalk.green('\n✓ Smart contract deployed successfully!'));
-        this.log(chalk.blue('Deployment Info:'));
-        this.log(chalk.bold(chalk.cyan(`  Package ID: ${packageId}`)));
-        this.log(chalk.dim(`  Digest: ${publishResult.digest}`));
-        this.log(chalk.dim(`  Network: ${network}`));
-        this.log(chalk.dim(`  Address: ${deployAddress}`));
+        this.log(chalk.green('\n✅ Deployment Successful!'));
+        this.log(chalk.green('━'.repeat(50)));
+        this.log(chalk.cyan('📦 Package Details:'));
+        this.log(chalk.bold(`   Package ID:  ${chalk.green(packageId)}`));
+        this.log(chalk.dim(`   Digest:      ${publishResult.digest}`));
+        this.log(chalk.dim(`   Network:     ${network}`));
+        this.log(chalk.dim(`   Deployer:    ${deployAddress}`));
+        this.log(chalk.green('━'.repeat(50)));
 
         // Generate frontend configuration
         if (!skipFrontendConfig) {
           try {
-            this.log(chalk.blue('\nGenerating frontend configuration...'));
+            this.log(chalk.blue('\n⚙️ Generating frontend configuration...'));
             const frontendConfigGenerator = createFrontendConfigGenerator();
 
             // Check if frontend exists
@@ -390,7 +453,7 @@ export default class DeployCommand extends BaseCommand {
               );
 
               this.log(
-                chalk.green('✓ Frontend configuration generated successfully!')
+                chalk.green('✅ Frontend configuration generated successfully!')
               );
               this.log(
                 chalk.dim(
@@ -434,16 +497,22 @@ export default class DeployCommand extends BaseCommand {
           );
         }
 
-        this.log(
-          '\nConfiguration has been saved. You can now use other commands without specifying the package ID.'
-        );
-        this.log(chalk.blue('\nView your package on Sui Explorer:'));
+        this.log(chalk.yellow('\n💡 Next Steps:'));
+        this.log(chalk.dim('   • Use "waltodo add" to create your first todo'));
+        this.log(chalk.dim('   • Use "waltodo list" to view your todos'));
+        this.log(chalk.dim('   • Run the frontend with "pnpm run nextjs"'));
+        
+        this.log(chalk.blue('\n🔍 View on Sui Explorer:'));
         this.log(
           chalk.cyan(
-            `  https://explorer.sui.io/object/${packageId}?network=${network}`
+            `   ${chalk.underline(`https://explorer.sui.io/object/${packageId}?network=${network}`)}`
           )
         );
       } catch (execError: unknown) {
+        // Clear the spinner on error
+        clearInterval(spinnerInterval);
+        process.stdout.write('\r' + ' '.repeat(30) + '\r'); // Clear the line
+        
         const errorObj = execError as {
           status?: number;
           stderr?: { toString(): string };

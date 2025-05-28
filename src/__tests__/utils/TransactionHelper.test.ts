@@ -209,7 +209,6 @@ describe('TransactionHelper', () => {
       expect(
         helper.shouldRetry(
           new ValidationError('Invalid input', {
-            message: 'Invalid input',
             field: 'test',
           })
         )

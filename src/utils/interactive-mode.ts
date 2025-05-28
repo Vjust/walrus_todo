@@ -1,7 +1,7 @@
 import * as readline from 'readline';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { ICONS } from '../base-command';
-import { Logger } from './Logger';
+// import { Logger } from './Logger';
 import { TodoService } from '../services/todoService';
 import { spawn } from 'child_process';
 import * as path from 'path';
@@ -14,14 +14,13 @@ interface InteractiveContext {
 
 export class InteractiveMode {
   private rl: readline.Interface;
-  private logger: Logger;
   private context: InteractiveContext;
   private todoService: TodoService;
   private commands: Map<string, string>;
   private running: boolean = false;
 
   constructor() {
-    this.logger = Logger.getInstance();
+    // this.logger = Logger.getInstance();
     this.todoService = new TodoService();
     this.context = {
       history: [],
@@ -97,7 +96,7 @@ export class InteractiveMode {
       try {
         await this.handleCommand(trimmed);
       } catch (error) {
-        logger.error(chalk.red(`${ICONS.ERROR} Error: ${error.message}`));
+        console.error(chalk.red(`${ICONS.ERROR} Error: ${error.message}`));
       }
 
       if (this.running) {
@@ -115,29 +114,29 @@ export class InteractiveMode {
   }
 
   private showWelcome(): void {
-    logger.info('\n' + chalk.blue('═'.repeat(50)));
-    logger.info(
+    console.log('\n' + chalk.blue('═'.repeat(50)));
+    console.log(
       chalk.cyan.bold('  🌊 Welcome to Walrus Todo Interactive Mode! 🌊')
     );
-    logger.info(chalk.blue('═'.repeat(50)));
-    logger.info();
-    logger.info(chalk.yellow('Quick Commands:'));
-    logger.info('  • ' + chalk.green('l') + ' - List todos');
-    logger.info('  • ' + chalk.green('a <title>') + ' - Add a new todo');
-    logger.info('  • ' + chalk.green('c <id>') + ' - Complete a todo');
-    logger.info('  • ' + chalk.green('sl <list>') + ' - Set current list');
-    logger.info('  • ' + chalk.green('help') + ' - Show all commands');
-    logger.info('  • ' + chalk.green('exit') + ' - Exit interactive mode');
-    logger.info();
-    logger.info(chalk.dim('Tip: Use TAB for command completion'));
-    logger.info();
+    console.log(chalk.blue('═'.repeat(50)));
+    console.log();
+    console.log(chalk.yellow('Quick Commands:'));
+    console.log('  • ' + chalk.green('l') + ' - List todos');
+    console.log('  • ' + chalk.green('a <title>') + ' - Add a new todo');
+    console.log('  • ' + chalk.green('c <id>') + ' - Complete a todo');
+    console.log('  • ' + chalk.green('sl <list>') + ' - Set current list');
+    console.log('  • ' + chalk.green('help') + ' - Show all commands');
+    console.log('  • ' + chalk.green('exit') + ' - Exit interactive mode');
+    console.log();
+    console.log(chalk.dim('Tip: Use TAB for command completion'));
+    console.log();
   }
 
   private showGoodbye(): void {
-    logger.info();
-    logger.info(chalk.cyan('👋 Thanks for using Walrus Todo!'));
-    logger.info(chalk.blue('See you later, alligator! 🐊'));
-    logger.info();
+    console.log();
+    console.log(chalk.cyan('👋 Thanks for using Walrus Todo!'));
+    console.log(chalk.blue('See you later, alligator! 🐊'));
+    console.log();
   }
 
   private async handleCommand(input: string): Promise<void> {
@@ -166,26 +165,26 @@ export class InteractiveMode {
 
       case 'set-list':
         if (args.length === 0) {
-          logger.info(
+          console.log(
             chalk.yellow(`${ICONS.WARNING} Please specify a list name`)
           );
           return;
         }
         this.context.currentList = args[0];
-        logger.info(
+        console.log(
           chalk.green(`${ICONS.SUCCESS} Current list set to: ${args[0]}`)
         );
         break;
 
       case 'current-list':
         if (this.context.currentList) {
-          logger.info(
+          console.log(
             chalk.blue(
               `${ICONS.LIST} Current list: ${this.context.currentList}`
             )
           );
         } else {
-          logger.info(chalk.yellow(`${ICONS.WARNING} No list selected`));
+          console.log(chalk.yellow(`${ICONS.WARNING} No list selected`));
         }
         break;
 
@@ -248,45 +247,45 @@ export class InteractiveMode {
   }
 
   private showHelp(): void {
-    logger.info();
-    logger.info(chalk.bold('📚 Interactive Mode Commands:'));
-    logger.info();
-    logger.info(chalk.green('List Management:'));
-    logger.info(
+    console.log();
+    console.log(chalk.bold('📚 Interactive Mode Commands:'));
+    console.log();
+    console.log(chalk.green('List Management:'));
+    console.log(
       '  ' + chalk.cyan('set-list <name>') + ' (sl) - Set the current list'
     );
-    logger.info(
+    console.log(
       '  ' + chalk.cyan('current-list') + ' (cl) - Show current list'
     );
-    logger.info(
+    console.log(
       '  ' + chalk.cyan('list') + ' (l) - List todos in current list'
     );
-    logger.info();
-    logger.info(chalk.green('Todo Operations:'));
-    logger.info('  ' + chalk.cyan('add <title>') + ' (a) - Add a new todo');
-    logger.info('  ' + chalk.cyan('complete <id>') + ' (c) - Complete a todo');
-    logger.info('  ' + chalk.cyan('delete <id>') + ' (d) - Delete a todo');
-    logger.info('  ' + chalk.cyan('update <id>') + ' - Update a todo');
-    logger.info();
-    logger.info(chalk.green('AI Features:'));
-    logger.info('  ' + chalk.cyan('suggest') + ' (s) - Get AI suggestions');
-    logger.info('  ' + chalk.cyan('ai verify') + ' - Verify AI service');
-    logger.info();
-    logger.info(chalk.green('Storage:'));
-    logger.info('  ' + chalk.cyan('store') + ' - Store todos to blockchain');
-    logger.info(
+    console.log();
+    console.log(chalk.green('Todo Operations:'));
+    console.log('  ' + chalk.cyan('add <title>') + ' (a) - Add a new todo');
+    console.log('  ' + chalk.cyan('complete <id>') + ' (c) - Complete a todo');
+    console.log('  ' + chalk.cyan('delete <id>') + ' (d) - Delete a todo');
+    console.log('  ' + chalk.cyan('update <id>') + ' - Update a todo');
+    console.log();
+    console.log(chalk.green('AI Features:'));
+    console.log('  ' + chalk.cyan('suggest') + ' (s) - Get AI suggestions');
+    console.log('  ' + chalk.cyan('ai verify') + ' - Verify AI service');
+    console.log();
+    console.log(chalk.green('Storage:'));
+    console.log('  ' + chalk.cyan('store') + ' - Store todos to blockchain');
+    console.log(
       '  ' + chalk.cyan('retrieve') + ' - Retrieve todos from blockchain'
     );
-    logger.info();
-    logger.info(chalk.green('System:'));
-    logger.info('  ' + chalk.cyan('help') + ' (h, ?) - Show this help');
-    logger.info('  ' + chalk.cyan('clear') + ' - Clear the screen');
-    logger.info('  ' + chalk.cyan('exit') + ' (quit) - Exit interactive mode');
-    logger.info();
-    logger.info(
+    console.log();
+    console.log(chalk.green('System:'));
+    console.log('  ' + chalk.cyan('help') + ' (h, ?) - Show this help');
+    console.log('  ' + chalk.cyan('clear') + ' - Clear the screen');
+    console.log('  ' + chalk.cyan('exit') + ' (quit) - Exit interactive mode');
+    console.log();
+    console.log(
       chalk.dim('Note: When a list is set, todo operations use it by default')
     );
-    logger.info();
+    console.log();
   }
 
   public setCurrentList(listName: string): void {

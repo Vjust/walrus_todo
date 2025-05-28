@@ -69,7 +69,7 @@ export const ArgumentValidators = {
             code: 'EMPTY_TITLE',
           },
           {
-            test: value => value.length <= 100,
+            test: value => value !== null && typeof value === 'string' && value.length <= 100,
             message: 'Todo title must be 100 characters or less',
             code: 'TITLE_TOO_LONG',
           },

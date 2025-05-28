@@ -3,7 +3,7 @@ import BaseCommand from '../base-command';
 import { aiService, secureCredentialService } from '../services/ai';
 import { AIProviderFactory } from '../services/ai/AIProviderFactory';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { Logger } from '../utils/Logger';
 import {
   requireEnvironment,
@@ -14,6 +14,12 @@ import { getEnv, hasEnv } from '../utils/environment-config';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 import { Todo } from '../types/todo';
+import { 
+  createBackgroundAIOperationsManager, 
+  BackgroundAIOperations, 
+  BackgroundAIUtils,
+  BackgroundAIOptions
+} from '../utils/background-ai-operations';
 
 const logger = new Logger('AI');
 
@@ -29,6 +35,9 @@ interface AICommandFlags {
   debug?: boolean;
   network?: string;
   verbose?: boolean;
+  background?: boolean;
+  wait?: boolean;
+  jobId?: string;
 }
 
 // Define interfaces for AI response handling
@@ -78,6 +87,10 @@ export default class AI extends BaseCommand {
     '<%= config.bin %> ai suggest --list work --context "sprint planning"  # Context-aware suggestions',
     '<%= config.bin %> ai analyze --all                              # Analyze all lists',
     '<%= config.bin %> ai summarize --list project --format detailed  # Detailed summary',
+    '<%= config.bin %> ai summarize --background                      # Run in background, non-blocking',
+    '<%= config.bin %> ai analyze --background --wait                 # Background with wait for results',
+    '<%= config.bin %> ai status --jobId abc123                       # Check background job status',
+    '<%= config.bin %> ai suggest --jobId abc123 --wait               # Wait for background job completion',
     '$ walrus_todo ai credentials add xai --key YOUR_KEY',
   ];
 
@@ -99,6 +112,23 @@ export default class AI extends BaseCommand {
       description: 'Output as JSON',
       required: false,
       default: false,
+    }),
+    background: Flags.boolean({
+      char: 'b',
+      description: 'Run AI operation in background without blocking terminal',
+      required: false,
+      default: false,
+    }),
+    wait: Flags.boolean({
+      char: 'w',
+      description: 'Wait for background operation to complete and show results',
+      required: false,
+      default: false,
+    }),
+    jobId: Flags.string({
+      char: 'j',
+      description: 'Check status or get result of specific background job',
+      required: false,
     }),
   };
 
@@ -136,6 +166,11 @@ export default class AI extends BaseCommand {
     const { args, flags } = await this.parse(AI);
     // Type assertion for flags to fix property access
     const typedFlags = flags as AICommandFlags;
+
+    // Handle job status check first
+    if (typedFlags.jobId) {
+      return this.handleJobStatus(typedFlags.jobId, typedFlags);
+    }
 
     // Always set AI features flag for AI command
     AIProviderFactory.setAIFeatureRequested(true);
@@ -466,6 +501,11 @@ export default class AI extends BaseCommand {
   private async summarizeTodos(flags: AICommandFlags) {
     const todos = await this.getTodos(flags.list);
 
+    // Handle background execution
+    if (flags.background) {
+      return this.executeAIInBackground('summarize', todos, flags);
+    }
+
     this.log(chalk.bold('Generating AI summary...'));
 
     try {
@@ -560,6 +600,11 @@ export default class AI extends BaseCommand {
    */
   private async categorizeTodos(flags: AICommandFlags) {
     const todos = await this.getTodos(flags.list);
+
+    // Handle background execution
+    if (flags.background) {
+      return this.executeAIInBackground('categorize', todos, flags);
+    }
 
     this.log(chalk.bold('Categorizing todos...'));
 
@@ -685,6 +730,11 @@ export default class AI extends BaseCommand {
    */
   private async prioritizeTodos(flags: AICommandFlags) {
     const todos = await this.getTodos(flags.list);
+
+    // Handle background execution
+    if (flags.background) {
+      return this.executeAIInBackground('prioritize', todos, flags);
+    }
 
     this.log(chalk.bold('Prioritizing todos...'));
 
@@ -827,6 +877,11 @@ export default class AI extends BaseCommand {
    */
   private async suggestTodos(flags: AICommandFlags) {
     const todos = await this.getTodos(flags.list);
+
+    // Handle background execution
+    if (flags.background) {
+      return this.executeAIInBackground('suggest', todos, flags);
+    }
 
     this.log(chalk.bold('Generating todo suggestions...'));
 
@@ -1007,6 +1062,11 @@ export default class AI extends BaseCommand {
   private async analyzeTodos(flags: AICommandFlags) {
     const todos = await this.getTodos(flags.list);
 
+    // Handle background execution
+    if (flags.background) {
+      return this.executeAIInBackground('analyze', todos, flags);
+    }
+
     this.log(chalk.bold('Analyzing todos...'));
 
     try {
@@ -1129,6 +1189,307 @@ export default class AI extends BaseCommand {
         `AI analysis failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
+  }
+
+  /**
+   * Handle background job status checking
+   */
+  private async handleJobStatus(jobId: string, flags: AICommandFlags) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+      const status = await backgroundOps.getOperationStatus(jobId);
+
+      if (!status) {
+        this.error(`Job ${jobId} not found`);
+        return;
+      }
+
+      if (flags.json) {
+        this.log(JSON.stringify(status, null, 2));
+        return;
+      }
+
+      this.log(chalk.bold(`Job Status: ${jobId}`));
+      this.log(`Type: ${chalk.cyan(status.type)}`);
+      this.log(`Status: ${this.formatStatus(status.status)}`);
+      this.log(`Progress: ${chalk.yellow(`${status.progress}%`)}`);
+      this.log(`Stage: ${chalk.blue(status.stage)}`);
+      
+      if (status.startedAt) {
+        this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
+      }
+      
+      if (status.completedAt) {
+        this.log(`Completed: ${chalk.dim(status.completedAt.toLocaleString())}`);
+      }
+
+      if (status.error) {
+        this.log(`Error: ${chalk.red(status.error)}`);
+      }
+
+      // If completed, show results
+      if (status.status === 'completed' && !flags.json) {
+        const result = await backgroundOps.getOperationResult(jobId);
+        if (result) {
+          this.log(chalk.bold('\nResults:'));
+          await this.displayAIResult(status.type as any, result.result, flags);
+        }
+      }
+
+      // If waiting and operation is still running, wait for completion
+      if (flags.wait && (status.status === 'queued' || status.status === 'running')) {
+        this.log(chalk.yellow('\nWaiting for operation to complete...'));
+        
+        const result = await backgroundOps.waitForOperationWithProgress(
+          jobId,
+          (progress, stage) => {
+            process.stdout.write(`\r${chalk.blue('Progress:')} ${progress}% (${stage})`);
+          }
+        );
+
+        process.stdout.write('\n');
+        this.log(chalk.green('Operation completed!'));
+        
+        if (!flags.json) {
+          await this.displayAIResult(status.type as any, result.result, flags);
+        } else {
+          this.log(JSON.stringify(result, null, 2));
+        }
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to get job status: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Execute AI operation in background
+   */
+  private async executeAIInBackground(
+    type: 'summarize' | 'categorize' | 'prioritize' | 'suggest' | 'analyze',
+    todos: Todo[],
+    flags: AICommandFlags
+  ) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+
+      const options: BackgroundAIOptions = {
+        list: flags.list,
+        verify: flags.verify,
+        apiKey: flags.apiKey,
+        provider: flags.provider,
+        model: flags.model,
+        temperature: flags.temperature,
+        priority: 'normal',
+      };
+
+      // Create non-blocking operation
+      const operation = await BackgroundAIUtils.createNonBlockingAIOperation(
+        backgroundOps,
+        type,
+        todos,
+        options
+      );
+
+      this.log(chalk.green(`✓ AI ${type} operation started in background`));
+      this.log(chalk.blue(`Job ID: ${operation.operationId}`));
+      this.log('');
+      this.log(chalk.dim('Commands to check progress:'));
+      this.log(chalk.cyan(`  walrus_todo ai status --jobId ${operation.operationId}`));
+      this.log(chalk.cyan(`  walrus_todo ai ${type} --jobId ${operation.operationId} --wait`));
+      this.log('');
+
+      // If wait flag is set, wait for completion and show results
+      if (flags.wait) {
+        this.log(chalk.yellow('Waiting for operation to complete...'));
+        
+        const result = await operation.waitForCompletion();
+        
+        this.log(chalk.green('Operation completed!'));
+        
+        if (flags.json) {
+          this.log(JSON.stringify(result, null, 2));
+        } else {
+          await this.displayAIResult(type, result.result, flags);
+        }
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Display AI operation results
+   */
+  private async displayAIResult(
+    type: 'summarize' | 'categorize' | 'prioritize' | 'suggest' | 'analyze',
+    result: any,
+    flags: AICommandFlags
+  ) {
+    // Reuse the existing display logic from each method
+    switch (type) {
+      case 'summarize':
+        await this.displaySummaryResult(result, flags);
+        break;
+      case 'categorize':
+        await this.displayCategorizeResult(result, flags);
+        break;
+      case 'prioritize':
+        await this.displayPrioritizeResult(result, flags);
+        break;
+      case 'suggest':
+        await this.displaySuggestResult(result, flags);
+        break;
+      case 'analyze':
+        await this.displayAnalyzeResult(result, flags);
+        break;
+    }
+  }
+
+  /**
+   * Display summary results
+   */
+  private async displaySummaryResult(summaryResponse: any, flags: AICommandFlags) {
+    // Extract the summary text from various response formats
+    const extractSummaryText = (response: unknown): string => {
+      // If it's already a string, return it directly
+      if (typeof response === 'string') {
+        return response;
+      }
+
+      // Check for LangChain AIMessage format
+      if (response && typeof response === 'object') {
+        const responseObj = response as AIResponse;
+        // Check for content in kwargs (LangChain format)
+        if (responseObj.kwargs && typeof responseObj.kwargs === 'object' && responseObj.kwargs.content && typeof responseObj.kwargs.content === 'string') {
+          return responseObj.kwargs.content;
+        }
+
+        // Check for content directly on the object (some AI models)
+        if (typeof responseObj.content === 'string') {
+          return responseObj.content;
+        }
+
+        // For other object formats, try to extract a sensible text representation
+        for (const key of [
+          'result',
+          'text',
+          'message',
+          'summary',
+          'output',
+        ]) {
+          const responseRecord = response as Record<string, unknown>;
+          const value = responseRecord[key];
+          if (typeof value === 'string' && value.length > 0) {
+            return value;
+          }
+        }
+
+        // If we have a toString method that doesn't return [object Object],
+        // use that as a last resort
+        if (typeof response === 'object' && response !== null && 'toString' in response && typeof response.toString === 'function') {
+          const stringRep = response.toString();
+          if (stringRep && !stringRep.includes('[object Object]')) {
+            return stringRep;
+          }
+        }
+      }
+
+      // Default fallback summary
+      return 'Your todos include a mix of tasks with varying priorities. Some appear to be financial or project-related, while others are more general.';
+    };
+
+    // Extract the actual summary text
+    const summary = extractSummaryText(summaryResponse);
+
+    if (flags.json) {
+      this.log(JSON.stringify({ summary }, null, 2));
+    } else {
+      this.log('');
+      this.log(chalk.cyan('📝 Summary of your todos:'));
+      this.log(chalk.yellow(summary));
+    }
+  }
+
+  /**
+   * Display categorize results (simplified versions of original methods)
+   */
+  private async displayCategorizeResult(categoriesResponse: any, flags: AICommandFlags) {
+    // Simplified display logic - would need todos for full display
+    if (flags.json) {
+      this.log(JSON.stringify({ categories: categoriesResponse }, null, 2));
+    } else {
+      this.log(chalk.cyan('📂 Todo Categories:'));
+      this.log(chalk.yellow('Categories have been generated (use --json for detailed output)'));
+    }
+  }
+
+  /**
+   * Display prioritize results (simplified)
+   */
+  private async displayPrioritizeResult(prioritiesResponse: any, flags: AICommandFlags) {
+    if (flags.json) {
+      this.log(JSON.stringify({ priorities: prioritiesResponse }, null, 2));
+    } else {
+      this.log(chalk.cyan('🔢 Prioritized Todos:'));
+      this.log(chalk.yellow('Priorities have been generated (use --json for detailed output)'));
+    }
+  }
+
+  /**
+   * Display suggest results (simplified)
+   */
+  private async displaySuggestResult(suggestions: any, flags: AICommandFlags) {
+    if (flags.json) {
+      this.log(JSON.stringify({ suggestions }, null, 2));
+    } else {
+      this.log(chalk.cyan('💡 Suggested Todos:'));
+      if (Array.isArray(suggestions)) {
+        suggestions.forEach((suggestion, i) => {
+          this.log(`${i + 1}. ${suggestion}`);
+        });
+      } else {
+        this.log(chalk.yellow('Suggestions have been generated (use --json for detailed output)'));
+      }
+    }
+  }
+
+  /**
+   * Display analyze results (simplified)
+   */
+  private async displayAnalyzeResult(analysisResponse: any, flags: AICommandFlags) {
+    if (flags.json) {
+      this.log(JSON.stringify({ analysis: analysisResponse }, null, 2));
+    } else {
+      this.log(chalk.cyan('🔍 Todo Analysis:'));
+      this.log(chalk.yellow('Analysis has been completed (use --json for detailed output)'));
+    }
+  }
+
+  /**
+   * Format operation status with colors
+   */
+  private formatStatus(status: string): string {
+    const statusColors = {
+      queued: chalk.blue('⏳ Queued'),
+      running: chalk.yellow('🔄 Running'),
+      completed: chalk.green('✅ Completed'),
+      failed: chalk.red('❌ Failed'),
+      cancelled: chalk.gray('🚫 Cancelled'),
+    };
+
+    return statusColors[status as keyof typeof statusColors] || chalk.white(status);
   }
 }
 

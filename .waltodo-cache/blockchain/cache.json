@@ -6,10 +6,10 @@
     "evictions": 0,
     "totalEntries": 0,
     "hitRate": 0,
-    "lastReset": "2025-05-17T14:49:10.636Z"
+    "lastReset": "2025-05-27T18:03:57.334Z"
   },
   "metadata": {
-    "savedAt": "2025-05-20T01:26:42.315Z",
+    "savedAt": "2025-05-27T20:16:12.499Z",
     "strategy": "TTL",
     "version": "1.0.0"
   }

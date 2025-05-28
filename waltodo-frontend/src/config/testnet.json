@@ -6,12 +6,12 @@
     "aggregatorUrl": "https://aggregator.walrus-testnet.walrus.space"
   },
   "deployment": {
-    "packageId": "0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b",
-    "upgradeCapId": "0x539cf6e6eec48a561935e2a9ee41ee2862bce4b145bcb493c59cdb65468bd89d",
+    "packageId": "0xd6f97fc85796ee23adf60504a620631a0eea6947f85c4ca51e02245e9a4b57d7",
+    "upgradeCapId": "0x380082348e8c41fe52101bbf51758e2d700bbde96f3df516b37139ad6cb93563",
     "deployerAddress": "0xca793690985183dc8e2180fd059d76f3b0644f5c2ecd3b01cdebe7d40b0cca39",
-    "timestamp": "2025-01-21T19:30:00Z",
-    "gasUsed": "15677880",
-    "transactionHash": "EUhfTqLwattcLiuqwM7DrokzoYo31Kz5rfAfwkwURbFA"
+    "timestamp": "2025-05-27T02:53:00Z",
+    "gasUsed": "129773480",
+    "transactionHash": "C3HkWwACTjfQi9i7focqoZhsZpXtH61JBJVahaxa6SbH"
   },
   "features": {
     "aiIntegration": false,

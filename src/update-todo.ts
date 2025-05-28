@@ -28,9 +28,10 @@ async function main() {
   // Update the first todo
   if (list.todos.length > 0) {
     const todoToUpdate = list.todos[0];
-    logger.info(`Updating todo: ${todoToUpdate.title}`);
+    if (todoToUpdate) {
+      logger.info(`Updating todo: ${todoToUpdate.title}`);
 
-    await todoService.updateTodo(listName, todoToUpdate.id, {
+      await todoService.updateTodo(listName, todoToUpdate.id, {
       // Removed unused updatedTodo variable assignment
       title: 'Updated Todo Title',
       description: 'This todo has been updated',
@@ -39,6 +40,7 @@ async function main() {
     });
 
     logger.info('Todo updated');
+    }
   }
 
   // Show updated list

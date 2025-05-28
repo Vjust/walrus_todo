@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { confirm } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
 import { Todo, StorageLocation } from '../types/todo';

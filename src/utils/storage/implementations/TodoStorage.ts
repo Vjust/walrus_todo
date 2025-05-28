@@ -406,7 +406,7 @@ export class TodoStorage extends BlobStorage {
       // Wrap the error with list context
       if (error instanceof ValidationError) {
         throw new ValidationError(`Invalid todo in list: ${error.message}`, {
-          field: error.details?.field,
+          field: error.field,
           recoverable: false,
           operation: 'list validation',
           cause: error,

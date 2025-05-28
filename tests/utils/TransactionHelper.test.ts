@@ -86,11 +86,11 @@ describe('TransactionHelper', () => {
       // Override setTimeout to capture delays
       jest
         .spyOn(global, 'setTimeout')
-        .mockImplementation((cb: () => void, delay?: number) => {
+        .mockImplementation(((cb: () => void, delay?: number) => {
           delays.push(delay || 0);
           cb();
-          return undefined as unknown as NodeJS.Timeout;
-        });
+          return {} as NodeJS.Timeout;
+        }) as any);
 
       helper = new TransactionHelper(mockSigner, {
         attempts: 3,
@@ -179,7 +179,7 @@ describe('TransactionHelper', () => {
       // Validation errors should not be retried
       expect(
         helper.shouldRetry(
-          new ValidationError('Invalid input', { field: 'test' })
+          new ValidationError('Invalid input', { field: 'test_field' })
         )
       ).toBe(false);
 

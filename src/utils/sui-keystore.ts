@@ -212,9 +212,8 @@ export class KeystoreSigner implements SignerAdapter {
   ): Promise<SignatureWithBytes> {
     // Serialize the transaction and sign the bytes
     let bytes: Uint8Array;
-    if (transaction instanceof TransactionBlock) {
-      const serialized = await transaction.serialize();
-      bytes = new Uint8Array(Buffer.from(serialized, 'base64'));
+    if (transaction instanceof Transaction) {
+      bytes = await transaction.build({ client: this.suiClient });
     } else if (
       'serialize' in transaction &&
       typeof transaction.serialize === 'function'
@@ -259,7 +258,7 @@ export class KeystoreSigner implements SignerAdapter {
   }
 
   async signAndExecuteTransaction(
-    transactionBlock: TransactionBlock | Transaction,
+    transaction: Transaction,
     options?: {
       requestType?: 'WaitForLocalExecution';
       showEffects?: boolean;
@@ -269,12 +268,12 @@ export class KeystoreSigner implements SignerAdapter {
     }
   ): Promise<unknown> {
     try {
-      if (!transactionBlock) {
-        throw new Error('Invalid transaction block');
+      if (!transaction) {
+        throw new Error('Invalid transaction');
       }
 
       const { bytes, signature } =
-        await this.signedTransactionBlock(transactionBlock);
+        await this.signedTransaction(transaction);
 
       const response = await (this.suiClient as Record<string, unknown>).executeTransactionBlock({
         transactionBlock: bytes,
@@ -301,20 +300,14 @@ export class KeystoreSigner implements SignerAdapter {
   }
 
   /**
-   * Signs a transaction block and returns the bytes and signature array
-   * @param transactionBlock The transaction block to sign
+   * Signs a transaction and returns the bytes and signature array
+   * @param transaction The transaction to sign
    * @returns The bytes and signature array
    */
-  async signedTransactionBlock(
-    transactionBlock: TransactionBlock | Transaction
+  async signedTransaction(
+    transaction: Transaction
   ): Promise<{ bytes: Uint8Array; signature: string[] }> {
-    let bytes: Uint8Array;
-    if (transactionBlock instanceof TransactionBlock) {
-      bytes = await transactionBlock.build({ client: this.suiClient });
-    } else {
-      // Handle modern Transaction type
-      bytes = await (transactionBlock as Transaction).build({ client: this.suiClient });
-    }
+    const bytes = await transaction.build({ client: this.suiClient });
     const signatureResult = await this.signTransactionBlock(bytes);
 
     // Convert the signature to base64 string for serialization

@@ -19,6 +19,8 @@ export function ErrorSuppressor() {
       'chrome-extension://',
       '[[ << query #',
       'Error: [[ << query #',
+      'Invalid prop `type` supplied to `React.Fragment`',
+      'React.Fragment can only have `key` and `children` props',
     ];
 
     // Store original error handler

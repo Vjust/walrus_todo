@@ -3,7 +3,7 @@
  * Provides consistent error handling, logging, and display throughout the application.
  */
 
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { BaseError } from '../../types/errors/consolidated/BaseError';
 import { CLIError } from '../../types/errors/consolidated/CLIError';
 import { Logger } from '../Logger';

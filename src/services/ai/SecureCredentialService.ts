@@ -368,7 +368,7 @@ export class SecureCredentialService {
     // Check vault
     const hasInVault = await this.vault.hasSecret(`${provider}-api-key`);
     if (hasInVault) {
-      logger.info(`Found credential for ${provider} in vault`);
+      logger.debug(`Found credential for ${provider} in vault`);
       return true;
     }
 
@@ -376,11 +376,11 @@ export class SecureCredentialService {
     const envKey = `${provider.toUpperCase()}_API_KEY`;
     const hasEnvKey = !!process.env[envKey];
 
-    logger.info(
+    logger.debug(
       `Checking for ${envKey} in environment: ${hasEnvKey ? 'FOUND' : 'NOT FOUND'}`
     );
     if (hasEnvKey) {
-      logger.info(
+      logger.debug(
         `${envKey} value length: ${process.env[envKey]?.length || 0}`
       );
     }

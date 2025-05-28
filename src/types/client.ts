@@ -157,6 +157,27 @@ export interface WalrusClient {
     writeCost: bigint;
     totalCost: bigint;
   }>;
+
+  // Transaction execution methods (required by ExpiryMonitor)
+  executeCreateStorageTransaction(
+    options: StorageWithSizeOptions & {
+      transaction?: Transaction;
+      signer: Signer | Ed25519Keypair;
+    }
+  ): Promise<{
+    digest: string;
+    storage: {
+      id: { id: string };
+      start_epoch: number;
+      end_epoch: number;
+      storage_size: string;
+    };
+  }>;
+
+  // Additional methods required by tests
+  getStorageProviders?(params: { blobId: string }): Promise<string[]>;
+  reset?(): void;
+  connect?(): Promise<void>;
 }
 
 /**

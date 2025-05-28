@@ -7,7 +7,7 @@
  */
 
 import { Logger } from '../../Logger';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 
 const logger = new Logger('NFTStorage');
 
@@ -25,7 +25,6 @@ import { ValidationError } from '../../../types/errors/ValidationError';
 import { TransactionSigner } from '../../../types/signer';
 import { Todo } from '../../../types/todo';
 import { BlobStorage } from './BlobStorage';
-import { TransactionBlock } from '@mysten/sui/transactions';
 
 /**
  * Configuration for NFT storage
@@ -416,7 +415,7 @@ export class NFTStorage extends AbstractStorage {
     }
 
     try {
-      const tx = new TransactionBlock(); // Create transaction block
+      const tx = new Transaction(); // Create transaction
 
       // Transaction operations
       tx.moveCall({
@@ -571,7 +570,7 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Create update transaction
-      const tx = new TransactionBlock();
+      const tx = new Transaction();
 
       // Use proper transaction methods
       tx.moveCall({

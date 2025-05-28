@@ -1,137 +1,92 @@
-import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import chalk from 'chalk';
-import { createConfigValidator, ConfigValidator } from '../utils/config-validator';
-import { CLIError } from '../types/errors/consolidated';
+import chalk = require('chalk');
+import ConfigCommand from './config';
+import { jobManager } from '../utils/PerformanceMonitor';
 
 /**
  * @class ValidateConfigCommand
- * @description Validates configuration consistency between CLI and frontend.
- * This command checks for configuration mismatches, missing settings, and provides
- * suggestions for resolving configuration issues.
+ * @description Legacy command that redirects to the config validate command.
+ * Kept for backward compatibility.
  */
 export default class ValidateConfigCommand extends BaseCommand {
   static description =
-    'Validate configuration consistency between CLI and frontend';
+    'Validate configuration consistency (redirects to config validate)';
+
+  static hidden = true; // Hide from help since it's a legacy command
 
   static examples = [
-    '<%= config.bin %> validate-config                        # Basic validation',
-    '<%= config.bin %> validate-config --network testnet      # Validate for testnet',
-    '<%= config.bin %> validate-config --detailed             # Show detailed results',
-    '<%= config.bin %> validate-config --fix                  # Auto-fix issues',
-    '<%= config.bin %> validate-config --frontend-path ./app  # Check specific frontend',
-    '<%= config.bin %> validate-config --strict               # Strict validation mode',
+    '<%= config.bin %> validate-config                        # Redirects to: config validate',
+    '<%= config.bin %> validate-config --network testnet      # Redirects to: config validate --network testnet',
+    '<%= config.bin %> validate-config --detailed             # Redirects to: config validate --detailed',
   ];
 
-  static flags = {
-    ...BaseCommand.flags,
-    network: Flags.string({
-      char: 'n',
-      description: 'Network to validate configuration for',
-      options: ['localnet', 'devnet', 'testnet', 'mainnet'],
-    }),
-    detailed: Flags.boolean({
-      char: 'd',
-      description: 'Show detailed validation report',
-      default: false,
-    }),
-    'report-file': Flags.string({
-      description: 'Save validation report to file',
-    }),
-  };
+  static flags = ConfigCommand.flags;
 
   async run(): Promise<void> {
-    const { flags } = await this.parse(ValidateConfigCommand);
+    const { flags, argv } = await this.parse(ValidateConfigCommand);
 
-    this.log(chalk.blue('🔍 Validating configuration...\n'));
-
-    try {
-      // Create validator
-      const validator = createConfigValidator();
-
-      // Run validation
-      const result = await validator.validateConfiguration(flags.network);
-
-      // Display results
-      if (result.valid) {
-        this.log(chalk.green('✅ Configuration is valid!'));
-      } else {
-        this.log(chalk.red('❌ Configuration validation failed!'));
-      }
-
-      this.log('');
-
-      // Show errors
-      if (result.errors.length > 0) {
-        this.log(chalk.red('🛑 Errors:'));
-        result.errors.forEach(error => {
-          this.log(chalk.red(`  • ${error}`));
-        });
-        this.log('');
-      }
-
-      // Show warnings
-      if (result.warnings.length > 0) {
-        this.log(chalk.yellow('⚠️  Warnings:'));
-        result.warnings.forEach(warning => {
-          this.log(chalk.yellow(`  • ${warning}`));
-        });
-        this.log('');
-      }
-
-      // Show suggestions
-      if (result.suggestions.length > 0) {
-        this.log(chalk.blue('💡 Suggestions:'));
-        result.suggestions.forEach(suggestion => {
-          this.log(chalk.blue(`  • ${suggestion}`));
-        });
-        this.log('');
-      }
-
-      // Show detailed information if requested
-      if (flags.detailed) {
-        await this.showDetailedInfo(validator);
-      }
-
-      // Save report to file if requested
-      if (flags['report-file']) {
-        const report = validator.generateReport(result);
-        const fs = await import('fs');
-        await fs.promises.writeFile(flags['report-file'], report, 'utf-8');
-        this.log(chalk.dim(`Report saved to: ${flags['report-file']}`));
-      }
-
-      // Exit with error code if validation failed
-      if (!result.valid) {
-        process.exit(1);
-      }
-    } catch (error) {
-      if (error instanceof CLIError) {
-        throw error;
-      }
-      throw new CLIError(
-        `Validation failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+    // Show deprecation notice
+    this.log(chalk.yellow('⚠️  This command is deprecated. Please use "waltodo config validate" instead.\n'));
+    
+    // Handle background mode directly for legacy support
+    if (flags.background) {
+      return this.runLegacyValidationInBackground(flags);
     }
+    
+    // Build args for config command
+    const args = ['validate'];
+    
+    // Add flags
+    const flagArgs: string[] = [];
+    if (flags.network) flagArgs.push('--network', flags.network);
+    if (flags.detailed) flagArgs.push('--detailed');
+    if (flags['report-file']) flagArgs.push('--report-file', flags['report-file']);
+    if (flags.background) flagArgs.push('--background');
+    
+    // Run the config command with validate action
+    await this.config.runCommand('config', [...args, ...flagArgs]);
   }
 
   /**
-   * Shows detailed configuration information
+   * Run legacy validation in background (for backward compatibility)
    */
-  private async showDetailedInfo(validator: ConfigValidator): Promise<void> {
-    this.log(chalk.blue('📋 Detailed Information:'));
+  private async runLegacyValidationInBackground(flags: any): Promise<void> {
+    // Create background job for legacy validation
+    const job = jobManager.createJob('validate-config', ['legacy'], flags);
+    jobManager.startJob(job.id);
 
-    // Show available configurations
-    const availableConfigs = await validator.getAvailableConfigurations();
-    if (availableConfigs.length > 0) {
-      this.log(chalk.dim('Available frontend configurations:'));
-      availableConfigs.forEach(config => {
-        this.log(chalk.dim(`  • ${config}`));
-      });
-    } else {
-      this.log(chalk.dim('No frontend configurations found'));
-    }
+    this.log(chalk.blue(`🔍 Starting legacy configuration validation in background...`));
+    this.log(chalk.gray(`Job ID: ${job.id}`));
+    this.log(chalk.gray(`Note: Consider using "waltodo config validate --background" instead`));
+    this.log(chalk.gray(`Use "waltodo jobs" to check progress`));
 
-    this.log('');
+    // Run validation in background
+    setImmediate(async () => {
+      try {
+        jobManager.writeJobLog(job.id, 'Starting legacy configuration validation');
+        jobManager.updateProgress(job.id, 25);
+        
+        // Redirect to modern config validation
+        const configCmd = new ConfigCommand([], this.config);
+        await configCmd.init();
+        
+        jobManager.updateProgress(job.id, 50);
+        jobManager.writeJobLog(job.id, 'Running comprehensive validation via config command');
+        
+        // Run the actual validation (non-background since we're already in background)
+        const modifiedFlags = { ...flags, background: false };
+        await (configCmd as any).validateConfig('comprehensive', modifiedFlags);
+        
+        jobManager.updateProgress(job.id, 100);
+        jobManager.writeJobLog(job.id, 'Legacy validation completed successfully');
+        jobManager.completeJob(job.id, { success: true, method: 'legacy-redirect' });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        jobManager.writeJobLog(job.id, `Legacy validation failed: ${errorMessage}`);
+        jobManager.failJob(job.id, errorMessage);
+      }
+    });
+
+    return;
   }
 }

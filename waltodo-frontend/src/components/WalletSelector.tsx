@@ -14,7 +14,7 @@ interface WalletOption {
 }
 
 export function WalletSelector() {
-  const { connected, connecting, connect, error, setError } =
+  const { connected, connecting, connect, error, clearError } =
     useWalletContext();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -117,7 +117,7 @@ export function WalletSelector() {
                   : 'Wallet';
 
         const error = new WalletNotInstalledError(walletName);
-        setError(error);
+        console.error('Wallet not installed:', error);
         return;
       }
 
@@ -138,7 +138,7 @@ export function WalletSelector() {
 
       // Proceed with connection if wallet is installed
       if (walletType === 'sui') {
-        await connect();
+        connect(); // This opens the modal
       }
     } catch (err) {
       console.error(`Error connecting to ${walletType} wallet:`, err);
@@ -150,7 +150,7 @@ export function WalletSelector() {
 
   // Handle error dismissal
   const handleDismissError = () => {
-    setError(null);
+    clearError();
   };
 
   return (

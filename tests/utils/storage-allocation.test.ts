@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { SuiClient as SuiClientClass } from '@mysten/sui/client';
+import { SuiClient } from '../../../src/utils/adapters/sui-client-compatibility';
 
 // Define CoinBalance type locally since it's not exported
 interface CoinBalance {
@@ -8,7 +8,7 @@ interface CoinBalance {
   totalBalance: string;
   lockedBalance: Record<string, string>;
 }
-import { WalrusClient } from '@mysten/walrus';
+import { WalrusClient } from '../../src/types/client';
 import { StorageManager } from '../../src/utils/StorageManager';
 import { CLIError } from '../../src/types/errors/consolidated';
 import { execSync } from 'child_process';
@@ -19,7 +19,7 @@ jest.mock('child_process', () => ({
 
 describe('StorageManager - Allocation Tests', () => {
   let storageManager: StorageManager;
-  let mockSuiClient: jest.Mocked<SuiClientClass>;
+  let mockSuiClient: jest.Mocked<typeof SuiClient>;
   let mockWalrusClient: jest.Mocked<WalrusClient>;
 
   beforeEach(() => {
@@ -27,10 +27,24 @@ describe('StorageManager - Allocation Tests', () => {
       getBalance: jest.fn(),
       getLatestSuiSystemState: jest.fn(),
       getOwnedObjects: jest.fn(),
-    } as jest.Mocked<SuiClientClass>;
+    } as jest.Mocked<typeof SuiClient>;
 
     mockWalrusClient = {
       storageCost: jest.fn(),
+      getConfig: jest.fn(),
+      getWalBalance: jest.fn(),
+      getStorageUsage: jest.fn(),
+      getBlobObject: jest.fn(),
+      verifyPoA: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      readBlob: jest.fn(),
+      writeBlob: jest.fn(),
+      getBlobInfo: jest.fn(),
+      connect: jest.fn(),
+      getBlobMetadata: jest.fn(),
+      getStorageProviders: jest.fn(),
+      getBlobSize: jest.fn(),
+      reset: jest.fn(),
     } as jest.Mocked<WalrusClient>;
 
     storageManager = new StorageManager(

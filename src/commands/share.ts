@@ -1,6 +1,6 @@
 import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 
@@ -10,40 +10,65 @@ import { CLIError } from '../types/errors/consolidated';
  * It checks if the list exists and if the recipient is already a collaborator before updating the list's sharing settings.
  * The command provides feedback on the successful sharing of the list with the specified user.
  *
- * @param {string} [listName] - The name of the todo list to share. Can also be provided via the --list flag. (Optional argument)
- * @param {string} [list] - The name of the todo list to share. Alternative to providing it as an argument. (Optional flag: -l, --list)
- * @param {string} recipient - The username of the person to share the list with. (Required flag: -r, --recipient)
+ * Positional syntax:
+ * @param {string} [listName] - The name of the todo list to share
+ * @param {string} [recipient] - The username to share with
+ *
+ * Flag syntax (backward compatible):
+ * @param {string} [list] - The name of the todo list to share (flag: -l, --list)
+ * @param {string} recipient - The username to share with (flag: -r, --recipient)
  */
 export default class ShareCommand extends BaseCommand {
   static description = 'Share a todo list with another user';
 
   static examples = [
-    '<%= config.bin %> share --list my-list --recipient username      # Share with username',
-    '<%= config.bin %> share my-list --recipient username             # Share using args',
-    '<%= config.bin %> share work --recipient alice@example.com       # Share work list',
-    '<%= config.bin %> share personal --recipient bob --read-only     # Share read-only access',
-    '<%= config.bin %> share project --recipient team --permissions edit  # Share with edit rights',
+    '# Positional syntax (recommended):',
+    '<%= config.bin %> share my-list username                  # Share with username',
+    '<%= config.bin %> share work alice@example.com            # Share work list with alice',
+    '<%= config.bin %> share personal bob                      # Share personal list with bob',
+    '',
+    '# With additional options:',
+    '<%= config.bin %> share project team --read-only          # Share with read-only access',
+    '<%= config.bin %> share my-list user --permissions edit   # Share with edit rights',
+    '',
+    '# Legacy flag syntax (still supported):',
+    '<%= config.bin %> share --list my-list --recipient username      # Share using flags',
+    '<%= config.bin %> share my-list --recipient username             # Mixed syntax',
   ];
 
   static flags = {
     ...BaseCommand.flags,
     list: Flags.string({
       char: 'l',
-      description: 'Name of the todo list to share',
+      description: 'Name of the todo list to share (legacy syntax)',
       required: false,
+      hidden: true, // Hide from help but keep for backward compatibility
     }),
     recipient: Flags.string({
       char: 'r',
-      description: 'Username to share with',
-      required: true,
+      description: 'Username to share with (optional if using positional args)',
+      required: false,
+    }),
+    'read-only': Flags.boolean({
+      description: 'Grant read-only access',
+      default: false,
+    }),
+    permissions: Flags.string({
+      description: 'Permission level to grant',
+      options: ['read', 'edit', 'admin'],
+      default: 'edit',
     }),
   };
 
   static args = {
     listName: Args.string({
       name: 'listName',
-      description:
-        'Name of the todo list to share (alternative to --list flag)',
+      description: 'Name of the todo list to share',
+      required: false,
+    }),
+    recipient: Args.string({
+      name: 'recipient',
+      description: 'Username to share the list with',
       required: false,
     }),
   };
@@ -54,41 +79,105 @@ export default class ShareCommand extends BaseCommand {
     try {
       const { args, flags } = await this.parse(ShareCommand);
 
-      // Use either the listName argument or the list flag
-      const listName = args.listName || flags.list;
+      // Parse input to support both positional and flag syntax
+      let listName: string | undefined;
+      let recipient: string | undefined;
 
-      if (!listName) {
-        throw new CLIError(
-          'List name is required. Provide it as an argument or with --list flag',
-          'MISSING_LIST'
-        );
+      // Positional syntax: share <list> <recipient>
+      if (args.listName && args.recipient) {
+        listName = args.listName;
+        recipient = args.recipient;
       }
-
-      const { recipient } = flags;
+      // Mixed syntax: share <list> --recipient <user>
+      else if (args.listName && flags.recipient) {
+        listName = args.listName;
+        recipient = flags.recipient;
+      }
+      // Legacy flag syntax: share --list <list> --recipient <user>
+      else if (flags.list && flags.recipient) {
+        listName = flags.list;
+        recipient = flags.recipient;
+      }
+      // Error: missing required information
+      else {
+        const availableLists = await this.todoService.getAllLists();
+        let errorMessage = 'Please specify both a list and recipient.\n\n';
+        errorMessage += 'Usage:\n';
+        errorMessage += `  ${chalk.cyan(`${this.config.bin} share <list> <recipient>`)}  # Recommended\n`;
+        errorMessage += `  ${chalk.cyan(`${this.config.bin} share <list> --recipient <user>`)}  # Alternative\n`;
+        
+        if (availableLists.length > 0) {
+          errorMessage += `\nAvailable lists: ${chalk.cyan(availableLists.join(', '))}`;
+        } else {
+          errorMessage += `\n${chalk.yellow('No lists exist yet. Create one with:')} ${chalk.cyan(`${this.config.bin} add "Your first todo"`)}`;
+        }
+        
+        throw new CLIError(errorMessage, 'MISSING_PARAMETERS');
+      }
 
       // Get the list
       const todoList = await this.todoService.getList(listName);
       if (!todoList) {
-        throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
-      }
-
-      // Update collaborators
-      todoList.collaborators = todoList.collaborators || [];
-      if (todoList.collaborators.includes(recipient)) {
+        const availableLists = await this.todoService.getAllLists();
         throw new CLIError(
-          `User "${recipient}" already has access to list "${listName}"`,
-          'ALREADY_SHARED'
+          `List "${listName}" not found.\n\nAvailable lists: ${availableLists.length > 0 ? chalk.cyan(availableLists.join(', ')) : 'none'}`,
+          'LIST_NOT_FOUND'
         );
       }
 
+      // Handle permissions
+      const permissionLevel = flags['read-only'] ? 'read' : (flags.permissions || 'edit');
+
+      // Update collaborators with permissions
+      todoList.collaborators = todoList.collaborators || [];
+      todoList.permissions = todoList.permissions || {};
+
+      // Check if already shared
+      if (todoList.collaborators.includes(recipient)) {
+        const currentPermission = todoList.permissions[recipient] || 'edit';
+        if (currentPermission === permissionLevel) {
+          throw new CLIError(
+            `User "${recipient}" already has ${permissionLevel} access to list "${listName}"`,
+            'ALREADY_SHARED'
+          );
+        } else {
+          // Update permission level
+          todoList.permissions[recipient] = permissionLevel;
+          this.log(
+            chalk.green('✓'),
+            `Updated ${chalk.cyan(recipient)}'s permissions to ${chalk.bold(permissionLevel)} for list "${chalk.bold(listName)}"`
+          );
+          await this.todoService.saveList(listName, todoList);
+          return;
+        }
+      }
+
+      // Add new collaborator
       todoList.collaborators.push(recipient);
+      todoList.permissions[recipient] = permissionLevel;
       todoList.updatedAt = new Date().toISOString();
 
       await this.todoService.saveList(listName, todoList);
+      
+      // Success message with permission info
       this.log(
         chalk.green('✓'),
-        `Todo list "${chalk.bold(listName)}" shared successfully with ${chalk.cyan(recipient)}`
+        `Todo list "${chalk.bold(listName)}" shared with ${chalk.cyan(recipient)}`
       );
+      this.log(
+        '  ',
+        chalk.dim(`Permission level: ${permissionLevel}`)
+      );
+      
+      // Show helpful next steps
+      this.log(chalk.dim('\nNext steps:'));
+      this.log(chalk.dim(`  • ${recipient} can now access this list`));
+      if (permissionLevel === 'edit' || permissionLevel === 'admin') {
+        this.log(chalk.dim(`  • They can add, update, and complete todos`));
+      } else {
+        this.log(chalk.dim(`  • They have read-only access`));
+      }
+      this.log(chalk.dim(`  • View shared lists with: ${chalk.cyan(`${this.config.bin} list --shared`)}`));
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

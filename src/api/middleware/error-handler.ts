@@ -89,8 +89,8 @@ export function errorHandler(
 ): void {
   // Log the error
   logger.error('API Error:', err, {
-    requestMethod: req.method,
-    requestPath: req.path,
+    requestMethod: req.method || 'UNKNOWN',
+    requestPath: req.path || req.url || 'UNKNOWN',
   });
 
   // Determine status code
@@ -157,7 +157,7 @@ export function asyncHandler(
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch((error: unknown) => {
       const typedError = error instanceof Error ? error : new Error(String(error));
-      next(typedError);
+      return next(typedError);
     });
   };
 }

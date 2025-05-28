@@ -120,7 +120,7 @@ export abstract class BaseModelAdapter implements AIModelAdapter {
       modelName: this.modelName,
       provider: this.provider,
       timestamp: Date.now(),
-      metadata: Record<string, unknown>,
+      metadata: {} as Record<string, unknown>,
     };
   }
 

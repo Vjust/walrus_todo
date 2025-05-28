@@ -1,40 +1,61 @@
 import { Args, Flags } from '@oclif/core';
-import chalk from 'chalk';
+import chalk = require('chalk');
+import * as fs from 'fs';
+import * as path from 'path';
+import { createWriteStream } from 'fs';
+import { spawn, ChildProcess } from 'child_process';
 import BaseCommand, { ICONS, PRIORITY } from '../base-command';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
+import { jobManager, BackgroundJob } from '../utils/PerformanceMonitor';
+import { createSpinner } from '../utils/progress-indicators';
 
 // Add debug logging for cache hits/misses
 const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
 
 /**
  * @class ListCommand
- * @description This command displays todo items within a specified list or shows all available todo lists if no list is specified.
- * It offers filtering options to show only completed or pending todos and sorting capabilities based on priority or due date.
- * The output is formatted with color-coded status indicators for better readability.
+ * @description List and display todo items with intuitive positional arguments.
+ * 
+ * Usage patterns:
+ * - `waltodo list` - Shows all available lists with statistics
+ * - `waltodo list <name>` - Shows todos in the specified list
+ * - `waltodo list <name> --completed` - Shows only completed todos
+ * - `waltodo list <name> --sort priority` - Shows todos sorted by priority
+ * 
+ * Features color-coded output, progress bars, and smart filtering options.
  */
 export default class ListCommand extends BaseCommand {
   static description =
-    'Display todo items or available todo lists (compact view by default)';
+    'Display todos from a specific list, or show all available lists';
 
   static examples = [
-    `<%= config.bin %> list                     # Show all available lists`,
-    `<%= config.bin %> list my-list             # Show todos in "my-list" (compact view by default)`,
-    `<%= config.bin %> list my-list --detailed  # Show todos with full details`,
-    `<%= config.bin %> list my-list --completed # Show only completed todos`,
-    `<%= config.bin %> list my-list --pending   # Show only pending todos`,
-    `<%= config.bin %> list my-list --sort priority # Sort todos by priority`,
+    `<%= config.bin %> list                        # Show all available lists with statistics`,
+    `<%= config.bin %> list work                   # Show todos in "work" list`,
+    `<%= config.bin %> list personal --detailed    # Show "personal" list with full details`,
+    `<%= config.bin %> list work --completed       # Show only completed todos`,
+    `<%= config.bin %> list personal --pending     # Show only pending todos`,
+    `<%= config.bin %> list work --sort priority   # Sort by priority (high → low)`,
+    `<%= config.bin %> list work --sort dueDate    # Sort by due date (earliest first)`,
+    ``,
+    `# Legacy syntax (still supported):`,
+    `<%= config.bin %> list --list work            # Same as 'list work'`,
   ];
 
   static flags = {
     ...BaseCommand.flags,
+    list: Flags.string({
+      description: 'List name (deprecated - use positional argument instead)',
+      char: 'l',
+      hidden: true, // Hide from help but keep for backward compatibility
+    }),
     completed: Flags.boolean({
-      description: 'Show only completed items',
+      description: 'Show only completed todos',
       exclusive: ['pending'],
     }),
     pending: Flags.boolean({
-      description: 'Show only pending items',
+      description: 'Show only pending todos',
       exclusive: ['completed'],
     }),
     sort: Flags.string({
@@ -51,47 +72,94 @@ export default class ListCommand extends BaseCommand {
       char: 'd',
       exclusive: ['compact'],
     }),
+    background: Flags.boolean({
+      description: 'Run list operation in background for large datasets',
+      char: 'b',
+      default: false,
+    }),
+    sync: Flags.boolean({
+      description: 'Sync with blockchain before listing (runs in background)',
+      char: 's',
+      default: false,
+    }),
+    stream: Flags.boolean({
+      description: 'Stream output for real-time updates',
+      default: false,
+    }),
+    watch: Flags.boolean({
+      description: 'Watch for changes and update display',
+      char: 'w',
+      default: false,
+    }),
+    'job-id': Flags.string({
+      description: 'Check status of existing background job',
+      hidden: true,
+    }),
   };
 
   static args = {
     listName: Args.string({
       name: 'listName',
-      description: 'Name of the todo list to display',
+      description: 'Name of the todo list to display (shows all lists if omitted)',
       required: false,
     }),
   };
 
   private todoService = new TodoService();
   private listName: string = ''; // Property to store the current list name
+  private outputStream?: fs.WriteStream;
+  private backgroundJob?: BackgroundJob;
+  private watchInterval?: NodeJS.Timeout;
 
   async run(): Promise<void> {
     try {
       const { args, flags } = await this.parse(ListCommand);
       this.debugLog(`Command parsed with args: ${JSON.stringify(args)}`);
 
-      // If JSON output is requested, handle it separately
-      if (this.isJson) {
-        return this.handleJsonOutput(args, flags);
+      // Check if we're querying job status
+      if (flags['job-id']) {
+        return this.showJobStatus(flags['job-id'] as string);
       }
 
-      if (args.listName) {
-        // Store list name in the class property
-        this.listName = args.listName;
-        // Show specific list
-        await this.showSpecificList(args.listName, flags);
+      // Determine which list to show: positional arg takes precedence over flag
+      const targetList = args.listName || (flags.list as string);
+      
+      // Store list name in the class property for error handling
+      if (targetList) {
+        this.listName = targetList;
+      }
+
+      // If JSON output is requested, handle it separately
+      if (this.isJson) {
+        return this.handleJsonOutput({ listName: targetList }, flags);
+      }
+
+      // Determine if we should run in background
+      const shouldRunInBackground = flags.background || flags.sync || this.shouldUseBackground(targetList);
+
+      if (shouldRunInBackground && !flags.watch) {
+        return this.runInBackground(targetList, flags);
+      }
+
+      // Handle watch mode
+      if (flags.watch) {
+        return this.runWatchMode(targetList, flags);
+      }
+
+      // Regular synchronous execution
+      if (targetList) {
+        await this.showSpecificList(targetList, flags);
       } else {
-        // Show all available lists
         await this.showAllLists();
       }
     } catch (error) {
       this.debugLog(`Error: ${error}`);
 
       if (error instanceof CLIError && error.code === 'LIST_NOT_FOUND') {
-        // Provide helpful guidance when a list is not found
         this.errorWithHelp(
           'List not found',
-          `List "${this.listName}" not found`,
-          `Try running '${this.config.bin} list' to see all available lists`
+          `List "${this.listName}" does not exist`,
+          `Run '${this.config.bin} list' to see all available lists`
         );
       }
 
@@ -103,6 +171,8 @@ export default class ListCommand extends BaseCommand {
         `Failed to list todos: ${error instanceof Error ? error.message : String(error)}`,
         'LIST_FAILED'
       );
+    } finally {
+      this.cleanup();
     }
   }
 
@@ -231,19 +301,19 @@ export default class ListCommand extends BaseCommand {
       if (flags.completed && completed === 0) {
         this.log(
           chalk.dim(
-            `\nTip: Mark todos as completed with '${this.config.bin} complete --id <todo-id>'`
+            `\n${ICONS.TIP} Mark todos as completed with: ${chalk.cyan(`${this.config.bin} complete <todo-id>`)}`
           )
         );
       } else if (flags.pending && completed === total) {
         this.log(
           chalk.dim(
-            `\nTip: Add new todos with '${this.config.bin} add "${listName}" -t "Your todo title"'`
+            `\n${ICONS.TIP} Add new todos with: ${chalk.cyan(`${this.config.bin} add ${listName} -t "Your todo"`)}`
           )
         );
       } else if (total === 0) {
         this.log(
           chalk.dim(
-            `\nTip: Add your first todo with '${this.config.bin} add "${listName}" -t "Your todo title"'`
+            `\n${ICONS.TIP} Add your first todo with: ${chalk.cyan(`${this.config.bin} add ${listName} -t "Your first todo"`)}`
           )
         );
       }
@@ -388,11 +458,14 @@ export default class ListCommand extends BaseCommand {
     }
 
     // Format header for lists display
-    this.log('');
-    this.log(
-      chalk.blue(`${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}`)
-    );
-    this.log(chalk.dim(`${ICONS.LINE.repeat(50)}`));
+    const headerBox = [
+      `${ICONS.BOX_TL}${ICONS.BOX_H.repeat(50)}${ICONS.BOX_TR}`,
+      `${ICONS.BOX_V} ${ICONS.LISTS} ${chalk.bold('Available Todo Lists')}${' '.repeat(24)}${ICONS.BOX_V}`,
+      `${ICONS.BOX_V} ${chalk.dim(`Found ${lists.length} list${lists.length === 1 ? '' : 's'}`)}${' '.repeat(50 - 8 - lists.length.toString().length - (lists.length === 1 ? 4 : 5))}${ICONS.BOX_V}`,
+      `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(50)}${ICONS.BOX_BR}`,
+    ].join('\n');
+    
+    this.log('\n' + headerBox + '\n');
 
     // Process all lists to get more detailed information
     const listDetails = await Promise.all(
@@ -444,28 +517,36 @@ export default class ListCommand extends BaseCommand {
 
     // Display each list with its details
     validLists.forEach((list, index) => {
-      // Format list name with a bullet
-      this.log(`${chalk.white(ICONS.BULLET)} ${chalk.bold(list.name)}`);
+      // Format list name with icon and better spacing
+      const listIcon = list.total === 0 ? ICONS.FOLDER : (list.percent === 100 ? ICONS.SUCCESS : ICONS.LIST);
+      this.log(`${listIcon} ${chalk.bold(list.name)}`);
 
-      // Show progress statistics
-      this.log(
-        `  ${list.progressBar} ${chalk.blue(`${list.completed}/${list.total} completed`)} ${chalk.dim(`(${list.percent}%)`)}`
-      );
+      // Show progress statistics with better formatting
+      const statsLine = [
+        list.progressBar,
+        chalk.blue(`${list.completed}/${list.total}`),
+        chalk.dim(`(${list.percent}%)`),
+      ].join(' ');
+      this.log(`  ${statsLine}`);
 
       // Show priority breakdown if there are todos
       if (list.total > 0) {
-        const priorityDisplay = [
-          list.priorities.high > 0 && chalk.red(`${list.priorities.high} high`),
-          list.priorities.medium > 0 &&
-            chalk.yellow(`${list.priorities.medium} medium`),
-          list.priorities.low > 0 && chalk.green(`${list.priorities.low} low`),
-        ]
-          .filter(Boolean)
-          .join(', ');
-
-        if (priorityDisplay) {
-          this.log(`  ${chalk.dim(`Priorities: ${priorityDisplay}`)}`);
+        const priorityParts = [];
+        if (list.priorities.high > 0) {
+          priorityParts.push(chalk.red(`${ICONS.PRIORITY_HIGH} ${list.priorities.high}`));
         }
+        if (list.priorities.medium > 0) {
+          priorityParts.push(chalk.yellow(`${ICONS.PRIORITY_MEDIUM} ${list.priorities.medium}`));
+        }
+        if (list.priorities.low > 0) {
+          priorityParts.push(chalk.green(`${ICONS.PRIORITY_LOW} ${list.priorities.low}`));
+        }
+
+        if (priorityParts.length > 0) {
+          this.log(`  ${priorityParts.join('  ')}`);
+        }
+      } else {
+        this.log(chalk.dim(`  Empty list`));
       }
 
       // Add spacer between lists
@@ -476,14 +557,20 @@ export default class ListCommand extends BaseCommand {
 
     // Add helpful command tips
     this.log('');
+    this.log(chalk.blue(`${ICONS.INFO} Quick Commands:`));
     this.log(
       chalk.dim(
-        `Tip: View a specific list with '${this.config.bin} list <list-name>'`
+        `  ${ICONS.BULLET} View a list: ${chalk.cyan(`${this.config.bin} list <list-name>`)}`
       )
     );
     this.log(
       chalk.dim(
-        `Tip: Add a new todo with '${this.config.bin} add <list-name> -t "Todo title"'`
+        `  ${ICONS.BULLET} Add a todo: ${chalk.cyan(`${this.config.bin} add <list-name> -t "Your task"`)}`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `  ${ICONS.BULLET} Filter todos: ${chalk.cyan(`${this.config.bin} list <list-name> --completed`)}`
       )
     );
   }
@@ -518,6 +605,260 @@ export default class ListCommand extends BaseCommand {
           return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         });
         break;
+    }
+  }
+
+  /**
+   * Determine if operation should run in background based on dataset size
+   */
+  private async shouldUseBackground(targetList?: string): Promise<boolean> {
+    try {
+      if (targetList) {
+        const list = await this.todoService.getList(targetList);
+        return list ? list.todos.length > 100 : false;
+      } else {
+        const lists = await this.todoService.getAllLists();
+        return lists.length > 10;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Run list operation in background
+   */
+  private async runInBackground(targetList: string | undefined, flags: Record<string, unknown>): Promise<void> {
+    const command = 'list';
+    const args = targetList ? [targetList] : [];
+    const jobFlags = { ...flags, background: false }; // Remove background flag to avoid recursion
+
+    // Create background job
+    this.backgroundJob = jobManager.createJob(command, args, jobFlags);
+    
+    this.log(chalk.blue(`${ICONS.INFO} Starting background list operation...`));
+    this.log(chalk.dim(`Job ID: ${this.backgroundJob.id}`));
+    this.log(chalk.dim(`Track progress: ${this.config.bin} list --job-id ${this.backgroundJob.id}`));
+
+    // Start background process
+    const childArgs = [
+      this.config.bin,
+      'list',
+      ...args,
+      '--output', flags.output as string || 'text',
+      '--network', flags.network as string || 'testnet'
+    ];
+
+    if (flags.completed) childArgs.push('--completed');
+    if (flags.pending) childArgs.push('--pending');
+    if (flags.sort) childArgs.push('--sort', flags.sort as string);
+    if (flags.detailed) childArgs.push('--detailed');
+    if (flags.sync) childArgs.push('--sync');
+    if (flags.stream) childArgs.push('--stream');
+
+    const child = spawn('node', childArgs, {
+      detached: true,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    // Set up output and log files
+    const outputFile = createWriteStream(this.backgroundJob.outputFile!);
+    const logFile = createWriteStream(this.backgroundJob.logFile!);
+
+    child.stdout?.pipe(outputFile);
+    child.stderr?.pipe(logFile);
+
+    jobManager.startJob(this.backgroundJob.id, child.pid);
+    jobManager.writeJobLog(this.backgroundJob.id, `Started background list operation with PID: ${child.pid}`);
+
+    child.on('exit', (code) => {
+      if (code === 0) {
+        jobManager.completeJob(this.backgroundJob!.id, { exitCode: code });
+      } else {
+        jobManager.failJob(this.backgroundJob!.id, `Process exited with code: ${code}`);
+      }
+    });
+
+    child.unref();
+    
+    this.log(chalk.green(`${ICONS.SUCCESS} Background job started successfully`));
+    this.log(chalk.dim(`View output: cat ${this.backgroundJob.outputFile}`));
+  }
+
+  /**
+   * Show status of background job
+   */
+  private async showJobStatus(jobId: string): Promise<void> {
+    const job = jobManager.getJob(jobId);
+    
+    if (!job) {
+      throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
+    }
+
+    this.log('\n' + jobManager.formatJobForDisplay(job));
+
+    // Show recent log output if available
+    const logs = jobManager.readJobLog(jobId);
+    if (logs) {
+      this.log('\n' + chalk.blue('Recent Logs:'));
+      const recentLogs = logs.split('\n').slice(-10).join('\n');
+      this.log(chalk.dim(recentLogs));
+    }
+
+    // Show output if job is completed
+    if (job.status === 'completed' && job.outputFile && fs.existsSync(job.outputFile)) {
+      this.log('\n' + chalk.blue('Output:'));
+      const output = fs.readFileSync(job.outputFile, 'utf8');
+      this.log(output);
+    }
+  }
+
+  /**
+   * Run in watch mode for real-time updates
+   */
+  private async runWatchMode(targetList: string | undefined, flags: Record<string, unknown>): Promise<void> {
+    this.log(chalk.blue(`${ICONS.INFO} Starting watch mode (Press Ctrl+C to exit)...`));
+    
+    const updateDisplay = async () => {
+      try {
+        // Clear screen and move cursor to top
+        process.stdout.write('\x1b[2J\x1b[H');
+        
+        this.log(chalk.dim(`Last updated: ${new Date().toLocaleTimeString()}`));
+        this.log('');
+        
+        if (targetList) {
+          await this.showSpecificList(targetList, flags);
+        } else {
+          await this.showAllLists();
+        }
+        
+        this.log('');
+        this.log(chalk.dim('Watching for changes... (Press Ctrl+C to exit)'));
+      } catch (error) {
+        this.log(chalk.red(`Error updating display: ${error instanceof Error ? error.message : String(error)}`));
+      }
+    };
+
+    // Initial display
+    await updateDisplay();
+
+    // Set up periodic updates
+    this.watchInterval = setInterval(updateDisplay, 2000);
+
+    // Handle graceful shutdown
+    process.on('SIGINT', () => {
+      this.cleanup();
+      this.log('\n' + chalk.yellow('Watch mode stopped.'));
+      process.exit(0);
+    });
+
+    // Keep process alive
+    return new Promise(() => {});
+  }
+
+  /**
+   * Stream output for real-time updates
+   */
+  private async streamOutput(targetList: string | undefined, flags: Record<string, unknown>): Promise<void> {
+    const spinner = createSpinner('Streaming todo data...');
+    spinner.start();
+
+    try {
+      if (targetList) {
+        await this.streamSpecificList(targetList, flags);
+      } else {
+        await this.streamAllLists();
+      }
+    } finally {
+      spinner.stop();
+    }
+  }
+
+  /**
+   * Stream specific list with chunked output
+   */
+  private async streamSpecificList(listName: string, flags: Record<string, unknown>): Promise<void> {
+    const list = await this.todoService.getList(listName);
+    
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    }
+
+    let todos = list.todos;
+    if (flags.completed) todos = todos.filter(t => t.completed);
+    if (flags.pending) todos = todos.filter(t => !t.completed);
+    this.applySorting(todos, flags.sort as string);
+
+    // Stream header
+    this.log(chalk.bold(`\n📋 ${listName} (${todos.length} items)`));
+    this.log(''.padEnd(50, '─'));
+
+    // Stream todos in chunks
+    const chunkSize = 10;
+    for (let i = 0; i < todos.length; i += chunkSize) {
+      const chunk = todos.slice(i, i + chunkSize);
+      
+      chunk.forEach((todo: Todo) => {
+        const shortId = todo.id.slice(-6);
+        const status = todo.completed ? chalk.green(ICONS.SUCCESS) : chalk.yellow(ICONS.PENDING);
+        const priority = PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
+        
+        this.log(`${status} [${chalk.dim(shortId)}] ${priority.color(priority.label)} ${todo.title}`);
+      });
+      
+      // Small delay for streaming effect
+      if (i + chunkSize < todos.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+  }
+
+  /**
+   * Stream all lists with chunked output
+   */
+  private async streamAllLists(): Promise<void> {
+    const lists = await this.todoService.getAllLists();
+    
+    this.log(chalk.bold(`\n📚 Found ${lists.length} lists`));
+    this.log(''.padEnd(50, '─'));
+
+    for (const listName of lists) {
+      const list = await this.todoService.getList(listName);
+      if (!list) continue;
+
+      const completed = list.todos.filter(t => t.completed).length;
+      const total = list.todos.length;
+      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      const progressBar = this.createMiniProgressBar(percent);
+      
+      this.log(`📋 ${chalk.bold(listName)} ${progressBar} ${chalk.blue(`${completed}/${total}`)} ${chalk.dim(`(${percent}%)`)}`);
+      
+      // Small delay for streaming effect
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  }
+
+  /**
+   * Create mini progress bar for streaming display
+   */
+  private createMiniProgressBar(percent: number, width: number = 10): string {
+    const filled = Math.round((percent / 100) * width);
+    const empty = width - filled;
+    return `[${chalk.green('█'.repeat(filled))}${chalk.gray('░'.repeat(empty))}]`;
+  }
+
+  /**
+   * Cleanup resources
+   */
+  private cleanup(): void {
+    if (this.outputStream) {
+      this.outputStream.end();
+    }
+    
+    if (this.watchInterval) {
+      clearInterval(this.watchInterval);
     }
   }
 }

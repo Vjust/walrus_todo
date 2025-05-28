@@ -67,7 +67,8 @@ declare module '@mysten/walrus' {
     blob_id: string;
     size: string;
     encoding_type: number;
-    certified_epoch: number | null;
+    cert_epoch?: number;
+    certified_epoch?: number | null;
     storage: {
       id: { id: string };
       storage_size: string;
@@ -76,6 +77,7 @@ declare module '@mysten/walrus' {
       start_epoch: number;
     };
     deletable: boolean;
+    metadata?: any;
   };
 
   export type EnumOutputShapeWithKeys<T extends object, K extends keyof T> = {

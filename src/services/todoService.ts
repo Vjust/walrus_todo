@@ -104,6 +104,25 @@ export class TodoService {
   }
 
   /**
+   * Retrieves all todo lists with their full content
+   *
+   * @returns {Promise<Record<string, TodoList>>} Object mapping list names to their full TodoList objects
+   */
+  async getAllListsWithContent(): Promise<Record<string, TodoList>> {
+    const listNames = await this.getAllLists();
+    const result: Record<string, TodoList> = {};
+
+    for (const listName of listNames) {
+      const list = await this.getList(listName);
+      if (list) {
+        result[listName] = list;
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Creates a new todo list with the specified name and owner
    *
    * @param {string} name - Name of the new todo list

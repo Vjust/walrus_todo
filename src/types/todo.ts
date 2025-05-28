@@ -157,6 +157,7 @@ export interface SyncData {
  * @property {Todo[]} todos - Array of todo items in the list
  * @property {number} version - Version number for the list, increments with changes
  * @property {string[]} [collaborators] - List of users who can access this list (blockchain addresses)
+ * @property {Record<string, string>} [permissions] - User permissions mapping (user -> permission level)
  * @property {string} createdAt - Creation timestamp (ISO string)
  * @property {string} updatedAt - Last update timestamp (ISO string)
  * @property {string} [walrusBlobId] - Walrus blob ID for decentralized storage of the list
@@ -175,6 +176,8 @@ export interface TodoList {
   version: number;
   /** List of users who can access this list (blockchain addresses) */
   collaborators?: string[];
+  /** User permissions mapping (user -> permission level) */
+  permissions?: Record<string, string>;
   /** Creation timestamp (ISO string) */
   createdAt: string;
   /** Last update timestamp (ISO string) */
@@ -297,10 +300,7 @@ export function createTodoList(name: string, owner: string): TodoList {
     version: 1,
     createdAt: now,
     updatedAt: now,
-    shared: false,
-    collaborators: [],
-    metadata: {},
-    description: ''
+    collaborators: []
   };
 }
 

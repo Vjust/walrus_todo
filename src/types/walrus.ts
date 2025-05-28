@@ -22,8 +22,16 @@ export interface BlobObject {
     value: string;
   };
   size?: string;
+  encoding_type?: number;
   deletable?: boolean;
   cert_epoch?: number;
+  storage?: {
+    id: { id: string };
+    storage_size: string;
+    used_size: string;
+    end_epoch: number;
+    start_epoch: number;
+  };
   metadata?: BlobMetadataShape;
   provider_count?: number;
   slivers?: number;

@@ -3,7 +3,7 @@ import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 // Removed unused Todo import
-import chalk from 'chalk';
+import chalk = require('chalk');
 
 /**
  * @class SimpleCommand

@@ -278,17 +278,17 @@ export class ExpiryMonitor {
       // Filter out blobs that failed verification
       const validBlobs = warningBlobs.filter(
         (_, index) =>
-          verificationResults[index].exists &&
-          verificationResults[index].onChain
+          verificationResults[index]?.exists &&
+          verificationResults[index]?.onChain
       );
 
       // Log failed verifications
       warningBlobs.forEach((blob, index) => {
         const result = verificationResults[index];
-        if (!result.exists || !result.onChain) {
+        if (!result?.exists || !result?.onChain) {
           this.logger.warn('Blob verification failed during expiry check', {
             blobId: blob.blobId,
-            error: result.error,
+            error: result?.error,
           });
         }
       });
@@ -466,7 +466,7 @@ export class ExpiryMonitor {
             }, 10000);
           });
 
-          storageUsage = await Promise.race<{ used: number; allocated: number }>([storagePromise, timeoutPromise]);
+          storageUsage = await Promise.race<{ used: string; total: string }>([storagePromise, timeoutPromise]);
         } catch (storageError) {
           const error =
             storageError instanceof Error

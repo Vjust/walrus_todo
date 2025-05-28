@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'node:child_process';

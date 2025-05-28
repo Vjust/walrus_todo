@@ -23,9 +23,9 @@ export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
 
   // If we're not mounted yet, render nothing or fallback
   if (!mounted) {
-    return fallback ? <>{fallback}</> : null;
+    return fallback ? <div>{fallback}</div> : null;
   }
 
   // Render children only on client
-  return <>{children}</>;
+  return <div>{children}</div>;
 }

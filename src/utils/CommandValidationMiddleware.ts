@@ -115,7 +115,7 @@ export const validateCommandEnvironment: Hook<'prerun'> = async (options) => {
     // Check if the variable exists in our environment configuration
     const envVarNames = Object.keys(envConfig.getAllVariables());
     if (envVarNames.includes(req.variable)) {
-      const value = envConfig.getAllVariables()[req.variable].value as string;
+      const value = envConfig.getAllVariables()[req.variable]?.value as string;
 
       // If there's a validator, check the value
       if (req.validator && typeof value === 'string' && !req.validator(value)) {

@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { Logger } from './Logger';
 
 const logger = new Logger('error-handler');

@@ -9,7 +9,7 @@ import {
   AIPermissionLevel,
   CredentialType,
 } from '../../types/adapters/AICredentialAdapter';
-import chalk from 'chalk';
+import chalk = require('chalk');
 
 export default class Credentials extends BaseCommand {
   static description =

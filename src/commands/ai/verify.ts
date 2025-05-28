@@ -4,7 +4,7 @@ import { AIVerificationService } from '../../services/ai/AIVerificationService';
 import { TodoAIAdapter } from '../../types/adapters/TodoAIAdapter';
 import { SuiClient } from '../../utils/adapters/sui-client-adapter';
 import { AIProvider, TodoAIOperation } from '../../services/ai/types';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { getAIVerifierAddress } from '../../services/ai/credentials/module-address';
 
 export default class Verify extends BaseCommand {

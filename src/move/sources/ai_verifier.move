@@ -16,19 +16,19 @@ module walrus_todo::ai_verifier {
     const E_CREDENTIAL_REVOKED: u64 = 6;
 
     /// Events
-    struct CredentialRegistered has copy, drop {
+    public struct CredentialRegistered has copy, drop {
         provider: String,
         registrar: address,
         timestamp: String
     }
 
-    struct CredentialRevoked has copy, drop {
+    public struct CredentialRevoked has copy, drop {
         provider: String,
         revoker: address,
         timestamp: String
     }
 
-    struct CredentialVerified has copy, drop {
+    public struct CredentialVerified has copy, drop {
         provider: String,
         verifier: address,
         timestamp: String,
@@ -36,7 +36,7 @@ module walrus_todo::ai_verifier {
     }
 
     /// The credential registry object - stored as a shared object
-    struct CredentialRegistry has key {
+    public struct CredentialRegistry has key {
         id: UID,
         // Maps provider names to credential hashes
         credentials: Table<String, Credential>,
@@ -45,7 +45,7 @@ module walrus_todo::ai_verifier {
     }
 
     /// Credential struct
-    struct Credential has store, drop {
+    public struct Credential has store, drop {
         hash: String,
         provider: String,
         registered_at: String,
@@ -54,7 +54,7 @@ module walrus_todo::ai_verifier {
     }
 
     /// Admin capability
-    struct AdminCap has key {
+    public struct AdminCap has key {
         id: UID
     }
 

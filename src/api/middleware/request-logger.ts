@@ -47,20 +47,21 @@ export function requestLogger(
 
     // Create log entry
     const logEntry: RequestLog = {
-      method: req.method,
-      url: req.originalUrl || req.url,
-      ip: req.ip || (req.socket?.remoteAddress ?? 'unknown'),
-      userAgent: req.headers['user-agent'],
+      method: req.method || 'UNKNOWN',
+      url: req.originalUrl || req.url || 'UNKNOWN',
+      ip: req.ip || (req.socket && 'remoteAddress' in req.socket ? req.socket.remoteAddress as string : 'unknown'),
+      userAgent: (req.headers && req.headers['user-agent'] as string) || undefined,
       timestamp,
       duration,
-      status: res.statusCode,
+      status: res.statusCode || 0,
       size,
     };
 
     // Log based on status code
-    if (res.statusCode >= 500) {
+    const statusCode = res.statusCode || 0;
+    if (statusCode >= 500) {
       logger.error('Request failed', undefined, logEntry);
-    } else if (res.statusCode >= 400) {
+    } else if (statusCode >= 400) {
       logger.warn('Request error', logEntry);
     } else {
       logger.info('Request completed', logEntry);
@@ -81,4 +82,5 @@ export function requestLogger(
   };
 
   next();
+  return;
 }

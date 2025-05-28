@@ -109,6 +109,7 @@ export function setupDefaultMockImplementations(mockClient: CompleteWalrusClient
       blob_id: 'test-blob-id',
       registered_epoch: 1,
       size: '1024',
+      encoding_type: 1,
       metadata: {
         $kind: 'V1',
         V1: {
@@ -123,6 +124,13 @@ export function setupDefaultMockImplementations(mockClient: CompleteWalrusClient
       },
       cert_epoch: 2,
       deletable: false,
+      storage: {
+        id: { id: 'test-storage-id' },
+        storage_size: '1000000',
+        used_size: '100000',
+        end_epoch: 100,
+        start_epoch: 1,
+      },
     } as BlobObject,
   });
 
@@ -138,6 +146,7 @@ export function setupDefaultMockImplementations(mockClient: CompleteWalrusClient
     blob_id: 'test-blob-id',
     registered_epoch: 1,
     size: '1024',
+    encoding_type: 1,
     metadata: {
       $kind: 'V1',
       V1: {
@@ -152,6 +161,13 @@ export function setupDefaultMockImplementations(mockClient: CompleteWalrusClient
     },
     cert_epoch: 2,
     deletable: false,
+    storage: {
+      id: { id: 'test-storage-id' },
+      storage_size: '1000000',
+      used_size: '100000',
+      end_epoch: 100,
+      start_epoch: 1,
+    },
   } as BlobObject);
 
   mockClient.getBlobMetadata.mockResolvedValue({
@@ -197,7 +213,16 @@ export function setupDefaultMockImplementations(mockClient: CompleteWalrusClient
       blob_id: 'test-blob-id',
       registered_epoch: 1,
       size: '1024',
+      encoding_type: 1,
+      cert_epoch: 2,
       deletable: false,
+      storage: {
+        id: { id: 'test-storage-id' },
+        storage_size: '1000000',
+        used_size: '100000',
+        end_epoch: 100,
+        start_epoch: 1,
+      },
     } as BlobObject,
     digest: 'test-digest',
   });

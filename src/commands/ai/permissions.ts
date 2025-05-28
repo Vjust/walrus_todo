@@ -8,7 +8,7 @@ import {
   AIPermissionManager,
   initializePermissionManager,
 } from '../../services/ai/AIPermissionManager';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { KeystoreSigner } from '../../utils/sui-keystore';
 import { createInterface } from 'readline';
 

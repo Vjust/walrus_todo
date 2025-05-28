@@ -1,4 +1,5 @@
 import '@/styles/globals.css';
+import '@mysten/dapp-kit/dist/index.css';
 import type { Metadata } from 'next';
 import ClientOnlyRoot from './ClientOnlyRoot';
 

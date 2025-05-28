@@ -52,14 +52,23 @@ Generating frontend configuration...
 Check that CLI and frontend configurations are consistent:
 
 ```bash
-# Basic validation
-./bin/waltodo validate-config
+# Full validation (recommended)
+./bin/waltodo config validate
+
+# Basic validation only
+./bin/waltodo config validate basic
 
 # Detailed validation with full report
-./bin/waltodo validate-config --detailed
+./bin/waltodo config validate --detailed
 
 # Save validation report to file
-./bin/waltodo validate-config --report-file config-validation-report.md
+./bin/waltodo config validate --report-file config-validation-report.md
+
+# Validate for specific network
+./bin/waltodo config validate --network testnet --detailed
+
+# Legacy command (still works but shows deprecation warning)
+./bin/waltodo validate-config --detailed
 ```
 
 Expected output for successful validation:
@@ -102,7 +111,7 @@ Deploy and generate configurations for multiple networks:
 ./bin/waltodo deploy --network localnet
 
 # Validate all configurations
-./bin/waltodo validate-config --detailed
+./bin/waltodo config validate --detailed
 ```
 
 ### Step 5: Update Existing Configuration
@@ -286,7 +295,7 @@ export function useConfig() {
 **Solution**:
 ```bash
 # Validate configuration
-./bin/waltodo validate-config --detailed
+./bin/waltodo config validate --detailed
 
 # Regenerate configuration with latest deployment
 ./bin/waltodo generate-frontend-config --force
@@ -332,7 +341,7 @@ waltodo-frontend/
 
 ## Validation Report Example
 
-After running `./bin/waltodo validate-config --detailed`, you might see:
+After running `./bin/waltodo config validate --detailed`, you might see:
 
 ```
 🔍 Validating configuration...

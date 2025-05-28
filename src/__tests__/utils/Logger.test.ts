@@ -28,10 +28,10 @@ describe('Logger', () => {
 
     // Mock console methods
     mockConsole = [
-      jest.spyOn(console, 'debug').mockImplementation(),
-      jest.spyOn(console, 'info').mockImplementation(),
-      jest.spyOn(console, 'warn').mockImplementation(),
-      jest.spyOn(console, 'error').mockImplementation(),
+      jest.spyOn(console, 'debug').mockImplementation(() => undefined),
+      jest.spyOn(console, 'info').mockImplementation(() => undefined),
+      jest.spyOn(console, 'warn').mockImplementation(() => undefined),
+      jest.spyOn(console, 'error').mockImplementation(() => undefined),
     ];
 
     // Create mock handler

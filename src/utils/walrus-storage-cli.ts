@@ -58,7 +58,7 @@ export class WalrusStorage {
     this.walrusPath = path.join(os.homedir(), '.local', 'bin', 'walrus');
     this.configPath =
       process.env.WALRUS_CONFIG_PATH ||
-      path.join(os.homedir(), '.walrus', 'client_config.yaml');
+      path.join(os.homedir(), '.config', 'walrus', 'client_config.yaml');
     this.useMock = forceMock || shouldUseMock();
 
     // Create temp directory if it doesn't exist
@@ -154,6 +154,123 @@ export class WalrusStorage {
       }
 
       return blobIdMatch[1];
+    } finally {
+      // Clean up temp file
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
+    }
+  }
+
+  /**
+   * Store a todo on Walrus with detailed results
+   */
+  async storeTodoWithDetails(todo: Todo, epochs: number = 5): Promise<{
+    blobId: string;
+    transactionId?: string;
+    explorerUrl?: string;
+    networkInfo: {
+      network: string;
+      epochs: number;
+    }
+  }> {
+    await this.connect();
+
+    if (this.useMock) {
+      const mockBlobId = `mock-blob-${todo.id}`;
+      const mockTxId = `mock-tx-${Date.now()}`;
+      return {
+        blobId: mockBlobId,
+        transactionId: mockTxId,
+        explorerUrl: `https://suiscan.xyz/${this._network}/tx/${mockTxId}`,
+        networkInfo: {
+          network: this._network,
+          epochs
+        }
+      };
+    }
+
+    // Create a temporary file with the todo data
+    const tempFile = path.join(this.tempDir, `todo-${todo.id}.json`);
+    const todoData = {
+      id: todo.id,
+      title: todo.title,
+      description: todo.description,
+      completed: todo.completed,
+      priority: todo.priority,
+      tags: todo.tags,
+      createdAt: todo.createdAt,
+      updatedAt: todo.updatedAt,
+      private: todo.private,
+    };
+
+    try {
+      fs.writeFileSync(tempFile, JSON.stringify(todoData, null, 2));
+
+      // Store using Walrus CLI with verbose output
+      const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
+      logger.info(`Executing: ${command}`);
+      const { stdout, stderr } = await execAsync(command);
+      
+      logger.info(`Walrus CLI output: ${stdout}`);
+      if (stderr) {
+        logger.info(`Walrus CLI stderr: ${stderr}`);
+      }
+
+      // Parse blob ID from output
+      const blobIdMatch = stdout.match(/Blob ID: ([^\n]+)/);
+      if (!blobIdMatch) {
+        throw new CLIError(
+          'Failed to parse blob ID from Walrus output',
+          'PARSE_ERROR'
+        );
+      }
+
+      const blobId = blobIdMatch[1].trim();
+      
+      // Try to extract transaction ID if available in output
+      let transactionId: string | undefined;
+      let explorerUrl: string | undefined;
+      
+      // Look for transaction digest/ID patterns in output
+      const txIdPatterns = [
+        /Transaction digest: ([A-Za-z0-9]+)/,
+        /Tx digest: ([A-Za-z0-9]+)/,
+        /Transaction ID: ([A-Za-z0-9]+)/,
+        /Digest: ([A-Za-z0-9]+)/
+      ];
+      
+      for (const pattern of txIdPatterns) {
+        const match = stdout.match(pattern) || stderr?.match(pattern);
+        if (match) {
+          transactionId = match[1].trim();
+          break;
+        }
+      }
+      
+      // Generate explorer URL if we have transaction ID
+      if (transactionId) {
+        const explorerBase = this._network === 'mainnet' 
+          ? 'https://suiscan.xyz/mainnet' 
+          : 'https://suiscan.xyz/testnet';
+        explorerUrl = `${explorerBase}/tx/${transactionId}`;
+      }
+
+      // Generate Walrus aggregator URL for blob access
+      const aggregatorUrl = this._network === 'mainnet'
+        ? `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${blobId}`
+        : `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`;
+
+      return {
+        blobId,
+        transactionId,
+        explorerUrl,
+        aggregatorUrl,
+        networkInfo: {
+          network: this._network,
+          epochs
+        }
+      };
     } finally {
       // Clean up temp file
       if (fs.existsSync(tempFile)) {

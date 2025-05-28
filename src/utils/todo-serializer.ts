@@ -16,8 +16,12 @@ export class TodoSerializer {
   static bufferToTodo(buffer: Buffer): Todo {
     try {
       const parsed = JSON.parse(buffer.toString());
-      // Validate the parsed data using Zod schema
-      return validateTodo(parsed);
+      
+      // Apply backwards compatibility defaults before validation
+      const normalized = this.normalizeTodoForCompatibility(parsed);
+      
+      // Validate the normalized data using Zod schema
+      return validateTodo(normalized);
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new CLIError(
@@ -38,8 +42,12 @@ export class TodoSerializer {
   static bufferToTodoList(buffer: Buffer): TodoList {
     try {
       const parsed = JSON.parse(buffer.toString());
-      // Validate the parsed data using Zod schema
-      return validateTodoList(parsed);
+      
+      // Apply backwards compatibility defaults before validation
+      const normalized = this.normalizeTodoListForCompatibility(parsed);
+      
+      // Validate the normalized data using Zod schema
+      return validateTodoList(normalized);
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new CLIError(
@@ -95,13 +103,50 @@ export class TodoSerializer {
    * Validate and normalize a plain object to a Todo
    */
   static normalizeTodo(obj: unknown): Todo {
-    return validateTodo(obj);
+    const normalized = this.normalizeTodoForCompatibility(obj);
+    return validateTodo(normalized);
   }
 
   /**
    * Validate and normalize a plain object to a TodoList
    */
   static normalizeTodoList(obj: unknown): TodoList {
-    return validateTodoList(obj);
+    const normalized = this.normalizeTodoListForCompatibility(obj);
+    return validateTodoList(normalized);
+  }
+
+  /**
+   * Apply backwards compatibility defaults for Todo objects
+   */
+  private static normalizeTodoForCompatibility(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+
+    // Ensure required fields have default values
+    return {
+      ...obj,
+      // Set defaults for missing required fields
+      private: obj.private ?? false,
+      priority: obj.priority ?? 'medium',
+      tags: obj.tags ?? [],
+    };
+  }
+
+  /**
+   * Apply backwards compatibility defaults for TodoList objects
+   */
+  private static normalizeTodoListForCompatibility(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+
+    // Normalize nested todos first
+    const normalizedTodos = Array.isArray(obj.todos) 
+      ? obj.todos.map((todo: any) => this.normalizeTodoForCompatibility(todo))
+      : [];
+
+    // Ensure required fields have default values
+    return {
+      ...obj,
+      todos: normalizedTodos,
+      version: obj.version ?? 1,
+    };
   }
 }

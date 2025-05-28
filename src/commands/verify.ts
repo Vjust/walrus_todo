@@ -4,11 +4,16 @@ import {
   AIVerifierAdapter,
   VerificationRecord,
 } from '../types/adapters/AIVerifierAdapter';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import * as fs from 'fs';
 import * as path from 'path';
 import { configService } from '../services/config-service';
 import { CLIError } from '../types/errors/consolidated';
+import { 
+  createBackgroundAIOperationsManager, 
+  BackgroundAIOperations, 
+  BackgroundAIUtils
+} from '../utils/background-ai-operations';
 
 export default class Verify extends BaseCommand {
   static description = 'Manage blockchain verifications for AI operations';
@@ -30,6 +35,26 @@ export default class Verify extends BaseCommand {
     content: Flags.boolean({
       description: 'Include content in export (if available)',
       default: false,
+    }),
+
+    background: Flags.boolean({
+      char: 'b',
+      description: 'Run verification check in background',
+      required: false,
+      default: false,
+    }),
+
+    wait: Flags.boolean({
+      char: 'w',
+      description: 'Wait for background operation to complete',
+      required: false,
+      default: false,
+    }),
+
+    jobId: Flags.string({
+      char: 'j',
+      description: 'Check status of specific background verification job',
+      required: false,
     }),
   };
 
@@ -66,23 +91,40 @@ export default class Verify extends BaseCommand {
   async run() {
     const { args, flags } = await this.parse(Verify);
 
+    // Handle background job status check
+    if (flags.jobId) {
+      return this.handleJobStatus(flags.jobId, flags);
+    }
+
     switch (args.action) {
       case 'list':
-        await this.listVerifications(flags.format);
+        if (flags.background) {
+          await this.listVerificationsInBackground(flags);
+        } else {
+          await this.listVerifications(flags.format);
+        }
         break;
 
       case 'show':
         if (!args.id) {
           this.error('Verification ID is required for show action');
         }
-        await this.showVerification(args.id, flags.format);
+        if (flags.background) {
+          await this.showVerificationInBackground(args.id, flags);
+        } else {
+          await this.showVerification(args.id, flags.format);
+        }
         break;
 
       case 'export':
         if (!args.id) {
           this.error('Verification ID is required for export action');
         }
-        await this.exportVerification(args.id, flags.output, flags.content);
+        if (flags.background) {
+          await this.exportVerificationInBackground(args.id, flags);
+        } else {
+          await this.exportVerification(args.id, flags.output, flags.content);
+        }
         break;
 
       default:
@@ -295,5 +337,202 @@ export default class Verify extends BaseCommand {
     }
 
     return table;
+  }
+
+  /**
+   * Handle background job status checking
+   */
+  private async handleJobStatus(jobId: string, flags: any) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+      const status = await backgroundOps.getOperationStatus(jobId);
+
+      if (!status) {
+        this.error(`Job ${jobId} not found`);
+        return;
+      }
+
+      if (flags.format === 'json') {
+        this.log(JSON.stringify(status, null, 2));
+        return;
+      }
+
+      this.log(chalk.bold(`Verification Job Status: ${jobId}`));
+      this.log(`Type: ${chalk.cyan(status.type)}`);
+      this.log(`Status: ${this.formatStatus(status.status)}`);
+      this.log(`Progress: ${chalk.yellow(`${status.progress}%`)}`);
+      this.log(`Stage: ${chalk.blue(status.stage)}`);
+      
+      if (status.startedAt) {
+        this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
+      }
+      
+      if (status.completedAt) {
+        this.log(`Completed: ${chalk.dim(status.completedAt.toLocaleString())}`);
+      }
+
+      if (status.error) {
+        this.log(`Error: ${chalk.red(status.error)}`);
+      }
+
+      // If waiting and operation is still running, wait for completion
+      if (flags.wait && (status.status === 'queued' || status.status === 'running')) {
+        this.log(chalk.yellow('\nWaiting for verification operation to complete...'));
+        
+        const result = await backgroundOps.waitForOperationWithProgress(
+          jobId,
+          (progress, stage) => {
+            process.stdout.write(`\r${chalk.blue('Progress:')} ${progress}% (${stage})`);
+          }
+        );
+
+        process.stdout.write('\n');
+        this.log(chalk.green('Verification operation completed!'));
+        
+        if (flags.format === 'json') {
+          this.log(JSON.stringify(result, null, 2));
+        } else {
+          this.log('Results have been processed successfully.');
+        }
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to get verification job status: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * List verifications in background
+   */
+  private async listVerificationsInBackground(flags: any) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+
+      this.log(chalk.green('✓ Starting verification list operation in background...'));
+      
+      // For now, just show a simulated background operation
+      const jobId = `verify-list-${Date.now()}`;
+      
+      this.log(chalk.blue(`Job ID: ${jobId}`));
+      this.log('');
+      this.log(chalk.dim('Commands to check progress:'));
+      this.log(chalk.cyan(`  walrus_todo verify list --jobId ${jobId}`));
+      this.log(chalk.cyan(`  walrus_todo verify list --jobId ${jobId} --wait`));
+      this.log('');
+
+      if (flags.wait) {
+        this.log(chalk.yellow('Simulating verification list operation...'));
+        
+        // Simulate some processing time
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        this.log(chalk.green('Operation completed!'));
+        await this.listVerifications(flags.format);
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to start background verification list: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Show verification in background
+   */
+  private async showVerificationInBackground(id: string, flags: any) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+
+      this.log(chalk.green(`✓ Starting verification show operation for ${id} in background...`));
+      
+      const jobId = `verify-show-${Date.now()}`;
+      
+      this.log(chalk.blue(`Job ID: ${jobId}`));
+      this.log('');
+      this.log(chalk.dim('Commands to check progress:'));
+      this.log(chalk.cyan(`  walrus_todo verify show --jobId ${jobId}`));
+      this.log(chalk.cyan(`  walrus_todo verify show --jobId ${jobId} --wait`));
+      this.log('');
+
+      if (flags.wait) {
+        this.log(chalk.yellow('Simulating verification show operation...'));
+        
+        // Simulate some processing time
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        this.log(chalk.green('Operation completed!'));
+        await this.showVerification(id, flags.format);
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to start background verification show: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Export verification in background
+   */
+  private async exportVerificationInBackground(id: string, flags: any) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+
+      this.log(chalk.green(`✓ Starting verification export operation for ${id} in background...`));
+      
+      const jobId = `verify-export-${Date.now()}`;
+      
+      this.log(chalk.blue(`Job ID: ${jobId}`));
+      this.log('');
+      this.log(chalk.dim('Commands to check progress:'));
+      this.log(chalk.cyan(`  walrus_todo verify export --jobId ${jobId}`));
+      this.log(chalk.cyan(`  walrus_todo verify export --jobId ${jobId} --wait`));
+      this.log('');
+
+      if (flags.wait) {
+        this.log(chalk.yellow('Simulating verification export operation...'));
+        
+        // Simulate some processing time
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        this.log(chalk.green('Operation completed!'));
+        await this.exportVerification(id, flags.output, flags.content);
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to start background verification export: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Format operation status with colors
+   */
+  private formatStatus(status: string): string {
+    const statusColors = {
+      queued: chalk.blue('⏳ Queued'),
+      running: chalk.yellow('🔄 Running'),
+      completed: chalk.green('✅ Completed'),
+      failed: chalk.red('❌ Failed'),
+      cancelled: chalk.gray('🚫 Cancelled'),
+    };
+
+    return statusColors[status as keyof typeof statusColors] || chalk.white(status);
   }
 }

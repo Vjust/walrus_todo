@@ -5,7 +5,7 @@ import './utils/polyfills/aggregate-error';
 
 // Import core dependencies with CommonJS compatibility
 import { Command, Flags } from '@oclif/core';
-import * as Commands from './commands/index.js';
+import * as Commands from './commands/index';
 import { initializeConfig } from './utils/config-loader';
 
 // Initialize environment configuration
@@ -15,7 +15,7 @@ initializeConfig();
 process.env.FORCE_COLOR = '1';
 
 // Force chalk to use colors even in CI/non-TTY environments
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { Logger } from './utils/Logger';
 chalk.level = chalk.level > 0 ? chalk.level : 1;
 
@@ -107,20 +107,6 @@ export const run = async () => {
     // Special handling for AI commands to ensure proper error handling and output
     if (commandName === 'ai') {
       try {
-        // Ensure environment variables are loaded
-        if (!process.env.XAI_API_KEY) {
-          // Try to find API key in args
-          const apiKeyIndex = args.findIndex(
-            arg => arg === '--apiKey' || arg === '-k'
-          );
-          if (apiKeyIndex === -1 || apiKeyIndex === args.length - 1) {
-            logger.error(
-              'XAI API key is required. Set XAI_API_KEY environment variable or use --apiKey flag.'
-            );
-            process.exit(1);
-          }
-        }
-
         // Force output to be colored
         process.env.FORCE_COLOR = '1';
 

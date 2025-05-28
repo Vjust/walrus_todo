@@ -48,6 +48,7 @@ export function validateApiKey(
   req.apiKey = apiKey;
 
   next();
+  return;
 }
 
 // Optional middleware for specific routes that require user authentication
@@ -64,4 +65,5 @@ export function requireUser(
     return;
   }
   next();
+  return;
 }

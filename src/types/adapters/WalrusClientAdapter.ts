@@ -609,7 +609,7 @@ export function isOriginalWalrusClient(
     return false;
   }
   
-  const clientObj = client as Record<string, unknown>;
+  const clientObj = client as unknown as Record<string, unknown>;
   return (
     typeof clientObj.getBlobInfo === 'function' &&
     typeof clientObj.readBlob === 'function' &&
@@ -642,7 +642,7 @@ export function isWalrusClient(client: unknown): client is WalrusClient {
     return false;
   }
   
-  const clientObj = client as Record<string, unknown>;
+  const clientObj = client as unknown as Record<string, unknown>;
   return (
     typeof clientObj.getBlobObject === 'function' &&
     typeof clientObj.verifyPoA === 'function'
@@ -670,7 +670,7 @@ export function isWalrusClientExt(client: unknown): client is WalrusClientExt {
     return false;
   }
   
-  const clientObj = client as Record<string, unknown>;
+  const clientObj = client as unknown as Record<string, unknown>;
   return typeof clientObj.getBlobSize === 'function';
 }
 
@@ -773,8 +773,8 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       client !== null &&
       client !== undefined &&
       typeof client === 'object' &&
-      (('getBlobSize' in client && typeof (client as Record<string, unknown>).getBlobSize === 'function') ||
-      ('experimental' in client && (client as Record<string, unknown>).experimental))
+      (('getBlobSize' in client && typeof (client as unknown as Record<string, unknown>).getBlobSize === 'function') ||
+      ('experimental' in client && (client as unknown as Record<string, unknown>).experimental))
     ) {
       return WalrusClientVersion.EXTENDED;
     }
@@ -784,9 +784,9 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
       client !== undefined &&
       typeof client === 'object' &&
       'getBlobObject' in client &&
-      typeof (client as Record<string, unknown>).getBlobObject === 'function' &&
+      typeof (client as unknown as Record<string, unknown>).getBlobObject === 'function' &&
       'verifyPoA' in client &&
-      typeof (client as Record<string, unknown>).verifyPoA === 'function'
+      typeof (client as unknown as Record<string, unknown>).verifyPoA === 'function'
     ) {
       return WalrusClientVersion.CUSTOM;
     }
@@ -917,11 +917,11 @@ export abstract class BaseWalrusClientAdapter implements WalrusClientAdapter {
         'getUnderlyingSigner' in signer &&
         typeof (signer as Record<string, unknown>).getUnderlyingSigner === 'function'
       ) {
-        return (signer as SignerAdapter).getUnderlyingSigner();
+        return (signer as any).getUnderlyingSigner();
       }
 
       if ('getSigner' in signer && typeof (signer as Record<string, unknown>).getSigner === 'function') {
-        return (signer as SignerAdapter).getSigner();
+        return (signer as any).getSigner();
       }
     }
 
