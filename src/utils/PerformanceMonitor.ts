@@ -1,4 +1,4 @@
-import { Logger } from './Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -7,7 +7,7 @@ export interface PerformanceMetric {
   duration: number;
   timestamp: number;
   success: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   memoryUsage?: NodeJS.MemoryUsage;
   cpuUsage?: NodeJS.CpuUsage;
 }
@@ -55,14 +55,14 @@ export class PerformanceMonitor {
     try {
       if (fs.existsSync(this.metricsFile)) {
         const data = fs.readFileSync(this.metricsFile, 'utf-8');
-        this.metrics = JSON.parse(data);
+        this.metrics = JSON.parse(data.toString());
         // Keep only recent metrics to prevent memory issues
         if (this.metrics.length > this.maxMetrics) {
           this.metrics = this.metrics.slice(-this.maxMetrics);
         }
       }
     } catch (error) {
-      this.logger.warn('Failed to load existing metrics:', error);
+      this.logger.warn('Failed to load existing metrics:', { error: error instanceof Error ? error.message : String(error) });
       this.metrics = [];
     }
   }
@@ -79,7 +79,7 @@ export class PerformanceMonitor {
     this.logger.debug(`Started tracking: ${operation} (${operationId})`);
   }
 
-  endOperation(operationId: string, operation: string, success = true, metadata?: Record<string, any>): PerformanceMetric {
+  endOperation(operationId: string, operation: string, success = true, metadata?: Record<string, unknown>): PerformanceMetric {
     const activeOp = this.activeOperations.get(operationId);
     if (!activeOp) {
       throw new Error(`No active operation found for ID: ${operationId}`);
@@ -118,7 +118,7 @@ export class PerformanceMonitor {
     return metric;
   }
 
-  async measureOperation<T>(operation: string, fn: () => Promise<T>, metadata?: Record<string, any>): Promise<T> {
+  async measureOperation<T>(operation: string, fn: () => Promise<T>, metadata?: Record<string, unknown>): Promise<T> {
     const operationId = `${operation}-${Date.now()}-${Math.random()}`;
     this.startOperation(operationId, operation);
     
@@ -135,7 +135,7 @@ export class PerformanceMonitor {
     }
   }
 
-  measureSync<T>(operation: string, fn: () => T, metadata?: Record<string, any>): T {
+  measureSync<T>(operation: string, fn: () => T, metadata?: Record<string, unknown>): T {
     const operationId = `${operation}-${Date.now()}-${Math.random()}`;
     this.startOperation(operationId, operation);
     
@@ -185,7 +185,10 @@ export class PerformanceMonitor {
       if (!operationBreakdown[metric.operation]) {
         operationBreakdown[metric.operation] = { count: 0, avgDuration: 0, successRate: 0 };
       }
-      operationBreakdown[metric.operation].count++;
+      const breakdown = operationBreakdown[metric.operation];
+      if (breakdown) {
+        breakdown.count++;
+      }
     }
 
     for (const [operation, stats] of Object.entries(operationBreakdown)) {
@@ -201,9 +204,9 @@ export class PerformanceMonitor {
       maxDuration: Math.max(...durations),
       successRate: successfulOps.length / relevantMetrics.length,
       memoryStats: {
-        avgHeapUsed: memoryMetrics.reduce((sum, m) => sum + m.memoryUsage!.heapUsed, 0) / memoryMetrics.length,
-        avgHeapTotal: memoryMetrics.reduce((sum, m) => sum + m.memoryUsage!.heapTotal, 0) / memoryMetrics.length,
-        peakHeapUsed: Math.max(...memoryMetrics.map(m => m.memoryUsage!.heapUsed))
+        avgHeapUsed: memoryMetrics.reduce((sum, m) => sum + (m.memoryUsage?.heapUsed || 0), 0) / memoryMetrics.length,
+        avgHeapTotal: memoryMetrics.reduce((sum, m) => sum + (m.memoryUsage?.heapTotal || 0), 0) / memoryMetrics.length,
+        peakHeapUsed: Math.max(...memoryMetrics.map(m => m.memoryUsage?.heapUsed || 0))
       },
       operationBreakdown
     };
@@ -224,7 +227,7 @@ export class PerformanceMonitor {
       fs.writeFileSync(this.metricsFile, JSON.stringify(this.metrics, null, 2));
       this.logger.debug(`Saved ${this.metrics.length} metrics to ${this.metricsFile}`);
     } catch (error) {
-      this.logger.error('Failed to save metrics:', error);
+      this.logger.error('Failed to save metrics:', error instanceof Error ? error : new Error(String(error)));
     }
   }
 
@@ -261,7 +264,7 @@ export interface BackgroundJob {
   id: string;
   command: string;
   args: string[];
-  flags: Record<string, any>;
+  flags: Record<string, unknown>;
   status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   startTime: number;
   endTime?: number;
@@ -271,7 +274,7 @@ export interface BackgroundJob {
   errorMessage?: string;
   outputFile?: string;
   logFile?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   pid?: number;
 }
 
@@ -300,14 +303,14 @@ export class JobManager {
     try {
       if (fs.existsSync(this.jobsFile)) {
         const data = fs.readFileSync(this.jobsFile, 'utf8');
-        const jobs: BackgroundJob[] = JSON.parse(data);
+        const jobs: BackgroundJob[] = JSON.parse(data.toString());
         jobs.forEach(job => {
           this.activeJobs.set(job.id, job);
         });
         this.logger.debug(`Loaded ${jobs.length} jobs from storage`);
       }
     } catch (error) {
-      this.logger.warn('Failed to load jobs:', error);
+      this.logger.warn('Failed to load jobs:', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -317,11 +320,11 @@ export class JobManager {
       fs.writeFileSync(this.jobsFile, JSON.stringify(jobs, null, 2));
       this.logger.debug(`Saved ${jobs.length} jobs to storage`);
     } catch (error) {
-      this.logger.error('Failed to save jobs:', error);
+      this.logger.error('Failed to save jobs:', error instanceof Error ? error : new Error(String(error)));
     }
   }
 
-  public createJob(command: string, args: string[], flags: Record<string, any>): BackgroundJob {
+  public createJob(command: string, args: string[], flags: Record<string, unknown>): BackgroundJob {
     const id = this.generateJobId();
     const logFile = path.join(this.jobsDir, `${id}.log`);
     const outputFile = path.join(this.jobsDir, `${id}.out`);
@@ -377,7 +380,7 @@ export class JobManager {
     });
   }
 
-  public completeJob(jobId: string, metadata?: Record<string, any>): void {
+  public completeJob(jobId: string, metadata?: Record<string, unknown>): void {
     this.updateJob(jobId, {
       status: 'completed',
       endTime: Date.now(),
@@ -442,10 +445,18 @@ export class JobManager {
         
         // Clean up log files
         if (job.logFile && fs.existsSync(job.logFile)) {
-          try { fs.unlinkSync(job.logFile); } catch {}
+          try { 
+            fs.unlinkSync(job.logFile); 
+          } catch (error) {
+            this.logger.warn(`Failed to delete log file: ${error instanceof Error ? error.message : String(error)}`);
+          }
         }
         if (job.outputFile && fs.existsSync(job.outputFile)) {
-          try { fs.unlinkSync(job.outputFile); } catch {}
+          try { 
+            fs.unlinkSync(job.outputFile); 
+          } catch (error) {
+            this.logger.warn(`Failed to delete output file: ${error instanceof Error ? error.message : String(error)}`);
+          }
         }
       }
     });
@@ -481,7 +492,8 @@ export class JobManager {
     }
 
     try {
-      return fs.readFileSync(job.logFile, 'utf8');
+      const data = fs.readFileSync(job.logFile, 'utf8');
+      return data.toString();
     } catch (error) {
       return null;
     }

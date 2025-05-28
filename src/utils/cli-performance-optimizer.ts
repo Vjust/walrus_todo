@@ -83,7 +83,7 @@ export class CLIPerformanceOptimizer {
   private loadStartupCache(): StartupCache | null {
     try {
       if (existsSync(this.cacheFile)) {
-        const cache = JSON.parse(readFileSync(this.cacheFile, 'utf8'));
+        const cache = JSON.parse(readFileSync(this.cacheFile, 'utf8') as string);
         // Cache is valid for 24 hours
         if (Date.now() - cache.timestamp < 24 * 60 * 60 * 1000) {
           return cache;
@@ -222,7 +222,7 @@ export class CLIPerformanceOptimizer {
   private loadMetrics(): CLIMetrics[] {
     try {
       if (existsSync(this.metricsFile)) {
-        const data = readFileSync(this.metricsFile, 'utf8');
+        const data = readFileSync(this.metricsFile, 'utf8') as string;
         const metrics = JSON.parse(data);
         // Keep only last 100 metrics entries
         return metrics.slice(-100);
@@ -257,6 +257,10 @@ export class CLIPerformanceOptimizer {
     }
     
     const latestMetrics = metrics[metrics.length - 1];
+    
+    if (!latestMetrics) {
+      return ['No recent metrics available for recommendations'];
+    }
     
     // Startup time recommendations
     if (latestMetrics.startupTime > 1000) {
@@ -312,10 +316,10 @@ export class CLIPerformanceOptimizer {
 }
 
 // Decorator for performance monitoring
-export function measurePerformance(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+export function measurePerformance(target: object, propertyName: string, descriptor: PropertyDescriptor) {
   const method = descriptor.value;
   
-  descriptor.value = async function (...args: any[]) {
+  descriptor.value = async function (...args: unknown[]) {
     const optimizer = CLIPerformanceOptimizer.getInstance();
     optimizer.startCommand(propertyName);
     

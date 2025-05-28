@@ -12,7 +12,7 @@ import { ClipboardErrorModal } from './ClipboardErrorModal';
 import { WalletError } from '@/lib/wallet-errors';
 import { ErrorBoundary } from './ErrorBoundary';
 import { WalletSelector } from './WalletSelector';
-import { ClientOnly } from './ClientOnly';
+import { ClientOnly } from '@/components/ClientOnly';
 
 function WalletConnectButton() {
   const {
