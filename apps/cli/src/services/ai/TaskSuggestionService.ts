@@ -351,12 +351,8 @@ export class TaskSuggestionService {
 
       return suggestions;
     } catch (error) {
-      EnhancedErrorHandler.logError(error, {
-        operation: 'generateRelatedTasks',
-        component: 'TaskSuggestionService',
-        additionalInfo: { todoCount: targetTodos.length }
-      });
-      return [];
+      this.logger.error(`Error generating related tasks: ${error}`);
+      throw error;
     }
   }
 
@@ -455,7 +451,7 @@ export class TaskSuggestionService {
       }));
     } catch (error) {
       this.logger.error(`Error generating next step tasks: ${error}`);
-      return [];
+      throw error;
     }
   }
 
@@ -523,7 +519,7 @@ export class TaskSuggestionService {
       }));
     } catch (error) {
       this.logger.error(`Error generating dependency tasks: ${error}`);
-      return [];
+      throw error;
     }
   }
 

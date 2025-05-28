@@ -34,89 +34,97 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
 
 /**
  * Creates a complete mock WalrusClient with all methods mocked
+ * Uses factory functions to create responses dynamically to reduce memory usage
  */
 export function getMockWalrusClient(): CompleteWalrusClientMock {
+  // Factory functions for creating mock responses
+  const createMockConfig = () => ({
+    network: 'testnet',
+    version: '1.0.0',
+    maxSize: 10485760
+  });
+
+  const createMockStorageUsage = () => ({
+    used: '100',
+    total: '1000'
+  });
+
+  const createMockBlob = (length?: number) => new Uint8Array(length || 4).fill(1);
+
   return {
-    getConfig: jest.fn().mockResolvedValue({
-      network: 'testnet',
-      version: '1.0.0',
-      maxSize: 10485760
-    }),
+    getConfig: jest.fn().mockImplementation(() => Promise.resolve(createMockConfig())),
     getWalBalance: jest.fn().mockResolvedValue('1000'),
-    getStorageUsage: jest.fn().mockResolvedValue({
-      used: '100',
-      total: '1000'
-    }),
-    readBlob: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
-    writeBlob: jest.fn().mockResolvedValue({
+    getStorageUsage: jest.fn().mockImplementation(() => Promise.resolve(createMockStorageUsage())),
+    readBlob: jest.fn().mockImplementation(() => Promise.resolve(createMockBlob())),
+    writeBlob: jest.fn().mockImplementation(() => Promise.resolve({
       blobId: 'mock-blob-test-todo-id',
       blobObject: {
         id: { id: 'mock-blob-test-todo-id' },
         blob_id: 'mock-blob-test-todo-id',
         registered_epoch: 100,
         certified_epoch: 150,
-        size: BigInt(1024),
+        size: BigInt(4), // Match default blob size
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
           storage_size: BigInt(2048),
-          used_size: BigInt(1024),
+          used_size: BigInt(4), // Match default blob size
         },
         deletable: true,
       }
-    }),
-    getBlobInfo: jest.fn().mockResolvedValue({
+    })),
+    getBlobInfo: jest.fn().mockImplementation(() => Promise.resolve({
       blob_id: 'mock-blob-test-todo-id',
       certified_epoch: 150,
       registered_epoch: 100,
       encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-      unencoded_length: '1024',
-      size: '1024',
+      unencoded_length: '4', // Match default blob size
+      size: '4', // Match default blob size
       hashes: [],
       metadata: {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: '1024',
+          unencoded_length: '4', // Match default blob size
           hashes: [],
           $kind: 'V1',
         },
         $kind: 'V1',
       },
-    }),
-    getBlobObject: jest.fn().mockResolvedValue({
+    })),
+    getBlobObject: jest.fn().mockImplementation(() => Promise.resolve({
       id: { id: 'mock-blob-test-todo-id' },
       blob_id: 'mock-blob-test-todo-id',
       registered_epoch: 100,
       certified_epoch: 150,
-      size: BigInt(1024),
+      size: BigInt(4), // Match default blob size
       encoding_type: { RedStuff: true, $kind: 'RedStuff' },
       storage: {
         id: { id: 'storage1' },
         start_epoch: 100,
         end_epoch: 200,
         storage_size: BigInt(2048),
-        used_size: BigInt(1024),
+        used_size: BigInt(4), // Match default blob size
       },
       deletable: true,
-    }),
-    getBlobMetadata: jest.fn().mockResolvedValue({
+    })),
+    getBlobMetadata: jest.fn().mockImplementation(() => Promise.resolve({
       V1: {
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-        unencoded_length: '1024',
+        unencoded_length: '4', // Match default blob size
         hashes: [],
         $kind: 'V1',
       },
       $kind: 'V1',
-    }),
+    })),
     verifyPoA: jest.fn().mockResolvedValue(true),
-    getBlobSize: jest.fn().mockResolvedValue(1024),
-    storageCost: jest.fn().mockResolvedValue({
+    getBlobSize: jest.fn().mockResolvedValue(4), // Match default blob size
+    storageCost: jest.fn().mockImplementation(() => Promise.resolve({
       storageCost: BigInt(100),
       writeCost: BigInt(50),
       totalCost: BigInt(150),
-    }),
+    })),
     executeCreateStorageTransaction: jest.fn().mockResolvedValue({
       digest: 'mock-transaction-digest',
       storage: {
@@ -141,14 +149,14 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         blob_id: 'mock-blob-id',
         registered_epoch: 100,
         certified_epoch: 150,
-        size: BigInt(1024),
+        size: BigInt(4), // Match default blob size
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
           storage_size: BigInt(2048),
-          used_size: BigInt(1024),
+          used_size: BigInt(4), // Match default blob size
         },
         deletable: true,
       },
@@ -170,29 +178,44 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         storage_size: '2048',
       },
     })),
-    getStorageProviders: jest.fn().mockResolvedValue([
+    getStorageProviders: jest.fn().mockImplementation(() => Promise.resolve([
       'provider1',
       'provider2',
       'provider3',
       'provider4',
-    ]),
+    ])),
     reset: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
     experimental: {
-      getBlobData: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
+      getBlobData: jest.fn().mockImplementation(() => Promise.resolve(createMockBlob())),
     },
   };
 }
 
 /**
  * Creates a mock Walrus module for Jest mocking
+ * Uses factory function to create fresh instances and avoid reference sharing
  */
 export function createWalrusModuleMock() {
-  const mockClient = getMockWalrusClient();
-  
   return {
-    WalrusClient: jest.fn().mockImplementation(() => mockClient),
+    WalrusClient: jest.fn().mockImplementation(() => getMockWalrusClient()),
     // Add other exports from @mysten/walrus that might be needed
-    createWalrusClient: jest.fn().mockImplementation(() => mockClient),
+    createWalrusClient: jest.fn().mockImplementation(() => getMockWalrusClient()),
+  };
+}
+
+/**
+ * Creates a lightweight mock client with minimal functionality
+ * for tests that don't need full mock functionality
+ */
+export function getLightweightMockWalrusClient() {
+  return {
+    readBlob: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
+    writeBlob: jest.fn().mockResolvedValue({
+      blobId: 'mock-blob-id',
+      blobObject: { id: { id: 'mock-blob-id' } }
+    }),
+    reset: jest.fn(),
+    connect: jest.fn().mockResolvedValue(undefined),
   };
 }

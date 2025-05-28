@@ -1,5 +1,32 @@
 import type { WalrusClientExt } from '../../types/client';
 import type { BlobInfo, BlobObject, BlobMetadataShape } from '../../types/walrus';
+import { createMemoryEfficientMock, cleanupMocks } from './memory-utils';
+
+// Internal storage for mock state to simulate real Walrus behavior
+interface MockBlobRecord {
+  blobId: string;
+  data: Uint8Array;
+  registered_epoch: number;
+  certified_epoch?: number;
+  size: number;
+  attributes?: Record<string, string>;
+  contentType?: string;
+  owner?: string;
+  tags?: string[];
+  encoding_type: { RedStuff: boolean; $kind: string };
+  metadata: BlobMetadataShape;
+  storage: {
+    id: { id: string };
+    start_epoch: number;
+    end_epoch: number;
+    storage_size: bigint;
+    used_size: bigint;
+  };
+  certificationInProgress?: boolean;
+}
+
+const mockBlobStorage: Record<string, MockBlobRecord> = {};
+const currentEpoch = 100;
 
 /**
  * Complete mock implementation of WalrusClientExt for testing
@@ -30,29 +57,170 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
   experimental?: {
     getBlobData: jest.Mock<Promise<Uint8Array | BlobObject>, []>;
   };
+  // Additional helper methods for test setup
+  _setBlobCertified?: (blobId: string, certified: boolean) => void;
+  _simulateEpochProgress?: (epochs: number) => void;
+  _addMockBlob?: (blobId: string, data: Uint8Array, options?: Partial<MockBlobRecord>) => void;
+}
+
+// Helper function to create proper metadata structure
+function createMockMetadata(size: number = 1024): BlobMetadataShape {
+  return {
+    V1: {
+      encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+      unencoded_length: size.toString(),
+      hashes: [
+        {
+          primary_hash: {
+            Digest: new Uint8Array([1, 2, 3, 4]),
+            $kind: 'Digest',
+          },
+          secondary_hash: {
+            Sha256: new Uint8Array([5, 6, 7, 8]),
+            $kind: 'Sha256',
+          },
+        },
+      ],
+      $kind: 'V1' as const,
+    },
+    $kind: 'V1' as const,
+  };
 }
 
 /**
  * Creates a complete mock WalrusClient with all methods mocked
+ * Uses memory-efficient mocks to prevent heap overflow
  */
 export function getMockWalrusClient(): CompleteWalrusClientMock {
   return {
-    getConfig: jest.fn().mockResolvedValue({
+    getConfig: createMemoryEfficientMock(Promise.resolve({
       network: 'testnet',
       version: '1.0.0',
       maxSize: 10485760
-    }),
-    getWalBalance: jest.fn().mockResolvedValue('1000'),
-    getStorageUsage: jest.fn().mockResolvedValue({
+    })),
+    getWalBalance: createMemoryEfficientMock(Promise.resolve('1000')),
+    getStorageUsage: createMemoryEfficientMock(Promise.resolve({
       used: '100',
       total: '1000'
+    })),
+    
+    // Improved readBlob that checks mock storage
+    readBlob: jest.fn().mockImplementation(async (params: { blobId: string }) => {
+      const record = mockBlobStorage[params.blobId];
+      if (record) {
+        return record.data;
+      }
+      return new Uint8Array([1, 2, 3, 4]); // Default fallback
     }),
-    readBlob: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
-    writeBlob: jest.fn().mockResolvedValue({
-      blobId: 'mock-blob-test-todo-id',
-      blobObject: {
-        id: { id: 'mock-blob-test-todo-id' },
-        blob_id: 'mock-blob-test-todo-id',
+    
+    // Improved writeBlob that stores in mock storage
+    writeBlob: jest.fn().mockImplementation(async (params: any) => {
+      const blobId = params.blobId || `mock-blob-${Date.now()}`;
+      const data = params.blob || params.data || new Uint8Array([1, 2, 3, 4]);
+      const size = data.length;
+      
+      const metadata = createMockMetadata(size);
+      const storage = {
+        id: { id: 'storage1' },
+        start_epoch: currentEpoch,
+        end_epoch: currentEpoch + 100,
+        storage_size: BigInt(size * 2),
+        used_size: BigInt(size),
+      };
+      
+      // Store in mock storage
+      mockBlobStorage[blobId] = {
+        blobId,
+        data,
+        registered_epoch: currentEpoch,
+        certified_epoch: currentEpoch + 50, // Auto-certify after 50 epochs
+        size,
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        metadata,
+        storage,
+        attributes: params.attributes || {},
+        contentType: params.contentType || 'application/octet-stream',
+        owner: params.owner || 'mock-owner',
+        tags: params.tags || [],
+      };
+      
+      return {
+        blobId,
+        blobObject: {
+          id: { id: blobId },
+          blob_id: blobId,
+          registered_epoch: currentEpoch,
+          certified_epoch: currentEpoch + 50,
+          size: BigInt(size),
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+          storage,
+          deletable: true,
+          metadata,
+        }
+      };
+    }),
+    // Improved getBlobInfo that uses mock storage
+    getBlobInfo: jest.fn().mockImplementation(async (blobId: string) => {
+      const record = mockBlobStorage[blobId];
+      if (record) {
+        return {
+          blob_id: record.blobId,
+          certified_epoch: record.certified_epoch,
+          registered_epoch: record.registered_epoch,
+          encoding_type: typeof record.encoding_type === 'object' ? 0 : record.encoding_type,
+          unencoded_length: record.size.toString(),
+          size: record.size.toString(),
+          hashes: record.metadata.V1.hashes,
+          metadata: record.metadata,
+        } as BlobInfo;
+      }
+      
+      // Default fallback for unknown blobs
+      return {
+        blob_id: blobId,
+        certified_epoch: 150,
+        registered_epoch: 100,
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        unencoded_length: '1024',
+        size: '1024',
+        hashes: [
+          {
+            primary_hash: {
+              Digest: new Uint8Array([1, 2, 3, 4]),
+              $kind: 'Digest',
+            },
+            secondary_hash: {
+              Digest: new Uint8Array([5, 6, 7, 8]),
+              $kind: 'Digest',
+            },
+          },
+        ],
+        metadata: createMockMetadata(1024),
+      } as BlobInfo;
+    }),
+    
+    // Improved getBlobObject that uses mock storage
+    getBlobObject: jest.fn().mockImplementation(async (params: { blobId: string }) => {
+      const record = mockBlobStorage[params.blobId];
+      if (record) {
+        return {
+          id: { id: record.blobId },
+          blob_id: record.blobId,
+          registered_epoch: record.registered_epoch,
+          certified_epoch: record.certified_epoch,
+          size: BigInt(record.size),
+          encoding_type: record.encoding_type,
+          storage: record.storage,
+          deletable: true,
+          metadata: record.metadata,
+          attributes: record.attributes,
+        } as BlobObject;
+      }
+      
+      // Default fallback
+      return {
+        id: { id: params.blobId },
+        blob_id: params.blobId,
         registered_epoch: 100,
         certified_epoch: 150,
         size: BigInt(1024),
@@ -65,53 +233,37 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           used_size: BigInt(1024),
         },
         deletable: true,
+      } as BlobObject;
+    }),
+    
+    // Improved getBlobMetadata that uses mock storage  
+    getBlobMetadata: jest.fn().mockImplementation(async (params: { blobId: string }) => {
+      const record = mockBlobStorage[params.blobId];
+      if (record) {
+        return record.metadata;
       }
+      
+      // Default fallback
+      return createMockMetadata(1024);
     }),
-    getBlobInfo: jest.fn().mockResolvedValue({
-      blob_id: 'mock-blob-test-todo-id',
-      certified_epoch: 150,
-      registered_epoch: 100,
-      encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-      unencoded_length: '1024',
-      size: '1024',
-      hashes: [],
-      metadata: {
-        V1: {
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: '1024',
-          hashes: [],
-          $kind: 'V1',
-        },
-        $kind: 'V1',
-      },
+    // Improved verifyPoA that checks certification status
+    verifyPoA: jest.fn().mockImplementation(async (params: { blobId: string }) => {
+      const record = mockBlobStorage[params.blobId];
+      if (record) {
+        // PoA is complete if blob is certified
+        return record.certified_epoch !== undefined && record.certified_epoch <= currentEpoch;
+      }
+      return true; // Default to true for unknown blobs
     }),
-    getBlobObject: jest.fn().mockResolvedValue({
-      id: { id: 'mock-blob-test-todo-id' },
-      blob_id: 'mock-blob-test-todo-id',
-      registered_epoch: 100,
-      certified_epoch: 150,
-      size: BigInt(1024),
-      encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-      storage: {
-        id: { id: 'storage1' },
-        start_epoch: 100,
-        end_epoch: 200,
-        storage_size: BigInt(2048),
-        used_size: BigInt(1024),
-      },
-      deletable: true,
+    
+    // Improved getBlobSize that uses mock storage
+    getBlobSize: jest.fn().mockImplementation(async (blobId: string) => {
+      const record = mockBlobStorage[blobId];
+      if (record) {
+        return record.size;
+      }
+      return 1024; // Default size
     }),
-    getBlobMetadata: jest.fn().mockResolvedValue({
-      V1: {
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-        unencoded_length: '1024',
-        hashes: [],
-        $kind: 'V1',
-      },
-      $kind: 'V1',
-    }),
-    verifyPoA: jest.fn().mockResolvedValue(true),
-    getBlobSize: jest.fn().mockResolvedValue(1024),
     storageCost: jest.fn().mockResolvedValue({
       storageCost: BigInt(100),
       writeCost: BigInt(50),
@@ -126,19 +278,23 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         storage_size: '2048',
       },
     }),
-    getStorageProviders: jest.fn().mockResolvedValue([
-      'provider1',
-      'provider2',
-      'provider3',
-      'provider4',
-    ]),
+    // Improved getStorageProviders that can simulate different provider counts
+    getStorageProviders: jest.fn().mockImplementation(async (params: { blobId: string }) => {
+      const record = mockBlobStorage[params.blobId];
+      if (record) {
+        // Return a variable number of providers based on blob characteristics
+        const baseProviders = ['provider1', 'provider2', 'provider3', 'provider4'];
+        return baseProviders.slice(0, Math.max(2, record.size % 5)); // 2-4 providers
+      }
+      return ['provider1', 'provider2', 'provider3', 'provider4'];
+    }),
     executeCertifyBlobTransaction: jest.fn().mockResolvedValue({
       digest: 'mock-certify-digest',
     }),
     executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({
       digest: 'mock-attributes-digest',
     }),
-    deleteBlob: jest.fn().mockImplementation(() => (tx: any) => Promise.resolve({
+    deleteBlob: jest.fn().mockImplementation(() => (_tx: any) => Promise.resolve({
       digest: 'mock-delete-digest',
     })),
     executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
@@ -165,7 +321,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
       epoch: 150,
     }),
     createStorageBlock: jest.fn().mockResolvedValue({}),
-    createStorage: jest.fn().mockImplementation(() => (tx: any) => Promise.resolve({
+    createStorage: jest.fn().mockImplementation(() => (_tx: any) => Promise.resolve({
       digest: 'mock-create-storage-digest',
       storage: {
         id: { id: 'storage1' },
@@ -174,12 +330,150 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         storage_size: '2048',
       },
     })),
-    reset: jest.fn(),
+    // Improved reset that clears mock storage
+    reset: jest.fn().mockImplementation(() => {
+      // Clear all mock storage when reset is called
+      Object.keys(mockBlobStorage).forEach(key => delete mockBlobStorage[key]);
+      currentEpoch = 100; // Reset epoch
+    }),
+    
     connect: jest.fn().mockResolvedValue(undefined),
     experimental: {
       getBlobData: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
     },
+    
+    // Helper methods for test setup
+    _setBlobCertified: (blobId: string, certified: boolean) => {
+      const record = mockBlobStorage[blobId];
+      if (record) {
+        if (certified) {
+          record.certified_epoch = currentEpoch;
+        } else {
+          record.certified_epoch = undefined;
+        }
+      }
+    },
+    
+    _simulateEpochProgress: (epochs: number) => {
+      currentEpoch += epochs;
+      // Update certification for blobs that should be certified
+      Object.values(mockBlobStorage).forEach(record => {
+        if (record.certificationInProgress && record.registered_epoch + 50 <= currentEpoch) {
+          record.certified_epoch = record.registered_epoch + 50;
+          record.certificationInProgress = false;
+        }
+      });
+    },
+    
+    _addMockBlob: (blobId: string, data: Uint8Array, options?: Partial<MockBlobRecord>) => {
+      const size = data.length;
+      const metadata = createMockMetadata(size);
+      const storage = {
+        id: { id: 'storage1' },
+        start_epoch: currentEpoch,
+        end_epoch: currentEpoch + 100,
+        storage_size: BigInt(size * 2),
+        used_size: BigInt(size),
+      };
+      
+      mockBlobStorage[blobId] = {
+        blobId,
+        data,
+        registered_epoch: currentEpoch,
+        certified_epoch: options?.certified_epoch,
+        size,
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        metadata,
+        storage,
+        attributes: options?.attributes || {},
+        contentType: options?.contentType || 'application/octet-stream',
+        owner: options?.owner || 'mock-owner',
+        tags: options?.tags || [],
+        certificationInProgress: options?.certified_epoch === undefined,
+        ...options,
+      };
+    },
   };
+}
+
+/**
+ * Clean up all mocks to prevent memory leaks
+ */
+export function cleanupWalrusClientMocks(client: CompleteWalrusClientMock): void {
+  const mocks = {
+    getConfig: client.getConfig,
+    getWalBalance: client.getWalBalance,
+    getStorageUsage: client.getStorageUsage,
+    readBlob: client.readBlob,
+    writeBlob: client.writeBlob,
+    getBlobInfo: client.getBlobInfo,
+    getBlobObject: client.getBlobObject,
+    getBlobMetadata: client.getBlobMetadata,
+    verifyPoA: client.verifyPoA,
+    getBlobSize: client.getBlobSize,
+    storageCost: client.storageCost,
+    executeCreateStorageTransaction: client.executeCreateStorageTransaction,
+    executeCertifyBlobTransaction: client.executeCertifyBlobTransaction,
+    executeWriteBlobAttributesTransaction: client.executeWriteBlobAttributesTransaction,
+    deleteBlob: client.deleteBlob,
+    executeRegisterBlobTransaction: client.executeRegisterBlobTransaction,
+    getStorageConfirmationFromNode: client.getStorageConfirmationFromNode,
+    createStorageBlock: client.createStorageBlock,
+    createStorage: client.createStorage,
+    getStorageProviders: client.getStorageProviders,
+    reset: client.reset,
+    connect: client.connect,
+  };
+  
+  cleanupMocks(mocks);
+  
+  if (client.experimental?.getBlobData) {
+    cleanupMocks({ getBlobData: client.experimental.getBlobData });
+  }
+}
+
+/**
+ * Creates a configured mock client for specific test scenarios
+ */
+export function createConfiguredMockClient(config: {
+  defaultCertified?: boolean;
+  simulateNetworkErrors?: boolean;
+  customBlobData?: Record<string, Uint8Array>;
+  providerCount?: number;
+  currentEpoch?: number;
+} = {}): CompleteWalrusClientMock {
+  const client = getMockWalrusClient();
+  
+  // Apply configuration
+  if (config.currentEpoch !== undefined) {
+    currentEpoch = config.currentEpoch;
+  }
+  
+  if (config.customBlobData) {
+    Object.entries(config.customBlobData).forEach(([blobId, data]) => {
+      client._addMockBlob?.(blobId, data, {
+        certified_epoch: config.defaultCertified ? currentEpoch : undefined,
+      });
+    });
+  }
+  
+  if (config.simulateNetworkErrors) {
+    // Make some calls intermittently fail
+    const originalReadBlob = client.readBlob;
+    client.readBlob.mockImplementation(async (params: any) => {
+      if (Math.random() < 0.3) { // 30% failure rate
+        throw new Error('Network error');
+      }
+      return originalReadBlob(params);
+    });
+  }
+  
+  if (config.providerCount !== undefined) {
+    const providers = Array.from({ length: config.providerCount }, (_, i) => `provider${i + 1}`);
+    client.getStorageProviders.mockResolvedValue(providers);
+  }
+  
+  return client;
 }
 
 /**
@@ -192,5 +486,16 @@ export function createWalrusModuleMock() {
     WalrusClient: jest.fn().mockImplementation(() => mockClient),
     // Add other exports from @mysten/walrus that might be needed
     createWalrusClient: jest.fn().mockImplementation(() => mockClient),
+    // Cleanup function for tests
+    cleanup: () => cleanupWalrusClientMocks(mockClient),
   };
 }
+
+/**
+ * Export additional utilities for tests
+ */
+export {
+  mockBlobStorage,
+  currentEpoch,
+  createMockMetadata,
+};
