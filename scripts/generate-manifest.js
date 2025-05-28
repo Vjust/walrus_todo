@@ -30,7 +30,7 @@ const packageJson = require('../package.json');
 const version = packageJson.version || '1.0.0';
 
 // Configuration
-const commandsDir = path.join(__dirname, '..', 'dist', 'src', 'commands');
+const commandsDir = path.join(__dirname, '..', 'dist', 'apps', 'cli', 'src', 'commands');
 const manifestPath = path.join(__dirname, '..', 'oclif.manifest.json');
 
 // Topic descriptions
@@ -137,7 +137,7 @@ function scanDirectory(directory, pathSegments = []) {
         aliases: [],
         flags: {},
         args: [],
-        path: `./dist/src/commands/${relativePath}`,
+        path: `./dist/apps/cli/src/commands/${relativePath}`,
       };
     });
 
@@ -193,7 +193,7 @@ function generateManifest() {
           aliases: [],
           flags: {},
           args: [],
-          path: `./dist/src/commands/${topic}/index`,
+          path: `./dist/apps/cli/src/commands/${topic}/index`,
         };
       }
     });

@@ -8,9 +8,9 @@ interface CoinBalance {
   totalBalance: string;
   lockedBalance: Record<string, string>;
 }
-import { WalrusClient } from '../../src/types/client';
-import { StorageManager } from '../../src/utils/StorageManager';
-import { CLIError } from '../../src/types/errors/consolidated';
+import { WalrusClient } from '../../apps/cli/src/types/client';
+import { StorageManager } from '../../apps/cli/src/utils/StorageManager';
+import { CLIError } from '../../apps/cli/src/types/errors/consolidated';
 import { execSync } from 'child_process';
 
 jest.mock('child_process', () => ({
