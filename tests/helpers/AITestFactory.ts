@@ -9,43 +9,159 @@ import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerifica
 import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
 import {
   AIProvider,
+  AIModelAdapter,
 } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import {
   AIVerifierAdapter,
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-// Create mock AI adapters inline
-const createMockAIModelAdapter = () => ({
-  processWithPromptTemplate: jest.fn().mockResolvedValue({
-    result: expectedResults.summarize,
-    modelName: 'mock-model',
-    provider: AIProvider.XAI,
-    timestamp: Date.now(),
-  }),
-  completeStructured: jest.fn().mockResolvedValue({
-    result: JSON.stringify(expectedResults.categorize),
-    modelName: 'mock-model',
-    provider: AIProvider.XAI,
-    timestamp: Date.now(),
-  }),
+// Import the full interface for proper typing
+import { AIModelAdapter } from '../../apps/cli/src/types/adapters/AIModelAdapter';
+
+// Create comprehensive mock AI adapter with all required methods
+const createMockAIModelAdapter = (): AIModelAdapter => ({
+  // Core interface methods
+  getProviderName: jest.fn().mockReturnValue(AIProvider.XAI),
+  getModelName: jest.fn().mockReturnValue('mock-model'),
+  
   complete: jest.fn().mockResolvedValue({
     result: expectedResults.summarize,
     modelName: 'mock-model',
     provider: AIProvider.XAI,
     timestamp: Date.now(),
   }),
-  getProvider: jest.fn().mockReturnValue(AIProvider.XAI),
-  getModelName: jest.fn().mockReturnValue('mock-model'),
-  updateConfig: jest.fn(),
-  validateConfig: jest.fn().mockReturnValue(true),
+  
+  completeStructured: jest.fn().mockResolvedValue({
+    result: JSON.stringify(expectedResults.categorize),
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+  
+  processWithPromptTemplate: jest.fn().mockResolvedValue({
+    result: expectedResults.summarize,
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+  
+  // Optional interface methods
+  checkConsentFor: jest.fn().mockReturnValue(true),
+  cancelAllRequests: jest.fn(),
 });
 
-const createMockAIVerifierAdapter = (): AIVerifierAdapter => ({
-  verifyAIOperation: jest.fn().mockResolvedValue(true),
-  getVerificationStatus: jest.fn().mockResolvedValue('verified'),
-  createVerificationProof: jest.fn().mockResolvedValue('proof-data'),
-});
+const createMockAIVerifierAdapter = (): jest.Mocked<AIVerifierAdapter> => {
+  const mockSigner = {
+    getAddress: jest.fn().mockResolvedValue('0x1234567890abcdef'),
+    signMessage: jest.fn().mockResolvedValue('mock_signature'),
+    signTransactionBlock: jest.fn(),
+    getPublicKey: jest.fn().mockReturnValue({
+      toBase64: jest.fn().mockReturnValue('mock_public_key_base64')
+    }),
+  };
+
+  return {
+    createVerification: jest.fn().mockImplementation(async (params) => ({
+      id: `verification_${Date.now()}`,
+      requestHash: 'hash1',
+      responseHash: 'hash2',
+      user: '0x1234567890abcdef',
+      provider: params.provider || 'test_provider',
+      timestamp: Date.now(),
+      verificationType: params.actionType,
+      actionType: params.actionType, // Also include actionType for compatibility
+      metadata: params.metadata || {},
+      privacyLevel: params.privacyLevel,
+    })),
+    verifyRecord: jest.fn().mockResolvedValue(true),
+    getProviderInfo: jest.fn().mockResolvedValue({
+      name: 'test_provider',
+      publicKey: 'mock_public_key',
+      verificationCount: 0,
+      isActive: true,
+      metadata: {},
+    }),
+    listVerifications: jest.fn().mockResolvedValue([
+      {
+        id: 'verification_1',
+        requestHash: 'hash1',
+        responseHash: 'hash2',
+        user: '0x1234567890abcdef',
+        provider: 'test_provider',
+        timestamp: Date.now(),
+        verificationType: 0,
+        actionType: 0,
+        metadata: {},
+        privacyLevel: 'hash_only',
+      },
+      {
+        id: 'verification_2',
+        requestHash: 'hash3',
+        responseHash: 'hash4',
+        user: '0x1234567890abcdef',
+        provider: 'test_provider',
+        timestamp: Date.now(),
+        verificationType: 1,
+        actionType: 1,
+        metadata: {},
+        privacyLevel: 'hash_only',
+      }
+    ]),
+    getRegistryAddress: jest.fn().mockResolvedValue('0xregistry123'),
+    registerProvider: jest.fn().mockResolvedValue('provider_id_123'),
+    getVerification: jest.fn().mockImplementation(async (verificationId) => ({
+      id: verificationId,
+      requestHash: 'hash1',
+      responseHash: 'hash2',
+      user: '0x1234567890abcdef',
+      provider: 'test_provider',
+      timestamp: Date.now(),
+      verificationType: 0, // AIActionType.SUMMARIZE
+      actionType: 0, // Also include actionType for compatibility
+      metadata: {},
+      privacyLevel: 'hash_only',
+    })),
+    getSigner: jest.fn().mockReturnValue(mockSigner),
+    generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
+    exportVerifications: jest.fn().mockResolvedValue(JSON.stringify([])),
+    enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
+    securelyDestroyData: jest.fn().mockResolvedValue(true),
+  };
+};
+
 import { expectedResults } from './ai-test-utils';
 import { Todo } from '../../apps/cli/src/types/todo';
+
+export { createMockAIVerifierAdapter };
+
+/**
+ * Creates a test-ready AIService instance with proper mock adapter
+ * This ensures the adapter is properly initialized before tests run
+ */
+export const createTestAIService = (
+  apiKey: string = 'test-api-key',
+  provider: AIProvider = AIProvider.XAI,
+  modelName: string = 'mock-model',
+  verificationService?: AIVerificationService
+): AIService => {
+  const mockAdapter = createMockAIModelAdapter();
+  
+  // Create service
+  const aiService = new AIService(apiKey, provider, modelName, {}, verificationService);
+  
+  // Ensure the adapter is properly set (override async initialization)
+  Object.defineProperty(aiService, 'modelAdapter', {
+    value: mockAdapter,
+    writable: true,
+    configurable: true
+  });
+  
+  return aiService;
+};
+
+/**
+ * Exported mock factory functions for use in individual test files
+ */
+export { createMockAIModelAdapter, createMockAIVerifierAdapter };
 
 /**
  * Factory class for creating pre-configured AI services and utilities for testing.

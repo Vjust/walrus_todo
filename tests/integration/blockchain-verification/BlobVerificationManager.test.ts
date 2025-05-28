@@ -66,6 +66,9 @@ describe('BlobVerificationManager Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Reset SuiClient mock
+    mockGetLatestSuiSystemState.mockResolvedValue({ epoch: '42' });
+
     // Use the complete mock implementation
     mockWalrusClient = getMockWalrusClient();
     
@@ -133,6 +136,9 @@ describe('BlobVerificationManager Integration', () => {
               secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
             },
           ],
+          contentType: expectedAttributes.contentType,
+          owner: expectedAttributes.owner,
+          tags: expectedAttributes.tags,
           $kind: 'V1',
         },
         $kind: 'V1',
@@ -246,6 +252,9 @@ describe('BlobVerificationManager Integration', () => {
               secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
             },
           ],
+          contentType: expectedAttributes.contentType,
+          owner: expectedAttributes.owner,
+          tags: expectedAttributes.tags,
           $kind: 'V1',
         },
         $kind: 'V1',

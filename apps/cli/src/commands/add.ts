@@ -29,7 +29,7 @@ import * as path from 'path';
  * If the specified list does not exist, it will be created automatically.
  * AI features can suggest appropriate tags and priority levels based on todo content.
  */
-export default class AddCommand extends BaseCommand {
+class AddCommand extends BaseCommand {
   static description = 'Add one or more todo items to a specified list';
 
   static examples = [
@@ -1554,3 +1554,7 @@ export default class AddCommand extends BaseCommand {
     return cleanedFlags;
   }
 }
+
+// Export both named and default for compatibility
+export { AddCommand };
+export default AddCommand;

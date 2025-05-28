@@ -20,6 +20,11 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+  // ESM Module Handling
+  transformIgnorePatterns: [
+    'node_modules/(?!(p-retry|@mysten|delay|p-map|p-limit|p-queue|p-timeout|@langchain|langchain|langsmith|@walrus|retry)/)' 
+  ],
+  
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: {
@@ -31,15 +36,16 @@ module.exports = {
         allowSyntheticDefaultImports: true,
         experimentalDecorators: true,
         emitDecoratorMetadata: true,
+        moduleResolution: 'node',
       },
       // Memory optimization for TypeScript compilation
-      isolatedModules: true,
       useESM: false,
     }],
     '^.+\\.(js|jsx)$': 'babel-jest',
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/apps/cli/src/$1',
+    '^p-retry$': '<rootDir>/node_modules/p-retry/index.js',
   },
   testTimeout: 30000,
   clearMocks: true,
@@ -48,9 +54,15 @@ module.exports = {
   resetModules: true,
   verbose: true,
   
+  // Timer configuration
+  fakeTimers: {
+    enableGlobally: false, // Let tests control fake timers explicitly
+    doNotFake: ['setImmediate'], // Keep setImmediate real for async operations
+  },
+  
   // Memory Management Configuration
-  maxWorkers: '50%', // Limit workers to 50% of available CPU cores
-  workerIdleMemoryLimit: '256MB', // Force worker restart when idle memory exceeds limit
+  maxWorkers: process.env.CI ? 1 : '50%', // Use single worker in CI, 50% locally
+  workerIdleMemoryLimit: '512MB', // Conservative worker memory limit
   
   // Test Isolation and Cleanup
   forceExit: true, // Force Jest to exit after all tests complete
@@ -74,4 +86,5 @@ module.exports = {
   
   // Global teardown for cleanup
   globalTeardown: '<rootDir>/scripts/jest-global-teardown.js',
+  
 };

@@ -358,7 +358,7 @@ themes:
       const result = execSync(
         `${CLI_CMD} ai analyze --list personal`
       ).toString();
-      expect(result).toContain('personal list');
+      expect(result).toContain("'personal' list");
       expect(result).toContain('Personal development');
     });
   });

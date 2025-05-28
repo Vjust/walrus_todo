@@ -176,7 +176,7 @@ describe('WalrusImageStorage', () => {
         id: { id: 'test-blob-id' },
         blob_id: 'test-blob-id',
         registered_epoch: 100,
-        certified_epoch: 150,
+        cert_epoch: 150,
         size: BigInt(1024).toString(),
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
@@ -194,7 +194,7 @@ describe('WalrusImageStorage', () => {
       id: { id: 'test-blob-id' },
       blob_id: 'test-blob-id',
       registered_epoch: 100,
-      certified_epoch: 150,
+      cert_epoch: 150,
       size: BigInt(1024).toString(),
       encoding_type: { RedStuff: true, $kind: 'RedStuff' },
       storage: {
@@ -265,7 +265,7 @@ describe('WalrusImageStorage', () => {
             id: { id: 'test-blob-id' },
             blob_id: 'test-blob-id',
             registered_epoch: 100,
-            certified_epoch: 150,
+            cert_epoch: 150,
             size: '1024',
             encoding_type: 1,
             storage: {
@@ -296,7 +296,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -330,7 +330,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {

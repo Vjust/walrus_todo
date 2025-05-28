@@ -58,7 +58,7 @@ describe('Blob Mappings Path Test', () => {
     jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
     
     // Create an instance of CompleteCommand
-    const command = new CompleteCommand([], {});
+    const command = new CompleteCommand([], {} as any);
 
     // Access private method using type assertion
     const saveBlobMapping = (command as unknown as { saveBlobMapping: (todoId: string, blobId: string) => void }).saveBlobMapping.bind(command);
@@ -90,7 +90,7 @@ describe('Blob Mappings Path Test', () => {
     ).mockReturnValue(testDir);
 
     // Create an instance of CompleteCommand
-    const command = new CompleteCommand([], {});
+    const command = new CompleteCommand([], {} as any);
 
     // Access private method using type assertion
     const saveBlobMapping = (command as unknown as { saveBlobMapping: (todoId: string, blobId: string) => void }).saveBlobMapping.bind(command);

@@ -19,25 +19,23 @@ interface AppInitializationContextType {
   initializationError: string | null;
 }
 
-const AppInitializationContext = createContext<AppInitializationContextType>({
+// Default context value to ensure consistency across SSR and client renders
+const defaultContextValue: AppInitializationContextType = {
   isClientReady: false,
   isSuiClientReady: false,
   isAppReady: false,
   initializationError: null,
-});
+};
+
+const AppInitializationContext = createContext<AppInitializationContextType>(defaultContextValue);
 
 export const useAppInitialization = () => {
   // ALWAYS call useContext - never conditionally!
   // This ensures hooks are called in the same order every render
   const context = useContext(AppInitializationContext);
   
-  // Return context or default values - but always call the hook
-  return context || {
-    isClientReady: false,
-    isSuiClientReady: false,
-    isAppReady: false,
-    initializationError: null,
-  };
+  // Context should never be null/undefined now, but keep fallback for safety
+  return context || defaultContextValue;
 };
 
 export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {

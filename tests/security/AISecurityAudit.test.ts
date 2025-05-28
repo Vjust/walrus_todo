@@ -884,11 +884,37 @@ describe('AI Security Audit', () => {
         mockPermissionManager
       );
 
+      const mockBlockchainVerifierForPermissions = {
+        verifyOperation: jest.fn().mockResolvedValue(mockVerificationRecord),
+        getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+        listVerifications: jest.fn().mockResolvedValue([mockVerificationRecord]),
+        getVerifierAdapter: jest.fn().mockReturnValue({
+          createVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+          verifyRecord: jest.fn().mockResolvedValue(true),
+          getProviderInfo: jest.fn().mockResolvedValue({}),
+          listVerifications: jest.fn().mockResolvedValue([]),
+          getRegistryAddress: jest.fn().mockResolvedValue('test-registry'),
+          registerProvider: jest.fn().mockResolvedValue('test-provider'),
+          getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+          getSigner: jest.fn().mockReturnValue({
+            getPublicKey: jest.fn().mockReturnValue({ toBase64: jest.fn().mockReturnValue('test-key') }),
+            toSuiAddress: jest.fn().mockReturnValue('test-address')
+          }),
+          generateProof: jest.fn().mockResolvedValue('test-proof'),
+          exportVerifications: jest.fn().mockResolvedValue('test-export'),
+          enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
+          securelyDestroyData: jest.fn().mockResolvedValue(true)
+        }),
+        getSigner: jest.fn().mockReturnValue({
+          getPublicKey: jest.fn().mockReturnValue({ toBase64: jest.fn().mockReturnValue('test-key') })
+        })
+      };
+
       const mockBlockchainVerificationService =
         new BlockchainAIVerificationService(
-          { createVerification: jest.fn() },
-          mockPermissionManager,
-          { getCredential: jest.fn().mockResolvedValue('api-key') },
+          mockBlockchainVerifierForPermissions as any,
+          mockPermissionManager as any,
+          { getCredential: jest.fn().mockResolvedValue('api-key') } as any,
           'xai'
         );
 

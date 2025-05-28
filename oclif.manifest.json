@@ -9,7 +9,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/add"
+      "path": "./dist/apps/cli/src/commands/add"
     },
     "ai": {
       "id": "ai",
@@ -19,7 +19,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/ai/index"
+      "path": "./dist/apps/cli/src/commands/ai/index"
     },
     "cancel": {
       "id": "cancel",
@@ -29,7 +29,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/cancel"
+      "path": "./dist/apps/cli/src/commands/cancel"
     },
     "check": {
       "id": "check",
@@ -39,7 +39,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/check"
+      "path": "./dist/apps/cli/src/commands/check"
     },
     "complete": {
       "id": "complete",
@@ -49,7 +49,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/complete"
+      "path": "./dist/apps/cli/src/commands/complete"
     },
     "config": {
       "id": "config",
@@ -59,7 +59,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/config"
+      "path": "./dist/apps/cli/src/commands/config"
     },
     "configure": {
       "id": "configure",
@@ -69,7 +69,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/configure"
+      "path": "./dist/apps/cli/src/commands/configure"
     },
     "create": {
       "id": "create",
@@ -79,7 +79,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/create"
+      "path": "./dist/apps/cli/src/commands/create"
     },
     "daemon": {
       "id": "daemon",
@@ -89,7 +89,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/daemon"
+      "path": "./dist/apps/cli/src/commands/daemon"
     },
     "delete": {
       "id": "delete",
@@ -99,7 +99,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/delete"
+      "path": "./dist/apps/cli/src/commands/delete"
     },
     "demo-progress": {
       "id": "demo-progress",
@@ -109,7 +109,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/demo-progress"
+      "path": "./dist/apps/cli/src/commands/demo-progress"
     },
     "deploy": {
       "id": "deploy",
@@ -119,7 +119,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/deploy"
+      "path": "./dist/apps/cli/src/commands/deploy"
     },
     "env": {
       "id": "env",
@@ -129,7 +129,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/env"
+      "path": "./dist/apps/cli/src/commands/env"
     },
     "fetch": {
       "id": "fetch",
@@ -139,7 +139,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/fetch"
+      "path": "./dist/apps/cli/src/commands/fetch"
     },
     "generate-frontend-config": {
       "id": "generate-frontend-config",
@@ -149,7 +149,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/generate-frontend-config"
+      "path": "./dist/apps/cli/src/commands/generate-frontend-config"
     },
     "help": {
       "id": "help",
@@ -159,7 +159,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/help"
+      "path": "./dist/apps/cli/src/commands/help"
     },
     "history": {
       "id": "history",
@@ -169,7 +169,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/history"
+      "path": "./dist/apps/cli/src/commands/history"
     },
     "image": {
       "id": "image",
@@ -179,7 +179,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/image"
+      "path": "./dist/apps/cli/src/commands/image"
     },
     "interactive": {
       "id": "interactive",
@@ -189,7 +189,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/interactive"
+      "path": "./dist/apps/cli/src/commands/interactive"
     },
     "jobs": {
       "id": "jobs",
@@ -199,7 +199,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/jobs"
+      "path": "./dist/apps/cli/src/commands/jobs"
     },
     "list": {
       "id": "list",
@@ -209,7 +209,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/list"
+      "path": "./dist/apps/cli/src/commands/list"
     },
     "provider": {
       "id": "provider",
@@ -219,7 +219,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/provider"
+      "path": "./dist/apps/cli/src/commands/provider"
     },
     "queue": {
       "id": "queue",
@@ -229,7 +229,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/queue"
+      "path": "./dist/apps/cli/src/commands/queue"
     },
     "retrieve": {
       "id": "retrieve",
@@ -239,7 +239,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/retrieve"
+      "path": "./dist/apps/cli/src/commands/retrieve"
     },
     "share": {
       "id": "share",
@@ -249,7 +249,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/share"
+      "path": "./dist/apps/cli/src/commands/share"
     },
     "simple": {
       "id": "simple",
@@ -259,7 +259,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/simple"
+      "path": "./dist/apps/cli/src/commands/simple"
     },
     "status": {
       "id": "status",
@@ -269,7 +269,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/status"
+      "path": "./dist/apps/cli/src/commands/status"
     },
     "storage": {
       "id": "storage",
@@ -279,7 +279,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/storage"
+      "path": "./dist/apps/cli/src/commands/storage"
     },
     "store-file": {
       "id": "store-file",
@@ -289,7 +289,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/store-file"
+      "path": "./dist/apps/cli/src/commands/store-file"
     },
     "store-list": {
       "id": "store-list",
@@ -299,7 +299,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/store-list"
+      "path": "./dist/apps/cli/src/commands/store-list"
     },
     "store-simple": {
       "id": "store-simple",
@@ -309,7 +309,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/store-simple"
+      "path": "./dist/apps/cli/src/commands/store-simple"
     },
     "store": {
       "id": "store",
@@ -319,7 +319,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/store"
+      "path": "./dist/apps/cli/src/commands/store"
     },
     "suggest": {
       "id": "suggest",
@@ -329,7 +329,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/suggest"
+      "path": "./dist/apps/cli/src/commands/suggest"
     },
     "sync": {
       "id": "sync",
@@ -339,7 +339,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/sync"
+      "path": "./dist/apps/cli/src/commands/sync"
     },
     "template": {
       "id": "template",
@@ -349,7 +349,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/template"
+      "path": "./dist/apps/cli/src/commands/template"
     },
     "update-storage": {
       "id": "update-storage",
@@ -359,7 +359,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/update-storage"
+      "path": "./dist/apps/cli/src/commands/update-storage"
     },
     "update": {
       "id": "update",
@@ -369,7 +369,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/update"
+      "path": "./dist/apps/cli/src/commands/update"
     },
     "validate-config": {
       "id": "validate-config",
@@ -379,7 +379,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/validate-config"
+      "path": "./dist/apps/cli/src/commands/validate-config"
     },
     "verify": {
       "id": "verify",
@@ -389,7 +389,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/verify"
+      "path": "./dist/apps/cli/src/commands/verify"
     },
     "account:auth": {
       "id": "account:auth",
@@ -399,7 +399,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/account/auth"
+      "path": "./dist/apps/cli/src/commands/account/auth"
     },
     "account:permissions": {
       "id": "account:permissions",
@@ -409,7 +409,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/account/permissions"
+      "path": "./dist/apps/cli/src/commands/account/permissions"
     },
     "account:show": {
       "id": "account:show",
@@ -419,7 +419,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/account/show"
+      "path": "./dist/apps/cli/src/commands/account/show"
     },
     "account:switch": {
       "id": "account:switch",
@@ -429,7 +429,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/account/switch"
+      "path": "./dist/apps/cli/src/commands/account/switch"
     },
     "ai:credentials": {
       "id": "ai:credentials",
@@ -439,7 +439,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/ai/credentials"
+      "path": "./dist/apps/cli/src/commands/ai/credentials"
     },
     "ai:enhance-credentials": {
       "id": "ai:enhance-credentials",
@@ -449,7 +449,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/ai/enhance-credentials"
+      "path": "./dist/apps/cli/src/commands/ai/enhance-credentials"
     },
     "ai:keys": {
       "id": "ai:keys",
@@ -459,7 +459,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/ai/keys"
+      "path": "./dist/apps/cli/src/commands/ai/keys"
     },
     "ai:permissions": {
       "id": "ai:permissions",
@@ -469,7 +469,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/ai/permissions"
+      "path": "./dist/apps/cli/src/commands/ai/permissions"
     },
     "ai:verify": {
       "id": "ai:verify",
@@ -479,7 +479,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/ai/verify"
+      "path": "./dist/apps/cli/src/commands/ai/verify"
     },
     "image:create-nft": {
       "id": "image:create-nft",
@@ -489,7 +489,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/image/create-nft"
+      "path": "./dist/apps/cli/src/commands/image/create-nft"
     },
     "image:upload": {
       "id": "image:upload",
@@ -499,7 +499,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/image/upload"
+      "path": "./dist/apps/cli/src/commands/image/upload"
     },
     "system:audit": {
       "id": "system:audit",
@@ -509,7 +509,7 @@
       "aliases": [],
       "flags": {},
       "args": [],
-      "path": "./dist/src/commands/system/audit"
+      "path": "./dist/apps/cli/src/commands/system/audit"
     }
   },
   "topics": {

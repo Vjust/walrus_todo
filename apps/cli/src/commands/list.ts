@@ -26,7 +26,7 @@ const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
  * 
  * Features color-coded output, progress bars, and smart filtering options.
  */
-export default class ListCommand extends BaseCommand {
+class ListCommand extends BaseCommand {
   static description =
     'Display todos from a specific list, or show all available lists';
 
@@ -863,3 +863,7 @@ export default class ListCommand extends BaseCommand {
     }
   }
 }
+
+// Export both named and default for compatibility
+export { ListCommand };
+export default ListCommand;

@@ -52,7 +52,7 @@ const mockVerificationRecord: VerificationRecord = {
   provider: 'xai',
   timestamp: Date.now(),
   verificationType: AIActionType.SUMMARIZE,
-  metadata: Record<string, unknown>,
+  metadata: {} as Record<string, unknown>,
 };
 
 describe('Data Privacy and PII Security Tests', () => {
@@ -67,7 +67,7 @@ describe('Data Privacy and PII Security Tests', () => {
           getModelName: () => params.modelName || 'default-model',
           complete: jest.fn(),
           completeStructured: jest.fn().mockResolvedValue({
-            result: Record<string, unknown>,
+            result: {} as Record<string, unknown>,
             modelName: params.modelName || 'default-model',
             provider: params.provider,
             timestamp: Date.now(),

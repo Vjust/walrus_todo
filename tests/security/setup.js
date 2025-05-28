@@ -3,6 +3,11 @@
 // Set up environment variables for testing
 import { Logger } from '../../apps/cli/src/utils/Logger';
 
+// Global type declarations for test environment
+if (typeof global.Record === 'undefined') {
+  global.Record = globalThis.Record;
+}
+
 const logger = new Logger('setup');
 process.env.NODE_ENV = 'test';
 process.env.XAI_API_KEY = 'test-api-key';

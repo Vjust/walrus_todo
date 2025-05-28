@@ -21,7 +21,7 @@ export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunctio
 };
 
 // Global error handler
-export const errorHandler = (error: Error | ApiError, req: Request, res: Response, next: NextFunction): void => {
+export const errorHandler = (error: Error | ApiError, req: Request, res: Response, _next: NextFunction): void => {
   let statusCode = 500;
   let message = 'Internal Server Error';
   let code = 'INTERNAL_ERROR';

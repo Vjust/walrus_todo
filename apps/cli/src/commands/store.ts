@@ -3,7 +3,7 @@ import BaseCommand from '../base-command';
 import { TodoService } from '../services/todoService';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { CLIError } from '../types/errors/consolidated';
-import chalk = require('chalk');
+import * as chalk from 'chalk';
 import { RetryManager } from '../utils/retry-manager';
 import { createCache } from '../utils/performance-cache';
 import { Todo } from '../types/todo';
@@ -14,7 +14,7 @@ import { createBackgroundOperationsManager, BackgroundUtils } from '../utils/bac
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import pRetry from 'p-retry';
+import * as pRetry from 'p-retry';
 
 /**
  * @class StoreCommand
@@ -145,8 +145,8 @@ export default class StoreCommand extends BaseCommand {
     }
 
     // Smart argument parsing - support both positional and flag syntax
-    let listName = args.list || flags.list || 'default';
-    let todoIdentifier = args.todo || flags.todo;
+    const listName = args.list || flags.list || 'default';
+    const todoIdentifier = args.todo || flags.todo;
     let storeAll = flags.all;
 
     // If no specific todo is provided and --all isn't explicitly set, default to storing all
@@ -292,8 +292,8 @@ export default class StoreCommand extends BaseCommand {
       const backgroundOps = await createBackgroundOperationsManager();
 
       // Smart argument parsing - support both positional and flag syntax
-      let listName = args.list || flags.list || 'default';
-      let todoIdentifier = args.todo || flags.todo;
+      const listName = args.list || flags.list || 'default';
+      const todoIdentifier = args.todo || flags.todo;
       let storeAll = flags.all;
 
       // If no specific todo is provided and --all isn't explicitly set, default to storing all
@@ -1053,8 +1053,8 @@ export default class StoreCommand extends BaseCommand {
     };
 
     // Smart argument parsing - support both positional and flag syntax
-    let listName = args.list || flags.list || 'default';
-    let todoIdentifier = args.todo || flags.todo;
+    const listName = args.list || flags.list || 'default';
+    const todoIdentifier = args.todo || flags.todo;
     let storeAll = flags.all;
 
     // If no specific todo is provided and --all isn't explicitly set, default to storing all
@@ -1240,8 +1240,8 @@ export default class StoreCommand extends BaseCommand {
    */
   private async runWithQueue(args: any, flags: any): Promise<void> {
     // Parse arguments
-    let listName = args.list || flags.list || 'default';
-    let todoIdentifier = args.todo || flags.todo;
+    const listName = args.list || flags.list || 'default';
+    const todoIdentifier = args.todo || flags.todo;
     let storeAll = flags.all;
 
     // If no specific todo is provided and --all isn't explicitly set, default to storing all

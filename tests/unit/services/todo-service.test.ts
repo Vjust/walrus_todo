@@ -4,7 +4,7 @@ import { CLIError } from '../../../apps/cli/src/types/errors';
 
 import { STORAGE_CONFIG } from '../../../apps/cli/src/constants';
 import * as fs from 'fs';
-import { promises as fsPromises } from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 
 // Mock file system modules

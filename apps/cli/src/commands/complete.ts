@@ -60,7 +60,7 @@ interface CompleteCommandFlags {
  * @param {string} [todoId] - Todo ID or title when list is specified (positional)
  * @param {string} [network] - The blockchain network to use (optional flag: -n, --network)
  */
-export default class CompleteCommand extends BaseCommand {
+class CompleteCommand extends BaseCommand {
   static description = `Mark a todo as completed.
   If the todo has an associated NFT or Walrus blob, updates blockchain storage as well.
   NFT updates may require gas tokens on the configured network.
@@ -1238,3 +1238,7 @@ export default class CompleteCommand extends BaseCommand {
     }
   }
 }
+
+// Export both named and default for compatibility
+export { CompleteCommand };
+export default CompleteCommand;

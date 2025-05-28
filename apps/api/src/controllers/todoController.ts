@@ -1,10 +1,9 @@
-import express, { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import '../types/express';
 import { TodoService } from '../services/todoService';
 import { WebSocketService } from '../services/websocketService';
 import { asyncHandler } from '../middleware/error';
 import { ApiError } from '../middleware/error';
-import { logger } from '../utils/logger';
 
 export class TodoController {
   constructor(
@@ -174,7 +173,7 @@ export class TodoController {
       throw new ApiError('Wallet address required', 400, 'WALLET_REQUIRED');
     }
 
-    const results: any[] = [];
+    const results: Array<{ success: boolean; result?: unknown; error?: string; operation: unknown }> = [];
 
     for (const operation of operations) {
       try {
@@ -234,7 +233,7 @@ export class TodoController {
 
         results.push({
           success: true,
-          data: result,
+          result,
           operation
         });
 

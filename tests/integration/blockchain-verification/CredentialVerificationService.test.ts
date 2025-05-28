@@ -247,6 +247,39 @@ describe('CredentialVerificationService Integration', () => {
         },
       });
 
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
+        blob_id: credentialId,
+        registered_epoch: 40,
+        certified_epoch: 41,
+        size: '1000',
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: '1000',
+            hashes: [
+              {
+                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
+                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
+              },
+            ],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
+      });
+
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+        V1: {
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+          unencoded_length: '1000',
+          credentialType: 'TodoAccess',
+          issuer: 'did:sui:0x123abc',
+          subject: 'did:sui:0x456def',
+          $kind: 'V1',
+        },
+        $kind: 'V1',
+      });
+
       // Mock private methods to simulate signature failure - return boolean false
       const serviceMethods = service as unknown as {
         verifyDigitalSignature: jest.Mock;
@@ -302,6 +335,34 @@ describe('CredentialVerificationService Integration', () => {
         new TextEncoder().encode(JSON.stringify(credential))
       );
 
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
+        blob_id: credentialId,
+        registered_epoch: 40,
+        certified_epoch: 41,
+        size: '1000',
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: '1000',
+            hashes: [],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
+      });
+
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+        V1: {
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+          unencoded_length: '1000',
+          credentialType: 'TodoAccess',
+          issuer: 'did:sui:0x123abc',
+          subject: 'did:sui:0x456def',
+          $kind: 'V1',
+        },
+        $kind: 'V1',
+      });
+
       // Mock timestamp verification to return false for expired credential
       const serviceMethods = service as unknown as {
         verifyTimestamps: jest.Mock;
@@ -350,6 +411,34 @@ describe('CredentialVerificationService Integration', () => {
         new TextEncoder().encode(JSON.stringify(credential))
       );
 
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
+        blob_id: credentialId,
+        registered_epoch: 40,
+        certified_epoch: 41,
+        size: '1000',
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: '1000',
+            hashes: [],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
+      });
+
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+        V1: {
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+          unencoded_length: '1000',
+          credentialType: 'TodoAccess',
+          issuer: 'did:sui:0x123abc',
+          subject: 'did:sui:0x456def',
+          $kind: 'V1',
+        },
+        $kind: 'V1',
+      });
+
       // Mock revocation check to return false
       const serviceMethods = service as unknown as {
         checkRevocationStatus: jest.Mock;
@@ -389,19 +478,48 @@ describe('CredentialVerificationService Integration', () => {
         },
       };
 
+      // Create a fresh service instance without mocked private methods for this test
+      const testService = new CredentialVerificationService(
+        mockSuiClient,
+        mockWalrusClient,
+        mockSigner
+      );
+
       // Set up mock responses
       mockWalrusClient.readBlob.mockResolvedValue(
         new TextEncoder().encode(JSON.stringify(invalidCredential))
       );
 
-      // Mock schema validation to return false
-      const serviceMethods = service as unknown as {
-        validateSchema: jest.Mock;
-      };
-      serviceMethods.validateSchema.mockReturnValue(false);
+      mockWalrusClient.getBlobInfo.mockResolvedValue({
+        blob_id: credentialId,
+        registered_epoch: 40,
+        certified_epoch: 41,
+        size: '1000',
+        metadata: {
+          V1: {
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+            unencoded_length: '1000',
+            hashes: [],
+            $kind: 'V1',
+          },
+          $kind: 'V1',
+        },
+      });
 
-      // Execute the verification
-      const result = await service.verifyCredential(credentialId);
+      mockWalrusClient.getBlobMetadata.mockResolvedValue({
+        V1: {
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+          unencoded_length: '1000',
+          credentialType: 'TodoAccess',
+          issuer: 'did:sui:0x123abc',
+          subject: 'did:sui:0x456def',
+          $kind: 'V1',
+        },
+        $kind: 'V1',
+      });
+
+      // Execute the verification using the fresh service instance
+      const result = await testService.verifyCredential(credentialId);
 
       // Verify the results - ensure all are boolean types
       expect(result.valid).toBe(false);
@@ -467,6 +585,7 @@ describe('CredentialVerificationService Integration', () => {
       expect(writeArgs.signer).toBe(mockSigner);
       expect(writeArgs.deletable).toBe(false);
       expect(writeArgs.attributes).toEqual({
+        contentType: 'application/json',
         credentialType: 'TodoAccess',
         issuer: 'did:sui:0x123abc',
         subject: 'did:sui:0x456def',

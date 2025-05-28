@@ -1,111 +1,31 @@
 // Jest setup file for global configurations
-import 'jest-extended';
-import { setupMemoryLeakPrevention } from './tests/helpers/memory-leak-prevention';
+require('jest-extended');
+const sinon = require('sinon');
+
+// Load global mocks
+require('./tests/setup/global-mocks.js');
 
 // Global test timeout
 jest.setTimeout(30000);
 
-// Setup memory leak prevention
-setupMemoryLeakPrevention();
-
 // Memory management
-let originalConsoleWarn;
+let originalConsoleWarn = console.warn;
+
+// Memory configuration - don't override if already set by package.json scripts
+// This prevents conflicts between different configurations
+if (!process.env.JEST_WORKER_ID) {
+  // Only set in main process, not workers
+  if (!process.env.NODE_OPTIONS || !process.env.NODE_OPTIONS.includes('--max-old-space-size')) {
+    console.log('⚙️  Setting default memory configuration for Jest');
+  }
+}
+
+// Record initial memory usage
 let initialMemory;
-
-beforeAll(() => {
-  // Increase memory limit warning threshold
-  if (process.env.NODE_OPTIONS && !process.env.NODE_OPTIONS.includes('--max-old-space-size')) {
-    process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS} --max-old-space-size=6144`; // Increased to 6GB
-  } else if (!process.env.NODE_OPTIONS) {
-    process.env.NODE_OPTIONS = '--max-old-space-size=6144';
-  }
-  
-  // Enable garbage collection
-  if (!process.env.NODE_OPTIONS.includes('--expose-gc')) {
-    process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS} --expose-gc`;
-  }
-  
-  originalConsoleWarn = console.warn;
-  
-  // Record initial memory usage
-  if (global.gc) {
-    global.gc();
-  }
-  initialMemory = process.memoryUsage();
-});
-
-// Mock console.error to reduce noise in tests unless explicitly checking for errors
-const originalError = console.error;
-beforeEach(() => {
-  console.error = jest.fn();
-});
-
-afterEach(() => {
-  console.error = originalError;
-  
-  // Enhanced cleanup for memory leak prevention
-  jest.clearAllTimers();
-  jest.useRealTimers();
-  
-  // Clear all jest module registry to prevent module caching leaks
-  jest.resetModules();
-  
-  // Force multiple garbage collection cycles
-  if (global.gc) {
-    global.gc();
-    setTimeout(() => {
-      if (global.gc) global.gc();
-    }, 0);
-  }
-  
-  // Clear any global references that might hold memory
-  if (global.mockReset) {
-    global.mockReset();
-  }
-});
-
-// Global mock for process.exit to prevent tests from actually exiting
-const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-  throw new Error('process.exit() was called');
-});
-
-afterAll(() => {
-  mockExit.mockRestore();
-  console.warn = originalConsoleWarn;
-  
-  // Enhanced final cleanup
-  jest.clearAllMocks();
-  jest.restoreAllMocks();
-  jest.resetModules();
-  
-  // Multiple garbage collection cycles for thorough cleanup
-  if (global.gc) {
-    for (let i = 0; i < 3; i++) {
-      global.gc();
-    }
-  }
-  
-  // Check for excessive memory growth
-  if (initialMemory) {
-    const finalMemory = process.memoryUsage();
-    const heapGrowth = finalMemory.heapUsed - initialMemory.heapUsed;
-    const maxAcceptableGrowth = 200 * 1024 * 1024; // Increased to 200MB to account for larger test suite
-    
-    if (heapGrowth > maxAcceptableGrowth) {
-      const growthMB = Math.round(heapGrowth / 1024 / 1024);
-      console.warn(`⚠️  Memory leak detected: Heap grew by ${growthMB}MB during tests`);
-      console.warn('Consider adding more cleanup in test teardown phases');
-      
-      // Log detailed memory breakdown
-      console.log('Final memory usage:', {
-        rss: `${Math.round(finalMemory.rss / 1024 / 1024)} MB`,
-        heapUsed: `${Math.round(finalMemory.heapUsed / 1024 / 1024)} MB`,
-        heapTotal: `${Math.round(finalMemory.heapTotal / 1024 / 1024)} MB`,
-        external: `${Math.round(finalMemory.external / 1024 / 1024)} MB`,
-      });
-    }
-  }
-});
+if (global.gc) {
+  global.gc();
+}
+initialMemory = process.memoryUsage();
 
 // Setup for node environment
 global.TextEncoder = TextEncoder;
@@ -130,3 +50,37 @@ if (typeof global.AbortController === 'undefined') {
     });
   };
 }
+
+// Global Sinon helper for safe stub creation
+global.createSafeStub = function(obj, method, implementation) {
+  // Check if already stubbed and restore first
+  if (obj[method] && typeof obj[method].restore === 'function') {
+    obj[method].restore();
+  }
+  return sinon.stub(obj, method).callsFake(implementation || (() => {}));
+};
+
+// Global Sinon sandbox for tests that need isolated stubs
+global.createSinonSandbox = function() {
+  return sinon.createSandbox();
+};
+
+// Global Sinon cleanup helper
+global.restoreAllSinon = function() {
+  try {
+    sinon.restore();
+  } catch (e) {
+    // Ignore errors if nothing to restore
+  }
+};
+
+// Enhanced cleanup helper
+global.performCleanup = function() {
+  // Sinon cleanup
+  global.restoreAllSinon();
+  
+  // Force garbage collection
+  if (global.gc) {
+    global.gc();
+  }
+};

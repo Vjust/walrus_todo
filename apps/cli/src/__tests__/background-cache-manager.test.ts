@@ -2,7 +2,6 @@ import { BackgroundCacheManager, CacheOperation } from '../utils/BackgroundCache
 import { performanceMonitor } from '../utils/PerformanceMonitor';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
-import * as path from 'path';
 
 describe('BackgroundCacheManager', () => {
   let cacheManager: BackgroundCacheManager;
@@ -148,10 +147,9 @@ describe('BackgroundCacheManager', () => {
       
       // Check that our operations are in the list
       const opIds = activeOps.map(op => op.id);
-      if (activeOps.length > 0) {
-        expect(opIds).toContain(operation1.id);
-        expect(opIds).toContain(operation2.id);
-      }
+      expect(activeOps.length).toBeGreaterThanOrEqual(2);
+      expect(opIds).toContain(operation1.id);
+      expect(opIds).toContain(operation2.id);
     });
   });
 
@@ -168,13 +166,7 @@ describe('BackgroundCacheManager', () => {
       await cacheManager.queueOperation(operation);
 
       // Wait for operation with short timeout for test
-      try {
-        const result = await cacheManager.waitForOperation(operation.id, 8000);
-        expect(result).toBeTruthy();
-      } catch (error) {
-        // Timeout is acceptable in test environment
-        expect((error as Error).message).toContain('timeout');
-      }
+      await expect(cacheManager.waitForOperation(operation.id, 8000)).resolves.toBeTruthy();
     });
 
     it('should timeout when waiting too long', async () => {
@@ -216,7 +208,7 @@ describe('BackgroundCacheManager', () => {
     it('should handle invalid operation types gracefully', async () => {
       const operation: CacheOperation = {
         id: uuidv4(),
-        type: 'invalid-type' as any,
+        type: 'invalid-type' as never,
         data: {},
         priority: 'medium' as const,
       };

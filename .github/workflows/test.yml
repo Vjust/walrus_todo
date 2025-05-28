@@ -81,6 +81,9 @@ jobs:
             ~/.pnpm-store
           key: ${{ needs.setup.outputs.cache-key }}
       
+      - name: Test Node.js compatibility
+        run: ./scripts/test-node-compatibility.sh
+      
       - name: Run unit tests
         run: pnpm test:unit -- --coverage --maxWorkers=4
       

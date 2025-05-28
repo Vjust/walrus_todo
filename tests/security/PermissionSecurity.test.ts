@@ -2,6 +2,7 @@ import { jest } from '@jest/globals';
 import {
   AIPermissionManager,
   initializePermissionManager,
+  getPermissionManager,
 } from '../../apps/cli/src/services/ai/AIPermissionManager';
 import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import { BlockchainVerifier } from '../../apps/cli/src/services/ai/BlockchainVerifier';
@@ -53,7 +54,23 @@ interface UsageTracker {
 jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
 jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier');
 jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
-jest.mock('@langchain/core/prompts');
+jest.mock('../../apps/cli/src/services/ai/AIPermissionManager', () => {
+  const actual = jest.requireActual('../../apps/cli/src/services/ai/AIPermissionManager');
+  return {
+    ...actual,
+    initializePermissionManager: jest.fn(),
+    getPermissionManager: jest.fn(),
+  };
+});
+jest.mock('@langchain/core/prompts', () => {
+  return {
+    PromptTemplate: {
+      fromTemplate: jest.fn().mockReturnValue({
+        format: jest.fn().mockResolvedValue('formatted prompt'),
+      }),
+    },
+  };
+});
 
 // Sample data for tests
 const sampleTodo: Todo = {
@@ -110,6 +127,20 @@ describe('Permission System Security Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Mock the SecureCredentialManager constructor to prevent actual instantiation
+    (SecureCredentialManager as jest.MockedClass<typeof SecureCredentialManager>).mockImplementation(() => ({
+      getCredential: jest.fn(),
+      setCredential: jest.fn(),
+      hasCredential: jest.fn(),
+      removeCredential: jest.fn(),
+      verifyCredential: jest.fn(),
+      updatePermissions: jest.fn(),
+      generateCredentialProof: jest.fn(),
+      getCredentialObject: jest.fn(),
+      listCredentials: jest.fn(),
+      setBlockchainAdapter: jest.fn(),
+    }) as unknown as SecureCredentialManager);
+
     // Mock credential manager
     mockCredentialManager = {
       getCredential: jest.fn(),
@@ -124,6 +155,14 @@ describe('Permission System Security Tests', () => {
       setBlockchainAdapter: jest.fn(),
     } as unknown as jest.Mocked<SecureCredentialManager>;
 
+    // Mock the BlockchainVerifier constructor to prevent actual instantiation
+    (BlockchainVerifier as jest.MockedClass<typeof BlockchainVerifier>).mockImplementation(() => ({
+      createVerification: jest.fn(),
+      verifyRecord: jest.fn(),
+      verifyOperation: jest.fn(),
+      verifyPermission: jest.fn(),
+    }) as unknown as BlockchainVerifier);
+
     // Mock blockchain verifier
     mockBlockchainVerifier = {
       createVerification: jest.fn(),
@@ -131,6 +170,23 @@ describe('Permission System Security Tests', () => {
       verifyOperation: jest.fn(),
       verifyPermission: jest.fn(),
     } as unknown as jest.Mocked<BlockchainVerifier>;
+
+    // Setup permission manager mocks
+    const mockInitializePermissionManager = initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>;
+    const mockGetPermissionManager = getPermissionManager as jest.MockedFunction<typeof getPermissionManager>;
+    
+    // Create mock permission manager that defaults to allowing all operations
+    const mockDefaultPermissionManager = {
+      checkPermission: jest.fn().mockResolvedValue(true),
+      setPermissionLevel: jest.fn().mockResolvedValue(true),
+      getPermissionLevel: jest.fn().mockResolvedValue(2), // STANDARD level
+      registerOperationPermission: jest.fn(),
+      verifyOperationPermission: jest.fn().mockResolvedValue({ allowed: true }),
+      getAllowedOperations: jest.fn().mockResolvedValue(['summarize', 'analyze', 'categorize']),
+    } as unknown as AIPermissionManager;
+    
+    mockInitializePermissionManager.mockReturnValue(mockDefaultPermissionManager);
+    mockGetPermissionManager.mockReturnValue(mockDefaultPermissionManager);
 
     // Default mock implementation for AIProviderFactory
     (AIProviderFactory.createProvider as jest.MockedFunction<typeof AIProviderFactory.createProvider>).mockImplementation(
@@ -140,7 +196,7 @@ describe('Permission System Security Tests', () => {
           getModelName: () => params.modelName || 'default-model',
           complete: jest.fn(),
           completeStructured: jest.fn().mockResolvedValue({
-            result: Record<string, unknown>,
+            result: {},
             modelName: params.modelName || 'default-model',
             provider: params.provider,
             timestamp: Date.now(),
@@ -154,6 +210,30 @@ describe('Permission System Security Tests', () => {
         });
       }
     );
+    
+    // Add mocks for additional AIProviderFactory methods
+    (AIProviderFactory.createDefaultAdapter as jest.MockedFunction<typeof AIProviderFactory.createDefaultAdapter>).mockReturnValue({
+      getProviderName: () => 'default',
+      getModelName: () => 'default-model',
+      complete: jest.fn(),
+      completeStructured: jest.fn().mockResolvedValue({
+        result: {},
+        modelName: 'default-model',
+        provider: 'default',
+        timestamp: Date.now(),
+      }),
+      processWithPromptTemplate: jest.fn().mockResolvedValue({
+        result: 'Test result',
+        modelName: 'default-model',
+        provider: 'default',
+        timestamp: Date.now(),
+      }),
+    });
+    
+    (AIProviderFactory.getDefaultProvider as jest.MockedFunction<typeof AIProviderFactory.getDefaultProvider>).mockResolvedValue({
+      provider: AIProvider.XAI,
+      modelName: 'grok-beta',
+    });
   });
 
   describe('Permission Level Enforcement', () => {
@@ -326,7 +406,13 @@ describe('Permission System Security Tests', () => {
       };
 
       // Mock initializePermissionManager to return our mock
-      (initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>).mockReturnValue(
+      const mockInitialize = initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>;
+      const mockGet = getPermissionManager as jest.MockedFunction<typeof getPermissionManager>;
+      
+      mockInitialize.mockReturnValue(
+        mockPermissionManager as unknown as AIPermissionManager
+      );
+      mockGet.mockReturnValue(
         mockPermissionManager as unknown as AIPermissionManager
       );
 
@@ -340,7 +426,7 @@ describe('Permission System Security Tests', () => {
       // XAI service should only be able to summarize
       await expect(xaiService.summarize(sampleTodos)).resolves.not.toThrow();
       await expect(xaiService.analyze(sampleTodos)).rejects.toThrow(
-        /insufficient permissions/
+        /insufficient permissions/i
       );
 
       // Anthropic service should be able to do both
@@ -604,7 +690,13 @@ describe('Permission System Security Tests', () => {
       };
 
       // Mock initializePermissionManager to return our mock
-      (initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>).mockReturnValue(
+      const mockInitialize = initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>;
+      const mockGet = getPermissionManager as jest.MockedFunction<typeof getPermissionManager>;
+      
+      mockInitialize.mockReturnValue(
+        mockPermissionManager as unknown as AIPermissionManager
+      );
+      mockGet.mockReturnValue(
         mockPermissionManager as unknown as AIPermissionManager
       );
 
@@ -618,7 +710,7 @@ describe('Permission System Security Tests', () => {
       // XAI service should only be able to summarize
       await expect(xaiService.summarize(sampleTodos)).resolves.not.toThrow();
       await expect(xaiService.analyze(sampleTodos)).rejects.toThrow(
-        /insufficient permissions/
+        /insufficient permissions/i
       );
 
       // Anthropic service should be able to do both

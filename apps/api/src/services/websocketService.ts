@@ -2,7 +2,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import { config } from '../config';
 import { logger } from '../utils/logger';
-import { WebSocketEvents, Todo } from '../types';
+import { Todo } from '../types';
 import { isValidWallet } from '../middleware/auth';
 
 export interface WalletSocket extends Socket {
@@ -22,7 +22,7 @@ export class WebSocketService {
       },
       pingTimeout: config.websocket.pingTimeout,
       pingInterval: config.websocket.pingInterval
-    } as any);
+    });
 
     this.setupEventHandlers();
     logger.info('WebSocket service initialized');

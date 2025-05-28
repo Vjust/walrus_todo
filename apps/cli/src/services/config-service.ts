@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { promises as fsPromises } from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { Todo, TodoList } from '../types/todo';
 import { CLI_CONFIG, STORAGE_CONFIG } from '../constants';
