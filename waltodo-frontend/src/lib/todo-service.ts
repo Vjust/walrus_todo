@@ -8,8 +8,60 @@ import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { PublicKey } from '@solana/web3.js';
 import safeStorage, { isUsingFallbackStorage } from './safe-storage';
-import testnetConfig from '@/config/testnet.json';
+import { loadNetworkConfig, type AppConfig } from './config-loader';
 import { walrusClient } from './walrus-client';
+
+// Runtime configuration state
+let runtimeConfig: AppConfig | null = null;
+
+/**
+ * Load runtime configuration for current network
+ */
+async function ensureConfigLoaded(): Promise<AppConfig> {
+  if (!runtimeConfig) {
+    const network = typeof window !== 'undefined' 
+      ? (process.env.NEXT_PUBLIC_NETWORK || 'testnet')
+      : 'testnet';
+    
+    runtimeConfig = await loadNetworkConfig(network);
+    
+    // Fallback config if load fails
+    if (!runtimeConfig) {
+      runtimeConfig = {
+        network: {
+          name: 'testnet',
+          url: 'https://fullnode.testnet.sui.io',
+          explorerUrl: 'https://testnet.suiexplorer.com',
+        },
+        walrus: {
+          networkUrl: 'https://wal.testnet.sui.io',
+          publisherUrl: 'https://publisher-testnet.walrus.space',
+          aggregatorUrl: 'https://aggregator-testnet.walrus.space',
+          apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+        },
+        deployment: {
+          packageId: '0xd6f97fc85796ee23adf60504a620631a0eea6947f85c4ca51e02245e9a4b57d7',
+          digest: 'unknown',
+          timestamp: new Date().toISOString(),
+          deployerAddress: '0xca793690985183dc8e2180fd059d76f3b0644f5c2ecd3b01cdebe7d40b0cca39',
+        },
+        contracts: {
+          todoNft: {
+            packageId: '0xd6f97fc85796ee23adf60504a620631a0eea6947f85c4ca51e02245e9a4b57d7',
+            moduleName: 'todo_nft',
+            structName: 'TodoNFT',
+          },
+        },
+        features: {
+          aiEnabled: false,
+          blockchainVerification: false,
+          encryptedStorage: false,
+        },
+      };
+    }
+  }
+  return runtimeConfig;
+}
 
 // Define wallet-aware service types
 export interface WalletSigner {
@@ -362,6 +414,9 @@ export async function storeTodoOnBlockchain(
   }
 
   try {
+    // Load runtime configuration
+    const config = await ensureConfigLoaded();
+
     // First, upload the todo data to Walrus
     const todoData = {
       title: todo.title,
@@ -398,7 +453,7 @@ export async function storeTodoOnBlockchain(
 
     // Call the create_todo_nft function from the deployed contract
     tx.moveCall({
-      target: `${testnetConfig.deployment.packageId}::todo_nft::create_todo_nft`,
+      target: `${config.deployment.packageId}::todo_nft::create_todo_nft`,
       arguments: [
         tx.pure.vector('u8', Array.from(titleBytes)),
         tx.pure.vector('u8', Array.from(descriptionBytes)),
@@ -441,14 +496,17 @@ export async function retrieveTodosFromBlockchain(
   }
 
   try {
+    // Load runtime configuration
+    const config = await ensureConfigLoaded();
+
     // Create a Sui client to query the blockchain
-    const client = new SuiClient({ url: testnetConfig.rpcUrl });
+    const client = new SuiClient({ url: config.network.url });
 
     // Query for TodoNFT objects owned by the address
     const objects = await client.getOwnedObjects({
       owner: address,
       filter: {
-        StructType: `${testnetConfig.deployment.packageId}::todo_nft::TodoNFT`,
+        StructType: `${config.deployment.packageId}::todo_nft::TodoNFT`,
       },
       options: {
         showContent: true,
@@ -540,12 +598,15 @@ export async function completeTodoOnBlockchain(
   }
 
   try {
+    // Load runtime configuration
+    const config = await ensureConfigLoaded();
+
     // Create a transaction to complete the todo
     const tx = new Transaction();
 
     // Call the complete_todo function from the contract
     tx.moveCall({
-      target: `${testnetConfig.deployment.packageId}::todo_nft::complete_todo`,
+      target: `${config.deployment.packageId}::todo_nft::complete_todo`,
       arguments: [tx.object(todo.objectId)],
     });
 
@@ -596,12 +657,15 @@ export async function transferTodoNFT(
   }
 
   try {
+    // Load runtime configuration
+    const config = await ensureConfigLoaded();
+
     // Create a transfer transaction
     const tx = new Transaction();
 
     // Use the custom transfer function from the contract which emits events
     tx.moveCall({
-      target: `${testnetConfig.deployment.packageId}::todo_nft::transfer_todo_nft`,
+      target: `${config.deployment.packageId}::todo_nft::transfer_todo_nft`,
       arguments: [tx.object(todo.objectId), tx.pure.address(toAddress)],
     });
 

@@ -180,22 +180,68 @@ function getCurrentNetwork(): string {
 }
 
 /**
- * Loads configuration from auto-generated files
+ * Load network configuration dynamically at runtime
+ * This replaces build-time imports with runtime loading
  */
-async function loadGeneratedConfig(network: string): Promise<AppConfig | null> {
+export async function loadNetworkConfig(network: string): Promise<AppConfig | null> {
   try {
-    // Try to load the JSON configuration file
+    // Try to load the JSON configuration file from public directory
     const configResponse = await fetch(`/config/${network}.json`);
     if (configResponse.ok) {
       const config = await configResponse.json();
-      console.log(`Loaded generated configuration for ${network}`);
-      return config as AppConfig;
+      console.log(`Loaded runtime configuration for ${network}`);
+      return transformConfigFormat(config);
     }
   } catch (error) {
-    console.warn(`Failed to load generated config for ${network}:`, error);
+    console.warn(`Failed to load runtime config for ${network}:`, error);
   }
 
   return null;
+}
+
+/**
+ * Transform config from CLI format to frontend format
+ */
+function transformConfigFormat(config: any): AppConfig {
+  return {
+    network: {
+      name: config.network || 'testnet',
+      url: config.rpcUrl || config.environment?.apiEndpoint || 'https://fullnode.testnet.sui.io:443',
+      faucetUrl: config.faucetUrl,
+      explorerUrl: config.explorerUrl || 'https://testnet.suiexplorer.com',
+    },
+    walrus: {
+      networkUrl: config.walrus?.networkUrl || 'https://wal.testnet.sui.io',
+      publisherUrl: config.walrus?.publisherUrl || 'https://publisher-testnet.walrus.space',
+      aggregatorUrl: config.walrus?.aggregatorUrl || 'https://aggregator-testnet.walrus.space',
+      apiPrefix: config.walrus?.apiPrefix || 'https://api-testnet.walrus.tech/1.0',
+    },
+    deployment: {
+      packageId: config.deployment?.packageId || '0x0',
+      digest: config.deployment?.transactionHash || 'unknown',
+      timestamp: config.deployment?.timestamp || new Date().toISOString(),
+      deployerAddress: config.deployment?.deployerAddress || '0x0',
+    },
+    contracts: {
+      todoNft: {
+        packageId: config.deployment?.packageId || '0x0',
+        moduleName: 'todo_nft',
+        structName: 'TodoNFT',
+      },
+    },
+    features: {
+      aiEnabled: config.features?.aiIntegration || false,
+      blockchainVerification: config.features?.blockchainVerification || false,
+      encryptedStorage: config.features?.encryptedStorage || false,
+    },
+  };
+}
+
+/**
+ * Loads configuration from auto-generated files
+ */
+async function loadGeneratedConfig(network: string): Promise<AppConfig | null> {
+  return loadNetworkConfig(network);
 }
 
 /**
