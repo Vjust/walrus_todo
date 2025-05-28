@@ -5,10 +5,10 @@ import { KeystoreSigner } from '../utils/sui-keystore';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { walrusModuleMock, type MockWalrusClient } from './helpers/walrus-client-mock';
+import { createWalrusModuleMock, getMockWalrusClient } from './helpers/complete-walrus-client-mock';
 
 // Mock the external dependencies
-jest.mock('@mysten/walrus', () => walrusModuleMock);
+jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 
 jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
@@ -47,7 +47,7 @@ describe('WalrusImageStorage', () => {
     signAndExecuteTransactionBlock: jest.Mock;
     executeTransactionBlock: jest.Mock;
   };
-  let mockWalrusClient: MockWalrusClient;
+  let mockWalrusClient: ReturnType<typeof getMockWalrusClient>;
   let mockKeystoreSigner: {
     fromPath: jest.Mock;
   };
@@ -62,7 +62,7 @@ describe('WalrusImageStorage', () => {
     jest.clearAllMocks();
 
     // Setup mock implementations
-    mockWalrusClient = walrusModuleMock.WalrusClient() as MockWalrusClient;
+    mockWalrusClient = getMockWalrusClient();
 
     mockSuiClient = {
       connect: jest.fn(),

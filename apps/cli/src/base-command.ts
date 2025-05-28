@@ -321,7 +321,7 @@ export abstract class BaseCommand extends Command {
     const errorMessage = error.message || 'No error message provided';
     
     // Log detailed error for debugging
-    if (this.flags.debug || this.flags.verbose) {
+    if (this.flagsConfig.debug || this.flagsConfig.verbose) {
       this.debug(`${commandName}: Detailed error info:`);
       this.debug(`- Error type: ${errorType}`);
       this.debug(`- Error message: ${errorMessage}`);

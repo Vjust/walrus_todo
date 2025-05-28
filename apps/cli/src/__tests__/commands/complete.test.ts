@@ -9,8 +9,24 @@ import { createMockTodo } from '../helpers/test-utils';
 import { createMockSystemStateResponse } from '../sui-test-types';
 import type { Config } from '../../types';
 
-// Using real service implementations for better testing coverage
-// Only mock external network calls if needed
+// Mock implementations for testing
+const mockTodoService = {
+  prototype: {
+    getList: jest.fn(),
+    getTodo: jest.fn(),
+    toggleItemStatus: jest.fn(),
+  },
+};
+
+const mockSuiClient = {
+  getLatestSuiSystemState: jest.fn(),
+};
+
+const mockSuiNftStorage = {
+  prototype: {
+    updateTodoNftCompletionStatus: jest.fn(),
+  },
+};
 
 // Using real implementations - create instances directly
 let todoService: TodoService;
