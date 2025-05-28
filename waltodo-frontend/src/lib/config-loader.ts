@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import { useIsHydrated } from './hydration-safe';
 
 /**
  * Network configuration interface
@@ -168,15 +169,12 @@ const FALLBACK_CONFIGS: Record<string, Partial<AppConfig>> = {
 
 /**
  * Gets the current network from environment variables
+ * Uses consistent logic for both server and client to prevent hydration mismatches
  */
 function getCurrentNetwork(): string {
-  if (typeof window !== 'undefined') {
-    // Client-side: use environment variable or default
-    return process.env.NEXT_PUBLIC_NETWORK || 'testnet';
-  } else {
-    // Server-side: use environment variable or default
-    return process.env.NEXT_PUBLIC_NETWORK || 'testnet';
-  }
+  // Always use the same environment variable logic
+  // NEXT_PUBLIC_ variables are available on both server and client
+  return process.env.NEXT_PUBLIC_NETWORK || 'testnet';
 }
 
 /**
@@ -302,13 +300,18 @@ export function getNetworkName(): string {
 
 /**
  * Hook for React components to load configuration
+ * Prevents hydration mismatches by ensuring client-only execution
  */
 export function useAppConfig() {
   const [config, setConfig] = React.useState<AppConfig | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const hydrated = useIsHydrated();
 
   React.useEffect(() => {
+    // Only load config after hydration is complete
+    if (!hydrated) return;
+
     loadAppConfig()
       .then(setConfig)
       .catch(err => {
@@ -316,7 +319,7 @@ export function useAppConfig() {
         console.error('Failed to load app configuration:', err);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [hydrated]);
 
   return { config, loading, error };
 }

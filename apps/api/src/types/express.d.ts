@@ -6,13 +6,19 @@ declare global {
       user?: any;
       wallet?: string;
       ip: string;
+      method: string;
+      url: string;
+      path: string;
+      headers: any;
       header(name: string): string | undefined;
+      get(name: string): string | undefined;
       params: any;
       query: any;
       body: any;
     }
     
     interface Response {
+      statusCode: number;
       json(body?: any): Response;
       status(code: number): Response;
       send(body?: any): Response;
@@ -22,7 +28,8 @@ declare global {
       redirect(path: string): void;
       end(): void;
       set(field: string, value: string): Response;
-      set(fields: Record<string, string>): Response;
+      setHeader(field: string, value: string): Response;
+      get(field: string): string | undefined;
       header(field: string, value: string): Response;
       type(type: string): Response;
       sendStatus(statusCode: number): Response;
@@ -73,13 +80,19 @@ export interface Request extends ExpressRequest {
   user?: any;
   wallet?: string;
   ip: string;
+  method: string;
+  url: string;
+  path: string;
+  headers: any;
   header(name: string): string | undefined;
+  get(name: string): string | undefined;
   params: any;
   query: any;
   body: any;
 }
 
 export interface Response extends ExpressResponse {
+  statusCode: number;
   json(body?: any): Response;
   status(code: number): Response;
   send(body?: any): Response;
@@ -89,7 +102,8 @@ export interface Response extends ExpressResponse {
   redirect(path: string): void;
   end(): void;
   set(field: string, value: string): Response;
-  set(fields: Record<string, string>): Response;
+  setHeader(field: string, value: string): Response;
+  get(field: string): string | undefined;
   header(field: string, value: string): Response;
   type(type: string): Response;
   sendStatus(statusCode: number): Response;

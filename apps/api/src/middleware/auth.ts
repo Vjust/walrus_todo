@@ -16,7 +16,7 @@ export const validateApiKey = (req: Request, res: Response, next: NextFunction):
     return next();
   }
 
-  const apiKey = req.header('X-API-Key') || req.query.apiKey as string;
+  const apiKey = req.header?.('X-API-Key') || req.query.apiKey as string;
   
   if (!apiKey) {
     res.status(401).json({
@@ -45,7 +45,7 @@ export const validateApiKey = (req: Request, res: Response, next: NextFunction):
 
 // JWT authentication middleware
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.header('Authorization');
+  const authHeader = req.header?.('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
@@ -83,7 +83,7 @@ export const extractWallet = (req: Request, res: Response, next: NextFunction): 
   }
 
   // Fall back to wallet parameter/header for development
-  const wallet = req.query.wallet as string || req.header('X-Wallet-Address');
+  const wallet = req.query.wallet as string || req.header?.('X-Wallet-Address');
   
   if (wallet) {
     req.wallet = wallet;

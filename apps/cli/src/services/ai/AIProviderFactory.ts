@@ -88,7 +88,8 @@ export class AIProviderFactory {
       return this.createFallbackAdapter();
     } catch (_error) {
       this.logger.error(
-        `Failed to create default adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+        `AIProviderFactory: Failed to create default adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        _error instanceof Error ? _error : undefined
       );
       return this.createFallbackAdapter();
     }
@@ -216,7 +217,8 @@ export class AIProviderFactory {
       }
     } catch (_error) {
       this.logger.error(
-        `Failed to create provider adapter: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+        `AIProviderFactory: Failed to create provider adapter for ${provider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        _error instanceof Error ? _error : undefined
       );
       return this.createFallbackProvider(options);
     }
@@ -292,7 +294,8 @@ export class AIProviderFactory {
       };
     } catch (_error) {
       this.logger.error(
-        `Error determining default provider: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+        `AIProviderFactory: Error determining default provider: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        _error instanceof Error ? _error : undefined
       );
 
       // Fall back to hardcoded safe defaults
@@ -365,7 +368,8 @@ export class AIProviderFactory {
         // Only log debug messages if we actually requested AI features
         if (this.isAIFeatureRequested) {
           this.logger.debug(
-            `Failed to use fallback provider ${fallbackProvider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+            `AIProviderFactory: Failed to use fallback provider ${fallbackProvider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+            _error instanceof Error ? _error : undefined
           );
         }
         // Continue to next fallback

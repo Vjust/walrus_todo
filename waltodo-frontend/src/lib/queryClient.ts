@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 
-// Enhanced React Query configuration for real-time todo management
+// Enhanced React Query configuration for real-time todo management with SSR support
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -10,9 +10,11 @@ export const queryClient = new QueryClient({
         return failureCount < 3;
       },
       staleTime: 30000, // 30 seconds
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
+      refetchOnWindowFocus: typeof window !== 'undefined', // Only refetch on window focus in browser
+      refetchOnReconnect: typeof window !== 'undefined', // Only refetch on reconnect in browser
       refetchInterval: false, // Will be managed by WebSocket
+      // Prevent queries from running during SSR by default
+      enabled: typeof window !== 'undefined',
     },
     mutations: {
       retry: 1,

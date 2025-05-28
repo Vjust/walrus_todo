@@ -96,6 +96,7 @@ const SESSION_TIMEOUT = 30 * 60 * 1000;
 function WalletContextProvider({ children }: { children: ReactNode }) {
   // Component mount tracking
   const [componentMounted, setComponentMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   // Mysten dApp Kit hooks
   const account = useCurrentAccount();
@@ -104,13 +105,16 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
   const wallets = useWallets();
   
-  // Local state
+  // Local state - only initialize with client-safe defaults
   const [transactionHistory, setTransactionHistory] = useState<TransactionRecord[]>([]);
   const [currentNetwork, setCurrentNetwork] = useState('testnet');
   const [error, setError] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [lastActivity, setLastActivity] = useState(() => {
+    // Only access Date.now() on client to avoid hydration mismatch
+    return typeof window !== 'undefined' ? Date.now() : 0;
+  });
   
   // WebSocket integration - temporarily disabled
   // const { connect: connectWebSocket, disconnect: disconnectWebSocket, joinRoom, leaveRoom } = useWebSocket();
@@ -134,9 +138,13 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   });
   */
   
-  // Component mount effect
+  // Client-side initialization effect
   useEffect(() => {
+    setIsClient(true);
     setComponentMounted(true);
+    // Initialize lastActivity with current time once we're on client
+    setLastActivity(Date.now());
+    
     return () => {
       setComponentMounted(false);
     };
@@ -147,25 +155,31 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
 
   // Auto-reconnect logic with proper cleanup and mount guard
   useEffect(() => {
+    // Only run auto-reconnect on client side
+    if (!isClient || !componentMounted) return;
+    
     let timeoutId: NodeJS.Timeout | null = null;
     let isMounted = true;
 
     const autoReconnect = async () => {
-      if (!isMounted || !componentMounted) return;
+      if (!isMounted || !componentMounted || !isClient) return;
       
       try {
         let lastWallet = null;
         try {
-          lastWallet = localStorage.getItem('sui-wallet-last-connected');
+          // Safe localStorage access with client-side check
+          if (typeof window !== 'undefined' && window.localStorage) {
+            lastWallet = localStorage.getItem('sui-wallet-last-connected');
+          }
         } catch (storageError) {
           console.warn('[WalletContext] localStorage access failed:', storageError);
           return;
         }
 
-        if (lastWallet && !connected && !connecting && wallets.length > 0 && isMounted && componentMounted) {
+        if (lastWallet && !connected && !connecting && wallets.length > 0 && isMounted && componentMounted && isClient) {
           console.log('[WalletContext] Attempting auto-reconnect to:', lastWallet);
           const wallet = wallets.find(w => w.name === lastWallet);
-          if (wallet && isMounted && componentMounted) {
+          if (wallet && isMounted && componentMounted && isClient) {
             connectWallet(
               { wallet },
               {
@@ -176,7 +190,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
                   }
                 },
                 onError: (error) => {
-                  if (isMounted) {
+                  if (isMounted && typeof window !== 'undefined') {
                     console.error('[WalletContext] Auto-reconnect failed:', error);
                     try {
                       localStorage.removeItem('sui-wallet-last-connected');
@@ -190,7 +204,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        if (isMounted) {
+        if (isMounted && typeof window !== 'undefined') {
           console.error('[WalletContext] Auto-reconnect error:', error);
           try {
             localStorage.removeItem('sui-wallet-last-connected');
@@ -209,7 +223,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
         clearTimeout(timeoutId);
       }
     };
-  }, [connected, connecting, wallets, connectWallet, resetActivityTimer, componentMounted]);
+  }, [connected, connecting, wallets, connectWallet, resetActivityTimer, componentMounted, isClient]);
 
   // Clear error when wallet state changes
   useEffect(() => {
@@ -286,10 +300,13 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
       setError(null);
       console.log('[WalletContext] Disconnecting wallet...');
       disconnectWallet();
-      try {
-        localStorage.removeItem('sui-wallet-last-connected');
-      } catch (storageError) {
-        console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
+      // Safe localStorage access
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          localStorage.removeItem('sui-wallet-last-connected');
+        } catch (storageError) {
+          console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
+        }
       }
       setTransactionHistory([]);
       console.log('[WalletContext] Wallet disconnected successfully');
@@ -385,29 +402,29 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   }, [addTransaction]);
 
   const contextValue: WalletContextType = {
-    connected,
-    connecting,
-    account,
-    address: account?.address || null, // Add convenience property
+    connected: isClient ? connected : false, // Ensure consistent SSR state
+    connecting: isClient ? connecting : false,
+    account: isClient ? account : null,
+    address: isClient ? (account?.address || null) : null,
     chainId: currentNetwork,
-    name: connected ? 'Sui Wallet' : null, // Simple placeholder
-    network: currentNetwork, // Add convenience property
+    name: (isClient && connected) ? 'Sui Wallet' : null,
+    network: currentNetwork,
     connect,
     disconnect,
     signAndExecuteTransaction,
     trackTransaction,
-    sessionExpired,
+    sessionExpired: isClient ? sessionExpired : false,
     resetSession,
-    transactionHistory,
+    transactionHistory: isClient ? transactionHistory : [],
     addTransaction,
     currentNetwork,
     switchNetwork,
-    error,
+    error: isClient ? error : null,
     clearError,
-    isModalOpen,
+    isModalOpen: isClient ? isModalOpen : false,
     openModal,
     closeModal,
-    lastActivity,
+    lastActivity: isClient ? lastActivity : 0,
     resetActivityTimer,
   };
 
@@ -422,7 +439,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
             setIsModalOpen(open);
             if (!open) {
               // Modal was closed, save the connected wallet
-              if (connected && account) {
+              if (connected && account && typeof window !== 'undefined' && window.localStorage) {
                 try {
                   localStorage.setItem('sui-wallet-last-connected', 'sui-wallet');
                 } catch (storageError) {

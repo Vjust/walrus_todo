@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Todo, TodoList } from '../types/todo';
 import { apiClient } from '../lib/api-client';
+import { useEffect, useState } from 'react';
 
 // UI State interface
 interface UIState {
@@ -340,9 +341,11 @@ export const useTodoStore = create<TodoStore>()(
 
       // Migration helpers
       migrateFromLocalStorage: () => {
+        // Only run migration on client side after hydration
+        if (typeof window === 'undefined') return;
+        
         try {
-          // Migration logic for existing localStorage data
-          const oldTodos = localStorage.getItem('walrus-todos');
+          const oldTodos = window.localStorage.getItem('walrus-todos');
           if (oldTodos) {
             const parsed = JSON.parse(oldTodos);
             set(state => ({
@@ -355,14 +358,37 @@ export const useTodoStore = create<TodoStore>()(
       },
 
       clearLegacyData: () => {
-        // Clear old localStorage keys
-        const legacyKeys = ['walrus-todos', 'walrus-todo-lists', 'walrus-settings'];
-        legacyKeys.forEach(key => localStorage.removeItem(key));
+        // Only clear on client side
+        if (typeof window === 'undefined') return;
+        
+        try {
+          const legacyKeys = ['walrus-todos', 'walrus-todo-lists', 'walrus-settings'];
+          legacyKeys.forEach(key => {
+            try {
+              window.localStorage.removeItem(key);
+            } catch (e) {
+              console.warn(`Failed to remove legacy key ${key}:`, e);
+            }
+          });
+        } catch (error) {
+          console.error('Failed to clear legacy data:', error);
+        }
       },
     }),
     {
       name: 'walrus-todo-store',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        // Provide safe localStorage access with SSR compatibility
+        if (typeof window === 'undefined') {
+          // Return a no-op storage for SSR
+          return {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          };
+        }
+        return window.localStorage;
+      }),
       partialize: (state) => ({
         todos: state.todos,
         lists: state.lists,
@@ -378,17 +404,68 @@ export const useTodoStore = create<TodoStore>()(
           state.uiState.syncInProgress = new Set();
         }
       },
+      skipHydration: typeof window === 'undefined', // Skip hydration during SSR
     }
   )
 );
 
+/**
+ * Hook to ensure Zustand store is properly hydrated before use
+ * Prevents hydration mismatches by waiting for client-side hydration
+ */
+export function useHydratedTodoStore() {
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  useEffect(() => {
+    // Mark as hydrated after first client-side render
+    setIsHydrated(true);
+  }, []);
+
+  // Return the store state only after hydration
+  const store = useTodoStore();
+  
+  // Return default values during SSR/hydration to prevent mismatches
+  if (!isHydrated) {
+    return {
+      ...store,
+      todos: { default: [] },
+      lists: ['default'],
+      settings: defaultSettings,
+      uiState: { ...defaultUIState, syncInProgress: new Set() },
+      lastSync: null,
+      syncErrors: {},
+    };
+  }
+
+  return store;
+}
+
 // Selector hooks for better performance
-export const useActiveList = () => useTodoStore(state => state.uiState.activeList);
-export const useCurrentTodos = () => useTodoStore(state => state.getCurrentTodos());
-export const useFilteredTodos = () => useTodoStore(state => state.getFilteredTodos());
-export const useSettings = () => useTodoStore(state => state.settings);
-export const useSyncState = () => useTodoStore(state => ({
-  lastSync: state.lastSync,
-  syncErrors: state.syncErrors,
-  syncInProgress: state.uiState.syncInProgress,
-}));
+export const useActiveList = () => {
+  const store = useHydratedTodoStore();
+  return store.uiState.activeList;
+};
+
+export const useCurrentTodos = () => {
+  const store = useHydratedTodoStore();
+  return store.getCurrentTodos();
+};
+
+export const useFilteredTodos = () => {
+  const store = useHydratedTodoStore();
+  return store.getFilteredTodos();
+};
+
+export const useSettings = () => {
+  const store = useHydratedTodoStore();
+  return store.settings;
+};
+
+export const useSyncState = () => {
+  const store = useHydratedTodoStore();
+  return {
+    lastSync: store.lastSync,
+    syncErrors: store.syncErrors,
+    syncInProgress: store.uiState.syncInProgress,
+  };
+};

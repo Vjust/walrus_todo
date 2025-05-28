@@ -10,8 +10,12 @@ interface ErrorBoundaryProps {
 export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
   const [hasError, setHasError] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Track mounting for hydration safety
+    setMounted(true);
+    
     // Only run in the browser
     if (typeof window === 'undefined') return;
 
@@ -136,11 +140,11 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
     </div>
   );
 
-  // Show the fallback UI if there's an error
-  if (hasError) {
-    return fallback || defaultFallback;
-  }
-
-  // Otherwise, render children normally
-  return <div>{children}</div>;
+  // Always render consistent structure to prevent hydration mismatch
+  // Use suppressHydrationWarning since error state differs between server/client
+  return (
+    <div suppressHydrationWarning>
+      {hasError ? (fallback || defaultFallback) : children}
+    </div>
+  );
 }

@@ -3,16 +3,9 @@ import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
 
-jest.mock('child_process', () => ({ execSync: jest.fn() }));
-jest.mock('fs', () => ({
-  readFileSync: jest.fn(),
-  existsSync: jest.fn(),
-  mkdirSync: jest.fn(),
-  unlinkSync: jest.fn(),
-  rmdirSync: jest.fn(),
-  readdirSync: jest.fn(),
-  writeFileSync: jest.fn(),
-}));
+// Use mocked fs and child_process from global setup
+const mockedFs = fs as jest.Mocked<typeof fs>;
+const mockedExecSync = execSync as jest.MockedFunction<typeof execSync>;
 
 describe('CLI Commands', () => {
   const CLI_CMD = 'node ./bin/run.js';
@@ -33,21 +26,27 @@ describe('CLI Commands', () => {
   };
 
   beforeAll(() => {
-    if (!fs.existsSync(FIXTURES_DIR)) {
-      fs.mkdirSync(FIXTURES_DIR, { recursive: true });
-    }
-
-    if (!fs.existsSync(TEST_IMAGE)) {
-      fs.writeFileSync(TEST_IMAGE, 'test image data');
-    }
+    // Setup mocked fs responses
+    mockedFs.existsSync.mockImplementation((path) => {
+      if (path === FIXTURES_DIR || path === TEST_IMAGE) {
+        return true;
+      }
+      return false;
+    });
+    
+    mockedFs.readFileSync.mockImplementation((path) => {
+      if (path === TEST_IMAGE) {
+        return 'test image data';
+      }
+      return '{}';
+    });
+    
+    mockedExecSync.mockReturnValue('mocked command output');
   });
 
   afterAll(() => {
     jest.restoreAllMocks();
-
-    if (fs.existsSync(TEST_IMAGE)) {
-      fs.unlinkSync(TEST_IMAGE);
-    }
+    // No need to clean up mock files
     if (
       fs.existsSync(FIXTURES_DIR) &&
       fs.readdirSync(FIXTURES_DIR).length === 0

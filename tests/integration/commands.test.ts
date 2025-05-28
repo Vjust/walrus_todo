@@ -3,6 +3,17 @@ jest.mock('child_process', () => {
   return { execSync: execSyncMock };
 });
 
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  existsSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  unlinkSync: jest.fn(),
+  rmdirSync: jest.fn(),
+  readdirSync: jest.fn(),
+}));
+
 import * as fs from 'fs';
 import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';
 import * as path from 'path';

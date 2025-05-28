@@ -5,6 +5,7 @@ import safeStorage, {
   isBrowser,
   isUsingFallbackStorage,
 } from '@/lib/safe-storage';
+import { useIsHydrated } from '@/lib/hydration-safe';
 
 // Define context types for storage environments
 type StorageContext =
@@ -107,7 +108,7 @@ function detectStorageContext(): StorageContext {
       return 'extension';
     }
   } catch (e) {
-    console.warn('Error checking for extension context:', e);
+    // Silently handle extension check errors
   }
 
   // Safe check for iframe
@@ -117,7 +118,6 @@ function detectStorageContext(): StorageContext {
     }
   } catch (e) {
     // If this errors, we're probably in a cross-origin iframe
-    console.warn('Error checking for iframe context:', e);
     return 'iframe'; // Assume iframe with restrictions
   }
 
@@ -127,17 +127,20 @@ function detectStorageContext(): StorageContext {
       return 'insecure';
     }
   } catch (e) {
-    console.warn('Error checking for secure context:', e);
+    // Silently handle secure context check errors
   }
 
   // Check for incognito/private mode or storage restrictions
   try {
-    const testKey = '__storage_test__';
-    localStorage.setItem(testKey, testKey);
-    localStorage.removeItem(testKey);
-    sessionStorage.setItem(testKey, testKey);
-    sessionStorage.removeItem(testKey);
-    return 'browser';
+    if (typeof window.localStorage !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
+      const testKey = '__storage_test__';
+      window.localStorage.setItem(testKey, testKey);
+      window.localStorage.removeItem(testKey);
+      window.sessionStorage.setItem(testKey, testKey);
+      window.sessionStorage.removeItem(testKey);
+      return 'browser';
+    }
+    return 'unknown';
   } catch (e) {
     // If storage test fails but browser isn't otherwise identified as a specific context
     return 'incognito';
@@ -145,29 +148,19 @@ function detectStorageContext(): StorageContext {
 }
 
 export function StorageContextWarning() {
-  const [context, setContext] = useState<StorageContext>('unknown');
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [context, setContext] = useState<StorageContext>('server'); // Start with server context
+  const [usingFallback, setUsingFallback] = useState(true); // Start with safe default
   const [showWarning, setShowWarning] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const hydrated = useIsHydrated();
 
-  // Use two-phase mounting to ensure complete client-side initialization
+  // Initialize after hydration is complete
   useEffect(() => {
-    // First phase - mark component as mounted
-    setMounted(true);
+    if (!hydrated) return;
 
-    // Cleanup function to handle component unmounting
-    return () => setMounted(false);
-  }, []);
-
-  // Second phase - only run detection logic after initial mount
-  useEffect(() => {
-    // Skip if not mounted or not in browser
-    if (!mounted || !isBrowser()) return;
-
-    // Use setTimeout with a delay to ensure this runs after Next.js hydration is complete
-    const timer = setTimeout(() => {
+    // Small delay to ensure all other components have also hydrated
+    const timerId = setTimeout(() => {
       try {
-        // Safely detect context with error handling
+        // Safely detect context
         let detectedContext: StorageContext = 'unknown';
         try {
           detectedContext = detectStorageContext();
@@ -175,34 +168,34 @@ export function StorageContextWarning() {
           console.warn('Error detecting storage context:', error);
           detectedContext = 'unknown';
         }
-        setContext(detectedContext);
-
-        // Safely check if using fallback storage
-        let fallbackStatus = true; // Default to true for safety
+        
+        // Safely check fallback status
+        let fallbackStatus = true; // Safe default
         try {
           fallbackStatus = isUsingFallbackStorage();
         } catch (error) {
           console.warn('Error checking fallback storage status:', error);
         }
+        
+        // Update state
+        setContext(detectedContext);
         setUsingFallback(fallbackStatus);
       } catch (e) {
-        console.error('Error in StorageContextWarning useEffect:', e);
+        console.error('Error in StorageContextWarning initialization:', e);
         // Set safe defaults
         setContext('unknown');
         setUsingFallback(true);
       }
-    }, 100); // Short delay to ensure hydration is complete
+    }, 100);
 
-    return () => clearTimeout(timer);
-  }, [mounted]);
+    return () => clearTimeout(timerId);
+  }, [hydrated]);
 
-  // Only render on client side after mounting
-  if (!mounted || !isBrowser() || !showWarning) {
-    // Return null during SSR and initial client-side render
+  // Don't render during SSR or before hydration
+  if (!hydrated || !showWarning) {
     return null;
   }
 
-  // Only render the component content after mounting
   return (
     <div className='relative'>
       <WarningMessage context={context} usingFallback={usingFallback} />
