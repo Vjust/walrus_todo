@@ -6,8 +6,8 @@
  * and response parsing failures.
  */
 
-import { AIService } from '../../src/services/ai/aiService';
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';

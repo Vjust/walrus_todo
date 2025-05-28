@@ -1560,7 +1560,34 @@ For more detailed troubleshooting:
 
 ## Development
 
-### Setup
+### Quick Start with Development Orchestrator
+
+WalTodo includes a development orchestrator that starts all services (CLI + API + Web) in a unified environment:
+
+```bash
+# Start all services in tmux panes (recommended)
+pnpm run dev:all
+# or
+./pnpm-dev.sh
+
+# Alternative for users without tmux
+pnpm run dev:simple
+# or  
+./pnpm-dev-simple.sh
+```
+
+The orchestrator provides:
+- **CLI**: Ready for testing in the left pane
+- **API Server**: REST API on http://localhost:3001 (top right)
+- **Web Frontend**: Next.js app on http://localhost:3000 (bottom right)
+
+#### Tmux Controls
+- `Ctrl+B` then arrow keys: Switch between panes
+- `Ctrl+B` then `Q`: Quit session
+- `Ctrl+B` then `D`: Detach (keeps running)
+- `tmux attach -t waltodo-dev`: Reattach later
+
+### Manual Setup
 
 ```bash
 # Install dependencies
@@ -1584,8 +1611,9 @@ pnpm test -- -t "test name pattern"
 # Run tests with coverage
 pnpm test -- --coverage
 
-# Run in dev mode
-pnpm run dev
+# Start services individually
+pnpm start:api        # API server on port 3001
+cd waltodo-frontend && pnpm dev  # Web frontend on port 3000
 ```
 
 ### Frontend and Monorepo Structure

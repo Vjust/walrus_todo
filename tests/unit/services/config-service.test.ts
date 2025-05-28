@@ -1,16 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import * as configServiceModule from '../../../src/services/config-service';
-import { ConfigService } from '../../../src/services/config-service';
+import * as configServiceModule from '../../../apps/cli/src/services/config-service';
+import { ConfigService } from '../../../apps/cli/src/services/config-service';
 
-import { envConfig, getEnv } from '../../../src/utils/environment-config';
+import { envConfig, getEnv } from '../../../apps/cli/src/utils/environment-config';
 import {
   loadConfigFile,
   saveConfigToFile,
-} from '../../../src/utils/config-loader';
-import type { Config, Todo, TodoList } from '../../../src/types';
-import { CLIError } from '../../../src/types/errors';
+} from '../../../apps/cli/src/utils/config-loader';
+import type { Config, Todo, TodoList } from '../../../apps/cli/src/types';
+import { CLIError } from '../../../apps/cli/src/types/errors';
 // Using jest fs mock directly
 const mockFsPromises = {
   access: jest.fn(),
@@ -25,8 +25,8 @@ const mockFsPromises = {
 
 // Mock dependencies
 jest.mock('fs');
-jest.mock('../../../src/utils/environment-config');
-jest.mock('../../../src/utils/config-loader');
+jest.mock('../../../apps/cli/src/utils/environment-config');
+jest.mock('../../../apps/cli/src/utils/config-loader');
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 const mockEnvConfig = envConfig as jest.Mocked<typeof envConfig>;

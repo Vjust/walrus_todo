@@ -239,7 +239,7 @@ export class WalrusTodoManager {
           write: costInfo.writeCost,
         },
         uploadTimestamp: Date.now(),
-        expiresAt: walrusResult.metadata.expiresAt,
+        expiresAt: walrusResult.metadata.expiresAt as number | undefined,
       };
 
       return {
@@ -273,10 +273,10 @@ export class WalrusTodoManager {
       }
 
       return {
-        blockchainStored: true,
         ...todoData,
+        blockchainStored: true,
         walrusBlobId, // Ensure blob ID is set
-      };
+      } as WalrusTodo;
     } catch (error) {
       if (error instanceof WalrusClientError) {
         throw error;

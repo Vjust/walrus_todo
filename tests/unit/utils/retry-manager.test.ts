@@ -1,5 +1,5 @@
-import { RetryManager } from '../../../src/utils/retry-manager';
-import '../../../src/utils/polyfills/aggregate-error';
+import { RetryManager } from '../../../apps/cli/src/utils/retry-manager';
+import '../../../apps/cli/src/utils/polyfills/aggregate-error';
 
 describe('RetryManager', () => {
   let retryManager: RetryManager;

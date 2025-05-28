@@ -7,7 +7,7 @@ import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiTodos } from '@/hooks/useSuiTodos';
 
 export default function BlockchainPage() {
-  const { connected, connecting, address, connect } = useWalletContext();
+  const { connected, connecting, account, connect } = useWalletContext();
   const { state, network, isWalletReady } = useSuiTodos();
   const [showFullManager, setShowFullManager] = useState(false);
 
@@ -24,7 +24,7 @@ export default function BlockchainPage() {
               <p className='text-sm text-ocean-medium dark:text-ocean-light'>
                 Address:{' '}
                 <code className='bg-white/20 px-2 py-1 rounded text-xs'>
-                  {address}
+                  {account?.address}
                 </code>
               </p>
               <p className='text-sm text-ocean-medium dark:text-ocean-light'>

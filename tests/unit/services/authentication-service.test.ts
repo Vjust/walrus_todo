@@ -1,19 +1,19 @@
-import { AuthenticationService } from '../../../src/services/authentication-service';
+import { AuthenticationService } from '../../../apps/cli/src/services/authentication-service';
 import {
   permissionService,
-} from '../../../src/services/permission-service';
-import { auditLogger } from '../../../src/utils/AuditLogger';
-import { Logger } from '../../../src/utils/Logger';
+} from '../../../apps/cli/src/services/permission-service';
+import { auditLogger } from '../../../apps/cli/src/utils/AuditLogger';
+import { Logger } from '../../../apps/cli/src/utils/Logger';
 import {
   UserRole,
   PermissionUser,
-} from '../../../src/types/permissions';
-import { CLIError } from '../../../src/types/errors';
+} from '../../../apps/cli/src/types/permissions';
+import { CLIError } from '../../../apps/cli/src/types/errors';
 
 import * as jwt from 'jsonwebtoken';
 
 // Mock dependencies
-jest.mock('../../../src/services/permission-service', () => ({
+jest.mock('../../../apps/cli/src/services/permission-service', () => ({
   permissionService: {
     createUser: jest.fn(),
     getUser: jest.fn(),
@@ -27,7 +27,7 @@ jest.mock('../../../src/services/permission-service', () => ({
     getInstance: jest.fn(),
   },
 }));
-jest.mock('../../../src/utils/AuditLogger', () => ({
+jest.mock('../../../apps/cli/src/utils/AuditLogger', () => ({
   auditLogger: {
     log: jest.fn().mockResolvedValue(undefined),
   },
@@ -35,7 +35,7 @@ jest.mock('../../../src/utils/AuditLogger', () => ({
     getInstance: jest.fn(),
   },
 }));
-jest.mock('../../../src/utils/Logger');
+jest.mock('../../../apps/cli/src/utils/Logger');
 
 describe('AuthenticationService', () => {
   let authService: AuthenticationService;
