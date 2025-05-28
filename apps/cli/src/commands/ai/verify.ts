@@ -6,6 +6,7 @@ import { SuiClient } from '../../utils/adapters/sui-client-adapter';
 import { AIProvider, TodoAIOperation } from '../../services/ai/types';
 import chalk = require('chalk');
 import { getAIVerifierAddress } from '../../services/ai/credentials/module-address';
+import { getErrorMessage } from '../../utils/type-guards';
 
 export default class Verify extends BaseCommand {
   static description =
@@ -141,7 +142,7 @@ export default class Verify extends BaseCommand {
         this.log('This verification ID does not exist on the blockchain.');
       }
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -176,7 +177,7 @@ export default class Verify extends BaseCommand {
         this.log(`  ${chalk.cyan(verificationId)}: ${status}`);
       }
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -220,7 +221,7 @@ export default class Verify extends BaseCommand {
         }
       }
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 }

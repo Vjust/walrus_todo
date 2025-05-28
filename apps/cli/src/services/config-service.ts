@@ -330,8 +330,9 @@ export class ConfigService {
     try {
       if (fs.existsSync(listPath)) {
         const data = await fsPromises.readFile(listPath, 'utf-8');
+        const dataStr = typeof data === 'string' ? data : data.toString('utf-8');
         try {
-          return JSON.parse(data);
+          return JSON.parse(dataStr);
         } catch (parseError: unknown) {
           if (parseError instanceof SyntaxError) {
             throw new CLIError(

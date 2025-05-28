@@ -3,6 +3,7 @@ import BaseCommand from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
 import chalk = require('chalk');
 import { CLIError } from '../../types/errors/consolidated';
+import { getErrorMessage, isError } from '../../utils/type-guards';
 
 /**
  * AI Credential Key Management command
@@ -78,9 +79,7 @@ export default class AIKeysCommand extends BaseCommand {
       if (error instanceof CLIError) {
         this.error(`${error.message} (${error.code})`);
       } else {
-        this.error(
-          `Operation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
+        this.error(`Operation failed: ${getErrorMessage(error)}`);
       }
     }
   }
@@ -142,9 +141,7 @@ export default class AIKeysCommand extends BaseCommand {
         `${chalk.green('✓')} Encryption key backup created successfully`
       );
     } catch (error) {
-      this.error(
-        `Failed to create backup: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      this.error(`Failed to create backup: ${getErrorMessage(error)}`);
     }
   }
 

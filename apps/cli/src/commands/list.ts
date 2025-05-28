@@ -708,7 +708,8 @@ export default class ListCommand extends BaseCommand {
     // Show output if job is completed
     if (job.status === 'completed' && job.outputFile && fs.existsSync(job.outputFile)) {
       this.log('\n' + chalk.blue('Output:'));
-      const output = fs.readFileSync(job.outputFile, 'utf8');
+      const content = fs.readFileSync(job.outputFile, 'utf8');
+      const output = typeof content === 'string' ? content : content.toString('utf8');
       this.log(output);
     }
   }

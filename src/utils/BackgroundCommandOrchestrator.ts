@@ -2,8 +2,8 @@ import { spawn, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { JobManager, BackgroundJob, getPerformanceMonitor } from './PerformanceMonitor';
-import { Logger } from './Logger';
+import { JobManager, BackgroundJob } from './PerformanceMonitor';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 import chalk = require('chalk');
 import { EventEmitter } from 'events';
 
@@ -36,7 +36,7 @@ export interface ProgressUpdate {
   jobId: string;
   progress: number;
   stage: string;
-  details?: any;
+  details?: unknown;
   timestamp: number;
 }
 
@@ -178,7 +178,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   /**
    * Determine if a command should run in background based on various factors
    */
-  public shouldRunInBackground(command: string, args: string[], flags: Record<string, any>): boolean {
+  public shouldRunInBackground(command: string, args: string[], flags: Record<string, unknown>): boolean {
     // Always return false if orchestrator is disabled
     if (process.env.WALTODO_SKIP_ORCHESTRATOR === 'true' || process.env.WALTODO_NO_BACKGROUND === 'true') {
       return false;
@@ -218,7 +218,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   public async executeInBackground(
     command: string,
     args: string[],
-    flags: Record<string, any>,
+    flags: Record<string, unknown>,
     options: BackgroundOptions = {}
   ): Promise<string> {
     // Check if orchestrator is disabled via environment variables
@@ -341,8 +341,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     if (!process.stdout && !process.stderr) return;
     
     let outputBuffer = '';
-    let progressRegex = /PROGRESS:(\d+):(.*)/;
-    let stageRegex = /STAGE:(.*)/;
+    const progressRegex = /PROGRESS:(\d+):(.*)/;
+    const stageRegex = /STAGE:(.*)/;
     
     const processOutput = (data: Buffer) => {
       outputBuffer += data.toString();
@@ -355,8 +355,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         
         // Parse progress updates
         const progressMatch = line.match(progressRegex);
-        if (progressMatch) {
-          const progress = parseInt(progressMatch[1]);
+        if (progressMatch && progressMatch[1] && progressMatch[2]) {
+          const progress = parseInt(progressMatch[1], 10);
           const details = progressMatch[2];
           this.jobManager.updateProgress(job.id, progress);
           
@@ -372,7 +372,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         
         // Parse stage updates
         const stageMatch = line.match(stageRegex);
-        if (stageMatch) {
+        if (stageMatch && stageMatch[1]) {
           const stage = stageMatch[1];
           this.jobManager.updateJob(job.id, {
             metadata: {
@@ -451,7 +451,7 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
         this.activeProcesses.delete(jobId);
         return this.jobManager.cancelJob(jobId);
       } catch (error) {
-        this.logger.error(`Failed to cancel job ${jobId}:`, error);
+        this.logger.error(`Failed to cancel job ${jobId}:`, error instanceof Error ? error : new Error(String(error)));
         return false;
       }
     }

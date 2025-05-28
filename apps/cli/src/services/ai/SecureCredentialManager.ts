@@ -120,7 +120,8 @@ export class SecureCredentialManager {
       }
 
       // Load the key
-      this.encryptionKey = fs.readFileSync(this.keyPath);
+      const key = fs.readFileSync(this.keyPath);
+      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
     } catch (_error) {
       throw new CLIError(
         `Failed to initialize encryption key: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -136,7 +137,8 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.keyMetadataPath)) {
         const metadataRaw = fs.readFileSync(this.keyMetadataPath, 'utf8');
-        const metadata = JSON.parse(metadataRaw);
+        const metadataStr = typeof metadataRaw === 'string' ? metadataRaw : metadataRaw.toString('utf8');
+        const metadata = JSON.parse(metadataStr);
         
         // Validate metadata structure
         if (typeof metadata === 'object' && metadata !== null) {
@@ -254,7 +256,8 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const credentials = this.decrypt(encryptedData);
+        const dataBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData);
+        const credentials = this.decrypt(dataBuffer);
         if (credentials) {
           this.credentials = JSON.parse(credentials.toString());
         }
@@ -920,7 +923,8 @@ export class SecureCredentialManager {
         credentialsExisted = true;
         try {
           const encryptedData = fs.readFileSync(this.credentialsPath);
-          decryptedData = this.decrypt(encryptedData);
+          const dataBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData);
+          decryptedData = this.decrypt(dataBuffer);
           
           if (!decryptedData) {
             throw new Error('Failed to decrypt existing credentials with current key');
@@ -1228,15 +1232,16 @@ export class SecureCredentialManager {
       fs.copyFileSync(backupInfo.path, this.keyPath);
       fs.chmodSync(this.keyPath, 0o600);
 
-      const backupMetadata = JSON.parse(
-        fs.readFileSync(backupInfo.metadataBackupPath, 'utf8')
-      );
+      const metadataContent = fs.readFileSync(backupInfo.metadataBackupPath, 'utf8');
+      const metadataStr = typeof metadataContent === 'string' ? metadataContent : metadataContent.toString('utf8');
+      const backupMetadata = JSON.parse(metadataStr);
       fs.writeFileSync(this.keyMetadataPath, JSON.stringify(backupMetadata), {
         mode: 0o600,
       });
 
       // Load the restored key
-      this.encryptionKey = fs.readFileSync(this.keyPath);
+      const key = fs.readFileSync(this.keyPath);
+      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
 
       // Re-load credentials with the restored key
       this.loadCredentials();
