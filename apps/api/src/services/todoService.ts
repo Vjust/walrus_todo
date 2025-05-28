@@ -32,7 +32,7 @@ export class TodoService {
     try {
       const filePath = path.join(this.dataPath, this.getWalletFileName(wallet));
       const data = await fs.readFile(filePath, 'utf-8');
-      const parsed = JSON.parse(data);
+      const parsed = JSON.parse(data.toString());
       
       // Handle both array format and object format
       if (Array.isArray(parsed)) {

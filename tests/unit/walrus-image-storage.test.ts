@@ -39,7 +39,7 @@ jest.mock('../../apps/cli/src/utils/sui-keystore', () => ({
 describe('WalrusImageStorage', () => {
   let mockWalrusClient: CompleteWalrusClientMock;
   let mockSuiClient: jest.Mocked<InstanceType<typeof SuiClient>>;
-  let mockKeystoreSigner: jest.MockedObject<typeof KeystoreSigner>;
+  let mockKeystoreSigner: jest.Mocked<typeof KeystoreSigner>;
   let storage: ReturnType<typeof createWalrusImageStorage>;
 
   const mockImagePath = '/path/to/image.jpg';

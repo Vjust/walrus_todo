@@ -10,7 +10,7 @@ import { AIProvider } from '../../types/adapters/AIModelAdapter';
 /**
  * Convert an AIProvider enum value to its string representation
  */
-export function getProviderString(provider: AIProvider): string {
+export function getProviderString(provider: AIProvider): 'xai' | 'openai' | 'anthropic' | 'ollama' {
   // For enum values, convert to string appropriately
   switch (provider) {
     case AIProvider.XAI:

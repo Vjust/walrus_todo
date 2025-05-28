@@ -10,7 +10,7 @@ jest.mock('@mysten/walrus');
 describe('ExpiryMonitor', () => {
   // let monitor: ExpiryMonitor; // Commented out - will be used when tests are implemented
   let _mockVaultManager: jest.Mocked<VaultManager>;
-  let _mockWalrusClient: jest.MockedObject<WalrusClientExt>;
+  let _mockWalrusClient: jest.Mocked<WalrusClientExt>;
   let _mockWarningHandler: jest.Mock;
   let _mockRenewalHandler: jest.Mock;
   let mockDate: Date;

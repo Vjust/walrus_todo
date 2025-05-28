@@ -18,7 +18,7 @@ jest.mock('../../utils/Logger');
 describe('Storage Allocation Integration', () => {
   // ExpiryMonitor instantiated in tests
   // StorageManager instantiated in tests
-  let mockWalrusClient: jest.MockedObject<WalrusClientExt>;
+  let mockWalrusClient: jest.Mocked<WalrusClientExt>;
   let mockVaultManager: jest.Mocked<VaultManager>;
   let mockSigner: jest.Mocked<Signer>;
   let mockLogger: jest.Mocked<Logger>;

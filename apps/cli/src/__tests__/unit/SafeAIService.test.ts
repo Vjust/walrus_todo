@@ -11,14 +11,17 @@ import { AIService } from '../../services/ai/aiService';
 import { Logger } from '../../utils/Logger';
 import { AIProvider } from '../../types/adapters/AIModelAdapter';
 
-// Using real implementations for better test coverage
-// Logger can be mocked as it's primarily for output
+// Mock Logger module
+jest.mock('../../utils/Logger');
+jest.mock('../../services/ai/aiService');
 
 
 describe('SafeAIService', () => {
   let safeAIService: SafeAIService;
   let aiService: AIService;
   let logger: Logger;
+  let mockLogger: jest.Mocked<Logger>;
+  let mockAIService: jest.Mocked<AIService>;
 
   const sampleTodos: Todo[] = [
     {
@@ -57,10 +60,10 @@ describe('SafeAIService', () => {
       error: jest.fn(),
       addHandler: jest.fn(),
       clearHandlers: jest.fn(),
-      getInstance: jest.fn(() => mockLogger),
     } as unknown as jest.Mocked<Logger>;
 
-    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
+    // Mock Logger.getInstance to return our mock
+    (Logger.getInstance as jest.MockedFunction<typeof Logger.getInstance>).mockReturnValue(mockLogger);
 
     // Mock AIService
     mockAIService = {
@@ -82,7 +85,7 @@ describe('SafeAIService', () => {
       analyzeWithVerification: jest.fn(),
     } as unknown as jest.Mocked<AIService>;
 
-    (AIService as jest.Mock).mockImplementation(() => mockAIService);
+    (AIService as jest.MockedClass<typeof AIService>).mockImplementation(() => mockAIService);
 
     safeAIService = new SafeAIService();
   });

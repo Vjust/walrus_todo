@@ -19,7 +19,7 @@ export interface CacheOperation {
   id: string;
   type: 'upload' | 'blob-cache' | 'storage-allocation' | 'batch-process' | 'sync' | 'continuous-sync' | 'ai-summarize' | 'ai-categorize' | 'ai-prioritize' | 'ai-suggest' | 'ai-analyze';
   data: any;
-  priority: 'low' | 'normal' | 'high';
+  priority: 'low' | 'medium' | 'high';
   timeout?: number;
 }
 

@@ -3,7 +3,7 @@ import './express';
 import { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler } from './express';
 
 // Re-export the enhanced Express types
-export { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler };
+export type { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler };
 
 export interface AuthenticatedRequest extends Request {
   wallet?: string;
