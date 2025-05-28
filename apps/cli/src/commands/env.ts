@@ -521,7 +521,8 @@ export default class EnvironmentCommand extends BaseCommand {
       let envContent = '';
       
       if (fs.existsSync(envPath)) {
-        envContent = fs.readFileSync(envPath, 'utf-8');
+        const content = fs.readFileSync(envPath, 'utf-8');
+        envContent = typeof content === 'string' ? content : content.toString('utf-8');
       }
 
       // Parse existing content

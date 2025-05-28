@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
+import { ClientOnly } from '@/components/ClientOnly';
 
 type NavbarProps = {
   currentPage: string;

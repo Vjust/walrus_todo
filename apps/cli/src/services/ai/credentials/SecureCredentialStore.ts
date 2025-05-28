@@ -135,7 +135,8 @@ export class SecureCredentialStore {
         }
       } else {
         try {
-          this.masterKey = fs.readFileSync(this.keyFile);
+          const key = fs.readFileSync(this.keyFile);
+          this.masterKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
 
           // Validate key length
           if (
@@ -156,7 +157,8 @@ export class SecureCredentialStore {
       if (fs.existsSync(this.storeFile)) {
         try {
           const data = fs.readFileSync(this.storeFile);
-          await this.loadCredentials(data);
+          const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+          await this.loadCredentials(dataBuffer);
         } catch (_error) {
           this.logger.error(`Failed to load credentials: ${_error}`);
           // Initialize with empty credentials on error

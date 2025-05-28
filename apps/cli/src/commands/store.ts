@@ -935,7 +935,8 @@ export default class StoreCommand extends BaseCommand {
       if (fs.existsSync(blobMappingsFile)) {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
-          mappings = JSON.parse(content);
+          const contentStr = typeof content === 'string' ? content : content.toString('utf8');
+          mappings = JSON.parse(contentStr);
         } catch (error) {
           this.warning(
             `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`

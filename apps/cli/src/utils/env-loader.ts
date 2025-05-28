@@ -100,7 +100,8 @@ function loadDotEnvFile(
         logger.info(`Loading environment variables from ${envPath}`);
       }
 
-      const envConfig = dotenv.parse(fs.readFileSync(envPath));
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const envConfig = dotenv.parse(envContent);
 
       // Set environment variables, allowing .env to take precedence
       Object.entries(envConfig).forEach(([key, value]) => {

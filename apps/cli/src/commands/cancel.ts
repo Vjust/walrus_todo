@@ -118,7 +118,7 @@ export default class CancelCommand extends BaseCommand {
     this.log(chalk.dim(`  Progress: ${job.progress}%`));
     
     const duration = Date.now() - job.startTime;
-    this.log(chalk.dim(`  Running for: ${this.formatDuration(duration)}`));
+    this.log(chalk.dim(`  Running for: ${this.formatJobDuration(duration)}`));
 
     try {
       // Attempt graceful cancellation first
@@ -212,7 +212,7 @@ export default class CancelCommand extends BaseCommand {
       this.log(chalk.yellow(`Would cancel ${jobsToCancel.length} job(s):`));
       jobsToCancel.forEach(job => {
         const duration = Date.now() - job.startTime;
-        this.log(chalk.dim(`  • ${job.id} - ${job.command} (${this.formatDuration(duration)})`));
+        this.log(chalk.dim(`  • ${job.id} - ${job.command} (${this.formatJobDuration(duration)})`));
       });
       return;
     }
@@ -221,12 +221,12 @@ export default class CancelCommand extends BaseCommand {
     this.log(chalk.blue(`🛑 Found ${jobsToCancel.length} job(s) to cancel:`));
     jobsToCancel.forEach(job => {
       const duration = Date.now() - job.startTime;
-      this.log(chalk.dim(`  • ${job.id} - ${job.command} ${job.args.join(' ')} (${this.formatDuration(duration)})`));
+      this.log(chalk.dim(`  • ${job.id} - ${job.command} ${job.args.join(' ')} (${this.formatJobDuration(duration)})`));
     });
 
     // Confirm bulk operation
     if (!flags.confirm && !flags.all) {
-      const answer = await this.prompt('Are you sure you want to cancel these jobs? (y/N)');
+      const answer = await this.simplePrompt('Are you sure you want to cancel these jobs? (y/N)');
       if (!answer.toLowerCase().startsWith('y')) {
         this.log(chalk.yellow('❌ Cancellation aborted'));
         return;
@@ -388,7 +388,7 @@ export default class CancelCommand extends BaseCommand {
     this.log(`Job ID: ${chalk.cyan(job.id)}`);
     this.log(`Command: ${chalk.cyan(job.command)} ${job.args.join(' ')}`);
     this.log(`Final Status: ${chalk.gray('Cancelled')}`);
-    this.log(`Runtime: ${chalk.yellow(this.formatDuration(duration))}`);
+    this.log(`Runtime: ${chalk.yellow(this.formatJobDuration(duration))}`);
     
     if (job.processedItems !== undefined && job.totalItems !== undefined) {
       this.log(`Progress: ${chalk.yellow(`${job.processedItems}/${job.totalItems} items (${job.progress}%)`)})`);
@@ -405,9 +405,9 @@ export default class CancelCommand extends BaseCommand {
   }
 
   /**
-   * Format duration
+   * Format duration for display
    */
-  private formatDuration(ms: number): string {
+  private formatJobDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
     if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
@@ -417,7 +417,7 @@ export default class CancelCommand extends BaseCommand {
   /**
    * Simple prompt utility
    */
-  private async prompt(message: string): Promise<string> {
+  private async simplePrompt(message: string): Promise<string> {
     process.stdout.write(chalk.yellow(`${message} `));
     
     return new Promise((resolve) => {

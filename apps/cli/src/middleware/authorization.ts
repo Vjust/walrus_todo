@@ -28,7 +28,8 @@ async function getAuthenticatedUser() {
 
   try {
     const data = fs.readFileSync(tokenPath, 'utf-8');
-    const authInfo = JSON.parse(data);
+    const dataStr = typeof data === 'string' ? data : data.toString('utf-8');
+    const authInfo = JSON.parse(dataStr);
 
     // Validate token - check for token property safely
     if (typeof authInfo === 'object' && authInfo !== null && 'token' in authInfo && typeof (authInfo as Record<string, unknown>).token === 'string') {

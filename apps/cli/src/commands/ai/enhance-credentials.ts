@@ -10,6 +10,7 @@ import {
   CredentialType,
 } from '../../types/adapters/AICredentialAdapter';
 import chalk = require('chalk');
+import { getErrorMessage, hasCode } from '../../utils/type-guards';
 
 export default class Credentials extends BaseCommand {
   static description =
@@ -210,12 +211,15 @@ export default class Credentials extends BaseCommand {
         );
       }
     } catch (error) {
-      if (error.code === 'CREDENTIAL_VERIFICATION_FAILED') {
-        this.log(`${chalk.yellow('\u26a0')} ${error.message}`);
-      } else if (error.code === 'INVALID_API_KEY_FORMAT') {
-        this.error(`${chalk.red('\u2717')} ${error.message}`);
+      const errorCode = hasCode(error) ? error.code : undefined;
+      const errorMessage = getErrorMessage(error);
+      
+      if (errorCode === 'CREDENTIAL_VERIFICATION_FAILED') {
+        this.log(`${chalk.yellow('\u26a0')} ${errorMessage}`);
+      } else if (errorCode === 'INVALID_API_KEY_FORMAT') {
+        this.error(`${chalk.red('\u2717')} ${errorMessage}`);
       } else {
-        this.error(error.message);
+        this.error(errorMessage);
       }
     }
   }
@@ -242,7 +246,7 @@ export default class Credentials extends BaseCommand {
         `${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} removed successfully`
       );
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -345,7 +349,7 @@ export default class Credentials extends BaseCommand {
         `- Set expiry: ${chalk.cyan('walrus_todo ai credentials add <provider> --key EXISTING_KEY --expiry <days>')}`
       );
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -400,7 +404,7 @@ export default class Credentials extends BaseCommand {
         chalk.gray('Note: Blockchain verification is currently in preview mode')
       );
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -470,10 +474,13 @@ export default class Credentials extends BaseCommand {
         );
       }
     } catch (error) {
-      if (error.code === 'INVALID_API_KEY_FORMAT') {
-        this.error(`${chalk.red('\u2717')} ${error.message}`);
+      const errorCode = hasCode(error) ? error.code : undefined;
+      const errorMessage = getErrorMessage(error);
+      
+      if (errorCode === 'INVALID_API_KEY_FORMAT') {
+        this.error(`${chalk.red('\u2717')} ${errorMessage}`);
       } else {
-        this.error(error.message);
+        this.error(errorMessage);
       }
     }
   }

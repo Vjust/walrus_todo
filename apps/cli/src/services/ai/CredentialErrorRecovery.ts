@@ -73,12 +73,13 @@ export class CredentialErrorRecovery {
     if (fs.existsSync(keyPath)) {
       try {
         const key = fs.readFileSync(keyPath);
-        if (opts.validateKeySize && key.length !== 32) {
-          logger.warn(`Invalid key size: ${key.length} bytes, expected 32`);
+        const keyBuffer = Buffer.isBuffer(key) ? key : Buffer.from(key);
+        if (opts.validateKeySize && keyBuffer.length !== 32) {
+          logger.warn(`Invalid key size: ${keyBuffer.length} bytes, expected 32`);
           // Regenerate key
           return this.generateAndSaveKey(keyPath, opts);
         }
-        return key;
+        return keyBuffer;
       } catch (readError) {
         logger.warn(`Failed to read existing key: ${readError}`);
         if (!opts.allowTestFallbacks) {

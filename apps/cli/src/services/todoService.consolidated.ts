@@ -211,7 +211,8 @@ export class TodoService {
         path.join(this.todosDir, `${listName}${STORAGE_CONFIG.FILE_EXT}`),
         'utf8'
       );
-      return JSON.parse(data) as TodoList;
+      const dataStr = typeof data === 'string' ? data : data.toString('utf8');
+      return JSON.parse(dataStr) as TodoList;
     } catch (err) {
       // Return null instead of throwing if list doesn't exist
       return null;

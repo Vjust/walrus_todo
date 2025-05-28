@@ -283,8 +283,10 @@ export default class CompleteCommand extends BaseCommand {
         arguments: [txb.object(nftObjectId)],
       });
 
+      const serialized = txb.serialize();
+      const transactionBlock = typeof serialized === 'string' ? serialized : serialized.toString('base64');
       const dryRunResult = await (suiClient as { dryRunTransactionBlock: (params: { transactionBlock: string }) => Promise<{ effects?: { gasUsed?: { computationCost?: string; storageCost?: string } } }> }).dryRunTransactionBlock({
-        transactionBlock: txb.serialize().toString(),
+        transactionBlock,
       });
 
       return {
@@ -428,7 +430,8 @@ export default class CompleteCommand extends BaseCommand {
       if (fs.existsSync(blobMappingsFile)) {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
-          mappings = JSON.parse(content);
+          const contentStr = typeof content === 'string' ? content : content.toString('utf8');
+          mappings = JSON.parse(contentStr);
         } catch (error) {
           this.warning(
             `Error reading blob mappings file: ${error instanceof Error ? error.message : String(error)}`
@@ -574,9 +577,9 @@ export default class CompleteCommand extends BaseCommand {
       
       // Look for batch progress indicators
       const batchMatches = output.match(/Completing \[(\d+)\/(\d+)\]/i);
-      if (batchMatches) {
-        const completed = parseInt(batchMatches[1]);
-        const total = parseInt(batchMatches[2]);
+      if (batchMatches && batchMatches[1] && batchMatches[2]) {
+        const completed = parseInt(batchMatches[1], 10);
+        const total = parseInt(batchMatches[2], 10);
         const progressPercentage = Math.min(100, (completed / total) * 100);
         jobManager.updateProgress(jobId, progressPercentage, completed, total);
       }
