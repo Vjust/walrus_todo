@@ -11,7 +11,7 @@ describe('CLI Commands Integration Tests', () => {
   beforeAll(async () => {
     // Setup real service instances in test mode
     walrusStorage = createWalrusStorage('testnet', true); // Force mock mode for tests
-    todoService = new TodoService(configService, walrusStorage);
+    todoService = new TodoService();
   });
 
   afterAll(async () => {
@@ -102,7 +102,7 @@ describe('CLI Commands Integration Tests', () => {
 
       // Create new service instance (simulating restart)
       const newWalrusStorage = createWalrusStorage('testnet', true);
-      const newTodoService = new TodoService(configService, newWalrusStorage);
+      const newTodoService = new TodoService();
 
       // Should be able to retrieve the todo
       const retrievedTodos = await newTodoService.listTodos();

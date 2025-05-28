@@ -153,7 +153,7 @@ export default class Credentials extends BaseCommand {
       // The type cast is needed because the AIProvider in SecureCredentialService
       // is different from the AIProvider enum in AIModelAdapter
       const result = await secureCredentialService.storeCredential(
-        providerString as 'openai' | 'anthropic' | 'xai',
+        providerString,
         apiKey,
         {
           permissionLevel,
@@ -285,7 +285,7 @@ export default class Credentials extends BaseCommand {
       // First check if credential exists
       const providerString = getProviderString(providerEnum);
       if (
-        !(await secureCredentialService.hasCredential(providerString as 'openai' | 'anthropic' | 'xai'))
+        !(await secureCredentialService.hasCredential(providerString))
       ) {
         throw new CLIError(`No credential found for ${provider}`);
       }
@@ -333,7 +333,7 @@ export default class Credentials extends BaseCommand {
       const providerEnum = getProviderEnum(provider);
       const providerString = getProviderString(providerEnum);
       const verified = await secureCredentialService.verifyCredential(
-        providerString as 'openai' | 'anthropic' | 'xai'
+        providerString
       );
 
       if (verified) {
@@ -448,7 +448,7 @@ export default class Credentials extends BaseCommand {
       const providerEnum = getProviderEnum(provider);
       const providerString = getProviderString(providerEnum);
       const result = await secureCredentialService.updatePermissions(
-        providerString as 'openai' | 'anthropic' | 'xai',
+        providerString,
         permissionLevel
       );
 

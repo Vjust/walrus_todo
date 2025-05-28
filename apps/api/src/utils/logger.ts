@@ -1,42 +1,80 @@
 import winston from 'winston';
 import { config } from '../config';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Create logger instance
+// Ensure logs directory exists
+const logsDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+
+// Validate and normalize log level
+const getValidLogLevel = (level: string): string => {
+  const validLevels = ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'];
+  const normalizedLevel = level.toLowerCase();
+  return validLevels.includes(normalizedLevel) ? normalizedLevel : 'info';
+};
+
+// Create logger instance with safe configuration
 export const logger = winston.createLogger({
-  level: config.logging.level,
+  level: getValidLogLevel(config.logging.level),
   format: winston.format.combine(
-    winston.format.timestamp(),
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
   defaultMeta: { service: 'waltodo-api' },
   transports: [
-    // Write to all logs with level `info` and below to `combined.log`
+    // Write error logs to error.log
     new winston.transports.File({ 
-      filename: 'logs/error.log', 
-      level: 'error'
+      filename: path.join(logsDir, 'error.log'), 
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+      )
     }),
+    // Write all logs to combined.log
     new winston.transports.File({ 
-      filename: 'logs/combined.log'
+      filename: path.join(logsDir, 'combined.log'),
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+      )
     })
   ],
   handleExceptions: true,
-  handleRejections: true
+  handleRejections: true,
+  exitOnError: false
 });
 
-// If we're not in production then log to the `console` with the format:
-// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
+// Add console transport for development and non-production environments
 if (config.env !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-      winston.format.printf(({ timestamp, level, message, ...meta }) => {
-        const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
-        return `${timestamp} [${level}]: ${message} ${metaStr}`;
-      })
-    )
-  }));
+  try {
+    logger.add(new winston.transports.Console({
+      level: getValidLogLevel(config.logging.level),
+      handleExceptions: true,
+      format: winston.format.combine(
+        winston.format.colorize({ all: true }),
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.printf(({ timestamp, level, message, service, ...meta }) => {
+          // Safely handle meta object
+          const metaStr = Object.keys(meta).length > 0 ? 
+            `\n${JSON.stringify(meta, null, 2)}` : '';
+          const serviceTag = service ? `[${service}] ` : '';
+          return `${timestamp} ${serviceTag}${level}: ${message}${metaStr}`;
+        })
+      )
+    }));
+  } catch (error) {
+    // Fallback to basic console logging if Winston console transport fails
+    console.error('Failed to add console transport to logger:', error);
+  }
 }
 
 export default logger;

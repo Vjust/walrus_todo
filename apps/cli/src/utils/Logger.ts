@@ -46,10 +46,12 @@ export class Logger {
         ? `\n${JSON.stringify(entry.error, null, 2)}`
         : '';
       const component = this.componentName ? `[${this.componentName}] ` : '';
+      const logMessage = `[${entry.timestamp}] ${component}${entry.message}${context}${error}`;
+      
+      // Safely map log levels to console methods with type guards
+      const consoleMethod = this.getConsoleMethod(entry.level);
       // eslint-disable-next-line no-console
-      console[entry.level](
-        `[${entry.timestamp}] ${component}${entry.message}${context}${error}`
-      );
+      consoleMethod(logMessage);
     });
   }
 
@@ -58,6 +60,27 @@ export class Logger {
       Logger.instance = new Logger();
     }
     return Logger.instance;
+  }
+
+  /**
+   * Safely get console method for log level
+   * @param level Log level
+   * @returns Console method function
+   */
+  private getConsoleMethod(level: LogLevel): (...args: any[]) => void {
+    switch (level) {
+      case LogLevel.DEBUG:
+        return console.debug;
+      case LogLevel.INFO:
+        return console.info;
+      case LogLevel.WARN:
+        return console.warn;
+      case LogLevel.ERROR:
+        return console.error;
+      default:
+        // Fallback to console.log for unknown levels
+        return console.log;
+    }
   }
 
   /**
@@ -88,6 +111,14 @@ export class Logger {
     context?: Record<string, unknown>,
     error?: Error
   ): void {
+    // Validate parameters
+    if (!level || !Object.values(LogLevel).includes(level)) {
+      level = LogLevel.INFO; // Default fallback
+    }
+    if (typeof message !== 'string') {
+      message = String(message || ''); // Convert to string
+    }
+
     const entry: LogEntry = {
       level,
       message,
@@ -97,14 +128,22 @@ export class Logger {
 
     if (error) {
       entry.error = {
-        name: error.name,
+        name: error.name || 'Error',
         code: error instanceof WalrusError ? error.code : 'UNKNOWN_ERROR',
-        message: error.message,
+        message: error.message || 'No error message provided',
         stack: error.stack,
       };
     }
 
-    this.logHandlers.forEach(handler => handler(entry));
+    // Safely execute handlers with error handling
+    this.logHandlers.forEach(handler => {
+      try {
+        handler(entry);
+      } catch (handlerError) {
+        // Prevent handler errors from breaking logging
+        console.error('Logger handler error:', handlerError);
+      }
+    });
   }
 
   /**

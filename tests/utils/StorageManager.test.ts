@@ -16,7 +16,7 @@ describe('StorageManager', () => {
   let manager: StorageManager;
   let mockWalrusClient: MockWalrusClient;
   let mockSuiClient: unknown;
-  let mockLogger: jest.MockedObject<Logger>;
+  let mockLogger: jest.Mocked<Logger>;
 
   const testConfig = {
     minAllocation: 1000n,

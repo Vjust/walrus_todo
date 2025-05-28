@@ -15,7 +15,7 @@ jest.mock('../../utils/Logger');
 describe('StorageManager', () => {
   let manager: StorageManager;
   let mockWalrusClient: CompleteWalrusClientMock;
-  let mockLogger: jest.MockedObject<Logger>;
+  let mockLogger: jest.Mocked<Logger>;
 
   const testConfig = {
     minAllocation: 1000n,

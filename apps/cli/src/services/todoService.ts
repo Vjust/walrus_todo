@@ -349,6 +349,34 @@ export class TodoService {
   }
 
   /**
+   * Marks a todo as completed by its ID
+   *
+   * @param {string} todoId - ID of the todo to complete
+   * @returns {Promise<Todo>} The completed todo
+   * @throws {CLIError} If the todo doesn't exist
+   */
+  async completeTodo(todoId: string): Promise<Todo> {
+    // Find the todo across all lists
+    const foundTodo = await this.findTodoByIdOrTitle(todoId);
+    if (!foundTodo) {
+      throw new CLIError(`Todo with ID "${todoId}" not found`, 'TODO_NOT_FOUND');
+    }
+
+    const { listName, todo } = foundTodo;
+    
+    // Update the todo to completed status
+    const updatedTodo = {
+      ...todo,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.updateTodo(listName, todoId, updatedTodo);
+    return updatedTodo;
+  }
+
+  /**
    * Deletes a todo from a specified list
    *
    * @param {string} listName - Name of the list containing the todo

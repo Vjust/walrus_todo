@@ -55,8 +55,20 @@ const nextConfig = {
         util: false,
         buffer: false,
         process: false,
+        path: false,
+        os: false,
+        http: false,
+        https: false,
+        child_process: false,
+        worker_threads: false,
       };
     }
+
+    // Ensure proper module resolution for all environments
+    config.resolve.modules = [
+      'node_modules',
+      ...(config.resolve.modules || []),
+    ];
 
     // Performance optimizations with hydration safety
     config.optimization = {
@@ -101,15 +113,11 @@ const nextConfig = {
       })
     );
 
-    // Prevent module resolution issues that can cause hydration mismatches
-    if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        // Ensure consistent module resolution
-        'react': require.resolve('react'),
-        'react-dom': require.resolve('react-dom'),
-      };
-    }
+    // Ensure proper module resolution without forcing specific paths
+    config.resolve.modules = [
+      'node_modules',
+      ...(config.resolve.modules || []),
+    ];
 
     return config;
   },
