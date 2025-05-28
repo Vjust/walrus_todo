@@ -1,10 +1,10 @@
-import type { WalrusClient } from '../../apps/cli/src/types/client';
+import type { WalrusClientExt } from '../../apps/cli/src/types/client';
 import type { BlobInfo, BlobObject, BlobMetadataShape } from '../../apps/cli/src/types/walrus';
 
 /**
- * Complete mock implementation of WalrusClient for testing
+ * Complete mock implementation of WalrusClientExt for testing
  */
-export interface CompleteWalrusClientMock extends WalrusClient {
+export interface CompleteWalrusClientMock extends WalrusClientExt {
   getConfig: jest.Mock<Promise<{ network: string; version: string; maxSize: number }>, []>;
   getWalBalance: jest.Mock<Promise<string>, []>;
   getStorageUsage: jest.Mock<Promise<{ used: string; total: string }>, []>;
@@ -17,9 +17,19 @@ export interface CompleteWalrusClientMock extends WalrusClient {
   getBlobSize: jest.Mock<Promise<number>, [string]>;
   storageCost: jest.Mock<Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>, [number, number]>;
   executeCreateStorageTransaction: jest.Mock<Promise<{ digest: string; storage: any }>, [any]>;
+  executeCertifyBlobTransaction: jest.Mock<Promise<{ digest: string }>, [any]>;
+  executeWriteBlobAttributesTransaction: jest.Mock<Promise<{ digest: string }>, [any]>;
+  deleteBlob: jest.Mock<(tx: any) => Promise<{ digest: string }>, [any]>;
+  executeRegisterBlobTransaction: jest.Mock<Promise<{ blob: BlobObject; digest: string }>, [any]>;
+  getStorageConfirmationFromNode: jest.Mock<Promise<any>, [any]>;
+  createStorageBlock: jest.Mock<Promise<any>, [number, number]>;
+  createStorage: jest.Mock<(tx: any) => Promise<{ digest: string; storage: any }>, [any]>;
   getStorageProviders: jest.Mock<Promise<string[]>, [any]>;
   reset: jest.Mock<void, []>;
   connect: jest.Mock<Promise<void>, []>;
+  experimental?: {
+    getBlobData: jest.Mock<Promise<Uint8Array | BlobObject>, []>;
+  };
 }
 
 /**
@@ -116,6 +126,50 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         storage_size: '2048',
       },
     }),
+    executeCertifyBlobTransaction: jest.fn().mockResolvedValue({
+      digest: 'mock-certify-digest',
+    }),
+    executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({
+      digest: 'mock-attributes-digest',
+    }),
+    deleteBlob: jest.fn().mockImplementation(() => (tx: any) => Promise.resolve({
+      digest: 'mock-delete-digest',
+    })),
+    executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
+      blob: {
+        id: { id: 'mock-blob-id' },
+        blob_id: 'mock-blob-id',
+        registered_epoch: 100,
+        certified_epoch: 150,
+        size: BigInt(1024),
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        storage: {
+          id: { id: 'storage1' },
+          start_epoch: 100,
+          end_epoch: 200,
+          storage_size: BigInt(2048),
+          used_size: BigInt(1024),
+        },
+        deletable: true,
+      },
+      digest: 'mock-register-digest',
+    }),
+    getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
+      primary_verification: true,
+      secondary_verification: true,
+      provider: 'mock-provider',
+      signature: 'mock-signature',
+    }),
+    createStorageBlock: jest.fn().mockResolvedValue({}),
+    createStorage: jest.fn().mockImplementation(() => (tx: any) => Promise.resolve({
+      digest: 'mock-create-storage-digest',
+      storage: {
+        id: { id: 'storage1' },
+        start_epoch: 100,
+        end_epoch: 200,
+        storage_size: '2048',
+      },
+    })),
     getStorageProviders: jest.fn().mockResolvedValue([
       'provider1',
       'provider2',
@@ -124,6 +178,9 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     ]),
     reset: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
+    experimental: {
+      getBlobData: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
+    },
   };
 }
 

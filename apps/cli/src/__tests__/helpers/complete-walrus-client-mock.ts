@@ -19,14 +19,17 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
   executeCreateStorageTransaction: jest.Mock<Promise<{ digest: string; storage: any }>, [any]>;
   executeCertifyBlobTransaction: jest.Mock<Promise<{ digest: string }>, [any]>;
   executeWriteBlobAttributesTransaction: jest.Mock<Promise<{ digest: string }>, [any]>;
-  deleteBlob: jest.Mock<any, [any]>;
+  deleteBlob: jest.Mock<(tx: any) => Promise<{ digest: string }>, [any]>;
   executeRegisterBlobTransaction: jest.Mock<Promise<{ blob: BlobObject; digest: string }>, [any]>;
   getStorageConfirmationFromNode: jest.Mock<Promise<any>, [any]>;
   createStorageBlock: jest.Mock<Promise<any>, [number, number]>;
-  createStorage: jest.Mock<any, [any]>;
+  createStorage: jest.Mock<(tx: any) => Promise<{ digest: string; storage: any }>, [any]>;
   getStorageProviders: jest.Mock<Promise<string[]>, [any]>;
   reset: jest.Mock<void, []>;
   connect: jest.Mock<Promise<void>, []>;
+  experimental?: {
+    getBlobData: jest.Mock<Promise<Uint8Array | BlobObject>, []>;
+  };
 }
 
 /**
@@ -135,7 +138,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
     executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({
       digest: 'mock-attributes-digest',
     }),
-    deleteBlob: jest.fn().mockImplementation(() => jest.fn().mockResolvedValue({
+    deleteBlob: jest.fn().mockImplementation(() => (tx: any) => Promise.resolve({
       digest: 'mock-delete-digest',
     })),
     executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
@@ -162,14 +165,20 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
       epoch: 150,
     }),
     createStorageBlock: jest.fn().mockResolvedValue({}),
-    createStorage: jest.fn().mockImplementation(() => jest.fn().mockResolvedValue({
-      id: { id: 'storage1' },
-      start_epoch: 100,
-      end_epoch: 200,
-      storage_size: BigInt(2048),
+    createStorage: jest.fn().mockImplementation(() => (tx: any) => Promise.resolve({
+      digest: 'mock-create-storage-digest',
+      storage: {
+        id: { id: 'storage1' },
+        start_epoch: 100,
+        end_epoch: 200,
+        storage_size: '2048',
+      },
     })),
     reset: jest.fn(),
     connect: jest.fn().mockResolvedValue(undefined),
+    experimental: {
+      getBlobData: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
+    },
   };
 }
 
