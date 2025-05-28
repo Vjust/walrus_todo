@@ -876,7 +876,7 @@ class CompleteCommand extends BaseCommand {
         {
           maxRetries: 3,
           initialDelay: 1000,
-          onRetry: (error, attempt, _delay) => {
+          onRetry: (error: any, attempt: number, _delay: number) => {
             const errorMessage =
               error instanceof Error
                 ? error.message
@@ -935,7 +935,7 @@ class CompleteCommand extends BaseCommand {
             options: { showContent: true },
           });
 
-          let timeoutId: NodeJS.Timeout;
+          let timeoutId: NodeJS.Timeout | undefined;
           const timeoutPromise = new Promise<never>((_, reject) => {
             timeoutId = setTimeout(() => {
               reject(new Error('NFT verification timed out after 10 seconds'));
@@ -946,7 +946,7 @@ class CompleteCommand extends BaseCommand {
             verificationPromise,
             timeoutPromise,
           ]);
-          clearTimeout(timeoutId);
+          if (timeoutId) clearTimeout(timeoutId);
 
           const content = result.data?.content as {
             fields?: { completed?: boolean };
@@ -968,7 +968,7 @@ class CompleteCommand extends BaseCommand {
       {
         maxRetries: 3,
         initialDelay: 2000,
-        onRetry: (error, attempt, _delay) => {
+        onRetry: (error: any, attempt: number, _delay: number) => {
           const errorMessage =
             error instanceof Error
               ? error.message
@@ -1037,9 +1037,9 @@ class CompleteCommand extends BaseCommand {
               ),
               timeout,
             ])) as string | undefined;
-            clearTimeout(timeoutId);
+            if (timeoutId) clearTimeout(timeoutId);
           } catch (raceError) {
-            clearTimeout(timeoutId);
+            if (timeoutId) clearTimeout(timeoutId);
             throw raceError;
           }
 

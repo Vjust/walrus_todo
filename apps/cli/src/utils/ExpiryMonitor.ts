@@ -1,7 +1,7 @@
 import type { WalrusClientExt } from '../types/client';
 import type { Signer } from '@mysten/sui/cryptography';
 // Transaction imported but not used
-import { execa } from 'execa';
+const execa = require('execa');
 import { VaultManager, BlobRecord } from './VaultManager';
 import { NetworkValidator, NetworkEnvironment } from './NetworkValidator';
 import { Logger } from './Logger';

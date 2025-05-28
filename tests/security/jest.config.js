@@ -23,20 +23,7 @@ module.exports = {
 
   // Module name mapping for monorepo structure and mocks
   moduleNameMapper: {
-    // Relative import mapping for security tests (most specific first)
-    '^../../apps/cli/src/(.*)$': '<rootDir>/../../apps/cli/src/$1',
-
-    // Monorepo path aliases for apps/cli structure
-    '^@/(.*)$': '<rootDir>/../../apps/cli/src/$1',
-    '^@tests/(.*)$': '<rootDir>/../../apps/cli/src/__tests__/$1',
-    '^@types/(.*)$': '<rootDir>/../../apps/cli/src/types/$1',
-    '^@utils/(.*)$': '<rootDir>/../../apps/cli/src/utils/$1',
-    '^@services/(.*)$': '<rootDir>/../../apps/cli/src/services/$1',
-    '^@commands/(.*)$': '<rootDir>/../../apps/cli/src/commands/$1',
-    '^@adapters/(.*)$': '<rootDir>/../../apps/cli/src/types/adapters/$1',
-    '^@errors/(.*)$': '<rootDir>/../../apps/cli/src/types/errors/$1',
-
-    // AI Service mocks
+    // AI Service mocks (MUST come first, before general mapping)
     '^../../apps/cli/src/services/ai/aiService$':
       '<rootDir>/../../tests/mocks/aiService.js',
     '^../../apps/cli/src/services/ai/AIProviderFactory$':
@@ -59,6 +46,19 @@ module.exports = {
       '<rootDir>/../../tests/mocks/AuditLogger.js',
     '^../../apps/cli/src/constants$':
       '<rootDir>/../../tests/mocks/constants.js',
+      
+    // Relative import mapping for security tests (after specific mocks)
+    '^../../apps/cli/src/(.*)$': '<rootDir>/../../apps/cli/src/$1',
+
+    // Monorepo path aliases for apps/cli structure
+    '^@/(.*)$': '<rootDir>/../../apps/cli/src/$1',
+    '^@tests/(.*)$': '<rootDir>/../../apps/cli/src/__tests__/$1',
+    '^@types/(.*)$': '<rootDir>/../../apps/cli/src/types/$1',
+    '^@utils/(.*)$': '<rootDir>/../../apps/cli/src/utils/$1',
+    '^@services/(.*)$': '<rootDir>/../../apps/cli/src/services/$1',
+    '^@commands/(.*)$': '<rootDir>/../../apps/cli/src/commands/$1',
+    '^@adapters/(.*)$': '<rootDir>/../../apps/cli/src/types/adapters/$1',
+    '^@errors/(.*)$': '<rootDir>/../../apps/cli/src/types/errors/$1',
 
     // Langchain mocks
     '^@langchain/core/prompts': '<rootDir>/../../tests/mocks/langchain-mock.js',

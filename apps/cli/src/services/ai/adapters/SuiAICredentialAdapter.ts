@@ -47,14 +47,14 @@ const logger = new Logger('SuiAICredentialAdapter');
  * for verification and storage of AI credential records.
  */
 export class SuiAICredentialAdapter implements AICredentialAdapter {
-  private client: SuiClient;
+  private client: any;
   private signer: SignerAdapter;
   private packageId: string;
   private registryId: string;
   private walrusAdapter?: WalrusClientAdapter;
 
   constructor(
-    client: SuiClient,
+    client: any,
     signer: SignerAdapter,
     packageId: string,
     registryId: string,

@@ -13,6 +13,30 @@ jest.mock('@mysten/walrus', () => ({
   default: jest.fn(),
 }));
 
+// Mock vault and credential services
+jest.mock('../../apps/cli/src/utils/EnhancedVaultManager', () => ({
+  EnhancedVaultManager: jest.fn().mockImplementation(() => ({
+    initializeVault: jest.fn().mockResolvedValue(true),
+    isVaultLocked: jest.fn().mockReturnValue(false),
+    unlockVault: jest.fn().mockResolvedValue(true),
+    getCredential: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
+    storeCredential: jest.fn().mockResolvedValue(true),
+  })),
+}));
+
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialService', () => ({
+  SecureCredentialService: jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(true),
+    getCredentials: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
+    storeCredentials: jest.fn().mockResolvedValue(true),
+  })),
+  secureCredentialService: {
+    initialize: jest.fn().mockResolvedValue(true),
+    getCredentials: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
+    storeCredentials: jest.fn().mockResolvedValue(true),
+  },
+}));
+
 // Now import the modules after mocking
 import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import { TaskSuggestionService } from '../../apps/cli/src/services/ai/TaskSuggestionService';
@@ -42,39 +66,66 @@ function createValidConfig(): Partial<Config> {
   };
 }
 
-// Mock the AIService
+// Mock the AI services module
+jest.mock('../../apps/cli/src/services/ai', () => {
+  const mockAIService = {
+    summarize: jest.fn().mockResolvedValue('Mock summary of your todos'),
+    categorize: jest.fn().mockResolvedValue({
+      work: ['todo-1'],
+      personal: ['todo-2', 'todo-3'],
+    }),
+    prioritize: jest.fn().mockResolvedValue({
+      'todo-1': 9,
+      'todo-2': 7,
+      'todo-3': 4,
+    }),
+    suggest: jest
+      .fn()
+      .mockResolvedValue([
+        'Create project documentation',
+        'Schedule weekly team meeting',
+        'Review pull requests',
+      ]),
+    analyze: jest.fn().mockResolvedValue({
+      themes: ['productivity', 'project management'],
+      bottlenecks: ['waiting for approvals'],
+      timeEstimates: {
+        total: '5 days',
+        breakdown: {
+          'todo-1': '2 days',
+          'todo-2': '2 days',
+          'todo-3': '1 day',
+        },
+      },
+    }),
+    setProvider: jest.fn().mockResolvedValue(true),
+    getProvider: jest.fn().mockReturnValue('xai'),
+    isAvailable: jest.fn().mockReturnValue(true),
+    suggestTags: jest.fn().mockResolvedValue(['work', 'project']),
+    suggestPriority: jest.fn().mockResolvedValue('medium'),
+    cancelAllOperations: jest.fn(),
+  };
+
+  return {
+    aiService: mockAIService,
+    secureCredentialService: {
+      initialize: jest.fn().mockResolvedValue(true),
+      getCredentials: jest.fn().mockResolvedValue({ apiKey: 'mock-api-key' }),
+      storeCredentials: jest.fn().mockResolvedValue(true),
+    },
+    AIService: jest.fn().mockImplementation(() => mockAIService),
+  };
+});
+
+// Mock the AIService class separately for compatibility
 jest.mock('../../apps/cli/src/services/ai/aiService', () => {
   return {
     AIService: jest.fn().mockImplementation(() => ({
       summarize: jest.fn().mockResolvedValue('Mock summary of your todos'),
-      categorize: jest.fn().mockResolvedValue({
-        work: ['todo-1'],
-        personal: ['todo-2', 'todo-3'],
-      }),
-      prioritize: jest.fn().mockResolvedValue({
-        'todo-1': 9,
-        'todo-2': 7,
-        'todo-3': 4,
-      }),
-      suggest: jest
-        .fn()
-        .mockResolvedValue([
-          'Create project documentation',
-          'Schedule weekly team meeting',
-          'Review pull requests',
-        ]),
-      analyze: jest.fn().mockResolvedValue({
-        themes: ['productivity', 'project management'],
-        bottlenecks: ['waiting for approvals'],
-        timeEstimates: {
-          total: '5 days',
-          breakdown: {
-            'todo-1': '2 days',
-            'todo-2': '2 days',
-            'todo-3': '1 day',
-          },
-        },
-      }),
+      setProvider: jest.fn().mockResolvedValue(true),
+      getProvider: jest.fn().mockReturnValue('xai'),
+      isAvailable: jest.fn().mockReturnValue(true),
+      cancelAllOperations: jest.fn(),
     })),
   };
 });
@@ -153,6 +204,7 @@ jest.mock('../../apps/cli/src/services/todoService', () => {
   return {
     TodoService: jest.fn().mockImplementation(() => ({
       getAllTodos: jest.fn().mockResolvedValue(mockSampleTodos),
+      listTodos: jest.fn().mockResolvedValue(mockSampleTodos),
       createTodo: jest.fn().mockImplementation(todo => {
         return Promise.resolve({
           id: 'new-todo-' + Date.now(),
