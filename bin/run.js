@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { Logger } = require('../dist/src/utils/Logger');
+const { Logger } = require('../dist/apps/cli/src/utils/Logger');
 const logger = new Logger('run');
 
 /**

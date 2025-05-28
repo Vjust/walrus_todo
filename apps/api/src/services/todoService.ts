@@ -152,11 +152,22 @@ export class TodoService {
       throw new ApiError('Todo not found', 404, 'TODO_NOT_FOUND');
     }
     
+    const existingTodo = todos[todoIndex];
+    if (!existingTodo) {
+      throw new ApiError('Todo not found', 404, 'TODO_NOT_FOUND');
+    }
+    
     const updatedTodo: Todo = {
-      ...todos[todoIndex],
+      ...existingTodo,
       ...data,
       ...(data.content && { title: data.content }), // Sync title with content
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      wallet: existingTodo.wallet, // Ensure wallet is preserved
+      id: existingTodo.id, // Ensure id is preserved
+      title: data.content || existingTodo.title, // Ensure title is always defined
+      content: data.content || existingTodo.content, // Ensure content is always defined
+      completed: data.completed !== undefined ? data.completed : existingTodo.completed,
+      createdAt: existingTodo.createdAt // Ensure createdAt is preserved
     };
     
     todos[todoIndex] = updatedTodo;
@@ -175,6 +186,10 @@ export class TodoService {
     }
     
     const deletedTodo = todos[todoIndex];
+    if (!deletedTodo) {
+      throw new ApiError('Todo not found', 404, 'TODO_NOT_FOUND');
+    }
+    
     todos.splice(todoIndex, 1);
     await this.writeWalletTodos(wallet, todos);
     

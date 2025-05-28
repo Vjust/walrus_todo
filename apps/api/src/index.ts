@@ -5,7 +5,7 @@ import { logger } from './utils/logger';
 async function startServer() {
   try {
     const server = new ApiServer();
-    const port = config.server.port || 3001;
+    const port = config.port || 3001;
     
     await server.start(port);
     logger.info(`API server started on port ${port}`);

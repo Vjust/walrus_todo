@@ -1,12 +1,12 @@
 import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
 import type { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
 import { Todo } from '../../apps/cli/src/types/todo';
-import { walrusModuleMock, type MockWalrusClient } from '../helpers/walrus-client-mock';
+import { createWalrusModuleMock, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
 
 // Mock the external dependencies
-jest.mock('@mysten/walrus', () => walrusModuleMock);
+jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 
-jest.mock('@mysten/sui/client', () => ({
+jest.mock('@mysten/sui.js/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
     connect: jest.fn(),
     getBalance: jest.fn(),
@@ -21,8 +21,7 @@ jest.mock('child_process', () => ({
   execSync: jest.fn(),
 }));
 
-import { WalrusClient } from '@mysten/walrus';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 import { execSync } from 'child_process';
 
 // Removed unused types
@@ -30,15 +29,16 @@ import { execSync } from 'child_process';
 describe('WalrusStorage', () => {
   let storage: WalrusStorage;
   let mockTodo: Todo;
-  let mockWalrusClient: MockWalrusClient;
+  let mockWalrusClient: CompleteWalrusClientMock;
   let mockSuiClient: jest.Mocked<InstanceType<typeof SuiClient>>;
 
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
 
-    // Setup mock implementations
-    mockWalrusClient = (WalrusClient as jest.Mock)() as MockWalrusClient;
+    // Setup mock implementations using complete mock
+    const { WalrusClient: MockWalrusClient } = require('@mysten/walrus');
+    mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -50,7 +50,6 @@ describe('WalrusStorage', () => {
     } as jest.Mocked<InstanceType<typeof SuiClient>>;
 
     // Mock constructor implementations
-    (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
     (SuiClient as jest.Mock).mockImplementation(() => mockSuiClient);
 
     // Mock execSync

@@ -1,6 +1,5 @@
 import { Ed25519Keypair } from '@mysten/sui/cryptography';
-import { SuiClient } from '@mysten/sui/client';
-import { getFullnodeUrl } from '@mysten/sui/client';
+import { SuiClient, getFullnodeUrl } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { decodeSuiPrivateKey } from '@mysten/sui/utils';
 import dotenv from 'dotenv';

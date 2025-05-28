@@ -3,7 +3,7 @@
  * Comprehensive error handling and usage patterns for TodoNFT operations
  */
 
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 import { Transaction } from '@mysten/sui/transactions';
 
 // Types for frontend usage

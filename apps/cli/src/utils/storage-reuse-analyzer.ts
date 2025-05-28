@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 import { WalrusClient } from '../types/client';
 import { CLIError } from '../types/error';
 

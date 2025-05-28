@@ -81,6 +81,19 @@ export class FuzzGenerator {
     return shuffled.slice(0, size);
   }
 
+  // Generate random buffer with specified size
+  buffer(
+    options: { minLength?: number; maxLength?: number } = {}
+  ): Buffer {
+    const minLen = options.minLength || 1;
+    const maxLen = options.maxLength || 1024;
+    const length = this.number(minLen, maxLen);
+    
+    const data = new Uint8Array(length);
+    crypto.getRandomValues(data);
+    return Buffer.from(data);
+  }
+
   // Generate random object with specified schema
   object<T>(schema: { [K in keyof T]: () => T[K] }): T {
     const result = {} as T;

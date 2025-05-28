@@ -30,7 +30,7 @@ import { fromB64, toB64 } from '@mysten/sui/utils';
 import { NetworkType } from '../../../apps/cli/src/types/network';
 import { NETWORK_URLS } from '../../../apps/cli/src/constants';
 import { CLIError } from '../../../apps/cli/src/types/errors';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 
 // Configuration constants
 const TESTNET_FAUCET_URL = 'https://faucet.testnet.sui.io';

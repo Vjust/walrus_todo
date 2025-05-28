@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar';
 import TodoList from '@/components/todo-list';
 import CreateTodoForm from '@/components/create-todo-form';
+import InitializationGuard from '@/components/InitializationGuard';
 import { useWalletContext } from '@/contexts/WalletContext';
 import {
   getTodoLists,
@@ -230,10 +231,12 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <TodoList
-              key={`${selectedList}-${refreshKey}`}
-              listName={selectedList}
-            />
+            <InitializationGuard requireSuiClient={true}>
+              <TodoList
+                key={`${selectedList}-${refreshKey}`}
+                listName={selectedList}
+              />
+            </InitializationGuard>
           </div>
         </div>
       </div>

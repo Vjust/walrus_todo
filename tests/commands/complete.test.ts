@@ -6,7 +6,7 @@ import { expect, describe, test, beforeEach } from '@jest/globals';
 import { SuiNftStorage } from '../../apps/cli/src/utils/sui-nft-storage';
 import { configService } from '../../apps/cli/src/services/config-service';
 import { TodoService } from '../../apps/cli/src/services/todoService';
-import { SuiClient } from '@mysten/sui/client';
+// SuiClient imported via compatibility adapter when needed
 
 import { TodoList } from '../../apps/cli/src/types/todo';
 import { createMockTodo } from '../helpers/test-utils';

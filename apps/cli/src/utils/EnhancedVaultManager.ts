@@ -102,11 +102,12 @@ export class EnhancedVaultManager {
     } else {
       try {
         // Load existing key
-        this.encryptionKey = fs.readFileSync(this.keyFile);
+        const keyData = fs.readFileSync(this.keyFile);
+        this.encryptionKey = Buffer.isBuffer(keyData) ? keyData : Buffer.from(keyData, 'utf-8');
 
         // Validate key length
         if (
-          this.encryptionKey.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE
+          this.encryptionKey && this.encryptionKey.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE
         ) {
           throw new CLIError(
             'Invalid encryption key detected',
@@ -130,7 +131,8 @@ export class EnhancedVaultManager {
       try {
         // Read and decrypt metadata file
         const encryptedData = fs.readFileSync(this.metadataFile);
-        const decryptedData = this.decrypt(encryptedData);
+        const encryptedBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData, 'utf-8');
+        const decryptedData = this.decrypt(encryptedBuffer);
 
         if (decryptedData) {
           // Parse metadata
@@ -141,7 +143,7 @@ export class EnhancedVaultManager {
           this.checkExpiredSecrets();
         }
       } catch (error) {
-        logger.error('Failed to load vault metadata:', error);
+        logger.error('Failed to load vault metadata:', error instanceof Error ? error : new Error(String(error)));
         // Initialize with empty metadata for safety
         this.metadata = new Map();
       }
@@ -307,7 +309,8 @@ export class EnhancedVaultManager {
     try {
       // Read and decrypt the secret
       const encryptedData = fs.readFileSync(secretPath);
-      const decryptedData = this.decrypt(encryptedData);
+      const encryptedBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData, 'utf-8');
+      const decryptedData = this.decrypt(encryptedBuffer);
 
       if (!decryptedData) {
         // Record failed attempt
@@ -684,7 +687,7 @@ export class EnhancedVaultManager {
       // Decrypt data
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (error) {
-      logger.error('Decryption failed:', error);
+      logger.error('Decryption failed:', error instanceof Error ? error : new Error(String(error)));
       return null;
     }
   }

@@ -109,8 +109,8 @@ export default class Credentials extends BaseCommand {
       blockchain_key: CredentialType.BLOCKCHAIN_KEY,
     };
 
-    const permissionLevel = permissionLevelMap[flags.permission];
-    const credentialType = credentialTypeMap[flags.type];
+    const permissionLevel = flags.permission ? permissionLevelMap[flags.permission] : AIPermissionLevel.STANDARD;
+    const credentialType = flags.type ? credentialTypeMap[flags.type] : CredentialType.API_KEY;
 
     switch (actionType) {
       case 'add':

@@ -1,9 +1,9 @@
-import express from 'express';
+import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import { createServer } from 'http';
+import { createServer, Server } from 'http';
 import { config } from './config';
 import { logger } from './utils/logger';
 import { WebSocketService } from './services/websocketService';
@@ -14,8 +14,8 @@ import { requestLogger, securityHeaders } from './middleware/logging';
 import { errorHandler, notFoundHandler, rateLimitHandler } from './middleware/error';
 
 export class ApiServer {
-  private app: express.Application;
-  private httpServer: ReturnType<typeof createServer>;
+  private app: Application;
+  private httpServer: Server;
   private websocketService?: WebSocketService;
 
   constructor() {
@@ -203,11 +203,11 @@ export class ApiServer {
     });
   }
 
-  public getApp(): express.Application {
+  public getApp(): Application {
     return this.app;
   }
 
-  public getHttpServer() {
+  public getHttpServer(): Server {
     return this.httpServer;
   }
 

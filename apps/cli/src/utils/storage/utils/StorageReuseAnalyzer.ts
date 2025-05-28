@@ -308,6 +308,13 @@ export class StorageReuseAnalyzer {
         });
       }
 
+      if (!costResult.data) {
+        throw new ValidationError('No cost data returned', {
+          operation: 'cost analysis',
+          recoverable: true,
+        });
+      }
+      
       const { storageCost, totalCost } = costResult.data;
       const newStorageCost = BigInt(totalCost);
 

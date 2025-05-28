@@ -267,6 +267,9 @@ export class AIService {
       .map(t => `- ${t.title}: ${t.description || 'No description'}`)
       .join('\n');
 
+    // Check for prompt injection attempts
+    this.detectPromptInjection(todoStr);
+
     try {
       const response = await this.modelAdapter.processWithPromptTemplate(
         prompt,
@@ -328,6 +331,9 @@ export class AIService {
   private anonymizePII(text: string): string {
     if (!text) return text;
 
+    // First sanitize prompt injection patterns
+    let sanitized = this.sanitizePromptInjection(text);
+
     // Common PII patterns
     const piiPatterns: Array<{ pattern: RegExp; replacement: string }> = [
       // Email addresses
@@ -352,12 +358,49 @@ export class AIService {
     ];
 
     // Apply each pattern
-    let anonymized = text;
+    let anonymized = sanitized;
     for (const { pattern, replacement } of piiPatterns) {
       anonymized = anonymized.replace(pattern, replacement);
     }
 
     return anonymized;
+  }
+
+  /**
+   * Sanitizes text to remove prompt injection patterns
+   *
+   * @param text - The text to sanitize
+   * @returns Sanitized text with prompt injection patterns removed
+   */
+  private sanitizePromptInjection(text: string): string {
+    if (!text) return text;
+
+    // Prompt injection patterns to detect and remove
+    const injectionPatterns = [
+      'ignore previous instructions',
+      'disregard earlier directives',
+      'forget the instructions above',
+      'new instructions:',
+      'instead, do the following:',
+      'you are now',
+      'act as',
+      'pretend to be',
+      'roleplay as',
+      'system:',
+      'user:',
+      'assistant:',
+      'override',
+      'bypass',
+    ];
+
+    let sanitized = text;
+    for (const pattern of injectionPatterns) {
+      // Create case-insensitive regex for each pattern
+      const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      sanitized = sanitized.replace(regex, '[FILTERED]');
+    }
+
+    return sanitized;
   }
 
   /**
@@ -381,6 +424,36 @@ export class AIService {
     sanitized = sanitized.replace(/(?:\/[\w.-]+){3,}/g, '[PATH]');
 
     return sanitized;
+  }
+
+  /**
+   * Detects potential prompt injection attempts in user input
+   * 
+   * @param input - The input text to check
+   * @throws Error if prompt injection patterns are detected
+   */
+  private detectPromptInjection(input: string): void {
+    const injectionPatterns = [
+      'ignore previous instructions',
+      'disregard earlier directives', 
+      'forget the instructions above',
+      'new instructions:',
+      'instead, do the following:',
+      'you are now',
+      'act as',
+      'forget everything',
+      'system:',
+      'assistant:',
+      'human:',
+    ];
+
+    const lowerInput = input.toLowerCase();
+    
+    for (const pattern of injectionPatterns) {
+      if (lowerInput.includes(pattern.toLowerCase())) {
+        throw new Error('Potential prompt injection detected');
+      }
+    }
   }
 
   /**

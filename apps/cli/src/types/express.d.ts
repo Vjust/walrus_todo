@@ -5,9 +5,13 @@ declare module 'express-serve-static-core' {
   interface Request {
     apiKey?: string;
     userId?: string;
+    user?: any;
+    wallet?: string;
     body?: any;
     params?: any;
     query?: any;
+    ip?: string;
+    header?: (name: string) => string | undefined;
     file?: {
       mimetype: string;
       size: number;
@@ -28,9 +32,13 @@ declare module 'express' {
   interface Request {
     apiKey?: string;
     userId?: string;
+    user?: any;
+    wallet?: string;
     body?: any;
     params?: any;
     query?: any;
+    ip?: string;
+    header?: (name: string) => string | undefined;
     file?: {
       mimetype: string;
       size: number;

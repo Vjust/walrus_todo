@@ -2,7 +2,7 @@
   "name": "waltodo",
   "version": "1.0.0",
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
-  "main": "dist/src/index.js",
+  "main": "dist/apps/cli/src/index.js",
   "type": "commonjs",
   "bin": {
     "waltodo": "bin/waltodo"
@@ -19,7 +19,7 @@
     "build-legacy": "tsc --skipLibCheck",
     "build-force-legacy": "tsc --skipLibCheck --noEmitOnError false",
     "start": "node bin/run.js",
-    "dev": "ts-node src/index.ts",
+    "dev": "ts-node apps/cli/src/index.ts",
     "clean": "node scripts/enhanced-run-build.js --mode=clean",
     "prepare": "node scripts/enhanced-run-build.js --clean --mode=dev || echo 'Build failed but continuing...'",
     "link": "pnpm link",
@@ -201,15 +201,15 @@
   },
   "files": [
     "/bin",
-    "/dist",
-    "/src/move",
+    "/dist/apps/cli",
+    "/apps/cli/src/move",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
   "oclif": {
     "bin": "waltodo",
     "dirname": "waltodo",
-    "commands": "./dist/src/commands",
+    "commands": "./dist/apps/cli/src/commands",
     "plugins": [],
     "topicSeparator": ":",
     "macos": {

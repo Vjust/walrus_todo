@@ -216,14 +216,22 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
     setError(null);
   }, [connected]);
 
-  // Initialize Sui client when wallet connects
+  // Initialize Sui client when wallet connects (but don't duplicate global initialization)
   useEffect(() => {
     if (connected && account?.address) {
       const initClient = async () => {
         try {
-          console.log('[WalletContext] Initializing Sui client...');
-          await initializeSuiClient(currentNetwork as any);
-          console.log('[WalletContext] Sui client initialized successfully');
+          console.log('[WalletContext] Checking Sui client state...');
+          
+          // Only initialize if not already done globally
+          const { isSuiClientInitialized } = await import('@/lib/sui-client');
+          if (!isSuiClientInitialized()) {
+            console.log('[WalletContext] Sui client not initialized, initializing...');
+            await initializeSuiClient(currentNetwork as any);
+            console.log('[WalletContext] Sui client initialized successfully');
+          } else {
+            console.log('[WalletContext] Sui client already initialized');
+          }
         } catch (error) {
           console.error('[WalletContext] Failed to initialize Sui client:', error);
           setError('Failed to initialize blockchain connection. Some features may not work properly.');
@@ -231,7 +239,9 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
         }
       };
       
-      initClient();
+      // Small delay to ensure global initialization has had a chance to complete
+      const timeoutId = setTimeout(initClient, 200);
+      return () => clearTimeout(timeoutId);
     }
   }, [connected, account?.address, currentNetwork]);
 

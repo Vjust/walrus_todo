@@ -4,7 +4,7 @@
  */
 
 import type { Todo, TodoList } from '@/types/todo-nft';
-import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { getFullnodeUrl, SuiClient } from '@mysten/sui.js/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { PublicKey } from '@solana/web3.js';
 import safeStorage, { isUsingFallbackStorage } from './safe-storage';

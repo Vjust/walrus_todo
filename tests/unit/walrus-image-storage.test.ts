@@ -1,19 +1,18 @@
-import { WalrusClient } from '../../apps/cli/src/types/client';
+import type { WalrusClient } from '../../apps/cli/src/types/client';
 import { createWalrusImageStorage } from '../../apps/cli/src/utils/walrus-image-storage';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '@mysten/sui.js/client';
 // import { TransactionBlock } from '@mysten/sui/transactions';
 import { KeystoreSigner } from '../../apps/cli/src/utils/sui-keystore';
-import { walrusModuleMock } from '../helpers/walrus-client-mock';
+import { createWalrusModuleMock, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
 
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Mock the external dependencies
-// Unused imports removed during TypeScript cleanup
-// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
-jest.mock('@mysten/walrus', () => walrusModuleMock);
+// Mock the Walrus module with complete implementation
+jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 
-jest.mock('@mysten/sui/client', () => ({
+jest.mock('@mysten/sui.js/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
     connect: jest.fn(),
     getBalance: jest.fn(),
@@ -38,7 +37,7 @@ jest.mock('../../apps/cli/src/utils/sui-keystore', () => ({
 }));
 
 describe('WalrusImageStorage', () => {
-  let mockWalrusClient: jest.Mocked<InstanceType<typeof WalrusClient>>;
+  let mockWalrusClient: CompleteWalrusClientMock;
   let mockSuiClient: jest.Mocked<InstanceType<typeof SuiClient>>;
   let mockKeystoreSigner: jest.MockedObject<typeof KeystoreSigner>;
   let storage: ReturnType<typeof createWalrusImageStorage>;
@@ -51,24 +50,9 @@ describe('WalrusImageStorage', () => {
     // Reset all mocks
     jest.clearAllMocks();
 
-    // Setup mock implementations
-    mockWalrusClient = {
-      readBlob: jest.fn(),
-      writeBlob: jest.fn(),
-      getBlobObject: jest.fn(),
-      verifyPoA: jest.fn(),
-      getBlobInfo: jest.fn(),
-      storageCost: jest.fn(),
-      executeCreateStorageTransaction: jest.fn(),
-      connect: jest.fn(),
-      getConfig: jest.fn(),
-      getWalBalance: jest.fn(),
-      getStorageUsage: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn(),
-      reset: jest.fn(),
-    } as jest.Mocked<InstanceType<typeof WalrusClient>>;
+    // Setup mock implementations using complete mock
+    const { WalrusClient: MockWalrusClient } = require('@mysten/walrus');
+    mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -123,7 +107,6 @@ describe('WalrusImageStorage', () => {
     };
 
     // Mock constructor implementations
-    (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
     (SuiClient as jest.Mock).mockImplementation(() => mockSuiClient);
     (KeystoreSigner as jest.Mock).mockImplementation(() => mockKeystoreSigner);
 
