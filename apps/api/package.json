@@ -20,6 +20,9 @@
     "docker:run": "docker run -p 3000:3000 waltodo-api"
   },
   "dependencies": {
+    "@waltodo/config-loader": "workspace:*",
+    "@waltodo/sui-client": "workspace:*",
+    "@waltodo/walrus-client": "workspace:*",
     "express": "^4.21.2",
     "socket.io": "^4.8.1",
     "cors": "^2.8.5",

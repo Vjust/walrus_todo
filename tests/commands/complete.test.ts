@@ -3,14 +3,14 @@
 
 import { expect, describe, test, beforeEach } from '@jest/globals';
 
-import { SuiNftStorage } from '../../src/utils/sui-nft-storage';
-import { configService } from '../../src/services/config-service';
-import { TodoService } from '../../src/services/todoService';
+import { SuiNftStorage } from '../../apps/cli/src/utils/sui-nft-storage';
+import { configService } from '../../apps/cli/src/services/config-service';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 import { SuiClient } from '@mysten/sui/client';
 
-import { TodoList } from '../../src/types/todo';
+import { TodoList } from '../../apps/cli/src/types/todo';
 import { createMockTodo } from '../helpers/test-utils';
-import type { Config } from '../../src/types/config';
+import type { Config } from '../../apps/cli/src/types/config';
 
 // Mock services
 // Unused imports removed during TypeScript cleanup

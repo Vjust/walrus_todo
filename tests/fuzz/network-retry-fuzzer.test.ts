@@ -1,7 +1,7 @@
 /* eslint-disable jest/no-conditional-expect */
 import { FuzzGenerator } from '../helpers/fuzz-generator';
-import { RetryManager, NetworkNode } from '../../src/utils/retry-manager';
-import { CLIError } from '../../src/types/errors/consolidated';
+import { RetryManager, NetworkNode } from '../../apps/cli/src/utils/retry-manager';
+import { CLIError } from '../../apps/cli/src/types/errors/consolidated';
 
 describe('Network Retry Fuzzing Tests', () => {
   const fuzzer = new FuzzGenerator();

@@ -1,26 +1,26 @@
 import { jest } from '@jest/globals';
-import { AIService } from '../../src/services/ai/aiService';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import {
   AIProvider,
   AIModelOptions,
-} from '../../src/types/adapters/AIModelAdapter';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import {
   // _AIPermissionManager,
   initializePermissionManager,
-} from '../../src/services/ai/AIPermissionManager';
-import { Todo } from '../../src/types/todo';
-import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
+} from '../../apps/cli/src/services/ai/AIPermissionManager';
+import { Todo } from '../../apps/cli/src/types/todo';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import {
   AIActionType,
   AIPrivacyLevel,
-} from '../../src/types/adapters/AIVerifierAdapter';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
-jest.mock('../../src/services/ai/AIProviderFactory');
-jest.mock('../../src/services/ai/AIPermissionManager');
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
+jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
 
 // Sample data for tests
 const sampleTodo: Todo = {

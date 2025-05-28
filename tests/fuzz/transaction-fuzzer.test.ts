@@ -1,8 +1,8 @@
 /* eslint-disable jest/expect-expect */
 import { FuzzGenerator } from '../helpers/fuzz-generator';
-import { SuiTestService } from '../../src/services/SuiTestService';
+import { SuiTestService } from '../../apps/cli/src/services/SuiTestService';
 // Mock contracts
-jest.mock('@/services/SuiTestService');
+jest.mock('../../apps/cli/src/services/SuiTestService');
 
 
 class MockNFTStorageContract {

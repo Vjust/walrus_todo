@@ -1,5 +1,5 @@
-import { TodoSizeCalculator } from '../../src/utils/todo-size-calculator';
-import { Todo, TodoList } from '../../src/types/todo';
+import { TodoSizeCalculator } from '../../apps/cli/src/utils/todo-size-calculator';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 describe('TodoSizeCalculator', () => {
   // Sample todo for testing

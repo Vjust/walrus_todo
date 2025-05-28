@@ -1,6 +1,6 @@
 import { test, expect } from '@jest/globals';
 import { runCommand } from '../helpers/test-utils';
-import { BackgroundOperations } from '../../src/utils/background-operations';
+import { BackgroundOperations } from '../../apps/cli/src/utils/background-operations';
 
 describe('Background Sync Command', () => {
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     // Add a test todo first
@@ -46,7 +46,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     const { stdout } = await runCommand(['sync', '--background', '--continuous', '--interval', '60', '--force']);
@@ -73,7 +73,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     // Add multiple test todos
@@ -94,7 +94,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     await runCommand(['add', 'High priority sync todo', '--storage', 'both']);
@@ -127,7 +127,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     await runCommand(['add', 'Direction test todo', '--storage', 'both']);
@@ -148,7 +148,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     await runCommand(['add', 'Resolve test todo', '--storage', 'both']);
@@ -169,7 +169,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     await runCommand(['add', 'Work todo', '--storage', 'both', '--list', 'work']);
@@ -186,7 +186,7 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest.spyOn(require('../../apps/cli/src/utils/background-operations'), 'createBackgroundOperationsManager')
       .mockResolvedValue(mockBackgroundOps);
 
     const { stdout } = await runCommand(['sync', '--background', '--force']);
@@ -205,7 +205,7 @@ describe('Background Operations Integration', () => {
       shutdown: jest.fn(),
     } as any;
 
-    jest.spyOn(require('../../src/utils/BackgroundCacheManager'), 'createBackgroundCacheManager')
+    jest.spyOn(require('../../apps/cli/src/utils/BackgroundCacheManager'), 'createBackgroundCacheManager')
       .mockReturnValue(mockCacheManager);
 
     const backgroundOps = new BackgroundOperations(mockCacheManager);
@@ -234,7 +234,7 @@ describe('Background Operations Integration', () => {
       shutdown: jest.fn(),
     } as any;
 
-    jest.spyOn(require('../../src/utils/BackgroundCacheManager'), 'createBackgroundCacheManager')
+    jest.spyOn(require('../../apps/cli/src/utils/BackgroundCacheManager'), 'createBackgroundCacheManager')
       .mockReturnValue(mockCacheManager);
 
     const backgroundOps = new BackgroundOperations(mockCacheManager);

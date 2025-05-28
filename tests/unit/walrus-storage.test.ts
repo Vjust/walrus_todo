@@ -1,6 +1,6 @@
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
-import type { WalrusStorage } from '../../src/utils/walrus-storage';
-import { Todo } from '../../src/types/todo';
+import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import type { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import { Todo } from '../../apps/cli/src/types/todo';
 import { walrusModuleMock, type MockWalrusClient } from '../helpers/walrus-client-mock';
 
 // Mock the external dependencies

@@ -1,5 +1,5 @@
-import { BaseError } from '../../src/types/errors/consolidated/BaseError';
-import { TransactionError } from '../../src/types/errors/consolidated/TransactionError';
+import { BaseError } from '../../apps/cli/src/types/errors/consolidated/BaseError';
+import { TransactionError } from '../../apps/cli/src/types/errors/consolidated/TransactionError';
 
 describe('Consolidated Error Types', () => {
   // Create a TestError class to expose protected methods for testing

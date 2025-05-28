@@ -4,7 +4,7 @@
  * Tests only the creation of the singleton instance
  */
 
-import { AIService, aiService } from '../../src/services/ai';
+import { AIService, aiService } from '../../apps/cli/src/services/ai';
 
 // Just test if we can import the service without errors
 describe('Simple AIService Test', () => {

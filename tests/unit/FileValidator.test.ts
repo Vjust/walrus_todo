@@ -1,7 +1,7 @@
 import {
   FileValidator,
   FileValidationConfig,
-} from '../../src/utils/FileValidator';
+} from '../../apps/cli/src/utils/FileValidator';
 
 import * as fs from 'fs';
 import sizeOf from 'image-size';

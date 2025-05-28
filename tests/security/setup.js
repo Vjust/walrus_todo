@@ -1,7 +1,7 @@
 // Jest setup file for security audit tests
 
 // Set up environment variables for testing
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('setup');
 process.env.NODE_ENV = 'test';

@@ -1,9 +1,9 @@
-import { Todo } from '../../src/types/todo';
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import {
   AIPrivacyLevel,
   AIActionType,
-} from '../../src/types/adapters/AIVerifierAdapter';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 
 /**
  * @module AITestUtils

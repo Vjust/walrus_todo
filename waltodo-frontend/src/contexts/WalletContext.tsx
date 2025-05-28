@@ -17,6 +17,7 @@ import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Transaction } from '@mysten/sui/transactions';
 import { useInactivityTimer } from '@/hooks/useInactivityTimer';
+import { initializeSuiClient } from '@/lib/sui-client';
 
 // Network Configuration using createNetworkConfig
 const { networkConfig } = createNetworkConfig({
@@ -133,38 +134,44 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   // Connection state
   const connected = Boolean(account);
 
-  // Auto-reconnect logic - temporarily disabled for debugging
+  // Auto-reconnect logic with proper cleanup
   useEffect(() => {
-    // Commenting out auto-reconnect to isolate loading issue
-    console.log('[WalletContext] Auto-reconnect disabled for debugging');
-    /*
+    let timeoutId: NodeJS.Timeout | null = null;
+    let isMounted = true;
+
     const autoReconnect = async () => {
+      if (!isMounted) return;
+      
       try {
         let lastWallet = null;
         try {
           lastWallet = localStorage.getItem('sui-wallet-last-connected');
         } catch (storageError) {
           console.warn('[WalletContext] localStorage access failed:', storageError);
-          return; // Skip auto-reconnect if localStorage is not available
+          return;
         }
 
-        if (lastWallet && !connected && !connecting && wallets.length > 0) {
+        if (lastWallet && !connected && !connecting && wallets.length > 0 && isMounted) {
           console.log('[WalletContext] Attempting auto-reconnect to:', lastWallet);
           const wallet = wallets.find(w => w.name === lastWallet);
-          if (wallet) {
+          if (wallet && isMounted) {
             connectWallet(
               { wallet },
               {
                 onSuccess: () => {
-                  console.log('[WalletContext] Auto-reconnect successful');
-                  resetActivityTimer();
+                  if (isMounted) {
+                    console.log('[WalletContext] Auto-reconnect successful');
+                    resetActivityTimer();
+                  }
                 },
                 onError: (error) => {
-                  console.error('[WalletContext] Auto-reconnect failed:', error);
-                  try {
-                    localStorage.removeItem('sui-wallet-last-connected');
-                  } catch (storageError) {
-                    console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
+                  if (isMounted) {
+                    console.error('[WalletContext] Auto-reconnect failed:', error);
+                    try {
+                      localStorage.removeItem('sui-wallet-last-connected');
+                    } catch (storageError) {
+                      console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
+                    }
                   }
                 }
               }
@@ -172,24 +179,49 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (error) {
-        console.error('[WalletContext] Auto-reconnect error:', error);
-        try {
-          localStorage.removeItem('sui-wallet-last-connected');
-        } catch (storageError) {
-          console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
+        if (isMounted) {
+          console.error('[WalletContext] Auto-reconnect error:', error);
+          try {
+            localStorage.removeItem('sui-wallet-last-connected');
+          } catch (storageError) {
+            console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
+          }
         }
       }
     };
 
-    const timer = setTimeout(autoReconnect, 1000);
-    return () => clearTimeout(timer);
-    */
-  }, []);
+    timeoutId = setTimeout(autoReconnect, 1000);
+    
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [connected, connecting, wallets, connectWallet, resetActivityTimer]);
 
   // Clear error when wallet state changes
   useEffect(() => {
     setError(null);
   }, [connected]);
+
+  // Initialize Sui client when wallet connects
+  useEffect(() => {
+    if (connected && account?.address) {
+      const initClient = async () => {
+        try {
+          console.log('[WalletContext] Initializing Sui client...');
+          await initializeSuiClient(currentNetwork as any);
+          console.log('[WalletContext] Sui client initialized successfully');
+        } catch (error) {
+          console.error('[WalletContext] Failed to initialize Sui client:', error);
+          setError('Failed to initialize blockchain connection');
+        }
+      };
+      
+      initClient();
+    }
+  }, [connected, account?.address, currentNetwork]);
 
   // WebSocket connection management - temporarily disabled
   // useEffect(() => {

@@ -1,7 +1,7 @@
-import { StorageReuseAnalyzer } from '../../src/utils/storage-reuse-analyzer';
-import { SuiClient, type SuiClientType } from '../../src/utils/adapters/sui-client-compatibility';
-import { WalrusClient } from '../../src/types/client';
-import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../src/__tests__/helpers/walrus-client-mock';
+import { StorageReuseAnalyzer } from '../../apps/cli/src/utils/storage-reuse-analyzer';
+import { SuiClient, type SuiClientType } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
+import { WalrusClient } from '../../apps/cli/src/types/client';
+import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../apps/cli/src/__tests__/helpers/walrus-client-mock';
 
 // Mock the SuiClient and WalrusClient
 jest.mock('@mysten/sui/client');

@@ -112,8 +112,17 @@ const isStorageAvailable = () => {
  */
 export async function initializeSuiClientWithConfig(): Promise<SuiClient> {
   appConfig = await loadAppConfig();
-  currentNetwork = appConfig.network.name as NetworkType;
+  const configNetwork = appConfig.network.name as NetworkType;
+  
+  // Return existing client if already initialized and network matches
+  if (suiClient && currentNetwork === configNetwork) {
+    console.log(`Sui client already initialized for ${configNetwork}`);
+    return suiClient;
+  }
+  
+  currentNetwork = configNetwork;
   suiClient = new SuiClient({ url: appConfig.network.url });
+  console.log(`Sui client initialized with config for ${configNetwork}`);
   return suiClient;
 }
 
@@ -123,6 +132,12 @@ export async function initializeSuiClientWithConfig(): Promise<SuiClient> {
 export async function initializeSuiClient(
   network: NetworkType = 'testnet'
 ): Promise<SuiClient> {
+  // Return existing client if already initialized and network matches
+  if (suiClient && currentNetwork === network) {
+    console.log(`Sui client already initialized for ${network}`);
+    return suiClient;
+  }
+
   // Try to load configuration first
   try {
     return await initializeSuiClientWithConfig();
@@ -140,6 +155,7 @@ export async function initializeSuiClient(
       localnet: 'http://127.0.0.1:9000',
     };
     suiClient = new SuiClient({ url: networkUrls[network] });
+    console.log(`Sui client initialized with fallback config for ${network}`);
     return suiClient;
   }
 }

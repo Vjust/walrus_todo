@@ -1,5 +1,5 @@
 // import type { _Mock } from 'jest-mock';
-import { StorageLocation, Todo } from '../../src/types/todo';
+import { StorageLocation, Todo } from '../../apps/cli/src/types/todo';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as path from 'path';
@@ -129,7 +129,7 @@ export class TestService {
       const command = args[0];
 
       // Dynamically import the command module
-      const CommandClass = await import(`../../src/commands/${command}`);
+      const CommandClass = await import(`../../apps/cli/src/commands/${command}`);
       const instance = new CommandClass.default();
 
       // Mock stdout

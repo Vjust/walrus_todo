@@ -17,13 +17,13 @@ module.exports = {
     ],
   },
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/../../src/$1',
+    '^@/(.*)$': '<rootDir>/../../apps/cli/src/$1',
   },
   collectCoverageFrom: [
-    '../../src/**/*.{js,ts}',
-    '!../../src/types/**',
-    '!../../src/**/*.d.ts',
-    '!../../src/**/__mocks__/**',
+    '../../apps/cli/src/**/*.{js,ts}',
+    '!../../apps/cli/src/types/**',
+    '!../../apps/cli/src/**/*.d.ts',
+    '!../../apps/cli/src/**/__mocks__/**',
   ],
   verbose: true,
 };

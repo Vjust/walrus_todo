@@ -49,7 +49,7 @@ describe('End-to-End Error Scenarios', () => {
 
       // Try to modify config
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} configure --storageMode blockchain`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} configure --storageMode blockchain`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -71,7 +71,7 @@ describe('End-to-End Error Scenarios', () => {
 
       expect(() => {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} add "Test todo"`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} add "Test todo"`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -90,7 +90,7 @@ describe('End-to-End Error Scenarios', () => {
       );
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} list`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} list`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -112,7 +112,7 @@ describe('End-to-End Error Scenarios', () => {
       let thrownError = null;
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} store list --storageMode blockchain`,
           {
             env: {
               ...process.env,
@@ -147,7 +147,7 @@ describe('End-to-End Error Scenarios', () => {
       let caughtError: Error | null = null;
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} ai suggest --apiKey test-key`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} ai suggest --apiKey test-key`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -174,7 +174,7 @@ describe('End-to-End Error Scenarios', () => {
       let caughtError: Error | null = null;
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} fetch 12345 --storageMode blockchain`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} fetch 12345 --storageMode blockchain`,
           {
             env: {
               ...process.env,
@@ -207,7 +207,7 @@ describe('End-to-End Error Scenarios', () => {
       let caughtError: Error | null = null;
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} deploy --network testnet`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} deploy --network testnet`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -237,7 +237,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} store list --storageMode blockchain`,
           {
             env: {
               ...process.env,
@@ -270,7 +270,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} update 1 --title "Updated" --storageMode blockchain`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} update 1 --title "Updated" --storageMode blockchain`,
           {
             env: {
               ...process.env,
@@ -306,7 +306,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} ai suggest --apiKey invalid-key`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} ai suggest --apiKey invalid-key`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -336,7 +336,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} ai analyze --apiKey test-key`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} ai analyze --apiKey test-key`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -368,7 +368,7 @@ describe('End-to-End Error Scenarios', () => {
       fs.writeFileSync(configFile, 'invalid json{');
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} list`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} list`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -395,7 +395,7 @@ describe('End-to-End Error Scenarios', () => {
       });
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} ai suggest --apiKey test-key`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} ai suggest --apiKey test-key`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -416,7 +416,7 @@ describe('End-to-End Error Scenarios', () => {
       process.env.DISABLE_AI_FEATURES = 'true';
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} ai suggest`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} ai suggest`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -436,7 +436,7 @@ describe('End-to-End Error Scenarios', () => {
         .throws(new Error('EACCES: permission denied'));
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} list --useCache`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} list --useCache`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -455,7 +455,7 @@ describe('End-to-End Error Scenarios', () => {
       const maliciousInput = '"; DROP TABLE todos; --';
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} add "${maliciousInput}"`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} add "${maliciousInput}"`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -470,7 +470,7 @@ describe('End-to-End Error Scenarios', () => {
       const longInput = 'a'.repeat(10000);
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} add "${longInput}"`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} add "${longInput}"`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -486,7 +486,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} add --complete --delete`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} add --complete --delete`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -511,7 +511,7 @@ describe('End-to-End Error Scenarios', () => {
       fs.writeFileSync(lockFile, 'locked');
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} add "New todo"`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} add "New todo"`,
         {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
@@ -556,7 +556,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} update 1 --title "My update"`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} update 1 --title "My update"`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -581,7 +581,7 @@ describe('End-to-End Error Scenarios', () => {
       delete process.env.WALRUS_TODO_CONFIG_DIR;
 
       const result = execSync(
-        `node ${path.join(__dirname, '../../src/index.ts')} configure`,
+        `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} configure`,
         {
           encoding: 'utf8',
         }
@@ -599,7 +599,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorThrown = false;
       let errorMessage = '';
       try {
-        execSync(`node ${path.join(__dirname, '../../src/index.ts')} deploy`, {
+        execSync(`node ${path.join(__dirname, '../../apps/cli/src/index.ts')} deploy`, {
           env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
           encoding: 'utf8',
         });
@@ -631,7 +631,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} ai enhance --apiKey test-key --save`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} ai enhance --apiKey test-key --save`,
           {
             env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
             encoding: 'utf8',
@@ -662,7 +662,7 @@ describe('End-to-End Error Scenarios', () => {
       let errorMessage = '';
       try {
         execSync(
-          `node ${path.join(__dirname, '../../src/index.ts')} store list --storageMode blockchain`,
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} store list --storageMode blockchain`,
           {
             env: {
               ...process.env,

@@ -1,4 +1,5 @@
 import * as childProcess from 'child_process';
+import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -68,7 +69,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       beforeEach(() => mockPlatform('win32'));
 
       it('should execute commands with Windows shell', () => {
-        const command = `${process.execPath} ${path.join(__dirname, '../../src/index.js')} add "Windows test"`;
+        const command = `${process.execPath} ${path.join(__dirname, '../../apps/cli/src/index.js')} add "Windows test"`;
 
         const mockExecSync = jest.fn(() => 'Todo added successfully');
         const _originalExecSync = execSync;
@@ -97,7 +98,7 @@ describe('Cross-Platform Compatibility Tests', () => {
           beforeEach(() => mockPlatform(platform as NodeJS.Platform));
 
           it(`should execute commands on ${platform}`, () => {
-            const command = `${process.execPath} ${path.join(__dirname, '../../src/index.js')} add "${platform} test"`;
+            const command = `${process.execPath} ${path.join(__dirname, '../../apps/cli/src/index.js')} add "${platform} test"`;
 
             const mockExecSync = jest.fn(() => 'Todo added successfully');
             const _originalExecSync = execSync;

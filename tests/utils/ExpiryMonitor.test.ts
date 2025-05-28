@@ -1,17 +1,17 @@
-import { WalrusClient } from '../../src/types/client';
-import { ExpiryMonitor } from '../../src/utils/ExpiryMonitor';
-import { VaultManager, BlobRecord } from '../../src/utils/VaultManager';
-import { StorageError } from '../../src/types/errors/consolidated';
+import { WalrusClient } from '../../apps/cli/src/types/client';
+import { ExpiryMonitor } from '../../apps/cli/src/utils/ExpiryMonitor';
+import { VaultManager, BlobRecord } from '../../apps/cli/src/utils/VaultManager';
+import { StorageError } from '../../apps/cli/src/types/errors/consolidated';
 import { Signer } from '@mysten/sui/cryptography';
 // import * as childProcess from 'child_process';
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 // Unused imports removed during TypeScript cleanup
 // import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
-jest.mock('../../src/utils/VaultManager');
-jest.mock('../../src/utils/Logger');
+jest.mock('../../apps/cli/src/utils/VaultManager');
+jest.mock('../../apps/cli/src/utils/Logger');
 
 describe('ExpiryMonitor', () => {
   let monitor: ExpiryMonitor;

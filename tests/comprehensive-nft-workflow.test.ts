@@ -4,26 +4,26 @@
  * This test suite validates the entire NFT creation workflow from CLI commands
  * to frontend integration, testing all the key components:
  * 
- * 1. NFT creation from todo items (src/commands/image/create-nft.ts)
- * 2. Blockchain integration (src/utils/sui-nft-storage.ts)
+ * 1. NFT creation from todo items (apps/cli/src/commands/image/create-nft.ts)
+ * 2. Blockchain integration (apps/cli/src/utils/sui-nft-storage.ts)
  * 3. Frontend NFT management (waltodo-frontend/src/components/BlockchainTodoManager.tsx)
  * 4. Frontend wallet integration (waltodo-frontend/src/contexts/WalletContext.tsx)
  */
 
 import { jest } from '@jest/globals';
-import { SuiNftStorage } from '../src/utils/sui-nft-storage';
-import CreateNftCommand from '../src/commands/image/create-nft';
-import { TodoService } from '../src/services/todoService';
-import { CLIError } from '../src/types/errors/consolidated';
-import { Todo, CreateTodoParams } from '../src/types/todo';
+import { SuiNftStorage } from '../apps/cli/src/utils/sui-nft-storage';
+import CreateNftCommand from '../apps/cli/src/commands/image/create-nft';
+import { TodoService } from '../apps/cli/src/services/todoService';
+import { CLIError } from '../apps/cli/src/types/errors/consolidated';
+import { Todo, CreateTodoParams } from '../apps/cli/src/types/todo';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
 
 // Mock dependencies
-jest.mock('../src/services/todoService');
-jest.mock('../src/services/config-service');
-jest.mock('../src/utils/sui-nft-storage');
-jest.mock('../src/utils/adapters/sui-client-compatibility');
+jest.mock('../apps/cli/src/services/todoService');
+jest.mock('../apps/cli/src/services/config-service');
+jest.mock('../apps/cli/src/utils/sui-nft-storage');
+jest.mock('../apps/cli/src/utils/adapters/sui-client-compatibility');
 
 describe('Comprehensive NFT Workflow Tests', () => {
   let mockTodoService: jest.Mocked<TodoService>;
@@ -79,7 +79,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
     }) as jest.Mocked<SuiNftStorage>;
 
     // Mock config service
-    const configService = require('../src/services/config-service');
+    const configService = require('../apps/cli/src/services/config-service');
     configService.configService = {
       getConfig: jest.fn().mockResolvedValue(mockConfig)
     };
@@ -139,7 +139,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
 
       it('should throw CLIError when package not deployed', async () => {
         const configWithoutDeployment = { ...mockConfig, lastDeployment: undefined };
-        const configService = require('../src/services/config-service');
+        const configService = require('../apps/cli/src/services/config-service');
         configService.configService.getConfig.mockResolvedValue(configWithoutDeployment);
 
         mockTodoService.getTodo.mockResolvedValue(mockTodo);
@@ -345,7 +345,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
     });
 
     it('should handle missing required configuration', async () => {
-      const configService = require('../src/services/config-service');
+      const configService = require('../apps/cli/src/services/config-service');
       configService.configService.getConfig.mockResolvedValue({});
 
       const command = new CreateNftCommand([], {});

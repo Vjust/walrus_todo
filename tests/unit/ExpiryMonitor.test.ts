@@ -1,10 +1,10 @@
-import { ExpiryMonitor } from '../../src/utils/ExpiryMonitor';
-import { VaultManager } from '../../src/utils/VaultManager';
+import { ExpiryMonitor } from '../../apps/cli/src/utils/ExpiryMonitor';
+import { VaultManager } from '../../apps/cli/src/utils/VaultManager';
 // Unused imports removed during TypeScript cleanup
-// import type { WalrusClientExt } from '../../src/types/client';
+// import type { WalrusClientExt } from '../../apps/cli/src/types/client';
 import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 
-jest.mock('../../src/utils/VaultManager');
+jest.mock('../../apps/cli/src/utils/VaultManager');
 jest.mock('@mysten/walrus');
 
 describe('ExpiryMonitor', () => {

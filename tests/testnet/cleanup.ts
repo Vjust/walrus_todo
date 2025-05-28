@@ -2,7 +2,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 
 /**
  * Test cleanup utility for removing test data and temporary files after test runs

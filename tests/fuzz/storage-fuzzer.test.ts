@@ -1,11 +1,11 @@
 /* eslint-disable jest/no-conditional-expect */
 import { FuzzGenerator } from '../helpers/fuzz-generator';
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import { TodoStorage } from '../../src/utils/storage/implementations/TodoStorage';
-import { ImageStorage } from '../../src/utils/storage/implementations/ImageStorage';
-import { NFTStorage } from '../../src/utils/storage/implementations/NFTStorage';
-import { FileHandleManager } from '../../src/utils/FileHandleManager';
-import { StorageReuseAnalyzer } from '../../src/utils/storage-reuse-analyzer';
+import { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import { TodoStorage } from '../../apps/cli/src/utils/storage/implementations/TodoStorage';
+import { ImageStorage } from '../../apps/cli/src/utils/storage/implementations/ImageStorage';
+import { NFTStorage } from '../../apps/cli/src/utils/storage/implementations/NFTStorage';
+import { FileHandleManager } from '../../apps/cli/src/utils/FileHandleManager';
+import { StorageReuseAnalyzer } from '../../apps/cli/src/utils/storage-reuse-analyzer';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tmpdir } from 'os';

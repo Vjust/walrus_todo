@@ -1,6 +1,6 @@
-import { AIService } from '../../src/services/ai/aiService';
-import { Logger } from '../../src/utils/Logger';
-import { Todo } from '../../src/types/todo';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { Logger } from '../../apps/cli/src/utils/Logger';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 // Mock PromptValidator for testing
 class MockPromptValidator {

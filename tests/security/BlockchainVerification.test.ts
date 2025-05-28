@@ -1,13 +1,13 @@
 import { jest } from '@jest/globals';
-import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import {
   SuiAIVerifierAdapter,
   AIActionType,
   AIPrivacyLevel,
   VerificationRecord,
-} from '../../src/types/adapters/AIVerifierAdapter';
-import { Todo } from '../../src/types/todo';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
 import crypto from 'crypto';
 
 // Mock data

@@ -4,8 +4,8 @@ import * as sinon from 'sinon';
 import {
   TaskSuggestionService,
   SuggestionType,
-} from '../../src/services/ai/TaskSuggestionService';
-import { EnhancedAIService } from '../../src/services/ai/EnhancedAIService';
+} from '../../apps/cli/src/services/ai/TaskSuggestionService';
+import { EnhancedAIService } from '../../apps/cli/src/services/ai/EnhancedAIService';
 
 describe('suggest command', () => {
   // Sample suggested tasks for testing

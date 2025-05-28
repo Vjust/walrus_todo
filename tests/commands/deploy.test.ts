@@ -2,7 +2,7 @@ import { test } from '@oclif/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { expect } from '@jest/globals';
-import DeployCommand from '../../src/commands/deploy';
+import DeployCommand from '../../apps/cli/src/commands/deploy';
 
 interface DeployCommandWithPrivateMethods extends DeployCommand {
   getMoveFilesPath: () => { moveToml: string; sourcesDir: string };
@@ -23,7 +23,7 @@ describe('DeployCommand', () => {
     });
 
     it('finds files in development environment', () => {
-      const devPath = path.join(process.cwd(), 'src/move');
+      const devPath = path.join(process.cwd(), 'apps/cli/src/move');
       (fs.existsSync as jest.Mock).mockImplementation(
         (p: string) =>
           p === path.join(devPath, 'Move.toml') ||
@@ -36,7 +36,7 @@ describe('DeployCommand', () => {
     });
 
     it('finds files in production environment', () => {
-      const prodPath = path.join(__dirname, '../../src/move');
+      const prodPath = path.join(__dirname, '../../apps/cli/src/move');
       (fs.existsSync as jest.Mock).mockImplementation(
         (p: string) =>
           p === path.join(prodPath, 'Move.toml') ||
@@ -85,12 +85,12 @@ describe('DeployCommand', () => {
       });
 
       // Mock config service
-      const configService = await import('../../src/services/config-service');
+      const configService = await import('../../apps/cli/src/services/config-service');
       jest.spyOn(configService.configService, 'getConfig').mockResolvedValue({});
       jest.spyOn(configService.configService, 'saveConfig').mockResolvedValue();
 
       // Mock command executor
-      const commandExecutor = await import('../../src/utils/command-executor');
+      const commandExecutor = await import('../../apps/cli/src/utils/command-executor');
       jest.spyOn(commandExecutor, 'safeExecFileSync').mockReturnValue();
       jest
         .spyOn(commandExecutor, 'getActiveSuiAddress')

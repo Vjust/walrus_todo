@@ -1,26 +1,26 @@
 import { jest } from '@jest/globals';
-import { AIService } from '../../src/services/ai/aiService';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import {
   AIProvider,
   // _AIModelOptions,
-} from '../../src/types/adapters/AIModelAdapter';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import {
   AIPrivacyLevel,
   AIActionType,
   VerificationRecord,
-} from '../../src/types/adapters/AIVerifierAdapter';
-import { Todo } from '../../src/types/todo';
-// import { _secureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
-import { initializePermissionManager } from '../../src/services/ai/AIPermissionManager';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
+// import { _secureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { initializePermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
 import crypto from 'crypto';
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
-jest.mock('../../src/services/ai/AIProviderFactory');
-jest.mock('../../src/services/ai/AIPermissionManager');
-jest.mock('../../src/services/ai/SecureCredentialManager');
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
+jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
 
 // Sample data for tests
 const sampleTodo: Todo = {

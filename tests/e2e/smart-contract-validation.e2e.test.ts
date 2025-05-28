@@ -8,7 +8,7 @@ import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { CLITestRunner, ContractTestHelpers } from './helpers/nft-test-utils';
 
-const CONTRACT_DIR = path.join(__dirname, '../../src/move');
+const CONTRACT_DIR = path.join(__dirname, '../../apps/cli/src/move');
 const CONTRACT_SOURCES = path.join(CONTRACT_DIR, 'sources');
 const MOVE_TOML = path.join(CONTRACT_DIR, 'Move.toml');
 

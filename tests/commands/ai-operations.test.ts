@@ -1,9 +1,9 @@
 import * as fs from 'fs';
-import { AIService } from '../../src/services/ai/aiService';
-import { TaskSuggestionService } from '../../src/services/ai/TaskSuggestionService';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { TaskSuggestionService } from '../../apps/cli/src/services/ai/TaskSuggestionService';
 import { createSampleTodos } from '../helpers/ai-test-utils';
-import { TodoService } from '../../src/services/todoService';
-import AICommand from '../../src/commands/ai';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import AICommand from '../../apps/cli/src/commands/ai';
 // Helper function to create a mock config object for testing
 import { Config } from '@oclif/core';
 
@@ -30,7 +30,7 @@ function createValidConfig(): Partial<Config> {
 }
 
 // Mock the AIService
-jest.mock('../../src/services/ai/aiService', () => {
+jest.mock('../../apps/cli/src/services/ai/aiService', () => {
   return {
     AIService: jest.fn().mockImplementation(() => ({
       summarize: jest.fn().mockResolvedValue('Mock summary of your todos'),
@@ -67,7 +67,7 @@ jest.mock('../../src/services/ai/aiService', () => {
 });
 
 // Mock the TaskSuggestionService
-jest.mock('../../src/services/ai/TaskSuggestionService', () => {
+jest.mock('../../apps/cli/src/services/ai/TaskSuggestionService', () => {
   return {
     TaskSuggestionService: jest.fn().mockImplementation(() => ({
       suggestTasks: jest
@@ -100,7 +100,7 @@ jest.mock('../../src/services/ai/TaskSuggestionService', () => {
 });
 
 // Mock the TodoService
-jest.mock('../../src/services/todoService', () => {
+jest.mock('../../apps/cli/src/services/todoService', () => {
   const sampleTodos = createSampleTodos(3);
 
   return {

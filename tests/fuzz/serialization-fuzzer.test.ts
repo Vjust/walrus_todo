@@ -1,7 +1,7 @@
 /* eslint-disable jest/no-conditional-expect */
 import { FuzzGenerator } from '../helpers/fuzz-generator';
-import { TodoSerializer } from '../../src/utils/todo-serializer';
-import { Todo, TodoList } from '../../src/types/todo';
+import { TodoSerializer } from '../../apps/cli/src/utils/todo-serializer';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 describe('Serialization Fuzzing Tests', () => {
   const fuzzer = new FuzzGenerator();

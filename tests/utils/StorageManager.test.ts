@@ -1,16 +1,16 @@
 import { jest } from '@jest/globals';
-import { WalrusClient } from '../../src/types/client';
-import { StorageManager } from '../../src/utils/StorageManager';
+import { WalrusClient } from '../../apps/cli/src/types/client';
+import { StorageManager } from '../../apps/cli/src/utils/StorageManager';
 import {
   StorageError,
   ValidationError,
   BlockchainError,
-} from '../../src/types/errors/consolidated';
-import { Logger } from '../../src/utils/Logger';
-import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../src/__tests__/helpers/walrus-client-mock';
+} from '../../apps/cli/src/types/errors/consolidated';
+import { Logger } from '../../apps/cli/src/utils/Logger';
+import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../apps/cli/src/__tests__/helpers/walrus-client-mock';
 
 jest.mock('@mysten/walrus');
-jest.mock('../../src/utils/Logger');
+jest.mock('../../apps/cli/src/utils/Logger');
 
 describe('StorageManager', () => {
   let manager: StorageManager;

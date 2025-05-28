@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { Permission, UserRole } from '../../src/types/permissions';
+import { Permission, UserRole } from '../../apps/cli/src/types/permissions';
 
 describe('Permission Fuzzer Tests', () => {
   beforeEach(() => {

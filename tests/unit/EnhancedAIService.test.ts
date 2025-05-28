@@ -1,13 +1,13 @@
-import { EnhancedAIService } from '../../src/services/ai/EnhancedAIService';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
-import { AIConfigManager } from '../../src/services/ai/AIConfigManager';
-import { PromptManager } from '../../src/services/ai/PromptManager';
-import { ResultCache } from '../../src/services/ai/ResultCache';
+import { EnhancedAIService } from '../../apps/cli/src/services/ai/EnhancedAIService';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+import { AIConfigManager } from '../../apps/cli/src/services/ai/AIConfigManager';
+import { PromptManager } from '../../apps/cli/src/services/ai/PromptManager';
+import { ResultCache } from '../../apps/cli/src/services/ai/ResultCache';
 import {
   AIProvider,
   AIModelAdapter,
-} from '../../src/types/adapters/AIModelAdapter';
-import { Todo } from '../../src/types/todo';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 // Mock the AIModelAdapter
 class MockAIModelAdapter implements AIModelAdapter {
@@ -158,7 +158,7 @@ class MockAIModelAdapter implements AIModelAdapter {
 }
 
 // Mock the AIProviderFactory
-jest.mock('../../src/services/ai/AIProviderFactory', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
   const mockAdapter = new MockAIModelAdapter();
 
   return {

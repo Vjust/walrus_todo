@@ -1,13 +1,13 @@
 import { jest } from '@jest/globals';
-import { TransactionHelper } from '../../src/utils/TransactionHelper';
+import { TransactionHelper } from '../../apps/cli/src/utils/TransactionHelper';
 import { Signer } from '@mysten/sui/cryptography';
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 import {
   ValidationError,
   BlockchainError,
-} from '../../src/types/errors/consolidated';
+} from '../../apps/cli/src/types/errors/consolidated';
 
-jest.mock('../../src/utils/Logger');
+jest.mock('../../apps/cli/src/utils/Logger');
 
 describe('TransactionHelper', () => {
   let mockSigner: jest.Mocked<Signer>;

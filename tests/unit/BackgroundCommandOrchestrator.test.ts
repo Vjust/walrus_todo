@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { BackgroundCommandOrchestrator } from '../../src/utils/BackgroundCommandOrchestrator';
-import { JobManager } from '../../src/utils/PerformanceMonitor';
+import { BackgroundCommandOrchestrator } from '../../apps/cli/src/utils/BackgroundCommandOrchestrator';
+import { JobManager } from '../../apps/cli/src/utils/PerformanceMonitor';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -8,7 +8,7 @@ import * as os from 'os';
 // Mock dependencies
 jest.mock('fs');
 jest.mock('child_process');
-jest.mock('../../src/utils/Logger');
+jest.mock('../../apps/cli/src/utils/Logger');
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 

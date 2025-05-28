@@ -1,14 +1,14 @@
 import { expect, describe, test, beforeEach, jest } from '@jest/globals';
-import CompleteCommand from '../../src/commands/complete';
-import { TodoService } from '../../src/services/todoService';
-import { configService } from '../../src/services/config-service';
-import { TodoList, Todo } from '../../src/types/todo';
-import { CLIError } from '../../src/types/errors/consolidated';
+import CompleteCommand from '../../apps/cli/src/commands/complete';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import { configService } from '../../apps/cli/src/services/config-service';
+import { TodoList, Todo } from '../../apps/cli/src/types/todo';
+import { CLIError } from '../../apps/cli/src/types/errors/consolidated';
 
 // Mock services
-jest.mock('../../src/services/todoService');
-jest.mock('../../src/services/config-service');
-jest.mock('../../src/utils/walrus-storage', () => ({
+jest.mock('../../apps/cli/src/services/todoService');
+jest.mock('../../apps/cli/src/services/config-service');
+jest.mock('../../apps/cli/src/utils/walrus-storage', () => ({
   createWalrusStorage: jest.fn(() => ({
     connect: jest.fn(),
     disconnect: jest.fn(),

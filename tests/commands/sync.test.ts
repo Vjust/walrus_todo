@@ -1,14 +1,14 @@
-import { SyncCommand } from '../../src/commands/sync';
-import { ConfigService } from '../../src/services/config-service';
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import type { WalrusStorage as WalrusStorageType } from '../../src/utils/walrus-storage';
+import { SyncCommand } from '../../apps/cli/src/commands/sync';
+import { ConfigService } from '../../apps/cli/src/services/config-service';
+import { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import type { WalrusStorage as WalrusStorageType } from '../../apps/cli/src/utils/walrus-storage';
 import * as readline from 'readline';
 import chalk from 'chalk';
-import { Todo } from '../../src/types/todo';
-import { CliConfig } from '../../src/types/config';
+import { Todo } from '../../apps/cli/src/types/todo';
+import { CliConfig } from '../../apps/cli/src/types/config';
 
-jest.mock('../../src/services/config-service');
-jest.mock('../../src/utils/walrus-storage');
+jest.mock('../../apps/cli/src/services/config-service');
+jest.mock('../../apps/cli/src/utils/walrus-storage');
 jest.mock('readline');
 
 describe('SyncCommand', () => {

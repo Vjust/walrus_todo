@@ -5,14 +5,14 @@ import {
 } from './cleanup';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-// import { _Logger } from '../../src/utils/Logger';
+// import { Logger } from '../../apps/cli/src/utils/Logger';
 
 /**
  * Tests for the cleanup utility
  */
 
 // Mock the Logger to avoid console output during tests
-jest.mock('../../src/utils/Logger', () => {
+jest.mock('../../apps/cli/src/utils/Logger', () => {
   return {
     Logger: jest.fn().mockImplementation(() => ({
       info: jest.fn(),

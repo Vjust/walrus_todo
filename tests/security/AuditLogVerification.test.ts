@@ -2,8 +2,8 @@ import { jest } from '@jest/globals';
 import * as fs from 'fs';
 import * as path from 'path';
 import crypto from 'crypto';
-import { AuditLogger } from '../../src/services/ai/AuditLogger';
-import { CLI_CONFIG } from '../../src/constants';
+import { AuditLogger } from '../../apps/cli/src/services/ai/AuditLogger';
+import { CLI_CONFIG } from '../../apps/cli/src/constants';
 
 // Mock fs module
 jest.mock('fs', () => {

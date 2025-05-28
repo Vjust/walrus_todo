@@ -1,16 +1,11 @@
-// Type declarations to fix Express compilation issues
+import express from 'express';
+
 declare global {
   namespace Express {
     interface Request {
+      user?: any;
       wallet?: string;
     }
-  }
-}
-
-// Extend Express types for compatibility
-declare module 'express' {
-  interface Request {
-    wallet?: string;
   }
 }
 

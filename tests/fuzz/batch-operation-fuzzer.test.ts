@@ -1,4 +1,4 @@
-import type { Todo, BatchResult } from '../../src/types/todo';
+import type { Todo, BatchResult } from '../../apps/cli/src/types/todo';
 
 interface BatchOperation {
   type: string;

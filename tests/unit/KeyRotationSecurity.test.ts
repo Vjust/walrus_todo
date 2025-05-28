@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import crypto from 'crypto';
-import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import {
   AIPermissionLevel,
   CredentialType,
-} from '../../src/types/adapters/AICredentialAdapter';
+} from '../../apps/cli/src/types/adapters/AICredentialAdapter';
 
 // Mock the fs module
 jest.mock('fs', () => {

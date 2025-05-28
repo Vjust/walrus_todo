@@ -1,5 +1,5 @@
 import * as childProcess from 'child_process';
-import { NetworkValidator } from '../../src/utils/NetworkValidator';
+import { NetworkValidator } from '../../apps/cli/src/utils/NetworkValidator';
 import { getMockWalrusClient, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');

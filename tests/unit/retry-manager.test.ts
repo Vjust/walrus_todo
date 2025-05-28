@@ -1,4 +1,4 @@
-import { RetryManager } from '../../src/utils/retry-manager';
+import { RetryManager } from '../../apps/cli/src/utils/retry-manager';
 
 describe('RetryManager', () => {
   const testNodes = [

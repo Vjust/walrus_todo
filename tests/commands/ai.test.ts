@@ -1,11 +1,10 @@
 import { TestService } from '../helpers/test-utils';
-import { AiService } from '../../src/services/ai';
-import { TodoService } from '../../src/services/todoService';
-
-import { TodoList } from '../../src/types/todo';
+import { AiService } from '../../apps/cli/src/services/ai';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 // Mock AiService
-jest.mock('../../src/services/ai', () => {
+jest.mock('../../apps/cli/src/services/ai', () => {
   return {
     AiService: jest.fn().mockImplementation(() => {
       return {
@@ -26,7 +25,7 @@ jest.mock('../../src/services/ai', () => {
 });
 
 // Mock TodoService
-jest.mock('../../src/services/todoService', () => {
+jest.mock('../../apps/cli/src/services/todoService', () => {
   const mockTodo: Todo = {
     id: 'todo-123',
     title: 'Complete project',

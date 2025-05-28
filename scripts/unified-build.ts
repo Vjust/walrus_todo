@@ -3,9 +3,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as ts from 'typescript';
-import { Logger } from '../apps/cli/src/utils/Logger';
-
-const logger = new Logger('unified-build');
+// Simple console logger instead of importing Logger to avoid path issues
+const logger = {
+  info: (msg: string) => console.log(`[INFO] ${msg}`),
+  error: (msg: string) => console.error(`[ERROR] ${msg}`),
+  warn: (msg: string) => console.warn(`[WARN] ${msg}`),
+  debug: (msg: string) => console.log(`[DEBUG] ${msg}`)
+};
 
 /**
  * Unified build script with improved error handling and reporting.
