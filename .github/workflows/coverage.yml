@@ -28,6 +28,10 @@ jobs:
       
     - name: Run tests with coverage
       run: pnpm test:coverage
+      env:
+        NODE_ENV: test
+        SUI_NETWORK: testnet
+        SUI_FULL_NODE_URL: "https://fullnode.testnet.sui.io:443"
       
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3

@@ -310,7 +310,7 @@ NFT_REGISTRY_ID=0x...
 XAI_API_KEY=... # For AI features
 
 # Storage Configuration
-WALRUS_USE_MOCK=false # Set to true for testing without real storage
+# Using real Walrus testnet storage
 `;
   }
 

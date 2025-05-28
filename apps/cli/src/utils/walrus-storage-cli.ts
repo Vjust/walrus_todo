@@ -23,7 +23,7 @@ const logger = new Logger('walrus-storage-cli');
  */
 function shouldUseMock(): boolean {
   return (
-    process.env.WALRUS_USE_MOCK === 'true' || process.env.NODE_ENV === 'test'
+    process.env.NODE_ENV === 'test'
   );
 }
 

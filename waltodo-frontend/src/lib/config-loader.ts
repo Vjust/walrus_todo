@@ -6,8 +6,16 @@
  * and network settings that were generated during CLI deployment.
  */
 
-import React from 'react';
-import { useIsHydrated } from './hydration-safe';
+import React, { useState, useEffect } from 'react';
+
+// Simple hydration check hook
+function useIsHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
+}
 
 /**
  * Network configuration interface

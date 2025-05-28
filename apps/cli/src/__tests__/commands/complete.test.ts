@@ -9,29 +9,12 @@ import { createMockTodo } from '../helpers/test-utils';
 import { createMockSystemStateResponse } from '../sui-test-types';
 import type { Config } from '../../types';
 
-// Mock services
-jest.mock('../../services/todoService');
-jest.mock('../../utils/walrus-storage');
-jest.mock('../../utils/sui-nft-storage');
-jest.mock('../../services/config-service');
-jest.mock('@mysten/sui/client');
+// Using real service implementations for better testing coverage
+// Only mock external network calls if needed
 
-const mockTodoService = TodoService as jest.MockedClass<typeof TodoService>;
-// WalrusStorage mocked but not directly used in tests
-const mockSuiNftStorage = SuiNftStorage as jest.MockedClass<
-  typeof SuiNftStorage
->;
-// Create a mock constructor for SuiClient
-const mockSuiClient = {
-  getLatestSuiSystemState: jest.fn(),
-  getBalance: jest.fn(),
-  getOwnedObjects: jest.fn(),
-  // Add other methods as needed
-} as {
-  getLatestSuiSystemState: jest.Mock;
-  getBalance: jest.Mock;
-  getOwnedObjects: jest.Mock;
-};
+// Using real implementations - create instances directly
+let todoService: TodoService;
+let suiNftStorage: SuiNftStorage;
 
 // Mock getConfig with correct type for the mock config
 type MockConfig = Config & {

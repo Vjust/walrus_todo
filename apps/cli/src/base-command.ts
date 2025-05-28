@@ -37,7 +37,6 @@ export interface BaseFlags {
   network?: string;
   verbose?: boolean;
   output?: string;
-  mock?: boolean;
   apiKey?: string;
   help?: void;
   timeout?: number;
@@ -87,13 +86,6 @@ export abstract class BaseCommand extends Command {
       options: ['text', 'json', 'yaml'],
       default: 'text',
       required: false,
-    }),
-    mock: Flags.boolean({
-      char: 'm',
-      description: 'Enable mock mode for testing',
-      default: false,
-      required: false,
-      env: 'WALRUS_USE_MOCK',
     }),
     apiKey: Flags.string({
       char: 'k',

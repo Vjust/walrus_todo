@@ -74,7 +74,7 @@ export async function runCommand(
   const testEnv = {
     ...process.env,
     NODE_ENV: 'test',
-    WALRUS_USE_MOCK: 'true', // Always use mock mode in tests
+    // Removed WALRUS_USE_MOCK - using real implementations
     ...env,
   };
 
@@ -215,7 +215,7 @@ export async function runCommandInProcess(
       env: {
         ...process.env,
         NODE_ENV: 'test',
-        WALRUS_USE_MOCK: 'true',
+        // Removed WALRUS_USE_MOCK - using real implementations
         ...env,
       },
       timeout,
