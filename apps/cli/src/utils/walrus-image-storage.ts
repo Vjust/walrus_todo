@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getAssetPath } from './path-utils';
 import { handleError } from './error-handler';
-import { execa } from 'execa';
+const execa = require('execa');
 import { KeystoreSigner } from './sui-keystore';
 import * as crypto from 'crypto';
 import { CLIError } from '../types/errors/consolidated';

@@ -1,9 +1,15 @@
 import type { WalrusClientExt } from '../../types/client';
 import type {
-  BlobInfo,
-  BlobObject,
-  BlobMetadataShape,
-} from '../../types/walrus';
+  StandardBlobObject,
+  StandardBlobInfo,
+  StandardBlobMetadata,
+} from '../../types/mocks/shared-types';
+import {
+  createMockBlobObject,
+  createMockBlobInfo,
+  createMockBlobMetadata,
+  createMockStorageConfirmation,
+} from '../../types/mocks/factories';
 
 /**
  * Mock implementation of WalrusClientExt for testing
@@ -17,12 +23,12 @@ export interface MockWalrusClient extends WalrusClientExt {
   getStorageUsage: jest.Mock<Promise<{ used: string; total: string }>, []>;
   readBlob: jest.Mock<Promise<Uint8Array>, [any]>;
   writeBlob: jest.Mock<
-    Promise<{ blobId: string; blobObject: BlobObject }>,
+    Promise<{ blobId: string; blobObject: StandardBlobObject }>,
     [any]
   >;
-  getBlobInfo: jest.Mock<Promise<BlobInfo>, [string]>;
-  getBlobObject: jest.Mock<Promise<BlobObject>, [any]>;
-  getBlobMetadata: jest.Mock<Promise<BlobMetadataShape>, [any]>;
+  getBlobInfo: jest.Mock<Promise<StandardBlobInfo>, [string]>;
+  getBlobObject: jest.Mock<Promise<StandardBlobObject>, [any]>;
+  getBlobMetadata: jest.Mock<Promise<StandardBlobMetadata>, [any]>;
   verifyPoA: jest.Mock<Promise<boolean>, [any]>;
   getBlobSize: jest.Mock<Promise<number>, [string]>;
   storageCost: jest.Mock<
@@ -40,7 +46,7 @@ export interface MockWalrusClient extends WalrusClientExt {
   >;
   deleteBlob: jest.Mock<(tx: any) => Promise<{ digest: string }>, [any]>;
   executeRegisterBlobTransaction: jest.Mock<
-    Promise<{ blob: BlobObject; digest: string }>,
+    Promise<{ blob: StandardBlobObject; digest: string }>,
     [any]
   >;
   getStorageConfirmationFromNode: jest.Mock<Promise<any>, [any]>;
@@ -53,7 +59,7 @@ export interface MockWalrusClient extends WalrusClientExt {
   reset: jest.Mock<void, []>;
   connect: jest.Mock<Promise<void>, []>;
   experimental?: {
-    getBlobData: jest.Mock<Promise<Uint8Array | BlobObject>, []>;
+    getBlobData: jest.Mock<Promise<Uint8Array | StandardBlobObject>, []>;
   };
 }
 
@@ -113,66 +119,20 @@ export function setupDefaultWalrusClientMocks(
 
   mockClient.writeBlob.mockResolvedValue({
     blobId: 'mock-blob-test-todo-id',
-    blobObject: {
-      id: { id: 'mock-blob-test-todo-id' },
-      blob_id: 'mock-blob-test-todo-id',
-      registered_epoch: 100,
-      cert_epoch: 150,
-      size: '1024',
-      encoding_type: 0,
-      storage: {
-        id: { id: 'storage1' },
-        start_epoch: 100,
-        end_epoch: 200,
-        storage_size: '2048',
-        used_size: '1024',
-      },
-      deletable: true,
-    },
+    blobObject: createMockBlobObject('mock-blob-test-todo-id'),
   });
 
-  mockClient.getBlobInfo.mockResolvedValue({
-    blob_id: 'mock-blob-test-todo-id',
-    certified_epoch: 150,
-    registered_epoch: 100,
-    encoding_type: 0,
-    size: '1024',
-    metadata: {
-      V1: {
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-        unencoded_length: '1024',
-        hashes: [],
-        $kind: 'V1',
-      },
-      $kind: 'V1',
-    },
-  });
+  mockClient.getBlobInfo.mockResolvedValue(
+    createMockBlobInfo('mock-blob-test-todo-id')
+  );
 
-  mockClient.getBlobObject.mockResolvedValue({
-    id: { id: 'mock-blob-test-todo-id' },
-    blob_id: 'mock-blob-test-todo-id',
-    registered_epoch: 100,
-    size: '1024',
-    encoding_type: 0,
-    storage: {
-      id: { id: 'storage1' },
-      start_epoch: 100,
-      end_epoch: 200,
-      storage_size: '2048',
-      used_size: '1024',
-    },
-    deletable: true,
-  });
+  mockClient.getBlobObject.mockResolvedValue(
+    createMockBlobObject('mock-blob-test-todo-id')
+  );
 
-  mockClient.getBlobMetadata.mockResolvedValue({
-    V1: {
-      encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-      unencoded_length: '1024',
-      hashes: [],
-      $kind: 'V1',
-    },
-    $kind: 'V1',
-  });
+  mockClient.getBlobMetadata.mockResolvedValue(
+    createMockBlobMetadata(1024)
+  );
 
   mockClient.verifyPoA.mockResolvedValue(true);
 
@@ -210,31 +170,13 @@ export function setupDefaultWalrusClientMocks(
   );
 
   mockClient.executeRegisterBlobTransaction.mockResolvedValue({
-    blob: {
-      id: { id: 'mock-blob-id' },
-      blob_id: 'mock-blob-id',
-      registered_epoch: 100,
-      cert_epoch: 150,
-      size: '1024',
-      encoding_type: 0,
-      storage: {
-        id: { id: 'storage1' },
-        start_epoch: 100,
-        end_epoch: 200,
-        storage_size: '2048',
-        used_size: '1024',
-      },
-      deletable: true,
-    },
+    blob: createMockBlobObject('mock-blob-id'),
     digest: 'mock-register-digest',
   });
 
-  mockClient.getStorageConfirmationFromNode.mockResolvedValue({
-    primary_verification: true,
-    secondary_verification: true,
-    provider: 'mock-provider',
-    signature: 'mock-signature',
-  });
+  mockClient.getStorageConfirmationFromNode.mockResolvedValue(
+    createMockStorageConfirmation()
+  );
 
   mockClient.createStorageBlock.mockResolvedValue({});
 

@@ -7,6 +7,12 @@ import type {
   BlobObjectFactory,
   BlobMetadataFactory,
 } from '../../types/mocks/shared-types';
+import {
+  createMockBlobMetadata,
+  createMockBlobObject,
+  createMockBlobInfo,
+  createMockBlobRecord,
+} from '../../types/mocks/factories';
 import { createMemoryEfficientMock, cleanupMocks } from './memory-utils';
 
 // Internal storage for mock state to simulate real Walrus behavior
@@ -75,29 +81,7 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
   ) => void;
 }
 
-// Helper function to create proper metadata structure
-function createMockMetadata(size: number = 1024): StandardBlobMetadata {
-  return {
-    V1: {
-      encoding_type: { RedStuff: true, RS2: false, $kind: 'RedStuff' },
-      unencoded_length: size.toString(),
-      hashes: [
-        {
-          primary_hash: {
-            Digest: new Uint8Array([1, 2, 3, 4]),
-            $kind: 'Digest',
-          },
-          secondary_hash: {
-            Sha256: new Uint8Array([5, 6, 7, 8]),
-            $kind: 'Sha256',
-          },
-        },
-      ],
-      $kind: 'V1' as const,
-    },
-    $kind: 'V1' as const,
-  };
-}
+// Using shared createMockBlobMetadata function from factories
 
 /**
  * Creates a complete mock WalrusClient with all methods mocked
@@ -137,7 +121,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
       const data = params.blob || params.data || new Uint8Array([1, 2, 3, 4]);
       const size = data.length;
 
-      const metadata = createMockMetadata(size);
+      const metadata = createMockBlobMetadata(size);
       const storage = {
         id: { id: 'storage1' },
         start_epoch: currentEpoch,
@@ -153,7 +137,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         registered_epoch: currentEpoch,
         certified_epoch: currentEpoch + 50, // Auto-certify after 50 epochs
         size,
-        encoding_type: 0,
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         metadata,
         storage,
         attributes: params.attributes || {},
@@ -170,7 +154,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           registered_epoch: currentEpoch,
           cert_epoch: currentEpoch + 50,
           size: size.toString(),
-          encoding_type: 0,
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           storage,
           deletable: true,
           metadata,
@@ -213,7 +197,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
             },
           },
         ],
-        metadata: createMockMetadata(1024),
+        metadata: createMockBlobMetadata(1024),
       } as StandardBlobInfo;
     }),
 
@@ -266,7 +250,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         }
 
         // Default fallback
-        return createMockMetadata(1024);
+        return createMockBlobMetadata(1024);
       }),
     // Improved verifyPoA that checks certification status
     verifyPoA: jest
@@ -414,7 +398,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
       options?: Partial<MockBlobRecord>
     ) => {
       const size = data.length;
-      const metadata = createMockMetadata(size);
+      const metadata = createMockBlobMetadata(size);
       const storage = {
         id: { id: 'storage1' },
         start_epoch: currentEpoch,
@@ -429,7 +413,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         registered_epoch: currentEpoch,
         certified_epoch: options?.certified_epoch,
         size,
-        encoding_type: 0,
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         metadata,
         storage,
         attributes: options?.attributes || {},
@@ -550,4 +534,4 @@ export function createWalrusModuleMock() {
 /**
  * Export additional utilities for tests
  */
-export { mockBlobStorage, currentEpoch, createMockMetadata };
+export { mockBlobStorage, currentEpoch, createMockBlobMetadata };
