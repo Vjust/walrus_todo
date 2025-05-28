@@ -88,6 +88,10 @@ export class WalletNotConnectedError extends SuiClientError {
 let suiClient: SuiClient | null = null;
 let currentNetwork: NetworkType = 'testnet';
 let appConfig: AppConfig | null = null;
+let initializationPromise: Promise<SuiClient> | null = null;
+let isInitialized = false;
+let initializationAttempts = 0;
+const MAX_INITIALIZATION_ATTEMPTS = 3;
 
 // Remove simulated wallet connection - use wallet context instead
 // let connected = false;
@@ -111,19 +115,35 @@ const isStorageAvailable = () => {
  * Initialize Sui client with auto-generated configuration
  */
 export async function initializeSuiClientWithConfig(): Promise<SuiClient> {
-  appConfig = await loadAppConfig();
-  const configNetwork = appConfig.network.name as NetworkType;
-  
-  // Return existing client if already initialized and network matches
-  if (suiClient && currentNetwork === configNetwork) {
-    console.log(`Sui client already initialized for ${configNetwork}`);
+  // Return existing promise if initialization is already in progress
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  // Return existing client if already initialized
+  if (suiClient && isInitialized) {
     return suiClient;
   }
-  
-  currentNetwork = configNetwork;
-  suiClient = new SuiClient({ url: appConfig.network.url });
-  console.log(`Sui client initialized with config for ${configNetwork}`);
-  return suiClient;
+
+  initializationPromise = (async () => {
+    try {
+      appConfig = await loadAppConfig();
+      const configNetwork = appConfig.network.name as NetworkType;
+      
+      currentNetwork = configNetwork;
+      suiClient = new SuiClient({ url: appConfig.network.url });
+      isInitialized = true;
+      initializationAttempts = 0; // Reset attempts on success
+      console.log(`Sui client initialized with config for ${configNetwork}`);
+      return suiClient;
+    } catch (error) {
+      console.error('Failed to initialize Sui client with config:', error);
+      initializationPromise = null;
+      throw error;
+    }
+  })();
+
+  return initializationPromise;
 }
 
 /**
@@ -132,8 +152,13 @@ export async function initializeSuiClientWithConfig(): Promise<SuiClient> {
 export async function initializeSuiClient(
   network: NetworkType = 'testnet'
 ): Promise<SuiClient> {
+  // Return existing promise if initialization is already in progress
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
   // Return existing client if already initialized and network matches
-  if (suiClient && currentNetwork === network) {
+  if (suiClient && isInitialized && currentNetwork === network) {
     console.log(`Sui client already initialized for ${network}`);
     return suiClient;
   }
@@ -142,34 +167,151 @@ export async function initializeSuiClient(
   try {
     return await initializeSuiClientWithConfig();
   } catch (error) {
-    // Fallback to direct network URL from config
     console.warn(
       'Failed to load app config, using fallback network configuration'
     );
-    currentNetwork = network;
-    // Use the network URLs from the config-loader fallback
-    const networkUrls = {
-      mainnet: 'https://fullnode.mainnet.sui.io:443',
-      testnet: 'https://fullnode.testnet.sui.io:443',
-      devnet: 'https://fullnode.devnet.sui.io:443',
-      localnet: 'http://127.0.0.1:9000',
-    };
-    suiClient = new SuiClient({ url: networkUrls[network] });
-    console.log(`Sui client initialized with fallback config for ${network}`);
-    return suiClient;
+    
+    initializationPromise = (async () => {
+      try {
+        currentNetwork = network;
+        // Use the network URLs from the config-loader fallback
+        const networkUrls = {
+          mainnet: 'https://fullnode.mainnet.sui.io:443',
+          testnet: 'https://fullnode.testnet.sui.io:443',
+          devnet: 'https://fullnode.devnet.sui.io:443',
+          localnet: 'http://127.0.0.1:9000',
+        };
+        suiClient = new SuiClient({ url: networkUrls[network] });
+        isInitialized = true;
+        initializationAttempts = 0; // Reset attempts on success
+        console.log(`Sui client initialized with fallback config for ${network}`);
+        return suiClient;
+      } catch (fallbackError) {
+        console.error('Failed to initialize Sui client with fallback:', fallbackError);
+        initializationPromise = null;
+        throw fallbackError;
+      }
+    })();
+
+    return initializationPromise;
   }
 }
 
 /**
- * Get or create Sui client instance
+ * Get or create Sui client instance with auto-initialization
  */
-export function getSuiClient(): SuiClient {
-  if (!suiClient) {
+export async function getSuiClient(): Promise<SuiClient> {
+  if (!suiClient || !isInitialized) {
+    // Check if too many attempts have been made
+    if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
+      throw new Error(`Sui client initialization failed after ${MAX_INITIALIZATION_ATTEMPTS} attempts`);
+    }
+    
+    // Auto-initialize if not already done
+    console.log(`Sui client not initialized, auto-initializing... (attempt ${initializationAttempts + 1})`);
+    initializationAttempts++;
+    
+    try {
+      return await ensureSuiClientInitialized();
+    } catch (error) {
+      console.error(`Sui client initialization attempt ${initializationAttempts} failed:`, error);
+      if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
+        throw new Error(`Failed to initialize Sui client after ${MAX_INITIALIZATION_ATTEMPTS} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      throw error;
+    }
+  }
+  return suiClient;
+}
+
+/**
+ * Get Sui client instance synchronously (throws if not initialized)
+ */
+export function getSuiClientSync(): SuiClient {
+  if (!suiClient || !isInitialized) {
     throw new Error(
       'Sui client not initialized. Call initializeSuiClient() first.'
     );
   }
   return suiClient;
+}
+
+/**
+ * Check if Sui client is initialized
+ */
+export function isSuiClientInitialized(): boolean {
+  return isInitialized && suiClient !== null;
+}
+
+/**
+ * Get initialization promise if client is currently being initialized
+ */
+export function getSuiClientInitializationPromise(): Promise<SuiClient> | null {
+  return initializationPromise;
+}
+
+/**
+ * Initialize Sui client and return a promise that resolves when ready
+ */
+export async function ensureSuiClientInitialized(network: NetworkType = 'testnet'): Promise<SuiClient> {
+  if (isSuiClientInitialized()) {
+    return suiClient!;
+  }
+  
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+  
+  return initializeSuiClient(network);
+}
+
+/**
+ * Reset initialization state - useful for error recovery
+ */
+export function resetSuiClientInitialization(): void {
+  console.log('Resetting Sui client initialization state');
+  suiClient = null;
+  isInitialized = false;
+  initializationPromise = null;
+  initializationAttempts = 0;
+  appConfig = null;
+}
+
+/**
+ * Safe wrapper for Sui client operations with automatic retry
+ */
+export async function withSuiClient<T>(
+  operation: (client: SuiClient) => Promise<T>,
+  maxRetries: number = 2
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const client = await getSuiClient();
+      return await operation(client);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // If it's an initialization error and we have retries left, reset and try again
+      if (attempt < maxRetries - 1 && 
+          (lastError.message.includes('not initialized') || 
+           lastError.message.includes('initialization failed'))) {
+        console.warn(`Sui operation failed (attempt ${attempt + 1}), resetting and retrying...`);
+        resetSuiClientInitialization();
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      
+      // If we're out of retries or it's not an initialization error, throw
+      if (attempt === maxRetries - 1) {
+        break;
+      }
+    }
+  }
+  
+  throw lastError!;
 }
 
 /**
@@ -262,31 +404,31 @@ export async function getTodosFromBlockchain(
   ownerAddress: string
 ): Promise<Todo[]> {
   try {
-    const client = getSuiClient();
-
     if (!ownerAddress) {
       throw new WalletNotConnectedError();
     }
 
-    // Get all objects owned by the address
-    const response: PaginatedObjectsResponse = await client.getOwnedObjects({
-      owner: ownerAddress,
-      filter: {
-        StructType: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`,
-      },
-      options: {
-        showContent: true,
-        showOwner: true,
-        showType: true,
-      },
+    return await withSuiClient(async (client) => {
+      // Get all objects owned by the address
+      const response: PaginatedObjectsResponse = await client.getOwnedObjects({
+        owner: ownerAddress,
+        filter: {
+          StructType: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`,
+        },
+        options: {
+          showContent: true,
+          showOwner: true,
+          showType: true,
+        },
+      });
+
+      // Transform Sui objects to Todo format
+      const todos: Todo[] = response.data
+        .map(transformSuiObjectToTodo)
+        .filter((todo): todo is Todo => todo !== null);
+
+      return todos;
     });
-
-    // Transform Sui objects to Todo format
-    const todos: Todo[] = response.data
-      .map(transformSuiObjectToTodo)
-      .filter((todo): todo is Todo => todo !== null);
-
-    return todos;
   } catch (error) {
     console.error('Error fetching todos from blockchain:', error);
     if (error instanceof SuiClientError) {
@@ -344,26 +486,29 @@ export async function storeTodoOnBlockchain(
 
     if (result.digest) {
       // Get the created object ID from transaction effects
-      const client = getSuiClient();
-      const txResponse = await client.getTransactionBlock({
-        digest: result.digest,
-        options: {
-          showEffects: true,
-          showObjectChanges: true,
-        },
-      });
+      const objectId = await withSuiClient(async (client) => {
+        const txResponse = await client.getTransactionBlock({
+          digest: result.digest,
+          options: {
+            showEffects: true,
+            showObjectChanges: true,
+          },
+        });
 
-      // Find the created TodoNFT object
-      const createdObject = txResponse.objectChanges?.find(
-        change =>
-          change.type === 'created' &&
-          change.objectType?.includes(TODO_NFT_CONFIG.STRUCT_NAME)
-      );
+        // Find the created TodoNFT object
+        const createdObject = txResponse.objectChanges?.find(
+          change =>
+            change.type === 'created' &&
+            change.objectType?.includes(TODO_NFT_CONFIG.STRUCT_NAME)
+        );
+
+        return (createdObject as any)?.objectId;
+      });
 
       return {
         success: true,
         digest: result.digest,
-        objectId: (createdObject as any)?.objectId,
+        objectId,
       };
     }
 
@@ -546,17 +691,18 @@ export async function getTodoByObjectId(
   objectId: string
 ): Promise<Todo | null> {
   try {
-    const client = getSuiClient();
-    const response = await client.getObject({
-      id: objectId,
-      options: {
-        showContent: true,
-        showOwner: true,
-        showType: true,
-      },
-    });
+    return await withSuiClient(async (client) => {
+      const response = await client.getObject({
+        id: objectId,
+        options: {
+          showContent: true,
+          showOwner: true,
+          showType: true,
+        },
+      });
 
-    return transformSuiObjectToTodo(response);
+      return transformSuiObjectToTodo(response);
+    });
   } catch (error) {
     console.error('Error fetching todo by object ID:', error);
     throw new SuiClientError(
@@ -572,19 +718,20 @@ export async function getTodosByObjectIds(
   objectIds: string[]
 ): Promise<Todo[]> {
   try {
-    const client = getSuiClient();
-    const response = await client.multiGetObjects({
-      ids: objectIds,
-      options: {
-        showContent: true,
-        showOwner: true,
-        showType: true,
-      },
-    });
+    return await withSuiClient(async (client) => {
+      const response = await client.multiGetObjects({
+        ids: objectIds,
+        options: {
+          showContent: true,
+          showOwner: true,
+          showType: true,
+        },
+      });
 
-    return response
-      .map(transformSuiObjectToTodo)
-      .filter((todo): todo is Todo => todo !== null);
+      return response
+        .map(transformSuiObjectToTodo)
+        .filter((todo): todo is Todo => todo !== null);
+    });
   } catch (error) {
     console.error('Error batch fetching todos:', error);
     throw new SuiClientError(
@@ -598,23 +745,24 @@ export async function getTodosByObjectIds(
  */
 export async function getTransactionStatus(digest: string) {
   try {
-    const client = getSuiClient();
-    const response = await client.getTransactionBlock({
-      digest,
-      options: {
-        showEffects: true,
-        showEvents: true,
-        showObjectChanges: true,
-      },
-    });
+    return await withSuiClient(async (client) => {
+      const response = await client.getTransactionBlock({
+        digest,
+        options: {
+          showEffects: true,
+          showEvents: true,
+          showObjectChanges: true,
+        },
+      });
 
-    return {
-      status: response.effects?.status?.status || 'unknown',
-      digest: response.digest,
-      timestamp: response.timestampMs,
-      objectChanges: response.objectChanges,
-      events: response.events,
-    };
+      return {
+        status: response.effects?.status?.status || 'unknown',
+        digest: response.digest,
+        timestamp: response.timestampMs,
+        objectChanges: response.objectChanges,
+        events: response.events,
+      };
+    });
   } catch (error) {
     console.error('Error getting transaction status:', error);
     throw new SuiClientError(
