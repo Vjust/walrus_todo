@@ -1,6 +1,6 @@
 import type { WalrusClientExt } from '../../types/client';
 import type { BlobInfo, BlobObject, BlobMetadataShape } from '../../types/walrus';
-import { createMemoryEfficientMock, cleanupMocks } from './memory-utils';
+import { createMemoryEfficientMock } from './memory-utils';
 
 // Internal storage for mock state to simulate real Walrus behavior
 interface MockBlobRecord {
@@ -13,7 +13,7 @@ interface MockBlobRecord {
   contentType?: string;
   owner?: string;
   tags?: string[];
-  encoding_type: { RedStuff: boolean; $kind: string };
+  encoding_type: number;
   metadata: BlobMetadataShape;
   storage: {
     id: { id: string };
@@ -26,7 +26,7 @@ interface MockBlobRecord {
 }
 
 const mockBlobStorage: Record<string, MockBlobRecord> = {};
-const currentEpoch = 100;
+let currentEpoch = 100;
 
 /**
  * Complete mock implementation of WalrusClientExt for testing
@@ -67,7 +67,7 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
 function createMockMetadata(size: number = 1024): BlobMetadataShape {
   return {
     V1: {
-      encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+      encoding_type: 0,
       unencoded_length: size.toString(),
       hashes: [
         {
@@ -124,8 +124,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         id: { id: 'storage1' },
         start_epoch: currentEpoch,
         end_epoch: currentEpoch + 100,
-        storage_size: BigInt(size * 2),
-        used_size: BigInt(size),
+        storage_size: (size * 2).toString(),
+        used_size: size.toString(),
       };
       
       // Store in mock storage
@@ -135,7 +135,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         registered_epoch: currentEpoch,
         certified_epoch: currentEpoch + 50, // Auto-certify after 50 epochs
         size,
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        encoding_type: 0,
         metadata,
         storage,
         attributes: params.attributes || {},
@@ -151,8 +151,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           blob_id: blobId,
           registered_epoch: currentEpoch,
           certified_epoch: currentEpoch + 50,
-          size: BigInt(size),
-          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+          size: size.toString(),
+          encoding_type: 0,
           storage,
           deletable: true,
           metadata,
@@ -180,7 +180,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         blob_id: blobId,
         certified_epoch: 150,
         registered_epoch: 100,
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        encoding_type: 0,
         unencoded_length: '1024',
         size: '1024',
         hashes: [
@@ -208,7 +208,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           blob_id: record.blobId,
           registered_epoch: record.registered_epoch,
           certified_epoch: record.certified_epoch,
-          size: BigInt(record.size),
+          size: record.size.toString(),
           encoding_type: record.encoding_type,
           storage: record.storage,
           deletable: true,
@@ -223,14 +223,14 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         blob_id: params.blobId,
         registered_epoch: 100,
         certified_epoch: 150,
-        size: BigInt(1024),
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        size: '1024',
+        encoding_type: 0,
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
-          storage_size: BigInt(2048),
-          used_size: BigInt(1024),
+          storage_size: '2048',
+          used_size: '1024',
         },
         deletable: true,
       } as BlobObject;
@@ -303,14 +303,14 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         blob_id: 'mock-blob-id',
         registered_epoch: 100,
         certified_epoch: 150,
-        size: BigInt(1024),
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        size: '1024',
+        encoding_type: 0,
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
-          storage_size: BigInt(2048),
-          used_size: BigInt(1024),
+          storage_size: '2048',
+          used_size: '1024',
         },
         deletable: true,
       },
@@ -372,8 +372,8 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         id: { id: 'storage1' },
         start_epoch: currentEpoch,
         end_epoch: currentEpoch + 100,
-        storage_size: BigInt(size * 2),
-        used_size: BigInt(size),
+        storage_size: (size * 2).toString(),
+        used_size: size.toString(),
       };
       
       mockBlobStorage[blobId] = {
@@ -382,7 +382,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         registered_epoch: currentEpoch,
         certified_epoch: options?.certified_epoch,
         size,
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+        encoding_type: 0,
         metadata,
         storage,
         attributes: options?.attributes || {},

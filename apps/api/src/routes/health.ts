@@ -1,4 +1,4 @@
-import express, { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import '../types/express';
 import { WebSocketService } from '../services/websocketService';
 import { asyncHandler } from '../middleware/error';

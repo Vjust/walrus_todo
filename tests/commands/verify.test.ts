@@ -85,7 +85,7 @@ jest.mock('../../apps/cli/src/utils/blob-verification', () => {
 });
 
 // Mock the createMockWalrusClient function
-jest.mock('../../apps/cli/src/utils/MockWalrusClient', () => {
+jest.mock('../helpers/complete-walrus-client-mock', () => {
   const mockClient = {
     readBlob: jest
       .fn()
@@ -127,6 +127,7 @@ jest.mock('../../apps/cli/src/utils/MockWalrusClient', () => {
   };
 
   return {
+    getMockWalrusClient: jest.fn().mockReturnValue(mockClient),
     createMockWalrusClient: jest.fn().mockReturnValue(mockClient),
   };
 });
@@ -163,9 +164,9 @@ describe('verify commands', () => {
     }
   });
 
-  after(() => {
+  afterAll(() => {
     // Remove temporary directory
-    fs.rmdirSync(tmpDir, { recursive: true });
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   describe('verify blob', () => {

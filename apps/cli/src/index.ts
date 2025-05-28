@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 
-// Import polyfills first
-import './utils/polyfills/aggregate-error';
+// Import polyfills first - ensures compatibility with older Node.js versions
+import './utils/polyfills';
+
+// Check Node.js version compatibility
+import { checkNodeVersion, logCompatibilityInfo } from './utils/node-version-check';
+checkNodeVersion();
+logCompatibilityInfo();
 
 // Import core dependencies with CommonJS compatibility
 import { Command, Flags } from '@oclif/core';

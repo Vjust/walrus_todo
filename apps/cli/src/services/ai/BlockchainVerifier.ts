@@ -123,21 +123,52 @@ export class BlockchainVerifier {
     request: string,
     response: string
   ): Promise<boolean> {
-    return this.verifierAdapter.verifyRecord(record, request, response);
+    // Defensive validation
+    if (!this.verifierAdapter) {
+      throw new Error('Verifier adapter is not initialized');
+    }
+    if (!record) {
+      throw new Error('Verification record is required');
+    }
+    if (typeof request !== 'string' || typeof response !== 'string') {
+      throw new Error('Request and response must be strings');
+    }
+
+    const result = await this.verifierAdapter.verifyRecord(record, request, response);
+    return Boolean(result);
   }
 
   /**
    * Get a specific verification record
    */
   async getVerification(verificationId: string): Promise<VerificationRecord> {
-    return this.verifierAdapter.getVerification(verificationId);
+    // Defensive validation
+    if (!this.verifierAdapter) {
+      throw new Error('Verifier adapter is not initialized');
+    }
+    if (!verificationId || typeof verificationId !== 'string') {
+      throw new Error('Verification ID must be a non-empty string');
+    }
+
+    const verification = await this.verifierAdapter.getVerification(verificationId);
+    if (!verification) {
+      throw new Error(`Verification not found: ${verificationId}`);
+    }
+
+    return verification;
   }
 
   /**
    * List verifications for the current user
    */
   async listVerifications(userAddress?: string): Promise<VerificationRecord[]> {
-    return this.verifierAdapter.listVerifications(userAddress);
+    // Defensive validation
+    if (!this.verifierAdapter) {
+      throw new Error('Verifier adapter is not initialized');
+    }
+
+    const verifications = await this.verifierAdapter.listVerifications(userAddress);
+    return Array.isArray(verifications) ? verifications : [];
   }
 
   /**
@@ -285,7 +316,20 @@ export class BlockchainVerifier {
    * Generate a cryptographic proof for a verification
    */
   async generateProof(verificationId: string): Promise<string> {
-    return this.verifierAdapter.generateProof(verificationId);
+    // Defensive validation
+    if (!this.verifierAdapter) {
+      throw new Error('Verifier adapter is not initialized');
+    }
+    if (!verificationId || typeof verificationId !== 'string') {
+      throw new Error('Verification ID must be a non-empty string');
+    }
+
+    const proof = await this.verifierAdapter.generateProof(verificationId);
+    if (!proof || typeof proof !== 'string') {
+      throw new Error('Failed to generate proof: invalid result');
+    }
+
+    return proof;
   }
 
   /**

@@ -9,7 +9,7 @@
 import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
+import { createMockAIModelAdapter } from '../helpers/AITestFactory';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 
 // Mock the AIProviderFactory

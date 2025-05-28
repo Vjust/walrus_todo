@@ -2,11 +2,15 @@ import { Args, Flags } from '@oclif/core';
 import chalk = require('chalk');
 import { confirm } from '@inquirer/prompts';
 import { select } from '@inquirer/prompts';
+import { v4 as uuidv4 } from 'uuid';
+import * as os from 'os';
+import { join } from 'path';
 import { TodoService } from '../services/todoService';
 import { Todo } from '../types/todo';
 import { CLIError } from '../types/errors/consolidated';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { StorageValidator } from '../utils/storage-validator';
+import { Logger } from '../utils/Logger';
 import BaseCommand, { ICONS } from '../base-command';
 
 /**
@@ -18,7 +22,7 @@ import BaseCommand, { ICONS } from '../base-command';
  * - Maintains backward compatibility with flag-based syntax
  * - Detects conflicts and allows user to choose resolution strategies
  */
-export default class SyncCommand extends BaseCommand {
+class SyncCommand extends BaseCommand {
   static description = 'Synchronize todos between local and blockchain storage. When no list is specified, syncs all lists.';
 
   static examples = [
@@ -89,12 +93,11 @@ export default class SyncCommand extends BaseCommand {
 
   private todoService = new TodoService();
   private walrusStorage = createWalrusStorage('testnet', false);
-  private validator: StorageValidator;
-
-  constructor(argv: string[], config: unknown) {
-    super(argv, config);
-    this.validator = new StorageValidator(this.walrusStorage);
-  }
+  private validator = new StorageValidator(this.walrusStorage);
+  private logger = new Logger('SyncCommand');
+  private continuousSyncJobId?: string;
+  private syncEngine?: any; // TODO: Add proper SyncEngine type when available
+  private backgroundOps?: any; // TODO: Add proper BackgroundOperations type when available
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(SyncCommand);
@@ -444,92 +447,17 @@ export default class SyncCommand extends BaseCommand {
     }>,
     flags: any
   ): Promise<void> {
-    if (!this.backgroundOps) {
-      throw new CLIError('Background operations not initialized', 'BACKGROUND_ERROR');
-    }
-
-    const syncJobId = uuidv4();
-    this.logger.info(`Starting background sync job: ${syncJobId}`);
-
-    if (flags.continuous) {
-      // Start continuous sync mode
-      this.continuousSyncJobId = await this.startContinuousSync(flags);
-      this.log(chalk.green(`${ICONS.SUCCESS} Continuous sync started in background`));
-      this.log(chalk.blue(`${ICONS.INFO} Job ID: ${this.continuousSyncJobId}`));
-      this.log(chalk.dim(`Use "waltodo status ${this.continuousSyncJobId}" to check progress`));
-      this.log(chalk.dim(`Use "waltodo cancel ${this.continuousSyncJobId}" to stop continuous sync`));
-      return;
-    }
-
-    // Batch sync operation
-    const batches = this.createSyncBatches(needsSync, flags['batch-size']);
-    const batchJobIds: string[] = [];
-
-    this.log(chalk.blue(`${ICONS.INFO} Starting ${batches.length} sync batch${batches.length !== 1 ? 'es' : ''} in background...`));
-
-    for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i];
-      const batchJobId = await this.backgroundOps.syncTodosInBackground({
-        todos: batch.map(item => item.todo),
-        direction: flags.direction,
-        resolve: flags.resolve,
-        batchSize: flags['batch-size'],
-        priority: flags.priority as 'low' | 'normal' | 'high',
-        onProgress: (operationId, progress) => {
-          this.logger.debug(`Batch ${i + 1} progress: ${progress}%`);
-        },
-        onComplete: (operationId, result) => {
-          this.logger.info(`Batch ${i + 1} completed successfully`);
-        },
-        onError: (operationId, error) => {
-          this.logger.error(`Batch ${i + 1} failed:`, error);
-        },
-      });
-      batchJobIds.push(batchJobId);
-    }
-
-    this.log(chalk.green(`${ICONS.SUCCESS} Background sync started`));
-    this.log(chalk.blue(`${ICONS.INFO} ${batchJobIds.length} batch job${batchJobIds.length !== 1 ? 's' : ''} queued`));
-    
-    batchJobIds.forEach((jobId, index) => {
-      this.log(chalk.dim(`  Batch ${index + 1}: ${jobId}`));
-    });
-
-    this.log(chalk.dim(`\nUse "waltodo jobs" to monitor progress`));
-    this.log(chalk.dim(`Use "waltodo status <job-id>" for detailed status`));
+    // TODO: Implement background sync when BackgroundOperations is available
+    this.log(chalk.yellow(`${ICONS.WARNING} Background sync functionality not yet implemented`));
+    this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 
   private async startContinuousSync(flags: any): Promise<string> {
-    if (!this.backgroundOps) {
-      throw new CLIError('Background operations not initialized', 'BACKGROUND_ERROR');
-    }
-
-    // Start continuous sync daemon using the dedicated method
-    const syncJobId = await this.backgroundOps.startContinuousSyncInBackground({
-      interval: flags.interval,
-      direction: flags.direction,
-      resolve: flags.resolve,
-      force: flags.force,
-      priority: flags.priority as 'low' | 'normal' | 'high',
-      onProgress: (operationId, progress, data) => {
-        if (data) {
-          this.logger.debug(`Continuous sync cycle ${data.cycles}: ${data.cycleSynced} todos synced`);
-        }
-      },
-      onComplete: (operationId, result) => {
-        this.logger.info(`Continuous sync completed after ${result.cycles} cycles`);
-      },
-      onError: (operationId, error) => {
-        this.logger.error('Continuous sync error:', error);
-      },
-    });
-    
-    this.logger.info(`Continuous sync started with ${flags.interval}s interval`, {
-      jobId: syncJobId,
-      interval: flags.interval,
-    });
-
-    return syncJobId;
+    // TODO: Implement continuous sync when BackgroundOperations is available
+    const jobId = uuidv4();
+    this.log(chalk.yellow(`${ICONS.WARNING} Continuous sync functionality not yet implemented`));
+    this.log(chalk.dim('Use regular sync for now: waltodo sync'));
+    return jobId;
   }
 
   private createSyncBatches(
@@ -581,32 +509,9 @@ export default class SyncCommand extends BaseCommand {
   private async startSyncDaemon(flags: any): Promise<void> {
     this.log(chalk.blue(`${ICONS.INFO} Starting sync daemon...`));
     
-    const config = this.createSyncEngineConfig(flags);
-    this.syncEngine = new SyncEngine(config);
-    
-    // Setup event handlers
-    this.setupSyncEngineEvents();
-    
-    // Initialize and start
-    await this.syncEngine.initialize(flags.wallet);
-    await this.syncEngine.start();
-    
-    this.log(chalk.green(`${ICONS.SUCCESS} Sync daemon started`));
-    this.log(chalk.blue(`${ICONS.INFO} Watching: ${config.todosDirectory}`));
-    this.log(chalk.blue(`${ICONS.INFO} API Server: ${config.apiConfig.baseURL}`));
-    this.log(chalk.dim('Press Ctrl+C to stop the daemon'));
-    
-    // Keep the process running
-    process.on('SIGINT', async () => {
-      this.log('\n' + chalk.yellow('Stopping sync daemon...'));
-      if (this.syncEngine) {
-        await this.syncEngine.shutdown();
-      }
-      process.exit(0);
-    });
-    
-    // Keep alive
-    await new Promise(() => {});
+    // TODO: Implement SyncEngine when available
+    this.log(chalk.yellow(`${ICONS.WARNING} Sync daemon functionality not yet implemented`));
+    this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 
   /**
@@ -615,44 +520,16 @@ export default class SyncCommand extends BaseCommand {
   private async startRealTimeSync(flags: any): Promise<void> {
     this.log(chalk.blue(`${ICONS.INFO} Starting real-time sync...`));
     
-    const config = this.createSyncEngineConfig(flags);
-    this.syncEngine = new SyncEngine(config);
-    
-    // Setup event handlers with more verbose output
-    this.setupSyncEngineEvents(true);
-    
-    // Initialize and start
-    await this.syncEngine.initialize(flags.wallet);
-    await this.syncEngine.start();
-    
-    this.log(chalk.green(`${ICONS.SUCCESS} Real-time sync started`));
-    this.log(chalk.blue(`${ICONS.INFO} Watching: ${config.todosDirectory}`));
-    this.log(chalk.blue(`${ICONS.INFO} API Server: ${config.apiConfig.baseURL}`));
-    this.log(chalk.dim('File changes will be automatically synced. Press Ctrl+C to stop.'));
-    
-    // Show initial status
-    const status = this.syncEngine.getSyncStatus();
-    this.displaySyncEngineStatus(status);
-    
-    // Handle graceful shutdown
-    process.on('SIGINT', async () => {
-      this.log('\n' + chalk.yellow('Stopping real-time sync...'));
-      if (this.syncEngine) {
-        await this.syncEngine.shutdown();
-      }
-      process.exit(0);
-    });
-    
-    // Keep alive
-    await new Promise(() => {});
+    // TODO: Implement real-time sync when SyncEngine is available
+    this.log(chalk.yellow(`${ICONS.WARNING} Real-time sync functionality not yet implemented`));
+    this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 
   /**
    * Stop sync daemon
    */
   private async stopSyncDaemon(): Promise<void> {
-    // This would connect to a running daemon and stop it
-    // For now, just show a message
+    // TODO: Implement daemon stop functionality
     this.log(chalk.yellow(`${ICONS.WARNING} Daemon stop functionality not yet implemented`));
     this.log(chalk.dim('Use Ctrl+C in the daemon terminal to stop it manually'));
   }
@@ -661,117 +538,12 @@ export default class SyncCommand extends BaseCommand {
    * Show sync engine status
    */
   private async showSyncStatus(): Promise<void> {
-    if (!this.syncEngine) {
-      // Try to connect to a running daemon or show offline status
-      this.log(chalk.yellow(`${ICONS.WARNING} No active sync engine`));
-      this.log(chalk.dim('Start sync with --daemon or --real-time flags'));
-      return;
-    }
-    
-    const status = this.syncEngine.getSyncStatus();
-    this.displaySyncEngineStatus(status);
-  }
-
-  /**
-   * Create sync engine configuration
-   */
-  private createSyncEngineConfig(flags: any): SyncEngineConfig {
-    const todosDir = process.env.WALTODO_TODOS_DIR || join(os.homedir(), 'Todos');
-    
-    return {
-      todosDirectory: todosDir,
-      apiConfig: {
-        baseURL: flags['api-url'],
-        timeout: 30000,
-        retryAttempts: 3,
-        enableWebSocket: true,
-        headers: {
-          'X-Client': 'WalTodo-CLI',
-          'X-Version': '1.0.0'
-        }
-      },
-      syncInterval: 30000, // 30 seconds
-      conflictResolution: flags.resolve,
-      enableRealTimeSync: flags['real-time'] || flags.daemon,
-      maxConcurrentSyncs: 3,
-      syncDebounceMs: 2000
-    };
-  }
-
-  /**
-   * Setup sync engine event handlers
-   */
-  private setupSyncEngineEvents(verbose = false): void {
-    if (!this.syncEngine) return;
-    
-    this.syncEngine.on('initialized', () => {
-      if (verbose) {
-        this.log(chalk.green(`${ICONS.SUCCESS} Sync engine initialized`));
-      }
-    });
-    
-    this.syncEngine.on('started', () => {
-      if (verbose) {
-        this.log(chalk.green(`${ICONS.SUCCESS} Sync engine started`));
-      }
-    });
-    
-    this.syncEngine.on('file-changed', (event) => {
-      if (verbose) {
-        this.log(chalk.blue(`${ICONS.ARROW} File ${event.type}: ${event.relativePath}`));
-      }
-    });
-    
-    this.syncEngine.on('sync-started', () => {
-      if (verbose) {
-        this.log(chalk.blue(`${ICONS.INFO} Sync started...`));
-      }
-    });
-    
-    this.syncEngine.on('sync-completed', (result) => {
-      if (verbose || result.errors.length > 0) {
-        this.log(chalk.green(`${ICONS.SUCCESS} Sync completed: ${result.syncedFiles} files`));
-        if (result.conflicts.length > 0) {
-          this.log(chalk.yellow(`${ICONS.WARNING} ${result.conflicts.length} conflicts detected`));
-        }
-        if (result.errors.length > 0) {
-          this.log(chalk.red(`${ICONS.ERROR} ${result.errors.length} errors occurred`));
-        }
-      }
-    });
-    
-    this.syncEngine.on('conflict-detected', (conflict) => {
-      this.log(chalk.yellow(`${ICONS.WARNING} Conflict detected: ${conflict.itemId}`));
-      this.log(chalk.dim(`  Local: ${new Date(conflict.localTimestamp).toLocaleString()}`));
-      this.log(chalk.dim(`  Remote: ${new Date(conflict.remoteTimestamp).toLocaleString()}`));
-    });
-    
-    this.syncEngine.on('remote-change-applied', (event) => {
-      if (verbose) {
-        this.log(chalk.cyan(`${ICONS.ARROW} Remote change applied: ${event.type}`));
-      }
-    });
-    
-    this.syncEngine.on('error', (error) => {
-      this.log(chalk.red(`${ICONS.ERROR} Sync error: ${error.message}`));
-    });
-    
-    this.syncEngine.on('api-disconnected', () => {
-      this.log(chalk.yellow(`${ICONS.WARNING} API connection lost, will retry...`));
-    });
-  }
-
-  /**
-   * Display sync engine status
-   */
-  private displaySyncEngineStatus(status: any): void {
-    this.section('Sync Engine Status', [
-      `Active: ${status.isActive ? chalk.green('Yes') : chalk.red('No')}`,
-      `Last Sync: ${status.lastSync ? new Date(status.lastSync).toLocaleString() : 'Never'}`,
-      `Pending Changes: ${status.pendingChanges}`,
-      `Conflicts: ${status.conflicts.length}`,
-      status.conflicts.length > 0 ? '\nConflicts:' : null,
-      ...status.conflicts.map((c: any) => `  • ${c.itemId} (${c.type})`)
-    ].filter(Boolean).join('\n'));
+    // TODO: Implement sync status when SyncEngine is available
+    this.log(chalk.yellow(`${ICONS.WARNING} Sync status functionality not yet implemented`));
+    this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 }
+
+// Export both named and default for compatibility
+export { SyncCommand };
+export default SyncCommand;

@@ -33,11 +33,20 @@ export class Logger {
     // Add default console handler
     this.componentName = componentName;
     this.addHandler(entry => {
+      // Detect test environment
+      const isTestEnv = this.isTestEnvironment();
+      
       // Skip debug messages unless NODE_ENV is development
       if (
         entry.level === LogLevel.DEBUG &&
         process.env.NODE_ENV !== 'development'
       ) {
+        return;
+      }
+
+      // In test environments, only show ERROR level logs by default
+      // unless LOG_LEVEL is explicitly set or VERBOSE_TESTS is enabled
+      if (isTestEnv && !this.shouldLogInTests(entry.level)) {
         return;
       }
 
@@ -60,6 +69,45 @@ export class Logger {
       Logger.instance = new Logger();
     }
     return Logger.instance;
+  }
+
+  /**
+   * Detect if we're running in a test environment
+   * @returns true if in test environment
+   */
+  private isTestEnvironment(): boolean {
+    // Always check current environment state, not cached
+    return (
+      process.env.NODE_ENV === 'test' ||
+      process.env.JEST_WORKER_ID !== undefined ||
+      process.env.npm_lifecycle_event === 'test' ||
+      process.argv.some(arg => arg.includes('jest')) ||
+      typeof global.expect !== 'undefined' ||
+      typeof jest !== 'undefined'
+    );
+  }
+
+  /**
+   * Determine if a log level should be shown in tests
+   * @param level Log level to check
+   * @returns true if should log in tests
+   */
+  private shouldLogInTests(level: LogLevel): boolean {
+    // Allow explicit override via environment variables
+    if (process.env.VERBOSE_TESTS === 'true' || process.env.VERBOSE_TESTS === '1') {
+      return true;
+    }
+
+    // Respect explicit LOG_LEVEL setting
+    if (process.env.LOG_LEVEL) {
+      const logLevels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR];
+      const targetIndex = logLevels.indexOf(process.env.LOG_LEVEL as LogLevel);
+      const currentIndex = logLevels.indexOf(level);
+      return targetIndex !== -1 && currentIndex >= targetIndex;
+    }
+
+    // Default test behavior: only show ERROR level and above
+    return level === LogLevel.ERROR;
   }
 
   /**

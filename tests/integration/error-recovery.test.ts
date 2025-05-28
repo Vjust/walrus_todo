@@ -15,22 +15,9 @@ import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 import { WalrusStorage } from '../../../apps/cli/src/utils/walrus-storage';
 import { RetryManager } from '../../../apps/cli/src/utils/retry-manager';
 import { AIService } from '../../../apps/cli/src/services/ai/aiService';
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
+import { AITestFactory } from '../helpers/AITestFactory';
 
-// Mock cross-component dependencies
-jest.mock('../../../apps/cli/src/services/ai/AIProviderFactory', () => {
-  return {
-    AIProviderFactory: {
-      createProvider: jest
-        .fn()
-        .mockImplementation(() => createMockAIModelAdapter()),
-      getDefaultProvider: jest.fn().mockImplementation(() => ({
-        provider: 'xai',
-        modelName: 'grok-beta',
-      })),
-    },
-  };
-});
+// Mock cross-component dependencies - moved to beforeEach to avoid import issues
 
 describe('Error Recovery Integration Tests', () => {
   // Setup basic mock clients
@@ -55,9 +42,24 @@ describe('Error Recovery Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Mock AIProviderFactory at runtime
+    jest.doMock('../../../apps/cli/src/services/ai/AIProviderFactory', () => ({
+      AIProviderFactory: {
+        createProvider: jest.fn().mockImplementation(() => {
+          const mockService = AITestFactory.createMockAIService();
+          return (mockService as any).modelAdapter;
+        }),
+        getDefaultProvider: jest.fn().mockImplementation(() => ({
+          provider: 'xai',
+          modelName: 'grok-beta',
+        })),
+      },
+    }));
+
     walrusStorage = new WalrusStorage(mockWalrusClient);
 
-    mockAdapter = createMockAIModelAdapter();
+    const mockService = AITestFactory.createMockAIService();
+    mockAdapter = (mockService as any).modelAdapter;
     aiService = new AIService('test-api-key');
     (aiService as { modelAdapter: unknown }).modelAdapter = mockAdapter;
   });

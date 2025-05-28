@@ -18,6 +18,9 @@ describe('BackgroundCommandOrchestrator', () => {
   let testConfigDir: string;
 
   beforeEach(() => {
+    // Use fake timers to prevent real timer leaks
+    jest.useFakeTimers();
+    
     // Setup test config directory
     testConfigDir = path.join(os.tmpdir(), 'waltodo-test', Date.now().toString());
     
@@ -32,13 +35,30 @@ describe('BackgroundCommandOrchestrator', () => {
 
   afterEach(async () => {
     try {
-      await orchestrator.shutdown();
+      // Shutdown orchestrator first
+      if (orchestrator) {
+        await orchestrator.shutdown();
+      }
+      
+      // Reset singleton
       await resetBackgroundOrchestrator();
+      
+      // Clear all timers including those created by orchestrator
+      jest.clearAllTimers();
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+      
+      // Clear mocks
+      jest.clearAllMocks();
+      
+      // Force garbage collection
+      if (global.gc) {
+        global.gc();
+      }
     } catch (error) {
       // Ignore shutdown errors in tests
+      console.warn('Test cleanup error:', error);
     }
-    jest.clearAllMocks();
-    jest.clearAllTimers();
   });
 
   describe('Command Profile Detection', () => {
@@ -196,8 +216,8 @@ describe('BackgroundCommandOrchestrator', () => {
 
       const jobId = await orchestrator.executeInBackground('store', ['test.txt'], {});
       
-      // Wait for progress update with timeout
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for progress update with timeout (using Jest fake timers)
+      jest.advanceTimersByTime(100);
       
       // Progress updates may not always be captured in test environment
       expect(progressUpdates.length).toBeGreaterThanOrEqual(0);
@@ -357,8 +377,8 @@ describe('BackgroundCommandOrchestrator', () => {
 
       const jobId = await orchestrator.executeInBackground('store', ['test.txt'], {});
       
-      // Wait for error event with shorter timeout
-      await new Promise(resolve => setTimeout(resolve, 25));
+      // Wait for error event with shorter timeout (using Jest fake timers)
+      jest.advanceTimersByTime(25);
       
       expect(errorEvents.length).toBeGreaterThan(0);
     });
@@ -376,14 +396,19 @@ describe('BackgroundCommandOrchestrator Integration', () => {
   let testConfigDir: string;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     testConfigDir = path.join(os.tmpdir(), 'waltodo-integration-test', Date.now().toString());
     orchestrator = new BackgroundCommandOrchestrator(testConfigDir);
   });
 
   afterEach(async () => {
     try {
-      await orchestrator.shutdown();
+      if (orchestrator) {
+        await orchestrator.shutdown();
+      }
       await resetBackgroundOrchestrator();
+      jest.clearAllTimers();
+      jest.useRealTimers();
     } catch (error) {
       // Ignore shutdown errors in tests
     }
@@ -438,8 +463,8 @@ describe('BackgroundCommandOrchestrator Integration', () => {
 
     const jobId = await orchestrator.executeInBackground('store', ['test.txt'], {});
     
-    // Wait for completion with shorter timeout
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Wait for completion with shorter timeout (using Jest fake timers)
+    jest.advanceTimersByTime(50);
     
     expect(events).toContain('started');
   });
@@ -450,13 +475,18 @@ describe('BackgroundCommandOrchestrator Performance', () => {
   let orchestrator: BackgroundCommandOrchestrator;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     orchestrator = new BackgroundCommandOrchestrator();
   });
 
   afterEach(async () => {
     try {
-      await orchestrator.shutdown();
+      if (orchestrator) {
+        await orchestrator.shutdown();
+      }
       await resetBackgroundOrchestrator();
+      jest.clearAllTimers();
+      jest.useRealTimers();
     } catch (error) {
       // Ignore shutdown errors in tests
     }

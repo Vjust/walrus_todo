@@ -43,7 +43,7 @@ export interface DigitalCredential {
   '@context': string[];
   id: string;
   type: string[];
-  issuer: {
+  issuer: string | {
     id: string;
     name?: string;
   };
@@ -117,9 +117,9 @@ export class CredentialVerificationService {
       );
 
       // 3. Get metadata for verification
-      // metadata and attestationInfo would be used for verification
-      // const metadata = await this.walrusClient.getBlobMetadata({ blobId: credentialId });
-      // const attestationInfo = await this.walrusClient.getBlobInfo(credentialId);
+      // These will be used for enhanced verification in future implementations
+      await this.walrusClient.getBlobMetadata({ blobId: credentialId });
+      await this.walrusClient.getBlobInfo(credentialId);
 
       // 4. Verify credential components
       const signatureValid = verifySignature
@@ -135,6 +135,7 @@ export class CredentialVerificationService {
         ? this.validateSchema(credential)
         : true;
 
+
       // 5. Return verification results with proper boolean types
       return {
         valid: signatureValid && timestampValid && notRevoked && schemaValid,
@@ -142,8 +143,8 @@ export class CredentialVerificationService {
         timestamp: timestampValid,
         revocation: notRevoked,
         schemaCompliance: schemaValid,
-        issuer: credential.issuer,
-        subject: credential.credentialSubject.id,
+        issuer: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer?.id || 'unknown',
+        subject: credential.credentialSubject?.id || 'unknown',
         issuanceDate: new Date(credential.issuanceDate),
         expirationDate: credential.expirationDate
           ? new Date(credential.expirationDate)
@@ -169,7 +170,8 @@ export class CredentialVerificationService {
     try {
       // Get the signature from the proof
       const { proof } = credential;
-      if (!proof || !proof.jws) {
+      const signatureValue = proof?.jws || proof?.proofValue;
+      if (!proof || !signatureValue) {
         this.logger.error('Missing proof in credential');
         return false;
       }
@@ -177,7 +179,7 @@ export class CredentialVerificationService {
       // Verify the signature using blockchain verification
       // In a real implementation, we would verify the signature cryptographically
       // For now, we'll perform a basic check
-      const signatureBytes = Buffer.from(proof.jws, 'base64');
+      const signatureBytes = Buffer.from(signatureValue, 'base64');
       if (signatureBytes.length < 64) {
         this.logger.error('Invalid signature length');
         return false;
@@ -249,11 +251,13 @@ export class CredentialVerificationService {
     try {
       // Basic schema validation
       const isValid =
-        credential &&
+        !!credential &&
         typeof credential === 'object' &&
-        credential.issuer &&
-        credential.credentialSubject &&
-        credential.issuanceDate &&
+        !!credential.issuer &&
+        !!credential.credentialSubject &&
+        typeof credential.credentialSubject === 'object' &&
+        !!credential.credentialSubject.id &&
+        !!credential.issuanceDate &&
         Array.isArray(credential.type) &&
         credential.type.includes('VerifiableCredential');
 
@@ -263,7 +267,7 @@ export class CredentialVerificationService {
 
       return isValid;
     } catch (_error) {
-      this.logger.error(`Schema validation failed: ${_error.message}`);
+      this.logger.error(`Schema validation failed: ${_error instanceof Error ? _error.message : String(_error)}`);
       return false;
     }
   }
@@ -293,9 +297,7 @@ export class CredentialVerificationService {
         ],
         id: `uuid:${this.generateUuid()}`,
         type: ['VerifiableCredential', ...data.type],
-        issuer: {
-          id: data.issuer,
-        },
+        issuer: data.issuer,
         issuanceDate: now.toISOString(),
         expirationDate: data.expirationDate?.toISOString(),
         credentialSubject: {
@@ -367,7 +369,7 @@ export class CredentialVerificationService {
       proof: {
         type: 'Ed25519Signature2020',
         created: now.toISOString(),
-        verificationMethod: `${credential.issuer}#key-1`,
+        verificationMethod: `${typeof credential.issuer === 'string' ? credential.issuer : credential.issuer.id}#key-1`,
         proofPurpose: 'assertionMethod',
         jws: Buffer.from(signatureBytes).toString('base64'),
         proofValue: Buffer.from(signatureBytes).toString('base64'),

@@ -124,7 +124,7 @@ function buildJestCommand(config) {
   }
   
   const jestArgs = [
-    path.join(__dirname, '..', 'node_modules', '.bin', 'jest'),
+    'jest',
     '--no-typecheck'
   ];
   
@@ -192,11 +192,12 @@ function runTests(config) {
   const args = [...nodeArgs, ...jestArgs];
   
   if (config.verbose) {
-    console.log(`Command: node ${args.join(' ')}`);
+    console.log(`Command: npx ${jestArgs.join(' ')}`);
+    console.log(`NODE_OPTIONS: ${nodeArgs.join(' ')}`);
     console.log('');
   }
   
-  const child = spawn('node', args, {
+  const child = spawn('npx', jestArgs, {
     stdio: 'inherit',
     cwd: path.join(__dirname, '..'),
     env: {

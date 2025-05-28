@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { createLimitedArray } from '../../apps/cli/src/__tests__/helpers/memory-utils';
 
 export class FuzzGenerator {
   private stringCharset =
@@ -22,7 +23,7 @@ export class FuzzGenerator {
     } = {}
   ): string {
     const minLen = options.minLength || 1;
-    const maxLen = options.maxLength || 100;
+    const maxLen = Math.min(options.maxLength || 100, 10000); // Cap at 10k chars
     const length = this.number(minLen, maxLen);
 
     let charset = options.charset || this.stringCharset;
@@ -57,15 +58,15 @@ export class FuzzGenerator {
     return new Date(this.number(start.getTime(), end.getTime()));
   }
 
-  // Generate random array of items
+  // Generate random array of items with memory limits
   array<T>(
     generator: () => T,
     options: { minLength?: number; maxLength?: number } = {}
   ): T[] {
     const minLen = options.minLength || 0;
-    const maxLen = options.maxLength || 10;
+    const maxLen = Math.min(options.maxLength || 10, 1000); // Cap at 1000 items
     const length = this.number(minLen, maxLen);
-    return Array.from({ length: length }, generator);
+    return createLimitedArray(generator, length, 1000);
   }
 
   // Generate random subset of array
@@ -86,7 +87,7 @@ export class FuzzGenerator {
     options: { minLength?: number; maxLength?: number } = {}
   ): Buffer {
     const minLen = options.minLength || 1;
-    const maxLen = options.maxLength || 1024;
+    const maxLen = Math.min(options.maxLength || 1024, 65536); // Cap at 64KB
     const length = this.number(minLen, maxLen);
     
     const data = new Uint8Array(length);

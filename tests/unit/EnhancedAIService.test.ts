@@ -9,44 +9,47 @@ import {
 } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 
-// Mock the AIModelAdapter
+// Mock the AIModelAdapter with minimal memory footprint
 class MockAIModelAdapter implements AIModelAdapter {
   private provider: AIProvider;
   private modelName: string;
 
-  // For tracking calls to methods
+  // For tracking calls to methods - use limited size array
   public callHistory: {
     method: string;
     params: unknown;
   }[] = [];
+  private maxHistorySize = 10; // Limit history to prevent memory buildup
 
-  // For controlling mock responses
-  public mockResponses: Record<string, unknown> = {
-    summarize: 'Mock summary of todos',
-    categorize: { 'Category 1': ['todo1'], 'Category 2': ['todo2'] },
-    prioritize: { todo1: 8, todo2: 5 },
-    suggest: ['Suggested todo 1', 'Suggested todo 2'],
-    analyze: {
-      key_themes: ['Theme 1', 'Theme 2'],
-      bottlenecks: ['Bottleneck 1'],
-    },
-    group: {
-      sequentialTracks: { 'Track 1': ['todo1', 'todo2'] },
-      parallelOpportunities: [['todo1', 'todo2']],
-    },
-    schedule: {
-      todo1: { start: 0, duration: 2, due: 3 },
-      todo2: { start: 2, duration: 1, due: 4 },
-    },
-    detect_dependencies: {
-      dependencies: { todo2: ['todo1'] },
-      blockers: { todo2: ['todo1'] },
-    },
-    estimate_effort: {
-      todo1: { effort: 3, reasoning: 'Complex task', estimated_hours: 4 },
-      todo2: { effort: 2, reasoning: 'Simple task', estimated_hours: 2 },
-    },
-  };
+  // Factory functions for responses to avoid keeping large objects in memory
+  private createMockResponses(): Record<string, unknown> {
+    return {
+      summarize: 'Mock summary of todos',
+      categorize: { 'Category 1': ['todo1'], 'Category 2': ['todo2'] },
+      prioritize: { todo1: 8, todo2: 5 },
+      suggest: ['Suggested todo 1', 'Suggested todo 2'],
+      analyze: {
+        key_themes: ['Theme 1', 'Theme 2'],
+        bottlenecks: ['Bottleneck 1'],
+      },
+      group: {
+        sequentialTracks: { 'Track 1': ['todo1', 'todo2'] },
+        parallelOpportunities: [['todo1', 'todo2']],
+      },
+      schedule: {
+        todo1: { start: 0, duration: 2, due: 3 },
+        todo2: { start: 2, duration: 1, due: 4 },
+      },
+      detect_dependencies: {
+        dependencies: { todo2: ['todo1'] },
+        blockers: { todo2: ['todo1'] },
+      },
+      estimate_effort: {
+        todo1: { effort: 3, reasoning: 'Complex task', estimated_hours: 4 },
+        todo2: { effort: 2, reasoning: 'Simple task', estimated_hours: 2 },
+      },
+    };
+  }
 
   constructor(
     provider: AIProvider = AIProvider.XAI,
@@ -65,7 +68,11 @@ class MockAIModelAdapter implements AIModelAdapter {
   }
 
   async complete(params: unknown): Promise<unknown> {
+    // Limit call history size to prevent memory buildup
     this.callHistory.push({ method: 'complete', params });
+    if (this.callHistory.length > this.maxHistorySize) {
+      this.callHistory.shift(); // Remove oldest entry
+    }
 
     // Determine which operation is being called based on the prompt
     const promptStr =
@@ -85,8 +92,9 @@ class MockAIModelAdapter implements AIModelAdapter {
       operation = 'detect_dependencies';
     else if (promptStr.includes('effort')) operation = 'estimate_effort';
 
+    const responses = this.createMockResponses();
     return {
-      result: this.mockResponses[operation] || 'Mock response',
+      result: responses[operation] || 'Mock response',
       modelName: this.modelName,
       provider: this.provider,
       timestamp: Date.now(),
@@ -94,7 +102,11 @@ class MockAIModelAdapter implements AIModelAdapter {
   }
 
   async completeStructured(params: unknown): Promise<unknown> {
+    // Limit call history size to prevent memory buildup
     this.callHistory.push({ method: 'completeStructured', params });
+    if (this.callHistory.length > this.maxHistorySize) {
+      this.callHistory.shift(); // Remove oldest entry
+    }
 
     // Determine which operation is being called based on the prompt
     const paramsObj = params as { prompt?: string; metadata?: { operation?: string } };
@@ -116,8 +128,9 @@ class MockAIModelAdapter implements AIModelAdapter {
       else if (promptStr.includes('effort')) operation = 'estimate_effort';
     }
 
+    const responses = this.createMockResponses();
     return {
-      result: this.mockResponses[operation] || {},
+      result: responses[operation] || {},
       modelName: this.modelName,
       provider: this.provider,
       timestamp: Date.now(),
@@ -128,10 +141,14 @@ class MockAIModelAdapter implements AIModelAdapter {
     promptTemplate: unknown,
     input: Record<string, unknown>
   ): Promise<unknown> {
+    // Limit call history size to prevent memory buildup
     this.callHistory.push({
       method: 'processWithPromptTemplate',
       params: { promptTemplate, input },
     });
+    if (this.callHistory.length > this.maxHistorySize) {
+      this.callHistory.shift(); // Remove oldest entry
+    }
 
     // Try to determine the operation based on the prompt template format string
     const formatStr = (promptTemplate as { template?: string })?.template || '';
@@ -148,12 +165,18 @@ class MockAIModelAdapter implements AIModelAdapter {
       operation = 'detect_dependencies';
     else if (formatStr.includes('effort')) operation = 'estimate_effort';
 
+    const responses = this.createMockResponses();
     return {
-      result: this.mockResponses[operation] || 'Mock response',
+      result: responses[operation] || 'Mock response',
       modelName: this.modelName,
       provider: this.provider,
       timestamp: Date.now(),
     };
+  }
+
+  // Method to clear history to prevent memory buildup
+  clearHistory(): void {
+    this.callHistory.length = 0;
   }
 }
 
@@ -173,25 +196,27 @@ jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
   };
 });
 
-// Test data
-const sampleTodos: Todo[] = [
-  {
-    id: 'todo1',
-    title: 'Complete project documentation',
-    description: 'Write comprehensive docs for the API',
-    completed: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'todo2',
-    title: 'Fix critical bugs',
-    description: 'Address high priority issues in the tracker',
-    completed: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+// Test data factory to avoid static object references
+function createSampleTodos(): Todo[] {
+  return [
+    {
+      id: 'todo1',
+      title: 'Complete project documentation',
+      description: 'Write comprehensive docs for the API',
+      completed: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    {
+      id: 'todo2',
+      title: 'Fix critical bugs',
+      description: 'Address high priority issues in the tracker',
+      completed: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ];
+}
 
 describe('EnhancedAIService', () => {
   let aiService: EnhancedAIService;
@@ -200,6 +225,7 @@ describe('EnhancedAIService', () => {
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
+    jest.restoreAllMocks();
 
     // Reset singletons
     ResultCache.getInstance().clear();
@@ -208,7 +234,7 @@ describe('EnhancedAIService', () => {
 
     // Get the mock adapter
     mockAdapter = (AIProviderFactory as { __mockAdapter: MockAIModelAdapter }).__mockAdapter;
-    mockAdapter.callHistory = [];
+    mockAdapter.clearHistory(); // Clear history instead of reassigning array
 
     // Create a new service instance
     aiService = new EnhancedAIService(
@@ -218,9 +244,29 @@ describe('EnhancedAIService', () => {
     );
   });
 
+  afterEach(() => {
+    // Cleanup after each test
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+    
+    // Clear mock adapter history
+    if (mockAdapter) {
+      mockAdapter.clearHistory();
+    }
+    
+    // Clear singletons
+    ResultCache.getInstance().clear();
+    PromptManager.getInstance().clearAllPromptOverrides();
+    
+    // Nullify references
+    aiService = null as any;
+    mockAdapter = null as any;
+  });
+
   describe('Basic operations', () => {
     it('should summarize todos', async () => {
-      const summary = await aiService.summarize(sampleTodos);
+      const todos = createSampleTodos();
+      const summary = await aiService.summarize(todos);
 
       expect(summary).toBe('Mock summary of todos');
       expect(mockAdapter.callHistory.length).toBe(1);
@@ -230,7 +276,8 @@ describe('EnhancedAIService', () => {
     });
 
     it('should categorize todos', async () => {
-      const categories = await aiService.categorize(sampleTodos);
+      const todos = createSampleTodos();
+      const categories = await aiService.categorize(todos);
 
       expect(categories).toEqual({
         'Category 1': ['todo1'],
@@ -241,7 +288,8 @@ describe('EnhancedAIService', () => {
     });
 
     it('should prioritize todos', async () => {
-      const priorities = await aiService.prioritize(sampleTodos);
+      const todos = createSampleTodos();
+      const priorities = await aiService.prioritize(todos);
 
       expect(priorities).toEqual({
         todo1: 8,
@@ -251,14 +299,16 @@ describe('EnhancedAIService', () => {
     });
 
     it('should suggest new todos', async () => {
-      const suggestions = await aiService.suggest(sampleTodos);
+      const todos = createSampleTodos();
+      const suggestions = await aiService.suggest(todos);
 
       expect(suggestions).toEqual(['Suggested todo 1', 'Suggested todo 2']);
       expect(mockAdapter.callHistory.length).toBe(1);
     });
 
     it('should analyze todos', async () => {
-      const analysis = await aiService.analyze(sampleTodos);
+      const todos = createSampleTodos();
+      const analysis = await aiService.analyze(todos);
 
       expect(analysis).toEqual({
         key_themes: ['Theme 1', 'Theme 2'],
@@ -270,7 +320,8 @@ describe('EnhancedAIService', () => {
 
   describe('New enhanced operations', () => {
     it('should group todos into workflows', async () => {
-      const groups = await aiService.group(sampleTodos);
+      const todos = createSampleTodos();
+      const groups = await aiService.group(todos);
 
       expect(groups).toEqual({
         sequentialTracks: { 'Track 1': ['todo1', 'todo2'] },
@@ -280,7 +331,8 @@ describe('EnhancedAIService', () => {
     });
 
     it('should create a schedule for todos', async () => {
-      const schedule = await aiService.schedule(sampleTodos);
+      const todos = createSampleTodos();
+      const schedule = await aiService.schedule(todos);
 
       expect(schedule).toEqual({
         todo1: { start: 0, duration: 2, due: 3 },
@@ -290,7 +342,8 @@ describe('EnhancedAIService', () => {
     });
 
     it('should detect dependencies between todos', async () => {
-      const dependencies = await aiService.detectDependencies(sampleTodos);
+      const todos = createSampleTodos();
+      const dependencies = await aiService.detectDependencies(todos);
 
       expect(dependencies).toEqual({
         dependencies: { todo2: ['todo1'] },
@@ -300,7 +353,8 @@ describe('EnhancedAIService', () => {
     });
 
     it('should estimate effort for todos', async () => {
-      const efforts = await aiService.estimateEffort(sampleTodos);
+      const todos = createSampleTodos();
+      const efforts = await aiService.estimateEffort(todos);
 
       expect(efforts).toEqual({
         todo1: { effort: 3, reasoning: 'Complex task', estimated_hours: 4 },
@@ -312,12 +366,14 @@ describe('EnhancedAIService', () => {
 
   describe('Caching mechanism', () => {
     it('should cache and reuse results for identical requests', async () => {
+      const todos = createSampleTodos();
+      
       // First call
-      await aiService.summarize(sampleTodos);
+      await aiService.summarize(todos);
       expect(mockAdapter.callHistory.length).toBe(1);
 
       // Second call should use cache
-      await aiService.summarize(sampleTodos);
+      await aiService.summarize(todos);
       expect(mockAdapter.callHistory.length).toBe(1); // Still 1, as cache was used
 
       // Cache stats should show a hit
@@ -327,9 +383,11 @@ describe('EnhancedAIService', () => {
     });
 
     it('should clear cache for a specific operation', async () => {
+      const todos = createSampleTodos();
+      
       // Perform some operations
-      await aiService.summarize(sampleTodos);
-      await aiService.categorize(sampleTodos);
+      await aiService.summarize(todos);
+      await aiService.categorize(todos);
 
       // Cache should have 2 entries
       expect(aiService.getCacheStats().size).toBe(2);
@@ -341,21 +399,23 @@ describe('EnhancedAIService', () => {
       expect(aiService.getCacheStats().size).toBe(1);
 
       // Performing summarize again should make a new API call
-      mockAdapter.callHistory = [];
-      await aiService.summarize(sampleTodos);
+      mockAdapter.clearHistory();
+      await aiService.summarize(todos);
       expect(mockAdapter.callHistory.length).toBe(1);
     });
 
     it('should disable cache when configured', async () => {
+      const todos = createSampleTodos();
+      
       // Configure to disable cache
       aiService.configure({ cacheEnabled: false });
 
       // First call
-      await aiService.summarize(sampleTodos);
+      await aiService.summarize(todos);
       expect(mockAdapter.callHistory.length).toBe(1);
 
       // Second call should NOT use cache
-      await aiService.summarize(sampleTodos);
+      await aiService.summarize(todos);
       expect(mockAdapter.callHistory.length).toBe(2); // 2 calls, no caching
 
       // Cache stats should be empty

@@ -14,6 +14,8 @@ export enum AIPrivacyLevel {
   PUBLIC = 'public', // Full request/response on-chain
   HASH_ONLY = 'hash_only', // Only hashes on-chain, content on Walrus
   PRIVATE = 'private', // Only verification record on-chain, encrypted content
+  METADATA_ONLY = 'metadata_only', // Only metadata on-chain
+  FULL_CONTENT = 'full_content', // Full content on-chain
 }
 
 export interface VerificationParams {

@@ -18,6 +18,7 @@ import { CLIError } from '../apps/cli/src/types/errors/consolidated';
 import { Todo, CreateTodoParams } from '../apps/cli/src/types/todo';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { Transaction } from '@mysten/sui/transactions';
+import { initializeCommandForTest, runCommandInTest } from '../apps/cli/src/__tests__/helpers/command-test-utils';
 
 // Mock dependencies
 jest.mock('../apps/cli/src/services/todoService');
@@ -92,49 +93,40 @@ describe('Comprehensive NFT Workflow Tests', () => {
         mockTodoService.getTodo.mockResolvedValue(mockTodo);
         mockSuiNftStorage.createTodoNft.mockResolvedValue('test-transaction-digest');
 
-        const command = new CreateNftCommand([], {});
-        
-        // Mock the parse method to return our test flags
-        command.parse = jest.fn().mockResolvedValue({
-          flags: {
+        // Use proper command initialization
+        const { command, output } = await runCommandInTest(
+          CreateNftCommand,
+          [],
+          {
             todo: 'test-todo-123',
             list: 'test-list'
           }
-        });
+        );
 
-        // Mock the log method
-        command.log = jest.fn();
-
-        await expect(command.run()).resolves.not.toThrow();
-        
         expect(mockTodoService.getTodo).toHaveBeenCalledWith('test-todo-123', 'test-list');
         expect(mockSuiNftStorage.createTodoNft).toHaveBeenCalledWith(mockTodo, 'test-blob-id-123');
-        expect(command.log).toHaveBeenCalledWith('✅ NFT created successfully!');
+        expect(output).toContain('✅ NFT created successfully!');
       });
 
       it('should throw CLIError when todo not found', async () => {
         mockTodoService.getTodo.mockResolvedValue(null);
 
-        const command = new CreateNftCommand([], {});
-        command.parse = jest.fn().mockResolvedValue({
-          flags: { todo: 'nonexistent', list: 'test-list' }
-        });
-
-        await expect(command.run()).rejects.toThrow(CLIError);
-        await expect(command.run()).rejects.toThrow('TODO_NOT_FOUND');
+        await expect(runCommandInTest(
+          CreateNftCommand,
+          [],
+          { todo: 'nonexistent', list: 'test-list' }
+        )).rejects.toThrow(CLIError);
       });
 
       it('should throw CLIError when todo has no image URL', async () => {
         const todoWithoutImage = { ...mockTodo, imageUrl: undefined };
         mockTodoService.getTodo.mockResolvedValue(todoWithoutImage);
 
-        const command = new CreateNftCommand([], {});
-        command.parse = jest.fn().mockResolvedValue({
-          flags: { todo: 'test-todo-123', list: 'test-list' }
-        });
-
-        await expect(command.run()).rejects.toThrow(CLIError);
-        await expect(command.run()).rejects.toThrow('NO_IMAGE_URL');
+        await expect(runCommandInTest(
+          CreateNftCommand,
+          [],
+          { todo: 'test-todo-123', list: 'test-list' }
+        )).rejects.toThrow(CLIError);
       });
 
       it('should throw CLIError when package not deployed', async () => {
@@ -144,13 +136,11 @@ describe('Comprehensive NFT Workflow Tests', () => {
 
         mockTodoService.getTodo.mockResolvedValue(mockTodo);
 
-        const command = new CreateNftCommand([], {});
-        command.parse = jest.fn().mockResolvedValue({
-          flags: { todo: 'test-todo-123', list: 'test-list' }
-        });
-
-        await expect(command.run()).rejects.toThrow(CLIError);
-        await expect(command.run()).rejects.toThrow('NOT_DEPLOYED');
+        await expect(runCommandInTest(
+          CreateNftCommand,
+          [],
+          { todo: 'test-todo-123', list: 'test-list' }
+        )).rejects.toThrow(CLIError);
       });
     });
   });

@@ -202,7 +202,7 @@ describe('Blockchain Verification Security', () => {
 
     // Mock blockchain verifier with signature support
     const mockBlockchainVerifier = {
-      createVerification: jest.fn().mockImplementation(params => {
+      verifyOperation: jest.fn().mockImplementation(params => {
         // Sign the verification data
         const dataToSign = `${params.actionType}:${params.request}:${params.response}`;
         const signature = signData(dataToSign, privateKey);
@@ -213,12 +213,34 @@ describe('Blockchain Verification Security', () => {
           publicKey,
         });
       }),
+      getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+      listVerifications: jest.fn().mockResolvedValue([mockVerificationRecord]),
+      getVerifierAdapter: jest.fn().mockReturnValue({
+        createVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+        verifyRecord: jest.fn().mockResolvedValue(true),
+        getProviderInfo: jest.fn().mockResolvedValue({}),
+        listVerifications: jest.fn().mockResolvedValue([]),
+        getRegistryAddress: jest.fn().mockResolvedValue('test-registry'),
+        registerProvider: jest.fn().mockResolvedValue('test-provider'),
+        getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+        getSigner: jest.fn().mockReturnValue({
+          getPublicKey: jest.fn().mockReturnValue({ toBase64: jest.fn().mockReturnValue('test-key') }),
+          toSuiAddress: jest.fn().mockReturnValue('test-address')
+        }),
+        generateProof: jest.fn().mockResolvedValue('test-proof'),
+        exportVerifications: jest.fn().mockResolvedValue('test-export'),
+        enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
+        securelyDestroyData: jest.fn().mockResolvedValue(true)
+      }),
       verifySignature: jest
         .fn()
         .mockImplementation((data, signature, pubKey) => {
-          return verifySignature(data, signature, pubKey);
+          return Promise.resolve(verifySignature(data, signature, pubKey));
         }),
-      getProviderInfo: jest.fn(),
+      getSigner: jest.fn().mockReturnValue({
+        getPublicKey: jest.fn().mockReturnValue({ toBase64: jest.fn().mockReturnValue('test-key') })
+      }),
+      generateProof: jest.fn().mockResolvedValue(Buffer.from(JSON.stringify({ id: 'test-proof' })).toString('base64'))
     };
 
     const mockPermissionManager = {
@@ -231,9 +253,9 @@ describe('Blockchain Verification Security', () => {
 
     // Create the service with signature verification
     const verificationService = new BlockchainAIVerificationService(
-      mockBlockchainVerifier,
-      mockPermissionManager,
-      mockCredentialManager,
+      mockBlockchainVerifier as any,
+      mockPermissionManager as any,
+      mockCredentialManager as any,
       'xai'
     );
 
@@ -330,7 +352,7 @@ describe('Blockchain Verification Security', () => {
   it('should enforce transaction authorization for verification records', async () => {
     // Mock blockchain verifier with authorization checks
     const mockBlockchainVerifier = {
-      createVerification: jest.fn().mockImplementation(params => {
+      verifyOperation: jest.fn().mockImplementation(params => {
         // Check user authorization from metadata
         const userAddress = params.metadata?.userAddress;
         if (!userAddress) {
@@ -345,7 +367,37 @@ describe('Blockchain Verification Security', () => {
 
         return Promise.resolve(mockVerificationRecord);
       }),
-      verifyPermission: jest.fn().mockReturnValue(true),
+      getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+      listVerifications: jest.fn().mockResolvedValue([mockVerificationRecord]),
+      getVerifierAdapter: jest.fn().mockReturnValue({
+        createVerification: jest.fn().mockImplementation(params => {
+          // Same logic as verifyOperation
+          const userAddress = params.metadata?.userAddress;
+          if (!userAddress) {
+            throw new Error('Missing user address for authorization');
+          }
+          const authorizedAddresses = ['user-123', 'admin-456'];
+          if (!authorizedAddresses.includes(userAddress)) {
+            throw new Error('User not authorized to create verifications');
+          }
+          return Promise.resolve(mockVerificationRecord);
+        }),
+        verifyRecord: jest.fn().mockResolvedValue(true),
+        getProviderInfo: jest.fn().mockResolvedValue({}),
+        listVerifications: jest.fn().mockResolvedValue([]),
+        getRegistryAddress: jest.fn().mockResolvedValue('test-registry'),
+        registerProvider: jest.fn().mockResolvedValue('test-provider'),
+        getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+        getSigner: jest.fn().mockReturnValue({
+          getPublicKey: jest.fn().mockReturnValue({ toBase64: jest.fn().mockReturnValue('test-key') }),
+          toSuiAddress: jest.fn().mockReturnValue('test-address')
+        }),
+        generateProof: jest.fn().mockResolvedValue('test-proof'),
+        exportVerifications: jest.fn().mockResolvedValue('test-export'),
+        enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
+        securelyDestroyData: jest.fn().mockResolvedValue(true)
+      }),
+      verifyPermission: jest.fn().mockReturnValue(Promise.resolve(true)),
     };
 
     const mockPermissionManager = {
@@ -358,9 +410,9 @@ describe('Blockchain Verification Security', () => {
 
     // Create the service
     const verificationService = new BlockchainAIVerificationService(
-      mockBlockchainVerifier,
-      mockPermissionManager,
-      mockCredentialManager,
+      mockBlockchainVerifier as any,
+      mockPermissionManager as any,
+      mockCredentialManager as any,
       'xai'
     );
 

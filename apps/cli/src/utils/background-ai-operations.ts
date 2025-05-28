@@ -138,15 +138,15 @@ export class BackgroundAIOperations {
       data: {
         todos,
         options: {
-          ...options,
-          verify: options.verify || false,
-          apiKey: options.apiKey || process.env.XAI_API_KEY,
-          provider: options.provider || getEnv('AI_DEFAULT_PROVIDER'),
-          model: options.model || getEnv('AI_DEFAULT_MODEL'),
-          temperature: options.temperature || parseFloat(getEnv('AI_TEMPERATURE') || '0.7'),
+          ...(options || {}),
+          verify: (options && options.verify) || false,
+          apiKey: (options && options.apiKey) || process.env.XAI_API_KEY,
+          provider: (options && options.provider) || getEnv('AI_DEFAULT_PROVIDER'),
+          model: (options && options.model) || getEnv('AI_DEFAULT_MODEL'),
+          temperature: (options && options.temperature) || parseFloat(getEnv('AI_TEMPERATURE') || '0.7'),
         },
       },
-      priority: options.priority || 'normal',
+      priority: (options && options.priority) || 'normal',
     };
 
     logger.info(`Starting background AI ${type} for ${todos.length} todos`, {
@@ -155,7 +155,7 @@ export class BackgroundAIOperations {
     });
 
     // Setup callbacks if provided
-    if (options.onProgress) {
+    if (options && options.onProgress) {
       this.cacheManager.on('operationProgress', (id, progress, stage) => {
         if (id === operationId) {
           options.onProgress!(id, progress, stage || 'processing');
@@ -163,7 +163,7 @@ export class BackgroundAIOperations {
       });
     }
 
-    if (options.onComplete) {
+    if (options && options.onComplete) {
       this.cacheManager.on('operationCompleted', (id, result) => {
         if (id === operationId) {
           options.onComplete!(id, result);
@@ -171,7 +171,7 @@ export class BackgroundAIOperations {
       });
     }
 
-    if (options.onError) {
+    if (options && options.onError) {
       this.cacheManager.on('operationFailed', (id, error) => {
         if (id === operationId) {
           options.onError!(id, error);
@@ -216,9 +216,9 @@ export class BackgroundAIOperations {
 
         // Configure AI provider
         try {
-          const provider = options.provider as AIProvider;
-          const model = options.model;
-          const temperature = options.temperature;
+          const provider = (options && options.provider) as AIProvider;
+          const model = options && options.model;
+          const temperature = options && options.temperature;
 
           await aiService.setProvider(provider, model, {
             temperature: temperature,
@@ -283,8 +283,8 @@ export class BackgroundAIOperations {
           result,
           metadata: {
             todoCount: todos.length,
-            provider: options.provider,
-            model: options.model,
+            provider: options && options.provider,
+            model: options && options.model,
             processingTime,
             completedAt: new Date(),
           },

@@ -2,6 +2,8 @@ import { TestService } from '../helpers/test-utils';
 import { AiService } from '../../apps/cli/src/services/ai';
 import { TodoService } from '../../apps/cli/src/services/todoService';
 import { Todo, TodoList } from '../../apps/cli/src/types/todo';
+import AI from '../../apps/cli/src/commands/ai';
+import { runCommandInTest, initializeCommandForTest } from '../../apps/cli/src/__tests__/helpers/command-test-utils';
 
 // Mock AiService
 jest.mock('../../apps/cli/src/services/ai', () => {

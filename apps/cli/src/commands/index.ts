@@ -21,6 +21,7 @@ import SimpleCommand from './simple';
 import StatusCommand from './status';
 import StoreCommand from './store';
 import StoreFileCommand from './store-file';
+import SyncCommand from './sync';
 import TemplateCommand from './template';
 import UpdateCommand from './update';
 
@@ -47,6 +48,7 @@ export {
   StatusCommand,
   StoreCommand,
   StoreFileCommand,
+  SyncCommand,
   TemplateCommand,
   UpdateCommand,
 };

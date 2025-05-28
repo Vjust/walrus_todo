@@ -1,18 +1,17 @@
 import { TodoService } from '../../services/todoService';
-import { WalrusStorage, createWalrusStorage } from '../../utils/walrus-storage';
+// import { WalrusStorage, createWalrusStorage } from '../../utils/walrus-storage';
 import { Todo } from '../../types/todo';
 import { createMockTodo } from '../helpers/test-utils';
-import { configService } from '../../services/config-service';
 import { CLI_CONFIG } from '../../constants';
 
 describe('Add Command - Real Implementation Tests', () => {
   let todoService: TodoService;
-  let walrusStorage: WalrusStorage;
+  // let walrusStorage: WalrusStorage;
   let mockTodo: Todo;
 
   beforeEach(() => {
     // Create real service instances in test mode
-    walrusStorage = createWalrusStorage('testnet', true); // Force mock mode for tests
+    // walrusStorage = createWalrusStorage('testnet', true); // Force mock mode for tests
     todoService = new TodoService();
     
     mockTodo = createMockTodo({
@@ -99,7 +98,7 @@ describe('Add Command - Real Implementation Tests', () => {
 
     it('should handle storage failures gracefully', async () => {
       // Create a storage instance that might fail
-      const failingStorage = createWalrusStorage('testnet', false); // Use real mode which might fail in test env
+      // const failingStorage = createWalrusStorage('testnet', false); // Use real mode which might fail in test env
       const failingTodoService = new TodoService();
 
       // In test mode, this should still work due to fallbacks

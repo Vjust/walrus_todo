@@ -9,8 +9,7 @@ import {
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
-import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
+import { createMockAIModelAdapter, createMockAIVerifierAdapter } from '../helpers/AITestFactory';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 
 // Mock the AIProviderFactory to inject our controllable mock

@@ -4,7 +4,7 @@ import {
 } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
+import { createMockAIModelAdapter } from '../helpers/AITestFactory';
 
 // Mock adapters for XAI and OpenAI
 jest.mock('../../apps/cli/src/services/ai/adapters/XAIModelAdapter', () => {

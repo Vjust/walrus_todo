@@ -310,8 +310,8 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
     if (!process.stdout && !process.stderr) return;
     
     let outputBuffer = '';
-    let progressRegex = /PROGRESS:(\d+):(.*)/;
-    let stageRegex = /STAGE:(.*)/;
+    const progressRegex = /PROGRESS:(\d+):(.*)/;
+    const stageRegex = /STAGE:(.*)/;
     
     const processOutput = (data: Buffer) => {
       outputBuffer += data.toString();
@@ -711,8 +711,32 @@ export function getBackgroundOrchestrator(): BackgroundCommandOrchestrator {
   
   if (!_backgroundOrchestrator) {
     _backgroundOrchestrator = new BackgroundCommandOrchestrator();
+    
+    // Store reference globally for test cleanup
+    if (process.env.NODE_ENV === 'test') {
+      (global as any).backgroundOrchestrator = _backgroundOrchestrator;
+    }
   }
   return _backgroundOrchestrator;
+}
+
+/**
+ * Reset the background orchestrator singleton (for tests)
+ */
+export async function resetBackgroundOrchestrator(): Promise<void> {
+  if (_backgroundOrchestrator) {
+    try {
+      await _backgroundOrchestrator.shutdown();
+    } catch (error) {
+      // Ignore shutdown errors during reset
+    }
+    _backgroundOrchestrator = null;
+    
+    // Clear global reference
+    if (process.env.NODE_ENV === 'test') {
+      (global as any).backgroundOrchestrator = null;
+    }
+  }
 }
 
 // For backward compatibility
@@ -735,15 +759,17 @@ export const backgroundOrchestrator = {
   }
 };
 
-// Process cleanup
-process.on('SIGINT', () => {
-  backgroundOrchestrator.shutdown().then(() => {
-    process.exit(0);
+// Process cleanup - only in non-test environments
+if (process.env.NODE_ENV !== 'test') {
+  process.on('SIGINT', () => {
+    backgroundOrchestrator.shutdown().then(() => {
+      process.exit(0);
+    });
   });
-});
 
-process.on('SIGTERM', () => {
-  backgroundOrchestrator.shutdown().then(() => {
-    process.exit(0);
+  process.on('SIGTERM', () => {
+    backgroundOrchestrator.shutdown().then(() => {
+      process.exit(0);
+    });
   });
-});
+}
