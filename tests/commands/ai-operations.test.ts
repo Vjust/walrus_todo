@@ -5,12 +5,28 @@ import { createSampleTodos } from '../helpers/ai-test-utils';
 import { TodoService } from '../../src/services/todoService';
 import AICommand from '../../src/commands/ai';
 // Helper function to create a mock config object for testing
-interface TestConfig {
-  [key: string]: unknown;
-}
+import { Config } from '@oclif/core';
 
-function createValidConfig(): TestConfig {
-  return {};
+function createValidConfig(): Partial<Config> {
+  return {
+    root: '/test',
+    name: 'test',
+    version: '1.0.0',
+    userAgent: 'test-cli',
+    channel: 'stable',
+    pjson: {
+      name: 'test',
+      version: '1.0.0',
+      oclif: {},
+      dependencies: {},
+    } as any,
+    arch: 'x64',
+    platform: 'linux',
+    shell: 'bash',
+    home: '/home/test',
+    debug: 0,
+    npmRegistry: 'https://registry.npmjs.org',
+  };
 }
 
 // Mock the AIService
@@ -128,15 +144,15 @@ describe('AI Command Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Mock console methods to prevent output during tests
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
 
   // SECTION: Summarize command tests
   describe('ai summarize command', () => {
     it('should summarize todos', async () => {
-      const command = new AICommand(['summarize'], createValidConfig());
+      const command = new AICommand(['summarize'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Mock summary of your todos'));
@@ -145,7 +161,7 @@ describe('AI Command Integration Tests', () => {
     });
 
     it('should handle API key from flag', async () => {
-      const command = new AICommand(['summarize', '--apiKey=test-api-key'], createValidConfig());
+      const command = new AICommand(['summarize', '--apiKey=test-api-key'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Mock summary of your todos'));
@@ -153,7 +169,7 @@ describe('AI Command Integration Tests', () => {
     });
 
     it('should handle specific provider option', async () => {
-      const command = new AICommand(['summarize', '--provider=openai'], createValidConfig());
+      const command = new AICommand(['summarize', '--provider=openai'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Mock summary of your todos'));
@@ -164,7 +180,7 @@ describe('AI Command Integration Tests', () => {
   // SECTION: Categorize command tests
   describe('ai categorize command', () => {
     it('should categorize todos', async () => {
-      const command = new AICommand(['categorize'], createValidConfig());
+      const command = new AICommand(['categorize'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('work'));
@@ -174,7 +190,7 @@ describe('AI Command Integration Tests', () => {
     });
 
     it('should output in JSON format when specified', async () => {
-      const command = new AICommand(['categorize', '--format=json'], createValidConfig());
+      const command = new AICommand(['categorize', '--format=json'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('"work":'));
@@ -185,7 +201,7 @@ describe('AI Command Integration Tests', () => {
   // SECTION: Prioritize command tests
   describe('ai prioritize command', () => {
     it('should prioritize todos', async () => {
-      const command = new AICommand(['prioritize'], createValidConfig());
+      const command = new AICommand(['prioritize'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Priority'));
@@ -195,7 +211,7 @@ describe('AI Command Integration Tests', () => {
     });
 
     it('should output only high priority todos when specified', async () => {
-      const command = new AICommand(['prioritize', '--threshold=8'], createValidConfig());
+      const command = new AICommand(['prioritize', '--threshold=8'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('todo-1'));
@@ -206,7 +222,7 @@ describe('AI Command Integration Tests', () => {
   // SECTION: Suggest command tests
   describe('ai suggest command', () => {
     it('should suggest new todos', async () => {
-      const command = new AICommand(['suggest'], createValidConfig());
+      const command = new AICommand(['suggest'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Create project documentation'));
@@ -216,16 +232,16 @@ describe('AI Command Integration Tests', () => {
     });
 
     it('should create suggested todos when requested', async () => {
-      const command = new AICommand(['suggest', '--create'], createValidConfig());
+      const command = new AICommand(['suggest', '--create'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Created new todo'));
-      const mockTodoService = TodoService.mock.results[0].value;
-      expect(mockTodoService.createTodo).toHaveBeenCalled();
+      const mockTodoService = (TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]?.value;
+      expect(mockTodoService?.createTodo).toHaveBeenCalled();
     });
 
     it('should limit suggestions when count is specified', async () => {
-      const command = new AICommand(['suggest', '--count=2'], createValidConfig());
+      const command = new AICommand(['suggest', '--count=2'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalled();
@@ -236,7 +252,7 @@ describe('AI Command Integration Tests', () => {
   // SECTION: Analyze command tests
   describe('ai analyze command', () => {
     it('should analyze todos', async () => {
-      const command = new AICommand(['analyze'], createValidConfig());
+      const command = new AICommand(['analyze'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Themes'));
@@ -247,7 +263,7 @@ describe('AI Command Integration Tests', () => {
     });
 
     it('should focus on specific analysis when specified', async () => {
-      const command = new AICommand(['analyze', '--focus=timeEstimates'], createValidConfig());
+      const command = new AICommand(['analyze', '--focus=timeEstimates'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Time Estimates'));
@@ -258,7 +274,7 @@ describe('AI Command Integration Tests', () => {
   // SECTION: Workflow suggestion tests
   describe('ai workflow command', () => {
     it('should suggest a workflow for todos', async () => {
-      const command = new AICommand(['workflow'], createValidConfig());
+      const command = new AICommand(['workflow'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Suggested Workflow'));
@@ -271,7 +287,7 @@ describe('AI Command Integration Tests', () => {
   // SECTION: Bottleneck identification tests
   describe('ai bottlenecks command', () => {
     it('should identify bottlenecks in todos', async () => {
-      const command = new AICommand(['bottlenecks'], createValidConfig());
+      const command = new AICommand(['bottlenecks'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Identified Bottlenecks'));
@@ -286,7 +302,7 @@ describe('AI Command Integration Tests', () => {
     it('should set AI configuration options', async () => {
       const command = new AICommand(
         ['configure', '--provider=openai', '--apiKey=new-api-key'],
-        createValidConfig()
+        createValidConfig() as Config
       );
       await command.run();
 
@@ -295,7 +311,7 @@ describe('AI Command Integration Tests', () => {
     });
 
     it('should display current configuration', async () => {
-      const command = new AICommand(['configure', '--show'], createValidConfig());
+      const command = new AICommand(['configure', '--show'], createValidConfig() as Config);
       await command.run();
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Current AI Configuration'));
@@ -317,7 +333,7 @@ describe('AI Command Integration Tests', () => {
         throw new Error('API key is required');
       });
 
-      const command = new AICommand(['summarize'], createValidConfig());
+      const command = new AICommand(['summarize'], createValidConfig() as Config);
       await expect(command.run()).rejects.toThrow('API key is required');
     });
 
@@ -334,7 +350,7 @@ describe('AI Command Integration Tests', () => {
         analyze: jest.fn(),
       }));
 
-      const command = new AICommand(['summarize'], createValidConfig());
+      const command = new AICommand(['summarize'], createValidConfig() as Config);
       await expect(command.run()).rejects.toThrow('AI service error');
     });
   });

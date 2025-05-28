@@ -2,7 +2,7 @@ import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import { CLIError } from '../types/errors/consolidated';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import * as fs from 'fs/promises';
 import * as path from 'path';
 

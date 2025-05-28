@@ -1,7 +1,7 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { CLIError } from '../types/errors/consolidated';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { envConfig } from '../utils/environment-config';
 import { generateEnvTemplate, loadEnvironment } from '../utils/env-loader';
 import {
@@ -16,20 +16,39 @@ import * as path from 'path';
  * Environment Management Command
  *
  * This command provides utilities for environment variable management,
- * validation, and documentation generation.
+ * validation, and documentation generation with intuitive positional syntax.
+ * 
+ * Positional Usage:
+ * - waltodo env                           # Show current environment (default)
+ * - waltodo env show                      # Show current environment
+ * - waltodo env validate                  # Validate .env file
+ * - waltodo env set VAR value             # Set environment variable
+ * - waltodo env generate                  # Generate .env template
+ * 
+ * Legacy Flag Usage (still supported):
+ * - waltodo env --validate                # Validate configuration
+ * - waltodo env --generate                # Generate template
  */
 export default class EnvironmentCommand extends BaseCommand {
   static description = 'Manage environment variables and configuration';
 
   static examples = [
+    // Positional syntax (new, intuitive)
+    '<%= config.bin %> env                             # Show current environment (default)',
+    '<%= config.bin %> env show                        # Display current env vars',
     '<%= config.bin %> env validate                    # Validate .env file',
+    '<%= config.bin %> env set NODE_ENV production     # Set environment variable',
     '<%= config.bin %> env generate                    # Generate .env template',
     '<%= config.bin %> env docs                        # Show env var documentation',
-    '<%= config.bin %> env show                        # Display current env vars',
-    '<%= config.bin %> env check                       # Check env configuration',
-    '<%= config.bin %> env validate --fix              # Auto-fix env issues',
+    '<%= config.bin %> env check                       # Check env configuration health',
     '<%= config.bin %> env show --reveal               # Show with secrets revealed',
-    '<%= config.bin %> env generate --minimal          # Generate minimal .env file',
+    '<%= config.bin %> env show --format=json          # Show as JSON',
+    '<%= config.bin %> env validate --strict           # Enforce stricter validation',
+    
+    // Legacy flag syntax (backward compatibility)
+    '<%= config.bin %> env --validate                  # Legacy: validate configuration',
+    '<%= config.bin %> env --generate                  # Legacy: generate template',
+    '<%= config.bin %> env --show-all                  # Legacy: show all variables',
   ];
 
   static flags = {
@@ -50,14 +69,54 @@ export default class EnvironmentCommand extends BaseCommand {
       description: 'Enforce stricter validation',
       default: false,
     }),
+    reveal: Flags.boolean({
+      char: 'r',
+      description: 'Reveal sensitive values (use with caution)',
+      default: false,
+    }),
+    fix: Flags.boolean({
+      description: 'Auto-fix environment issues when validating',
+      default: false,
+    }),
+    minimal: Flags.boolean({
+      char: 'm',
+      description: 'Generate minimal .env file',
+      default: false,
+    }),
+    // Legacy flags for backward compatibility
+    validate: Flags.boolean({
+      description: 'Validate configuration (legacy flag)',
+      default: false,
+      hidden: true,
+    }),
+    generate: Flags.boolean({
+      description: 'Generate .env template (legacy flag)',
+      default: false,
+      hidden: true,
+    }),
+    'show-all': Flags.boolean({
+      description: 'Show all variables including defaults (legacy flag)',
+      default: false,
+      hidden: true,
+    }),
   };
 
   static args = {
     action: Args.string({
       name: 'action',
-      description: 'Action to perform (validate, generate, docs, show, check)',
-      required: true,
-      options: ['validate', 'generate', 'docs', 'show', 'check'],
+      description: 'Action to perform: show (default), validate, set, generate, docs, check',
+      options: ['show', 'validate', 'set', 'generate', 'docs', 'check'],
+      required: false,
+    }),
+    key: Args.string({
+      name: 'key',
+      description: 'Environment variable key (for set action)',
+      required: false,
+    }),
+    value: Args.string({
+      name: 'value',
+      description: 'Environment variable value (for set action)',
+      required: false,
     }),
   };
 
@@ -68,12 +127,28 @@ export default class EnvironmentCommand extends BaseCommand {
       // Load environment configuration
       loadEnvironment();
 
-      switch (args.action) {
+      // Handle legacy flags for backward compatibility
+      let action = args.action;
+      if (!action) {
+        if (flags.validate) {
+          action = 'validate';
+        } else if (flags.generate) {
+          action = 'generate';
+        } else if (flags['show-all']) {
+          action = 'show';
+        } else {
+          // Default action is 'show' when no action specified
+          action = 'show';
+        }
+      }
+
+      // Execute the action
+      switch (action) {
         case 'validate':
-          await this.validateEnvironment(flags.strict);
+          await this.validateEnvironment(flags.strict, flags.fix);
           break;
         case 'generate':
-          await this.generateTemplate(flags.output || '.env.template');
+          await this.generateTemplate(flags.output || '.env.template', flags.minimal);
           break;
         case 'docs':
           await this.generateDocs(
@@ -81,13 +156,16 @@ export default class EnvironmentCommand extends BaseCommand {
           );
           break;
         case 'show':
-          await this.showEnvironment(flags.format);
+          await this.showEnvironment(flags.format, flags.reveal || flags['show-all']);
           break;
         case 'check':
           await this.checkEnvironment();
           break;
+        case 'set':
+          await this.setEnvironmentVariable(args.key, args.value);
+          break;
         default:
-          this.error(`Unknown action: ${args.action}`);
+          this.error(`Unknown action: ${action}`);
       }
     } catch (error) {
       this.error(
@@ -99,10 +177,15 @@ export default class EnvironmentCommand extends BaseCommand {
   /**
    * Validate environment configuration
    */
-  private async validateEnvironment(strict: boolean): Promise<void> {
+  private async validateEnvironment(strict: boolean, fix: boolean = false): Promise<void> {
     this.log(chalk.blue('Validating environment configuration...'));
 
     try {
+      if (fix) {
+        // TODO: Implement auto-fix functionality
+        this.log(chalk.yellow('Auto-fix functionality coming soon...'));
+      }
+
       validateOrThrow({
         requireAll: strict,
         showWarnings: true,
@@ -124,12 +207,17 @@ export default class EnvironmentCommand extends BaseCommand {
   /**
    * Generate environment template file
    */
-  private async generateTemplate(templatePath: string): Promise<void> {
+  private async generateTemplate(templatePath: string, minimal: boolean = false): Promise<void> {
     this.log(
-      chalk.blue(`Generating environment template file at ${templatePath}...`)
+      chalk.blue(`Generating ${minimal ? 'minimal ' : ''}environment template file at ${templatePath}...`)
     );
 
     try {
+      // TODO: Add minimal template generation support
+      if (minimal) {
+        this.log(chalk.yellow('Minimal template generation coming soon, using full template...'));
+      }
+      
       generateEnvTemplate(templatePath);
       this.log(
         chalk.green(`✓ Environment template generated at ${templatePath}`)
@@ -174,18 +262,28 @@ export default class EnvironmentCommand extends BaseCommand {
   /**
    * Show current environment configuration
    */
-  private async showEnvironment(format: string): Promise<void> {
+  private async showEnvironment(format: string, reveal: boolean = false): Promise<void> {
     this.log(chalk.blue('Current environment configuration:'));
 
     if (format === 'json') {
       // Display as JSON
-      this.log(JSON.stringify(envConfig.toJSON(), null, 2));
+      const jsonConfig = envConfig.toJSON();
+      // Mask sensitive values unless reveal is true
+      if (!reveal) {
+        for (const [key, value] of Object.entries(jsonConfig)) {
+          const varConfig = envConfig.getAllVariables()[key];
+          if (varConfig?.sensitive && value) {
+            jsonConfig[key] = '********';
+          }
+        }
+      }
+      this.log(JSON.stringify(jsonConfig, null, 2));
     } else if (format === 'env') {
       // Display as .env file format
       const config = envConfig.getAllVariables();
       for (const [key, value] of Object.entries(config)) {
-        // Skip printing sensitive values
-        if (value.sensitive && value.value) {
+        // Skip printing sensitive values unless reveal is true
+        if (value.sensitive && value.value && !reveal) {
           this.log(`${key}=********`);
         } else {
           this.log(`${key}=${value.value}`);
@@ -241,7 +339,7 @@ export default class EnvironmentCommand extends BaseCommand {
 
         // Format the value for display
         let displayValue = value.value;
-        if (value.sensitive && value.value) {
+        if (value.sensitive && value.value && !reveal) {
           displayValue = '********';
         } else if (value.value === undefined || value.value === null) {
           displayValue = chalk.gray('<not set>');
@@ -402,5 +500,77 @@ export default class EnvironmentCommand extends BaseCommand {
         '- Run `waltodo env docs` to generate detailed environment documentation'
       )
     );
+  }
+
+  /**
+   * Set environment variable
+   */
+  private async setEnvironmentVariable(key: string | undefined, value: string | undefined): Promise<void> {
+    if (!key || !value) {
+      throw new CLIError(
+        'Both key and value are required for set action. Usage: waltodo env set KEY value',
+        'MISSING_ARGUMENTS'
+      );
+    }
+
+    this.log(chalk.blue(`Setting environment variable ${key}...`));
+
+    try {
+      // Check if .env file exists
+      const envPath = path.join(process.cwd(), '.env');
+      let envContent = '';
+      
+      if (fs.existsSync(envPath)) {
+        envContent = fs.readFileSync(envPath, 'utf-8');
+      }
+
+      // Parse existing content
+      const lines = envContent.split('\n');
+      let found = false;
+      
+      // Update existing variable or add new one
+      const newLines = lines.map(line => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith(`${key}=`) || trimmed.startsWith(`${key} =`)) {
+          found = true;
+          return `${key}=${value}`;
+        }
+        return line;
+      });
+
+      if (!found) {
+        // Add new variable at the end
+        if (newLines[newLines.length - 1] !== '') {
+          newLines.push(''); // Add empty line before new variable
+        }
+        newLines.push(`${key}=${value}`);
+      }
+
+      // Write back to file
+      fs.writeFileSync(envPath, newLines.join('\n'));
+
+      // Set in current process
+      process.env[key] = value;
+
+      this.log(chalk.green(`✓ Environment variable ${key} has been set to ${value}`));
+      this.log(chalk.dim('Note: The change has been saved to .env file'));
+
+      // Validate the new configuration
+      try {
+        validateOrThrow({
+          requireAll: false,
+          showWarnings: true,
+          exitOnWarning: false,
+        });
+      } catch (error) {
+        this.log(chalk.yellow(`\nWarning: The new configuration may have validation issues:`));
+        this.log(chalk.yellow(error instanceof Error ? error.message : String(error)));
+      }
+    } catch (error) {
+      throw new CLIError(
+        `Failed to set environment variable: ${error instanceof Error ? error.message : String(error)}`,
+        'SET_VARIABLE_FAILED'
+      );
+    }
   }
 }

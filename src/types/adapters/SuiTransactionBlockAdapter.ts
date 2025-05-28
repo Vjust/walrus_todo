@@ -1,10 +1,10 @@
 import { Transaction } from '@mysten/sui/transactions';
 import { SignerAdapter } from './SignerAdapter';
-import { SuiClient } from '../../utils/adapters/sui-client-compatibility';
+import type { SuiClient } from '../../utils/adapters/sui-client-compatibility';
 import { Logger } from '../../utils/Logger';
 import { TransactionType } from '../transaction';
 
-// Type alias for compatibility
+// Type alias for compatibility - TransactionBlock is now just Transaction
 type TransactionBlock = Transaction;
 
 const logger = new Logger('SuiTransactionBlockAdapter');
@@ -46,22 +46,22 @@ export interface TransactionResponse {
 }
 
 /**
- * SuiTransactionBlockAdapter - Interface for creating and executing Sui transaction blocks
+ * SuiTransactionBlockAdapter - Interface for creating and executing Sui transactions
  *
- * This adapter provides a simpler interface for working with Sui transaction blocks,
+ * This adapter provides a simpler interface for working with Sui transactions,
  * abstracting away some of the complexity and providing reliable error handling.
  */
 export interface SuiTransactionBlockAdapter {
   /**
-   * Create a new transaction block
+   * Create a new transaction
    */
-  createTransactionBlock(): TransactionBlock;
+  createTransaction(): Transaction;
 
   /**
-   * Execute a transaction block
+   * Execute a transaction
    */
-  executeTransactionBlock(
-    transactionBlock: TransactionBlock,
+  executeTransaction(
+    transaction: Transaction,
     options?: TransactionOptions
   ): Promise<TransactionResponse>;
 
@@ -76,14 +76,33 @@ export interface SuiTransactionBlockAdapter {
   ): Promise<TransactionResponse>;
 
   /**
-   * Inspect a transaction block without executing it
+   * Inspect a transaction without executing it
    */
-  dryRunTransactionBlock(transactionBlock: TransactionBlock): Promise<unknown>;
+  dryRunTransaction(transaction: Transaction): Promise<unknown>;
 
   /**
    * Get the Sui client
    */
-  getClient(): SuiClient;
+  getClient(): InstanceType<typeof SuiClient>;
+
+  // Backward compatibility methods (deprecated)
+  /**
+   * @deprecated Use createTransaction() instead
+   */
+  createTransactionBlock(): TransactionBlock;
+
+  /**
+   * @deprecated Use executeTransaction() instead
+   */
+  executeTransactionBlock(
+    transactionBlock: TransactionBlock,
+    options?: TransactionOptions
+  ): Promise<TransactionResponse>;
+
+  /**
+   * @deprecated Use dryRunTransaction() instead
+   */
+  dryRunTransactionBlock(transactionBlock: TransactionBlock): Promise<unknown>;
 }
 
 /**
@@ -93,7 +112,7 @@ export class DefaultSuiTransactionBlockAdapter
   implements SuiTransactionBlockAdapter
 {
   private signer: SignerAdapter;
-  private client: SuiClient;
+  private client: InstanceType<typeof SuiClient>;
 
   constructor(signer: SignerAdapter) {
     this.signer = signer;
@@ -101,27 +120,26 @@ export class DefaultSuiTransactionBlockAdapter
   }
 
   /**
-   * Create a new transaction block
+   * Create a new transaction
    */
-  createTransactionBlock(): TransactionBlock {
+  createTransaction(): Transaction {
     return new Transaction();
   }
 
   /**
-   * Execute a transaction block
+   * Execute a transaction
    */
-  async executeTransactionBlock(
-    transactionBlock: TransactionBlock,
+  async executeTransaction(
+    transaction: Transaction,
     _options: TransactionOptions = {}
   ): Promise<TransactionResponse> {
     try {
       // Pass only valid transaction options
-      // Cast the transaction directly to handle it correctly
       const result = await this.signer.signAndExecuteTransaction(
-        transactionBlock as TransactionType
+        transaction as TransactionType
       );
 
-      return result as TransactionResponse;
+      return result as unknown as TransactionResponse;
     } catch (_error) {
       logger.error('Transaction execution failed:', _error);
       throw new Error(
@@ -149,18 +167,18 @@ export class DefaultSuiTransactionBlockAdapter
     });
 
     // Execute the transaction
-    return this.executeTransactionBlock(tx, options);
+    return this.executeTransaction(tx, options);
   }
 
   /**
-   * Inspect a transaction block without executing it
+   * Inspect a transaction without executing it
    */
-  async dryRunTransactionBlock(
-    transactionBlock: TransactionBlock
+  async dryRunTransaction(
+    transaction: Transaction
   ): Promise<unknown> {
     try {
       const result = await this.client.devInspectTransactionBlock({
-        transactionBlock: transactionBlock as TransactionType,
+        transactionBlock: transaction as TransactionType,
         sender: this.signer.toSuiAddress(),
       });
 
@@ -176,7 +194,34 @@ export class DefaultSuiTransactionBlockAdapter
   /**
    * Get the Sui client
    */
-  getClient(): SuiClient {
+  getClient(): InstanceType<typeof SuiClient> {
     return this.client;
+  }
+
+  // Backward compatibility methods (deprecated)
+  /**
+   * @deprecated Use createTransaction() instead
+   */
+  createTransactionBlock(): TransactionBlock {
+    return this.createTransaction();
+  }
+
+  /**
+   * @deprecated Use executeTransaction() instead
+   */
+  async executeTransactionBlock(
+    transactionBlock: TransactionBlock,
+    options: TransactionOptions = {}
+  ): Promise<TransactionResponse> {
+    return this.executeTransaction(transactionBlock, options);
+  }
+
+  /**
+   * @deprecated Use dryRunTransaction() instead
+   */
+  async dryRunTransactionBlock(
+    transactionBlock: TransactionBlock
+  ): Promise<unknown> {
+    return this.dryRunTransaction(transactionBlock);
   }
 }

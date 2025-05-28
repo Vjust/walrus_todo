@@ -9,7 +9,7 @@ import { BaseError, BaseErrorOptions } from './BaseError';
 /**
  * Options for ValidationError construction
  */
-export interface ValidationErrorOptions extends Omit<BaseErrorOptions, 'code'> {
+export interface ValidationErrorOptions extends Omit<BaseErrorOptions, 'code' | 'message'> {
   /** Field that failed validation */
   field?: string;
 

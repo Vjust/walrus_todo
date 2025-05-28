@@ -18,13 +18,16 @@ export function WalletConnectButton() {
     connected,
     connecting,
     disconnect,
-    address,
-    name: walletName,
-    network: chainId,
+    account,
+    currentNetwork,
     error,
-    setError,
+    clearError,
     switchNetwork,
+    connect,
   } = useWalletContext();
+
+  const address = account?.address || null;
+  const chainId = currentNetwork;
 
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>(
     'idle'
@@ -144,9 +147,7 @@ export function WalletConnectButton() {
       setShowNetworkOptions(false);
     } catch (error) {
       console.error(`Failed to switch to ${network}:`, error);
-      if (setError && error instanceof Error) {
-        setError(error);
-      }
+      // Note: clearError is available, but we'd need an setError function for this
     } finally {
       setIsNetworkSwitching(false);
     }
@@ -182,7 +183,7 @@ export function WalletConnectButton() {
         <div className='px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg flex items-center gap-2 relative'>
           <div className='flex flex-col'>
             <p className='text-sm text-ocean-deep dark:text-ocean-foam'>
-              {walletName || 'Wallet'}: {truncateAddress(address)}
+              Wallet: {truncateAddress(address)}
             </p>
             <p className='text-xs text-ocean-medium dark:text-ocean-light'>
               {getNetworkDisplayName(chainId)}
@@ -330,17 +331,9 @@ export function WalletConnectButton() {
         <button
           onClick={() => {
             try {
-              disconnect().catch(err => {
-                console.error('Error disconnecting wallet:', err);
-                if (setError && err instanceof Error) {
-                  setError(err);
-                }
-              });
+              disconnect();
             } catch (error) {
               console.error('Error in disconnect handler:', error);
-              if (setError && error instanceof Error) {
-                setError(error);
-              }
             }
           }}
           disabled={isNetworkSwitching}
@@ -396,19 +389,19 @@ export function WalletConnectButton() {
   // Wrap the entire component in an ErrorBoundary
   return (
     <ErrorBoundary>
-      <>
+      <div>
         {renderConnectedUI() || renderConnectingUI() || renderConnectUI()}
 
         <WalletErrorModal
-          error={error instanceof WalletError ? error : null}
-          onDismiss={() => setError(null)}
+          error={error ? new WalletError(error) : null}
+          onDismiss={clearError}
         />
         <ClipboardErrorModal
           error={clipboardError}
           onDismiss={() => setClipboardError(null)}
           onTryAlternative={handleManualCopy}
         />
-      </>
+      </div>
     </ErrorBoundary>
   );
 }

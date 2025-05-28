@@ -22,7 +22,7 @@ export class ApiValidationMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize the request body
-        const sanitizedBody = this.sanitizeObject(req.body);
+        const sanitizedBody = ApiValidationMiddleware.sanitizeObject(req.body);
 
         // Validate against schema
         SchemaValidator.validate(sanitizedBody, schema);
@@ -37,6 +37,7 @@ export class ApiValidationMiddleware {
           message: error instanceof Error ? error.message : String(error),
           code: 'VALIDATION_ERROR',
         });
+        return;
       }
     };
   }
@@ -50,7 +51,7 @@ export class ApiValidationMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize URL parameters
-        const sanitizedParams = this.sanitizeObject(req.params);
+        const sanitizedParams = ApiValidationMiddleware.sanitizeObject(req.params);
 
         // Validate against schema
         SchemaValidator.validate(sanitizedParams, schema);
@@ -65,6 +66,7 @@ export class ApiValidationMiddleware {
           message: error instanceof Error ? error.message : String(error),
           code: 'VALIDATION_ERROR',
         });
+        return;
       }
     };
   }
@@ -78,7 +80,7 @@ export class ApiValidationMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize query parameters
-        const sanitizedQuery = this.sanitizeObject(req.query);
+        const sanitizedQuery = ApiValidationMiddleware.sanitizeObject(req.query);
 
         // Validate against schema
         SchemaValidator.validate(sanitizedQuery, schema);
@@ -93,6 +95,7 @@ export class ApiValidationMiddleware {
           message: error instanceof Error ? error.message : String(error),
           code: 'VALIDATION_ERROR',
         });
+        return;
       }
     };
   }
@@ -138,6 +141,7 @@ export class ApiValidationMiddleware {
           message: error instanceof Error ? error.message : String(error),
           code: 'FILE_VALIDATION_ERROR',
         });
+        return;
       }
     };
   }
@@ -150,7 +154,7 @@ export class ApiValidationMiddleware {
   static validateAuth(authType: 'bearer' | 'api-key' = 'bearer') {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
-        const authHeader = req.headers.authorization;
+        const authHeader = (req as any).headers.authorization;
 
         if (!authHeader) {
           throw new Error('Authorization header is required');
@@ -193,6 +197,7 @@ export class ApiValidationMiddleware {
           message: error instanceof Error ? error.message : String(error),
           code: 'AUTH_VALIDATION_ERROR',
         });
+        return;
       }
     };
   }

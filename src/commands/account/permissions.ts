@@ -3,7 +3,7 @@ import BaseCommand from '../../base-command';
 import { permissionService } from '../../services/permission-service';
 import { ActionType, UserRole } from '../../types/permissions';
 import { CLIError } from '../../types/errors/consolidated';
-import chalk from 'chalk';
+import chalk = require('chalk');
 
 /**
  * Manage user permissions and roles

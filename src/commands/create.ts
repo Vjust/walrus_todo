@@ -4,7 +4,7 @@ import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import * as fs from 'fs';
 import { KeystoreSigner } from '../utils/sui-keystore';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
 import { WalrusImageStorage } from '../utils/walrus-image-storage';

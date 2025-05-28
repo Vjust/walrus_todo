@@ -21,6 +21,16 @@
       "args": [],
       "path": "./dist/src/commands/ai/index"
     },
+    "cancel": {
+      "id": "cancel",
+      "description": "cancel command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/cancel"
+    },
     "check": {
       "id": "check",
       "description": "Toggle completion status of a todo item",
@@ -171,6 +181,16 @@
       "args": [],
       "path": "./dist/src/commands/interactive"
     },
+    "jobs": {
+      "id": "jobs",
+      "description": "jobs command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/jobs"
+    },
     "list": {
       "id": "list",
       "description": "Display todo items or available todo lists",
@@ -190,6 +210,16 @@
       "flags": {},
       "args": [],
       "path": "./dist/src/commands/provider"
+    },
+    "queue": {
+      "id": "queue",
+      "description": "queue command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/queue"
     },
     "retrieve": {
       "id": "retrieve",
@@ -220,6 +250,16 @@
       "flags": {},
       "args": [],
       "path": "./dist/src/commands/simple"
+    },
+    "status": {
+      "id": "status",
+      "description": "status command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/status"
     },
     "storage": {
       "id": "storage",

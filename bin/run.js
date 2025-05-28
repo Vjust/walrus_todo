@@ -1,7 +1,7 @@
-import { Logger } from '../src/utils/Logger';
-
-const logger = new Logger('run');
 #!/usr/bin/env node
+
+const { Logger } = require('../dist/src/utils/Logger');
+const logger = new Logger('run');
 
 /**
  * Enhanced OCLIF runner with robust error handling

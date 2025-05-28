@@ -1,4 +1,4 @@
-import { WalrusClient } from '../types/client';
+import type { WalrusClient } from '../types/client';
 import type { BlobObject } from '../types/walrus';
 import { createWalrusStorage } from '../utils/walrus-storage';
 import type { WalrusStorage } from '../utils/walrus-storage';
@@ -188,7 +188,7 @@ describe('WalrusStorage', () => {
 
   describe('retrieveTodo', () => {
     beforeEach(async () => {
-      (WalrusClient as unknown as jest.Mock).mockImplementation(
+      (walrusModuleMock.WalrusClient as jest.Mock).mockImplementation(
         () => mockWalrusClient
       );
       await storage.init();
@@ -287,7 +287,7 @@ describe('WalrusStorage', () => {
   describe('storeTodo', () => {
     beforeEach(async () => {
       // Initialize WalrusClient with successful connection
-      (WalrusClient as unknown as jest.Mock).mockImplementation(
+      (walrusModuleMock.WalrusClient as jest.Mock).mockImplementation(
         () => mockWalrusClient
       );
       await storage.init();
@@ -577,7 +577,7 @@ describe('WalrusStorage', () => {
 
   describe('ensureStorageAllocated', () => {
     beforeEach(async () => {
-      (WalrusClient as unknown as jest.Mock).mockImplementation(
+      (walrusModuleMock.WalrusClient as jest.Mock).mockImplementation(
         () => mockWalrusClient
       );
       await storage.init();

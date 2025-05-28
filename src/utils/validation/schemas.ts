@@ -18,9 +18,9 @@ export const TodoPrioritySchema = z.enum(['low', 'medium', 'high'], {
 /**
  * Schema for Storage Location
  */
-export const StorageLocationSchema = z.enum(['local', 'walrus', 'sui'], {
+export const StorageLocationSchema = z.enum(['local', 'blockchain', 'both'], {
   errorMap: () => ({
-    message: 'Storage location must be one of: local, walrus, sui',
+    message: 'Storage location must be one of: local, blockchain, both',
   }),
 });
 
@@ -50,7 +50,7 @@ export const TodoSchema = z.object(
 
     completed: z.boolean(),
 
-    priority: TodoPrioritySchema.optional(),
+    priority: TodoPrioritySchema.default('medium'),
 
     tags: z
       .array(
@@ -64,7 +64,7 @@ export const TodoSchema = z.object(
           )
       )
       .max(20, 'Too many tags (max 20)')
-      .optional(),
+      .default([]),
 
     dueDate: z
       .string()
@@ -80,6 +80,13 @@ export const TodoSchema = z.object(
       .string()
       .datetime('Invalid updated date format (must be ISO 8601)'),
 
+    completedAt: z
+      .string()
+      .datetime('Invalid completed date format (must be ISO 8601)')
+      .optional(),
+
+    private: z.boolean().default(false),
+
     storageLocation: StorageLocationSchema.optional(),
 
     walrusBlobId: z
@@ -87,9 +94,27 @@ export const TodoSchema = z.object(
       .min(1, 'Walrus blob ID cannot be empty')
       .optional(),
 
-    suiObjectId: z.string().min(1, 'Sui object ID cannot be empty').optional(),
+    nftObjectId: z
+      .string()
+      .min(1, 'NFT object ID cannot be empty')
+      .optional(),
 
     imageUrl: z.string().url('Invalid image URL format').optional(),
+
+    category: z
+      .string()
+      .max(100, 'Category too long (max 100 characters)')
+      .optional(),
+
+    listName: z
+      .string()
+      .max(100, 'List name too long (max 100 characters)')
+      .optional(),
+
+    syncedAt: z
+      .string()
+      .datetime('Invalid synced date format (must be ISO 8601)')
+      .optional(),
   },
   {
     errorMap: (issue, ctx) => {
@@ -126,22 +151,18 @@ export const TodoListSchema = z.object(
         'TodoList name contains invalid characters'
       ),
 
-    description: z
-      .string()
-      .max(500, 'TodoList description too long (max 500 characters)')
-      .optional(),
-
     owner: z
       .string()
       .min(1, 'TodoList owner cannot be empty')
       .max(100, 'TodoList owner too long (max 100 characters)'),
 
-    todos: z.array(TodoSchema).max(1000, 'Too many todos in list (max 1000)'),
+    todos: z.array(TodoSchema).max(1000, 'Too many todos in list (max 1000)').default([]),
 
     version: z
       .number()
       .int('Version must be an integer')
-      .min(0, 'Version cannot be negative'),
+      .min(0, 'Version cannot be negative')
+      .default(1),
 
     collaborators: z
       .array(
@@ -151,6 +172,13 @@ export const TodoListSchema = z.object(
           .max(100, 'Collaborator address too long (max 100 characters)')
       )
       .max(50, 'Too many collaborators (max 50)')
+      .optional(),
+
+    permissions: z
+      .record(
+        z.string().min(1, 'Permission key cannot be empty'),
+        z.string().min(1, 'Permission value cannot be empty')
+      )
       .optional(),
 
     createdAt: z
@@ -169,21 +197,6 @@ export const TodoListSchema = z.object(
     suiObjectId: z
       .string()
       .min(1, 'Sui object ID cannot be empty')
-      .optional(),
-
-    tags: z
-      .array(
-        z
-          .string()
-          .min(1, 'List tag cannot be empty')
-          .max(50, 'List tag too long (max 50 characters)')
-      )
-      .max(10, 'Too many list tags (max 10)')
-      .optional(),
-
-    syncedAt: z
-      .string()
-      .datetime('Invalid synced date format (must be ISO 8601)')
       .optional(),
   },
   {

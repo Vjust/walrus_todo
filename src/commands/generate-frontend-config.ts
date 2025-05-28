@@ -1,6 +1,6 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
 import { createFrontendConfigGenerator } from '../utils/frontend-config-generator';

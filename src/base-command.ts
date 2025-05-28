@@ -4,7 +4,7 @@ import * as path from 'path';
 import { Command, Flags } from '@oclif/core';
 import { ux } from '@oclif/core';
 import * as cliProgress from 'cli-progress';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError, WalrusError } from './types/error';
 import { Todo } from './types/todo';
 import { NetworkError } from './types/errors/consolidated/NetworkError';
@@ -21,6 +21,8 @@ import {
   SpinnerOptions,
   ProgressBarOptions,
 } from './utils/progress-indicators';
+import { jobManager } from './utils/PerformanceMonitor';
+import { backgroundOrchestrator, BackgroundOptions } from './utils/BackgroundCommandOrchestrator';
 
 // Fix for undefined columns in non-TTY environments
 if (process.stdout && !process.stdout.columns) {
@@ -37,10 +39,14 @@ export interface BaseFlags {
   output?: string;
   mock?: boolean;
   apiKey?: string;
-  help?: boolean;
+  help?: void;
   timeout?: number;
   force?: boolean;
   quiet?: boolean;
+  background?: boolean;
+  bg?: boolean;
+  foreground?: boolean;
+  fg?: boolean;
 }
 
 /**
@@ -99,8 +105,7 @@ export abstract class BaseCommand extends Command {
       char: 'h',
     }),
     timeout: Flags.integer({
-      char: 't',
-      description: 'Timeout in seconds',
+      description: 'Timeout in seconds (use --timeout)',
       default: 30,
       required: false,
     }),
@@ -113,6 +118,27 @@ export abstract class BaseCommand extends Command {
     quiet: Flags.boolean({
       char: 'q',
       description: 'Suppress output',
+      default: false,
+      required: false,
+    }),
+    background: Flags.boolean({
+      char: 'b',
+      description: 'Run command in background',
+      default: false,
+      required: false,
+    }),
+    bg: Flags.boolean({
+      description: 'Alias for --background',
+      default: false,
+      required: false,
+    }),
+    foreground: Flags.boolean({
+      description: 'Force command to run in foreground',
+      default: false,
+      required: false,
+    }),
+    fg: Flags.boolean({
+      description: 'Alias for --foreground',
       default: false,
       required: false,
     }),
@@ -131,8 +157,17 @@ export abstract class BaseCommand extends Command {
     const parsed = await this.parse();
     this.flagsConfig = parsed.flags as BaseFlags;
 
+    // Check if command should run in background
+    if (await this.shouldRunInBackground()) {
+      await this.executeInBackground();
+      return;
+    }
+
     // Setup error handling
     this.setupErrorHandlers();
+
+    // Check for recent job completions and show notifications
+    this.checkJobNotifications();
   }
 
   /**
@@ -930,6 +965,111 @@ export abstract class BaseCommand extends Command {
   }
 
   /**
+   * Check for recently completed background jobs and show notifications
+   */
+  private checkJobNotifications(): void {
+    try {
+      const recentlyCompleted = this.getRecentlyCompletedJobs();
+      
+      if (recentlyCompleted.length > 0) {
+        this.showJobNotifications(recentlyCompleted);
+      }
+    } catch (error) {
+      // Silently ignore notification errors to not disrupt command execution
+      this.debugLog('Failed to check job notifications', error);
+    }
+  }
+
+  /**
+   * Get jobs that completed in the last 24 hours and haven't been notified about
+   */
+  private getRecentlyCompletedJobs(): any[] {
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const completedJobs = jobManager.getCompletedJobs();
+    
+    return completedJobs.filter(job => {
+      // Job completed recently
+      const recentlyCompleted = job.endTime && job.endTime > oneDayAgo;
+      
+      // Haven't shown notification yet (check metadata)
+      const notNotified = !job.metadata?.notificationShown;
+      
+      return recentlyCompleted && notNotified;
+    });
+  }
+
+  /**
+   * Display notifications for completed jobs
+   */
+  private showJobNotifications(jobs: any[]): void {
+    if (this.flagsConfig.quiet) return;
+
+    const successful = jobs.filter(j => j.status === 'completed');
+    const failed = jobs.filter(j => j.status === 'failed');
+
+    if (successful.length > 0) {
+      this.log(chalk.green(`✅ ${successful.length} background job(s) completed successfully`));
+      
+      successful.forEach(job => {
+        const duration = this.formatDuration(job.endTime - job.startTime);
+        this.log(chalk.gray(`   ${job.id}: ${job.command} ${job.args.join(' ')} (${duration})`));
+        
+        // Mark as notified
+        this.markJobAsNotified(job.id);
+      });
+    }
+
+    if (failed.length > 0) {
+      this.log(chalk.red(`❌ ${failed.length} background job(s) failed`));
+      
+      failed.forEach(job => {
+        this.log(chalk.gray(`   ${job.id}: ${job.command} ${job.args.join(' ')}`));
+        if (job.errorMessage) {
+          this.log(chalk.red(`   Error: ${job.errorMessage}`));
+        }
+        
+        // Mark as notified
+        this.markJobAsNotified(job.id);
+      });
+    }
+
+    if (jobs.length > 0) {
+      this.log(chalk.gray('💡 Use "waltodo jobs" to see all background jobs'));
+      this.log(''); // Empty line for spacing
+    }
+  }
+
+  /**
+   * Mark a job as having been notified about
+   */
+  private markJobAsNotified(jobId: string): void {
+    try {
+      const job = jobManager.getJob(jobId);
+      if (job) {
+        jobManager.updateJob(jobId, {
+          metadata: {
+            ...job.metadata,
+            notificationShown: true,
+            notifiedAt: Date.now()
+          }
+        });
+      }
+    } catch (error) {
+      this.debugLog(`Failed to mark job ${jobId} as notified`, error);
+    }
+  }
+
+  /**
+   * Format duration in human-readable format
+   */
+  private formatDuration(ms: number): string {
+    if (ms < 1000) return `${ms}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
+    return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
+  }
+
+  /**
    * Formatting utilities
    */
   protected get format() {
@@ -941,6 +1081,147 @@ export abstract class BaseCommand extends Command {
       info: (text: string) => chalk.blue(text),
       muted: (text: string) => chalk.gray(text),
     };
+  }
+
+  /**
+   * Check if command should run in background
+   */
+  protected async shouldRunInBackground(): Promise<boolean> {
+    const commandName = this.constructor.name.toLowerCase().replace('command', '');
+    const parsed = await this.parse();
+    
+    return backgroundOrchestrator.shouldRunInBackground(
+      commandName,
+      (parsed.args as any[]) || [],
+      this.flagsConfig
+    );
+  }
+
+  /**
+   * Execute command in background
+   */
+  protected async executeInBackground(): Promise<void> {
+    const commandName = this.constructor.name.toLowerCase().replace('command', '');
+    const parsed = await this.parse();
+    
+    const options: BackgroundOptions = {
+      detached: true,
+      silent: this.flagsConfig.quiet,
+      timeout: this.flagsConfig.timeout ? this.flagsConfig.timeout * 1000 : undefined,
+      priority: this.getCommandPriority()
+    };
+
+    try {
+      const jobId = await backgroundOrchestrator.executeInBackground(
+        commandName,
+        (parsed.args as any[]) || [],
+        this.flagsConfig,
+        options
+      );
+
+      this.log(chalk.green(`🚀 Command started in background with job ID: ${jobId}`));
+      this.log(chalk.gray(`💡 Monitor progress with: waltodo jobs status ${jobId}`));
+      this.log(chalk.gray(`📋 View all jobs with: waltodo jobs list`));
+      
+      // Don't exit in test environment
+      if (process.env.NODE_ENV !== 'test') {
+        process.exit(0);
+      }
+    } catch (error) {
+      this.error(`Failed to start background job: ${error instanceof Error ? error.message : String(error)}`, { exit: 1 });
+    }
+  }
+
+  /**
+   * Get command priority for background execution
+   */
+  protected getCommandPriority(): 'low' | 'medium' | 'high' {
+    const commandName = this.constructor.name.toLowerCase().replace('command', '');
+    
+    // High priority commands
+    if (['deploy', 'create-nft'].includes(commandName)) {
+      return 'high';
+    }
+    
+    // Medium priority commands
+    if (['store', 'store-list', 'store-file', 'sync', 'image'].includes(commandName)) {
+      return 'medium';
+    }
+    
+    // Default to low priority
+    return 'low';
+  }
+
+  /**
+   * Execute operation with background progress reporting
+   */
+  protected async executeWithBackgroundProgress<T>(
+    operation: () => Promise<T>,
+    options: {
+      totalSteps?: number;
+      stepName?: string;
+      progressCallback?: (progress: number, stage: string) => void;
+    } = {}
+  ): Promise<T> {
+    const { totalSteps = 100, stepName = 'operation', progressCallback } = options;
+    
+    // Check if running in background mode
+    const isBackground = process.env.WALRUS_BACKGROUND_JOB;
+    
+    if (isBackground && progressCallback) {
+      // Setup progress reporting for background jobs
+      let currentStep = 0;
+      
+      const reportProgress = (stage: string) => {
+        currentStep++;
+        const progress = Math.round((currentStep / totalSteps) * 100);
+        
+        // Output progress in format that background orchestrator can parse
+        console.log(`PROGRESS:${progress}:${stage}`);
+        console.log(`STAGE:${stage}`);
+        
+        if (progressCallback) {
+          progressCallback(progress, stage);
+        }
+      };
+      
+      // Monkey patch console.log to report stages
+      const originalLog = console.log;
+      console.log = (...args: any[]) => {
+        const message = args.join(' ');
+        if (message.includes('Starting') || message.includes('Processing') || message.includes('Completing')) {
+          reportProgress(message);
+        }
+        originalLog(...args);
+      };
+      
+      try {
+        const result = await operation();
+        reportProgress('Completed');
+        return result;
+      } finally {
+        console.log = originalLog;
+      }
+    } else {
+      return await operation();
+    }
+  }
+
+  /**
+   * Report progress for background jobs
+   */
+  protected reportBackgroundProgress(progress: number, stage: string): void {
+    if (process.env.WALRUS_BACKGROUND_JOB) {
+      console.log(`PROGRESS:${progress}:${stage}`);
+      console.log(`STAGE:${stage}`);
+    }
+  }
+
+  /**
+   * Check if currently running in background mode
+   */
+  protected get isBackgroundMode(): boolean {
+    return !!process.env.WALRUS_BACKGROUND_JOB;
   }
 }
 

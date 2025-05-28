@@ -45,8 +45,8 @@ describe('Add Command with AI', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
-    command = new AddCommand();
-    stdoutSpy = jest.spyOn(command, 'log').mockImplementation();
+    command = new AddCommand([], {} as any);
+    stdoutSpy = jest.spyOn(command, 'log').mockImplementation(() => undefined);
     jest.clearAllMocks();
   });
 
@@ -60,7 +60,7 @@ describe('Add Command with AI', () => {
 
     expect(aiService.suggestTags).not.toHaveBeenCalled();
     expect(TodoService).toHaveBeenCalled();
-    expect(TodoService.mock.results[0].value.addTodo).toHaveBeenCalled();
+    expect((TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]?.value.addTodo).toHaveBeenCalled();
   });
 
   test('should add a todo with AI suggestions', async () => {
@@ -78,7 +78,7 @@ describe('Add Command with AI', () => {
 
     expect(aiService.suggestTags).toHaveBeenCalled();
     expect(aiService.suggestPriority).toHaveBeenCalled();
-    expect(TodoService.mock.results[0].value.addTodo).toHaveBeenCalled();
+    expect((TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]?.value.addTodo).toHaveBeenCalled();
 
     // Check AI suggestions were logged
     expect(stdoutSpy).toHaveBeenCalledWith(
@@ -108,7 +108,7 @@ describe('Add Command with AI', () => {
     await command.run();
 
     // Should continue with regular todo creation
-    expect(TodoService.mock.results[0].value.addTodo).toHaveBeenCalled();
+    expect((TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]?.value.addTodo).toHaveBeenCalled();
     expect(stdoutSpy).toHaveBeenCalledWith(
       expect.stringContaining('AI enhancement failed')
     );

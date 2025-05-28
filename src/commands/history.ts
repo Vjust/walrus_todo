@@ -1,7 +1,7 @@
 import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { commandHistory } from '../utils/CommandHistory';
-import chalk from 'chalk';
+import chalk = require('chalk');
 
 /**
  * Show command history

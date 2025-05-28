@@ -115,7 +115,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // First call fails with a network error, second call succeeds
       mockWalrusClient.readBlob
@@ -149,7 +148,6 @@ describe('Blockchain Verification Error Handling', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -185,7 +183,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Setup success for readBlob
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
@@ -221,7 +218,6 @@ describe('Blockchain Verification Error Handling', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -257,7 +253,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // All calls to readBlob fail with network errors
       mockWalrusClient.readBlob.mockRejectedValue(
@@ -296,7 +291,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // First call times out, second call succeeds
       mockWalrusClient.readBlob
@@ -331,7 +325,6 @@ describe('Blockchain Verification Error Handling', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -368,7 +361,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // First call gets rate limited, second call succeeds
       mockWalrusClient.getBlobInfo
@@ -406,7 +398,6 @@ describe('Blockchain Verification Error Handling', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -445,7 +436,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Setup success for readBlob and getBlobInfo
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
@@ -483,7 +473,6 @@ describe('Blockchain Verification Error Handling', () => {
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
       const expectedAttributes = {
-        contentType: 'text/plain',
         owner: 'user123',
         tags: 'important,verification',
       };
@@ -516,7 +505,6 @@ describe('Blockchain Verification Error Handling', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain', // This matches
           owner: 'different-user', // This doesn't match
           // Missing 'tags' field
           $kind: 'V1',
@@ -562,7 +550,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Setup success for readBlob
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
@@ -593,7 +580,6 @@ describe('Blockchain Verification Error Handling', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -631,7 +617,6 @@ describe('Blockchain Verification Error Handling', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Setup success for readBlob and getBlobInfo
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
@@ -660,7 +645,6 @@ describe('Blockchain Verification Error Handling', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },

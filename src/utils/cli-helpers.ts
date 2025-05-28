@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import chalk = require('chalk');
 import type { Ora } from 'ora';
 
 // Safe ora import with fallback

@@ -88,7 +88,7 @@ module walrus_todo::todo_nft {
             string::utf8(b"{completed_at}")
         ];
 
-        let display_obj: Display<TodoNFT> = display::new_with_fields<TodoNFT>(
+        let mut display_obj: Display<TodoNFT> = display::new_with_fields<TodoNFT>(
             &publisher,
             fields,
             values,
@@ -235,7 +235,7 @@ module walrus_todo::todo_nft {
 
     /// Custom transfer function with event emission
     public entry fun transfer_todo_nft(
-        todo_nft: TodoNFT,
+        mut todo_nft: TodoNFT,
         recipient: address,
         ctx: &mut TxContext
     ) {
@@ -280,7 +280,8 @@ module walrus_todo::todo_nft {
 
     /// Returns the image URL as a string (for compatibility)
     public fun walrus_blob_id(todo_nft: &TodoNFT): String {
-        string::utf8(url::inner_url(&todo_nft.image_url))
+        let ascii_url = url::inner_url(&todo_nft.image_url);
+        string::from_ascii(ascii_url)
     }
 
     /// Returns whether a todo NFT is completed

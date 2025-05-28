@@ -8,7 +8,7 @@ import { Logger } from './Logger';
 
 const logger = new Logger('env-validator');
 
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError } from '../types/errors/consolidated';
 import { envConfig, EnvVariable } from './environment-config';
 

@@ -71,7 +71,7 @@ class OriginalWalrusClientAdapter extends BaseWalrusClientAdapter {
 
     try {
       // Validate getBlobInfo method exists
-      if (!('getBlobInfo' in this.walrusClient) || typeof (this.walrusClient as Record<string, unknown>).getBlobInfo !== 'function') {
+      if (!('getBlobInfo' in this.walrusClient) || typeof (this.walrusClient as unknown as Record<string, unknown>).getBlobInfo !== 'function') {
         throw new WalrusClientAdapterError('getBlobInfo method not available on client');
       }
       

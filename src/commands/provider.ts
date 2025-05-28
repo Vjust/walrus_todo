@@ -1,7 +1,7 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { AIVerifierAdapter } from '../types/adapters/AIVerifierAdapter';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { configService } from '../services/config-service';
 import { CLIError } from '../types/errors/consolidated';
 

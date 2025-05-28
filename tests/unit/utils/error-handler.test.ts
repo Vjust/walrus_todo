@@ -5,6 +5,7 @@ import {
 } from '../../../src/utils/error-handler';
 
 import * as errorMessages from '../../../src/utils/error-messages';
+import { CLIError } from '../../../src/types/errors/consolidated';
 
 // Mock dependencies
 jest.mock('../../../src/utils/error-messages');
@@ -16,7 +17,7 @@ jest.mock('chalk', () => ({
 }));
 
 // Mock console methods
-const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
+const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
 
 describe('Error Handler', () => {
   beforeEach(() => {
@@ -63,7 +64,7 @@ describe('Error Handler', () => {
     });
 
     it('should handle CLIError instances', () => {
-      const error = new CLIError('CLI specific error', 'TEST_ERROR');
+      const error = new CLIError('CLI specific error', { code: 'TEST_ERROR' });
       const mockFriendlyError = 'Friendly CLI error message';
 
       (errorMessages.displayFriendlyError as jest.Mock).mockReturnValue(

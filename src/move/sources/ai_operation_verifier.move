@@ -13,7 +13,7 @@ module walrus_todo::ai_operation_verifier {
     const E_INVALID_HASH: u64 = 4;
 
     /// Events
-    struct OperationVerified has copy, drop {
+    public struct OperationVerified has copy, drop {
         provider: String,
         operation: String,
         verifier: address,
@@ -22,7 +22,7 @@ module walrus_todo::ai_operation_verifier {
     }
 
     /// The operation verification registry
-    struct VerificationRegistry has key {
+    public struct VerificationRegistry has key {
         id: UID,
         // Maps verification IDs to verification records
         verifications: Table<String, VerificationRecord>,
@@ -32,7 +32,7 @@ module walrus_todo::ai_operation_verifier {
     }
 
     /// Verification record
-    struct VerificationRecord has store, drop {
+    public struct VerificationRecord has store, drop {
         provider: String,
         operation: String,
         input_hash: String,
@@ -43,7 +43,7 @@ module walrus_todo::ai_operation_verifier {
     }
 
     /// Admin capability
-    struct AdminCap has key {
+    public struct AdminCap has key {
         id: UID
     }
 
@@ -213,7 +213,7 @@ module walrus_todo::ai_operation_verifier {
     ): String {
         // In a real implementation, this would be a cryptographic hash of the parameters
         // For simplicity, we're just concatenating them
-        let result = concat_strings(provider, operation);
+        let mut result = concat_strings(provider, operation);
         result = concat_strings(&result, input_hash);
         result = concat_strings(&result, output_hash);
         result
@@ -221,7 +221,7 @@ module walrus_todo::ai_operation_verifier {
 
     /// Concatenate two strings
     fun concat_strings(a: &String, b: &String): String {
-        let result = *a;
+        let mut result = *a;
         string::append(&mut result, *b);
         result
     }

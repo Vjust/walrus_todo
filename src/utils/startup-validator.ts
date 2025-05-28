@@ -8,7 +8,7 @@ const logger = new Logger('startup-validator');
  * ensuring proper environment configuration and dependencies are in place.
  */
 
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError } from '../types/error';
 import { envConfig } from './environment-config';
 import { validateEnvironmentFull } from './env-validator';

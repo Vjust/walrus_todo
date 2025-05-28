@@ -7,7 +7,7 @@ import {
   getProviderEnum,
   getProviderString,
 } from '../../utils/adapters/ai-provider-adapter';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError } from '../../types/errors/consolidated';
 
 /**

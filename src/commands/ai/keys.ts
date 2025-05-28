@@ -1,7 +1,7 @@
 import { Flags, Args } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { secureCredentialManager } from '../../services/ai/SecureCredentialManager';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError } from '../../types/errors/consolidated';
 
 /**

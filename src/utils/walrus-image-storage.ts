@@ -6,7 +6,6 @@ const logger = new Logger('walrus-image-storage');
 
 // Define compatible SignatureWithBytes interface for local usage
 // Use adapter for WalrusClient since concrete implementation is not available
-import { createWalrusClientAdapter } from './adapters/walrus-client-adapter';
 import { type ReadBlobOptions } from '@mysten/walrus';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -24,6 +23,7 @@ import {
   WalrusClientAdapter,
   createWalrusClientAdapter,
 } from './adapters/walrus-client-adapter';
+import { WalrusClient } from '../types/client';
 
 /**
  * A type that extends SuiClient with optional extensions used by other parts of the code

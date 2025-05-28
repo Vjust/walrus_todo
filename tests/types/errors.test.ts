@@ -1,10 +1,10 @@
 import {
-  WalrusError,
+  BaseError as WalrusError,
   StorageError,
   BlockchainError,
   ValidationError,
   NetworkError,
-} from '@/types/errors';
+} from '../../src/types/errors/consolidated';
 
 describe('Error Types', () => {
   describe('WalrusError', () => {
@@ -12,8 +12,8 @@ describe('Error Types', () => {
       const error = new WalrusError('Test error');
 
       expect(error).toBeInstanceOf(Error);
-      expect(error.name).toBe('WalrusError');
-      expect(error.code).toBe('WALRUS_ERROR');
+      expect(error.name).toBe('BaseError');
+      expect(error.code).toBe('UNKNOWN_ERROR');
       expect(error.publicMessage).toBe('An unexpected error occurred');
       expect(error.shouldRetry).toBe(false);
     });
@@ -93,8 +93,7 @@ describe('Error Types', () => {
 
   describe('ValidationError', () => {
     it('should create field-specific message', () => {
-      const error = new ValidationError('Validation error', {
-        field: 'size',
+      const error = ValidationError.forField('Validation error', 'size', {
         value: -1,
         constraint: 'positive',
       });
@@ -104,8 +103,7 @@ describe('Error Types', () => {
     });
 
     it('should handle sensitive validation data', () => {
-      const error = new ValidationError('Validation error', {
-        field: 'token',
+      const error = ValidationError.forField('Validation error', 'token', {
         value: 'secret-token',
         constraint: 'format',
       });
@@ -218,8 +216,7 @@ describe('Error Types', () => {
     });
 
     it('should handle non-string sensitive data', () => {
-      const error = new ValidationError('Validation failed', {
-        field: 'credentials',
+      const error = ValidationError.forField('Validation failed', 'credentials', {
         value: { token: 'secret123', key: 'key123' },
         constraint: 'format',
       });

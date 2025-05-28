@@ -11,6 +11,7 @@ export type Transaction = SuiTransaction;
 /**
  * Legacy TransactionBlock interface for backward compatibility
  * This avoids errors when the type system expects transaction.blockData etc.
+ * @deprecated Use Transaction from @mysten/sui/transactions instead
  */
 export interface TransactionBlock extends SuiTransaction {
   blockData?: unknown;
@@ -24,8 +25,7 @@ export interface TransactionBlock extends SuiTransaction {
  */
 export type TransactionVariant = 
   | { kind: 'sui'; transaction: SuiTransaction }
-  | { kind: 'adapter'; transaction: TransactionBlockAdapter }
-  | { kind: 'legacy'; transaction: TransactionBlock };
+  | { kind: 'adapter'; transaction: TransactionBlockAdapter };
 
 /**
  * Enhanced transaction type that combines Transaction and TransactionBlockAdapter
@@ -57,7 +57,7 @@ export function isTransactionVariant(obj: unknown): obj is TransactionVariant {
     obj !== null &&
     'kind' in obj &&
     'transaction' in obj &&
-    ['sui', 'adapter', 'legacy'].includes((obj as Record<string, unknown>).kind as string)
+    ['sui', 'adapter'].includes((obj as Record<string, unknown>).kind as string)
   );
 }
 
@@ -72,8 +72,11 @@ export function isAdapterVariant(variant: TransactionVariant): variant is { kind
   return variant.kind === 'adapter';
 }
 
-export function isLegacyVariant(variant: TransactionVariant): variant is { kind: 'legacy'; transaction: TransactionBlock } {
-  return variant.kind === 'legacy';
+/**
+ * @deprecated Legacy TransactionBlock support removed
+ */
+export function isLegacyVariant(_variant: unknown): _variant is never {
+  return false;
 }
 
 /**
@@ -87,15 +90,21 @@ export function isTransactionType(obj: unknown): obj is TransactionType {
  * Convert various transaction formats to a standard Transaction
  */
 export function asTransaction(
-  input: SuiTransaction | TransactionBlock | TransactionBlockAdapter
+  input: SuiTransaction | TransactionBlockAdapter
 ): SuiTransaction {
   if (isSuiTransaction(input)) {
     return input;
   }
 
-  // For legacy TransactionBlock, create a new Transaction
-  // This is a simplified conversion - in practice you'd need proper serialization
-  throw new Error('Legacy TransactionBlock conversion not implemented');
+  // For adapter types, extract the underlying implementation
+  if ('getUnderlyingImplementation' in input && typeof input.getUnderlyingImplementation === 'function') {
+    const underlying = input.getUnderlyingImplementation();
+    if (isSuiTransaction(underlying)) {
+      return underlying;
+    }
+  }
+
+  throw new Error('Unable to convert input to Transaction');
 }
 
 /**
@@ -144,20 +153,21 @@ export function createAdapterVariant(transaction: TransactionBlockAdapter): Tran
   return { kind: 'adapter', transaction };
 }
 
-export function createLegacyVariant(transaction: TransactionBlock): TransactionVariant {
-  return { kind: 'legacy', transaction };
+/**
+ * @deprecated Legacy TransactionBlock support removed
+ */
+export function createLegacyVariant(_transaction: unknown): never {
+  throw new Error('Legacy TransactionBlock support has been removed');
 }
 
 /**
  * Safe transaction variant extraction with type narrowing
  */
-export function extractTransaction(variant: TransactionVariant): SuiTransaction | TransactionBlockAdapter | TransactionBlock {
+export function extractTransaction(variant: TransactionVariant): SuiTransaction | TransactionBlockAdapter {
   switch (variant.kind) {
     case 'sui':
       return variant.transaction;
     case 'adapter':
-      return variant.transaction;
-    case 'legacy':
       return variant.transaction;
     default: {
       // TypeScript exhaustiveness check
@@ -175,7 +185,6 @@ export function processTransactionVariant<T>(
   handlers: {
     sui: (tx: SuiTransaction) => T;
     adapter: (tx: TransactionBlockAdapter) => T;
-    legacy: (tx: TransactionBlock) => T;
   }
 ): T {
   switch (variant.kind) {
@@ -183,8 +192,6 @@ export function processTransactionVariant<T>(
       return handlers.sui(variant.transaction);
     case 'adapter':
       return handlers.adapter(variant.transaction);
-    case 'legacy':
-      return handlers.legacy(variant.transaction);
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = variant;

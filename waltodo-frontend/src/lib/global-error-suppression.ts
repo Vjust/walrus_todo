@@ -155,7 +155,5 @@ export function setupGlobalErrorSuppression() {
   };
 }
 
-// Auto-setup in browser environment
-if (typeof window !== 'undefined') {
-  setupGlobalErrorSuppression();
-}
+// Don't auto-setup - let the client component handle it
+// This prevents issues during SSR/build

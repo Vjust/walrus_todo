@@ -1,544 +1,324 @@
+// WalletContext.tsx - Modern simplified wallet management for Sui blockchain
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useMemo,
-  useCallback,
-} from 'react';
-import { nanoid } from 'nanoid';
-import {
-  WalletProvider,
-  useWallet,
-  AllDefaultWallets,
-} from '@suiet/wallet-kit';
-import {
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { 
   createNetworkConfig,
-  SuiClientProvider,
-  WalletProvider as SuiWalletProvider,
+  SuiClientProvider, 
+  WalletProvider,
   useCurrentAccount,
   useConnectWallet,
   useDisconnectWallet,
-  useWallets,
+  useSignAndExecuteTransaction,
+  ConnectModal,
+  useWallets
 } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import '@suiet/wallet-kit/style.css';
-import {
-  WalletError,
-  WalletNotInstalledError,
-  WalletConnectionRejectedError,
-  categorizeWalletError,
-} from '@/lib/wallet-errors';
-import {
-  safeWalletOperation,
-  safeGetWallets,
-  isWalletAvailable,
-  safeClearWalletStorage,
-  safeWalletSelect,
-} from '@/lib/wallet-safe-operations';
-import { WalletType } from '@/types/wallet';
+import { Transaction } from '@mysten/sui/transactions';
+import { useInactivityTimer } from '@/hooks/useInactivityTimer';
 
-// Configure networks for Sui
+// Network Configuration using createNetworkConfig
 const { networkConfig } = createNetworkConfig({
   testnet: { url: getFullnodeUrl('testnet') },
-  mainnet: { url: getFullnodeUrl('mainnet') },
   devnet: { url: getFullnodeUrl('devnet') },
+  mainnet: { url: getFullnodeUrl('mainnet') },
 });
 
-// Transaction status type
-type TransactionStatus = 'pending' | 'success' | 'error';
-
-// Transaction record interface
-interface TransactionRecord {
-  id: string;
-  hash?: string;
-  status: TransactionStatus;
-  timestamp: number;
-  type: string;
-  message?: string;
-}
-
-// Enhanced context with additional features
-interface WalletContextValue {
+// Types
+export interface WalletContextType {
   // Connection state
   connected: boolean;
   connecting: boolean;
-
-  // Wallet info
-  address: string | null;
-  chainId: string | null; // Network ID as string
-  name: string | null;
-  network: string | null;
-
-  // Actions
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  switchNetwork: (network: 'mainnet' | 'testnet' | 'devnet') => Promise<void>;
-
-  // Transaction tracking
-  transactions: TransactionRecord[];
-  trackTransaction: <T extends { digest?: string }>(
-    txPromise: Promise<T>,
-    type: string
-  ) => Promise<T>;
-
-  // Error handling
-  error: Error | null;
-  setError: (error: Error | null) => void;
-
-  // Activity timeout (security)
+  account: { address: string } | null;
+  
+  // Wallet actions
+  connect: () => void;
+  disconnect: () => void;
+  
+  // Transaction handling
+  signAndExecuteTransaction: (txb: Transaction) => Promise<any>;
+  
+  // Session management
+  sessionExpired: boolean;
+  resetSession: () => void;
   lastActivity: number;
   resetActivityTimer: () => void;
+  
+  // Transaction history
+  transactionHistory: TransactionRecord[];
+  addTransaction: (tx: TransactionRecord) => void;
+  
+  // Network management
+  currentNetwork: string;
+  switchNetwork: (network: string) => void;
+  
+  // Error handling
+  error: string | null;
+  clearError: () => void;
 
-  // Wallet capabilities
-  signTransaction?: (transaction: unknown) => Promise<{ signature: Uint8Array; transactionBlockBytes: Uint8Array }>;
-  signAndExecuteTransaction?: (transaction: unknown) => Promise<{ digest: string; effects?: unknown }>;
-  signMessage?: (message: Uint8Array) => Promise<{ signature: Uint8Array }>;
+  // Modal control
+  isModalOpen: boolean;
+  openModal: () => void;
+  closeModal: () => void;
 }
 
-// Create context with default values
-const WalletContext = createContext<WalletContextValue | null>(null);
+export interface TransactionRecord {
+  id: string;
+  status: 'pending' | 'success' | 'failed';
+  timestamp: Date;
+  type: string;
+  details?: any;
+}
 
-// Session timeout in milliseconds (30 minutes)
+// Create context
+export const WalletContext = createContext<WalletContextType | null>(null);
+
+// Hook to use wallet context
+export const useWalletContext = () => {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWalletContext must be used within a WalletProvider');
+  }
+  return context;
+};
+
+// Session timeout configuration (30 minutes)
 const SESSION_TIMEOUT = 30 * 60 * 1000;
 
-// Custom hook for inactivity timer
-function useInactivityTimer(isConnected: boolean, onTimeout: () => void) {
-  const [lastActivity, setLastActivity] = useState<number>(Date.now());
-
+// Inner wallet context provider that uses the wallet hooks
+function WalletContextProvider({ children }: { children: ReactNode }) {
+  // Mysten dApp Kit hooks
+  const account = useCurrentAccount();
+  const { mutate: connectWallet, isPending: connecting } = useConnectWallet();
+  const { mutate: disconnectWallet } = useDisconnectWallet();
+  const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
+  const wallets = useWallets();
+  
+  // Local state
+  const [transactionHistory, setTransactionHistory] = useState<TransactionRecord[]>([]);
+  const [currentNetwork, setCurrentNetwork] = useState('testnet');
+  const [error, setError] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  
+  // Session timeout - temporarily disabled for debugging
   const resetActivityTimer = useCallback(() => {
+    console.log('[WalletContext] Activity timer reset (disabled)');
     setLastActivity(Date.now());
   }, []);
-
-  useEffect(() => {
-    if (!isConnected || typeof window === 'undefined') return;
-
-    // Set up event listeners to track activity
-    const activityEvents = ['mousedown', 'keydown', 'touchstart'];
-    const handleActivity = () => resetActivityTimer();
-
-    activityEvents.forEach(event => {
-      window.addEventListener(event, handleActivity);
-    });
-
-    // Auto-disconnect after inactivity
-    const interval = setInterval(() => {
-      const now = Date.now();
-      if (now - lastActivity > SESSION_TIMEOUT) {
-        console.log('Session timeout due to inactivity');
-        onTimeout();
-      }
-    }, 60000); // Check every minute
-
-    return () => {
-      activityEvents.forEach(event => {
-        window.removeEventListener(event, handleActivity);
-      });
-      clearInterval(interval);
-    };
-  }, [isConnected, lastActivity, onTimeout, resetActivityTimer]);
-
-  return { lastActivity, resetActivityTimer };
-}
-
-// Main wallet context provider component
-function WalletContextProvider({ children }: { children: ReactNode }) {
-  // Track wallet state
-  const [error, setError] = useState<Error | null>(null);
-  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
-  const [currentNetwork, setCurrentNetwork] = useState<string>('testnet');
-
-  // Get wallet from Mysten dApp Kit (primary wallet)
-  const currentAccount = useCurrentAccount();
-  const { mutate: connectWallet } = useConnectWallet();
-  const { mutate: disconnectWallet } = useDisconnectWallet();
-  const wallets = useWallets();
-
-  // Fallback to Suiet kit for compatibility
-  const suietWallet = useWallet();
-
-  // Determine connection state prioritizing dApp Kit
-  const connected = !!currentAccount || suietWallet.connected;
-  const connecting = suietWallet.connecting; // Use Suiet's connecting state
-  const account = currentAccount || suietWallet.account;
-  const wallet = wallets[0] || null;
-
-  // Debug wallet connection state (disabled to reduce console spam)
-  // console.log('Checking sui wallet availability:', !!suietWallet);
-  // console.log('Wallet connected state:', connected);
-  // console.log('Current account:', !!currentAccount);
-  // console.log('Suiet wallet connected:', suietWallet.connected);
-  // console.log('Address:', account?.address || 'none');
-
-  // Handle timeout with useCallback to maintain reference stability
-  const handleTimeout = useCallback(() => {
-    suietWallet
-      .disconnect()
-      .catch(_error => console.error('Error during auto-disconnect:', _error));
-  }, [suietWallet]);
-
-  // Use the inactivity timer hook
-  const { lastActivity, resetActivityTimer } = useInactivityTimer(
-    connected,
-    handleTimeout
-  );
-
-  // Persist last connected wallet
-  useEffect(() => {
-    if (connected && wallet && typeof window !== 'undefined') {
-      // Save wallet name for auto-reconnect, but only if the wallet is actually available
-      try {
-        const availableWallets = safeGetWallets(suietWallet);
-
-        if (isWalletAvailable(wallet.name, availableWallets)) {
-          localStorage.setItem('lastConnectedWallet', wallet.name);
-        } else {
-          console.warn(
-            'Not saving wallet info - wallet not in available list:',
-            wallet.name
-          );
-        }
-      } catch (error) {
-        console.warn('Failed to save wallet info to localStorage:', error);
+  const isActive = true;
+  
+  /*
+  const { isActive, resetActivityTimer } = useInactivityTimer({
+    timeout: SESSION_TIMEOUT,
+    onTimeout: () => {
+      if (connected) {
+        console.log('[WalletContext] Session expired due to inactivity');
+        setSessionExpired(true);
       }
     }
-  }, [connected, wallet, suietWallet]);
+  });
+  */
+  
+  // Connection state
+  const connected = Boolean(account);
 
-  // Clear any invalid wallet data on component mount
+  // Auto-reconnect logic - temporarily disabled for debugging
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Immediately clear any stored wallet data to prevent auto-selection issues
+    // Commenting out auto-reconnect to isolate loading issue
+    console.log('[WalletContext] Auto-reconnect disabled for debugging');
+    /*
+    const autoReconnect = async () => {
       try {
-        const lastWallet = localStorage.getItem('lastConnectedWallet');
-        if (lastWallet) {
-          console.log(
-            '[WalletContext] Found stored wallet:',
-            lastWallet,
-            'Clearing to prevent selection errors'
-          );
-          localStorage.removeItem('lastConnectedWallet');
+        let lastWallet = null;
+        try {
+          lastWallet = localStorage.getItem('sui-wallet-last-connected');
+        } catch (storageError) {
+          console.warn('[WalletContext] localStorage access failed:', storageError);
+          return; // Skip auto-reconnect if localStorage is not available
         }
-      } catch (error) {
-        console.warn(
-          '[WalletContext] Could not access storage to clear wallet data:',
-          error
-        );
-      }
-    }
-  }, []); // Run only once on mount
 
-  // Try to reconnect with the last used wallet on load (DISABLED for now to prevent errors)
-  useEffect(() => {
-    // TEMPORARILY DISABLED: Auto-reconnect is causing infinite error loops
-    // Will re-enable once wallet selection is more stable
-    console.log(
-      '[WalletContext] Auto-reconnect disabled to prevent wallet selection errors'
-    );
-    return;
-
-    const attemptReconnect = async () => {
-      // Guard for SSR and ensure we have access to storage
-      if (typeof window === 'undefined') return;
-
-      try {
-        const lastWallet = localStorage.getItem('lastConnectedWallet');
-        if (lastWallet && !connected && !connecting) {
-          // Use safe wallet operations to check availability and select
-          const availableWallets = safeGetWallets(suietWallet);
-
-          if (!isWalletAvailable(lastWallet, availableWallets)) {
-            console.warn(
-              `Saved wallet "${lastWallet}" is not available. Available wallets:`,
-              availableWallets.map(w => w.name || w.label)
-            );
-            safeClearWalletStorage();
-            return;
-          }
-
-          // Attempt to select the wallet safely
-          const selectResult = await safeWalletSelect(suietWallet, lastWallet);
-
-          if (!selectResult.success) {
-            if (selectResult.isExpectedError) {
-              console.warn(
-                'Expected wallet selection error, clearing storage:',
-                selectResult.error
-              );
-            } else {
-              console.error(
-                'Unexpected wallet selection error:',
-                selectResult.error
-              );
-            }
-            safeClearWalletStorage();
-            return;
-          }
-
-          // Give the wallet selection a moment to process, then try to connect
-          setTimeout(() => {
-            if (
-              'connect' in suietWallet &&
-              typeof suietWallet.connect === 'function'
-            ) {
-              safeWalletOperation(
-                () => (suietWallet.connect as Function)(),
-                'auto-reconnect'
-              ).then(connectResult => {
-                if (!connectResult.success) {
-                  console.warn('Auto-reconnect failed:', connectResult.error);
-                  safeClearWalletStorage();
+        if (lastWallet && !connected && !connecting && wallets.length > 0) {
+          console.log('[WalletContext] Attempting auto-reconnect to:', lastWallet);
+          const wallet = wallets.find(w => w.name === lastWallet);
+          if (wallet) {
+            connectWallet(
+              { wallet },
+              {
+                onSuccess: () => {
+                  console.log('[WalletContext] Auto-reconnect successful');
+                  resetActivityTimer();
+                },
+                onError: (error) => {
+                  console.error('[WalletContext] Auto-reconnect failed:', error);
+                  try {
+                    localStorage.removeItem('sui-wallet-last-connected');
+                  } catch (storageError) {
+                    console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
+                  }
                 }
-              });
-            }
-          }, 500);
+              }
+            );
+          }
         }
       } catch (error) {
-        console.warn('Error during wallet auto-reconnect:', error);
-        // If there's any storage error, just skip auto-reconnect
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        if (errorMessage && errorMessage.includes('storage')) {
-          console.warn('Storage access restricted, skipping auto-reconnect');
+        console.error('[WalletContext] Auto-reconnect error:', error);
+        try {
+          localStorage.removeItem('sui-wallet-last-connected');
+        } catch (storageError) {
+          console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
         }
       }
     };
 
-    attemptReconnect();
-  }, [connected, connecting, suietWallet]);
+    const timer = setTimeout(autoReconnect, 1000);
+    return () => clearTimeout(timer);
+    */
+  }, []);
 
-  // Enhanced connect function with error handling
-  const connect = useCallback(async () => {
-    resetActivityTimer();
+  // Clear error when wallet state changes
+  useEffect(() => {
     setError(null);
+  }, [connected]);
 
+  const connect = useCallback(() => {
     try {
-      // Try dApp Kit first, then fallback to Suiet
-      if (wallets.length > 0) {
-        connectWallet({ wallet: wallets[0] });
-      } else {
-        if (
-          'connect' in suietWallet &&
-          typeof suietWallet.connect === 'function'
-        ) {
-          await suietWallet.connect();
-        }
-      }
-    } catch (err) {
-      const walletError = categorizeWalletError(err);
-      setError(walletError);
-      console.error('Wallet connection error:', walletError);
-      throw walletError;
+      setError(null);
+      console.log('[WalletContext] Opening wallet connection modal...');
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('[WalletContext] Connect error:', error);
+      setError('Failed to open wallet connection');
     }
-  }, [resetActivityTimer, connectWallet, wallets, suietWallet]);
+  }, []);
 
-  // Enhanced disconnect function with cleanup
-  const disconnect = useCallback(async () => {
-    resetActivityTimer();
-    setError(null);
-
+  const disconnect = useCallback(() => {
     try {
-      // Disconnect from both providers
-      if (currentAccount) {
-        disconnectWallet();
-      }
-      if (suietWallet.connected) {
-        await suietWallet.disconnect();
-      }
-
-      // Clear persisted wallet
+      setError(null);
+      console.log('[WalletContext] Disconnecting wallet...');
+      disconnectWallet();
       try {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('lastConnectedWallet');
-        }
-      } catch (e) {
-        console.warn('Failed to clear wallet from localStorage:', e);
+        localStorage.removeItem('sui-wallet-last-connected');
+      } catch (storageError) {
+        console.warn('[WalletContext] Failed to remove localStorage item:', storageError);
       }
-    } catch (err) {
-      const walletError = categorizeWalletError(err);
-      setError(walletError);
-      console.error('Wallet disconnect error:', walletError);
-      throw walletError;
+      setTransactionHistory([]);
+      console.log('[WalletContext] Wallet disconnected successfully');
+    } catch (error) {
+      console.error('[WalletContext] Disconnect error:', error);
+      setError('Failed to disconnect wallet');
     }
-  }, [resetActivityTimer, disconnectWallet, currentAccount, suietWallet]);
+  }, [disconnectWallet]);
 
-  // Network switching functionality
-  const switchNetwork = useCallback(
-    async (network: 'mainnet' | 'testnet' | 'devnet') => {
-      resetActivityTimer();
-
+  const signAndExecuteTransaction = useCallback(async (txb: Transaction) => {
+    try {
+      setError(null);
+      console.log('[WalletContext] Executing transaction...');
+      
       if (!connected) {
-        const err = new WalletError('Not connected to any wallet');
-        setError(err);
-        throw err;
+        throw new Error('No wallet connected');
       }
-
-      try {
-        // Update local network state
-        setCurrentNetwork(network);
-
-        // For Sui wallets, network switching is handled at the provider level
-        // Emit custom event for network change
-        if (typeof window !== 'undefined') {
-          const networkEvent = new CustomEvent('walletNetworkChange', {
-            detail: { network },
-          });
-          window.dispatchEvent(networkEvent);
-        }
-      } catch (err) {
-        const walletError = categorizeWalletError(err);
-        setError(walletError);
-        console.error(`Network switch error:`, walletError);
-        throw walletError;
-      }
-    },
-    [connected, resetActivityTimer, setError]
-  );
-
-  // Transaction tracking function
-  const trackTransaction = useCallback(
-    async <T extends { digest?: string }>(
-      txPromise: Promise<T>,
-      type: string
-    ): Promise<T> => {
-      resetActivityTimer();
-
-      // Create unique ID for tracking this transaction
-      const txId = nanoid();
-
-      // Add pending transaction to list
-      const pendingTx: TransactionRecord = {
-        id: txId,
-        status: 'pending',
-        timestamp: Date.now(),
-        type,
+      
+      const result = await signAndExecute({ transaction: txb });
+      
+      // Add to transaction history
+      const transaction: TransactionRecord = {
+        id: result.digest || Date.now().toString(),
+        status: 'success',
+        timestamp: new Date(),
+        type: 'transaction',
+        details: result
       };
+      
+      setTransactionHistory(prev => [transaction, ...prev.slice(0, 49)]); // Keep last 50
+      resetActivityTimer();
+      
+      console.log('[WalletContext] Transaction executed successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('[WalletContext] Transaction error:', error);
+      setError(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
+  }, [connected, signAndExecute, resetActivityTimer]);
 
-      setTransactions(prev => [pendingTx, ...prev]);
+  const addTransaction = useCallback((tx: TransactionRecord) => {
+    setTransactionHistory(prev => [tx, ...prev.slice(0, 49)]);
+  }, []);
 
-      try {
-        // Wait for transaction to complete
-        const result = await txPromise;
+  const switchNetwork = useCallback((network: string) => {
+    console.log('[WalletContext] Switching network to:', network);
+    setCurrentNetwork(network);
+    // Note: Network switching would require reconnecting with new network config
+  }, []);
 
-        // Get hash if available (results vary by transaction type)
-        const hash = result.digest ? String(result.digest) : undefined;
+  const resetSession = useCallback(() => {
+    console.log('[WalletContext] Resetting session');
+    setSessionExpired(false);
+    resetActivityTimer();
+  }, [resetActivityTimer]);
 
-        // Update transaction status to success
-        setTransactions(prev =>
-          prev.map(tx =>
-            tx.id === txId ? { ...tx, status: 'success', hash } : tx
-          )
-        );
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
-        return result;
-      } catch (error) {
-        // Update transaction status to error
-        const message = error instanceof Error ? error.message : String(error);
+  const openModal = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
 
-        setTransactions(prev =>
-          prev.map(tx =>
-            tx.id === txId ? { ...tx, status: 'error', message } : tx
-          )
-        );
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
-        throw error;
-      }
-    },
-    [resetActivityTimer]
-  );
-
-  // Create context value with all wallet functions
-  const contextValue = useMemo<WalletContextValue>(
-    () => ({
-      // Connection state
-      connected,
-      connecting,
-
-      // Wallet info
-      address: account?.address || null,
-      chainId: currentNetwork,
-      name: wallet?.name || null,
-      network: currentNetwork,
-
-      // Actions
-      connect,
-      disconnect,
-      switchNetwork,
-
-      // Transaction tracking
-      transactions,
-      trackTransaction,
-
-      // Error handling
-      error,
-      setError,
-
-      // Activity timeout (security)
-      lastActivity,
-      resetActivityTimer,
-
-      // Wallet capabilities - prioritize dApp Kit when available
-      signTransaction: currentAccount ? undefined : suietWallet.signTransaction,
-      signAndExecuteTransaction: async (transaction: unknown) => {
-        // Use the appropriate wallet provider for transaction execution
-        if (currentAccount) {
-          // For dApp Kit, we need to use the signAndExecuteTransactionBlock from the hooks
-          // Since we can't use hooks here, we'll rely on the wallet being connected
-          // and pass through to the Suiet wallet which handles both providers
-          if (suietWallet.signAndExecuteTransaction) {
-            return await suietWallet.signAndExecuteTransaction(transaction);
-          }
-          throw new Error('No transaction execution method available');
-        } else {
-          // Use Suiet wallet directly
-          if (suietWallet.signAndExecuteTransaction) {
-            return await suietWallet.signAndExecuteTransaction(transaction);
-          }
-          throw new Error(
-            'Wallet not connected or signAndExecuteTransaction not available'
-          );
-        }
-      },
-      signMessage: async (message: Uint8Array) => {
-        if (currentAccount) {
-          // dApp Kit message signing would go here
-          throw new Error('dApp Kit message signing not implemented');
-        }
-        // Convert Uint8Array to the expected format for Suiet wallet
-        if (
-          'signMessage' in suietWallet &&
-          typeof suietWallet.signMessage === 'function'
-        ) {
-          return await suietWallet.signMessage({ message });
-        }
-        throw new Error('signMessage not available');
-      },
-    }),
-    [
-      connected,
-      connecting,
-      account,
-      currentAccount,
-      currentNetwork,
-      wallet,
-      transactions,
-      error,
-      lastActivity,
-      connect,
-      disconnect,
-      switchNetwork,
-      trackTransaction,
-      resetActivityTimer,
-      suietWallet,
-    ]
-  );
+  const contextValue: WalletContextType = {
+    connected,
+    connecting,
+    account,
+    connect,
+    disconnect,
+    signAndExecuteTransaction,
+    sessionExpired,
+    resetSession,
+    transactionHistory,
+    addTransaction,
+    currentNetwork,
+    switchNetwork,
+    error,
+    clearError,
+    isModalOpen,
+    openModal,
+    closeModal,
+    lastActivity,
+    resetActivityTimer,
+  };
 
   return (
     <WalletContext.Provider value={contextValue}>
       {children}
+      <div>
+        <ConnectModal
+          open={isModalOpen}
+          onOpenChange={(open) => {
+            setIsModalOpen(open);
+            if (!open) {
+              // Modal was closed, save the connected wallet
+              if (connected && account) {
+                const connectedWallet = wallets.find(w => w.accounts?.some(acc => acc.address === account.address));
+                if (connectedWallet) {
+                  try {
+                    localStorage.setItem('sui-wallet-last-connected', connectedWallet.name);
+                  } catch (storageError) {
+                    console.warn('[WalletContext] Failed to save wallet to localStorage:', storageError);
+                  }
+                  resetActivityTimer();
+                }
+              }
+            }
+          }}
+        />
+      </div>
     </WalletContext.Provider>
   );
 }
@@ -547,55 +327,31 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
+      retry: 3,
+      staleTime: 30000,
     },
   },
 });
 
-// Wrapper component that includes both providers
+// Main app wallet provider component with Slush wallet support
 export function AppWalletProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork='testnet'>
-        <SuiWalletProvider>
-          <WalletProvider
-            defaultWallets={AllDefaultWallets}
-            chains={[
-              {
-                id: 'mainnet',
-                name: 'Mainnet',
-                rpcUrl: 'https://fullnode.mainnet.sui.io:443',
-              },
-              {
-                id: 'testnet',
-                name: 'Testnet',
-                rpcUrl: 'https://fullnode.testnet.sui.io:443',
-              },
-              {
-                id: 'devnet',
-                name: 'Devnet',
-                rpcUrl: 'https://fullnode.devnet.sui.io:443',
-              },
-            ]}
-            autoConnect={false}
-          >
-            <WalletContextProvider>{children}</WalletContextProvider>
-          </WalletProvider>
-        </SuiWalletProvider>
+      <SuiClientProvider 
+        networks={networkConfig} 
+        defaultNetwork="testnet"
+      >
+        <WalletProvider
+          slushWallet={{
+            name: 'Walrus Todo',
+          }}
+          autoConnect={true}
+        >
+          <WalletContextProvider>
+            {children}
+          </WalletContextProvider>
+        </WalletProvider>
       </SuiClientProvider>
     </QueryClientProvider>
   );
 }
-
-// Hook to use wallet context
-export function useWalletContext() {
-  const context = useContext(WalletContext);
-  if (!context) {
-    throw new Error('useWalletContext must be used within AppWalletProvider');
-  }
-  return context;
-}
-
-// Export types
-export type { TransactionRecord, TransactionStatus, WalletContextValue };

@@ -48,6 +48,13 @@ This approach provides the responsiveness of traditional applications while main
   - Cancellable AI operations with timeout management
 - **Multi-list Support**: Organize todos in different lists
 - **Automatic Image Generation**: Generate images for todo NFTs
+- **🚀 Background Command Orchestrator**: 
+  - Universal background execution for all CLI commands
+  - Automatic detection of long-running operations
+  - Unified progress tracking with real-time updates
+  - Global resource management and concurrency controls
+  - Comprehensive job management and monitoring
+  - Background process isolation and cleanup
 - **Seamless Sync**: Sync todos between CLI, blockchain and decentralized storage
 - **Priority & Tags**: Add priority levels and tags to your todos
 - **Flexible Filtering**: Filter todos by status, priority, or tags
@@ -101,6 +108,16 @@ waltodo add "Prepare presentation for client meeting" --ai
 
 # Get AI insights about your todos
 waltodo ai summarize
+
+# Run long operations in background
+waltodo store --background my-list
+waltodo deploy --bg
+waltodo sync --background
+
+# Monitor background jobs
+waltodo jobs
+waltodo jobs status <job-id>
+waltodo jobs --watch
 ```
 
 #### Enhanced Multi-Todo Command Syntax
@@ -117,26 +134,23 @@ waltodo add "work-list" -t "Task with tags" -g "work,urgent" -t "Another task" -
 # Add multiple todos with different due dates
 waltodo add "personal" -t "Task with due date" -d 2023-05-15 -t "Later task" -d 2023-12-31
 
-# Store a todo on Walrus (returns blob ID for reference)
+# NEW INTUITIVE SYNTAX - Store todos more naturally!
+# Store all todos in a list (default behavior)
+waltodo store my-list
+
+# Store a specific todo by ID or title
+waltodo store my-list task-123
+waltodo store my-list "Buy groceries"
+
+# Store with custom options
+waltodo store my-list --epochs 10            # Custom storage duration
+waltodo store my-list --batch-size 10        # Custom batch size for all todos
+waltodo store my-list --network mainnet      # Use mainnet instead of testnet
+waltodo store my-list --mock                 # Use mock mode for testing
+
+# Legacy syntax (still supported)
 waltodo store --todo task-123 --list my-list
-
-# Store a todo by title
-waltodo store --todo "Buy groceries" --list my-list
-
-# Store all todos in a list to Walrus (batch processing)
 waltodo store --all --list my-list
-
-# Store with custom batch size (default is 5)
-waltodo store --all --list my-list --batch-size 10
-
-# Store with custom storage duration (epochs)
-waltodo store --todo task-123 --list my-list --epochs 10
-
-# Store on mainnet instead of testnet
-waltodo store --todo task-123 --list my-list --network mainnet
-
-# Use mock mode for testing
-waltodo store --todo task-123 --list my-list --mock
 
 # Add multiple todos with mixed attributes
 waltodo add "project" -t "Important meeting" -p high -d 2023-06-01 -g "work,meeting" -t "Follow-up email" -p medium -g "work,email"
@@ -193,6 +207,141 @@ waltodo list my-list --detailed
 ```
 
 For a comprehensive reference of all CLI commands, see [CLI-COMMANDS.md](CLI-COMMANDS.md).
+
+## 🚀 Background Command Orchestrator
+
+WalTodo features a powerful background command orchestrator that enables all CLI commands to run without blocking your terminal. This system provides automatic detection of long-running operations, unified progress tracking, and comprehensive job management.
+
+### Features
+
+- **Universal Background Execution**: Any command can run in background with `--background` or `--bg` flags
+- **Auto-Detection**: Long-running operations automatically move to background when appropriate
+- **Real-time Progress**: Live progress updates with visual progress bars
+- **Job Management**: Full control over background jobs with listing, monitoring, and cancellation
+- **Resource Management**: Automatic concurrency limits and resource monitoring
+- **Smart Cleanup**: Automatic cleanup of old jobs and logs
+
+### Basic Usage
+
+```bash
+# Run any command in background
+waltodo store --background large-file.txt
+waltodo sync --bg
+waltodo deploy --background
+
+# Force foreground execution
+waltodo store --foreground small-file.txt
+
+# Monitor background jobs
+waltodo jobs                    # List all jobs
+waltodo jobs --active          # Show only running jobs
+waltodo jobs --watch           # Watch jobs in real-time
+waltodo jobs status <job-id>   # Detailed job status
+waltodo jobs cancel <job-id>   # Cancel a running job
+waltodo jobs logs <job-id>     # View job logs
+waltodo jobs report            # Comprehensive status report
+
+# Cleanup and maintenance
+waltodo jobs --cleanup         # Remove old completed jobs
+waltodo jobs --json           # JSON output for scripting
+```
+
+### Auto-Background Detection
+
+The orchestrator automatically detects commands that should run in background:
+
+| Command | Auto-Background | Reason |
+|---------|----------------|--------|
+| `store` | ✅ | File upload operations |
+| `store-list` | ✅ | Batch upload operations |
+| `deploy` | ✅ | Blockchain deployment |
+| `sync` | ✅ | Network synchronization |
+| `image` | ✅ | Image generation/processing |
+| `create-nft` | ✅ | NFT creation workflow |
+| `list` | ❌ | Quick local operation |
+| `add` | ❌ | Fast local operation |
+
+### Progress Tracking
+
+Background jobs provide real-time progress updates:
+
+```bash
+$ waltodo jobs status job_1234567890_abc123
+🔍 Job Status: job_1234567890_abc123
+
+Command: store my-list
+Status: 🔄 RUNNING
+Duration: 45.2s
+Progress: [████████████████    ] 80%
+Current Stage: Uploading to Walrus
+Items Processed: 8/10
+Process ID: 15432
+
+💡 View logs with: waltodo jobs logs job_1234567890_abc123
+```
+
+### Advanced Features
+
+#### Resource Management
+The orchestrator monitors system resources and automatically adjusts concurrency:
+
+```bash
+$ waltodo jobs report
+🔄 Background Command Orchestrator Status
+──────────────────────────────────────────────────
+
+📊 Resource Usage:
+  Memory: 65.2%
+  Active Jobs: 3/10
+  Total Jobs: 25
+
+🔄 Active Jobs:
+  ⏳ job_1234567890_abc123 - store my-list
+    Progress: [████████████████    ] 80%
+    Duration: 45.2s
+    Stage: Uploading to Walrus
+
+✅ Recent Completions:
+  ✅ sync (12.5s)
+  ✅ deploy (2m 15s)
+
+⚙️ Command Profiles:
+  store: 2/3 active
+  sync: 0/2 active
+  deploy: 0/1 active
+```
+
+#### Job Dependencies
+Commands with dependencies wait for prerequisites:
+
+```bash
+# Image creation waits for store to complete
+waltodo store --background my-list
+waltodo image --background my-todo    # Waits for store
+
+# NFT creation waits for both image and deploy
+waltodo create-nft --background my-todo  # Waits for dependencies
+```
+
+#### Scripting Support
+Perfect for automation and CI/CD:
+
+```bash
+#!/bin/bash
+# Start multiple background operations
+JOB1=$(waltodo store --background list1 | grep -o 'job_[^[:space:]]*')
+JOB2=$(waltodo store --background list2 | grep -o 'job_[^[:space:]]*')
+
+# Wait for completion
+while [[ $(waltodo jobs --active --json | jq length) -gt 0 ]]; do
+  sleep 5
+  echo "Waiting for jobs to complete..."
+done
+
+echo "All operations completed!"
+```
+
+For detailed documentation, see [Background Command Orchestrator Guide](docs/background-command-orchestrator.md).
 
 ## Installation
 
@@ -269,7 +418,7 @@ You can view and manage your configuration using the built-in config command:
 waltodo config
 
 # Validate configuration values
-waltodo config --validate
+waltodo config validate
 
 # Show only AI configuration
 waltodo config --section=ai

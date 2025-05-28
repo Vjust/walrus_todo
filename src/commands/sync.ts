@@ -1,5 +1,5 @@
 import { Args, Flags } from '@oclif/core';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { confirm } from '@inquirer/prompts';
 import { select } from '@inquirer/prompts';
 import { TodoService } from '../services/todoService';
@@ -11,20 +11,40 @@ import BaseCommand, { ICONS } from '../base-command';
 
 /**
  * @class SyncCommand
- * @description This command synchronizes todos between local and blockchain storage
- * for todos configured with 'both' storage mode. It detects conflicts and allows
- * the user to choose resolution strategies.
+ * @description Synchronizes todos between local and blockchain storage for todos
+ * configured with 'both' storage mode. Supports positional syntax for intuitive use:
+ * - `waltodo sync` syncs all lists (default)
+ * - `waltodo sync <list-name>` syncs specific list
+ * - Maintains backward compatibility with flag-based syntax
+ * - Detects conflicts and allows user to choose resolution strategies
  */
 export default class SyncCommand extends BaseCommand {
-  static description = 'Synchronize todos between local and blockchain storage';
+  static description = 'Synchronize todos between local and blockchain storage. When no list is specified, syncs all lists.';
 
   static examples = [
-    '<%= config.bin %> sync my-list                            # Sync entire list',
-    '<%= config.bin %> sync my-list --id task-123              # Sync specific todo',
-    '<%= config.bin %> sync my-list --resolve local            # Use local version for conflicts',
-    '<%= config.bin %> sync --all --resolve newest             # Sync all lists, keep newest',
-    '<%= config.bin %> sync work --dry-run                     # Preview sync changes',
-    '<%= config.bin %> sync personal --force --resolve remote  # Force sync, prefer remote',
+    '<%= config.bin %> sync                                    # Sync all lists (default)',
+    '<%= config.bin %> sync my-list                            # Sync specific list',
+    '<%= config.bin %> sync work                               # Sync "work" list',
+    '<%= config.bin %> sync personal                           # Sync "personal" list',
+    '',
+    '# Background sync options:',
+    '<%= config.bin %> sync --background                       # Run sync in background',
+    '<%= config.bin %> sync --background --continuous          # Enable continuous sync daemon',
+    '<%= config.bin %> sync --background --continuous --interval 60  # Continuous sync every 60 seconds',
+    '<%= config.bin %> sync --background --priority high       # High priority background sync',
+    '<%= config.bin %> sync --background --batch-size 5        # Process 5 todos per batch',
+    '',
+    '# Advanced options:',
+    '<%= config.bin %> sync --id task-123                      # Sync specific todo by ID',
+    '<%= config.bin %> sync --direction pull                   # Pull changes from blockchain only',
+    '<%= config.bin %> sync --direction push                   # Push changes to blockchain only',
+    '<%= config.bin %> sync my-list --resolve local            # Always use local version for conflicts',
+    '<%= config.bin %> sync --resolve newest                   # Always keep newest version',
+    '<%= config.bin %> sync --force                            # Skip confirmation prompts',
+    '<%= config.bin %> sync personal --dry-run                 # Preview what would be synced',
+    '',
+    '# Legacy flag syntax (still supported):',
+    '<%= config.bin %> sync --all                              # Explicitly sync all lists',
   ];
 
   static flags = {
@@ -32,11 +52,18 @@ export default class SyncCommand extends BaseCommand {
     id: Flags.string({
       char: 'i',
       description: 'Specific todo ID to sync',
+      exclusive: ['all'],
     }),
     all: Flags.boolean({
       char: 'a',
-      description: 'Sync all todos across all lists',
+      description: 'Explicitly sync all lists (default behavior)',
       exclusive: ['id'],
+    }),
+    direction: Flags.string({
+      char: 'd',
+      description: 'Sync direction',
+      options: ['push', 'pull', 'both'],
+      default: 'both',
     }),
     resolve: Flags.string({
       char: 'r',
@@ -48,11 +75,14 @@ export default class SyncCommand extends BaseCommand {
       char: 'f',
       description: 'Force sync without confirmations',
     }),
+    'dry-run': Flags.boolean({
+      description: 'Preview changes without applying them',
+    }),
   };
 
   static args = {
     listName: Args.string({
-      description: 'Name of the todo list',
+      description: 'Name of the todo list to sync. If not specified, syncs all lists',
       required: false,
     }),
   };
@@ -71,20 +101,54 @@ export default class SyncCommand extends BaseCommand {
 
     try {
       let todosToSync: Array<{ todo: Todo; listName: string }> = [];
+      const syncAllLists = !args.listName || flags.all;
 
-      if (flags.all) {
-        // Sync all todos from all lists
+      // Display what we're about to sync
+      if (flags['dry-run']) {
+        this.log(chalk.blue(`${ICONS.INFO} Dry run mode - no changes will be made`));
+      }
+
+      if (syncAllLists && !flags.id) {
+        // Default behavior: sync all lists
+        const spinner = this.startSpinner('Scanning all lists for todos to sync...');
         const lists = await this.todoService.getAllLists();
+        
+        if (lists.length === 0) {
+          this.stopSpinner();
+          this.log(chalk.yellow(`${ICONS.WARNING} No todo lists found`));
+          this.log(chalk.dim('Tip: Create a list first with "waltodo add <todo>"'));
+          return;
+        }
+
+        let totalLists = 0;
         for (const listName of lists) {
           const list = await this.todoService.getList(listName);
           if (list) {
             const bothStorageTodos = list.todos.filter(
               t => t.storageLocation === 'both'
             );
-            todosToSync.push(
-              ...bothStorageTodos.map(todo => ({ todo, listName }))
-            );
+            if (bothStorageTodos.length > 0) {
+              totalLists++;
+              todosToSync.push(
+                ...bothStorageTodos.map(todo => ({ todo, listName }))
+              );
+            }
           }
+        }
+
+        this.stopSpinnerSuccess(spinner, `Found ${todosToSync.length} todo${todosToSync.length !== 1 ? 's' : ''} to sync across ${totalLists} list${totalLists !== 1 ? 's' : ''}`);
+        
+        if (todosToSync.length > 0) {
+          // Show list breakdown
+          const listBreakdown = new Map<string, number>();
+          todosToSync.forEach(({ listName }) => {
+            listBreakdown.set(listName, (listBreakdown.get(listName) || 0) + 1);
+          });
+          
+          this.log(chalk.blue(`\n${ICONS.INFO} Syncing all lists:`));
+          listBreakdown.forEach((count, name) => {
+            this.log(chalk.dim(`  • ${name}: ${count} todo${count !== 1 ? 's' : ''}`));
+          });
         }
       } else {
         // Sync specific list or todo
@@ -92,7 +156,11 @@ export default class SyncCommand extends BaseCommand {
         const list = await this.todoService.getList(listName);
 
         if (!list) {
-          throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+          const availableLists = await this.todoService.getAllLists();
+          throw new CLIError(
+            `List "${listName}" not found. Available lists: ${availableLists.length > 0 ? availableLists.join(', ') : 'none'}`,
+            'LIST_NOT_FOUND'
+          );
         }
 
         if (flags.id) {
@@ -102,39 +170,56 @@ export default class SyncCommand extends BaseCommand {
           );
           if (!todo) {
             throw new CLIError(
-              `Todo "${flags.id}" not found`,
+              `Todo "${flags.id}" not found in list "${listName}"`,
               'TODO_NOT_FOUND'
             );
           }
           if (todo.storageLocation !== 'both') {
             throw new CLIError(
-              `Todo "${todo.title}" is not configured for 'both' storage`,
+              `Todo "${todo.title}" is not configured for 'both' storage. Current storage: ${todo.storageLocation}`,
               'INVALID_STORAGE'
             );
           }
           todosToSync = [{ todo, listName }];
+          this.log(chalk.blue(`${ICONS.INFO} Syncing specific todo: "${todo.title}" from list "${listName}"`));
         } else {
           const bothStorageTodos = list.todos.filter(
             t => t.storageLocation === 'both'
           );
           todosToSync = bothStorageTodos.map(todo => ({ todo, listName }));
+          
+          if (bothStorageTodos.length > 0) {
+            this.log(chalk.blue(`${ICONS.INFO} Syncing list "${listName}" (${bothStorageTodos.length} todo${bothStorageTodos.length !== 1 ? 's' : ''})`));
+          }
         }
       }
 
       if (todosToSync.length === 0) {
-        this.log(
-          chalk.yellow('No todos found with "both" storage mode to sync')
-        );
+        if (syncAllLists) {
+          this.log(chalk.yellow('No todos found with "both" storage mode across any lists'));
+          this.log(chalk.dim('Tip: Use "waltodo add --storage both" to create todos that sync with blockchain'));
+        } else {
+          this.log(chalk.yellow(`No todos found with "both" storage mode in list "${args.listName || 'default'}"`));
+          this.log(chalk.dim('Tip: Use "waltodo add --storage both" to create todos that sync with blockchain'));
+        }
+        return;
+      }
+
+      // Early exit for dry run after showing what would be synced
+      if (flags['dry-run']) {
+        this.log(chalk.blue(`\n${ICONS.INFO} Would sync ${todosToSync.length} todo${todosToSync.length !== 1 ? 's' : ''} with "both" storage mode`));
         return;
       }
 
       // Connect to blockchain
-      const spinner = this.startSpinner('Connecting to blockchain...');
+      const connectSpinner = this.startSpinner('Connecting to blockchain...');
       await this.walrusStorage.connect();
-      this.stopSpinnerSuccess(spinner, 'Connected to blockchain');
+      this.stopSpinnerSuccess(connectSpinner, 'Connected to blockchain');
 
       // Check sync status for all todos
+      const statusSpinner = this.startSpinner('Checking sync status...');
       const syncResults = await this.checkSyncStatus(todosToSync);
+      this.stopSpinnerSuccess(statusSpinner, 'Sync status checked');
 
       // Display sync status
       this.displaySyncStatus(syncResults);
@@ -143,15 +228,22 @@ export default class SyncCommand extends BaseCommand {
       const needsSync = syncResults.filter(r => !r.synced);
 
       if (needsSync.length === 0) {
-        this.log(chalk.green('✓ All todos are synchronized'));
+        this.log(chalk.green(`${ICONS.SUCCESS} All todos are synchronized`));
         return;
+      }
+
+      // Show sync direction info
+      if (flags.direction !== 'both') {
+        this.log(chalk.blue(`${ICONS.INFO} Sync direction: ${flags.direction}`));
       }
 
       // Confirm sync if not forced
       if (!flags.force && needsSync.length > 0) {
+        const actionText = flags.direction === 'pull' ? 'Pull changes for' : 
+                          flags.direction === 'push' ? 'Push changes for' : 'Sync';
         const shouldSync = await confirm({
-          message: `Sync ${needsSync.length} todo${needsSync.length !== 1 ? 's' : ''}?`,
-          default: false,
+          message: `${actionText} ${needsSync.length} todo${needsSync.length !== 1 ? 's' : ''}?`,
+          default: true,
         });
         if (!shouldSync) {
           this.log(chalk.yellow('Sync cancelled'));
@@ -160,7 +252,7 @@ export default class SyncCommand extends BaseCommand {
       }
 
       // Perform sync operations
-      await this.performSync(needsSync, flags.resolve);
+      await this.performSync(needsSync, flags.resolve, flags.direction);
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -257,24 +349,33 @@ export default class SyncCommand extends BaseCommand {
       localNewer?: boolean;
       blockchainNewer?: boolean;
     }>,
-    resolveStrategy: string
+    resolveStrategy: string,
+    direction: string = 'both'
   ): Promise<void> {
-    this.startSpinner('Syncing todos...');
     let successCount = 0;
     let failCount = 0;
+    let currentIndex = 0;
 
     for (const { todo, listName, localNewer, blockchainNewer } of needsSync) {
+      currentIndex++;
+      const progress = `[${currentIndex}/${needsSync.length}]`;
+      this.startSpinner(`${progress} Syncing "${todo.title}"...`);
       try {
         let resolution: 'local' | 'blockchain';
 
-        // Determine resolution strategy
-        if (resolveStrategy === 'ask') {
+        // Determine resolution strategy based on direction and conflict resolution
+        if (direction === 'push') {
+          resolution = 'local';
+        } else if (direction === 'pull') {
+          resolution = 'blockchain';
+        } else if (resolveStrategy === 'ask') {
+          this.stopSpinner();
           resolution = await this.askResolution(
             todo,
             Boolean(localNewer),
             Boolean(blockchainNewer)
           );
-          this.startSpinner('Continuing sync...');
+          this.startSpinner(`${progress} Applying resolution...`);
         } else if (resolveStrategy === 'newest') {
           resolution = localNewer ? 'local' : 'blockchain';
         } else if (resolveStrategy === 'oldest') {
@@ -303,16 +404,24 @@ export default class SyncCommand extends BaseCommand {
           }
         }
 
+        this.stopSpinnerSuccess(undefined, `Synced "${todo.title}"`);
         successCount++;
       } catch (error) {
+        this.stopSpinner();
         failCount++;
         this.warning(`Failed to sync "${todo.title}": ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-
-    this.log(chalk.green(
-      `✓ Synced ${successCount} todo${successCount !== 1 ? 's' : ''}, ${failCount} failed`
-    ));
+    
+    // Final summary
+    if (successCount > 0 && failCount === 0) {
+      this.log(chalk.green(`\n${ICONS.SUCCESS} All todos synced successfully!`));
+    } else if (successCount > 0) {
+      this.log(chalk.green(`\n${ICONS.SUCCESS} Successfully synced ${successCount} todo${successCount !== 1 ? 's' : ''}`));
+    }
+    if (failCount > 0) {
+      this.log(chalk.red(`${ICONS.ERROR} ${failCount} todo${failCount !== 1 ? 's' : ''} failed to sync`));
+    }
 
     // Display summary
     this.section(
@@ -324,6 +433,121 @@ export default class SyncCommand extends BaseCommand {
         .filter(Boolean)
         .join('\n')
     );
+  }
+
+  private async performBackgroundSync(
+    needsSync: Array<{
+      todo: Todo;
+      listName: string;
+      localNewer?: boolean;
+      blockchainNewer?: boolean;
+    }>,
+    flags: any
+  ): Promise<void> {
+    if (!this.backgroundOps) {
+      throw new CLIError('Background operations not initialized', 'BACKGROUND_ERROR');
+    }
+
+    const syncJobId = uuidv4();
+    this.logger.info(`Starting background sync job: ${syncJobId}`);
+
+    if (flags.continuous) {
+      // Start continuous sync mode
+      this.continuousSyncJobId = await this.startContinuousSync(flags);
+      this.log(chalk.green(`${ICONS.SUCCESS} Continuous sync started in background`));
+      this.log(chalk.blue(`${ICONS.INFO} Job ID: ${this.continuousSyncJobId}`));
+      this.log(chalk.dim(`Use "waltodo status ${this.continuousSyncJobId}" to check progress`));
+      this.log(chalk.dim(`Use "waltodo cancel ${this.continuousSyncJobId}" to stop continuous sync`));
+      return;
+    }
+
+    // Batch sync operation
+    const batches = this.createSyncBatches(needsSync, flags['batch-size']);
+    const batchJobIds: string[] = [];
+
+    this.log(chalk.blue(`${ICONS.INFO} Starting ${batches.length} sync batch${batches.length !== 1 ? 'es' : ''} in background...`));
+
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      const batchJobId = await this.backgroundOps.syncTodosInBackground({
+        todos: batch.map(item => item.todo),
+        direction: flags.direction,
+        resolve: flags.resolve,
+        batchSize: flags['batch-size'],
+        priority: flags.priority as 'low' | 'normal' | 'high',
+        onProgress: (operationId, progress) => {
+          this.logger.debug(`Batch ${i + 1} progress: ${progress}%`);
+        },
+        onComplete: (operationId, result) => {
+          this.logger.info(`Batch ${i + 1} completed successfully`);
+        },
+        onError: (operationId, error) => {
+          this.logger.error(`Batch ${i + 1} failed:`, error);
+        },
+      });
+      batchJobIds.push(batchJobId);
+    }
+
+    this.log(chalk.green(`${ICONS.SUCCESS} Background sync started`));
+    this.log(chalk.blue(`${ICONS.INFO} ${batchJobIds.length} batch job${batchJobIds.length !== 1 ? 's' : ''} queued`));
+    
+    batchJobIds.forEach((jobId, index) => {
+      this.log(chalk.dim(`  Batch ${index + 1}: ${jobId}`));
+    });
+
+    this.log(chalk.dim(`\nUse "waltodo jobs" to monitor progress`));
+    this.log(chalk.dim(`Use "waltodo status <job-id>" for detailed status`));
+  }
+
+  private async startContinuousSync(flags: any): Promise<string> {
+    if (!this.backgroundOps) {
+      throw new CLIError('Background operations not initialized', 'BACKGROUND_ERROR');
+    }
+
+    // Start continuous sync daemon using the dedicated method
+    const syncJobId = await this.backgroundOps.startContinuousSyncInBackground({
+      interval: flags.interval,
+      direction: flags.direction,
+      resolve: flags.resolve,
+      force: flags.force,
+      priority: flags.priority as 'low' | 'normal' | 'high',
+      onProgress: (operationId, progress, data) => {
+        if (data) {
+          this.logger.debug(`Continuous sync cycle ${data.cycles}: ${data.cycleSynced} todos synced`);
+        }
+      },
+      onComplete: (operationId, result) => {
+        this.logger.info(`Continuous sync completed after ${result.cycles} cycles`);
+      },
+      onError: (operationId, error) => {
+        this.logger.error('Continuous sync error:', error);
+      },
+    });
+    
+    this.logger.info(`Continuous sync started with ${flags.interval}s interval`, {
+      jobId: syncJobId,
+      interval: flags.interval,
+    });
+
+    return syncJobId;
+  }
+
+  private createSyncBatches(
+    needsSync: Array<{
+      todo: Todo;
+      listName: string;
+      localNewer?: boolean;
+      blockchainNewer?: boolean;
+    }>,
+    batchSize: number
+  ): Array<Array<{ todo: Todo; listName: string; localNewer?: boolean; blockchainNewer?: boolean }>> {
+    const batches = [];
+    
+    for (let i = 0; i < needsSync.length; i += batchSize) {
+      batches.push(needsSync.slice(i, i + batchSize));
+    }
+    
+    return batches;
   }
 
   private async askResolution(

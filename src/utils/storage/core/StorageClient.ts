@@ -52,7 +52,7 @@ export class StorageClient {
   private suiClient: SuiClient;
 
   /** The wrapped WalrusClient instance */
-  private walrusClient: WalrusClientAdapter;
+  private walrusClient: WalrusClientAdapter | null;
 
   /** Whether the client is initialized */
   private initialized: boolean = false;
@@ -103,6 +103,16 @@ export class StorageClient {
 
     // WalrusClient will be initialized later in init()
     this.walrusClient = null;
+  }
+
+  /**
+   * Gets the WalrusClient instance with null checking
+   */
+  protected getWalrusClient(): WalrusClientAdapter {
+    if (!this.walrusClient) {
+      throw new Error('WalrusClient not initialized. Call init() first.');
+    }
+    return this.walrusClient;
   }
 
   /**
@@ -251,9 +261,9 @@ export class StorageClient {
    * @returns The WalrusClient adapter
    * @throws {ValidationError} if client is not initialized
    */
-  public getWalrusClient(): WalrusClientAdapter {
+  public getWalrusClientPublic(): WalrusClientAdapter {
     this.validateInitialized('get Walrus client');
-    return this.walrusClient;
+    return this.getWalrusClient();
   }
 
   /**
@@ -357,7 +367,7 @@ export class StorageClient {
 
     try {
       const result = await AsyncOperationHandler.execute(
-        () => this.walrusClient.readBlob({ blobId, signal }),
+        () => this.getWalrusClient().readBlob({ blobId, signal }),
         {
           operation: 'retrieve blob',
           maxRetries,
@@ -408,7 +418,6 @@ export class StorageClient {
       throw new ValidationError(
         'StorageClient not initialized. Call init() first.',
         {
-          message: 'StorageClient not initialized. Call init() first.',
           operation,
         }
       );

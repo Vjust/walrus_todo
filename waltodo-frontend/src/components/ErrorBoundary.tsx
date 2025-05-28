@@ -142,5 +142,5 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
   }
 
   // Otherwise, render children normally
-  return <>{children}</>;
+  return <div>{children}</div>;
 }

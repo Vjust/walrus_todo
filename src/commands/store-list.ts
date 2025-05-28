@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 // import { SuiClient } from '../utils/adapters/sui-client-adapter';
 // Ed25519Keypair imported but not used
-import chalk from 'chalk';
+import chalk = require('chalk');
 import * as fs from 'fs';
 import * as path from 'path';
 import { configService } from '../services/config-service';

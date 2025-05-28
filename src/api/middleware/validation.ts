@@ -9,7 +9,7 @@ export interface ValidationOptions {
 }
 
 export function validate(options: ValidationOptions) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Validate body
       if (options.body) {
@@ -27,12 +27,12 @@ export function validate(options: ValidationOptions) {
       }
 
       next();
+      return;
     } catch (error: unknown) {
       if (error instanceof ZodError) {
         const validationError = new ValidationError(
           'Request validation failed',
           {
-            message: 'Request validation failed',
             field: error.errors[0]?.path.join('.') || 'unknown',
             constraint: error.errors[0]?.code || 'validation_failed',
             context: {
@@ -45,9 +45,11 @@ export function validate(options: ValidationOptions) {
           }
         );
         next(validationError);
+        return;
       } else {
         const typedError = error instanceof Error ? error : new Error(String(error));
         next(typedError);
+        return;
       }
     }
   };

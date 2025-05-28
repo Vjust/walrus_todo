@@ -93,7 +93,6 @@ describe('BlobVerificationManager Integration', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Set up the mock responses
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
@@ -121,7 +120,6 @@ describe('BlobVerificationManager Integration', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -169,7 +167,6 @@ describe('BlobVerificationManager Integration', () => {
       const blobId = 'test-blob-id';
       const testData = Buffer.from('expected test data');
       const retrievedData = Buffer.from('different test data'); // Content mismatch
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Set up the mock responses
       mockWalrusClient.readBlob.mockResolvedValue(
@@ -209,7 +206,6 @@ describe('BlobVerificationManager Integration', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Set up the mock responses for uncertified blob
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
@@ -237,7 +233,6 @@ describe('BlobVerificationManager Integration', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'text/plain',
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -276,7 +271,6 @@ describe('BlobVerificationManager Integration', () => {
       // Create test data
       const blobId = 'test-blob-id';
       const testData = Buffer.from('test data for verification');
-      const expectedAttributes = { contentType: 'text/plain' };
 
       // Set up the mock responses
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
@@ -304,7 +298,6 @@ describe('BlobVerificationManager Integration', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: String(testData.length),
-          contentType: 'application/json', // Mismatch from expected 'text/plain'
           hashes: [
             {
               primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },

@@ -61,7 +61,7 @@ export function TransactionSigner({
 
   // If children function is provided, use render props pattern
   if (children) {
-    return <>{children({ isLoading, error, signAndExecute })}</>;
+    return children({ isLoading, error, signAndExecute }) as React.ReactElement;
   }
 
   // Default UI

@@ -149,7 +149,6 @@ describe('CredentialVerificationService Integration', () => {
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           unencoded_length: '1000',
-          contentType: 'application/json',
           credentialType: 'TodoAccess',
           issuer: 'did:sui:0x123abc',
           subject: 'did:sui:0x456def',
@@ -468,7 +467,6 @@ describe('CredentialVerificationService Integration', () => {
       expect(writeArgs.signer).toBe(mockSigner);
       expect(writeArgs.deletable).toBe(false);
       expect(writeArgs.attributes).toEqual({
-        contentType: 'application/json',
         credentialType: 'TodoAccess',
         issuer: 'did:sui:0x123abc',
         subject: 'did:sui:0x456def',

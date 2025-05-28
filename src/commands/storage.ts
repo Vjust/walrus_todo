@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
 import { WalrusStorage } from '../utils/walrus-storage';
 import { StorageReuseAnalyzer } from '../utils/storage-reuse-analyzer';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { SuiClient } from '../utils/adapters/sui-client-adapter';
 import { NETWORK_URLS, CURRENT_NETWORK } from '../constants';
 import { CLIError } from '../types/errors/consolidated';

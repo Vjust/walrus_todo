@@ -12,7 +12,7 @@ import { BlockchainVerifier } from '../services/ai/BlockchainVerifier';
 import { SuiAIVerifierAdapter } from '../services/ai/adapters/SuiAIVerifierAdapter';
 import { AIPrivacyLevel } from '../types/adapters/AIVerifierAdapter';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { TodoService } from '../services/todoService';
 import { EnhancedAIService } from '../services/ai/EnhancedAIService';
 import { createCache } from '../utils/performance-cache';
@@ -22,6 +22,12 @@ import { getPermissionManager } from '../services/ai/AIPermissionManager';
 import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
 import { checkbox } from '@inquirer/prompts';
 import { CLIError } from '../types/errors/consolidated';
+import { 
+  createBackgroundAIOperationsManager, 
+  BackgroundAIOperations, 
+  BackgroundAIUtils,
+  BackgroundAIOptions
+} from '../utils/background-ai-operations';
 
 // Cache for AI suggestions, config, and API key validation
 const suggestionCache = createCache<import('../services/ai/TaskSuggestionService').SuggestedTask[]>('ai-suggestions', {
@@ -165,10 +171,37 @@ export default class Suggest extends BaseCommand {
       description: 'Generate suggestions related to specific todo (by ID)',
       multiple: true,
     }),
+    background: Flags.boolean({
+      char: 'b',
+      description: 'Run suggestion generation in background without blocking terminal',
+      required: false,
+      default: false,
+    }),
+    wait: Flags.boolean({
+      char: 'w',
+      description: 'Wait for background operation to complete and show results',
+      required: false,
+      default: false,
+    }),
+    jobId: Flags.string({
+      char: 'j',
+      description: 'Check status or get result of specific background job',
+      required: false,
+    }),
   };
 
   async run() {
     const { flags } = await this.parse(Suggest);
+
+    // Handle job status check first
+    if (flags.jobId) {
+      return this.handleJobStatus(flags.jobId, flags);
+    }
+
+    // Handle background execution
+    if (flags.background) {
+      return this.executeInBackground(flags);
+    }
 
     // Enable cache debugging if requested
     const cacheDebugEnabled = flags.cacheDebug || CACHE_DEBUG;
@@ -671,5 +704,187 @@ export default class Suggest extends BaseCommand {
         `To view detailed verification information, run: ${chalk.cyan(`walrus_todo ai:verify show --id ${verification.verificationId || 'unknown'}`)}`
       )
     );
+  }
+
+  /**
+   * Handle background job status checking
+   */
+  private async handleJobStatus(jobId: string, flags: any) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+      const status = await backgroundOps.getOperationStatus(jobId);
+
+      if (!status) {
+        this.error(`Job ${jobId} not found`);
+        return;
+      }
+
+      if (flags.format === 'json') {
+        this.log(JSON.stringify(status, null, 2));
+        return;
+      }
+
+      this.log(chalk.bold(`Job Status: ${jobId}`));
+      this.log(`Type: ${chalk.cyan(status.type)}`);
+      this.log(`Status: ${this.formatStatus(status.status)}`);
+      this.log(`Progress: ${chalk.yellow(`${status.progress}%`)}`);
+      this.log(`Stage: ${chalk.blue(status.stage)}`);
+      
+      if (status.startedAt) {
+        this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
+      }
+      
+      if (status.completedAt) {
+        this.log(`Completed: ${chalk.dim(status.completedAt.toLocaleString())}`);
+      }
+
+      if (status.error) {
+        this.log(`Error: ${chalk.red(status.error)}`);
+      }
+
+      // If completed, show results
+      if (status.status === 'completed') {
+        const result = await backgroundOps.getOperationResult(jobId);
+        if (result && flags.format !== 'json') {
+          this.log(chalk.bold('\nResults:'));
+          this.displaySuggestionResults(result.result, flags);
+        }
+      }
+
+      // If waiting and operation is still running, wait for completion
+      if (flags.wait && (status.status === 'queued' || status.status === 'running')) {
+        this.log(chalk.yellow('\nWaiting for operation to complete...'));
+        
+        const result = await backgroundOps.waitForOperationWithProgress(
+          jobId,
+          (progress, stage) => {
+            process.stdout.write(`\r${chalk.blue('Progress:')} ${progress}% (${stage})`);
+          }
+        );
+
+        process.stdout.write('\n');
+        this.log(chalk.green('Operation completed!'));
+        
+        if (flags.format === 'json') {
+          this.log(JSON.stringify(result, null, 2));
+        } else {
+          this.displaySuggestionResults(result.result, flags);
+        }
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to get job status: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Execute suggestion generation in background
+   */
+  private async executeInBackground(flags: any) {
+    try {
+      const backgroundOps = await createBackgroundAIOperationsManager();
+
+      // Get all todos
+      const todoService = await this.getTodoService();
+      const todos = await todoService.listTodos();
+
+      if (todos.length === 0) {
+        this.log('No todos found to analyze for suggestions.');
+        return;
+      }
+
+      const options: BackgroundAIOptions = {
+        verify: flags.verify,
+        apiKey: flags.apiKey,
+        provider: flags.provider,
+        model: flags.model,
+        temperature: 0.7,
+        priority: 'normal',
+      };
+
+      // Create non-blocking operation
+      const operation = await BackgroundAIUtils.createNonBlockingAIOperation(
+        backgroundOps,
+        'suggest',
+        todos,
+        options
+      );
+
+      this.log(chalk.green(`✓ AI suggestion generation started in background`));
+      this.log(chalk.blue(`Job ID: ${operation.operationId}`));
+      this.log('');
+      this.log(chalk.dim('Commands to check progress:'));
+      this.log(chalk.cyan(`  walrus_todo suggest --jobId ${operation.operationId}`));
+      this.log(chalk.cyan(`  walrus_todo suggest --jobId ${operation.operationId} --wait`));
+      this.log('');
+
+      // If wait flag is set, wait for completion and show results
+      if (flags.wait) {
+        this.log(chalk.yellow('Waiting for operation to complete...'));
+        
+        const result = await operation.waitForCompletion();
+        
+        this.log(chalk.green('Operation completed!'));
+        
+        if (flags.format === 'json') {
+          this.log(JSON.stringify(result, null, 2));
+        } else {
+          this.displaySuggestionResults(result.result, flags);
+        }
+      }
+
+    } catch (error) {
+      if (error instanceof CLIError) {
+        throw error;
+      }
+      throw new CLIError(
+        `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Display suggestion results (simplified version for background operations)
+   */
+  private displaySuggestionResults(suggestions: any, flags: any) {
+    if (flags.format === 'json') {
+      this.log(JSON.stringify({ suggestions }, null, 2));
+      return;
+    }
+
+    this.log(chalk.cyan('💡 Task Suggestions:'));
+
+    if (Array.isArray(suggestions)) {
+      suggestions.forEach((suggestion, index) => {
+        this.log(`${index + 1}. ${suggestion}`);
+      });
+    } else {
+      this.log(chalk.yellow('Suggestions have been generated (use --format json for detailed output)'));
+    }
+
+    this.log('');
+    this.log(
+      chalk.dim('Tip: Use --addTodo flag with foreground operations to add suggestions as new todos.')
+    );
+  }
+
+  /**
+   * Format operation status with colors
+   */
+  private formatStatus(status: string): string {
+    const statusColors = {
+      queued: chalk.blue('⏳ Queued'),
+      running: chalk.yellow('🔄 Running'),
+      completed: chalk.green('✅ Completed'),
+      failed: chalk.red('❌ Failed'),
+      cancelled: chalk.gray('🚫 Cancelled'),
+    };
+
+    return statusColors[status as keyof typeof statusColors] || chalk.white(status);
   }
 }

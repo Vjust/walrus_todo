@@ -3,7 +3,7 @@ import BaseCommand from '../../base-command';
 import { authenticationService } from '../../services/authentication-service';
 import { UserRole } from '../../types/permissions';
 import { CLIError } from '../../types/errors/consolidated';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';

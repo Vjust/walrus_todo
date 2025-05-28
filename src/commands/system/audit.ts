@@ -1,7 +1,7 @@
 import { Flags, ux } from '@oclif/core';
 import BaseCommand from '../../base-command';
 import { auditLogger } from '../../utils/AuditLogger';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { CLIError } from '../../types/errors/consolidated';
 
 /**

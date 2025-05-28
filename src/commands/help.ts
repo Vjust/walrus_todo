@@ -5,7 +5,7 @@ import {
   CommandShortcuts,
   formatShortcutsTable,
 } from '../utils/command-shortcuts';
-import chalk from 'chalk';
+import chalk = require('chalk');
 
 // Import CommandMetadata type
 import type { CommandMetadata } from '../utils/CommandRegistry';

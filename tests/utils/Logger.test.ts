@@ -9,7 +9,7 @@ import {
 
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance[];
+  let mockConsole: jest.SpyInstance<void, [message?: any, ...optionalParams: any[]]>[];
   let mockHandler: jest.Mock<
     void,
     [{ level: LogLevel; message: string; context?: unknown; error?: unknown }]
@@ -22,7 +22,7 @@ describe('Logger', () => {
 
     // Mock console methods
     mockConsole = (['debug', 'info', 'warn', 'error'] as const).map(level =>
-      jest.spyOn(console, level as keyof Console).mockImplementation(() => {})
+      jest.spyOn(console, level).mockImplementation(() => undefined)
     );
 
     // Create mock handler
@@ -48,14 +48,14 @@ describe('Logger', () => {
 
       // Verify log level and message content
       const calls = mockHandler.mock.calls;
-      expect(calls[0][0].level).toBe(LogLevel.DEBUG);
-      expect(calls[1][0].level).toBe(LogLevel.INFO);
-      expect(calls[2][0].level).toBe(LogLevel.WARN);
-      expect(calls[3][0].level).toBe(LogLevel.ERROR);
+      expect(calls[0]?.[0]?.level).toBe(LogLevel.DEBUG);
+      expect(calls[1]?.[0]?.level).toBe(LogLevel.INFO);
+      expect(calls[2]?.[0]?.level).toBe(LogLevel.WARN);
+      expect(calls[3]?.[0]?.level).toBe(LogLevel.ERROR);
 
       // Verify context is included
       calls.forEach(call => {
-        expect(call[0].context).toEqual(testContext);
+        expect(call[0]?.context).toEqual(testContext);
       });
     });
 
@@ -122,7 +122,7 @@ describe('Logger', () => {
             name: 'Error',
             code: 'UNKNOWN_ERROR',
             message: 'string error',
-          }) as Record<string, unknown>,
+          }),
         })
       );
     });
@@ -146,8 +146,8 @@ describe('Logger', () => {
 
       logger.info('Test message', sensitiveContext);
 
-      const call = mockHandler.mock.calls[0][0];
-      expect(call.context).toEqual({
+      const call = mockHandler.mock.calls[0]?.[0];
+      expect(call?.context).toEqual({
         password: '[REDACTED]',
         apiKey: '[REDACTED]',
         token: '[REDACTED]',
@@ -174,7 +174,7 @@ describe('Logger', () => {
 
       logger.info('Test message', nestedContext);
 
-      expect(mockHandler.mock.calls[0][0].context).toEqual({
+      expect(mockHandler.mock.calls[0]?.[0]?.context).toEqual({
         data: {
           user: {
             password: '[REDACTED]',
@@ -223,8 +223,7 @@ describe('Logger', () => {
     });
 
     it('should handle ValidationError', () => {
-      const error = new ValidationError('Invalid blob size', {
-        field: 'size',
+      const error = ValidationError.forField('Invalid blob size', 'size', {
         value: -1,
         constraint: 'positive',
       });

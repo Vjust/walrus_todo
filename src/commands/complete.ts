@@ -8,16 +8,19 @@ import { SuiNftStorage } from '../utils/sui-nft-storage';
 import { NETWORK_URLS, TODO_NFT_CONFIG } from '../constants';
 import { CLIError } from '../types/errors/consolidated';
 import { configService } from '../services/config-service';
-import chalk from 'chalk';
+import chalk = require('chalk');
 import { RetryManager } from '../utils/retry-manager';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Todo } from '../types/todo';
 import { AppConfig } from '../types/config';
+import { jobManager, BackgroundJob, performanceMonitor } from '../utils/PerformanceMonitor';
+import { spawn } from 'child_process';
 
 // Define interface for parsed flags to fix property access
 interface CompleteCommandFlags {
-  id: string;
+  id?: string;
+  list?: string;
   network?: string;
   debug?: boolean;
   verbose?: boolean;
@@ -28,6 +31,9 @@ interface CompleteCommandFlags {
   timeout?: number;
   force?: boolean;
   quiet?: boolean;
+  background?: boolean;
+  batch?: boolean;
+  batchSize?: number;
 }
 
 // BufferEncoding type definition
@@ -45,43 +51,86 @@ interface CompleteCommandFlags {
  * - Provides feedback on the success of local, NFT, and Walrus updates.
  * - Includes retries and error handling for blockchain operations.
  *
- * @param {string} [list='default'] - The name of the todo list. (Argument)
- * @param {string} id - The ID or title of the todo item to mark as complete. (Required flag: -i, --id)
- * @param {string} [network] - The blockchain network to use (e.g., 'localnet', 'devnet', 'testnet', 'mainnet').
- *                             Defaults to the network configured globally or 'testnet'. (Optional flag: -n, --network)
+ * Usage patterns:
+ * - waltodo complete <todo-id>                     # Complete from default list
+ * - waltodo complete <list> <todo-id>              # Complete from specific list
+ * - waltodo complete -i <todo-id> --list <list>    # Legacy format with flags
+ *
+ * @param {string} [listOrTodo] - List name or todo ID/title (positional)
+ * @param {string} [todoId] - Todo ID or title when list is specified (positional)
+ * @param {string} [network] - The blockchain network to use (optional flag: -n, --network)
  */
 export default class CompleteCommand extends BaseCommand {
   static description = `Mark a todo as completed.
   If the todo has an associated NFT or Walrus blob, updates blockchain storage as well.
-  NFT updates may require gas tokens on the configured network.`;
+  NFT updates may require gas tokens on the configured network.
+  
+  Background Mode:
+  Use --background to run completion in the background without blocking the terminal.
+  Perfect for large blockchain operations or when dealing with network latency.
+  
+  Batch Mode:
+  Use --batch to complete multiple todos in parallel with progress tracking.
+  Combine with --list to complete all todos in a specific list.`;
 
   static examples = [
-    '<%= config.bin %> complete my-list -i todo-123              # Complete todo by ID',
-    '<%= config.bin %> complete my-list -i "Buy groceries"      # Complete todo by title',
-    '<%= config.bin %> complete -i task-456                     # Complete from default list',
-    '<%= config.bin %> complete work -i "Finish report"         # Complete specific todo',
-    '<%= config.bin %> complete personal -i todo-789 --network testnet  # Use specific network',
+    '<%= config.bin %> complete todo-123                        # Complete from default list',
+    '<%= config.bin %> complete mylist todo-456                 # Complete from specific list',
+    '<%= config.bin %> complete "Buy groceries"                 # Complete by title from default list',
+    '<%= config.bin %> complete work "Finish report"            # Complete by title from specific list',
+    '<%= config.bin %> complete mylist todo-789 --network testnet  # Use specific network',
+    '<%= config.bin %> complete todo-123 --background           # Complete in background',
+    '<%= config.bin %> complete --batch --list work             # Complete all todos in list',
+    '<%= config.bin %> complete --batch --batchSize 10          # Batch complete with custom batch size',
+    '',
+    'Legacy format (still supported):',
+    '<%= config.bin %> complete -i todo-123                     # Complete with flags',
+    '<%= config.bin %> complete mylist -i "Buy groceries"      # Complete with list and flags',
   ];
 
   static flags = {
     ...BaseCommand.flags,
     id: Flags.string({
       char: 'i',
-      description: 'Todo ID or title to mark as completed',
-      required: true,
+      description: 'Todo ID or title to mark as completed (legacy format)',
+      required: false,
     }),
     network: Flags.string({
       char: 'n',
       description: 'Network to use (defaults to configured network)',
       options: ['localnet', 'devnet', 'testnet', 'mainnet'],
     }),
+    list: Flags.string({
+      char: 'l',
+      description: 'List name (legacy format)',
+    }),
+    background: Flags.boolean({
+      char: 'b',
+      description: 'Run completion in background (non-blocking)',
+      default: false,
+    }),
+    batch: Flags.boolean({
+      description: 'Enable batch completion mode for multiple todos',
+      default: false,
+    }),
+    batchSize: Flags.integer({
+      description: 'Number of todos to process in parallel (batch mode)',
+      default: 5,
+      min: 1,
+      max: 20,
+    }),
   };
 
   static args = {
-    list: Args.string({
-      name: 'list',
-      description: 'List name',
-      default: 'default',
+    listOrTodo: Args.string({
+      name: 'listOrTodo',
+      description: 'List name or todo ID/title',
+      required: false,
+    }),
+    todoId: Args.string({
+      name: 'todoId',
+      description: 'Todo ID or title',
+      required: false,
     }),
   };
 
@@ -407,6 +456,595 @@ export default class CompleteCommand extends BaseCommand {
   }
 
   /**
+   * Create a background job for completing todos
+   */
+  private async createBackgroundJob(
+    todos: Todo[],
+    listName: string,
+    flags: CompleteCommandFlags
+  ): Promise<BackgroundJob> {
+    const job = jobManager.createJob('complete', [], flags);
+    
+    // Spawn background process using current CLI binary
+    const cliPath = process.argv[1];
+    const args: string[] = [
+      'complete',
+      '--quiet', // Reduce output in background
+      ...(flags.list ? ['--list', flags.list] : []),
+      ...(flags.network ? ['--network', flags.network] : []),
+      ...(flags.debug ? ['--debug'] : []),
+      ...(flags.force ? ['--force'] : []),
+      ...(flags.batch ? ['--batch'] : []),
+      ...(flags.batchSize ? ['--batchSize', flags.batchSize.toString()] : []),
+    ];
+    
+    // Add todo IDs or use batch mode for all todos in list
+    if (flags.batch) {
+      // Batch mode will process all incomplete todos in the specified list
+    } else {
+      // Add individual todo IDs
+      args.push(...todos.map(t => t.id));
+    }
+    
+    const childProcess = spawn(process.execPath, [cliPath, ...args], {
+      detached: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        WALTODO_BACKGROUND_MODE: 'true' // Flag to prevent infinite recursion
+      }
+    });
+
+    // Update job with process ID and metadata
+    jobManager.startJob(job.id, childProcess.pid);
+    
+    // Set up progress tracking
+    jobManager.updateProgress(job.id, 0, 0, todos.length);
+    
+    // Update job metadata with completion details
+    jobManager.updateJob(job.id, {
+      metadata: {
+        operation: 'complete',
+        listName,
+        todoCount: todos.length,
+        todos: todos.map(t => ({ id: t.id, title: t.title }))
+      }
+    });
+    
+    // Write initial log
+    jobManager.writeJobLog(job.id, `Starting completion of ${todos.length} todo(s) in list "${listName}"`);
+    
+    // Handle process completion
+    childProcess.on('exit', (code) => {
+      if (code === 0) {
+        jobManager.writeJobLog(job.id, `Successfully completed all ${todos.length} todo(s)`);
+        jobManager.completeJob(job.id, {
+          completedTodos: todos.length,
+          listName,
+          operation: 'complete'
+        });
+      } else {
+        jobManager.writeJobLog(job.id, `Process failed with exit code ${code}`);
+        jobManager.failJob(job.id, `Process exited with code ${code}`);
+      }
+    });
+
+    // Handle process errors
+    childProcess.on('error', (error) => {
+      jobManager.writeJobLog(job.id, `Process error: ${error.message}`);
+      jobManager.failJob(job.id, `Process error: ${error.message}`);
+    });
+
+    // Capture output and update progress based on log content
+    if (childProcess.stdout) {
+      childProcess.stdout.on('data', (data) => {
+        const output = data.toString();
+        jobManager.writeJobLog(job.id, output);
+        
+        // Try to extract progress from output
+        this.updateProgressFromOutput(job.id, output, todos.length);
+      });
+    }
+    
+    if (childProcess.stderr) {
+      childProcess.stderr.on('data', (data) => {
+        const error = data.toString();
+        jobManager.writeJobLog(job.id, `ERROR: ${error}`);
+      });
+    }
+
+    // Allow parent process to exit
+    childProcess.unref();
+    
+    return job;
+  }
+
+  /**
+   * Extract progress information from command output
+   */
+  private updateProgressFromOutput(jobId: string, output: string, totalTodos: number): void {
+    try {
+      // Look for completion indicators in the output
+      const completionMatches = output.match(/✓.*completed/gi);
+      if (completionMatches) {
+        const currentProgress = completionMatches.length;
+        const progressPercentage = Math.min(100, (currentProgress / totalTodos) * 100);
+        jobManager.updateProgress(jobId, progressPercentage, currentProgress, totalTodos);
+      }
+      
+      // Look for batch progress indicators
+      const batchMatches = output.match(/Completing \[(\d+)\/(\d+)\]/i);
+      if (batchMatches) {
+        const completed = parseInt(batchMatches[1]);
+        const total = parseInt(batchMatches[2]);
+        const progressPercentage = Math.min(100, (completed / total) * 100);
+        jobManager.updateProgress(jobId, progressPercentage, completed, total);
+      }
+    } catch (error) {
+      // Ignore progress parsing errors
+    }
+  }
+
+  /**
+   * Complete multiple todos in batch with progress tracking
+   */
+  private async completeBatch(
+    todos: Todo[],
+    listName: string,
+    flags: CompleteCommandFlags
+  ): Promise<void> {
+    const batchSize = flags.batchSize || 5;
+    const totalTodos = todos.filter(t => !t.completed);
+    
+    if (totalTodos.length === 0) {
+      this.log(chalk.yellow('No incomplete todos found for batch completion.'));
+      return;
+    }
+
+    this.log(chalk.blue(`Starting batch completion of ${totalTodos.length} todos...`));
+    
+    const showProgress = !flags.quiet;
+    let multiProgress, progressBar;
+    
+    if (showProgress) {
+      multiProgress = this.createMultiProgress();
+      progressBar = multiProgress.create('Completing todos', totalTodos.length);
+    }
+    
+    let completed = 0;
+    let failed = 0;
+    const errors: string[] = [];
+    
+    // Process todos in batches
+    for (let i = 0; i < totalTodos.length; i += batchSize) {
+      const batch = totalTodos.slice(i, i + batchSize);
+      
+      if (!flags.quiet) {
+        this.log(chalk.gray(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(totalTodos.length / batchSize)}...`));
+      }
+      
+      const batchPromises = batch.map(async (todo, index) => {
+        try {
+          if (!flags.quiet) {
+            this.log(chalk.blue(`Completing [${completed + index + 1}/${totalTodos.length}] "${todo.title}"...`));
+          }
+          await this.completeSingleTodo(todo, listName, flags, false);
+          completed++;
+          if (progressBar) progressBar.increment();
+          if (!flags.quiet) {
+            this.log(chalk.green(`✓ Completed "${todo.title}"`));
+          }
+          return { success: true, todo };
+        } catch (error) {
+          failed++;
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          errors.push(`${todo.title}: ${errorMsg}`);
+          if (progressBar) progressBar.increment();
+          if (!flags.quiet) {
+            this.log(chalk.red(`✗ Failed "${todo.title}": ${errorMsg}`));
+          }
+          return { 
+            success: false, 
+            todo, 
+            error: errorMsg
+          };
+        }
+      });
+      
+      await Promise.all(batchPromises);
+      
+      // Small delay between batches to prevent overwhelming the system
+      if (i + batchSize < totalTodos.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    if (multiProgress) {
+      multiProgress.stop();
+    }
+    
+    // Summary
+    this.log(chalk.green(`\n✅ Batch completion finished:`));
+    this.log(`  ${chalk.green('Completed:')} ${completed}`);
+    if (failed > 0) {
+      this.log(`  ${chalk.red('Failed:')} ${failed}`);
+      if (errors.length > 0 && !flags.quiet) {
+        this.log(chalk.red('\nErrors:'));
+        errors.slice(0, 5).forEach(error => {
+          this.log(chalk.red(`  • ${error}`));
+        });
+        if (errors.length > 5) {
+          this.log(chalk.red(`  ... and ${errors.length - 5} more errors`));
+        }
+      }
+    }
+    
+    if (failed > 0) {
+      throw new CLIError(
+        `Batch completion completed with ${failed} failures. ${completed} todos were successfully completed.`,
+        'BATCH_COMPLETION_PARTIAL_FAILURE'
+      );
+    }
+  }
+
+  /**
+   * Complete a single todo (extracted from main run method)
+   */
+  private async completeSingleTodo(
+    todo: Todo,
+    listName: string,
+    flags: CompleteCommandFlags,
+    showOutput: boolean = true
+  ): Promise<void> {
+    const operationId = `complete-${todo.id}-${Date.now()}`;
+    
+    return performanceMonitor.measureOperation('complete-todo', async () => {
+      // Verify not already completed
+      if (todo.completed) {
+        if (showOutput) {
+          this.log(chalk.yellow(`Todo "${todo.title}" is already marked as completed`));
+        }
+        return;
+      }
+
+      const config = await configService.getConfig();
+      const network = flags.network || config.network || 'testnet';
+      const networkUrl = this.validateNetwork(network);
+
+      // Initialize blockchain clients if needed
+      let suiClient: unknown | undefined;
+      let suiNftStorage: SuiNftStorage | undefined;
+
+      if (todo.nftObjectId || todo.walrusBlobId) {
+        // Validate deployment config first
+        await this.validateBlockchainConfig(network);
+
+        // Initialize and check network connection
+        suiClient = { url: networkUrl }; // Mock SuiClient
+        const protocolVersion = await this.getNetworkStatus(suiClient);
+        if (showOutput) {
+          this.log(
+            chalk.dim(
+              `Connected to ${network} (protocol version ${protocolVersion})`
+            )
+          );
+        }
+
+        // Validate NFT state and estimate gas if NFT exists
+        if (todo.nftObjectId) {
+          await this.validateNftState(suiClient, todo.nftObjectId);
+
+          // Initialize NFT storage
+          const signer = {} as Ed25519Keypair;
+          suiNftStorage = new SuiNftStorage(suiClient, signer, {
+            address: config.lastDeployment?.packageId ?? '',
+            packageId: config.lastDeployment?.packageId ?? '',
+          });
+
+          if (showOutput) {
+            // Estimate gas for the operation
+            const gasEstimate = await this.estimateGasForNftUpdate(
+              suiClient,
+              todo.nftObjectId,
+              config.lastDeployment?.packageId ?? ''
+            );
+            this.log(
+              chalk.dim(
+                `Estimated gas cost: ${Number(gasEstimate.computationCost) + Number(gasEstimate.storageCost)} MIST`
+              )
+            );
+          }
+        }
+      }
+
+      // Update local todo first
+      if (showOutput) {
+        this.log(chalk.blue(`Marking todo "${todo.title}" as completed...`));
+      }
+      await this.todoService.toggleItemStatus(listName, todo.id, true);
+      if (showOutput) {
+        this.log(chalk.green('✓ Local update successful'));
+      }
+
+      // Update configuration to record completion
+      await this.updateConfigWithCompletion(todo);
+
+      // Update NFT if exists (same as original implementation)
+      if (todo.nftObjectId && suiNftStorage) {
+        await this.updateNFT(todo, suiNftStorage, suiClient, showOutput);
+      }
+
+      // Update Walrus blob if exists (same as original implementation)
+      if (todo.walrusBlobId) {
+        await this.updateWalrusBlob(todo, listName, showOutput);
+      }
+
+      if (showOutput) {
+        this.showCompletionSummary(todo, network);
+      }
+    }, { todoId: todo.id, listName });
+  }
+
+  /**
+   * Update NFT on blockchain (extracted from main method)
+   */
+  private async updateNFT(
+    todo: Todo,
+    suiNftStorage: SuiNftStorage,
+    suiClient: unknown,
+    showOutput: boolean
+  ): Promise<void> {
+    try {
+      if (showOutput) {
+        this.log(chalk.blue('Updating NFT on blockchain...'));
+      }
+      const txDigest = await RetryManager.retry(
+        () => suiNftStorage.updateTodoNftCompletionStatus(todo.nftObjectId || ''),
+        {
+          maxRetries: 3,
+          initialDelay: 1000,
+          onRetry: (error, attempt, _delay) => {
+            const errorMessage = error instanceof Error
+              ? error.message
+              : typeof error === 'object' && error !== null && 'message' in error && typeof (error as Record<string, unknown>).message === 'string'
+                ? (error as Record<string, unknown>).message as string
+                : String(error);
+            if (showOutput) {
+              this.log(
+                chalk.yellow(
+                  `Retry attempt ${attempt} after error: ${errorMessage}`
+                )
+              );
+            }
+          },
+        }
+      );
+      if (showOutput) {
+        this.log(chalk.green('✓ Todo NFT updated on blockchain'));
+        this.log(chalk.dim(`Transaction: ${txDigest}`));
+      }
+
+      // Verify NFT update
+      await this.verifyNFTUpdate(todo, suiClient, showOutput);
+    } catch (blockchainError) {
+      throw new CLIError(
+        `Failed to update NFT on blockchain: ${blockchainError instanceof Error ? blockchainError.message : String(blockchainError)}\nLocal update was successful, but blockchain state may be out of sync.`,
+        'BLOCKCHAIN_UPDATE_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Verify NFT update (extracted from main method)
+   */
+  private async verifyNFTUpdate(
+    todo: Todo,
+    suiClient: unknown,
+    showOutput: boolean
+  ): Promise<void> {
+    await RetryManager.retry(
+      async () => {
+        try {
+          const verificationPromise = (suiClient as { getObject: (params: { id: string; options: { showContent: boolean } }) => Promise<{ data?: { content?: unknown } }> }).getObject({
+            id: todo.nftObjectId || '',
+            options: { showContent: true },
+          });
+
+          let timeoutId: NodeJS.Timeout;
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => {
+              reject(
+                new Error('NFT verification timed out after 10 seconds')
+              );
+            }, 10000);
+          });
+
+          const result = await Promise.race([
+            verificationPromise,
+            timeoutPromise,
+          ]);
+          clearTimeout(timeoutId);
+
+          const content = result.data?.content as {
+            fields?: { completed?: boolean };
+          };
+          if (!content?.fields?.completed) {
+            throw new Error(
+              'NFT update verification failed: completed flag not set'
+            );
+          }
+        } catch (verifyError) {
+          const error =
+            verifyError instanceof Error
+              ? verifyError
+              : new Error(String(verifyError));
+
+          throw new Error(`NFT verification error: ${error.message}`);
+        }
+      },
+      {
+        maxRetries: 3,
+        initialDelay: 2000,
+        onRetry: (error, attempt, _delay) => {
+          const errorMessage = error instanceof Error
+            ? error.message
+            : typeof error === 'object' && error !== null && 'message' in error && typeof (error as Record<string, unknown>).message === 'string'
+              ? (error as Record<string, unknown>).message as string
+              : String(error);
+          if (showOutput) {
+            this.log(
+              chalk.yellow(
+                `Verification retry ${attempt} after error: ${errorMessage}`
+              )
+            );
+          }
+        },
+      }
+    );
+  }
+
+  /**
+   * Update Walrus blob (extracted from main method)
+   */
+  private async updateWalrusBlob(
+    todo: Todo,
+    listName: string,
+    showOutput: boolean
+  ): Promise<Error | null> {
+    let lastWalrusError: Error | null = null;
+    
+    try {
+      if (showOutput) {
+        this.log(chalk.blue('Connecting to Walrus storage...'));
+      }
+      await this.walrusStorage.connect();
+
+      let timeoutId: NodeJS.Timeout;
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(
+            new Error('Walrus operation timed out after 30 seconds')
+          );
+        }, 30000);
+      });
+
+      if (showOutput) {
+        this.log(chalk.blue('Updating todo on Walrus...'));
+      }
+
+      const updatedTodo = {
+        ...todo,
+        completed: true,
+        completedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const maxRetries = 3;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          let newBlobId: string | undefined;
+          try {
+            newBlobId = (await Promise.race([
+              this.walrusStorage.updateTodo(
+                todo.walrusBlobId || '',
+                updatedTodo
+              ),
+              timeout,
+            ])) as string | undefined;
+            clearTimeout(timeoutId);
+          } catch (raceError) {
+            clearTimeout(timeoutId);
+            throw raceError;
+          }
+
+          if (typeof newBlobId === 'string') {
+            await this.todoService.updateTodo(listName, todo.id, {
+              walrusBlobId: newBlobId,
+              completedAt: updatedTodo.completedAt,
+              updatedAt: updatedTodo.updatedAt,
+            });
+
+            this.saveBlobMapping(todo.id, newBlobId);
+
+            if (showOutput) {
+              this.log(chalk.green('✓ Todo updated on Walrus'));
+              this.log(chalk.dim(`New blob ID: ${newBlobId}`));
+              this.log(
+                chalk.dim(
+                  `Public URL: https://testnet.wal.app/blob/${newBlobId}`
+                )
+              );
+            }
+            break;
+          } else {
+            throw new Error('Invalid blob ID returned from Walrus');
+          }
+        } catch (error) {
+          lastWalrusError = error instanceof Error ? error : new Error(String(error));
+          if (attempt === maxRetries) {
+            if (showOutput) {
+              this.log(
+                chalk.yellow(
+                  '⚠️ Failed to update Walrus storage after all retries'
+                )
+              );
+              this.log(
+                chalk.yellow(
+                  'The todo has been marked as completed locally and on-chain, but Walrus blob is out of sync.'
+                )
+              );
+            }
+            break;
+          }
+          if (showOutput) {
+            this.log(
+              chalk.yellow(`Attempt ${attempt} failed, retrying...`)
+            );
+          }
+          await new Promise(resolve =>
+            setTimeout(resolve, 1000 * attempt)
+          );
+        }
+      }
+    } finally {
+      try {
+        await this.walrusStorage.disconnect();
+      } catch (disconnectError) {
+        if (showOutput) {
+          this.warn('Warning: Failed to disconnect from Walrus');
+        }
+      }
+    }
+    
+    return lastWalrusError;
+  }
+
+  /**
+   * Show completion summary (extracted from main method)
+   */
+  private showCompletionSummary(todo: Todo, network: string): void {
+    this.log(chalk.green('\n✓ Todo completion summary:'));
+    this.log(chalk.dim('Title:'));
+    this.log(`  ${chalk.bold(todo.title)}`);
+
+    this.log(chalk.dim('\nUpdates:'));
+    this.log(`  ${chalk.green('✓')} Local storage`);
+    if (todo.nftObjectId) {
+      this.log(`  ${chalk.green('✓')} Blockchain NFT`);
+      this.log(chalk.blue('\nView your updated NFT:'));
+      this.log(
+        chalk.cyan(
+          `  https://explorer.sui.io/object/${todo.nftObjectId}?network=${network}`
+        )
+      );
+    }
+    if (todo.walrusBlobId) {
+      this.log(`  ${chalk.green('✓')} Walrus storage`);
+    }
+  }
+
+  /**
    * Main command execution method. Handles the complete workflow for marking
    * a todo as completed across all relevant storage systems.
    *
@@ -421,9 +1059,6 @@ export default class CompleteCommand extends BaseCommand {
    * 8. Present summary information to the user
    */
   async run(): Promise<void> {
-    // Track non-blocking errors like Walrus blob update failure
-    let lastWalrusError: Error | null = null;
-
     try {
       const { args, flags } = await this.parse(CompleteCommand);
       // Type assertion for flags to fix property access
@@ -436,303 +1071,159 @@ export default class CompleteCommand extends BaseCommand {
       const network = typedFlags.network || config.network || 'testnet';
       const networkUrl = this.validateNetwork(network);
 
+      // Handle batch mode
+      if (typedFlags.batch) {
+        const listName = typedFlags.list || 'default';
+        const list = await this.todoService.getList(listName);
+        if (!list) {
+          const availableLists = await this.todoService.getLists();
+          const listNames = availableLists.map(l => l.name).join(', ');
+          throw new CLIError(
+            `List "${listName}" not found.\n\nAvailable lists: ${listNames}`,
+            'LIST_NOT_FOUND'
+          );
+        }
+        
+        const todos = await this.todoService.getListItems(listName);
+        const incompleteTodos = todos.filter(t => !t.completed);
+        
+        // Check if we're already in background mode to prevent recursion
+        if (process.env.WALTODO_BACKGROUND_MODE === 'true') {
+          // We're in background mode, process directly
+          await this.completeBatch(incompleteTodos, listName, typedFlags);
+          return;
+        }
+        
+        if (typedFlags.background) {
+          const job = await this.createBackgroundJob(incompleteTodos, listName, typedFlags);
+          this.log(chalk.green(`🚀 Started background batch completion job: ${job.id}`));
+          this.log(chalk.gray(`   Processing ${incompleteTodos.length} todos in list "${listName}"`));
+          this.log(chalk.gray('   Use "waltodo jobs" to check progress'));
+          return;
+        } else {
+          await this.completeBatch(incompleteTodos, listName, typedFlags);
+          return;
+        }
+      }
+
+      // Determine list name and todo ID/title based on input format
+      let listName: string;
+      let todoIdentifier: string;
+
+      if (typedFlags.id) {
+        // Legacy format: using flags
+        listName = typedFlags.list || args.listOrTodo || 'default';
+        todoIdentifier = typedFlags.id;
+      } else if (args.todoId) {
+        // New format: waltodo complete <list> <todo>
+        listName = args.listOrTodo || 'default';
+        todoIdentifier = args.todoId;
+      } else if (args.listOrTodo) {
+        // New format: waltodo complete <todo> (default list)
+        listName = 'default';
+        todoIdentifier = args.listOrTodo;
+      } else {
+        // No arguments provided - show helpful error
+        const lists = await this.todoService.getLists();
+        const todos: Todo[] = [];
+        
+        // Gather todos from all lists
+        for (const list of lists) {
+          const listTodos = await this.todoService.getListItems(list.name);
+          todos.push(...listTodos.filter(t => !t.completed));
+        }
+
+        let helpMessage = 'Please specify a todo to complete.\n\n';
+        helpMessage += 'Usage:\n';
+        helpMessage += '  waltodo complete <todo-id>             # Complete from default list\n';
+        helpMessage += '  waltodo complete <list> <todo-id>      # Complete from specific list\n';
+        helpMessage += '  waltodo complete --batch --list <list> # Complete all todos in list\n';
+        helpMessage += '  waltodo complete <todo-id> --background # Complete in background\n\n';
+        
+        if (todos.length > 0) {
+          helpMessage += 'Available incomplete todos:\n';
+          const todosByList = new Map<string, Todo[]>();
+          
+          for (const todo of todos) {
+            const list = todo.listName || 'default';
+            if (!todosByList.has(list)) {
+              todosByList.set(list, []);
+            }
+            todosByList.get(list)!.push(todo);
+          }
+          
+          for (const [list, listTodos] of todosByList) {
+            helpMessage += `\n${chalk.bold(list)}:\n`;
+            for (const todo of listTodos.slice(0, 5)) {
+              helpMessage += `  ${chalk.dim(todo.id.substring(0, 8))} - ${todo.title}\n`;
+            }
+            if (listTodos.length > 5) {
+              helpMessage += `  ${chalk.dim(`... and ${listTodos.length - 5} more`)}\n`;
+            }
+          }
+        }
+        
+        throw new CLIError(helpMessage, 'MISSING_ARGUMENTS');
+      }
+
       // Check list exists
-      const list = await this.todoService.getList(args.list);
+      const list = await this.todoService.getList(listName);
       if (!list) {
-        throw new CLIError(`List "${args.list}" not found`, 'LIST_NOT_FOUND');
+        const availableLists = await this.todoService.getLists();
+        const listNames = availableLists.map(l => l.name).join(', ');
+        throw new CLIError(
+          `List "${listName}" not found.\n\nAvailable lists: ${listNames}`,
+          'LIST_NOT_FOUND'
+        );
       }
 
       // Find todo by ID or title
       const todo = await this.todoService.getTodoByTitleOrId(
-        typedFlags.id,
-        args.list
+        todoIdentifier,
+        listName
       );
       if (!todo) {
-        throw new CLIError(
-          `Todo "${typedFlags.id}" not found in list "${args.list}"`,
-          'TODO_NOT_FOUND'
-        );
+        // Provide helpful error with available todos
+        const todos = await this.todoService.getListItems(listName);
+        const incompleteTodos = todos.filter(t => !t.completed);
+        
+        let errorMessage = `Todo "${todoIdentifier}" not found in list "${listName}"`;
+        
+        if (incompleteTodos.length > 0) {
+          errorMessage += '\n\nAvailable todos in this list:\n';
+          for (const t of incompleteTodos.slice(0, 10)) {
+            errorMessage += `  ${chalk.dim(t.id.substring(0, 8))} - ${t.title}\n`;
+          }
+          if (incompleteTodos.length > 10) {
+            errorMessage += `  ${chalk.dim(`... and ${incompleteTodos.length - 10} more`)}\n`;
+          }
+          errorMessage += '\nTip: You can use either the todo ID or title to complete it.';
+        } else {
+          errorMessage += '\n\nThis list has no incomplete todos.';
+        }
+        
+        throw new CLIError(errorMessage, 'TODO_NOT_FOUND');
       }
 
-      // Verify not already completed
-      if (todo.completed) {
-        this.log(
-          chalk.yellow(`Todo "${todo.title}" is already marked as completed`)
-        );
+      // Check if we're already in background mode to prevent recursion
+      if (process.env.WALTODO_BACKGROUND_MODE === 'true') {
+        // We're in background mode, process directly without spawning
+        await this.completeSingleTodo(todo, listName, typedFlags, !typedFlags.quiet);
+        return;
+      }
+      
+      // Handle background execution for single todo
+      if (typedFlags.background) {
+        const job = await this.createBackgroundJob([todo], listName, typedFlags);
+        this.log(chalk.green(`🚀 Started background completion job: ${job.id}`));
+        this.log(chalk.gray(`   Completing todo: "${todo.title}"`));
+        this.log(chalk.gray('   Use "waltodo jobs" to check progress'));
         return;
       }
 
-      // Initialize blockchain clients if needed
-      let suiClient: unknown | undefined;
-      let suiNftStorage: SuiNftStorage | undefined;
+      // Complete single todo in foreground
+      await this.completeSingleTodo(todo, listName, typedFlags, true);
 
-      if (todo.nftObjectId || todo.walrusBlobId) {
-        // Validate deployment config first
-        await this.validateBlockchainConfig(network);
-
-        // Initialize and check network connection
-        suiClient = { url: networkUrl }; // Mock SuiClient
-        const protocolVersion = await this.getNetworkStatus(suiClient);
-        this.log(
-          chalk.dim(
-            `Connected to ${network} (protocol version ${protocolVersion})`
-          )
-        );
-
-        // Validate NFT state and estimate gas if NFT exists
-        if (todo.nftObjectId) {
-          await this.validateNftState(suiClient, todo.nftObjectId);
-
-          // Initialize NFT storage
-          const signer = {} as Ed25519Keypair;
-          suiNftStorage = new SuiNftStorage(suiClient, signer, {
-            address: config.lastDeployment?.packageId ?? '',
-            packageId: config.lastDeployment?.packageId ?? '',
-          });
-
-          // Estimate gas for the operation
-          const gasEstimate = await this.estimateGasForNftUpdate(
-            suiClient,
-            todo.nftObjectId,
-            config.lastDeployment?.packageId ?? ''
-          );
-          this.log(
-            chalk.dim(
-              `Estimated gas cost: ${Number(gasEstimate.computationCost) + Number(gasEstimate.storageCost)} MIST`
-            )
-          );
-        }
-      }
-
-      // Update local todo first
-      this.log(chalk.blue(`Marking todo "${todo.title}" as completed...`));
-      await this.todoService.toggleItemStatus(args.list, todo.id, true);
-      this.log(chalk.green('\u2713 Local update successful'));
-
-      // Update configuration to record completion
-      await this.updateConfigWithCompletion(todo);
-
-      // Update NFT if exists
-      if (todo.nftObjectId && suiNftStorage) {
-        try {
-          this.log(chalk.blue('Updating NFT on blockchain...'));
-          const txDigest = await RetryManager.retry(
-            () =>
-              suiNftStorage.updateTodoNftCompletionStatus(todo.nftObjectId || ''),
-            {
-              maxRetries: 3,
-              initialDelay: 1000,
-              onRetry: (error, attempt, _delay) => {
-                const errorMessage = error instanceof Error
-                  ? error.message
-                  : typeof error === 'object' && error !== null && 'message' in error && typeof (error as Record<string, unknown>).message === 'string'
-                    ? (error as Record<string, unknown>).message as string
-                    : String(error);
-                this.log(
-                  chalk.yellow(
-                    `Retry attempt ${attempt} after error: ${errorMessage}`
-                  )
-                );
-              },
-            }
-          );
-          this.log(chalk.green('\u2713 Todo NFT updated on blockchain'));
-          this.log(chalk.dim(`Transaction: ${txDigest}`));
-
-          // Verify NFT update with proper error handling
-          await RetryManager.retry(
-            async () => {
-              try {
-                // Add timeout for verification to prevent hanging
-                const verificationPromise = (suiClient as { getObject: (params: { id: string; options: { showContent: boolean } }) => Promise<{ data?: { content?: unknown } }> }).getObject({
-                  id: todo.nftObjectId || '',
-                  options: { showContent: true },
-                });
-
-                let timeoutId: NodeJS.Timeout;
-                const timeoutPromise = new Promise<never>((_, reject) => {
-                  timeoutId = setTimeout(() => {
-                    reject(
-                      new Error('NFT verification timed out after 10 seconds')
-                    );
-                  }, 10000);
-                });
-
-                const result = await Promise.race([
-                  verificationPromise,
-                  timeoutPromise,
-                ]);
-                clearTimeout(timeoutId);
-
-                const content = result.data?.content as {
-                  fields?: { completed?: boolean };
-                };
-                if (!content?.fields?.completed) {
-                  throw new Error(
-                    'NFT update verification failed: completed flag not set'
-                  );
-                }
-              } catch (verifyError) {
-                const error =
-                  verifyError instanceof Error
-                    ? verifyError
-                    : new Error(String(verifyError));
-
-                throw new Error(`NFT verification error: ${error.message}`);
-              }
-            },
-            {
-              maxRetries: 3,
-              initialDelay: 2000,
-              onRetry: (error, attempt, _delay) => {
-                const errorMessage = error instanceof Error
-                  ? error.message
-                  : typeof error === 'object' && error !== null && 'message' in error && typeof (error as Record<string, unknown>).message === 'string'
-                    ? (error as Record<string, unknown>).message as string
-                    : String(error);
-                this.log(
-                  chalk.yellow(
-                    `Verification retry ${attempt} after error: ${errorMessage}`
-                  )
-                );
-              },
-            }
-          );
-        } catch (blockchainError) {
-          // Keep local update but throw error for blockchain update
-          throw new CLIError(
-            `Failed to update NFT on blockchain: ${blockchainError instanceof Error ? blockchainError.message : String(blockchainError)}\nLocal update was successful, but blockchain state may be out of sync.`,
-            'BLOCKCHAIN_UPDATE_FAILED'
-          );
-        }
-
-        // If the todo has a Walrus blob ID, update it
-        if (todo.walrusBlobId) {
-          try {
-            this.log(chalk.blue('Connecting to Walrus storage...'));
-            await this.walrusStorage.connect();
-
-            // Add proper timeout handling for Walrus operations with cleanup
-            let timeoutId: NodeJS.Timeout;
-            const timeout = new Promise<never>((_, reject) => {
-              timeoutId = setTimeout(() => {
-                reject(
-                  new Error('Walrus operation timed out after 30 seconds')
-                );
-              }, 30000);
-            });
-
-            // Update todo on Walrus with retries
-            this.log(chalk.blue('Updating todo on Walrus...'));
-
-            const updatedTodo = {
-              ...todo,
-              completed: true,
-              completedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
-
-            // Try update with retries
-            const maxRetries = 3;
-
-            for (let attempt = 1; attempt <= maxRetries; attempt++) {
-              try {
-                // Use Promise.race with proper cleanup in both success and error cases
-                let newBlobId: string | undefined;
-                try {
-                  newBlobId = (await Promise.race([
-                    this.walrusStorage.updateTodo(
-                      todo.walrusBlobId || '',
-                      updatedTodo
-                    ),
-                    timeout,
-                  ])) as string | undefined;
-                  clearTimeout(timeoutId); // Clear timeout on success
-                } catch (raceError) {
-                  clearTimeout(timeoutId); // Always clear timeout
-                  throw raceError; // Re-throw for outer catch to handle
-                }
-
-                if (typeof newBlobId === 'string') {
-                  // Update local todo with new blob ID
-                  await this.todoService.updateTodo(args.list, todo.id, {
-                    walrusBlobId: newBlobId,
-                    completedAt: updatedTodo.completedAt,
-                    updatedAt: updatedTodo.updatedAt,
-                  });
-
-                  // Save blob mapping for future reference
-                  this.saveBlobMapping(todo.id, newBlobId);
-
-                  this.log(chalk.green('\u2713 Todo updated on Walrus'));
-                  this.log(chalk.dim(`New blob ID: ${newBlobId}`));
-                  this.log(
-                    chalk.dim(
-                      `Public URL: https://testnet.wal.app/blob/${newBlobId}`
-                    )
-                  );
-                  break;
-                } else {
-                  throw new Error('Invalid blob ID returned from Walrus');
-                }
-              } catch (error) {
-                lastWalrusError =
-                  error instanceof Error ? error : new Error(String(error));
-                if (attempt === maxRetries) {
-                  this.log(
-                    chalk.yellow(
-                      '\u26a0\ufe0f Failed to update Walrus storage after all retries'
-                    )
-                  );
-                  this.log(
-                    chalk.yellow(
-                      'The todo has been marked as completed locally and on-chain, but Walrus blob is out of sync.'
-                    )
-                  );
-                  break;
-                }
-                this.log(
-                  chalk.yellow(`Attempt ${attempt} failed, retrying...`)
-                );
-                await new Promise(resolve =>
-                  setTimeout(resolve, 1000 * attempt)
-                );
-              }
-            }
-          } finally {
-            // Always try to disconnect
-            try {
-              await this.walrusStorage.disconnect();
-            } catch (disconnectError) {
-              // Just log this error, it's not critical
-              this.warn('Warning: Failed to disconnect from Walrus');
-            }
-          }
-        }
-      }
-
-      // Show final success message with appropriate details
-      this.log(chalk.green('\n\u2713 Todo completion summary:'));
-      this.log(chalk.dim('Title:'));
-      this.log(`  ${chalk.bold(todo.title)}`);
-
-      this.log(chalk.dim('\nUpdates:'));
-      this.log(`  ${chalk.green('\u2713')} Local storage`);
-      if (todo.nftObjectId) {
-        this.log(`  ${chalk.green('\u2713')} Blockchain NFT`);
-        this.log(chalk.blue('\nView your updated NFT:'));
-        this.log(
-          chalk.cyan(
-            `  https://explorer.sui.io/object/${todo.nftObjectId}?network=${network}`
-          )
-        );
-      }
-      if (todo.walrusBlobId) {
-        const walrusUpdateStatus = lastWalrusError
-          ? chalk.yellow('\u26a0\ufe0f')
-          : chalk.green('\u2713');
-        this.log(`  ${walrusUpdateStatus} Walrus storage`);
-      }
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
