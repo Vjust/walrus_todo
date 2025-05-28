@@ -301,9 +301,9 @@ describe('Batch Operations E2E Tests', () => {
     it('should maintain data integrity across batch operations', async () => {
       // Add todos with specific data
       const testData = [
-        { title: 'Test 1', priority: 'high', tags: ['urgent', 'work'] },
-        { title: 'Test 2', priority: 'medium', tags: ['personal'] },
-        { title: 'Test 3', priority: 'low', tags: ['optional'] },
+        { title: 'Test 1', priority: 'high' as const, tags: ['urgent', 'work'] },
+        { title: 'Test 2', priority: 'medium' as const, tags: ['personal'] },
+        { title: 'Test 3', priority: 'low' as const, tags: ['optional'] },
       ];
 
       for (const item of testData) {
@@ -326,7 +326,7 @@ describe('Batch Operations E2E Tests', () => {
       expect(retrievedTodos).toHaveLength(3);
       expect(retrievedTodos[0]).toMatchObject({
         title: 'Test 1',
-        priority: 'high',
+        priority: 'high' as const,
         tags: expect.arrayContaining(['urgent', 'work']),
       });
     });

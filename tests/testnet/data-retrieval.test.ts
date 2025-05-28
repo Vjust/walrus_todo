@@ -42,12 +42,12 @@ describe('Walrus Testnet Data Retrieval', () => {
     title: 'Test Todo from Walrus',
     description: 'This todo was retrieved from Walrus testnet',
     completed: false,
-    priority: 'high',
+    priority: 'high' as const,
     tags: ['test', 'walrus'],
     createdAt: '2024-01-15T10:00:00.000Z',
     updatedAt: '2024-01-15T10:00:00.000Z',
     private: false,
-    storageLocation: 'blockchain',
+    storageLocation: 'blockchain' as const,
     walrusBlobId: sampleTodoBlobId,
   };
 

@@ -29,12 +29,12 @@ const sampleTodo: Todo = {
   title: 'Test Todo',
   description: 'A test todo for queue testing',
   completed: false,
-  priority: 'medium',
+  priority: 'medium' as const,
   tags: ['test'],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   private: false,
-  storageLocation: 'local',
+  storageLocation: 'local' as const,
 };
 
 describe('Upload Queue System', () => {
@@ -66,7 +66,7 @@ describe('Upload Queue System', () => {
   describe('Job Management', () => {
     test('should add todo job to queue', async () => {
       const jobId = await queue.addTodoJob(sampleTodo, {
-        priority: 'medium',
+        priority: 'medium' as const,
         epochs: 5,
         network: 'testnet',
       });
@@ -94,7 +94,7 @@ describe('Upload Queue System', () => {
       };
 
       const jobId = await queue.addTodoListJob(todoList, {
-        priority: 'high',
+        priority: 'high' as const,
         epochs: 3,
         network: 'testnet',
       });
@@ -111,7 +111,7 @@ describe('Upload Queue System', () => {
       const testContent = 'Test blob content';
       const jobId = await queue.addBlobJob(testContent, {
         fileName: 'test.txt',
-        priority: 'low',
+        priority: 'low' as const,
         epochs: 2,
       });
 
@@ -125,9 +125,9 @@ describe('Upload Queue System', () => {
 
     test('should get jobs with filtering', async () => {
       // Add multiple jobs
-      await queue.addTodoJob(sampleTodo, { priority: 'high' });
-      await queue.addTodoJob({ ...sampleTodo, id: 'test-todo-2' }, { priority: 'low' });
-      await queue.addBlobJob('test', { priority: 'medium' });
+      await queue.addTodoJob(sampleTodo, { priority: 'high' as const });
+      await queue.addTodoJob({ ...sampleTodo, id: 'test-todo-2' }, { priority: 'low' as const });
+      await queue.addBlobJob('test', { priority: 'medium' as const });
 
       // Test filtering
       const allJobs = queue.getJobs();
@@ -136,7 +136,7 @@ describe('Upload Queue System', () => {
       const todoJobs = queue.getJobs({ type: 'todo' });
       expect(todoJobs).toHaveLength(2);
 
-      const highPriorityJobs = queue.getJobs({ priority: 'high' });
+      const highPriorityJobs = queue.getJobs({ priority: 'high' as const });
       expect(highPriorityJobs).toHaveLength(1);
 
       const pendingJobs = queue.getJobs({ status: 'pending' });
@@ -376,7 +376,7 @@ describe('Notification System', () => {
       type: 'todo',
       data: sampleTodo,
       status: 'pending',
-      priority: 'medium',
+      priority: 'medium' as const,
       retryCount: 0,
       maxRetries: 3,
       epochs: 5,

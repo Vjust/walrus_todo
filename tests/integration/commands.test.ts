@@ -823,7 +823,7 @@ View your updated NFT:
                   title: 'Existing todo',
                   completed: false,
                   createdAt: new Date().toISOString(),
-                  priority: 'high',
+                  priority: 'high' as const,
                   category: 'work',
                 },
               ]);

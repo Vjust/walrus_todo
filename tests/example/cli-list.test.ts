@@ -26,12 +26,12 @@ describe('WalTodo list command', () => {
     createTestTodo({
       id: 'todo-1',
       title: 'First test todo',
-      priority: 'medium',
+      priority: 'medium' as const,
     }),
     createTestTodo({
       id: 'todo-2',
       title: 'High priority todo',
-      priority: 'high',
+      priority: 'high' as const,
     }),
     createTestTodo({
       id: 'todo-3',
@@ -64,7 +64,7 @@ describe('WalTodo list command', () => {
       testList,
       createTestTodoList('work', [
         createTestTodo({ title: 'Work todo 1' }),
-        createTestTodo({ title: 'Work todo 2', priority: 'high' }),
+        createTestTodo({ title: 'Work todo 2', priority: 'high' as const }),
       ]),
       createTestTodoList('personal', [
         createTestTodo({ title: 'Personal todo' }),

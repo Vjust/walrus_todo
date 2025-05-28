@@ -83,7 +83,7 @@ describe('WalTodo add command', () => {
       'default',
       expect.objectContaining({
         title: 'High priority task',
-        priority: 'high',
+        priority: 'high' as const,
       })
     );
   });

@@ -63,7 +63,7 @@ const sampleTodo: Todo = {
   completed: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  priority: 'medium',
+  priority: 'medium' as const,
   tags: [],
   private: false,
 };
@@ -77,7 +77,7 @@ const sampleTodos: Todo[] = [
     completed: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    priority: 'low',
+    priority: 'low' as const,
     tags: [],
     private: false,
   },

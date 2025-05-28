@@ -6,7 +6,7 @@ import { createWalrusModuleMock, type CompleteWalrusClientMock } from '../helper
 // Mock the external dependencies
 jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 
-jest.mock('@mysten/sui.js/client', () => ({
+jest.mock('../../apps/cli/src/utils/adapters/sui-client-compatibility', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
     connect: jest.fn(),
     getBalance: jest.fn(),
@@ -21,7 +21,7 @@ jest.mock('child_process', () => ({
   execSync: jest.fn(),
 }));
 
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { execSync } from 'child_process';
 
 // Removed unused types
@@ -94,7 +94,7 @@ describe('WalrusStorage', () => {
       completed: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      priority: 'medium',
+      priority: 'medium' as const,
       tags: [],
       private: false,
     };

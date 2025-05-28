@@ -8,7 +8,7 @@ describe('TodoSizeCalculator', () => {
     title: 'Test Todo',
     description: 'This is a test todo description for calculator testing',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     tags: ['test', 'calculator'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

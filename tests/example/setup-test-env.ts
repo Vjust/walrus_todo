@@ -43,12 +43,12 @@ export function createTestTodo(overrides = {}) {
     title: 'Test Todo',
     description: 'A todo item for testing',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     tags: ['test', 'example'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: false,
-    storageLocation: 'local',
+    storageLocation: 'local' as const,
     ...overrides,
   };
 }

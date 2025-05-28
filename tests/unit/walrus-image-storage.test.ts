@@ -1,6 +1,6 @@
 import type { WalrusClient } from '../../apps/cli/src/types/client';
 import { createWalrusImageStorage } from '../../apps/cli/src/utils/walrus-image-storage';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 // import { TransactionBlock } from '@mysten/sui/transactions';
 import { KeystoreSigner } from '../../apps/cli/src/utils/sui-keystore';
 import { createWalrusModuleMock, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
@@ -12,7 +12,7 @@ import * as path from 'path';
 // Mock the Walrus module with complete implementation
 jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 
-jest.mock('@mysten/sui.js/client', () => ({
+jest.mock('../../apps/cli/src/utils/adapters/sui-client-compatibility', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
     connect: jest.fn(),
     getBalance: jest.fn(),

@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from './adapters/sui-client-compatibility';
 import { type Signer } from '@mysten/sui/cryptography';
 import { Logger } from './Logger';
 

@@ -44,7 +44,7 @@ describe('Walrus Testnet Integration', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         tags: ['test', 'walrus', 'integration'],
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       // console.log('Storing todo on Walrus testnet...'); // Removed console statement
@@ -66,7 +66,7 @@ describe('Walrus Testnet Integration', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         tags: ['retrieval', 'test'],
-        priority: 'medium',
+        priority: 'medium' as const,
       };
 
       // console.log('Storing todo for retrieval test...'); // Removed console statement

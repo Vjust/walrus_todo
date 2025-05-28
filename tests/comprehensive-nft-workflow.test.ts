@@ -37,7 +37,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
     title: 'Test Todo for NFT',
     description: 'This is a test todo that will be converted to NFT',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     dueDate: '2024-12-31',
     tags: ['test', 'nft'],
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -45,7 +45,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
     private: false,
     imageUrl: 'https://walrus.test/blob/test-blob-id-123',
     walrusBlobId: 'test-blob-id-123',
-    storageLocation: 'blockchain'
+    storageLocation: 'blockchain' as const
   };
 
   const mockConfig = {
@@ -236,7 +236,7 @@ describe('Comprehensive NFT Workflow Tests', () => {
         const createTodoParams: CreateTodoParams = {
           title: 'Frontend Todo',
           description: 'Created from frontend',
-          priority: 'high',
+          priority: 'high' as const,
           tags: ['frontend', 'test']
         };
 
@@ -470,7 +470,7 @@ describe('NFT Workflow Integration Helpers', () => {
       title: 'Test Todo',
       description: 'Test Description',
       completed: false,
-      priority: 'medium',
+      priority: 'medium' as const,
       dueDate: '2024-12-31',
       tags: ['test'],
       createdAt: '2024-01-01T00:00:00.000Z',
