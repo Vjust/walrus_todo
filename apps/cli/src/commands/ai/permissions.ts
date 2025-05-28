@@ -8,6 +8,7 @@ import {
   AIPermissionManager,
   initializePermissionManager,
 } from '../../services/ai/AIPermissionManager';
+import { SignerAdapter } from '../../types/adapters/SignerAdapter';
 import chalk = require('chalk');
 import { KeystoreSigner } from '../../utils/sui-keystore';
 import { createInterface } from 'readline';
@@ -95,8 +96,8 @@ export default class AiPermissions extends BaseCommand {
       // Initialize blockchain components
       const keystoreSigner = await this.getSuiSigner();
       const suiClient = keystoreSigner.getClient();
-      // KeystoreSigner already implements SignerAdapter, so use it directly
-      const signer = keystoreSigner;
+      // KeystoreSigner implements SignerAdapter, so use it directly with type assertion
+      const signer: SignerAdapter = keystoreSigner as SignerAdapter;
 
       // Create verifier adapter
       const verifierAdapter = new SuiAIVerifierAdapter(
@@ -137,9 +138,10 @@ export default class AiPermissions extends BaseCommand {
     if (!localPermissionManager) {
       try {
         const keystoreSigner = await this.getSuiSigner();
+        const signer: SignerAdapter = keystoreSigner as SignerAdapter;
         localPermissionManager = initializePermissionManager(
           secureCredentialManager,
-          new BlockchainVerifier(new SuiAIVerifierAdapter(keystoreSigner.getClient(), keystoreSigner, '', '')) // Dummy verifier
+          new BlockchainVerifier(new SuiAIVerifierAdapter(keystoreSigner.getClient(), signer, '', '')) // Dummy verifier
         );
       } catch (error) {
         this.warn('Could not initialize permission manager with signer, using minimal setup');
@@ -192,7 +194,7 @@ export default class AiPermissions extends BaseCommand {
             JSON.stringify(
               {
                 provider: flags.provider,
-                permission_level: this.permissionLevelToString(permissionLevel),
+                permission_level: this.permissionLevelToString(permissionLevel || AIPermissionLevel.STANDARD),
                 allowed_operations: operations,
               },
               null,
@@ -202,7 +204,7 @@ export default class AiPermissions extends BaseCommand {
         } else {
           this.log(chalk.bold(`Permissions for ${flags.provider}:`));
           this.log(
-            `Permission Level: ${chalk.cyan(this.permissionLevelToString(permissionLevel))}`
+            `Permission Level: ${chalk.cyan(this.permissionLevelToString(permissionLevel || AIPermissionLevel.STANDARD))}`
           );
 
           if (operations.length === 0) {
@@ -237,7 +239,7 @@ export default class AiPermissions extends BaseCommand {
               return {
                 provider: c.providerName,
                 permission_level: this.permissionLevelToString(
-                  c.permissionLevel
+                  c.permissionLevel || AIPermissionLevel.STANDARD
                 ),
                 allowed_operations: operations,
               };
@@ -255,7 +257,7 @@ export default class AiPermissions extends BaseCommand {
 
             this.log(chalk.bold(`\n${credential.providerName}:`));
             this.log(
-              `  Permission Level: ${chalk.cyan(this.permissionLevelToString(credential.permissionLevel))}`
+              `  Permission Level: ${chalk.cyan(this.permissionLevelToString(credential.permissionLevel || AIPermissionLevel.STANDARD))}`
             );
 
             if (operations.length === 0) {
@@ -316,7 +318,7 @@ export default class AiPermissions extends BaseCommand {
               provider: flags.provider,
               operation: flags.aiOperation,
               permission: hasPermission,
-              permission_level: this.permissionLevelToString(permissionLevel),
+              permission_level: this.permissionLevelToString(permissionLevel || AIPermissionLevel.STANDARD),
             },
             null,
             2
@@ -326,7 +328,7 @@ export default class AiPermissions extends BaseCommand {
         this.log(chalk.bold(`Permission Check for ${flags.provider}:`));
         this.log(`Operation:        ${chalk.cyan(flags.aiOperation)}`);
         this.log(
-          `Permission Level: ${chalk.cyan(this.permissionLevelToString(permissionLevel))}`
+          `Permission Level: ${chalk.cyan(this.permissionLevelToString(permissionLevel || AIPermissionLevel.STANDARD))}`
         );
         this.log(
           `Result:           ${hasPermission ? chalk.green('Allowed') : chalk.red('Denied')}`
@@ -650,7 +652,11 @@ export default class AiPermissions extends BaseCommand {
     }
   }
 
-  private permissionLevelToString(level: AIPermissionLevel): string {
+  private permissionLevelToString(level: AIPermissionLevel | undefined | null): string {
+    if (level === undefined || level === null) {
+      return 'Standard';
+    }
+    
     switch (level) {
       case AIPermissionLevel.NO_ACCESS:
         return 'No Access';

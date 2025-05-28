@@ -18,6 +18,7 @@ import { EnhancedAIService } from '../services/ai/EnhancedAIService';
 import { createCache } from '../utils/performance-cache';
 import crypto from 'crypto';
 import { KeystoreSigner } from '../utils/sui-keystore';
+import { SignerAdapter } from '../types/adapters/SignerAdapter';
 import { getPermissionManager } from '../services/ai/AIPermissionManager';
 import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
 import { checkbox } from '@inquirer/prompts';
@@ -267,7 +268,7 @@ export default class Suggest extends BaseCommand {
         const keystoreSigner = await this.getSuiSigner();
         const suiClient = keystoreSigner.getClient();
         // KeystoreSigner already implements SignerAdapter, so use it directly
-        const signer = keystoreSigner;
+        const signer = keystoreSigner as SignerAdapter;
 
         // Create verifier adapter
         const verifierAdapter = new SuiAIVerifierAdapter(
