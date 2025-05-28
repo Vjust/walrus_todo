@@ -1,10 +1,19 @@
 /**
  * Configuration management for Sui client
  * Handles dynamic configuration loading for both browser and Node.js environments
+ * Uses @waltodo/config-loader for dynamic configuration loading
  */
 
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { AppConfig, NetworkConfig, NetworkType, NetworkError } from './types';
+
+// Import config-loader for dynamic configuration loading
+let configLoader: any = null;
+try {
+  configLoader = require('@waltodo/config-loader');
+} catch (error) {
+  console.debug('[SuiClient] @waltodo/config-loader not available, using fallback configurations');
+}
 
 // Configuration cache
 let cachedConfig: AppConfig | null = null;
@@ -252,7 +261,67 @@ function createFallbackConfig(network: string): AppConfig {
 }
 
 /**
+ * Transform config-loader format to sui-client format
+ */
+function transformConfigLoaderConfig(configLoaderResult: any): AppConfig {
+  // Handle different possible structures from config-loader
+  const config = configLoaderResult.config || configLoaderResult;
+  
+  return {
+    network: {
+      name: config.network?.name || config.network || 'testnet',
+      url: config.network?.url || config.rpcUrl || getNetworkUrl(config.network || 'testnet'),
+      faucetUrl: config.network?.faucetUrl,
+      explorerUrl: config.network?.explorerUrl || getDefaultExplorerUrl(config.network?.name || config.network || 'testnet'),
+    },
+    walrus: {
+      networkUrl: config.walrus?.networkUrl || '',
+      publisherUrl: config.walrus?.publisherUrl || '',
+      aggregatorUrl: config.walrus?.aggregatorUrl || '',
+      apiPrefix: config.walrus?.apiPrefix || '',
+    },
+    deployment: {
+      packageId: config.deployment?.packageId || '0x0',
+      digest: config.deployment?.transactionHash || 'unknown',
+      timestamp: config.deployment?.timestamp || new Date().toISOString(),
+      deployerAddress: config.deployment?.deployerAddress || '0x0',
+    },
+    contracts: {
+      todoNft: {
+        packageId: config.contracts?.todoNft?.packageId || config.deployment?.packageId || '0x0',
+        moduleName: config.contracts?.todoNft?.moduleName || 'todo_nft',
+        structName: config.contracts?.todoNft?.structName || 'TodoNFT',
+      },
+    },
+    features: {
+      aiEnabled: config.features?.aiIntegration !== false,
+      blockchainVerification: config.features?.blockchainVerification || false,
+      encryptedStorage: config.features?.encryptedStorage || false,
+    },
+  };
+}
+
+/**
+ * Get default explorer URL for a network
+ */
+function getDefaultExplorerUrl(network: string): string {
+  switch (network) {
+    case 'mainnet':
+      return 'https://suiexplorer.com';
+    case 'testnet':
+      return 'https://testnet.suiexplorer.com';
+    case 'devnet':
+      return 'https://devnet.suiexplorer.com';
+    case 'localnet':
+      return 'http://localhost:9001';
+    default:
+      return 'https://testnet.suiexplorer.com';
+  }
+}
+
+/**
  * Loads the application configuration for the current network
+ * Uses @waltodo/config-loader when available, falls back to built-in configurations
  */
 export async function loadAppConfig(networkOverride?: string): Promise<AppConfig> {
   const network = networkOverride || getCurrentNetwork();
@@ -264,16 +333,35 @@ export async function loadAppConfig(networkOverride?: string): Promise<AppConfig
 
   console.log(`[SuiClient] Loading configuration for ${network} network`);
 
-  // Try to load configuration based on environment
   let config: AppConfig | null = null;
 
-  if (isBrowserEnvironment()) {
-    config = await loadGeneratedConfig(network);
-  } else {
-    config = await loadCliConfig(network);
+  // Try to use config-loader first
+  if (configLoader) {
+    try {
+      const loadResult = await configLoader.loadNetworkConfig(network, {
+        enableCache: true,
+        fallbackToLocalnet: false,
+      });
+      
+      if (loadResult && loadResult.config) {
+        config = transformConfigLoaderConfig(loadResult.config);
+        console.log(`[SuiClient] Loaded configuration from config-loader (${loadResult.source})`);
+      }
+    } catch (error) {
+      console.warn(`[SuiClient] Failed to load config using config-loader:`, error);
+    }
   }
 
-  // Fall back to default configuration if needed
+  // Fallback to original loading method if config-loader failed
+  if (!config) {
+    if (isBrowserEnvironment()) {
+      config = await loadGeneratedConfig(network);
+    } else {
+      config = await loadCliConfig(network);
+    }
+  }
+
+  // Fall back to default configuration if still no config
   if (!config) {
     config = createFallbackConfig(network);
   }

@@ -3,7 +3,7 @@
  * Configures Walrus binary paths and API endpoints
  */
 
-import { Logger } from '../../../src/utils/Logger';
+import { Logger } from '../../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('walrus-setup');
 

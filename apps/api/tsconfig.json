@@ -17,8 +17,6 @@
     "sourceMap": true,
     "moduleResolution": "node",
     "allowJs": true,
-    "noImplicitUseStrict": true,
-    "suppressImplicitAnyIndexErrors": true,
     "types": ["node", "express"]
   },
   "include": [

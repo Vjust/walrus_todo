@@ -297,7 +297,7 @@ function runTranspileOnly(): void {
       try {
         // Read the file
         const fileContent = fs.readFileSync(fileName, 'utf8');
-        const sourceText = typeof fileContent === 'string' ? fileContent : fileContent.toString();
+        const sourceText = fileContent;
 
         // Transpile the file (no type checking)
         const { outputText } = ts.transpileModule(sourceText, {

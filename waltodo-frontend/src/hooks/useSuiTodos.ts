@@ -7,32 +7,14 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-// Use the Todo type from sui-client
-type Todo = SuiTodo;
-
-interface CreateTodoParams {
-  title: string;
-  description: string;
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string;
-  tags?: string[];
-}
-
-interface UpdateTodoParams {
-  objectId: string;
-  title?: string;
-  description?: string;
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string;
-}
-
-interface TransactionResult {
-  success: boolean;
-  digest?: string;
-  error?: string;
-}
-
-type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+// Use unified types
+import type { 
+  Todo, 
+  CreateTodoParams, 
+  UpdateTodoParams,
+  TransactionResult as TodoTransactionResult,
+  NetworkType
+} from '@/types/todo-nft';
 
 interface UseSuiTodosState {
   todos: Todo[];
@@ -43,10 +25,10 @@ interface UseSuiTodosState {
 }
 
 interface UseSuiTodosActions {
-  createTodo: (params: CreateTodoParams) => Promise<TransactionResult>;
-  updateTodo: (params: UpdateTodoParams) => Promise<TransactionResult>;
-  completeTodo: (objectId: string) => Promise<TransactionResult>;
-  deleteTodo: (objectId: string) => Promise<TransactionResult>;
+  createTodo: (params: CreateTodoParams) => Promise<TodoTransactionResult>;
+  updateTodo: (params: UpdateTodoParams) => Promise<TodoTransactionResult>;
+  completeTodo: (objectId: string) => Promise<TodoTransactionResult>;
+  deleteTodo: (objectId: string) => Promise<TodoTransactionResult>;
   refreshTodos: () => Promise<void>;
   switchToNetwork: (network: NetworkType) => Promise<void>;
   checkHealth: () => Promise<void>;
@@ -73,7 +55,8 @@ import {
   deleteTodo as deleteLocalTodo,
   type WalletSigner,
 } from '@/lib/todo-service';
-import { Todo as SuiTodo, TodoList } from '@/lib/sui-client';
+import { getTodosFromBlockchain } from '@/lib/sui-client';
+import type { TodoList } from '@/types/todo-nft';
 
 /**
  * Hook for managing TodoNFTs on Sui blockchain
@@ -85,7 +68,7 @@ export function useSuiTodos(): UseSuiTodosReturn {
     address,
     trackTransaction,
     error: walletError,
-    setError: setWalletError,
+    clearError: clearWalletError,
   } = walletContext;
 
   const [state, setState] = useState<UseSuiTodosState>({
@@ -121,8 +104,8 @@ export function useSuiTodos(): UseSuiTodosReturn {
   // Clear error
   const clearError = useCallback(() => {
     setError(null);
-    setWalletError(null);
-  }, [setError, setWalletError]);
+    clearWalletError();
+  }, [setError, clearWalletError]);
 
   // Check network health
   const checkHealth = useCallback(async () => {
@@ -210,7 +193,7 @@ export function useSuiTodos(): UseSuiTodosReturn {
 
   // Create todo (locally first, then optionally on blockchain)
   const createTodo = useCallback(
-    async (params: CreateTodoParams): Promise<TransactionResult> => {
+    async (params: CreateTodoParams): Promise<TodoTransactionResult> => {
       setLoading(true);
       setError(null);
 
@@ -247,7 +230,9 @@ export function useSuiTodos(): UseSuiTodosReturn {
             address
           ).then(objectId => ({ digest: objectId || undefined }));
 
-          const result = await trackTransaction(todoPromise, 'Create Todo NFT');
+          const result = trackTransaction 
+            ? await trackTransaction(todoPromise, 'Create Todo NFT')
+            : await todoPromise;
           const objectId = result.digest;
 
           if (objectId) {
@@ -282,7 +267,7 @@ export function useSuiTodos(): UseSuiTodosReturn {
 
   // Update todo on blockchain
   const updateTodo = useCallback(
-    async (params: UpdateTodoParams): Promise<TransactionResult> => {
+    async (params: UpdateTodoParams): Promise<TodoTransactionResult> => {
       if (!isWalletReady || !address) {
         throw new Error('Wallet not connected');
       }
@@ -292,7 +277,7 @@ export function useSuiTodos(): UseSuiTodosReturn {
 
       try {
         // Mock transaction
-        const result: TransactionResult = {
+        const result: TodoTransactionResult = {
           success: true,
           digest: 'mock_digest_' + Date.now(),
         };
@@ -332,7 +317,7 @@ export function useSuiTodos(): UseSuiTodosReturn {
 
   // Complete todo
   const completeTodo = useCallback(
-    async (todoId: string): Promise<TransactionResult> => {
+    async (todoId: string): Promise<TodoTransactionResult> => {
       setLoading(true);
       setError(null);
 
@@ -369,10 +354,9 @@ export function useSuiTodos(): UseSuiTodosReturn {
             address
           ).then(success => ({ digest: success ? 'completed' : undefined }));
 
-          const result = await trackTransaction(
-            completePromise,
-            'Complete Todo NFT'
-          );
+          const result = trackTransaction 
+            ? await trackTransaction(completePromise, 'Complete Todo NFT')
+            : await completePromise;
           const success = !!result.digest;
 
           if (!success) {
@@ -406,7 +390,7 @@ export function useSuiTodos(): UseSuiTodosReturn {
 
   // Transfer todo NFT (delete locally after transfer)
   const deleteTodo = useCallback(
-    async (todoId: string): Promise<TransactionResult> => {
+    async (todoId: string): Promise<TodoTransactionResult> => {
       setLoading(true);
       setError(null);
 
@@ -454,11 +438,20 @@ export function useSuiTodos(): UseSuiTodosReturn {
 
   // Auto-refresh todos when wallet connects
   useEffect(() => {
-    if (isWalletReady) {
-      refreshTodos();
-      checkHealth();
-    }
-  }, [isWalletReady, refreshTodos, checkHealth]);
+    if (!isWalletReady) return;
+    (async () => {
+      setRefreshing(true);
+      try {
+        const chainTodos = await getTodosFromBlockchain(address!);
+        setState(s => ({ ...s, todos: chainTodos, error: null }));
+        await checkHealth();
+      } catch (err) {
+        setError(`Failed to load blockchain todos: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setRefreshing(false);
+      }
+    })();
+  }, [isWalletReady, address, setRefreshing, setError, checkHealth]);
 
   // Auto-check health periodically
   useEffect(() => {
@@ -492,10 +485,10 @@ export function useSuiTodos(): UseSuiTodosReturn {
 export function useTodoOperation() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<TransactionResult | null>(null);
+  const [result, setResult] = useState<TodoTransactionResult | null>(null);
 
   const executeOperation = useCallback(
-    async (operation: () => Promise<TransactionResult>) => {
+    async (operation: () => Promise<TodoTransactionResult>) => {
       setLoading(true);
       setError(null);
       setResult(null);
@@ -534,7 +527,7 @@ export type {
   Todo,
   CreateTodoParams,
   UpdateTodoParams,
-  TransactionResult,
+  TodoTransactionResult as TransactionResult,
   NetworkType,
   UseSuiTodosState,
   UseSuiTodosActions,

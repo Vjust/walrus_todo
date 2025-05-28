@@ -5,8 +5,8 @@
  * including timeouts, disconnections, and rate limiting.
  */
 
-import { RetryManager } from '../../src/utils/retry-manager';
-import { NetworkError } from '../../src/types/errors';
+import { RetryManager } from '../../apps/cli/src/utils/retry-manager';
+import { NetworkError } from '../../apps/cli/src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
 describe('Network Error Handling', () => {

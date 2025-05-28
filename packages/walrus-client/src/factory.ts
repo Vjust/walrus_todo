@@ -50,17 +50,10 @@ export function createWalrusImageStorage(
  * Create a Walrus todo storage client
  */
 export function createWalrusTodoStorage(
-  networkOrConfig?: WalrusNetwork | WalrusConfig | Partial<WalrusConfig>
+  network: WalrusNetwork = 'testnet',
+  options?: { useMockMode?: boolean }
 ): WalrusTodoStorage {
-  if (typeof networkOrConfig === 'string') {
-    return new WalrusTodoStorage(WalrusConfig.forNetwork(networkOrConfig));
-  }
-  
-  if (networkOrConfig instanceof WalrusConfig) {
-    return new WalrusTodoStorage(networkOrConfig);
-  }
-  
-  return new WalrusTodoStorage(new WalrusConfig(networkOrConfig));
+  return new WalrusTodoStorage(network, options);
 }
 
 /**
@@ -82,12 +75,49 @@ export async function createWalrusClientFromUrl(configUrl: string): Promise<Walr
  * Create a mock client for testing
  */
 export function createMockWalrusClient(network: WalrusNetwork = 'testnet'): WalrusClient {
-  const config = WalrusConfig.forNetwork(network);
-  // In a real implementation, this would return a mock client
-  // For now, return regular client with mock URLs
-  config.update({
-    publisherUrl: `http://localhost:31415`, // Mock URLs
-    aggregatorUrl: `http://localhost:31416`,
-  });
-  return new WalrusClient(config);
+  return new WalrusClient({ network, useMockMode: true });
+}
+
+/**
+ * Create a mock todo storage for testing
+ */
+export function createMockWalrusTodoStorage(network: WalrusNetwork = 'testnet'): WalrusTodoStorage {
+  return new WalrusTodoStorage(network, { useMockMode: true });
+}
+
+/**
+ * Create client for specific network with sensible defaults
+ */
+export function createTestnetClient(): WalrusClient {
+  return createWalrusClient('testnet');
+}
+
+export function createMainnetClient(): WalrusClient {
+  return createWalrusClient('mainnet');
+}
+
+export function createLocalClient(): WalrusClient {
+  return createWalrusClient('localnet');
+}
+
+/**
+ * Create clients with config-loader integration
+ */
+export async function createWalrusClientWithDynamicConfig(
+  network: WalrusNetwork = 'testnet'
+): Promise<WalrusClient> {
+  try {
+    // Try to import config-loader if available
+    const { loadConfig } = await import('@waltodo/config-loader');
+    const config = await loadConfig();
+    
+    return new WalrusClient({
+      network: config?.walrus?.network || network,
+      publisherUrl: config?.walrus?.publisherUrl,
+      aggregatorUrl: config?.walrus?.aggregatorUrl,
+    });
+  } catch (error) {
+    console.warn('Config loader not available, using default config:', error);
+    return createWalrusClient(network);
+  }
 }

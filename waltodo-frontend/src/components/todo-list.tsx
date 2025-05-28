@@ -281,7 +281,7 @@ export default function TodoList({ listName }: TodoListProps) {
 
       {displayTodos.map(todo => (
         <div
-          key={todo.id}
+          key={todo.objectId ?? todo.id}
           data-testid='todo-item'
           className={`p-4 rounded-lg transition-all ${
             todo.completed

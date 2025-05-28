@@ -3,7 +3,7 @@
  * In a production app, this would integrate with the backend CLI
  */
 
-import { Todo, TodoList } from './sui-client';
+import type { Todo, TodoList } from '@/types/todo-nft';
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { PublicKey } from '@solana/web3.js';

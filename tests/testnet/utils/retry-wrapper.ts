@@ -1,5 +1,5 @@
-import { RetryManager } from '../../../src/utils/retry-manager';
-import { CLIError } from '../../../src/types/errors';
+import { RetryManager } from '../../../apps/cli/src/utils/retry-manager';
+import { CLIError } from '../../../apps/cli/src/types/errors';
 
 describe('Testnet Retry Wrapper - Network Resilience', () => {
   // Testnet configuration with realistic URLs

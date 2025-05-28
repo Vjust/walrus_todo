@@ -5,9 +5,9 @@
  * including transaction failures, verification errors, and consensus issues.
  */
 
-import { BlockchainError, TransactionError } from '../../src/types/errors';
+import { BlockchainError, TransactionError } from '../../apps/cli/src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
-import { BlobVerificationManager } from '../../src/utils/blob-verification';
+import { BlobVerificationManager } from '../../apps/cli/src/utils/blob-verification';
 
 // Create mock clients and services
 // Unused imports removed during TypeScript cleanup

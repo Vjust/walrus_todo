@@ -1,5 +1,5 @@
 /**
-import { Logger } from '../../../../src/utils/Logger';
+import { Logger } from '../../../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('basic-setup');
  * Basic Setup Example

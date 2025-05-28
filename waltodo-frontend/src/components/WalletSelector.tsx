@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { WalletType } from '@/types/wallet';
 import { WalletErrorModal } from './WalletErrorModal';
-import { WalletNotInstalledError } from '@/lib/wallet-errors';
+import { WalletNotInstalledError, WalletError } from '@/lib/wallet-errors';
 
 interface WalletOption {
   type: WalletType;
@@ -157,7 +157,10 @@ export function WalletSelector() {
     <div className='relative'>
       {/* Show error modal when there's a wallet error */}
       {error && (
-        <WalletErrorModal error={error} onDismiss={handleDismissError} />
+        <WalletErrorModal 
+          error={typeof error === 'string' ? new WalletError(error) : error} 
+          onDismiss={handleDismissError} 
+        />
       )}
 
       <button

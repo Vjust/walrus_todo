@@ -3,7 +3,7 @@
  * Enhanced implementation with full Sui SDK integration and auto-generated configuration
  */
 
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient, type SuiObjectResponse, type SuiMoveObject, type PaginatedObjectsResponse } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromB64 } from '@mysten/sui/utils';
@@ -21,30 +21,15 @@ const TODO_NFT_CONFIG = {
   STRUCT_NAME: 'TodoNFT',
 } as const;
 
-export type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
-
-export interface Todo {
-  id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  priority: 'low' | 'medium' | 'high';
-  tags?: string[];
-  dueDate?: string;
-  blockchainStored: boolean;
-  objectId?: string; // Sui object ID when stored on chain
-  imageUrl?: string;
-  createdAt?: number;
-  completedAt?: number;
-  owner?: string;
-  metadata?: string;
-  isPrivate?: boolean;
-}
-
-export interface TodoList {
-  name: string;
-  todos: Todo[];
-}
+// Import unified types
+import type { 
+  Todo, 
+  TodoList, 
+  CreateTodoParams, 
+  UpdateTodoParams, 
+  TransactionResult, 
+  NetworkType 
+} from '@/types/todo-nft';
 
 export interface SuiTodoNFT {
   id: {
@@ -61,28 +46,15 @@ export interface SuiTodoNFT {
   is_private: boolean;
 }
 
-export interface TransactionResult {
-  success: boolean;
-  digest?: string;
-  objectId?: string;
-  error?: string;
-}
-
-export interface CreateTodoParams {
-  title: string;
-  description: string;
-  imageUrl: string;
-  metadata?: string;
-  isPrivate?: boolean;
-}
-
-export interface UpdateTodoParams {
-  objectId: string;
-  title?: string;
-  description?: string;
-  imageUrl?: string;
-  metadata?: string;
-}
+// Re-export for convenience
+export type { 
+  Todo, 
+  TodoList, 
+  CreateTodoParams, 
+  UpdateTodoParams, 
+  TransactionResult, 
+  NetworkType 
+};
 
 // Error classes for better error handling
 export class SuiClientError extends Error {
@@ -326,7 +298,7 @@ export function createTodoNFTTransaction(
     arguments: [
       tx.pure(bcs.string().serialize(params.title)),
       tx.pure(bcs.string().serialize(params.description)),
-      tx.pure(bcs.string().serialize(params.imageUrl)),
+      tx.pure(bcs.string().serialize(params.imageUrl || '')),
       tx.pure(bcs.string().serialize(params.metadata || '')),
       tx.pure(bcs.bool().serialize(params.isPrivate || false)),
     ],

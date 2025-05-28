@@ -8,7 +8,7 @@ import {
   createNetworkConfig,
   SuiClientProvider,
   WalletProvider,
-  useCurrentAccount,
+  useCurrentAccount as useCurrentAccountDApp,
   useConnectWallet,
   useDisconnectWallet,
   useSignAndExecuteTransaction,
@@ -20,6 +20,12 @@ import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Transaction } from '@mysten/sui/transactions';
 import { bcs } from '@mysten/sui/bcs';
+import { 
+  normalizeTransactionResult, 
+  normalizeOwnedObjectsResponse,
+  checkVersionCompatibility,
+  ReactCompatibility 
+} from './compatibility';
 import {
   AppConfig,
   NetworkType,
@@ -127,8 +133,8 @@ export function useWalTodoWallet(): WalTodoWalletContextType {
  * Enhanced wallet context provider with WalTodo-specific functionality
  */
 function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
-  // Mysten dApp Kit hooks
-  const account = useCurrentAccount();
+  // Mysten dApp Kit hooks with compatibility wrapper
+  const account = useCurrentAccountDApp();
   const { mutate: connectWallet, isPending: connecting } = useConnectWallet();
   const { mutate: disconnectWallet } = useDisconnectWallet();
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
@@ -222,13 +228,8 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         setTransactionHistory((prev) => [transaction, ...prev.slice(0, 49)]);
         resetActivityTimer();
 
-        return {
-          digest: result.digest,
-          effects: result.effects,
-          events: result.events,
-          objectChanges: result.objectChanges,
-          balanceChanges: result.balanceChanges,
-        };
+        // Use compatibility wrapper for transaction result
+        return normalizeTransactionResult(result);
       } catch (error) {
         console.error('[WalTodoWallet] Transaction error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -345,7 +346,7 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const response = await suiClient.getOwnedObjects({
+      const rawResponse = await suiClient.getOwnedObjects({
         owner: account.address,
         filter: {
           StructType: `${config.contracts.todoNft.packageId}::${config.contracts.todoNft.moduleName}::${config.contracts.todoNft.structName}`,
@@ -357,6 +358,8 @@ function WalTodoWalletContextProvider({ children }: { children: ReactNode }) {
         },
       });
 
+      // Use compatibility wrapper for response
+      const response = normalizeOwnedObjectsResponse(rawResponse);
       const todos: Todo[] = [];
 
       for (const item of response.data) {
@@ -473,6 +476,11 @@ export function WalTodoWalletProvider({
   defaultNetwork = 'testnet',
   autoConnect = true,
 }: WalTodoWalletProviderProps) {
+  // Check version compatibility on initialization
+  useEffect(() => {
+    checkVersionCompatibility();
+  }, []);
+
   // Create network configuration
   const { networkConfig } = createNetworkConfig({
     testnet: { url: getFullnodeUrl('testnet') },
@@ -506,7 +514,58 @@ export function useExecuteTxn() {
 }
 
 /**
+ * Enhanced hook for transaction execution with loading states
+ */
+export function useTransactionExecution() {
+  const { signAndExecuteTransaction, connected, account } = useWalTodoWallet();
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [lastResult, setLastResult] = useState<TransactionResult | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  const executeTransaction = useCallback(
+    async (transaction: Transaction): Promise<TransactionResult> => {
+      if (!connected || !account) {
+        const error = 'Wallet not connected';
+        setLastError(error);
+        throw new WalletNotConnectedError();
+      }
+
+      setIsExecuting(true);
+      setLastError(null);
+
+      try {
+        const result = await signAndExecuteTransaction(transaction);
+        setLastResult(result);
+        return result;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Transaction failed';
+        setLastError(errorMessage);
+        throw error;
+      } finally {
+        setIsExecuting(false);
+      }
+    },
+    [signAndExecuteTransaction, connected, account]
+  );
+
+  const clearError = useCallback(() => {
+    setLastError(null);
+  }, []);
+
+  return {
+    executeTransaction,
+    isExecuting,
+    lastResult,
+    lastError,
+    clearError,
+    connected,
+    account,
+  };
+}
+
+/**
  * Hook for current account information
+ * Note: This shadows the dApp Kit useCurrentAccount to provide WalTodo-specific account info
  */
 export function useCurrentAccount() {
   const { account } = useWalTodoWallet();

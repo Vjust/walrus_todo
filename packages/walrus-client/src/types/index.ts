@@ -68,6 +68,37 @@ export interface WalrusImageUploadOptions extends WalrusUploadOptions {
   supportedFormats?: string[];
 }
 
+// Consolidated Todo interface from CLI implementation
+export interface Todo {
+  id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+  private?: boolean;
+  storageLocation?: 'local' | 'blockchain' | 'walrus';
+  dueDate?: string;
+  walrusBlobId?: string;
+  suiObjectId?: string;
+}
+
+// Consolidated TodoList interface from CLI implementation
+export interface TodoList {
+  id: string;
+  name: string;
+  owner: string;
+  todos: Todo[];
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  description?: string;
+  isPrivate?: boolean;
+  sharedWith?: string[];
+}
+
 export interface WalrusTodo {
   id: string;
   title: string;
@@ -112,6 +143,7 @@ export interface WalrusTodoCreateResult {
 }
 
 export interface WalrusClientAdapter {
+  // Core HTTP API methods
   getConfig(): Promise<WalrusConfig>;
   upload(data: Uint8Array | string, options?: WalrusUploadOptions): Promise<WalrusUploadResponse>;
   download(blobId: string): Promise<WalrusBlob>;
@@ -125,6 +157,39 @@ export interface WalrusClientAdapter {
   }>;
   getWalBalance(): Promise<string>;
   getStorageUsage(): Promise<{ used: string; total: string }>;
+
+  // Consolidated Todo-specific methods from CLI
+  storeTodo(todo: Todo, epochs?: number): Promise<string>;
+  storeList(list: TodoList, epochs?: number): Promise<string>;
+  storeTodoList(list: TodoList, epochs?: number): Promise<string>;
+  retrieveTodo(blobId: string): Promise<Todo>;
+  retrieveList(blobId: string): Promise<TodoList>;
+  updateTodo(blobId: string, todo: Todo, epochs?: number): Promise<string>;
+  
+  // Connection management
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  checkConnection(): Promise<boolean>;
+  getConnectionStatus(): boolean;
+  
+  // Enhanced storage operations
+  storeTodoWithDetails(todo: Todo, epochs?: number): Promise<{
+    blobId: string;
+    transactionId?: string;
+    explorerUrl?: string;
+    aggregatorUrl?: string;
+    networkInfo: {
+      network: string;
+      epochs: number;
+    };
+  }>;
+  checkExistingStorage(): Promise<{
+    id: { id: string };
+    storage_size: string;
+    used_size: string;
+  } | null>;
+  getActiveAddress(): Promise<string>;
+  checkBalance(): Promise<number>;
 }
 
 // Runtime environment detection
@@ -140,4 +205,31 @@ export interface UniversalSigner {
   getAddress(): Promise<string> | string;
   toSuiAddress(): string;
   signData?(data: Uint8Array): Promise<{ signature: Uint8Array; publicKey: Uint8Array }>;
+}
+
+// Image upload options consolidated from image storage implementation
+export interface ImageUploadOptions {
+  imagePath?: string;
+  file?: File;
+  type?: 'todo-nft-image' | 'todo-nft-default-image';
+  metadata?: {
+    title?: string;
+    completed?: boolean | string;
+    [key: string]: unknown;
+  };
+  epochs?: number;
+}
+
+// Storage cost estimation
+export interface StorageCostEstimate {
+  totalCost: bigint;
+  storageCost: bigint;
+  writeCost: bigint;
+  sizeBytes: number;
+  epochs: number;
+}
+
+// Progress tracking
+export interface ProgressCallback {
+  (message: string, progress: number): void;
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { SuiTestService } from '../../src/services/SuiTestService';
+import { SuiTestService } from '../../apps/cli/src/services/SuiTestService';
 
 describe('SuiTestService (in‑memory)', () => {
   const service = new SuiTestService();

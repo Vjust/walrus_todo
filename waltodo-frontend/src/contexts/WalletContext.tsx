@@ -11,7 +11,7 @@ import {
   useDisconnectWallet,
   useSignAndExecuteTransaction,
   ConnectModal,
-  useWallets
+  useWallets,
 } from '@mysten/dapp-kit';
 import { getFullnodeUrl } from '@mysten/sui/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -31,6 +31,10 @@ export interface WalletContextType {
   connected: boolean;
   connecting: boolean;
   account: { address: string } | null;
+  address: string | null; // Add convenience property
+  chainId: string | null;
+  name: string | null;
+  network: string; // Add convenience property
   
   // Wallet actions
   connect: () => void;
@@ -38,6 +42,7 @@ export interface WalletContextType {
   
   // Transaction handling
   signAndExecuteTransaction: (txb: Transaction) => Promise<any>;
+  trackTransaction?: (promise: Promise<any>, type: string) => Promise<any>;
   
   // Session management
   sessionExpired: boolean;
@@ -102,6 +107,9 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   const [sessionExpired, setSessionExpired] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
+  
+  // WebSocket integration - temporarily disabled
+  // const { connect: connectWebSocket, disconnect: disconnectWebSocket, joinRoom, leaveRoom } = useWebSocket();
   
   // Session timeout - temporarily disabled for debugging
   const resetActivityTimer = useCallback(() => {
@@ -182,6 +190,31 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setError(null);
   }, [connected]);
+
+  // WebSocket connection management - temporarily disabled
+  // useEffect(() => {
+  //   if (connected && account?.address) {
+  //     console.log('[WalletContext] Wallet connected, initializing WebSocket...');
+  //     connectWebSocket();
+  //     
+  //     // Join a room based on wallet address for personalized updates
+  //     const userRoom = `user_${account.address}`;
+  //     joinRoom(userRoom);
+  //     
+  //     // Also join the general todo updates room
+  //     joinRoom('todo_updates');
+  //   } else {
+  //     console.log('[WalletContext] Wallet disconnected, closing WebSocket...');
+  //     disconnectWebSocket();
+  //   }
+  //   
+  //   return () => {
+  //     if (account?.address) {
+  //       leaveRoom(`user_${account.address}`);
+  //       leaveRoom('todo_updates');
+  //     }
+  //   };
+  // }, [connected, account?.address, connectWebSocket, disconnectWebSocket, joinRoom, leaveRoom]);
 
   const connect = useCallback(() => {
     try {
@@ -272,13 +305,43 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
     setIsModalOpen(false);
   }, []);
 
+  // Simple transaction tracker
+  const trackTransaction = useCallback(async (promise: Promise<any>, type: string) => {
+    const txRecord: TransactionRecord = {
+      id: Date.now().toString(),
+      status: 'pending',
+      timestamp: new Date(),
+      type,
+    };
+    
+    addTransaction(txRecord);
+    
+    try {
+      const result = await promise;
+      txRecord.status = 'success';
+      txRecord.details = result;
+      setTransactionHistory(prev => prev.map(tx => tx.id === txRecord.id ? txRecord : tx));
+      return result;
+    } catch (error) {
+      txRecord.status = 'failed';
+      txRecord.details = { error: error instanceof Error ? error.message : 'Unknown error' };
+      setTransactionHistory(prev => prev.map(tx => tx.id === txRecord.id ? txRecord : tx));
+      throw error;
+    }
+  }, [addTransaction]);
+
   const contextValue: WalletContextType = {
     connected,
     connecting,
     account,
+    address: account?.address || null, // Add convenience property
+    chainId: currentNetwork,
+    name: connected ? 'Sui Wallet' : null, // Simple placeholder
+    network: currentNetwork, // Add convenience property
     connect,
     disconnect,
     signAndExecuteTransaction,
+    trackTransaction,
     sessionExpired,
     resetSession,
     transactionHistory,
@@ -299,21 +362,19 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
       {children}
       <div>
         <ConnectModal
+          trigger={<button style={{ display: 'none' }}>Hidden trigger</button>}
           open={isModalOpen}
           onOpenChange={(open) => {
             setIsModalOpen(open);
             if (!open) {
               // Modal was closed, save the connected wallet
               if (connected && account) {
-                const connectedWallet = wallets.find(w => w.accounts?.some(acc => acc.address === account.address));
-                if (connectedWallet) {
-                  try {
-                    localStorage.setItem('sui-wallet-last-connected', connectedWallet.name);
-                  } catch (storageError) {
-                    console.warn('[WalletContext] Failed to save wallet to localStorage:', storageError);
-                  }
-                  resetActivityTimer();
+                try {
+                  localStorage.setItem('sui-wallet-last-connected', 'sui-wallet');
+                } catch (storageError) {
+                  console.warn('[WalletContext] Failed to save wallet to localStorage:', storageError);
                 }
+                resetActivityTimer();
               }
             }
           }}
@@ -333,7 +394,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Main app wallet provider component with Slush wallet support
+// Main app wallet provider component with multi-wallet support
 export function AppWalletProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
@@ -341,11 +402,8 @@ export function AppWalletProvider({ children }: { children: ReactNode }) {
         networks={networkConfig} 
         defaultNetwork="testnet"
       >
-        <WalletProvider
-          slushWallet={{
-            name: 'Walrus Todo',
-          }}
-          autoConnect={true}
+        <WalletProvider 
+          autoConnect
         >
           <WalletContextProvider>
             {children}
