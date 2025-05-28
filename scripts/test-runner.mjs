@@ -7,14 +7,21 @@
  * including binary problems, environment mismatches, and execution failures.
  */
 
-const { spawn, spawnSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import { spawn, spawnSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
-// Import our helper modules
-const JestEnvironmentSetup = require('./jest-environment-setup');
-const JestErrorHandler = require('./jest-error-handler');
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+// Import our helper modules (CommonJS modules)
+const JestEnvironmentSetup = require('./jest-environment-setup.js');
+const JestErrorHandler = require('./jest-error-handler.js');
 
 class JestTestRunner {
   constructor() {
@@ -413,40 +420,41 @@ class JestTestRunner {
 }
 
 // CLI interface
-if (require.main === module) {
-  const args = process.argv.slice(2);
-  const runner = new JestTestRunner();
+async function main() {
+  if (import.meta.url === `file://${process.argv[1]}`) {
+    const args = process.argv.slice(2);
+    const runner = new JestTestRunner();
 
-  // Handle special commands
-  if (args.includes('--diagnostic')) {
-    runner.generateDiagnosticReport();
-    process.exit(0);
-  }
+    // Handle special commands
+    if (args.includes('--diagnostic')) {
+      runner.generateDiagnosticReport();
+      process.exit(0);
+    }
 
-  // Handle strategy selection
-  const strategyIndex = args.findIndex(arg => arg.startsWith('--strategy='));
-  if (strategyIndex !== -1) {
-    const strategy = args[strategyIndex].split('=')[1];
-    const filteredArgs = args.filter((_, index) => index !== strategyIndex);
-    
-    if (runner.strategies.includes(strategy + 'Jest') || strategy === 'fallback') {
-      const methodName = strategy === 'fallback' ? 'fallbackRunner' : strategy + 'Jest';
-      try {
-        const result = await runner[methodName](filteredArgs);
-        process.exit(result.code);
-      } catch (error) {
-        runner.errorHandler.handleError(error, { forcedStrategy: strategy });
+    // Handle strategy selection
+    const strategyIndex = args.findIndex(arg => arg.startsWith('--strategy='));
+    if (strategyIndex !== -1) {
+      const strategy = args[strategyIndex].split('=')[1];
+      const filteredArgs = args.filter((_, index) => index !== strategyIndex);
+      
+      if (runner.strategies.includes(strategy + 'Jest') || strategy === 'fallback') {
+        const methodName = strategy === 'fallback' ? 'fallbackRunner' : strategy + 'Jest';
+        try {
+          const result = await runner[methodName](filteredArgs);
+          process.exit(result.code);
+        } catch (error) {
+          runner.errorHandler.handleError(error, { forcedStrategy: strategy });
+          process.exit(1);
+        }
+      } else {
+        console.error(`❌ Unknown strategy: ${strategy}`);
+        console.log(`Available strategies: ${runner.strategies.map(s => s.replace('Jest', '')).join(', ')}, fallback`);
         process.exit(1);
       }
-    } else {
-      console.error(`❌ Unknown strategy: ${strategy}`);
-      console.log(`Available strategies: ${runner.strategies.map(s => s.replace('Jest', '')).join(', ')}, fallback`);
-      process.exit(1);
     }
-  }
 
-  if (args.includes('--help')) {
-    console.log(`
+    if (args.includes('--help')) {
+      console.log(`
 Jest Test Runner - Robust test execution with multiple fallback strategies
 
 Usage:
@@ -468,20 +476,26 @@ The runner will automatically try multiple strategies:
 4. Direct binary execution
 5. Fallback custom runner
 `);
-    process.exit(0);
-  }
+      process.exit(0);
+    }
 
-  // Run tests
-  runner.runTests(args)
-    .then((result) => {
+    // Run tests
+    try {
+      const result = await runner.runTests(args);
       process.exit(result.code);
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error('💥 Fatal error:', error.message);
       console.log('\n📊 Generating diagnostic report...');
       runner.generateDiagnosticReport();
       process.exit(1);
-    });
+    }
+  }
 }
 
-module.exports = JestTestRunner;
+// Run main function if this is the entry point
+main().catch(error => {
+  console.error('Fatal initialization error:', error);
+  process.exit(1);
+});
+
+export default JestTestRunner;
