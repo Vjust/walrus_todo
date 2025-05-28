@@ -4,6 +4,9 @@ import * as path from 'path';
 import { expect } from '@jest/globals';
 import DeployCommand from '../../apps/cli/src/commands/deploy';
 
+// Mock fs module
+jest.mock('fs');
+
 interface DeployCommandWithPrivateMethods extends DeployCommand {
   getMoveFilesPath: () => { moveToml: string; sourcesDir: string };
 }
@@ -16,6 +19,7 @@ describe('DeployCommand', () => {
       command = new DeployCommand() as DeployCommandWithPrivateMethods;
       // Mock filesystem
       jest.spyOn(fs, 'existsSync').mockImplementation(() => false);
+      jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
     });
 
     afterEach(() => {
@@ -64,6 +68,7 @@ describe('DeployCommand', () => {
 
     it('saves deployment config after successful deployment', async () => {
       // Mock successful deployment
+      const writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'mkdtempSync').mockReturnValue('/temp/test-deploy');
       jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
@@ -124,6 +129,9 @@ describe('DeployCommand', () => {
               }),
             })
           );
+          
+          // Verify fs.writeFileSync was called (through writeFileSafe)
+          expect(writeFileSyncSpy).toHaveBeenCalled();
         });
     });
   });

@@ -109,6 +109,19 @@ describe('AI Security Audit', () => {
     it('should not expose API key in error messages', async () => {
       const mockAIService = new AIService('test-api-key');
 
+      // Ensure modelAdapter is available before spying
+      if (!mockAIService['modelAdapter']) {
+        // Create a mock adapter if it doesn't exist
+        mockAIService['modelAdapter'] = {
+          getProviderName: () => 'openai',
+          getModelName: () => 'test-model',
+          complete: jest.fn(),
+          completeStructured: jest.fn(),
+          processWithPromptTemplate: jest.fn(),
+          cancelAllRequests: jest.fn(),
+        };
+      }
+
       // Mock a failed API call that might expose the key
       jest
         .spyOn(mockAIService['modelAdapter'], 'processWithPromptTemplate')
@@ -159,6 +172,18 @@ describe('AI Security Audit', () => {
       // Create AI service with a malformed key
       const mockAIService = new AIService('invalid-format-key-!@#$');
 
+      // Ensure modelAdapter is available before spying
+      if (!mockAIService['modelAdapter']) {
+        mockAIService['modelAdapter'] = {
+          getProviderName: () => 'openai',
+          getModelName: () => 'test-model',
+          complete: jest.fn(),
+          completeStructured: jest.fn(),
+          processWithPromptTemplate: jest.fn(),
+          cancelAllRequests: jest.fn(),
+        };
+      }
+
       // Mock the adapter to validate key format
       jest
         .spyOn(mockAIService['modelAdapter'], 'processWithPromptTemplate')
@@ -203,6 +228,18 @@ describe('AI Security Audit', () => {
   describe('Input Validation and Sanitization', () => {
     it('should validate and sanitize todo input before processing', async () => {
       const mockAIService = new AIService('test-api-key');
+
+      // Ensure modelAdapter is available before spying
+      if (!mockAIService['modelAdapter']) {
+        mockAIService['modelAdapter'] = {
+          getProviderName: () => 'openai',
+          getModelName: () => 'test-model',
+          complete: jest.fn(),
+          completeStructured: jest.fn(),
+          processWithPromptTemplate: jest.fn(),
+          cancelAllRequests: jest.fn(),
+        };
+      }
 
       // Create a todo with potentially malicious content
       const maliciousTodo: Todo = {

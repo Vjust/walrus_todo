@@ -80,11 +80,13 @@ export interface TransactionRecord {
 // Create context
 export const WalletContext = createContext<WalletContextType | null>(null);
 
-// Hook to use wallet context
+// Hook to use wallet context - safe version that doesn't throw during SSR/initialization
 export const useWalletContext = () => {
   const context = useContext(WalletContext);
   if (!context) {
-    throw new Error('useWalletContext must be used within a WalletProvider');
+    // Return null instead of throwing during SSR/initialization phase
+    // Components should handle null context gracefully
+    return null;
   }
   return context;
 };

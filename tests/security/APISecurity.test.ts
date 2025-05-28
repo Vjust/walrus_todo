@@ -922,8 +922,11 @@ describe('API Security Tests', () => {
         }
       );
 
-      // Create AI service
+      // Create AI service with proper mock setup
       const aiService = new AIService('test-api-key');
+      
+      // Ensure the modelAdapter is properly initialized
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Call an API that returns potentially sensitive debug info
       const result = await aiService.categorize(sampleTodos);

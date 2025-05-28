@@ -13,6 +13,7 @@ import {
 } from '@/lib/todo-service';
 
 export default function Dashboard() {
+  // ALL HOOKS MUST BE DECLARED AT THE TOP - NO CONDITIONAL HOOKS
   const [selectedList, setSelectedList] = useState('default');
   const [refreshKey, setRefreshKey] = useState(0);
   const [todoLists, setTodoLists] = useState<string[]>(['default']);
@@ -20,9 +21,9 @@ export default function Dashboard() {
   const [newListName, setNewListName] = useState('');
   const [componentMounted, setComponentMounted] = useState(false);
   
-  // Safe wallet context access
+  // Safe wallet context access - hook must be called unconditionally
   const walletContext = useWalletContext();
-  const { address } = walletContext || {};
+  const address = walletContext?.address || null;
 
   // Component mount effect
   useEffect(() => {

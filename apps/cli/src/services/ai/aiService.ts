@@ -48,35 +48,46 @@ export class AIService {
    * @param verificationService - Optional service for blockchain verification of AI results
    */
   constructor(
+    apiKey?: string,
     provider?: AIProvider,
     modelName?: string,
     options: AIModelOptions = {},
     verificationService?: AIVerificationService
   ) {
-    // Set default options with overrides from parameters
-    this.options = {
+    // Sanitize and set default options with overrides from parameters
+    this.options = this.sanitizeOptions({
       temperature: 0.7,
       maxTokens: 2000,
       ...options,
-    };
+    });
 
     this.verificationService = verificationService;
 
     // Initialize with default fallback adapter immediately
     try {
-      const defaultAdapter = AIProviderFactory.createDefaultAdapter();
-      this.modelAdapter = defaultAdapter;
+      // Check if AIProviderFactory methods are available
+      if (typeof AIProviderFactory.createDefaultAdapter === 'function') {
+        const defaultAdapter = AIProviderFactory.createDefaultAdapter();
+        this.modelAdapter = defaultAdapter;
+      } else {
+        logger.warn('AIProviderFactory.createDefaultAdapter is not available, using fallback');
+        this.modelAdapter = this.createMinimalFallbackAdapter();
+      }
     } catch (error) {
       logger.error(
         'AIService: Failed to initialize with default adapter:',
         error as Error
       );
       // Set a minimal fallback adapter to avoid null reference errors
-      this.modelAdapter = AIProviderFactory.createFallbackAdapter();
+      if (typeof AIProviderFactory.createFallbackAdapter === 'function') {
+        this.modelAdapter = AIProviderFactory.createFallbackAdapter();
+      } else {
+        this.modelAdapter = this.createMinimalFallbackAdapter();
+      }
     }
 
     // Initialize the full model adapter asynchronously
-    this.initializeModelAdapter(provider, modelName).catch(error => {
+    this.initializeModelAdapter(apiKey, provider, modelName).catch(error => {
       logger.error('AIService: Model adapter initialization failed', error as Error, {
         provider,
         modelName,
@@ -96,6 +107,7 @@ export class AIService {
    * @throws Error if initialization fails after fallback
    */
   private async initializeModelAdapter(
+    apiKey?: string,
     provider?: AIProvider,
     modelName?: string
   ): Promise<void> {
@@ -112,26 +124,43 @@ export class AIService {
         );
       }
 
-      // Use the secure credential service to get provider info
-      const defaultProvider = await AIProviderFactory.getDefaultProvider();
+      // If API key provided directly, use it (for testing/direct instantiation)
+      if (apiKey) {
+        // Validate and sanitize the API key
+        this.validateApiKey(apiKey);
+        
+        const selectedProvider = provider || AIProvider.XAI;
+        const selectedModelName = modelName || 'grok-beta';
+        
+        // Create adapter directly with provided API key
+        this.modelAdapter = await AIProviderFactory.createProvider({
+          provider: selectedProvider,
+          modelName: selectedModelName,
+          options: this.options,
+          apiKey: apiKey,
+        });
+      } else {
+        // Use the secure credential service to get provider info
+        const defaultProvider = await AIProviderFactory.getDefaultProvider();
 
-      // Ensure we have valid provider and modelName
-      if (!defaultProvider.provider || !defaultProvider.modelName) {
-        throw new Error(
-          `Invalid default provider configuration: provider=${defaultProvider.provider}, modelName=${defaultProvider.modelName}`
-        );
+        // Ensure we have valid provider and modelName
+        if (!defaultProvider.provider || !defaultProvider.modelName) {
+          throw new Error(
+            `Invalid default provider configuration: provider=${defaultProvider.provider}, modelName=${defaultProvider.modelName}`
+          );
+        }
+
+        const selectedProvider = provider || defaultProvider.provider;
+        const selectedModelName = modelName || defaultProvider.modelName;
+
+        // Initialize the provider adapter
+        this.modelAdapter = await AIProviderFactory.createProvider({
+          provider: selectedProvider,
+          modelName: selectedModelName,
+          options: this.options,
+          credentialService: secureCredentialService,
+        });
       }
-
-      const selectedProvider = provider || defaultProvider.provider;
-      const selectedModelName = modelName || defaultProvider.modelName;
-
-      // Initialize the provider adapter
-      this.modelAdapter = await AIProviderFactory.createProvider({
-        provider: selectedProvider,
-        modelName: selectedModelName,
-        options: this.options,
-        credentialService: secureCredentialService,
-      });
     } catch (error) {
       const typedError = error instanceof Error ? error : new Error(String(error));
       logger.error('AIService: Failed to initialize model adapter:', typedError, {
@@ -253,8 +282,16 @@ export class AIService {
     // Set operation type for consent management
     this.setOperationType('summarize');
 
-    // Input validation: check for empty todos
-    if (!todos || !Array.isArray(todos) || todos.length === 0) {
+    // Input validation: check for valid input
+    if (todos === null || todos === undefined) {
+      throw new Error('Cannot summarize null or undefined input');
+    }
+    
+    if (!Array.isArray(todos)) {
+      throw new Error('Input must be an array of todos');
+    }
+    
+    if (todos.length === 0) {
       throw new Error('Cannot summarize empty todo list');
     }
 
@@ -410,6 +447,77 @@ export class AIService {
   }
 
   /**
+   * Validates API key format and security
+   * 
+   * @param apiKey - The API key to validate
+   * @throws Error if API key is invalid or insecure
+   */
+  private validateApiKey(apiKey: string): void {
+    if (!apiKey || typeof apiKey !== 'string') {
+      throw new Error('Invalid API key: must be a non-empty string');
+    }
+    
+    if (apiKey.length < 10) {
+      throw new Error('Invalid API key format: too short');
+    }
+    
+    // Check for common insecure patterns
+    if (apiKey.includes(' ') || apiKey.includes('\n') || apiKey.includes('\t')) {
+      throw new Error('Invalid API key format: contains whitespace characters');
+    }
+  }
+
+  /**
+   * Sanitizes options to prevent parameter injection
+   * 
+   * @param options - The options object to sanitize
+   * @returns Sanitized options object
+   */
+  private sanitizeOptions(options: AIModelOptions): AIModelOptions {
+    const sanitized: AIModelOptions = {};
+    
+    // Only allow known safe properties
+    if (typeof options.temperature === 'number' && options.temperature >= 0 && options.temperature <= 2) {
+      sanitized.temperature = options.temperature;
+    }
+    
+    if (typeof options.maxTokens === 'number' && options.maxTokens > 0 && options.maxTokens <= 50000) {
+      sanitized.maxTokens = options.maxTokens;
+    }
+    
+    if (typeof options.baseUrl === 'string' && options.baseUrl.startsWith('https://')) {
+      sanitized.baseUrl = options.baseUrl;
+    }
+    
+    // Reject any options that try to disable security
+    if (options.rejectUnauthorized === false) {
+      throw new Error('Invalid SSL configuration: certificate validation disabled');
+    }
+    
+    // Copy other safe options
+    if (options.operation && typeof options.operation === 'string') {
+      sanitized.operation = options.operation;
+    }
+    
+    if (options.differentialPrivacy === true) {
+      sanitized.differentialPrivacy = true;
+      if (typeof options.epsilon === 'number' && options.epsilon > 0) {
+        sanitized.epsilon = options.epsilon;
+      }
+    }
+    
+    if (options.collectUsageData === false) {
+      sanitized.collectUsageData = false;
+    }
+    
+    if (options.storePromptHistory === false) {
+      sanitized.storePromptHistory = false;
+    }
+    
+    return sanitized;
+  }
+
+  /**
    * Sanitizes error messages to remove any potentially sensitive information
    *
    * @param message - The error message to sanitize
@@ -499,8 +607,16 @@ export class AIService {
     // Set operation type for consent management
     this.setOperationType('categorize');
 
-    // Input validation: check for empty todos
-    if (!todos || !Array.isArray(todos) || todos.length === 0) {
+    // Input validation: check for valid input
+    if (todos === null || todos === undefined) {
+      throw new Error('Cannot categorize null or undefined input');
+    }
+    
+    if (!Array.isArray(todos)) {
+      throw new Error('Input must be an array of todos');
+    }
+    
+    if (todos.length === 0) {
       throw new Error('Cannot categorize empty todo list');
     }
 
@@ -730,6 +846,27 @@ export class AIService {
    * @returns Promise resolving to a structured analysis object
    */
   async analyze(todos: Todo[]): Promise<Record<string, unknown>> {
+    // Set operation type for consent management
+    this.setOperationType('analyze');
+
+    // Input validation: check for valid input
+    if (todos === null || todos === undefined) {
+      throw new Error('Cannot analyze null or undefined input');
+    }
+    
+    if (!Array.isArray(todos)) {
+      throw new Error('Input must be an array of todos');
+    }
+    
+    if (todos.length === 0) {
+      throw new Error('Cannot analyze empty todo list');
+    }
+
+    // Input validation: check for maximum input size to prevent DoS
+    if (todos.length > 500) {
+      throw new Error('Input exceeds maximum allowed size for analysis');
+    }
+
     const prompt = PromptTemplate.fromTemplate(
       `Analyze the following todos for patterns, dependencies, and insights.
       Provide analysis including:
@@ -863,6 +1000,36 @@ export class AIService {
       logger.error('Priority suggestion error:', error as Error);
       return 'medium'; // Default to medium on error
     }
+  }
+
+  /**
+   * Creates a minimal fallback adapter when AIProviderFactory is not available
+   * @returns A basic AIModelAdapter implementation
+   */
+  private createMinimalFallbackAdapter(): AIModelAdapter {
+    return {
+      getProviderName: () => AIProvider.XAI,
+      getModelName: () => 'minimal-fallback',
+      complete: async () => ({
+        result: 'AI service temporarily unavailable',
+        modelName: 'minimal-fallback',
+        provider: AIProvider.XAI,
+        timestamp: Date.now(),
+      }),
+      completeStructured: async <T>() => ({
+        result: {} as T,
+        modelName: 'minimal-fallback',
+        provider: AIProvider.XAI,
+        timestamp: Date.now(),
+      }),
+      processWithPromptTemplate: async () => ({
+        result: 'AI service temporarily unavailable',
+        modelName: 'minimal-fallback',
+        provider: AIProvider.XAI,
+        timestamp: Date.now(),
+      }),
+      cancelAllRequests: () => {},
+    };
   }
 }
 
