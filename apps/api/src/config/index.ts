@@ -31,6 +31,10 @@ export interface ApiConfig {
     dataPath: string;
     maxTodosPerWallet: number;
   };
+  server?: {
+    host?: string;
+    timeout?: number;
+  };
 }
 
 export const config: ApiConfig = {

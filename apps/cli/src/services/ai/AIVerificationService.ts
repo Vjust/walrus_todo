@@ -34,15 +34,64 @@ export class AIVerificationService {
     const responseStr =
       typeof response === 'string' ? response : JSON.stringify(response);
 
+    // Sanitize request and response to prevent prompt injection
+    const sanitizedRequestStr = this.sanitizeInput(requestStr);
+    const sanitizedResponseStr = this.sanitizeInput(responseStr);
+
     // Create verification
     return this.verifierAdapter.createVerification({
       actionType: verificationType, // Map to the expected parameter name in the adapter
-      request: requestStr,
-      response: responseStr,
+      request: sanitizedRequestStr,
+      response: sanitizedResponseStr,
       metadata,
       privacyLevel,
       provider: 'default_provider',
     });
+  }
+
+  /**
+   * Sanitizes input to prevent prompt injection and other security issues
+   *
+   * @param input - The input string to sanitize
+   * @returns Sanitized input string
+   */
+  private sanitizeInput(input: string): string {
+    if (!input) return input;
+
+    // Prompt injection patterns to detect and remove
+    const injectionPatterns = [
+      'ignore previous instructions',
+      'disregard earlier directives',
+      'forget the instructions above',
+      'new instructions:',
+      'instead, do the following:',
+      'you are now',
+      'act as',
+      'pretend to be',
+      'roleplay as',
+      'system:',
+      'user:',
+      'assistant:',
+      'override',
+      'bypass',
+    ];
+
+    let sanitized = input;
+    for (const pattern of injectionPatterns) {
+      // Create case-insensitive regex for each pattern
+      const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      sanitized = sanitized.replace(regex, '[FILTERED]');
+    }
+
+    // Remove HTML/script tags to prevent XSS
+    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, '[SCRIPT_REMOVED]');
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+
+    // Remove potential command injection patterns
+    sanitized = sanitized.replace(/\$\([^)]*\)/g, '[CMD_FILTERED]');
+    sanitized = sanitized.replace(/`[^`]*`/g, '[CMD_FILTERED]');
+
+    return sanitized;
   }
 
   /**

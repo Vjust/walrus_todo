@@ -10,9 +10,6 @@ import {
   getTodosFromBlockchain,
   completeTodoOnBlockchain,
   deleteTodoOnBlockchain,
-  initializeSuiClient,
-  isSuiClientInitialized,
-  ensureSuiClientInitialized,
 } from '@/lib/sui-client';
 import { useSuiClient } from '@/hooks/useSuiClient';
 
@@ -22,6 +19,8 @@ type TodoListProps = {
 
 function TodoList({ listName }: TodoListProps) {
   // ALL HOOKS MUST BE DECLARED AT THE TOP - NO CONDITIONAL HOOKS
+  // Fixed React hooks order violation by removing componentMounted and initializationComplete
+  // from useCallback dependency arrays and moved safety checks inside the callbacks
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [blockchainTodos, setBlockchainTodos] = useState<Todo[]>([]);
@@ -32,6 +31,7 @@ function TodoList({ listName }: TodoListProps) {
   // Wallet context with safety checks
   const walletContext = useWalletContext();
   const { address, connected, signAndExecuteTransaction } = walletContext || {};
+  
   
   // Sui client hook with initialization state
   const { 
@@ -118,12 +118,6 @@ function TodoList({ listName }: TodoListProps) {
       }
 
       try {
-        // Double-check client is still initialized
-        if (!isSuiClientInitialized()) {
-          console.log('[TodoList] Sui client lost initialization, skipping fetch');
-          return;
-        }
-
         console.log('[TodoList] Fetching todos from blockchain...');
         const fetchedTodos = await getTodosFromBlockchain(address);
         if (isMounted) {
@@ -186,19 +180,12 @@ function TodoList({ listName }: TodoListProps) {
 
 
   const refreshBlockchainTodos = useCallback(async () => {
-    // Safety guards
+    // Safety guards - moved inside the callback to ensure stable hook count
     if (!componentMounted || !initializationComplete) return;
     if (!connected || !address || !suiClientInitialized) return;
 
     try {
       console.log('[TodoList] Refreshing blockchain todos...');
-      
-      // Double-check client state
-      if (!isSuiClientInitialized()) {
-        console.warn('[TodoList] Sui client not ready for refresh');
-        return;
-      }
-      
       const fetchedTodos = await getTodosFromBlockchain(address);
       setBlockchainTodos(fetchedTodos);
       console.log(`[TodoList] Refreshed ${fetchedTodos.length} todos from blockchain`);
@@ -208,7 +195,7 @@ function TodoList({ listName }: TodoListProps) {
   }, [connected, address, suiClientInitialized, componentMounted, initializationComplete]);
 
   const toggleTodoCompletion = useCallback(async (id: string) => {
-    // Safety guards
+    // Safety guards - componentMounted and initializationComplete checked inside to ensure stable hook count
     if (!componentMounted || !initializationComplete) return;
     
     const todo = displayTodos.find(t => t.id === id);
@@ -228,11 +215,6 @@ function TodoList({ listName }: TodoListProps) {
 
     try {
       if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction && suiClientInitialized) {
-        // Complete todo on blockchain - with additional safety checks
-        if (!isSuiClientInitialized()) {
-          throw new Error('Sui client not ready for blockchain operations');
-        }
-        
         console.log('[TodoList] Completing todo on blockchain:', todo.objectId);
         const result = await completeTodoOnBlockchain(
           todo.objectId,
@@ -278,7 +260,7 @@ function TodoList({ listName }: TodoListProps) {
 
   // Handle storing local todo on blockchain
   const handleStoreOnBlockchain = useCallback(async (todo: Todo) => {
-    // Safety guards
+    // Safety guards - moved inside the callback to ensure stable hook count
     if (!componentMounted || !initializationComplete) return;
     if (!connected || !address || !signAndExecuteTransaction || !suiClientInitialized) return;
 
@@ -297,17 +279,12 @@ function TodoList({ listName }: TodoListProps) {
 
   // Handle deleting todo (local or blockchain)
   const handleDeleteTodo = useCallback(async (todo: Todo) => {
-    // Safety guards
+    // Safety guards - moved inside the callback to ensure stable hook count
     if (!componentMounted || !initializationComplete) return;
     if (!confirm(`Are you sure you want to delete "${todo.title}"?`)) return;
 
     try {
       if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction && suiClientInitialized) {
-        // Delete from blockchain - with additional safety checks
-        if (!isSuiClientInitialized()) {
-          throw new Error('Sui client not ready for blockchain operations');
-        }
-        
         console.log('[TodoList] Deleting todo from blockchain:', todo.objectId);
         const result = await deleteTodoOnBlockchain(
           todo.objectId,

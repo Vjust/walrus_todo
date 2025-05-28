@@ -1,5 +1,7 @@
-// TODO: This test file requires refactoring to work without mocks
-// Mock imports and jest.mock calls were removed during mock cleanup
+jest.mock('child_process', () => {
+  const execSyncMock = jest.fn().mockReturnValue('');
+  return { execSync: execSyncMock };
+});
 
 import * as fs from 'fs';
 import { PathOrFileDescriptor, ObjectEncodingOptions } from 'fs';

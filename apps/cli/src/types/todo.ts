@@ -20,6 +20,18 @@
 export type StorageLocation = 'local' | 'blockchain' | 'both';
 
 /**
+ * Represents a reminder for a todo item
+ */
+export interface TodoReminder {
+  /** Unique identifier for the reminder */
+  id: string;
+  /** Date and time for the reminder */
+  date: string;
+  /** Message to display with the reminder */
+  message: string;
+}
+
+/**
  * Represents a todo item with blockchain storage capabilities
  *
  * Todo items are the core entity in the application. They can be stored locally,
@@ -83,6 +95,12 @@ export interface Todo {
   listName?: string;
   /** Sync timestamp for API server integration */
   syncedAt?: string;
+  /** User who owns this todo */
+  user?: string;
+  /** Reminders associated with this todo */
+  reminders?: TodoReminder[];
+  /** Additional metadata for the todo */
+  metadata?: Record<string, unknown>;
 }
 
 // Additional types for API inputs and operations

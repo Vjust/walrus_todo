@@ -1,5 +1,5 @@
 import { BlobVerificationManager } from '../../apps/cli/src/utils/blob-verification';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import type { WalrusClientExt } from '../../apps/cli/src/types/client';
 import type { BlobMetadataShape, BlobInfo } from '../../apps/cli/src/types/walrus';
 import { createWalrusModuleMock, getMockWalrusClient } from '../helpers/walrus-client-mock';

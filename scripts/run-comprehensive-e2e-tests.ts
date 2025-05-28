@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /* eslint-disable no-console */
-import { Logger } from '../src/utils/Logger';
+import { Logger } from '../apps/cli/src/utils/Logger';
 
 const logger = new Logger('run-comprehensive-e2e-tests');
 

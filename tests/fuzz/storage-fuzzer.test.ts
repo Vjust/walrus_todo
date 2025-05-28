@@ -250,6 +250,8 @@ describe('Storage Fuzzing Tests', () => {
       );
 
       for (const filename of specialFilenames) {
+        if (typeof filename !== 'string') continue;
+        
         // Sanitize filename for filesystem
         const sanitizedFilename = filename.replace(/[<>:"|?*\\/]/g, '_');
         const filePath = path.join(testDir, sanitizedFilename);

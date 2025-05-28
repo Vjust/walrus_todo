@@ -142,7 +142,7 @@ export default class Credentials extends BaseCommand {
     };
 
     const permissionLevel =
-      permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
+      (flags.permission && permissionMap[flags.permission]) || AIPermissionLevel.STANDARD;
 
     try {
       // Convert string provider to AIProvider enum value and back to string
@@ -441,7 +441,7 @@ export default class Credentials extends BaseCommand {
     };
 
     const permissionLevel =
-      permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
+      (flags.permission && permissionMap[flags.permission]) || AIPermissionLevel.STANDARD;
 
     try {
       // Convert string provider to AIProvider enum

@@ -3,7 +3,7 @@
  * Enhanced implementation with full Sui SDK integration and auto-generated configuration
  */
 
-import { SuiClient, type SuiObjectResponse, type SuiMoveObject, type PaginatedObjectsResponse } from '@mysten/sui/client';
+import { SuiClient, type SuiObjectResponse, type SuiMoveObject, type PaginatedObjectsResponse } from '@mysten/sui.js/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromB64 } from '@mysten/sui/utils';
@@ -138,7 +138,10 @@ export async function initializeSuiClientWithConfig(): Promise<SuiClient> {
       return suiClient;
     } catch (error) {
       console.error('Failed to initialize Sui client with config:', error);
-      initializationPromise = null;
+      // Only reset initializationPromise after a delay to prevent rapid retries
+      setTimeout(() => {
+        initializationPromise = null;
+      }, 1000);
       throw error;
     }
   })();
@@ -188,7 +191,10 @@ export async function initializeSuiClient(
         return suiClient;
       } catch (fallbackError) {
         console.error('Failed to initialize Sui client with fallback:', fallbackError);
-        initializationPromise = null;
+        // Only reset initializationPromise after a delay to prevent rapid retries
+        setTimeout(() => {
+          initializationPromise = null;
+        }, 1000);
         throw fallbackError;
       }
     })();
@@ -201,27 +207,40 @@ export async function initializeSuiClient(
  * Get or create Sui client instance with auto-initialization
  */
 export async function getSuiClient(): Promise<SuiClient> {
-  if (!suiClient || !isInitialized) {
-    // Check if too many attempts have been made
-    if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
-      throw new Error(`Sui client initialization failed after ${MAX_INITIALIZATION_ATTEMPTS} attempts`);
-    }
-    
-    // Auto-initialize if not already done
-    console.log(`Sui client not initialized, auto-initializing... (attempt ${initializationAttempts + 1})`);
-    initializationAttempts++;
-    
+  // If already initialized, return immediately
+  if (suiClient && isInitialized) {
+    return suiClient;
+  }
+  
+  // If initialization is in progress, wait for it
+  if (initializationPromise) {
     try {
-      return await ensureSuiClientInitialized();
+      return await initializationPromise;
     } catch (error) {
-      console.error(`Sui client initialization attempt ${initializationAttempts} failed:`, error);
-      if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
-        throw new Error(`Failed to initialize Sui client after ${MAX_INITIALIZATION_ATTEMPTS} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
+      // Don't reset the promise immediately, let the initialization function handle it
+      console.warn('Initialization promise failed, will retry if needed');
       throw error;
     }
   }
-  return suiClient;
+  
+  // Check if too many attempts have been made
+  if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
+    throw new SuiClientError(`Sui client initialization failed after ${MAX_INITIALIZATION_ATTEMPTS} attempts`, 'INITIALIZATION_FAILED');
+  }
+  
+  // Auto-initialize if not already done
+  console.log(`Sui client not initialized, auto-initializing... (attempt ${initializationAttempts + 1})`);
+  initializationAttempts++;
+  
+  try {
+    return await ensureSuiClientInitialized();
+  } catch (error) {
+    console.error(`Sui client initialization attempt ${initializationAttempts} failed:`, error);
+    if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
+      throw new SuiClientError(`Failed to initialize Sui client after ${MAX_INITIALIZATION_ATTEMPTS} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`, 'INITIALIZATION_FAILED');
+    }
+    throw error;
+  }
 }
 
 /**
@@ -229,8 +248,9 @@ export async function getSuiClient(): Promise<SuiClient> {
  */
 export function getSuiClientSync(): SuiClient {
   if (!suiClient || !isInitialized) {
-    throw new Error(
-      'Sui client not initialized. Call initializeSuiClient() first.'
+    throw new SuiClientError(
+      'Sui client not initialized. Use getSuiClient() for async initialization or ensure initializeSuiClient() was called first.',
+      'CLIENT_NOT_INITIALIZED'
     );
   }
   return suiClient;
@@ -244,10 +264,34 @@ export function isSuiClientInitialized(): boolean {
 }
 
 /**
+ * Safe check for client initialization without throwing errors
+ */
+export function isSuiClientReady(): boolean {
+  try {
+    return isSuiClientInitialized() && !initializationPromise;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Get initialization promise if client is currently being initialized
  */
 export function getSuiClientInitializationPromise(): Promise<SuiClient> | null {
   return initializationPromise;
+}
+
+/**
+ * Get current initialization state for debugging
+ */
+export function getSuiClientState() {
+  return {
+    isInitialized,
+    currentNetwork,
+    hasClient: !!suiClient,
+    hasPromise: !!initializationPromise,
+    attempts: initializationAttempts
+  };
 }
 
 /**
@@ -413,7 +457,7 @@ export async function getTodosFromBlockchain(
       const response: PaginatedObjectsResponse = await client.getOwnedObjects({
         owner: ownerAddress,
         filter: {
-          StructType: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`,
+          StructType: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::${TODO_NFT_CONFIG.STRUCT_NAME}`,
         },
         options: {
           showContent: true,
@@ -452,7 +496,7 @@ export function createTodoNFTTransaction(
 
   // Call the create_todo function from the smart contract
   tx.moveCall({
-    target: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::create_todo`,
+    target: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::create_todo`,
     arguments: [
       tx.pure(bcs.string().serialize(params.title)),
       tx.pure(bcs.string().serialize(params.description)),
@@ -534,7 +578,7 @@ export function updateTodoNFTTransaction(
 
   // Call the update_todo function from the smart contract
   tx.moveCall({
-    target: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::update_todo`,
+    target: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::update_todo`,
     arguments: [
       tx.object(params.objectId),
       tx.pure(bcs.string().serialize(params.title || '')),
@@ -559,7 +603,7 @@ export function completeTodoNFTTransaction(
 
   // Call the complete_todo function from the smart contract
   tx.moveCall({
-    target: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::complete_todo`,
+    target: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::complete_todo`,
     arguments: [tx.object(objectId)],
   });
 
@@ -578,7 +622,7 @@ export function deleteTodoNFTTransaction(
 
   // Call the delete_todo function from the smart contract
   tx.moveCall({
-    target: `${TODO_NFT_CONFIG.PACKAGE_ID}::${TODO_NFT_CONFIG.MODULE_NAME}::delete_todo`,
+    target: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::delete_todo`,
     arguments: [tx.object(objectId)],
   });
 
