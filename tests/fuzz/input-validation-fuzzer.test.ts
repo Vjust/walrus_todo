@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-conditional-expect */
 import { InputValidator } from '../../apps/cli/src/utils/InputValidator';
-import { ValidationError } from '../../apps/cli/src/types/errors';
+import { ValidationError } from '../../apps/cli/src/types/errors/consolidated/ValidationError';
 
 describe('Input Validation Fuzzer', () => {
   let validator: InputValidator;

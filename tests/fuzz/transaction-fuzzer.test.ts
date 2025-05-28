@@ -19,8 +19,8 @@ describe('Transaction Fuzzing Tests', () => {
 
   beforeEach(() => {
     suiService = new SuiTestService({
-      network: 'testnet',
-      walletAddress: fuzzer.blockchainData().address(),
+      activeNetwork: { name: 'testnet' },
+      activeAccount: { address: fuzzer.blockchainData().address() },
       encryptedStorage: false,
     });
     nftContract = new MockNFTStorageContract('0x456');

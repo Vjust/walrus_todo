@@ -45,6 +45,7 @@ export interface ISuiService {
     itemId: string,
     changes: Partial<Omit<TodoItem, 'id'>>
   ): Promise<void>;
+  deleteTodo(listId: string, itemId: string): Promise<void>;
   deleteTodoList(listId: string): Promise<void>;
 }
 
@@ -183,6 +184,23 @@ export class SuiTestService implements ISuiService {
     }
 
     Object.assign(item, changes, { updatedAt: Date.now() });
+    list.updatedAt = Date.now();
+  }
+
+  /**
+   * Delete a todo item
+   */
+  async deleteTodo(listId: string, itemId: string): Promise<void> {
+    const list = this.todoLists.get(listId);
+    if (!list) {
+      throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
+    }
+
+    if (!list.items.has(itemId)) {
+      throw new CLIError('Todo item not found', 'ITEM_NOT_FOUND');
+    }
+
+    list.items.delete(itemId);
     list.updatedAt = Date.now();
   }
 
