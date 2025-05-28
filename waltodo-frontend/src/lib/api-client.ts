@@ -21,7 +21,7 @@ export class TodoAPIClient {
 
   constructor() {
     this.baseURL =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     this.apiKey = process.env.NEXT_PUBLIC_API_KEY;
   }
 
@@ -55,38 +55,38 @@ export class TodoAPIClient {
 
   // Todo operations
   async getTodos(listName: string = 'default'): Promise<Todo[]> {
-    return this.request<Todo[]>(`/todos?list=${listName}`);
+    return this.request<Todo[]>(`/v1/todos?list=${listName}`);
   }
 
   async getTodo(id: string): Promise<Todo> {
-    return this.request<Todo>(`/todos/${id}`);
+    return this.request<Todo>(`/v1/todos/${id}`);
   }
 
   async createTodo(
     todo: Partial<Todo>,
     listName: string = 'default'
   ): Promise<Todo> {
-    return this.request<Todo>('/todos', {
+    return this.request<Todo>('/v1/todos', {
       method: 'POST',
       body: JSON.stringify({ ...todo, listName }),
     });
   }
 
   async updateTodo(id: string, updates: Partial<Todo>): Promise<Todo> {
-    return this.request<Todo>(`/todos/${id}`, {
+    return this.request<Todo>(`/v1/todos/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
     });
   }
 
   async deleteTodo(id: string): Promise<void> {
-    await this.request<void>(`/todos/${id}`, {
+    await this.request<void>(`/v1/todos/${id}`, {
       method: 'DELETE',
     });
   }
 
   async completeTodo(id: string): Promise<Todo> {
-    return this.request<Todo>(`/todos/${id}/complete`, {
+    return this.request<Todo>(`/v1/todos/${id}/complete`, {
       method: 'POST',
     });
   }
@@ -180,7 +180,7 @@ export class TodoAPIClient {
 
   // Health check
   async healthCheck(): Promise<{ status: string; version: string }> {
-    return this.request<{ status: string; version: string }>('/health');
+    return this.request<{ status: string; version: string }>('/healthz');
   }
 }
 

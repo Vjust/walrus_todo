@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as childProcess from 'child_process';
 import * as ts from 'typescript';
-import { Logger } from '../src/utils/Logger';
+import { Logger } from '../apps/cli/src/utils/Logger';
 
 const logger = new Logger('unified-build');
 
@@ -279,7 +279,7 @@ function runTranspileOnly(): void {
     };
 
     // Get all TypeScript files in src directory
-    const sourceFiles = getSourceFiles(path.join(rootDir, 'src'));
+    const sourceFiles = getSourceFiles(path.join(rootDir, 'apps/cli/src'));
     logger.info(
       `${colors.gray}Transpiling ${sourceFiles.length} files...${colors.reset}`
     );
@@ -297,7 +297,7 @@ function runTranspileOnly(): void {
       try {
         // Read the file
         const fileContent = fs.readFileSync(fileName, 'utf8');
-        const sourceText = typeof fileContent === 'string' ? fileContent : fileContent.toString();
+        const sourceText = fileContent;
 
         // Transpile the file (no type checking)
         const { outputText } = ts.transpileModule(sourceText, {
@@ -316,9 +316,9 @@ function runTranspileOnly(): void {
 
         // Calculate output path
         let outputPath;
-        if (fileName.startsWith(path.join(rootDir, 'src'))) {
+        if (fileName.startsWith(path.join(rootDir, 'apps/cli/src'))) {
           outputPath = fileName
-            .replace(path.resolve(rootDir, 'src'), path.join(outDir, 'src'))
+            .replace(path.resolve(rootDir, 'apps/cli/src'), path.join(outDir, 'src'))
             .replace(/\.tsx?$/, '.js');
         } else if (fileName.startsWith(path.join(rootDir, 'scripts'))) {
           outputPath = fileName

@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { Readable, Writable } from 'stream';
-import { InteractiveMode } from '../../../src/utils/interactive-mode';
+import { InteractiveMode } from '../../../apps/cli/src/utils/interactive-mode';
 import { stdin as mockStdin, stdout as mockStdout } from 'process';
 import * as readline from 'readline';
 
@@ -215,8 +215,8 @@ describe('InteractiveMode', () => {
       };
       readline.createInterface.mockReturnValue(mockRl);
 
-      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
-      await testableMode.promptUser?.();
+      const testablePromptMode = interactiveMode as unknown as TestableInteractiveMode;
+      await testablePromptMode.promptUser?.();
 
       expect(executeCommandSpy).toHaveBeenCalledWith('add "Test todo"');
       expect(mockRl.close).toHaveBeenCalled();
@@ -234,17 +234,17 @@ describe('InteractiveMode', () => {
       };
       readline.createInterface.mockReturnValue(mockRl);
 
-      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
-      await testableMode.promptUser?.();
+      const testableExitMode = interactiveMode as unknown as TestableInteractiveMode;
+      await testableExitMode.promptUser?.();
 
       expect(consoleLogSpy).toHaveBeenCalledWith('Exiting interactive mode...');
       expect(mockRl.close).toHaveBeenCalled();
     });
 
     it('should handle empty input', async () => {
-      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
+      const testableEmptyMode = interactiveMode as unknown as TestableInteractiveMode;
       const executeCommandSpy = jest.spyOn(
-        testableMode,
+        testableEmptyMode,
         'executeCommand'
       );
       // Use the imported readline module
@@ -257,8 +257,7 @@ describe('InteractiveMode', () => {
       };
       readline.createInterface.mockReturnValue(mockRl);
 
-      const testableMode = interactiveMode as unknown as TestableInteractiveMode;
-      await testableMode.promptUser?.();
+      await testableEmptyMode.promptUser?.();
 
       expect(executeCommandSpy).not.toHaveBeenCalled();
       expect(mockRl.close).toHaveBeenCalled();

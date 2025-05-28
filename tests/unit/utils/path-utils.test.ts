@@ -8,7 +8,7 @@ jest.mock('fs');
 const mockProjectRoot = '/test/project/root';
 
 // Mock the path-utils module
-jest.mock('../../../src/utils/path-utils', () => {
+jest.mock('../../../apps/cli/src/utils/path-utils', () => {
   const findProjectRoot = (startPath: string): string => {
     let currentPath = startPath;
     const mockedFs = jest.requireMock('fs') as typeof fs;
@@ -47,7 +47,7 @@ jest.mock('../../../src/utils/path-utils', () => {
 });
 
 // Import the mocked functions
-import { getAssetPath, getProjectPath } from '../../../src/utils/path-utils';
+import { getAssetPath, getProjectPath } from '../../../apps/cli/src/utils/path-utils';
 
 describe('path-utils', () => {
   const mockedFs = fs as jest.Mocked<typeof fs>;
@@ -59,7 +59,7 @@ describe('path-utils', () => {
   describe('findProjectRoot', () => {
     // We need to import the function from the mocked module
     const { findProjectRoot } = jest.requireMock(
-      '../../../src/utils/path-utils'
+      '../../../apps/cli/src/utils/path-utils'
     );
 
     it('should find project root when package.json exists', () => {
@@ -246,7 +246,7 @@ describe('path-utils', () => {
 
   describe('PROJECT_ROOT constant', () => {
     it('should be defined', () => {
-      const pathUtils = jest.requireMock('../../../src/utils/path-utils');
+      const pathUtils = jest.requireMock('../../../apps/cli/src/utils/path-utils');
       expect(pathUtils.PROJECT_ROOT).toBeDefined();
       expect(pathUtils.PROJECT_ROOT).toBe(mockProjectRoot);
     });
@@ -254,7 +254,7 @@ describe('path-utils', () => {
 
   describe('edge cases and error scenarios', () => {
     it('should handle null/undefined inputs gracefully', () => {
-      const pathUtils = jest.requireMock('../../../src/utils/path-utils');
+      const pathUtils = jest.requireMock('../../../apps/cli/src/utils/path-utils');
 
       // TypeScript would normally prevent these, but testing runtime behavior
       expect(() => {

@@ -1,5 +1,5 @@
 /**
-import { Logger } from '../../../../src/utils/Logger';
+import { Logger } from '../../../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('test-integration');
  * Test Integration Example

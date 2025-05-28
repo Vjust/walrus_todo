@@ -6,7 +6,7 @@
 import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { Logger } from '../../../src/utils/Logger';
+import { Logger } from '../../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('environment-validator');
 

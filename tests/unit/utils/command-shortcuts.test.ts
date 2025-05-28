@@ -1,4 +1,4 @@
-import { ShortcutRegistry } from '../../../src/utils/command-shortcuts';
+import { ShortcutRegistry } from '../../../apps/cli/src/utils/command-shortcuts';
 
 describe('ShortcutRegistry', () => {
   let registry: ShortcutRegistry;

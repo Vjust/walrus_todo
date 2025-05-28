@@ -9,12 +9,12 @@ import {
   StorageError,
   ValidationError,
   WalrusErrorCode,
-} from '../../src/types/errors';
+} from '../../apps/cli/src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
 // Import the storage components to test
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import { StorageManager } from '../../src/utils/StorageManager';
+import { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import { StorageManager } from '../../apps/cli/src/utils/StorageManager';
 // Unused imports removed during TypeScript cleanup
 // import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
 

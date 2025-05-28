@@ -3,7 +3,7 @@
  * Used in test files to simulate AI provider behavior
  */
 
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { expectedResults } from '../helpers/ai-test-utils';
 
 /**

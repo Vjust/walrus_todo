@@ -10,22 +10,22 @@ import {
   SuggestedTask,
   SuggestionType,
   SuggestionContext,
-} from '../../../../src/services/ai/TaskSuggestionService';
-import { EnhancedAIService } from '../../../../src/services/ai/EnhancedAIService';
+} from '../../../../apps/cli/src/services/ai/TaskSuggestionService';
+import { EnhancedAIService } from '../../../../apps/cli/src/services/ai/EnhancedAIService';
 import {
   AIVerificationService,
-} from '../../../../src/services/ai/AIVerificationService';
-import { Todo } from '../../../../src/types/todo';
+} from '../../../../apps/cli/src/services/ai/AIVerificationService';
+import { Todo } from '../../../../apps/cli/src/types/todo';
 import {
   AIPrivacyLevel,
   AIActionType,
-} from '../../../../src/types/adapters/AIVerifierAdapter';
-import { Logger } from '../../../../src/utils/Logger';
+} from '../../../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { Logger } from '../../../../apps/cli/src/utils/Logger';
 
 // Mock the dependencies
-jest.mock('../../../../src/services/ai/EnhancedAIService');
-jest.mock('../../../../src/services/ai/AIVerificationService');
-jest.mock('../../../../src/utils/Logger');
+jest.mock('../../../../apps/cli/src/services/ai/EnhancedAIService');
+jest.mock('../../../../apps/cli/src/services/ai/AIVerificationService');
+jest.mock('../../../../apps/cli/src/utils/Logger');
 
 describe('TaskSuggestionService', () => {
   let taskSuggestionService: TaskSuggestionService;

@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { SuiClient } from '../../../src/utils/adapters/sui-client-compatibility';
+import { SuiClient } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 
 // Define CoinBalance type locally since it's not exported
 interface CoinBalance {

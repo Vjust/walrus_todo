@@ -16,7 +16,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { Logger } from '../../../src/utils/Logger';
+import { Logger } from '../../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('sui-setup');
 import * as os from 'os';
@@ -27,9 +27,9 @@ import { Secp256k1Keypair } from '@mysten/sui/keypairs/secp256k1';
 // import { _bcs } from '@mysten/sui/bcs';
 import { fromB64, toB64 } from '@mysten/sui/utils';
 
-import { NetworkType } from '../../../src/types/network';
-import { NETWORK_URLS } from '../../../src/constants';
-import { CLIError } from '../../../src/types/errors';
+import { NetworkType } from '../../../apps/cli/src/types/network';
+import { NETWORK_URLS } from '../../../apps/cli/src/constants';
+import { CLIError } from '../../../apps/cli/src/types/errors';
 import { SuiClient } from '@mysten/sui/client';
 
 // Configuration constants

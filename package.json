@@ -2,7 +2,7 @@
   "name": "waltodo",
   "version": "1.0.0",
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
-  "main": "dist/src/index.js",
+  "main": "dist/apps/cli/src/index.js",
   "type": "commonjs",
   "bin": {
     "waltodo": "bin/waltodo"
@@ -101,9 +101,17 @@
     "config:validate": "pnpm run build:dev && ./bin/waltodo validate-config",
     "config:validate:detailed": "pnpm run build:dev && ./bin/waltodo validate-config --detailed",
     "build:all": "pnpm run build && pnpm run nextjs:build",
-    "api:start": "node dist/src/api/start-server.js",
-    "api:dev": "ts-node src/api/start-server.ts",
-    "api:start:port": "node dist/src/api/start-server.js --port="
+    "api:start": "node start-api-server.js",
+    "api:dev": "node start-api-server.js --dev",
+    "api:build": "cd apps/api && pnpm build",
+    "api:install": "cd apps/api && pnpm install",
+    "api:docker:build": "cd apps/api && docker build -t waltodo-api .",
+    "api:docker:run": "cd apps/api && docker run -p 3000:3000 waltodo-api",
+    "api:start:port": "node start-api-server.js --port=",
+    "start:api": "cd apps/api && pnpm dev --port=3001",
+    "dev:all": "./pnpm-dev.sh",
+    "dev:tmux": "./pnpm-dev.sh",
+    "dev:simple": "./pnpm-dev-simple.sh"
   },
   "keywords": [
     "cli",
@@ -141,7 +149,9 @@
     "langchain": "^0.3.24",
     "node-fetch": "^3.3.2",
     "p-retry": "^6.2.1",
+    "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
+    "winston": "^3.17.0",
     "zod": "^3.25.12"
   },
   "devDependencies": {
@@ -191,14 +201,14 @@
   "files": [
     "/bin",
     "/dist",
-    "/src/move",
+    "/apps/cli/src/move",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
   "oclif": {
     "bin": "waltodo",
     "dirname": "waltodo",
-    "commands": "./dist/src/commands",
+    "commands": "./dist/apps/cli/src/commands",
     "plugins": [],
     "topicSeparator": ":",
     "macos": {

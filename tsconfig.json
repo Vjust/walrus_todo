@@ -8,19 +8,19 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@tests/*": ["src/__tests__/*"],
-      "@types/*": ["src/types/*"],
-      "@utils/*": ["src/utils/*"],
-      "@services/*": ["src/services/*"],
-      "@commands/*": ["src/commands/*"],
-      "@adapters/*": ["src/types/adapters/*"],
-      "@errors/*": ["src/types/errors/*"]
+      "@/*": ["apps/cli/src/*"],
+      "@tests/*": ["apps/cli/src/__tests__/*"],
+      "@types/*": ["apps/cli/src/types/*"],
+      "@utils/*": ["apps/cli/src/utils/*"],
+      "@services/*": ["apps/cli/src/services/*"],
+      "@commands/*": ["apps/cli/src/commands/*"],
+      "@adapters/*": ["apps/cli/src/types/adapters/*"],
+      "@errors/*": ["apps/cli/src/types/errors/*"]
     },
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "typeRoots": ["./node_modules/@types", "./apps/cli/src/types"],
     "types": ["node", "jest", "cli-progress", "express"],
     "resolveJsonModule": true,
-    "outDir": "./dist",
+    "outDir": "./dist/root",
     "importHelpers": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -70,6 +70,6 @@
       "module": "commonjs"
     }
   },
-  "include": ["src/**/*", "scripts/**/*", "tests/**/*", "*.ts"],
+  "include": ["apps/cli/src/**/*", "scripts/**/*", "tests/**/*", "*.ts"],
   "exclude": ["node_modules", "dist", "backup", "waltodo-frontend", "frontend-demo"]
 }

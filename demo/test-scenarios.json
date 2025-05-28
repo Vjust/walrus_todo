@@ -1,0 +1,278 @@
+{
+  "demo_info": {
+    "name": "WalTodo Convergence Demo",
+    "version": "1.0.0",
+    "description": "Comprehensive test scenarios for CLI-Frontend convergence",
+    "acceptance_criteria": {
+      "sync_time_seconds": 2,
+      "cli_response_ms": 1000,
+      "api_response_ms": 500,
+      "lighthouse_score": 90
+    }
+  },
+  "wallets": [
+    {
+      "address": "0x1234567890abcdef1234567890abcdef12345678",
+      "name": "Demo Wallet 1",
+      "description": "Primary test wallet for convergence demo",
+      "todos": [
+        {
+          "title": "Wallet 1 Todo - CLI Test",
+          "list": "demo-list-1",
+          "priority": "medium",
+          "tags": ["demo", "cli-test"]
+        },
+        {
+          "title": "Wallet 1 Todo - Frontend Test",
+          "list": "demo-list-1",
+          "priority": "high",
+          "tags": ["demo", "frontend-test"]
+        }
+      ]
+    },
+    {
+      "address": "0xfedcba0987654321fedcba0987654321fedcba09",
+      "name": "Demo Wallet 2",
+      "description": "Secondary test wallet for isolation testing",
+      "todos": [
+        {
+          "title": "Wallet 2 Todo - Isolation Test",
+          "list": "demo-list-2",
+          "priority": "low",
+          "tags": ["demo", "isolation-test"]
+        }
+      ]
+    },
+    {
+      "address": "0x9876543210fedcba9876543210fedcba98765432",
+      "name": "Demo Wallet 3",
+      "description": "Third wallet for multi-wallet scenarios",
+      "todos": [
+        {
+          "title": "Wallet 3 Todo - Multi-wallet Test",
+          "list": "demo-list-3",
+          "priority": "medium",
+          "tags": ["demo", "multi-wallet"]
+        }
+      ]
+    }
+  ],
+  "sync_tests": [
+    {
+      "name": "CLI to Frontend Sync",
+      "description": "Test CLI add operation reflected in frontend",
+      "action": "cli_add",
+      "data": {
+        "title": "CLI Sync Test Todo",
+        "list": "sync-test",
+        "priority": "high"
+      },
+      "verification": "frontend_api",
+      "max_time_seconds": 2,
+      "expected_status": 200
+    },
+    {
+      "name": "Frontend to CLI Sync",
+      "description": "Test frontend complete operation reflected in CLI",
+      "action": "frontend_complete",
+      "data": {
+        "todo_id": "auto",
+        "completed": true
+      },
+      "verification": "cli_list",
+      "max_time_seconds": 2,
+      "expected_pattern": "✓"
+    },
+    {
+      "name": "Bidirectional Sync",
+      "description": "Test rapid bidirectional synchronization",
+      "action": "mixed_operations",
+      "data": {
+        "operations": [
+          {"type": "cli_add", "title": "Rapid Test 1"},
+          {"type": "frontend_add", "title": "Rapid Test 2"},
+          {"type": "cli_complete", "target": "Rapid Test 1"},
+          {"type": "frontend_complete", "target": "Rapid Test 2"}
+        ]
+      },
+      "verification": "consistency_check",
+      "max_time_seconds": 5
+    }
+  ],
+  "performance_tests": [
+    {
+      "name": "CLI Response Time",
+      "description": "Measure CLI command execution time",
+      "command": "list --json",
+      "max_time_ms": 1000,
+      "iterations": 5
+    },
+    {
+      "name": "API Response Time",
+      "description": "Measure API endpoint response time",
+      "endpoint": "/api/todos",
+      "method": "GET",
+      "max_time_ms": 500,
+      "iterations": 10
+    },
+    {
+      "name": "WebSocket Connection",
+      "description": "Test WebSocket connection establishment",
+      "endpoint": "/api/ws-status",
+      "max_time_ms": 1000,
+      "expected_response": {"connected": true}
+    },
+    {
+      "name": "Bulk Operations",
+      "description": "Test performance with multiple simultaneous operations",
+      "operations": {
+        "add_count": 10,
+        "complete_count": 5,
+        "delete_count": 3
+      },
+      "max_time_seconds": 10
+    }
+  ],
+  "isolation_tests": [
+    {
+      "name": "Wallet Data Isolation",
+      "description": "Verify todos are isolated per wallet",
+      "wallets": [
+        "0x1234567890abcdef1234567890abcdef12345678",
+        "0xfedcba0987654321fedcba0987654321fedcba09"
+      ],
+      "operations": [
+        {
+          "wallet": "0x1234567890abcdef1234567890abcdef12345678",
+          "action": "add",
+          "title": "Wallet 1 Isolation Test"
+        },
+        {
+          "wallet": "0xfedcba0987654321fedcba0987654321fedcba09",
+          "action": "add",
+          "title": "Wallet 2 Isolation Test"
+        }
+      ],
+      "verification": "cross_wallet_check"
+    },
+    {
+      "name": "List Isolation",
+      "description": "Verify todos are isolated per list",
+      "lists": ["isolation-list-1", "isolation-list-2"],
+      "operations": [
+        {
+          "list": "isolation-list-1",
+          "action": "add",
+          "title": "List 1 Todo"
+        },
+        {
+          "list": "isolation-list-2",
+          "action": "add",
+          "title": "List 2 Todo"
+        }
+      ],
+      "verification": "cross_list_check"
+    }
+  ],
+  "websocket_tests": [
+    {
+      "name": "Real-time Event Broadcasting",
+      "description": "Test WebSocket event propagation",
+      "events": [
+        {"type": "todo_added", "data": {"title": "WebSocket Test 1"}},
+        {"type": "todo_completed", "data": {"id": "auto"}},
+        {"type": "todo_deleted", "data": {"id": "auto"}}
+      ],
+      "max_propagation_ms": 100
+    },
+    {
+      "name": "Connection Resilience",
+      "description": "Test WebSocket reconnection handling",
+      "actions": [
+        "connect",
+        "add_todo",
+        "disconnect",
+        "reconnect",
+        "verify_sync"
+      ],
+      "max_recovery_seconds": 5
+    }
+  ],
+  "error_handling_tests": [
+    {
+      "name": "API Server Down",
+      "description": "Test graceful handling when API server is unavailable",
+      "scenario": "stop_api_server",
+      "operations": [
+        "cli_add",
+        "frontend_interaction"
+      ],
+      "expected_behavior": "graceful_degradation"
+    },
+    {
+      "name": "Network Interruption",
+      "description": "Test handling of network connectivity issues",
+      "scenario": "network_interruption",
+      "duration_seconds": 10,
+      "expected_behavior": "automatic_retry"
+    },
+    {
+      "name": "Invalid Data Handling",
+      "description": "Test handling of malformed or invalid data",
+      "test_cases": [
+        {"input": "", "field": "title", "expected": "validation_error"},
+        {"input": null, "field": "list", "expected": "validation_error"},
+        {"input": "x".repeat(1000), "field": "title", "expected": "length_error"}
+      ]
+    }
+  ],
+  "user_scenarios": [
+    {
+      "name": "Daily Workflow",
+      "description": "Simulate typical daily usage pattern",
+      "steps": [
+        "morning_todo_review",
+        "add_new_tasks",
+        "work_session_updates",
+        "evening_completion_review"
+      ],
+      "duration_minutes": 5
+    },
+    {
+      "name": "Team Collaboration",
+      "description": "Simulate multiple users working simultaneously",
+      "concurrent_users": 3,
+      "operations_per_user": 5,
+      "duration_minutes": 3
+    },
+    {
+      "name": "Mobile Usage Pattern",
+      "description": "Simulate mobile device usage with intermittent connectivity",
+      "connection_pattern": "intermittent",
+      "operations": [
+        "offline_add",
+        "reconnect_sync",
+        "online_complete",
+        "disconnect_again"
+      ]
+    }
+  ],
+  "validation_rules": {
+    "sync_timing": {
+      "cli_to_frontend_max_seconds": 2,
+      "frontend_to_cli_max_seconds": 2,
+      "websocket_propagation_max_ms": 100
+    },
+    "performance": {
+      "cli_response_max_ms": 1000,
+      "api_response_max_ms": 500,
+      "lighthouse_min_score": 90,
+      "memory_usage_max_mb": 512
+    },
+    "reliability": {
+      "success_rate_min_percent": 99,
+      "error_recovery_max_seconds": 30,
+      "data_consistency_required": true
+    }
+  }
+}

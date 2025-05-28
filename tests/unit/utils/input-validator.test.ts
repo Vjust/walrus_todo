@@ -2,8 +2,8 @@ import {
   InputValidator,
   CommonValidationRules,
   ValidationRule,
-} from '../../../src/utils/InputValidator';
-import { ValidationError } from '../../../src/types/errors/consolidated';
+} from '../../../apps/cli/src/utils/InputValidator';
+import { ValidationError } from '../../../apps/cli/src/types/errors/consolidated';
 
 describe('InputValidator', () => {
   describe('validate', () => {
