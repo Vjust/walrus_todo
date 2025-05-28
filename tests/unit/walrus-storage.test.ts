@@ -1,10 +1,15 @@
 import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
 import type { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
 import { Todo } from '../../apps/cli/src/types/todo';
-import { createWalrusModuleMock, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
+// Using real WalrusStorage implementation
 
-// Mock the external dependencies
-jest.mock('@mysten/walrus', () => createWalrusModuleMock());
+// Mock the external dependencies for unit testing
+jest.mock('@mysten/walrus', () => ({
+  WalrusClient: jest.fn().mockImplementation(() => ({
+    store: jest.fn().mockResolvedValue('mock-blob-id'),
+    read: jest.fn().mockResolvedValue(new Uint8Array()),
+  })),
+}));
 
 jest.mock('../../apps/cli/src/utils/adapters/sui-client-compatibility', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
