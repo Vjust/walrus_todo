@@ -5,20 +5,23 @@ import { queryClient, queryKeys, invalidateQueries } from './queryClient';
 import { Todo } from '../types/todo';
 
 export interface ServerToClientEvents {
-  TODO_CREATED: (data: { todo: Todo; listName: string }) => void;
-  TODO_UPDATED: (data: { todo: Todo; listName: string }) => void;
-  TODO_DELETED: (data: { todoId: string; listName: string }) => void;
-  TODO_COMPLETED: (data: { todo: Todo; listName: string }) => void;
-  LIST_CREATED: (data: { listName: string }) => void;
-  LIST_DELETED: (data: { listName: string }) => void;
-  SYNC_STARTED: (data: { todoId: string; type: 'walrus' | 'blockchain' }) => void;
-  SYNC_COMPLETED: (data: { todoId: string; type: 'walrus' | 'blockchain'; result: any }) => void;
-  SYNC_FAILED: (data: { todoId: string; type: 'walrus' | 'blockchain'; error: string }) => void;
+  'todo-created': (todo: Todo) => void;
+  'todo-updated': (todo: Todo) => void;
+  'todo-deleted': (data: { id: string; wallet: string }) => void;
+  'todo-completed': (todo: Todo) => void;
+  'sync-requested': (data: { wallet: string }) => void;
+  'auth-success': (data: { wallet: string }) => void;
+  'auth-error': (data: { message: string }) => void;
+  'joined-wallet': (data: { wallet: string }) => void;
+  'left-wallet': (data: { wallet: string }) => void;
+  error: (error: any) => void;
 }
 
 export interface ClientToServerEvents {
-  JOIN_ROOM: (room: string) => void;
-  LEAVE_ROOM: (room: string) => void;
+  authenticate: (data: { wallet: string }) => void;
+  'join-wallet': (data: { wallet: string }) => void;
+  'leave-wallet': (data: { wallet: string }) => void;
+  'sync-request': (data: { wallet: string }) => void;
 }
 
 class WebSocketManager {
@@ -54,9 +57,9 @@ class WebSocketManager {
       this.isConnected = true;
       this.reconnectAttempts = 0;
       
-      // Rejoin room if we were in one
+      // Rejoin wallet if we were in one
       if (this.currentRoom) {
-        this.joinRoom(this.currentRoom);
+        this.joinWallet(this.currentRoom);
       }
     });
 
@@ -75,27 +78,27 @@ class WebSocketManager {
     });
 
     // Todo events with optimistic updates
-    this.socket.on('TODO_CREATED', ({ todo, listName }) => {
+    this.socket.on('todo-created', (todo: Todo) => {
       console.log('📝 Todo created:', todo.title);
       
       // Update the todos list cache
-      queryClient.setQueryData(queryKeys.todos.list(listName), (oldData: Todo[] | undefined) => {
+      queryClient.setQueryData(queryKeys.todos.list('default'), (oldData: Todo[] | undefined) => {
         if (!oldData) return [todo];
         return [...oldData, todo];
       });
       
       // Invalidate related queries
-      invalidateQueries.todos(listName);
+      invalidateQueries.todos('default');
     });
 
-    this.socket.on('TODO_UPDATED', ({ todo, listName }) => {
+    this.socket.on('todo-updated', (todo: Todo) => {
       console.log('📝 Todo updated:', todo.title);
       
       // Update specific todo in cache
       queryClient.setQueryData(queryKeys.todos.detail(todo.id), todo);
       
       // Update todo in list cache
-      queryClient.setQueryData(queryKeys.todos.list(listName), (oldData: Todo[] | undefined) => {
+      queryClient.setQueryData(queryKeys.todos.list('default'), (oldData: Todo[] | undefined) => {
         if (!oldData) return [todo];
         return oldData.map(t => t.id === todo.id ? todo : t);
       });
@@ -103,29 +106,29 @@ class WebSocketManager {
       invalidateQueries.todoDetail(todo.id);
     });
 
-    this.socket.on('TODO_DELETED', ({ todoId, listName }) => {
-      console.log('🗑️ Todo deleted:', todoId);
+    this.socket.on('todo-deleted', (data: { id: string; wallet: string }) => {
+      console.log('🗑️ Todo deleted:', data.id);
       
       // Remove from list cache
-      queryClient.setQueryData(queryKeys.todos.list(listName), (oldData: Todo[] | undefined) => {
+      queryClient.setQueryData(queryKeys.todos.list('default'), (oldData: Todo[] | undefined) => {
         if (!oldData) return [];
-        return oldData.filter(t => t.id !== todoId);
+        return oldData.filter(t => t.id !== data.id);
       });
       
       // Remove from detail cache
-      queryClient.removeQueries({ queryKey: queryKeys.todos.detail(todoId) });
+      queryClient.removeQueries({ queryKey: queryKeys.todos.detail(data.id) });
       
-      invalidateQueries.todos(listName);
+      invalidateQueries.todos('default');
     });
 
-    this.socket.on('TODO_COMPLETED', ({ todo, listName }) => {
+    this.socket.on('todo-completed', (todo: Todo) => {
       console.log('✅ Todo completed:', todo.title);
       
       // Update specific todo in cache
       queryClient.setQueryData(queryKeys.todos.detail(todo.id), todo);
       
       // Update todo in list cache
-      queryClient.setQueryData(queryKeys.todos.list(listName), (oldData: Todo[] | undefined) => {
+      queryClient.setQueryData(queryKeys.todos.list('default'), (oldData: Todo[] | undefined) => {
         if (!oldData) return [todo];
         return oldData.map(t => t.id === todo.id ? todo : t);
       });
@@ -133,58 +136,52 @@ class WebSocketManager {
       invalidateQueries.todoDetail(todo.id);
     });
 
-    // List events
-    this.socket.on('LIST_CREATED', ({ listName }) => {
-      console.log('📋 List created:', listName);
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.lists() });
+    // Auth events
+    this.socket.on('auth-success', (data: { wallet: string }) => {
+      console.log('🔐 Authenticated with wallet:', data.wallet);
     });
 
-    this.socket.on('LIST_DELETED', ({ listName }) => {
-      console.log('🗑️ List deleted:', listName);
-      queryClient.removeQueries({ queryKey: queryKeys.todos.list(listName) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.lists() });
+    this.socket.on('auth-error', (data: { message: string }) => {
+      console.error('🔐 Authentication failed:', data.message);
+    });
+
+    this.socket.on('joined-wallet', (data: { wallet: string }) => {
+      console.log('🏠 Joined wallet room:', data.wallet);
+    });
+
+    this.socket.on('left-wallet', (data: { wallet: string }) => {
+      console.log('🚪 Left wallet room:', data.wallet);
     });
 
     // Sync events
-    this.socket.on('SYNC_STARTED', ({ todoId, type }) => {
-      console.log(`🔄 Sync started for ${todoId} (${type})`);
-      // Could update UI to show sync in progress
-    });
-
-    this.socket.on('SYNC_COMPLETED', ({ todoId, type, result }) => {
-      console.log(`✅ Sync completed for ${todoId} (${type}):`, result);
-      // Invalidate sync status queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.sync(todoId) });
-      invalidateQueries.todoDetail(todoId);
-    });
-
-    this.socket.on('SYNC_FAILED', ({ todoId, type, error }) => {
-      console.error(`❌ Sync failed for ${todoId} (${type}):`, error);
-      // Could show error notification
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.sync(todoId) });
+    this.socket.on('sync-requested', (data: { wallet: string }) => {
+      console.log('🔄 Sync requested for wallet:', data.wallet);
+      // Invalidate all queries to refetch data
+      queryClient.invalidateQueries();
     });
   }
 
-  joinRoom(room: string) {
+  joinWallet(wallet: string) {
     if (!this.socket?.connected) {
-      console.warn('🔌 Cannot join room: WebSocket not connected');
+      console.warn('🔌 Cannot join wallet: WebSocket not connected');
       return;
     }
 
-    this.currentRoom = room;
-    this.socket.emit('JOIN_ROOM', room);
-    console.log('🏠 Joined room:', room);
+    this.currentRoom = wallet;
+    this.socket.emit('authenticate', { wallet });
+    this.socket.emit('join-wallet', { wallet });
+    console.log('🏠 Joined wallet:', wallet);
   }
 
-  leaveRoom(room: string) {
+  leaveWallet(wallet: string) {
     if (!this.socket?.connected) return;
 
-    if (this.currentRoom === room) {
+    if (this.currentRoom === wallet) {
       this.currentRoom = null;
     }
     
-    this.socket.emit('LEAVE_ROOM', room);
-    console.log('🚪 Left room:', room);
+    this.socket.emit('leave-wallet', { wallet });
+    console.log('🚪 Left wallet:', wallet);
   }
 
   disconnect() {
@@ -213,14 +210,14 @@ export const websocketManager = new WebSocketManager();
 export function useWebSocket() {
   const connect = () => websocketManager.connect();
   const disconnect = () => websocketManager.disconnect();
-  const joinRoom = (room: string) => websocketManager.joinRoom(room);
-  const leaveRoom = (room: string) => websocketManager.leaveRoom(room);
+  const joinWallet = (wallet: string) => websocketManager.joinWallet(wallet);
+  const leaveWallet = (wallet: string) => websocketManager.leaveWallet(wallet);
   
   return {
     connect,
     disconnect,
-    joinRoom,
-    leaveRoom,
+    joinWallet,
+    leaveWallet,
     connected: websocketManager.connected,
     socketId: websocketManager.socketId,
   };

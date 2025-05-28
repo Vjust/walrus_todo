@@ -67,7 +67,7 @@ module.exports = {
   transformIgnorePatterns: [
     '/node_modules/(?!(@oclif|fancy-test|@mysten|@langchain|ora|cli-progress)/.*)',
   ],
-  modulePaths: ['<rootDir>/src'],
+  modulePaths: ['<rootDir>/apps/cli/src'],
   maxWorkers: 1,
   testTimeout: 10000,
   // Conditionally enable coverage collection for CI environments
@@ -75,8 +75,8 @@ module.exports = {
   coverageReporters: ['json', 'lcov', 'text', 'clover', 'json-summary'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
+    'apps/cli/src/**/*.{js,jsx,ts,tsx}',
+    '!apps/cli/src/**/*.d.ts',
     '!apps/cli/src/**/*.test.{js,jsx,ts,tsx}',
     '!apps/cli/src/**/index.{js,ts}',
   ],

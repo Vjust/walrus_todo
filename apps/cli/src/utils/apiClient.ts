@@ -47,12 +47,12 @@ export class ApiClient extends EventEmitter {
     this.logger = new Logger('ApiClient');
     
     this.config = {
-      baseURL: config.baseURL,
+      baseURL: config.baseURL || 'http://localhost:3001',
       timeout: config.timeout || 30000,
       retryAttempts: config.retryAttempts || 3,
       retryDelay: config.retryDelay || 1000,
       enableWebSocket: config.enableWebSocket ?? true,
-      websocketURL: config.websocketURL || config.baseURL,
+      websocketURL: config.websocketURL || config.baseURL || 'http://localhost:3001',
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'WalTodo-CLI/1.0.0',
@@ -184,8 +184,8 @@ export class ApiClient extends EventEmitter {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await this.httpClient.get('/health');
-      return response.data.status === 'ok';
+      const response = await this.httpClient.get('/healthz');
+      return response.data.status === 'ok' || response.status === 200;
     } catch (error) {
       this.logger.error('Health check failed:', error);
       return false;
@@ -310,8 +310,8 @@ export class ApiClient extends EventEmitter {
    */
   async pushTodo(todo: Todo, listName: string): Promise<SyncResponse> {
     return this.retryManager.executeWithRetry(async () => {
-      const response = await this.httpClient.post('/api/todos', {
-        todo,
+      const response = await this.httpClient.post('/api/v1/todos', {
+        ...todo,
         listName,
         wallet: this.wallet
       });
@@ -336,12 +336,12 @@ export class ApiClient extends EventEmitter {
         params.listName = listName;
       }
       
-      const response = await this.httpClient.get('/api/todos', { params });
+      const response = await this.httpClient.get('/api/v1/todos', { params });
       
       this.logger.debug('Todos pulled from server', { 
         wallet, 
         listName, 
-        count: response.data?.todos?.length || 0 
+        count: response.data?.length || 0 
       });
       
       return {
@@ -357,7 +357,7 @@ export class ApiClient extends EventEmitter {
    */
   async deleteTodo(todoId: string, listName: string): Promise<SyncResponse> {
     return this.retryManager.executeWithRetry(async () => {
-      await this.httpClient.delete(`/api/todos/${todoId}`, {
+      await this.httpClient.delete(`/api/v1/todos/${todoId}`, {
         data: { listName, wallet: this.wallet }
       });
       
@@ -375,8 +375,8 @@ export class ApiClient extends EventEmitter {
    */
   async updateTodo(todo: Todo, listName: string): Promise<SyncResponse> {
     return this.retryManager.executeWithRetry(async () => {
-      const response = await this.httpClient.put(`/api/todos/${todo.id}`, {
-        todo,
+      const response = await this.httpClient.put(`/api/v1/todos/${todo.id}`, {
+        ...todo,
         listName,
         wallet: this.wallet
       });
@@ -408,7 +408,7 @@ export class ApiClient extends EventEmitter {
    */
   async getSyncStatus(wallet: string): Promise<SyncResponse> {
     try {
-      const response = await this.httpClient.get(`/api/sync/status`, {
+      const response = await this.httpClient.get(`/api/v1/todos/stats`, {
         params: { wallet }
       });
       

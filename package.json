@@ -2,7 +2,7 @@
   "name": "waltodo",
   "version": "1.0.0",
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
-  "main": "dist/src/index.js",
+  "main": "dist/apps/cli/src/index.js",
   "type": "commonjs",
   "bin": {
     "waltodo": "bin/waltodo"
@@ -201,14 +201,14 @@
   "files": [
     "/bin",
     "/dist",
-    "/src/move",
+    "/apps/cli/src/move",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
   "oclif": {
     "bin": "waltodo",
     "dirname": "waltodo",
-    "commands": "./dist/src/commands",
+    "commands": "./dist/apps/cli/src/commands",
     "plugins": [],
     "topicSeparator": ":",
     "macos": {
