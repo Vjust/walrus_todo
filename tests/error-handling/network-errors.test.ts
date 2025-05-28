@@ -283,7 +283,14 @@ describe('Network Error Handling', () => {
         // Increase probability with each failure
         errorFactory: () => {
           simulator.updateConfig({
-            probability: Math.min(1.0, (simulator as ErrorSimulator & { config: { probability: number } }).config.probability + 0.25),
+            probability: Math.min(
+              1.0,
+              (
+                simulator as ErrorSimulator & {
+                  config: { probability: number };
+                }
+              ).config.probability + 0.25
+            ),
           });
           return new NetworkError('Network degrading', {
             network: 'test',
@@ -300,7 +307,10 @@ describe('Network Error Handling', () => {
       const promises = Array.from({ length: 10 }, () =>
         task.performNetworkRequest().then(
           result => ({ success: true, result }),
-          error => ({ success: false, error: error instanceof Error ? error.message : String(error) })
+          error => ({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          })
         )
       );
 

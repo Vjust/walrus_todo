@@ -4,7 +4,6 @@ import { SuiTestService } from '../../apps/cli/src/services/SuiTestService';
 // Mock contracts
 jest.mock('../../apps/cli/src/services/SuiTestService');
 
-
 class MockNFTStorageContract {
   constructor(public address: string) {}
   mintNFT = jest.fn().mockResolvedValue({ id: 'nft-123' });
@@ -47,7 +46,7 @@ describe('Transaction Fuzzing Tests', () => {
             case 'create':
               await suiService.addTodo(listId, op.text);
               break;
-              
+
             case 'update': {
               const todos = await suiService.getTodos(listId);
               if (todos.length > 0) {
@@ -60,7 +59,7 @@ describe('Transaction Fuzzing Tests', () => {
               }
               break;
             }
-              
+
             case 'delete':
               await suiService.deleteTodoList(listId);
               break;
@@ -101,8 +100,13 @@ describe('Transaction Fuzzing Tests', () => {
       const listId = await suiService.createTodoList();
 
       // Test extremely long strings
-      const veryLongText = fuzzer.string({ minLength: 50000, maxLength: 100000 });
-      await expect(suiService.addTodo(listId, veryLongText)).rejects.toBeDefined();
+      const veryLongText = fuzzer.string({
+        minLength: 50000,
+        maxLength: 100000,
+      });
+      await expect(
+        suiService.addTodo(listId, veryLongText)
+      ).rejects.toBeDefined();
 
       // Test empty strings
       await expect(suiService.addTodo(listId, '')).rejects.toBeDefined();
@@ -110,7 +114,9 @@ describe('Transaction Fuzzing Tests', () => {
       // Test special characters
       const specialChars = '!@#$%^&*()_+-=[]{}|;:",./<>?`~';
       // Should either succeed or fail gracefully
-      const specialCharResult = await suiService.addTodo(listId, specialChars).catch(error => error);
+      const specialCharResult = await suiService
+        .addTodo(listId, specialChars)
+        .catch(error => error);
       expect(specialCharResult).toBeDefined();
     });
   });
@@ -148,13 +154,17 @@ describe('Transaction Fuzzing Tests', () => {
 
       // Verify all operations completed (either successfully or with proper errors)
       expect(results).toHaveLength(operations.length);
-      const rejectedResults = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[];
-      const fulfilledResults = results.filter(r => r.status === 'fulfilled') as PromiseFulfilledResult<unknown>[];
-      
+      const rejectedResults = results.filter(
+        r => r.status === 'rejected'
+      ) as PromiseRejectedResult[];
+      const fulfilledResults = results.filter(
+        r => r.status === 'fulfilled'
+      ) as PromiseFulfilledResult<unknown>[];
+
       rejectedResults.forEach(result => {
         expect(result.reason).toBeDefined();
       });
-      
+
       fulfilledResults.forEach(result => {
         expect(result.value).toBeDefined();
       });
@@ -174,13 +184,16 @@ describe('Transaction Fuzzing Tests', () => {
         highGasOperations.map(async op => {
           // Simulate high-gas operations
           return new Promise((resolve, reject) => {
-            setTimeout(() => {
-              if (op.gasLimit < 100 || op.gasPrice > 50) {
-                reject(new Error('Gas limit exceeded or price too high'));
-              } else {
-                resolve({ success: true, gasUsed: op.gasLimit * 0.8 });
-              }
-            }, fuzzer.number(10, 200));
+            setTimeout(
+              () => {
+                if (op.gasLimit < 100 || op.gasPrice > 50) {
+                  reject(new Error('Gas limit exceeded or price too high'));
+                } else {
+                  resolve({ success: true, gasUsed: op.gasLimit * 0.8 });
+                }
+              },
+              fuzzer.number(10, 200)
+            );
           });
         })
       );
@@ -188,8 +201,10 @@ describe('Transaction Fuzzing Tests', () => {
       // Ensure proper error handling for gas-related issues
       const rejectedResults = results.filter(r => r.status === 'rejected');
       const fulfilledResults = results.filter(r => r.status === 'fulfilled');
-      
-      expect(rejectedResults.length + fulfilledResults.length).toBe(highGasOperations.length);
+
+      expect(rejectedResults.length + fulfilledResults.length).toBe(
+        highGasOperations.length
+      );
     });
   });
 
@@ -224,7 +239,9 @@ describe('Transaction Fuzzing Tests', () => {
                 break;
 
               case 'update':
-                await suiService.updateTodo(listId, 'todo-123', { text: fuzzer.string() });
+                await suiService.updateTodo(listId, 'todo-123', {
+                  text: fuzzer.string(),
+                });
                 break;
 
               case 'delete':
@@ -261,14 +278,16 @@ describe('Transaction Fuzzing Tests', () => {
       const results = await Promise.allSettled(
         largeDataOperations.map(async op => {
           // Simulate memory-intensive operation
-          const largeData = Array(op.size).fill(fuzzer.string({ maxLength: 100 }));
-          
+          const largeData = Array(op.size).fill(
+            fuzzer.string({ maxLength: 100 })
+          );
+
           // Process data with varying complexity
           for (let i = 0; i < op.complexity; i++) {
             largeData.sort();
             largeData.reverse();
           }
-          
+
           return { processed: largeData.length, complexity: op.complexity };
         })
       );

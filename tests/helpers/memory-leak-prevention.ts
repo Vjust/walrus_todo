@@ -2,7 +2,10 @@
  * Memory leak prevention utilities for tests
  */
 
-import { logMemoryUsage, forceGC } from './memory-utils';
+import {
+  logMemoryUsage,
+  forceGC,
+} from '../../apps/cli/src/__tests__/helpers/memory-utils';
 
 /**
  * Interface for components that need cleanup
@@ -47,7 +50,7 @@ class ResourceRegistry {
    */
   async cleanup(): Promise<void> {
     // Cleanup resources
-    const resourceCleanups = Array.from(this.resources).map(async (resource) => {
+    const resourceCleanups = Array.from(this.resources).map(async resource => {
       try {
         if (resource.cleanup) {
           await resource.cleanup();
@@ -62,13 +65,15 @@ class ResourceRegistry {
     });
 
     // Cleanup callbacks
-    const callbackCleanups = Array.from(this.cleanupCallbacks).map(async (callback) => {
-      try {
-        await callback();
-      } catch (error) {
-        console.warn('Error during callback cleanup:', error);
+    const callbackCleanups = Array.from(this.cleanupCallbacks).map(
+      async callback => {
+        try {
+          await callback();
+        } catch (error) {
+          console.warn('Error during callback cleanup:', error);
+        }
       }
-    });
+    );
 
     await Promise.all([...resourceCleanups, ...callbackCleanups]);
 
@@ -92,7 +97,9 @@ const globalRegistry = new ResourceRegistry();
  * Register a resource for automatic cleanup
  * @param resource - Resource or cleanup function
  */
-export function registerForCleanup(resource: Cleanupable | (() => void | Promise<void>)): void {
+export function registerForCleanup(
+  resource: Cleanupable | (() => void | Promise<void>)
+): void {
   globalRegistry.register(resource);
 }
 
@@ -100,7 +107,9 @@ export function registerForCleanup(resource: Cleanupable | (() => void | Promise
  * Unregister a resource
  * @param resource - Resource or cleanup function to unregister
  */
-export function unregisterCleanup(resource: Cleanupable | (() => void | Promise<void>)): void {
+export function unregisterCleanup(
+  resource: Cleanupable | (() => void | Promise<void>)
+): void {
   globalRegistry.unregister(resource);
 }
 
@@ -126,7 +135,8 @@ export class MemoryLeakDetector {
   private threshold: number;
   private label: string;
 
-  constructor(label: string = 'test', threshold: number = 50 * 1024 * 1024) { // 50MB default
+  constructor(label: string = 'test', threshold: number = 50 * 1024 * 1024) {
+    // 50MB default
     this.label = label;
     this.threshold = threshold;
     this.initialMemory = process.memoryUsage();
@@ -139,12 +149,18 @@ export class MemoryLeakDetector {
   checkForLeaks(): boolean {
     const currentMemory = process.memoryUsage();
     const heapIncrease = currentMemory.heapUsed - this.initialMemory.heapUsed;
-    
+
     if (heapIncrease > this.threshold) {
       console.warn(`Potential memory leak detected in ${this.label}:`);
-      console.warn(`  Heap increase: ${Math.round(heapIncrease / 1024 / 1024)} MB`);
-      console.warn(`  Current heap: ${Math.round(currentMemory.heapUsed / 1024 / 1024)} MB`);
-      console.warn(`  Threshold: ${Math.round(this.threshold / 1024 / 1024)} MB`);
+      console.warn(
+        `  Heap increase: ${Math.round(heapIncrease / 1024 / 1024)} MB`
+      );
+      console.warn(
+        `  Current heap: ${Math.round(currentMemory.heapUsed / 1024 / 1024)} MB`
+      );
+      console.warn(
+        `  Threshold: ${Math.round(this.threshold / 1024 / 1024)} MB`
+      );
       return true;
     }
 
@@ -182,23 +198,27 @@ export function withMemoryLeakDetection(
     label?: string;
   } = {}
 ): () => Promise<void> {
-  const { threshold = 50 * 1024 * 1024, cleanup = true, label = 'test' } = options;
+  const {
+    threshold = 50 * 1024 * 1024,
+    cleanup = true,
+    label = 'test',
+  } = options;
 
   return async () => {
     const detector = new MemoryLeakDetector(label, threshold);
-    
+
     try {
       // Run the test
       await testFn();
-      
+
       // Cleanup if requested
       if (cleanup) {
         await cleanupAllResources();
       }
-      
+
       // Check for leaks
       const hasLeak = detector.forceGCAndCheck();
-      
+
       if (hasLeak) {
         console.warn(`Memory leak detected after test: ${label}`);
       }
@@ -290,7 +310,7 @@ export class ResourcePool<T extends Cleanupable> {
   async release(resource: T): Promise<void> {
     if (this.resources.has(resource)) {
       this.resources.delete(resource);
-      
+
       if (resource.cleanup) {
         await resource.cleanup();
       } else if (resource.destroy) {
@@ -305,7 +325,9 @@ export class ResourcePool<T extends Cleanupable> {
    * Cleanup all resources in the pool
    */
   async cleanup(): Promise<void> {
-    const cleanupPromises = Array.from(this.resources).map(resource => this.release(resource));
+    const cleanupPromises = Array.from(this.resources).map(resource =>
+      this.release(resource)
+    );
     await Promise.all(cleanupPromises);
     this.resources.clear();
   }

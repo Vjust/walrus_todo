@@ -110,10 +110,10 @@ describe('Frontend-CLI Integration Tests', () => {
         const addressMatch = deployOutput.match(/Address:\s*(0x[a-fA-F0-9]+)/);
 
         // Validate matches unconditionally
-      const hasPackageId = !!packageIdMatch;
-      const hasAddress = !!addressMatch;
-      expect(hasPackageId).toBe(true);
-      expect(hasAddress).toBe(true);
+        const hasPackageId = !!packageIdMatch;
+        const hasAddress = !!addressMatch;
+        expect(hasPackageId).toBe(true);
+        expect(hasAddress).toBe(true);
 
         // Always set deployment info when matches are found
         deploymentInfo = {
@@ -127,10 +127,10 @@ describe('Frontend-CLI Integration Tests', () => {
         expect(deploymentInfo.packageId).toBeTruthy();
         expect(deploymentInfo.walletAddress).toBeTruthy();
       } catch (error) {
-        const isAlreadyDeployed = 
+        const isAlreadyDeployed =
           String(error).includes('already deployed') ||
           String(error).includes('Package ID already exists');
-          
+
         if (!isAlreadyDeployed) {
           throw error;
         }
@@ -155,7 +155,6 @@ describe('Frontend-CLI Integration Tests', () => {
         // Validate matches unconditionally
         expect(packageIdMatch).toBeTruthy();
         expect(addressMatch).toBeTruthy();
-
 
         deploymentInfo = {
           packageId: packageIdMatch?.[1] || '',
@@ -278,7 +277,7 @@ describe('Frontend-CLI Integration Tests', () => {
 
       // Test config endpoint availability
       const configUrl = `http://localhost:${frontendPort}/config/testnet.json`;
-      
+
       // Simply test that the endpoint responds without throwing
       let responseReceived = false;
       let errorOccurred = false;
@@ -329,7 +328,7 @@ describe('Frontend-CLI Integration Tests', () => {
 
       const testTodo = todos.find(todo => todo.title === testTodoTitle);
       expect(testTodo).toBeTruthy();
-      
+
       // Use non-null assertion after verifying existence
       const verifiedTodo = testTodo!;
 
@@ -422,7 +421,7 @@ describe('Frontend-CLI Integration Tests', () => {
       // Just verify we can check for component existence
       const realtimeExists = fs.existsSync(realtimeComponentPath);
       const eventStatusExists = fs.existsSync(eventStatusPath);
-      
+
       expect(typeof realtimeExists).toBe('boolean');
       expect(typeof eventStatusExists).toBe('boolean');
 
@@ -473,7 +472,7 @@ describe('Frontend-CLI Integration Tests', () => {
       );
 
       const configExists = fs.existsSync(configPath);
-      
+
       // Test configuration handling scenarios
       const configUtilPath = path.join(
         frontendPath,
@@ -481,23 +480,23 @@ describe('Frontend-CLI Integration Tests', () => {
       );
       const configUtilExists = fs.existsSync(configUtilPath);
       expect(typeof configUtilExists).toBe('boolean');
-      
+
       // Test configuration scenarios unconditionally
       expect(typeof configExists).toBe('boolean');
-      
+
       // Test config manipulation when config exists
       let configWasTemporarilyRemoved = false;
-      
+
       if (configExists) {
         fs.renameSync(configPath, backupPath);
         configWasTemporarilyRemoved = !fs.existsSync(configPath);
-        
+
         // Restore config file immediately
         if (fs.existsSync(backupPath)) {
           fs.renameSync(backupPath, configPath);
         }
       }
-      
+
       // Verify the removal operation result
       expect(configWasTemporarilyRemoved === configExists).toBe(true);
     });

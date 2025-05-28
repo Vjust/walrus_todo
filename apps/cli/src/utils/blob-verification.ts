@@ -1,8 +1,6 @@
 // Import statements with CommonJS compatibility
 import type { WalrusClientExt } from '../types/client';
-import type {
-  BlobMetadata,
-} from '../types/walrus';
+import type { BlobMetadata } from '../types/walrus';
 import { CLIError } from '../types/errors/consolidated';
 import { handleError } from './error-handler';
 import { RetryManager, NetworkNode } from './retry-manager';
@@ -14,7 +12,6 @@ import { Logger } from './Logger';
 const logger = new Logger('blob-verification');
 
 // Provide fallback implementations for testing environments
-
 
 // Using BlobInfo from types/walrus.ts
 
@@ -404,42 +401,46 @@ export class BlobVerificationManager {
 
         // 3. Verify checksums with tamper detection
         const actualChecksums = this.calculateChecksums(retrievedContent);
-        
+
         // Track tampering detection results
         const tamperingDetected = [];
-        
+
         for (const [algorithm, expectedHash] of Object.entries(
           expectedChecksums
         )) {
-          const actualHash = actualChecksums[algorithm as keyof typeof actualChecksums];
-          
+          const actualHash =
+            actualChecksums[algorithm as keyof typeof actualChecksums];
+
           // Critical: Hash comparison for tamper detection
           const isHashValid = actualHash === expectedHash;
-          
+
           if (!isHashValid) {
             // Tampering detected - collect evidence
             tamperingDetected.push({
               algorithm,
               expected: expectedHash,
               actual: actualHash,
-              tampered: true
+              tampered: true,
             });
-            
+
             throw new Error(
               `TAMPERING DETECTED: ${algorithm} hash mismatch indicates data modification. ` +
-              `Expected: ${expectedHash}, Got: ${actualHash}. ` +
-              `This suggests the blob content has been altered.`
+                `Expected: ${expectedHash}, Got: ${actualHash}. ` +
+                `This suggests the blob content has been altered.`
             );
           }
         }
-        
+
         // Log successful verification for audit trail
         if (tamperingDetected.length === 0) {
-          logger.info(`Hash verification PASSED: All ${Object.keys(expectedChecksums).length} checksums match`, {
-            blobId,
-            algorithms: Object.keys(expectedChecksums),
-            verified: true
-          });
+          logger.info(
+            `Hash verification PASSED: All ${Object.keys(expectedChecksums).length} checksums match`,
+            {
+              blobId,
+              algorithms: Object.keys(expectedChecksums),
+              verified: true,
+            }
+          );
         }
 
         // 4. Verify smart contract certification if requested
@@ -457,7 +458,11 @@ export class BlobVerificationManager {
 
         if (verifySmartContract) {
           const systemState = await this.suiClient.getLatestSuiSystemState();
-          if (!systemState || typeof systemState !== 'object' || !('epoch' in systemState)) {
+          if (
+            !systemState ||
+            typeof systemState !== 'object' ||
+            !('epoch' in systemState)
+          ) {
             throw new Error('Failed to get system state or epoch information');
           }
           const { epoch } = systemState as { epoch: string };
@@ -591,31 +596,38 @@ export class BlobVerificationManager {
 
         // 2. Verify all checksums with tamper detection
         let tamperingDetectedInMonitoring = false;
-        
+
         for (const [algorithm, expectedHash] of Object.entries(checksums)) {
-          const actualHash = actualChecksums[algorithm as keyof typeof actualChecksums];
-          
+          const actualHash =
+            actualChecksums[algorithm as keyof typeof actualChecksums];
+
           // Hash comparison with proper tamper detection logic
           const hashMatches = actualHash === expectedHash;
-          
+
           if (!hashMatches) {
             tamperingDetectedInMonitoring = true;
             throw new Error(
               `TAMPERING DETECTED during monitoring: ${algorithm} hash mismatch on attempt ${attempts}. ` +
-              `Expected: ${expectedHash}, Actual: ${actualHash}. ` +
-              `Data integrity compromised - blob may have been modified.`
+                `Expected: ${expectedHash}, Actual: ${actualHash}. ` +
+                `Data integrity compromised - blob may have been modified.`
             );
           }
         }
-        
+
         // Log successful monitoring verification
         if (!tamperingDetectedInMonitoring) {
-          logger.info(`Monitoring hash verification PASSED for blob ${blobId} (attempt ${attempts})`);
+          logger.info(
+            `Monitoring hash verification PASSED for blob ${blobId} (attempt ${attempts})`
+          );
         }
 
         // 3. Check certification status
         const systemState = await this.suiClient.getLatestSuiSystemState();
-        if (!systemState || typeof systemState !== 'object' || !('epoch' in systemState)) {
+        if (
+          !systemState ||
+          typeof systemState !== 'object' ||
+          !('epoch' in systemState)
+        ) {
           throw new Error('Failed to get system state or epoch information');
         }
         const { epoch } = systemState as { epoch: string };
@@ -704,7 +716,11 @@ export class BlobVerificationManager {
 
     // Check initial certification status
     const systemState = await this.suiClient.getLatestSuiSystemState();
-    if (!systemState || typeof systemState !== 'object' || !('epoch' in systemState)) {
+    if (
+      !systemState ||
+      typeof systemState !== 'object' ||
+      !('epoch' in systemState)
+    ) {
       throw new Error('Failed to get system state or epoch information');
     }
     const { epoch } = systemState as { epoch: string };
@@ -723,8 +739,14 @@ export class BlobVerificationManager {
       while (Date.now() - startTime < waitTimeout) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         const newSystemState = await this.suiClient.getLatestSuiSystemState();
-        if (!newSystemState || typeof newSystemState !== 'object' || !('epoch' in newSystemState)) {
-          throw new Error('Failed to get system state or epoch information during certification wait');
+        if (
+          !newSystemState ||
+          typeof newSystemState !== 'object' ||
+          !('epoch' in newSystemState)
+        ) {
+          throw new Error(
+            'Failed to get system state or epoch information during certification wait'
+          );
         }
         const { epoch: newEpoch } = newSystemState as { epoch: string };
         verificationResult = await this.verifySmartContract(

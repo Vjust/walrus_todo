@@ -1,6 +1,9 @@
 /* eslint-disable jest/no-conditional-expect */
 import { FuzzGenerator } from '../helpers/fuzz-generator';
-import { RetryManager, NetworkNode } from '../../apps/cli/src/utils/retry-manager';
+import {
+  RetryManager,
+  NetworkNode,
+} from '../../apps/cli/src/utils/retry-manager';
 import { CLIError } from '../../apps/cli/src/types/errors/consolidated';
 
 describe('Network Retry Fuzzing Tests', () => {
@@ -226,7 +229,12 @@ describe('Network Retry Fuzzing Tests', () => {
       ];
 
       const startTime = Date.now();
-      const operationResults: Array<{ node?: string; timestamp: number; success: boolean; error?: string }> = [];
+      const operationResults: Array<{
+        node?: string;
+        timestamp: number;
+        success: boolean;
+        error?: string;
+      }> = [];
 
       for (const phase of phases) {
         const phaseEnd = Date.now() + phase.duration;
@@ -341,7 +349,9 @@ describe('Network Retry Fuzzing Tests', () => {
 
         try {
           await manager.execute(testCase.operation, testCase.name);
-          throw new Error(`Expected ${testCase.name} to throw ${testCase.expectedError}`);
+          throw new Error(
+            `Expected ${testCase.name} to throw ${testCase.expectedError}`
+          );
         } catch (error) {
           expect(error).toBeInstanceOf(CLIError);
           expect((error as CLIError).code).toBe(testCase.expectedError);

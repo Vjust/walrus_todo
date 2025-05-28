@@ -1,5 +1,8 @@
 import { Ed25519Keypair } from '@mysten/sui/cryptography';
-import { SuiClient, getFullnodeUrl } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
+import {
+  SuiClient,
+  getFullnodeUrl,
+} from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { decodeSuiPrivateKey } from '@mysten/sui/utils';
 import dotenv from 'dotenv';
@@ -136,9 +139,7 @@ describe('Sui Testnet NFT Creation', () => {
       target: `${PACKAGE_ID}::todo_nft::update_metadata`,
       arguments: [
         nft,
-        txb.pure.string(
-          '{"custom": "updated", "tags": ["important", "test"]}'
-        ),
+        txb.pure.string('{"custom": "updated", "tags": ["important", "test"]}'),
       ],
     });
 
@@ -163,7 +164,7 @@ describe('Sui Testnet NFT Creation', () => {
 
     // Ensure NFT was created before proceeding
     expect(createdNft).toBeDefined();
-    
+
     // Fetch the NFT object to verify metadata
     const nftObject = await suiClient.getObject({
       id: createdNft!.reference.objectId,
@@ -221,7 +222,7 @@ describe('Sui Testnet NFT Creation', () => {
 
     // Ensure NFT was mutated before proceeding
     expect(mutatedObject).toBeDefined();
-    
+
     // Verify ownership changed
     const nftObject = await suiClient.getObject({
       id: mutatedObject!.reference.objectId,
@@ -247,9 +248,7 @@ describe('Sui Testnet NFT Creation', () => {
           txb.pure.u8(i + 1),
           txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
           txb.pure.string(`test-blob-id-batch-${i + 1}`),
-          txb.pure.string(
-            `https://walrus.testnet/test-blob-id-batch-${i + 1}`
-          ),
+          txb.pure.string(`https://walrus.testnet/test-blob-id-batch-${i + 1}`),
           txb.pure.string(
             `https://walrus.testnet/assets/batch-image-${i + 1}.jpg`
           ),
@@ -306,9 +305,7 @@ describe('Sui Testnet NFT Creation', () => {
         txb.pure.address(testWallet.getPublicKey().toSuiAddress()),
         txb.pure.string('test-blob-id-ai-enhanced'),
         txb.pure.string('https://walrus.testnet/test-blob-id-ai-enhanced'),
-        txb.pure.string(
-          'https://walrus.testnet/assets/ai-enhanced-image.jpg'
-        ),
+        txb.pure.string('https://walrus.testnet/assets/ai-enhanced-image.jpg'),
         txb.pure.bool(true), // AI enhanced
         txb.pure.bool(false),
         txb.pure.string(JSON.stringify(aiMetadata)),
@@ -335,7 +332,7 @@ describe('Sui Testnet NFT Creation', () => {
 
     // Ensure NFT was created before proceeding
     expect(createdNft).toBeDefined();
-    
+
     // Fetch the NFT to verify AI enhancement flag
     const nftObject = await suiClient.getObject({
       id: createdNft!.reference.objectId,

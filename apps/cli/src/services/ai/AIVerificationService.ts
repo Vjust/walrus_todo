@@ -28,6 +28,18 @@ export class AIVerificationService {
     metadata: Record<string, string> = {},
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerificationRecord> {
+    // Add type guards for required parameters
+    if (verificationType === undefined || verificationType === null) {
+      throw new Error('Verification type is required and cannot be undefined');
+    }
+
+    if (request === undefined || request === null) {
+      throw new Error('Request data is required and cannot be undefined');
+    }
+
+    if (response === undefined || response === null) {
+      throw new Error('Response data is required and cannot be undefined');
+    }
     // Defensive check for verifierAdapter
     if (!this.verifierAdapter) {
       throw new Error('Verifier adapter is not initialized');
@@ -68,7 +80,7 @@ export class AIVerificationService {
     if (!this.verifierAdapter) {
       throw new Error('Verifier adapter is not initialized');
     }
-    
+
     return this.verifierAdapter.listVerifications(userAddress);
   }
 
@@ -83,10 +95,12 @@ export class AIVerificationService {
     if (!this.verifierAdapter) {
       throw new Error('Verifier adapter is not initialized');
     }
-    
-    const requestStr = typeof request === 'string' ? request : JSON.stringify(request);
-    const responseStr = typeof response === 'string' ? response : JSON.stringify(response);
-    
+
+    const requestStr =
+      typeof request === 'string' ? request : JSON.stringify(request);
+    const responseStr =
+      typeof response === 'string' ? response : JSON.stringify(response);
+
     return this.verifierAdapter.verifyRecord(record, requestStr, responseStr);
   }
 
@@ -120,12 +134,18 @@ export class AIVerificationService {
     let sanitized = input;
     for (const pattern of injectionPatterns) {
       // Create case-insensitive regex for each pattern
-      const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      const regex = new RegExp(
+        pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'gi'
+      );
       sanitized = sanitized.replace(regex, '[FILTERED]');
     }
 
     // Remove HTML/script tags to prevent XSS
-    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gi, '[SCRIPT_REMOVED]');
+    sanitized = sanitized.replace(
+      /<script[^>]*>.*?<\/script>/gi,
+      '[SCRIPT_REMOVED]'
+    );
     sanitized = sanitized.replace(/<[^>]*>/g, '');
 
     // Remove potential command injection patterns
@@ -169,9 +189,9 @@ export class AIVerificationService {
       AIActionType.CATEGORIZE,
       todos,
       categories,
-      { 
+      {
         todoCount: todos.length.toString(),
-        categoryCount: Object.keys(categories).length.toString()
+        categoryCount: Object.keys(categories).length.toString(),
       },
       privacyLevel
     );
@@ -216,9 +236,9 @@ export class AIVerificationService {
       AIActionType.SUGGEST,
       todos,
       suggestions,
-      { 
+      {
         todoCount: todos.length.toString(),
-        suggestionCount: suggestions.length.toString()
+        suggestionCount: suggestions.length.toString(),
       },
       privacyLevel
     );
@@ -241,9 +261,9 @@ export class AIVerificationService {
       AIActionType.ANALYZE,
       todos,
       analysis,
-      { 
+      {
         todoCount: todos.length.toString(),
-        analysisKeys: Object.keys(analysis).join(',')
+        analysisKeys: Object.keys(analysis).join(','),
       },
       privacyLevel
     );
@@ -265,7 +285,10 @@ export class AIVerificationService {
 
     // Validate hash format (SHA-256 should be 64 hex characters)
     const hashPattern = /^[a-fA-F0-9]{64}$/;
-    if (!hashPattern.test(record.requestHash) || !hashPattern.test(record.responseHash)) {
+    if (
+      !hashPattern.test(record.requestHash) ||
+      !hashPattern.test(record.responseHash)
+    ) {
       return false;
     }
 
@@ -354,7 +377,11 @@ export class AIVerificationService {
       typeof response === 'string' ? response : JSON.stringify(response);
 
     // Verify record - ensure we get a proper promise
-    const verificationResult = await this.verifierAdapter.verifyRecord(record, requestStr, responseStr);
+    const verificationResult = await this.verifierAdapter.verifyRecord(
+      record,
+      requestStr,
+      responseStr
+    );
 
     // Ensure we return a boolean
     return Boolean(verificationResult);

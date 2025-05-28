@@ -114,7 +114,9 @@ export class AIProviderFactory {
           timestamp: Date.now(),
         };
       },
-      completeStructured: async <T>(_params: AICompletionParams): Promise<AIResponse<T>> => {
+      completeStructured: async <T>(
+        _params: AICompletionParams
+      ): Promise<AIResponse<T>> => {
         return {
           result: {} as T,
           modelName: 'fallback-model',
@@ -159,14 +161,14 @@ export class AIProviderFactory {
           : provider;
 
       let finalApiKey: string;
-      
+
       // If API key is provided directly, use it (for testing or direct instantiation)
       if (apiKey) {
         finalApiKey = apiKey;
       } else {
         // Use the provided credential service or the default one
         const credService = credentialService || secureCredentialService;
-        
+
         // Convert enum to string for credential service
         const providerString = getProviderString(providerEnum);
 

@@ -142,7 +142,9 @@ describe('store command', () => {
 
     // Create a mock disposeResources method since cleanup doesn't exist
     const disposeResources = jest.fn();
-    const augmentedMock = mockWalrusStorage as Mocked<InstanceType<typeof WalrusStorage>> & { disposeResources: jest.Mock };
+    const augmentedMock = mockWalrusStorage as Mocked<
+      InstanceType<typeof WalrusStorage>
+    > & { disposeResources: jest.Mock };
     augmentedMock.disposeResources = disposeResources;
 
     const result = await mockWalrusStorage.storeTodo(createTestTodo());

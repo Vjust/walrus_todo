@@ -12,7 +12,8 @@ import * as path from 'path';
  * Config command to display, validate, and manage environment configuration
  */
 export default class ConfigCommand extends BaseCommand {
-  static description = 'Manage environment configuration with intuitive actions\n\nNEW SYNTAX:\n  waltodo config                          # Show current configuration\n  waltodo config show                     # Explicitly show configuration\n  waltodo config validate                 # Comprehensive validation\n  waltodo config validate basic           # Basic validation only\n  waltodo config set <key> <value>        # Set configuration value\n  waltodo config reset                    # Reset to defaults\n\nThe new syntax uses clear action words instead of flags, making it\nmore intuitive to understand what each command does.\n\nLEGACY SYNTAX (still supported):\n  waltodo config --validate               # Validate configuration\n  waltodo config --show-all               # Show all values';
+  static description =
+    'Manage environment configuration with intuitive actions\n\nNEW SYNTAX:\n  waltodo config                          # Show current configuration\n  waltodo config show                     # Explicitly show configuration\n  waltodo config validate                 # Comprehensive validation\n  waltodo config validate basic           # Basic validation only\n  waltodo config set <key> <value>        # Set configuration value\n  waltodo config reset                    # Reset to defaults\n\nThe new syntax uses clear action words instead of flags, making it\nmore intuitive to understand what each command does.\n\nLEGACY SYNTAX (still supported):\n  waltodo config --validate               # Validate configuration\n  waltodo config --show-all               # Show all values';
 
   static examples = [
     '<%= config.bin %> config                          # Show current configuration',
@@ -42,7 +43,8 @@ export default class ConfigCommand extends BaseCommand {
       required: false,
     }),
     key: Args.string({
-      description: 'Configuration key (for set action) or validation type (for validate action)',
+      description:
+        'Configuration key (for set action) or validation type (for validate action)',
       required: false,
     }),
     value: Args.string({
@@ -60,7 +62,8 @@ export default class ConfigCommand extends BaseCommand {
     }),
     'show-all': Flags.boolean({
       char: 'a',
-      description: 'Show all configuration values including empty ones (legacy flag)',
+      description:
+        'Show all configuration values including empty ones (legacy flag)',
       default: false,
     }),
     all: Flags.boolean({
@@ -238,7 +241,10 @@ export default class ConfigCommand extends BaseCommand {
   /**
    * Validate configuration
    */
-  private async validateConfig(validationType?: string, flags?: any): Promise<void> {
+  private async validateConfig(
+    validationType?: string,
+    flags?: any
+  ): Promise<void> {
     // Handle background mode
     if (flags?.background) {
       return this.runValidationInBackground(validationType, flags);
@@ -246,28 +252,42 @@ export default class ConfigCommand extends BaseCommand {
     try {
       // Determine validation type
       const type = validationType?.toLowerCase() || 'comprehensive';
-      
+
       if (type === 'basic') {
         // Basic validation only
         envConfig.validate();
         this.log(chalk.green('✓ Basic configuration validation successful'));
-        
+
         // Show summary of what was validated
         const config = envConfig.getConfig();
         const requiredKeys = Object.entries(envConfig.getMetadata())
           .filter(([, meta]) => meta.required)
           .map(([key]) => key);
-        
+
         const setRequiredKeys = requiredKeys.filter(key => {
           const configEntry = config[key] as { value: unknown };
-          return configEntry?.value !== undefined && configEntry?.value !== null && configEntry?.value !== '';
+          return (
+            configEntry?.value !== undefined &&
+            configEntry?.value !== null &&
+            configEntry?.value !== ''
+          );
         });
 
-        this.log(chalk.dim(`Validated ${setRequiredKeys.length}/${requiredKeys.length} required configuration values`));
-        
+        this.log(
+          chalk.dim(
+            `Validated ${setRequiredKeys.length}/${requiredKeys.length} required configuration values`
+          )
+        );
+
         if (setRequiredKeys.length < requiredKeys.length) {
-          const missingKeys = requiredKeys.filter(key => !setRequiredKeys.includes(key));
-          this.log(chalk.yellow(`⚠ Missing required configuration: ${missingKeys.join(', ')}`));
+          const missingKeys = requiredKeys.filter(
+            key => !setRequiredKeys.includes(key)
+          );
+          this.log(
+            chalk.yellow(
+              `⚠ Missing required configuration: ${missingKeys.join(', ')}`
+            )
+          );
         }
         return;
       }
@@ -276,30 +296,46 @@ export default class ConfigCommand extends BaseCommand {
       // First do basic environment validation
       envConfig.validate();
       this.log(chalk.green('✓ Basic configuration validation successful'));
-      
+
       // Show summary of what was validated
       const config = envConfig.getConfig();
       const requiredKeys = Object.entries(envConfig.getMetadata())
         .filter(([, meta]) => meta.required)
         .map(([key]) => key);
-      
+
       const setRequiredKeys = requiredKeys.filter(key => {
         const configEntry = config[key] as { value: unknown };
-        return configEntry?.value !== undefined && configEntry?.value !== null && configEntry?.value !== '';
+        return (
+          configEntry?.value !== undefined &&
+          configEntry?.value !== null &&
+          configEntry?.value !== ''
+        );
       });
 
-      this.log(chalk.dim(`Validated ${setRequiredKeys.length}/${requiredKeys.length} required configuration values`));
-      
+      this.log(
+        chalk.dim(
+          `Validated ${setRequiredKeys.length}/${requiredKeys.length} required configuration values`
+        )
+      );
+
       if (setRequiredKeys.length < requiredKeys.length) {
-        const missingKeys = requiredKeys.filter(key => !setRequiredKeys.includes(key));
-        this.log(chalk.yellow(`⚠ Missing required configuration: ${missingKeys.join(', ')}`));
+        const missingKeys = requiredKeys.filter(
+          key => !setRequiredKeys.includes(key)
+        );
+        this.log(
+          chalk.yellow(
+            `⚠ Missing required configuration: ${missingKeys.join(', ')}`
+          )
+        );
       }
 
       // Now do comprehensive validation if we have a project setup
       this.log('');
       this.log(chalk.blue('🔍 Performing comprehensive validation...\n'));
-      
-      const { createConfigValidator } = await import('../utils/config-validator');
+
+      const { createConfigValidator } = await import(
+        '../utils/config-validator'
+      );
       const validator = createConfigValidator();
       const result = await validator.validateConfiguration(flags?.network);
 
@@ -389,13 +425,21 @@ export default class ConfigCommand extends BaseCommand {
   /**
    * Set configuration value
    */
-  private async setConfig(key?: string, value?: string, interactive = false): Promise<void> {
+  private async setConfig(
+    key?: string,
+    value?: string,
+    interactive = false
+  ): Promise<void> {
     if (!key && !interactive) {
-      throw new CLIError('Configuration key is required. Use --interactive for guided setup.');
+      throw new CLIError(
+        'Configuration key is required. Use --interactive for guided setup.'
+      );
     }
 
     if (interactive) {
-      throw new CLIError('Interactive mode not yet implemented. Please specify key and value directly.');
+      throw new CLIError(
+        'Interactive mode not yet implemented. Please specify key and value directly.'
+      );
     }
 
     if (!key || !value) {
@@ -405,18 +449,30 @@ export default class ConfigCommand extends BaseCommand {
     // Validate the key exists in our configuration schema
     const metadata = envConfig.getMetadata();
     if (!metadata[key]) {
-      this.log(chalk.yellow(`⚠ Warning: '${key}' is not a recognized configuration key.`));
-      this.log(chalk.dim(`Available keys: ${Object.keys(metadata).join(', ')}`));
+      this.log(
+        chalk.yellow(
+          `⚠ Warning: '${key}' is not a recognized configuration key.`
+        )
+      );
+      this.log(
+        chalk.dim(`Available keys: ${Object.keys(metadata).join(', ')}`)
+      );
     }
 
     // Set the environment variable
     process.env[key] = value;
-    
+
     // Reload configuration
     envConfig.reload();
 
-    this.log(chalk.green(`✓ Set ${chalk.bold(key)} = ${this.formatValue(value)}`));
-    this.log(chalk.dim('Note: This change is only for the current session. To persist, set the environment variable or update your config file.'));
+    this.log(
+      chalk.green(`✓ Set ${chalk.bold(key)} = ${this.formatValue(value)}`)
+    );
+    this.log(
+      chalk.dim(
+        'Note: This change is only for the current session. To persist, set the environment variable or update your config file.'
+      )
+    );
   }
 
   /**
@@ -426,7 +482,7 @@ export default class ConfigCommand extends BaseCommand {
     // Get list of configuration keys
     const metadata = envConfig.getMetadata();
     const configKeys = Object.keys(metadata);
-    
+
     // Clear environment variables for config keys
     let clearedCount = 0;
     for (const key of configKeys) {
@@ -440,8 +496,14 @@ export default class ConfigCommand extends BaseCommand {
     envConfig.reload();
 
     if (clearedCount > 0) {
-      this.log(chalk.green(`✓ Reset ${clearedCount} configuration values to defaults`));
-      this.log(chalk.dim('Note: Environment variables were cleared for the current session only.'));
+      this.log(
+        chalk.green(`✓ Reset ${clearedCount} configuration values to defaults`)
+      );
+      this.log(
+        chalk.dim(
+          'Note: Environment variables were cleared for the current session only.'
+        )
+      );
     } else {
       this.log(chalk.yellow('No configuration values were set to reset.'));
     }
@@ -567,94 +629,165 @@ export default class ConfigCommand extends BaseCommand {
     // Show usage hints
     this.log('');
     this.log(chalk.dim('Usage:'));
-    this.log(chalk.dim(`  waltodo config validate                    # Full configuration validation`));
-    this.log(chalk.dim(`  waltodo config validate basic              # Basic validation only`));
-    this.log(chalk.dim(`  waltodo config validate --network testnet  # Validate for specific network`));
-    this.log(chalk.dim(`  waltodo config validate --detailed         # Show detailed report`));
-    this.log(chalk.dim(`  waltodo config set <key> <value>           # Set configuration value`));
-    this.log(chalk.dim(`  waltodo config reset                       # Reset to defaults`));
-    this.log(chalk.dim(`  waltodo config validate --background       # Run validation in background`));
+    this.log(
+      chalk.dim(
+        `  waltodo config validate                    # Full configuration validation`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `  waltodo config validate basic              # Basic validation only`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `  waltodo config validate --network testnet  # Validate for specific network`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `  waltodo config validate --detailed         # Show detailed report`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `  waltodo config set <key> <value>           # Set configuration value`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `  waltodo config reset                       # Reset to defaults`
+      )
+    );
+    this.log(
+      chalk.dim(
+        `  waltodo config validate --background       # Run validation in background`
+      )
+    );
   }
 
   /**
    * Run validation in background without blocking terminal
    */
-  private async runValidationInBackground(validationType?: string, flags?: any): Promise<void> {
+  private async runValidationInBackground(
+    validationType?: string,
+    flags?: any
+  ): Promise<void> {
     try {
       // Create background job
-      const job = jobManager.createJob('config', ['validate', validationType || 'comprehensive'], flags || {});
+      const job = jobManager.createJob(
+        'config',
+        ['validate', validationType || 'comprehensive'],
+        flags || {}
+      );
       jobManager.startJob(job.id);
 
-      this.log(chalk.blue(`🔍 Starting configuration validation in background...`));
+      this.log(
+        chalk.blue(`🔍 Starting configuration validation in background...`)
+      );
       this.log(chalk.gray(`Job ID: ${job.id}`));
       this.log(chalk.gray(`Use "waltodo jobs" to check progress`));
-      this.log(chalk.gray(`Use "waltodo status ${job.id}" for detailed status`));
+      this.log(
+        chalk.gray(`Use "waltodo status ${job.id}" for detailed status`)
+      );
 
       // Run validation in background using a promise that doesn't block
       setImmediate(async () => {
         try {
           jobManager.writeJobLog(job.id, 'Starting configuration validation');
-          
+
           // Update progress
           jobManager.updateProgress(job.id, 10);
-          
+
           // Determine validation type
           const type = validationType?.toLowerCase() || 'comprehensive';
-          
+
           if (type === 'basic') {
             jobManager.writeJobLog(job.id, 'Running basic validation');
             jobManager.updateProgress(job.id, 50);
-            
+
             // Basic validation only
             envConfig.validate();
-            
+
             jobManager.updateProgress(job.id, 100);
-            jobManager.writeJobLog(job.id, 'Basic configuration validation successful');
-            jobManager.completeJob(job.id, { validationType: 'basic', success: true });
+            jobManager.writeJobLog(
+              job.id,
+              'Basic configuration validation successful'
+            );
+            jobManager.completeJob(job.id, {
+              validationType: 'basic',
+              success: true,
+            });
           } else {
             jobManager.writeJobLog(job.id, 'Running comprehensive validation');
             jobManager.updateProgress(job.id, 30);
-            
+
             // Basic environment validation first
             envConfig.validate();
             jobManager.updateProgress(job.id, 50);
-            
+
             // Comprehensive validation
-            jobManager.writeJobLog(job.id, 'Performing comprehensive validation...');
-            const { createConfigValidator } = await import('../utils/config-validator');
+            jobManager.writeJobLog(
+              job.id,
+              'Performing comprehensive validation...'
+            );
+            const { createConfigValidator } = await import(
+              '../utils/config-validator'
+            );
             const validator = createConfigValidator();
-            
+
             jobManager.updateProgress(job.id, 70);
-            const result = await validator.validateConfiguration(flags?.network);
-            
+            const result = await validator.validateConfiguration(
+              flags?.network
+            );
+
             jobManager.updateProgress(job.id, 90);
-            
+
             // Save report if requested
             if (flags?.['report-file']) {
               const report = validator.generateReport(result);
-              await fs.promises.writeFile(flags['report-file'], report, 'utf-8');
-              jobManager.writeJobLog(job.id, `Report saved to: ${flags['report-file']}`);
+              await fs.promises.writeFile(
+                flags['report-file'],
+                report,
+                'utf-8'
+              );
+              jobManager.writeJobLog(
+                job.id,
+                `Report saved to: ${flags['report-file']}`
+              );
             }
-            
+
             jobManager.updateProgress(job.id, 100);
-            
+
             if (result.valid) {
-              jobManager.writeJobLog(job.id, 'Comprehensive validation passed!');
-              jobManager.completeJob(job.id, { 
-                validationType: 'comprehensive', 
+              jobManager.writeJobLog(
+                job.id,
+                'Comprehensive validation passed!'
+              );
+              jobManager.completeJob(job.id, {
+                validationType: 'comprehensive',
                 success: true,
                 errors: result.errors.length,
                 warnings: result.warnings.length,
-                suggestions: result.suggestions.length
+                suggestions: result.suggestions.length,
               });
             } else {
-              jobManager.writeJobLog(job.id, `Comprehensive validation failed with ${result.errors.length} errors`);
-              result.errors.forEach(error => jobManager.writeJobLog(job.id, `ERROR: ${error}`));
-              jobManager.failJob(job.id, `Validation failed with ${result.errors.length} errors`);
+              jobManager.writeJobLog(
+                job.id,
+                `Comprehensive validation failed with ${result.errors.length} errors`
+              );
+              result.errors.forEach(error =>
+                jobManager.writeJobLog(job.id, `ERROR: ${error}`)
+              );
+              jobManager.failJob(
+                job.id,
+                `Validation failed with ${result.errors.length} errors`
+              );
             }
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
           jobManager.writeJobLog(job.id, `Validation failed: ${errorMessage}`);
           jobManager.failJob(job.id, errorMessage);
         }
@@ -672,36 +805,54 @@ export default class ConfigCommand extends BaseCommand {
   /**
    * Run network connectivity validation in background
    */
-  private async runNetworkValidationInBackground(network?: string): Promise<string> {
-    const job = jobManager.createJob('config', ['validate-network', network || 'current'], {});
+  private async runNetworkValidationInBackground(
+    network?: string
+  ): Promise<string> {
+    const job = jobManager.createJob(
+      'config',
+      ['validate-network', network || 'current'],
+      {}
+    );
     jobManager.startJob(job.id);
 
     setImmediate(async () => {
       try {
-        jobManager.writeJobLog(job.id, `Starting network validation for ${network || 'current network'}`);
+        jobManager.writeJobLog(
+          job.id,
+          `Starting network validation for ${network || 'current network'}`
+        );
         jobManager.updateProgress(job.id, 25);
 
         // Simulate network checks
-        const { createConfigValidator } = await import('../utils/config-validator');
+        const { createConfigValidator } = await import(
+          '../utils/config-validator'
+        );
         const validator = createConfigValidator();
-        
+
         jobManager.updateProgress(job.id, 50);
         jobManager.writeJobLog(job.id, 'Checking network connectivity...');
-        
+
         // This would contain actual network validation logic
         await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network check
-        
+
         jobManager.updateProgress(job.id, 75);
         jobManager.writeJobLog(job.id, 'Checking blockchain endpoints...');
-        
+
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate endpoint check
-        
+
         jobManager.updateProgress(job.id, 100);
-        jobManager.writeJobLog(job.id, 'Network validation completed successfully');
+        jobManager.writeJobLog(
+          job.id,
+          'Network validation completed successfully'
+        );
         jobManager.completeJob(job.id, { network, connectivity: 'good' });
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        jobManager.writeJobLog(job.id, `Network validation failed: ${errorMessage}`);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        jobManager.writeJobLog(
+          job.id,
+          `Network validation failed: ${errorMessage}`
+        );
         jobManager.failJob(job.id, errorMessage);
       }
     });

@@ -333,7 +333,7 @@ describe('RetryManager', () => {
       } catch (error) {
         thrownError = error;
       }
-      
+
       expect(thrownError).toBeDefined();
       // Verify error categorization
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -368,7 +368,7 @@ describe('RetryManager', () => {
       } catch (error) {
         thrownError = error;
       }
-      
+
       expect(thrownError).toBeDefined();
       const health = retryManager.getNodesHealth();
       const node = health[0];

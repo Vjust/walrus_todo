@@ -13,7 +13,7 @@ describe('Add Command - Real Implementation Tests', () => {
     // Create real service instances in test mode
     // walrusStorage = createWalrusStorage('testnet', true); // Force mock mode for tests
     todoService = new TodoService();
-    
+
     mockTodo = createMockTodo({
       title: 'Test Todo for Add Command',
       description: 'This is a test todo',
@@ -23,8 +23,11 @@ describe('Add Command - Real Implementation Tests', () => {
 
   describe('Todo Creation', () => {
     it('should create a new todo with valid data', async () => {
-      const result = await todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, mockTodo);
-      
+      const result = await todoService.addTodo(
+        CLI_CONFIG.DEFAULT_LIST,
+        mockTodo
+      );
+
       expect(result).toBeDefined();
       expect(result.id).toBeDefined();
       expect(result.title).toBe(mockTodo.title);
@@ -36,9 +39,10 @@ describe('Add Command - Real Implementation Tests', () => {
 
     it('should validate required fields', async () => {
       const invalidTodo = { ...mockTodo, title: '' };
-      
-      await expect(todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, invalidTodo as Todo))
-        .rejects.toThrow();
+
+      await expect(
+        todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, invalidTodo as Todo)
+      ).rejects.toThrow();
     });
 
     it('should handle todos with different priorities', async () => {
@@ -59,39 +63,52 @@ describe('Add Command - Real Implementation Tests', () => {
     });
 
     it('should handle todos with tags', async () => {
-      const taggedTodo = { 
-        ...mockTodo, 
-        tags: ['work', 'important', 'urgent'] 
+      const taggedTodo = {
+        ...mockTodo,
+        tags: ['work', 'important', 'urgent'],
       };
 
-      const result = await todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, taggedTodo);
-      
+      const result = await todoService.addTodo(
+        CLI_CONFIG.DEFAULT_LIST,
+        taggedTodo
+      );
+
       expect(result.tags).toEqual(['work', 'important', 'urgent']);
     });
 
     it('should set proper timestamps', async () => {
       const beforeCreate = new Date();
-      const result = await todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, mockTodo);
+      const result = await todoService.addTodo(
+        CLI_CONFIG.DEFAULT_LIST,
+        mockTodo
+      );
       const afterCreate = new Date();
 
       const createdAt = new Date(result.createdAt);
       const updatedAt = new Date(result.updatedAt);
 
-      expect(createdAt.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
+      expect(createdAt.getTime()).toBeGreaterThanOrEqual(
+        beforeCreate.getTime()
+      );
       expect(createdAt.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
-      expect(updatedAt.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
+      expect(updatedAt.getTime()).toBeGreaterThanOrEqual(
+        beforeCreate.getTime()
+      );
       expect(updatedAt.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
     });
   });
 
   describe('Storage Integration', () => {
     it('should store todo in Walrus storage', async () => {
-      const result = await todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, mockTodo);
-      
+      const result = await todoService.addTodo(
+        CLI_CONFIG.DEFAULT_LIST,
+        mockTodo
+      );
+
       // Verify the todo was stored and can be retrieved
       const todos = await todoService.listTodos();
       const storedTodo = todos.find(t => t.id === result.id);
-      
+
       expect(storedTodo).toBeDefined();
       expect(storedTodo?.title).toBe(mockTodo.title);
     });
@@ -102,7 +119,10 @@ describe('Add Command - Real Implementation Tests', () => {
       const failingTodoService = new TodoService();
 
       // In test mode, this should still work due to fallbacks
-      const result = await failingTodoService.addTodo(CLI_CONFIG.DEFAULT_LIST, mockTodo);
+      const result = await failingTodoService.addTodo(
+        CLI_CONFIG.DEFAULT_LIST,
+        mockTodo
+      );
       expect(result).toBeDefined();
     });
   });
@@ -129,14 +149,16 @@ describe('Add Command - Real Implementation Tests', () => {
     });
 
     it('should handle concurrent todo creation', async () => {
-      const todos = Array.from({ length: 5 }, (_, i) => 
-        createMockTodo({ 
+      const todos = Array.from({ length: 5 }, (_, i) =>
+        createMockTodo({
           title: `Concurrent Todo ${i}`,
-          id: `concurrent-${i}` 
+          id: `concurrent-${i}`,
         })
       );
 
-      const promises = todos.map(todo => todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, todo));
+      const promises = todos.map(todo =>
+        todoService.addTodo(CLI_CONFIG.DEFAULT_LIST, todo)
+      );
       const results = await Promise.all(promises);
 
       expect(results).toHaveLength(5);

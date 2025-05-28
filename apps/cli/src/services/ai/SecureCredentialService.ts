@@ -34,7 +34,7 @@ export interface CredentialInfo {
   securityIssues?: string[];
 }
 
-interface CredentialMetadata {
+interface CredentialMetadata extends Record<string, unknown> {
   credentialId: string;
   permissionLevel: AIPermissionLevel;
   verified: boolean;
@@ -294,7 +294,8 @@ export class SecureCredentialService {
         return envValue;
       }
 
-      const baseError = _error instanceof Error ? _error : new Error(String(_error));
+      const baseError =
+        _error instanceof Error ? _error : new Error(String(_error));
       throw new CLIError(
         `No API key found for ${provider}. Use 'walrus_todo ai credentials add ${provider} --key YOUR_API_KEY' to add one. Original error: ${baseError.message}`,
         'CREDENTIAL_NOT_FOUND',

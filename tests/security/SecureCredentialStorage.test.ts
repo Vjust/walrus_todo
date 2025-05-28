@@ -15,8 +15,8 @@ jest.mock('../../apps/cli/src/utils/Logger', () => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
-    debug: jest.fn()
-  }))
+    debug: jest.fn(),
+  })),
 }));
 
 // Mock fs module
@@ -28,36 +28,44 @@ jest.mock('fs', () => {
   return {
     ...originalModule,
     existsSync: jest.fn().mockImplementation((path: string) => {
-      if (path.includes('keyfile') || path.includes('.config') || path.includes('key_backups')) {
+      if (
+        path.includes('keyfile') ||
+        path.includes('.config') ||
+        path.includes('key_backups')
+      ) {
         return true;
       }
       return mockFileContent.has(path);
     }),
     writeFileSync: jest
       .fn()
-      .mockImplementation((path: string, data: Buffer | string, _options?: unknown) => {
-        mockFileContent.set(path, data);
+      .mockImplementation(
+        (path: string, data: Buffer | string, _options?: unknown) => {
+          mockFileContent.set(path, data);
+        }
+      ),
+    readFileSync: jest
+      .fn()
+      .mockImplementation((path: string, encoding?: string) => {
+        if (path.includes('keyfile')) {
+          return Buffer.from('mock-key-32-bytes-long-for-testing'); // Mock encryption key
+        }
+        if (path.includes('keymetadata')) {
+          const metadata = JSON.stringify({
+            keyId: 'test-key-id',
+            version: 1,
+            created: Date.now(),
+            lastRotated: Date.now(),
+            backupLocations: [],
+          });
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+        }
+        const content = mockFileContent.get(path) || Buffer.from('');
+        if (encoding === 'utf8' && Buffer.isBuffer(content)) {
+          return content.toString('utf8');
+        }
+        return content;
       }),
-    readFileSync: jest.fn().mockImplementation((path: string, encoding?: string) => {
-      if (path.includes('keyfile')) {
-        return crypto.randomBytes(32); // Mock encryption key
-      }
-      if (path.includes('keymetadata')) {
-        const metadata = JSON.stringify({
-          keyId: 'test-key-id',
-          version: 1,
-          created: Date.now(),
-          lastRotated: Date.now(),
-          backupLocations: []
-        });
-        return encoding === 'utf8' ? metadata : Buffer.from(metadata);
-      }
-      const content = mockFileContent.get(path) || Buffer.from('');
-      if (encoding === 'utf8' && Buffer.isBuffer(content)) {
-        return content.toString('utf8');
-      }
-      return content;
-    }),
     mkdirSync: jest.fn(),
     renameSync: jest.fn(),
     copyFileSync: jest.fn(),
@@ -65,50 +73,58 @@ jest.mock('fs', () => {
     unlinkSync: jest.fn(),
     readdirSync: jest.fn().mockReturnValue([]),
     statSync: jest.fn().mockReturnValue(mockStats),
-    constants: originalModule.constants
+    constants: originalModule.constants,
   };
 });
 
 describe('SecureCredentialStorage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset fs mocks to default implementations
     const mockFileContent = new Map<string, Buffer | string>();
     const mockStats = { mtime: { getTime: () => Date.now() } };
-    
+
     (fs.existsSync as jest.Mock).mockImplementation((path: string) => {
-      if (path.includes('keyfile') || path.includes('.config') || path.includes('key_backups')) {
+      if (
+        path.includes('keyfile') ||
+        path.includes('.config') ||
+        path.includes('key_backups')
+      ) {
         return true;
       }
       return mockFileContent.has(path);
     });
-    
-    (fs.readFileSync as jest.Mock).mockImplementation((path: string, encoding?: string) => {
-      if (path.includes('keyfile')) {
-        return crypto.randomBytes(32); // Mock encryption key
+
+    (fs.readFileSync as jest.Mock).mockImplementation(
+      (path: string, encoding?: string) => {
+        if (path.includes('keyfile')) {
+          return Buffer.from('mock-key-32-bytes-long-for-testing'); // Mock encryption key
+        }
+        if (path.includes('keymetadata')) {
+          const metadata = JSON.stringify({
+            keyId: 'test-key-id',
+            version: 1,
+            created: Date.now(),
+            lastRotated: Date.now(),
+            backupLocations: [],
+          });
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+        }
+        const content = mockFileContent.get(path) || Buffer.from('');
+        if (encoding === 'utf8' && Buffer.isBuffer(content)) {
+          return content.toString('utf8');
+        }
+        return content;
       }
-      if (path.includes('keymetadata')) {
-        const metadata = JSON.stringify({
-          keyId: 'test-key-id',
-          version: 1,
-          created: Date.now(),
-          lastRotated: Date.now(),
-          backupLocations: []
-        });
-        return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+    );
+
+    (fs.writeFileSync as jest.Mock).mockImplementation(
+      (path: string, data: Buffer | string, _options?: unknown) => {
+        mockFileContent.set(path, data);
       }
-      const content = mockFileContent.get(path) || Buffer.from('');
-      if (encoding === 'utf8' && Buffer.isBuffer(content)) {
-        return content.toString('utf8');
-      }
-      return content;
-    });
-    
-    (fs.writeFileSync as jest.Mock).mockImplementation((path: string, data: Buffer | string, _options?: unknown) => {
-      mockFileContent.set(path, data);
-    });
-    
+    );
+
     (fs.statSync as jest.Mock).mockReturnValue(mockStats);
     (fs.readdirSync as jest.Mock).mockReturnValue([]);
   });
@@ -142,47 +158,64 @@ describe('SecureCredentialStorage', () => {
   it('should retrieve stored credentials and decrypt them', async () => {
     // Setup a persistent mock file system to simulate storage between instances
     const mockFileContent = new Map<string, Buffer | string>();
-    const fixedKey = Buffer.from('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', 'hex');
-    
+    const fixedKey = Buffer.from(
+      '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      'hex'
+    );
+
     // Override the mock for this test
-    (fs.writeFileSync as jest.Mock).mockImplementation((path: string, data: Buffer | string, _options?: unknown) => {
-      mockFileContent.set(path, data);
-    });
-    
-    (fs.renameSync as jest.Mock).mockImplementation((oldPath: string, newPath: string) => {
-      const data = mockFileContent.get(oldPath);
-      if (data) {
-        mockFileContent.set(newPath, data);
-        mockFileContent.delete(oldPath);
+    (fs.writeFileSync as jest.Mock).mockImplementation(
+      (path: string, data: Buffer | string, _options?: unknown) => {
+        mockFileContent.set(path, data);
       }
-    });
-    
-    (fs.readFileSync as jest.Mock).mockImplementation((path: string, encoding?: string) => {
-      if (path.includes('.keyfile')) {
-        return fixedKey; // Same key for consistency
+    );
+
+    (fs.renameSync as jest.Mock).mockImplementation(
+      (oldPath: string, newPath: string) => {
+        const data = mockFileContent.get(oldPath);
+        if (data) {
+          mockFileContent.set(newPath, data);
+          mockFileContent.delete(oldPath);
+        }
       }
-      if (path.includes('.keymetadata.json')) {
-        const metadata = JSON.stringify({
-          keyId: 'test-key-id',
-          version: 1,
-          created: Date.now(),
-          lastRotated: Date.now(),
-          backupLocations: []
-        });
-        return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+    );
+
+    (fs.readFileSync as jest.Mock).mockImplementation(
+      (path: string, encoding?: string) => {
+        if (path.includes('.keyfile')) {
+          return fixedKey; // Same key for consistency
+        }
+        if (path.includes('.keymetadata.json')) {
+          const metadata = JSON.stringify({
+            keyId: 'test-key-id',
+            version: 1,
+            created: Date.now(),
+            lastRotated: Date.now(),
+            backupLocations: [],
+          });
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+        }
+        if (path.includes('secure_credentials.enc')) {
+          const content = mockFileContent.get(path) || Buffer.from('');
+          return content;
+        }
+        return Buffer.from('');
       }
-      if (path.includes('secure_credentials.enc')) {
-        const content = mockFileContent.get(path) || Buffer.from('');
-        return content;
-      }
-      return Buffer.from('');
-    });
-    
+    );
+
     (fs.existsSync as jest.Mock).mockImplementation((path: string) => {
-      if (path.includes('.keyfile') || path.includes('.config') || path.includes('key_backups') || path.includes('.keymetadata.json')) {
+      if (
+        path.includes('.keyfile') ||
+        path.includes('.config') ||
+        path.includes('key_backups') ||
+        path.includes('.keymetadata.json')
+      ) {
         return true;
       }
-      if (path.includes('secure_credentials.enc') && mockFileContent.has(path)) {
+      if (
+        path.includes('secure_credentials.enc') &&
+        mockFileContent.has(path)
+      ) {
         return true;
       }
       return false;
@@ -199,7 +232,9 @@ describe('SecureCredentialStorage', () => {
     );
 
     // Verify the encrypted file was created (check all paths in the map)
-    const credentialFilePath = Array.from(mockFileContent.keys()).find(key => key.includes('secure_credentials.enc'));
+    const credentialFilePath = Array.from(mockFileContent.keys()).find(key =>
+      key.includes('secure_credentials.enc')
+    );
     expect(credentialFilePath).toBeDefined();
 
     // Mimic a restart by creating a new manager instance
@@ -215,29 +250,35 @@ describe('SecureCredentialStorage', () => {
   it('should gracefully handle corrupted credential stores', async () => {
     // Mock readFileSync to return corrupted data for credential files
     const originalMock = (fs.readFileSync as jest.Mock).getMockImplementation();
-    (fs.readFileSync as jest.Mock).mockImplementation((path: string, encoding?: string) => {
-      if (path.includes('keyfile')) {
-        return crypto.randomBytes(32); // Mock encryption key
+    (fs.readFileSync as jest.Mock).mockImplementation(
+      (path: string, encoding?: string) => {
+        if (path.includes('keyfile')) {
+          return Buffer.from('mock-key-32-bytes-long-for-testing'); // Mock encryption key
+        }
+        if (path.includes('keymetadata')) {
+          const metadata = JSON.stringify({
+            keyId: 'test-key-id',
+            version: 1,
+            created: Date.now(),
+            lastRotated: Date.now(),
+            backupLocations: [],
+          });
+          return encoding === 'utf8' ? metadata : Buffer.from(metadata);
+        }
+        if (path.includes('secure_credentials.enc')) {
+          return Buffer.from('corrupted-data');
+        }
+        return originalMock?.(path, encoding) || Buffer.from('');
       }
-      if (path.includes('keymetadata')) {
-        const metadata = JSON.stringify({
-          keyId: 'test-key-id',
-          version: 1,
-          created: Date.now(),
-          lastRotated: Date.now(),
-          backupLocations: []
-        });
-        return encoding === 'utf8' ? metadata : Buffer.from(metadata);
-      }
-      if (path.includes('secure_credentials.enc')) {
-        return Buffer.from('corrupted-data');
-      }
-      return originalMock?.(path, encoding) || Buffer.from('');
-    });
+    );
 
     // Mock existsSync to indicate credentials file exists
     (fs.existsSync as jest.Mock).mockImplementation((path: string) => {
-      if (path.includes('keyfile') || path.includes('.config') || path.includes('key_backups')) {
+      if (
+        path.includes('keyfile') ||
+        path.includes('.config') ||
+        path.includes('key_backups')
+      ) {
         return true;
       }
       if (path.includes('secure_credentials.enc')) {
@@ -366,7 +407,7 @@ describe('SecureCredentialStorage', () => {
     const mockSigner = {
       toSuiAddress: jest.fn().mockReturnValue('addr-123'),
     };
-    
+
     const mockBlockchainAdapter = {
       verifyCredential: jest.fn().mockResolvedValue({
         verificationId: 'ver-123',
@@ -424,7 +465,9 @@ describe('SecureCredentialStorage', () => {
     let errorMessage = '';
     try {
       // Mock credential object as verified
-      (manager as unknown as { credentials: Record<string, unknown> }).credentials['test-provider'] = {
+      (
+        manager as unknown as { credentials: Record<string, unknown> }
+      ).credentials['test-provider'] = {
         id: 'cred-123',
         providerName: 'test-provider',
         credentialType: CredentialType.API_KEY,
@@ -440,7 +483,7 @@ describe('SecureCredentialStorage', () => {
     } catch (error) {
       errorMessage = String(error);
     }
-    
+
     // Error should not contain the API key
     expect(errorMessage).not.toContain('sensitive-api-key-123');
   });

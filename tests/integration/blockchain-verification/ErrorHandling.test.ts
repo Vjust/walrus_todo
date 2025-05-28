@@ -4,7 +4,10 @@ import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 // import { SuiClient } from '@mysten/sui/client';
 // import type { WalrusClientExt } from '../../../apps/cli/src/types/client';
 import { CLIError } from '../../../apps/cli/src/types/errors/consolidated';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../../helpers/complete-walrus-client-mock';
 import { SuiClientType } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 
 import { BlobVerificationManager } from '../../../apps/cli/src/utils/blob-verification';
@@ -14,25 +17,44 @@ import { setTimeout as sleep } from 'timers/promises';
 let mockRetryManagerInstance: any;
 
 jest.mock('../../../apps/cli/src/utils/retry-manager', () => {
-  const mockRetryManager = function(nodes: string[], _options: unknown) {
-    const mockNode = { url: nodes[0] || 'mock-node', priority: 1, consecutiveFailures: 0, healthScore: 1.0 };
-    
+  const mockRetryManager = function (nodes: string[], _options: unknown) {
+    const mockNode = {
+      url: nodes[0] || 'mock-node',
+      priority: 1,
+      consecutiveFailures: 0,
+      healthScore: 1.0,
+    };
+
     mockRetryManagerInstance = {
-      execute: jest.fn().mockImplementation(async (callback: (node: unknown) => Promise<unknown>, _operationName: string) => {
-        // Call the callback with the mock node and return its result
-        return await callback(mockNode);
-      }),
-      retry: jest.fn().mockImplementation(async (callback: (node: unknown) => Promise<unknown>, _operationName: string) => {
-        // Call the callback with the mock node and return its result
-        return await callback(mockNode);
-      }),
+      execute: jest
+        .fn()
+        .mockImplementation(
+          async (
+            callback: (node: unknown) => Promise<unknown>,
+            _operationName: string
+          ) => {
+            // Call the callback with the mock node and return its result
+            return await callback(mockNode);
+          }
+        ),
+      retry: jest
+        .fn()
+        .mockImplementation(
+          async (
+            callback: (node: unknown) => Promise<unknown>,
+            _operationName: string
+          ) => {
+            // Call the callback with the mock node and return its result
+            return await callback(mockNode);
+          }
+        ),
       getNodesHealth: jest.fn().mockReturnValue([mockNode]),
       getErrorSummary: jest.fn().mockReturnValue('Mock error summary'),
     };
-    
+
     return mockRetryManagerInstance;
   };
-  
+
   return {
     RetryManager: mockRetryManager,
   };
@@ -75,7 +97,9 @@ const mockSigner = {
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
+  signTransaction: async (
+    _transaction: unknown
+  ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -95,7 +119,7 @@ const createErrorWithCode = (message: string, code?: string) => {
 describe('Blockchain Verification Error Handling', () => {
   let verificationManager: BlobVerificationManager;
   let mockWalrusClient: CompleteWalrusClientMock;
-  
+
   // Define expected attributes for testing
   const expectedAttributes = {
     contentType: 'application/json',
@@ -105,20 +129,20 @@ describe('Blockchain Verification Error Handling', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Clear the mock functions if they exist
     if (mockRetryManagerInstance) {
       mockRetryManagerInstance.execute?.mockClear?.();
       mockRetryManagerInstance.retry?.mockClear?.();
     }
-    
+
     // Reset SuiClient mock
     mockGetLatestSuiSystemState.mockReset();
     mockGetLatestSuiSystemState.mockResolvedValue({ epoch: '42' });
 
     // Use the complete mock implementation
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific methods for this test
     mockWalrusClient.getConfig.mockResolvedValue({
       network: 'testnet',
@@ -126,7 +150,10 @@ describe('Blockchain Verification Error Handling', () => {
       maxSize: 1000000,
     });
     mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({ used: '500', total: '2000' });
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '500',
+      total: '2000',
+    });
     mockWalrusClient.getBlobSize.mockResolvedValue(1024);
     mockWalrusClient.storageCost.mockResolvedValue({
       storageCost: BigInt(1000),
@@ -198,7 +225,7 @@ describe('Blockchain Verification Error Handling', () => {
       ]);
       mockWalrusClient.verifyPoA.mockResolvedValue(true);
 
-        // Mock readBlob to fail first, then succeed
+      // Mock readBlob to fail first, then succeed
       let callCount = 0;
       mockWalrusClient.readBlob.mockImplementation(() => {
         callCount++;
@@ -207,7 +234,7 @@ describe('Blockchain Verification Error Handling', () => {
         }
         return Promise.resolve(new Uint8Array(testData));
       });
-      
+
       // Ensure the SuiClient mock is working
       mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '42' });
 
@@ -339,7 +366,7 @@ describe('Blockchain Verification Error Handling', () => {
       } catch (error) {
         caughtError = error as CLIError;
       }
-      
+
       expect(caughtError).toBeInstanceOf(CLIError);
       expect(caughtError!.message).toContain('verification failed after');
       expect(caughtError!.code).toBe('WALRUS_VERIFICATION_FAILED');
@@ -640,11 +667,13 @@ describe('Blockchain Verification Error Handling', () => {
       } catch (error) {
         caughtError = error as CLIError;
       }
-      
+
       expect(caughtError).toBeInstanceOf(CLIError);
       expect(caughtError!.message).toContain('Metadata verification failed');
       expect(caughtError!.message).toContain('owner:');
-      expect(caughtError!.message).toContain('expected "user123", got "different-user"');
+      expect(caughtError!.message).toContain(
+        'expected "user123", got "different-user"'
+      );
       expect(caughtError!.code).toBe('WALRUS_VERIFICATION_FAILED');
     });
   });
@@ -701,16 +730,23 @@ describe('Blockchain Verification Error Handling', () => {
       // First test: verification should fail with requireCertification enabled
       let caughtError: CLIError | null = null;
       try {
-        await verificationManager.verifyBlob(blobId, testData, expectedAttributes, {
-          requireCertification: true,
-          verifyAttributes: false, // Disable to focus on certification check
-        });
+        await verificationManager.verifyBlob(
+          blobId,
+          testData,
+          expectedAttributes,
+          {
+            requireCertification: true,
+            verifyAttributes: false, // Disable to focus on certification check
+          }
+        );
       } catch (error) {
         caughtError = error as CLIError;
       }
-      
+
       expect(caughtError).toBeInstanceOf(CLIError);
-      expect(caughtError!.message).toContain('Blob certification required but not found');
+      expect(caughtError!.message).toContain(
+        'Blob certification required but not found'
+      );
 
       // Second test: should succeed if requireCertification is disabled
       const result = await verificationManager.verifyBlob(

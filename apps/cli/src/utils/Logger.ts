@@ -35,7 +35,7 @@ export class Logger {
     this.addHandler(entry => {
       // Detect test environment
       const isTestEnv = this.isTestEnvironment();
-      
+
       // Skip debug messages unless NODE_ENV is development
       if (
         entry.level === LogLevel.DEBUG &&
@@ -56,7 +56,7 @@ export class Logger {
         : '';
       const component = this.componentName ? `[${this.componentName}] ` : '';
       const logMessage = `[${entry.timestamp}] ${component}${entry.message}${context}${error}`;
-      
+
       // Safely map log levels to console methods with type guards
       const consoleMethod = this.getConsoleMethod(entry.level);
       // eslint-disable-next-line no-console
@@ -94,13 +94,21 @@ export class Logger {
    */
   private shouldLogInTests(level: LogLevel): boolean {
     // Allow explicit override via environment variables
-    if (process.env.VERBOSE_TESTS === 'true' || process.env.VERBOSE_TESTS === '1') {
+    if (
+      process.env.VERBOSE_TESTS === 'true' ||
+      process.env.VERBOSE_TESTS === '1'
+    ) {
       return true;
     }
 
     // Respect explicit LOG_LEVEL setting
     if (process.env.LOG_LEVEL) {
-      const logLevels = [LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR];
+      const logLevels = [
+        LogLevel.DEBUG,
+        LogLevel.INFO,
+        LogLevel.WARN,
+        LogLevel.ERROR,
+      ];
       const targetIndex = logLevels.indexOf(process.env.LOG_LEVEL as LogLevel);
       const currentIndex = logLevels.indexOf(level);
       return targetIndex !== -1 && currentIndex >= targetIndex;

@@ -236,7 +236,9 @@ export class EnhancedAIService {
     const response = await this.modelAdapter.processWithPromptTemplate(
       promptTemplate,
       {
-        todos: todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n'),
+        todos: todos
+          .map(t => `- ${t.title}: ${t.description || 'No description'}`)
+          .join('\n'),
       }
     );
 
@@ -301,7 +303,11 @@ export class EnhancedAIService {
       Record<string, string[]>
     >({
       prompt: promptTemplate,
-      input: { todos: todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n') },
+      input: {
+        todos: todos
+          .map(t => `- ${t.title}: ${t.description || 'No description'}`)
+          .join('\n'),
+      },
       options: modelOptions,
       metadata: { operation },
     });

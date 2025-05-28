@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
-import { AIActionType, AIPrivacyLevel } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { AIActionType } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 import {
   createMockAIVerificationService,
@@ -102,7 +102,11 @@ describe('Verification Operations Promise Returns', () => {
       // Test verifyRecord
       const mockRecord = createMockVerificationRecord();
       const verifyResult = await assertVerificationSuccess(
-        service.verifyRecord(mockRecord, JSON.stringify(sampleTodos), 'Test summary'),
+        service.verifyRecord(
+          mockRecord,
+          JSON.stringify(sampleTodos),
+          'Test summary'
+        ),
         'boolean'
       );
       expect(verifyResult).toBe(true);
@@ -168,9 +172,7 @@ describe('Verification Operations Promise Returns', () => {
       );
 
       // Test listVerifications returns a promise
-      assertReturnsPromise(() =>
-        service.listVerifications()
-      );
+      assertReturnsPromise(() => service.listVerifications());
 
       // Test generateProof returns a promise
       assertReturnsPromise(() =>
@@ -258,7 +260,9 @@ describe('Verification Operations Promise Returns', () => {
 
       // Test verifyProof
       const verifyProofResult = await assertVerificationSuccess(
-        service.verifyProof('test-proof-id', 'test-signature', { test: 'data' }),
+        service.verifyProof('test-proof-id', 'test-signature', {
+          test: 'data',
+        }),
         'boolean'
       );
       expect(typeof verifyProofResult).toBe('boolean');
@@ -274,7 +278,7 @@ describe('Verification Operations Promise Returns', () => {
 
       // Test that methods handle undefined adapter gracefully
       const serviceWithNullAdapter = new AIVerificationService(null as any);
-      
+
       await expect(async () => {
         await serviceWithNullAdapter.createVerification(
           AIActionType.SUMMARIZE,

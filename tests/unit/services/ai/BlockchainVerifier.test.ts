@@ -90,18 +90,20 @@ describe('BlockchainVerifier', () => {
 
     it('should set Walrus adapter', async () => {
       const newVerifier = new BlockchainVerifier(mockVerifierAdapter);
-      
+
       // Initially no Walrus adapter configured
-      await expect(newVerifier.retrieveVerificationData({
-        id: 'test',
-        requestHash: 'hash1',
-        responseHash: 'hash2',
-        tipo: VerificationType.ANALYSIS,
-        timestamp: Date.now(),
-        user: '0x123',
-        metadata: { requestBlobId: 'blob1', responseBlobId: 'blob2' }
-      })).rejects.toThrow('Walrus adapter not configured');
-      
+      await expect(
+        newVerifier.retrieveVerificationData({
+          id: 'test',
+          requestHash: 'hash1',
+          responseHash: 'hash2',
+          tipo: VerificationType.ANALYSIS,
+          timestamp: Date.now(),
+          user: '0x123',
+          metadata: { requestBlobId: 'blob1', responseBlobId: 'blob2' },
+        })
+      ).rejects.toThrow('Walrus adapter not configured');
+
       // After setting adapter, it should be available (tested indirectly)
       newVerifier.setWalrusAdapter(mockWalrusAdapter);
       expect(newVerifier).toBeDefined(); // Verifies setter completed successfully

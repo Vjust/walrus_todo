@@ -20,7 +20,9 @@ const getErrorMessage = (error: unknown): string => {
   if (typeof error === 'object') {
     try {
       const stringified = JSON.stringify(error);
-      return stringified === '{}' ? 'Empty object error' : `Object error: ${stringified}`;
+      return stringified === '{}'
+        ? 'Empty object error'
+        : `Object error: ${stringified}`;
     } catch {
       return 'Non-serializable object error';
     }
@@ -124,7 +126,12 @@ export async function withRetry<T>(
     }
   }
 
-  throw lastError || new Error('withRetry: Operation failed after all retries with no error details available');
+  throw (
+    lastError ||
+    new Error(
+      'withRetry: Operation failed after all retries with no error details available'
+    )
+  );
 }
 
 // Using isRetryableError from consolidated types now

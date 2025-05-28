@@ -76,8 +76,8 @@ class MockAIModelAdapter implements AIModelAdapter {
 
     // Determine which operation is being called based on the prompt
     const promptStr =
-      typeof (params as { prompt?: string }).prompt === 'string' 
-        ? (params as { prompt?: string }).prompt 
+      typeof (params as { prompt?: string }).prompt === 'string'
+        ? (params as { prompt?: string }).prompt
         : 'unknown';
 
     let operation = 'unknown';
@@ -109,7 +109,10 @@ class MockAIModelAdapter implements AIModelAdapter {
     }
 
     // Determine which operation is being called based on the prompt
-    const paramsObj = params as { prompt?: string; metadata?: { operation?: string } };
+    const paramsObj = params as {
+      prompt?: string;
+      metadata?: { operation?: string };
+    };
     const promptStr =
       typeof paramsObj.prompt === 'string'
         ? paramsObj.prompt
@@ -233,7 +236,8 @@ describe('EnhancedAIService', () => {
     AIConfigManager.getInstance().resetToDefaults();
 
     // Get the mock adapter
-    mockAdapter = (AIProviderFactory as { __mockAdapter: MockAIModelAdapter }).__mockAdapter;
+    mockAdapter = (AIProviderFactory as { __mockAdapter: MockAIModelAdapter })
+      .__mockAdapter;
     mockAdapter.clearHistory(); // Clear history instead of reassigning array
 
     // Create a new service instance
@@ -248,16 +252,16 @@ describe('EnhancedAIService', () => {
     // Cleanup after each test
     jest.clearAllMocks();
     jest.restoreAllMocks();
-    
+
     // Clear mock adapter history
     if (mockAdapter) {
       mockAdapter.clearHistory();
     }
-    
+
     // Clear singletons
     ResultCache.getInstance().clear();
     PromptManager.getInstance().clearAllPromptOverrides();
-    
+
     // Nullify references
     aiService = null as any;
     mockAdapter = null as any;
@@ -367,7 +371,7 @@ describe('EnhancedAIService', () => {
   describe('Caching mechanism', () => {
     it('should cache and reuse results for identical requests', async () => {
       const todos = createSampleTodos();
-      
+
       // First call
       await aiService.summarize(todos);
       expect(mockAdapter.callHistory.length).toBe(1);
@@ -384,7 +388,7 @@ describe('EnhancedAIService', () => {
 
     it('should clear cache for a specific operation', async () => {
       const todos = createSampleTodos();
-      
+
       // Perform some operations
       await aiService.summarize(todos);
       await aiService.categorize(todos);
@@ -406,7 +410,7 @@ describe('EnhancedAIService', () => {
 
     it('should disable cache when configured', async () => {
       const todos = createSampleTodos();
-      
+
       // Configure to disable cache
       aiService.configure({ cacheEnabled: false });
 
@@ -455,9 +459,10 @@ describe('EnhancedAIService', () => {
       // The custom prompt should have been used
       const lastCall =
         mockAdapter.callHistory[mockAdapter.callHistory.length - 1];
-      expect((lastCall.params as { promptTemplate?: { template?: string } }).promptTemplate?.template).toContain(
-        'Custom summary prompt'
-      );
+      expect(
+        (lastCall.params as { promptTemplate?: { template?: string } })
+          .promptTemplate?.template
+      ).toContain('Custom summary prompt');
     });
   });
 });

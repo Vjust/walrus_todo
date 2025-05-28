@@ -107,7 +107,10 @@ export class StorageManager {
 
       // Verify network connectivity
       let systemState: unknown;
-      if ('getLatestSuiSystemState' in this.suiClient && typeof this.suiClient.getLatestSuiSystemState === 'function') {
+      if (
+        'getLatestSuiSystemState' in this.suiClient &&
+        typeof this.suiClient.getLatestSuiSystemState === 'function'
+      ) {
         systemState = await this.suiClient.getLatestSuiSystemState();
       }
       if (!systemState || !(systemState as { epoch?: unknown }).epoch) {
@@ -143,10 +146,11 @@ export class StorageManager {
       });
 
       // Get Storage Fund balance
-      const storageFundBalance: SuiBalanceResponse = await this.suiClient.getBalance({
-        owner: this.address,
-        coinType: '0x2::storage::Storage',
-      });
+      const storageFundBalance: SuiBalanceResponse =
+        await this.suiClient.getBalance({
+          owner: this.address,
+          coinType: '0x2::storage::Storage',
+        });
 
       const isStorageFundSufficient =
         BigInt(storageFundBalance.totalBalance) >= this.MIN_WAL_BALANCE;
@@ -213,11 +217,12 @@ export class StorageManager {
     currentEpoch: number
   ): Promise<StorageVerification> {
     try {
-      const response: SuiOwnedObjectsResponse = await this.suiClient.getOwnedObjects({
-        owner: this.address,
-        filter: { StructType: '0x2::storage::Storage' },
-        options: { showContent: true },
-      });
+      const response: SuiOwnedObjectsResponse =
+        await this.suiClient.getOwnedObjects({
+          owner: this.address,
+          filter: { StructType: '0x2::storage::Storage' },
+          options: { showContent: true },
+        });
 
       // Find suitable storage with enough remaining size and epochs
       const suitableStorage = response.data
@@ -306,7 +311,8 @@ export class StorageManager {
       const balances = await this.checkBalances();
 
       // 3. Get current epoch
-      const systemState: SuiSystemState = await this.suiClient.getLatestSuiSystemState();
+      const systemState: SuiSystemState =
+        await this.suiClient.getLatestSuiSystemState();
       const epoch = systemState?.epoch;
       const currentEpoch = Number(epoch);
 
@@ -366,11 +372,12 @@ export class StorageManager {
     }>;
   }> {
     try {
-      const response: SuiOwnedObjectsResponse = await this.suiClient.getOwnedObjects({
-        owner: address,
-        filter: { StructType: '0x2::storage::Storage' },
-        options: { showContent: true },
-      });
+      const response: SuiOwnedObjectsResponse =
+        await this.suiClient.getOwnedObjects({
+          owner: address,
+          filter: { StructType: '0x2::storage::Storage' },
+          options: { showContent: true },
+        });
 
       const storageObjects = response.data
         .map(item => {

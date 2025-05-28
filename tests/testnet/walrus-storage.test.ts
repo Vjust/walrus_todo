@@ -18,9 +18,9 @@ import { join } from 'path';
 
 describe('Walrus Testnet Integration', () => {
   const isTestnetEnabled = process.env.WALRUS_TEST_ENABLE_TESTNET === 'true';
-  
+
   const describeIfEnabled = isTestnetEnabled ? describe : describe.skip;
-  
+
   describeIfEnabled('TodoStorage on Testnet', () => {
     let todoStorage: TodoStorage;
 

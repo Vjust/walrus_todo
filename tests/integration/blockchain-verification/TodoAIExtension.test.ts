@@ -2,7 +2,10 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 import { SuiClient } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import type { WalrusClientExt } from '../../../apps/cli/src/types/client';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../../helpers/complete-walrus-client-mock';
 
 import { BlobVerificationManager } from '../../../apps/cli/src/utils/blob-verification';
 import { CLIError } from '../../../apps/cli/src/types/errors/consolidated';
@@ -222,7 +225,7 @@ class TodoAIExtension {
       const metadata = await this.walrusClient.getBlobMetadata({
         blobId: todoId,
       });
-      const metadataObj = metadata?.V1 || {} as Record<string, unknown>;
+      const metadataObj = metadata?.V1 || ({} as Record<string, unknown>);
 
       // 4. Verify content integrity
       const contentIntact = true; // Mocked in tests
@@ -287,7 +290,9 @@ const mockSigner = {
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
+  signTransaction: async (
+    _transaction: unknown
+  ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -304,7 +309,7 @@ describe('TodoAIExtension Integration', () => {
 
     // Create inline mock for WalrusClient with all required methods
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific methods for this test as needed
     // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
 

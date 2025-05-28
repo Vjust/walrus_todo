@@ -1,9 +1,11 @@
-import type { WalrusClient } from '../../apps/cli/src/types/client';
 import { createWalrusImageStorage } from '../../apps/cli/src/utils/walrus-image-storage';
 import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 // import { TransactionBlock } from '@mysten/sui/transactions';
 import { KeystoreSigner } from '../../apps/cli/src/utils/sui-keystore';
-import { createWalrusModuleMock, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
+import {
+  createWalrusModuleMock,
+  type CompleteWalrusClientMock,
+} from '../helpers/complete-walrus-client-mock';
 
 import * as fs from 'fs';
 import * as path from 'path';

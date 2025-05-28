@@ -4,7 +4,10 @@
 import './utils/polyfills';
 
 // Check Node.js version compatibility
-import { checkNodeVersion, logCompatibilityInfo } from './utils/node-version-check';
+import {
+  checkNodeVersion,
+  logCompatibilityInfo,
+} from './utils/node-version-check';
 checkNodeVersion();
 logCompatibilityInfo();
 
@@ -156,7 +159,8 @@ export const run = async () => {
     // Run the command with the remaining arguments
     await CommandClass.run(args.slice(1));
   } catch (_error) {
-    const errorMessage = _error instanceof Error ? _error.message : String(_error);
+    const errorMessage =
+      _error instanceof Error ? _error.message : String(_error);
 
     // Handle common network errors with better messaging
     if (

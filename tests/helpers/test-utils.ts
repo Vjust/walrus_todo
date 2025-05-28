@@ -162,7 +162,8 @@ Options:
   --help                Show help`;
             } else {
               if (args.includes('--background')) {
-                stdout = 'Background sync started with job ID: job-123\nUse "waltodo jobs" to monitor progress';
+                stdout =
+                  'Background sync started with job ID: job-123\nUse "waltodo jobs" to monitor progress';
               } else {
                 stdout = 'Sync completed successfully';
               }
@@ -176,7 +177,8 @@ Options:
             break;
           case '--help':
           case 'help':
-            stdout = 'WalTodo CLI - Blockchain Todo Manager\n\nUsage: waltodo [command] [options]';
+            stdout =
+              'WalTodo CLI - Blockchain Todo Manager\n\nUsage: waltodo [command] [options]';
             break;
           default:
             if (options.expectError) {
@@ -189,7 +191,10 @@ Options:
         return { stdout, stderr };
       } catch (error) {
         if (options.expectError) {
-          return { stdout: '', stderr: error instanceof Error ? error.message : String(error) };
+          return {
+            stdout: '',
+            stderr: error instanceof Error ? error.message : String(error),
+          };
         }
         throw error;
       }
@@ -203,14 +208,14 @@ Options:
       const result = await execPromise(cmd, {
         timeout: options.timeout || 30000,
         cwd: options.cwd,
-        env: { ...process.env, ...options.env }
+        env: { ...process.env, ...options.env },
       });
       return result;
     } catch (error: any) {
       if (options.expectError) {
         return {
           stdout: error.stdout || '',
-          stderr: error.stderr || error.message || String(error)
+          stderr: error.stderr || error.message || String(error),
         };
       }
       throw error;
@@ -244,19 +249,20 @@ export async function executeCommand(
   try {
     const result = await runCommand(args);
     let success = true;
-    
+
     if (expectedOutput) {
-      success = expectedOutput.every(pattern => 
-        result.stdout.includes(pattern) || result.stderr.includes(pattern)
+      success = expectedOutput.every(
+        pattern =>
+          result.stdout.includes(pattern) || result.stderr.includes(pattern)
       );
     }
-    
+
     return { ...result, success };
   } catch (error) {
     return {
       stdout: '',
       stderr: error instanceof Error ? error.message : String(error),
-      success: false
+      success: false,
     };
   }
 }
@@ -270,11 +276,11 @@ export async function executeCommandSequence(
   commandSets: string[][]
 ): Promise<{ stdout: string; stderr: string }[]> {
   const results: { stdout: string; stderr: string }[] = [];
-  
+
   for (const args of commandSets) {
     const result = await runCommand(args);
     results.push(result);
   }
-  
+
   return results;
 }

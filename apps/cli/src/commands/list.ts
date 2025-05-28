@@ -17,13 +17,13 @@ const CACHE_DEBUG = process.env.CACHE_DEBUG === 'true';
 /**
  * @class ListCommand
  * @description List and display todo items with intuitive positional arguments.
- * 
+ *
  * Usage patterns:
  * - `waltodo list` - Shows all available lists with statistics
  * - `waltodo list <name>` - Shows todos in the specified list
  * - `waltodo list <name> --completed` - Shows only completed todos
  * - `waltodo list <name> --sort priority` - Shows todos sorted by priority
- * 
+ *
  * Features color-coded output, progress bars, and smart filtering options.
  */
 class ListCommand extends BaseCommand {
@@ -100,7 +100,8 @@ class ListCommand extends BaseCommand {
   static args = {
     listName: Args.string({
       name: 'listName',
-      description: 'Name of the todo list to display (shows all lists if omitted)',
+      description:
+        'Name of the todo list to display (shows all lists if omitted)',
       required: false,
     }),
   };
@@ -123,7 +124,7 @@ class ListCommand extends BaseCommand {
 
       // Determine which list to show: positional arg takes precedence over flag
       const targetList = args.listName || (flags.list as string);
-      
+
       // Store list name in the class property for error handling
       if (targetList) {
         this.listName = targetList;
@@ -135,7 +136,8 @@ class ListCommand extends BaseCommand {
       }
 
       // Determine if we should run in background
-      const shouldRunInBackground = flags.background || flags.sync || this.shouldUseBackground(targetList);
+      const shouldRunInBackground =
+        flags.background || flags.sync || this.shouldUseBackground(targetList);
 
       if (shouldRunInBackground && !flags.watch) {
         return this.runInBackground(targetList, flags);
@@ -464,7 +466,7 @@ class ListCommand extends BaseCommand {
       `${ICONS.BOX_V} ${chalk.dim(`Found ${lists.length} list${lists.length === 1 ? '' : 's'}`)}${' '.repeat(50 - 8 - lists.length.toString().length - (lists.length === 1 ? 4 : 5))}${ICONS.BOX_V}`,
       `${ICONS.BOX_BL}${ICONS.BOX_H.repeat(50)}${ICONS.BOX_BR}`,
     ].join('\n');
-    
+
     this.log('\n' + headerBox + '\n');
 
     // Process all lists to get more detailed information
@@ -518,7 +520,12 @@ class ListCommand extends BaseCommand {
     // Display each list with its details
     validLists.forEach((list, index) => {
       // Format list name with icon and better spacing
-      const listIcon = list.total === 0 ? ICONS.FOLDER : (list.percent === 100 ? ICONS.SUCCESS : ICONS.LIST);
+      const listIcon =
+        list.total === 0
+          ? ICONS.FOLDER
+          : list.percent === 100
+            ? ICONS.SUCCESS
+            : ICONS.LIST;
       this.log(`${listIcon} ${chalk.bold(list.name)}`);
 
       // Show progress statistics with better formatting
@@ -533,13 +540,19 @@ class ListCommand extends BaseCommand {
       if (list.total > 0) {
         const priorityParts = [];
         if (list.priorities.high > 0) {
-          priorityParts.push(chalk.red(`${ICONS.PRIORITY_HIGH} ${list.priorities.high}`));
+          priorityParts.push(
+            chalk.red(`${ICONS.PRIORITY_HIGH} ${list.priorities.high}`)
+          );
         }
         if (list.priorities.medium > 0) {
-          priorityParts.push(chalk.yellow(`${ICONS.PRIORITY_MEDIUM} ${list.priorities.medium}`));
+          priorityParts.push(
+            chalk.yellow(`${ICONS.PRIORITY_MEDIUM} ${list.priorities.medium}`)
+          );
         }
         if (list.priorities.low > 0) {
-          priorityParts.push(chalk.green(`${ICONS.PRIORITY_LOW} ${list.priorities.low}`));
+          priorityParts.push(
+            chalk.green(`${ICONS.PRIORITY_LOW} ${list.priorities.low}`)
+          );
         }
 
         if (priorityParts.length > 0) {
@@ -628,25 +641,34 @@ class ListCommand extends BaseCommand {
   /**
    * Run list operation in background
    */
-  private async runInBackground(targetList: string | undefined, flags: Record<string, unknown>): Promise<void> {
+  private async runInBackground(
+    targetList: string | undefined,
+    flags: Record<string, unknown>
+  ): Promise<void> {
     const command = 'list';
     const args = targetList ? [targetList] : [];
     const jobFlags = { ...flags, background: false }; // Remove background flag to avoid recursion
 
     // Create background job
     this.backgroundJob = jobManager.createJob(command, args, jobFlags);
-    
+
     this.log(chalk.blue(`${ICONS.INFO} Starting background list operation...`));
     this.log(chalk.dim(`Job ID: ${this.backgroundJob.id}`));
-    this.log(chalk.dim(`Track progress: ${this.config.bin} list --job-id ${this.backgroundJob.id}`));
+    this.log(
+      chalk.dim(
+        `Track progress: ${this.config.bin} list --job-id ${this.backgroundJob.id}`
+      )
+    );
 
     // Start background process
     const childArgs = [
       this.config.bin,
       'list',
       ...args,
-      '--output', flags.output as string || 'text',
-      '--network', flags.network as string || 'testnet'
+      '--output',
+      (flags.output as string) || 'text',
+      '--network',
+      (flags.network as string) || 'testnet',
     ];
 
     if (flags.completed) childArgs.push('--completed');
@@ -658,7 +680,7 @@ class ListCommand extends BaseCommand {
 
     const child = spawn('node', childArgs, {
       detached: true,
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
     // Set up output and log files
@@ -669,19 +691,27 @@ class ListCommand extends BaseCommand {
     child.stderr?.pipe(logFile);
 
     jobManager.startJob(this.backgroundJob.id, child.pid);
-    jobManager.writeJobLog(this.backgroundJob.id, `Started background list operation with PID: ${child.pid}`);
+    jobManager.writeJobLog(
+      this.backgroundJob.id,
+      `Started background list operation with PID: ${child.pid}`
+    );
 
-    child.on('exit', (code) => {
+    child.on('exit', code => {
       if (code === 0) {
         jobManager.completeJob(this.backgroundJob!.id, { exitCode: code });
       } else {
-        jobManager.failJob(this.backgroundJob!.id, `Process exited with code: ${code}`);
+        jobManager.failJob(
+          this.backgroundJob!.id,
+          `Process exited with code: ${code}`
+        );
       }
     });
 
     child.unref();
-    
-    this.log(chalk.green(`${ICONS.SUCCESS} Background job started successfully`));
+
+    this.log(
+      chalk.green(`${ICONS.SUCCESS} Background job started successfully`)
+    );
     this.log(chalk.dim(`View output: cat ${this.backgroundJob.outputFile}`));
   }
 
@@ -690,7 +720,7 @@ class ListCommand extends BaseCommand {
    */
   private async showJobStatus(jobId: string): Promise<void> {
     const job = jobManager.getJob(jobId);
-    
+
     if (!job) {
       throw new CLIError(`Job not found: ${jobId}`, 'JOB_NOT_FOUND');
     }
@@ -706,10 +736,15 @@ class ListCommand extends BaseCommand {
     }
 
     // Show output if job is completed
-    if (job.status === 'completed' && job.outputFile && fs.existsSync(job.outputFile)) {
+    if (
+      job.status === 'completed' &&
+      job.outputFile &&
+      fs.existsSync(job.outputFile)
+    ) {
       this.log('\n' + chalk.blue('Output:'));
       const content = fs.readFileSync(job.outputFile, 'utf8');
-      const output = typeof content === 'string' ? content : content.toString('utf8');
+      const output =
+        typeof content === 'string' ? content : content.toString('utf8');
       this.log(output);
     }
   }
@@ -717,27 +752,36 @@ class ListCommand extends BaseCommand {
   /**
    * Run in watch mode for real-time updates
    */
-  private async runWatchMode(targetList: string | undefined, flags: Record<string, unknown>): Promise<void> {
-    this.log(chalk.blue(`${ICONS.INFO} Starting watch mode (Press Ctrl+C to exit)...`));
-    
+  private async runWatchMode(
+    targetList: string | undefined,
+    flags: Record<string, unknown>
+  ): Promise<void> {
+    this.log(
+      chalk.blue(`${ICONS.INFO} Starting watch mode (Press Ctrl+C to exit)...`)
+    );
+
     const updateDisplay = async () => {
       try {
         // Clear screen and move cursor to top
         process.stdout.write('\x1b[2J\x1b[H');
-        
+
         this.log(chalk.dim(`Last updated: ${new Date().toLocaleTimeString()}`));
         this.log('');
-        
+
         if (targetList) {
           await this.showSpecificList(targetList, flags);
         } else {
           await this.showAllLists();
         }
-        
+
         this.log('');
         this.log(chalk.dim('Watching for changes... (Press Ctrl+C to exit)'));
       } catch (error) {
-        this.log(chalk.red(`Error updating display: ${error instanceof Error ? error.message : String(error)}`));
+        this.log(
+          chalk.red(
+            `Error updating display: ${error instanceof Error ? error.message : String(error)}`
+          )
+        );
       }
     };
 
@@ -761,7 +805,10 @@ class ListCommand extends BaseCommand {
   /**
    * Stream output for real-time updates
    */
-  private async streamOutput(targetList: string | undefined, flags: Record<string, unknown>): Promise<void> {
+  private async streamOutput(
+    targetList: string | undefined,
+    flags: Record<string, unknown>
+  ): Promise<void> {
     const spinner = createSpinner('Streaming todo data...');
     spinner.start();
 
@@ -779,9 +826,12 @@ class ListCommand extends BaseCommand {
   /**
    * Stream specific list with chunked output
    */
-  private async streamSpecificList(listName: string, flags: Record<string, unknown>): Promise<void> {
+  private async streamSpecificList(
+    listName: string,
+    flags: Record<string, unknown>
+  ): Promise<void> {
     const list = await this.todoService.getList(listName);
-    
+
     if (!list) {
       throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
     }
@@ -799,15 +849,20 @@ class ListCommand extends BaseCommand {
     const chunkSize = 10;
     for (let i = 0; i < todos.length; i += chunkSize) {
       const chunk = todos.slice(i, i + chunkSize);
-      
+
       chunk.forEach((todo: Todo) => {
         const shortId = todo.id.slice(-6);
-        const status = todo.completed ? chalk.green(ICONS.SUCCESS) : chalk.yellow(ICONS.PENDING);
-        const priority = PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
-        
-        this.log(`${status} [${chalk.dim(shortId)}] ${priority.color(priority.label)} ${todo.title}`);
+        const status = todo.completed
+          ? chalk.green(ICONS.SUCCESS)
+          : chalk.yellow(ICONS.PENDING);
+        const priority =
+          PRIORITY[todo.priority as keyof typeof PRIORITY] || PRIORITY.medium;
+
+        this.log(
+          `${status} [${chalk.dim(shortId)}] ${priority.color(priority.label)} ${todo.title}`
+        );
       });
-      
+
       // Small delay for streaming effect
       if (i + chunkSize < todos.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -820,7 +875,7 @@ class ListCommand extends BaseCommand {
    */
   private async streamAllLists(): Promise<void> {
     const lists = await this.todoService.getAllLists();
-    
+
     this.log(chalk.bold(`\n📚 Found ${lists.length} lists`));
     this.log(''.padEnd(50, '─'));
 
@@ -833,9 +888,11 @@ class ListCommand extends BaseCommand {
       const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
       const progressBar = this.createMiniProgressBar(percent);
-      
-      this.log(`📋 ${chalk.bold(listName)} ${progressBar} ${chalk.blue(`${completed}/${total}`)} ${chalk.dim(`(${percent}%)`)}`);
-      
+
+      this.log(
+        `📋 ${chalk.bold(listName)} ${progressBar} ${chalk.blue(`${completed}/${total}`)} ${chalk.dim(`(${percent}%)`)}`
+      );
+
       // Small delay for streaming effect
       await new Promise(resolve => setTimeout(resolve, 200));
     }
@@ -857,7 +914,7 @@ class ListCommand extends BaseCommand {
     if (this.outputStream) {
       this.outputStream.end();
     }
-    
+
     if (this.watchInterval) {
       clearInterval(this.watchInterval);
     }

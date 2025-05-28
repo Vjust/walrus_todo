@@ -262,11 +262,15 @@ describe('TodoSerializer', () => {
 
   describe('Error handling', () => {
     it('should throw error when null is passed to todoToBuffer', () => {
-      expect(() => TodoSerializer.todoToBuffer(null as unknown as Todo)).toThrow();
+      expect(() =>
+        TodoSerializer.todoToBuffer(null as unknown as Todo)
+      ).toThrow();
     });
 
     it('should throw error when undefined is passed to todoToBuffer', () => {
-      expect(() => TodoSerializer.todoToBuffer(undefined as unknown as Todo)).toThrow();
+      expect(() =>
+        TodoSerializer.todoToBuffer(undefined as unknown as Todo)
+      ).toThrow();
     });
 
     it('should throw error when invalid buffer is passed to bufferToTodo', () => {

@@ -5,14 +5,18 @@
 /**
  * Safely stringify objects with circular reference detection and size limits
  */
-export function safeStringify(obj: any, maxDepth: number = 10, sizeLimit: number = 1024 * 1024): string {
+export function safeStringify(
+  obj: any,
+  maxDepth: number = 10,
+  sizeLimit: number = 1024 * 1024
+): string {
   const seen = new WeakSet();
   let currentDepth = 0;
   let currentSize = 0;
 
   function replacer(key: string, value: any): any {
     currentSize += JSON.stringify(key).length;
-    
+
     // Check size limit
     if (currentSize > sizeLimit) {
       return '[SIZE_LIMIT_EXCEEDED]';
@@ -92,9 +96,9 @@ export function createMemoryEfficientMock<T = any>(
   } = {}
 ): jest.Mock<T> {
   const { maxReturnSize = 1024, maxCallHistory = 100 } = options;
-  
+
   const mock = jest.fn();
-  
+
   // Override the mock implementation to limit memory usage
   mock.mockImplementation((...args: any[]) => {
     // Limit argument history to prevent memory buildup
@@ -102,16 +106,16 @@ export function createMemoryEfficientMock<T = any>(
       mock.mock.calls = mock.mock.calls.slice(-maxCallHistory);
       mock.mock.results = mock.mock.results.slice(-maxCallHistory);
     }
-    
+
     // Return size-limited value
     const stringified = JSON.stringify(defaultValue);
     if (stringified.length > maxReturnSize) {
       return '[MOCK_VALUE_TOO_LARGE]';
     }
-    
+
     return defaultValue;
   });
-  
+
   return mock as jest.Mock<T>;
 }
 
@@ -136,8 +140,8 @@ export function getMemoryUsage(): NodeJS.MemoryUsage {
  */
 export function logMemoryUsage(label: string = 'Memory'): void {
   const usage = getMemoryUsage();
-  const mb = (bytes: number) => Math.round(bytes / 1024 / 1024 * 100) / 100;
-  
+  const mb = (bytes: number) => Math.round((bytes / 1024 / 1024) * 100) / 100;
+
   console.log(`${label} Usage:`, {
     rss: `${mb(usage.rss)}MB`,
     heapUsed: `${mb(usage.heapUsed)}MB`,
@@ -149,14 +153,18 @@ export function logMemoryUsage(label: string = 'Memory'): void {
 /**
  * Create a size-limited array that prevents memory overflow
  */
-export function createLimitedArray<T>(generator: () => T, count: number, maxSize: number = 1000): T[] {
+export function createLimitedArray<T>(
+  generator: () => T,
+  count: number,
+  maxSize: number = 1000
+): T[] {
   const actualCount = Math.min(count, maxSize);
   const result: T[] = [];
-  
+
   for (let i = 0; i < actualCount; i++) {
     result.push(generator());
   }
-  
+
   return result;
 }
 
@@ -169,10 +177,10 @@ export function shallowCloneWithLimits<T extends Record<string, any>>(
 ): Partial<T> {
   const keys = Object.keys(obj).slice(0, maxProps);
   const result: Partial<T> = {};
-  
+
   keys.forEach(key => {
     result[key as keyof T] = obj[key];
   });
-  
+
   return result;
 }

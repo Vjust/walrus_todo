@@ -7,7 +7,10 @@ import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 // Unused imports removed during TypeScript cleanup
 // import { SuiClient } from '@mysten/sui/client';
 // import type { WalrusClientExt } from '../../../apps/cli/src/types/client';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../../helpers/complete-walrus-client-mock';
 import { SuiClientType } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 
 // Mock the SuiClient
@@ -44,7 +47,9 @@ const mockSigner = {
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
+  signTransaction: async (
+    _transaction: unknown
+  ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -55,7 +60,7 @@ const mockSigner = {
 describe('BlobVerificationManager Integration', () => {
   let verificationManager: BlobVerificationManager;
   let mockWalrusClient: CompleteWalrusClientMock;
-  
+
   // Define expected attributes for testing
   const expectedAttributes = {
     contentType: 'application/json',
@@ -71,7 +76,7 @@ describe('BlobVerificationManager Integration', () => {
 
     // Use the complete mock implementation
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific methods for this test
     mockWalrusClient.getConfig.mockResolvedValue({
       network: 'testnet',
@@ -79,7 +84,10 @@ describe('BlobVerificationManager Integration', () => {
       maxSize: 1000000,
     });
     mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({ used: '500', total: '2000' });
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '500',
+      total: '2000',
+    });
     mockWalrusClient.getBlobSize.mockResolvedValue(1024);
     mockWalrusClient.storageCost.mockResolvedValue({
       storageCost: BigInt(1000),

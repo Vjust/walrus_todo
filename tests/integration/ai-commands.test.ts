@@ -16,7 +16,6 @@ describe('AI Commands Integration Tests', () => {
   const CLI_CMD = 'node ./bin/run.js';
   const MOCK_API_KEY = 'test-api-key-123';
 
-
   beforeEach(() => {
     (execSync as jest.Mock).mockReset();
     process.env.XAI_API_KEY = MOCK_API_KEY;

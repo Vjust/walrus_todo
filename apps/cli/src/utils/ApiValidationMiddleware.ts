@@ -51,7 +51,9 @@ export class ApiValidationMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize URL parameters
-        const sanitizedParams = ApiValidationMiddleware.sanitizeObject(req.params);
+        const sanitizedParams = ApiValidationMiddleware.sanitizeObject(
+          req.params
+        );
 
         // Validate against schema
         SchemaValidator.validate(sanitizedParams, schema);
@@ -80,7 +82,9 @@ export class ApiValidationMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       try {
         // Sanitize query parameters
-        const sanitizedQuery = ApiValidationMiddleware.sanitizeObject(req.query);
+        const sanitizedQuery = ApiValidationMiddleware.sanitizeObject(
+          req.query
+        );
 
         // Validate against schema
         SchemaValidator.validate(sanitizedQuery, schema);

@@ -2,7 +2,10 @@
 // Provides a unified SuiClient interface across different SDK versions
 
 // Import the modules using ES6 syntax
-import { SuiClient as SuiClientClass, getFullnodeUrl as getFullnodeUrlFn } from '@mysten/sui/client';
+import {
+  SuiClient as SuiClientClass,
+  getFullnodeUrl as getFullnodeUrlFn,
+} from '@mysten/sui/client';
 import { Ed25519Keypair as Ed25519KeypairClass } from '@mysten/sui/keypairs/ed25519';
 
 // Define proper interface for SUI client options

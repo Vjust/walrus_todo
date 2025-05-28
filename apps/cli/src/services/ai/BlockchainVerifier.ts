@@ -134,7 +134,11 @@ export class BlockchainVerifier {
       throw new Error('Request and response must be strings');
     }
 
-    const result = await this.verifierAdapter.verifyRecord(record, request, response);
+    const result = await this.verifierAdapter.verifyRecord(
+      record,
+      request,
+      response
+    );
     return Boolean(result);
   }
 
@@ -150,7 +154,8 @@ export class BlockchainVerifier {
       throw new Error('Verification ID must be a non-empty string');
     }
 
-    const verification = await this.verifierAdapter.getVerification(verificationId);
+    const verification =
+      await this.verifierAdapter.getVerification(verificationId);
     if (!verification) {
       throw new Error(`Verification not found: ${verificationId}`);
     }
@@ -167,7 +172,8 @@ export class BlockchainVerifier {
       throw new Error('Verifier adapter is not initialized');
     }
 
-    const verifications = await this.verifierAdapter.listVerifications(userAddress);
+    const verifications =
+      await this.verifierAdapter.listVerifications(userAddress);
     return Array.isArray(verifications) ? verifications : [];
   }
 

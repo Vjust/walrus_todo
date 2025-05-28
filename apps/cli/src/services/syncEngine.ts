@@ -57,7 +57,7 @@ export class SyncEngine extends EventEmitter {
   private backgroundOrchestrator: BackgroundCommandOrchestrator;
   private retryManager: RetryManager;
   private config: Required<SyncEngineConfig>;
-  
+
   private isRunning = false;
   private isInitialized = false;
   private pendingChanges = new Map<string, FileChangeEvent>();
@@ -66,14 +66,14 @@ export class SyncEngine extends EventEmitter {
   private syncQueue: Array<() => Promise<void>> = [];
   private activeSyncs = 0;
   private wallet: string | null = null;
-  
+
   private debouncedSync: Function;
   private syncInterval: NodeJS.Timer | null = null;
 
   constructor(config: SyncEngineConfig) {
     super();
     this.logger = new Logger('SyncEngine');
-    
+
     this.config = {
       todosDirectory: resolve(config.todosDirectory),
       apiConfig: config.apiConfig,
@@ -81,17 +81,17 @@ export class SyncEngine extends EventEmitter {
       conflictResolution: config.conflictResolution || 'newest',
       enableRealTimeSync: config.enableRealTimeSync ?? true,
       maxConcurrentSyncs: config.maxConcurrentSyncs || 3,
-      syncDebounceMs: config.syncDebounceMs || 2000
+      syncDebounceMs: config.syncDebounceMs || 2000,
     };
 
     this.todoService = new TodoService();
     this.backgroundOrchestrator = new BackgroundCommandOrchestrator();
-    
+
     this.retryManager = new RetryManager({
       maxAttempts: 3,
       baseDelay: 1000,
       maxDelay: 10000,
-      backoffFactor: 2
+      backoffFactor: 2,
     });
 
     this.fileWatcher = new FileWatcher({
@@ -99,23 +99,23 @@ export class SyncEngine extends EventEmitter {
       ignoreInitial: false,
       debounceMs: 1000,
       fileExtensions: ['.json'],
-      excludePatterns: [/\.tmp$/, /\.swp$/, /~$/, /\.DS_Store$/, /\.sync$/]
+      excludePatterns: [/\.tmp$/, /\.swp$/, /~$/, /\.DS_Store$/, /\.sync$/],
     });
 
     this.apiClient = new ApiClient(this.config.apiConfig);
-    
+
     // Create debounced sync function
     this.debouncedSync = debounce(
-      this.performSync.bind(this), 
+      this.performSync.bind(this),
       this.config.syncDebounceMs
     );
 
     this.setupEventHandlers();
-    
+
     this.logger.info('SyncEngine initialized', {
       todosDirectory: this.config.todosDirectory,
       apiURL: this.config.apiConfig.baseURL,
-      realTimeSync: this.config.enableRealTimeSync
+      realTimeSync: this.config.enableRealTimeSync,
     });
   }
 
@@ -129,27 +129,28 @@ export class SyncEngine extends EventEmitter {
     }
 
     this.wallet = wallet || null;
-    
+
     try {
       // Ensure todos directory exists
       await fs.mkdir(this.config.todosDirectory, { recursive: true });
-      
+
       // Connect to API server
       await this.apiClient.connect(this.wallet);
-      
+
       // Start file watching
       await this.fileWatcher.startWatching(this.config.todosDirectory);
-      
+
       // Perform initial sync if wallet is provided
       if (this.wallet) {
         await this.performInitialSync();
       }
-      
+
       this.isInitialized = true;
       this.emit('initialized');
-      
-      this.logger.info('SyncEngine initialized successfully', { wallet: this.wallet });
-      
+
+      this.logger.info('SyncEngine initialized successfully', {
+        wallet: this.wallet,
+      });
     } catch (error) {
       this.logger.error('Failed to initialize SyncEngine:', error);
       throw error;
@@ -163,25 +164,25 @@ export class SyncEngine extends EventEmitter {
     if (!this.isInitialized) {
       throw new Error('SyncEngine must be initialized before starting');
     }
-    
+
     if (this.isRunning) {
       this.logger.warn('SyncEngine already running');
       return;
     }
 
     this.isRunning = true;
-    
+
     // Start periodic sync if enabled
     if (this.config.syncInterval > 0) {
       this.syncInterval = setInterval(() => {
         this.debouncedSync();
       }, this.config.syncInterval);
     }
-    
+
     this.emit('started');
     this.logger.info('SyncEngine started', {
       syncInterval: this.config.syncInterval,
-      realTimeSync: this.config.enableRealTimeSync
+      realTimeSync: this.config.enableRealTimeSync,
     });
   }
 
@@ -194,18 +195,18 @@ export class SyncEngine extends EventEmitter {
     }
 
     this.isRunning = false;
-    
+
     // Stop periodic sync
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
     }
-    
+
     // Wait for active syncs to complete
     while (this.activeSyncs > 0) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     this.emit('stopped');
     this.logger.info('SyncEngine stopped');
   }
@@ -231,7 +232,7 @@ export class SyncEngine extends EventEmitter {
       this.handleFileChange(event);
     });
 
-    this.fileWatcher.on('error', (error) => {
+    this.fileWatcher.on('error', error => {
       this.logger.error('FileWatcher error:', error);
       this.emit('error', error);
     });
@@ -241,12 +242,12 @@ export class SyncEngine extends EventEmitter {
       this.handleRemoteChange(event);
     });
 
-    this.apiClient.on('sync-requested', (data) => {
+    this.apiClient.on('sync-requested', data => {
       this.logger.info('Sync requested from remote client', data);
       this.debouncedSync();
     });
 
-    this.apiClient.on('error', (error) => {
+    this.apiClient.on('error', error => {
       this.logger.error('ApiClient error:', error);
       this.emit('error', error);
     });
@@ -272,15 +273,15 @@ export class SyncEngine extends EventEmitter {
 
     this.logger.debug('File change detected', {
       type: event.type,
-      path: event.relativePath
+      path: event.relativePath,
     });
 
     // Store pending change
     this.pendingChanges.set(event.filePath, event);
-    
+
     // Trigger debounced sync
     this.debouncedSync();
-    
+
     this.emit('file-changed', event);
   }
 
@@ -294,7 +295,7 @@ export class SyncEngine extends EventEmitter {
 
     this.logger.debug('Remote change received', {
       type: event.type,
-      wallet: event.wallet
+      wallet: event.wallet,
     });
 
     try {
@@ -303,18 +304,17 @@ export class SyncEngine extends EventEmitter {
         case 'todo-updated':
           await this.applyRemoteTodoChange(event.data as Todo);
           break;
-          
+
         case 'todo-deleted':
           await this.applyRemoteTodoDelete(event.data.id, event.data.wallet);
           break;
-          
+
         case 'todo-completed':
           await this.applyRemoteTodoCompletion(event.data as Todo);
           break;
       }
-      
+
       this.emit('remote-change-applied', event);
-      
     } catch (error) {
       this.logger.error('Failed to apply remote change:', error);
       this.emit('error', error);
@@ -331,28 +331,31 @@ export class SyncEngine extends EventEmitter {
     }
 
     this.logger.info('Performing initial sync...');
-    
+
     try {
       // Scan local files first
-      const localFiles = await this.fileWatcher.scanDirectory(this.config.todosDirectory);
+      const localFiles = await this.fileWatcher.scanDirectory(
+        this.config.todosDirectory
+      );
       this.logger.info(`Found ${localFiles.length} local todo files`);
-      
+
       // Pull remote todos
       const remoteResponse = await this.apiClient.pullTodos(this.wallet);
       if (remoteResponse.success && remoteResponse.data?.todos) {
-        this.logger.info(`Found ${remoteResponse.data.todos.length} remote todos`);
-        
+        this.logger.info(
+          `Found ${remoteResponse.data.todos.length} remote todos`
+        );
+
         // Apply remote changes
         for (const todo of remoteResponse.data.todos) {
           await this.applyRemoteTodoChange(todo, true); // silent mode for initial sync
         }
       }
-      
+
       this.lastSyncTime = Date.now();
       this.emit('initial-sync-complete');
-      
+
       this.logger.info('Initial sync completed successfully');
-      
     } catch (error) {
       this.logger.error('Initial sync failed:', error);
       throw error;
@@ -369,36 +372,39 @@ export class SyncEngine extends EventEmitter {
         syncedFiles: 0,
         conflicts: [],
         errors: ['Sync not available or at max concurrency'],
-        duration: 0
+        duration: 0,
       };
     }
 
     const startTime = Date.now();
     this.activeSyncs++;
-    
+
     try {
       this.logger.info('Starting synchronization...');
       this.emit('sync-started');
-      
+
       const result: SyncResult = {
         success: true,
         syncedFiles: 0,
         conflicts: [],
         errors: [],
-        duration: 0
+        duration: 0,
       };
 
       // Process pending local changes
       const pendingChanges = Array.from(this.pendingChanges.values());
       this.pendingChanges.clear();
-      
+
       for (const change of pendingChanges) {
         try {
           await this.syncFileChange(change);
           result.syncedFiles++;
         } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
-          result.errors.push(`Failed to sync ${change.relativePath}: ${errorMsg}`);
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          result.errors.push(
+            `Failed to sync ${change.relativePath}: ${errorMsg}`
+          );
           this.logger.error(`Failed to sync file change:`, error);
         }
       }
@@ -406,7 +412,7 @@ export class SyncEngine extends EventEmitter {
       // Check for conflicts
       if (this.conflicts.length > 0) {
         result.conflicts = [...this.conflicts];
-        
+
         if (this.config.conflictResolution !== 'manual') {
           await this.resolveConflicts();
         }
@@ -414,32 +420,30 @@ export class SyncEngine extends EventEmitter {
 
       result.duration = Date.now() - startTime;
       this.lastSyncTime = Date.now();
-      
+
       this.emit('sync-completed', result);
       this.logger.info('Synchronization completed', {
         syncedFiles: result.syncedFiles,
         conflicts: result.conflicts.length,
         errors: result.errors.length,
-        duration: result.duration
+        duration: result.duration,
       });
-      
+
       return result;
-      
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.error('Synchronization failed:', error);
-      
+
       const result: SyncResult = {
         success: false,
         syncedFiles: 0,
         conflicts: [],
         errors: [errorMsg],
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
-      
+
       this.emit('sync-failed', result);
       return result;
-      
     } finally {
       this.activeSyncs--;
     }
@@ -451,7 +455,9 @@ export class SyncEngine extends EventEmitter {
   private async syncFileChange(change: FileChangeEvent): Promise<void> {
     const listName = this.extractListNameFromPath(change.relativePath);
     if (!listName) {
-      this.logger.warn(`Cannot determine list name from path: ${change.relativePath}`);
+      this.logger.warn(
+        `Cannot determine list name from path: ${change.relativePath}`
+      );
       return;
     }
 
@@ -461,7 +467,7 @@ export class SyncEngine extends EventEmitter {
         case 'modified':
           await this.syncModifiedFile(change.filePath, listName);
           break;
-          
+
         case 'deleted':
           // Handle deleted todo list
           this.logger.info(`Todo list deleted: ${listName}`);
@@ -469,7 +475,10 @@ export class SyncEngine extends EventEmitter {
           break;
       }
     } catch (error) {
-      this.logger.error(`Failed to sync file change ${change.filePath}:`, error);
+      this.logger.error(
+        `Failed to sync file change ${change.filePath}:`,
+        error
+      );
       throw error;
     }
   }
@@ -477,7 +486,10 @@ export class SyncEngine extends EventEmitter {
   /**
    * Sync a modified file to the server
    */
-  private async syncModifiedFile(filePath: string, listName: string): Promise<void> {
+  private async syncModifiedFile(
+    filePath: string,
+    listName: string
+  ): Promise<void> {
     try {
       const list = await this.todoService.getList(listName);
       if (!list || !list.todos) {
@@ -495,7 +507,6 @@ export class SyncEngine extends EventEmitter {
           throw error;
         }
       }
-      
     } catch (error) {
       this.logger.error(`Failed to sync modified file ${filePath}:`, error);
       throw error;
@@ -505,12 +516,15 @@ export class SyncEngine extends EventEmitter {
   /**
    * Apply remote todo change locally
    */
-  private async applyRemoteTodoChange(remoteTodo: Todo, silent = false): Promise<void> {
+  private async applyRemoteTodoChange(
+    remoteTodo: Todo,
+    silent = false
+  ): Promise<void> {
     try {
       // Find which list this todo belongs to
       const lists = await this.todoService.getAllLists();
       let targetList: string | null = null;
-      
+
       for (const listName of lists) {
         const list = await this.todoService.getList(listName);
         if (list?.todos.some(t => t.id === remoteTodo.id)) {
@@ -518,19 +532,26 @@ export class SyncEngine extends EventEmitter {
           break;
         }
       }
-      
+
       // If todo not found in any list, add to default list
       if (!targetList) {
         targetList = 'default';
       }
-      
+
       // Check for conflicts
-      const existingTodo = await this.todoService.findTodoByIdOrTitle(remoteTodo.id, targetList);
-      
+      const existingTodo = await this.todoService.findTodoByIdOrTitle(
+        remoteTodo.id,
+        targetList
+      );
+
       if (existingTodo && !silent) {
-        const localTimestamp = new Date(existingTodo.updatedAt || existingTodo.createdAt || 0).getTime();
-        const remoteTimestamp = new Date(remoteTodo.updatedAt || remoteTodo.createdAt || 0).getTime();
-        
+        const localTimestamp = new Date(
+          existingTodo.updatedAt || existingTodo.createdAt || 0
+        ).getTime();
+        const remoteTimestamp = new Date(
+          remoteTodo.updatedAt || remoteTodo.createdAt || 0
+        ).getTime();
+
         if (localTimestamp !== remoteTimestamp) {
           // Conflict detected
           const conflict: SyncConflict = {
@@ -539,33 +560,36 @@ export class SyncEngine extends EventEmitter {
             local: existingTodo,
             remote: remoteTodo,
             localTimestamp,
-            remoteTimestamp
+            remoteTimestamp,
           };
-          
+
           this.conflicts.push(conflict);
           this.emit('conflict-detected', conflict);
-          
+
           this.logger.warn('Conflict detected for todo', {
             id: remoteTodo.id,
             localTime: new Date(localTimestamp).toISOString(),
-            remoteTime: new Date(remoteTimestamp).toISOString()
+            remoteTime: new Date(remoteTimestamp).toISOString(),
           });
-          
+
           return; // Don't apply change, let conflict resolution handle it
         }
       }
-      
+
       // Apply the change
       if (existingTodo) {
-        await this.todoService.updateTodo(targetList, remoteTodo.id, remoteTodo);
+        await this.todoService.updateTodo(
+          targetList,
+          remoteTodo.id,
+          remoteTodo
+        );
       } else {
         await this.todoService.addTodo(targetList, remoteTodo);
       }
-      
+
       if (!silent) {
         this.logger.info(`Applied remote todo change: ${remoteTodo.id}`);
       }
-      
     } catch (error) {
       this.logger.error('Failed to apply remote todo change:', error);
       throw error;
@@ -575,14 +599,17 @@ export class SyncEngine extends EventEmitter {
   /**
    * Apply remote todo deletion
    */
-  private async applyRemoteTodoDelete(todoId: string, wallet: string): Promise<void> {
+  private async applyRemoteTodoDelete(
+    todoId: string,
+    wallet: string
+  ): Promise<void> {
     if (this.wallet !== wallet) {
       return; // Not for this wallet
     }
 
     try {
       const lists = await this.todoService.getAllLists();
-      
+
       for (const listName of lists) {
         const deleted = await this.todoService.deleteTodo(listName, todoId);
         if (deleted) {
@@ -615,31 +642,32 @@ export class SyncEngine extends EventEmitter {
     for (const conflict of this.conflicts) {
       try {
         let resolution: any;
-        
+
         switch (this.config.conflictResolution) {
           case 'local':
             resolution = conflict.local;
             break;
-            
+
           case 'remote':
             resolution = conflict.remote;
             break;
-            
+
           case 'newest':
-            resolution = conflict.remoteTimestamp > conflict.localTimestamp 
-              ? conflict.remote 
-              : conflict.local;
+            resolution =
+              conflict.remoteTimestamp > conflict.localTimestamp
+                ? conflict.remote
+                : conflict.local;
             break;
-            
+
           default:
             continue; // Skip manual resolution in auto mode
         }
-        
+
         // Apply the resolution
         if (conflict.type === 'todo') {
           const lists = await this.todoService.getAllLists();
           let targetList: string | null = null;
-          
+
           for (const listName of lists) {
             const list = await this.todoService.getList(listName);
             if (list?.todos.some(t => t.id === conflict.itemId)) {
@@ -647,18 +675,26 @@ export class SyncEngine extends EventEmitter {
               break;
             }
           }
-          
+
           if (targetList) {
-            await this.todoService.updateTodo(targetList, conflict.itemId, resolution);
-            this.logger.info(`Resolved conflict for todo ${conflict.itemId} using ${this.config.conflictResolution} strategy`);
+            await this.todoService.updateTodo(
+              targetList,
+              conflict.itemId,
+              resolution
+            );
+            this.logger.info(
+              `Resolved conflict for todo ${conflict.itemId} using ${this.config.conflictResolution} strategy`
+            );
           }
         }
-        
       } catch (error) {
-        this.logger.error(`Failed to resolve conflict for ${conflict.itemId}:`, error);
+        this.logger.error(
+          `Failed to resolve conflict for ${conflict.itemId}:`,
+          error
+        );
       }
     }
-    
+
     this.conflicts = [];
   }
 
@@ -670,7 +706,7 @@ export class SyncEngine extends EventEmitter {
     if (!fileName || !fileName.endsWith('.json')) {
       return null;
     }
-    
+
     return fileName.replace('.json', '');
   }
 
@@ -691,7 +727,7 @@ export class SyncEngine extends EventEmitter {
       lastSync: this.lastSyncTime,
       pendingChanges: this.pendingChanges.size,
       conflicts: [...this.conflicts],
-      errors: [] // Could be expanded to track recent errors
+      errors: [], // Could be expanded to track recent errors
     };
   }
 
@@ -700,11 +736,11 @@ export class SyncEngine extends EventEmitter {
    */
   async setWallet(wallet: string): Promise<void> {
     this.wallet = wallet;
-    
+
     if (this.apiClient.isClientConnected()) {
       await this.apiClient.connect(wallet);
     }
-    
+
     this.logger.info('Wallet updated for sync operations', { wallet });
   }
 

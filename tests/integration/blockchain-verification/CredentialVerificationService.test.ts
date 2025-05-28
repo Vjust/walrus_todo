@@ -5,7 +5,10 @@ import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 // Unused imports removed during TypeScript cleanup
 // import { SuiClient } from '@mysten/sui/client';
 // import type { WalrusClientExt } from '../../../apps/cli/src/types/client';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../../helpers/complete-walrus-client-mock';
 import { SuiClientType } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 
 import { CredentialVerificationService } from '../../../apps/cli/src/services/ai/credentials/CredentialVerificationService';
@@ -46,7 +49,9 @@ const mockSigner = {
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
+  signTransaction: async (
+    _transaction: unknown
+  ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -63,7 +68,7 @@ describe('CredentialVerificationService Integration', () => {
 
     // Create inline mock for WalrusClient with all required methods
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific methods for this test as needed
     // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
 
@@ -75,11 +80,31 @@ describe('CredentialVerificationService Integration', () => {
 
     // Spy on private methods but ensure they return proper boolean types
     jest
-      .spyOn(service as unknown as { verifyDigitalSignature: () => Promise<boolean> }, 'verifyDigitalSignature')
+      .spyOn(
+        service as unknown as {
+          verifyDigitalSignature: () => Promise<boolean>;
+        },
+        'verifyDigitalSignature'
+      )
       .mockResolvedValue(true);
-    jest.spyOn(service as unknown as { verifyTimestamps: () => boolean }, 'verifyTimestamps').mockReturnValue(true);
-    jest.spyOn(service as unknown as { checkRevocationStatus: () => Promise<boolean> }, 'checkRevocationStatus').mockResolvedValue(true);
-    jest.spyOn(service as unknown as { validateSchema: () => boolean }, 'validateSchema').mockReturnValue(true);
+    jest
+      .spyOn(
+        service as unknown as { verifyTimestamps: () => boolean },
+        'verifyTimestamps'
+      )
+      .mockReturnValue(true);
+    jest
+      .spyOn(
+        service as unknown as { checkRevocationStatus: () => Promise<boolean> },
+        'checkRevocationStatus'
+      )
+      .mockResolvedValue(true);
+    jest
+      .spyOn(
+        service as unknown as { validateSchema: () => boolean },
+        'validateSchema'
+      )
+      .mockReturnValue(true);
   });
 
   afterEach(() => {

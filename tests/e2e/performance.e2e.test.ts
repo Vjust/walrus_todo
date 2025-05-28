@@ -434,7 +434,7 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
         // Compare with baseline if available
         let percentChange = 0;
         let hasBaselineMetric = false;
-        
+
         if (baseline) {
           const baselineMetric = baseline.results.find(r => r.command === cmd);
           if (baselineMetric) {
@@ -446,15 +446,17 @@ Memory Delta: ${(result.memory.delta.heapUsed / 1024 / 1024).toFixed(2)}MB
             hasBaselineMetric = true;
           }
         }
-        
+
         // Only check regression if we have baseline data
         const checkRegression = () => {
           if (hasBaselineMetric && percentChange >= 20) {
-            throw new Error(`Performance regression: ${percentChange.toFixed(2)}% slower than baseline`);
+            throw new Error(
+              `Performance regression: ${percentChange.toFixed(2)}% slower than baseline`
+            );
           }
         };
         expect(checkRegression).not.toThrow();
-        
+
         // Ensure baseline comparison is tracked
         expect(baseline).toBeDefined();
       }

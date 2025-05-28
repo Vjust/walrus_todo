@@ -137,28 +137,35 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.keyMetadataPath)) {
         const metadataRaw = fs.readFileSync(this.keyMetadataPath, 'utf8');
-        const metadataStr = typeof metadataRaw === 'string' ? metadataRaw : metadataRaw.toString('utf8');
+        const metadataStr =
+          typeof metadataRaw === 'string'
+            ? metadataRaw
+            : metadataRaw.toString('utf8');
         const metadata = JSON.parse(metadataStr);
-        
+
         // Validate metadata structure
         if (typeof metadata === 'object' && metadata !== null) {
           return {
             version: metadata.version || 1,
             created: metadata.created || metadata.createdAt || Date.now(),
-            lastRotated: metadata.lastRotated || metadata.lastRotatedAt || Date.now(),
+            lastRotated:
+              metadata.lastRotated || metadata.lastRotatedAt || Date.now(),
             keyId: metadata.keyId,
             lastRotatedAt: metadata.lastRotatedAt || metadata.lastRotated,
             previousKeyId: metadata.previousKeyId,
-            backupLocations: Array.isArray(metadata.backupLocations) ? metadata.backupLocations : [],
+            backupLocations: Array.isArray(metadata.backupLocations)
+              ? metadata.backupLocations
+              : [],
             lastCredentialBackup: metadata.lastCredentialBackup,
             lastBackupPath: metadata.lastBackupPath,
-            ...metadata
+            ...metadata,
           };
         }
       }
       return null;
     } catch (_error: unknown) {
-      const errorMessage = _error instanceof Error ? _error.message : String(_error);
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Failed to read key metadata:', errorMessage);
       return null;
     }
@@ -173,11 +180,11 @@ export class SecureCredentialManager {
         version: 1,
         created: Date.now(),
         lastRotated: Date.now(),
-        backupLocations: []
+        backupLocations: [],
       };
-      
+
       const updatedMetadata = { ...currentMetadata, ...updates };
-      
+
       // Ensure required fields are present
       if (!updatedMetadata.keyId) {
         updatedMetadata.keyId = randomUUID();
@@ -188,20 +195,24 @@ export class SecureCredentialManager {
       if (!updatedMetadata.created) {
         updatedMetadata.created = Date.now();
       }
-      
+
       // Create backup of current metadata before updating
       const tempMetadataPath = `${this.keyMetadataPath}.tmp`;
-      fs.writeFileSync(tempMetadataPath, JSON.stringify(updatedMetadata, null, 2), {
-        mode: 0o600,
-      });
-      
+      fs.writeFileSync(
+        tempMetadataPath,
+        JSON.stringify(updatedMetadata, null, 2),
+        {
+          mode: 0o600,
+        }
+      );
+
       // Atomic rename
       fs.renameSync(tempMetadataPath, this.keyMetadataPath);
-      
     } catch (_error: unknown) {
-      const errorMessage = _error instanceof Error ? _error.message : String(_error);
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Failed to update key metadata:', errorMessage);
-      
+
       // Clean up temporary file if it exists
       const tempMetadataPath = `${this.keyMetadataPath}.tmp`;
       try {
@@ -209,7 +220,10 @@ export class SecureCredentialManager {
           fs.unlinkSync(tempMetadataPath);
         }
       } catch (cleanupError: unknown) {
-        logger.warn('Failed to clean up temporary metadata file:', cleanupError);
+        logger.warn(
+          'Failed to clean up temporary metadata file:',
+          cleanupError
+        );
       }
     }
   }
@@ -232,18 +246,23 @@ export class SecureCredentialManager {
       );
 
       if (daysSinceLastRotation >= this.keyRotationIntervalDays) {
-        logger.info(`Key rotation needed: ${daysSinceLastRotation} days since last rotation`);
-        
+        logger.info(
+          `Key rotation needed: ${daysSinceLastRotation} days since last rotation`
+        );
+
         // Run rotation asynchronously to avoid blocking initialization
         this.rotateKey().catch((error: unknown) => {
           logger.error('Automatic key rotation failed:', error);
           // Don't throw here as this runs during initialization
         });
       } else {
-        logger.debug(`Key rotation not needed: ${daysSinceLastRotation}/${this.keyRotationIntervalDays} days`);
+        logger.debug(
+          `Key rotation not needed: ${daysSinceLastRotation}/${this.keyRotationIntervalDays} days`
+        );
       }
     } catch (_error: unknown) {
-      const errorMessage = _error instanceof Error ? _error.message : String(_error);
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Failed to check key rotation status:', errorMessage);
       // Don't throw here as this runs during initialization
     }
@@ -256,7 +275,9 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const dataBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData);
+        const dataBuffer = Buffer.isBuffer(encryptedData)
+          ? encryptedData
+          : Buffer.from(encryptedData);
         const credentials = this.decrypt(dataBuffer);
         if (credentials) {
           this.credentials = JSON.parse(credentials.toString());
@@ -317,7 +338,8 @@ export class SecureCredentialManager {
         `Failed to save credentials: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
       saveError.name = 'CredentialSaveError';
-      (saveError as Error & { code?: string; cause?: unknown }).code = 'CREDENTIALS_SAVE_FAILED';
+      (saveError as Error & { code?: string; cause?: unknown }).code =
+        'CREDENTIALS_SAVE_FAILED';
       (saveError as Error & { code?: string; cause?: unknown }).cause = _error;
 
       // Log the error without sensitive information
@@ -337,7 +359,9 @@ export class SecureCredentialManager {
       const metadata = this.getKeyMetadata();
       if (!metadata) return;
 
-      const lastBackup = (metadata as KeyMetadata & { lastCredentialBackup?: number }).lastCredentialBackup || 0;
+      const lastBackup =
+        (metadata as KeyMetadata & { lastCredentialBackup?: number })
+          .lastCredentialBackup || 0;
       const currentTime = Date.now();
       const daysSinceLastBackup = Math.floor(
         (currentTime - lastBackup) / (1000 * 60 * 60 * 24)
@@ -895,18 +919,21 @@ export class SecureCredentialManager {
   public async rotateKey(): Promise<boolean> {
     let oldKey: Buffer | null = null;
     let backupCreated = false;
-    
+
     try {
       // Store the old key for potential rollback
       oldKey = this.encryptionKey ? Buffer.from(this.encryptionKey) : null;
-      
+
       // First, backup the current key and credentials
       try {
         await this.backupKey();
         backupCreated = true;
         logger.info('Key backup completed successfully');
       } catch (backupError: unknown) {
-        logger.warn('Key backup failed, continuing with rotation:', backupError);
+        logger.warn(
+          'Key backup failed, continuing with rotation:',
+          backupError
+        );
         // Continue with rotation even if backup fails, but log the issue
       }
 
@@ -918,16 +945,20 @@ export class SecureCredentialManager {
       // First, decrypt with old key
       let decryptedData: Buffer | null = null;
       let credentialsExisted = false;
-      
+
       if (fs.existsSync(this.credentialsPath)) {
         credentialsExisted = true;
         try {
           const encryptedData = fs.readFileSync(this.credentialsPath);
-          const dataBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData);
+          const dataBuffer = Buffer.isBuffer(encryptedData)
+            ? encryptedData
+            : Buffer.from(encryptedData);
           decryptedData = this.decrypt(dataBuffer);
-          
+
           if (!decryptedData) {
-            throw new Error('Failed to decrypt existing credentials with current key');
+            throw new Error(
+              'Failed to decrypt existing credentials with current key'
+            );
           }
           logger.info('Existing credentials decrypted successfully');
         } catch (decryptError: unknown) {
@@ -945,7 +976,10 @@ export class SecureCredentialManager {
         try {
           fs.copyFileSync(this.keyPath, tempKeyPath);
         } catch (tempBackupError: unknown) {
-          logger.warn('Failed to create temporary key backup:', tempBackupError);
+          logger.warn(
+            'Failed to create temporary key backup:',
+            tempBackupError
+          );
           // Continue without temp backup
         }
       }
@@ -957,13 +991,13 @@ export class SecureCredentialManager {
         logger.info('New key written to disk');
 
         // Update key metadata
-        const metadata = this.getKeyMetadata() || { 
-          keyId: randomUUID(), 
-          version: 0, 
+        const metadata = this.getKeyMetadata() || {
+          keyId: randomUUID(),
+          version: 0,
           created: Date.now(),
-          lastRotated: 0
+          lastRotated: 0,
         };
-        
+
         const newMetadata = {
           keyId: randomUUID(),
           lastRotatedAt: Date.now(),
@@ -972,7 +1006,7 @@ export class SecureCredentialManager {
           version: (metadata.version || 0) + 1,
           created: metadata.created || Date.now(),
         };
-        
+
         this.updateKeyMetadata(newMetadata);
         logger.info('Key metadata updated');
 
@@ -980,19 +1014,19 @@ export class SecureCredentialManager {
         if (decryptedData && credentialsExisted) {
           try {
             const newEncryptedData = this.encrypt(decryptedData.toString());
-            
+
             // Create temporary encrypted file first
             const tempCredentialsPath = `${this.credentialsPath}.tmp`;
             fs.writeFileSync(tempCredentialsPath, newEncryptedData, {
               mode: 0o600,
             });
-            
+
             // Atomic rename to replace the original
             fs.renameSync(tempCredentialsPath, this.credentialsPath);
             logger.info('Credentials re-encrypted with new key');
           } catch (reencryptError: unknown) {
             logger.error('Failed to re-encrypt credentials:', reencryptError);
-            
+
             // Attempt to restore the old key
             if (oldKey) {
               try {
@@ -1003,7 +1037,7 @@ export class SecureCredentialManager {
                 logger.error('Failed to rollback key:', rollbackError);
               }
             }
-            
+
             throw new CLIError(
               'Failed to re-encrypt credentials with new key',
               'CREDENTIALS_REENCRYPT_FAILED'
@@ -1027,10 +1061,9 @@ export class SecureCredentialManager {
 
         logger.info('Key rotation completed successfully');
         return true;
-        
       } catch (keyWriteError: unknown) {
         logger.error('Failed to write new key:', keyWriteError);
-        
+
         // Attempt to restore from temporary backup
         if (fs.existsSync(tempKeyPath) && oldKey) {
           try {
@@ -1041,21 +1074,25 @@ export class SecureCredentialManager {
             logger.error('Failed to restore key from backup:', restoreError);
           }
         }
-        
+
         throw keyWriteError;
       }
-      
     } catch (_error: unknown) {
-      const errorMessage = _error instanceof Error ? _error.message : String(_error);
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Key rotation failed:', errorMessage);
-      
+
       // Provide more specific error information
       let specificError = 'Unknown error';
       if (_error instanceof CLIError) {
         specificError = _error.message;
       } else if (_error instanceof Error) {
-        if (_error.message.includes('EACCES') || _error.message.includes('permission')) {
-          specificError = 'Permission denied - check file/directory permissions';
+        if (
+          _error.message.includes('EACCES') ||
+          _error.message.includes('permission')
+        ) {
+          specificError =
+            'Permission denied - check file/directory permissions';
         } else if (_error.message.includes('ENOSPC')) {
           specificError = 'Insufficient disk space';
         } else if (_error.message.includes('ENOENT')) {
@@ -1064,7 +1101,7 @@ export class SecureCredentialManager {
           specificError = _error.message;
         }
       }
-      
+
       throw new CLIError(
         `Failed to rotate encryption key: ${specificError}`,
         'KEY_ROTATION_FAILED'
@@ -1090,7 +1127,7 @@ export class SecureCredentialManager {
           version: 1,
           created: Date.now(),
           lastRotated: Date.now(),
-          backupLocations: []
+          backupLocations: [],
         };
         this.updateKeyMetadata(newMetadata);
         return;
@@ -1114,7 +1151,10 @@ export class SecureCredentialManager {
         fs.copyFileSync(this.keyPath, backupPath);
         fs.chmodSync(backupPath, 0o400); // Make backup read-only
       } catch (copyError: unknown) {
-        if (copyError instanceof Error && copyError.message.includes('EEXIST')) {
+        if (
+          copyError instanceof Error &&
+          copyError.message.includes('EEXIST')
+        ) {
           // File already exists, create with unique suffix
           const uniqueBackupPath = `${backupPath}_${Date.now()}`;
           fs.copyFileSync(this.keyPath, uniqueBackupPath);
@@ -1131,18 +1171,27 @@ export class SecureCredentialManager {
         this.backupDirectory,
         `metadata_backup_${timestamp}.json`
       );
-      
+
       try {
-        fs.writeFileSync(metadataBackupPath, JSON.stringify(metadata, null, 2), {
-          mode: 0o400,
-        });
+        fs.writeFileSync(
+          metadataBackupPath,
+          JSON.stringify(metadata, null, 2),
+          {
+            mode: 0o400,
+          }
+        );
       } catch (metadataError: unknown) {
-        logger.warn('Failed to backup metadata, continuing with key backup only:', metadataError);
+        logger.warn(
+          'Failed to backup metadata, continuing with key backup only:',
+          metadataError
+        );
         // Continue without metadata backup if it fails
       }
 
       // Update metadata to record the backup
-      const backupLocations = Array.isArray(metadata.backupLocations) ? metadata.backupLocations : [];
+      const backupLocations = Array.isArray(metadata.backupLocations)
+        ? metadata.backupLocations
+        : [];
       backupLocations.push({
         path: backupPath,
         timestamp: Date.now(),
@@ -1161,14 +1210,19 @@ export class SecureCredentialManager {
 
       logger.info(`Key backup created successfully at: ${backupPath}`);
     } catch (_error: unknown) {
-      const errorMessage = _error instanceof Error ? _error.message : String(_error);
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Key backup failed:', errorMessage);
-      
+
       // Provide more specific error information
       let specificError = 'Unknown error';
       if (_error instanceof Error) {
-        if (_error.message.includes('EACCES') || _error.message.includes('permission')) {
-          specificError = 'Permission denied - check file/directory permissions';
+        if (
+          _error.message.includes('EACCES') ||
+          _error.message.includes('permission')
+        ) {
+          specificError =
+            'Permission denied - check file/directory permissions';
         } else if (_error.message.includes('ENOSPC')) {
           specificError = 'Insufficient disk space';
         } else if (_error.message.includes('ENOENT')) {
@@ -1177,7 +1231,7 @@ export class SecureCredentialManager {
           specificError = _error.message;
         }
       }
-      
+
       throw new CLIError(
         `Failed to backup encryption key: ${specificError}`,
         'KEY_BACKUP_FAILED'
@@ -1232,8 +1286,14 @@ export class SecureCredentialManager {
       fs.copyFileSync(backupInfo.path, this.keyPath);
       fs.chmodSync(this.keyPath, 0o600);
 
-      const metadataContent = fs.readFileSync(backupInfo.metadataBackupPath, 'utf8');
-      const metadataStr = typeof metadataContent === 'string' ? metadataContent : metadataContent.toString('utf8');
+      const metadataContent = fs.readFileSync(
+        backupInfo.metadataBackupPath,
+        'utf8'
+      );
+      const metadataStr =
+        typeof metadataContent === 'string'
+          ? metadataContent
+          : metadataContent.toString('utf8');
       const backupMetadata = JSON.parse(metadataStr);
       fs.writeFileSync(this.keyMetadataPath, JSON.stringify(backupMetadata), {
         mode: 0o600,
@@ -1304,7 +1364,8 @@ export class SecureCredentialManager {
       logger.debug('Key integrity validation passed');
       return true;
     } catch (_error: unknown) {
-      const errorMessage = _error instanceof Error ? _error.message : String(_error);
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
       logger.error('Key validation failed:', errorMessage);
       return false;
     }
@@ -1328,13 +1389,15 @@ export class SecureCredentialManager {
     lastRotation: Date | null;
   } {
     const metadata = this.getKeyMetadata();
-    
+
     if (!metadata) {
       return {
         needsRotation: false,
         daysSinceLastRotation: 0,
-        nextRotationDue: new Date(Date.now() + this.keyRotationIntervalDays * 24 * 60 * 60 * 1000),
-        lastRotation: null
+        nextRotationDue: new Date(
+          Date.now() + this.keyRotationIntervalDays * 24 * 60 * 60 * 1000
+        ),
+        lastRotation: null,
       };
     }
 
@@ -1344,13 +1407,15 @@ export class SecureCredentialManager {
       (currentTime - lastRotation) / (1000 * 60 * 60 * 24)
     );
 
-    const nextRotationDue = new Date(lastRotation + this.keyRotationIntervalDays * 24 * 60 * 60 * 1000);
+    const nextRotationDue = new Date(
+      lastRotation + this.keyRotationIntervalDays * 24 * 60 * 60 * 1000
+    );
 
     return {
       needsRotation: daysSinceLastRotation >= this.keyRotationIntervalDays,
       daysSinceLastRotation,
       nextRotationDue,
-      lastRotation: lastRotation ? new Date(lastRotation) : null
+      lastRotation: lastRotation ? new Date(lastRotation) : null,
     };
   }
 

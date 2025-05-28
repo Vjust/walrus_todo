@@ -20,6 +20,7 @@ export class FuzzGenerator {
       charset?: string;
       includeSpecialChars?: boolean;
       includeUnicode?: boolean;
+      validTag?: boolean; // For tag validation
     } = {}
   ): string {
     const minLen = options.minLength || 1;
@@ -27,11 +28,18 @@ export class FuzzGenerator {
     const length = this.number(minLen, maxLen);
 
     let charset = options.charset || this.stringCharset;
-    if (options.includeSpecialChars) {
-      charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-    }
-    if (options.includeUnicode) {
-      charset += '⚡️🎉🔥💫🌟✨⭐️';
+
+    if (options.validTag) {
+      // Tags cannot contain <>"'& characters
+      charset =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.';
+    } else {
+      if (options.includeSpecialChars) {
+        charset += '!@#$%^*()_+-=[]{}|;:,.';
+      }
+      if (options.includeUnicode) {
+        charset += '⚡️🎉🔥💫🌟✨⭐️';
+      }
     }
 
     return Array.from(
@@ -54,8 +62,52 @@ export class FuzzGenerator {
   }
 
   // Generate random date within range
-  date(start: Date = new Date(0), end: Date = new Date()): Date {
+  date(
+    start: Date = new Date(2020, 0, 1),
+    end: Date = new Date(2025, 11, 31)
+  ): Date {
     return new Date(this.number(start.getTime(), end.getTime()));
+  }
+
+  // Generate valid ISO 8601 datetime string
+  isoDateTime(start?: Date, end?: Date): string {
+    const date = this.date(start, end);
+    return date.toISOString();
+  }
+
+  // Generate valid ISO 8601 date string (YYYY-MM-DD)
+  isoDate(start?: Date, end?: Date): string {
+    const date = this.date(start, end);
+    return date.toISOString().split('T')[0];
+  }
+
+  // Generate valid tag (no invalid characters, max 50 chars)
+  validTag(): string {
+    return this.string({
+      minLength: 1,
+      maxLength: 50,
+      validTag: true,
+    });
+  }
+
+  // Generate valid todo title (1-256 chars, not just whitespace)
+  validTitle(): string {
+    const title = this.string({
+      minLength: 1,
+      maxLength: 200,
+      includeUnicode: true,
+    });
+    // Ensure it's not just whitespace
+    return title.trim() || 'Default Title';
+  }
+
+  // Generate valid description (max 2048 chars)
+  validDescription(): string {
+    return this.string({
+      minLength: 0,
+      maxLength: 1000,
+      includeSpecialChars: true,
+    });
   }
 
   // Generate random array of items with memory limits
@@ -83,13 +135,11 @@ export class FuzzGenerator {
   }
 
   // Generate random buffer with specified size
-  buffer(
-    options: { minLength?: number; maxLength?: number } = {}
-  ): Buffer {
+  buffer(options: { minLength?: number; maxLength?: number } = {}): Buffer {
     const minLen = options.minLength || 1;
     const maxLen = Math.min(options.maxLength || 1024, 65536); // Cap at 64KB
     const length = this.number(minLen, maxLen);
-    
+
     const data = new Uint8Array(length);
     crypto.getRandomValues(data);
     return Buffer.from(data);
@@ -119,12 +169,16 @@ export class FuzzGenerator {
     const protocols = ['https://', 'http://'];
     const domains = ['example.com', 'test.org', 'demo.net', 'sample.edu'];
     const paths = ['/api/v1', '/data', '/files', '/images', '/docs'];
-    
+
     const protocol = protocols[Math.floor(Math.random() * protocols.length)];
     const domain = domains[Math.floor(Math.random() * domains.length)];
     const path = paths[Math.floor(Math.random() * paths.length)];
-    const resource = this.string({ minLength: 5, maxLength: 20, charset: 'abcdefghijklmnopqrstuvwxyz0123456789' });
-    
+    const resource = this.string({
+      minLength: 5,
+      maxLength: 20,
+      charset: 'abcdefghijklmnopqrstuvwxyz0123456789',
+    });
+
     return `${protocol}${domain}${path}/${resource}`;
   }
 

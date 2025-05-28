@@ -147,7 +147,14 @@ export class StorageReuseAnalyzer {
         }
 
         // Parse storage fields from the move object
-        const content = item.data.content as { fields?: { storage_size?: string; used_size?: string; end_epoch?: string; start_epoch?: string } };
+        const content = item.data.content as {
+          fields?: {
+            storage_size?: string;
+            used_size?: string;
+            end_epoch?: string;
+            start_epoch?: string;
+          };
+        };
         if (!content.fields) continue;
 
         const fields = content.fields;
@@ -314,7 +321,7 @@ export class StorageReuseAnalyzer {
           recoverable: true,
         });
       }
-      
+
       const { storageCost, totalCost } = costResult.data;
       const newStorageCost = BigInt(totalCost);
 

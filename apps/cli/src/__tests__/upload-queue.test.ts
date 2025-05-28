@@ -1,6 +1,6 @@
 /**
  * @fileoverview Upload Queue System Tests
- * 
+ *
  * Tests for the asynchronous upload queue functionality including
  * job management, status tracking, and error handling.
  */
@@ -126,7 +126,10 @@ describe('Upload Queue System', () => {
     test('should get jobs with filtering', async () => {
       // Add multiple jobs
       await queue.addTodoJob(sampleTodo, { priority: 'high' as const });
-      await queue.addTodoJob({ ...sampleTodo, id: 'test-todo-2' }, { priority: 'low' as const });
+      await queue.addTodoJob(
+        { ...sampleTodo, id: 'test-todo-2' },
+        { priority: 'low' as const }
+      );
       await queue.addBlobJob('test', { priority: 'medium' as const });
 
       // Test filtering
@@ -145,7 +148,7 @@ describe('Upload Queue System', () => {
 
     test('should cancel job', async () => {
       const jobId = await queue.addTodoJob(sampleTodo);
-      
+
       let job = queue.getJob(jobId);
       expect(job?.status).toBe('pending');
 
@@ -164,10 +167,10 @@ describe('Upload Queue System', () => {
 
     test('should retry failed job', async () => {
       const jobId = await queue.addTodoJob(sampleTodo);
-      
+
       // Simulate job failure
       await queue.cancelJob(jobId);
-      
+
       let job = queue.getJob(jobId);
       expect(job?.status).toBe('failed');
 
@@ -194,7 +197,7 @@ describe('Upload Queue System', () => {
       // Add some jobs
       await queue.addTodoJob(sampleTodo);
       await queue.addTodoJob({ ...sampleTodo, id: 'test-todo-2' });
-      
+
       stats = await queue.getStats();
       expect(stats.total).toBe(2);
       expect(stats.pending).toBe(2);
@@ -206,14 +209,17 @@ describe('Upload Queue System', () => {
     test('should calculate success rate', async () => {
       // Add and simulate completing some jobs
       const jobId1 = await queue.addTodoJob(sampleTodo);
-      const jobId2 = await queue.addTodoJob({ ...sampleTodo, id: 'test-todo-2' });
-      
+      const jobId2 = await queue.addTodoJob({
+        ...sampleTodo,
+        id: 'test-todo-2',
+      });
+
       // Simulate one success and one failure
       const job1 = queue.getJob(jobId1)!;
       job1.status = 'completed';
       job1.blobId = 'test-blob-id';
       job1.completedAt = new Date();
-      
+
       await queue.cancelJob(jobId2); // This creates a failure
 
       const stats = await queue.getStats();
@@ -272,8 +278,11 @@ describe('Upload Queue System', () => {
     test('should clear completed jobs', async () => {
       // Add and complete some jobs
       const jobId1 = await queue.addTodoJob(sampleTodo);
-      const jobId2 = await queue.addTodoJob({ ...sampleTodo, id: 'test-todo-2' });
-      
+      const jobId2 = await queue.addTodoJob({
+        ...sampleTodo,
+        id: 'test-todo-2',
+      });
+
       // Simulate completion
       const job1 = queue.getJob(jobId1)!;
       job1.status = 'completed';
@@ -315,11 +324,13 @@ describe('Notification System', () => {
 
   test('should create notifications', () => {
     const id = notifications.info('Test Title', 'Test message');
-    
+
     expect(id).toBeDefined();
     expect(typeof id).toBe('string');
 
-    const notification = notifications.getNotifications().find(n => n.id === id);
+    const notification = notifications
+      .getNotifications()
+      .find(n => n.id === id);
     expect(notification).toBeDefined();
     expect(notification?.type).toBe('info');
     expect(notification?.title).toBe('Test Title');
@@ -328,20 +339,22 @@ describe('Notification System', () => {
 
   test('should update notifications', () => {
     const id = notifications.progress('Upload', 'Starting...');
-    
+
     const updated = notifications.updateNotification(id, {
       message: 'Progress 50%',
     });
 
     expect(updated).toBe(true);
 
-    const notification = notifications.getNotifications().find(n => n.id === id);
+    const notification = notifications
+      .getNotifications()
+      .find(n => n.id === id);
     expect(notification?.message).toBe('Progress 50%');
   });
 
   test('should remove notifications', () => {
     const id = notifications.warning('Warning', 'Test warning');
-    
+
     let notification = notifications.getNotifications().find(n => n.id === id);
     expect(notification).toBeDefined();
 
@@ -386,7 +399,8 @@ describe('Notification System', () => {
       progress: 0,
     };
 
-    const uploadNotifications = notifications.createUploadNotifications(mockJob);
+    const uploadNotifications =
+      notifications.createUploadNotifications(mockJob);
 
     expect(uploadNotifications.started).toBeDefined();
     expect(uploadNotifications.progress).toBeDefined();
@@ -396,8 +410,10 @@ describe('Notification System', () => {
     // Verify notification content
     const allNotifications = notifications.getNotifications();
     expect(allNotifications).toHaveLength(4);
-    
-    const startedNotification = allNotifications.find(n => n.title === 'Upload Started');
+
+    const startedNotification = allNotifications.find(
+      n => n.title === 'Upload Started'
+    );
     expect(startedNotification?.message).toContain('Test Todo');
   });
 });

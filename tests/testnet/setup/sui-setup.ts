@@ -338,8 +338,7 @@ export class SuiTestnetSetup {
         logger.info(`✅ Faucet request successful! Tx: ${txDigest}`);
         return txDigest;
       } catch (error) {
-        lastError =
-          error instanceof Error ? error : new Error(String(error));
+        lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt < RETRY_ATTEMPTS) {
           logger.warn(`Faucet request attempt ${attempt} failed, retrying...`);

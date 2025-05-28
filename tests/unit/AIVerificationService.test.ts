@@ -17,7 +17,7 @@ jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier', () => {
     signMessage: jest.fn().mockResolvedValue('mock_signature'),
     signTransactionBlock: jest.fn(),
     getPublicKey: jest.fn().mockReturnValue({
-      toBase64: jest.fn().mockReturnValue('mock_public_key_base64')
+      toBase64: jest.fn().mockReturnValue('mock_public_key_base64'),
     }),
   };
 
@@ -411,15 +411,17 @@ describe('AI Verification Services', () => {
             timestamp: Date.now(),
             verificationType: 0,
             metadata: {},
-          }
+          },
         ]),
-        getVerifierAdapter: jest.fn().mockReturnValue(createMockAIVerifierAdapter()),
+        getVerifierAdapter: jest
+          .fn()
+          .mockReturnValue(createMockAIVerifierAdapter()),
         getSigner: jest.fn().mockReturnValue({
           getAddress: jest.fn().mockResolvedValue('0x1234567890abcdef'),
           signMessage: jest.fn().mockResolvedValue('mock_signature'),
           signTransactionBlock: jest.fn(),
           getPublicKey: jest.fn().mockReturnValue({
-            toBase64: jest.fn().mockReturnValue('mock_public_key_base64')
+            toBase64: jest.fn().mockReturnValue('mock_public_key_base64'),
           }),
         }),
         generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
@@ -434,11 +436,11 @@ describe('AI Verification Services', () => {
           }),
         },
       };
-      
+
       const permissionManager = {
         checkPermission: jest.fn().mockResolvedValue(true),
       };
-      
+
       const credentialManager = {
         getCredentialObject: jest.fn().mockReturnValue({
           provider: 'xai',

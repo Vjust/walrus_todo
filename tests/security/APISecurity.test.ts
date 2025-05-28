@@ -1,8 +1,6 @@
 import { jest } from '@jest/globals';
 import { AIService } from '../../apps/cli/src/services/ai/aiService';
-import {
-  AIProvider,
-} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import { Todo } from '../../apps/cli/src/types/todo';
 import { initializePermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
@@ -172,10 +170,7 @@ describe('API Security Tests', () => {
       // Invalid characters in API key should fail
       const invalidCharsService = new AIService('invalid!@#$%^&*()');
       await expect(
-        invalidCharsService['modelAdapter'].processWithPromptTemplate(
-          {},
-          {}
-        )
+        invalidCharsService['modelAdapter'].processWithPromptTemplate({}, {})
       ).rejects.toThrow('API key contains invalid characters');
     });
 
@@ -468,8 +463,10 @@ describe('API Security Tests', () => {
       await aiService.summarize(maliciousTodos);
 
       // Verify prototype isn't polluted
-      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
-      expect(((Object.prototype as Record<string, unknown>).polluted)).toBeUndefined();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      expect(
+        (Object.prototype as Record<string, unknown>).polluted
+      ).toBeUndefined();
     });
 
     it('should validate and limit input size to prevent DoS', async () => {
@@ -565,7 +562,7 @@ describe('API Security Tests', () => {
       expect(result.constructor).toBeUndefined();
 
       // Global prototype should not be polluted
-      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     });
 
     it('should detect and prevent prompt injection attacks', async () => {
@@ -924,7 +921,7 @@ describe('API Security Tests', () => {
 
       // Create AI service with proper mock setup
       const aiService = new AIService('test-api-key');
-      
+
       // Ensure the modelAdapter is properly initialized
       await new Promise(resolve => setTimeout(resolve, 100));
 

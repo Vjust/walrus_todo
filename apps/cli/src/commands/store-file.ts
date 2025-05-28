@@ -92,7 +92,10 @@ export default class StoreFileCommand extends BaseCommand {
     }
   }
 
-  private async initializeStorage(flags: { mock?: boolean; verbose?: boolean }): Promise<import('../utils/walrus-storage-cli').WalrusStorage> {
+  private async initializeStorage(flags: {
+    mock?: boolean;
+    verbose?: boolean;
+  }): Promise<import('../utils/walrus-storage-cli').WalrusStorage> {
     if (flags.verbose) {
       this.log(
         chalk.blue('Using mock storage') + (flags.mock ? ' (mock mode)' : '')
@@ -106,7 +109,7 @@ export default class StoreFileCommand extends BaseCommand {
         await storage.connect();
       } catch (error) {
         const errorObj = error as { code?: string };
-      if (errorObj.code === 'WALRUS_CLI_NOT_FOUND') {
+        if (errorObj.code === 'WALRUS_CLI_NOT_FOUND') {
           throw new CLIError(
             'Walrus CLI not found. Please install it from https://docs.wal.app',
             'WALRUS_CLI_NOT_FOUND'
@@ -200,7 +203,8 @@ export default class StoreFileCommand extends BaseCommand {
 
         this.log(`✓ ${fileName} → ${blobId} (Success)`);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         results.push({
           fileName,
           error: errorMessage,

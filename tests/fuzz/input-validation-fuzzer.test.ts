@@ -362,9 +362,9 @@ describe('Input Validation Fuzzer', () => {
       ];
 
       for (const value of invalidValues) {
-        expect(() => validator.validateBatchSize(value as unknown as number)).toThrow(
-          ValidationError
-        );
+        expect(() =>
+          validator.validateBatchSize(value as unknown as number)
+        ).toThrow(ValidationError);
       }
     });
   });

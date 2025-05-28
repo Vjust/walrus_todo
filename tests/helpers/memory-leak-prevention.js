@@ -15,19 +15,19 @@ const originalTimers = {
  */
 function setupMemoryLeakPrevention() {
   // Track timers to prevent memory leaks
-  global.setTimeout = function(callback, ms, ...args) {
+  global.setTimeout = function (callback, ms, ...args) {
     const timer = originalTimers.setTimeout.call(this, callback, ms, ...args);
     activeResources.add({ type: 'timeout', timer });
     return timer;
   };
 
-  global.setInterval = function(callback, ms, ...args) {
+  global.setInterval = function (callback, ms, ...args) {
     const timer = originalTimers.setInterval.call(this, callback, ms, ...args);
     activeResources.add({ type: 'interval', timer });
     return timer;
   };
 
-  global.setImmediate = function(callback, ...args) {
+  global.setImmediate = function (callback, ...args) {
     const timer = originalTimers.setImmediate.call(this, callback, ...args);
     activeResources.add({ type: 'immediate', timer });
     return timer;
@@ -35,7 +35,7 @@ function setupMemoryLeakPrevention() {
 
   // Track clear operations
   const originalClearTimeout = global.clearTimeout;
-  global.clearTimeout = function(timer) {
+  global.clearTimeout = function (timer) {
     activeResources.forEach(resource => {
       if (resource.timer === timer) {
         activeResources.delete(resource);
@@ -45,7 +45,7 @@ function setupMemoryLeakPrevention() {
   };
 
   const originalClearInterval = global.clearInterval;
-  global.clearInterval = function(timer) {
+  global.clearInterval = function (timer) {
     activeResources.forEach(resource => {
       if (resource.timer === timer) {
         activeResources.delete(resource);
@@ -55,7 +55,7 @@ function setupMemoryLeakPrevention() {
   };
 
   const originalClearImmediate = global.clearImmediate;
-  global.clearImmediate = function(timer) {
+  global.clearImmediate = function (timer) {
     activeResources.forEach(resource => {
       if (resource.timer === timer) {
         activeResources.delete(resource);
@@ -65,7 +65,7 @@ function setupMemoryLeakPrevention() {
   };
 
   // Global cleanup function
-  global.clearAllTimers = function() {
+  global.clearAllTimers = function () {
     activeResources.forEach(resource => {
       try {
         switch (resource.type) {

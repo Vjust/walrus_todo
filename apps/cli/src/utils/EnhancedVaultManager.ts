@@ -1,6 +1,6 @@
 /**
  * EnhancedVaultManager.ts
- * 
+ *
  * An improved secure storage system for API keys and sensitive credentials
  * with enhanced encryption, key rotation, and security features.
  */
@@ -76,7 +76,10 @@ export class EnhancedVaultManager {
         try {
           fs.chmodSync(this.vaultDir, 0o700); // Only owner can read/write/execute
         } catch (error) {
-          logger.warn('Could not set restrictive permissions on vault directory:', error instanceof Error ? error.message : String(error));
+          logger.warn(
+            'Could not set restrictive permissions on vault directory:',
+            error instanceof Error ? error.message : String(error)
+          );
         }
       }
 
@@ -95,8 +98,11 @@ export class EnhancedVaultManager {
           error
         );
       }
-      
-      logger.error('Vault initialization failed:', error instanceof Error ? error : new Error(String(error)));
+
+      logger.error(
+        'Vault initialization failed:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw error;
     }
   }
@@ -116,9 +122,15 @@ export class EnhancedVaultManager {
         // Write key to file with restricted permissions
         fs.writeFileSync(this.keyFile, this.encryptionKey, { mode: 0o600 }); // Only owner can read/write
       } catch (writeError) {
-        logger.warn('Failed to write encryption key to file:', writeError instanceof Error ? writeError.message : String(writeError));
+        logger.warn(
+          'Failed to write encryption key to file:',
+          writeError instanceof Error ? writeError.message : String(writeError)
+        );
         // In test environments, we can continue with in-memory key
-        if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing') {
+        if (
+          process.env.NODE_ENV === 'test' ||
+          process.env.NODE_ENV === 'testing'
+        ) {
           logger.info('Using in-memory encryption key for test environment');
           return;
         }
@@ -131,22 +143,30 @@ export class EnhancedVaultManager {
       try {
         // Load existing key
         const keyData = fs.readFileSync(this.keyFile);
-        this.encryptionKey = Buffer.isBuffer(keyData) ? keyData : Buffer.from(keyData, 'utf-8');
+        this.encryptionKey = Buffer.isBuffer(keyData)
+          ? keyData
+          : Buffer.from(keyData, 'utf-8');
 
         // Validate key length
         if (
-          this.encryptionKey && this.encryptionKey.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE
+          this.encryptionKey &&
+          this.encryptionKey.length !== AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE
         ) {
           // Handle corrupted key file
-          logger.warn(`Invalid encryption key detected in ${this.keyFile}. Expected ${AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE} bytes, got ${this.encryptionKey.length}`);
-          
+          logger.warn(
+            `Invalid encryption key detected in ${this.keyFile}. Expected ${AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE} bytes, got ${this.encryptionKey.length}`
+          );
+
           // In test environments, regenerate the key
-          if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing') {
+          if (
+            process.env.NODE_ENV === 'test' ||
+            process.env.NODE_ENV === 'testing'
+          ) {
             logger.info('Regenerating encryption key for test environment');
             this.regenerateEncryptionKey();
             return;
           }
-          
+
           throw new CLIError(
             `Invalid encryption key detected. Expected ${AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE} bytes, got ${this.encryptionKey.length}. Vault may be corrupted.`,
             'ENCRYPTION_KEY_ERROR'
@@ -156,20 +176,33 @@ export class EnhancedVaultManager {
         if (error instanceof CLIError) {
           throw error;
         }
-        
-        logger.warn('Failed to read encryption key:', error instanceof Error ? error.message : String(error));
-        
+
+        logger.warn(
+          'Failed to read encryption key:',
+          error instanceof Error ? error.message : String(error)
+        );
+
         // In test environments, try to recover by regenerating
-        if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing') {
-          logger.info('Attempting to recover by regenerating encryption key for test environment');
+        if (
+          process.env.NODE_ENV === 'test' ||
+          process.env.NODE_ENV === 'testing'
+        ) {
+          logger.info(
+            'Attempting to recover by regenerating encryption key for test environment'
+          );
           try {
             this.regenerateEncryptionKey();
             return;
           } catch (regenerateError) {
-            logger.warn('Failed to regenerate encryption key:', regenerateError instanceof Error ? regenerateError.message : String(regenerateError));
+            logger.warn(
+              'Failed to regenerate encryption key:',
+              regenerateError instanceof Error
+                ? regenerateError.message
+                : String(regenerateError)
+            );
           }
         }
-        
+
         throw new CLIError(
           `Failed to read encryption key: ${error instanceof Error ? error.message : 'Unknown error'}. Vault may be corrupted.`,
           'ENCRYPTION_KEY_ERROR'
@@ -186,15 +219,17 @@ export class EnhancedVaultManager {
       try {
         // Read and decrypt metadata file
         const encryptedData = fs.readFileSync(this.metadataFile);
-        const encryptedBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData, 'utf-8');
-        
+        const encryptedBuffer = Buffer.isBuffer(encryptedData)
+          ? encryptedData
+          : Buffer.from(encryptedData, 'utf-8');
+
         // Only try to decrypt if we have a valid encryption key
         if (!this.encryptionKey) {
           logger.warn('Cannot decrypt metadata without valid encryption key');
           this.metadata = new Map();
           return;
         }
-        
+
         const decryptedData = this.decrypt(encryptedBuffer);
 
         if (decryptedData) {
@@ -205,19 +240,29 @@ export class EnhancedVaultManager {
           // Check for and handle expired credentials
           this.checkExpiredSecrets();
         } else {
-          logger.warn('Failed to decrypt metadata file, initializing with empty metadata');
+          logger.warn(
+            'Failed to decrypt metadata file, initializing with empty metadata'
+          );
           this.metadata = new Map();
         }
       } catch (error) {
-        logger.error('Failed to load vault metadata:', error instanceof Error ? error : new Error(String(error)));
-        
+        logger.error(
+          'Failed to load vault metadata:',
+          error instanceof Error ? error : new Error(String(error))
+        );
+
         // In test environments, be more permissive
-        if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing') {
+        if (
+          process.env.NODE_ENV === 'test' ||
+          process.env.NODE_ENV === 'testing'
+        ) {
           logger.info('Initializing with empty metadata for test environment');
           this.metadata = new Map();
         } else {
           // In production, this might indicate corruption
-          logger.warn('Vault metadata appears corrupted, initializing with empty metadata');
+          logger.warn(
+            'Vault metadata appears corrupted, initializing with empty metadata'
+          );
           this.metadata = new Map();
         }
       }
@@ -386,7 +431,9 @@ export class EnhancedVaultManager {
     try {
       // Read and decrypt the secret
       const encryptedData = fs.readFileSync(secretPath);
-      const encryptedBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData, 'utf-8');
+      const encryptedBuffer = Buffer.isBuffer(encryptedData)
+        ? encryptedData
+        : Buffer.from(encryptedData, 'utf-8');
       const decryptedData = this.decrypt(encryptedBuffer);
 
       if (!decryptedData) {
@@ -647,7 +694,9 @@ export class EnhancedVaultManager {
     if (!this.encryptionKey) {
       // In test environments, try to recover
       if (this.isTestEnvironment()) {
-        logger.warn('Encryption key not initialized in test environment, attempting recovery');
+        logger.warn(
+          'Encryption key not initialized in test environment, attempting recovery'
+        );
         try {
           this.regenerateEncryptionKey();
         } catch (error) {
@@ -775,7 +824,10 @@ export class EnhancedVaultManager {
       // Decrypt data
       return Buffer.concat([decipher.update(encrypted), decipher.final()]);
     } catch (error) {
-      logger.error('Decryption failed:', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        'Decryption failed:',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return null;
     }
   }

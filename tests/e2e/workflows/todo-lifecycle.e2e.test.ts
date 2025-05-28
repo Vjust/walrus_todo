@@ -21,7 +21,11 @@ describe('Todo Lifecycle E2E Workflow', () => {
       });
       return { output, error: '' };
     } catch (error: unknown) {
-      const execError = error as { stdout?: string; stderr?: string; message?: string };
+      const execError = error as {
+        stdout?: string;
+        stderr?: string;
+        message?: string;
+      };
       return {
         output: execError.stdout || '',
         error: execError.stderr || execError.message || String(error),
@@ -387,10 +391,12 @@ describe('Todo Lifecycle E2E Workflow', () => {
       const results = await Promise.all(promises);
 
       // Verify all todos were created successfully
-      results.forEach((result: { output: string; error: string; index: number }) => {
-        expect(result.error).toBe('');
-        expect(result.output).toContain('Todo added successfully');
-      });
+      results.forEach(
+        (result: { output: string; error: string; index: number }) => {
+          expect(result.error).toBe('');
+          expect(result.output).toContain('Todo added successfully');
+        }
+      );
 
       // List all todos
       const { output: listOutput } = runCommand('list');

@@ -4,12 +4,13 @@ import {
   AIProvider,
   AIModelAdapter,
 } from '../../apps/cli/src/types/adapters/AIModelAdapter';
-import {
-  AIPrivacyLevel,
-} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { AIPrivacyLevel } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 
-import { createMockAIModelAdapter, createMockAIVerifierAdapter } from '../helpers/AITestFactory';
+import {
+  createMockAIModelAdapter,
+  createMockAIVerifierAdapter,
+} from '../helpers/AITestFactory';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 
 // Mock the AIProviderFactory to inject our controllable mock

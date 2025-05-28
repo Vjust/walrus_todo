@@ -41,7 +41,7 @@ jest.mock('@mysten/walrus', () => ({
     readBlob: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
     writeBlob: jest.fn().mockResolvedValue({
       blobId: 'mock-blob-id',
-      blobObject: { id: { id: 'mock-blob-id' } }
+      blobObject: { id: { id: 'mock-blob-id' } },
     }),
   })),
 }));
@@ -50,13 +50,13 @@ jest.mock('@mysten/walrus', () => ({
 if (process.env.CI) {
   const originalLog = console.log;
   const originalError = console.error;
-  
+
   console.log = jest.fn((...args) => {
     if (process.env.DEBUG) {
       originalLog(...args);
     }
   });
-  
+
   console.error = jest.fn((...args) => {
     if (process.env.DEBUG) {
       originalError(...args);

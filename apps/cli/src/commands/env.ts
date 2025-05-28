@@ -17,14 +17,14 @@ import * as path from 'path';
  *
  * This command provides utilities for environment variable management,
  * validation, and documentation generation with intuitive positional syntax.
- * 
+ *
  * Positional Usage:
  * - waltodo env                           # Show current environment (default)
  * - waltodo env show                      # Show current environment
  * - waltodo env validate                  # Validate .env file
  * - waltodo env set VAR value             # Set environment variable
  * - waltodo env generate                  # Generate .env template
- * 
+ *
  * Legacy Flag Usage (still supported):
  * - waltodo env --validate                # Validate configuration
  * - waltodo env --generate                # Generate template
@@ -44,7 +44,7 @@ export default class EnvironmentCommand extends BaseCommand {
     '<%= config.bin %> env show --reveal               # Show with secrets revealed',
     '<%= config.bin %> env show --format=json          # Show as JSON',
     '<%= config.bin %> env validate --strict           # Enforce stricter validation',
-    
+
     // Legacy flag syntax (backward compatibility)
     '<%= config.bin %> env --validate                  # Legacy: validate configuration',
     '<%= config.bin %> env --generate                  # Legacy: generate template',
@@ -104,7 +104,8 @@ export default class EnvironmentCommand extends BaseCommand {
   static args = {
     action: Args.string({
       name: 'action',
-      description: 'Action to perform: show (default), validate, set, generate, docs, check',
+      description:
+        'Action to perform: show (default), validate, set, generate, docs, check',
       options: ['show', 'validate', 'set', 'generate', 'docs', 'check'],
       required: false,
     }),
@@ -148,7 +149,10 @@ export default class EnvironmentCommand extends BaseCommand {
           await this.validateEnvironment(flags.strict, flags.fix);
           break;
         case 'generate':
-          await this.generateTemplate(flags.output || '.env.template', flags.minimal);
+          await this.generateTemplate(
+            flags.output || '.env.template',
+            flags.minimal
+          );
           break;
         case 'docs':
           await this.generateDocs(
@@ -156,7 +160,10 @@ export default class EnvironmentCommand extends BaseCommand {
           );
           break;
         case 'show':
-          await this.showEnvironment(flags.format, flags.reveal || flags['show-all']);
+          await this.showEnvironment(
+            flags.format,
+            flags.reveal || flags['show-all']
+          );
           break;
         case 'check':
           await this.checkEnvironment();
@@ -177,7 +184,10 @@ export default class EnvironmentCommand extends BaseCommand {
   /**
    * Validate environment configuration
    */
-  private async validateEnvironment(strict: boolean, fix: boolean = false): Promise<void> {
+  private async validateEnvironment(
+    strict: boolean,
+    fix: boolean = false
+  ): Promise<void> {
     this.log(chalk.blue('Validating environment configuration...'));
 
     try {
@@ -207,17 +217,26 @@ export default class EnvironmentCommand extends BaseCommand {
   /**
    * Generate environment template file
    */
-  private async generateTemplate(templatePath: string, minimal: boolean = false): Promise<void> {
+  private async generateTemplate(
+    templatePath: string,
+    minimal: boolean = false
+  ): Promise<void> {
     this.log(
-      chalk.blue(`Generating ${minimal ? 'minimal ' : ''}environment template file at ${templatePath}...`)
+      chalk.blue(
+        `Generating ${minimal ? 'minimal ' : ''}environment template file at ${templatePath}...`
+      )
     );
 
     try {
       // TODO: Add minimal template generation support
       if (minimal) {
-        this.log(chalk.yellow('Minimal template generation coming soon, using full template...'));
+        this.log(
+          chalk.yellow(
+            'Minimal template generation coming soon, using full template...'
+          )
+        );
       }
-      
+
       generateEnvTemplate(templatePath);
       this.log(
         chalk.green(`✓ Environment template generated at ${templatePath}`)
@@ -262,7 +281,10 @@ export default class EnvironmentCommand extends BaseCommand {
   /**
    * Show current environment configuration
    */
-  private async showEnvironment(format: string, reveal: boolean = false): Promise<void> {
+  private async showEnvironment(
+    format: string,
+    reveal: boolean = false
+  ): Promise<void> {
     this.log(chalk.blue('Current environment configuration:'));
 
     if (format === 'json') {
@@ -295,7 +317,16 @@ export default class EnvironmentCommand extends BaseCommand {
       const metaData = envConfig.getMetadata();
 
       // Group variables by category
-      const categories: Record<string, Array<{name: string; value: unknown; source: string; required: string; sensitive: string}>> = {
+      const categories: Record<
+        string,
+        Array<{
+          name: string;
+          value: unknown;
+          source: string;
+          required: string;
+          sensitive: string;
+        }>
+      > = {
         Common: [],
         Blockchain: [],
         Storage: [],
@@ -347,7 +378,12 @@ export default class EnvironmentCommand extends BaseCommand {
           displayValue = chalk.gray('<empty string>');
         }
 
-        const envMetadata = (metaData as Record<string, {source: string; required: boolean; sensitive?: boolean}>)[key];
+        const envMetadata = (
+          metaData as Record<
+            string,
+            { source: string; required: boolean; sensitive?: boolean }
+          >
+        )[key];
         if (envMetadata) {
           categories[category]?.push({
             name: key,
@@ -505,7 +541,10 @@ export default class EnvironmentCommand extends BaseCommand {
   /**
    * Set environment variable
    */
-  private async setEnvironmentVariable(key: string | undefined, value: string | undefined): Promise<void> {
+  private async setEnvironmentVariable(
+    key: string | undefined,
+    value: string | undefined
+  ): Promise<void> {
     if (!key || !value) {
       throw new CLIError(
         'Both key and value are required for set action. Usage: waltodo env set KEY value',
@@ -519,16 +558,17 @@ export default class EnvironmentCommand extends BaseCommand {
       // Check if .env file exists
       const envPath = path.join(process.cwd(), '.env');
       let envContent = '';
-      
+
       if (fs.existsSync(envPath)) {
         const content = fs.readFileSync(envPath, 'utf-8');
-        envContent = typeof content === 'string' ? content : content.toString('utf-8');
+        envContent =
+          typeof content === 'string' ? content : content.toString('utf-8');
       }
 
       // Parse existing content
       const lines = envContent.split('\n');
       let found = false;
-      
+
       // Update existing variable or add new one
       const newLines = lines.map(line => {
         const trimmed = line.trim();
@@ -553,7 +593,9 @@ export default class EnvironmentCommand extends BaseCommand {
       // Set in current process
       process.env[key] = value;
 
-      this.log(chalk.green(`✓ Environment variable ${key} has been set to ${value}`));
+      this.log(
+        chalk.green(`✓ Environment variable ${key} has been set to ${value}`)
+      );
       this.log(chalk.dim('Note: The change has been saved to .env file'));
 
       // Validate the new configuration
@@ -564,8 +606,14 @@ export default class EnvironmentCommand extends BaseCommand {
           exitOnWarning: false,
         });
       } catch (error) {
-        this.log(chalk.yellow(`\nWarning: The new configuration may have validation issues:`));
-        this.log(chalk.yellow(error instanceof Error ? error.message : String(error)));
+        this.log(
+          chalk.yellow(
+            `\nWarning: The new configuration may have validation issues:`
+          )
+        );
+        this.log(
+          chalk.yellow(error instanceof Error ? error.message : String(error))
+        );
       }
     } catch (error) {
       throw new CLIError(

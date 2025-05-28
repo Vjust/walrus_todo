@@ -1,6 +1,6 @@
 /**
  * Stress Test Report Generator
- * 
+ *
  * This utility generates HTML and text reports from stress test metrics.
  * It can be used to visualize performance data and identify bottlenecks.
  */

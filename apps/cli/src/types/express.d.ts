@@ -1,5 +1,8 @@
-
-import { Request as ExpressRequest, Response as ExpressResponse, NextFunction } from 'express';
+import {
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+  NextFunction,
+} from 'express';
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -20,7 +23,7 @@ declare module 'express-serve-static-core' {
       fieldname: string;
     };
   }
-  
+
   interface Response {
     json(body?: any): this;
     status(code: number): this;
@@ -47,7 +50,7 @@ declare module 'express' {
       fieldname: string;
     };
   }
-  
+
   interface Response {
     json(body?: any): this;
     status(code: number): this;

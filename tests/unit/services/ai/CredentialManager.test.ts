@@ -4,7 +4,9 @@ import * as fs from 'fs';
 // path module available for future credential path tests
 import * as crypto from 'crypto';
 
-jest.mock('../../../../apps/cli/src/services/ai/credentials/SecureCredentialStore');
+jest.mock(
+  '../../../../apps/cli/src/services/ai/credentials/SecureCredentialStore'
+);
 jest.mock('fs');
 jest.mock('crypto');
 
@@ -299,7 +301,7 @@ describe('CredentialManager', () => {
       const apiKey = 'sensitive-api-key';
 
       // Test that API key is encrypted before storage
-      mockSecureStore.saveCredentials.mockImplementation(async (creds) => {
+      mockSecureStore.saveCredentials.mockImplementation(async creds => {
         expect(creds.apiKey).not.toBe(apiKey);
         expect(creds.apiKey).toBeDefined();
       });
@@ -311,7 +313,7 @@ describe('CredentialManager', () => {
       const providers = ['openai', 'anthropic'];
       const encryptionKeys: string[] = [];
 
-      mockSecureStore.saveCredentials.mockImplementation(async (creds) => {
+      mockSecureStore.saveCredentials.mockImplementation(async creds => {
         // Capture the encryption context
         encryptionKeys.push(JSON.stringify(creds));
       });
@@ -386,7 +388,9 @@ describe('CredentialManager', () => {
       const apiKey = 'test-key';
 
       mockSecureStore.saveCredentials.mockImplementation(() => {
-        const error = new Error('No space left on device') as NodeJS.ErrnoException;
+        const error = new Error(
+          'No space left on device'
+        ) as NodeJS.ErrnoException;
         error.code = 'ENOSPC';
         throw error;
       });

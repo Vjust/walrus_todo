@@ -11,7 +11,7 @@ describe('List Command Background Operations', () => {
   beforeEach(() => {
     todoService = new TodoService();
     testListName = `test-list-${Date.now()}`;
-    
+
     // Clean up any existing jobs
     jobManager.cleanupOldJobs(0);
   });
@@ -19,7 +19,11 @@ describe('List Command Background Operations', () => {
   afterEach(async () => {
     // Clean up test data
     try {
-      const testFile = path.join(process.cwd(), 'Todos', `${testListName}.json`);
+      const testFile = path.join(
+        process.cwd(),
+        'Todos',
+        `${testListName}.json`
+      );
       if (fs.existsSync(testFile)) {
         fs.unlinkSync(testFile);
       }
@@ -74,7 +78,9 @@ describe('List Command Background Operations', () => {
           priority: i % 3 === 0 ? 'high' : i % 2 === 0 ? 'medium' : 'low',
           completed: i % 4 === 0,
           tags: [`tag${i % 3}`],
-          dueDate: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          dueDate: new Date(Date.now() + i * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0],
         });
       }
     });
@@ -127,12 +133,12 @@ describe('List Command Background Operations', () => {
       for (let listIndex = 0; listIndex < 5; listIndex++) {
         const listName = `${testListName}-${listIndex}`;
         await todoService.createList(listName);
-        
+
         for (let todoIndex = 0; todoIndex < 25; todoIndex++) {
           await todoService.addTodo(listName, {
             title: `Todo ${todoIndex} in list ${listIndex}`,
             priority: todoIndex % 3 === 0 ? 'high' : 'medium',
-            completed: todoIndex % 5 === 0
+            completed: todoIndex % 5 === 0,
           });
         }
       }
@@ -175,15 +181,35 @@ describe('List Command Background Operations', () => {
   describe('Filtering and Sorting in Background', () => {
     beforeEach(async () => {
       await todoService.createList(testListName);
-      
+
       // Create todos with different properties
       const todos = [
-        { title: 'High priority task', priority: 'high' as const, completed: false, dueDate: '2024-01-01' },
-        { title: 'Medium priority task', priority: 'medium' as const, completed: true, dueDate: '2024-02-01' },
-        { title: 'Low priority task', priority: 'low' as const, completed: false, dueDate: '2024-03-01' },
-        { title: 'Another high priority', priority: 'high' as const, completed: true, dueDate: '2024-01-15' }
+        {
+          title: 'High priority task',
+          priority: 'high' as const,
+          completed: false,
+          dueDate: '2024-01-01',
+        },
+        {
+          title: 'Medium priority task',
+          priority: 'medium' as const,
+          completed: true,
+          dueDate: '2024-02-01',
+        },
+        {
+          title: 'Low priority task',
+          priority: 'low' as const,
+          completed: false,
+          dueDate: '2024-03-01',
+        },
+        {
+          title: 'Another high priority',
+          priority: 'high' as const,
+          completed: true,
+          dueDate: '2024-01-15',
+        },
       ];
-      
+
       for (const todo of todos) {
         await todoService.addTodo(testListName, todo);
       }
@@ -242,24 +268,24 @@ describe('List Command Background Operations', () => {
       .do(() => {
         const job = jobManager.createJob('list', ['performance-test'], {});
         jobManager.startJob(job.id);
-        
+
         // Simulate some processing time
         setTimeout(() => {
           jobManager.updateProgress(job.id, 25, 25, 100);
         }, 100);
-        
+
         setTimeout(() => {
           jobManager.updateProgress(job.id, 75, 75, 100);
         }, 200);
-        
+
         setTimeout(() => {
-          jobManager.completeJob(job.id, { 
+          jobManager.completeJob(job.id, {
             processedItems: 100,
             totalTime: '2.5s',
-            avgItemTime: '25ms'
+            avgItemTime: '25ms',
           });
         }, 300);
-        
+
         return job;
       })
       .command(ctx => ['list', '--job-id', ctx.job.id])
@@ -286,7 +312,7 @@ describe('List Command Background Operations', () => {
       .it('should manage multiple background jobs', ctx => {
         const activeJobs = jobManager.getActiveJobs();
         const completedJobs = jobManager.getCompletedJobs();
-        
+
         expect(completedJobs.length).to.be.greaterThan(0);
       });
   });

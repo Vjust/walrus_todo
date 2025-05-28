@@ -31,7 +31,11 @@ describe('E2E: complete command', () => {
       });
       return { stdout, stderr: '' };
     } catch (error: unknown) {
-      const execError = error as { stdout?: string; stderr?: string; message?: string };
+      const execError = error as {
+        stdout?: string;
+        stderr?: string;
+        message?: string;
+      };
       return {
         stdout: execError.stdout || '',
         stderr: execError.stderr || execError.message || '',

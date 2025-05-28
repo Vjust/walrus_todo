@@ -98,7 +98,9 @@ describe('BatchUploader', () => {
 
   describe('uploadTodos', () => {
     it('should throw error for empty batch', async () => {
-      const { CLIError } = await import('../../apps/cli/src/types/errors/consolidated');
+      const { CLIError } = await import(
+        '../../apps/cli/src/types/errors/consolidated'
+      );
       await expect(batchUploader.uploadTodos([])).rejects.toThrow(CLIError);
     });
 
@@ -110,7 +112,9 @@ describe('BatchUploader', () => {
         TodoSizeCalculator.calculateOptimalStorageSize
       ).toHaveBeenCalledWith(
         sampleTodos,
-        expect.objectContaining({ extraAllocation: expect.any(Number) as number })
+        expect.objectContaining({
+          extraAllocation: expect.any(Number) as number,
+        })
       );
 
       // Verify storage was allocated with the calculated size

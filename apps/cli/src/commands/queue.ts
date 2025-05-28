@@ -1,19 +1,24 @@
 /**
  * @fileoverview Queue Status Command - Monitor and manage upload queue
- * 
+ *
  * This command provides comprehensive queue management functionality including
  * status monitoring, job control, and queue statistics.
  */
 
 import { Args, Flags } from '@oclif/core';
 import BaseCommand from '../base-command';
-import { getGlobalUploadQueue, QueueJob, QueueStats } from '../utils/upload-queue';
+import {
+  getGlobalUploadQueue,
+  QueueJob,
+  QueueStats,
+} from '../utils/upload-queue';
 import { CLIError } from '../types/errors/consolidated';
 import chalk = require('chalk');
 import * as Table from 'cli-table3';
 
 export default class QueueCommand extends BaseCommand {
-  static description = 'Manage and monitor the upload queue\n\nMonitor upload progress, view queue statistics, and control queue operations.\nThe upload queue processes Walrus uploads in the background without blocking the CLI.';
+  static description =
+    'Manage and monitor the upload queue\n\nMonitor upload progress, view queue statistics, and control queue operations.\nThe upload queue processes Walrus uploads in the background without blocking the CLI.';
 
   static examples = [
     '<%= config.bin %> queue                                    # Show queue status',
@@ -121,7 +126,10 @@ export default class QueueCommand extends BaseCommand {
   /**
    * Show queue status overview
    */
-  private async showStatus(watch: boolean = false, interval: number = 3): Promise<void> {
+  private async showStatus(
+    watch: boolean = false,
+    interval: number = 3
+  ): Promise<void> {
     if (watch) {
       await this.watchQueue(interval);
       return;
@@ -129,9 +137,13 @@ export default class QueueCommand extends BaseCommand {
 
     const stats = await this.queue.getStats();
     const activeJobs = this.queue.getJobs({ status: 'processing' });
-    const recentCompleted = this.queue.getJobs({ status: 'completed' })
+    const recentCompleted = this.queue
+      .getJobs({ status: 'completed' })
       .slice(0, 5)
-      .sort((a, b) => (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0));
+      .sort(
+        (a, b) =>
+          (b.completedAt?.getTime() || 0) - (a.completedAt?.getTime() || 0)
+      );
 
     this.log('');
     this.section('Upload Queue Status', this.formatOverview(stats));
@@ -167,8 +179,14 @@ export default class QueueCommand extends BaseCommand {
     if (failedJobs.length > 0) {
       this.log('');
       this.log(chalk.red.bold(`❌ ${failedJobs.length} failed job(s)`));
-      this.log(chalk.gray('  Use "waltodo queue list --status failed" to view details'));
-      this.log(chalk.gray('  Use "waltodo queue retry <job-id>" to retry specific jobs'));
+      this.log(
+        chalk.gray('  Use "waltodo queue list --status failed" to view details')
+      );
+      this.log(
+        chalk.gray(
+          '  Use "waltodo queue retry <job-id>" to retry specific jobs'
+        )
+      );
     }
 
     this.log('');
@@ -197,7 +215,15 @@ export default class QueueCommand extends BaseCommand {
 
     // Create table
     const table = new Table({
-      head: ['Job ID', 'Type', 'Status', 'Priority', 'Created', 'Progress', 'Details'],
+      head: [
+        'Job ID',
+        'Type',
+        'Status',
+        'Priority',
+        'Created',
+        'Progress',
+        'Details',
+      ],
       colWidths: [12, 10, 12, 8, 12, 10, 30],
       style: {
         head: ['cyan'],
@@ -209,7 +235,7 @@ export default class QueueCommand extends BaseCommand {
       const progress = job.progress ? `${job.progress}%` : '-';
       const details = this.getJobDetails(job);
       const created = this.formatRelativeTime(job.createdAt);
-      
+
       table.push([
         job.id.substring(0, 10) + '...',
         job.type,
@@ -235,20 +261,23 @@ export default class QueueCommand extends BaseCommand {
    */
   private async showStats(): Promise<void> {
     const stats = await this.queue.getStats();
-    
+
     this.log('');
-    this.section('Queue Statistics', [
-      `Total Jobs: ${chalk.cyan(stats.total)}`,
-      `Pending: ${chalk.yellow(stats.pending)}`,
-      `Processing: ${chalk.blue(stats.processing)}`,
-      `Completed: ${chalk.green(stats.completed)}`,
-      `Failed: ${chalk.red(stats.failed)}`,
-      `Retrying: ${chalk.magenta(stats.retrying)}`,
-      '',
-      `Total Data Uploaded: ${chalk.cyan(this.formatBytes(stats.totalBytesUploaded))}`,
-      `Average Upload Time: ${chalk.cyan(this.formatQueueDuration(stats.averageUploadTime))}`,
-      `Success Rate: ${chalk.cyan((stats.successRate * 100).toFixed(1) + '%')}`,
-    ].join('\n'));
+    this.section(
+      'Queue Statistics',
+      [
+        `Total Jobs: ${chalk.cyan(stats.total)}`,
+        `Pending: ${chalk.yellow(stats.pending)}`,
+        `Processing: ${chalk.blue(stats.processing)}`,
+        `Completed: ${chalk.green(stats.completed)}`,
+        `Failed: ${chalk.red(stats.failed)}`,
+        `Retrying: ${chalk.magenta(stats.retrying)}`,
+        '',
+        `Total Data Uploaded: ${chalk.cyan(this.formatBytes(stats.totalBytesUploaded))}`,
+        `Average Upload Time: ${chalk.cyan(this.formatQueueDuration(stats.averageUploadTime))}`,
+        `Success Rate: ${chalk.cyan((stats.successRate * 100).toFixed(1) + '%')}`,
+      ].join('\n')
+    );
 
     // Job type breakdown
     const jobs = this.queue.getJobs();
@@ -259,11 +288,14 @@ export default class QueueCommand extends BaseCommand {
     };
 
     this.log('');
-    this.section('Job Types', [
-      `Todos: ${chalk.cyan(typeStats.todo)}`,
-      `Todo Lists: ${chalk.cyan(typeStats['todo-list'])}`,
-      `Blobs: ${chalk.cyan(typeStats.blob)}`,
-    ].join('\n'));
+    this.section(
+      'Job Types',
+      [
+        `Todos: ${chalk.cyan(typeStats.todo)}`,
+        `Todo Lists: ${chalk.cyan(typeStats['todo-list'])}`,
+        `Blobs: ${chalk.cyan(typeStats.blob)}`,
+      ].join('\n')
+    );
 
     this.log('');
   }
@@ -273,7 +305,10 @@ export default class QueueCommand extends BaseCommand {
    */
   private async cancelJob(jobId?: string): Promise<void> {
     if (!jobId) {
-      throw new CLIError('Job ID is required for cancel operation', 'MISSING_JOB_ID');
+      throw new CLIError(
+        'Job ID is required for cancel operation',
+        'MISSING_JOB_ID'
+      );
     }
 
     const job = this.queue.getJob(jobId);
@@ -298,7 +333,10 @@ export default class QueueCommand extends BaseCommand {
    */
   private async retryJob(jobId?: string): Promise<void> {
     if (!jobId) {
-      throw new CLIError('Job ID is required for retry operation', 'MISSING_JOB_ID');
+      throw new CLIError(
+        'Job ID is required for retry operation',
+        'MISSING_JOB_ID'
+      );
     }
 
     const job = this.queue.getJob(jobId);
@@ -307,7 +345,10 @@ export default class QueueCommand extends BaseCommand {
     }
 
     if (job.status !== 'failed') {
-      throw new CLIError(`Job is not in failed status (current: ${job.status})`, 'INVALID_STATUS');
+      throw new CLIError(
+        `Job is not in failed status (current: ${job.status})`,
+        'INVALID_STATUS'
+      );
     }
 
     const success = await this.queue.retryJob(jobId);
@@ -323,7 +364,10 @@ export default class QueueCommand extends BaseCommand {
    */
   private async clearJobs(target?: string): Promise<void> {
     if (!target) {
-      throw new CLIError('Clear target is required (completed/failed/all)', 'MISSING_TARGET');
+      throw new CLIError(
+        'Clear target is required (completed/failed/all)',
+        'MISSING_TARGET'
+      );
     }
 
     let clearedCount = 0;
@@ -368,22 +412,34 @@ export default class QueueCommand extends BaseCommand {
     });
 
     this.queue.on('jobCompleted', (job: QueueJob) => {
-      this.log(chalk.green(`✅ Completed: ${this.formatJobLine(job, false)} -> ${job.blobId}`));
+      this.log(
+        chalk.green(
+          `✅ Completed: ${this.formatJobLine(job, false)} -> ${job.blobId}`
+        )
+      );
     });
 
     this.queue.on('jobFailed', (job: QueueJob) => {
-      this.log(chalk.red(`❌ Failed: ${this.formatJobLine(job, false)} - ${job.error}`));
+      this.log(
+        chalk.red(`❌ Failed: ${this.formatJobLine(job, false)} - ${job.error}`)
+      );
     });
 
-    this.queue.on('jobProgress', (progress) => {
-      this.log(chalk.yellow(`⏳ Progress: ${progress.jobId} - ${progress.message} (${progress.progress}%)`));
+    this.queue.on('jobProgress', progress => {
+      this.log(
+        chalk.yellow(
+          `⏳ Progress: ${progress.jobId} - ${progress.message} (${progress.progress}%)`
+        )
+      );
     });
 
     // Periodic status updates
     const watchInterval = setInterval(async () => {
       try {
         const stats = await this.queue.getStats();
-        process.stdout.write(`\r${chalk.cyan('Queue:')} ${stats.pending}⏳ ${stats.processing}🔄 ${stats.completed}✅ ${stats.failed}❌`);
+        process.stdout.write(
+          `\r${chalk.cyan('Queue:')} ${stats.pending}⏳ ${stats.processing}🔄 ${stats.completed}✅ ${stats.failed}❌`
+        );
       } catch (error) {
         // Ignore errors during watch
       }
@@ -406,7 +462,7 @@ export default class QueueCommand extends BaseCommand {
    */
   private formatOverview(stats: QueueStats): string {
     const totalActive = stats.pending + stats.processing + stats.retrying;
-    
+
     return [
       `Total Jobs: ${chalk.cyan(stats.total)}`,
       `Active: ${chalk.yellow(totalActive)} (${stats.pending} pending, ${stats.processing} processing, ${stats.retrying} retrying)`,
@@ -425,7 +481,7 @@ export default class QueueCommand extends BaseCommand {
     const details = this.getJobDetails(job);
     const time = this.formatRelativeTime(job.updatedAt);
     const progress = showProgress && job.progress ? ` (${job.progress}%)` : '';
-    
+
     return `  ${job.id.substring(0, 8)}... | ${job.type} | ${details} | ${time}${progress}`;
   }
 
@@ -490,7 +546,7 @@ export default class QueueCommand extends BaseCommand {
   private formatRelativeTime(date: Date): string {
     const now = Date.now();
     const diff = now - date.getTime();
-    
+
     if (diff < 60000) {
       return 'now';
     } else if (diff < 3600000) {

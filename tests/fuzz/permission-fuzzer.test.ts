@@ -214,8 +214,16 @@ describe('Permission Fuzzer Tests', () => {
     it('should handle edge cases with empty or invalid permissions', () => {
       const edgeCases = [
         { permissions: [], check: 'read:todo', expected: false },
-        { permissions: null as unknown as Permission[], check: 'read:todo', expected: false },
-        { permissions: undefined as unknown as Permission[], check: 'read:todo', expected: false },
+        {
+          permissions: null as unknown as Permission[],
+          check: 'read:todo',
+          expected: false,
+        },
+        {
+          permissions: undefined as unknown as Permission[],
+          check: 'read:todo',
+          expected: false,
+        },
         {
           permissions: ['invalid:permission'] as unknown as Permission[],
           check: 'read:todo',

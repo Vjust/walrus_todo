@@ -47,8 +47,8 @@ export function logMemoryUsage(label: string): void {
  * Safe JSON stringify that prevents memory overflow and circular references
  */
 export function safeStringify(
-  obj: any, 
-  maxDepth: number = 10, 
+  obj: any,
+  maxDepth: number = 10,
   maxSize: number = 1024 * 1024 // 1MB default
 ): string {
   const seen = new WeakSet();
@@ -65,7 +65,7 @@ export function safeStringify(
     if (serialized && currentSize + serialized.length > maxSize) {
       return '[SIZE_LIMIT_EXCEEDED]';
     }
-    
+
     if (serialized) {
       currentSize += serialized.length;
     }
@@ -94,7 +94,7 @@ export function safeStringify(
         const keys = Object.keys(value).slice(0, 50);
         const truncated: any = {};
         keys.forEach(k => {
-          truncated[k] = replacer(k, value[k], depth + 1);
+          truncated[k] = replacer(String(k), value[k], depth + 1);
         });
         truncated['[OBJECT_TRUNCATED]'] = true;
         return truncated;
@@ -105,7 +105,7 @@ export function safeStringify(
     if (typeof value === 'object') {
       const processed: any = Array.isArray(value) ? [] : {};
       for (const [k, v] of Object.entries(value)) {
-        processed[k] = replacer(k, v, depth + 1);
+        processed[k] = replacer(String(k), v, depth + 1);
       }
       return processed;
     }
@@ -130,7 +130,7 @@ export function createMemoryEfficientMock<T = any>(
   const {
     maxCallHistory = 50,
     maxReturnSize = 10000,
-    maxStringLength = 1000
+    maxStringLength = 1000,
   } = options;
 
   // Limit return value size
@@ -148,9 +148,9 @@ export function createMemoryEfficientMock<T = any>(
 
   // Override mockImplementation to limit call history
   const originalMockImplementation = mockFn.mockImplementation;
-  mockFn.mockImplementation = function(impl: any) {
+  mockFn.mockImplementation = function (impl: any) {
     const result = originalMockImplementation.call(this, impl);
-    
+
     // Limit call history to prevent memory buildup
     if (mockFn.mock.calls.length > maxCallHistory) {
       const excess = mockFn.mock.calls.length - maxCallHistory;
@@ -160,7 +160,7 @@ export function createMemoryEfficientMock<T = any>(
         mockFn.mock.instances.splice(0, excess);
       }
     }
-    
+
     return result;
   };
 
@@ -177,11 +177,11 @@ export function createLimitedArray<T>(
 ): T[] {
   const actualSize = Math.min(requestedSize, maxSize);
   const result: T[] = [];
-  
+
   for (let i = 0; i < actualSize; i++) {
     result.push(generator());
   }
-  
+
   return result;
 }
 
@@ -215,18 +215,20 @@ export async function monitorMemoryUsage<T>(
 ): Promise<{ result: T; memoryGrowth: number }> {
   forceGC();
   const beforeMemory = getMemoryUsage();
-  
+
   try {
     const result = await operation();
-    
+
     forceGC();
     const afterMemory = getMemoryUsage();
     const memoryGrowth = afterMemory.heapUsed - beforeMemory.heapUsed;
-    
+
     if (process.env.LOG_MEMORY === 'true') {
-      console.log(`[${label}] Memory growth: ${Math.round(memoryGrowth / 1024)}KB`);
+      console.log(
+        `[${label}] Memory growth: ${Math.round(memoryGrowth / 1024)}KB`
+      );
     }
-    
+
     return { result, memoryGrowth };
   } catch (error) {
     forceGC();
@@ -235,19 +237,38 @@ export async function monitorMemoryUsage<T>(
 }
 
 /**
+ * Cleanup mocks to prevent memory leaks
+ */
+export function cleanupMocks(
+  mocks: Record<string, jest.MockedFunction<any>>
+): void {
+  Object.values(mocks).forEach(mock => {
+    if (mock && typeof mock.mockClear === 'function') {
+      mock.mockClear();
+    }
+    if (mock && typeof mock.mockReset === 'function') {
+      mock.mockReset();
+    }
+    if (mock && typeof mock.mockRestore === 'function') {
+      mock.mockRestore();
+    }
+  });
+}
+
+/**
  * Create a memory-safe test timeout
  */
 export function createSafeTimeout(ms: number): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const timeoutId = setTimeout(() => {
       resolve();
     }, ms);
-    
+
     // Ensure cleanup
     const cleanup = () => {
       clearTimeout(timeoutId);
     };
-    
+
     // Add cleanup to the promise
     (resolve as any).cleanup = cleanup;
   });
@@ -262,22 +283,22 @@ export async function retryWithMemoryCleanup<T>(
   delayMs: number = 100
 ): Promise<T> {
   let lastError: Error | undefined;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const result = await operation();
       return result;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       // Force cleanup between retries
       forceGC();
-      
+
       if (attempt < maxRetries - 1) {
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
   }
-  
+
   throw lastError || new Error('All retry attempts failed');
 }

@@ -20,17 +20,27 @@ export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => {
     private: true,
     storageLocation: 'local' as StorageLocation,
   };
-  
+
   return {
     ...base,
     ...overrides,
-    tags: (overrides?.tags?.filter((tag): tag is string => tag != null) ?? base.tags),
+    tags:
+      overrides?.tags?.filter((tag): tag is string => tag != null) ?? base.tags,
   } as Todo;
 };
 
 export type MockOf<T> = {
   [P in keyof T]: T[P] extends (...args: unknown[]) => unknown
-    ? jest.Mock<ReturnType<T[P] extends (...args: unknown[]) => infer R ? () => R : never>, Parameters<T[P] extends (...args: infer P) => unknown ? (...args: P) => unknown : never>>
+    ? jest.Mock<
+        ReturnType<
+          T[P] extends (...args: unknown[]) => infer R ? () => R : never
+        >,
+        Parameters<
+          T[P] extends (...args: infer P) => unknown
+            ? (...args: P) => unknown
+            : never
+        >
+      >
     : T[P];
 };
 

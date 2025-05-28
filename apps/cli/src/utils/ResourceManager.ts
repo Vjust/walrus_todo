@@ -342,9 +342,12 @@ export class ResourceManager {
 
     // If we collected errors and should throw, create an aggregate error
     if (errors.length > 0 && options.throwOnError) {
-      const aggregateError = typeof (globalThis as any).AggregateError !== 'undefined'
-        ? new (globalThis as any).AggregateError(errors)
-        : new Error(`Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`);
+      const aggregateError =
+        typeof (globalThis as any).AggregateError !== 'undefined'
+          ? new (globalThis as any).AggregateError(errors)
+          : new Error(
+              `Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`
+            );
       throw new ResourceManagerError(
         `Failed to dispose ${errors.length} out of ${resources.length} resources of type "${type}"`,
         aggregateError
@@ -426,9 +429,12 @@ export class ResourceManager {
 
     // If we collected errors and should throw, create an aggregate error
     if (errors.length > 0 && options.throwOnError) {
-      const aggregateError = typeof (globalThis as any).AggregateError !== 'undefined'
-        ? new (globalThis as any).AggregateError(errors)
-        : new Error(`Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`);
+      const aggregateError =
+        typeof (globalThis as any).AggregateError !== 'undefined'
+          ? new (globalThis as any).AggregateError(errors)
+          : new Error(
+              `Multiple errors occurred: ${errors.map(e => e.message).join(', ')}`
+            );
       throw new ResourceManagerError(
         `Failed to dispose ${errors.length} resources during disposeAll`,
         aggregateError

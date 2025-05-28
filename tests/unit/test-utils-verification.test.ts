@@ -50,7 +50,9 @@ describe('Test Utils Verification', () => {
     });
 
     it('should handle invalid command gracefully', async () => {
-      const result = await runCommand(['invalid-command'], { expectError: true });
+      const result = await runCommand(['invalid-command'], {
+        expectError: true,
+      });
       expect(result).toHaveProperty('stdout');
       expect(result).toHaveProperty('stderr');
       expect(typeof result.stderr).toBe('string');

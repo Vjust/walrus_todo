@@ -6,9 +6,7 @@
  */
 
 import { AIService, aiService } from '../../apps/cli/src/services/ai';
-import {
-  AIProvider,
-} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import { ResultCache } from '../../apps/cli/src/services/ai/ResultCache';

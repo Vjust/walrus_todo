@@ -9,9 +9,9 @@ import * as path from 'path';
  */
 async function globalSetup(config: FullConfig) {
   const projectRoot = path.join(__dirname, '../../..');
-  
+
   console.log('🔧 Setting up E2E test environment...');
-  
+
   try {
     // 1. Build CLI for testing
     console.log('📦 Building CLI...');
@@ -20,7 +20,7 @@ async function globalSetup(config: FullConfig) {
       stdio: 'inherit',
       timeout: 120000,
     });
-    
+
     // 2. Install frontend dependencies
     const frontendPath = path.join(projectRoot, 'waltodo-frontend');
     if (fs.existsSync(frontendPath)) {
@@ -31,7 +31,7 @@ async function globalSetup(config: FullConfig) {
         timeout: 180000,
       });
     }
-    
+
     // 3. Generate frontend configuration
     console.log('⚙️ Generating frontend configuration...');
     try {
@@ -41,22 +41,24 @@ async function globalSetup(config: FullConfig) {
         timeout: 60000,
       });
     } catch (error) {
-      console.warn('⚠️ Frontend config generation failed, continuing with existing config');
+      console.warn(
+        '⚠️ Frontend config generation failed, continuing with existing config'
+      );
     }
-    
+
     // 4. Create test data directories
     const testDataDirs = [
       path.join(projectRoot, 'test-results'),
       path.join(projectRoot, 'playwright-report'),
       path.join(projectRoot, '.waltodo-cache/test'),
     ];
-    
+
     testDataDirs.forEach(dir => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
     });
-    
+
     // 5. Verify CLI is functional
     console.log('🧪 Verifying CLI functionality...');
     const cliVersion = execSync('./bin/waltodo --version', {
@@ -65,13 +67,12 @@ async function globalSetup(config: FullConfig) {
       timeout: 30000,
     });
     console.log(`✅ CLI version: ${cliVersion.trim()}`);
-    
+
     // 6. Set up browser for global state (if needed)
     const browser = await chromium.launch();
     await browser.close();
-    
+
     console.log('✅ E2E test environment setup complete!');
-    
   } catch (error) {
     console.error('❌ Failed to set up E2E test environment:', error);
     throw error;

@@ -25,7 +25,9 @@ describe('Basic Jest Test', () => {
     jest.clearAllMocks();
 
     // Mock TodoService methods
-    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(basicTestTodo);
+    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(
+      basicTestTodo
+    );
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
       id: 'default',
       name: 'default',

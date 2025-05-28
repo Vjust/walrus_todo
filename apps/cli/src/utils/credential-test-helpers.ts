@@ -1,6 +1,6 @@
 /**
  * Credential Test Helpers
- * 
+ *
  * Utilities for testing credential and encryption services safely
  */
 
@@ -57,7 +57,9 @@ export function getTestEncryptionConfig() {
     KEY_SIZE: 32,
     IV_SIZE: 16,
     SALT_SIZE: 32,
-    KEY_ITERATIONS: validateTestEnvironment() ? 1000 : AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_ITERATIONS,
+    KEY_ITERATIONS: validateTestEnvironment()
+      ? 1000
+      : AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_ITERATIONS,
   };
 }
 
@@ -85,7 +87,7 @@ export function createTestCredentialMetadata() {
 export function setupTestEnvironment() {
   process.env.NODE_ENV = 'test';
   process.env.HOME = '/tmp/test-home';
-  
+
   // Set test-safe defaults for encryption
   process.env.CREDENTIAL_KEY_ITERATIONS = '1000';
   process.env.CREDENTIAL_AUTO_ROTATION_DAYS = '90';
@@ -110,7 +112,7 @@ export function cleanupTestEnvironment() {
  */
 export function createFileSystemMocks() {
   const mockData = new Map<string, Buffer | string>();
-  
+
   return {
     existsSync: jest.fn((path: string) => mockData.has(path)),
     readFileSync: jest.fn((path: string) => {
@@ -118,9 +120,11 @@ export function createFileSystemMocks() {
       if (!data) throw new Error(`File not found: ${path}`);
       return data;
     }),
-    writeFileSync: jest.fn((path: string, data: Buffer | string, options?: any) => {
-      mockData.set(path, data);
-    }),
+    writeFileSync: jest.fn(
+      (path: string, data: Buffer | string, options?: any) => {
+        mockData.set(path, data);
+      }
+    ),
     mkdirSync: jest.fn(),
     copyFileSync: jest.fn(),
     chmodSync: jest.fn(),
@@ -129,7 +133,8 @@ export function createFileSystemMocks() {
     readdirSync: jest.fn(() => []),
     statSync: jest.fn(() => ({ mtime: { getTime: () => Date.now() } })),
     constants: { COPYFILE_EXCL: 1 },
-    setMockData: (path: string, data: Buffer | string) => mockData.set(path, data),
+    setMockData: (path: string, data: Buffer | string) =>
+      mockData.set(path, data),
     getMockData: (path: string) => mockData.get(path),
     clearMockData: () => mockData.clear(),
   };

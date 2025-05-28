@@ -196,7 +196,9 @@ declare module '@mysten/walrus' {
     }>;
 
     readBlob(params: ReadBlobOptions): Promise<Uint8Array>;
-    getBlobMetadata(params: { blobId: string } | ReadBlobOptions): Promise<Record<string, unknown>>;
+    getBlobMetadata(
+      params: { blobId: string } | ReadBlobOptions
+    ): Promise<Record<string, unknown>>;
 
     // Cost calculation with bigint return type
     storageCost(
@@ -389,14 +391,28 @@ declare module '@playwright/test' {
 // Node.js built-in module declarations for better compatibility
 declare module 'fs' {
   export function existsSync(path: string): boolean;
-  export function readFileSync(path: string, encoding?: BufferEncoding): string | Buffer;
-  export function writeFileSync(path: string, data: string | Buffer, options?: unknown): void;
+  export function readFileSync(
+    path: string,
+    encoding?: BufferEncoding
+  ): string | Buffer;
+  export function writeFileSync(
+    path: string,
+    data: string | Buffer,
+    options?: unknown
+  ): void;
   export function mkdirSync(path: string, options?: unknown): void;
   export function readdirSync(path: string): string[];
-  export function statSync(path: string): { isFile(): boolean; isDirectory(): boolean };
+  export function statSync(path: string): {
+    isFile(): boolean;
+    isDirectory(): boolean;
+  };
   export const promises: {
     readFile(path: string, encoding?: BufferEncoding): Promise<string | Buffer>;
-    writeFile(path: string, data: string | Buffer, options?: unknown): Promise<void>;
+    writeFile(
+      path: string,
+      data: string | Buffer,
+      options?: unknown
+    ): Promise<void>;
     access(path: string): Promise<void>;
     stat(path: string): Promise<{ isFile(): boolean; isDirectory(): boolean }>;
     mkdir(path: string, options?: unknown): Promise<void>;

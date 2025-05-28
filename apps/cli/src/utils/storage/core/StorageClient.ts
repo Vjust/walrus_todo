@@ -210,7 +210,12 @@ export class StorageClient {
 
       // Verify network connectivity
       const systemStateResult = await AsyncOperationHandler.execute(
-        () => (this.suiClient as { getLatestSuiSystemState: () => Promise<{ epoch: string }> }).getLatestSuiSystemState(),
+        () =>
+          (
+            this.suiClient as {
+              getLatestSuiSystemState: () => Promise<{ epoch: string }>;
+            }
+          ).getLatestSuiSystemState(),
         {
           operation: 'network check',
           maxRetries: 2,

@@ -55,7 +55,7 @@ export class NetworkError extends BaseError {
 
     // Build context with network details
     const context = {
-      ...(options.context || {} as Record<string, unknown>),
+      ...(options.context || ({} as Record<string, unknown>)),
       ...(network ? { network } : {}),
       ...(operation ? { operation } : {}),
       ...(statusCode ? { statusCode } : {}),

@@ -6,14 +6,14 @@ module.exports = async () => {
   process.env.JEST_PROJECT = 'fuzz-tests';
   process.env.NODE_ENV = 'test';
   process.env.FUZZ_TEST_MODE = 'true';
-  
+
   // Configure test timeouts
   process.env.JEST_TIMEOUT = '60000';
-  
+
   // Memory optimization for fuzz tests
   if (global.gc) {
     global.gc();
   }
-  
+
   console.log('🎯 Fuzz test environment configured');
 };

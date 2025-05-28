@@ -1,7 +1,7 @@
 /**
  * Environment Configuration Manager
- * 
- * This module provides centralized management of environment variables 
+ *
+ * This module provides centralized management of environment variables
  * with validation, type checking, and fallback values.
  */
 
@@ -192,11 +192,13 @@ function getNumberValue(
   return isNaN(parsed) ? defaultValue : parsed;
 }
 
-
 /**
  * Safely converts a value to match the expected type
  */
-function safeTypeConversion<T>(value: string | number | boolean, expectedValue: T): T {
+function safeTypeConversion<T>(
+  value: string | number | boolean,
+  expectedValue: T
+): T {
   if (typeof expectedValue === 'boolean') {
     if (typeof value === 'boolean') return value as T;
     if (typeof value === 'string') {
@@ -204,7 +206,7 @@ function safeTypeConversion<T>(value: string | number | boolean, expectedValue: 
     }
     return expectedValue;
   }
-  
+
   if (typeof expectedValue === 'number') {
     if (typeof value === 'number' && !isNaN(value)) return value as T;
     if (typeof value === 'string') {
@@ -212,25 +214,28 @@ function safeTypeConversion<T>(value: string | number | boolean, expectedValue: 
     }
     return expectedValue;
   }
-  
+
   if (typeof expectedValue === 'string') {
     if (typeof value === 'string') return value as T;
     if (value != null) return String(value) as T;
     return expectedValue;
   }
-  
+
   // For complex types or when types match
   if (typeof value === typeof expectedValue) {
     return value as T;
   }
-  
+
   return expectedValue;
 }
 
 export class EnvironmentConfigManager {
   private static instance: EnvironmentConfigManager;
   private config: EnvironmentConfig;
-  private extensionVars: Record<string, EnvVariable<string | number | boolean>> = {};
+  private extensionVars: Record<
+    string,
+    EnvVariable<string | number | boolean>
+  > = {};
   private variableWarnings: string[] = [];
 
   private constructor() {
@@ -830,7 +835,8 @@ export class EnvironmentConfigManager {
     // Get the environment value if it exists
     const envValue = (process.env as Record<string, string | undefined>)[key];
     let value: string | number | boolean;
-    const source: 'environment' | 'default' = envValue !== undefined ? 'environment' : 'default';
+    const source: 'environment' | 'default' =
+      envValue !== undefined ? 'environment' : 'default';
 
     // Convert to the right type based on the defaultValue
     if (typeof defaultValue === 'boolean') {
@@ -849,7 +855,9 @@ export class EnvironmentConfigManager {
       source,
       description: options.description,
       example: options.example,
-      validationFn: options.validationFn as ((value: string | number | boolean) => boolean) | undefined,
+      validationFn: options.validationFn as
+        | ((value: string | number | boolean) => boolean)
+        | undefined,
       validationError: options.validationError,
       sensitive: options.sensitive,
       deprecated: options.deprecated,

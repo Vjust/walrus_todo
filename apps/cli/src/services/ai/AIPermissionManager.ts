@@ -139,12 +139,21 @@ export class AIPermissionManager {
       throw new Error('Invalid operation parameter');
     }
 
-    // Convert enum to string or use string directly
+    // Convert enum to string or use string directly with proper type checking
     const providerName =
-      typeof provider === 'string' ? provider : AIProvider[provider];
+      typeof provider === 'string'
+        ? provider
+        : typeof provider === 'object' && provider in AIProvider
+          ? Object.keys(AIProvider)[
+              Object.values(AIProvider).indexOf(provider as AIProvider)
+            ]
+          : String(provider);
 
     // Prevent privilege escalation by checking for restricted operations
-    if (operation === 'blockchain_verification' && !(await this.hasPermissionLevel(providerName, AIPermissionLevel.ADMIN))) {
+    if (
+      operation === 'blockchain_verification' &&
+      !(await this.hasPermissionLevel(providerName, AIPermissionLevel.ADMIN))
+    ) {
       throw new Error(`Insufficient permissions for ${operation}`);
     }
 
@@ -191,15 +200,22 @@ export class AIPermissionManager {
         await this.credentialManager.getCredentialObject(provider);
 
       // Prevent unauthorized permission escalation attempts
-      if (level === AIPermissionLevel.ADMIN && credential.permissionLevel < AIPermissionLevel.ADMIN) {
-        Logger.getInstance().warn(`Unauthorized permission escalation attempt for provider ${provider}`);
+      if (
+        level === AIPermissionLevel.ADMIN &&
+        credential.permissionLevel < AIPermissionLevel.ADMIN
+      ) {
+        Logger.getInstance().warn(
+          `Unauthorized permission escalation attempt for provider ${provider}`
+        );
         return false;
       }
 
       // Check if permission level is sufficient
       return credential.permissionLevel >= level;
     } catch (err: unknown) {
-      Logger.getInstance().warn(`Permission check failed: ${err instanceof Error ? err.message : String(err)}`);
+      Logger.getInstance().warn(
+        `Permission check failed: ${err instanceof Error ? err.message : String(err)}`
+      );
       return false;
     }
   }
@@ -222,7 +238,9 @@ export class AIPermissionManager {
 
       return credential.permissionLevel;
     } catch (err: unknown) {
-      Logger.getInstance().warn(`Failed to get permission level: ${err instanceof Error ? err.message : String(err)}`);
+      Logger.getInstance().warn(
+        `Failed to get permission level: ${err instanceof Error ? err.message : String(err)}`
+      );
       return AIPermissionLevel.NO_ACCESS;
     }
   }

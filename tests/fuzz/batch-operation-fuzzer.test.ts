@@ -58,7 +58,10 @@ describe('Batch Operation Fuzzer Tests', () => {
     tags: Array.from({ length: Math.floor(Math.random() * 5) }, () =>
       randomString(5)
     ),
-    priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as 'low' | 'medium' | 'high',
+    priority: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as
+      | 'low'
+      | 'medium'
+      | 'high',
     dueDate:
       Math.random() > 0.5
         ? new Date(
@@ -191,20 +194,25 @@ describe('Batch Operation Fuzzer Tests', () => {
     activeOperations.add(operationId);
 
     try {
-      const results: PromiseSettledResult<{ success: boolean; operation: BatchOperation }>[] = [];
+      const results: PromiseSettledResult<{
+        success: boolean;
+        operation: BatchOperation;
+      }>[] = [];
       const errors: { error: unknown; operation: BatchOperation }[] = [];
       const startTime = Date.now();
 
       // Execute operations in batches
       const chunkSize = Math.min(testCase.operations.length, 10);
-      
+
       for (let i = 0; i < testCase.operations.length; i += chunkSize) {
         const chunk = testCase.operations.slice(i, i + chunkSize);
-        
-        const promises = chunk.map(async (operation) => {
+
+        const promises = chunk.map(async operation => {
           try {
             // Simulate operation execution
-            await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+            await new Promise(resolve =>
+              setTimeout(resolve, Math.random() * 100)
+            );
             return { success: true, operation };
           } catch (error) {
             errors.push({ error, operation });
@@ -222,7 +230,8 @@ describe('Batch Operation Fuzzer Tests', () => {
       return {
         success: errors.length === 0,
         totalOperations: testCase.operations.length,
-        successfulOperations: results.filter(r => r.status === 'fulfilled').length,
+        successfulOperations: results.filter(r => r.status === 'fulfilled')
+          .length,
         failedOperations: errors.length,
         duration,
         errors: errors.slice(0, 5), // Limit error reporting
@@ -235,10 +244,10 @@ describe('Batch Operation Fuzzer Tests', () => {
   describe('Fuzz Testing Suite', () => {
     it('should handle random batch operations without crashing', async () => {
       const testCases = generateFuzzTestCases(50);
-      
+
       for (const testCase of testCases) {
         const result = await executeBatchTest(testCase);
-        
+
         // Basic assertions that the system doesn't crash
         expect(result).toBeDefined();
         expect(typeof result.success).toBe('boolean');
@@ -255,7 +264,7 @@ describe('Batch Operation Fuzzer Tests', () => {
         operations: [],
         expectedBehavior: 'Should handle stress test operations',
       };
-      
+
       // Generate stress operations
       stressTest.operations = Array.from({ length: 100 }, () => ({
         type: 'add',
@@ -263,7 +272,7 @@ describe('Batch Operation Fuzzer Tests', () => {
       }));
 
       const result = await executeBatchTest(stressTest);
-      
+
       expect(result).toBeDefined();
       expect(result.totalOperations).toBe(100);
     });
@@ -276,7 +285,7 @@ describe('Batch Operation Fuzzer Tests', () => {
         operations: [],
         expectedBehavior: 'Should handle mixed operations',
       };
-      
+
       // Generate mixed operations
       mixedTest.operations = Array.from({ length: 25 }, (_, index) => {
         const types = ['add', 'update', 'complete', 'delete'];
@@ -284,12 +293,15 @@ describe('Batch Operation Fuzzer Tests', () => {
         return {
           type,
           id: type !== 'add' ? `todo-${index}` : undefined,
-          data: type === 'add' || type === 'update' ? generateRandomTodo() : undefined,
+          data:
+            type === 'add' || type === 'update'
+              ? generateRandomTodo()
+              : undefined,
         };
       });
 
       const result = await executeBatchTest(mixedTest);
-      
+
       expect(result).toBeDefined();
       expect(result.totalOperations).toBe(25);
     });

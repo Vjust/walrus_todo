@@ -76,7 +76,7 @@ describe('AiService', () => {
   }
 
   it('should initialize with API key from constructor', () => {
-      new AiService('test-api-key');
+    new AiService('test-api-key');
     expect(ChatXAI).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       model: 'grok-beta',

@@ -45,8 +45,16 @@ describe('KeyManagementService', () => {
     (
       SecureStorage as jest.MockedClass<typeof SecureStorage>
     ).mockImplementation(() => mockSecureStorage);
-    (Ed25519Keypair.fromSecretKey as jest.MockedFunction<typeof Ed25519Keypair.fromSecretKey>).mockReturnValue(mockKeypair);
-    (Ed25519Keypair.generate as jest.MockedFunction<typeof Ed25519Keypair.generate>).mockReturnValue(mockKeypair);
+    (
+      Ed25519Keypair.fromSecretKey as jest.MockedFunction<
+        typeof Ed25519Keypair.fromSecretKey
+      >
+    ).mockReturnValue(mockKeypair);
+    (
+      Ed25519Keypair.generate as jest.MockedFunction<
+        typeof Ed25519Keypair.generate
+      >
+    ).mockReturnValue(mockKeypair);
 
     keyManagementService = KeyManagementService.getInstance();
   });
@@ -107,7 +115,11 @@ describe('KeyManagementService', () => {
 
     it('should throw error when keypair creation fails', async () => {
       mockSecureStorage.getSecureItem.mockResolvedValue(validPrivateKeyBase64);
-      (Ed25519Keypair.fromSecretKey as jest.MockedFunction<typeof Ed25519Keypair.fromSecretKey>).mockImplementation(() => {
+      (
+        Ed25519Keypair.fromSecretKey as jest.MockedFunction<
+          typeof Ed25519Keypair.fromSecretKey
+        >
+      ).mockImplementation(() => {
         throw new Error('Invalid key format');
       });
 
@@ -147,7 +159,11 @@ describe('KeyManagementService', () => {
     });
 
     it('should validate private key format before storing', async () => {
-      (Ed25519Keypair.fromSecretKey as jest.MockedFunction<typeof Ed25519Keypair.fromSecretKey>).mockImplementation(() => {
+      (
+        Ed25519Keypair.fromSecretKey as jest.MockedFunction<
+          typeof Ed25519Keypair.fromSecretKey
+        >
+      ).mockImplementation(() => {
         throw new Error('Invalid base64');
       });
 
@@ -201,7 +217,11 @@ describe('KeyManagementService', () => {
   describe('key generation scenarios', () => {
     it('should handle generation of new keypairs', async () => {
       const newKeypair = mockKeypair;
-      (Ed25519Keypair.generate as jest.MockedFunction<typeof Ed25519Keypair.generate>).mockReturnValue(newKeypair);
+      (
+        Ed25519Keypair.generate as jest.MockedFunction<
+          typeof Ed25519Keypair.generate
+        >
+      ).mockReturnValue(newKeypair);
 
       // Generate new keypair
       Ed25519Keypair.generate();
@@ -232,7 +252,11 @@ describe('KeyManagementService', () => {
 
     it('should handle corrupt key data', async () => {
       mockSecureStorage.getSecureItem.mockResolvedValue('not-valid-base64&&&');
-      (Ed25519Keypair.fromSecretKey as jest.MockedFunction<typeof Ed25519Keypair.fromSecretKey>).mockImplementation(() => {
+      (
+        Ed25519Keypair.fromSecretKey as jest.MockedFunction<
+          typeof Ed25519Keypair.fromSecretKey
+        >
+      ).mockImplementation(() => {
         throw new Error('Invalid base64 string');
       });
 

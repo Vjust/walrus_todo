@@ -11,9 +11,7 @@ import {
   AIProvider,
   AIModelAdapter,
 } from '../../apps/cli/src/types/adapters/AIModelAdapter';
-import {
-  AIVerifierAdapter,
-} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { AIVerifierAdapter } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 // Import the full interface for proper typing
 import { AIModelAdapter } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 
@@ -22,28 +20,28 @@ const createMockAIModelAdapter = (): AIModelAdapter => ({
   // Core interface methods
   getProviderName: jest.fn().mockReturnValue(AIProvider.XAI),
   getModelName: jest.fn().mockReturnValue('mock-model'),
-  
+
   complete: jest.fn().mockResolvedValue({
     result: expectedResults.summarize,
     modelName: 'mock-model',
     provider: AIProvider.XAI,
     timestamp: Date.now(),
   }),
-  
+
   completeStructured: jest.fn().mockResolvedValue({
     result: JSON.stringify(expectedResults.categorize),
     modelName: 'mock-model',
     provider: AIProvider.XAI,
     timestamp: Date.now(),
   }),
-  
+
   processWithPromptTemplate: jest.fn().mockResolvedValue({
     result: expectedResults.summarize,
     modelName: 'mock-model',
     provider: AIProvider.XAI,
     timestamp: Date.now(),
   }),
-  
+
   // Optional interface methods
   checkConsentFor: jest.fn().mockReturnValue(true),
   cancelAllRequests: jest.fn(),
@@ -55,12 +53,12 @@ const createMockAIVerifierAdapter = (): jest.Mocked<AIVerifierAdapter> => {
     signMessage: jest.fn().mockResolvedValue('mock_signature'),
     signTransactionBlock: jest.fn(),
     getPublicKey: jest.fn().mockReturnValue({
-      toBase64: jest.fn().mockReturnValue('mock_public_key_base64')
+      toBase64: jest.fn().mockReturnValue('mock_public_key_base64'),
     }),
   };
 
   return {
-    createVerification: jest.fn().mockImplementation(async (params) => ({
+    createVerification: jest.fn().mockImplementation(async params => ({
       id: `verification_${Date.now()}`,
       requestHash: 'hash1',
       responseHash: 'hash2',
@@ -104,11 +102,11 @@ const createMockAIVerifierAdapter = (): jest.Mocked<AIVerifierAdapter> => {
         actionType: 1,
         metadata: {},
         privacyLevel: 'hash_only',
-      }
+      },
     ]),
     getRegistryAddress: jest.fn().mockResolvedValue('0xregistry123'),
     registerProvider: jest.fn().mockResolvedValue('provider_id_123'),
-    getVerification: jest.fn().mockImplementation(async (verificationId) => ({
+    getVerification: jest.fn().mockImplementation(async verificationId => ({
       id: verificationId,
       requestHash: 'hash1',
       responseHash: 'hash2',
@@ -144,17 +142,23 @@ export const createTestAIService = (
   verificationService?: AIVerificationService
 ): AIService => {
   const mockAdapter = createMockAIModelAdapter();
-  
+
   // Create service
-  const aiService = new AIService(apiKey, provider, modelName, {}, verificationService);
-  
+  const aiService = new AIService(
+    apiKey,
+    provider,
+    modelName,
+    {},
+    verificationService
+  );
+
   // Ensure the adapter is properly set (override async initialization)
   Object.defineProperty(aiService, 'modelAdapter', {
     value: mockAdapter,
     writable: true,
-    configurable: true
+    configurable: true,
   });
-  
+
   return aiService;
 };
 
@@ -493,15 +497,19 @@ export class AITestFactory {
    *   expect(validation.errors).toEqual([]);
    * });
    */
-  public static createOperationValidator(
-    operationType: string
-  ): {
-    validate: (result: unknown, todos: Todo[]) => { isValid: boolean; errors: string[] };
+  public static createOperationValidator(operationType: string): {
+    validate: (
+      result: unknown,
+      todos: Todo[]
+    ) => { isValid: boolean; errors: string[] };
     getExpectedType: () => string;
   } {
-    const getValidationResult = (result: unknown, _todos: Todo[]): { isValid: boolean; errors: string[] } => {
+    const getValidationResult = (
+      result: unknown,
+      _todos: Todo[]
+    ): { isValid: boolean; errors: string[] } => {
       const errors: string[] = [];
-      
+
       if (result === undefined || result === null) {
         errors.push('Result is undefined or null');
         return { isValid: false, errors };
@@ -547,7 +555,9 @@ export class AITestFactory {
               if (typeof priority !== 'number') {
                 errors.push(`Priority for todo "${todoId}" is not a number`);
               } else if (priority < 1 || priority > 10) {
-                errors.push(`Priority for todo "${todoId}" is ${priority}, outside range 1-10`);
+                errors.push(
+                  `Priority for todo "${todoId}" is ${priority}, outside range 1-10`
+                );
               }
             });
           }
@@ -583,10 +593,10 @@ export class AITestFactory {
         default:
           throw new Error(`Unknown operation type: ${operationType}`);
       }
-      
+
       return { isValid: errors.length === 0, errors };
     };
-    
+
     const getExpectedType = (): string => {
       switch (operationType.toLowerCase()) {
         case 'summarize':
@@ -601,10 +611,10 @@ export class AITestFactory {
           return 'unknown';
       }
     };
-    
+
     return {
       validate: getValidationResult,
-      getExpectedType
+      getExpectedType,
     };
   }
 }

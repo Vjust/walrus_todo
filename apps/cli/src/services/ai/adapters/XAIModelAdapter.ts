@@ -74,10 +74,9 @@ class MockChatXAI
   ): Promise<string> {
     // Handle both string and StringPromptValueInterface
     const promptStr = typeof prompt === 'string' ? prompt : prompt.toString();
-    logger.info(
-      'Mocked XAI model invoked with prompt:',
-      { prompt: promptStr.substring(0, 20) + '...' }
-    );
+    logger.info('Mocked XAI model invoked with prompt:', {
+      prompt: promptStr.substring(0, 20) + '...',
+    });
 
     // Generate a more helpful mock response based on the prompt content
     if (
@@ -218,7 +217,11 @@ class MockChatXAI
       },
       pipe: <T>(
         runnable: RunnableInterface<NewOutput, T, Record<string, unknown>>
-      ): RunnableInterface<string | StringPromptValueInterface, T, Record<string, unknown>> => {
+      ): RunnableInterface<
+        string | StringPromptValueInterface,
+        T,
+        Record<string, unknown>
+      > => {
         const transformed = this.transform(transformer);
         return {
           lc_serializable: true,
@@ -255,7 +258,11 @@ class MockChatXAI
           },
           pipe: <U>(
             nextRunnable: RunnableInterface<T, U, Record<string, unknown>>
-          ): RunnableInterface<string | StringPromptValueInterface, U, Record<string, unknown>> => {
+          ): RunnableInterface<
+            string | StringPromptValueInterface,
+            U,
+            Record<string, unknown>
+          > => {
             return transformed.pipe(runnable.pipe(nextRunnable));
           },
         };
@@ -265,7 +272,11 @@ class MockChatXAI
 
   pipe<NewOutput>(
     runnable: RunnableInterface<string, NewOutput, Record<string, unknown>>
-  ): RunnableInterface<string | StringPromptValueInterface, NewOutput, Record<string, unknown>> {
+  ): RunnableInterface<
+    string | StringPromptValueInterface,
+    NewOutput,
+    Record<string, unknown>
+  > {
     return {
       lc_serializable: true,
       getName: () => `${this.getName()}_pipe_${runnable.getName()}`,
@@ -301,7 +312,11 @@ class MockChatXAI
       },
       pipe: <T>(
         nextRunnable: RunnableInterface<NewOutput, T, Record<string, unknown>>
-      ): RunnableInterface<string | StringPromptValueInterface, T, Record<string, unknown>> => {
+      ): RunnableInterface<
+        string | StringPromptValueInterface,
+        T,
+        Record<string, unknown>
+      > => {
         return this.pipe(runnable.pipe(nextRunnable));
       },
     };
@@ -398,7 +413,11 @@ export class XAIModelAdapter extends BaseModelAdapter {
           model: this.modelName, // Changed from modelName to model as expected by ChatXAI
           temperature: options.temperature ?? 0.7,
           maxTokens: options.maxTokens,
-        }) as RunnableInterface<string | StringPromptValueInterface, string, Record<string, unknown>>;
+        }) as RunnableInterface<
+          string | StringPromptValueInterface,
+          string,
+          Record<string, unknown>
+        >;
         this.useMock = false;
       } else {
         // Fall back to mock implementation with clear logging about the reason

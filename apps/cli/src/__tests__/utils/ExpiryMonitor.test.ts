@@ -27,7 +27,7 @@ describe('ExpiryMonitor', () => {
 
     // Mock execSync for network detection
     jest.doMock('child_process', () => ({
-      execSync: jest.fn().mockReturnValue(Buffer.from('testnet\n'))
+      execSync: jest.fn().mockReturnValue(Buffer.from('testnet\n')),
     }));
   });
 
@@ -81,7 +81,9 @@ describe('ExpiryMonitor', () => {
       signWithIntent: jest
         .fn()
         .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
-      signPersonalMessage: jest.fn().mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
+      signPersonalMessage: jest
+        .fn()
+        .mockResolvedValue({ signature: 'mock-sig', bytes: 'mock-bytes' }),
     } as unknown as jest.Mocked<Signer>;
 
     mockVaultManager = {

@@ -82,7 +82,10 @@ export class SecureStorage {
 
     try {
       const fileContent = fs.readFileSync(filePath, 'utf8');
-      const contentStr = typeof fileContent === 'string' ? fileContent : fileContent.toString('utf8');
+      const contentStr =
+        typeof fileContent === 'string'
+          ? fileContent
+          : fileContent.toString('utf8');
       const data = JSON.parse(contentStr);
       const decipher = crypto.createDecipheriv(
         'aes-256-gcm',

@@ -32,7 +32,9 @@ describe('PermissionService', () => {
     (uuidv4 as jest.MockedFunction<typeof uuidv4>).mockReturnValue(mockUserId);
 
     // Clear the singleton instance
-    (PermissionService as unknown as { instance?: PermissionService }).instance = undefined;
+    (
+      PermissionService as unknown as { instance?: PermissionService }
+    ).instance = undefined;
     permissionService = PermissionService.getInstance();
   });
 

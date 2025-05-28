@@ -69,13 +69,13 @@ describe('BatchUploader', () => {
         start_epoch: '100',
         end_epoch: '200',
       }),
-      
-      storeTodo: jest.fn().mockImplementation((todo: Todo) => 
-        Promise.resolve(`blob-${todo.id}`)
-      ),
-      
+
+      storeTodo: jest
+        .fn()
+        .mockImplementation((todo: Todo) => Promise.resolve(`blob-${todo.id}`)),
+
       storeTodoList: jest.fn().mockResolvedValue('list-blob-123'),
-      
+
       // Add other required methods as no-ops for testing
       init: jest.fn().mockResolvedValue(undefined),
       connect: jest.fn().mockResolvedValue(undefined),

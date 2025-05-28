@@ -6,7 +6,7 @@ jest.mock('@langchain/xai', () => ({
 }));
 
 jest.mock('p-retry', () => {
-  return jest.fn().mockImplementation((fn) => fn());
+  return jest.fn().mockImplementation(fn => fn());
 });
 
 import {
@@ -75,12 +75,14 @@ describe('suggest command (Sinon conflict test)', () => {
     jest.restoreAllMocks();
   });
 
-  it('can create multiple mocks without Sinon conflicts', () => {
+  it('can create multiple mocks without Sinon conflicts', async () => {
     // Mock the TaskSuggestionService methods using Jest
-    const mockSuggestTasks = jest.spyOn(TaskSuggestionService.prototype, 'suggestTasks')
+    const mockSuggestTasks = jest
+      .spyOn(TaskSuggestionService.prototype, 'suggestTasks')
       .mockResolvedValue(sampleSuggestions);
-    
-    const mockSuggestTasksWithVerification = jest.spyOn(TaskSuggestionService.prototype, 'suggestTasksWithVerification')
+
+    const mockSuggestTasksWithVerification = jest
+      .spyOn(TaskSuggestionService.prototype, 'suggestTasksWithVerification')
       .mockResolvedValue({
         result: sampleSuggestions,
         verification: {
@@ -95,7 +97,8 @@ describe('suggest command (Sinon conflict test)', () => {
         },
       });
 
-    const mockGetProvider = jest.spyOn(EnhancedAIService.prototype, 'getProvider')
+    const mockGetProvider = jest
+      .spyOn(EnhancedAIService.prototype, 'getProvider')
       .mockReturnValue({} as any);
 
     // Verify mocks are set up
@@ -105,27 +108,29 @@ describe('suggest command (Sinon conflict test)', () => {
 
     // Test that we can call the mocked methods
     const service = new TaskSuggestionService({} as any, {} as any);
-    
-    expect(service.suggestTasks()).resolves.toBe(sampleSuggestions);
+
+    await expect(service.suggestTasks()).resolves.toBe(sampleSuggestions);
     expect(mockSuggestTasks).toHaveBeenCalled();
   });
 
   it('handles repeated mocking without conflicts', () => {
     // This test verifies that we can mock the same methods multiple times
     // without getting "already wrapped" errors
-    
-    const mock1 = jest.spyOn(TaskSuggestionService.prototype, 'suggestTasks')
+
+    const mock1 = jest
+      .spyOn(TaskSuggestionService.prototype, 'suggestTasks')
       .mockResolvedValue(sampleSuggestions);
-    
+
     expect(mock1).toBeDefined();
-    
+
     // Clean up
     mock1.mockRestore();
-    
+
     // Mock again - should not conflict
-    const mock2 = jest.spyOn(TaskSuggestionService.prototype, 'suggestTasks')
+    const mock2 = jest
+      .spyOn(TaskSuggestionService.prototype, 'suggestTasks')
       .mockResolvedValue(sampleSuggestions);
-    
+
     expect(mock2).toBeDefined();
     expect(mock2).not.toBe(mock1);
   });
@@ -144,8 +149,14 @@ describe('suggest command (Sinon conflict test)', () => {
 
   it('verifies Jest setup cleanup works', () => {
     // Create mocks
-    const mockSuggestTasks = jest.spyOn(TaskSuggestionService.prototype, 'suggestTasks');
-    const mockGetProvider = jest.spyOn(EnhancedAIService.prototype, 'getProvider');
+    const mockSuggestTasks = jest.spyOn(
+      TaskSuggestionService.prototype,
+      'suggestTasks'
+    );
+    const mockGetProvider = jest.spyOn(
+      EnhancedAIService.prototype,
+      'getProvider'
+    );
 
     expect(mockSuggestTasks).toBeDefined();
     expect(mockGetProvider).toBeDefined();

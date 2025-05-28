@@ -2,47 +2,55 @@ import { jest } from '@jest/globals';
 import { Command } from '@oclif/core';
 import BaseCommand from '../base-command';
 import AI from '../commands/ai';
-import { initializeCommandForTest, runCommandInTest, createMockOCLIFConfig } from './helpers/command-test-utils';
+import {
+  initializeCommandForTest,
+  runCommandInTest,
+  createMockOCLIFConfig,
+} from './helpers/command-test-utils';
 
 // Mock external dependencies
 jest.mock('../services/ai', () => ({
   aiService: {
     setProvider: jest.fn(),
     summarize: jest.fn().mockResolvedValue('Mock summary'),
-    categorize: jest.fn().mockResolvedValue({ work: ['todo-1'], personal: ['todo-2'] }),
+    categorize: jest
+      .fn()
+      .mockResolvedValue({ work: ['todo-1'], personal: ['todo-2'] }),
     prioritize: jest.fn().mockResolvedValue({ 'todo-1': 8, 'todo-2': 5 }),
     suggest: jest.fn().mockResolvedValue(['Task 1', 'Task 2']),
-    analyze: jest.fn().mockResolvedValue({ themes: ['Work'], recommendations: ['Focus'] })
+    analyze: jest
+      .fn()
+      .mockResolvedValue({ themes: ['Work'], recommendations: ['Focus'] }),
   },
   secureCredentialService: {
-    listCredentials: jest.fn().mockResolvedValue([])
-  }
+    listCredentials: jest.fn().mockResolvedValue([]),
+  },
 }));
 
 jest.mock('../services/todoService', () => ({
   TodoService: jest.fn().mockImplementation(() => ({
     listTodos: jest.fn().mockResolvedValue([
       { id: 'todo-1', title: 'Test Todo 1', completed: false },
-      { id: 'todo-2', title: 'Test Todo 2', completed: true }
-    ])
-  }))
+      { id: 'todo-2', title: 'Test Todo 2', completed: true },
+    ]),
+  })),
 }));
 
 jest.mock('../utils/env-loader', () => ({
-  loadEnvironment: jest.fn()
+  loadEnvironment: jest.fn(),
 }));
 
 jest.mock('../utils/environment-config', () => ({
   getEnv: jest.fn((key: string) => {
     const defaults = {
-      'AI_DEFAULT_PROVIDER': 'xai',
-      'AI_DEFAULT_MODEL': 'grok-beta',
-      'AI_TEMPERATURE': '0.7',
-      'ENABLE_BLOCKCHAIN_VERIFICATION': false
+      AI_DEFAULT_PROVIDER: 'xai',
+      AI_DEFAULT_MODEL: 'grok-beta',
+      AI_TEMPERATURE: '0.7',
+      ENABLE_BLOCKCHAIN_VERIFICATION: false,
     };
     return defaults[key as keyof typeof defaults];
   }),
-  hasEnv: jest.fn().mockReturnValue(true)
+  hasEnv: jest.fn().mockReturnValue(true),
 }));
 
 describe('OCLIF Command Parsing Fix', () => {
@@ -55,7 +63,7 @@ describe('OCLIF Command Parsing Fix', () => {
   describe('OCLIF Config Creation', () => {
     it('should create a valid OCLIF config for tests', () => {
       const config = createMockOCLIFConfig();
-      
+
       expect(config.name).toBe('waltodo');
       expect(config.bin).toBe('waltodo');
       expect(config.version).toBe('1.0.0');
@@ -65,7 +73,7 @@ describe('OCLIF Command Parsing Fix', () => {
 
     it('should have all required OCLIF config properties', () => {
       const config = createMockOCLIFConfig();
-      
+
       // Check essential OCLIF config properties
       expect(config.root).toBeDefined();
       expect(config.dataDir).toBeDefined();
@@ -81,7 +89,7 @@ describe('OCLIF Command Parsing Fix', () => {
     it('should initialize BaseCommand without config errors', async () => {
       const command = await initializeCommandForTest(BaseCommand, [], {
         mockParse: true,
-        parseResult: { flags: {}, args: {} }
+        parseResult: { flags: {}, args: {} },
       });
 
       expect(command.config).toBeDefined();
@@ -132,10 +140,10 @@ describe('OCLIF Command Parsing Fix', () => {
     it('should handle command initialization with missing config gracefully', async () => {
       // Create command without proper config to test fallback
       const command = new AI([], undefined as any);
-      
+
       // The init method should handle missing config in test env
       await expect(command.init()).resolves.not.toThrow();
-      
+
       expect(command.config).toBeDefined();
       expect(command.config.runHook).toBeDefined();
     });
@@ -145,7 +153,7 @@ describe('OCLIF Command Parsing Fix', () => {
     it('should handle parse errors gracefully', async () => {
       const command = await initializeCommandForTest(AI, [], {
         mockParse: true,
-        parseResult: { flags: {}, args: { operation: 'invalid' } }
+        parseResult: { flags: {}, args: { operation: 'invalid' } },
       });
 
       // Should not throw during initialization
@@ -154,12 +162,9 @@ describe('OCLIF Command Parsing Fix', () => {
     });
 
     it('should provide meaningful error messages for invalid operations', async () => {
-      await expect(runCommandInTest(
-        AI,
-        [],
-        {},
-        { operation: 'invalid-operation' }
-      )).rejects.toThrow();
+      await expect(
+        runCommandInTest(AI, [], {}, { operation: 'invalid-operation' })
+      ).rejects.toThrow();
     });
   });
 });

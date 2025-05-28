@@ -134,21 +134,27 @@ export default class AiPermissions extends BaseCommand {
 
     // For operations that don't require the permission manager, create a minimal one
     let localPermissionManager = permissionManager;
-    
+
     if (!localPermissionManager) {
       try {
         const keystoreSigner = await this.getSuiSigner();
         const signer: SignerAdapter = keystoreSigner as SignerAdapter;
         localPermissionManager = initializePermissionManager(
           secureCredentialManager,
-          new BlockchainVerifier(new SuiAIVerifierAdapter(keystoreSigner.getClient(), signer, '', '')) // Dummy verifier
+          new BlockchainVerifier(
+            new SuiAIVerifierAdapter(keystoreSigner.getClient(), signer, '', '')
+          ) // Dummy verifier
         );
       } catch (error) {
-        this.warn('Could not initialize permission manager with signer, using minimal setup');
+        this.warn(
+          'Could not initialize permission manager with signer, using minimal setup'
+        );
         // Use null values for minimal setup when signer is not available
         localPermissionManager = initializePermissionManager(
           secureCredentialManager,
-          new BlockchainVerifier(new SuiAIVerifierAdapter(null as never, null as never, '', ''))
+          new BlockchainVerifier(
+            new SuiAIVerifierAdapter(null as never, null as never, '', '')
+          )
         );
       }
     }
@@ -194,7 +200,9 @@ export default class AiPermissions extends BaseCommand {
             JSON.stringify(
               {
                 provider: flags.provider,
-                permission_level: this.permissionLevelToString(permissionLevel || AIPermissionLevel.STANDARD),
+                permission_level: this.permissionLevelToString(
+                  permissionLevel || AIPermissionLevel.STANDARD
+                ),
                 allowed_operations: operations,
               },
               null,
@@ -284,7 +292,12 @@ export default class AiPermissions extends BaseCommand {
   }
 
   private async checkPermission(
-    flags: { provider?: string; aiOperation?: string; format?: string; verify?: boolean },
+    flags: {
+      provider?: string;
+      aiOperation?: string;
+      format?: string;
+      verify?: boolean;
+    },
     permissionManager: AIPermissionManager
   ) {
     if (!flags.provider) {
@@ -318,7 +331,9 @@ export default class AiPermissions extends BaseCommand {
               provider: flags.provider,
               operation: flags.aiOperation,
               permission: hasPermission,
-              permission_level: this.permissionLevelToString(permissionLevel || AIPermissionLevel.STANDARD),
+              permission_level: this.permissionLevelToString(
+                permissionLevel || AIPermissionLevel.STANDARD
+              ),
             },
             null,
             2
@@ -368,7 +383,12 @@ export default class AiPermissions extends BaseCommand {
   }
 
   private async grantPermission(
-    flags: { provider?: string; permission?: string; aiOperation?: string; verify?: boolean },
+    flags: {
+      provider?: string;
+      permission?: string;
+      aiOperation?: string;
+      verify?: boolean;
+    },
     permissionManager: AIPermissionManager
   ) {
     if (!flags.provider) {
@@ -652,11 +672,13 @@ export default class AiPermissions extends BaseCommand {
     }
   }
 
-  private permissionLevelToString(level: AIPermissionLevel | undefined | null): string {
+  private permissionLevelToString(
+    level: AIPermissionLevel | undefined | null
+  ): string {
     if (level === undefined || level === null) {
       return 'Standard';
     }
-    
+
     switch (level) {
       case AIPermissionLevel.NO_ACCESS:
         return 'No Access';

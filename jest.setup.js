@@ -1,6 +1,5 @@
 // Jest setup file for global configurations
 require('jest-extended');
-const { setupMemoryLeakPrevention, cleanupAllResources } = require('./tests/helpers/memory-leak-prevention');
 const sinon = require('sinon');
 
 // Load global mocks
@@ -12,8 +11,13 @@ jest.setTimeout(30000);
 // Memory management
 let originalConsoleWarn = console.warn;
 
-// Memory configuration and leak prevention setup
-setupMemoryLeakPrevention();
+// Memory configuration setup
+try {
+  const { setupMemoryLeakPrevention } = require('./tests/helpers/memory-leak-prevention');
+  setupMemoryLeakPrevention();
+} catch (error) {
+  console.warn('Memory leak prevention setup failed:', error.message);
+}
 
 // Memory configuration - handled by test-runner.js to prevent conflicts
 if (!process.env.JEST_WORKER_ID) {

@@ -25,7 +25,6 @@ const isRetryableError = (error: unknown): boolean => {
   return false;
 };
 
-
 const toBaseError = (error: unknown): BaseError => {
   if (error instanceof BaseError) {
     return error;
@@ -129,7 +128,9 @@ export function handleError(
     // Display context if available and requested
     const combinedContext = { ...baseError.context, ...additionalContext };
     if (Object.keys(combinedContext).length > 0) {
-      logger.error(`${chalk.dim('Context:')} ${JSON.stringify(combinedContext, null, 2)}`);
+      logger.error(
+        `${chalk.dim('Context:')} ${JSON.stringify(combinedContext, null, 2)}`
+      );
     }
 
     // Display recovery information

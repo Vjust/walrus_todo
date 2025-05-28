@@ -1902,18 +1902,22 @@ All modules verified successfully!`);
           if (command.includes('deploy')) {
             // Simulate the config file write that would happen in the actual deploy command
             const configPath = '/path/to/config.json';
-            const configContent = JSON.stringify({
-              network: 'testnet',
-              lastDeployment: {
-                packageId: MOCK_DEPLOYED_PACKAGE.packageId,
-                digest: MOCK_DEPLOYED_PACKAGE.digest,
+            const configContent = JSON.stringify(
+              {
                 network: 'testnet',
-                timestamp: new Date().toISOString(),
+                lastDeployment: {
+                  packageId: MOCK_DEPLOYED_PACKAGE.packageId,
+                  digest: MOCK_DEPLOYED_PACKAGE.digest,
+                  network: 'testnet',
+                  timestamp: new Date().toISOString(),
+                },
               },
-            }, null, 2);
-            
+              null,
+              2
+            );
+
             writeFileSpy(configPath, configContent);
-            
+
             return Buffer.from(`Deployment successful!
 Package ID: ${MOCK_DEPLOYED_PACKAGE.packageId}
 Updating configuration...
@@ -2366,9 +2370,7 @@ Todo saved locally only`);
         it('should handle quotes in todo text', () => {
           (execSync as jest.Mock).mockImplementation((command: string) => {
             if (command.includes('add')) {
-              return Buffer.from(
-                'Todo added successfully: He said "Hello"'
-              );
+              return Buffer.from('Todo added successfully: He said "Hello"');
             }
             throw new Error(`Command not mocked: ${command}`);
           });
@@ -3275,10 +3277,10 @@ Advanced analysis of your todos...`);
           if (command.includes('store')) {
             // Simulate the actual blob mapping save that the store command does
             const mappingData = JSON.stringify({
-              'mock-todo-id': MOCK_BLOB_ID
+              'mock-todo-id': MOCK_BLOB_ID,
             });
             (fs.writeFileSync as jest.Mock)(blobMappingPath, mappingData);
-            
+
             return Buffer.from(
               `Storing data on Walrus storage...\nData stored successfully. Blob ID: ${MOCK_BLOB_ID}\nSaving blob mapping...\nPublic URL: https://testnet.wal.app/blob/${MOCK_BLOB_ID}`
             );

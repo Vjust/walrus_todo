@@ -17,7 +17,9 @@ jest.mock('chalk', () => ({
 }));
 
 // Mock console methods
-const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+const mockConsoleError = jest
+  .spyOn(console, 'error')
+  .mockImplementation(() => undefined);
 
 describe('Error Handler', () => {
   beforeEach(() => {
@@ -299,13 +301,13 @@ describe('Error Handler', () => {
 
     it('should throw Error instance', () => {
       let thrownError: unknown;
-      
+
       try {
         assert(false, 'Custom error message');
       } catch (error) {
         thrownError = error;
       }
-      
+
       expect(thrownError).toBeInstanceOf(Error);
       expect((thrownError as Error).message).toBe('Custom error message');
     });

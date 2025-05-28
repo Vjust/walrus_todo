@@ -1,8 +1,12 @@
 // Use interface declarations instead of namespace
 type MockedFunction<T extends (...args: unknown[]) => unknown> = {
   (...args: Parameters<T>): ReturnType<T>;
-  mockImplementation(fn: (...args: Parameters<T>) => ReturnType<T>): MockedFunction<T>;
-  mockImplementationOnce(fn: (...args: Parameters<T>) => ReturnType<T>): MockedFunction<T>;
+  mockImplementation(
+    fn: (...args: Parameters<T>) => ReturnType<T>
+  ): MockedFunction<T>;
+  mockImplementationOnce(
+    fn: (...args: Parameters<T>) => ReturnType<T>
+  ): MockedFunction<T>;
   mockReturnValue(value: ReturnType<T>): MockedFunction<T>;
   mockReturnValueOnce(value: ReturnType<T>): MockedFunction<T>;
   mockResolvedValue<U extends ReturnType<T>>(

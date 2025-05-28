@@ -1,38 +1,37 @@
 import * as fs from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 
 import * as configServiceModule from '../../../apps/cli/src/services/config-service';
 import { ConfigService } from '../../../apps/cli/src/services/config-service';
 
-import { envConfig, getEnv } from '../../../apps/cli/src/utils/environment-config';
+import {
+  envConfig,
+  getEnv,
+} from '../../../apps/cli/src/utils/environment-config';
 import {
   loadConfigFile,
   saveConfigToFile,
 } from '../../../apps/cli/src/utils/config-loader';
 import type { Config, Todo, TodoList } from '../../../apps/cli/src/types';
 import { CLIError } from '../../../apps/cli/src/types/errors';
-// Using jest fs mock directly
-const mockFsPromises = {
-  access: jest.fn(),
-  mkdir: jest.fn(),
-  writeFile: jest.fn(),
-  readFile: jest.fn(),
-  readdir: jest.fn(),
-  unlink: jest.fn(),
-};
-
-// Add to mockFs.promises in beforeEach
 
 // Mock dependencies
 jest.mock('fs');
+jest.mock('fs/promises');
 jest.mock('../../../apps/cli/src/utils/environment-config');
 jest.mock('../../../apps/cli/src/utils/config-loader');
 
 const mockFs = fs as jest.Mocked<typeof fs>;
+const mockFsPromises = fsPromises as jest.Mocked<typeof fsPromises>;
 const mockEnvConfig = envConfig as jest.Mocked<typeof envConfig>;
 const mockGetEnv = getEnv as jest.MockedFunction<typeof getEnv>;
-const mockLoadConfigFile = loadConfigFile as jest.MockedFunction<typeof loadConfigFile>;
-const mockSaveConfigToFile = saveConfigToFile as jest.MockedFunction<typeof saveConfigToFile>;
+const mockLoadConfigFile = loadConfigFile as jest.MockedFunction<
+  typeof loadConfigFile
+>;
+const mockSaveConfigToFile = saveConfigToFile as jest.MockedFunction<
+  typeof saveConfigToFile
+>;
 
 describe('ConfigService', () => {
   let configService: ConfigService;
@@ -55,28 +54,26 @@ describe('ConfigService', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // Setup basic fs mocks
-    mockFs.existsSync.mockReturnValue(true);
+    mockFs.existsSync.mockReturnValue(false);
     mockFs.readFileSync.mockReturnValue('{}');
     mockFs.readdirSync.mockReturnValue([]);
     mockFs.writeFileSync.mockImplementation(() => {});
     mockFs.mkdirSync.mockImplementation(() => {});
     mockFs.unlinkSync.mockImplementation(() => {});
 
-    // Setup fs.promises mock
-    if (!mockFs.promises) {
-      mockFs.promises = {} as typeof fs.promises;
-    }
-    mockFs.promises.readFile = jest.fn().mockResolvedValue('{}');
-    mockFs.promises.writeFile = jest.fn().mockResolvedValue(undefined);
-    mockFs.promises.readdir = jest.fn().mockResolvedValue([]);
-    mockFs.promises.mkdir = jest.fn().mockResolvedValue(undefined);
-    mockFs.promises.unlink = jest.fn().mockResolvedValue(undefined);
+    // Setup fs/promises mocks
+    mockFsPromises.access.mockResolvedValue(undefined);
+    mockFsPromises.readFile.mockResolvedValue('{}');
+    mockFsPromises.writeFile.mockResolvedValue(undefined);
+    mockFsPromises.readdir.mockResolvedValue([]);
+    mockFsPromises.mkdir.mockResolvedValue(undefined);
+    mockFsPromises.unlink.mockResolvedValue(undefined);
 
     // Setup default mocks
-    mockFs.existsSync.mockReturnValue(false);
     mockGetEnv.mockReturnValue('');
     mockEnvConfig.updateConfig.mockReturnValue(undefined);
     mockLoadConfigFile.mockReturnValue({});
+    mockSaveConfigToFile.mockReturnValue(undefined);
 
     // Mock HOME environment
     process.env.HOME = '/home/user';

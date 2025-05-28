@@ -1,11 +1,12 @@
-import {
-  createWalrusImageStorage,
-} from '../utils/walrus-image-storage';
+import { createWalrusImageStorage } from '../utils/walrus-image-storage';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { createWalrusModuleMock, getMockWalrusClient } from './helpers/complete-walrus-client-mock';
+import {
+  createWalrusModuleMock,
+  getMockWalrusClient,
+} from './helpers/complete-walrus-client-mock';
 
 // Mock the external dependencies
 jest.mock('@mysten/walrus', () => createWalrusModuleMock());
@@ -119,7 +120,9 @@ describe('WalrusImageStorage', () => {
     // Mock constructor implementations
     // WalrusClient mock already set up in module mock
     // SuiClient mock already set up in module mock
-    (KeystoreSigner as unknown as jest.Mock).mockImplementation(() => mockKeystoreSigner);
+    (KeystoreSigner as unknown as jest.Mock).mockImplementation(
+      () => mockKeystoreSigner
+    );
     (execSync as jest.Mock).mockImplementation((cmd: string): string => {
       if (cmd.includes('active-env')) return 'testnet';
       if (cmd.includes('active-address')) return '0xtest-address';

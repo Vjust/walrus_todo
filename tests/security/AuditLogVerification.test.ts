@@ -312,7 +312,7 @@ describe('Audit Log Verification Tests', () => {
       const entries = auditLogger.getEntries();
       expect(entries.length).toBe(1);
       expect(entries[0].eventType).toBe('test_event');
-      
+
       // The error should be handled gracefully - fs.appendFileSync should have been called
       expect(fs.appendFileSync).toHaveBeenCalledTimes(1);
     });

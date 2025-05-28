@@ -93,7 +93,10 @@ export class StorageValidator {
         // Check blockchain connectivity
         try {
           // Check if storage has connect method and call it
-          if ('connect' in this.walrusStorage && typeof this.walrusStorage.connect === 'function') {
+          if (
+            'connect' in this.walrusStorage &&
+            typeof this.walrusStorage.connect === 'function'
+          ) {
             await this.walrusStorage.connect();
           }
         } catch (error) {

@@ -24,15 +24,17 @@ import { secureCredentialManager } from '../services/ai/SecureCredentialManager'
 import { checkbox } from '@inquirer/prompts';
 import { CLIError } from '../types/errors/consolidated';
 import { EnhancedErrorHandler } from '../utils/enhanced-error-handler';
-import { 
-  createBackgroundAIOperationsManager, 
-  BackgroundAIOperations, 
+import {
+  createBackgroundAIOperationsManager,
+  BackgroundAIOperations,
   BackgroundAIUtils,
-  BackgroundAIOptions
+  BackgroundAIOptions,
 } from '../utils/background-ai-operations';
 
 // Cache for AI suggestions, config, and API key validation
-const suggestionCache = createCache<import('../services/ai/TaskSuggestionService').SuggestedTask[]>('ai-suggestions', {
+const suggestionCache = createCache<
+  import('../services/ai/TaskSuggestionService').SuggestedTask[]
+>('ai-suggestions', {
   strategy: 'TTL',
   ttlMs: 10 * 60 * 1000, // 10 minutes for suggestions
   maxSize: 100,
@@ -175,7 +177,8 @@ export default class Suggest extends BaseCommand {
     }),
     background: Flags.boolean({
       char: 'b',
-      description: 'Run suggestion generation in background without blocking terminal',
+      description:
+        'Run suggestion generation in background without blocking terminal',
       required: false,
       default: false,
     }),
@@ -250,7 +253,9 @@ export default class Suggest extends BaseCommand {
           this.log(chalk.dim('✓ API key validation result cached'));
       } catch (error) {
         await apiKeyValidationCache.set(apiKeyCacheKey, false);
-        throw new CLIError('Suggest command: API key validation failed. Please check your API key format and validity.');
+        throw new CLIError(
+          'Suggest command: API key validation failed. Please check your API key format and validity.'
+        );
       }
     }
 
@@ -473,9 +478,7 @@ export default class Suggest extends BaseCommand {
 
       // Display results
       if (flags.format === 'json') {
-        this.log(
-          JSON.stringify(flags.verify ? result : result, null, 2)
-        );
+        this.log(JSON.stringify(flags.verify ? result : result, null, 2));
         return;
       }
 
@@ -499,8 +502,8 @@ export default class Suggest extends BaseCommand {
         };
       };
       const suggestions = flags.verify
-        ? resultData.result?.suggestions ?? []
-        : resultData.suggestions ?? [];
+        ? (resultData.result?.suggestions ?? [])
+        : (resultData.suggestions ?? []);
       const contextInfo = flags.verify
         ? resultData.result?.contextInfo
         : resultData.contextInfo;
@@ -582,7 +585,13 @@ export default class Suggest extends BaseCommand {
 
       // If verification was used, display verification details
       if (flags.verify) {
-        const verificationData = result as { verification?: { allowed: boolean; verificationId?: string; details?: Record<string, unknown> } };
+        const verificationData = result as {
+          verification?: {
+            allowed: boolean;
+            verificationId?: string;
+            details?: Record<string, unknown>;
+          };
+        };
         if (verificationData.verification) {
           this.displayVerificationDetails(verificationData.verification);
         }
@@ -634,10 +643,10 @@ export default class Suggest extends BaseCommand {
         additionalInfo: {
           verify: flags.verify,
           todoCount: todos?.length || 0,
-          apiKeyProvided: !!flags.apiKey
-        }
+          apiKeyProvided: !!flags.apiKey,
+        },
       };
-      
+
       throw EnhancedErrorHandler.createCLIError(error, context);
     }
   }
@@ -645,7 +654,10 @@ export default class Suggest extends BaseCommand {
   /**
    * Prompt user to add suggestions as todos
    */
-  private async promptToAddSuggestions(suggestions: import('../services/ai/TaskSuggestionService').SuggestedTask[], todoService: TodoService) {
+  private async promptToAddSuggestions(
+    suggestions: import('../services/ai/TaskSuggestionService').SuggestedTask[],
+    todoService: TodoService
+  ) {
     // Ask which suggestions to add
     const selectedSuggestions = await checkbox({
       message: 'Select suggestions to add as todos:',
@@ -691,22 +703,36 @@ export default class Suggest extends BaseCommand {
   /**
    * Display verification details
    */
-  private displayVerificationDetails(verification: { allowed: boolean; verificationId?: string; details?: Record<string, unknown> }) {
+  private displayVerificationDetails(verification: {
+    allowed: boolean;
+    verificationId?: string;
+    details?: Record<string, unknown>;
+  }) {
     this.log(chalk.bold('\nVerification Details:'));
     this.log(chalk.dim('─'.repeat(50)));
-    this.log(`ID:        ${chalk.yellow(verification.verificationId || 'unknown')}`);
-    this.log(`Allowed:   ${verification.allowed ? chalk.green('Yes') : chalk.red('No')}`);
-    
+    this.log(
+      `ID:        ${chalk.yellow(verification.verificationId || 'unknown')}`
+    );
+    this.log(
+      `Allowed:   ${verification.allowed ? chalk.green('Yes') : chalk.red('No')}`
+    );
+
     if (verification.details) {
-      this.log(`Privacy:   ${chalk.blue(String(verification.details.privacyLevel || 'hash_only'))}`);
-      
+      this.log(
+        `Privacy:   ${chalk.blue(String(verification.details.privacyLevel || 'hash_only'))}`
+      );
+
       // Display transaction ID if available
       if (verification.details.transactionId) {
-        this.log(`Transaction: ${chalk.yellow(String(verification.details.transactionId))}`);
+        this.log(
+          `Transaction: ${chalk.yellow(String(verification.details.transactionId))}`
+        );
       }
-      
+
       if (verification.details.timestamp) {
-        this.log(`Timestamp: ${new Date(Number(verification.details.timestamp)).toLocaleString()}`);
+        this.log(
+          `Timestamp: ${new Date(Number(verification.details.timestamp)).toLocaleString()}`
+        );
       }
     }
 
@@ -741,13 +767,15 @@ export default class Suggest extends BaseCommand {
       this.log(`Status: ${this.formatStatus(status.status)}`);
       this.log(`Progress: ${chalk.yellow(`${status.progress}%`)}`);
       this.log(`Stage: ${chalk.blue(status.stage)}`);
-      
+
       if (status.startedAt) {
         this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
       }
-      
+
       if (status.completedAt) {
-        this.log(`Completed: ${chalk.dim(status.completedAt.toLocaleString())}`);
+        this.log(
+          `Completed: ${chalk.dim(status.completedAt.toLocaleString())}`
+        );
       }
 
       if (status.error) {
@@ -764,26 +792,30 @@ export default class Suggest extends BaseCommand {
       }
 
       // If waiting and operation is still running, wait for completion
-      if (flags.wait && (status.status === 'queued' || status.status === 'running')) {
+      if (
+        flags.wait &&
+        (status.status === 'queued' || status.status === 'running')
+      ) {
         this.log(chalk.yellow('\nWaiting for operation to complete...'));
-        
+
         const result = await backgroundOps.waitForOperationWithProgress(
           jobId,
           (progress, stage) => {
-            process.stdout.write(`\r${chalk.blue('Progress:')} ${progress}% (${stage})`);
+            process.stdout.write(
+              `\r${chalk.blue('Progress:')} ${progress}% (${stage})`
+            );
           }
         );
 
         process.stdout.write('\n');
         this.log(chalk.green('Operation completed!'));
-        
+
         if (flags.format === 'json') {
           this.log(JSON.stringify(result, null, 2));
         } else {
           this.displaySuggestionResults(result.result, flags);
         }
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -831,25 +863,30 @@ export default class Suggest extends BaseCommand {
       this.log(chalk.blue(`Job ID: ${operation.operationId}`));
       this.log('');
       this.log(chalk.dim('Commands to check progress:'));
-      this.log(chalk.cyan(`  walrus_todo suggest --jobId ${operation.operationId}`));
-      this.log(chalk.cyan(`  walrus_todo suggest --jobId ${operation.operationId} --wait`));
+      this.log(
+        chalk.cyan(`  walrus_todo suggest --jobId ${operation.operationId}`)
+      );
+      this.log(
+        chalk.cyan(
+          `  walrus_todo suggest --jobId ${operation.operationId} --wait`
+        )
+      );
       this.log('');
 
       // If wait flag is set, wait for completion and show results
       if (flags.wait) {
         this.log(chalk.yellow('Waiting for operation to complete...'));
-        
+
         const result = await operation.waitForCompletion();
-        
+
         this.log(chalk.green('Operation completed!'));
-        
+
         if (flags.format === 'json') {
           this.log(JSON.stringify(result, null, 2));
         } else {
           this.displaySuggestionResults(result.result, flags);
         }
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -876,12 +913,18 @@ export default class Suggest extends BaseCommand {
         this.log(`${index + 1}. ${suggestion}`);
       });
     } else {
-      this.log(chalk.yellow('Suggestions have been generated (use --format json for detailed output)'));
+      this.log(
+        chalk.yellow(
+          'Suggestions have been generated (use --format json for detailed output)'
+        )
+      );
     }
 
     this.log('');
     this.log(
-      chalk.dim('Tip: Use --addTodo flag with foreground operations to add suggestions as new todos.')
+      chalk.dim(
+        'Tip: Use --addTodo flag with foreground operations to add suggestions as new todos.'
+      )
     );
   }
 
@@ -897,6 +940,8 @@ export default class Suggest extends BaseCommand {
       cancelled: chalk.gray('🚫 Cancelled'),
     };
 
-    return statusColors[status as keyof typeof statusColors] || chalk.white(status);
+    return (
+      statusColors[status as keyof typeof statusColors] || chalk.white(status)
+    );
   }
 }

@@ -40,18 +40,21 @@ export class FileWatcher extends EventEmitter {
   constructor(options: FileWatcherOptions = {}) {
     super();
     this.logger = new Logger('FileWatcher');
-    
+
     this.options = {
       recursive: true,
       ignoreInitial: true,
       debounceMs: 500,
       fileExtensions: ['.json'],
       excludePatterns: [/\.tmp$/, /\.swp$/, /~$/, /\.DS_Store$/],
-      ...options
+      ...options,
     };
 
-    this.debouncedEmit = debounce(this.emitChange.bind(this), this.options.debounceMs);
-    
+    this.debouncedEmit = debounce(
+      this.emitChange.bind(this),
+      this.options.debounceMs
+    );
+
     this.logger.info('FileWatcher initialized', { options: this.options });
   }
 
@@ -60,7 +63,7 @@ export class FileWatcher extends EventEmitter {
    */
   async startWatching(directoryPath: string): Promise<void> {
     const resolvedPath = resolve(directoryPath);
-    
+
     if (this.watchedPaths.has(resolvedPath)) {
       this.logger.warn(`Already watching path: ${resolvedPath}`);
       return;
@@ -76,19 +79,19 @@ export class FileWatcher extends EventEmitter {
 
     const watcher = watch(
       resolvedPath,
-      { 
+      {
         recursive: this.options.recursive,
-        persistent: true
+        persistent: true,
       },
       (eventType: string, filename: string | null) => {
         if (!filename) return;
-        
+
         const fullPath = join(resolvedPath, filename);
         this.handleFileChange(eventType, fullPath, resolvedPath);
       }
     );
 
-    watcher.on('error', (error) => {
+    watcher.on('error', error => {
       this.logger.error(`File watcher error for ${resolvedPath}:`, error);
       this.emit('error', error);
     });
@@ -108,7 +111,7 @@ export class FileWatcher extends EventEmitter {
     if (directoryPath) {
       const resolvedPath = resolve(directoryPath);
       const watcher = this.watchers.get(resolvedPath);
-      
+
       if (watcher) {
         watcher.close();
         this.watchers.delete(resolvedPath);
@@ -122,7 +125,7 @@ export class FileWatcher extends EventEmitter {
         watcher.close();
         this.logger.info(`Stopped watching: ${path}`);
       }
-      
+
       this.watchers.clear();
       this.watchedPaths.clear();
       this.isWatching = false;
@@ -135,8 +138,8 @@ export class FileWatcher extends EventEmitter {
    * Handle file system change events
    */
   private async handleFileChange(
-    eventType: string, 
-    filePath: string, 
+    eventType: string,
+    filePath: string,
     watchedRoot: string
   ): Promise<void> {
     try {
@@ -148,13 +151,14 @@ export class FileWatcher extends EventEmitter {
       // Debounce rapid changes to the same file
       const now = Date.now();
       const lastChange = this.lastChangeMap.get(filePath) || 0;
-      if (now - lastChange < 100) { // 100ms minimum between events for same file
+      if (now - lastChange < 100) {
+        // 100ms minimum between events for same file
         return;
       }
       this.lastChangeMap.set(filePath, now);
 
       const relativePath = relative(watchedRoot, filePath);
-      
+
       // Determine change type and get file stats
       let changeType: 'created' | 'modified' | 'deleted' = 'modified';
       let fileStats;
@@ -163,9 +167,9 @@ export class FileWatcher extends EventEmitter {
         const stats = await stat(filePath);
         fileStats = {
           size: stats.size,
-          mtime: stats.mtime
+          mtime: stats.mtime,
         };
-        
+
         // For new files, eventType is usually 'rename'
         if (eventType === 'rename') {
           changeType = 'created';
@@ -184,18 +188,17 @@ export class FileWatcher extends EventEmitter {
         filePath,
         relativePath,
         timestamp: now,
-        stats: fileStats
+        stats: fileStats,
       };
 
       this.logger.debug('File change detected', {
         type: changeType,
         path: relativePath,
-        size: fileStats?.size
+        size: fileStats?.size,
       });
 
       // Use debounced emit to handle rapid file changes
       this.debouncedEmit(changeEvent);
-      
     } catch (error) {
       this.logger.error(`Error handling file change for ${filePath}:`, error);
     }
@@ -206,7 +209,7 @@ export class FileWatcher extends EventEmitter {
    */
   private shouldProcessFile(filePath: string): boolean {
     const fileName = filePath.split('/').pop() || '';
-    
+
     // Check exclude patterns
     if (this.options.excludePatterns.some(pattern => pattern.test(fileName))) {
       return false;
@@ -214,7 +217,7 @@ export class FileWatcher extends EventEmitter {
 
     // Check file extensions
     if (this.options.fileExtensions.length > 0) {
-      const hasValidExtension = this.options.fileExtensions.some(ext => 
+      const hasValidExtension = this.options.fileExtensions.some(ext =>
         fileName.endsWith(ext)
       );
       if (!hasValidExtension) {
@@ -244,7 +247,7 @@ export class FileWatcher extends EventEmitter {
     return {
       isWatching: this.isWatching,
       watchedPaths: Array.from(this.watchedPaths),
-      watcherCount: this.watchers.size
+      watcherCount: this.watchers.size,
     };
   }
 
@@ -254,24 +257,26 @@ export class FileWatcher extends EventEmitter {
   async scanDirectory(directoryPath: string): Promise<FileChangeEvent[]> {
     const resolvedPath = resolve(directoryPath);
     const changes: FileChangeEvent[] = [];
-    
+
     this.logger.info(`Scanning directory: ${resolvedPath}`);
-    
+
     try {
       const { readdir } = await import('fs/promises');
-      const files = await readdir(resolvedPath, { recursive: this.options.recursive });
-      
+      const files = await readdir(resolvedPath, {
+        recursive: this.options.recursive,
+      });
+
       for (const file of files) {
         const filePath = join(resolvedPath, file.toString());
         const relativePath = relative(resolvedPath, filePath);
-        
+
         if (!this.shouldProcessFile(filePath)) {
           continue;
         }
-        
+
         try {
           const stats = await stat(filePath);
-          
+
           if (stats.isFile()) {
             changes.push({
               type: 'created',
@@ -280,18 +285,19 @@ export class FileWatcher extends EventEmitter {
               timestamp: Date.now(),
               stats: {
                 size: stats.size,
-                mtime: stats.mtime
-              }
+                mtime: stats.mtime,
+              },
             });
           }
         } catch (error) {
           this.logger.warn(`Error reading file ${filePath}:`, error);
         }
       }
-      
-      this.logger.info(`Directory scan complete: ${changes.length} files found`);
+
+      this.logger.info(
+        `Directory scan complete: ${changes.length} files found`
+      );
       return changes;
-      
     } catch (error) {
       this.logger.error(`Error scanning directory ${resolvedPath}:`, error);
       return [];

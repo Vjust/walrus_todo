@@ -17,14 +17,28 @@ export interface BackgroundCacheConfig {
 
 export interface CacheOperation {
   id: string;
-  type: 'upload' | 'blob-cache' | 'storage-allocation' | 'batch-process' | 'sync' | 'continuous-sync' | 'ai-summarize' | 'ai-categorize' | 'ai-prioritize' | 'ai-suggest' | 'ai-analyze';
+  type:
+    | 'upload'
+    | 'blob-cache'
+    | 'storage-allocation'
+    | 'batch-process'
+    | 'sync'
+    | 'continuous-sync'
+    | 'ai-summarize'
+    | 'ai-categorize'
+    | 'ai-prioritize'
+    | 'ai-suggest'
+    | 'ai-analyze';
   data: any;
   priority: 'low' | 'medium' | 'high';
   timeout?: number;
 }
 
 export interface OperationProcessor {
-  processor: (operation: CacheOperation, updateProgress: (progress: number, stage?: string) => void) => Promise<any>;
+  processor: (
+    operation: CacheOperation,
+    updateProgress: (progress: number, stage?: string) => void
+  ) => Promise<any>;
 }
 
 export interface ProcessStatus {
@@ -58,7 +72,7 @@ export class BackgroundCacheManager extends EventEmitter {
 
   constructor(config: Partial<BackgroundCacheConfig> = {}) {
     super();
-    
+
     this.config = {
       maxConcurrentProcesses: 3,
       processTimeout: 300000, // 5 minutes
@@ -88,7 +102,10 @@ export class BackgroundCacheManager extends EventEmitter {
   /**
    * Queue a cache operation to run in the background
    */
-  async queueOperation(operation: CacheOperation, options?: OperationProcessor): Promise<string> {
+  async queueOperation(
+    operation: CacheOperation,
+    options?: OperationProcessor
+  ): Promise<string> {
     this.logger.info(`Queuing background operation: ${operation.type}`, {
       id: operation.id,
       priority: operation.priority,
@@ -131,7 +148,7 @@ export class BackgroundCacheManager extends EventEmitter {
   async getOperationStatus(operationId: string): Promise<ProcessStatus | null> {
     // Check memory first
     let status = this.processStatus.get(operationId);
-    
+
     // Fall back to cache
     if (!status) {
       status = await this.statusCache.get(operationId);
@@ -145,7 +162,7 @@ export class BackgroundCacheManager extends EventEmitter {
    */
   async getOperationResult(operationId: string): Promise<any> {
     const status = await this.getOperationStatus(operationId);
-    
+
     if (!status || status.status !== 'completed') {
       return null;
     }
@@ -164,7 +181,7 @@ export class BackgroundCacheManager extends EventEmitter {
    */
   async cancelOperation(operationId: string): Promise<boolean> {
     const process = this.activeProcesses.get(operationId);
-    
+
     if (process) {
       if ('terminate' in process) {
         // Worker thread
@@ -173,9 +190,9 @@ export class BackgroundCacheManager extends EventEmitter {
         // Child process
         process.kill('SIGTERM');
       }
-      
+
       this.activeProcesses.delete(operationId);
-      
+
       // Update status
       const status = this.processStatus.get(operationId);
       if (status) {
@@ -184,16 +201,18 @@ export class BackgroundCacheManager extends EventEmitter {
         status.endTime = Date.now();
         await this.statusCache.set(operationId, status);
       }
-      
+
       this.emit('operationCancelled', operationId);
       return true;
     }
 
     // Remove from queue if pending
-    const queueIndex = this.operationQueue.findIndex(op => op.id === operationId);
+    const queueIndex = this.operationQueue.findIndex(
+      op => op.id === operationId
+    );
     if (queueIndex >= 0) {
       this.operationQueue.splice(queueIndex, 1);
-      
+
       const status = this.processStatus.get(operationId);
       if (status) {
         status.status = 'failed';
@@ -201,7 +220,7 @@ export class BackgroundCacheManager extends EventEmitter {
         status.endTime = Date.now();
         await this.statusCache.set(operationId, status);
       }
-      
+
       this.emit('operationCancelled', operationId);
       return true;
     }
@@ -213,22 +232,28 @@ export class BackgroundCacheManager extends EventEmitter {
    * Get list of all active operations
    */
   getActiveOperations(): ProcessStatus[] {
-    return Array.from(this.processStatus.values())
-      .filter(status => status.status === 'running' || status.status === 'pending');
+    return Array.from(this.processStatus.values()).filter(
+      status => status.status === 'running' || status.status === 'pending'
+    );
   }
 
   /**
    * Wait for an operation to complete
    */
-  async waitForOperation(operationId: string, timeoutMs: number = 60000): Promise<any> {
+  async waitForOperation(
+    operationId: string,
+    timeoutMs: number = 60000
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error(`Operation ${operationId} timeout after ${timeoutMs}ms`));
+        reject(
+          new Error(`Operation ${operationId} timeout after ${timeoutMs}ms`)
+        );
       }, timeoutMs);
 
       const checkStatus = async () => {
         const status = await this.getOperationStatus(operationId);
-        
+
         if (!status) {
           clearTimeout(timeoutId);
           reject(new Error(`Operation ${operationId} not found`));
@@ -294,7 +319,11 @@ export class BackgroundCacheManager extends EventEmitter {
     // Check if we have a custom processor for this operation
     const customProcessor = this.operationProcessors.get(operation.id);
     if (customProcessor?.processor) {
-      return this.executeCustomProcessor(operation, status, customProcessor.processor);
+      return this.executeCustomProcessor(
+        operation,
+        status,
+        customProcessor.processor
+      );
     }
 
     // Update status to running
@@ -340,11 +369,14 @@ export class BackgroundCacheManager extends EventEmitter {
 
       if ('on' in process) {
         // Worker thread
-        process.on('message', (result) => handleCompletion(result));
-        process.on('error', (error) => handleCompletion(undefined, error));
-        process.on('exit', (code) => {
+        process.on('message', result => handleCompletion(result));
+        process.on('error', error => handleCompletion(undefined, error));
+        process.on('exit', code => {
           if (code !== 0) {
-            handleCompletion(undefined, new Error(`Worker exited with code ${code}`));
+            handleCompletion(
+              undefined,
+              new Error(`Worker exited with code ${code}`)
+            );
           }
         });
       } else {
@@ -359,14 +391,16 @@ export class BackgroundCacheManager extends EventEmitter {
           }
         });
 
-        process.on('error', (error) => handleCompletion(undefined, error));
-        process.on('exit', (code) => {
+        process.on('error', error => handleCompletion(undefined, error));
+        process.on('exit', code => {
           if (code !== 0) {
-            handleCompletion(undefined, new Error(`Process exited with code ${code}`));
+            handleCompletion(
+              undefined,
+              new Error(`Process exited with code ${code}`)
+            );
           }
         });
       }
-
     } catch (error) {
       await this.markOperationFailed(operation.id, error);
     }
@@ -376,18 +410,24 @@ export class BackgroundCacheManager extends EventEmitter {
    * Execute a custom processor function directly in the current process
    */
   private async executeCustomProcessor(
-    operation: CacheOperation, 
-    status: ProcessStatus, 
-    processor: (operation: CacheOperation, updateProgress: (progress: number, stage?: string) => void) => Promise<any>
+    operation: CacheOperation,
+    status: ProcessStatus,
+    processor: (
+      operation: CacheOperation,
+      updateProgress: (progress: number, stage?: string) => void
+    ) => Promise<any>
   ): Promise<void> {
     // Update status to running
     status.status = 'running';
     status.startTime = Date.now();
     await this.statusCache.set(operation.id, status);
 
-    this.logger.info(`Starting custom processor for operation: ${operation.type}`, {
-      id: operation.id,
-    });
+    this.logger.info(
+      `Starting custom processor for operation: ${operation.type}`,
+      {
+        id: operation.id,
+      }
+    );
 
     try {
       // Create progress update function
@@ -404,9 +444,11 @@ export class BackgroundCacheManager extends EventEmitter {
 
       // Mark as completed
       await this.markOperationCompleted(operation.id, result);
-
     } catch (error) {
-      this.logger.error(`Custom processor failed for operation ${operation.id}`, error);
+      this.logger.error(
+        `Custom processor failed for operation ${operation.id}`,
+        error
+      );
       await this.markOperationFailed(operation.id, error);
     } finally {
       // Clean up the processor reference
@@ -417,9 +459,11 @@ export class BackgroundCacheManager extends EventEmitter {
   /**
    * Create a worker thread for CPU-intensive operations
    */
-  private async createWorkerProcess(operation: CacheOperation): Promise<Worker> {
+  private async createWorkerProcess(
+    operation: CacheOperation
+  ): Promise<Worker> {
     const workerScript = path.join(__dirname, 'background-cache-worker.js');
-    
+
     // Ensure worker script exists
     await this.ensureWorkerScript();
 
@@ -436,9 +480,11 @@ export class BackgroundCacheManager extends EventEmitter {
   /**
    * Create a child process for I/O operations
    */
-  private async createChildProcess(operation: CacheOperation): Promise<ChildProcess> {
+  private async createChildProcess(
+    operation: CacheOperation
+  ): Promise<ChildProcess> {
     const processScript = path.join(__dirname, 'background-cache-process.js');
-    
+
     // Ensure process script exists
     await this.ensureProcessScript();
 
@@ -457,7 +503,10 @@ export class BackgroundCacheManager extends EventEmitter {
   /**
    * Update operation progress
    */
-  private async updateOperationProgress(operationId: string, progress: number): Promise<void> {
+  private async updateOperationProgress(
+    operationId: string,
+    progress: number
+  ): Promise<void> {
     const status = this.processStatus.get(operationId);
     if (status) {
       status.progress = Math.min(100, Math.max(0, progress));
@@ -469,19 +518,22 @@ export class BackgroundCacheManager extends EventEmitter {
   /**
    * Mark operation as completed
    */
-  private async markOperationCompleted(operationId: string, result: any): Promise<void> {
+  private async markOperationCompleted(
+    operationId: string,
+    result: any
+  ): Promise<void> {
     const status = this.processStatus.get(operationId);
     if (status) {
       status.status = 'completed';
       status.progress = 100;
       status.endTime = Date.now();
       status.result = result;
-      
+
       await this.statusCache.set(operationId, status);
       await this.resultCache.set(operationId, result);
-      
+
       this.emit('operationCompleted', operationId, result);
-      
+
       this.logger.info(`Background operation completed: ${status.type}`, {
         id: operationId,
         duration: status.endTime - status.startTime,
@@ -492,17 +544,20 @@ export class BackgroundCacheManager extends EventEmitter {
   /**
    * Mark operation as failed
    */
-  private async markOperationFailed(operationId: string, error: any): Promise<void> {
+  private async markOperationFailed(
+    operationId: string,
+    error: any
+  ): Promise<void> {
     const status = this.processStatus.get(operationId);
     if (status) {
       status.status = 'failed';
       status.endTime = Date.now();
       status.error = error instanceof Error ? error.message : String(error);
-      
+
       await this.statusCache.set(operationId, status);
-      
+
       this.emit('operationFailed', operationId, error);
-      
+
       this.logger.error(`Background operation failed: ${status.type}`, {
         id: operationId,
         error: status.error,
@@ -530,10 +585,10 @@ export class BackgroundCacheManager extends EventEmitter {
       status.status = 'timeout';
       status.endTime = Date.now();
       status.error = 'Operation timeout';
-      
+
       await this.statusCache.set(operationId, status);
       this.emit('operationTimeout', operationId);
-      
+
       this.logger.warn(`Background operation timeout: ${status.type}`, {
         id: operationId,
       });
@@ -553,11 +608,13 @@ export class BackgroundCacheManager extends EventEmitter {
    * Clean up old completed operations
    */
   private async cleanupOldOperations(): Promise<void> {
-    const cutoffTime = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
-    
+    const cutoffTime = Date.now() - 24 * 60 * 60 * 1000; // 24 hours ago
+
     for (const [id, status] of this.processStatus.entries()) {
       if (
-        (status.status === 'completed' || status.status === 'failed' || status.status === 'timeout') &&
+        (status.status === 'completed' ||
+          status.status === 'failed' ||
+          status.status === 'timeout') &&
         status.endTime &&
         status.endTime < cutoffTime
       ) {
@@ -585,7 +642,7 @@ export class BackgroundCacheManager extends EventEmitter {
    */
   private async ensureWorkerScript(): Promise<void> {
     const workerScript = path.join(__dirname, 'background-cache-worker.js');
-    
+
     if (!existsSync(workerScript)) {
       const workerCode = this.generateWorkerScript();
       await fs.writeFile(workerScript, workerCode, 'utf8');
@@ -597,7 +654,7 @@ export class BackgroundCacheManager extends EventEmitter {
    */
   private async ensureProcessScript(): Promise<void> {
     const processScript = path.join(__dirname, 'background-cache-process.js');
-    
+
     if (!existsSync(processScript)) {
       const processCode = this.generateProcessScript();
       await fs.writeFile(processScript, processCode, 'utf8');
@@ -1018,10 +1075,10 @@ processOperation();
 
     // Terminate all active processes
     const shutdownPromises: Promise<void>[] = [];
-    
+
     for (const [id, process] of this.activeProcesses.entries()) {
       shutdownPromises.push(
-        new Promise<void>((resolve) => {
+        new Promise<void>(resolve => {
           const timeout = setTimeout(() => {
             if ('terminate' in process) {
               process.terminate();

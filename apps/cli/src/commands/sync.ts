@@ -23,7 +23,8 @@ import BaseCommand, { ICONS } from '../base-command';
  * - Detects conflicts and allows user to choose resolution strategies
  */
 class SyncCommand extends BaseCommand {
-  static description = 'Synchronize todos between local and blockchain storage. When no list is specified, syncs all lists.';
+  static description =
+    'Synchronize todos between local and blockchain storage. When no list is specified, syncs all lists.';
 
   static examples = [
     '<%= config.bin %> sync                                    # Sync all lists (default)',
@@ -86,7 +87,8 @@ class SyncCommand extends BaseCommand {
 
   static args = {
     listName: Args.string({
-      description: 'Name of the todo list to sync. If not specified, syncs all lists',
+      description:
+        'Name of the todo list to sync. If not specified, syncs all lists',
       required: false,
     }),
   };
@@ -108,18 +110,24 @@ class SyncCommand extends BaseCommand {
 
       // Display what we're about to sync
       if (flags['dry-run']) {
-        this.log(chalk.blue(`${ICONS.INFO} Dry run mode - no changes will be made`));
+        this.log(
+          chalk.blue(`${ICONS.INFO} Dry run mode - no changes will be made`)
+        );
       }
 
       if (syncAllLists && !flags.id) {
         // Default behavior: sync all lists
-        const spinner = this.startSpinner('Scanning all lists for todos to sync...');
+        const spinner = this.startSpinner(
+          'Scanning all lists for todos to sync...'
+        );
         const lists = await this.todoService.getAllLists();
-        
+
         if (lists.length === 0) {
           this.stopSpinner();
           this.log(chalk.yellow(`${ICONS.WARNING} No todo lists found`));
-          this.log(chalk.dim('Tip: Create a list first with "waltodo add <todo>"'));
+          this.log(
+            chalk.dim('Tip: Create a list first with "waltodo add <todo>"')
+          );
           return;
         }
 
@@ -139,18 +147,23 @@ class SyncCommand extends BaseCommand {
           }
         }
 
-        this.stopSpinnerSuccess(spinner, `Found ${todosToSync.length} todo${todosToSync.length !== 1 ? 's' : ''} to sync across ${totalLists} list${totalLists !== 1 ? 's' : ''}`);
-        
+        this.stopSpinnerSuccess(
+          spinner,
+          `Found ${todosToSync.length} todo${todosToSync.length !== 1 ? 's' : ''} to sync across ${totalLists} list${totalLists !== 1 ? 's' : ''}`
+        );
+
         if (todosToSync.length > 0) {
           // Show list breakdown
           const listBreakdown = new Map<string, number>();
           todosToSync.forEach(({ listName }) => {
             listBreakdown.set(listName, (listBreakdown.get(listName) || 0) + 1);
           });
-          
+
           this.log(chalk.blue(`\n${ICONS.INFO} Syncing all lists:`));
           listBreakdown.forEach((count, name) => {
-            this.log(chalk.dim(`  • ${name}: ${count} todo${count !== 1 ? 's' : ''}`));
+            this.log(
+              chalk.dim(`  • ${name}: ${count} todo${count !== 1 ? 's' : ''}`)
+            );
           });
         }
       } else {
@@ -184,33 +197,61 @@ class SyncCommand extends BaseCommand {
             );
           }
           todosToSync = [{ todo, listName }];
-          this.log(chalk.blue(`${ICONS.INFO} Syncing specific todo: "${todo.title}" from list "${listName}"`));
+          this.log(
+            chalk.blue(
+              `${ICONS.INFO} Syncing specific todo: "${todo.title}" from list "${listName}"`
+            )
+          );
         } else {
           const bothStorageTodos = list.todos.filter(
             t => t.storageLocation === 'both'
           );
           todosToSync = bothStorageTodos.map(todo => ({ todo, listName }));
-          
+
           if (bothStorageTodos.length > 0) {
-            this.log(chalk.blue(`${ICONS.INFO} Syncing list "${listName}" (${bothStorageTodos.length} todo${bothStorageTodos.length !== 1 ? 's' : ''})`));
+            this.log(
+              chalk.blue(
+                `${ICONS.INFO} Syncing list "${listName}" (${bothStorageTodos.length} todo${bothStorageTodos.length !== 1 ? 's' : ''})`
+              )
+            );
           }
         }
       }
 
       if (todosToSync.length === 0) {
         if (syncAllLists) {
-          this.log(chalk.yellow('No todos found with "both" storage mode across any lists'));
-          this.log(chalk.dim('Tip: Use "waltodo add --storage both" to create todos that sync with blockchain'));
+          this.log(
+            chalk.yellow(
+              'No todos found with "both" storage mode across any lists'
+            )
+          );
+          this.log(
+            chalk.dim(
+              'Tip: Use "waltodo add --storage both" to create todos that sync with blockchain'
+            )
+          );
         } else {
-          this.log(chalk.yellow(`No todos found with "both" storage mode in list "${args.listName || 'default'}"`));
-          this.log(chalk.dim('Tip: Use "waltodo add --storage both" to create todos that sync with blockchain'));
+          this.log(
+            chalk.yellow(
+              `No todos found with "both" storage mode in list "${args.listName || 'default'}"`
+            )
+          );
+          this.log(
+            chalk.dim(
+              'Tip: Use "waltodo add --storage both" to create todos that sync with blockchain'
+            )
+          );
         }
         return;
       }
 
       // Early exit for dry run after showing what would be synced
       if (flags['dry-run']) {
-        this.log(chalk.blue(`\n${ICONS.INFO} Would sync ${todosToSync.length} todo${todosToSync.length !== 1 ? 's' : ''} with "both" storage mode`));
+        this.log(
+          chalk.blue(
+            `\n${ICONS.INFO} Would sync ${todosToSync.length} todo${todosToSync.length !== 1 ? 's' : ''} with "both" storage mode`
+          )
+        );
         return;
       }
 
@@ -237,13 +278,19 @@ class SyncCommand extends BaseCommand {
 
       // Show sync direction info
       if (flags.direction !== 'both') {
-        this.log(chalk.blue(`${ICONS.INFO} Sync direction: ${flags.direction}`));
+        this.log(
+          chalk.blue(`${ICONS.INFO} Sync direction: ${flags.direction}`)
+        );
       }
 
       // Confirm sync if not forced
       if (!flags.force && needsSync.length > 0) {
-        const actionText = flags.direction === 'pull' ? 'Pull changes for' : 
-                          flags.direction === 'push' ? 'Push changes for' : 'Sync';
+        const actionText =
+          flags.direction === 'pull'
+            ? 'Pull changes for'
+            : flags.direction === 'push'
+              ? 'Push changes for'
+              : 'Sync';
         const shouldSync = await confirm({
           message: `${actionText} ${needsSync.length} todo${needsSync.length !== 1 ? 's' : ''}?`,
           default: true,
@@ -412,18 +459,30 @@ class SyncCommand extends BaseCommand {
       } catch (error) {
         this.stopSpinner();
         failCount++;
-        this.warning(`Failed to sync "${todo.title}": ${error instanceof Error ? error.message : String(error)}`);
+        this.warning(
+          `Failed to sync "${todo.title}": ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
-    
+
     // Final summary
     if (successCount > 0 && failCount === 0) {
-      this.log(chalk.green(`\n${ICONS.SUCCESS} All todos synced successfully!`));
+      this.log(
+        chalk.green(`\n${ICONS.SUCCESS} All todos synced successfully!`)
+      );
     } else if (successCount > 0) {
-      this.log(chalk.green(`\n${ICONS.SUCCESS} Successfully synced ${successCount} todo${successCount !== 1 ? 's' : ''}`));
+      this.log(
+        chalk.green(
+          `\n${ICONS.SUCCESS} Successfully synced ${successCount} todo${successCount !== 1 ? 's' : ''}`
+        )
+      );
     }
     if (failCount > 0) {
-      this.log(chalk.red(`${ICONS.ERROR} ${failCount} todo${failCount !== 1 ? 's' : ''} failed to sync`));
+      this.log(
+        chalk.red(
+          `${ICONS.ERROR} ${failCount} todo${failCount !== 1 ? 's' : ''} failed to sync`
+        )
+      );
     }
 
     // Display summary
@@ -448,14 +507,22 @@ class SyncCommand extends BaseCommand {
     flags: any
   ): Promise<void> {
     // TODO: Implement background sync when BackgroundOperations is available
-    this.log(chalk.yellow(`${ICONS.WARNING} Background sync functionality not yet implemented`));
+    this.log(
+      chalk.yellow(
+        `${ICONS.WARNING} Background sync functionality not yet implemented`
+      )
+    );
     this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 
   private async startContinuousSync(flags: any): Promise<string> {
     // TODO: Implement continuous sync when BackgroundOperations is available
     const jobId = uuidv4();
-    this.log(chalk.yellow(`${ICONS.WARNING} Continuous sync functionality not yet implemented`));
+    this.log(
+      chalk.yellow(
+        `${ICONS.WARNING} Continuous sync functionality not yet implemented`
+      )
+    );
     this.log(chalk.dim('Use regular sync for now: waltodo sync'));
     return jobId;
   }
@@ -468,13 +535,20 @@ class SyncCommand extends BaseCommand {
       blockchainNewer?: boolean;
     }>,
     batchSize: number
-  ): Array<Array<{ todo: Todo; listName: string; localNewer?: boolean; blockchainNewer?: boolean }>> {
+  ): Array<
+    Array<{
+      todo: Todo;
+      listName: string;
+      localNewer?: boolean;
+      blockchainNewer?: boolean;
+    }>
+  > {
     const batches = [];
-    
+
     for (let i = 0; i < needsSync.length; i += batchSize) {
       batches.push(needsSync.slice(i, i + batchSize));
     }
-    
+
     return batches;
   }
 
@@ -508,9 +582,13 @@ class SyncCommand extends BaseCommand {
    */
   private async startSyncDaemon(flags: any): Promise<void> {
     this.log(chalk.blue(`${ICONS.INFO} Starting sync daemon...`));
-    
+
     // TODO: Implement SyncEngine when available
-    this.log(chalk.yellow(`${ICONS.WARNING} Sync daemon functionality not yet implemented`));
+    this.log(
+      chalk.yellow(
+        `${ICONS.WARNING} Sync daemon functionality not yet implemented`
+      )
+    );
     this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 
@@ -519,9 +597,13 @@ class SyncCommand extends BaseCommand {
    */
   private async startRealTimeSync(flags: any): Promise<void> {
     this.log(chalk.blue(`${ICONS.INFO} Starting real-time sync...`));
-    
+
     // TODO: Implement real-time sync when SyncEngine is available
-    this.log(chalk.yellow(`${ICONS.WARNING} Real-time sync functionality not yet implemented`));
+    this.log(
+      chalk.yellow(
+        `${ICONS.WARNING} Real-time sync functionality not yet implemented`
+      )
+    );
     this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 
@@ -530,8 +612,14 @@ class SyncCommand extends BaseCommand {
    */
   private async stopSyncDaemon(): Promise<void> {
     // TODO: Implement daemon stop functionality
-    this.log(chalk.yellow(`${ICONS.WARNING} Daemon stop functionality not yet implemented`));
-    this.log(chalk.dim('Use Ctrl+C in the daemon terminal to stop it manually'));
+    this.log(
+      chalk.yellow(
+        `${ICONS.WARNING} Daemon stop functionality not yet implemented`
+      )
+    );
+    this.log(
+      chalk.dim('Use Ctrl+C in the daemon terminal to stop it manually')
+    );
   }
 
   /**
@@ -539,7 +627,11 @@ class SyncCommand extends BaseCommand {
    */
   private async showSyncStatus(): Promise<void> {
     // TODO: Implement sync status when SyncEngine is available
-    this.log(chalk.yellow(`${ICONS.WARNING} Sync status functionality not yet implemented`));
+    this.log(
+      chalk.yellow(
+        `${ICONS.WARNING} Sync status functionality not yet implemented`
+      )
+    );
     this.log(chalk.dim('Use regular sync for now: waltodo sync'));
   }
 }

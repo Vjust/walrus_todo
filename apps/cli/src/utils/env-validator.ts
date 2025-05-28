@@ -1,6 +1,6 @@
 /**
  * Environment Variable Validation Service
- * 
+ *
  * Provides robust validation and diagnostic functions for environment variables.
  */
 
@@ -103,10 +103,7 @@ export function validateOrThrow(
   } = {}
 ): void {
   const result = validateEnvironmentFull();
-  const {
-    showWarnings = true,
-    exitOnWarning = false,
-  } = options;
+  const { showWarnings = true, exitOnWarning = false } = options;
 
   // Always check for missing required variables
   if (result.missingVars.length > 0) {

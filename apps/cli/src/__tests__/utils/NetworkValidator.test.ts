@@ -1,6 +1,9 @@
 import { jest, describe, it, expect, beforeEach } from '@jest/globals';
 import { NetworkValidator } from '../../utils/NetworkValidator';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
@@ -12,7 +15,7 @@ describe('NetworkValidator', () => {
     jest.clearAllMocks();
     // Mock child_process module
     jest.doMock('child_process', () => ({
-      execSync: jest.fn()
+      execSync: jest.fn(),
     }));
 
     // Use the complete mock implementation
@@ -74,10 +77,9 @@ describe('NetworkValidator', () => {
 
       await validator.validateEnvironment(mockWalrusClient);
 
-      expect(execSync).toHaveBeenCalledWith(
-        'sui client switch --env testnet',
-        { encoding: 'utf8' }
-      );
+      expect(execSync).toHaveBeenCalledWith('sui client switch --env testnet', {
+        encoding: 'utf8',
+      });
     });
 
     it('should throw on Walrus environment mismatch', async () => {

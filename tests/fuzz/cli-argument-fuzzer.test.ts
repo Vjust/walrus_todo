@@ -19,7 +19,11 @@ function executeCLI(args: string[]): {
     );
     return { stdout, stderr: '', exitCode: 0 };
   } catch (error: unknown) {
-    const execError = error as { stdout?: string; stderr?: string; status?: number };
+    const execError = error as {
+      stdout?: string;
+      stderr?: string;
+      status?: number;
+    };
     return {
       stdout: execError.stdout || '',
       stderr: execError.stderr || '',
@@ -255,7 +259,9 @@ describe('CLI Argument Fuzzing Tests', () => {
       expect([0, 1, 2]).toContain(result.exitCode);
 
       // Should provide meaningful error messages for failures
-      expect(result.exitCode === 0 || (result.stdout + result.stderr).length > 0).toBe(true);
+      expect(
+        result.exitCode === 0 || (result.stdout + result.stderr).length > 0
+      ).toBe(true);
     }
   });
 

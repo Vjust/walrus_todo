@@ -11,21 +11,45 @@ export interface MockTodoService extends jest.Mocked<TodoService> {
   getAllLists: jest.MockedFunction<() => Promise<string[]>>;
   getAllListsSync: jest.MockedFunction<() => string[]>;
   listTodos: jest.MockedFunction<() => Promise<Todo[]>>;
-  getAllListsWithContent: jest.MockedFunction<() => Promise<Record<string, TodoList>>>;
-  createList: jest.MockedFunction<(name: string, owner: string) => Promise<TodoList>>;
+  getAllListsWithContent: jest.MockedFunction<
+    () => Promise<Record<string, TodoList>>
+  >;
+  createList: jest.MockedFunction<
+    (name: string, owner: string) => Promise<TodoList>
+  >;
   getList: jest.MockedFunction<(listName: string) => Promise<TodoList | null>>;
-  getTodo: jest.MockedFunction<(todoId: string, listName?: string) => Promise<Todo | null>>;
-  getTodoByTitle: jest.MockedFunction<(title: string, listName?: string) => Promise<Todo | null>>;
-  getTodoByTitleOrId: jest.MockedFunction<(titleOrId: string, listName?: string) => Promise<Todo | null>>;
-  addTodo: jest.MockedFunction<(listName: string, todo: Partial<Todo>) => Promise<Todo>>;
-  updateTodo: jest.MockedFunction<(listName: string, todoId: string, updates: Partial<Todo>) => Promise<Todo>>;
-  toggleItemStatus: jest.MockedFunction<(listName: string, itemId: string, checked: boolean) => Promise<void>>;
+  getTodo: jest.MockedFunction<
+    (todoId: string, listName?: string) => Promise<Todo | null>
+  >;
+  getTodoByTitle: jest.MockedFunction<
+    (title: string, listName?: string) => Promise<Todo | null>
+  >;
+  getTodoByTitleOrId: jest.MockedFunction<
+    (titleOrId: string, listName?: string) => Promise<Todo | null>
+  >;
+  addTodo: jest.MockedFunction<
+    (listName: string, todo: Partial<Todo>) => Promise<Todo>
+  >;
+  updateTodo: jest.MockedFunction<
+    (listName: string, todoId: string, updates: Partial<Todo>) => Promise<Todo>
+  >;
+  toggleItemStatus: jest.MockedFunction<
+    (listName: string, itemId: string, checked: boolean) => Promise<void>
+  >;
   completeTodo: jest.MockedFunction<(todoId: string) => Promise<Todo>>;
-  deleteTodo: jest.MockedFunction<(listName: string, todoId: string) => Promise<void>>;
-  saveList: jest.MockedFunction<(listName: string, list: TodoList) => Promise<void>>;
+  deleteTodo: jest.MockedFunction<
+    (listName: string, todoId: string) => Promise<void>
+  >;
+  saveList: jest.MockedFunction<
+    (listName: string, list: TodoList) => Promise<void>
+  >;
   deleteList: jest.MockedFunction<(listName: string) => Promise<void>>;
-  findTodoByIdOrTitle: jest.MockedFunction<(listName: string, idOrTitle: string) => Promise<Todo | null>>;
-  findTodoByIdOrTitleAcrossLists: jest.MockedFunction<(idOrTitle: string) => Promise<{listName: string, todo: Todo} | null>>;
+  findTodoByIdOrTitle: jest.MockedFunction<
+    (listName: string, idOrTitle: string) => Promise<Todo | null>
+  >;
+  findTodoByIdOrTitleAcrossLists: jest.MockedFunction<
+    (idOrTitle: string) => Promise<{ listName: string; todo: Todo } | null>
+  >;
 }
 
 /**
@@ -58,8 +82,12 @@ export function createMockTodoService(): MockTodoService {
  * Creates a TodoService class mock for jest.MockedClass usage
  */
 export function createTodoServiceClassMock() {
-  const MockTodoServiceClass = jest.fn().mockImplementation(() => createMockTodoService()) as jest.MockedClass<typeof TodoService>;
-  
+  const MockTodoServiceClass = jest
+    .fn()
+    .mockImplementation(() => createMockTodoService()) as jest.MockedClass<
+    typeof TodoService
+  >;
+
   // Add prototype methods for cases where tests access methods via prototype
   MockTodoServiceClass.prototype = {
     getAllLists: jest.fn(),
