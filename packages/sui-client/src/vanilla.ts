@@ -8,6 +8,13 @@ import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { bcs } from '@mysten/sui/bcs';
 import { 
+  createCompatibleSuiClientOptions,
+  normalizeTransactionResult,
+  normalizeOwnedObjectsResponse,
+  normalizeObjectResponse,
+  checkVersionCompatibility,
+} from './compatibility';
+import { 
   AppConfig, 
   NetworkType, 
   SuiClientOptions,
@@ -46,17 +53,21 @@ export class VanillaSuiClient {
    */
   async initialize(networkOverride?: NetworkType): Promise<void> {
     try {
+      // Check version compatibility
+      checkVersionCompatibility();
+      
       // Load configuration
       this.config = await loadAppConfig(networkOverride);
       this.currentNetwork = this.config.network.name as NetworkType;
 
-      // Create SuiClient instance
-      const clientOptions: SuiClientOptions = {
+      // Create SuiClient instance with compatibility wrapper
+      const baseOptions = { 
         url: this.config.network.url,
-        ...this.options,
+        ...this.options 
       };
+      const compatOptions = createCompatibleSuiClientOptions(baseOptions);
 
-      this.client = new SuiClient(clientOptions);
+      this.client = new SuiClient(compatOptions);
       
       console.log(`[VanillaSuiClient] Initialized for ${this.currentNetwork} network`);
     } catch (error) {
@@ -167,13 +178,8 @@ export class VanillaSuiClient {
         );
       }
 
-      return {
-        digest: result.digest,
-        effects: result.effects,
-        events: result.events,
-        objectChanges: result.objectChanges,
-        balanceChanges: result.balanceChanges,
-      };
+      // Use compatibility wrapper for transaction result
+      return normalizeTransactionResult(result);
     } catch (error) {
       if (error instanceof TransactionError) {
         throw error;
@@ -280,7 +286,7 @@ export class VanillaSuiClient {
     const config = this.getConfig();
 
     try {
-      const response = await client.getOwnedObjects({
+      const rawResponse = await client.getOwnedObjects({
         owner: ownerAddress,
         filter: {
           StructType: `${config.contracts.todoNft.packageId}::${config.contracts.todoNft.moduleName}::${config.contracts.todoNft.structName}`,
@@ -292,6 +298,8 @@ export class VanillaSuiClient {
         },
       });
 
+      // Use compatibility wrapper for response
+      const response = normalizeOwnedObjectsResponse(rawResponse);
       const todos: Todo[] = [];
       
       for (const item of response.data) {
@@ -316,7 +324,7 @@ export class VanillaSuiClient {
     const client = this.getClient();
     
     try {
-      const response = await client.getObject({
+      const rawResponse = await client.getObject({
         id: objectId,
         options: {
           showContent: true,
@@ -325,6 +333,8 @@ export class VanillaSuiClient {
         },
       });
 
+      // Use compatibility wrapper for response
+      const response = normalizeObjectResponse(rawResponse);
       return this.transformSuiObjectToTodo(response);
     } catch (error) {
       throw new SuiClientError(

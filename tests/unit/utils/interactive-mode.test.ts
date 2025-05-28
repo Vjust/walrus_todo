@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 import { Readable, Writable } from 'stream';
-import { InteractiveMode } from '../../../src/utils/interactive-mode';
+import { InteractiveMode } from '../../../apps/cli/src/utils/interactive-mode';
 import { stdin as mockStdin, stdout as mockStdout } from 'process';
 import * as readline from 'readline';
 

@@ -21,7 +21,7 @@ export class TodoAPIClient {
 
   constructor() {
     this.baseURL =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     this.apiKey = process.env.NEXT_PUBLIC_API_KEY;
   }
 

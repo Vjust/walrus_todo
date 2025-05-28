@@ -2,10 +2,10 @@ import { runCommand } from '../../helpers/test-utils';
 // import { Todo } from '../../../src/types/todo';
 import * as fs from 'fs';
 import * as path from 'path';
-import { AIProviderFactory } from '../../../src/services/ai/AIProviderFactory';
+import { AIProviderFactory } from '../../../apps/cli/src/services/ai/AIProviderFactory';
 
 // Mock the AIProviderFactory to avoid API calls
-jest.mock('../../../src/services/ai/AIProviderFactory', () => ({
+jest.mock('../../../apps/cli/src/services/ai/AIProviderFactory', () => ({
   AIProviderFactory: {
     setAIFeatureRequested: jest.fn(),
     createDefaultAdapter: jest.fn().mockReturnValue({
@@ -85,7 +85,7 @@ jest.mock('../../../src/services/ai/AIProviderFactory', () => ({
 }));
 
 // Mock the environment loader
-jest.mock('../../../src/utils/env-loader', () => ({
+jest.mock('../../../apps/cli/src/utils/env-loader', () => ({
   loadEnvironment: jest.fn(),
 }));
 

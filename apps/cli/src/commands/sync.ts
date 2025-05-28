@@ -574,4 +574,204 @@ export default class SyncCommand extends BaseCommand {
 
     return resolution as 'local' | 'blockchain';
   }
+
+  /**
+   * Start sync daemon mode
+   */
+  private async startSyncDaemon(flags: any): Promise<void> {
+    this.log(chalk.blue(`${ICONS.INFO} Starting sync daemon...`));
+    
+    const config = this.createSyncEngineConfig(flags);
+    this.syncEngine = new SyncEngine(config);
+    
+    // Setup event handlers
+    this.setupSyncEngineEvents();
+    
+    // Initialize and start
+    await this.syncEngine.initialize(flags.wallet);
+    await this.syncEngine.start();
+    
+    this.log(chalk.green(`${ICONS.SUCCESS} Sync daemon started`));
+    this.log(chalk.blue(`${ICONS.INFO} Watching: ${config.todosDirectory}`));
+    this.log(chalk.blue(`${ICONS.INFO} API Server: ${config.apiConfig.baseURL}`));
+    this.log(chalk.dim('Press Ctrl+C to stop the daemon'));
+    
+    // Keep the process running
+    process.on('SIGINT', async () => {
+      this.log('\n' + chalk.yellow('Stopping sync daemon...'));
+      if (this.syncEngine) {
+        await this.syncEngine.shutdown();
+      }
+      process.exit(0);
+    });
+    
+    // Keep alive
+    await new Promise(() => {});
+  }
+
+  /**
+   * Start real-time sync mode (foreground)
+   */
+  private async startRealTimeSync(flags: any): Promise<void> {
+    this.log(chalk.blue(`${ICONS.INFO} Starting real-time sync...`));
+    
+    const config = this.createSyncEngineConfig(flags);
+    this.syncEngine = new SyncEngine(config);
+    
+    // Setup event handlers with more verbose output
+    this.setupSyncEngineEvents(true);
+    
+    // Initialize and start
+    await this.syncEngine.initialize(flags.wallet);
+    await this.syncEngine.start();
+    
+    this.log(chalk.green(`${ICONS.SUCCESS} Real-time sync started`));
+    this.log(chalk.blue(`${ICONS.INFO} Watching: ${config.todosDirectory}`));
+    this.log(chalk.blue(`${ICONS.INFO} API Server: ${config.apiConfig.baseURL}`));
+    this.log(chalk.dim('File changes will be automatically synced. Press Ctrl+C to stop.'));
+    
+    // Show initial status
+    const status = this.syncEngine.getSyncStatus();
+    this.displaySyncEngineStatus(status);
+    
+    // Handle graceful shutdown
+    process.on('SIGINT', async () => {
+      this.log('\n' + chalk.yellow('Stopping real-time sync...'));
+      if (this.syncEngine) {
+        await this.syncEngine.shutdown();
+      }
+      process.exit(0);
+    });
+    
+    // Keep alive
+    await new Promise(() => {});
+  }
+
+  /**
+   * Stop sync daemon
+   */
+  private async stopSyncDaemon(): Promise<void> {
+    // This would connect to a running daemon and stop it
+    // For now, just show a message
+    this.log(chalk.yellow(`${ICONS.WARNING} Daemon stop functionality not yet implemented`));
+    this.log(chalk.dim('Use Ctrl+C in the daemon terminal to stop it manually'));
+  }
+
+  /**
+   * Show sync engine status
+   */
+  private async showSyncStatus(): Promise<void> {
+    if (!this.syncEngine) {
+      // Try to connect to a running daemon or show offline status
+      this.log(chalk.yellow(`${ICONS.WARNING} No active sync engine`));
+      this.log(chalk.dim('Start sync with --daemon or --real-time flags'));
+      return;
+    }
+    
+    const status = this.syncEngine.getSyncStatus();
+    this.displaySyncEngineStatus(status);
+  }
+
+  /**
+   * Create sync engine configuration
+   */
+  private createSyncEngineConfig(flags: any): SyncEngineConfig {
+    const todosDir = process.env.WALTODO_TODOS_DIR || join(os.homedir(), 'Todos');
+    
+    return {
+      todosDirectory: todosDir,
+      apiConfig: {
+        baseURL: flags['api-url'],
+        timeout: 30000,
+        retryAttempts: 3,
+        enableWebSocket: true,
+        headers: {
+          'X-Client': 'WalTodo-CLI',
+          'X-Version': '1.0.0'
+        }
+      },
+      syncInterval: 30000, // 30 seconds
+      conflictResolution: flags.resolve,
+      enableRealTimeSync: flags['real-time'] || flags.daemon,
+      maxConcurrentSyncs: 3,
+      syncDebounceMs: 2000
+    };
+  }
+
+  /**
+   * Setup sync engine event handlers
+   */
+  private setupSyncEngineEvents(verbose = false): void {
+    if (!this.syncEngine) return;
+    
+    this.syncEngine.on('initialized', () => {
+      if (verbose) {
+        this.log(chalk.green(`${ICONS.SUCCESS} Sync engine initialized`));
+      }
+    });
+    
+    this.syncEngine.on('started', () => {
+      if (verbose) {
+        this.log(chalk.green(`${ICONS.SUCCESS} Sync engine started`));
+      }
+    });
+    
+    this.syncEngine.on('file-changed', (event) => {
+      if (verbose) {
+        this.log(chalk.blue(`${ICONS.ARROW} File ${event.type}: ${event.relativePath}`));
+      }
+    });
+    
+    this.syncEngine.on('sync-started', () => {
+      if (verbose) {
+        this.log(chalk.blue(`${ICONS.INFO} Sync started...`));
+      }
+    });
+    
+    this.syncEngine.on('sync-completed', (result) => {
+      if (verbose || result.errors.length > 0) {
+        this.log(chalk.green(`${ICONS.SUCCESS} Sync completed: ${result.syncedFiles} files`));
+        if (result.conflicts.length > 0) {
+          this.log(chalk.yellow(`${ICONS.WARNING} ${result.conflicts.length} conflicts detected`));
+        }
+        if (result.errors.length > 0) {
+          this.log(chalk.red(`${ICONS.ERROR} ${result.errors.length} errors occurred`));
+        }
+      }
+    });
+    
+    this.syncEngine.on('conflict-detected', (conflict) => {
+      this.log(chalk.yellow(`${ICONS.WARNING} Conflict detected: ${conflict.itemId}`));
+      this.log(chalk.dim(`  Local: ${new Date(conflict.localTimestamp).toLocaleString()}`));
+      this.log(chalk.dim(`  Remote: ${new Date(conflict.remoteTimestamp).toLocaleString()}`));
+    });
+    
+    this.syncEngine.on('remote-change-applied', (event) => {
+      if (verbose) {
+        this.log(chalk.cyan(`${ICONS.ARROW} Remote change applied: ${event.type}`));
+      }
+    });
+    
+    this.syncEngine.on('error', (error) => {
+      this.log(chalk.red(`${ICONS.ERROR} Sync error: ${error.message}`));
+    });
+    
+    this.syncEngine.on('api-disconnected', () => {
+      this.log(chalk.yellow(`${ICONS.WARNING} API connection lost, will retry...`));
+    });
+  }
+
+  /**
+   * Display sync engine status
+   */
+  private displaySyncEngineStatus(status: any): void {
+    this.section('Sync Engine Status', [
+      `Active: ${status.isActive ? chalk.green('Yes') : chalk.red('No')}`,
+      `Last Sync: ${status.lastSync ? new Date(status.lastSync).toLocaleString() : 'Never'}`,
+      `Pending Changes: ${status.pendingChanges}`,
+      `Conflicts: ${status.conflicts.length}`,
+      status.conflicts.length > 0 ? '\nConflicts:' : null,
+      ...status.conflicts.map((c: any) => `  • ${c.itemId} (${c.type})`)
+    ].filter(Boolean).join('\n'));
+  }
 }

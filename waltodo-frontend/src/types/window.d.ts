@@ -32,8 +32,17 @@ interface Window {
     [key: string]: unknown;
   };
 
-  // Solana wallets
+  // Phantom wallet - supports both Solana and Sui
   phantom?: {
+    sui?: {
+      connect(options?: { onlyIfTrusted?: boolean }): Promise<{ address: string }>;
+      disconnect(): Promise<void>;
+      signAndExecuteTransaction(tx: unknown): Promise<{ digest: string }>;
+      /* …rest identical to solana interface… */
+      on: (event: string, callback: (...args: unknown[]) => void) => void;
+      off: (event: string, callback: (...args: unknown[]) => void) => void;
+      [key: string]: unknown;
+    };
     solana?: {
       isPhantom: boolean;
       connect: (options?: {

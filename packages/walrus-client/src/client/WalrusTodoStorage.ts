@@ -9,11 +9,18 @@ import type {
   WalrusTodo,
   WalrusTodoUploadOptions,
   WalrusTodoCreateResult,
-  UniversalSigner
+  UniversalSigner,
+  Todo,
+  TodoList,
+  WalrusNetwork,
+  StorageCostEstimate
 } from '../types';
 import { WalrusValidationError, WalrusStorageError } from '../errors';
 
 export class WalrusTodoStorage extends WalrusClient {
+  constructor(network: WalrusNetwork = 'testnet', options?: { useMockMode?: boolean }) {
+    super({ network, ...options });
+  }
   /**
    * Store a todo on Walrus with comprehensive metadata
    */
@@ -348,6 +355,166 @@ export class WalrusTodoStorage extends WalrusClient {
       typeof todo.createdAt === 'number' &&
       typeof todo.updatedAt === 'number'
     );
+  }
+
+  /**
+   * Store todo using the legacy Todo interface (consolidated from CLI)
+   */
+  async storeTodoLegacy(todo: Todo, epochs: number = 5): Promise<string> {
+    return super.storeTodo(todo, epochs);
+  }
+
+  /**
+   * Store todo list using the legacy TodoList interface
+   */
+  async storeTodoListLegacy(list: TodoList, epochs: number = 5): Promise<string> {
+    return super.storeList(list, epochs);
+  }
+
+  /**
+   * Retrieve todo using the legacy Todo interface
+   */
+  async retrieveTodoLegacy(blobId: string): Promise<Todo> {
+    return super.retrieveTodo(blobId);
+  }
+
+  /**
+   * Retrieve todo list using the legacy TodoList interface
+   */
+  async retrieveListLegacy(blobId: string): Promise<TodoList> {
+    return super.retrieveList(blobId);
+  }
+
+  /**
+   * Convert between Todo and WalrusTodo formats
+   */
+  convertToWalrusTodo(todo: Todo): WalrusTodo {
+    return {
+      id: todo.id,
+      title: todo.title,
+      description: todo.description,
+      completed: todo.completed,
+      priority: todo.priority,
+      tags: todo.tags,
+      dueDate: todo.dueDate,
+      walrusBlobId: todo.walrusBlobId,
+      suiObjectId: todo.suiObjectId,
+      blockchainStored: !!todo.suiObjectId,
+      createdAt: new Date(todo.createdAt).getTime(),
+      updatedAt: new Date(todo.updatedAt).getTime(),
+      isPrivate: todo.private,
+    };
+  }
+
+  /**
+   * Convert WalrusTodo back to Todo format
+   */
+  convertToTodo(walrusTodo: WalrusTodo): Todo {
+    return {
+      id: walrusTodo.id,
+      title: walrusTodo.title,
+      description: walrusTodo.description,
+      completed: walrusTodo.completed,
+      priority: walrusTodo.priority,
+      tags: walrusTodo.tags,
+      createdAt: new Date(walrusTodo.createdAt).toISOString(),
+      updatedAt: new Date(walrusTodo.updatedAt).toISOString(),
+      private: walrusTodo.isPrivate,
+      dueDate: walrusTodo.dueDate,
+      walrusBlobId: walrusTodo.walrusBlobId,
+      suiObjectId: walrusTodo.suiObjectId,
+      storageLocation: walrusTodo.blockchainStored ? 'blockchain' : 'walrus',
+    };
+  }
+
+  /**
+   * Get storage information for todos
+   */
+  async getTodoStorageInfo(walrusBlobId: string): Promise<{
+    exists: boolean;
+    blobInfo?: any;
+    storageCost?: StorageCostEstimate;
+  }> {
+    const exists = await this.exists(walrusBlobId);
+    
+    if (!exists) {
+      return { exists: false };
+    }
+
+    try {
+      const blobInfo = await this.getBlobInfo(walrusBlobId);
+      let storageCost: StorageCostEstimate | undefined;
+      
+      if (blobInfo.size) {
+        const costResult = await this.calculateStorageCost(blobInfo.size, 5);
+        storageCost = {
+          ...costResult,
+          sizeBytes: blobInfo.size,
+          epochs: 5,
+        };
+      }
+
+      return {
+        exists: true,
+        blobInfo,
+        storageCost,
+      };
+    } catch (error) {
+      return { exists: true };
+    }
+  }
+
+  /**
+   * Estimate storage costs for multiple todos
+   */
+  async estimateStorageCosts(
+    todos: Array<Omit<WalrusTodo, 'id' | 'createdAt' | 'updatedAt' | 'blockchainStored'>>,
+    epochs: number = 5
+  ): Promise<{
+    totalCost: bigint;
+    totalSize: number;
+    perTodoCost: Array<{ totalCost: bigint; size: number }>;
+  }> {
+    let totalCost = BigInt(0);
+    let totalSize = 0;
+    const perTodoCost: Array<{ totalCost: bigint; size: number }> = [];
+
+    for (const todo of todos) {
+      const sizeBytes = JSON.stringify(todo).length;
+      const cost = await this.calculateStorageCost(sizeBytes, epochs);
+      
+      totalCost += cost.totalCost;
+      totalSize += sizeBytes;
+      perTodoCost.push({ totalCost: cost.totalCost, size: sizeBytes });
+    }
+
+    return {
+      totalCost,
+      totalSize,
+      perTodoCost,
+    };
+  }
+
+  /**
+   * Delete a todo (for legacy Todo interface)
+   */
+  async deleteTodoLegacy(walrusBlobId: string, signer?: UniversalSigner): Promise<void> {
+    if (!walrusBlobId) {
+      throw new WalrusValidationError('Walrus blob ID is required for deletion');
+    }
+
+    try {
+      await this.delete(walrusBlobId, signer);
+    } catch (error) {
+      console.warn('Walrus blob deletion failed (may not be deletable):', error);
+    }
+  }
+
+  /**
+   * Get client instance for direct access
+   */
+  getClient(): WalrusClient {
+    return this;
   }
 
   /**

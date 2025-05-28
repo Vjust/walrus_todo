@@ -9,7 +9,7 @@ export type WalletType = 'sui' | 'phantom' | 'slush' | 'backpack' | null;
 export type NetworkType = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
 
 // Re-export from existing context to maintain compatibility
-export type { WalletContextValue } from '@/contexts/WalletContext';
+export type { WalletContextType } from '@/contexts/WalletContext';
 
 // Slush wallet account interface (based on StashedWalletAdapter)
 export interface SlushAccount {

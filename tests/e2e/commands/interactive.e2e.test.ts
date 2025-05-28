@@ -9,8 +9,8 @@ import * as readline from 'readline';
 import { expect } from 'chai';
 import * as childProcess from 'child_process';
 
-import InteractiveCommand from '../../../src/commands/interactive';
-import { TodoService } from '../../../src/services/todo-service';
+import InteractiveCommand from '../../../apps/cli/src/commands/interactive';
+import { TodoService } from '../../../apps/cli/src/services/todo-service';
 
 describe('interactive command e2e tests', () => {
   let sandbox: sinon.SinonSandbox;

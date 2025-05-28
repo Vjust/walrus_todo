@@ -9,15 +9,15 @@ interface TransactionHistoryProps {
 }
 
 export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
-  const { transactions } = useWalletContext();
+  const { transactionHistory } = useWalletContext();
   const [expanded, setExpanded] = useState(false);
 
   // Get transactions to display based on expanded state and maxItems
   const displayTransactions = expanded
-    ? transactions
-    : transactions.slice(0, maxItems);
+    ? transactionHistory
+    : transactionHistory.slice(0, maxItems);
 
-  if (transactions.length === 0) {
+  if (transactionHistory.length === 0) {
     return (
       <div className='p-4 ocean-card'>
         <p className='text-ocean-medium dark:text-ocean-light text-sm'>
@@ -81,7 +81,7 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
   };
 
   // Get status icon based on transaction status
-  const getStatusIcon = (status: 'pending' | 'success' | 'error') => {
+  const getStatusIcon = (status: 'pending' | 'success' | 'failed') => {
     switch (status) {
       case 'pending':
         return (
@@ -106,7 +106,7 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
             />
           </svg>
         );
-      case 'error':
+      case 'failed':
         return (
           <svg
             className='w-4 h-4 text-red-500'
@@ -137,18 +137,18 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
           <div className='flex justify-between'>
             <p className='text-sm font-medium truncate'>
               {tx.type}
-              {tx.hash && (
+              {tx.details?.digest && (
                 <span className='ml-2 text-xs text-ocean-medium dark:text-ocean-light truncate'>
-                  {tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}
+                  {tx.details.digest.slice(0, 8)}...{tx.details.digest.slice(-6)}
                 </span>
               )}
             </p>
             <p className='text-xs text-ocean-medium dark:text-ocean-light ml-2'>
-              {formatRelativeTime(tx.timestamp)}
+              {formatRelativeTime(tx.timestamp instanceof Date ? tx.timestamp.getTime() : tx.timestamp)}
             </p>
           </div>
-          {tx.status === 'error' && tx.message && (
-            <p className='text-xs text-red-500 mt-1 truncate'>{tx.message}</p>
+          {tx.status === 'failed' && tx.details?.error && (
+            <p className='text-xs text-red-500 mt-1 truncate'>{tx.details.error}</p>
           )}
         </div>
       </div>
@@ -161,12 +161,12 @@ export function TransactionHistory({ maxItems = 5 }: TransactionHistoryProps) {
         <h3 className='font-medium text-sm text-ocean-deep dark:text-ocean-foam'>
           Transaction History
         </h3>
-        {transactions.length > maxItems && (
+        {transactionHistory.length > maxItems && (
           <button
             onClick={() => setExpanded(!expanded)}
             className='text-xs text-ocean-medium hover:text-ocean-deep dark:text-ocean-light dark:hover:text-ocean-foam'
           >
-            {expanded ? 'Show less' : `Show all (${transactions.length})`}
+            {expanded ? 'Show less' : `Show all (${transactionHistory.length})`}
           </button>
         )}
       </div>

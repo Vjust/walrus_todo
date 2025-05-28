@@ -1,15 +1,16 @@
 # @waltodo/sui-client
 
-A unified Sui blockchain client package that wraps @mysten/dapp-kit functionality for use in both React frontend applications and Node.js CLI environments.
+A unified Sui client package for WalTodo that provides both vanilla JavaScript functions for CLI usage and React hooks for frontend usage. This package wraps @mysten/dapp-kit functionality with WalTodo-specific enhancements and automatic version compatibility.
 
 ## Features
 
-- **Universal**: Works in both browser (React) and Node.js (CLI) environments
-- **Type-safe**: Full TypeScript support with comprehensive type definitions
-- **Configuration-driven**: Dynamic configuration loading for different networks
-- **Wallet integration**: Complete wallet connection and transaction signing
-- **TodoNFT operations**: Built-in support for WalTodo-specific smart contract operations
-- **Error handling**: Comprehensive error types and handling
+- **Universal Compatibility**: Works in both Node.js (CLI) and browser (React) environments
+- **Dynamic Configuration**: Integrates with @waltodo/config-loader for runtime configuration
+- **Version Compatibility**: Automatic compatibility wrappers for different @mysten/sui versions
+- **Type Safety**: Full TypeScript support with comprehensive type definitions
+- **React Integration**: Complete dApp Kit wrapper with enhanced hooks
+- **Error Handling**: Robust error handling and recovery mechanisms
+- **Testing**: Comprehensive test suite for both environments
 
 ## Installation
 
@@ -19,40 +20,93 @@ npm install @waltodo/sui-client
 pnpm add @waltodo/sui-client
 ```
 
+### Peer Dependencies
+
+For React usage:
+```bash
+npm install react react-dom @mysten/sui @mysten/dapp-kit @tanstack/react-query
+```
+
+For Node.js/CLI usage:
+```bash
+npm install @mysten/sui
+```
+
 ## Usage
 
-### React Frontend
+### Vanilla JavaScript (Node.js/CLI)
+
+```typescript
+import { createVanillaSuiClient, type CreateTodoParams } from '@waltodo/sui-client';
+
+// Create and initialize client
+const client = createVanillaSuiClient({
+  rpcTimeout: 30000,
+  websocketTimeout: 30000,
+});
+
+await client.initialize('testnet');
+
+// Create keypair
+const keypair = client.createKeypairFromPrivateKey('your-private-key');
+
+// Create todo transaction
+const createParams: CreateTodoParams = {
+  title: 'My Todo',
+  description: 'Todo description',
+  imageUrl: 'https://example.com/image.jpg',
+  metadata: '{}',
+  isPrivate: false,
+};
+
+const tx = client.createTodoNFTTransaction(createParams, keypair.getPublicKey().toSuiAddress());
+
+// Execute transaction
+const result = await client.executeTransaction(tx, keypair);
+console.log('Transaction digest:', result.digest);
+
+// Get todos from blockchain
+const todos = await client.getTodosFromBlockchain(address);
+```
+
+### React Integration
 
 ```tsx
 import React from 'react';
 import {
   WalTodoWalletProvider,
-  useWalTodoWallet,
   useCurrentAccount,
-  useTodoNFTOperations
-} from '@waltodo/sui-client/react';
+  useExecuteTxn,
+  useTodoNFTOperations,
+  useWalletConnection,
+  useTransactionExecution,
+} from '@waltodo/sui-client';
 
 // Wrap your app with the provider
 function App() {
   return (
     <WalTodoWalletProvider defaultNetwork="testnet" autoConnect={true}>
-      <MyComponent />
+      <TodoApp />
     </WalTodoWalletProvider>
   );
 }
 
-// Use the hooks in your components
-function MyComponent() {
-  const { connected, connect, disconnect } = useWalTodoWallet();
+// Use hooks in components
+function TodoApp() {
   const account = useCurrentAccount();
+  const { connected, connect, disconnect } = useWalletConnection();
   const { createTodoNFT, getTodosFromBlockchain } = useTodoNFTOperations();
+  const { executeTransaction, isExecuting } = useTransactionExecution();
 
   const handleCreateTodo = async () => {
-    if (!connected) return;
-    
+    if (!connected) {
+      connect();
+      return;
+    }
+
     try {
       const result = await createTodoNFT({
-        title: 'My Todo',
+        title: 'New Todo',
         description: 'Todo description',
         imageUrl: 'https://example.com/image.jpg',
       });
@@ -64,210 +118,203 @@ function MyComponent() {
 
   return (
     <div>
-      {connected ? (
-        <div>
-          <p>Connected: {account?.address}</p>
-          <button onClick={handleCreateTodo}>Create Todo</button>
-          <button onClick={disconnect}>Disconnect</button>
-        </div>
-      ) : (
-        <button onClick={connect}>Connect Wallet</button>
-      )}
+      <p>Account: {account?.address || 'Not connected'}</p>
+      <button onClick={connected ? disconnect : connect}>
+        {connected ? 'Disconnect' : 'Connect'}
+      </button>
+      <button onClick={handleCreateTodo} disabled={isExecuting}>
+        {isExecuting ? 'Creating...' : 'Create Todo'}
+      </button>
     </div>
   );
 }
 ```
 
-### Node.js CLI
+### Configuration Loading
 
-```typescript
-import {
-  createVanillaSuiClient,
-  loadAppConfig,
-  Ed25519Keypair,
-  CreateTodoParams
-} from '@waltodo/sui-client/vanilla';
+The package automatically loads configuration using the following priority:
 
-async function main() {
-  // Create and initialize the client
-  const client = createVanillaSuiClient();
-  await client.initialize('testnet');
+1. **@waltodo/config-loader** (if available)
+2. **Generated config files** (browser: `/config/{network}.json`)
+3. **CLI config files** (Node.js: various paths)
+4. **Fallback configurations** (built-in defaults)
 
-  // Create a keypair (in real usage, load from secure storage)
-  const keypair = Ed25519Keypair.generate();
-  const address = keypair.getPublicKey().toSuiAddress();
-
-  // Create a todo
-  const todoParams: CreateTodoParams = {
-    title: 'CLI Todo',
-    description: 'Created from CLI',
-    imageUrl: 'https://example.com/image.jpg',
-  };
-
-  // Create transaction
-  const tx = client.createTodoNFTTransaction(todoParams, address);
-
-  // Execute transaction
-  const result = await client.executeTransaction(tx, keypair);
-  console.log('Todo created:', result.digest);
-
-  // Fetch todos
-  const todos = await client.getTodosFromBlockchain(address);
-  console.log('All todos:', todos);
-}
-
-main().catch(console.error);
-```
-
-## Configuration
-
-The package supports dynamic configuration loading:
-
-### Browser Environment
-- Loads configuration from `/config/${network}.json`
-- Falls back to built-in configurations if files not found
-
-### Node.js Environment  
-- Loads configuration from various possible paths:
-  - `./config/${network}.json`
-  - `../.waltodo-cache/config/${network}.json`
-  - And other common locations
-- Falls back to built-in configurations if files not found
-
-### Manual Configuration
+You can also load configuration manually:
 
 ```typescript
 import { loadAppConfig, getNetworkConfig } from '@waltodo/sui-client';
 
-// Load full app configuration
+// Load app configuration
 const config = await loadAppConfig('testnet');
+console.log('Network URL:', config.network.url);
 
-// Get just network configuration
+// Get specific network configuration
 const networkConfig = getNetworkConfig('testnet');
+console.log('Explorer URL:', networkConfig.explorerUrl);
 ```
 
 ## API Reference
 
-### React Hooks
+### VanillaSuiClient
 
-#### `useWalTodoWallet()`
-Main hook providing comprehensive wallet functionality.
-
-#### `useCurrentAccount()`
-Returns the currently connected account information.
-
-#### `useExecuteTxn()`
-Hook for executing transactions with automatic error handling.
-
-#### `useTodoNFTOperations()`
-Hook providing TodoNFT-specific operations.
-
-#### `useAppConfig()`
-Hook for loading and accessing configuration.
-
-### Vanilla Client
-
-#### `VanillaSuiClient`
-Main client class for Node.js environments.
+Main class for Node.js/CLI usage:
 
 ```typescript
 class VanillaSuiClient {
   async initialize(network?: NetworkType): Promise<void>
   getClient(): SuiClient
   getConfig(): AppConfig
-  async executeTransaction(tx: Transaction, keypair: Ed25519Keypair): Promise<TransactionResult>
+  getCurrentNetwork(): NetworkType
+  
+  createKeypairFromPrivateKey(privateKey: string): Ed25519Keypair
+  async getAccount(address: string): Promise<WalletAccount>
+  
+  async executeTransaction(transaction: Transaction, keypair: Ed25519Keypair): Promise<TransactionResult>
+  
   createTodoNFTTransaction(params: CreateTodoParams, senderAddress: string): Transaction
+  updateTodoNFTTransaction(params: UpdateTodoParams, senderAddress: string): Transaction
+  completeTodoNFTTransaction(objectId: string, senderAddress: string): Transaction
+  deleteTodoNFTTransaction(objectId: string, senderAddress: string): Transaction
+  
   async getTodosFromBlockchain(ownerAddress: string): Promise<Todo[]>
-  // ... more methods
+  async getTodoByObjectId(objectId: string): Promise<Todo | null>
+  async getTransactionStatus(digest: string): Promise<TransactionStatus>
 }
 ```
 
-### Types
+### React Hooks
 
-The package exports comprehensive TypeScript types:
+Available hooks for React integration:
 
 ```typescript
-export interface Todo {
-  id: string;
-  title: string;
-  description?: string;
-  completed: boolean;
-  // ... more fields
+// Core hooks
+useCurrentAccount(): WalletAccount | null
+useExecuteTxn(): (transaction: Transaction) => Promise<TransactionResult>
+useWalletConnection(): { connected, connecting, connect, disconnect, error, clearError }
+
+// Enhanced hooks
+useTransactionExecution(): {
+  executeTransaction: (tx: Transaction) => Promise<TransactionResult>
+  isExecuting: boolean
+  lastResult: TransactionResult | null
+  lastError: string | null
+  clearError: () => void
 }
 
-export interface CreateTodoParams {
-  title: string;
-  description: string;
-  imageUrl: string;
-  metadata?: string;
-  isPrivate?: boolean;
+useTodoNFTOperations(): {
+  createTodoNFT: (params: CreateTodoParams) => Promise<TransactionResult>
+  updateTodoNFT: (params: UpdateTodoParams) => Promise<TransactionResult>
+  completeTodoNFT: (objectId: string) => Promise<TransactionResult>
+  deleteTodoNFT: (objectId: string) => Promise<TransactionResult>
+  getTodosFromBlockchain: () => Promise<Todo[]>
 }
 
-export interface TransactionResult {
-  digest: string;
-  effects?: any;
-  events?: any[];
-  objectChanges?: any[];
-  balanceChanges?: any[];
+useAppConfig(): {
+  config: AppConfig | null
+  loading: boolean
+  error: string | null
+  reload: () => Promise<void>
 }
-
-// ... many more types
 ```
+
+## Version Compatibility
+
+The package includes automatic compatibility wrappers for different versions of @mysten/sui and @mysten/dapp-kit:
+
+- **Minimum supported @mysten/sui**: 1.28.0
+- **Minimum supported @mysten/dapp-kit**: 0.14.0
+- **Recommended @mysten/sui**: 1.30.1+
+- **Recommended @mysten/dapp-kit**: 0.14.32+
+
+Compatibility features:
+- Automatic option normalization for SuiClient
+- Result property fallbacks for missing fields
+- Hook error handling for API changes
+- Environment detection and feature polyfills
 
 ## Error Handling
 
-The package provides specific error types:
+The package provides comprehensive error handling:
 
 ```typescript
 import {
   SuiClientError,
   WalletNotConnectedError,
   TransactionError,
-  NetworkError
+  NetworkError,
 } from '@waltodo/sui-client';
 
 try {
-  await someOperation();
+  await client.executeTransaction(tx, keypair);
 } catch (error) {
   if (error instanceof WalletNotConnectedError) {
-    // Handle wallet not connected
+    console.log('Please connect your wallet');
   } else if (error instanceof TransactionError) {
-    // Handle transaction failure
-    console.log('Transaction digest:', error.transactionDigest);
+    console.log('Transaction failed:', error.transactionDigest);
   } else if (error instanceof NetworkError) {
-    // Handle network issues
-    console.log('Network:', error.networkName);
+    console.log('Network error:', error.networkName);
   }
 }
 ```
+
+## Testing
+
+The package includes comprehensive tests for both environments:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run with coverage
+npm test -- --coverage
+```
+
+Test categories:
+- **Unit tests**: Individual functions and classes
+- **Integration tests**: Full workflow testing
+- **React tests**: Component and hook testing
+- **Compatibility tests**: Version compatibility verification
 
 ## Development
 
 ### Building
 
 ```bash
-pnpm build      # Build for production
-pnpm build:dev  # Build for development (faster)
-pnpm clean      # Clean build artifacts
-```
+# Development build (fast)
+npm run build:dev
 
-### Testing
+# Production build (with type checking)
+npm run build
 
-```bash
-pnpm test       # Run tests
-pnpm test:watch # Run tests in watch mode
+# Clean build
+npm run clean && npm run build
 ```
 
 ### Type Checking
 
 ```bash
-pnpm typecheck  # Type check without emitting
+npm run typecheck
 ```
 
 ## License
 
-ISC
+ISC - See LICENSE file for details.
 
 ## Contributing
 
-This package is part of the WalTodo project. See the main repository for contribution guidelines.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
+
+## Support
+
+For issues and questions:
+1. Check the [WalTodo documentation](../../../docs/)
+2. Search existing [GitHub issues](https://github.com/your-org/waltodo/issues)
+3. Create a new issue with reproduction steps

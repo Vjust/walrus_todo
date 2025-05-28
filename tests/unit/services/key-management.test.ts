@@ -1,9 +1,10 @@
-import { KeyManagementService } from '../../../src/services/key-management';
-import { SecureStorage } from '../../../src/services/secure-storage';
+import { KeyManagementService } from '../../../apps/cli/src/services/key-management';
+import { SecureStorage } from '../../../apps/cli/src/services/secure-storage';
+import { CLIError } from '../../../apps/cli/src/types/errors';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 
 // Mock SecureStorage
-jest.mock('../../../src/services/secure-storage');
+jest.mock('../../../apps/cli/src/services/secure-storage');
 
 // Mock Ed25519Keypair
 jest.mock('@mysten/sui/keypairs/ed25519', () => ({

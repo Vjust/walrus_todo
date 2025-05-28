@@ -16,9 +16,7 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "jsx": "react-jsx",
-    "suppressImplicitAnyIndexErrors": true,
-    "noImplicitUseStrict": true
+    "jsx": "react-jsx"
   },
   "include": [
     "src/**/*"
