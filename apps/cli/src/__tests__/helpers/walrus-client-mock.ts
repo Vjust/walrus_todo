@@ -1,10 +1,10 @@
-import type { WalrusClient } from '../../types/client';
+import type { WalrusClientExt } from '../../types/client';
 import type { BlobInfo, BlobObject, BlobMetadataShape } from '../../types/walrus';
 
 /**
- * Mock implementation of WalrusClient for testing
+ * Mock implementation of WalrusClientExt for testing
  */
-export interface MockWalrusClient extends WalrusClient {
+export interface MockWalrusClient extends WalrusClientExt {
   getConfig: jest.Mock<Promise<{ network: string; version: string; maxSize: number }>, []>;
   getWalBalance: jest.Mock<Promise<string>, []>;
   getStorageUsage: jest.Mock<Promise<{ used: string; total: string }>, []>;
@@ -17,9 +17,19 @@ export interface MockWalrusClient extends WalrusClient {
   getBlobSize: jest.Mock<Promise<number>, [string]>;
   storageCost: jest.Mock<Promise<{ storageCost: bigint; writeCost: bigint; totalCost: bigint }>, [number, number]>;
   executeCreateStorageTransaction: jest.Mock<Promise<{ digest: string; storage: any }>, [any]>;
+  executeCertifyBlobTransaction: jest.Mock<Promise<{ digest: string }>, [any]>;
+  executeWriteBlobAttributesTransaction: jest.Mock<Promise<{ digest: string }>, [any]>;
+  deleteBlob: jest.Mock<(tx: any) => Promise<{ digest: string }>, [any]>;
+  executeRegisterBlobTransaction: jest.Mock<Promise<{ blob: BlobObject; digest: string }>, [any]>;
+  getStorageConfirmationFromNode: jest.Mock<Promise<any>, [any]>;
+  createStorageBlock: jest.Mock<Promise<any>, [number, number]>;
+  createStorage: jest.Mock<(tx: any) => Promise<{ digest: string; storage: any }>, [any]>;
   getStorageProviders: jest.Mock<Promise<string[]>, [any]>;
   reset: jest.Mock<void, []>;
   connect: jest.Mock<Promise<void>, []>;
+  experimental?: {
+    getBlobData: jest.Mock<Promise<Uint8Array | BlobObject>, []>;
+  };
 }
 
 /**
@@ -39,9 +49,19 @@ export function createWalrusClientMock(): MockWalrusClient {
     getBlobSize: jest.fn(),
     storageCost: jest.fn(),
     executeCreateStorageTransaction: jest.fn(),
+    executeCertifyBlobTransaction: jest.fn(),
+    executeWriteBlobAttributesTransaction: jest.fn(),
+    deleteBlob: jest.fn(),
+    executeRegisterBlobTransaction: jest.fn(),
+    getStorageConfirmationFromNode: jest.fn(),
+    createStorageBlock: jest.fn(),
+    createStorage: jest.fn(),
     getStorageProviders: jest.fn(),
     reset: jest.fn(),
     connect: jest.fn(),
+    experimental: {
+      getBlobData: jest.fn(),
+    },
   };
 }
 
@@ -150,6 +170,57 @@ export function setupDefaultWalrusClientMocks(mockClient: MockWalrusClient): voi
     },
   });
 
+  mockClient.executeCertifyBlobTransaction.mockResolvedValue({
+    digest: 'mock-certify-digest',
+  });
+
+  mockClient.executeWriteBlobAttributesTransaction.mockResolvedValue({
+    digest: 'mock-attributes-digest',
+  });
+
+  mockClient.deleteBlob.mockImplementation(() => (tx: any) => Promise.resolve({
+    digest: 'mock-delete-digest',
+  }));
+
+  mockClient.executeRegisterBlobTransaction.mockResolvedValue({
+    blob: {
+      id: { id: 'mock-blob-id' },
+      blob_id: 'mock-blob-id',
+      registered_epoch: 100,
+      certified_epoch: 150,
+      size: '1024',
+      encoding_type: 0,
+      storage: {
+        id: { id: 'storage1' },
+        start_epoch: 100,
+        end_epoch: 200,
+        storage_size: '2048',
+        used_size: '1024',
+      },
+      deletable: true,
+    },
+    digest: 'mock-register-digest',
+  });
+
+  mockClient.getStorageConfirmationFromNode.mockResolvedValue({
+    primary_verification: true,
+    secondary_verification: true,
+    provider: 'mock-provider',
+    signature: 'mock-signature',
+  });
+
+  mockClient.createStorageBlock.mockResolvedValue({});
+
+  mockClient.createStorage.mockImplementation(() => (tx: any) => Promise.resolve({
+    digest: 'mock-create-storage-digest',
+    storage: {
+      id: { id: 'storage1' },
+      start_epoch: 100,
+      end_epoch: 200,
+      storage_size: '2048',
+    },
+  }));
+
   mockClient.getStorageProviders.mockResolvedValue([
     'provider1',
     'provider2',
@@ -160,6 +231,10 @@ export function setupDefaultWalrusClientMocks(mockClient: MockWalrusClient): voi
   mockClient.reset.mockImplementation(() => {});
 
   mockClient.connect.mockResolvedValue(undefined);
+
+  if (mockClient.experimental) {
+    mockClient.experimental.getBlobData.mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
+  }
 }
 
 /**
