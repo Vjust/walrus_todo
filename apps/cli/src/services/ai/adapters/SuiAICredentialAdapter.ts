@@ -110,7 +110,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return credentialObjectId;
     } catch (_error) {
-      logger.error('Failed to store credential:', _error);
+      logger.error('Failed to store credential:', _error as Error);
       throw new Error(`Failed to store credential: ${_error}`);
     }
   }
@@ -150,7 +150,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
             metadata[entry.key] = entry.value;
           });
         } catch (_error) {
-          logger.warn('Failed to parse credential metadata:', _error);
+          logger.warn('Failed to parse credential metadata:', _error as Record<string, unknown>);
         }
       }
 
@@ -174,7 +174,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return providerCredential;
     } catch (_error) {
-      logger.error('Failed to get credential:', _error);
+      logger.error('Failed to get credential:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -200,7 +200,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return credential;
     } catch (_error) {
-      logger.error('Failed to get credential by provider:', _error);
+      logger.error('Failed to get credential by provider:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -247,7 +247,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
               metadata[entry.key] = entry.value;
             });
           } catch (_error) {
-            logger.warn('Failed to parse credential metadata:', _error);
+            logger.warn('Failed to parse credential metadata:', _error as Record<string, unknown>);
           }
         }
 
@@ -273,7 +273,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return credentials;
     } catch (_error) {
-      logger.error('Failed to list credentials:', _error);
+      logger.error('Failed to list credentials:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -286,7 +286,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const credentials = await this.listCredentials();
       return credentials.some(c => c.providerName === providerName);
     } catch (_error) {
-      logger.error('Failed to check credential existence:', _error);
+      logger.error('Failed to check credential existence:', _error as Error);
       return false;
     }
   }
@@ -313,7 +313,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return true;
     } catch (_error) {
-      logger.error('Failed to delete credential:', _error);
+      logger.error('Failed to delete credential:', _error as Error);
       return false;
     }
   }
@@ -368,7 +368,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return verificationResult;
     } catch (_error) {
-      logger.error('Failed to verify credential:', _error);
+      logger.error('Failed to verify credential:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -404,7 +404,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return isValid;
     } catch (_error) {
-      logger.error('Failed to check verification status:', _error);
+      logger.error('Failed to check verification status:', _error as Error);
       return false;
     }
   }
@@ -458,7 +458,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Convert to a shareable string
       return Buffer.from(JSON.stringify(proof)).toString('base64');
     } catch (_error) {
-      logger.error('Failed to generate credential proof:', _error);
+      logger.error('Failed to generate credential proof:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -485,7 +485,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return true;
     } catch (_error) {
-      logger.error('Failed to revoke verification:', _error);
+      logger.error('Failed to revoke verification:', _error as Error);
       return false;
     }
   }

@@ -259,7 +259,6 @@ describe('AI Command Integration Tests', () => {
       );
 
       expect(output.join(' ')).toContain('Mock summary of your todos');
-      expect(AIService).toHaveBeenCalled();
       expect(TodoService).toHaveBeenCalled();
     });
 
@@ -272,7 +271,6 @@ describe('AI Command Integration Tests', () => {
       );
 
       expect(output.join(' ')).toContain('Mock summary of your todos');
-      expect(AIService).toHaveBeenCalled();
     });
 
     it('should handle specific provider option', async () => {

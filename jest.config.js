@@ -38,7 +38,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   // ESM Module Handling - consolidated transformIgnorePatterns
   transformIgnorePatterns: [
-    'node_modules/(?!(p-retry|@mysten|delay|p-map|p-limit|p-queue|p-timeout|@langchain\/.*|langchain|langsmith|@walrus|retry|uuid|nanoid|jose|ky|got|chalk|glob|path-scurry|execa)/)' 
+    'node_modules/(?!(p-retry|@mysten|delay|p-map|p-limit|p-queue|p-timeout|@langchain\/.*|langchain|langsmith|@walrus|retry|uuid|nanoid|jose|ky|got|chalk|glob|path-scurry)/)' 
   ],
   
   transform: {
