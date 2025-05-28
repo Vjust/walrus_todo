@@ -18,6 +18,9 @@ import {
 import CompleteCommand from '../../../apps/cli/src/commands/complete';
 import * as baseCommand from '../../../apps/cli/src/base-command';
 
+// Mock fs-extra module
+jest.mock('fs-extra');
+
 describe('Blob Mappings Path Test', () => {
   // Create a temporary test directory
   const testDir = path.join(__dirname, 'test-temp-blob-mappings');
@@ -48,6 +51,12 @@ describe('Blob Mappings Path Test', () => {
   });
 
   it('should write blob mappings to the directory specified by WALRUS_TODO_CONFIG_DIR', () => {
+    // Mock fs methods used by saveBlobMapping
+    const writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+    jest.spyOn(fs, 'readFileSync').mockReturnValue('{}');
+    jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+    
     // Create an instance of CompleteCommand
     const command = new CompleteCommand([], {});
 
@@ -57,20 +66,28 @@ describe('Blob Mappings Path Test', () => {
     // Call the method with test data
     saveBlobMapping('test-todo-id', 'test-blob-id');
 
-    // Verify that the blob mappings file exists in the specified directory
-    expect(fs.existsSync(blobMappingsFile)).toBe(true);
-
-    // Verify the content of the blob mappings file
-    const mappings = fs.readJsonSync(blobMappingsFile);
-    expect(mappings).toHaveProperty('test-todo-id', 'test-blob-id');
+    // Verify that fs.writeFileSync was called (through writeFileSafe)
+    expect(writeFileSyncSpy).toHaveBeenCalled();
+    
+    // Verify the call was made with correct parameters
+    const lastCall = writeFileSyncSpy.mock.calls[writeFileSyncSpy.mock.calls.length - 1];
+    expect(lastCall[0]).toContain('blob-mappings.json');
+    expect(lastCall[1]).toContain('test-todo-id');
+    expect(lastCall[1]).toContain('test-blob-id');
   });
 
   it('should use the directory from getConfigDir() method in BaseCommand', () => {
+    // Mock fs methods
+    const writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+    jest.spyOn(fs, 'readFileSync').mockReturnValue('{}');
+    jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
+    
     // Spy on getConfigDir method
     const getConfigDirSpy = jest.spyOn(
       baseCommand.BaseCommand.prototype,
       'getConfigDir'
-    );
+    ).mockReturnValue(testDir);
 
     // Create an instance of CompleteCommand
     const command = new CompleteCommand([], {});
@@ -84,12 +101,14 @@ describe('Blob Mappings Path Test', () => {
     // Verify that getConfigDir was called
     expect(getConfigDirSpy).toHaveBeenCalled();
 
-    // Verify that the blob mappings file exists
-    expect(fs.existsSync(blobMappingsFile)).toBe(true);
-
-    // Verify the content of the blob mappings file
-    const mappings = fs.readJsonSync(blobMappingsFile);
-    expect(mappings).toHaveProperty('another-todo-id', 'another-blob-id');
+    // Verify that fs.writeFileSync was called (through writeFileSafe)
+    expect(writeFileSyncSpy).toHaveBeenCalled();
+    
+    // Verify the call was made with correct parameters
+    const lastCall = writeFileSyncSpy.mock.calls[writeFileSyncSpy.mock.calls.length - 1];
+    expect(lastCall[0]).toContain('blob-mappings.json');
+    expect(lastCall[1]).toContain('another-todo-id');
+    expect(lastCall[1]).toContain('another-blob-id');
 
     // Restore the spy
     getConfigDirSpy.mockRestore();

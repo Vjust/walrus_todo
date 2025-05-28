@@ -80,6 +80,19 @@ export interface AIModelOptions {
 
   /** The operation type being performed (e.g., 'summarize', 'categorize') */
   operation?: string;
+
+  // Security parameters
+  /** Custom base URL for API requests (must be HTTPS) */
+  baseUrl?: string;
+
+  /** Whether to reject unauthorized SSL certificates (should always be true in production) */
+  rejectUnauthorized?: boolean;
+
+  /** Whether to collect usage data for analytics */
+  collectUsageData?: boolean;
+
+  /** Whether to store prompt history for debugging */
+  storePromptHistory?: boolean;
 }
 
 /**
@@ -186,6 +199,9 @@ export interface AIProviderCreationParams {
 
   /** Service for securely retrieving and managing API credentials */
   credentialService?: SecureCredentialService;
+
+  /** Direct API key (for testing or direct instantiation) */
+  apiKey?: string;
 }
 
 /**

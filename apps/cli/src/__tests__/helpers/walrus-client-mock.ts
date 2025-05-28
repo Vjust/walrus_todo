@@ -90,7 +90,7 @@ export function setupDefaultWalrusClientMocks(mockClient: MockWalrusClient): voi
       id: { id: 'mock-blob-test-todo-id' },
       blob_id: 'mock-blob-test-todo-id',
       registered_epoch: 100,
-      certified_epoch: 150,
+      cert_epoch: 150,
       size: '1024',
       encoding_type: 0,
       storage: {
@@ -187,7 +187,7 @@ export function setupDefaultWalrusClientMocks(mockClient: MockWalrusClient): voi
       id: { id: 'mock-blob-id' },
       blob_id: 'mock-blob-id',
       registered_epoch: 100,
-      certified_epoch: 150,
+      cert_epoch: 150,
       size: '1024',
       encoding_type: 0,
       storage: {

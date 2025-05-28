@@ -27,11 +27,17 @@ const AppInitializationContext = createContext<AppInitializationContextType>({
 });
 
 export const useAppInitialization = () => {
+  // ALWAYS call useContext - never conditionally!
+  // This ensures hooks are called in the same order every render
   const context = useContext(AppInitializationContext);
-  if (!context) {
-    throw new Error('useAppInitialization must be used within ClientOnlyRoot');
-  }
-  return context;
+  
+  // Return context or default values - but always call the hook
+  return context || {
+    isClientReady: false,
+    isSuiClientReady: false,
+    isAppReady: false,
+    initializationError: null,
+  };
 };
 
 export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {

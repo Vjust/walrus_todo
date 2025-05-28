@@ -22,27 +22,14 @@ export function InitializationGuard({
 }: InitializationGuardProps) {
   const [mounted, setMounted] = useState(false);
   
+  // Always call hooks at the top level - never conditionally
+  // useAppInitialization now safely returns default values during SSR
+  const contextValue = useAppInitialization();
+  
   // Track client-side mounting to prevent hydration issues
   useEffect(() => {
     setMounted(true);
   }, []);
-  
-  // Safe context access - provide fallback for SSR/unmounted state
-  let contextValue;
-  try {
-    contextValue = mounted ? useAppInitialization() : {
-      isAppReady: false,
-      isSuiClientReady: false,
-      initializationError: null
-    };
-  } catch (error) {
-    // Context not available, use fallback
-    contextValue = {
-      isAppReady: false,
-      isSuiClientReady: false,
-      initializationError: null
-    };
-  }
   
   const { isAppReady, isSuiClientReady, initializationError } = contextValue;
   
