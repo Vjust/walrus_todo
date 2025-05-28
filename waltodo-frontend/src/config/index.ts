@@ -26,8 +26,17 @@ export function getNetworkConfig(network: NetworkName) {
 
 /**
  * Get current network configuration from environment
+ * Safe for both SSR and client-side rendering
  */
 export function getCurrentNetworkConfig() {
+  // NEXT_PUBLIC_ variables are available on both server and client with same values
   const network = (process.env.NEXT_PUBLIC_NETWORK || 'testnet') as NetworkName;
   return getNetworkConfig(network);
+}
+
+/**
+ * Get current network name safely
+ */
+export function getCurrentNetworkName(): NetworkName {
+  return (process.env.NEXT_PUBLIC_NETWORK || 'testnet') as NetworkName;
 }

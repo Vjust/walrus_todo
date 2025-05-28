@@ -64,10 +64,11 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node', 'mts'],
   // Setup files run before each test file
   setupFiles: [
-    // Remove missing polyfill reference
+    '<rootDir>/__mocks__/global-mocks.js',
+    '<rootDir>/jest.setup.ts'
   ],
   // Setup files run after the test framework is installed
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: [],
   transformIgnorePatterns: [
     '/node_modules/(?!(@oclif|fancy-test|@mysten|@langchain|ora|cli-progress)/.*)',
   ],

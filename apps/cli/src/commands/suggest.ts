@@ -22,6 +22,7 @@ import { getPermissionManager } from '../services/ai/AIPermissionManager';
 import { secureCredentialManager } from '../services/ai/SecureCredentialManager';
 import { checkbox } from '@inquirer/prompts';
 import { CLIError } from '../types/errors/consolidated';
+import { EnhancedErrorHandler } from '../utils/enhanced-error-handler';
 import { 
   createBackgroundAIOperationsManager, 
   BackgroundAIOperations, 
@@ -61,7 +62,7 @@ export default class Suggest extends BaseCommand {
       return await KeystoreSigner.fromPath('');
     } catch (error) {
       this.error(
-        `Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}`
+        `Suggest command: Failed to initialize Sui signer: ${error instanceof Error ? error.message : String(error)}. Please check your Sui configuration and wallet setup.`
       );
       throw error; // To satisfy TypeScript - execution won't reach here after this.error()
     }
@@ -248,7 +249,7 @@ export default class Suggest extends BaseCommand {
           this.log(chalk.dim('✓ API key validation result cached'));
       } catch (error) {
         await apiKeyValidationCache.set(apiKeyCacheKey, false);
-        throw new CLIError('API key validation failed');
+        throw new CLIError('Suggest command: API key validation failed. Please check your API key format and validity.');
       }
     }
 
@@ -298,7 +299,7 @@ export default class Suggest extends BaseCommand {
           throw error;
         }
         throw new CLIError(
-          `Failed to initialize blockchain verification: ${error instanceof Error ? error.message : String(error)}`
+          `Suggest command: Failed to initialize blockchain verification: ${error instanceof Error ? error.message : String(error)}. Check registry address, package ID, and Sui connection.`
         );
       }
     }
@@ -624,9 +625,19 @@ export default class Suggest extends BaseCommand {
       if (error instanceof CLIError) {
         throw error;
       }
-      throw new CLIError(
-        `Failed to generate task suggestions: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      const context = {
+        operation: 'generateTaskSuggestions',
+        component: 'SuggestCommand',
+        provider: flags.provider,
+        commandName: 'suggest',
+        additionalInfo: {
+          verify: flags.verify,
+          todoCount: todos?.length || 0,
+          apiKeyProvided: !!flags.apiKey
+        }
+      };
+      
+      throw EnhancedErrorHandler.createCLIError(error, context);
     }
   }
 

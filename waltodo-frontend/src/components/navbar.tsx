@@ -60,7 +60,9 @@ export default function Navbar({ currentPage }: NavbarProps) {
         </div>
 
         <div>
-          <WalletConnectButton />
+          <ClientOnly fallback={<div className="w-24 h-10 bg-gray-200 animate-pulse rounded"></div>}>
+            <WalletConnectButton />
+          </ClientOnly>
         </div>
       </nav>
     </header>

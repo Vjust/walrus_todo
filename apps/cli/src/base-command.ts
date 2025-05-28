@@ -218,11 +218,12 @@ export abstract class BaseCommand extends Command {
    */
   private setupErrorHandlers(): void {
     process.on('uncaughtException', error => {
-      this.error(`Uncaught exception: ${error.message}`, { exit: 1 });
+      this.error(`BaseCommand: Uncaught exception in ${this.constructor.name}: ${error.message}\nStack: ${error.stack}`, { exit: 1 });
     });
 
     process.on('unhandledRejection', (reason, promise) => {
-      this.error(`Unhandled rejection at ${promise}: ${reason}`, { exit: 1 });
+      const reasonStr = reason instanceof Error ? `${reason.message} (${reason.constructor.name})` : String(reason);
+      this.error(`BaseCommand: Unhandled promise rejection in ${this.constructor.name} at ${promise}: ${reasonStr}`, { exit: 1 });
     });
   }
 
@@ -323,12 +324,26 @@ export abstract class BaseCommand extends Command {
    * Handle generic errors with basic troubleshooting
    */
   private handleGenericError(error: Error): never {
-    this.error(chalk.red(`Error: ${error.message}`), {
+    const errorType = error.constructor.name;
+    const commandName = this.constructor.name;
+    const errorMessage = error.message || 'No error message provided';
+    
+    // Log detailed error for debugging
+    if (this.flags.debug || this.flags.verbose) {
+      this.debug(`${commandName}: Detailed error info:`);
+      this.debug(`- Error type: ${errorType}`);
+      this.debug(`- Error message: ${errorMessage}`);
+      if (error.stack) {
+        this.debug(`- Stack trace: ${error.stack}`);
+      }
+    }
+    
+    this.error(chalk.red(`${commandName}: ${errorMessage} (${errorType})`), {
       suggestions: [
         'Try running the command again',
         'Use --debug for detailed error information',
         'Check the command documentation',
-        'Report this issue if it persists',
+        `Report this ${errorType} error if it persists`,
       ],
       exit: 1,
     });
@@ -353,7 +368,7 @@ export abstract class BaseCommand extends Command {
       isRetryable = () => true,
     } = options;
 
-    let lastError: Error = new Error('Unknown error');
+    let lastError: Error = new Error(`BaseCommand.withRetry: ${operationName} failed with no specific error details`);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -723,7 +738,7 @@ export abstract class BaseCommand extends Command {
       operationName = 'operation',
     } = options;
 
-    let lastError: Error = new Error('Unknown error');
+    let lastError: Error = new Error(`BaseCommand.executeWithRetry: ${operationName} failed with no specific error details`);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -742,7 +757,7 @@ export abstract class BaseCommand extends Command {
     }
 
     throw new Error(
-      `${operationName} failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+      `${operationName} failed after ${maxRetries} attempts: ${lastError?.message || 'No error details available'}`
     );
   }
 

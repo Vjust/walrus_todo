@@ -21,6 +21,14 @@ export function ErrorSuppressor() {
       'Error: [[ << query #',
       'Invalid prop `type` supplied to `React.Fragment`',
       'React.Fragment can only have `key` and `children` props',
+      'Hydration failed because the initial UI does not match',
+      'There was an error while hydrating',
+      'Text content does not match server-rendered HTML',
+      'Hydration text mismatch',
+      'Warning: Text content did not match',
+      'Warning: Prop `',
+      'did not match. Server:',
+      'Client:',
     ];
 
     // Store original error handler

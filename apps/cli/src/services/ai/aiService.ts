@@ -68,7 +68,7 @@ export class AIService {
       this.modelAdapter = defaultAdapter;
     } catch (error) {
       logger.error(
-        'Failed to initialize with default adapter:',
+        'AIService: Failed to initialize with default adapter:',
         error as Error
       );
       // Set a minimal fallback adapter to avoid null reference errors
@@ -77,9 +77,10 @@ export class AIService {
 
     // Initialize the full model adapter asynchronously
     this.initializeModelAdapter(provider, modelName).catch(error => {
-      logger.error('Model adapter initialization failed', error as Error, {
+      logger.error('AIService: Model adapter initialization failed', error as Error, {
         provider,
         modelName,
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
       });
     });
   }
@@ -132,8 +133,13 @@ export class AIService {
         credentialService: secureCredentialService,
       });
     } catch (error) {
-      logger.error('Failed to initialize model adapter:', error as Error);
-      throw error;
+      const typedError = error instanceof Error ? error : new Error(String(error));
+      logger.error('AIService: Failed to initialize model adapter:', typedError, {
+        provider,
+        modelName,
+        errorType: typedError.constructor.name,
+      });
+      throw new Error(`AIService initialization failed for provider ${provider || 'default'}: ${typedError.message}`);
     }
   }
 
@@ -186,7 +192,7 @@ export class AIService {
       const hasConsent = this.modelAdapter.checkConsentFor(operationType);
       if (!hasConsent) {
         throw new Error(
-          `User has not provided consent for operation type: ${operationType}`
+          `AIService: User has not provided consent for operation type: ${operationType}. Please provide consent before using this AI operation.`
         );
       }
     }

@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang='en'>
-      <body className='font-sans wave-animation'>
+    <html lang='en' suppressHydrationWarning>
+      <body className='font-sans wave-animation' suppressHydrationWarning>
         {/* ClientOnlyRoot handles all client-side components */}
         <ClientOnlyRoot>{children}</ClientOnlyRoot>
       </body>

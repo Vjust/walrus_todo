@@ -9,7 +9,7 @@ import { Logger } from '../Logger';
 import { 
   SuiClient as SuiClientClass, 
   getFullnodeUrl as getFullnodeUrlFn 
-} from '@mysten/sui.js/client';
+} from '@mysten/sui/client';
 
 const logger = new Logger('sui-client-compatibility');
 

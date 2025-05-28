@@ -2,7 +2,7 @@
   "name": "waltodo",
   "version": "1.0.0",
   "description": "A CLI todo application using Sui blockchain and Walrus storage",
-  "main": "dist/apps/cli/src/index.js",
+  "main": "dist/src/index.js",
   "type": "commonjs",
   "bin": {
     "waltodo": "bin/waltodo"
@@ -131,6 +131,7 @@
     "@oclif/core": "^3.25.2",
     "@smithery/cli": "^1.1.84",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/lodash": "^4.17.17",
     "@types/uuid": "^10.0.0",
     "axios": "^1.9.0",
     "chalk": "^4.1.2",
@@ -145,6 +146,7 @@
     "inquirer": "^9.2.15",
     "jsonwebtoken": "^9.0.2",
     "langchain": "^0.3.24",
+    "lodash": "^4.17.21",
     "node-fetch": "^3.3.2",
     "p-retry": "^6.2.1",
     "socket.io": "^4.8.1",
@@ -154,6 +156,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.3",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
     "@babel/preset-env": "^7.24.3",
     "@babel/preset-typescript": "^7.24.3",
     "@jest/globals": "^29.6.3",
@@ -201,7 +204,7 @@
   },
   "files": [
     "/bin",
-    "/dist/apps/cli",
+    "/dist",
     "/apps/cli/src/move",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
@@ -209,7 +212,7 @@
   "oclif": {
     "bin": "waltodo",
     "dirname": "waltodo",
-    "commands": "./dist/apps/cli/src/commands",
+    "commands": "./dist/src/commands",
     "plugins": [],
     "topicSeparator": ":",
     "macos": {

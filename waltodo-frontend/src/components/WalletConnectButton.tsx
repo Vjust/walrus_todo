@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, memo } from 'react';
-import { useWalletContext } from '@/contexts/WalletContext';
+import React, { useState, useCallback, memo, useEffect } from 'react';
+import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 import {
   copyToClipboard,
   getClipboardCapabilities,
@@ -12,6 +12,7 @@ import { ClipboardErrorModal } from './ClipboardErrorModal';
 import { WalletError } from '@/lib/wallet-errors';
 import { ErrorBoundary } from './ErrorBoundary';
 import { WalletSelector } from './WalletSelector';
+import { ClientOnly } from './ClientOnly';
 
 function WalletConnectButton() {
   const {
@@ -24,7 +25,8 @@ function WalletConnectButton() {
     clearError,
     switchNetwork,
     connect,
-  } = useWalletContext();
+    isLoading,
+  } = useClientSafeWallet();
 
   const address = account?.address || null;
   const chainId = currentNetwork;
@@ -38,6 +40,12 @@ function WalletConnectButton() {
   );
   const [showNetworkOptions, setShowNetworkOptions] = useState(false);
   const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle client-side mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Helper function to truncate address
   const truncateAddress = (address: string) => {
@@ -102,9 +110,9 @@ function WalletConnectButton() {
   // Add clipboard manual fallback option
   const handleManualCopy = useCallback(() => {
     try {
-      // Prevent function execution if no address exists
-      if (!address) {
-        console.warn('Attempted manual copy but no address is available');
+      // Prevent function execution if no address exists or not on client
+      if (!address || typeof window === 'undefined' || typeof document === 'undefined') {
+        console.warn('Attempted manual copy but no address is available or not on client');
         return;
       }
 
@@ -178,9 +186,9 @@ function WalletConnectButton() {
 
   // Render the connected wallet UI
   const renderConnectedUI = () => {
-    if (!connected || !address) return null;
+    if (!connected || !address || !mounted) return null;
 
-    // Get clipboard capabilities to determine what UI to show
+    // Get clipboard capabilities to determine what UI to show (only on client)
     const clipboardCapabilities = getClipboardCapabilities();
     const showClipboardButton =
       clipboardCapabilities.hasModernApi ||
@@ -394,22 +402,24 @@ function WalletConnectButton() {
     return <WalletSelector />;
   };
 
-  // Wrap the entire component in an ErrorBoundary
+  // Wrap the entire component in an ErrorBoundary and ClientOnly
   return (
     <ErrorBoundary>
-      <div>
-        {renderConnectedUI() || renderConnectingUI() || renderConnectUI()}
+      <ClientOnly fallback={<div className="px-4 py-2 bg-gray-200 animate-pulse rounded-lg">Loading...</div>}>
+        <div>
+          {renderConnectedUI() || renderConnectingUI() || renderConnectUI()}
 
-        <WalletErrorModal
-          error={error ? new WalletError(error) : null}
-          onDismiss={clearError}
-        />
-        <ClipboardErrorModal
-          error={clipboardError}
-          onDismiss={() => setClipboardError(null)}
-          onTryAlternative={handleManualCopy}
-        />
-      </div>
+          <WalletErrorModal
+            error={error ? new WalletError(error) : null}
+            onDismiss={clearError}
+          />
+          <ClipboardErrorModal
+            error={clipboardError}
+            onDismiss={() => setClipboardError(null)}
+            onTryAlternative={handleManualCopy}
+          />
+        </div>
+      </ClientOnly>
     </ErrorBoundary>
   );
 }

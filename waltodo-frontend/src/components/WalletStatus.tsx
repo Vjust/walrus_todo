@@ -1,10 +1,22 @@
 'use client';
 
 import React from 'react';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 
 export function WalletStatus() {
-  const { connected, address, name, network, error } = useWalletContext();
+  const { connected, address, name, network, error, isLoading } = useClientSafeWallet();
+
+  // Show loading state during hydration
+  if (isLoading) {
+    return (
+      <div className='inline-flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full'>
+        <div className='w-2 h-2 rounded-full bg-gray-400' />
+        <span className='text-sm text-gray-600 dark:text-gray-400'>
+          Loading...
+        </span>
+      </div>
+    );
+  }
 
   if (error) {
     return (
