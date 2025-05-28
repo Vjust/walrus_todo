@@ -1,7 +1,32 @@
 #!/bin/bash
 
 # WalTodo Development Orchestrator
-# Starts all services (CLI + API + Web) in tmux panes
+# ================================
+# 
+# This script creates a unified development environment for WalTodo that includes:
+# 
+# 1. CLI: Ready for testing commands in the left pane
+# 2. API Server: REST API on http://localhost:3001 (top right pane)  
+# 3. Web Frontend: Next.js app on http://localhost:3000 (bottom right pane)
+#
+# The script uses tmux to manage multiple panes in a single terminal window.
+# Each service runs in its own pane with live logs and the ability to restart.
+#
+# Prerequisites:
+# - tmux installed (brew install tmux on macOS)
+# - pnpm package manager
+# - Node.js 18+
+#
+# Usage:
+#   ./pnpm-dev.sh              # Start all services
+#   pnpm run dev:all           # Alternative via npm script
+#   pnpm run dev:simple        # Simple mode without tmux
+#
+# Tmux Controls:
+#   Ctrl+B then arrow keys     # Switch between panes
+#   Ctrl+B then Q              # Quit session
+#   Ctrl+B then D              # Detach (keeps running)
+#   tmux attach -t waltodo-dev # Reattach later
 
 set -e
 
@@ -34,10 +59,21 @@ print_info() {
 
 # Check if tmux is installed
 if ! command -v tmux &> /dev/null; then
-    print_error "tmux is not installed. Please install tmux first:"
-    echo "  macOS: brew install tmux"
-    echo "  Ubuntu: apt-get install tmux"
-    echo "  Arch: pacman -S tmux"
+    print_error "tmux is not installed."
+    print_info ""
+    print_info "To install tmux:"
+    print_info "  macOS: brew install tmux"
+    print_info "  Ubuntu/Debian: apt-get install tmux"
+    print_info "  Arch: pacman -S tmux"
+    print_info "  CentOS/RHEL: yum install tmux"
+    print_info ""
+    print_warning "Alternative options:"
+    print_info "  Option 1: Use simple script: ./pnpm-dev-simple.sh"
+    print_info "  Option 2: Run services individually:"
+    print_info "    Terminal 1: pnpm start:api"
+    print_info "    Terminal 2: cd waltodo-frontend && pnpm dev"
+    print_info "    Terminal 3: CLI available for testing"
+    print_info ""
     exit 1
 fi
 
@@ -75,6 +111,11 @@ if [ ! -d "waltodo-frontend/node_modules" ]; then
     cd waltodo-frontend && pnpm install && cd ..
 fi
 
+if [ ! -d "apps/api/node_modules" ]; then
+    print_status "Installing API dependencies..."
+    cd apps/api && pnpm install && cd ../..
+fi
+
 # Build CLI for development
 print_status "Building CLI for development..."
 pnpm build:dev
@@ -104,13 +145,21 @@ print_status "Starting services in tmux panes..."
 tmux send-keys -t "$SESSION_NAME:main.0" "clear" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '🚀 WalTodo CLI Development Environment'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo ''" Enter
-tmux send-keys -t "$SESSION_NAME:main.0" "echo 'Available commands:'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo 'Services Status:'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  📱 CLI: Ready for testing'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  🔧 API: Starting on http://localhost:3001'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  🌐 Web: Starting on http://localhost:3000'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo ''" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo 'CLI Commands:'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo --help       # Show all commands'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo add \"task\"   # Add a new todo'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo list         # List all todos'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo status       # Show system status'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo ''" Enter
-tmux send-keys -t "$SESSION_NAME:main.0" "echo 'Press Ctrl+C to stop any service, Ctrl+B then Q to quit tmux'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo 'Tmux Controls:'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  Ctrl+B then arrow keys: Switch panes'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  Ctrl+B then Q: Quit tmux session'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  Ctrl+C: Stop service in current pane'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo ''" Enter
 
 # Pane 1: API Server (right top)
@@ -118,7 +167,7 @@ tmux send-keys -t "$SESSION_NAME:main.1" "clear" Enter
 tmux send-keys -t "$SESSION_NAME:main.1" "echo '🔧 Starting API Server on port 3001...'" Enter
 tmux send-keys -t "$SESSION_NAME:main.1" "echo 'Waiting 3 seconds before start...'" Enter
 tmux send-keys -t "$SESSION_NAME:main.1" "sleep 3" Enter
-tmux send-keys -t "$SESSION_NAME:main.1" "PORT=3001 pnpm start:api" Enter
+tmux send-keys -t "$SESSION_NAME:main.1" "cd apps/api && pnpm dev --port=3001" Enter
 
 # Pane 2: Web Frontend (right bottom)
 tmux send-keys -t "$SESSION_NAME:main.2" "clear" Enter
@@ -139,16 +188,26 @@ tmux select-pane -t "$SESSION_NAME:main.1" -T "API Server" 2>/dev/null || true
 tmux select-pane -t "$SESSION_NAME:main.2" -T "Web Frontend" 2>/dev/null || true
 
 print_status "Development environment started!"
-print_info "Services:"
+print_info ""
+print_info "🎯 WalTodo Development Environment"
+print_info "================================="
+print_info ""
+print_info "📋 Services:"
 print_info "  • CLI: Ready for commands (left pane)"
 print_info "  • API: Starting on http://localhost:3001 (top right)"
 print_info "  • Web: Starting on http://localhost:3000 (bottom right)"
 print_info ""
-print_info "Tmux commands:"
+print_info "🎮 Tmux Controls:"
 print_info "  • Ctrl+B then arrow keys: Switch between panes"
 print_info "  • Ctrl+B then Q: Quit tmux session"
 print_info "  • Ctrl+B then D: Detach (keeps running in background)"
 print_info "  • tmux attach-session -t $SESSION_NAME: Reattach later"
+print_info ""
+print_info "🚀 Quick Start:"
+print_info "  1. Wait for services to start (watch the logs)"
+print_info "  2. Test CLI in left pane: waltodo --help"
+print_info "  3. Open http://localhost:3000 for web interface"
+print_info "  4. API docs at http://localhost:3001/api"
 print_info ""
 print_status "Attaching to tmux session..."
 

@@ -2,7 +2,7 @@
 module.exports = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
+  roots: ['<rootDir>/apps/cli/src', '<rootDir>/tests'],
   transform: {
     // Enhanced TypeScript transform with support for ESM imports
     '^.+\\.tsx?$': [
@@ -51,16 +51,16 @@ module.exports = {
     // Fix ESM module path patterns
     '^(\\.{1,2}/.*)\\.js$': '$1',
     // Add support for polyfills
-    '^src/utils/polyfills/(.*)$': '<rootDir>/src/utils/polyfills/$1',
+    '^src/utils/polyfills/(.*)$': '<rootDir>/apps/cli/src/utils/polyfills/$1',
     // Handle absolute imports
-    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/(.*)$': '<rootDir>/apps/cli/src/$1',
   },
   testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[jt]s?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node', 'mts'],
   // Setup files run before each test file
   setupFiles: [
     // Explicitly load polyfills before tests
-    '<rootDir>/src/utils/polyfills/aggregate-error.ts',
+    '<rootDir>/apps/cli/src/utils/polyfills/aggregate-error.ts',
   ],
   // Setup files run after the test framework is installed
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
@@ -77,8 +77,8 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
-    '!src/**/*.test.{js,jsx,ts,tsx}',
-    '!src/**/index.{js,ts}',
+    '!apps/cli/src/**/*.test.{js,jsx,ts,tsx}',
+    '!apps/cli/src/**/index.{js,ts}',
   ],
   coverageThreshold: {
     global: {
