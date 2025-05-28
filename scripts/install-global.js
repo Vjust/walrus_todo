@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Logger } from '../src/utils/Logger';
+import { Logger } from '../dist/src/utils/Logger.js';
 
 const logger = new Logger('install-global');
 
@@ -8,10 +8,10 @@ const logger = new Logger('install-global');
  * This replaces the shell script with a more portable Node.js version
  */
 
-const { spawnSync } = require('child_process');
-const os = require('os');
-const fs = require('fs');
-const path = require('path');
+import { spawnSync } from 'child_process';
+import os from 'os';
+import fs from 'fs';
+import path from 'path';
 
 // ANSI color codes
 const colors = {
@@ -67,9 +67,15 @@ async function installGlobally() {
     }).stdout.trim();
 
     const globalBin = path.join(npmPrefix, 'bin');
-    const needsSudo =
-      npmPrefix === '/usr/local' &&
-      !fs.accessSync(globalBin, fs.constants.W_OK);
+    let needsSudo = false;
+    
+    if (npmPrefix === '/usr/local') {
+      try {
+        fs.accessSync(globalBin, fs.constants.W_OK);
+      } catch {
+        needsSudo = true;
+      }
+    }
 
     if (needsSudo) {
       print(

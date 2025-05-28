@@ -1,15 +1,15 @@
 /**
-import { Logger } from '../src/utils/Logger';
-
-const logger = new Logger('build-cache-manager');
  * Build cache manager for optimizing build performance
  * Implements file hashing and incremental builds
  */
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
-const buildConfig = require('./unified-build-config');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { Logger } from '../apps/cli/src/utils/Logger.js';
+import buildConfig from './unified-build-config.js';
+
+const logger = new Logger('build-cache-manager');
 
 // Caching system
 class BuildCacheManager {
@@ -142,4 +142,4 @@ class BuildCacheManager {
   }
 }
 
-module.exports = BuildCacheManager;
+export default BuildCacheManager;

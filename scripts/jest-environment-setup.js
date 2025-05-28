@@ -57,7 +57,8 @@ class JestEnvironmentSetup {
 
     // Garbage collection optimizations
     options.push('--expose-gc');
-    options.push('--optimize-for-size');
+    // Note: --optimize-for-size is not allowed in NODE_OPTIONS
+    // options.push('--optimize-for-size');
 
     // Module loading optimizations
     options.push('--experimental-vm-modules');
