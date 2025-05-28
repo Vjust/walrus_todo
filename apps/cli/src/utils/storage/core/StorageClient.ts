@@ -8,7 +8,7 @@
  */
 
 import { execSync } from 'child_process';
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '../../adapters/sui-client-compatibility';
 import { WalrusClient } from '@mysten/walrus';
 import { AsyncOperationHandler } from '../../walrus-error-handler';
 import {

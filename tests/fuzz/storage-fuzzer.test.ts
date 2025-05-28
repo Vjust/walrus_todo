@@ -159,7 +159,7 @@ describe('Storage Fuzzing Tests', () => {
             title: fuzzer.string(),
             description: jsonString,
             completed: false,
-            priority: 'medium',
+            priority: 'medium' as const,
             tags: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),

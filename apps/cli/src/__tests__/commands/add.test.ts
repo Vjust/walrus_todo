@@ -36,7 +36,7 @@ const addCommand = {
 
     const newTodo = createMockTodo({
       title,
-      storageLocation: 'local',
+      storageLocation: 'local' as const,
     });
 
     if (options?.storage === 'blockchain') {
@@ -45,7 +45,7 @@ const addCommand = {
         await walrusStorage.connect();
         await walrusStorage.storeTodo({
           ...newTodo,
-          storageLocation: 'blockchain',
+          storageLocation: 'blockchain' as const,
         });
       } catch (_error) {
         throw new CLIError(
@@ -83,7 +83,7 @@ describe('add', () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           private: true,
-          priority: 'medium',
+          priority: 'medium' as const,
           tags: [],
         }) as Todo
     );
@@ -101,7 +101,7 @@ describe('add', () => {
       'default',
       expect.objectContaining({
         title: 'Test Todo',
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       })
     );
   });

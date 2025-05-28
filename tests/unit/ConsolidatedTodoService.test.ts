@@ -112,7 +112,7 @@ describe('Consolidated TodoService', () => {
       const todo = await todoService.addTodo('testList', {
         title: 'Test Todo',
         description: 'Test Description',
-        priority: 'high',
+        priority: 'high' as const,
       });
 
       expect(todo).toBeDefined();
@@ -167,12 +167,12 @@ describe('Consolidated TodoService', () => {
         description: '',
         completed: true,
         completedAt: expect.any(String),
-        priority: 'medium',
+        priority: 'medium' as const,
         tags: [],
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
         private: true,
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       });
 
       await todoService.toggleItemStatus('testList', '456', true);

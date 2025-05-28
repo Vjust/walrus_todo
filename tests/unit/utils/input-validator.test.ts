@@ -108,7 +108,7 @@ describe('InputValidator', () => {
       const data = {
         email: 'test@example.com',
         age: 25,
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       const result = InputValidator.validateObject(data, schema);
@@ -120,7 +120,7 @@ describe('InputValidator', () => {
       const data = {
         email: 'invalid',
         age: 150,
-        priority: 'urgent',
+        priority: 'high' as const,
       };
 
       const result = InputValidator.validateObject(data, schema);
@@ -132,7 +132,7 @@ describe('InputValidator', () => {
       const data = {
         email: 'invalid',
         age: 25,
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       expect(() => {

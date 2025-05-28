@@ -69,7 +69,7 @@ describe('Add Command with AI', () => {
       args: { listOrTitle: 'Test todo with AI' } as AddCommandArgs,
       flags: {
         list: 'default',
-        priority: 'medium',
+        priority: 'medium' as const,
         ai: true,
       } as AddCommandFlags,
     } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
@@ -100,7 +100,7 @@ describe('Add Command with AI', () => {
       args: { listOrTitle: 'Test todo with AI error' } as AddCommandArgs,
       flags: {
         list: 'default',
-        priority: 'medium',
+        priority: 'medium' as const,
         ai: true,
       } as AddCommandFlags,
     } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
@@ -120,7 +120,7 @@ describe('Add Command with AI', () => {
       args: { listOrTitle: 'Test todo with custom API key' } as AddCommandArgs,
       flags: {
         list: 'default',
-        priority: 'medium',
+        priority: 'medium' as const,
         ai: true,
         apiKey: 'custom-api-key',
       } as AddCommandFlags,

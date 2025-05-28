@@ -38,7 +38,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [{ key: 'test', value: 'value' }] },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       const operationId = await cacheManager.queueOperation(operation);
@@ -55,14 +55,14 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'low',
+        priority: 'low' as const,
       };
 
       const highPriorityOp: CacheOperation = {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       await cacheManager.queueOperation(lowPriorityOp);
@@ -80,7 +80,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'storage-allocation',
         data: { size: 1024 },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       await cacheManager.queueOperation(operation);
@@ -104,7 +104,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'batch-process',
         data: { items: [] },
-        priority: 'low', // Low priority to keep it pending longer
+        priority: 'low' as const, // Low priority to keep it pending longer
       };
 
       await cacheManager.queueOperation(operation);
@@ -130,14 +130,14 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       const operation2: CacheOperation = {
         id: uuidv4(),
         type: 'storage-allocation',
         data: { size: 2048 },
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       await cacheManager.queueOperation(operation1);
@@ -161,7 +161,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [{ key: 'test', value: 'test-value' }] },
-        priority: 'high',
+        priority: 'high' as const,
         timeout: 5000,
       };
 
@@ -182,7 +182,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'batch-process',
         data: { items: Array(1000).fill({}) }, // Large data to take time
-        priority: 'low',
+        priority: 'low' as const,
       };
 
       await cacheManager.queueOperation(operation);
@@ -199,7 +199,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       await cacheManager.queueOperation(operation);
@@ -218,7 +218,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'invalid-type' as any,
         data: {},
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       await cacheManager.queueOperation(operation);
@@ -241,7 +241,7 @@ describe('BackgroundCacheManager', () => {
           id: uuidv4(),
           type: 'batch-process',
           data: { items: Array(10).fill({}) },
-          priority: 'normal',
+          priority: 'medium' as const,
         });
       }
 
@@ -262,7 +262,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'storage-allocation',
         data: { size: 512 },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       const operationId = `test-operation-${Date.now()}`;

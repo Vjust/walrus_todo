@@ -31,7 +31,7 @@ describe('TodoService', () => {
     const todo: Partial<Todo> = {
       title: 'Test Todo',
       description: 'Test Description',
-      priority: 'high',
+      priority: 'high' as const,
       tags: ['test'],
     };
 

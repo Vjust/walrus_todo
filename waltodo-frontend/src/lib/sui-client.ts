@@ -3,7 +3,7 @@
  * Enhanced implementation with full Sui SDK integration and auto-generated configuration
  */
 
-import { SuiClient, type SuiObjectResponse, type SuiMoveObject, type PaginatedObjectsResponse } from '@mysten/sui.js/client';
+import { SuiClient, type SuiObjectResponse, type SuiMoveObject, type PaginatedObjectsResponse } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { fromB64 } from '@mysten/sui/utils';

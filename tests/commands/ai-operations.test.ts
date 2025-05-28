@@ -78,9 +78,9 @@ jest.mock('../../apps/cli/src/services/ai/TaskSuggestionService', () => {
           'Review pull requests',
         ]),
       suggestPrioritizedTasks: jest.fn().mockResolvedValue([
-        { title: 'Create project documentation', priority: 'high' },
-        { title: 'Schedule weekly team meeting', priority: 'medium' },
-        { title: 'Review pull requests', priority: 'medium' },
+        { title: 'Create project documentation', priority: 'high' as const },
+        { title: 'Schedule weekly team meeting', priority: 'medium' as const },
+        { title: 'Review pull requests', priority: 'medium' as const },
       ]),
       suggestTaskWorkflow: jest.fn().mockResolvedValue({
         steps: [

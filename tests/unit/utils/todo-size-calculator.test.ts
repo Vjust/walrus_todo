@@ -49,7 +49,7 @@ describe('TodoSizeCalculator', () => {
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-02T00:00:00.000Z',
         category: 'work',
-        priority: 'high',
+        priority: 'high' as const,
         tags: ['urgent', 'important', 'project-x'],
         reminders: [
           {
@@ -258,7 +258,7 @@ describe('TodoSizeCalculator', () => {
           completed: false,
           user: 'user4',
           category: 'personal',
-          priority: 'medium',
+          priority: 'medium' as const,
           tags: ['health', 'exercise'],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

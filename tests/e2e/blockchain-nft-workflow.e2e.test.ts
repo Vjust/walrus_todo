@@ -379,9 +379,9 @@ test.describe('Smart Contract Integration Tests', () => {
   test('Contract: Test NFT creation parameters', async () => {
     // Test with various parameter combinations
     const testCases = [
-      { title: 'Simple Todo', description: '', priority: 'low' },
-      { title: 'Complex Todo', description: 'With description', priority: 'high' },
-      { title: 'Unicode Todo 🚀', description: 'With emoji', priority: 'medium' },
+      { title: 'Simple Todo', description: '', priority: 'low' as const },
+      { title: 'Complex Todo', description: 'With description', priority: 'high' as const },
+      { title: 'Unicode Todo 🚀', description: 'With emoji', priority: 'medium' as const },
     ];
 
     for (const testCase of testCases) {

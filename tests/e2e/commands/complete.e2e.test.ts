@@ -391,7 +391,7 @@ describe('E2E: complete command', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         aiGenerated: true,
-        priority: 'high',
+        priority: 'high' as const,
         tags: ['important', 'urgent'],
         customField: 'custom value',
       };

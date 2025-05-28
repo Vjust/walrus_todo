@@ -12,12 +12,12 @@ const basicTestTodo = {
   title: 'Test Todo',
   description: 'Test Description',
   completed: false,
-  priority: 'medium',
+  priority: 'medium' as const,
   tags: ['test'],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   private: false,
-  storageLocation: 'local',
+  storageLocation: 'local' as const,
 };
 
 describe('Basic Jest Test', () => {

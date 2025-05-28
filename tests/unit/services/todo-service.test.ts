@@ -187,7 +187,7 @@ describe('TodoService', () => {
       const todoData: Partial<Todo> = {
         title: 'Test Todo',
         description: 'Test Description',
-        priority: 'high',
+        priority: 'high' as const,
         tags: ['test', 'important'],
       };
 
@@ -198,7 +198,7 @@ describe('TodoService', () => {
         title: 'Test Todo',
         description: 'Test Description',
         completed: false,
-        priority: 'high',
+        priority: 'high' as const,
         tags: ['test', 'important'],
       });
 
@@ -230,7 +230,7 @@ describe('TodoService', () => {
             title: 'Test Todo',
             description: 'Test Description',
             completed: false,
-            priority: 'medium',
+            priority: 'medium' as const,
             tags: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -284,7 +284,7 @@ describe('TodoService', () => {
             title: 'Test Todo',
             description: 'Test Description',
             completed: false,
-            priority: 'medium',
+            priority: 'medium' as const,
             tags: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -318,7 +318,7 @@ describe('TodoService', () => {
             title: 'Original Title',
             description: 'Original Description',
             completed: false,
-            priority: 'medium',
+            priority: 'medium' as const,
             tags: [],
             createdAt: '2024-01-01T00:00:00.000Z',
             updatedAt: '2024-01-01T00:00:00.000Z',
@@ -338,7 +338,7 @@ describe('TodoService', () => {
       const updates: Partial<Todo> = {
         title: 'Updated Title',
         completed: true,
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       const result = await todoService.updateTodo(
@@ -351,7 +351,7 @@ describe('TodoService', () => {
         id: 'todo-1',
         title: 'Updated Title',
         completed: true,
-        priority: 'high',
+        priority: 'high' as const,
         description: 'Original Description',
       });
 
@@ -397,7 +397,7 @@ describe('TodoService', () => {
             id: 'todo-1',
             title: 'Test Todo',
             completed: false,
-            priority: 'medium',
+            priority: 'medium' as const,
             tags: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -461,7 +461,7 @@ describe('TodoService', () => {
             id: 'todo-1',
             title: 'Test Todo',
             completed: false,
-            priority: 'medium',
+            priority: 'medium' as const,
             tags: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -583,7 +583,7 @@ describe('TodoService', () => {
             id: 'todo-1',
             title: 'Todo 1',
             completed: false,
-            priority: 'high',
+            priority: 'high' as const,
             tags: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -604,7 +604,7 @@ describe('TodoService', () => {
             id: 'todo-2',
             title: 'Todo 2',
             completed: true,
-            priority: 'low',
+            priority: 'low' as const,
             tags: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),

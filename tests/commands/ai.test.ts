@@ -31,12 +31,12 @@ jest.mock('../../apps/cli/src/services/todoService', () => {
     title: 'Complete project',
     description: 'Finish the quarterly project report',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     tags: ['work'],
     createdAt: '2023-01-01T12:00:00Z',
     updatedAt: '2023-01-01T12:00:00Z',
     private: true,
-    storageLocation: 'local',
+    storageLocation: 'local' as const,
   };
 
   const mockTodoList: TodoList = {

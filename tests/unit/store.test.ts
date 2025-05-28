@@ -14,7 +14,7 @@ describe('store command', () => {
     title: 'Test Todo',
     description: '',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     tags: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

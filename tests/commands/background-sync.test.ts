@@ -60,7 +60,7 @@ describe('Background Sync Command', () => {
       direction: 'both',
       resolve: 'ask',
       force: true,
-      priority: 'normal',
+      priority: 'medium' as const,
       onProgress: expect.any(Function),
       onComplete: expect.any(Function),
       onError: expect.any(Function),
@@ -104,7 +104,7 @@ describe('Background Sync Command', () => {
     expect(stdout).toContain('Background sync started');
     expect(mockBackgroundOps.syncTodosInBackground).toHaveBeenCalledWith(
       expect.objectContaining({
-        priority: 'high',
+        priority: 'high' as const,
       })
     );
   });
@@ -243,7 +243,7 @@ describe('Background Operations Integration', () => {
       interval: 120,
       direction: 'pull',
       resolve: 'local',
-      priority: 'high',
+      priority: 'high' as const,
     });
 
     expect(mockCacheManager.queueOperation).toHaveBeenCalledWith(
@@ -254,7 +254,7 @@ describe('Background Operations Integration', () => {
           direction: 'pull',
           resolve: 'local',
         }),
-        priority: 'high',
+        priority: 'high' as const,
         timeout: undefined, // No timeout for continuous operations
       })
     );

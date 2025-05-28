@@ -178,10 +178,10 @@ describe('List Command Background Operations', () => {
       
       // Create todos with different properties
       const todos = [
-        { title: 'High priority task', priority: 'high', completed: false, dueDate: '2024-01-01' },
-        { title: 'Medium priority task', priority: 'medium', completed: true, dueDate: '2024-02-01' },
-        { title: 'Low priority task', priority: 'low', completed: false, dueDate: '2024-03-01' },
-        { title: 'Another high priority', priority: 'high', completed: true, dueDate: '2024-01-15' }
+        { title: 'High priority task', priority: 'high' as const, completed: false, dueDate: '2024-01-01' },
+        { title: 'Medium priority task', priority: 'medium' as const, completed: true, dueDate: '2024-02-01' },
+        { title: 'Low priority task', priority: 'low' as const, completed: false, dueDate: '2024-03-01' },
+        { title: 'Another high priority', priority: 'high' as const, completed: true, dueDate: '2024-01-15' }
       ];
       
       for (const todo of todos) {
