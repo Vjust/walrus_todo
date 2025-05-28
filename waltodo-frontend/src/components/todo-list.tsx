@@ -11,7 +11,10 @@ import {
   completeTodoOnBlockchain,
   deleteTodoOnBlockchain,
   initializeSuiClient,
+  isSuiClientInitialized,
+  ensureSuiClientInitialized,
 } from '@/lib/sui-client';
+import { useSuiClient } from '@/hooks/useSuiClient';
 
 type TodoListProps = {
   listName: string;
@@ -23,8 +26,19 @@ function TodoList({ listName }: TodoListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [blockchainTodos, setBlockchainTodos] = useState<Todo[]>([]);
   const [loadingBlockchain, setLoadingBlockchain] = useState(false);
+  const [componentMounted, setComponentMounted] = useState(false);
+  const [initializationComplete, setInitializationComplete] = useState(false);
   
-  const { address, connected, signAndExecuteTransaction } = useWalletContext();
+  // Wallet context with safety checks
+  const walletContext = useWalletContext();
+  const { address, connected, signAndExecuteTransaction } = walletContext || {};
+  
+  // Sui client hook with initialization state
+  const { 
+    isInitialized: suiClientInitialized, 
+    isInitializing: suiClientInitializing, 
+    error: suiClientError 
+  } = useSuiClient('testnet');
 
   // Disable blockchain events to prevent console spam
   // const { syncedTodos, isConnected: eventsConnected } = useTodoStateSync({
@@ -61,15 +75,41 @@ function TodoList({ listName }: TodoListProps) {
   // Use merged todos since blockchain events are disabled
   const displayTodos = useMemo(() => mergedTodos, [mergedTodos]);
 
-  // Load blockchain todos when wallet is connected - moved to useEffect to prevent dependency loops
+  // Component mount effect
+  useEffect(() => {
+    setComponentMounted(true);
+    return () => {
+      setComponentMounted(false);
+    };
+  }, []);
+
+  // Initialization guard effect
+  useEffect(() => {
+    if (componentMounted && (suiClientInitialized || !connected)) {
+      setInitializationComplete(true);
+    }
+  }, [componentMounted, suiClientInitialized, connected]);
+
+  // Load blockchain todos when wallet is connected and Sui client is ready
   useEffect(() => {
     let isMounted = true;
 
     const loadBlockchainTodos = async () => {
+      // Safety checks - prevent premature execution
+      if (!componentMounted || !initializationComplete) {
+        return;
+      }
+
       if (!connected || !address) {
         if (isMounted) {
           setBlockchainTodos([]);
         }
+        return;
+      }
+
+      // Only proceed if Sui client is initialized
+      if (!suiClientInitialized) {
+        console.log('[TodoList] Sui client not initialized, skipping blockchain fetch');
         return;
       }
 
@@ -78,21 +118,20 @@ function TodoList({ listName }: TodoListProps) {
       }
 
       try {
-        // Wait for Sui client to be initialized
-        if (!suiClientInitialized) {
-          console.log('Waiting for Sui client to initialize...');
+        // Double-check client is still initialized
+        if (!isSuiClientInitialized()) {
+          console.log('[TodoList] Sui client lost initialization, skipping fetch');
           return;
         }
 
-        console.log('Fetching todos from blockchain...');
-        // Fetch todos from blockchain (Sui client is already initialized)
+        console.log('[TodoList] Fetching todos from blockchain...');
         const fetchedTodos = await getTodosFromBlockchain(address);
         if (isMounted) {
           setBlockchainTodos(fetchedTodos);
-          console.log(`Loaded ${fetchedTodos.length} todos from blockchain`);
+          console.log(`[TodoList] Loaded ${fetchedTodos.length} todos from blockchain`);
         }
       } catch (error) {
-        console.error('Failed to load blockchain todos:', error);
+        console.error('[TodoList] Failed to load blockchain todos:', error);
         if (isMounted) {
           setBlockchainTodos([]);
         }
@@ -108,7 +147,7 @@ function TodoList({ listName }: TodoListProps) {
     return () => {
       isMounted = false;
     };
-  }, [connected, address, suiClientInitialized]);
+  }, [connected, address, suiClientInitialized, componentMounted, initializationComplete]);
 
   // Load initial todos from local storage for the connected wallet
   useEffect(() => {
@@ -145,26 +184,33 @@ function TodoList({ listName }: TodoListProps) {
     };
   }, [listName, address]);
 
+
   const refreshBlockchainTodos = useCallback(async () => {
-    if (!connected || !address) return;
+    // Safety guards
+    if (!componentMounted || !initializationComplete) return;
+    if (!connected || !address || !suiClientInitialized) return;
 
     try {
-      // Initialize Sui client
-      try {
-        initializeSuiClient('testnet');
-      } catch (e) {
-        console.warn('Sui client already initialized');
+      console.log('[TodoList] Refreshing blockchain todos...');
+      
+      // Double-check client state
+      if (!isSuiClientInitialized()) {
+        console.warn('[TodoList] Sui client not ready for refresh');
+        return;
       }
-
-      // Fetch todos from blockchain
+      
       const fetchedTodos = await getTodosFromBlockchain(address);
       setBlockchainTodos(fetchedTodos);
+      console.log(`[TodoList] Refreshed ${fetchedTodos.length} todos from blockchain`);
     } catch (error) {
-      console.error('Failed to refresh blockchain todos:', error);
+      console.error('[TodoList] Failed to refresh blockchain todos:', error);
     }
-  }, [connected, address]);
+  }, [connected, address, suiClientInitialized, componentMounted, initializationComplete]);
 
   const toggleTodoCompletion = useCallback(async (id: string) => {
+    // Safety guards
+    if (!componentMounted || !initializationComplete) return;
+    
     const todo = displayTodos.find(t => t.id === id);
     if (!todo) return;
 
@@ -181,9 +227,13 @@ function TodoList({ listName }: TodoListProps) {
     setTodos(updatedTodos);
 
     try {
-      if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction) {
-        // Complete todo on blockchain
-        console.log('Completing todo on blockchain:', todo.objectId);
+      if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction && suiClientInitialized) {
+        // Complete todo on blockchain - with additional safety checks
+        if (!isSuiClientInitialized()) {
+          throw new Error('Sui client not ready for blockchain operations');
+        }
+        
+        console.log('[TodoList] Completing todo on blockchain:', todo.objectId);
         const result = await completeTodoOnBlockchain(
           todo.objectId,
           signAndExecuteTransaction,
@@ -191,7 +241,7 @@ function TodoList({ listName }: TodoListProps) {
         );
 
         if (result.success) {
-          console.log('✅ Todo completed on blockchain:', result.digest);
+          console.log('[TodoList] ✅ Todo completed on blockchain:', result.digest);
           // Refresh blockchain todos to get updated state
           await refreshBlockchainTodos();
         } else {
@@ -224,14 +274,16 @@ function TodoList({ listName }: TodoListProps) {
         await refreshBlockchainTodos();
       }
     }
-  }, [displayTodos, signAndExecuteTransaction, address, refreshBlockchainTodos, listName, connected]);
+  }, [displayTodos, signAndExecuteTransaction, address, refreshBlockchainTodos, listName, connected, suiClientInitialized, componentMounted, initializationComplete]);
 
   // Handle storing local todo on blockchain
   const handleStoreOnBlockchain = useCallback(async (todo: Todo) => {
-    if (!connected || !address || !signAndExecuteTransaction) return;
+    // Safety guards
+    if (!componentMounted || !initializationComplete) return;
+    if (!connected || !address || !signAndExecuteTransaction || !suiClientInitialized) return;
 
     try {
-      console.log('Storing todo on blockchain:', todo.title);
+      console.log('[TodoList] Storing todo on blockchain:', todo.title);
       // This would create an NFT version of the local todo
       // Implementation would involve calling storeTodoOnBlockchain
       // For now, just show a placeholder
@@ -239,18 +291,24 @@ function TodoList({ listName }: TodoListProps) {
         'Feature coming soon: Store existing todo as NFT on Sui blockchain'
       );
     } catch (error) {
-      console.error('Failed to store todo on blockchain:', error);
+      console.error('[TodoList] Failed to store todo on blockchain:', error);
     }
-  }, [connected, address, signAndExecuteTransaction]);
+  }, [connected, address, signAndExecuteTransaction, suiClientInitialized, componentMounted, initializationComplete]);
 
   // Handle deleting todo (local or blockchain)
   const handleDeleteTodo = useCallback(async (todo: Todo) => {
+    // Safety guards
+    if (!componentMounted || !initializationComplete) return;
     if (!confirm(`Are you sure you want to delete "${todo.title}"?`)) return;
 
     try {
-      if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction) {
-        // Delete from blockchain
-        console.log('Deleting todo from blockchain:', todo.objectId);
+      if (todo.blockchainStored && todo.objectId && signAndExecuteTransaction && suiClientInitialized) {
+        // Delete from blockchain - with additional safety checks
+        if (!isSuiClientInitialized()) {
+          throw new Error('Sui client not ready for blockchain operations');
+        }
+        
+        console.log('[TodoList] Deleting todo from blockchain:', todo.objectId);
         const result = await deleteTodoOnBlockchain(
           todo.objectId,
           signAndExecuteTransaction,
@@ -258,7 +316,7 @@ function TodoList({ listName }: TodoListProps) {
         );
 
         if (result.success) {
-          console.log('✅ Todo deleted from blockchain:', result.digest);
+          console.log('[TodoList] ✅ Todo deleted from blockchain:', result.digest);
           // Refresh blockchain todos
           await refreshBlockchainTodos();
         } else {
@@ -276,23 +334,36 @@ function TodoList({ listName }: TodoListProps) {
       console.error('Failed to delete todo:', error);
       alert('Failed to delete todo. Please try again.');
     }
-  }, [signAndExecuteTransaction, address, refreshBlockchainTodos, todos]);
+  }, [signAndExecuteTransaction, address, refreshBlockchainTodos, todos, suiClientInitialized, componentMounted, initializationComplete]);
 
-  if (isLoading || (connected && suiClientInitializing)) {
+  // Loading states with proper initialization guards
+  if (!componentMounted || isLoading || (connected && suiClientInitializing)) {
     return (
-      <div className='flex justify-center py-12'>
+      <div className='flex flex-col items-center justify-center py-12'>
         <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
-        {suiClientInitializing && (
-          <p className='ml-4 text-sm text-ocean-medium animate-pulse'>
-            Initializing blockchain connection...
-          </p>
-        )}
+        <div className='mt-4 text-center'>
+          {!componentMounted && (
+            <p className='text-sm text-ocean-medium animate-pulse'>
+              Loading component...
+            </p>
+          )}
+          {componentMounted && isLoading && (
+            <p className='text-sm text-ocean-medium animate-pulse'>
+              Loading todos...
+            </p>
+          )}
+          {componentMounted && connected && suiClientInitializing && (
+            <p className='text-sm text-ocean-medium animate-pulse'>
+              Initializing blockchain connection...
+            </p>
+          )}
+        </div>
       </div>
     );
   }
 
-  // Show Sui client error if there is one
-  if (connected && suiClientError) {
+  // Show Sui client error if there is one (only after component is mounted)
+  if (componentMounted && connected && suiClientError) {
     return (
       <div className='text-center py-12'>
         <div className='text-red-500 mb-4'>

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { addTodo } from '@/lib/todo-service';
-import { storeTodoOnBlockchain, initializeSuiClient } from '@/lib/sui-client';
+import { storeTodoOnBlockchain } from '@/lib/sui-client';
+import { useSuiClient } from '@/hooks/useSuiClient';
 import React, { useEffect } from 'react';
 
 type CreateTodoFormProps = {
@@ -25,20 +26,26 @@ export default function CreateTodoForm({
   const [error, setError] = useState<string | null>(null);
   const [isCreatingOnChain, setIsCreatingOnChain] = useState(false);
   const [createOnBlockchain, setCreateOnBlockchain] = useState(true); // Default to blockchain creation
+  const [componentMounted, setComponentMounted] = useState(false);
 
-  const { address, connected, signAndExecuteTransaction } = useWalletContext();
+  // Safe wallet context access
+  const walletContext = useWalletContext();
+  const { address, connected, signAndExecuteTransaction } = walletContext || {};
+  const { isInitialized: suiClientInitialized, isInitializing: suiClientInitializing, error: suiClientError } = useSuiClient('testnet');
 
-  // Initialize Sui client when component mounts
+  // Component mount effect
   useEffect(() => {
-    try {
-      initializeSuiClient('testnet');
-    } catch (error) {
-      console.warn('Sui client initialization:', error);
-    }
+    setComponentMounted(true);
+    return () => {
+      setComponentMounted(false);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Safety guard
+    if (!componentMounted) return;
 
     if (!title.trim()) return;
 
@@ -77,7 +84,8 @@ export default function CreateTodoForm({
         createOnBlockchain &&
         connected &&
         address &&
-        signAndExecuteTransaction
+        signAndExecuteTransaction &&
+        suiClientInitialized
       ) {
         setIsCreatingOnChain(true);
 
@@ -146,6 +154,15 @@ export default function CreateTodoForm({
       setIsCreatingOnChain(false);
     }
   };
+
+  // Prevent render until component is mounted
+  if (!componentMounted) {
+    return (
+      <div className='flex justify-center py-4'>
+        <div className='w-6 h-6 rounded-full border-2 border-ocean-light border-t-ocean-deep animate-spin'></div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
@@ -278,10 +295,16 @@ export default function CreateTodoForm({
         <button
           type='submit'
           disabled={
-            isSubmitting || !title.trim() || (createOnBlockchain && !connected)
+            isSubmitting || 
+            !title.trim() || 
+            (createOnBlockchain && (!connected || !suiClientInitialized))
           }
           className={`ocean-button ${
-            isSubmitting || !title.trim() ? 'opacity-70 cursor-not-allowed' : ''
+            isSubmitting || 
+            !title.trim() || 
+            (createOnBlockchain && (!connected || !suiClientInitialized))
+              ? 'opacity-70 cursor-not-allowed' 
+              : ''
           }`}
         >
           {isSubmitting
@@ -290,9 +313,13 @@ export default function CreateTodoForm({
               : 'Adding...'
             : createOnBlockchain && !connected
               ? 'Connect Wallet for NFT'
-              : createOnBlockchain && connected
-                ? 'Create NFT Todo'
-                : 'Add Todo'}
+              : createOnBlockchain && connected && !suiClientInitialized
+                ? suiClientInitializing
+                  ? 'Initializing Blockchain...'
+                  : 'Blockchain Not Ready'
+                : createOnBlockchain && connected && suiClientInitialized
+                  ? 'Create NFT Todo'
+                  : 'Add Todo'}
         </button>
       </div>
     </form>

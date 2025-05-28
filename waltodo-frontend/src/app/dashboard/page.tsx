@@ -10,7 +10,6 @@ import {
   createTodoList,
   deleteTodoList,
 } from '@/lib/todo-service';
-import { initializeSuiClient } from '@/lib/sui-client';
 
 export default function Dashboard() {
   const [selectedList, setSelectedList] = useState('default');
@@ -18,27 +17,27 @@ export default function Dashboard() {
   const [todoLists, setTodoLists] = useState<string[]>(['default']);
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
-  const { address } = useWalletContext();
+  const [componentMounted, setComponentMounted] = useState(false);
+  
+  // Safe wallet context access
+  const walletContext = useWalletContext();
+  const { address } = walletContext || {};
 
-  // Initialize Sui client on dashboard mount
+  // Component mount effect
   useEffect(() => {
-    const initClient = async () => {
-      try {
-        await initializeSuiClient('testnet');
-        console.log('[Dashboard] Sui client initialized');
-      } catch (error) {
-        console.warn('[Dashboard] Sui client initialization failed or already initialized:', error);
-      }
+    setComponentMounted(true);
+    return () => {
+      setComponentMounted(false);
     };
-    
-    initClient();
   }, []);
 
-  // Load todo lists for the current wallet
+  // Load todo lists for the current wallet with mount guard
   useEffect(() => {
+    if (!componentMounted) return;
+    
     const lists = getTodoLists(address || undefined);
     setTodoLists(lists.length > 0 ? lists : ['default']);
-  }, [address, refreshKey]);
+  }, [address, refreshKey, componentMounted]);
 
   const handleTodoAdded = () => {
     // Force TodoList to refresh by updating key
@@ -83,6 +82,18 @@ export default function Dashboard() {
       alert('Failed to delete list');
     }
   };
+
+  // Prevent render until component is mounted
+  if (!componentMounted) {
+    return (
+      <div className='max-w-6xl mx-auto'>
+        <Navbar currentPage='dashboard' />
+        <div className='flex justify-center py-12'>
+          <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='max-w-6xl mx-auto'>

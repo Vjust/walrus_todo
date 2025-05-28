@@ -76,7 +76,7 @@ module.exports = {
     '<rootDir>/apps/cli/src'
   ],
   maxWorkers: 1,
-  testTimeout: 10000,
+  testTimeout: 5000, // Reduced for faster feedback
   // Conditionally enable coverage collection for CI environments
   collectCoverage: process.env.CI === 'true' || false,
   coverageReporters: ['json', 'lcov', 'text', 'clover', 'json-summary'],

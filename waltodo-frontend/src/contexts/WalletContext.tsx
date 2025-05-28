@@ -94,6 +94,9 @@ const SESSION_TIMEOUT = 30 * 60 * 1000;
 
 // Inner wallet context provider that uses the wallet hooks
 function WalletContextProvider({ children }: { children: ReactNode }) {
+  // Component mount tracking
+  const [componentMounted, setComponentMounted] = useState(false);
+  
   // Mysten dApp Kit hooks
   const account = useCurrentAccount();
   const { mutate: connectWallet, isPending: connecting } = useConnectWallet();
@@ -131,16 +134,24 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   });
   */
   
+  // Component mount effect
+  useEffect(() => {
+    setComponentMounted(true);
+    return () => {
+      setComponentMounted(false);
+    };
+  }, []);
+
   // Connection state
   const connected = Boolean(account);
 
-  // Auto-reconnect logic with proper cleanup
+  // Auto-reconnect logic with proper cleanup and mount guard
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
     let isMounted = true;
 
     const autoReconnect = async () => {
-      if (!isMounted) return;
+      if (!isMounted || !componentMounted) return;
       
       try {
         let lastWallet = null;
@@ -151,10 +162,10 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        if (lastWallet && !connected && !connecting && wallets.length > 0 && isMounted) {
+        if (lastWallet && !connected && !connecting && wallets.length > 0 && isMounted && componentMounted) {
           console.log('[WalletContext] Attempting auto-reconnect to:', lastWallet);
           const wallet = wallets.find(w => w.name === lastWallet);
-          if (wallet && isMounted) {
+          if (wallet && isMounted && componentMounted) {
             connectWallet(
               { wallet },
               {
@@ -198,7 +209,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
         clearTimeout(timeoutId);
       }
     };
-  }, [connected, connecting, wallets, connectWallet, resetActivityTimer]);
+  }, [connected, connecting, wallets, connectWallet, resetActivityTimer, componentMounted]);
 
   // Clear error when wallet state changes
   useEffect(() => {
@@ -215,7 +226,8 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
           console.log('[WalletContext] Sui client initialized successfully');
         } catch (error) {
           console.error('[WalletContext] Failed to initialize Sui client:', error);
-          setError('Failed to initialize blockchain connection');
+          setError('Failed to initialize blockchain connection. Some features may not work properly.');
+          // Don't block the app completely, just warn the user
         }
       };
       

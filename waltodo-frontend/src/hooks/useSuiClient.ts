@@ -8,39 +8,59 @@ export function useSuiClient(network: NetworkType = 'testnet') {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [componentMounted, setComponentMounted] = useState(false);
 
   const initialize = useCallback(async () => {
-    if (isInitializing || isInitialized) return;
+    if (!componentMounted || isInitializing || isInitialized) return;
 
     setIsInitializing(true);
     setError(null);
 
     try {
       await initializeSuiClient(network);
-      setIsInitialized(true);
-      console.log(`[useSuiClient] Successfully initialized for ${network}`);
+      if (componentMounted) {
+        setIsInitialized(true);
+        console.log(`[useSuiClient] Successfully initialized for ${network}`);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to initialize Sui client';
-      setError(errorMessage);
-      console.error('[useSuiClient] Initialization failed:', err);
+      if (componentMounted) {
+        setError(errorMessage);
+        console.error('[useSuiClient] Initialization failed:', err);
+      }
     } finally {
-      setIsInitializing(false);
+      if (componentMounted) {
+        setIsInitializing(false);
+      }
     }
-  }, [network, isInitializing, isInitialized]);
+  }, [network, isInitializing, isInitialized, componentMounted]);
 
-  const getClient = useCallback(() => {
+  const getClient = useCallback(async () => {
+    if (!componentMounted) return null;
+    
     try {
-      return getSuiClient();
+      return await getSuiClient();
     } catch (err) {
       console.warn('[useSuiClient] Client not available, attempting to initialize...');
-      initialize();
-      return null;
+      await initialize();
+      return await getSuiClient();
     }
-  }, [initialize]);
+  }, [initialize, componentMounted]);
 
+  // Component mount effect
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    setComponentMounted(true);
+    return () => {
+      setComponentMounted(false);
+    };
+  }, []);
+
+  // Initialize after mount
+  useEffect(() => {
+    if (componentMounted) {
+      initialize();
+    }
+  }, [initialize, componentMounted]);
 
   return {
     isInitialized,

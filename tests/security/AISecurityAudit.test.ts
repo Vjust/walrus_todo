@@ -348,12 +348,17 @@ describe('AI Security Audit', () => {
    * 3. Credential Storage Security Tests
    */
   describe('Credential Storage Security', () => {
-    it('should securely encrypt credentials at rest', async () => {
-      // Mock fs methods to capture file content
-      const writeFileSyncSpy = jest
-        .spyOn(fs, 'writeFileSync')
-        .mockImplementation(() => {});
+    let writeFileSyncSpy: jest.SpyInstance;
 
+    beforeEach(() => {
+      writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      writeFileSyncSpy.mockRestore();
+    });
+
+    it('should securely encrypt credentials at rest', async () => {
       // Call through to the actual secureCredentialManager to test encryption
       await secureCredentialManager.setCredential(
         'xai',
@@ -373,16 +378,9 @@ describe('AI Security Audit', () => {
 
       // Verify IV is included (first 16 bytes should be IV)
       expect(fileContentBuffer.length).toBeGreaterThan(16);
-
-      writeFileSyncSpy.mockRestore();
     });
 
     it('should apply proper file permissions when storing credentials', async () => {
-      // Mock fs methods
-      const writeFileSyncSpy = jest
-        .spyOn(fs, 'writeFileSync')
-        .mockImplementation(() => {});
-
       // Call setCredential
       await secureCredentialManager.setCredential(
         'xai',
@@ -396,8 +394,6 @@ describe('AI Security Audit', () => {
         expect.any(Buffer),
         expect.objectContaining({ mode: 0o600 })
       );
-
-      writeFileSyncSpy.mockRestore();
     });
 
     it('should handle decryption failures securely', async () => {
@@ -479,11 +475,6 @@ describe('AI Security Audit', () => {
       // Attempt path traversal in provider name
       const traversalProvider = '../../../etc/passwd';
 
-      // Mock to capture the path used
-      const writeFileSyncSpy = jest
-        .spyOn(fs, 'writeFileSync')
-        .mockImplementation(() => {});
-
       // Create a credential with the malicious provider name
       await secureCredentialManager.setCredential(
         traversalProvider,
@@ -496,8 +487,6 @@ describe('AI Security Audit', () => {
       expect(secureCredentialManager.getCredential).toHaveBeenCalledWith(
         expect.not.stringContaining('../')
       );
-
-      writeFileSyncSpy.mockRestore();
     });
   });
 
