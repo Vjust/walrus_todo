@@ -55,6 +55,9 @@ function WalletConnectButton() {
       return;
     }
 
+    // Prevent multiple simultaneous copy operations
+    if (copyStatus === 'success') return;
+
     setCopyStatus('idle');
     setCopyError(null);
     setClipboardError(null);
@@ -65,7 +68,12 @@ function WalletConnectButton() {
       if (result.success) {
         setCopyStatus('success');
         // Reset success status after 2 seconds
-        setTimeout(() => setCopyStatus('idle'), 2000);
+        const timeoutId = setTimeout(() => {
+          setCopyStatus('idle');
+        }, 2000);
+        
+        // Cleanup on unmount
+        return () => clearTimeout(timeoutId);
       } else {
         setCopyStatus('error');
         setCopyError(result.error?.message || 'Unknown error');
@@ -89,7 +97,7 @@ function WalletConnectButton() {
 
       console.error('Copy operation failed:', error);
     }
-  }, [address]);
+  }, [address, copyStatus]);
 
   // Add clipboard manual fallback option
   const handleManualCopy = useCallback(() => {
@@ -406,4 +414,7 @@ function WalletConnectButton() {
   );
 }
 
-export const WalletConnectButton = memo(WalletConnectButton);
+const MemoizedWalletConnectButton = memo(WalletConnectButton);
+
+export { MemoizedWalletConnectButton as WalletConnectButton };
+export default MemoizedWalletConnectButton;

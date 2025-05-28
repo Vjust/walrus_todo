@@ -9,8 +9,17 @@ import {
   afterEach,
 } from '@jest/globals';
 
-// Import AggregateError polyfill
-import './apps/cli/src/utils/polyfills/aggregate-error';
+// Import AggregateError polyfill - try both locations
+try {
+  require('./src/utils/polyfills/aggregate-error');
+} catch {
+  try {
+    require('./apps/cli/src/utils/polyfills/aggregate-error');
+  } catch {
+    // Fallback if polyfill doesn't exist
+    console.warn('AggregateError polyfill not found, using native implementation');
+  }
+}
 
 // AggregateError is now available globally through the polyfill
 

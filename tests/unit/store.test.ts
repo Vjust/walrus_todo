@@ -1,9 +1,9 @@
 // TODO: This test file requires refactoring to work without mocks
 // The following jest.mock calls were removed during mock cleanup:
-// - jest.mock('../../src/utils/walrus-storage')
-// - jest.mock('../../src/services/config-service')
+// - jest.mock('../../apps/cli/src/utils/walrus-storage')
+// - jest.mock('../../apps/cli/src/services/config-service')
 
-import type { Todo } from '../../src/types/todo';
+import type { Todo } from '../../apps/cli/src/types/todo';
 
 describe('store command', () => {
   // TODO: All tests in this suite require mocks and need to be refactored

@@ -1,20 +1,20 @@
-import { AIService } from '../../src/services/ai/aiService';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import {
   AIProvider,
   AIModelAdapter,
-} from '../../src/types/adapters/AIModelAdapter';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import {
   AIPrivacyLevel,
-} from '../../src/types/adapters/AIVerifierAdapter';
-import { Todo } from '../../src/types/todo';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 
 // Mock the AIProviderFactory to inject our controllable mock
-jest.mock('../../src/services/ai/AIProviderFactory', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
   return {
     AIProviderFactory: {
       createProvider: jest

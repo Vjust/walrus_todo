@@ -4,10 +4,10 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type {
   SuiTransactionBlockResponse,
   SuiObjectResponse,
-} from '../../src/utils/adapters/sui-client-compatibility';
+} from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { IntentScope, SignatureWithBytes } from '@mysten/sui/cryptography';
-import { SuiNftStorage } from '../../src/utils/sui-nft-storage';
-import { SuiClient } from '../../src/utils/adapters/sui-client-compatibility';
+import { SuiNftStorage } from '../../apps/cli/src/utils/sui-nft-storage';
+import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { createMockSuiObjectResponse, createMockTransactionResponse } from '../sui-test-types';
 

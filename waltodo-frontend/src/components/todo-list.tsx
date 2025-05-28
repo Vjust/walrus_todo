@@ -18,10 +18,12 @@ type TodoListProps = {
 };
 
 function TodoList({ listName }: TodoListProps) {
+  // ALL HOOKS MUST BE DECLARED AT THE TOP - NO CONDITIONAL HOOKS
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [blockchainTodos, setBlockchainTodos] = useState<Todo[]>([]);
   const [loadingBlockchain, setLoadingBlockchain] = useState(false);
+  
   const { address, connected, signAndExecuteTransaction } = useWalletContext();
 
   // Disable blockchain events to prevent console spam
@@ -34,58 +36,6 @@ function TodoList({ listName }: TodoListProps) {
   //   autoStart: connected,
   // })
   const eventsConnected = false;
-
-  // Load blockchain todos when wallet is connected
-  const loadBlockchainTodos = useCallback(async () => {
-    if (!connected || !address) {
-      setBlockchainTodos([]);
-      return;
-    }
-
-    setLoadingBlockchain(true);
-    try {
-      // Initialize Sui client
-      try {
-        initializeSuiClient('testnet');
-      } catch (e) {
-        console.warn('Sui client already initialized');
-      }
-
-      // Fetch todos from blockchain
-      const fetchedTodos = await getTodosFromBlockchain(address);
-      setBlockchainTodos(fetchedTodos);
-    } catch (error) {
-      console.error('Failed to load blockchain todos:', error);
-      setBlockchainTodos([]);
-    } finally {
-      setLoadingBlockchain(false);
-    }
-  }, [connected, address]); // useCallback dependencies
-
-  // Load initial todos from local storage for the connected wallet
-  useEffect(() => {
-    const loadTodos = async () => {
-      setIsLoading(true);
-      try {
-        // Load wallet-specific todos from local storage
-        const localTodos = getTodos(listName, address || undefined);
-        setTodos(localTodos);
-
-        // Also load blockchain todos if wallet is connected
-        if (connected && address) {
-          await loadBlockchainTodos();
-        }
-      } catch (error) {
-        console.error('Failed to load todos:', error);
-        // Fallback to empty array
-        setTodos([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTodos();
-  }, [listName, address, connected, loadBlockchainTodos]); // Re-load when wallet address changes
 
   // Merge local and blockchain todos, prioritizing blockchain todos
   const mergedTodos = useMemo(() => {
@@ -110,6 +60,109 @@ function TodoList({ listName }: TodoListProps) {
 
   // Use merged todos since blockchain events are disabled
   const displayTodos = useMemo(() => mergedTodos, [mergedTodos]);
+
+  // Load blockchain todos when wallet is connected - moved to useEffect to prevent dependency loops
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBlockchainTodos = async () => {
+      if (!connected || !address) {
+        if (isMounted) {
+          setBlockchainTodos([]);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setLoadingBlockchain(true);
+      }
+
+      try {
+        // Wait for Sui client to be initialized
+        if (!suiClientInitialized) {
+          console.log('Waiting for Sui client to initialize...');
+          return;
+        }
+
+        console.log('Fetching todos from blockchain...');
+        // Fetch todos from blockchain (Sui client is already initialized)
+        const fetchedTodos = await getTodosFromBlockchain(address);
+        if (isMounted) {
+          setBlockchainTodos(fetchedTodos);
+          console.log(`Loaded ${fetchedTodos.length} todos from blockchain`);
+        }
+      } catch (error) {
+        console.error('Failed to load blockchain todos:', error);
+        if (isMounted) {
+          setBlockchainTodos([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingBlockchain(false);
+        }
+      }
+    };
+
+    loadBlockchainTodos();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [connected, address, suiClientInitialized]);
+
+  // Load initial todos from local storage for the connected wallet
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTodos = async () => {
+      if (isMounted) {
+        setIsLoading(true);
+      }
+
+      try {
+        // Load wallet-specific todos from local storage
+        const localTodos = getTodos(listName, address || undefined);
+        if (isMounted) {
+          setTodos(localTodos);
+        }
+      } catch (error) {
+        console.error('Failed to load todos:', error);
+        // Fallback to empty array
+        if (isMounted) {
+          setTodos([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadTodos();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [listName, address]);
+
+  const refreshBlockchainTodos = useCallback(async () => {
+    if (!connected || !address) return;
+
+    try {
+      // Initialize Sui client
+      try {
+        initializeSuiClient('testnet');
+      } catch (e) {
+        console.warn('Sui client already initialized');
+      }
+
+      // Fetch todos from blockchain
+      const fetchedTodos = await getTodosFromBlockchain(address);
+      setBlockchainTodos(fetchedTodos);
+    } catch (error) {
+      console.error('Failed to refresh blockchain todos:', error);
+    }
+  }, [connected, address]);
 
   const toggleTodoCompletion = useCallback(async (id: string) => {
     const todo = displayTodos.find(t => t.id === id);
@@ -140,7 +193,7 @@ function TodoList({ listName }: TodoListProps) {
         if (result.success) {
           console.log('✅ Todo completed on blockchain:', result.digest);
           // Refresh blockchain todos to get updated state
-          await loadBlockchainTodos();
+          await refreshBlockchainTodos();
         } else {
           throw new Error(
             result.error || 'Failed to complete todo on blockchain'
@@ -168,49 +221,10 @@ function TodoList({ listName }: TodoListProps) {
       const localTodos = getTodos(listName, address || undefined);
       setTodos(localTodos);
       if (connected && address) {
-        await loadBlockchainTodos();
+        await refreshBlockchainTodos();
       }
     }
-  }, [displayTodos, signAndExecuteTransaction, address, loadBlockchainTodos, listName, connected]);
-
-  if (isLoading) {
-    return (
-      <div className='flex justify-center py-12'>
-        <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
-      </div>
-    );
-  }
-
-  if (displayTodos.length === 0) {
-    return (
-      <div className='text-center py-12'>
-        <p className='text-ocean-medium dark:text-ocean-light mb-4'>
-          No todos in this list yet.
-        </p>
-        <p className='text-sm text-ocean-medium/70 dark:text-ocean-light/70'>
-          Create your first todo using the form above!
-        </p>
-        {connected && (
-          <div className='mt-4'>
-            <div className='flex items-center space-x-2'>
-              <div className='w-2 h-2 bg-blue-500 rounded-full' />
-              <span className='text-xs text-ocean-medium/70'>
-                Blockchain Connected
-              </span>
-            </div>
-            <p className='text-xs text-ocean-medium/50 dark:text-ocean-light/50 mt-2'>
-              Blockchain integration active
-            </p>
-            {loadingBlockchain && (
-              <p className='text-xs text-blue-600 dark:text-blue-400 mt-1 animate-pulse'>
-                Loading blockchain todos...
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
+  }, [displayTodos, signAndExecuteTransaction, address, refreshBlockchainTodos, listName, connected]);
 
   // Handle storing local todo on blockchain
   const handleStoreOnBlockchain = useCallback(async (todo: Todo) => {
@@ -246,7 +260,7 @@ function TodoList({ listName }: TodoListProps) {
         if (result.success) {
           console.log('✅ Todo deleted from blockchain:', result.digest);
           // Refresh blockchain todos
-          await loadBlockchainTodos();
+          await refreshBlockchainTodos();
         } else {
           throw new Error(
             result.error || 'Failed to delete todo from blockchain'
@@ -262,7 +276,66 @@ function TodoList({ listName }: TodoListProps) {
       console.error('Failed to delete todo:', error);
       alert('Failed to delete todo. Please try again.');
     }
-  }, [signAndExecuteTransaction, address, loadBlockchainTodos, todos]);
+  }, [signAndExecuteTransaction, address, refreshBlockchainTodos, todos]);
+
+  if (isLoading || (connected && suiClientInitializing)) {
+    return (
+      <div className='flex justify-center py-12'>
+        <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
+        {suiClientInitializing && (
+          <p className='ml-4 text-sm text-ocean-medium animate-pulse'>
+            Initializing blockchain connection...
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Show Sui client error if there is one
+  if (connected && suiClientError) {
+    return (
+      <div className='text-center py-12'>
+        <div className='text-red-500 mb-4'>
+          <p className='font-medium'>Blockchain Connection Error</p>
+          <p className='text-sm'>{suiClientError}</p>
+        </div>
+        <p className='text-sm text-ocean-medium/70 dark:text-ocean-light/70'>
+          Local todos will still work. Try refreshing to reconnect to the blockchain.
+        </p>
+      </div>
+    );
+  }
+
+  if (displayTodos.length === 0) {
+    return (
+      <div className='text-center py-12'>
+        <p className='text-ocean-medium dark:text-ocean-light mb-4'>
+          No todos in this list yet.
+        </p>
+        <p className='text-sm text-ocean-medium/70 dark:text-ocean-light/70'>
+          Create your first todo using the form above!
+        </p>
+        {connected && (
+          <div className='mt-4'>
+            <div className='flex items-center space-x-2'>
+              <div className='w-2 h-2 bg-blue-500 rounded-full' />
+              <span className='text-xs text-ocean-medium/70'>
+                Blockchain Connected
+              </span>
+            </div>
+            <p className='text-xs text-ocean-medium/50 dark:text-ocean-light/50 mt-2'>
+              Blockchain integration active
+            </p>
+            {loadingBlockchain && (
+              <p className='text-xs text-blue-600 dark:text-blue-400 mt-1 animate-pulse'>
+                Loading blockchain todos...
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className='space-y-4'>

@@ -1,16 +1,16 @@
 import { jest } from '@jest/globals';
-import { AIService } from '../../src/services/ai/aiService';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import {
   AIProvider,
-} from '../../src/types/adapters/AIModelAdapter';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
-import { Todo } from '../../src/types/todo';
-import { initializePermissionManager } from '../../src/services/ai/AIPermissionManager';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+import { Todo } from '../../apps/cli/src/types/todo';
+import { initializePermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
-jest.mock('../../src/services/ai/AIProviderFactory');
-jest.mock('../../src/services/ai/AIPermissionManager');
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
+jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
 
 // Sample data for tests
 const sampleTodo: Todo = {

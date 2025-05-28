@@ -1,14 +1,14 @@
 import { test } from '@oclif/test';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 import * as fs from 'fs';
-import StoreCommand from '../../src/commands/store';
+import StoreCommand from '../../apps/cli/src/commands/store';
 
-import * as walrusStorage from '../../src/utils/walrus-storage';
-import * as performanceCache from '../../src/utils/performance-cache';
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import { PerformanceCache } from '../../src/utils/performance-cache';
+import * as walrusStorage from '../../apps/cli/src/utils/walrus-storage';
+import * as performanceCache from '../../apps/cli/src/utils/performance-cache';
+import { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import { PerformanceCache } from '../../apps/cli/src/utils/performance-cache';
 
 describe('store command batch processing', () => {
   let sandbox: sinon.SinonSandbox;

@@ -13,7 +13,7 @@ import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 
 // Mock the AIProviderFactory
-jest.mock('../../src/services/ai/AIProviderFactory', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
   return {
     AIProviderFactory: {
       createProvider: jest

@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as sinon from 'sinon';
-import { BlobVerificationManager } from '../../src/utils/blob-verification';
+import { BlobVerificationManager } from '../../apps/cli/src/utils/blob-verification';
 
 // Mock configuration values that would normally be in the user's home directory
 const mockBaseConfig = {
@@ -36,7 +36,7 @@ jest.mock('@mysten/sui/client', () => {
 });
 
 // Mock the BlobVerificationManager
-jest.mock('../../src/utils/blob-verification', () => {
+jest.mock('../../apps/cli/src/utils/blob-verification', () => {
   return {
     BlobVerificationManager: jest.fn().mockImplementation(() => ({
       verifyBlob: jest.fn().mockResolvedValue({
@@ -85,7 +85,7 @@ jest.mock('../../src/utils/blob-verification', () => {
 });
 
 // Mock the createMockWalrusClient function
-jest.mock('../../src/utils/MockWalrusClient', () => {
+jest.mock('../../apps/cli/src/utils/MockWalrusClient', () => {
   const mockClient = {
     readBlob: jest
       .fn()

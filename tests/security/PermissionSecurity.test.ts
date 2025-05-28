@@ -2,21 +2,21 @@ import { jest } from '@jest/globals';
 import {
   AIPermissionManager,
   initializePermissionManager,
-} from '../../src/services/ai/AIPermissionManager';
-import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
-import { BlockchainVerifier } from '../../src/services/ai/BlockchainVerifier';
-import { AIService } from '../../src/services/ai/aiService';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
+} from '../../apps/cli/src/services/ai/AIPermissionManager';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { BlockchainVerifier } from '../../apps/cli/src/services/ai/BlockchainVerifier';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import {
   CredentialType,
   AIPermissionLevel,
-} from '../../src/types/adapters/AICredentialAdapter';
+} from '../../apps/cli/src/types/adapters/AICredentialAdapter';
 import {
   AIActionType,
-} from '../../src/types/adapters/AIVerifierAdapter';
-import { Todo } from '../../src/types/todo';
-import { CLIError } from '../../src/types/errors';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
+import { CLIError } from '../../apps/cli/src/types/errors';
 
 // Type definitions for test interfaces
 interface MockPermissionManager {
@@ -50,9 +50,9 @@ interface UsageTracker {
 }
 
 // Mock dependencies
-jest.mock('../../src/services/ai/SecureCredentialManager');
-jest.mock('../../src/services/ai/BlockchainVerifier');
-jest.mock('../../src/services/ai/AIProviderFactory');
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
+jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier');
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
 jest.mock('@langchain/core/prompts');
 
 // Sample data for tests

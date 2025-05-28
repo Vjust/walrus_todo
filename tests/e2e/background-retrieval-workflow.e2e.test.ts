@@ -1,8 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { spawn, ChildProcess } from 'child_process';
-import { backgroundDataRetriever } from '../../src/utils/BackgroundDataRetriever';
-import { jobManager } from '../../src/utils/PerformanceMonitor';
-import { createBackgroundOperationsManager } from '../../src/utils/background-operations';
+import { backgroundDataRetriever } from '../../apps/cli/src/utils/BackgroundDataRetriever';
+import { jobManager } from '../../apps/cli/src/utils/PerformanceMonitor';
+import { createBackgroundOperationsManager } from '../../apps/cli/src/utils/background-operations';
 import chalk from 'chalk';
 
 /**

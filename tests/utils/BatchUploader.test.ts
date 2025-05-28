@@ -1,11 +1,11 @@
-import { BatchUploader } from '../../src/utils/batch-uploader';
-import { TodoSizeCalculator } from '../../src/utils/todo-size-calculator';
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import type { WalrusStorage as WalrusStorageType } from '../../src/utils/walrus-storage';
-import { Todo, TodoList } from '../../src/types/todo';
+import { BatchUploader } from '../../apps/cli/src/utils/batch-uploader';
+import { TodoSizeCalculator } from '../../apps/cli/src/utils/todo-size-calculator';
+import { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import type { WalrusStorage as WalrusStorageType } from '../../apps/cli/src/utils/walrus-storage';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 // Mock the WalrusStorage class
-jest.mock('../../src/utils/walrus-storage');
+jest.mock('../../apps/cli/src/utils/walrus-storage');
 
 describe('BatchUploader', () => {
   // Sample test data
@@ -98,7 +98,7 @@ describe('BatchUploader', () => {
 
   describe('uploadTodos', () => {
     it('should throw error for empty batch', async () => {
-      const { CLIError } = await import('../../src/types/errors/consolidated');
+      const { CLIError } = await import('../../apps/cli/src/types/errors/consolidated');
       await expect(batchUploader.uploadTodos([])).rejects.toThrow(CLIError);
     });
 

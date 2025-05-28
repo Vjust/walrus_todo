@@ -10,9 +10,9 @@
  * Run with: WALRUS_TEST_ENABLE_TESTNET=true pnpm test tests/testnet/walrus-storage.test.ts
  */
 
-import { TodoStorage } from '../../src/utils/storage/implementations/TodoStorage';
-import { StorageClient } from '../../src/utils/storage/core/StorageClient';
-import { ImageStorage } from '../../src/utils/storage/implementations/ImageStorage';
+import { TodoStorage } from '../../apps/cli/src/utils/storage/implementations/TodoStorage';
+import { StorageClient } from '../../apps/cli/src/utils/storage/core/StorageClient';
+import { ImageStorage } from '../../apps/cli/src/utils/storage/implementations/ImageStorage';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 

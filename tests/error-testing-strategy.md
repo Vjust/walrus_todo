@@ -314,8 +314,8 @@ For systematic coverage, we'll implement tests according to this matrix:
 // tests/unit/walrus-storage-errors.test.ts
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import { StorageError, WalrusErrorCode } from '../../src/types/errors';
+import { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import { StorageError, WalrusErrorCode } from '../../apps/cli/src/types/errors';
 
 describe('WalrusStorage Error Handling', () => {
   let walrusStorage: WalrusStorage;
@@ -382,8 +382,8 @@ describe('WalrusStorage Error Handling', () => {
 // tests/unit/blockchain-verification-errors.test.ts
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { BlobVerificationManager } from '../../src/utils/blob-verification';
-import { BlockchainError } from '../../src/types/errors';
+import { BlobVerificationManager } from '../../apps/cli/src/utils/blob-verification';
+import { BlockchainError } from '../../apps/cli/src/types/errors';
 
 describe('Blockchain Verification Error Handling', () => {
   let verificationManager: BlobVerificationManager;
@@ -469,11 +469,11 @@ describe('Blockchain Verification Error Handling', () => {
 // tests/unit/ai-service-errors.test.ts
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { AIService } from '../../src/services/ai/aiService';
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { ErrorSimulator } from '../helpers/error-simulator';
-import { MockErrorType } from '../../src/__mocks__/ai/types';
+import { MockErrorType } from '../../apps/cli/src/__mocks__/ai/types';
 
 describe('AI Service Error Handling with Fault Injection', () => {
   let aiService: AIService;

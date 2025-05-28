@@ -1,0 +1,44 @@
+/**
+ * Auto-generated configuration for testnet network
+ * Generated at: 2025-05-28T02:30:02.394Z
+ * Package ID: 0x123456789
+ */
+
+export const TESTNET_CONFIG = {
+  network: {
+    name: 'testnet',
+    url: 'https://fullnode.testnet.sui.io:443',
+    faucetUrl: 'https://faucet.testnet.sui.io',
+    explorerUrl: 'https://testnet.suiexplorer.com',
+  },
+  
+  walrus: {
+    networkUrl: 'https://wal.testnet.sui.io',
+    publisherUrl: 'https://publisher-testnet.walrus.site',
+    aggregatorUrl: 'https://aggregator-testnet.walrus.site',
+    apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+  },
+  
+  deployment: {
+    packageId: '0x123456789',
+    digest: 'unknown',
+    timestamp: '2025-05-28T02:30:02.394Z',
+    deployerAddress: '0x987654321',
+  },
+  
+  contracts: {
+    todoNft: {
+      packageId: '0x123456789',
+      moduleName: 'todo_nft',
+      structName: 'TodoNFT',
+    },
+  },
+  
+  features: {
+    aiEnabled: true,
+    blockchainVerification: true,
+    encryptedStorage: false,
+  },
+} as const;
+
+export default TESTNET_CONFIG;

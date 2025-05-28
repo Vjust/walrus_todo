@@ -1,10 +1,10 @@
-import { aiService } from '../../src/services/ai';
-import AddCommand from '../../src/commands/add';
-import { TodoService } from '../../src/services/todoService';
-import { AddCommandArgs, AddCommandFlags, ParsedOutput } from '../../src/types/command-types';
+import { aiService } from '../../apps/cli/src/services/ai';
+import AddCommand from '../../apps/cli/src/commands/add';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import { AddCommandArgs, AddCommandFlags, ParsedOutput } from '../../apps/cli/src/types/command-types';
 
 // Mock aiService
-jest.mock('../../src/services/ai', () => {
+jest.mock('../../apps/cli/src/services/ai', () => {
   return {
     aiService: {
       suggestTags: jest.fn().mockResolvedValue(['ai-suggested', 'important']),
@@ -14,7 +14,7 @@ jest.mock('../../src/services/ai', () => {
 });
 
 // Mock TodoService
-jest.mock('../../src/services/todoService', () => {
+jest.mock('../../apps/cli/src/services/todoService', () => {
   return {
     TodoService: jest.fn().mockImplementation(() => {
       return {

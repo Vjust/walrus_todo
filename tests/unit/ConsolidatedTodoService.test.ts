@@ -3,8 +3,8 @@ import * as fsPromises from 'fs/promises';
 import {
   TodoService,
   todoService,
-} from '../../src/services/todoService.consolidated';
-import { STORAGE_CONFIG } from '../../src/constants';
+} from '../../apps/cli/src/services/todoService.consolidated';
+import { STORAGE_CONFIG } from '../../apps/cli/src/constants';
 
 // Mock the filesystem operations
 jest.mock('fs');

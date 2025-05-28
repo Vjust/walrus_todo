@@ -55,6 +55,13 @@ const mockSigner = {
 describe('BlobVerificationManager Integration', () => {
   let verificationManager: BlobVerificationManager;
   let mockWalrusClient: CompleteWalrusClientMock;
+  
+  // Define expected attributes for testing
+  const expectedAttributes = {
+    contentType: 'application/json',
+    owner: 'test-user',
+    tags: 'testing,verification',
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();

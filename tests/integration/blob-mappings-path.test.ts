@@ -15,8 +15,8 @@ import {
   afterAll,
   beforeEach,
 } from '@jest/globals';
-import CompleteCommand from '../../src/commands/complete';
-import * as baseCommand from '../../src/base-command';
+import CompleteCommand from '../../../apps/cli/src/commands/complete';
+import * as baseCommand from '../../../apps/cli/src/base-command';
 
 describe('Blob Mappings Path Test', () => {
   // Create a temporary test directory

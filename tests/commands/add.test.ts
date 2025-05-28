@@ -3,10 +3,10 @@
 
 import { expect, describe, test, beforeEach } from '@jest/globals';
 
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
-import { TodoService } from '../../src/services/todoService';
-import { CLIError } from '../../src/types/errors/consolidated';
-import { Todo } from '../../src/types/todo';
+import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import { CLIError } from '../../apps/cli/src/types/errors/consolidated';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 import { createMockTodo } from '../helpers/test-utils';
 

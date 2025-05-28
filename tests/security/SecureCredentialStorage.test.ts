@@ -2,12 +2,12 @@ import { jest } from '@jest/globals';
 import * as fs from 'fs';
 // import path from 'path';
 import crypto from 'crypto';
-import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import {
   CredentialType,
   AIPermissionLevel,
-} from '../../src/types/adapters/AICredentialAdapter';
-// import { _CLI_CONFIG } from '../../src/constants';
+} from '../../apps/cli/src/types/adapters/AICredentialAdapter';
+// import { _CLI_CONFIG } from '../../apps/cli/src/constants';
 
 // Mock fs module
 jest.mock('fs', () => {

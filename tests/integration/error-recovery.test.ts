@@ -8,17 +8,17 @@ import {
   // _NetworkError,  // Unused import
   StorageError,
   // _BlockchainError,  // Unused import
-} from '../../src/types/errors';
+} from '../../../apps/cli/src/types/errors';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
 // Import the components to test
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import { RetryManager } from '../../src/utils/retry-manager';
-import { AIService } from '../../src/services/ai/aiService';
+import { WalrusStorage } from '../../../apps/cli/src/utils/walrus-storage';
+import { RetryManager } from '../../../apps/cli/src/utils/retry-manager';
+import { AIService } from '../../../apps/cli/src/services/ai/aiService';
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 
 // Mock cross-component dependencies
-jest.mock('../../src/services/ai/AIProviderFactory', () => {
+jest.mock('../../../apps/cli/src/services/ai/AIProviderFactory', () => {
   return {
     AIProviderFactory: {
       createProvider: jest

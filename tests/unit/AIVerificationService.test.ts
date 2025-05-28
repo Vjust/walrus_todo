@@ -1,17 +1,17 @@
-import { AIVerificationService } from '../../src/services/ai';
-import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
 import {
   AIActionType,
   AIPrivacyLevel,
-} from '../../src/types/adapters/AIVerifierAdapter';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';
-import { BlockchainVerifier } from '../../src/services/ai/BlockchainVerifier';
-import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
-import { getPermissionManager } from '../../src/services/ai/AIPermissionManager';
+import { BlockchainVerifier } from '../../apps/cli/src/services/ai/BlockchainVerifier';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { getPermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
 
 // Mock blockchain verifier
-jest.mock('../../src/services/ai/BlockchainVerifier', () => {
+jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier', () => {
   return {
     BlockchainVerifier: jest.fn().mockImplementation(() => ({
       verifyOperation: jest.fn().mockResolvedValue({
@@ -60,7 +60,7 @@ jest.mock('../../src/services/ai/BlockchainVerifier', () => {
 });
 
 // Mock proof system
-jest.mock('../../src/services/ai/AIProofSystem', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProofSystem', () => {
   return {
     AIProofSystem: jest.fn().mockImplementation(() => ({
       createProof: jest.fn().mockResolvedValue({
@@ -87,7 +87,7 @@ jest.mock('../../src/services/ai/AIProofSystem', () => {
 });
 
 // Mock credential manager
-jest.mock('../../src/services/ai/SecureCredentialManager', () => {
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager', () => {
   return {
     SecureCredentialManager: jest.fn().mockImplementation(() => ({
       getCredentialObject: jest.fn().mockReturnValue({
@@ -106,7 +106,7 @@ jest.mock('../../src/services/ai/SecureCredentialManager', () => {
 });
 
 // Mock permission manager
-jest.mock('../../src/services/ai/AIPermissionManager', () => {
+jest.mock('../../apps/cli/src/services/ai/AIPermissionManager', () => {
   return {
     getPermissionManager: jest.fn().mockReturnValue({
       checkPermission: jest.fn().mockResolvedValue({

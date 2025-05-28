@@ -3,9 +3,9 @@
  */
 
 import { execSync } from 'child_process';
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 
-jest.mock('../../src/services/todoService');
+jest.mock('../../apps/cli/src/services/todoService');
 
 // Mock command execution
 jest.mock('child_process', () => ({

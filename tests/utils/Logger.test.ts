@@ -1,11 +1,11 @@
-import { Logger, LogLevel } from '../../src/utils/Logger';
+import { Logger, LogLevel } from '../../apps/cli/src/utils/Logger';
 import {
   BaseError as WalrusError,
   StorageError,
   BlockchainError,
   ValidationError,
   NetworkError,
-} from '../../src/types/errors/consolidated';
+} from '../../apps/cli/src/types/errors/consolidated';
 
 describe('Logger', () => {
   let logger: Logger;

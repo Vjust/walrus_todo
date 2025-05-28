@@ -10,6 +10,7 @@ import {
   createTodoList,
   deleteTodoList,
 } from '@/lib/todo-service';
+import { initializeSuiClient } from '@/lib/sui-client';
 
 export default function Dashboard() {
   const [selectedList, setSelectedList] = useState('default');
@@ -18,6 +19,20 @@ export default function Dashboard() {
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const { address } = useWalletContext();
+
+  // Initialize Sui client on dashboard mount
+  useEffect(() => {
+    const initClient = async () => {
+      try {
+        await initializeSuiClient('testnet');
+        console.log('[Dashboard] Sui client initialized');
+      } catch (error) {
+        console.warn('[Dashboard] Sui client initialization failed or already initialized:', error);
+      }
+    };
+    
+    initClient();
+  }, []);
 
   // Load todo lists for the current wallet
   useEffect(() => {

@@ -1,37 +1,37 @@
 import { jest } from '@jest/globals';
 import * as fs from 'fs';
-import { AIService } from '../../src/services/ai/aiService';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
-import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
-import { SuiAIVerifierAdapter } from '../../src/types/adapters/AIVerifierAdapter';
-import { secureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
+import { SuiAIVerifierAdapter } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { secureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import {
   AIProvider,
   AIModelOptions,
-} from '../../src/types/adapters/AIModelAdapter';
-import { Todo } from '../../src/types/todo';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
 import {
   AIPrivacyLevel,
   AIActionType,
   VerificationRecord,
-} from '../../src/types/adapters/AIVerifierAdapter';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import {
   CredentialType,
   AIPermissionLevel,
-} from '../../src/types/adapters/AICredentialAdapter';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
-import { initializePermissionManager } from '../../src/services/ai/AIPermissionManager';
+} from '../../apps/cli/src/types/adapters/AICredentialAdapter';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+import { initializePermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
 jest.mock('@langchain/xai');
-jest.mock('../../src/services/ai/AIProviderFactory');
-jest.mock('../../src/services/ai/AIVerificationService');
-jest.mock('../../src/services/ai/BlockchainAIVerificationService');
-jest.mock('../../src/services/ai/AIPermissionManager');
-jest.mock('../../src/services/ai/SecureCredentialManager', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
+jest.mock('../../apps/cli/src/services/ai/AIVerificationService');
+jest.mock('../../apps/cli/src/services/ai/BlockchainAIVerificationService');
+jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager', () => {
   const originalModule = jest.requireActual(
-    '../../src/services/ai/SecureCredentialManager'
+    '../../apps/cli/src/services/ai/SecureCredentialManager'
   );
 
   return {
@@ -409,7 +409,7 @@ describe('AI Security Audit', () => {
 
       // Create a new SecureCredentialManager instance which should trigger loading
       const SecureCredentialManager = jest.requireActual(
-        '../../src/services/ai/SecureCredentialManager'
+        '../../apps/cli/src/services/ai/SecureCredentialManager'
       ).SecureCredentialManager;
       const credManager = new SecureCredentialManager();
 

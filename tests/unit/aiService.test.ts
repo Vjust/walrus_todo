@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
-import { AiService } from '../../src/services/ai';
+import { AiService } from '../../apps/cli/src/services/ai';
 import { ChatXAI } from '@langchain/xai';
-import { Todo, TodoList } from '../../src/types/todo';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 // Mock the ChatXAI class
 jest.mock('@langchain/xai', () => {

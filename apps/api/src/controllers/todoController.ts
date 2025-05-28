@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
+import '../types/express';
 import { TodoService } from '../services/todoService';
 import { WebSocketService } from '../services/websocketService';
 import { asyncHandler } from '../middleware/error';

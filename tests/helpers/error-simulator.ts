@@ -12,7 +12,7 @@ import {
   StorageError,
   ValidationError,
   TransactionError,
-} from '../../src/types/errors';
+} from '../../apps/cli/src/types/errors';
 
 /**
  * Available error types that can be simulated

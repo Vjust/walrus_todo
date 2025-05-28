@@ -2,10 +2,10 @@
  * Simplified test for the add command without using @oclif/test
  */
 
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 import { execSync } from 'child_process';
 
-jest.mock('../../src/services/todoService');
+jest.mock('../../apps/cli/src/services/todoService');
 
 // Mock command execution
 jest.mock('child_process', () => ({

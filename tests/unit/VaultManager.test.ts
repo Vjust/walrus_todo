@@ -1,7 +1,7 @@
-import { VaultManager } from '../../src/utils/VaultManager';
+import { VaultManager } from '../../apps/cli/src/utils/VaultManager';
 import * as fs from 'fs';
 import * as path from 'path';
-import { WalrusError } from '../../src/types/errors';
+import { WalrusError } from '../../apps/cli/src/types/errors';
 
 interface VaultConfig {
   name: string;

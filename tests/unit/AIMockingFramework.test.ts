@@ -2,10 +2,10 @@
  * Test for the AI Mocking Framework
  */
 
-import { AIService } from '../../src/services/ai/aiService';
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 // Mock the AI module
-jest.mock('../../src/services/ai/aiService');
+jest.mock('../../apps/cli/src/services/ai/aiService');
 
 // Define types and utilities for mocking
 type MockErrorType = 'AUTHENTICATION' | 'RATE_LIMIT' | 'NETWORK';
@@ -66,7 +66,7 @@ const MockAIProviderFactory: MockAIProviderFactoryType = {
     invoke: jest.fn(),
   }),
 };
-import { Todo } from '../../src/types/todo';
+import { Todo } from '../../apps/cli/src/types/todo';
 import * as fs from 'fs';
 
 describe('AI Mocking Framework', () => {

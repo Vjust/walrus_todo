@@ -2,24 +2,24 @@ import { jest } from '@jest/globals';
 import * as fs from 'fs';
 import * as path from 'path';
 import crypto from 'crypto';
-import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
-import { AIService } from '../../src/services/ai/aiService';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import {
   CredentialType,
   AIPermissionLevel,
-} from '../../src/types/adapters/AICredentialAdapter';
+} from '../../apps/cli/src/types/adapters/AICredentialAdapter';
 import {
   AIActionType,
   AIPrivacyLevel,
-} from '../../src/types/adapters/AIVerifierAdapter';
-import { CLI_CONFIG } from '../../src/constants';
-import { Todo } from '../../src/types/todo';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { CLI_CONFIG } from '../../apps/cli/src/constants';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
-jest.mock('../../src/services/ai/AIProviderFactory');
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
 jest.mock('fs', () => {
   const originalModule = jest.requireActual('fs');
   const mockFileContent = new Map<string, Buffer>();

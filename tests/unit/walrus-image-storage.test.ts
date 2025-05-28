@@ -1,8 +1,8 @@
-import { WalrusClient } from '../../src/types/client';
-import { createWalrusImageStorage } from '../../src/utils/walrus-image-storage';
+import { WalrusClient } from '../../apps/cli/src/types/client';
+import { createWalrusImageStorage } from '../../apps/cli/src/utils/walrus-image-storage';
 import { SuiClient } from '@mysten/sui/client';
 // import { TransactionBlock } from '@mysten/sui/transactions';
-import { KeystoreSigner } from '../../src/utils/sui-keystore';
+import { KeystoreSigner } from '../../apps/cli/src/utils/sui-keystore';
 import { walrusModuleMock } from '../helpers/walrus-client-mock';
 
 import * as fs from 'fs';
@@ -33,7 +33,7 @@ jest.mock('path', () => ({
   basename: jest.fn(),
 }));
 
-jest.mock('../../src/utils/sui-keystore', () => ({
+jest.mock('../../apps/cli/src/utils/sui-keystore', () => ({
   KeystoreSigner: jest.fn(),
 }));
 

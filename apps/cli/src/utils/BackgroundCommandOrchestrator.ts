@@ -700,8 +700,40 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
   }
 }
 
-// Singleton instance
-export const backgroundOrchestrator = new BackgroundCommandOrchestrator();
+// Lazy singleton instance - only create when needed
+let _backgroundOrchestrator: BackgroundCommandOrchestrator | null = null;
+
+export function getBackgroundOrchestrator(): BackgroundCommandOrchestrator {
+  // Skip orchestrator entirely if disabled
+  if (process.env.WALTODO_SKIP_ORCHESTRATOR === 'true' || process.env.WALTODO_NO_BACKGROUND === 'true') {
+    throw new Error('Background orchestrator disabled');
+  }
+  
+  if (!_backgroundOrchestrator) {
+    _backgroundOrchestrator = new BackgroundCommandOrchestrator();
+  }
+  return _backgroundOrchestrator;
+}
+
+// For backward compatibility
+export const backgroundOrchestrator = {
+  shouldRunInBackground: (...args: any[]) => {
+    try {
+      return getBackgroundOrchestrator().shouldRunInBackground(...args);
+    } catch {
+      return false; // Disabled - never use background
+    }
+  },
+  executeInBackground: (...args: any[]) => {
+    return getBackgroundOrchestrator().executeInBackground(...args);
+  },
+  shutdown: () => {
+    if (_backgroundOrchestrator) {
+      return _backgroundOrchestrator.shutdown();
+    }
+    return Promise.resolve();
+  }
+};
 
 // Process cleanup
 process.on('SIGINT', () => {

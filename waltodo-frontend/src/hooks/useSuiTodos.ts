@@ -439,19 +439,36 @@ export function useSuiTodos(): UseSuiTodosReturn {
   // Auto-refresh todos when wallet connects
   useEffect(() => {
     if (!isWalletReady) return;
-    (async () => {
+    
+    let isMounted = true;
+    
+    const loadInitialTodos = async () => {
+      if (!isMounted) return;
+      
       setRefreshing(true);
       try {
         const chainTodos = await getTodosFromBlockchain(address!);
-        setState(s => ({ ...s, todos: chainTodos, error: null }));
-        await checkHealth();
+        if (isMounted) {
+          setState(s => ({ ...s, todos: chainTodos, error: null }));
+          await checkHealth();
+        }
       } catch (err) {
-        setError(`Failed to load blockchain todos: ${err instanceof Error ? err.message : String(err)}`);
+        if (isMounted) {
+          setError(`Failed to load blockchain todos: ${err instanceof Error ? err.message : String(err)}`);
+        }
       } finally {
-        setRefreshing(false);
+        if (isMounted) {
+          setRefreshing(false);
+        }
       }
-    })();
-  }, [isWalletReady, address, setRefreshing, setError, checkHealth]);
+    };
+
+    loadInitialTodos();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [isWalletReady, address]);
 
   // Auto-check health periodically
   useEffect(() => {
@@ -462,7 +479,7 @@ export function useSuiTodos(): UseSuiTodosReturn {
     }, 30000); // Check every 30 seconds
 
     return () => clearInterval(interval);
-  }, [isWalletReady, checkHealth]);
+  }, [isWalletReady]);
 
   return {
     state,

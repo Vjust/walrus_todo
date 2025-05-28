@@ -14,10 +14,10 @@ import {
   createTestTodo,
   createTestTodoList,
 } from './setup-test-env';
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 
 // Mock the TodoService to avoid actual file system operations
-jest.mock('../../src/services/todoService');
+jest.mock('../../apps/cli/src/services/todoService');
 jest.mock('child_process');
 
 describe('WalTodo list command', () => {

@@ -1,10 +1,10 @@
-import { AIService } from '../../src/services/ai/aiService';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import {
   AIProvider,
   AIModelAdapter,
-} from '../../src/types/adapters/AIModelAdapter';
-import { AIPrivacyLevel } from '../../src/types/adapters/AIVerifierAdapter';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIPrivacyLevel } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import {
@@ -19,7 +19,7 @@ interface TestableAIService extends AIService {
 }
 
 // Mock the AIProviderFactory
-jest.mock('../../src/services/ai/AIProviderFactory', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
   const mockAdapter = {
     getProviderName: () => 'XAI',
     getModelName: () => 'grok-beta',

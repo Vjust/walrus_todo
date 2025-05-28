@@ -1,8 +1,8 @@
 import { expect, test } from '@oclif/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import { TodoService } from '../../src/services/todoService';
-import { jobManager } from '../../src/utils/PerformanceMonitor';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import { jobManager } from '../../apps/cli/src/utils/PerformanceMonitor';
 
 describe('List Command Background Operations', () => {
   let todoService: TodoService;

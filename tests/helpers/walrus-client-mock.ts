@@ -10,7 +10,7 @@
  */
 
 // Unused imports removed during TypeScript cleanup
-// import type { BlobObject } from '../../src/types/walrus';
+// import type { BlobObject } from '../../apps/cli/src/types/walrus';
 import { 
   createCompleteWalrusClientMock,
   type CompleteWalrusClientMock 

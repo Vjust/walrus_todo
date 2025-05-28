@@ -225,5 +225,37 @@
     "pid": 74572,
     "endTime": 1748379027626,
     "errorMessage": "Process exited with code: 1"
+  },
+  {
+    "id": "job_1748401720446_6xr407",
+    "command": "list",
+    "args": [],
+    "flags": {
+      "debug": false,
+      "network": "testnet",
+      "verbose": false,
+      "output": "text",
+      "mock": false,
+      "timeout": 30,
+      "force": false,
+      "quiet": false,
+      "background": false,
+      "bg": false,
+      "foreground": false,
+      "fg": false,
+      "compact": true,
+      "sync": false,
+      "stream": false,
+      "watch": false
+    },
+    "status": "failed",
+    "startTime": 1748401720448,
+    "progress": 0,
+    "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748401720446_6xr407.log",
+    "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748401720446_6xr407.out",
+    "metadata": {},
+    "pid": 30113,
+    "endTime": 1748401720478,
+    "errorMessage": "Process exited with code: 1"
   }
 ]

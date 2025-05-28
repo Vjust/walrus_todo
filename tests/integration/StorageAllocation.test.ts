@@ -1,10 +1,10 @@
 /* eslint-disable jest/expect-expect */
 import { jest } from '@jest/globals';
-import { Logger } from '@/utils/Logger';
+import { Logger } from '../../../apps/cli/src/utils/Logger';
 
 jest.mock('@mysten/walrus');
-jest.mock('@/utils/VaultManager');
-jest.mock('@/utils/Logger');
+jest.mock('../../../apps/cli/src/utils/VaultManager');
+jest.mock('../../../apps/cli/src/utils/Logger');
 
 describe('Storage Allocation Integration', () => {
   let mockLogger: jest.Mocked<Logger>;

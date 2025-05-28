@@ -16,12 +16,12 @@ import {
 } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
-import { TodoService } from '../../src/services/todoService';
-jest.mock('../../src/services/todoService');
+import { TodoService } from '../../apps/cli/src/services/todoService';
+jest.mock('../../apps/cli/src/services/todoService');
 
 // Mock walrus-storage module for blockchain testing
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
-jest.mock('../../src/utils/walrus-storage');
+import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+jest.mock('../../apps/cli/src/utils/walrus-storage');
 
 describe('WalTodo complete command', () => {
   // Sample test todo

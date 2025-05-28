@@ -4,7 +4,7 @@ import {
   BlockchainError,
   ValidationError,
   NetworkError,
-} from '../../src/types/errors/consolidated';
+} from '../../apps/cli/src/types/errors/consolidated';
 
 describe('Error Types', () => {
   describe('WalrusError', () => {

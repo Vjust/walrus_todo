@@ -6,9 +6,9 @@ module.exports = {
   verbose: true,
   collectCoverage: true,
   collectCoverageFrom: [
-    '<rootDir>/src/services/ai/**/*.ts',
-    '<rootDir>/src/types/adapters/AI*.ts',
-    '<rootDir>/src/commands/ai*.ts',
+    '<rootDir>/apps/cli/src/services/ai/**/*.ts',
+    '<rootDir>/apps/cli/src/types/adapters/AI*.ts',
+    '<rootDir>/apps/cli/src/commands/ai*.ts',
   ],
   coverageThreshold: {
     global: {
