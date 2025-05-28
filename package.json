@@ -108,9 +108,10 @@
     "api:docker:build": "cd apps/api && docker build -t waltodo-api .",
     "api:docker:run": "cd apps/api && docker run -p 3000:3000 waltodo-api",
     "api:start:port": "node start-api-server.js --port=",
-    "start:api": "node src/api/start-server.ts",
+    "start:api": "cd apps/api && pnpm dev --port=3001",
     "dev:all": "./pnpm-dev.sh",
-    "dev:tmux": "./pnpm-dev.sh"
+    "dev:tmux": "./pnpm-dev.sh",
+    "dev:simple": "./pnpm-dev-simple.sh"
   },
   "keywords": [
     "cli",
