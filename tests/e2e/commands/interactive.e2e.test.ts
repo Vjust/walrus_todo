@@ -35,14 +35,16 @@ describe('interactive command e2e tests', () => {
     mockReadline = {
       prompt: sandbox.stub(),
       setPrompt: sandbox.stub(),
-      on: sandbox.stub().callsFake((event: string, handler: (input?: string) => void) => {
-        if (event === 'line') {
-          lineHandlers.line = handler;
-        } else if (event === 'close') {
-          closeHandlers.push(handler);
-        }
-        return mockReadline;
-      }),
+      on: sandbox
+        .stub()
+        .callsFake((event: string, handler: (input?: string) => void) => {
+          if (event === 'line') {
+            lineHandlers.line = handler;
+          } else if (event === 'close') {
+            closeHandlers.push(handler);
+          }
+          return mockReadline;
+        }),
       close: sandbox.stub().callsFake(() => {
         closeHandlers.forEach(handler => handler());
       }),
@@ -197,7 +199,8 @@ describe('interactive command e2e tests', () => {
       try {
         await cmd.run();
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         expect(errorMessage).to.include('Failed to start interactive mode');
       }
     });

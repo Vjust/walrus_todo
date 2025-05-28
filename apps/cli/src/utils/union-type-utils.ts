@@ -1,6 +1,6 @@
 /**
  * Union Type Utilities
- * 
+ *
  * This module provides utilities for working with union types and discriminated unions
  * to achieve superior type safety throughout the application.
  */
@@ -40,7 +40,10 @@ export function hasPropertyOfType<T, K extends PropertyKey, V>(
   key: K,
   typeGuard: (val: unknown) => val is V
 ): obj is T & Record<K, V> {
-  return hasProperty(obj, key) && typeGuard((obj as Record<PropertyKey, unknown>)[key]);
+  return (
+    hasProperty(obj, key) &&
+    typeGuard((obj as Record<PropertyKey, unknown>)[key])
+  );
 }
 
 /**
@@ -141,7 +144,9 @@ export function filterByKind<T extends { kind: string }, K extends T['kind']>(
   values: T[],
   kind: K
 ): Extract<T, { kind: K }>[] {
-  return values.filter((value): value is Extract<T, { kind: K }> => value.kind === kind);
+  return values.filter(
+    (value): value is Extract<T, { kind: K }> => value.kind === kind
+  );
 }
 
 /**
@@ -151,15 +156,17 @@ export function groupByKind<T extends { kind: string }>(
   values: T[]
 ): { [K in T['kind']]: Extract<T, { kind: K }>[] } {
   const result = {} as { [K in T['kind']]: Extract<T, { kind: K }>[] };
-  
+
   for (const value of values) {
     const kind = value.kind;
     if (!result[kind]) {
       result[kind] = [];
     }
-    (result[kind] as Extract<T, { kind: typeof kind }>[]).push(value as Extract<T, { kind: typeof kind }>);
+    (result[kind] as Extract<T, { kind: typeof kind }>[]).push(
+      value as Extract<T, { kind: typeof kind }>
+    );
   }
-  
+
   return result;
 }
 
@@ -200,7 +207,10 @@ export function isOneOf<T extends { kind: string }, K extends T['kind']>(
 /**
  * Safe union type assertion with runtime checking
  */
-export function assertUnionType<T extends { kind: string }, K extends T['kind']>(
+export function assertUnionType<
+  T extends { kind: string },
+  K extends T['kind'],
+>(
   value: T,
   expectedKind: K,
   message?: string
@@ -215,7 +225,8 @@ export function assertUnionType<T extends { kind: string }, K extends T['kind']>
 /**
  * Conditional type helper for optional union members
  */
-export type OptionalMember<T, K extends keyof T> = T extends Record<K, infer U> ? U : never;
+export type OptionalMember<T, K extends keyof T> =
+  T extends Record<K, infer U> ? U : never;
 
 /**
  * Extract optional properties from union type
@@ -224,7 +235,9 @@ export function extractOptional<T, K extends keyof T>(
   obj: T,
   key: K
 ): OptionalMember<T, K> | undefined {
-  return hasProperty(obj, key) ? (obj as Record<PropertyKey, unknown>)[key] as OptionalMember<T, K> : undefined;
+  return hasProperty(obj, key)
+    ? ((obj as Record<PropertyKey, unknown>)[key] as OptionalMember<T, K>)
+    : undefined;
 }
 
 /**

@@ -15,7 +15,7 @@ const activeEventEmitters = new Set<NodeJS.EventEmitter>();
  */
 export function trackPromise<T>(promise: Promise<T>): Promise<T> {
   activePromises.add(promise);
-  
+
   // Remove from tracking when resolved
   promise
     .finally(() => {
@@ -24,14 +24,16 @@ export function trackPromise<T>(promise: Promise<T>): Promise<T> {
     .catch(() => {
       // Ignore errors during cleanup
     });
-  
+
   return promise;
 }
 
 /**
  * Register an AbortController for cleanup
  */
-export function trackAbortController(controller: AbortController): AbortController {
+export function trackAbortController(
+  controller: AbortController
+): AbortController {
   activeAbortControllers.add(controller);
   return controller;
 }
@@ -39,7 +41,9 @@ export function trackAbortController(controller: AbortController): AbortControll
 /**
  * Register an EventEmitter for cleanup
  */
-export function trackEventEmitter(emitter: NodeJS.EventEmitter): NodeJS.EventEmitter {
+export function trackEventEmitter(
+  emitter: NodeJS.EventEmitter
+): NodeJS.EventEmitter {
   activeEventEmitters.add(emitter);
   return emitter;
 }
@@ -47,23 +51,29 @@ export function trackEventEmitter(emitter: NodeJS.EventEmitter): NodeJS.EventEmi
 /**
  * Wait for all tracked promises to settle
  */
-export async function waitForActivePromises(timeoutMs: number = 5000): Promise<void> {
+export async function waitForActivePromises(
+  timeoutMs: number = 5000
+): Promise<void> {
   if (activePromises.size === 0) {
     return;
   }
 
   const promises = Array.from(activePromises);
   const timeoutPromise = new Promise<void>((_, reject) => {
-    setTimeout(() => reject(new Error(`Timeout waiting for ${promises.length} promises`)), timeoutMs);
+    setTimeout(
+      () =>
+        reject(new Error(`Timeout waiting for ${promises.length} promises`)),
+      timeoutMs
+    );
   });
 
   try {
-    await Promise.race([
-      Promise.allSettled(promises),
-      timeoutPromise
-    ]);
+    await Promise.race([Promise.allSettled(promises), timeoutPromise]);
   } catch (error) {
-    console.warn(`Failed to wait for ${promises.length} active promises:`, error);
+    console.warn(
+      `Failed to wait for ${promises.length} active promises:`,
+      error
+    );
   }
 }
 
@@ -103,20 +113,20 @@ export function cleanupEventEmitters(): void {
 export async function cleanupAsyncOperations(): Promise<void> {
   // Abort all controllers first
   abortAllControllers();
-  
+
   // Clean up event emitters
   cleanupEventEmitters();
-  
+
   // Wait for active promises with timeout
   await waitForActivePromises(1000); // Shorter timeout for tests
-  
+
   // Reset background orchestrator
   try {
     await resetBackgroundOrchestrator();
   } catch (error) {
     // Ignore errors during cleanup
   }
-  
+
   // Clear remaining promises
   activePromises.clear();
 }
@@ -127,9 +137,14 @@ export async function cleanupAsyncOperations(): Promise<void> {
 export function setupAsyncCleanup(): void {
   // Override Promise constructor to track promises
   const OriginalPromise = global.Promise;
-  
+
   global.Promise = class TrackedPromise<T> extends OriginalPromise<T> {
-    constructor(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
+    constructor(
+      executor: (
+        resolve: (value: T | PromiseLike<T>) => void,
+        reject: (reason?: any) => void
+      ) => void
+    ) {
       const trackedPromise = new OriginalPromise<T>(executor);
       trackPromise(trackedPromise);
       return trackedPromise as any;
@@ -139,7 +154,9 @@ export function setupAsyncCleanup(): void {
   // Override AbortController to track instances
   const OriginalAbortController = global.AbortController;
   if (OriginalAbortController) {
-    global.AbortController = class TrackedAbortController extends OriginalAbortController {
+    global.AbortController = class TrackedAbortController extends (
+      OriginalAbortController
+    ) {
       constructor() {
         super();
         trackAbortController(this);
@@ -166,18 +183,18 @@ export function setupAsyncCleanup(): void {
  */
 export function createCleanupTimeout(ms: number): Promise<void> {
   let timeoutId: NodeJS.Timeout;
-  
-  const promise = new Promise<void>((resolve) => {
+
+  const promise = new Promise<void>(resolve => {
     timeoutId = setTimeout(resolve, ms);
   });
-  
+
   // Add cleanup method
   (promise as any).cleanup = () => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
   };
-  
+
   return trackPromise(promise);
 }
 
@@ -207,6 +224,9 @@ export function getAsyncStats() {
     activePromises: activePromises.size,
     activeAbortControllers: activeAbortControllers.size,
     activeEventEmitters: activeEventEmitters.size,
-    totalTracked: activePromises.size + activeAbortControllers.size + activeEventEmitters.size
+    totalTracked:
+      activePromises.size +
+      activeAbortControllers.size +
+      activeEventEmitters.size,
   };
 }

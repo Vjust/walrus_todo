@@ -1,6 +1,6 @@
 /**
  * @fileoverview Upload Queue System - Manages asynchronous Walrus upload operations
- * 
+ *
  * This module provides a robust queue system for handling Walrus uploads in the background
  * without blocking the user interface. Features include persistent storage, retry logic,
  * progress tracking, and status notifications.
@@ -87,10 +87,10 @@ export class UploadQueue extends EventEmitter {
     this.queueFile = path.join(options.persistenceDir, 'upload-queue.json');
     this.loadQueue();
     this.startWorkers();
-    
+
     // Auto-save queue every 30 seconds
     setInterval(() => this.saveQueue(), 30000);
-    
+
     // Cleanup completed jobs older than 24 hours
     setInterval(() => this.cleanupOldJobs(), 3600000); // 1 hour
   }
@@ -109,7 +109,7 @@ export class UploadQueue extends EventEmitter {
     } = {}
   ): Promise<string> {
     const jobId = this.generateJobId('todo', todo.id);
-    
+
     const job: QueueJob = {
       id: jobId,
       type: 'todo',
@@ -128,12 +128,12 @@ export class UploadQueue extends EventEmitter {
 
     this.jobs.set(jobId, job);
     await this.saveQueue();
-    
+
     logger.info(`Added todo upload job: ${jobId}`, {
       todoTitle: todo.title,
       priority: job.priority,
     });
-    
+
     // Send notification
     if (this.options.enableNotifications) {
       this.notificationSystem.info(
@@ -142,7 +142,7 @@ export class UploadQueue extends EventEmitter {
         { jobId, priority: job.priority }
       );
     }
-    
+
     this.emit('jobAdded', job);
     return jobId;
   }
@@ -160,7 +160,7 @@ export class UploadQueue extends EventEmitter {
     } = {}
   ): Promise<string> {
     const jobId = this.generateJobId('list', todoList.id);
-    
+
     const job: QueueJob = {
       id: jobId,
       type: 'todo-list',
@@ -178,12 +178,12 @@ export class UploadQueue extends EventEmitter {
 
     this.jobs.set(jobId, job);
     await this.saveQueue();
-    
+
     logger.info(`Added todo list upload job: ${jobId}`, {
       listName: todoList.name,
       todoCount: todoList.todos.length,
     });
-    
+
     this.emit('jobAdded', job);
     return jobId;
   }
@@ -203,7 +203,7 @@ export class UploadQueue extends EventEmitter {
   ): Promise<string> {
     const fileName = options.fileName || `blob-${Date.now()}`;
     const jobId = this.generateJobId('blob', fileName);
-    
+
     const job: QueueJob = {
       id: jobId,
       type: 'blob',
@@ -221,12 +221,12 @@ export class UploadQueue extends EventEmitter {
 
     this.jobs.set(jobId, job);
     await this.saveQueue();
-    
+
     logger.info(`Added blob upload job: ${jobId}`, {
       fileName,
       size: Buffer.isBuffer(content) ? content.length : content.length,
     });
-    
+
     this.emit('jobAdded', job);
     return jobId;
   }
@@ -247,7 +247,7 @@ export class UploadQueue extends EventEmitter {
     priority?: QueueJob['priority'];
   }): QueueJob[] {
     let jobs = Array.from(this.jobs.values());
-    
+
     if (filter) {
       if (filter.status) {
         jobs = jobs.filter(job => job.status === filter.status);
@@ -259,17 +259,17 @@ export class UploadQueue extends EventEmitter {
         jobs = jobs.filter(job => job.priority === filter.priority);
       }
     }
-    
+
     // Sort by priority and creation time
     return jobs.sort((a, b) => {
       const priorityOrder = { high: 3, medium: 2, low: 1 };
       const aPriority = priorityOrder[a.priority];
       const bPriority = priorityOrder[b.priority];
-      
+
       if (aPriority !== bPriority) {
         return bPriority - aPriority; // Higher priority first
       }
-      
+
       return a.createdAt.getTime() - b.createdAt.getTime(); // Older first
     });
   }
@@ -299,7 +299,7 @@ export class UploadQueue extends EventEmitter {
     await this.saveQueue();
     this.emit('jobCancelled', job);
     logger.info(`Cancelled job: ${jobId}`);
-    
+
     return true;
   }
 
@@ -321,7 +321,7 @@ export class UploadQueue extends EventEmitter {
     await this.saveQueue();
     this.emit('jobRetried', job);
     logger.info(`Retrying job: ${jobId}`);
-    
+
     return true;
   }
 
@@ -332,14 +332,14 @@ export class UploadQueue extends EventEmitter {
     const completedJobs = Array.from(this.jobs.values()).filter(
       job => job.status === 'completed'
     );
-    
+
     for (const job of completedJobs) {
       this.jobs.delete(job.id);
     }
-    
+
     await this.saveQueue();
     logger.info(`Cleared ${completedJobs.length} completed jobs`);
-    
+
     return completedJobs.length;
   }
 
@@ -354,19 +354,21 @@ export class UploadQueue extends EventEmitter {
 
     const jobs = Array.from(this.jobs.values());
     const completed = jobs.filter(job => job.status === 'completed');
-    
+
     let totalBytesUploaded = 0;
     let totalUploadTime = 0;
-    
+
     for (const job of completed) {
       if (job.startedAt && job.completedAt) {
         totalUploadTime += job.completedAt.getTime() - job.startedAt.getTime();
       }
-      
+
       // Estimate bytes for different job types
       if (job.type === 'blob' && 'content' in job.data) {
         const content = (job.data as { content: Buffer | string }).content;
-        totalBytesUploaded += Buffer.isBuffer(content) ? content.length : content.length;
+        totalBytesUploaded += Buffer.isBuffer(content)
+          ? content.length
+          : content.length;
       } else {
         // Estimate size for todos/lists
         totalBytesUploaded += JSON.stringify(job.data).length;
@@ -381,7 +383,8 @@ export class UploadQueue extends EventEmitter {
       failed: jobs.filter(job => job.status === 'failed').length,
       retrying: jobs.filter(job => job.status === 'retrying').length,
       totalBytesUploaded,
-      averageUploadTime: completed.length > 0 ? totalUploadTime / completed.length : 0,
+      averageUploadTime:
+        completed.length > 0 ? totalUploadTime / completed.length : 0,
       successRate: jobs.length > 0 ? completed.length / jobs.length : 0,
     };
 
@@ -397,7 +400,7 @@ export class UploadQueue extends EventEmitter {
       const worker = setInterval(() => this.processNextJob(), 1000);
       this.workers.add(worker);
     }
-    
+
     logger.info(`Started ${this.options.maxConcurrency} upload workers`);
   }
 
@@ -413,7 +416,7 @@ export class UploadQueue extends EventEmitter {
     const pendingJobs = this.getJobs({ status: 'pending' });
     const retryingJobs = this.getJobs({ status: 'retrying' });
     const availableJobs = [...pendingJobs, ...retryingJobs];
-    
+
     if (availableJobs.length === 0) {
       return;
     }
@@ -437,7 +440,7 @@ export class UploadQueue extends EventEmitter {
 
     await this.saveQueue();
     this.emit('jobStarted', job);
-    
+
     logger.info(`Processing job: ${job.id}`, {
       type: job.type,
       retryCount: job.retryCount,
@@ -461,34 +464,52 @@ export class UploadQueue extends EventEmitter {
 
     try {
       let blobId: string;
-      
+
       // Update progress
       job.progress = 25;
-      this.emit('jobProgress', this.createProgressUpdate(job, 'Connecting to Walrus...'));
+      this.emit(
+        'jobProgress',
+        this.createProgressUpdate(job, 'Connecting to Walrus...')
+      );
 
       switch (job.type) {
         case 'todo':
           job.progress = 50;
-          this.emit('jobProgress', this.createProgressUpdate(job, 'Uploading todo...'));
+          this.emit(
+            'jobProgress',
+            this.createProgressUpdate(job, 'Uploading todo...')
+          );
           blobId = await walrusStorage.storeTodo(job.data as Todo, job.epochs);
           break;
-          
+
         case 'todo-list':
           job.progress = 50;
-          this.emit('jobProgress', this.createProgressUpdate(job, 'Uploading todo list...'));
-          blobId = await walrusStorage.storeTodoList(job.data as TodoList, job.epochs);
+          this.emit(
+            'jobProgress',
+            this.createProgressUpdate(job, 'Uploading todo list...')
+          );
+          blobId = await walrusStorage.storeTodoList(
+            job.data as TodoList,
+            job.epochs
+          );
           break;
-          
+
         case 'blob':
-          const blobData = job.data as { content: Buffer | string; fileName?: string };
+          const blobData = job.data as {
+            content: Buffer | string;
+            fileName?: string;
+          };
           job.progress = 50;
-          this.emit('jobProgress', this.createProgressUpdate(job, 'Uploading blob...'));
+          this.emit(
+            'jobProgress',
+            this.createProgressUpdate(job, 'Uploading blob...')
+          );
           blobId = await walrusStorage.storeBlob(blobData.content, {
             epochs: job.epochs,
             fileName: blobData.fileName,
           });
           break;
-          
+
         default:
           throw new Error(`Unknown job type: ${job.type}`);
       }
@@ -503,23 +524,30 @@ export class UploadQueue extends EventEmitter {
 
       await this.saveQueue();
       this.emit('jobCompleted', job);
-      this.emit('jobProgress', this.createProgressUpdate(job, 'Upload completed!'));
-      
+      this.emit(
+        'jobProgress',
+        this.createProgressUpdate(job, 'Upload completed!')
+      );
+
       // Send success notification
       if (this.options.enableNotifications) {
         const jobDetails = this.getJobDisplayName(job);
         this.notificationSystem.success(
           'Upload Completed',
           `Successfully uploaded: ${jobDetails}`,
-          { jobId: job.id, blobId, duration: job.completedAt.getTime() - (job.startedAt?.getTime() || 0) }
+          {
+            jobId: job.id,
+            blobId,
+            duration:
+              job.completedAt.getTime() - (job.startedAt?.getTime() || 0),
+          }
         );
       }
-      
+
       logger.info(`Job completed successfully: ${job.id}`, {
         blobId,
         duration: job.completedAt.getTime() - (job.startedAt?.getTime() || 0),
       });
-
     } finally {
       await walrusStorage.disconnect();
     }
@@ -530,7 +558,7 @@ export class UploadQueue extends EventEmitter {
    */
   private async handleJobError(job: QueueJob, error: unknown): Promise<void> {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     job.retryCount++;
     job.error = errorMessage;
     job.updatedAt = new Date();
@@ -538,7 +566,7 @@ export class UploadQueue extends EventEmitter {
     if (job.retryCount < job.maxRetries) {
       // Schedule retry
       job.status = 'retrying';
-      
+
       // Exponential backoff delay
       const delay = this.options.retryDelayMs * Math.pow(2, job.retryCount - 1);
       setTimeout(() => {
@@ -558,13 +586,13 @@ export class UploadQueue extends EventEmitter {
         delay,
         error: errorMessage,
       });
-      
+
       this.emit('jobRetry', job);
     } else {
       // Max retries exceeded
       job.status = 'failed';
       job.completedAt = new Date();
-      
+
       // Send failure notification
       if (this.options.enableNotifications) {
         const jobDetails = this.getJobDisplayName(job);
@@ -574,12 +602,12 @@ export class UploadQueue extends EventEmitter {
           { jobId: job.id, error: errorMessage, retryCount: job.retryCount }
         );
       }
-      
+
       logger.error(`Job failed permanently: ${job.id}`, {
         retryCount: job.retryCount,
         error: errorMessage,
       });
-      
+
       this.emit('jobFailed', job);
     }
 
@@ -603,7 +631,10 @@ export class UploadQueue extends EventEmitter {
    */
   private generateJobId(type: string, identifier: string): string {
     const timestamp = Date.now();
-    const hash = crypto.createHash('md5').update(`${type}-${identifier}-${timestamp}`).digest('hex');
+    const hash = crypto
+      .createHash('md5')
+      .update(`${type}-${identifier}-${timestamp}`)
+      .digest('hex');
     return `${type}-${hash.substring(0, 8)}-${timestamp}`;
   }
 
@@ -629,7 +660,6 @@ export class UploadQueue extends EventEmitter {
 
       await fs.mkdir(this.options.persistenceDir, { recursive: true });
       await fs.writeFile(this.queueFile, JSON.stringify(queueData, null, 2));
-      
     } catch (error) {
       logger.error('Failed to save queue', error);
     }
@@ -642,25 +672,29 @@ export class UploadQueue extends EventEmitter {
     try {
       const data = await fs.readFile(this.queueFile, 'utf-8');
       const queueData = JSON.parse(data);
-      
+
       for (const jobData of queueData.jobs) {
         const job: QueueJob = {
           ...jobData,
           createdAt: new Date(jobData.createdAt),
           updatedAt: new Date(jobData.updatedAt),
-          startedAt: jobData.startedAt ? new Date(jobData.startedAt) : undefined,
-          completedAt: jobData.completedAt ? new Date(jobData.completedAt) : undefined,
+          startedAt: jobData.startedAt
+            ? new Date(jobData.startedAt)
+            : undefined,
+          completedAt: jobData.completedAt
+            ? new Date(jobData.completedAt)
+            : undefined,
         };
-        
+
         // Reset processing jobs to pending on startup
         if (job.status === 'processing') {
           job.status = 'pending';
           job.progress = 0;
         }
-        
+
         this.jobs.set(job.id, job);
       }
-      
+
       logger.info(`Loaded ${this.jobs.size} jobs from queue`);
     } catch (error) {
       if ((error as any).code !== 'ENOENT') {
@@ -673,16 +707,20 @@ export class UploadQueue extends EventEmitter {
    * Clean up old completed jobs
    */
   private cleanupOldJobs(): void {
-    const cutoffTime = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+    const cutoffTime = Date.now() - 24 * 60 * 60 * 1000; // 24 hours ago
     let cleanedCount = 0;
-    
+
     for (const [jobId, job] of this.jobs.entries()) {
-      if (job.status === 'completed' && job.completedAt && job.completedAt.getTime() < cutoffTime) {
+      if (
+        job.status === 'completed' &&
+        job.completedAt &&
+        job.completedAt.getTime() < cutoffTime
+      ) {
         this.jobs.delete(jobId);
         cleanedCount++;
       }
     }
-    
+
     if (cleanedCount > 0) {
       logger.info(`Cleaned up ${cleanedCount} old completed jobs`);
       this.saveQueue();
@@ -694,24 +732,27 @@ export class UploadQueue extends EventEmitter {
    */
   async shutdown(): Promise<void> {
     this.isShuttingDown = true;
-    
+
     // Stop all workers
     for (const worker of this.workers) {
       clearInterval(worker);
     }
     this.workers.clear();
-    
+
     // Wait for current jobs to finish (with timeout)
     const maxWaitTime = 30000; // 30 seconds
     const startTime = Date.now();
-    
-    while (this.processingJobs.size > 0 && (Date.now() - startTime) < maxWaitTime) {
+
+    while (
+      this.processingJobs.size > 0 &&
+      Date.now() - startTime < maxWaitTime
+    ) {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    
+
     // Save final state
     await this.saveQueue();
-    
+
     logger.info('Upload queue shut down');
   }
 
@@ -738,7 +779,9 @@ export class UploadQueue extends EventEmitter {
 /**
  * Create an upload queue instance
  */
-export function createUploadQueue(options: Partial<QueueOptions> = {}): UploadQueue {
+export function createUploadQueue(
+  options: Partial<QueueOptions> = {}
+): UploadQueue {
   const defaultOptions: QueueOptions = {
     maxConcurrency: 3,
     retryDelayMs: 2000,

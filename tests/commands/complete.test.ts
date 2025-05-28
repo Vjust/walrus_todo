@@ -61,9 +61,7 @@ describe('complete', () => {
     // Setup default mocks
     mockTodoService.getList.mockResolvedValue(defaultList);
     mockTodoService.getTodo.mockResolvedValue(defaultTodo);
-    mockTodoService.toggleItemStatus.mockImplementation(
-      async () => {}
-    );
+    mockTodoService.toggleItemStatus.mockImplementation(async () => {});
 
     mockSuiClient.getLatestSuiSystemState.mockResolvedValue({
       activeValidators: [],
@@ -84,11 +82,7 @@ describe('complete', () => {
   });
 
   test('completes a local todo', async () => {
-    await mockTodoService.toggleItemStatus(
-      'default',
-      'todo123',
-      true
-    );
+    await mockTodoService.toggleItemStatus('default', 'todo123', true);
 
     expect(mockTodoService.toggleItemStatus).toHaveBeenCalledWith(
       'default',
@@ -108,11 +102,7 @@ describe('complete', () => {
 
     mockTodoService.getTodo.mockResolvedValue(todoWithNft);
 
-    await mockTodoService.toggleItemStatus(
-      'default',
-      'todo123',
-      true
-    );
+    await mockTodoService.toggleItemStatus('default', 'todo123', true);
 
     expect(mockTodoService.toggleItemStatus).toHaveBeenCalledWith(
       'default',

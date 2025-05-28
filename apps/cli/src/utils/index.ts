@@ -110,7 +110,9 @@ export function isNonEmptyString(value: unknown): value is string {
  * @param value Value to check
  * @returns True if value is a non-empty array
  */
-export function isNonEmptyArray<T>(value: T[] | undefined | null): value is T[] {
+export function isNonEmptyArray<T>(
+  value: T[] | undefined | null
+): value is T[] {
   return Array.isArray(value) && value.length > 0;
 }
 

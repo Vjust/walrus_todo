@@ -1,6 +1,6 @@
 /**
  * Enhanced Error Handler - Comprehensive error processing and normalization
- * 
+ *
  * This utility provides improved error handling with:
  * - Context-aware error messages
  * - Error type identification
@@ -38,7 +38,10 @@ export class EnhancedErrorHandler {
   /**
    * Normalize any error into a structured format with enhanced context
    */
-  static normalizeError(error: unknown, context?: ErrorContext): EnhancedErrorInfo {
+  static normalizeError(
+    error: unknown,
+    context?: ErrorContext
+  ): EnhancedErrorInfo {
     if (error instanceof Error) {
       return this.normalizeKnownError(error, context);
     }
@@ -69,7 +72,9 @@ export class EnhancedErrorHandler {
         message: `String error: ${message}${context?.operation ? ` (during ${context.operation})` : ''}`,
         type: 'StringError',
         context,
-        suggestions: ['Check error throwing logic to ensure proper Error objects are used'],
+        suggestions: [
+          'Check error throwing logic to ensure proper Error objects are used',
+        ],
         isRecoverable: true,
       };
     }
@@ -77,7 +82,10 @@ export class EnhancedErrorHandler {
     if (typeof error === 'object') {
       try {
         const stringified = JSON.stringify(error);
-        const message = stringified === '{}' ? 'Empty object error' : `Object error: ${stringified}`;
+        const message =
+          stringified === '{}'
+            ? 'Empty object error'
+            : `Object error: ${stringified}`;
         return {
           message: `${message}${context?.operation ? ` (during ${context.operation})` : ''}`,
           type: 'ObjectError',
@@ -103,7 +111,9 @@ export class EnhancedErrorHandler {
         message: `Unknown error of type ${typeof error}: ${errorStr}${context?.operation ? ` (during ${context.operation})` : ''}`,
         type: `UnknownError_${typeof error}`,
         context,
-        suggestions: ['Investigate error source and ensure proper error handling'],
+        suggestions: [
+          'Investigate error source and ensure proper error handling',
+        ],
         isRecoverable: false,
       };
     } catch (conversionError) {
@@ -111,7 +121,9 @@ export class EnhancedErrorHandler {
         message: `Unconvertible error of type ${typeof error}${context?.operation ? ` during ${context.operation}` : ''}`,
         type: 'UnconvertibleError',
         context,
-        suggestions: ['Check error object for circular references or non-standard properties'],
+        suggestions: [
+          'Check error object for circular references or non-standard properties',
+        ],
         isRecoverable: false,
       };
     }
@@ -120,10 +132,13 @@ export class EnhancedErrorHandler {
   /**
    * Handle known Error instances with enhanced context
    */
-  private static normalizeKnownError(error: Error, context?: ErrorContext): EnhancedErrorInfo {
+  private static normalizeKnownError(
+    error: Error,
+    context?: ErrorContext
+  ): EnhancedErrorInfo {
     const errorType = error.constructor.name;
     const baseMessage = error.message || 'No error message provided';
-    
+
     // Add context to the message
     let enhancedMessage = baseMessage;
     if (context?.operation) {
@@ -152,14 +167,21 @@ export class EnhancedErrorHandler {
   /**
    * Generate helpful suggestions based on error type and context
    */
-  private static generateSuggestions(error: Error, context?: ErrorContext): string[] {
+  private static generateSuggestions(
+    error: Error,
+    context?: ErrorContext
+  ): string[] {
     const suggestions: string[] = [];
     const errorMessage = error.message.toLowerCase();
     const errorType = error.constructor.name;
 
     // Network-related errors
-    if (errorMessage.includes('network') || errorMessage.includes('connection') || 
-        errorMessage.includes('timeout') || errorMessage.includes('econnrefused')) {
+    if (
+      errorMessage.includes('network') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('econnrefused')
+    ) {
       suggestions.push('Check your internet connection');
       suggestions.push('Verify service endpoints are accessible');
       suggestions.push('Try again in a few moments');
@@ -169,41 +191,61 @@ export class EnhancedErrorHandler {
     }
 
     // Authentication/Authorization errors
-    if (errorMessage.includes('unauthorized') || errorMessage.includes('forbidden') ||
-        errorMessage.includes('api key') || errorMessage.includes('authentication')) {
+    if (
+      errorMessage.includes('unauthorized') ||
+      errorMessage.includes('forbidden') ||
+      errorMessage.includes('api key') ||
+      errorMessage.includes('authentication')
+    ) {
       suggestions.push('Check your API key configuration');
       suggestions.push('Verify your credentials are valid and not expired');
       if (context?.provider) {
-        suggestions.push(`Use 'walrus_todo ai credentials add ${context.provider} --key YOUR_API_KEY' to update credentials`);
+        suggestions.push(
+          `Use 'walrus_todo ai credentials add ${context.provider} --key YOUR_API_KEY' to update credentials`
+        );
       }
     }
 
     // Validation errors
-    if (errorMessage.includes('validation') || errorMessage.includes('invalid') ||
-        errorType.includes('Validation')) {
+    if (
+      errorMessage.includes('validation') ||
+      errorMessage.includes('invalid') ||
+      errorType.includes('Validation')
+    ) {
       suggestions.push('Check the format of your input parameters');
       suggestions.push('Refer to command help with --help flag');
       suggestions.push('Use --verbose for detailed validation info');
     }
 
     // Blockchain/Transaction errors
-    if (errorMessage.includes('transaction') || errorMessage.includes('blockchain') ||
-        errorMessage.includes('gas') || errorMessage.includes('sui')) {
+    if (
+      errorMessage.includes('transaction') ||
+      errorMessage.includes('blockchain') ||
+      errorMessage.includes('gas') ||
+      errorMessage.includes('sui')
+    ) {
       suggestions.push('Check your wallet balance and gas fees');
       suggestions.push('Verify transaction parameters');
       suggestions.push('Check blockchain network status');
     }
 
     // Storage errors
-    if (errorMessage.includes('storage') || errorMessage.includes('walrus') ||
-        errorMessage.includes('blob')) {
+    if (
+      errorMessage.includes('storage') ||
+      errorMessage.includes('walrus') ||
+      errorMessage.includes('blob')
+    ) {
       suggestions.push('Check your Walrus storage allocation');
       suggestions.push('Verify you have sufficient WAL tokens');
       suggestions.push('Ensure blob size is within limits');
     }
 
     // AI/Provider errors
-    if (context?.provider || errorMessage.includes('ai') || errorMessage.includes('model')) {
+    if (
+      context?.provider ||
+      errorMessage.includes('ai') ||
+      errorMessage.includes('model')
+    ) {
       suggestions.push('Check AI provider service status');
       suggestions.push('Verify model availability and parameters');
       if (context?.provider) {
@@ -217,7 +259,9 @@ export class EnhancedErrorHandler {
       suggestions.push('Use --debug for detailed error information');
       suggestions.push('Check the command documentation');
       if (context?.commandName) {
-        suggestions.push(`Use '${context.commandName} --help' for usage information`);
+        suggestions.push(
+          `Use '${context.commandName} --help' for usage information`
+        );
       }
     }
 
@@ -227,24 +271,38 @@ export class EnhancedErrorHandler {
   /**
    * Determine if an error is likely recoverable
    */
-  private static isErrorRecoverable(error: Error, context?: ErrorContext): boolean {
+  private static isErrorRecoverable(
+    error: Error,
+    context?: ErrorContext
+  ): boolean {
     const errorMessage = error.message.toLowerCase();
 
     // Non-recoverable errors
-    if (errorMessage.includes('fatal') || errorMessage.includes('critical') ||
-        errorMessage.includes('corrupted') || errorMessage.includes('permission denied')) {
+    if (
+      errorMessage.includes('fatal') ||
+      errorMessage.includes('critical') ||
+      errorMessage.includes('corrupted') ||
+      errorMessage.includes('permission denied')
+    ) {
       return false;
     }
 
     // Recoverable errors
-    if (errorMessage.includes('timeout') || errorMessage.includes('network') ||
-        errorMessage.includes('connection') || errorMessage.includes('retry') ||
-        errorMessage.includes('temporary')) {
+    if (
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('network') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('retry') ||
+      errorMessage.includes('temporary')
+    ) {
       return true;
     }
 
     // Context-based recovery assessment
-    if (context?.operation?.includes('network') || context?.operation?.includes('fetch')) {
+    if (
+      context?.operation?.includes('network') ||
+      context?.operation?.includes('fetch')
+    ) {
       return true;
     }
 
@@ -257,7 +315,7 @@ export class EnhancedErrorHandler {
    */
   static createCLIError(error: unknown, context?: ErrorContext): CLIError {
     const errorInfo = this.normalizeError(error, context);
-    
+
     const cliError = new CLIError(
       errorInfo.message,
       errorInfo.type.toUpperCase().replace(/ERROR$/, '') + '_ERROR'
@@ -265,7 +323,8 @@ export class EnhancedErrorHandler {
 
     // Add suggestions as a property if the CLIError supports it
     if ('suggestions' in cliError) {
-      (cliError as CLIError & { suggestions: string[] }).suggestions = errorInfo.suggestions || [];
+      (cliError as CLIError & { suggestions: string[] }).suggestions =
+        errorInfo.suggestions || [];
     }
 
     return cliError;
@@ -276,7 +335,7 @@ export class EnhancedErrorHandler {
    */
   static logError(error: unknown, context?: ErrorContext): void {
     const errorInfo = this.normalizeError(error, context);
-    
+
     const logContext = {
       errorType: errorInfo.type,
       operation: context?.operation,
@@ -295,11 +354,14 @@ export class EnhancedErrorHandler {
   /**
    * Get a user-friendly error message with suggestions
    */
-  static getUserFriendlyMessage(error: unknown, context?: ErrorContext): string {
+  static getUserFriendlyMessage(
+    error: unknown,
+    context?: ErrorContext
+  ): string {
     const errorInfo = this.normalizeError(error, context);
-    
+
     let message = errorInfo.message;
-    
+
     if (errorInfo.suggestions && errorInfo.suggestions.length > 0) {
       message += '\n\nSuggestions:';
       errorInfo.suggestions.forEach(suggestion => {

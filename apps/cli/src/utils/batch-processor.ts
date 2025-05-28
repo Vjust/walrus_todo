@@ -133,7 +133,8 @@ export class BatchProcessor {
         }
       }
     } catch (error: unknown) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       this.logger.error('Batch processing error', typedError);
       throw typedError;
     }
@@ -346,29 +347,41 @@ export class BatchProcessor {
 /**
  * Discriminated union for batch item results
  */
-export type BatchItemResultVariant<T, R> = 
+export type BatchItemResultVariant<T, R> =
   | { kind: 'success'; item: T; index: number; value: R }
   | { kind: 'error'; item: T; index: number; error: Error };
 
 /**
  * Type predicates for BatchItemResultVariant
  */
-export function isSuccessResult<T, R>(result: BatchItemResultVariant<T, R>): result is { kind: 'success'; item: T; index: number; value: R } {
+export function isSuccessResult<T, R>(
+  result: BatchItemResultVariant<T, R>
+): result is { kind: 'success'; item: T; index: number; value: R } {
   return result.kind === 'success';
 }
 
-export function isErrorResult<T, R>(result: BatchItemResultVariant<T, R>): result is { kind: 'error'; item: T; index: number; error: Error } {
+export function isErrorResult<T, R>(
+  result: BatchItemResultVariant<T, R>
+): result is { kind: 'error'; item: T; index: number; error: Error } {
   return result.kind === 'error';
 }
 
 /**
  * Factory functions for creating batch results
  */
-export function createSuccessResult<T, R>(item: T, index: number, value: R): BatchItemResultVariant<T, R> {
+export function createSuccessResult<T, R>(
+  item: T,
+  index: number,
+  value: R
+): BatchItemResultVariant<T, R> {
   return { kind: 'success', item, index, value };
 }
 
-export function createErrorResult<T, R>(item: T, index: number, error: Error): BatchItemResultVariant<T, R> {
+export function createErrorResult<T, R>(
+  item: T,
+  index: number,
+  error: Error
+): BatchItemResultVariant<T, R> {
   return { kind: 'error', item, index, error };
 }
 
@@ -386,18 +399,24 @@ interface BatchItemResult<T, R> {
 /**
  * Type predicate for optional union members
  */
-export function hasValue<T, R>(result: BatchItemResult<T, R>): result is BatchItemResult<T, R> & { value: R } {
+export function hasValue<T, R>(
+  result: BatchItemResult<T, R>
+): result is BatchItemResult<T, R> & { value: R } {
   return result.success && result.value !== null;
 }
 
-export function hasError<T, R>(result: BatchItemResult<T, R>): result is BatchItemResult<T, R> & { error: Error } {
+export function hasError<T, R>(
+  result: BatchItemResult<T, R>
+): result is BatchItemResult<T, R> & { error: Error } {
   return !result.success && result.error !== null;
 }
 
 /**
  * Convert legacy result to discriminated union
  */
-export function normalizeResult<T, R>(result: BatchItemResult<T, R>): BatchItemResultVariant<T, R> {
+export function normalizeResult<T, R>(
+  result: BatchItemResult<T, R>
+): BatchItemResultVariant<T, R> {
   if (hasValue(result)) {
     return createSuccessResult(result.item, result.index, result.value);
   }
@@ -405,7 +424,11 @@ export function normalizeResult<T, R>(result: BatchItemResult<T, R>): BatchItemR
     return createErrorResult(result.item, result.index, result.error);
   }
   // Fallback for malformed results
-  return createErrorResult(result.item, result.index, new Error('Malformed batch result'));
+  return createErrorResult(
+    result.item,
+    result.index,
+    new Error('Malformed batch result')
+  );
 }
 
 // Export utility functions

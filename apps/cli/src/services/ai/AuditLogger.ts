@@ -155,7 +155,10 @@ export class AuditLogger {
       const line = JSON.stringify(entry) + '\n';
       fs.appendFileSync(this.logFilePath, line, { mode: 0o600 }); // Restrict file permissions
     } catch (error: unknown) {
-      logger.error('Failed to write audit log:', error instanceof Error ? error : new Error(String(error)));
+      logger.error(
+        'Failed to write audit log:',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 
@@ -316,7 +319,10 @@ export class AuditLogger {
 
       for (const line of lines) {
         try {
-          const entry = JSON.parse(line) as { hash?: string; [key: string]: unknown };
+          const entry = JSON.parse(line) as {
+            hash?: string;
+            [key: string]: unknown;
+          };
 
           if (!entry.hash || typeof entry.hash !== 'string') {
             return false; // Missing hash

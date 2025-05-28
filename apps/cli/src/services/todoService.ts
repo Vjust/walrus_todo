@@ -359,11 +359,14 @@ export class TodoService {
     // Find the todo across all lists
     const foundTodo = await this.findTodoByIdOrTitleAcrossLists(todoId);
     if (!foundTodo) {
-      throw new CLIError(`Todo with ID "${todoId}" not found`, 'TODO_NOT_FOUND');
+      throw new CLIError(
+        `Todo with ID "${todoId}" not found`,
+        'TODO_NOT_FOUND'
+      );
     }
 
     const { listName, todo } = foundTodo;
-    
+
     // Update the todo to completed status
     const updatedTodo = {
       ...todo,
@@ -484,16 +487,16 @@ export class TodoService {
    */
   async findTodoByIdOrTitleAcrossLists(
     idOrTitle: string
-  ): Promise<{listName: string, todo: Todo} | null> {
+  ): Promise<{ listName: string; todo: Todo } | null> {
     const listNames = await this.getAllLists();
-    
+
     for (const listName of listNames) {
       const todo = await this.findTodoByIdOrTitle(listName, idOrTitle);
       if (todo) {
         return { listName, todo };
       }
     }
-    
+
     return null;
   }
 }

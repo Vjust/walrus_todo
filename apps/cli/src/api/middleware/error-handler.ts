@@ -9,7 +9,7 @@ const logger = new Logger('ApiErrorHandler');
 /**
  * Discriminated union for API error details
  */
-export type ApiErrorDetails = 
+export type ApiErrorDetails =
   | { kind: 'object'; data: Record<string, unknown> }
   | { kind: 'array'; data: string[] }
   | { kind: 'string'; data: string };
@@ -41,22 +41,30 @@ export interface LegacyApiError {
 /**
  * Type guards for error details
  */
-export function isObjectDetails(details: ApiErrorDetails): details is { kind: 'object'; data: Record<string, unknown> } {
+export function isObjectDetails(
+  details: ApiErrorDetails
+): details is { kind: 'object'; data: Record<string, unknown> } {
   return details.kind === 'object';
 }
 
-export function isArrayDetails(details: ApiErrorDetails): details is { kind: 'array'; data: string[] } {
+export function isArrayDetails(
+  details: ApiErrorDetails
+): details is { kind: 'array'; data: string[] } {
   return details.kind === 'array';
 }
 
-export function isStringDetails(details: ApiErrorDetails): details is { kind: 'string'; data: string } {
+export function isStringDetails(
+  details: ApiErrorDetails
+): details is { kind: 'string'; data: string } {
   return details.kind === 'string';
 }
 
 /**
  * Factory functions for creating error details
  */
-export function createObjectDetails(data: Record<string, unknown>): ApiErrorDetails {
+export function createObjectDetails(
+  data: Record<string, unknown>
+): ApiErrorDetails {
   return { kind: 'object', data };
 }
 
@@ -71,7 +79,9 @@ export function createStringDetails(data: string): ApiErrorDetails {
 /**
  * Normalize legacy details to discriminated union
  */
-export function normalizeErrorDetails(details: Record<string, unknown> | string[] | string): ApiErrorDetails {
+export function normalizeErrorDetails(
+  details: Record<string, unknown> | string[] | string
+): ApiErrorDetails {
   if (Array.isArray(details)) {
     return createArrayDetails(details);
   }
@@ -101,7 +111,11 @@ export function errorHandler(
   if (err instanceof ValidationError) {
     status = 400;
     code = 'VALIDATION_ERROR';
-    const validationErrors = (err as ValidationError & { validationErrors?: Record<string, unknown> | string[] }).validationErrors;
+    const validationErrors = (
+      err as ValidationError & {
+        validationErrors?: Record<string, unknown> | string[];
+      }
+    ).validationErrors;
     if (validationErrors) {
       details = normalizeErrorDetails(validationErrors);
     }
@@ -152,11 +166,16 @@ export function errorHandler(
 
 // Async error wrapper
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<void | Response>
+  fn: (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => Promise<void | Response>
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch((error: unknown) => {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       return next(typedError);
     });
   };

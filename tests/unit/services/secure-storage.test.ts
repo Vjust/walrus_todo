@@ -1,8 +1,4 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-} from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { createHash } from 'crypto';
 import { SecureStorageService } from '../../../apps/cli/src/services/secure-storage';
 
@@ -40,8 +36,12 @@ describe('SecureStorageService', () => {
 
     // Get mock functions
     mockRandomBytes = randomBytes as jest.MockedFunction<typeof randomBytes>;
-    mockCreateCipheriv = createCipheriv as jest.MockedFunction<typeof createCipheriv>;
-    mockCreateDecipheriv = createDecipheriv as jest.MockedFunction<typeof createDecipheriv>;
+    mockCreateCipheriv = createCipheriv as jest.MockedFunction<
+      typeof createCipheriv
+    >;
+    mockCreateDecipheriv = createDecipheriv as jest.MockedFunction<
+      typeof createDecipheriv
+    >;
     mockCreateHash = createHash as jest.MockedFunction<typeof createHash>;
   });
 
@@ -278,7 +278,12 @@ describe('SecureStorageService', () => {
         // Missing iv and authTag
       } as { encrypted: string; iv?: string; authTag?: string };
 
-      await expect(service.decrypt(invalidData as { encrypted: string; iv: string; authTag: string }, 'key')).rejects.toThrow();
+      await expect(
+        service.decrypt(
+          invalidData as { encrypted: string; iv: string; authTag: string },
+          'key'
+        )
+      ).rejects.toThrow();
     });
 
     it('should handle large data encryption', async () => {

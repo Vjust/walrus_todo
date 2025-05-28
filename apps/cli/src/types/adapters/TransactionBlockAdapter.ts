@@ -65,7 +65,7 @@ export function isTransactionSui(tx: unknown): tx is TransactionSui {
   if (tx === null || typeof tx !== 'object' || tx === undefined) {
     return false;
   }
-  
+
   const txObj = tx as Record<string, unknown>;
   return (
     'setSender' in txObj &&
@@ -80,7 +80,7 @@ export function isTransaction(tx: unknown): tx is Transaction {
   if (tx === null || typeof tx !== 'object' || tx === undefined) {
     return false;
   }
-  
+
   const txObj = tx as Record<string, unknown>;
   return (
     'moveCall' in txObj &&
@@ -96,12 +96,9 @@ export function isTransactionObjectArgument(
   if (arg === null || typeof arg !== 'object' || arg === undefined) {
     return false;
   }
-  
+
   const argObj = arg as Record<string, unknown>;
-  return (
-    'kind' in argObj &&
-    typeof argObj.kind === 'string'
-  );
+  return 'kind' in argObj && typeof argObj.kind === 'string';
 }
 
 // Type guard for checking if a value is a string
@@ -316,7 +313,9 @@ export class TransactionBlockAdapter
             if ('setOwner' in gasObj && typeof gasObj.setOwner === 'function') {
               (gasObj as { setOwner: (owner: string) => void }).setOwner(owner);
             } else {
-              throw new TransactionAdapterError('gas.setOwner method not available');
+              throw new TransactionAdapterError(
+                'gas.setOwner method not available'
+              );
             }
           } else {
             throw new TransactionAdapterError(

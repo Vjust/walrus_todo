@@ -13,7 +13,7 @@ beforeEach(() => {
   // Ensure test environment is set
   process.env.NODE_ENV = 'test';
   // Removed WALRUS_USE_MOCK - using real implementations
-  
+
   // Force garbage collection
   forceGC();
 });

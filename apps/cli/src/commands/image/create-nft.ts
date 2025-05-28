@@ -106,7 +106,13 @@ export default class CreateNftCommand extends BaseCommand {
       });
 
       if (flags.background) {
-        return await this.handleBackgroundNftCreation(flags, todoItem, blobId, suiClient, config);
+        return await this.handleBackgroundNftCreation(
+          flags,
+          todoItem,
+          blobId,
+          suiClient,
+          config
+        );
       }
 
       // Initialize Sui NFT storage
@@ -156,12 +162,14 @@ export default class CreateNftCommand extends BaseCommand {
     suiClient: any,
     config: any
   ): Promise<void> {
-    const jobId = flags['job-id'] || jobManager.createJob('image', ['create-nft'], {
-      todo: flags.todo,
-      list: flags.list,
-      priority: flags.priority,
-      gasBudget: flags['gas-budget'],
-    }).id;
+    const jobId =
+      flags['job-id'] ||
+      jobManager.createJob('image', ['create-nft'], {
+        todo: flags.todo,
+        list: flags.list,
+        priority: flags.priority,
+        gasBudget: flags['gas-budget'],
+      }).id;
 
     this.log(chalk.blue(`🔄 Starting background NFT creation...`));
     this.log(chalk.gray(`📝 Job ID: ${jobId}`));
@@ -177,10 +185,16 @@ export default class CreateNftCommand extends BaseCommand {
         jobManager.writeJobLog(jobId, `Todo: ${todoItem.title}`);
         jobManager.writeJobLog(jobId, `Image URL: ${todoItem.imageUrl}`);
         jobManager.writeJobLog(jobId, `Blob ID: ${blobId}`);
-        jobManager.writeJobLog(jobId, `Gas Budget: ${flags['gas-budget']} MIST`);
-        
+        jobManager.writeJobLog(
+          jobId,
+          `Gas Budget: ${flags['gas-budget']} MIST`
+        );
+
         let progress = 0;
-        const updateProgress = (message: string, progressIncrement: number = 20) => {
+        const updateProgress = (
+          message: string,
+          progressIncrement: number = 20
+        ) => {
           progress = Math.min(100, progress + progressIncrement);
           jobManager.updateProgress(jobId, progress);
           jobManager.writeJobLog(jobId, `[${progress}%] ${message}`);
@@ -190,22 +204,26 @@ export default class CreateNftCommand extends BaseCommand {
         };
 
         updateProgress('Validating blockchain configuration...', 10);
-        
+
         updateProgress('Initializing NFT storage service...', 15);
-        const suiNftStorage = new SuiNftStorage(suiClient, {} as Ed25519Keypair, {
-          address: config.lastDeployment.packageId,
-          packageId: config.lastDeployment.packageId,
-        });
-        
+        const suiNftStorage = new SuiNftStorage(
+          suiClient,
+          {} as Ed25519Keypair,
+          {
+            address: config.lastDeployment.packageId,
+            packageId: config.lastDeployment.packageId,
+          }
+        );
+
         updateProgress('Preparing NFT metadata...', 15);
-        
+
         updateProgress('Submitting transaction to Sui blockchain...', 30);
         const txDigest = await suiNftStorage.createTodoNft(todoItem, blobId);
-        
+
         updateProgress('Waiting for transaction confirmation...', 20);
-        
+
         updateProgress('NFT creation completed successfully!', 10);
-        
+
         jobManager.completeJob(jobId, {
           txDigest,
           todoTitle: todoItem.title,
@@ -214,27 +232,45 @@ export default class CreateNftCommand extends BaseCommand {
           gasBudget: flags['gas-budget'],
           network: config.network,
         });
-        
+
         jobManager.writeJobLog(jobId, `✅ NFT created successfully!`);
         jobManager.writeJobLog(jobId, `📝 Transaction: ${txDigest}`);
-        jobManager.writeJobLog(jobId, `🔍 View on explorer: https://suiexplorer.com/txblock/${txDigest}?network=${config.network}`);
+        jobManager.writeJobLog(
+          jobId,
+          `🔍 View on explorer: https://suiexplorer.com/txblock/${txDigest}?network=${config.network}`
+        );
         jobManager.writeJobLog(jobId, `📋 NFT Details:`);
         jobManager.writeJobLog(jobId, `   - Title: ${todoItem.title}`);
         jobManager.writeJobLog(jobId, `   - Image URL: ${todoItem.imageUrl}`);
         jobManager.writeJobLog(jobId, `   - Walrus Blob ID: ${blobId}`);
-        jobManager.writeJobLog(jobId, `   - Gas Used: ${flags['gas-budget']} MIST`);
-        
+        jobManager.writeJobLog(
+          jobId,
+          `   - Gas Used: ${flags['gas-budget']} MIST`
+        );
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
-        jobManager.writeJobLog(jobId, `❌ NFT creation failed: ${errorMessage}`);
-        
+        jobManager.writeJobLog(
+          jobId,
+          `❌ NFT creation failed: ${errorMessage}`
+        );
+
         // Log additional debugging info for blockchain errors
         if (errorMessage.includes('gas') || errorMessage.includes('budget')) {
-          jobManager.writeJobLog(jobId, `💡 Tip: Try increasing gas budget with --gas-budget flag`);
+          jobManager.writeJobLog(
+            jobId,
+            `💡 Tip: Try increasing gas budget with --gas-budget flag`
+          );
         }
-        if (errorMessage.includes('network') || errorMessage.includes('connection')) {
-          jobManager.writeJobLog(jobId, `💡 Tip: Check network connectivity and try again`);
+        if (
+          errorMessage.includes('network') ||
+          errorMessage.includes('connection')
+        ) {
+          jobManager.writeJobLog(
+            jobId,
+            `💡 Tip: Check network connectivity and try again`
+          );
         }
       }
     });
@@ -243,7 +279,11 @@ export default class CreateNftCommand extends BaseCommand {
     return;
   }
 
-  private writeProgressFile(filePath: string, progress: number, message: string): void {
+  private writeProgressFile(
+    filePath: string,
+    progress: number,
+    message: string
+  ): void {
     try {
       const progressData = {
         progress,

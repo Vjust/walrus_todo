@@ -110,8 +110,12 @@ export default class Credentials extends BaseCommand {
       blockchain_key: CredentialType.BLOCKCHAIN_KEY,
     };
 
-    const permissionLevel = flags.permission ? permissionLevelMap[flags.permission] : AIPermissionLevel.STANDARD;
-    const credentialType = flags.type ? credentialTypeMap[flags.type] : CredentialType.API_KEY;
+    const permissionLevel = flags.permission && flags.permission in permissionLevelMap
+      ? permissionLevelMap[flags.permission]!
+      : AIPermissionLevel.STANDARD;
+    const credentialType = flags.type
+      ? credentialTypeMap[flags.type]
+      : CredentialType.API_KEY;
 
     switch (actionType) {
       case 'add':
@@ -148,7 +152,12 @@ export default class Credentials extends BaseCommand {
     provider: AIProvider,
     permissionLevel: AIPermissionLevel,
     type: CredentialType,
-    flags: { verify?: boolean; expiry?: number; rotation?: number; permission: string }
+    flags: {
+      verify?: boolean;
+      expiry?: number;
+      rotation?: number;
+      permission: string;
+    }
   ) {
     // Validate provider
     if (!provider) {
@@ -160,7 +169,11 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Create options object from flags
-      const options: { verify?: boolean; expiryDays?: number; rotationReminder?: number } = {
+      const options: {
+        verify?: boolean;
+        expiryDays?: number;
+        rotationReminder?: number;
+      } = {
         verify: flags.verify,
       };
 
@@ -213,7 +226,7 @@ export default class Credentials extends BaseCommand {
     } catch (error) {
       const errorCode = hasCode(error) ? error.code : undefined;
       const errorMessage = getErrorMessage(error);
-      
+
       if (errorCode === 'CREDENTIAL_VERIFICATION_FAILED') {
         this.log(`${chalk.yellow('\u26a0')} ${errorMessage}`);
       } else if (errorCode === 'INVALID_API_KEY_FORMAT') {
@@ -476,7 +489,7 @@ export default class Credentials extends BaseCommand {
     } catch (error) {
       const errorCode = hasCode(error) ? error.code : undefined;
       const errorMessage = getErrorMessage(error);
-      
+
       if (errorCode === 'INVALID_API_KEY_FORMAT') {
         this.error(`${chalk.red('\u2717')} ${errorMessage}`);
       } else {

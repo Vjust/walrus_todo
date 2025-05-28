@@ -131,7 +131,6 @@ describe('End-to-End Error Scenarios', () => {
       expect(thrownError).toBeTruthy();
       expect(thrownError).toBeInstanceOf(Error);
 
-
       fetchStub.restore();
     });
 
@@ -251,11 +250,10 @@ describe('End-to-End Error Scenarios', () => {
         errorThrown = true;
         errorMessage = error.message || '';
       }
-      
+
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
       expect(errorMessage).toMatch(/Transaction validation failed/);
-
 
       execStub.restore();
     });
@@ -287,8 +285,9 @@ describe('End-to-End Error Scenarios', () => {
 
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Smart contract execution failed.*Contract error code/);
-
+      expect(errorMessage).toMatch(
+        /Smart contract execution failed.*Contract error code/
+      );
 
       execStub.restore();
     });
@@ -319,8 +318,9 @@ describe('End-to-End Error Scenarios', () => {
 
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Invalid API key.*Check your AI provider credentials/);
-
+      expect(errorMessage).toMatch(
+        /Invalid API key.*Check your AI provider credentials/
+      );
 
       fetchStub.restore();
     });
@@ -351,7 +351,6 @@ describe('End-to-End Error Scenarios', () => {
       expect(errorThrown).toBe(true);
       expect(errorMessage).toMatch(/AI service error.*Try again later/);
 
-
       fetchStub.restore();
     });
   });
@@ -378,7 +377,6 @@ describe('End-to-End Error Scenarios', () => {
       // Restructured to avoid conditional expects
       expect(result).toContain('Restored configuration from backup');
       expect(result).toContain('Todo list');
-
     });
 
     it('should retry failed network requests', () => {
@@ -405,7 +403,9 @@ describe('End-to-End Error Scenarios', () => {
       expect(callCount).toBe(3);
       expect(result).toBeDefined();
       // Check result content unconditionally
-      const resultContainsRetryMessage = result.includes('Successfully connected after retry');
+      const resultContainsRetryMessage = result.includes(
+        'Successfully connected after retry'
+      );
       expect(resultContainsRetryMessage).toBe(true);
 
       fetchStub.restore();
@@ -500,7 +500,6 @@ describe('End-to-End Error Scenarios', () => {
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
       expect(errorMessage).toMatch(/Conflicting options/);
-
     });
   });
 
@@ -569,8 +568,9 @@ describe('End-to-End Error Scenarios', () => {
 
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Concurrent modification|File lock|operation failed/);
-
+      expect(errorMessage).toMatch(
+        /Concurrent modification|File lock|operation failed/
+      );
 
       stub.restore();
     });
@@ -599,10 +599,13 @@ describe('End-to-End Error Scenarios', () => {
       let errorThrown = false;
       let errorMessage = '';
       try {
-        execSync(`node ${path.join(__dirname, '../../apps/cli/src/index.ts')} deploy`, {
-          env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
-          encoding: 'utf8',
-        });
+        execSync(
+          `node ${path.join(__dirname, '../../apps/cli/src/index.ts')} deploy`,
+          {
+            env: { ...process.env, WALRUS_TODO_CONFIG_DIR: testDir },
+            encoding: 'utf8',
+          }
+        );
       } catch (error: any) {
         errorThrown = true;
         errorMessage = error.message || '';
@@ -611,7 +614,6 @@ describe('End-to-End Error Scenarios', () => {
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
       expect(errorMessage).toMatch(/Invalid network|Valid networks/);
-
 
       delete process.env.WALRUS_NETWORK;
     });
@@ -644,8 +646,9 @@ describe('End-to-End Error Scenarios', () => {
 
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Multiple errors|Network error|Disk full|Operation.*completed/);
-
+      expect(errorMessage).toMatch(
+        /Multiple errors|Network error|Disk full|Operation.*completed/
+      );
 
       fetchStub.restore();
       fsStub.restore();
@@ -679,8 +682,9 @@ describe('End-to-End Error Scenarios', () => {
 
       // Restructured to avoid conditional expects
       expect(errorThrown).toBe(true);
-      expect(errorMessage).toMatch(/Connection refused.*Troubleshooting steps:.*1\. Check if the service is running.*2\. Verify the network configuration.*3\. Check firewall settings/s);
-
+      expect(errorMessage).toMatch(
+        /Connection refused.*Troubleshooting steps:.*1\. Check if the service is running.*2\. Verify the network configuration.*3\. Check firewall settings/s
+      );
 
       fetchStub.restore();
     });

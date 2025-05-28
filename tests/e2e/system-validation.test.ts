@@ -60,22 +60,24 @@ describe('System Validation Tests', () => {
       // Check frontend package.json existence and validate accordingly
       const frontendExists = fs.existsSync(frontendPackageJson);
       expect(frontendExists).toBeDefined();
-      
+
       // Frontend validation test - split into separate assertions
-      const frontendPkgContent = frontendExists 
+      const frontendPkgContent = frontendExists
         ? fs.readFileSync(frontendPackageJson, 'utf8')
         : null;
-      const frontendPkg = frontendPkgContent 
+      const frontendPkg = frontendPkgContent
         ? JSON.parse(frontendPkgContent)
         : null;
-      
+
       // Non-conditional assertions based on existence
       expect(typeof frontendExists).toBe('boolean');
-      
+
       // Validate frontend package structure without conditional expects
-      const frontendValidated = frontendPkg ? 
-        (frontendPkg.name && frontendPkg.scripts?.dev && frontendPkg.scripts?.build) : 
-        (frontendPkg === null);
+      const frontendValidated = frontendPkg
+        ? frontendPkg.name &&
+          frontendPkg.scripts?.dev &&
+          frontendPkg.scripts?.build
+        : frontendPkg === null;
       expect(frontendValidated).toBeTruthy();
 
       // console.log('✅ Package.json configurations are valid'); // Removed console statement
@@ -115,7 +117,7 @@ describe('System Validation Tests', () => {
       };
 
       expect(getVersionOutput).not.toThrow();
-      
+
       const versionOutput = getVersionOutput();
       expect(versionOutput).toBeTruthy();
       expect(versionOutput).not.toContain('Error:');
@@ -126,7 +128,10 @@ describe('System Validation Tests', () => {
 
   describe('Smart Contract Validation', () => {
     test('should have valid Move.toml configuration', () => {
-      const moveTomlPath = path.join(projectRoot, 'apps/cli/src/move/Move.toml');
+      const moveTomlPath = path.join(
+        projectRoot,
+        'apps/cli/src/move/Move.toml'
+      );
       const moveTomlContent = fs.readFileSync(moveTomlPath, 'utf8');
 
       // Check for required sections
@@ -158,7 +163,7 @@ describe('System Validation Tests', () => {
     test('should have frontend structure in place', () => {
       const frontendPath = path.join(projectRoot, 'waltodo-frontend');
       const frontendExists = fs.existsSync(frontendPath);
-      
+
       expect(frontendExists).toBeDefined();
 
       if (!frontendExists) {
@@ -231,7 +236,11 @@ describe('System Validation Tests', () => {
           });
           return { name: tool.name, available: true, version: output.trim() };
         } catch (error) {
-          return { name: tool.name, available: false, error: (error as Error).toString() };
+          return {
+            name: tool.name,
+            available: false,
+            error: (error as Error).toString(),
+          };
         }
       });
 
@@ -262,7 +271,7 @@ describe('System Validation Tests', () => {
       ];
 
       const toolsChecked = [];
-      
+
       optionalTools.forEach(tool => {
         try {
           execSync(tool.command, {
@@ -277,7 +286,7 @@ describe('System Validation Tests', () => {
           // console.log(`⚠️ ${tool.name} not found - some features may use fallback modes`); // Removed console statement
         }
       });
-      
+
       expect(toolsChecked).toHaveLength(optionalTools.length);
       expect(optionalTools.length).toBeGreaterThan(0);
     });
@@ -313,25 +322,25 @@ describe('System Validation Tests', () => {
 
       const jestConfigExists = fs.existsSync(jestConfigPath);
       expect(jestConfigExists).toBeDefined();
-      
+
       // Jest config validation - avoid conditional expects
-      const jestConfigContent = jestConfigExists 
+      const jestConfigContent = jestConfigExists
         ? fs.readFileSync(jestConfigPath, 'utf8')
         : null;
-      
+
       // Non-conditional assertions
       expect(typeof jestConfigExists).toBe('boolean');
-      
+
       // Validate Jest config without conditional expects
-      const jestConfigValidated = jestConfigContent ? 
-        jestConfigContent.includes('module.exports') : 
-        (jestConfigContent === null);
+      const jestConfigValidated = jestConfigContent
+        ? jestConfigContent.includes('module.exports')
+        : jestConfigContent === null;
       expect(jestConfigValidated).toBeTruthy();
     });
 
     test('should be able to run a simple test', () => {
       let testFrameworkWorking = false;
-      
+
       try {
         // Try to run a basic test to verify Jest is working
         execSync(
@@ -342,14 +351,14 @@ describe('System Validation Tests', () => {
             timeout: 60000,
           }
         );
-        
+
         testFrameworkWorking = true;
         // console.log('✅ Test framework is functional'); // Removed console statement
       } catch (_error) {
         // This test calling itself might have issues, but that's OK
         // console.log('⚠️ Test framework validation has some issues - this might be expected'); // Removed console statement
       }
-      
+
       expect(testFrameworkWorking).toBeDefined();
       expect(typeof testFrameworkWorking).toBe('boolean');
     });

@@ -12,9 +12,7 @@ import {
   SuggestionContext,
 } from '../../../../apps/cli/src/services/ai/TaskSuggestionService';
 import { EnhancedAIService } from '../../../../apps/cli/src/services/ai/EnhancedAIService';
-import {
-  AIVerificationService,
-} from '../../../../apps/cli/src/services/ai/AIVerificationService';
+import { AIVerificationService } from '../../../../apps/cli/src/services/ai/AIVerificationService';
 import { Todo } from '../../../../apps/cli/src/types/todo';
 import {
   AIPrivacyLevel,
@@ -184,7 +182,11 @@ describe('TaskSuggestionService', () => {
     beforeEach(() => {
       // Mock AI provider responses
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: mockRelatedSuggestions })
         .mockResolvedValueOnce({ result: mockNextStepSuggestions })
         .mockResolvedValueOnce({ result: mockDependencySuggestions });
@@ -269,7 +271,11 @@ describe('TaskSuggestionService', () => {
 
       // Set up mocks for empty todo list (should return empty results)
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>).mockResolvedValue({
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      ).mockResolvedValue({
         result: [],
       });
 
@@ -321,7 +327,11 @@ describe('TaskSuggestionService', () => {
       // Mock AI provider responses with diverse suggestions
 
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: mockRelatedSuggestions })
         .mockResolvedValueOnce({ result: mockNextStepSuggestions })
         .mockResolvedValueOnce({ result: mockDependencySuggestions });
@@ -455,7 +465,11 @@ describe('TaskSuggestionService', () => {
     beforeEach(() => {
       // Mock basic AI responses
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: mockRelatedSuggestions })
         .mockResolvedValueOnce({ result: mockNextStepSuggestions })
         .mockResolvedValueOnce({ result: mockDependencySuggestions });
@@ -562,7 +576,11 @@ describe('TaskSuggestionService', () => {
       mockAiService.analyze.mockRejectedValue(new Error('Analysis failed'));
 
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] });
@@ -607,7 +625,11 @@ describe('TaskSuggestionService', () => {
       });
 
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: mockNextStepSuggestions })
         .mockResolvedValueOnce({ result: [] });
@@ -640,7 +662,11 @@ describe('TaskSuggestionService', () => {
       });
 
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: mockDependencySuggestions });
@@ -663,7 +689,11 @@ describe('TaskSuggestionService', () => {
 
     it('should handle AI provider returning null result', async () => {
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: null })
         .mockResolvedValueOnce({ result: undefined })
         .mockResolvedValueOnce({ result: null });
@@ -705,7 +735,11 @@ describe('TaskSuggestionService', () => {
       ];
 
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] });
@@ -739,7 +773,11 @@ describe('TaskSuggestionService', () => {
       ];
 
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: incompleteSuggestions })
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] });
@@ -767,7 +805,11 @@ describe('TaskSuggestionService', () => {
 
     it('should handle non-array themes from AI analysis', async () => {
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] });
@@ -793,7 +835,11 @@ describe('TaskSuggestionService', () => {
 
     it('should calculate zero average score for empty suggestions', async () => {
       const provider = mockAiService.getProvider();
-      (provider.completeStructured as jest.MockedFunction<typeof provider.completeStructured>)
+      (
+        provider.completeStructured as jest.MockedFunction<
+          typeof provider.completeStructured
+        >
+      )
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] })
         .mockResolvedValueOnce({ result: [] });

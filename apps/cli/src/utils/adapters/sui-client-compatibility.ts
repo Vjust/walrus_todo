@@ -1,14 +1,14 @@
 /**
  * SuiClient Compatibility Adapter
- * 
+ *
  * This module provides compatibility wrappers for SuiClient import changes
  * between different versions of @mysten/sui library.
  */
 
 import { Logger } from '../Logger';
-import { 
-  SuiClient as SuiClientClass, 
-  getFullnodeUrl as getFullnodeUrlFn 
+import {
+  SuiClient as SuiClientClass,
+  getFullnodeUrl as getFullnodeUrlFn,
 } from '@mysten/sui/client';
 
 const logger = new Logger('sui-client-compatibility');
@@ -30,7 +30,7 @@ import type {
   SuiObjectResponse,
   SuiObjectData,
   SuiMoveObject,
-  PaginatedObjectsResponse
+  PaginatedObjectsResponse,
 } from '@mysten/sui/client';
 
 export type {
@@ -38,16 +38,20 @@ export type {
   SuiObjectResponse,
   SuiObjectData,
   SuiMoveObject,
-  PaginatedObjectsResponse
+  PaginatedObjectsResponse,
 };
 
 // Helper function to create a SuiClient with compatibility handling
-export function createCompatibleSuiClient(options?: CompatibleSuiClientOptions): SuiClientClass {
+export function createCompatibleSuiClient(
+  options?: CompatibleSuiClientOptions
+): SuiClientClass {
   try {
     return new SuiClient(options);
   } catch (error) {
     logger.error('Failed to create SuiClient:', error);
-    throw new Error(`Failed to create SuiClient: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to create SuiClient: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -57,14 +61,16 @@ export function isSuiClientAvailable(): boolean {
 }
 
 // Helper function to get a fallback URL for SuiClient
-export function getCompatibleFullnodeUrl(network: 'mainnet' | 'testnet' | 'devnet' | 'localnet' = 'testnet'): string {
+export function getCompatibleFullnodeUrl(
+  network: 'mainnet' | 'testnet' | 'devnet' | 'localnet' = 'testnet'
+): string {
   const urls = {
     mainnet: 'https://fullnode.mainnet.sui.io:443',
     testnet: 'https://fullnode.testnet.sui.io:443',
     devnet: 'https://fullnode.devnet.sui.io:443',
-    localnet: 'http://localhost:9000'
+    localnet: 'http://localhost:9000',
   };
-  
+
   return urls[network] || urls.testnet;
 }
 
@@ -77,5 +83,5 @@ export default {
   SuiClient,
   createCompatibleSuiClient,
   isSuiClientAvailable,
-  getCompatibleFullnodeUrl
+  getCompatibleFullnodeUrl,
 };

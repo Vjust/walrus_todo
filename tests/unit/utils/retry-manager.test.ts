@@ -58,13 +58,11 @@ describe('RetryManager', () => {
 
   describe('failure scenarios', () => {
     it('should fail after max retries exceeded', async () => {
-      const operation = jest
-        .fn()
-        .mockRejectedValue(new Error('network error'));
+      const operation = jest.fn().mockRejectedValue(new Error('network error'));
 
-      await expect(
-        retryManager.execute(operation, 'test')
-      ).rejects.toThrow('Maximum retries');
+      await expect(retryManager.execute(operation, 'test')).rejects.toThrow(
+        'Maximum retries'
+      );
 
       expect(operation).toHaveBeenCalledTimes(3); // initial + 2 retries
     });
@@ -74,9 +72,9 @@ describe('RetryManager', () => {
         .fn()
         .mockRejectedValue(new Error('validation error'));
 
-      await expect(
-        retryManager.execute(operation, 'test')
-      ).rejects.toThrow('Non-retryable error');
+      await expect(retryManager.execute(operation, 'test')).rejects.toThrow(
+        'Non-retryable error'
+      );
 
       expect(operation).toHaveBeenCalledTimes(1);
     });
@@ -88,9 +86,9 @@ describe('RetryManager', () => {
           () => new Promise(resolve => setTimeout(resolve, 400))
         );
 
-      await expect(
-        retryManager.execute(operation, 'test')
-      ).rejects.toThrow('Operation timed out');
+      await expect(retryManager.execute(operation, 'test')).rejects.toThrow(
+        'Operation timed out'
+      );
     });
   });
 
@@ -164,13 +162,11 @@ describe('RetryManager', () => {
     });
 
     it('should not retry validation errors', async () => {
-      const operation = jest
-        .fn()
-        .mockRejectedValue(new Error('invalid input'));
+      const operation = jest.fn().mockRejectedValue(new Error('invalid input'));
 
-      await expect(
-        retryManager.execute(operation, 'test')
-      ).rejects.toThrow('Non-retryable error');
+      await expect(retryManager.execute(operation, 'test')).rejects.toThrow(
+        'Non-retryable error'
+      );
 
       expect(operation).toHaveBeenCalledTimes(1);
     });
@@ -361,7 +357,7 @@ describe('RetryManager', () => {
 
     it('should provide node health information', async () => {
       const health = retryManager.getNodesHealth();
-      
+
       expect(health).toHaveLength(testNodes.length);
       expect(health[0]).toHaveProperty('url');
       expect(health[0]).toHaveProperty('health');

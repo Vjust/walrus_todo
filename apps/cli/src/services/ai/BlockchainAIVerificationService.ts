@@ -67,14 +67,18 @@ export class BlockchainAIVerificationService extends AIVerificationService {
         : null;
     } catch (error) {
       // In test scenarios, the mock might not have this method, create a fallback
-      logger.warn('Failed to get verifier adapter, creating fallback for tests:', error);
+      logger.warn(
+        'Failed to get verifier adapter, creating fallback for tests:',
+        error
+      );
       verifierAdapter = null;
     }
 
     // For test scenarios, create a minimal verifier adapter if not available
     if (!verifierAdapter) {
-      const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
-      
+      const isTestEnvironment =
+        process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
+
       if (isTestEnvironment) {
         // Create a minimal mock adapter for test scenarios
         verifierAdapter = {
@@ -113,7 +117,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
             signMessage: jest.fn().mockResolvedValue('test_signature'),
             signTransactionBlock: jest.fn(),
             getPublicKey: jest.fn().mockReturnValue({
-              toBase64: jest.fn().mockReturnValue('test_public_key')
+              toBase64: jest.fn().mockReturnValue('test_public_key'),
             }),
           }),
           generateProof: jest.fn().mockResolvedValue('test_proof'),
@@ -134,7 +138,8 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       !blockchainVerifier.verifyOperation ||
       typeof blockchainVerifier.verifyOperation !== 'function'
     ) {
-      const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
+      const isTestEnvironment =
+        process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
       if (!isTestEnvironment) {
         throw new CLIError(
           'BlockchainVerifier must implement verifyOperation method',
@@ -147,7 +152,8 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       !blockchainVerifier.getVerification ||
       typeof blockchainVerifier.getVerification !== 'function'
     ) {
-      const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
+      const isTestEnvironment =
+        process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
       if (!isTestEnvironment) {
         throw new CLIError(
           'BlockchainVerifier must implement getVerification method',
@@ -288,7 +294,8 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     } catch (error) {
       logger.warn('Failed to generate proof:', error);
       // In test environment, provide a fallback proof
-      const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
+      const isTestEnvironment =
+        process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
       if (isTestEnvironment) {
         proof = {
           proofId: 'test-proof-123',
@@ -299,9 +306,10 @@ export class BlockchainAIVerificationService extends AIVerificationService {
         };
       }
     }
-    
+
     // Ensure we have a proof for tests
-    const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
+    const isTestEnvironment =
+      process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
     if (isTestEnvironment && !proof) {
       proof = {
         proofId: 'fallback-proof-123',
@@ -452,7 +460,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       if (exportedProof === 'exported-proof-string') {
         return true;
       }
-      
+
       // For path-based proofs, we need to import from a file
       // For string-based proofs, we can directly verify the string
       const verificationResult =
@@ -461,7 +469,8 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     } catch (_error) {
       logger.error('Failed to verify proof:', _error);
       // In test environment, check for specific test proof strings
-      const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
+      const isTestEnvironment =
+        process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID;
       if (isTestEnvironment && exportedProof === 'exported-proof-string') {
         return true;
       }
@@ -520,7 +529,9 @@ export class BlockchainAIVerificationService extends AIVerificationService {
   /**
    * List all verifications for the current user
    */
-  public async listVerifications(): Promise<BlockchainVerifiedResult<unknown>[]> {
+  public async listVerifications(): Promise<
+    BlockchainVerifiedResult<unknown>[]
+  > {
     // Defensive validation
     if (!this.blockchainVerifier) {
       throw new CLIError(
@@ -578,19 +589,22 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     // Parse request data - handle both JSON strings and already parsed objects
     let requestData: unknown;
     try {
-      requestData = typeof request === 'string' && request.startsWith('[') 
-        ? JSON.parse(request) 
-        : request;
+      requestData =
+        typeof request === 'string' && request.startsWith('[')
+          ? JSON.parse(request)
+          : request;
     } catch (error) {
       // If request is not valid JSON, treat it as a string
-      requestData = [{
-        id: 'generated-todo',
-        title: 'Generated from request',
-        description: request,
-        completed: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }];
+      requestData = [
+        {
+          id: 'generated-todo',
+          title: 'Generated from request',
+          description: request,
+          completed: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ];
     }
 
     // Response is typically a string result
@@ -608,7 +622,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
     const proofString = await this.blockchainVerifier.generateProof(
       verification.verification.id
     );
-    
+
     let proofData: { id: string; signature?: { signature: string } };
     try {
       proofData = JSON.parse(Buffer.from(proofString, 'base64').toString());
@@ -616,7 +630,7 @@ export class BlockchainAIVerificationService extends AIVerificationService {
       // If proof string is not base64 encoded JSON, create a simple proof structure
       proofData = {
         id: verification.verification.id,
-        signature: { signature: proofString }
+        signature: { signature: proofString },
       };
     }
 

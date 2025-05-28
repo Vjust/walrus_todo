@@ -43,10 +43,12 @@ export interface DigitalCredential {
   '@context': string[];
   id: string;
   type: string[];
-  issuer: string | {
-    id: string;
-    name?: string;
-  };
+  issuer:
+    | string
+    | {
+        id: string;
+        name?: string;
+      };
   credentialSubject: {
     id: string;
     [key: string]: unknown;
@@ -95,6 +97,20 @@ export class CredentialVerificationService {
     credentialId: string,
     options: CredentialVerificationOptions = {}
   ): Promise<CredentialVerificationResult> {
+    // Add type guards for input parameters
+    if (!credentialId || typeof credentialId !== 'string') {
+      throw new CLIError(
+        'Credential ID is required and must be a string',
+        'INVALID_CREDENTIAL_ID'
+      );
+    }
+
+    if (options && typeof options !== 'object') {
+      throw new CLIError(
+        'Options parameter must be an object',
+        'INVALID_OPTIONS'
+      );
+    }
     const {
       verifySignature = true,
       verifyTimestamp = true,
@@ -135,7 +151,6 @@ export class CredentialVerificationService {
         ? this.validateSchema(credential)
         : true;
 
-
       // 5. Return verification results with proper boolean types
       return {
         valid: signatureValid && timestampValid && notRevoked && schemaValid,
@@ -143,7 +158,10 @@ export class CredentialVerificationService {
         timestamp: timestampValid,
         revocation: notRevoked,
         schemaCompliance: schemaValid,
-        issuer: typeof credential.issuer === 'string' ? credential.issuer : credential.issuer?.id || 'unknown',
+        issuer:
+          typeof credential.issuer === 'string'
+            ? credential.issuer
+            : credential.issuer?.id || 'unknown',
         subject: credential.credentialSubject?.id || 'unknown',
         issuanceDate: new Date(credential.issuanceDate),
         expirationDate: credential.expirationDate
@@ -267,7 +285,9 @@ export class CredentialVerificationService {
 
       return isValid;
     } catch (_error) {
-      this.logger.error(`Schema validation failed: ${_error instanceof Error ? _error.message : String(_error)}`);
+      this.logger.error(
+        `Schema validation failed: ${_error instanceof Error ? _error.message : String(_error)}`
+      );
       return false;
     }
   }

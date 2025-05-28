@@ -61,14 +61,22 @@ describe('DeployCommand', () => {
     it('handles missing move files gracefully', async () => {
       const commandPromise = test
         .stdout()
-        .command(['deploy', '--network', 'testnet', '--gas-budget', '200000000']);
-      
+        .command([
+          'deploy',
+          '--network',
+          'testnet',
+          '--gas-budget',
+          '200000000',
+        ]);
+
       await expect(commandPromise).rejects.toThrow('Move files not found');
     });
 
     it('saves deployment config after successful deployment', async () => {
       // Mock successful deployment
-      const writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+      const writeFileSyncSpy = jest
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => undefined);
       jest.spyOn(fs, 'existsSync').mockReturnValue(true);
       jest.spyOn(fs, 'mkdtempSync').mockReturnValue('/temp/test-deploy');
       jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
@@ -90,12 +98,18 @@ describe('DeployCommand', () => {
       });
 
       // Mock config service
-      const configService = await import('../../apps/cli/src/services/config-service');
-      jest.spyOn(configService.configService, 'getConfig').mockResolvedValue({});
+      const configService = await import(
+        '../../apps/cli/src/services/config-service'
+      );
+      jest
+        .spyOn(configService.configService, 'getConfig')
+        .mockResolvedValue({});
       jest.spyOn(configService.configService, 'saveConfig').mockResolvedValue();
 
       // Mock command executor
-      const commandExecutor = await import('../../apps/cli/src/utils/command-executor');
+      const commandExecutor = await import(
+        '../../apps/cli/src/utils/command-executor'
+      );
       jest.spyOn(commandExecutor, 'safeExecFileSync').mockReturnValue();
       jest
         .spyOn(commandExecutor, 'getActiveSuiAddress')
@@ -129,7 +143,7 @@ describe('DeployCommand', () => {
               }),
             })
           );
-          
+
           // Verify fs.writeFileSync was called (through writeFileSafe)
           expect(writeFileSyncSpy).toHaveBeenCalled();
         });

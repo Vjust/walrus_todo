@@ -13,9 +13,7 @@ import {
   CredentialType,
   AIPermissionLevel,
 } from '../../apps/cli/src/types/adapters/AICredentialAdapter';
-import {
-  AIActionType,
-} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { AIActionType } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 import { CLIError } from '../../apps/cli/src/types/errors';
 
@@ -36,11 +34,21 @@ interface AuditLogEntry {
 
 interface ExtendedAIPermissionManager {
   initialized: boolean;
-  registerOperationPermission: (operation: string, actionType: number, level: AIPermissionLevel) => void;
+  registerOperationPermission: (
+    operation: string,
+    actionType: number,
+    level: AIPermissionLevel
+  ) => void;
   getPermissionLevel: (provider: string) => Promise<AIPermissionLevel>;
-  setPermissionLevel: (provider: string, level: AIPermissionLevel) => Promise<boolean>;
+  setPermissionLevel: (
+    provider: string,
+    level: AIPermissionLevel
+  ) => Promise<boolean>;
   checkPermission: (provider: string, operation: string) => Promise<boolean>;
-  verifyOperationPermission: (provider: string, operation: string) => Promise<{ allowed: boolean; verificationId?: string }>;
+  verifyOperationPermission: (
+    provider: string,
+    operation: string
+  ) => Promise<{ allowed: boolean; verificationId?: string }>;
   requireBlockchainVerification?: boolean;
   auditLogger?: { log: (entry: AuditLogEntry) => void };
 }
@@ -55,7 +63,9 @@ jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
 jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier');
 jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
 jest.mock('../../apps/cli/src/services/ai/AIPermissionManager', () => {
-  const actual = jest.requireActual('../../apps/cli/src/services/ai/AIPermissionManager');
+  const actual = jest.requireActual(
+    '../../apps/cli/src/services/ai/AIPermissionManager'
+  );
   return {
     ...actual,
     initializePermissionManager: jest.fn(),
@@ -100,7 +110,6 @@ const sampleTodos: Todo[] = [
   },
 ];
 
-
 // Helper to create credential object
 function createCredential(
   provider: string,
@@ -128,18 +137,25 @@ describe('Permission System Security Tests', () => {
     jest.clearAllMocks();
 
     // Mock the SecureCredentialManager constructor to prevent actual instantiation
-    (SecureCredentialManager as jest.MockedClass<typeof SecureCredentialManager>).mockImplementation(() => ({
-      getCredential: jest.fn(),
-      setCredential: jest.fn(),
-      hasCredential: jest.fn(),
-      removeCredential: jest.fn(),
-      verifyCredential: jest.fn(),
-      updatePermissions: jest.fn(),
-      generateCredentialProof: jest.fn(),
-      getCredentialObject: jest.fn(),
-      listCredentials: jest.fn(),
-      setBlockchainAdapter: jest.fn(),
-    }) as unknown as SecureCredentialManager);
+    (
+      SecureCredentialManager as jest.MockedClass<
+        typeof SecureCredentialManager
+      >
+    ).mockImplementation(
+      () =>
+        ({
+          getCredential: jest.fn(),
+          setCredential: jest.fn(),
+          hasCredential: jest.fn(),
+          removeCredential: jest.fn(),
+          verifyCredential: jest.fn(),
+          updatePermissions: jest.fn(),
+          generateCredentialProof: jest.fn(),
+          getCredentialObject: jest.fn(),
+          listCredentials: jest.fn(),
+          setBlockchainAdapter: jest.fn(),
+        }) as unknown as SecureCredentialManager
+    );
 
     // Mock credential manager
     mockCredentialManager = {
@@ -156,12 +172,17 @@ describe('Permission System Security Tests', () => {
     } as unknown as jest.Mocked<SecureCredentialManager>;
 
     // Mock the BlockchainVerifier constructor to prevent actual instantiation
-    (BlockchainVerifier as jest.MockedClass<typeof BlockchainVerifier>).mockImplementation(() => ({
-      createVerification: jest.fn(),
-      verifyRecord: jest.fn(),
-      verifyOperation: jest.fn(),
-      verifyPermission: jest.fn(),
-    }) as unknown as BlockchainVerifier);
+    (
+      BlockchainVerifier as jest.MockedClass<typeof BlockchainVerifier>
+    ).mockImplementation(
+      () =>
+        ({
+          createVerification: jest.fn(),
+          verifyRecord: jest.fn(),
+          verifyOperation: jest.fn(),
+          verifyPermission: jest.fn(),
+        }) as unknown as BlockchainVerifier
+    );
 
     // Mock blockchain verifier
     mockBlockchainVerifier = {
@@ -172,9 +193,13 @@ describe('Permission System Security Tests', () => {
     } as unknown as jest.Mocked<BlockchainVerifier>;
 
     // Setup permission manager mocks
-    const mockInitializePermissionManager = initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>;
-    const mockGetPermissionManager = getPermissionManager as jest.MockedFunction<typeof getPermissionManager>;
-    
+    const mockInitializePermissionManager =
+      initializePermissionManager as jest.MockedFunction<
+        typeof initializePermissionManager
+      >;
+    const mockGetPermissionManager =
+      getPermissionManager as jest.MockedFunction<typeof getPermissionManager>;
+
     // Create mock permission manager that defaults to allowing all operations
     const mockDefaultPermissionManager = {
       checkPermission: jest.fn().mockResolvedValue(true),
@@ -182,14 +207,22 @@ describe('Permission System Security Tests', () => {
       getPermissionLevel: jest.fn().mockResolvedValue(2), // STANDARD level
       registerOperationPermission: jest.fn(),
       verifyOperationPermission: jest.fn().mockResolvedValue({ allowed: true }),
-      getAllowedOperations: jest.fn().mockResolvedValue(['summarize', 'analyze', 'categorize']),
+      getAllowedOperations: jest
+        .fn()
+        .mockResolvedValue(['summarize', 'analyze', 'categorize']),
     } as unknown as AIPermissionManager;
-    
-    mockInitializePermissionManager.mockReturnValue(mockDefaultPermissionManager);
+
+    mockInitializePermissionManager.mockReturnValue(
+      mockDefaultPermissionManager
+    );
     mockGetPermissionManager.mockReturnValue(mockDefaultPermissionManager);
 
     // Default mock implementation for AIProviderFactory
-    (AIProviderFactory.createProvider as jest.MockedFunction<typeof AIProviderFactory.createProvider>).mockImplementation(
+    (
+      AIProviderFactory.createProvider as jest.MockedFunction<
+        typeof AIProviderFactory.createProvider
+      >
+    ).mockImplementation(
       async (params: { provider: string; modelName?: string }) => {
         return Promise.resolve({
           getProviderName: () => params.provider,
@@ -210,9 +243,13 @@ describe('Permission System Security Tests', () => {
         });
       }
     );
-    
+
     // Add mocks for additional AIProviderFactory methods
-    (AIProviderFactory.createDefaultAdapter as jest.MockedFunction<typeof AIProviderFactory.createDefaultAdapter>).mockReturnValue({
+    (
+      AIProviderFactory.createDefaultAdapter as jest.MockedFunction<
+        typeof AIProviderFactory.createDefaultAdapter
+      >
+    ).mockReturnValue({
       getProviderName: () => 'default',
       getModelName: () => 'default-model',
       complete: jest.fn(),
@@ -229,8 +266,12 @@ describe('Permission System Security Tests', () => {
         timestamp: Date.now(),
       }),
     });
-    
-    (AIProviderFactory.getDefaultProvider as jest.MockedFunction<typeof AIProviderFactory.getDefaultProvider>).mockResolvedValue({
+
+    (
+      AIProviderFactory.getDefaultProvider as jest.MockedFunction<
+        typeof AIProviderFactory.getDefaultProvider
+      >
+    ).mockResolvedValue({
       provider: AIProvider.XAI,
       modelName: 'grok-beta',
     });
@@ -258,14 +299,16 @@ describe('Permission System Security Tests', () => {
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(async (provider: string) => {
-        return [
-          'readonly_provider',
-          'standard_provider',
-          'advanced_provider',
-          'admin_provider',
-        ].includes(provider);
-      });
+      mockCredentialManager.hasCredential.mockImplementation(
+        async (provider: string) => {
+          return [
+            'readonly_provider',
+            'standard_provider',
+            'advanced_provider',
+            'admin_provider',
+          ].includes(provider);
+        }
+      );
 
       // Create permission manager
       const permissionManager = new AIPermissionManager(
@@ -274,7 +317,8 @@ describe('Permission System Security Tests', () => {
       );
 
       // Initialize default permissions
-      const extendedPermissionManager = permissionManager as unknown as ExtendedAIPermissionManager;
+      const extendedPermissionManager =
+        permissionManager as unknown as ExtendedAIPermissionManager;
       extendedPermissionManager.registerOperationPermission(
         'summarize',
         AIActionType.SUMMARIZE,
@@ -393,22 +437,28 @@ describe('Permission System Security Tests', () => {
     it('should prevent operations based on permission level in AIService', async () => {
       // Create mock permission manager
       const mockPermissionManager: MockPermissionManager = {
-        checkPermission: jest.fn().mockImplementation((provider: string, operation: string) => {
-          // Only allow specific operations
-          if (provider === 'xai' && operation === 'summarize')
-            return Promise.resolve(true);
-          if (provider === 'xai' && operation === 'analyze')
+        checkPermission: jest
+          .fn()
+          .mockImplementation((provider: string, operation: string) => {
+            // Only allow specific operations
+            if (provider === 'xai' && operation === 'summarize')
+              return Promise.resolve(true);
+            if (provider === 'xai' && operation === 'analyze')
+              return Promise.resolve(false);
+            if (provider === 'anthropic') return Promise.resolve(true);
             return Promise.resolve(false);
-          if (provider === 'anthropic') return Promise.resolve(true);
-          return Promise.resolve(false);
-        }),
+          }),
         verifyOperationPermission: jest.fn(),
       };
 
       // Mock initializePermissionManager to return our mock
-      const mockInitialize = initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>;
-      const mockGet = getPermissionManager as jest.MockedFunction<typeof getPermissionManager>;
-      
+      const mockInitialize = initializePermissionManager as jest.MockedFunction<
+        typeof initializePermissionManager
+      >;
+      const mockGet = getPermissionManager as jest.MockedFunction<
+        typeof getPermissionManager
+      >;
+
       mockInitialize.mockReturnValue(
         mockPermissionManager as unknown as AIPermissionManager
       );
@@ -452,7 +502,13 @@ describe('Permission System Security Tests', () => {
 
       // Setup blockchain verification for permissions
       mockBlockchainVerifier.verifyOperation.mockImplementation(
-        async (_params: { actionType: number; request: string; response: string; provider: string; metadata: Record<string, string> }) => ({
+        async (_params: {
+          actionType: number;
+          request: string;
+          response: string;
+          provider: string;
+          metadata: Record<string, string>;
+        }) => ({
           id: 'op-123',
           success: true,
           timestamp: Date.now(),
@@ -464,7 +520,9 @@ describe('Permission System Security Tests', () => {
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
 
       // Add a custom operation with initial permission level
       permissionManager.registerOperationPermission(
@@ -501,7 +559,7 @@ describe('Permission System Security Tests', () => {
           request: expect.any(String),
           response: expect.any(String),
           provider: expect.any(String),
-          metadata: expect.any(Object)
+          metadata: expect.any(Object),
         })
       );
     });
@@ -532,7 +590,9 @@ describe('Permission System Security Tests', () => {
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
 
       // Standard permission update should succeed
       await expect(
@@ -578,7 +638,9 @@ describe('Permission System Security Tests', () => {
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
 
       // Define operations with various permission levels
       permissionManager.registerOperationPermission(
@@ -675,24 +737,30 @@ describe('Permission System Security Tests', () => {
     it('should enforce permission isolation between different providers', async () => {
       // Create permission manager with enforced provider boundaries
       const mockPermissionManager: MockPermissionManager = {
-        checkPermission: jest.fn().mockImplementation((provider: string, operation: string) => {
-          // Only allow specific operations for specific providers
-          if (provider === 'xai' && operation === 'summarize')
-            return Promise.resolve(true);
-          if (
-            provider === 'anthropic' &&
-            ['summarize', 'analyze'].includes(operation)
-          )
-            return Promise.resolve(true);
-          return Promise.resolve(false);
-        }),
+        checkPermission: jest
+          .fn()
+          .mockImplementation((provider: string, operation: string) => {
+            // Only allow specific operations for specific providers
+            if (provider === 'xai' && operation === 'summarize')
+              return Promise.resolve(true);
+            if (
+              provider === 'anthropic' &&
+              ['summarize', 'analyze'].includes(operation)
+            )
+              return Promise.resolve(true);
+            return Promise.resolve(false);
+          }),
         verifyOperationPermission: jest.fn(),
       };
 
       // Mock initializePermissionManager to return our mock
-      const mockInitialize = initializePermissionManager as jest.MockedFunction<typeof initializePermissionManager>;
-      const mockGet = getPermissionManager as jest.MockedFunction<typeof getPermissionManager>;
-      
+      const mockInitialize = initializePermissionManager as jest.MockedFunction<
+        typeof initializePermissionManager
+      >;
+      const mockGet = getPermissionManager as jest.MockedFunction<
+        typeof getPermissionManager
+      >;
+
       mockInitialize.mockReturnValue(
         mockPermissionManager as unknown as AIPermissionManager
       );
@@ -737,7 +805,12 @@ describe('Permission System Security Tests', () => {
         // Secure implementation that requires permissions for the switch
         secureSetProvider: async function (
           newProvider: AIProvider,
-          permissionManager: { checkPermission: (provider: string, operation: string) => Promise<boolean> }
+          permissionManager: {
+            checkPermission: (
+              provider: string,
+              operation: string
+            ) => Promise<boolean>;
+          }
         ) {
           // Check if user has admin permissions to switch providers
           const hasPermission = await permissionManager.checkPermission(
@@ -754,7 +827,12 @@ describe('Permission System Security Tests', () => {
 
         performOperation: async function (
           operation: string,
-          permissionManager: { checkPermission: (provider: string, operation: string) => Promise<boolean> }
+          permissionManager: {
+            checkPermission: (
+              provider: string,
+              operation: string
+            ) => Promise<boolean>;
+          }
         ) {
           // Check permissions for current provider
           const hasPermission = await permissionManager.checkPermission(
@@ -772,26 +850,28 @@ describe('Permission System Security Tests', () => {
 
       // Create mock permission manager
       const mockPermissionManager: MockPermissionManager = {
-        checkPermission: jest.fn().mockImplementation((provider: string, operation: string) => {
-          // XAI has limited permissions
-          if (provider === AIProvider.XAI) {
-            return Promise.resolve(operation === 'summarize');
-          }
+        checkPermission: jest
+          .fn()
+          .mockImplementation((provider: string, operation: string) => {
+            // XAI has limited permissions
+            if (provider === AIProvider.XAI) {
+              return Promise.resolve(operation === 'summarize');
+            }
 
-          // Anthropic has more permissions
-          if (provider === AIProvider.ANTHROPIC) {
-            return Promise.resolve(
-              ['summarize', 'analyze', 'categorize'].includes(operation)
-            );
-          }
+            // Anthropic has more permissions
+            if (provider === AIProvider.ANTHROPIC) {
+              return Promise.resolve(
+                ['summarize', 'analyze', 'categorize'].includes(operation)
+              );
+            }
 
-          // No provider has manage_providers permission
-          if (operation === 'manage_providers') {
+            // No provider has manage_providers permission
+            if (operation === 'manage_providers') {
+              return Promise.resolve(false);
+            }
+
             return Promise.resolve(false);
-          }
-
-          return Promise.resolve(false);
-        }),
+          }),
         verifyOperationPermission: jest.fn(),
       };
 
@@ -831,7 +911,13 @@ describe('Permission System Security Tests', () => {
     it('should verify permissions on the blockchain', async () => {
       // Setup blockchain verifier
       mockBlockchainVerifier.verifyOperation.mockImplementation(
-        async (_params: { actionType: number; request: string; response: string; provider: string; metadata: Record<string, string> }) => ({
+        async (_params: {
+          actionType: number;
+          request: string;
+          response: string;
+          provider: string;
+          metadata: Record<string, string>;
+        }) => ({
           id: 'op-123',
           success: true,
           timestamp: Date.now(),
@@ -854,7 +940,9 @@ describe('Permission System Security Tests', () => {
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
 
       // Register operations
       permissionManager.registerOperationPermission(
@@ -904,12 +992,16 @@ describe('Permission System Security Tests', () => {
       );
 
       // Create mock blockchain verifier that verifies credentials
-      const mockAdapter: { checkVerificationStatus: (proofId: string) => Promise<boolean> } = {
-        checkVerificationStatus: jest.fn().mockImplementation((proofId: string) => {
-          // Simulate blockchain verification
-          // For this test, only approve specific proof IDs
-          return Promise.resolve(proofId === 'proof-123');
-        }),
+      const mockAdapter: {
+        checkVerificationStatus: (proofId: string) => Promise<boolean>;
+      } = {
+        checkVerificationStatus: jest
+          .fn()
+          .mockImplementation((proofId: string) => {
+            // Simulate blockchain verification
+            // For this test, only approve specific proof IDs
+            return Promise.resolve(proofId === 'proof-123');
+          }),
       };
 
       mockCredentialManager.setBlockchainAdapter(mockAdapter);
@@ -919,8 +1011,12 @@ describe('Permission System Security Tests', () => {
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
-      (permissionManager as unknown as ExtendedAIPermissionManager).requireBlockchainVerification = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).requireBlockchainVerification = true;
 
       // Register operations
       permissionManager.registerOperationPermission(
@@ -942,7 +1038,7 @@ describe('Permission System Security Tests', () => {
 
   describe('Permission Audit Logging', () => {
     it('should log access attempts for security auditing', async () => {
-      // Create mock audit logger  
+      // Create mock audit logger
       const auditLogSpy = jest.fn<void, [AuditLogEntry]>();
 
       // Setup credential manager with audit logging
@@ -960,25 +1056,31 @@ describe('Permission System Security Tests', () => {
         }
       );
 
-      mockCredentialManager.hasCredential.mockImplementation(async (provider: string) => {
-        // Log the check attempt
-        auditLogSpy({
-          event: 'credential_check',
-          provider,
-          timestamp: Date.now(),
-          success: true,
-        });
+      mockCredentialManager.hasCredential.mockImplementation(
+        async (provider: string) => {
+          // Log the check attempt
+          auditLogSpy({
+            event: 'credential_check',
+            provider,
+            timestamp: Date.now(),
+            success: true,
+          });
 
-        return true;
-      });
+          return true;
+        }
+      );
 
       // Create permission manager
       const permissionManager = new AIPermissionManager(
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
-      (permissionManager as unknown as ExtendedAIPermissionManager).auditLogger = { log: auditLogSpy };
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).auditLogger = { log: auditLogSpy };
 
       // Perform permission checks
       await permissionManager.checkPermission('test-provider', 'summarize');
@@ -1030,8 +1132,12 @@ describe('Permission System Security Tests', () => {
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
-      (permissionManager as unknown as ExtendedAIPermissionManager).auditLogger = { log: auditLogSpy };
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).auditLogger = { log: auditLogSpy };
 
       // Update permissions
       await permissionManager.setPermissionLevel(
@@ -1278,7 +1384,9 @@ describe('Permission System Security Tests', () => {
         mockCredentialManager,
         mockBlockchainVerifier
       );
-      (permissionManager as unknown as ExtendedAIPermissionManager).initialized = true;
+      (
+        permissionManager as unknown as ExtendedAIPermissionManager
+      ).initialized = true;
 
       // Test initial usage (should not reduce permissions)
       permissionAdjuster.trackUsage('test-provider');

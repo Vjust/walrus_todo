@@ -161,8 +161,11 @@ export class CLITestRunner {
   private cliPath: string;
   private defaultEnv: Record<string, string>;
 
-  constructor(options: { cliPath?: string; env?: Record<string, string> } = {}) {
-    this.cliPath = options.cliPath || path.resolve(__dirname, '../../../bin/run');
+  constructor(
+    options: { cliPath?: string; env?: Record<string, string> } = {}
+  ) {
+    this.cliPath =
+      options.cliPath || path.resolve(__dirname, '../../../bin/run');
     this.defaultEnv = {
       NODE_ENV: 'test',
       WALRUS_USE_MOCK: 'true',
@@ -191,20 +194,20 @@ export class CLITestRunner {
       let stdout = '';
       let stderr = '';
 
-      process.stdout?.on('data', (data) => {
+      process.stdout?.on('data', data => {
         stdout += data.toString();
       });
 
-      process.stderr?.on('data', (data) => {
+      process.stderr?.on('data', data => {
         stderr += data.toString();
       });
 
-      process.on('close', (code) => {
+      process.on('close', code => {
         const duration = Date.now() - startTime;
         resolve({ stdout, stderr, exitCode: code, duration });
       });
 
-      process.on('error', (error) => {
+      process.on('error', error => {
         reject(error);
       });
 
@@ -275,7 +278,9 @@ export class PageTestHelpers {
   async connectWallet(): Promise<boolean> {
     try {
       // Look for connect button
-      const connectButton = await this.page.locator('button', { hasText: /connect/i }).first();
+      const connectButton = await this.page
+        .locator('button', { hasText: /connect/i })
+        .first();
       if (await connectButton.isVisible()) {
         await connectButton.click();
         return await this.waitForWalletConnection();
@@ -298,20 +303,30 @@ export class PageTestHelpers {
   async createTodo(title: string, description = ''): Promise<boolean> {
     try {
       // Find title input
-      const titleInput = this.page.locator('input[name="title"], input[placeholder*="title"]').first();
+      const titleInput = this.page
+        .locator('input[name="title"], input[placeholder*="title"]')
+        .first();
       if (await titleInput.isVisible()) {
         await titleInput.fill(title);
 
         // Find description input if provided
         if (description) {
-          const descInput = this.page.locator('textarea[name="description"], textarea[placeholder*="description"]').first();
+          const descInput = this.page
+            .locator(
+              'textarea[name="description"], textarea[placeholder*="description"]'
+            )
+            .first();
           if (await descInput.isVisible()) {
             await descInput.fill(description);
           }
         }
 
         // Submit form
-        const submitButton = this.page.locator('button[type="submit"], button:has-text("Create"), button:has-text("Add")').first();
+        const submitButton = this.page
+          .locator(
+            'button[type="submit"], button:has-text("Create"), button:has-text("Add")'
+          )
+          .first();
         if (await submitButton.isVisible()) {
           await submitButton.click();
 
@@ -333,13 +348,17 @@ export class PageTestHelpers {
   async convertToNFT(todoSelector?: string): Promise<boolean> {
     try {
       let nftButton;
-      
+
       if (todoSelector) {
         // Look for NFT button within specific todo
-        nftButton = this.page.locator(`${todoSelector} button:has-text("NFT")`).first();
+        nftButton = this.page
+          .locator(`${todoSelector} button:has-text("NFT")`)
+          .first();
       } else {
         // Look for any NFT button
-        nftButton = this.page.locator('button', { hasText: /nft|blockchain/i }).first();
+        nftButton = this.page
+          .locator('button', { hasText: /nft|blockchain/i })
+          .first();
       }
 
       if (await nftButton.isVisible()) {
@@ -349,7 +368,11 @@ export class PageTestHelpers {
         await this.page.waitForFunction(
           () => {
             const text = document.body.innerText.toLowerCase();
-            return text.includes('nft created') || text.includes('success') || text.includes('failed');
+            return (
+              text.includes('nft created') ||
+              text.includes('success') ||
+              text.includes('failed')
+            );
           },
           { timeout: 15000 }
         );
@@ -371,11 +394,15 @@ export class PageTestHelpers {
   async completeTodo(todoSelector?: string): Promise<boolean> {
     try {
       let completeButton;
-      
+
       if (todoSelector) {
-        completeButton = this.page.locator(`${todoSelector} button:has-text("Complete")`).first();
+        completeButton = this.page
+          .locator(`${todoSelector} button:has-text("Complete")`)
+          .first();
       } else {
-        completeButton = this.page.locator('button', { hasText: /complete|done/i }).first();
+        completeButton = this.page
+          .locator('button', { hasText: /complete|done/i })
+          .first();
       }
 
       if (await completeButton.isVisible()) {
@@ -438,7 +465,7 @@ export class PageTestHelpers {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `${name}-${timestamp}.png`;
     const path = `./screenshots/${filename}`;
-    
+
     await this.page.screenshot({ path, fullPage: true });
     return path;
   }
@@ -459,9 +486,13 @@ export class ContractTestHelpers {
     }
   }
 
-  async estimateGasCost(operation: 'create' | 'complete' | 'transfer'): Promise<number> {
+  async estimateGasCost(
+    operation: 'create' | 'complete' | 'transfer'
+  ): Promise<number> {
     try {
-      const result = await this.cli.runCommand('estimate-gas', [`--${operation}`]);
+      const result = await this.cli.runCommand('estimate-gas', [
+        `--${operation}`,
+      ]);
       if (result.exitCode === 0) {
         const match = result.stdout.match(/(\d+)/);
         return match ? parseInt(match[1]) : 0;
@@ -474,7 +505,10 @@ export class ContractTestHelpers {
 
   async verifyEventEmission(eventType: string): Promise<boolean> {
     try {
-      const result = await this.cli.runCommand('verify-events', ['--type', eventType]);
+      const result = await this.cli.runCommand('verify-events', [
+        '--type',
+        eventType,
+      ]);
       return result.exitCode === 0 && result.stdout.includes('event emitted');
     } catch {
       return false;
@@ -497,16 +531,16 @@ export class PerformanceTestHelpers {
     if (!this.metrics[name] || this.metrics[name].length === 0) {
       throw new Error(`Timer ${name} was not started`);
     }
-    
+
     const startTime = this.metrics[name].pop()!;
     const duration = Date.now() - startTime;
-    
+
     // Store duration for analysis
     if (!this.metrics[`${name}_durations`]) {
       this.metrics[`${name}_durations`] = [];
     }
     this.metrics[`${name}_durations`].push(duration);
-    
+
     return duration;
   }
 
@@ -518,16 +552,16 @@ export class PerformanceTestHelpers {
     total: number;
   } {
     const durations = this.metrics[`${name}_durations`] || [];
-    
+
     if (durations.length === 0) {
       return { count: 0, average: 0, min: 0, max: 0, total: 0 };
     }
-    
+
     const total = durations.reduce((sum, duration) => sum + duration, 0);
     const average = total / durations.length;
     const min = Math.min(...durations);
     const max = Math.max(...durations);
-    
+
     return { count: durations.length, average, min, max, total };
   }
 
@@ -537,7 +571,10 @@ export class PerformanceTestHelpers {
     return Date.now() - startTime;
   }
 
-  async measureInteraction(page: Page, interaction: () => Promise<void>): Promise<number> {
+  async measureInteraction(
+    page: Page,
+    interaction: () => Promise<void>
+  ): Promise<number> {
     const startTime = Date.now();
     await interaction();
     return Date.now() - startTime;
@@ -545,13 +582,13 @@ export class PerformanceTestHelpers {
 
   generateReport(): string {
     const report = ['Performance Test Report', '=' + '='.repeat(25)];
-    
+
     Object.keys(this.metrics)
       .filter(key => key.endsWith('_durations'))
       .forEach(key => {
         const name = key.replace('_durations', '');
         const metrics = this.getMetrics(name);
-        
+
         report.push(`\n${name}:`);
         report.push(`  Count: ${metrics.count}`);
         report.push(`  Average: ${metrics.average.toFixed(2)}ms`);
@@ -559,7 +596,7 @@ export class PerformanceTestHelpers {
         report.push(`  Max: ${metrics.max}ms`);
         report.push(`  Total: ${metrics.total}ms`);
       });
-    
+
     return report.join('\n');
   }
 }

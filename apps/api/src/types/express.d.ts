@@ -1,4 +1,8 @@
-import { Request as ExpressRequest, Response as ExpressResponse, Application as ExpressApplication } from 'express';
+import {
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+  Application as ExpressApplication,
+} from 'express';
 
 declare global {
   namespace Express {
@@ -16,7 +20,7 @@ declare global {
       query: any;
       body: any;
     }
-    
+
     interface Response {
       statusCode: number;
       json(body?: any): Response;
@@ -37,7 +41,7 @@ declare global {
       vary(field: string): Response;
       locals: Record<string, any>;
     }
-    
+
     interface Application {
       use(...args: any[]): Application;
       get(...args: any[]): Application;
@@ -65,11 +69,11 @@ declare module 'express' {
     (): void;
     (error?: any): void;
   }
-  
+
   interface RequestHandler {
     (req: Request, res: Response, next: NextFunction): void;
   }
-  
+
   interface ErrorRequestHandler {
     (err: any, req: Request, res: Response, next: NextFunction): void;
   }

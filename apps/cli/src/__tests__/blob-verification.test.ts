@@ -1,6 +1,9 @@
 import { BlobVerificationManager } from '../utils/blob-verification';
 import type { BlobMetadataShape, BlobInfo } from '../types/walrus';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from './helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from './helpers/complete-walrus-client-mock';
 // SuiClient mocked where needed
 
 jest.mock('@mysten/sui/client');
@@ -23,7 +26,10 @@ describe('BlobVerificationManager', () => {
   };
   const mockMetadata: BlobMetadataShape = {
     V1: {
-      encoding_type: { RedStuff: true, $kind: 'RedStuff' } as { RedStuff: true; $kind: string },
+      encoding_type: { RedStuff: true, $kind: 'RedStuff' } as {
+        RedStuff: true;
+        $kind: string;
+      },
       unencoded_length: '1024',
       hashes: [
         {
@@ -62,10 +68,13 @@ describe('BlobVerificationManager', () => {
 
     // Use the complete mock implementation
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific values for this test
     mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({ used: '500', total: '2000' });
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '500',
+      total: '2000',
+    });
     mockWalrusClient.writeBlob.mockResolvedValue({
       blobId: mockBlobId,
       blobObject: { blob_id: mockBlobId },

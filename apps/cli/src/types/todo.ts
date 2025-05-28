@@ -145,7 +145,12 @@ export interface TodoFilter {
   search?: string;
 }
 
-export type SortBy = 'createdAt' | 'updatedAt' | 'dueDate' | 'priority' | 'title';
+export type SortBy =
+  | 'createdAt'
+  | 'updatedAt'
+  | 'dueDate'
+  | 'priority'
+  | 'title';
 export type SortOrder = 'asc' | 'desc';
 
 export interface OfflineData {
@@ -304,7 +309,7 @@ export function createTodo(input: CreateTodoInput): Todo {
     updatedAt: now,
     private: false,
     category: input.category,
-    listName: input.listName
+    listName: input.listName,
   };
 }
 
@@ -318,7 +323,7 @@ export function createTodoList(name: string, owner: string): TodoList {
     version: 1,
     createdAt: now,
     updatedAt: now,
-    collaborators: []
+    collaborators: [],
   };
 }
 

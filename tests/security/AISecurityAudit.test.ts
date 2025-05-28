@@ -29,27 +29,8 @@ jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
 jest.mock('../../apps/cli/src/services/ai/AIVerificationService');
 jest.mock('../../apps/cli/src/services/ai/BlockchainAIVerificationService');
 jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
-jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager', () => {
-  const originalModule = jest.requireActual(
-    '../../apps/cli/src/services/ai/SecureCredentialManager'
-  );
-
-  return {
-    ...originalModule,
-    secureCredentialManager: {
-      getCredential: jest.fn(),
-      setCredential: jest.fn(),
-      hasCredential: jest.fn(),
-      removeCredential: jest.fn(),
-      verifyCredential: jest.fn(),
-      updatePermissions: jest.fn(),
-      generateCredentialProof: jest.fn(),
-      getCredentialObject: jest.fn(),
-      listCredentials: jest.fn(),
-      setBlockchainAdapter: jest.fn(),
-    },
-  };
-});
+jest.mock('../../apps/cli/src/utils/Logger');
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
 
 // Sample data for tests
 const sampleTodo: Todo = {
@@ -161,7 +142,9 @@ describe('AI Security Audit', () => {
         const logs = mockLog.mock.calls.flat();
         const stringLogs = logs.filter(log => typeof log === 'string');
         // Check each log for API key
-        const containsApiKey = stringLogs.some(log => log.includes('test-api-key-12345'));
+        const containsApiKey = stringLogs.some(log =>
+          log.includes('test-api-key-12345')
+        );
         expect(containsApiKey).toBe(false);
       } finally {
         console.log = originalLog;
@@ -210,7 +193,9 @@ describe('AI Security Audit', () => {
         .map(([_key, value]) => value)
         .filter(value => typeof value === 'string');
       // Check each string value for sensitive key
-      const containsSensitiveKey = stringValues.some(value => value === 'test-api-key-sensitive');
+      const containsSensitiveKey = stringValues.some(
+        value => value === 'test-api-key-sensitive'
+      );
       expect(containsSensitiveKey).toBe(false);
 
       // Check that provider creation happened properly
@@ -388,7 +373,9 @@ describe('AI Security Audit', () => {
     let writeFileSyncSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
+      writeFileSyncSpy = jest
+        .spyOn(fs, 'writeFileSync')
+        .mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -887,9 +874,13 @@ describe('AI Security Audit', () => {
       const mockBlockchainVerifierForPermissions = {
         verifyOperation: jest.fn().mockResolvedValue(mockVerificationRecord),
         getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
-        listVerifications: jest.fn().mockResolvedValue([mockVerificationRecord]),
+        listVerifications: jest
+          .fn()
+          .mockResolvedValue([mockVerificationRecord]),
         getVerifierAdapter: jest.fn().mockReturnValue({
-          createVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
+          createVerification: jest
+            .fn()
+            .mockResolvedValue(mockVerificationRecord),
           verifyRecord: jest.fn().mockResolvedValue(true),
           getProviderInfo: jest.fn().mockResolvedValue({}),
           listVerifications: jest.fn().mockResolvedValue([]),
@@ -897,17 +888,25 @@ describe('AI Security Audit', () => {
           registerProvider: jest.fn().mockResolvedValue('test-provider'),
           getVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
           getSigner: jest.fn().mockReturnValue({
-            getPublicKey: jest.fn().mockReturnValue({ toBase64: jest.fn().mockReturnValue('test-key') }),
-            toSuiAddress: jest.fn().mockReturnValue('test-address')
+            getPublicKey: jest
+              .fn()
+              .mockReturnValue({
+                toBase64: jest.fn().mockReturnValue('test-key'),
+              }),
+            toSuiAddress: jest.fn().mockReturnValue('test-address'),
           }),
           generateProof: jest.fn().mockResolvedValue('test-proof'),
           exportVerifications: jest.fn().mockResolvedValue('test-export'),
           enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-          securelyDestroyData: jest.fn().mockResolvedValue(true)
+          securelyDestroyData: jest.fn().mockResolvedValue(true),
         }),
         getSigner: jest.fn().mockReturnValue({
-          getPublicKey: jest.fn().mockReturnValue({ toBase64: jest.fn().mockReturnValue('test-key') })
-        })
+          getPublicKey: jest
+            .fn()
+            .mockReturnValue({
+              toBase64: jest.fn().mockReturnValue('test-key'),
+            }),
+        }),
       };
 
       const mockBlockchainVerificationService =
@@ -1189,20 +1188,28 @@ describe('AI Security Audit', () => {
           // Check that privacy level is respected
           const isPrivate = params.privacyLevel === AIPrivacyLevel.PRIVATE;
           const isPublic = params.privacyLevel === AIPrivacyLevel.PUBLIC;
-          
+
           // In private mode, request and response should be hashed
           // Check privacy level first
           expect(isPrivate || isPublic).toBe(true);
-          
+
           // Private mode validation
-          const privateRequestCheck = isPrivate ? params.request !== JSON.stringify(sampleTodos) : true;
-          const privateResponseCheck = isPrivate ? params.response !== 'Test summary' : true;
+          const privateRequestCheck = isPrivate
+            ? params.request !== JSON.stringify(sampleTodos)
+            : true;
+          const privateResponseCheck = isPrivate
+            ? params.response !== 'Test summary'
+            : true;
           expect(privateRequestCheck).toBe(true);
           expect(privateResponseCheck).toBe(true);
-          
+
           // Public mode validation
-          const publicRequestCheck = isPublic ? params.request === JSON.stringify(sampleTodos) : true;
-          const publicResponseCheck = isPublic ? params.response === 'Test summary' : true;
+          const publicRequestCheck = isPublic
+            ? params.request === JSON.stringify(sampleTodos)
+            : true;
+          const publicResponseCheck = isPublic
+            ? params.response === 'Test summary'
+            : true;
           expect(publicRequestCheck).toBe(true);
           expect(publicResponseCheck).toBe(true);
 
@@ -1256,7 +1263,9 @@ describe('AI Security Audit', () => {
                 ];
 
                 // Should not contain any PII
-                const containsPII = piiPatterns.some(pattern => pattern.test(todoStr));
+                const containsPII = piiPatterns.some(pattern =>
+                  pattern.test(todoStr)
+                );
                 expect(containsPII).toBe(false);
 
                 return {
@@ -1529,14 +1538,14 @@ describe('AI Security Audit', () => {
         // Validate error exists
         const hasError = !!error;
         expect(hasError).toBe(true);
-        
+
         // Error message should be sanitized
         const errorString = String(error);
         const containsApiKey = errorString.includes('test-api-key');
         const containsEmail = errorString.includes('user@example.com');
         expect(containsApiKey).toBe(false);
         expect(containsEmail).toBe(false);
-        
+
         // Error object should not contain sensitive data
         const errorWithData = error as Error & { sensitiveData?: unknown };
         const hasSensitiveData = errorWithData.sensitiveData !== undefined;

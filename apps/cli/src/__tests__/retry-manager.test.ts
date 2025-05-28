@@ -1,6 +1,6 @@
 import { RetryManager } from '../utils/retry-manager';
 
-// Type for RetryManager with logger access  
+// Type for RetryManager with logger access
 interface RetryManagerWithLogger {
   logger: {
     info: jest.Mock;
@@ -380,7 +380,9 @@ describe('RetryManager', () => {
 
       // Should see higher delay for rate limit error
       const rateLimitDelay = delays[delays.length - 1];
-      expect(rateLimitDelay || 0).toBeGreaterThan(delays[delays.length - 2] || 0);
+      expect(rateLimitDelay || 0).toBeGreaterThan(
+        delays[delays.length - 2] || 0
+      );
     });
 
     it('should log long retry delays with context', async () => {

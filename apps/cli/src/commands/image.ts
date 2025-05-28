@@ -9,7 +9,10 @@ import { NETWORK_URLS } from '../constants';
 import { SuiClient } from '../utils/adapters/sui-client-compatibility';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { jobManager, performanceMonitor } from '../utils/PerformanceMonitor';
-import { BackgroundOperations, createBackgroundOperationsManager } from '../utils/background-operations';
+import {
+  BackgroundOperations,
+  createBackgroundOperationsManager,
+} from '../utils/background-operations';
 import * as path from 'path';
 import * as fs from 'fs';
 import chalk = require('chalk');
@@ -160,7 +163,12 @@ export default class ImageCommand extends BaseCommand {
 
       if (args.action === 'upload') {
         if (flags.background) {
-          return await this.handleBackgroundUpload(flags, todoItem, walrusImageStorage, todoService);
+          return await this.handleBackgroundUpload(
+            flags,
+            todoItem,
+            walrusImageStorage,
+            todoService
+          );
         }
 
         // Upload image logic
@@ -172,7 +180,10 @@ export default class ImageCommand extends BaseCommand {
           async () => {
             if (flags.image) {
               // Resolve relative path to absolute
-              const absoluteImagePath = path.resolve(process.cwd(), flags.image);
+              const absoluteImagePath = path.resolve(
+                process.cwd(),
+                flags.image
+              );
               return await walrusImageStorage.uploadTodoImage(
                 absoluteImagePath,
                 todoItem.title,
@@ -223,7 +234,13 @@ export default class ImageCommand extends BaseCommand {
         }
 
         if (flags.background) {
-          return await this.handleBackgroundNftCreation(flags, todoItem, blobId, suiClient, config);
+          return await this.handleBackgroundNftCreation(
+            flags,
+            todoItem,
+            blobId,
+            suiClient,
+            config
+          );
         }
 
         this.log('Creating NFT on Sui blockchain...');
@@ -269,12 +286,14 @@ export default class ImageCommand extends BaseCommand {
     walrusImageStorage: WalrusImageStorage,
     todoService: TodoService
   ): Promise<void> {
-    const jobId = flags['job-id'] || jobManager.createJob('image', ['upload'], {
-      todo: flags.todo,
-      list: flags.list,
-      image: flags.image,
-      priority: flags.priority,
-    }).id;
+    const jobId =
+      flags['job-id'] ||
+      jobManager.createJob('image', ['upload'], {
+        todo: flags.todo,
+        list: flags.list,
+        image: flags.image,
+        priority: flags.priority,
+      }).id;
 
     this.log(chalk.blue(`🔄 Starting background image upload...`));
     this.log(chalk.gray(`📝 Job ID: ${jobId}`));
@@ -286,9 +305,12 @@ export default class ImageCommand extends BaseCommand {
       try {
         jobManager.startJob(jobId, process.pid);
         jobManager.writeJobLog(jobId, 'Starting image upload operation...');
-        
+
         let progress = 0;
-        const updateProgress = (message: string, progressIncrement: number = 10) => {
+        const updateProgress = (
+          message: string,
+          progressIncrement: number = 10
+        ) => {
           progress = Math.min(100, progress + progressIncrement);
           jobManager.updateProgress(jobId, progress);
           jobManager.writeJobLog(jobId, `[${progress}%] ${message}`);
@@ -299,10 +321,10 @@ export default class ImageCommand extends BaseCommand {
 
         updateProgress('Connecting to Walrus storage...', 10);
         await walrusImageStorage.connect();
-        
+
         updateProgress('Preparing image upload...', 10);
         let imageUrl: string;
-        
+
         if (flags.image) {
           const absoluteImagePath = path.resolve(process.cwd(), flags.image);
           updateProgress('Uploading custom image...', 20);
@@ -318,25 +340,28 @@ export default class ImageCommand extends BaseCommand {
 
         updateProgress('Processing image metadata...', 20);
         const blobId = imageUrl.split('/').pop() || '';
-        
+
         updateProgress('Updating todo with image URL...', 20);
         const updatedTodo = { ...todoItem, imageUrl };
         await todoService.updateTodo(flags.todo, flags.list, updatedTodo);
-        
+
         updateProgress('Upload completed successfully!', 10);
-        
+
         jobManager.completeJob(jobId, {
           imageUrl,
           blobId,
           todoId: flags.todo,
           listName: flags.list,
         });
-        
-        jobManager.writeJobLog(jobId, `✅ Image uploaded successfully: ${imageUrl}`);
+
+        jobManager.writeJobLog(
+          jobId,
+          `✅ Image uploaded successfully: ${imageUrl}`
+        );
         jobManager.writeJobLog(jobId, `📝 Blob ID: ${blobId}`);
-        
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(jobId, `❌ Upload failed: ${errorMessage}`);
       }
@@ -353,11 +378,13 @@ export default class ImageCommand extends BaseCommand {
     suiClient: any,
     config: any
   ): Promise<void> {
-    const jobId = flags['job-id'] || jobManager.createJob('image', ['create-nft'], {
-      todo: flags.todo,
-      list: flags.list,
-      priority: flags.priority,
-    }).id;
+    const jobId =
+      flags['job-id'] ||
+      jobManager.createJob('image', ['create-nft'], {
+        todo: flags.todo,
+        list: flags.list,
+        priority: flags.priority,
+      }).id;
 
     this.log(chalk.blue(`🔄 Starting background NFT creation...`));
     this.log(chalk.gray(`📝 Job ID: ${jobId}`));
@@ -369,9 +396,12 @@ export default class ImageCommand extends BaseCommand {
       try {
         jobManager.startJob(jobId, process.pid);
         jobManager.writeJobLog(jobId, 'Starting NFT creation operation...');
-        
+
         let progress = 0;
-        const updateProgress = (message: string, progressIncrement: number = 20) => {
+        const updateProgress = (
+          message: string,
+          progressIncrement: number = 20
+        ) => {
           progress = Math.min(100, progress + progressIncrement);
           jobManager.updateProgress(jobId, progress);
           jobManager.writeJobLog(jobId, `[${progress}%] ${message}`);
@@ -385,31 +415,34 @@ export default class ImageCommand extends BaseCommand {
           address: config.lastDeployment.packageId,
           packageId: config.lastDeployment.packageId,
         });
-        
+
         updateProgress('Preparing NFT metadata...', 20);
-        
+
         updateProgress('Creating NFT on Sui blockchain...', 30);
         const txDigest = await nftStorage.createTodoNft(todoItem, blobId);
-        
+
         updateProgress('NFT creation completed!', 30);
-        
+
         jobManager.completeJob(jobId, {
           txDigest,
           todoTitle: todoItem.title,
           imageUrl: todoItem.imageUrl,
           blobId,
         });
-        
+
         jobManager.writeJobLog(jobId, `✅ NFT created successfully!`);
         jobManager.writeJobLog(jobId, `📝 Transaction: ${txDigest}`);
         jobManager.writeJobLog(jobId, `📝 Title: ${todoItem.title}`);
         jobManager.writeJobLog(jobId, `📝 Image URL: ${todoItem.imageUrl}`);
         jobManager.writeJobLog(jobId, `📝 Walrus Blob ID: ${blobId}`);
-        
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
-        jobManager.writeJobLog(jobId, `❌ NFT creation failed: ${errorMessage}`);
+        jobManager.writeJobLog(
+          jobId,
+          `❌ NFT creation failed: ${errorMessage}`
+        );
       }
     });
 
@@ -417,7 +450,11 @@ export default class ImageCommand extends BaseCommand {
     return;
   }
 
-  private writeProgressFile(filePath: string, progress: number, message: string): void {
+  private writeProgressFile(
+    filePath: string,
+    progress: number,
+    message: string
+  ): void {
     try {
       const progressData = {
         progress,

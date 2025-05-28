@@ -21,8 +21,8 @@ const globalMockStorage = {
   errorSimulation: {
     enabled: false,
     failureRate: 0,
-    errorTypes: []
-  }
+    errorTypes: [],
+  },
 };
 
 // ==================== WALRUS CLIENT MOCKS ====================
@@ -32,25 +32,30 @@ const globalMockStorage = {
  */
 function createWalrusMock() {
   return {
-    readBlob: jest.fn().mockImplementation(async (params) => {
+    readBlob: jest.fn().mockImplementation(async params => {
       const blobId = typeof params === 'string' ? params : params.blobId;
       const blob = globalMockStorage.blobs.get(blobId);
-      
-      if (globalMockStorage.errorSimulation.enabled && Math.random() < globalMockStorage.errorSimulation.failureRate) {
+
+      if (
+        globalMockStorage.errorSimulation.enabled &&
+        Math.random() < globalMockStorage.errorSimulation.failureRate
+      ) {
         throw new Error('Simulated network error');
       }
-      
+
       if (blob) {
         return blob.data;
       }
       return new Uint8Array([1, 2, 3, 4]); // Default fallback
     }),
-    
-    writeBlob: jest.fn().mockImplementation(async (params) => {
-      const blobId = params.blobId || `mock-blob-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    writeBlob: jest.fn().mockImplementation(async params => {
+      const blobId =
+        params.blobId ||
+        `mock-blob-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const data = params.blob || params.data || new Uint8Array([1, 2, 3, 4]);
       const size = data.length;
-      
+
       // Store in global mock storage
       globalMockStorage.blobs.set(blobId, {
         id: blobId,
@@ -63,16 +68,24 @@ function createWalrusMock() {
           V1: {
             encoding_type: 0,
             unencoded_length: size.toString(),
-            hashes: [{
-              primary_hash: { Digest: new Uint8Array([1, 2, 3, 4]), $kind: 'Digest' },
-              secondary_hash: { Sha256: new Uint8Array([5, 6, 7, 8]), $kind: 'Sha256' }
-            }],
-            $kind: 'V1'
+            hashes: [
+              {
+                primary_hash: {
+                  Digest: new Uint8Array([1, 2, 3, 4]),
+                  $kind: 'Digest',
+                },
+                secondary_hash: {
+                  Sha256: new Uint8Array([5, 6, 7, 8]),
+                  $kind: 'Sha256',
+                },
+              },
+            ],
+            $kind: 'V1',
           },
-          $kind: 'V1'
-        }
+          $kind: 'V1',
+        },
       });
-      
+
       return {
         blobId,
         blobObject: {
@@ -82,12 +95,12 @@ function createWalrusMock() {
           certified_epoch: globalMockStorage.currentEpoch + 50,
           size: size.toString(),
           encoding_type: 0,
-          deletable: true
-        }
+          deletable: true,
+        },
       };
     }),
-    
-    getBlobInfo: jest.fn().mockImplementation(async (blobId) => {
+
+    getBlobInfo: jest.fn().mockImplementation(async blobId => {
       const blob = globalMockStorage.blobs.get(blobId);
       if (blob) {
         return {
@@ -98,10 +111,10 @@ function createWalrusMock() {
           unencoded_length: blob.size.toString(),
           size: blob.size.toString(),
           hashes: blob.metadata.V1.hashes,
-          metadata: blob.metadata
+          metadata: blob.metadata,
         };
       }
-      
+
       return {
         blob_id: blobId,
         certified_epoch: 150,
@@ -109,17 +122,25 @@ function createWalrusMock() {
         encoding_type: 0,
         unencoded_length: '1024',
         size: '1024',
-        hashes: [{
-          primary_hash: { Digest: new Uint8Array([1, 2, 3, 4]), $kind: 'Digest' },
-          secondary_hash: { Digest: new Uint8Array([5, 6, 7, 8]), $kind: 'Digest' }
-        }]
+        hashes: [
+          {
+            primary_hash: {
+              Digest: new Uint8Array([1, 2, 3, 4]),
+              $kind: 'Digest',
+            },
+            secondary_hash: {
+              Digest: new Uint8Array([5, 6, 7, 8]),
+              $kind: 'Digest',
+            },
+          },
+        ],
       };
     }),
-    
-    getBlobObject: jest.fn().mockImplementation(async (params) => {
+
+    getBlobObject: jest.fn().mockImplementation(async params => {
       const blobId = typeof params === 'string' ? params : params.blobId;
       const blob = globalMockStorage.blobs.get(blobId);
-      
+
       if (blob) {
         return {
           id: { id: blob.id },
@@ -129,10 +150,10 @@ function createWalrusMock() {
           size: blob.size.toString(),
           encoding_type: 0,
           deletable: true,
-          metadata: blob.metadata
+          metadata: blob.metadata,
         };
       }
-      
+
       return {
         id: { id: blobId },
         blob_id: blobId,
@@ -140,66 +161,77 @@ function createWalrusMock() {
         certified_epoch: 150,
         size: '1024',
         encoding_type: 0,
-        deletable: true
+        deletable: true,
       };
     }),
-    
-    getBlobMetadata: jest.fn().mockImplementation(async (params) => {
+
+    getBlobMetadata: jest.fn().mockImplementation(async params => {
       const blobId = typeof params === 'string' ? params : params.blobId;
       const blob = globalMockStorage.blobs.get(blobId);
-      
+
       if (blob) {
         return blob.metadata;
       }
-      
+
       return {
         V1: {
           encoding_type: 0,
           unencoded_length: '1024',
-          hashes: [{
-            primary_hash: { Digest: new Uint8Array([1, 2, 3, 4]), $kind: 'Digest' },
-            secondary_hash: { Sha256: new Uint8Array([5, 6, 7, 8]), $kind: 'Sha256' }
-          }],
-          $kind: 'V1'
+          hashes: [
+            {
+              primary_hash: {
+                Digest: new Uint8Array([1, 2, 3, 4]),
+                $kind: 'Digest',
+              },
+              secondary_hash: {
+                Sha256: new Uint8Array([5, 6, 7, 8]),
+                $kind: 'Sha256',
+              },
+            },
+          ],
+          $kind: 'V1',
         },
-        $kind: 'V1'
+        $kind: 'V1',
       };
     }),
-    
+
     verifyPoA: jest.fn().mockResolvedValue(true),
-    getBlobSize: jest.fn().mockImplementation(async (blobId) => {
+    getBlobSize: jest.fn().mockImplementation(async blobId => {
       const blob = globalMockStorage.blobs.get(blobId);
       return blob ? blob.size : 1024;
     }),
-    
+
     storageCost: jest.fn().mockResolvedValue({
       storageCost: BigInt(100),
       writeCost: BigInt(50),
-      totalCost: BigInt(150)
+      totalCost: BigInt(150),
     }),
-    
+
     executeCreateStorageTransaction: jest.fn().mockResolvedValue({
       digest: 'mock-transaction-digest',
       storage: {
         id: { id: 'storage1' },
         start_epoch: globalMockStorage.currentEpoch,
         end_epoch: globalMockStorage.currentEpoch + 100,
-        storage_size: '2048'
-      }
+        storage_size: '2048',
+      },
     }),
-    
+
     executeCertifyBlobTransaction: jest.fn().mockResolvedValue({
-      digest: 'mock-certify-digest'
+      digest: 'mock-certify-digest',
     }),
-    
+
     executeWriteBlobAttributesTransaction: jest.fn().mockResolvedValue({
-      digest: 'mock-attributes-digest'
+      digest: 'mock-attributes-digest',
     }),
-    
-    deleteBlob: jest.fn().mockImplementation(() => (tx) => Promise.resolve({
-      digest: 'mock-delete-digest'
-    })),
-    
+
+    deleteBlob: jest.fn().mockImplementation(
+      () => tx =>
+        Promise.resolve({
+          digest: 'mock-delete-digest',
+        })
+    ),
+
     executeRegisterBlobTransaction: jest.fn().mockResolvedValue({
       blob: {
         id: { id: 'mock-blob-id' },
@@ -208,52 +240,57 @@ function createWalrusMock() {
         certified_epoch: globalMockStorage.currentEpoch + 50,
         size: '1024',
         encoding_type: 0,
-        deletable: true
+        deletable: true,
       },
-      digest: 'mock-register-digest'
+      digest: 'mock-register-digest',
     }),
-    
+
     getStorageConfirmationFromNode: jest.fn().mockResolvedValue({
       confirmed: true,
-      epoch: 150
+      epoch: 150,
     }),
-    
+
     createStorageBlock: jest.fn().mockResolvedValue({}),
-    createStorage: jest.fn().mockImplementation(() => (tx) => Promise.resolve({
-      digest: 'mock-create-storage-digest',
-      storage: {
-        id: { id: 'storage1' },
-        start_epoch: globalMockStorage.currentEpoch,
-        end_epoch: globalMockStorage.currentEpoch + 100,
-        storage_size: '2048'
-      }
-    })),
-    
-    getStorageProviders: jest.fn().mockResolvedValue(['provider1', 'provider2', 'provider3']),
-    
+    createStorage: jest.fn().mockImplementation(
+      () => tx =>
+        Promise.resolve({
+          digest: 'mock-create-storage-digest',
+          storage: {
+            id: { id: 'storage1' },
+            start_epoch: globalMockStorage.currentEpoch,
+            end_epoch: globalMockStorage.currentEpoch + 100,
+            storage_size: '2048',
+          },
+        })
+    ),
+
+    getStorageProviders: jest
+      .fn()
+      .mockResolvedValue(['provider1', 'provider2', 'provider3']),
+
     reset: jest.fn().mockImplementation(() => {
       globalMockStorage.blobs.clear();
       globalMockStorage.currentEpoch = 100;
     }),
-    
+
     connect: jest.fn().mockResolvedValue(undefined),
-    
+
     getConfig: jest.fn().mockResolvedValue({
       network: 'testnet',
       version: '1.0.0',
-      maxSize: 10485760
+      maxSize: 10485760,
     }),
-    
+
     getWalBalance: jest.fn().mockResolvedValue('1000'),
-    
+
     getStorageUsage: jest.fn().mockResolvedValue({
       used: '100',
-      total: '1000'
+      total: '1000',
     }),
-    
+
     experimental: {
-      getBlobData: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4]))
-    }
+      getBlobData: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3, 4])),
+    },
   };
 }
 
@@ -278,13 +315,13 @@ function createSuiClientMock() {
       storageFundTotalObjectStorageRebates: '0',
       storageFundNonRefundableBalance: '1000000',
       stakeSubsidyCurrentDistributionAmount: '0',
-      totalStake: '1000000'
+      totalStake: '1000000',
     }),
-    
-    getObject: jest.fn().mockImplementation(async (params) => {
+
+    getObject: jest.fn().mockImplementation(async params => {
       const objectId = typeof params === 'string' ? params : params.id;
       const todo = globalMockStorage.todos.get(objectId);
-      
+
       if (todo) {
         return {
           data: {
@@ -296,35 +333,37 @@ function createSuiClientMock() {
               dataType: 'moveObject',
               type: 'todo::Todo',
               hasPublicTransfer: true,
-              fields: todo
-            }
+              fields: todo,
+            },
           },
-          error: null
+          error: null,
         };
       }
-      
+
       return {
         data: null,
-        error: { code: 'objectNotExists', object_id: objectId }
+        error: { code: 'objectNotExists', object_id: objectId },
       };
     }),
-    
-    executeTransactionBlock: jest.fn().mockImplementation(async (params) => {
+
+    executeTransactionBlock: jest.fn().mockImplementation(async params => {
       const transactionId = `tx-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       // Simulate transaction execution delay
       if (globalMockStorage.networkLatency > 0) {
-        await new Promise(resolve => setTimeout(resolve, globalMockStorage.networkLatency));
+        await new Promise(resolve =>
+          setTimeout(resolve, globalMockStorage.networkLatency)
+        );
       }
-      
+
       // Store transaction
       globalMockStorage.transactions.set(transactionId, {
         id: transactionId,
         params,
         timestamp: Date.now(),
-        status: 'success'
+        status: 'success',
       });
-      
+
       return {
         digest: transactionId,
         confirmedLocalExecution: true,
@@ -333,32 +372,34 @@ function createSuiClientMock() {
           gasUsed: {
             computationCost: '1000',
             storageCost: '2000',
-            storageRebate: '500'
+            storageRebate: '500',
           },
           created: [],
           mutated: [],
-          deleted: []
-        }
+          deleted: [],
+        },
       };
     }),
-    
-    signAndExecuteTransactionBlock: jest.fn().mockImplementation(async (params) => {
-      // Reuse executeTransactionBlock logic
-      return await createSuiClientMock().executeTransactionBlock(params);
-    }),
-    
+
+    signAndExecuteTransactionBlock: jest
+      .fn()
+      .mockImplementation(async params => {
+        // Reuse executeTransactionBlock logic
+        return await createSuiClientMock().executeTransactionBlock(params);
+      }),
+
     dryRunTransactionBlock: jest.fn().mockResolvedValue({
       effects: {
         status: { status: 'success' },
         gasUsed: {
           computationCost: '1000',
           storageCost: '2000',
-          storageRebate: '500'
-        }
-      }
+          storageRebate: '500',
+        },
+      },
     }),
-    
-    multiGetObjects: jest.fn().mockImplementation(async (objectIds) => {
+
+    multiGetObjects: jest.fn().mockImplementation(async objectIds => {
       return objectIds.map(id => {
         const todo = globalMockStorage.todos.get(id);
         if (todo) {
@@ -368,73 +409,75 @@ function createSuiClientMock() {
               version: '1',
               digest: 'mock-digest',
               type: 'todo::Todo',
-              content: { fields: todo }
+              content: { fields: todo },
             },
-            error: null
+            error: null,
           };
         }
         return {
           data: null,
-          error: { code: 'objectNotExists', object_id: id }
+          error: { code: 'objectNotExists', object_id: id },
         };
       });
     }),
-    
-    getTransactionBlock: jest.fn().mockImplementation(async (digest) => {
+
+    getTransactionBlock: jest.fn().mockImplementation(async digest => {
       const transaction = globalMockStorage.transactions.get(digest);
       if (transaction) {
         return {
           digest,
           transaction: transaction.params,
           effects: {
-            status: { status: transaction.status }
-          }
+            status: { status: transaction.status },
+          },
         };
       }
-      
+
       return {
         digest,
         transaction: {},
         effects: {
-          status: { status: 'success' }
-        }
+          status: { status: 'success' },
+        },
       };
     }),
-    
+
     queryTransactionBlocks: jest.fn().mockResolvedValue({
       data: [],
-      hasNextPage: false
+      hasNextPage: false,
     }),
-    
+
     getAllBalances: jest.fn().mockResolvedValue([]),
-    
-    getBalance: jest.fn().mockImplementation(async (params) => {
+
+    getBalance: jest.fn().mockImplementation(async params => {
       const address = typeof params === 'string' ? params : params.owner;
       const account = globalMockStorage.walletAccounts.get(address);
-      
+
       return {
         coinType: '0x2::sui::SUI',
         coinObjectCount: 1,
-        totalBalance: account ? account.balance : '1000000'
+        totalBalance: account ? account.balance : '1000000',
       };
     }),
-    
+
     getCoins: jest.fn().mockResolvedValue({
       data: [],
-      hasNextPage: false
+      hasNextPage: false,
     }),
-    
-    getReferenceGasPrice: jest.fn().mockResolvedValue(globalMockStorage.gasPrice),
-    
+
+    getReferenceGasPrice: jest
+      .fn()
+      .mockResolvedValue(globalMockStorage.gasPrice),
+
     getValidatorsApy: jest.fn().mockResolvedValue({
       apys: [],
-      epoch: globalMockStorage.currentEpoch.toString()
+      epoch: globalMockStorage.currentEpoch.toString(),
     }),
-    
-    getOwnedObjects: jest.fn().mockImplementation(async (params) => {
+
+    getOwnedObjects: jest.fn().mockImplementation(async params => {
       const address = typeof params === 'string' ? params : params.owner;
       const account = globalMockStorage.walletAccounts.get(address);
-      
+
       if (account && account.todos) {
         return {
           data: account.todos.map(todoId => {
@@ -445,29 +488,31 @@ function createSuiClientMock() {
                 version: '1',
                 digest: 'mock-digest',
                 type: 'todo::Todo',
-                content: { fields: todo }
-              }
+                content: { fields: todo },
+              },
             };
           }),
-          hasNextPage: false
+          hasNextPage: false,
         };
       }
-      
+
       return {
         data: [],
-        hasNextPage: false
+        hasNextPage: false,
       };
     }),
-    
+
     getRpcApiVersion: jest.fn().mockResolvedValue('1.0.0'),
-    
+
     requestSuiFromFaucet: jest.fn().mockResolvedValue({
-      transferredGasObjects: [{
-        amount: 1000000000,
-        id: 'gas-object-id',
-        transferTxDigest: 'faucet-tx-digest'
-      }]
-    })
+      transferredGasObjects: [
+        {
+          amount: 1000000000,
+          id: 'gas-object-id',
+          transferTxDigest: 'faucet-tx-digest',
+        },
+      ],
+    }),
   };
 }
 
@@ -481,57 +526,62 @@ function createAIServiceMocks() {
     openai: {
       chat: {
         completions: {
-          create: jest.fn().mockImplementation(async (params) => {
+          create: jest.fn().mockImplementation(async params => {
             // Simulate AI response based on prompt
             const prompt = params.messages?.[0]?.content || '';
             let content = 'Mock AI response';
-            
+
             if (prompt.includes('suggest') || prompt.includes('task')) {
               content = JSON.stringify({
                 suggestions: [
                   'Complete the documentation',
                   'Add unit tests',
-                  'Refactor the code'
-                ]
+                  'Refactor the code',
+                ],
               });
-            } else if (prompt.includes('enhance') || prompt.includes('improve')) {
+            } else if (
+              prompt.includes('enhance') ||
+              prompt.includes('improve')
+            ) {
               content = 'Enhanced version: ' + prompt.substring(0, 100);
             }
-            
+
             return {
               id: 'chatcmpl-mock',
               object: 'chat.completion',
               created: Math.floor(Date.now() / 1000),
               model: params.model || 'gpt-3.5-turbo',
-              choices: [{
-                index: 0,
-                message: {
-                  role: 'assistant',
-                  content
+              choices: [
+                {
+                  index: 0,
+                  message: {
+                    role: 'assistant',
+                    content,
+                  },
+                  finish_reason: 'stop',
                 },
-                finish_reason: 'stop'
-              }],
+              ],
               usage: {
                 prompt_tokens: 50,
                 completion_tokens: 25,
-                total_tokens: 75
-              }
+                total_tokens: 75,
+              },
             };
-          })
-        }
-      }
+          }),
+        },
+      },
     },
-    
+
     anthropic: {
       messages: {
-        create: jest.fn().mockImplementation(async (params) => {
+        create: jest.fn().mockImplementation(async params => {
           const prompt = params.messages?.[0]?.content || '';
           let content = 'Mock Claude response';
-          
+
           if (prompt.includes('analyze') || prompt.includes('review')) {
             content = 'Analysis: This appears to be a well-structured request.';
           }
-          
+
           return {
             id: 'msg_mock',
             type: 'message',
@@ -542,12 +592,12 @@ function createAIServiceMocks() {
             stop_sequence: null,
             usage: {
               input_tokens: 50,
-              output_tokens: 25
-            }
+              output_tokens: 25,
+            },
           };
-        })
-      }
-    }
+        }),
+      },
+    },
   };
 }
 
@@ -558,31 +608,35 @@ function createAIServiceMocks() {
  */
 function createFileSystemMocks() {
   const mockFileSystem = new Map();
-  
+
   return {
-    readFile: jest.fn().mockImplementation(async (path) => {
+    readFile: jest.fn().mockImplementation(async path => {
       const content = mockFileSystem.get(path);
       if (content !== undefined) {
         return content;
       }
-      
+
       // Default content for common files
       if (path.includes('config.json')) {
         return JSON.stringify({ network: 'testnet', version: '1.0.0' });
       } else if (path.includes('.env')) {
         return 'NODE_ENV=test\nSUI_NETWORK=testnet';
       } else if (path.includes('todo')) {
-        return JSON.stringify({ id: 'test-todo', title: 'Test Todo', completed: false });
+        return JSON.stringify({
+          id: 'test-todo',
+          title: 'Test Todo',
+          completed: false,
+        });
       }
-      
+
       throw new Error(`ENOENT: no such file or directory, open '${path}'`);
     }),
-    
+
     writeFile: jest.fn().mockImplementation(async (path, data) => {
       mockFileSystem.set(path, data);
     }),
-    
-    readdir: jest.fn().mockImplementation(async (path) => {
+
+    readdir: jest.fn().mockImplementation(async path => {
       // Return mock directory listings
       if (path.includes('Todos')) {
         return ['todo1.json', 'todo2.json'];
@@ -591,25 +645,25 @@ function createFileSystemMocks() {
       }
       return [];
     }),
-    
+
     mkdir: jest.fn().mockResolvedValue(undefined),
     access: jest.fn().mockResolvedValue(undefined),
     stat: jest.fn().mockResolvedValue({
       isFile: () => true,
       isDirectory: () => false,
       size: 1024,
-      mtime: new Date()
+      mtime: new Date(),
     }),
-    
+
     // Helper to set mock file content
     _setMockFile: (path, content) => {
       mockFileSystem.set(path, content);
     },
-    
+
     // Helper to clear mock filesystem
     _clearMockFiles: () => {
       mockFileSystem.clear();
-    }
+    },
   };
 }
 
@@ -623,17 +677,22 @@ function createNetworkMocks() {
     fetch: jest.fn().mockImplementation(async (url, options = {}) => {
       // Simulate network latency
       if (globalMockStorage.networkLatency > 0) {
-        await new Promise(resolve => setTimeout(resolve, globalMockStorage.networkLatency));
+        await new Promise(resolve =>
+          setTimeout(resolve, globalMockStorage.networkLatency)
+        );
       }
-      
+
       // Simulate network errors
-      if (globalMockStorage.errorSimulation.enabled && Math.random() < globalMockStorage.errorSimulation.failureRate) {
+      if (
+        globalMockStorage.errorSimulation.enabled &&
+        Math.random() < globalMockStorage.errorSimulation.failureRate
+      ) {
         throw new Error('Network request failed');
       }
-      
+
       // Mock responses based on URL
       let responseData = { success: true };
-      
+
       if (url.includes('/api/todos')) {
         responseData = { todos: [] };
       } else if (url.includes('/api/ai/')) {
@@ -641,17 +700,17 @@ function createNetworkMocks() {
       } else if (url.includes('faucet')) {
         responseData = { success: true, amount: 1000000000 };
       }
-      
+
       return {
         ok: true,
         status: 200,
         statusText: 'OK',
         json: async () => responseData,
         text: async () => JSON.stringify(responseData),
-        headers: new Map([['content-type', 'application/json']])
+        headers: new Map([['content-type', 'application/json']]),
       };
     }),
-    
+
     WebSocket: jest.fn().mockImplementation(() => ({
       send: jest.fn(),
       close: jest.fn(),
@@ -661,8 +720,8 @@ function createNetworkMocks() {
       CONNECTING: 0,
       OPEN: 1,
       CLOSING: 2,
-      CLOSED: 3
-    }))
+      CLOSED: 3,
+    })),
   };
 }
 
@@ -676,31 +735,31 @@ function createCryptoMocks() {
     Ed25519Keypair: jest.fn().mockImplementation(() => ({
       getPublicKey: jest.fn().mockReturnValue({
         toSuiAddress: jest.fn().mockReturnValue('0xtest-address'),
-        toBase64: jest.fn().mockReturnValue('mock-public-key-base64')
+        toBase64: jest.fn().mockReturnValue('mock-public-key-base64'),
       }),
       signData: jest.fn().mockResolvedValue(new Uint8Array(64)),
       getSecretKey: jest.fn().mockReturnValue(new Uint8Array(32)),
       export: jest.fn().mockReturnValue({
         privateKey: 'mock-private-key',
-        schema: 'ED25519'
-      })
+        schema: 'ED25519',
+      }),
     })),
-    
+
     Secp256k1Keypair: jest.fn().mockImplementation(() => ({
       getPublicKey: jest.fn().mockReturnValue({
         toSuiAddress: jest.fn().mockReturnValue('0xtest-secp256k1-address'),
-        toBase64: jest.fn().mockReturnValue('mock-secp256k1-public-key-base64')
+        toBase64: jest.fn().mockReturnValue('mock-secp256k1-public-key-base64'),
       }),
       signData: jest.fn().mockResolvedValue(new Uint8Array(64)),
-      getSecretKey: jest.fn().mockReturnValue(new Uint8Array(32))
+      getSecretKey: jest.fn().mockReturnValue(new Uint8Array(32)),
     })),
-    
+
     // General crypto utilities
-    randomBytes: jest.fn().mockImplementation((size) => new Uint8Array(size)),
+    randomBytes: jest.fn().mockImplementation(size => new Uint8Array(size)),
     createHash: jest.fn().mockImplementation(() => ({
       update: jest.fn().mockReturnThis(),
-      digest: jest.fn().mockReturnValue('mock-hash')
-    }))
+      digest: jest.fn().mockReturnValue('mock-hash'),
+    })),
   };
 }
 
@@ -719,23 +778,23 @@ const cryptoMocks = createCryptoMocks();
 // Mock @mysten/walrus
 jest.mock('@mysten/walrus', () => ({
   WalrusClient: jest.fn().mockImplementation(() => walrusMock),
-  createWalrusClient: jest.fn().mockImplementation(() => walrusMock)
+  createWalrusClient: jest.fn().mockImplementation(() => walrusMock),
 }));
 
 // Mock @mysten/sui/client
 jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => suiClientMock),
-  getFullnodeUrl: jest.fn(() => 'https://fullnode.testnet.sui.io:443')
+  getFullnodeUrl: jest.fn(() => 'https://fullnode.testnet.sui.io:443'),
 }));
 
 // Mock @mysten/sui/keypairs/ed25519
 jest.mock('@mysten/sui/keypairs/ed25519', () => ({
-  Ed25519Keypair: cryptoMocks.Ed25519Keypair
+  Ed25519Keypair: cryptoMocks.Ed25519Keypair,
 }));
 
 // Mock @mysten/sui/keypairs/secp256k1
 jest.mock('@mysten/sui/keypairs/secp256k1', () => ({
-  Secp256k1Keypair: cryptoMocks.Secp256k1Keypair
+  Secp256k1Keypair: cryptoMocks.Secp256k1Keypair,
 }));
 
 // Mock fs/promises
@@ -752,12 +811,12 @@ jest.mock('node:crypto', () => cryptoMocks);
 
 // Mock openai
 jest.mock('openai', () => ({
-  OpenAI: jest.fn().mockImplementation(() => aiServiceMocks.openai)
+  OpenAI: jest.fn().mockImplementation(() => aiServiceMocks.openai),
 }));
 
 // Mock anthropic
 jest.mock('@anthropic-ai/sdk', () => ({
-  Anthropic: jest.fn().mockImplementation(() => aiServiceMocks.anthropic)
+  Anthropic: jest.fn().mockImplementation(() => aiServiceMocks.anthropic),
 }));
 
 // ==================== GLOBAL UTILITIES ====================
@@ -768,7 +827,7 @@ jest.mock('@anthropic-ai/sdk', () => ({
 global.mockUtils = {
   // Storage utilities
   storage: globalMockStorage,
-  
+
   // Reset all mocks
   resetAllMocks: () => {
     globalMockStorage.blobs.clear();
@@ -781,44 +840,44 @@ global.mockUtils = {
     globalMockStorage.errorSimulation = {
       enabled: false,
       failureRate: 0,
-      errorTypes: []
+      errorTypes: [],
     };
-    
+
     fileSystemMocks._clearMockFiles();
   },
-  
+
   // Add mock todo
   addMockTodo: (todoId, todoData) => {
     globalMockStorage.todos.set(todoId, todoData);
   },
-  
+
   // Add mock wallet account
   addMockWalletAccount: (address, accountData) => {
     globalMockStorage.walletAccounts.set(address, {
       balance: '1000000',
       todos: [],
-      ...accountData
+      ...accountData,
     });
   },
-  
+
   // Simulate network conditions
   simulateNetworkConditions: (latency = 0, errorRate = 0, errorTypes = []) => {
     globalMockStorage.networkLatency = latency;
     globalMockStorage.errorSimulation = {
       enabled: errorRate > 0,
       failureRate: errorRate,
-      errorTypes
+      errorTypes,
     };
   },
-  
+
   // Set mock file content
   setMockFile: fileSystemMocks._setMockFile,
-  
+
   // Advance blockchain epoch
   advanceEpoch: (epochs = 1) => {
     globalMockStorage.currentEpoch += epochs;
   },
-  
+
   // Get all mocks for cleanup
   getAllMocks: () => ({
     walrus: walrusMock,
@@ -826,8 +885,8 @@ global.mockUtils = {
     aiServices: aiServiceMocks,
     fileSystem: fileSystemMocks,
     network: networkMocks,
-    crypto: cryptoMocks
-  })
+    crypto: cryptoMocks,
+  }),
 };
 
 // ==================== ENVIRONMENT-SPECIFIC SETUP ====================
@@ -836,17 +895,17 @@ global.mockUtils = {
 if (process.env.CI) {
   // Reduce timeouts in CI
   globalMockStorage.networkLatency = 0;
-  
+
   // Mock console to reduce noise
   const originalConsoleLog = console.log;
   const originalConsoleWarn = console.warn;
-  
+
   console.log = jest.fn((...args) => {
     if (process.env.DEBUG) {
       originalConsoleLog(...args);
     }
   });
-  
+
   console.warn = jest.fn((...args) => {
     if (process.env.DEBUG) {
       originalConsoleWarn(...args);
@@ -867,14 +926,14 @@ afterEach(() => {
   // Only clear volatile state, keep persistent mock configurations
   globalMockStorage.blobs.clear();
   globalMockStorage.transactions.clear();
-  
+
   // Reset mock call counts
   Object.values(walrusMock).forEach(mock => {
     if (mock && typeof mock.mockClear === 'function') {
       mock.mockClear();
     }
   });
-  
+
   Object.values(suiClientMock).forEach(mock => {
     if (mock && typeof mock.mockClear === 'function') {
       mock.mockClear();
@@ -891,5 +950,5 @@ module.exports = {
   aiServiceMocks,
   fileSystemMocks,
   networkMocks,
-  cryptoMocks
+  cryptoMocks,
 };

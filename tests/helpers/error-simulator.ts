@@ -86,7 +86,10 @@ export class ErrorSimulator {
     };
 
     // If disabled, restore original methods
-    if (Object.prototype.hasOwnProperty.call(config, 'enabled') && !config.enabled) {
+    if (
+      Object.prototype.hasOwnProperty.call(config, 'enabled') &&
+      !config.enabled
+    ) {
       this.restoreAllMethods();
     }
   }

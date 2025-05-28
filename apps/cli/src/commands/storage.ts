@@ -102,11 +102,22 @@ export default class StorageCommand extends BaseCommand {
     const usedSize = Number(storageInfo.used_size);
     const remainingSize = totalSize - usedSize;
     const usagePercentage = (usedSize / totalSize) * 100;
-    const remainingEpochs = Number(
-      (storageInfo as { end_epoch?: number; storage?: { end_epoch?: number } }).end_epoch ||
-      (storageInfo as { end_epoch?: number; storage?: { end_epoch?: number } }).storage?.end_epoch ||
-      0
-    ) - currentEpoch;
+    const remainingEpochs =
+      Number(
+        (
+          storageInfo as {
+            end_epoch?: number;
+            storage?: { end_epoch?: number };
+          }
+        ).end_epoch ||
+          (
+            storageInfo as {
+              end_epoch?: number;
+              storage?: { end_epoch?: number };
+            }
+          ).storage?.end_epoch ||
+          0
+      ) - currentEpoch;
 
     // Format sizes for display
     const formatBytes = (bytes: number): string => {
@@ -189,7 +200,9 @@ export default class StorageCommand extends BaseCommand {
         if (!item.data?.content || item.data.content.dataType !== 'moveObject')
           continue;
 
-        const fields = (item.data.content as { fields?: Record<string, unknown> }).fields;
+        const fields = (
+          item.data.content as { fields?: Record<string, unknown> }
+        ).fields;
         if (!fields) continue;
 
         const storageSize = Number(fields.storage_size);
@@ -284,12 +297,15 @@ export default class StorageCommand extends BaseCommand {
       if (walrusStorage['storageReuseAnalyzer'] === null) {
         this.log('Initializing storage analyzer...');
         // Initialize the managers via private method
-        (walrusStorage as { initializeManagers: () => void }).initializeManagers();
+        (
+          walrusStorage as { initializeManagers: () => void }
+        ).initializeManagers();
       }
 
       // Get storage analyzer instance
-      const analyzer = (walrusStorage as { storageReuseAnalyzer: StorageReuseAnalyzer })
-        .storageReuseAnalyzer;
+      const analyzer = (
+        walrusStorage as { storageReuseAnalyzer: StorageReuseAnalyzer }
+      ).storageReuseAnalyzer;
 
       // Analyze for different storage sizes
       const smallTodoSize = 1024; // 1KB

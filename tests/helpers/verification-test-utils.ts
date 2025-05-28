@@ -12,7 +12,9 @@ import {
 /**
  * Create a complete mock verification record
  */
-export function createMockVerificationRecord(overrides: Partial<VerificationRecord> = {}): VerificationRecord {
+export function createMockVerificationRecord(
+  overrides: Partial<VerificationRecord> = {}
+): VerificationRecord {
   return {
     id: 'test-verification-id',
     requestHash: 'test-request-hash',
@@ -29,9 +31,11 @@ export function createMockVerificationRecord(overrides: Partial<VerificationReco
 /**
  * Create a mock AIVerifierAdapter with all required methods
  */
-export function createMockAIVerifierAdapter(customBehavior: Partial<SuiAIVerifierAdapter> = {}): jest.Mocked<SuiAIVerifierAdapter> {
+export function createMockAIVerifierAdapter(
+  customBehavior: Partial<SuiAIVerifierAdapter> = {}
+): jest.Mocked<SuiAIVerifierAdapter> {
   const mockRecord = createMockVerificationRecord();
-  
+
   return {
     createVerification: jest.fn().mockResolvedValue(mockRecord),
     verifyRecord: jest.fn().mockResolvedValue(true),
@@ -66,10 +70,12 @@ export function createMockAIVerifierAdapter(customBehavior: Partial<SuiAIVerifie
 /**
  * Create a mock BlockchainVerifier with all required methods
  */
-export function createMockBlockchainVerifier(customBehavior: Partial<BlockchainVerifier> = {}): jest.Mocked<BlockchainVerifier> {
+export function createMockBlockchainVerifier(
+  customBehavior: Partial<BlockchainVerifier> = {}
+): jest.Mocked<BlockchainVerifier> {
   const mockRecord = createMockVerificationRecord();
   const mockAdapter = createMockAIVerifierAdapter();
-  
+
   return {
     verifyOperation: jest.fn().mockResolvedValue(mockRecord),
     verifyCredential: jest.fn().mockResolvedValue({
@@ -84,8 +90,12 @@ export function createMockBlockchainVerifier(customBehavior: Partial<BlockchainV
       request: 'test-request',
       response: 'test-response',
     }),
-    generateVerificationProof: jest.fn().mockResolvedValue('test-verification-proof'),
-    verifyProof: jest.fn().mockResolvedValue({ isValid: true, record: mockRecord }),
+    generateVerificationProof: jest
+      .fn()
+      .mockResolvedValue('test-verification-proof'),
+    verifyProof: jest
+      .fn()
+      .mockResolvedValue({ isValid: true, record: mockRecord }),
     getVerifierAdapter: jest.fn().mockReturnValue(mockAdapter),
     getCredentialAdapter: jest.fn().mockReturnValue(undefined),
     getSigner: jest.fn().mockReturnValue({
@@ -146,7 +156,9 @@ export function createMockCredentialManager(customBehavior: any = {}) {
       providerName: 'test-provider',
       permissionLevel: 1,
     }),
-    generateCredentialProof: jest.fn().mockResolvedValue('test-credential-proof'),
+    generateCredentialProof: jest
+      .fn()
+      .mockResolvedValue('test-credential-proof'),
     getCredentialObject: jest.fn().mockResolvedValue({
       id: 'test-credential-id',
       providerName: 'test-provider',
@@ -166,7 +178,9 @@ export function createMockCredentialManager(customBehavior: any = {}) {
 /**
  * Create a properly mocked AIVerificationService
  */
-export function createMockAIVerificationService(customBehavior: any = {}): AIVerificationService {
+export function createMockAIVerificationService(
+  customBehavior: any = {}
+): AIVerificationService {
   const mockAdapter = createMockAIVerifierAdapter(customBehavior.adapter);
   return new AIVerificationService(mockAdapter);
 }
@@ -174,11 +188,19 @@ export function createMockAIVerificationService(customBehavior: any = {}): AIVer
 /**
  * Create a properly mocked BlockchainAIVerificationService
  */
-export function createMockBlockchainAIVerificationService(customBehavior: any = {}): BlockchainAIVerificationService {
-  const mockBlockchainVerifier = createMockBlockchainVerifier(customBehavior.blockchainVerifier);
-  const mockPermissionManager = createMockPermissionManager(customBehavior.permissionManager);
-  const mockCredentialManager = createMockCredentialManager(customBehavior.credentialManager);
-  
+export function createMockBlockchainAIVerificationService(
+  customBehavior: any = {}
+): BlockchainAIVerificationService {
+  const mockBlockchainVerifier = createMockBlockchainVerifier(
+    customBehavior.blockchainVerifier
+  );
+  const mockPermissionManager = createMockPermissionManager(
+    customBehavior.permissionManager
+  );
+  const mockCredentialManager = createMockCredentialManager(
+    customBehavior.credentialManager
+  );
+
   return new BlockchainAIVerificationService(
     mockBlockchainVerifier as any,
     mockPermissionManager as any,
@@ -206,19 +228,19 @@ export async function assertVerificationSuccess<T>(
 ): Promise<T> {
   // Ensure it's a promise
   expect(verificationPromise).toBeInstanceOf(Promise);
-  
+
   // Wait for completion
   const result = await verificationPromise;
-  
+
   // Ensure result is not undefined
   expect(result).toBeDefined();
   expect(result).not.toBeNull();
-  
+
   // Check type if specified
   if (expectedType) {
     expect(typeof result).toBe(expectedType);
   }
-  
+
   return result;
 }
 
@@ -231,10 +253,10 @@ export async function assertVerificationFailure(
 ): Promise<Error> {
   // Ensure it's a promise
   expect(verificationPromise).toBeInstanceOf(Promise);
-  
+
   // Expect it to reject
   await expect(verificationPromise).rejects.toThrow(expectedErrorMessage);
-  
+
   try {
     await verificationPromise;
     throw new Error('Expected promise to reject');

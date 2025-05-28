@@ -3,7 +3,10 @@ import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import type { WalrusClientExt } from '../../../apps/cli/src/types/client';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../../helpers/complete-walrus-client-mock';
 import { BlobVerificationManager } from '../../../apps/cli/src/utils/blob-verification';
 import { CLIError } from '../../../apps/cli/src/types/errors/consolidated';
 
@@ -310,7 +313,9 @@ const mockSigner = {
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
+  signTransaction: async (
+    _transaction: unknown
+  ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -327,7 +332,7 @@ describe('Verification Flow End-to-End', () => {
 
     // Create inline mock for WalrusClient with all required methods
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific methods for this test as needed
     // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
 
@@ -472,9 +477,7 @@ describe('Verification Flow End-to-End', () => {
       });
 
       // Mock that data is modified during retrieval (same size, different content)
-      const modifiedData = Buffer.from(
-        'XXXX data for verification flow'
-      ); // Same length as original test data (31 bytes)
+      const modifiedData = Buffer.from('XXXX data for verification flow'); // Same length as original test data (31 bytes)
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(modifiedData));
       mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
       mockWalrusClient.verifyPoA.mockResolvedValue(false);

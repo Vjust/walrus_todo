@@ -424,8 +424,10 @@ describe('Input Validation Security Tests', () => {
       await aiService.summarize(maliciousTodos);
 
       // Verify prototype isn't polluted
-      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
-      expect(((Object.prototype as Record<string, unknown>).polluted)).toBeUndefined();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      expect(
+        (Object.prototype as Record<string, unknown>).polluted
+      ).toBeUndefined();
     });
 
     it('should validate and sanitize structured AI responses', async () => {
@@ -466,7 +468,7 @@ describe('Input Validation Security Tests', () => {
       expect(result.constructor).toBeUndefined();
 
       // Global prototype should not be polluted
-      expect((({} as Record<string, unknown>).polluted)).toBeUndefined();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     });
   });
 
@@ -859,7 +861,7 @@ describe('Input Validation Security Tests', () => {
       );
 
       // Check prototype pollution
-      expect((({} as Record<string, unknown>).injected)).toBeUndefined();
+      expect(({} as Record<string, unknown>).injected).toBeUndefined();
 
       // Verify options were sanitized
       expect(mockAIService['options'].temperature).toBe(0.7);

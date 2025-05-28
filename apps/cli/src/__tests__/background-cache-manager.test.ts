@@ -1,4 +1,7 @@
-import { BackgroundCacheManager, CacheOperation } from '../utils/BackgroundCacheManager';
+import {
+  BackgroundCacheManager,
+  CacheOperation,
+} from '../utils/BackgroundCacheManager';
 import { performanceMonitor } from '../utils/PerformanceMonitor';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
@@ -24,7 +27,7 @@ describe('BackgroundCacheManager', () => {
 
   afterEach(async () => {
     await cacheManager.shutdown();
-    
+
     // Clean up test cache directory
     if (fs.existsSync(testCacheDir)) {
       fs.rmSync(testCacheDir, { recursive: true, force: true });
@@ -83,12 +86,14 @@ describe('BackgroundCacheManager', () => {
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       const status = await cacheManager.getOperationStatus(operation.id);
       expect(status).toBeTruthy();
       expect(status?.id).toBe(operation.id);
       expect(status?.type).toBe('storage-allocation');
-      expect(['pending', 'running', 'completed', 'failed']).toContain(status?.status);
+      expect(['pending', 'running', 'completed', 'failed']).toContain(
+        status?.status
+      );
     });
 
     it('should return null for non-existent operations', async () => {
@@ -107,7 +112,7 @@ describe('BackgroundCacheManager', () => {
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       // Try to cancel before it starts running
       const cancelled = await cacheManager.cancelOperation(operation.id);
       expect(cancelled).toBe(true);
@@ -144,7 +149,7 @@ describe('BackgroundCacheManager', () => {
 
       const activeOps = cacheManager.getActiveOperations();
       expect(activeOps.length).toBeGreaterThanOrEqual(0);
-      
+
       // Check that our operations are in the list
       const opIds = activeOps.map(op => op.id);
       expect(activeOps.length).toBeGreaterThanOrEqual(2);
@@ -166,7 +171,9 @@ describe('BackgroundCacheManager', () => {
       await cacheManager.queueOperation(operation);
 
       // Wait for operation with short timeout for test
-      await expect(cacheManager.waitForOperation(operation.id, 8000)).resolves.toBeTruthy();
+      await expect(
+        cacheManager.waitForOperation(operation.id, 8000)
+      ).resolves.toBeTruthy();
     });
 
     it('should timeout when waiting too long', async () => {
@@ -195,7 +202,7 @@ describe('BackgroundCacheManager', () => {
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       // Wait a bit for the operation to be processed
       await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -214,7 +221,7 @@ describe('BackgroundCacheManager', () => {
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       // Wait for processing
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -226,7 +233,7 @@ describe('BackgroundCacheManager', () => {
   describe('Resource Management', () => {
     it('should limit concurrent processes', async () => {
       const operations: CacheOperation[] = [];
-      
+
       // Create more operations than the max concurrent limit
       for (let i = 0; i < 5; i++) {
         operations.push({
@@ -261,11 +268,15 @@ describe('BackgroundCacheManager', () => {
       performanceMonitor.startOperation(operationId, 'background-cache-test');
 
       await cacheManager.queueOperation(operation);
-      
+
       // Wait a bit
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      performanceMonitor.endOperation(operationId, 'background-cache-test', true);
+      performanceMonitor.endOperation(
+        operationId,
+        'background-cache-test',
+        true
+      );
 
       const report = performanceMonitor.generateReport();
       expect(report.totalOperations).toBeGreaterThan(0);

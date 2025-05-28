@@ -1,11 +1,16 @@
-import type { WalrusClient } from '../../apps/cli/src/types/client';
 import { ExpiryMonitor } from '../../apps/cli/src/utils/ExpiryMonitor';
-import { VaultManager, BlobRecord } from '../../apps/cli/src/utils/VaultManager';
+import {
+  VaultManager,
+  BlobRecord,
+} from '../../apps/cli/src/utils/VaultManager';
 import { StorageError } from '../../apps/cli/src/types/errors/consolidated';
 import { Signer } from '@mysten/sui/cryptography';
 // import * as childProcess from 'child_process';
 import { Logger } from '../../apps/cli/src/utils/Logger';
-import { createWalrusModuleMock, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
+import {
+  createWalrusModuleMock,
+  type CompleteWalrusClientMock,
+} from '../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus', () => createWalrusModuleMock());
@@ -71,7 +76,7 @@ describe('ExpiryMonitor', () => {
     // Setup mock implementations using complete mock
     const { WalrusClient: MockWalrusClient } = require('@mysten/walrus');
     mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
-    
+
     // Override specific methods for this test
     mockWalrusClient.getConfig.mockResolvedValue({
       network: 'testnet',
@@ -79,7 +84,10 @@ describe('ExpiryMonitor', () => {
       maxSize: 1000000,
     });
     mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({ used: '500', total: '2000' });
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '500',
+      total: '2000',
+    });
     mockWalrusClient.getBlobObject.mockResolvedValue({
       id: { id: 'mock-blob-id' },
       blob_id: 'mock-blob-id',

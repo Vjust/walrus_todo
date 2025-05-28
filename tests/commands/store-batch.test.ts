@@ -206,13 +206,25 @@ describe('store command batch processing', () => {
 
         // Mock BaseCommand methods
         // Use imported StoreCommand - cast to any for protected methods
-        sandbox.spy(StoreCommand.prototype as unknown as { writeFileSafe: unknown }, 'writeFileSafe');
-        sandbox.spy(StoreCommand.prototype as unknown as { getConfigDir: unknown }, 'getConfigDir');
+        sandbox.spy(
+          StoreCommand.prototype as unknown as { writeFileSafe: unknown },
+          'writeFileSafe'
+        );
+        sandbox.spy(
+          StoreCommand.prototype as unknown as { getConfigDir: unknown },
+          'getConfigDir'
+        );
       })
       .command(['store', '--todo', 'Todo 1', '--list', 'test-list', '--mock'])
       .it('calls writeFileSafe to save blob mappings', ctx => {
         // Use imported StoreCommand - cast to any for protected methods
-        expect((StoreCommand.prototype as unknown as { writeFileSafe: { called: boolean } }).writeFileSafe.called).to.be.true;
+        expect(
+          (
+            StoreCommand.prototype as unknown as {
+              writeFileSafe: { called: boolean };
+            }
+          ).writeFileSafe.called
+        ).to.be.true;
         expect(ctx.stdout).to.contain('Todo stored successfully on Walrus');
       });
   });

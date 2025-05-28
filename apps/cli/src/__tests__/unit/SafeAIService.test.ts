@@ -15,7 +15,6 @@ import { AIProvider } from '../../types/adapters/AIModelAdapter';
 jest.mock('../../utils/Logger');
 jest.mock('../../services/ai/aiService');
 
-
 describe('SafeAIService', () => {
   let safeAIService: SafeAIService;
   let aiService: AIService;
@@ -67,7 +66,9 @@ describe('SafeAIService', () => {
     } as unknown as jest.Mocked<Logger>;
 
     // Mock Logger.getInstance to return our mock
-    (Logger.getInstance as jest.MockedFunction<typeof Logger.getInstance>).mockReturnValue(mockLogger);
+    (
+      Logger.getInstance as jest.MockedFunction<typeof Logger.getInstance>
+    ).mockReturnValue(mockLogger);
 
     // Create minimal mock AIService
     mockAIService = {
@@ -89,7 +90,9 @@ describe('SafeAIService', () => {
       analyzeWithVerification: jest.fn(),
     } as unknown as jest.Mocked<AIService>;
 
-    (AIService as jest.MockedClass<typeof AIService>).mockImplementation(() => mockAIService);
+    (AIService as jest.MockedClass<typeof AIService>).mockImplementation(
+      () => mockAIService
+    );
 
     safeAIService = new SafeAIService();
   });
@@ -98,7 +101,7 @@ describe('SafeAIService', () => {
     // Cleanup after each test to prevent memory leaks
     jest.clearAllMocks();
     jest.restoreAllMocks();
-    
+
     // Nullify references to help garbage collection
     safeAIService = null as any;
     aiService = null as any;
@@ -145,8 +148,18 @@ describe('SafeAIService', () => {
     it('should return false when AI service is not initialized', async () => {
       const newSafeService = new SafeAIService();
       // Force uninitialized state
-      (newSafeService as unknown as { isInitialized: boolean; aiService: unknown }).isInitialized = false;
-      (newSafeService as unknown as { isInitialized: boolean; aiService: unknown }).aiService = null;
+      (
+        newSafeService as unknown as {
+          isInitialized: boolean;
+          aiService: unknown;
+        }
+      ).isInitialized = false;
+      (
+        newSafeService as unknown as {
+          isInitialized: boolean;
+          aiService: unknown;
+        }
+      ).aiService = null;
 
       const available = await newSafeService.isAIAvailable();
       expect(available).toBe(false);
@@ -361,7 +374,9 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.suggestTags.mockResolvedValue(expectedTags);
 
-      const result = await safeAIService.suggestTags(createSampleTodos()[0] as Todo);
+      const result = await safeAIService.suggestTags(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(expectedTags);
@@ -372,7 +387,9 @@ describe('SafeAIService', () => {
     it('should return default tags when AI fails', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.suggestTags(createSampleTodos()[0] as Todo);
+      const result = await safeAIService.suggestTags(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(['general', 'task']);
@@ -385,7 +402,9 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.suggestPriority.mockResolvedValue('high');
 
-      const result = await safeAIService.suggestPriority(createSampleTodos()[0] as Todo);
+      const result = await safeAIService.suggestPriority(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('high');
@@ -396,7 +415,9 @@ describe('SafeAIService', () => {
     it('should return default priority when AI fails', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.suggestPriority(createSampleTodos()[0] as Todo);
+      const result = await safeAIService.suggestPriority(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('medium');

@@ -16,7 +16,7 @@ ora = (() => {
       start: () => ({ succeed: () => {}, fail: () => {}, stop: () => {} }),
       succeed: () => {},
       fail: () => {},
-      stop: () => {}
+      stop: () => {},
     });
   }
 })();
@@ -50,30 +50,38 @@ interface OraInstance {
   stream?: NodeJS.WritableStream;
 }
 
-type OraFunction = (options?: string | { 
-  text?: string; 
-  spinner?: string; 
-  color?: string;
-  prefixText?: string;
-  indent?: number;
-  discardStdin?: boolean;
-  hideCursor?: boolean;
-  stream?: NodeJS.WritableStream;
-}) => OraInstance;
+type OraFunction = (
+  options?:
+    | string
+    | {
+        text?: string;
+        spinner?: string;
+        color?: string;
+        prefixText?: string;
+        indent?: number;
+        discardStdin?: boolean;
+        hideCursor?: boolean;
+        stream?: NodeJS.WritableStream;
+      }
+) => OraInstance;
 
 // Fallback for testing environments if imports fail
 if (!ora || typeof ora !== 'function') {
   logger.warn('ora import failed, using mock implementation');
-  (ora as unknown) = ((options?: string | { 
-    text?: string; 
-    spinner?: string; 
-    color?: string;
-    prefixText?: string;
-    indent?: number;
-    discardStdin?: boolean;
-    hideCursor?: boolean;
-    stream?: NodeJS.WritableStream;
-  }): OraInstance => {
+  (ora as unknown) = ((
+    options?:
+      | string
+      | {
+          text?: string;
+          spinner?: string;
+          color?: string;
+          prefixText?: string;
+          indent?: number;
+          discardStdin?: boolean;
+          hideCursor?: boolean;
+          stream?: NodeJS.WritableStream;
+        }
+  ): OraInstance => {
     const mockInstance: OraInstance = {
       start: () => mockInstance,
       stop: () => mockInstance,
@@ -82,15 +90,16 @@ if (!ora || typeof ora !== 'function') {
       warn: () => mockInstance,
       info: () => mockInstance,
       clear: () => mockInstance,
-      text: typeof options === 'string' ? options : (options?.text || ''),
-      color: typeof options === 'object' ? (options?.color || 'cyan') : 'cyan',
+      text: typeof options === 'string' ? options : options?.text || '',
+      color: typeof options === 'object' ? options?.color || 'cyan' : 'cyan',
       spinner: {},
       isSpinning: false,
       prefixText: typeof options === 'object' ? options?.prefixText : undefined,
       indent: typeof options === 'object' ? options?.indent : undefined,
-      discardStdin: typeof options === 'object' ? options?.discardStdin : undefined,
+      discardStdin:
+        typeof options === 'object' ? options?.discardStdin : undefined,
       hideCursor: typeof options === 'object' ? options?.hideCursor : undefined,
-      stream: typeof options === 'object' ? options?.stream : undefined
+      stream: typeof options === 'object' ? options?.stream : undefined,
     };
     return mockInstance;
   }) as OraFunction;

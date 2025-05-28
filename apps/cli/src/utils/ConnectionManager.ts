@@ -271,7 +271,7 @@ export class ConnectionManager<T extends ManagedConnection> {
     const idleTime = Date.now() - this.lastUsed;
     if (idleTime > (this.options.maxIdleTime || 60000)) {
       logger.debug(`Closing idle connection (idle for ${idleTime}ms)`);
-      void this.closeConnection().catch((_error) => {
+      void this.closeConnection().catch(_error => {
         logger.warn('Error closing idle connection', { error: String(_error) });
       });
     }
@@ -289,7 +289,7 @@ export class ConnectionManager<T extends ManagedConnection> {
     // Set up a new reconnect timer
     this.reconnectTimer = setTimeout(() => {
       logger.debug('Attempting reconnection...');
-      void this.getConnection().catch((_error) => {
+      void this.getConnection().catch(_error => {
         logger.error(
           'Reconnection failed',
           _error instanceof Error ? _error : new Error(String(_error)),

@@ -31,7 +31,9 @@ test.describe('Smart Contract Validation', () => {
       expect(moveTomlContent).toContain('[package]');
       expect(moveTomlContent).toContain('name = "walrus_todo"');
       expect(moveTomlContent).toContain('[dependencies]');
-      expect(moveTomlContent).toContain('Sui = { git = "https://github.com/MystenLabs/sui.git"');
+      expect(moveTomlContent).toContain(
+        'Sui = { git = "https://github.com/MystenLabs/sui.git"'
+      );
     });
 
     test('should have all required contract source files', async () => {
@@ -62,7 +64,7 @@ test.describe('Smart Contract Validation', () => {
         expect(content).toContain('module walrus_todo::');
         expect(content).toMatch(/public\s+(entry\s+)?fun\s+\w+/);
         expect(content).not.toContain('syntax error');
-        
+
         // Check for required imports
         expect(content).toContain('use sui::');
         expect(content).toContain('use std::');
@@ -84,7 +86,9 @@ test.describe('Smart Contract Validation', () => {
       ];
 
       for (const func of requiredFunctions) {
-        expect(content).toMatch(new RegExp(`public\\s+(entry\\s+)?fun\\s+${func}`));
+        expect(content).toMatch(
+          new RegExp(`public\\s+(entry\\s+)?fun\\s+${func}`)
+        );
       }
 
       // Check for proper struct definitions
@@ -102,7 +106,8 @@ test.describe('Smart Contract Validation', () => {
       const content = readFileSync(contractPath, 'utf8');
 
       // Check create_todo_nft function signature
-      const createNftRegex = /public\s+entry\s+fun\s+create_todo_nft\s*\([^)]+\)/;
+      const createNftRegex =
+        /public\s+entry\s+fun\s+create_todo_nft\s*\([^)]+\)/;
       const createNftMatch = content.match(createNftRegex);
       expect(createNftMatch).toBeTruthy();
 
@@ -114,7 +119,8 @@ test.describe('Smart Contract Validation', () => {
       }
 
       // Check complete_todo function
-      const completeTodoRegex = /public\s+entry\s+fun\s+complete_todo\s*\([^)]+\)/;
+      const completeTodoRegex =
+        /public\s+entry\s+fun\s+complete_todo\s*\([^)]+\)/;
       const completeTodoMatch = content.match(completeTodoRegex);
       expect(completeTodoMatch).toBeTruthy();
 
@@ -131,10 +137,10 @@ test.describe('Smart Contract Validation', () => {
 
       // Check for error constants
       expect(content).toMatch(/const\s+E_\w+:\s+u64\s*=\s*\d+;/);
-      
+
       // Check for error assertions
       expect(content).toContain('assert!');
-      
+
       // Specific error codes
       expect(content).toContain('E_NOT_OWNER');
       expect(content).toContain('E_INVALID_METADATA');
@@ -152,7 +158,7 @@ test.describe('Smart Contract Validation', () => {
       // Should not have compilation errors
       expect(result.stderr).not.toContain('error');
       expect(result.stderr).not.toContain('failed');
-      
+
       // Should indicate successful build
       if (result.exitCode === 0) {
         expect(result.stdout).toMatch(/build|compiled|success/i);
@@ -161,7 +167,7 @@ test.describe('Smart Contract Validation', () => {
 
     test('should validate contract deployment parameters', async () => {
       const isValid = await contractHelper.validateContractDeployment();
-      
+
       // This might fail in test environment, so we check gracefully
       if (process.env.SUI_NETWORK === 'testnet' && process.env.PACKAGE_ID) {
         expect(isValid).toBe(true);
@@ -175,10 +181,10 @@ test.describe('Smart Contract Validation', () => {
   test.describe('Contract Gas Estimation', () => {
     test('should estimate gas for NFT creation', async () => {
       const gasCost = await contractHelper.estimateGasCost('create');
-      
+
       // Gas cost should be a reasonable number
       expect(gasCost).toBeGreaterThanOrEqual(0);
-      
+
       // In a real network, should be less than 1M gas units
       if (gasCost > 0) {
         expect(gasCost).toBeLessThan(1000000);
@@ -198,19 +204,22 @@ test.describe('Smart Contract Validation', () => {
 
   test.describe('Contract Event Validation', () => {
     test('should verify creation event emission', async () => {
-      const eventEmitted = await contractHelper.verifyEventEmission('TodoNFTCreated');
-      
+      const eventEmitted =
+        await contractHelper.verifyEventEmission('TodoNFTCreated');
+
       // In test environment, this might be mocked
       expect(typeof eventEmitted).toBe('boolean');
     });
 
     test('should verify completion event emission', async () => {
-      const eventEmitted = await contractHelper.verifyEventEmission('TodoNFTCompleted');
+      const eventEmitted =
+        await contractHelper.verifyEventEmission('TodoNFTCompleted');
       expect(typeof eventEmitted).toBe('boolean');
     });
 
     test('should verify update event emission', async () => {
-      const eventEmitted = await contractHelper.verifyEventEmission('TodoNFTUpdated');
+      const eventEmitted =
+        await contractHelper.verifyEventEmission('TodoNFTUpdated');
       expect(typeof eventEmitted).toBe('boolean');
     });
   });
@@ -235,7 +244,7 @@ test.describe('Smart Contract Validation', () => {
 
       // Check for length validations
       expect(content).toMatch(/assert!\([^)]*length\(\)[^)]*\)/g);
-      
+
       // Check for empty input validation
       expect(content).toMatch(/assert!\([^)]*> 0[^)]*\)/g);
     });
@@ -253,15 +262,21 @@ test.describe('Smart Contract Validation', () => {
   test.describe('Contract Integration Tests', () => {
     test('should handle NFT creation workflow', async () => {
       // Create a todo first
-      const createResult = await cli.runCommand('add', ['"Contract Test Todo"']);
+      const createResult = await cli.runCommand('add', [
+        '"Contract Test Todo"',
+      ]);
       expect(createResult.exitCode).toBe(0);
 
       // Try to convert to NFT
-      const nftResult = await cli.runCommand('store', ['1', '--nft', '--validate-contract']);
-      
+      const nftResult = await cli.runCommand('store', [
+        '1',
+        '--nft',
+        '--validate-contract',
+      ]);
+
       // Should either succeed or fail gracefully
       expect([0, 1]).toContain(nftResult.exitCode);
-      
+
       if (nftResult.exitCode !== 0) {
         // Should have meaningful error message
         expect(nftResult.stderr.length).toBeGreaterThan(0);
@@ -275,8 +290,12 @@ test.describe('Smart Contract Validation', () => {
       }
 
       // Try batch conversion
-      const batchResult = await cli.runCommand('store', ['--all', '--nft', '--validate-contract']);
-      
+      const batchResult = await cli.runCommand('store', [
+        '--all',
+        '--nft',
+        '--validate-contract',
+      ]);
+
       // Should handle gracefully
       expect(typeof batchResult.exitCode).toBe('number');
     });
@@ -286,7 +305,7 @@ test.describe('Smart Contract Validation', () => {
       const invalidResult = await cli.runCommand('complete', ['999'], {
         env: { SIMULATE_CONTRACT_ERROR: 'true' },
       });
-      
+
       expect(invalidResult.exitCode).not.toBe(0);
       expect(invalidResult.stderr).toContain('not found');
     });
@@ -295,16 +314,16 @@ test.describe('Smart Contract Validation', () => {
   test.describe('Contract Performance', () => {
     test('should validate contract execution efficiency', async () => {
       const startTime = Date.now();
-      
+
       // Create todo and convert to NFT
       await cli.runCommand('add', ['"Performance Test Todo"']);
       const nftResult = await cli.runCommand('store', ['1', '--nft']);
-      
+
       const duration = Date.now() - startTime;
-      
+
       // Should complete within reasonable time (30 seconds)
       expect(duration).toBeLessThan(30000);
-      
+
       // If successful, should be much faster
       if (nftResult.exitCode === 0) {
         expect(duration).toBeLessThan(10000);
@@ -318,17 +337,17 @@ test.describe('Smart Contract Validation', () => {
       }
 
       // Try concurrent NFT creation
-      const promises = [1, 2, 3].map(id => 
+      const promises = [1, 2, 3].map(id =>
         cli.runCommand('store', [id.toString(), '--nft'])
       );
 
       const results = await Promise.allSettled(promises);
-      
+
       // At least one should succeed, or all should fail gracefully
-      const successCount = results.filter(r => 
-        r.status === 'fulfilled' && r.value.exitCode === 0
+      const successCount = results.filter(
+        r => r.status === 'fulfilled' && r.value.exitCode === 0
       ).length;
-      
+
       expect(successCount).toBeGreaterThanOrEqual(0);
     });
   });
@@ -342,11 +361,11 @@ test.describe('Move Language Features', () => {
 
     // Check for proper struct syntax
     expect(content).toMatch(/struct\s+\w+\s+has\s+[^{]+\{/);
-    
+
     // Check for required abilities
     expect(content).toContain('has key, store');
     expect(content).toContain('has copy, drop');
-    
+
     // Check field types
     expect(content).toContain('id: UID');
     expect(content).toContain('String');
@@ -360,10 +379,10 @@ test.describe('Move Language Features', () => {
 
     // Check for public entry functions
     expect(content).toMatch(/public\s+entry\s+fun/);
-    
+
     // Check for public functions
     expect(content).toMatch(/public\s+fun/);
-    
+
     // Check for private functions (fun without public)
     expect(content).toMatch(/^\s*fun\s+\w+/m);
   });

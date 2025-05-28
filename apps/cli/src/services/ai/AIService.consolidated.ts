@@ -262,8 +262,7 @@ export class AIService {
         credentialService: secureCredentialService,
       });
     } catch (err: unknown) {
-      const typedError =
-        err instanceof Error ? err : new Error(String(err));
+      const typedError = err instanceof Error ? err : new Error(String(err));
       this.logger.error(`Failed to set provider ${provider}:`, typedError);
       // errorMessage would be used for more detailed error reporting
       // const errorMessage = `Failed to initialize AI provider ${provider}${modelName ? ` with model ${modelName}` : ''}: ${typedError.message}`;
@@ -363,8 +362,7 @@ export class AIService {
 
       return response.result;
     } catch (err: unknown) {
-      const typedError =
-        err instanceof Error ? err : new Error(String(err));
+      const typedError = err instanceof Error ? err : new Error(String(err));
       const summaryError = new Error(
         `Failed to summarize todos: ${typedError.message}`
       );
@@ -692,35 +690,36 @@ export class AIService {
 
     const modelOptions = this.configManager.getModelOptions(operation);
 
-    const response = await this.modelAdapter.completeStructured<
-      TodoAnalysisResult
-    >({
-      prompt: promptTemplate,
-      input: { todos: todoStr },
-      options: modelOptions,
-      metadata: { operation },
-    });
+    const response =
+      await this.modelAdapter.completeStructured<TodoAnalysisResult>({
+        prompt: promptTemplate,
+        input: { todos: todoStr },
+        options: modelOptions,
+        metadata: { operation },
+      });
 
     // Cache the result
     this.resultCache.set(operation, todos, response);
 
-    return response.result || {
-      productivity_insights: {
-        completion_rate: 0,
-        average_duration: 0,
-        peak_activity_periods: []
-      },
-      patterns: {
-        common_categories: [],
-        recurring_themes: [],
-        workflow_efficiency: 0
-      },
-      recommendations: {
-        optimization_suggestions: [],
-        priority_adjustments: {},
-        time_management_tips: []
+    return (
+      response.result || {
+        productivity_insights: {
+          completion_rate: 0,
+          average_duration: 0,
+          peak_activity_periods: [],
+        },
+        patterns: {
+          common_categories: [],
+          recurring_themes: [],
+          workflow_efficiency: 0,
+        },
+        recommendations: {
+          optimization_suggestions: [],
+          priority_adjustments: {},
+          time_management_tips: [],
+        },
       }
-    };
+    );
   }
 
   /**
@@ -801,13 +800,15 @@ export class AIService {
 
         return tags;
       } catch (parseError: unknown) {
-        const typedParseError = parseError instanceof Error ? parseError : new Error(String(parseError));
+        const typedParseError =
+          parseError instanceof Error
+            ? parseError
+            : new Error(String(parseError));
         this.logger.error('Failed to parse suggested tags:', typedParseError);
         throw new Error('Failed to parse tags response: ' + response.result);
       }
     } catch (err: unknown) {
-      const typedError =
-        err instanceof Error ? err : new Error(String(err));
+      const typedError = err instanceof Error ? err : new Error(String(err));
       this.logger.error(`Failed to suggest tags: ${typedError.message}`);
       throw typedError;
     }

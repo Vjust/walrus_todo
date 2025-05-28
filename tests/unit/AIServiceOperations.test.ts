@@ -5,7 +5,11 @@ import {
   AIModelAdapter,
 } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { AIPrivacyLevel } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { createMockAIModelAdapter, createMockAIVerifierAdapter, createTestAIService } from '../helpers/AITestFactory';
+import {
+  createMockAIModelAdapter,
+  createMockAIVerifierAdapter,
+  createTestAIService,
+} from '../helpers/AITestFactory';
 import {
   createSampleTodos,
   expectedResults,
@@ -66,7 +70,11 @@ describe('AIService Operations', () => {
     });
 
     it('should initialize with specified provider and model', () => {
-      const aiService = createTestAIService('test-api-key', AIProvider.OPENAI, 'gpt-4');
+      const aiService = createTestAIService(
+        'test-api-key',
+        AIProvider.OPENAI,
+        'gpt-4'
+      );
       expect(aiService).toBeDefined();
       expect(aiService.getProvider()).toBeDefined();
       expect(aiService.getProvider().getModelName()).toBe('mock-model');
@@ -78,21 +86,25 @@ describe('AIService Operations', () => {
 
       // Create a new mock adapter for the provider change
       const newMockAdapter = createMockAIModelAdapter();
-      (newMockAdapter.getProviderName as jest.Mock).mockReturnValue(AIProvider.OPENAI);
+      (newMockAdapter.getProviderName as jest.Mock).mockReturnValue(
+        AIProvider.OPENAI
+      );
       (newMockAdapter.getModelName as jest.Mock).mockReturnValue('gpt-4');
 
       // Mock the setProvider method since it might not exist in current implementation
       if (typeof (aiService as any).setProvider === 'function') {
         (aiService as any).setProvider(AIProvider.OPENAI, 'gpt-4');
-        
+
         // Manually update the adapter for test verification
         Object.defineProperty(aiService, 'modelAdapter', {
           value: newMockAdapter,
           writable: true,
-          configurable: true
+          configurable: true,
         });
-        
-        expect(aiService.getProvider().getProviderName()).toBe(AIProvider.OPENAI);
+
+        expect(aiService.getProvider().getProviderName()).toBe(
+          AIProvider.OPENAI
+        );
         expect(aiService.getProvider().getModelName()).toBe('gpt-4');
       } else {
         // Test the provider retrieval works properly
@@ -108,7 +120,7 @@ describe('AIService Operations', () => {
     it('should summarize todos', async () => {
       const aiService = createTestAIService() as TestableAIService;
       const mockAdapter = aiService.getProvider();
-      
+
       // Configure the mock response
       (mockAdapter.processWithPromptTemplate as jest.Mock).mockResolvedValue({
         result: expectedResults.summarize,
@@ -126,7 +138,7 @@ describe('AIService Operations', () => {
     it('should categorize todos', async () => {
       const aiService = createTestAIService() as TestableAIService;
       const mockAdapter = aiService.getProvider();
-      
+
       // Configure the mock response
       (mockAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: expectedResults.categorize,
@@ -144,7 +156,7 @@ describe('AIService Operations', () => {
     it('should prioritize todos', async () => {
       const aiService = createTestAIService() as TestableAIService;
       const mockAdapter = aiService.getProvider();
-      
+
       // Configure the mock response
       (mockAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: expectedResults.prioritize,
@@ -162,7 +174,7 @@ describe('AIService Operations', () => {
     it('should suggest new todos', async () => {
       const aiService = createTestAIService() as TestableAIService;
       const mockAdapter = aiService.getProvider();
-      
+
       // Configure the mock response
       (mockAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: expectedResults.suggest,
@@ -180,7 +192,7 @@ describe('AIService Operations', () => {
     it('should analyze todos', async () => {
       const aiService = createTestAIService() as TestableAIService;
       const mockAdapter = aiService.getProvider();
-      
+
       // Configure the mock response
       (mockAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: expectedResults.analyze,
@@ -242,15 +254,17 @@ describe('AIService Operations', () => {
         'mock-model',
         mockVerificationService
       ) as TestableAIService;
-      
+
       // Configure the mock adapter
       const serviceAdapter = aiService.getProvider();
-      (serviceAdapter.processWithPromptTemplate as jest.Mock).mockResolvedValue({
-        result: expectedResults.summarize,
-        modelName: 'mock-model',
-        provider: AIProvider.XAI,
-        timestamp: Date.now(),
-      });
+      (serviceAdapter.processWithPromptTemplate as jest.Mock).mockResolvedValue(
+        {
+          result: expectedResults.summarize,
+          modelName: 'mock-model',
+          provider: AIProvider.XAI,
+          timestamp: Date.now(),
+        }
+      );
 
       // Test
       const result = await aiService.summarizeWithVerification(
@@ -305,7 +319,7 @@ describe('AIService Operations', () => {
         'mock-model',
         mockVerificationService
       ) as TestableAIService;
-      
+
       // Configure the mock adapter
       const serviceAdapter = aiService.getProvider();
       (serviceAdapter.completeStructured as jest.Mock).mockResolvedValue({
@@ -359,17 +373,17 @@ describe('AIService Operations', () => {
       });
 
       const aiService = createTestAIService(
-        "test-api-key",
+        'test-api-key',
         AIProvider.XAI,
-        "mock-model",
+        'mock-model',
         mockVerificationService
       ) as TestableAIService;
-      
+
       // Configure the mock adapter
       const serviceAdapter = aiService.getProvider();
       (serviceAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: expectedResults.prioritize,
-        modelName: "mock-model",
+        modelName: 'mock-model',
         provider: AIProvider.XAI,
         timestamp: Date.now(),
       });
@@ -416,17 +430,17 @@ describe('AIService Operations', () => {
       });
 
       const aiService = createTestAIService(
-        "test-api-key",
+        'test-api-key',
         AIProvider.XAI,
-        "mock-model",
+        'mock-model',
         mockVerificationService
       ) as TestableAIService;
-      
+
       // Configure the mock adapter
       const serviceAdapter = aiService.getProvider();
       (serviceAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: expectedResults.prioritize,
-        modelName: "mock-model",
+        modelName: 'mock-model',
         provider: AIProvider.XAI,
         timestamp: Date.now(),
       });
@@ -476,17 +490,17 @@ describe('AIService Operations', () => {
       });
 
       const aiService = createTestAIService(
-        "test-api-key",
+        'test-api-key',
         AIProvider.XAI,
-        "mock-model",
+        'mock-model',
         mockVerificationService
       ) as TestableAIService;
-      
+
       // Configure the mock adapter
       const serviceAdapter = aiService.getProvider();
       (serviceAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: expectedResults.prioritize,
-        modelName: "mock-model",
+        modelName: 'mock-model',
         provider: AIProvider.XAI,
         timestamp: Date.now(),
       });
@@ -516,7 +530,7 @@ describe('AIService Operations', () => {
     it('should handle model adapter errors', async () => {
       const aiService = createTestAIService() as TestableAIService;
       const mockAdapter = aiService.getProvider();
-      
+
       // Configure the mock to throw an error
       (mockAdapter.processWithPromptTemplate as jest.Mock).mockRejectedValue(
         new Error('API connection error')
@@ -530,7 +544,7 @@ describe('AIService Operations', () => {
     it('should handle structured data parsing errors', async () => {
       const aiService = createTestAIService() as TestableAIService;
       const mockAdapter = aiService.getProvider();
-      
+
       // Configure the mock to return null result
       (mockAdapter.completeStructured as jest.Mock).mockResolvedValue({
         result: null, // Simulate null result

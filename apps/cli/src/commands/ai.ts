@@ -14,11 +14,11 @@ import { getEnv, hasEnv } from '../utils/environment-config';
 import { TodoService } from '../services/todoService';
 import { CLIError } from '../types/errors/consolidated';
 import { Todo } from '../types/todo';
-import { 
-  createBackgroundAIOperationsManager, 
-  BackgroundAIOperations, 
+import {
+  createBackgroundAIOperationsManager,
+  BackgroundAIOperations,
   BackgroundAIUtils,
-  BackgroundAIOptions
+  BackgroundAIOptions,
 } from '../utils/background-ai-operations';
 
 const logger = new Logger('AI');
@@ -234,7 +234,8 @@ export default class AI extends BaseCommand {
     }
 
     // Use environment-based verification setting
-    typedFlags.verify = typedFlags.verify || getEnv('ENABLE_BLOCKCHAIN_VERIFICATION');
+    typedFlags.verify =
+      typedFlags.verify || getEnv('ENABLE_BLOCKCHAIN_VERIFICATION');
 
     // Perform the requested operation
     switch (args.operation) {
@@ -291,7 +292,13 @@ export default class AI extends BaseCommand {
     const providers = ['XAI', 'OPENAI', 'ANTHROPIC', 'OLLAMA'];
 
     for (const provider of providers) {
-      const hasKey = hasEnv(`${provider}_API_KEY` as 'XAI_API_KEY' | 'OPENAI_API_KEY' | 'ANTHROPIC_API_KEY' | 'OLLAMA_API_KEY');
+      const hasKey = hasEnv(
+        `${provider}_API_KEY` as
+          | 'XAI_API_KEY'
+          | 'OPENAI_API_KEY'
+          | 'ANTHROPIC_API_KEY'
+          | 'OLLAMA_API_KEY'
+      );
       const status = hasKey
         ? chalk.green('✓ available')
         : chalk.gray('not configured');
@@ -528,7 +535,12 @@ export default class AI extends BaseCommand {
         if (response && typeof response === 'object') {
           const responseObj = response as AIResponse;
           // Check for content in kwargs (LangChain format)
-          if (responseObj.kwargs && typeof responseObj.kwargs === 'object' && responseObj.kwargs.content && typeof responseObj.kwargs.content === 'string') {
+          if (
+            responseObj.kwargs &&
+            typeof responseObj.kwargs === 'object' &&
+            responseObj.kwargs.content &&
+            typeof responseObj.kwargs.content === 'string'
+          ) {
             return responseObj.kwargs.content;
           }
 
@@ -554,7 +566,12 @@ export default class AI extends BaseCommand {
 
           // If we have a toString method that doesn't return [object Object],
           // use that as a last resort
-          if (typeof response === 'object' && response !== null && 'toString' in response && typeof response.toString === 'function') {
+          if (
+            typeof response === 'object' &&
+            response !== null &&
+            'toString' in response &&
+            typeof response.toString === 'function'
+          ) {
             const stringRep = response.toString();
             if (stringRep && !stringRep.includes('[object Object]')) {
               return stringRep;
@@ -620,7 +637,9 @@ export default class AI extends BaseCommand {
       }
 
       // Extract the categories from various response formats
-      const extractCategoriesData = (response: unknown): Record<string, string[]> => {
+      const extractCategoriesData = (
+        response: unknown
+      ): Record<string, string[]> => {
         // If it's already the right structure, return it directly
         if (
           response &&
@@ -642,7 +661,11 @@ export default class AI extends BaseCommand {
               if (typeof content === 'string') {
                 try {
                   const parsed = JSON.parse(content) as unknown;
-                  if (typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null) {
+                  if (
+                    typeof parsed === 'object' &&
+                    !Array.isArray(parsed) &&
+                    parsed !== null
+                  ) {
                     return parsed as Record<string, string[]>;
                   }
                 } catch (e) {
@@ -750,7 +773,9 @@ export default class AI extends BaseCommand {
       }
 
       // Extract priorities from various response formats
-      const extractPrioritiesData = (response: unknown): Record<string, number> => {
+      const extractPrioritiesData = (
+        response: unknown
+      ): Record<string, number> => {
         // If it's already the right structure, return it directly
         if (
           response &&
@@ -772,7 +797,11 @@ export default class AI extends BaseCommand {
               if (typeof content === 'string') {
                 try {
                   const parsed = JSON.parse(content) as unknown;
-                  if (typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null) {
+                  if (
+                    typeof parsed === 'object' &&
+                    !Array.isArray(parsed) &&
+                    parsed !== null
+                  ) {
                     return parsed as Record<string, number>;
                   }
                 } catch (e) {
@@ -921,7 +950,11 @@ export default class AI extends BaseCommand {
         if (obj && typeof obj === 'object') {
           const objAny = obj as AIObjectResponse;
           // Check for direct content in kwargs.content (LangChain format)
-          if (objAny.kwargs && typeof objAny.kwargs === 'object' && objAny.kwargs.content) {
+          if (
+            objAny.kwargs &&
+            typeof objAny.kwargs === 'object' &&
+            objAny.kwargs.content
+          ) {
             try {
               // Try to parse the content as JSON
               const content = objAny.kwargs.content;
@@ -1081,7 +1114,9 @@ export default class AI extends BaseCommand {
       }
 
       // Extract analysis from various response formats
-      const extractAnalysisData = (response: unknown): Record<string, unknown> => {
+      const extractAnalysisData = (
+        response: unknown
+      ): Record<string, unknown> => {
         // If it's already the right structure, return it directly
         if (
           response &&
@@ -1106,7 +1141,11 @@ export default class AI extends BaseCommand {
               if (typeof content === 'string') {
                 try {
                   const parsed = JSON.parse(content) as unknown;
-                  if (typeof parsed === 'object' && !Array.isArray(parsed) && parsed !== null) {
+                  if (
+                    typeof parsed === 'object' &&
+                    !Array.isArray(parsed) &&
+                    parsed !== null
+                  ) {
                     return parsed as Record<string, unknown>;
                   }
                 } catch (e) {
@@ -1214,13 +1253,15 @@ export default class AI extends BaseCommand {
       this.log(`Status: ${this.formatStatus(status.status)}`);
       this.log(`Progress: ${chalk.yellow(`${status.progress}%`)}`);
       this.log(`Stage: ${chalk.blue(status.stage)}`);
-      
+
       if (status.startedAt) {
         this.log(`Started: ${chalk.dim(status.startedAt.toLocaleString())}`);
       }
-      
+
       if (status.completedAt) {
-        this.log(`Completed: ${chalk.dim(status.completedAt.toLocaleString())}`);
+        this.log(
+          `Completed: ${chalk.dim(status.completedAt.toLocaleString())}`
+        );
       }
 
       if (status.error) {
@@ -1237,26 +1278,30 @@ export default class AI extends BaseCommand {
       }
 
       // If waiting and operation is still running, wait for completion
-      if (flags.wait && (status.status === 'queued' || status.status === 'running')) {
+      if (
+        flags.wait &&
+        (status.status === 'queued' || status.status === 'running')
+      ) {
         this.log(chalk.yellow('\nWaiting for operation to complete...'));
-        
+
         const result = await backgroundOps.waitForOperationWithProgress(
           jobId,
           (progress, stage) => {
-            process.stdout.write(`\r${chalk.blue('Progress:')} ${progress}% (${stage})`);
+            process.stdout.write(
+              `\r${chalk.blue('Progress:')} ${progress}% (${stage})`
+            );
           }
         );
 
         process.stdout.write('\n');
         this.log(chalk.green('Operation completed!'));
-        
+
         if (!flags.json) {
           await this.displayAIResult(status.type as any, result.result, flags);
         } else {
           this.log(JSON.stringify(result, null, 2));
         }
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -1300,25 +1345,30 @@ export default class AI extends BaseCommand {
       this.log(chalk.blue(`Job ID: ${operation.operationId}`));
       this.log('');
       this.log(chalk.dim('Commands to check progress:'));
-      this.log(chalk.cyan(`  walrus_todo ai status --jobId ${operation.operationId}`));
-      this.log(chalk.cyan(`  walrus_todo ai ${type} --jobId ${operation.operationId} --wait`));
+      this.log(
+        chalk.cyan(`  walrus_todo ai status --jobId ${operation.operationId}`)
+      );
+      this.log(
+        chalk.cyan(
+          `  walrus_todo ai ${type} --jobId ${operation.operationId} --wait`
+        )
+      );
       this.log('');
 
       // If wait flag is set, wait for completion and show results
       if (flags.wait) {
         this.log(chalk.yellow('Waiting for operation to complete...'));
-        
+
         const result = await operation.waitForCompletion();
-        
+
         this.log(chalk.green('Operation completed!'));
-        
+
         if (flags.json) {
           this.log(JSON.stringify(result, null, 2));
         } else {
           await this.displayAIResult(type, result.result, flags);
         }
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -1360,7 +1410,10 @@ export default class AI extends BaseCommand {
   /**
    * Display summary results
    */
-  private async displaySummaryResult(summaryResponse: any, flags: AICommandFlags) {
+  private async displaySummaryResult(
+    summaryResponse: any,
+    flags: AICommandFlags
+  ) {
     // Extract the summary text from various response formats
     const extractSummaryText = (response: unknown): string => {
       // If it's already a string, return it directly
@@ -1372,7 +1425,12 @@ export default class AI extends BaseCommand {
       if (response && typeof response === 'object') {
         const responseObj = response as AIResponse;
         // Check for content in kwargs (LangChain format)
-        if (responseObj.kwargs && typeof responseObj.kwargs === 'object' && responseObj.kwargs.content && typeof responseObj.kwargs.content === 'string') {
+        if (
+          responseObj.kwargs &&
+          typeof responseObj.kwargs === 'object' &&
+          responseObj.kwargs.content &&
+          typeof responseObj.kwargs.content === 'string'
+        ) {
           return responseObj.kwargs.content;
         }
 
@@ -1382,13 +1440,7 @@ export default class AI extends BaseCommand {
         }
 
         // For other object formats, try to extract a sensible text representation
-        for (const key of [
-          'result',
-          'text',
-          'message',
-          'summary',
-          'output',
-        ]) {
+        for (const key of ['result', 'text', 'message', 'summary', 'output']) {
           const responseRecord = response as Record<string, unknown>;
           const value = responseRecord[key];
           if (typeof value === 'string' && value.length > 0) {
@@ -1398,7 +1450,12 @@ export default class AI extends BaseCommand {
 
         // If we have a toString method that doesn't return [object Object],
         // use that as a last resort
-        if (typeof response === 'object' && response !== null && 'toString' in response && typeof response.toString === 'function') {
+        if (
+          typeof response === 'object' &&
+          response !== null &&
+          'toString' in response &&
+          typeof response.toString === 'function'
+        ) {
           const stringRep = response.toString();
           if (stringRep && !stringRep.includes('[object Object]')) {
             return stringRep;
@@ -1425,25 +1482,39 @@ export default class AI extends BaseCommand {
   /**
    * Display categorize results (simplified versions of original methods)
    */
-  private async displayCategorizeResult(categoriesResponse: any, flags: AICommandFlags) {
+  private async displayCategorizeResult(
+    categoriesResponse: any,
+    flags: AICommandFlags
+  ) {
     // Simplified display logic - would need todos for full display
     if (flags.json) {
       this.log(JSON.stringify({ categories: categoriesResponse }, null, 2));
     } else {
       this.log(chalk.cyan('📂 Todo Categories:'));
-      this.log(chalk.yellow('Categories have been generated (use --json for detailed output)'));
+      this.log(
+        chalk.yellow(
+          'Categories have been generated (use --json for detailed output)'
+        )
+      );
     }
   }
 
   /**
    * Display prioritize results (simplified)
    */
-  private async displayPrioritizeResult(prioritiesResponse: any, flags: AICommandFlags) {
+  private async displayPrioritizeResult(
+    prioritiesResponse: any,
+    flags: AICommandFlags
+  ) {
     if (flags.json) {
       this.log(JSON.stringify({ priorities: prioritiesResponse }, null, 2));
     } else {
       this.log(chalk.cyan('🔢 Prioritized Todos:'));
-      this.log(chalk.yellow('Priorities have been generated (use --json for detailed output)'));
+      this.log(
+        chalk.yellow(
+          'Priorities have been generated (use --json for detailed output)'
+        )
+      );
     }
   }
 
@@ -1460,7 +1531,11 @@ export default class AI extends BaseCommand {
           this.log(`${i + 1}. ${suggestion}`);
         });
       } else {
-        this.log(chalk.yellow('Suggestions have been generated (use --json for detailed output)'));
+        this.log(
+          chalk.yellow(
+            'Suggestions have been generated (use --json for detailed output)'
+          )
+        );
       }
     }
   }
@@ -1468,12 +1543,19 @@ export default class AI extends BaseCommand {
   /**
    * Display analyze results (simplified)
    */
-  private async displayAnalyzeResult(analysisResponse: any, flags: AICommandFlags) {
+  private async displayAnalyzeResult(
+    analysisResponse: any,
+    flags: AICommandFlags
+  ) {
     if (flags.json) {
       this.log(JSON.stringify({ analysis: analysisResponse }, null, 2));
     } else {
       this.log(chalk.cyan('🔍 Todo Analysis:'));
-      this.log(chalk.yellow('Analysis has been completed (use --json for detailed output)'));
+      this.log(
+        chalk.yellow(
+          'Analysis has been completed (use --json for detailed output)'
+        )
+      );
     }
   }
 
@@ -1489,7 +1571,9 @@ export default class AI extends BaseCommand {
       cancelled: chalk.gray('🚫 Cancelled'),
     };
 
-    return statusColors[status as keyof typeof statusColors] || chalk.white(status);
+    return (
+      statusColors[status as keyof typeof statusColors] || chalk.white(status)
+    );
   }
 }
 

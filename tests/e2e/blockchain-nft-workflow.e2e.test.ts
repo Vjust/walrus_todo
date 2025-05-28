@@ -13,7 +13,11 @@ class CLIHelper {
   private output: string[] = [];
   private errorOutput: string[] = [];
 
-  async runCommand(command: string, args: string[] = [], timeout = 10000): Promise<{
+  async runCommand(
+    command: string,
+    args: string[] = [],
+    timeout = 10000
+  ): Promise<{
     stdout: string;
     stderr: string;
     exitCode: number | null;
@@ -44,11 +48,11 @@ class CLIHelper {
         this.errorOutput.push(error);
       });
 
-      this.process.on('close', (code) => {
+      this.process.on('close', code => {
         resolve({ stdout, stderr, exitCode: code });
       });
 
-      this.process.on('error', (error) => {
+      this.process.on('error', error => {
         reject(error);
       });
 
@@ -83,7 +87,10 @@ class CLIHelper {
 class MockWallet {
   private connected = false;
   private address = '0x1234567890123456789012345678901234567890';
-  private transactions: Array<{ digest: string; status: 'success' | 'failed' }> = [];
+  private transactions: Array<{
+    digest: string;
+    status: 'success' | 'failed';
+  }> = [];
 
   async connect(): Promise<void> {
     this.connected = true;
@@ -107,21 +114,24 @@ class MockWallet {
   }> {
     // Simulate transaction processing
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     const digest = `mock_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const status = Math.random() > 0.1 ? 'success' : 'failure'; // 90% success rate
-    
+
     this.transactions.push({ digest, status });
-    
+
     return {
       digest,
       effects: {
-        status: { status }
-      }
+        status: { status },
+      },
     };
   }
 
-  getTransactionHistory(): Array<{ digest: string; status: 'success' | 'failed' }> {
+  getTransactionHistory(): Array<{
+    digest: string;
+    status: 'success' | 'failed';
+  }> {
     return [...this.transactions];
   }
 }
@@ -142,7 +152,11 @@ test.describe('Blockchain NFT Workflow', () => {
 
   test('CLI: Create todo and convert to NFT', async () => {
     // Step 1: Create a todo via CLI
-    const createResult = await cli.runCommand('add', ['"Test NFT Todo"', '--description', '"A todo that will become an NFT"']);
+    const createResult = await cli.runCommand('add', [
+      '"Test NFT Todo"',
+      '--description',
+      '"A todo that will become an NFT"',
+    ]);
     expect(createResult.exitCode).toBe(0);
     expect(createResult.stdout).toContain('Todo added');
 
@@ -168,7 +182,7 @@ test.describe('Blockchain NFT Workflow', () => {
     const noWalletResult = await cli.runCommand('store', ['1', '--nft']);
     expect(noWalletResult.exitCode).not.toBe(0);
     expect(noWalletResult.stderr).toContain('wallet');
-    
+
     // Restore mock environment
     process.env.WALRUS_USE_MOCK = 'true';
   });
@@ -210,7 +224,11 @@ test.describe('Blockchain NFT Workflow', () => {
 
     // Test contract interaction
     await cli.runCommand('add', ['"Contract Test Todo"']);
-    const contractResult = await cli.runCommand('store', ['1', '--nft', '--verify-contract']);
+    const contractResult = await cli.runCommand('store', [
+      '1',
+      '--nft',
+      '--verify-contract',
+    ]);
     expect(contractResult.exitCode).toBe(0);
   });
 });
@@ -224,7 +242,7 @@ test.describe('Frontend NFT Integration', () => {
     context = await browser.newContext();
     page = await context.newPage();
     mockWallet = new MockWallet();
-    
+
     // Mock wallet API for browser
     await page.addInitScript(() => {
       // @ts-ignore
@@ -243,9 +261,9 @@ test.describe('Frontend NFT Integration', () => {
         signAndExecuteTransaction: async (transaction: any) => {
           return {
             digest: `mock_tx_${Date.now()}`,
-            effects: { status: { status: 'success' } }
+            effects: { status: { status: 'success' } },
           };
-        }
+        },
       };
     });
 
@@ -277,20 +295,32 @@ test.describe('Frontend NFT Integration', () => {
     await expect(page.locator('text=Connected')).toBeVisible();
 
     // Navigate to todo creation form
-    const createTodoButton = page.locator('button', { hasText: /create todo/i });
+    const createTodoButton = page.locator('button', {
+      hasText: /create todo/i,
+    });
     if (await createTodoButton.isVisible()) {
       await createTodoButton.click();
     }
 
     // Fill out todo form
-    await page.fill('input[placeholder*="title"], input[name="title"]', 'Frontend NFT Todo');
-    await page.fill('textarea[placeholder*="description"], textarea[name="description"]', 'A todo created from the frontend');
+    await page.fill(
+      'input[placeholder*="title"], input[name="title"]',
+      'Frontend NFT Todo'
+    );
+    await page.fill(
+      'textarea[placeholder*="description"], textarea[name="description"]',
+      'A todo created from the frontend'
+    );
 
     // Submit todo
-    await page.click('button[type="submit"], button:has-text("Create"), button:has-text("Add")');
+    await page.click(
+      'button[type="submit"], button:has-text("Create"), button:has-text("Add")'
+    );
 
     // Wait for todo to appear in list
-    await expect(page.locator('text=Frontend NFT Todo')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Frontend NFT Todo')).toBeVisible({
+      timeout: 10000,
+    });
 
     // Look for NFT conversion option
     const nftButton = page.locator('button', { hasText: /nft|blockchain/i });
@@ -298,7 +328,9 @@ test.describe('Frontend NFT Integration', () => {
       await nftButton.click();
 
       // Wait for transaction to complete
-      await expect(page.locator('text=NFT created successfully')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=NFT created successfully')).toBeVisible({
+        timeout: 15000,
+      });
     }
   });
 
@@ -308,12 +340,16 @@ test.describe('Frontend NFT Integration', () => {
     await expect(page.locator('text=Connected')).toBeVisible();
 
     // Navigate to transaction history if available
-    const historyButton = page.locator('button', { hasText: /history|transactions/i });
+    const historyButton = page.locator('button', {
+      hasText: /history|transactions/i,
+    });
     if (await historyButton.isVisible()) {
       await historyButton.click();
 
       // Check for transaction list
-      const transactionList = page.locator('[data-testid="transaction-list"], .transaction-history');
+      const transactionList = page.locator(
+        '[data-testid="transaction-list"], .transaction-history'
+      );
       if (await transactionList.isVisible()) {
         await expect(transactionList).toBeVisible();
       }
@@ -330,9 +366,11 @@ test.describe('Frontend NFT Integration', () => {
     });
 
     await page.locator('button', { hasText: /connect/i }).click();
-    
+
     // Check for error message
-    await expect(page.locator('text=connection failed')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=connection failed')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('Frontend: NFT completion workflow', async () => {
@@ -342,18 +380,31 @@ test.describe('Frontend NFT Integration', () => {
 
     // Create a todo (assuming form exists)
     const todoTitle = 'Completable Frontend Todo';
-    if (await page.locator('input[name="title"], input[placeholder*="title"]').isVisible()) {
-      await page.fill('input[name="title"], input[placeholder*="title"]', todoTitle);
-      await page.click('button[type="submit"], button:has-text("Create"), button:has-text("Add")');
+    if (
+      await page
+        .locator('input[name="title"], input[placeholder*="title"]')
+        .isVisible()
+    ) {
+      await page.fill(
+        'input[name="title"], input[placeholder*="title"]',
+        todoTitle
+      );
+      await page.click(
+        'button[type="submit"], button:has-text("Create"), button:has-text("Add")'
+      );
       await expect(page.locator(`text=${todoTitle}`)).toBeVisible();
 
       // Complete the todo
-      const completeButton = page.locator('button', { hasText: /complete|done/i }).first();
+      const completeButton = page
+        .locator('button', { hasText: /complete|done/i })
+        .first();
       if (await completeButton.isVisible()) {
         await completeButton.click();
-        
+
         // Verify completion
-        await expect(page.locator('.completed, [data-completed="true"]')).toBeVisible({ timeout: 10000 });
+        await expect(
+          page.locator('.completed, [data-completed="true"]')
+        ).toBeVisible({ timeout: 10000 });
       }
     }
   });
@@ -371,7 +422,9 @@ test.describe('Smart Contract Integration Tests', () => {
   });
 
   test('Contract: Validate Move.toml configuration', async () => {
-    const configResult = await cli.runCommand('validate-config', ['--contract']);
+    const configResult = await cli.runCommand('validate-config', [
+      '--contract',
+    ]);
     expect(configResult.exitCode).toBe(0);
     expect(configResult.stdout).toContain('valid');
   });
@@ -380,25 +433,43 @@ test.describe('Smart Contract Integration Tests', () => {
     // Test with various parameter combinations
     const testCases = [
       { title: 'Simple Todo', description: '', priority: 'low' as const },
-      { title: 'Complex Todo', description: 'With description', priority: 'high' as const },
-      { title: 'Unicode Todo 🚀', description: 'With emoji', priority: 'medium' as const },
+      {
+        title: 'Complex Todo',
+        description: 'With description',
+        priority: 'high' as const,
+      },
+      {
+        title: 'Unicode Todo 🚀',
+        description: 'With emoji',
+        priority: 'medium' as const,
+      },
     ];
 
     for (const testCase of testCases) {
       await cli.runCommand('add', [
         `"${testCase.title}"`,
-        '--description', `"${testCase.description}"`,
-        '--priority', testCase.priority
+        '--description',
+        `"${testCase.description}"`,
+        '--priority',
+        testCase.priority,
       ]);
-      
-      const storeResult = await cli.runCommand('store', ['1', '--nft', '--validate-params']);
+
+      const storeResult = await cli.runCommand('store', [
+        '1',
+        '--nft',
+        '--validate-params',
+      ]);
       expect(storeResult.exitCode).toBe(0);
     }
   });
 
   test('Contract: Event emission verification', async () => {
     await cli.runCommand('add', ['"Event Test Todo"']);
-    const eventResult = await cli.runCommand('store', ['1', '--nft', '--listen-events']);
+    const eventResult = await cli.runCommand('store', [
+      '1',
+      '--nft',
+      '--listen-events',
+    ]);
     expect(eventResult.exitCode).toBe(0);
     expect(eventResult.stdout).toContain('event emitted');
   });
@@ -416,7 +487,7 @@ test.describe('Error Scenarios and Edge Cases', () => {
 
   test.beforeEach(async ({ browser }) => {
     cli = new CLIHelper();
-    
+
     const context = await browser.newContext();
     page = await context.newPage();
     await page.goto('/');
@@ -430,11 +501,11 @@ test.describe('Error Scenarios and Edge Cases', () => {
     // Simulate network failure
     process.env.WALRUS_USE_MOCK = 'false';
     process.env.SUI_RPC_URL = 'http://invalid-rpc.example.com';
-    
+
     const networkResult = await cli.runCommand('store', ['1', '--nft']);
     expect(networkResult.exitCode).not.toBe(0);
     expect(networkResult.stderr).toContain('network');
-    
+
     // Restore mock environment
     process.env.WALRUS_USE_MOCK = 'true';
     delete process.env.SUI_RPC_URL;
@@ -442,13 +513,21 @@ test.describe('Error Scenarios and Edge Cases', () => {
 
   test('Transaction: Handle insufficient gas', async () => {
     // Mock low gas scenario
-    const gasResult = await cli.runCommand('store', ['1', '--nft', '--simulate-low-gas']);
+    const gasResult = await cli.runCommand('store', [
+      '1',
+      '--nft',
+      '--simulate-low-gas',
+    ]);
     expect(gasResult.exitCode).not.toBe(0);
     expect(gasResult.stderr).toContain('gas');
   });
 
   test('Contract: Handle invalid contract state', async () => {
-    const invalidResult = await cli.runCommand('store', ['1', '--nft', '--simulate-invalid-contract']);
+    const invalidResult = await cli.runCommand('store', [
+      '1',
+      '--nft',
+      '--simulate-invalid-contract',
+    ]);
     expect(invalidResult.exitCode).not.toBe(0);
     expect(invalidResult.stderr).toContain('contract');
   });
@@ -462,7 +541,9 @@ test.describe('Error Scenarios and Edge Cases', () => {
       // @ts-ignore
       if (window.suiWallet) {
         // @ts-ignore
-        window.suiWallet.signAndExecuteTransaction = async (transaction: any) => {
+        window.suiWallet.signAndExecuteTransaction = async (
+          transaction: any
+        ) => {
           if (!connectionLost) {
             connectionLost = true;
             // @ts-ignore
@@ -477,9 +558,11 @@ test.describe('Error Scenarios and Edge Cases', () => {
     // Try to perform transaction
     if (await page.locator('button', { hasText: /connect/i }).isVisible()) {
       await page.locator('button', { hasText: /connect/i }).click();
-      
+
       // Try to create NFT - should handle disconnection gracefully
-      const errorMessage = page.locator('text=wallet disconnected', { hasText: /error/i });
+      const errorMessage = page.locator('text=wallet disconnected', {
+        hasText: /error/i,
+      });
       if (await errorMessage.isVisible({ timeout: 5000 })) {
         await expect(errorMessage).toBeVisible();
       }
@@ -488,14 +571,19 @@ test.describe('Error Scenarios and Edge Cases', () => {
 
   test('Data: Handle corrupted todo data', async () => {
     // Create todo with corrupted data
-    const corruptResult = await cli.runCommand('add', ['"\\x00Invalid\\x01Data"']);
+    const corruptResult = await cli.runCommand('add', [
+      '"\\x00Invalid\\x01Data"',
+    ]);
     expect(corruptResult.exitCode).not.toBe(0);
     expect(corruptResult.stderr).toContain('invalid');
   });
 
   test('Storage: Handle Walrus storage failures', async () => {
     // Mock Walrus failure
-    const walrusResult = await cli.runCommand('store', ['1', '--simulate-walrus-failure']);
+    const walrusResult = await cli.runCommand('store', [
+      '1',
+      '--simulate-walrus-failure',
+    ]);
     expect(walrusResult.exitCode).not.toBe(0);
     expect(walrusResult.stderr).toContain('storage');
   });
@@ -514,22 +602,22 @@ test.describe('Performance and Load Testing', () => {
 
   test('Performance: Batch NFT creation performance', async () => {
     const startTime = Date.now();
-    
+
     // Create 10 todos
     for (let i = 1; i <= 10; i++) {
       await cli.runCommand('add', [`"Performance Test Todo ${i}"`]);
     }
-    
+
     // Batch convert to NFTs
     const batchStart = Date.now();
     const batchResult = await cli.runCommand('store', ['--all', '--nft']);
     const batchEnd = Date.now();
-    
+
     expect(batchResult.exitCode).toBe(0);
-    
+
     const totalTime = batchEnd - startTime;
     const batchTime = batchEnd - batchStart;
-    
+
     // Performance assertions (adjust thresholds as needed)
     expect(totalTime).toBeLessThan(30000); // Total should be under 30 seconds
     expect(batchTime).toBeLessThan(15000); // Batch conversion under 15 seconds
@@ -540,20 +628,20 @@ test.describe('Performance and Load Testing', () => {
     for (let i = 1; i <= 5; i++) {
       await cli.runCommand('add', [`"Concurrent Test Todo ${i}"`]);
     }
-    
+
     // Try concurrent NFT creation
     const promises = [];
     for (let i = 1; i <= 5; i++) {
       promises.push(cli.runCommand('store', [i.toString(), '--nft']));
     }
-    
+
     const results = await Promise.allSettled(promises);
-    
+
     // At least some should succeed
-    const successCount = results.filter(r => 
-      r.status === 'fulfilled' && r.value.exitCode === 0
+    const successCount = results.filter(
+      r => r.status === 'fulfilled' && r.value.exitCode === 0
     ).length;
-    
+
     expect(successCount).toBeGreaterThan(0);
   });
 
@@ -562,14 +650,15 @@ test.describe('Performance and Load Testing', () => {
     const largeDescription = 'Large description '.repeat(100);
     const largeResult = await cli.runCommand('add', [
       '"Large Todo"',
-      '--description', `"${largeDescription}"`
+      '--description',
+      `"${largeDescription}"`,
     ]);
-    
+
     expect(largeResult.exitCode).toBe(0);
-    
+
     // Try to convert to NFT
     const nftResult = await cli.runCommand('store', ['1', '--nft']);
-    
+
     // Should handle large data gracefully (may succeed or fail with proper error)
     if (nftResult.exitCode !== 0) {
       expect(nftResult.stderr).toContain('size');

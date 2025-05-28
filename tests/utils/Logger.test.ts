@@ -9,7 +9,10 @@ import {
 
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance<void, [message?: any, ...optionalParams: any[]]>[];
+  let mockConsole: jest.SpyInstance<
+    void,
+    [message?: any, ...optionalParams: any[]]
+  >[];
   let mockHandler: jest.Mock<
     void,
     [{ level: LogLevel; message: string; context?: unknown; error?: unknown }]

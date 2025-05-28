@@ -70,9 +70,9 @@ describe('CLI Commands Integration Tests', () => {
       const allTodos = await todoService.listTodos();
       const batchIds = addedTodos.map(t => t.id);
       const foundBatchTodos = allTodos.filter(t => batchIds.includes(t.id));
-      
+
       expect(foundBatchTodos).toHaveLength(3);
-      
+
       // Complete some todos
       await todoService.toggleItemStatus('default', addedTodos[0]!.id, true);
       await todoService.toggleItemStatus('default', addedTodos[2]!.id, true);
@@ -80,10 +80,10 @@ describe('CLI Commands Integration Tests', () => {
       // Verify mixed completion states
       const finalTodos = await todoService.listTodos();
       const finalBatchTodos = finalTodos.filter(t => batchIds.includes(t.id));
-      
+
       const completedCount = finalBatchTodos.filter(t => t.completed).length;
       const pendingCount = finalBatchTodos.filter(t => !t.completed).length;
-      
+
       expect(completedCount).toBe(2);
       expect(pendingCount).toBe(1);
     });
@@ -107,23 +107,25 @@ describe('CLI Commands Integration Tests', () => {
       // Should be able to retrieve the todo
       const retrievedTodos = await newTodoService.listTodos();
       const foundTodo = retrievedTodos.find(t => t.id === addedTodo.id);
-      
+
       expect(foundTodo).toBeDefined();
       expect(foundTodo?.title).toBe(persistentTodo.title);
       expect(foundTodo?.description).toBe(persistentTodo.description);
     });
 
     it('should handle concurrent operations safely', async () => {
-      const concurrentTodos = Array.from({ length: 10 }, (_, i) => 
-        createMockTodo({ 
+      const concurrentTodos = Array.from({ length: 10 }, (_, i) =>
+        createMockTodo({
           title: `Concurrent Todo ${i}`,
           description: `Description ${i}`,
-          id: `concurrent-${i}`
+          id: `concurrent-${i}`,
         })
       );
 
       // Add all todos concurrently
-      const addPromises = concurrentTodos.map(todo => todoService.addTodo('default', todo));
+      const addPromises = concurrentTodos.map(todo =>
+        todoService.addTodo('default', todo)
+      );
       const addedTodos = await Promise.all(addPromises);
 
       expect(addedTodos).toHaveLength(10);
@@ -136,7 +138,7 @@ describe('CLI Commands Integration Tests', () => {
       const completePromises = addedTodos
         .slice(0, 5)
         .map(todo => todoService.completeTodo(todo.id));
-      
+
       const completedTodos = await Promise.all(completePromises);
       expect(completedTodos).toHaveLength(5);
       completedTodos.forEach(todo => {
@@ -146,11 +148,17 @@ describe('CLI Commands Integration Tests', () => {
       // Verify final state
       const finalTodos = await todoService.listTodos();
       const concurrentIds = addedTodos.map(t => t.id);
-      const finalConcurrentTodos = finalTodos.filter(t => concurrentIds.includes(t.id));
-      
-      const completedCount = finalConcurrentTodos.filter(t => t.completed).length;
-      const pendingCount = finalConcurrentTodos.filter(t => !t.completed).length;
-      
+      const finalConcurrentTodos = finalTodos.filter(t =>
+        concurrentIds.includes(t.id)
+      );
+
+      const completedCount = finalConcurrentTodos.filter(
+        t => t.completed
+      ).length;
+      const pendingCount = finalConcurrentTodos.filter(
+        t => !t.completed
+      ).length;
+
       expect(completedCount).toBe(5);
       expect(pendingCount).toBe(5);
     });
@@ -160,27 +168,31 @@ describe('CLI Commands Integration Tests', () => {
     it('should handle invalid todo data gracefully', async () => {
       // Test with empty title
       const invalidTodo = createMockTodo({ title: '' });
-      await expect(todoService.addTodo('default', invalidTodo as Todo))
-        .rejects.toThrow();
+      await expect(
+        todoService.addTodo('default', invalidTodo as Todo)
+      ).rejects.toThrow();
 
       // Test with invalid priority
-      const invalidPriorityTodo = { 
-        ...createMockTodo(), 
-        priority: 'invalid' as any 
+      const invalidPriorityTodo = {
+        ...createMockTodo(),
+        priority: 'invalid' as any,
       };
-      await expect(todoService.addTodo('default', invalidPriorityTodo))
-        .rejects.toThrow();
+      await expect(
+        todoService.addTodo('default', invalidPriorityTodo)
+      ).rejects.toThrow();
     });
 
     it('should handle non-existent todo operations', async () => {
       // Try to complete non-existent todo
-      await expect(todoService.completeTodo('non-existent-id'))
-        .rejects.toThrow();
+      await expect(
+        todoService.completeTodo('non-existent-id')
+      ).rejects.toThrow();
 
       // Try to update non-existent todo
       const updateData = { title: 'Updated Title' };
-      await expect(todoService.updateTodo('default', 'non-existent-id', updateData))
-        .rejects.toThrow();
+      await expect(
+        todoService.updateTodo('default', 'non-existent-id', updateData)
+      ).rejects.toThrow();
     });
 
     it('should validate todo updates', async () => {
@@ -189,11 +201,15 @@ describe('CLI Commands Integration Tests', () => {
       const addedTodo = await todoService.addTodo('default', validTodo);
 
       // Try invalid updates
-      await expect(todoService.updateTodo('default', addedTodo.id, { title: '' }))
-        .rejects.toThrow();
+      await expect(
+        todoService.updateTodo('default', addedTodo.id, { title: '' })
+      ).rejects.toThrow();
 
-      await expect(todoService.updateTodo('default', addedTodo.id, { priority: 'invalid' as any }))
-        .rejects.toThrow();
+      await expect(
+        todoService.updateTodo('default', addedTodo.id, {
+          priority: 'invalid' as any,
+        })
+      ).rejects.toThrow();
     });
   });
 
@@ -201,10 +217,30 @@ describe('CLI Commands Integration Tests', () => {
     beforeEach(async () => {
       // Setup test data with various attributes
       const testTodos = [
-        createMockTodo({ title: 'Work Task', tags: ['work'], priority: 'high', completed: false }),
-        createMockTodo({ title: 'Personal Task', tags: ['personal'], priority: 'medium', completed: true }),
-        createMockTodo({ title: 'Urgent Work', tags: ['work', 'urgent'], priority: 'high', completed: false }),
-        createMockTodo({ title: 'Low Priority Task', tags: ['misc'], priority: 'low', completed: false }),
+        createMockTodo({
+          title: 'Work Task',
+          tags: ['work'],
+          priority: 'high',
+          completed: false,
+        }),
+        createMockTodo({
+          title: 'Personal Task',
+          tags: ['personal'],
+          priority: 'medium',
+          completed: true,
+        }),
+        createMockTodo({
+          title: 'Urgent Work',
+          tags: ['work', 'urgent'],
+          priority: 'high',
+          completed: false,
+        }),
+        createMockTodo({
+          title: 'Low Priority Task',
+          tags: ['misc'],
+          priority: 'low',
+          completed: false,
+        }),
       ];
 
       for (const todo of testTodos) {
@@ -214,7 +250,7 @@ describe('CLI Commands Integration Tests', () => {
 
     it('should filter todos by completion status', async () => {
       const allTodos = await todoService.listTodos();
-      
+
       const completedTodos = allTodos.filter(t => t.completed);
       const pendingTodos = allTodos.filter(t => !t.completed);
 
@@ -225,7 +261,7 @@ describe('CLI Commands Integration Tests', () => {
 
     it('should filter todos by priority', async () => {
       const allTodos = await todoService.listTodos();
-      
+
       const highPriorityTodos = allTodos.filter(t => t.priority === 'high');
       const mediumPriorityTodos = allTodos.filter(t => t.priority === 'medium');
       const lowPriorityTodos = allTodos.filter(t => t.priority === 'low');
@@ -237,9 +273,13 @@ describe('CLI Commands Integration Tests', () => {
 
     it('should search todos by title', async () => {
       const allTodos = await todoService.listTodos();
-      
-      const workTodos = allTodos.filter(t => t.title.toLowerCase().includes('work'));
-      const taskTodos = allTodos.filter(t => t.title.toLowerCase().includes('task'));
+
+      const workTodos = allTodos.filter(t =>
+        t.title.toLowerCase().includes('work')
+      );
+      const taskTodos = allTodos.filter(t =>
+        t.title.toLowerCase().includes('task')
+      );
 
       expect(workTodos.length).toBeGreaterThan(0);
       expect(taskTodos.length).toBeGreaterThan(0);

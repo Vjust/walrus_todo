@@ -114,7 +114,12 @@ export default class UploadCommand extends BaseCommand {
       walrusImageStorage = createWalrusImageStorage(suiClient); // No change, but confirming assignment
 
       if (flags.background) {
-        return await this.handleBackgroundUpload(flags, todoItem, walrusImageStorage, todoService);
+        return await this.handleBackgroundUpload(
+          flags,
+          todoItem,
+          walrusImageStorage,
+          todoService
+        );
       }
 
       // Connect to Walrus
@@ -126,11 +131,12 @@ export default class UploadCommand extends BaseCommand {
       this.log('Uploading image to Walrus...');
       const imageUrl = await performanceMonitor.measureOperation(
         'image-upload',
-        async () => await walrusImageStorage.uploadTodoImage(
-          imagePath,
-          todoItem.title,
-          todoItem.completed
-        ),
+        async () =>
+          await walrusImageStorage.uploadTodoImage(
+            imagePath,
+            todoItem.title,
+            todoItem.completed
+          ),
         {
           imageSize: this.getFileSize(imagePath),
           imagePath: flags.image,
@@ -154,7 +160,9 @@ export default class UploadCommand extends BaseCommand {
       this.log(`✅ Image uploaded successfully to Walrus`);
       this.log(`📝 Image URL: ${imageUrl}`);
       this.log(`📝 Blob ID: ${blobId}`);
-      this.log(`📝 File size: ${this.formatFileSize(this.getFileSize(imagePath))}`);
+      this.log(
+        `📝 File size: ${this.formatFileSize(this.getFileSize(imagePath))}`
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -175,11 +183,14 @@ export default class UploadCommand extends BaseCommand {
     }
   }
 
-  private async validateImageFile(imagePath: string, maxSizeMB: number): Promise<void> {
+  private async validateImageFile(
+    imagePath: string,
+    maxSizeMB: number
+  ): Promise<void> {
     try {
       const stats = fs.statSync(imagePath);
       const maxSizeBytes = maxSizeMB * 1024 * 1024;
-      
+
       if (stats.size > maxSizeBytes) {
         throw new CLIError(
           `Image file is too large (${this.formatFileSize(stats.size)}). Maximum allowed: ${maxSizeMB}MB`,
@@ -189,15 +200,21 @@ export default class UploadCommand extends BaseCommand {
 
       // Check file extension
       const ext = path.extname(imagePath).toLowerCase();
-      const supportedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-      
+      const supportedExtensions = [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.gif',
+        '.webp',
+        '.svg',
+      ];
+
       if (!supportedExtensions.includes(ext)) {
         throw new CLIError(
           `Unsupported image format: ${ext}. Supported formats: ${supportedExtensions.join(', ')}`,
           'UNSUPPORTED_FORMAT'
         );
       }
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -231,19 +248,23 @@ export default class UploadCommand extends BaseCommand {
     walrusImageStorage: WalrusImageStorage,
     todoService: TodoService
   ): Promise<void> {
-    const jobId = flags['job-id'] || jobManager.createJob('image', ['upload'], {
-      todo: flags.todo,
-      list: flags.list,
-      image: flags.image,
-      priority: flags.priority,
-    }).id;
+    const jobId =
+      flags['job-id'] ||
+      jobManager.createJob('image', ['upload'], {
+        todo: flags.todo,
+        list: flags.list,
+        image: flags.image,
+        priority: flags.priority,
+      }).id;
 
     this.log(chalk.blue(`🔄 Starting background image upload...`));
     this.log(chalk.gray(`📝 Job ID: ${jobId}`));
     this.log(chalk.gray(`💡 Use 'waltodo status ${jobId}' to check progress`));
     this.log(chalk.gray(`💡 Use 'waltodo jobs' to list all background jobs`));
-    
-    const imageSize = this.getFileSize(path.resolve(process.cwd(), flags.image));
+
+    const imageSize = this.getFileSize(
+      path.resolve(process.cwd(), flags.image)
+    );
     this.log(chalk.gray(`📏 Image size: ${this.formatFileSize(imageSize)}`));
 
     // Start background process
@@ -252,10 +273,16 @@ export default class UploadCommand extends BaseCommand {
         jobManager.startJob(jobId, process.pid);
         jobManager.writeJobLog(jobId, 'Starting image upload operation...');
         jobManager.writeJobLog(jobId, `Image file: ${flags.image}`);
-        jobManager.writeJobLog(jobId, `Image size: ${this.formatFileSize(imageSize)}`);
-        
+        jobManager.writeJobLog(
+          jobId,
+          `Image size: ${this.formatFileSize(imageSize)}`
+        );
+
         let progress = 0;
-        const updateProgress = (message: string, progressIncrement: number = 10) => {
+        const updateProgress = (
+          message: string,
+          progressIncrement: number = 10
+        ) => {
           progress = Math.min(100, progress + progressIncrement);
           jobManager.updateProgress(jobId, progress);
           jobManager.writeJobLog(jobId, `[${progress}%] ${message}`);
@@ -267,33 +294,33 @@ export default class UploadCommand extends BaseCommand {
         updateProgress('Validating image file...', 5);
         const imagePath = path.resolve(process.cwd(), flags.image);
         await this.validateImageFile(imagePath, flags['max-size']);
-        
+
         updateProgress('Connecting to Walrus storage...', 10);
         await walrusImageStorage.connect();
-        
+
         updateProgress('Preparing image for upload...', 15);
-        
+
         if (flags.compress) {
           updateProgress('Compressing image...', 20);
           // Image compression would be implemented here
         }
-        
+
         updateProgress('Uploading image to Walrus...', 40);
         const imageUrl = await walrusImageStorage.uploadTodoImage(
           imagePath,
           todoItem.title,
           todoItem.completed
         );
-        
+
         updateProgress('Processing upload response...', 10);
         const blobId = imageUrl.split('/').pop() || '';
-        
+
         updateProgress('Updating todo with image URL...', 10);
         const updatedTodo = { ...todoItem, imageUrl };
         await todoService.updateTodo(flags.list, flags.todo, updatedTodo);
-        
+
         updateProgress('Upload completed successfully!', 10);
-        
+
         jobManager.completeJob(jobId, {
           imageUrl,
           blobId,
@@ -302,13 +329,19 @@ export default class UploadCommand extends BaseCommand {
           imageSize,
           imagePath: flags.image,
         });
-        
-        jobManager.writeJobLog(jobId, `✅ Image uploaded successfully: ${imageUrl}`);
+
+        jobManager.writeJobLog(
+          jobId,
+          `✅ Image uploaded successfully: ${imageUrl}`
+        );
         jobManager.writeJobLog(jobId, `📝 Blob ID: ${blobId}`);
-        jobManager.writeJobLog(jobId, `📏 Final size: ${this.formatFileSize(imageSize)}`);
-        
+        jobManager.writeJobLog(
+          jobId,
+          `📏 Final size: ${this.formatFileSize(imageSize)}`
+        );
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         jobManager.failJob(jobId, errorMessage);
         jobManager.writeJobLog(jobId, `❌ Upload failed: ${errorMessage}`);
       }
@@ -318,7 +351,11 @@ export default class UploadCommand extends BaseCommand {
     return;
   }
 
-  private writeProgressFile(filePath: string, progress: number, message: string): void {
+  private writeProgressFile(
+    filePath: string,
+    progress: number,
+    message: string
+  ): void {
     try {
       const progressData = {
         progress,

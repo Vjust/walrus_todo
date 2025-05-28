@@ -122,7 +122,17 @@ export default class Credentials extends BaseCommand {
   /**
    * Add a new credential
    */
-  private async addCredential(provider: string, flags: { key?: string; verify?: boolean; permission?: string; expiry?: number; rotation?: number; json?: boolean }) {
+  private async addCredential(
+    provider: string,
+    flags: {
+      key?: string;
+      verify?: boolean;
+      permission?: string;
+      expiry?: number;
+      rotation?: number;
+      json?: boolean;
+    }
+  ) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -142,9 +152,10 @@ export default class Credentials extends BaseCommand {
       admin: AIPermissionLevel.ADMIN,
     };
 
-    const permissionLevel: AIPermissionLevel = flags.permission && permissionMap[flags.permission] 
-      ? permissionMap[flags.permission] 
-      : AIPermissionLevel.STANDARD;
+    const permissionLevel: AIPermissionLevel =
+      flags.permission && flags.permission in permissionMap
+        ? permissionMap[flags.permission]!
+        : AIPermissionLevel.STANDARD;
 
     try {
       // Convert string provider to AIProvider enum
@@ -233,11 +244,12 @@ export default class Credentials extends BaseCommand {
           : chalk.gray('not verified');
 
         // Get permission level name with null safety
-        const permissionName = cred.permissionLevel !== undefined && cred.permissionLevel !== null
-          ? Object.entries(AIPermissionLevel)
-              .find(([_, value]) => value === cred.permissionLevel)?.[0]
-              ?.toLowerCase() || 'standard'
-          : 'standard';
+        const permissionName =
+          cred.permissionLevel !== undefined && cred.permissionLevel !== null
+            ? Object.entries(AIPermissionLevel)
+                .find(([_, value]) => value === cred.permissionLevel)?.[0]
+                ?.toLowerCase() || 'standard'
+            : 'standard';
 
         this.log(
           `${chalk.green(cred.provider.padEnd(10))} | ${chalk.yellow(permissionName.padEnd(10))} | ` +
@@ -283,9 +295,7 @@ export default class Credentials extends BaseCommand {
       const providerEnum = getProviderEnum(provider);
 
       // First check if credential exists
-      if (
-        !(await secureCredentialService.hasCredential(providerEnum))
-      ) {
+      if (!(await secureCredentialService.hasCredential(providerEnum))) {
         throw new CLIError(`No credential found for ${provider}`);
       }
 
@@ -298,9 +308,8 @@ export default class Credentials extends BaseCommand {
         return;
       }
 
-      const removed = await secureCredentialService.removeCredential(
-        providerEnum
-      );
+      const removed =
+        await secureCredentialService.removeCredential(providerEnum);
 
       if (removed) {
         this.log(
@@ -330,9 +339,8 @@ export default class Credentials extends BaseCommand {
     try {
       // Convert string provider to AIProvider enum
       const providerEnum = getProviderEnum(provider);
-      const verified = await secureCredentialService.verifyCredential(
-        providerEnum
-      );
+      const verified =
+        await secureCredentialService.verifyCredential(providerEnum);
 
       if (verified) {
         this.log(
@@ -354,7 +362,10 @@ export default class Credentials extends BaseCommand {
   /**
    * Rotate a credential
    */
-  private async rotateCredential(provider: string, flags: { key?: string; json?: boolean }) {
+  private async rotateCredential(
+    provider: string,
+    flags: { key?: string; json?: boolean }
+  ) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -423,7 +434,10 @@ export default class Credentials extends BaseCommand {
   /**
    * Update credential permissions
    */
-  private async updatePermissions(provider: string, flags: { permission?: string; json?: boolean }) {
+  private async updatePermissions(
+    provider: string,
+    flags: { permission?: string; json?: boolean }
+  ) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -437,9 +451,10 @@ export default class Credentials extends BaseCommand {
       admin: AIPermissionLevel.ADMIN,
     };
 
-    const permissionLevel: AIPermissionLevel = flags.permission && permissionMap[flags.permission] 
-      ? permissionMap[flags.permission] 
-      : AIPermissionLevel.STANDARD;
+    const permissionLevel: AIPermissionLevel =
+      flags.permission && flags.permission in permissionMap
+        ? permissionMap[flags.permission]!
+        : AIPermissionLevel.STANDARD;
 
     try {
       // Convert string provider to AIProvider enum

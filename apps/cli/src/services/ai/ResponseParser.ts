@@ -59,10 +59,9 @@ export class ResponseParser {
         }
 
         // String representation to help with debugging
-        logger.info(
-          'Received non-string, non-matching type:',
-          { type: typeof jsonStringOrObject }
-        );
+        logger.info('Received non-string, non-matching type:', {
+          type: typeof jsonStringOrObject,
+        });
         return defaultValue;
       }
 
@@ -150,17 +149,39 @@ export class ResponseParser {
     response: unknown,
     expectedType: string
   ): T | null {
+    // Add type guard for undefined/null responses
+    if (response === undefined || response === null) {
+      logger.warn('Received undefined or null response');
+      return null;
+    }
     try {
       // Handle different response formats based on expected type
       switch (expectedType) {
         case 'string':
           return typeof response === 'string'
             ? (response as unknown as T)
-            : (response && typeof response === 'object' && 'text' in response && typeof (response as ResponseWithText).text === 'string') ? (response as ResponseWithText).text :
-                (response && typeof response === 'object' && 'content' in response && typeof (response as ResponseWithContent).content === 'string') ? (response as ResponseWithContent).content :
-                (response && typeof response === 'object' && 'answer' in response && typeof (response as ResponseWithAnswer).answer === 'string') ? (response as ResponseWithAnswer).answer :
-                (response && typeof response === 'object' && 'result' in response && typeof (response as ResponseWithResult).result === 'string') ? (response as ResponseWithResult).result :
-                null;
+            : response &&
+                typeof response === 'object' &&
+                'text' in response &&
+                typeof (response as ResponseWithText).text === 'string'
+              ? (response as ResponseWithText).text
+              : response &&
+                  typeof response === 'object' &&
+                  'content' in response &&
+                  typeof (response as ResponseWithContent).content === 'string'
+                ? (response as ResponseWithContent).content
+                : response &&
+                    typeof response === 'object' &&
+                    'answer' in response &&
+                    typeof (response as ResponseWithAnswer).answer === 'string'
+                  ? (response as ResponseWithAnswer).answer
+                  : response &&
+                      typeof response === 'object' &&
+                      'result' in response &&
+                      typeof (response as ResponseWithResult).result ===
+                        'string'
+                    ? (response as ResponseWithResult).result
+                    : null;
 
         case 'array':
           if (Array.isArray(response)) {

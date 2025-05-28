@@ -257,7 +257,6 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
       }
     });
 
-
     it('should handle large file warning', async () => {
       const largeFile = join(testDir, 'large.json');
       // Create a file larger than typical limit (simulate with metadata)
@@ -288,9 +287,7 @@ describe('Store File Command E2E Tests (Mock Mode)', () => {
       // Test without mock (would fail in test environment without real Walrus)
       // Expected to fail without real Walrus connection
       await expect(
-        execAsync(
-          `WALRUS_USE_MOCK=false ${cliPath} store-file ${testFile}`
-        )
+        execAsync(`WALRUS_USE_MOCK=false ${cliPath} store-file ${testFile}`)
       ).rejects.toThrow();
     });
 

@@ -35,7 +35,7 @@ describe('progress-indicators', () => {
 
   // TODO: Re-implement tests for:
   // - SpinnerManager
-  // - ProgressBar  
+  // - ProgressBar
   // - MultiProgress
   // - Helper functions (createSpinner, createProgressBar, etc.)
   // - Utility functions (withSpinner, withProgressBar)

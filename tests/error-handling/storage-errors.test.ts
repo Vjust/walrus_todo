@@ -156,12 +156,14 @@ describe('Storage Error Handling', () => {
         /* missing required fields */
       };
 
-      await expect(walrusStorage.store(invalidData as Record<string, unknown>)).rejects.toThrow(
-        ValidationError
-      );
+      await expect(
+        walrusStorage.store(invalidData as Record<string, unknown>)
+      ).rejects.toThrow(ValidationError);
 
       // Test specific error properties
-      await expect(walrusStorage.store(invalidData as Record<string, unknown>)).rejects.toMatchObject({
+      await expect(
+        walrusStorage.store(invalidData as Record<string, unknown>)
+      ).rejects.toMatchObject({
         publicMessage: expect.stringContaining('Invalid value for title'),
       });
     });
@@ -191,7 +193,10 @@ describe('Storage Error Handling', () => {
     it('should handle size limit constraints', async () => {
       // Setup storage manager with low size limit
       jest
-        .spyOn(storageManager as StorageManager & { checkStorageSize(): void }, 'checkStorageSize')
+        .spyOn(
+          storageManager as StorageManager & { checkStorageSize(): void },
+          'checkStorageSize'
+        )
         .mockImplementation(() => {
           throw new ValidationError('Data exceeds maximum allowed size', {
             field: 'size',
@@ -212,7 +217,9 @@ describe('Storage Error Handling', () => {
       ).rejects.toThrow(ValidationError);
 
       // Verify error details
-      await expect(storageManager.storeObject('test-path', largeObject)).rejects.toMatchObject({
+      await expect(
+        storageManager.storeObject('test-path', largeObject)
+      ).rejects.toMatchObject({
         code: 'VALIDATION_ERROR',
         recoverable: false,
       });
@@ -232,7 +239,9 @@ describe('Storage Error Handling', () => {
       );
 
       // Verify specific error details
-      await expect(walrusStorage.retrieve('corrupted-id')).rejects.toMatchObject({
+      await expect(
+        walrusStorage.retrieve('corrupted-id')
+      ).rejects.toMatchObject({
         code: expect.stringContaining('PARSE'),
       });
     });
@@ -240,7 +249,10 @@ describe('Storage Error Handling', () => {
     it('should detect and handle hash verification failures', async () => {
       // Create storage with verification
       jest
-        .spyOn(walrusStorage as WalrusStorage & { verifyDataIntegrity(): void }, 'verifyDataIntegrity')
+        .spyOn(
+          walrusStorage as WalrusStorage & { verifyDataIntegrity(): void },
+          'verifyDataIntegrity'
+        )
         .mockImplementation(() => {
           throw new StorageError('Data integrity check failed: hash mismatch', {
             operation: 'verify',
@@ -320,7 +332,14 @@ describe('Storage Error Handling', () => {
 
       // Mock the storage manager to use fallback
       const fallbackSpy = jest
-        .spyOn(storageManager as StorageManager & { useFallbackStorage(data: unknown): Promise<{ success: boolean; location: string; id: string }> }, 'useFallbackStorage')
+        .spyOn(
+          storageManager as StorageManager & {
+            useFallbackStorage(
+              data: unknown
+            ): Promise<{ success: boolean; location: string; id: string }>;
+          },
+          'useFallbackStorage'
+        )
         .mockImplementation(async (data: { id: string }) => {
           // Simulate local storage success
           return { success: true, location: 'local', id: data.id };

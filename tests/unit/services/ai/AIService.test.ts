@@ -5,9 +5,7 @@ import {
   mockXAIProvider,
 } from '../../../helpers/ai-test-utils';
 // MockXAIProvider is available through mocking
-import {
-  AIProviderType,
-} from '../../../../apps/cli/src/services/ai/types';
+import { AIProviderType } from '../../../../apps/cli/src/services/ai/types';
 import type { Todo } from '../../../../apps/cli/src/types/todo';
 
 describe('AIService', () => {

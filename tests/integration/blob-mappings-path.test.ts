@@ -52,25 +52,32 @@ describe('Blob Mappings Path Test', () => {
 
   it('should write blob mappings to the directory specified by WALRUS_TODO_CONFIG_DIR', () => {
     // Mock fs methods used by saveBlobMapping
-    const writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    const writeFileSyncSpy = jest
+      .spyOn(fs, 'writeFileSync')
+      .mockImplementation(() => undefined);
     jest.spyOn(fs, 'existsSync').mockReturnValue(false);
     jest.spyOn(fs, 'readFileSync').mockReturnValue('{}');
     jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-    
+
     // Create an instance of CompleteCommand
     const command = new CompleteCommand([], {} as any);
 
     // Access private method using type assertion
-    const saveBlobMapping = (command as unknown as { saveBlobMapping: (todoId: string, blobId: string) => void }).saveBlobMapping.bind(command);
+    const saveBlobMapping = (
+      command as unknown as {
+        saveBlobMapping: (todoId: string, blobId: string) => void;
+      }
+    ).saveBlobMapping.bind(command);
 
     // Call the method with test data
     saveBlobMapping('test-todo-id', 'test-blob-id');
 
     // Verify that fs.writeFileSync was called (through writeFileSafe)
     expect(writeFileSyncSpy).toHaveBeenCalled();
-    
+
     // Verify the call was made with correct parameters
-    const lastCall = writeFileSyncSpy.mock.calls[writeFileSyncSpy.mock.calls.length - 1];
+    const lastCall =
+      writeFileSyncSpy.mock.calls[writeFileSyncSpy.mock.calls.length - 1];
     expect(lastCall[0]).toContain('blob-mappings.json');
     expect(lastCall[1]).toContain('test-todo-id');
     expect(lastCall[1]).toContain('test-blob-id');
@@ -78,22 +85,27 @@ describe('Blob Mappings Path Test', () => {
 
   it('should use the directory from getConfigDir() method in BaseCommand', () => {
     // Mock fs methods
-    const writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    const writeFileSyncSpy = jest
+      .spyOn(fs, 'writeFileSync')
+      .mockImplementation(() => undefined);
     jest.spyOn(fs, 'existsSync').mockReturnValue(false);
     jest.spyOn(fs, 'readFileSync').mockReturnValue('{}');
     jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
-    
+
     // Spy on getConfigDir method
-    const getConfigDirSpy = jest.spyOn(
-      baseCommand.BaseCommand.prototype,
-      'getConfigDir'
-    ).mockReturnValue(testDir);
+    const getConfigDirSpy = jest
+      .spyOn(baseCommand.BaseCommand.prototype, 'getConfigDir')
+      .mockReturnValue(testDir);
 
     // Create an instance of CompleteCommand
     const command = new CompleteCommand([], {} as any);
 
     // Access private method using type assertion
-    const saveBlobMapping = (command as unknown as { saveBlobMapping: (todoId: string, blobId: string) => void }).saveBlobMapping.bind(command);
+    const saveBlobMapping = (
+      command as unknown as {
+        saveBlobMapping: (todoId: string, blobId: string) => void;
+      }
+    ).saveBlobMapping.bind(command);
 
     // Call the method with test data
     saveBlobMapping('another-todo-id', 'another-blob-id');
@@ -103,9 +115,10 @@ describe('Blob Mappings Path Test', () => {
 
     // Verify that fs.writeFileSync was called (through writeFileSafe)
     expect(writeFileSyncSpy).toHaveBeenCalled();
-    
+
     // Verify the call was made with correct parameters
-    const lastCall = writeFileSyncSpy.mock.calls[writeFileSyncSpy.mock.calls.length - 1];
+    const lastCall =
+      writeFileSyncSpy.mock.calls[writeFileSyncSpy.mock.calls.length - 1];
     expect(lastCall[0]).toContain('blob-mappings.json');
     expect(lastCall[1]).toContain('another-todo-id');
     expect(lastCall[1]).toContain('another-blob-id');

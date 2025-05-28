@@ -20,8 +20,8 @@ jest.mock('child_process', () => ({
     kill: jest.fn(),
     killed: false,
     stdout: { on: jest.fn() },
-    stderr: { on: jest.fn() }
-  }))
+    stderr: { on: jest.fn() },
+  })),
 }));
 
 // Mock file system operations to prevent actual file I/O
@@ -31,7 +31,7 @@ jest.mock('fs', () => ({
   writeFileSync: jest.fn(),
   readFileSync: jest.fn(() => '[]'),
   appendFileSync: jest.fn(),
-  unlinkSync: jest.fn()
+  unlinkSync: jest.fn(),
 }));
 
 // Global cleanup after each test
@@ -39,7 +39,7 @@ afterEach(async () => {
   // Clear all timers to prevent hanging
   jest.clearAllTimers();
   jest.runOnlyPendingTimers();
-  
+
   // Force garbage collection if available
   if (global.gc) {
     global.gc();
@@ -51,7 +51,7 @@ afterAll(async () => {
   // Final cleanup
   jest.clearAllMocks();
   jest.clearAllTimers();
-  
+
   // Force garbage collection
   if (global.gc) {
     global.gc();

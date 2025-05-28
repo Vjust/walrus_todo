@@ -26,7 +26,10 @@ import {
   AIActionType,
 } from '../../types/adapters/AIVerifierAdapter';
 import { Logger } from '../../utils/Logger';
-import { EnhancedErrorHandler, withEnhancedErrorHandling } from '../../utils/enhanced-error-handler';
+import {
+  EnhancedErrorHandler,
+  withEnhancedErrorHandling,
+} from '../../utils/enhanced-error-handler';
 
 /**
  * Represents a suggested task with relevance scoring
@@ -179,6 +182,15 @@ export class TaskSuggestionService {
     todos: Todo[],
     context: SuggestionContext = {}
   ): Promise<TaskSuggestionResult> {
+    // Add type guards for parameters
+    if (!Array.isArray(todos)) {
+      throw new Error('Todos parameter must be an array');
+    }
+
+    if (context && typeof context !== 'object') {
+      throw new Error('Context parameter must be an object');
+    }
+
     this.logger.debug(`Generating task suggestions for ${todos.length} todos`);
 
     // Handle empty todo list
@@ -269,7 +281,9 @@ export class TaskSuggestionService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerifiedAIResult<TaskSuggestionResult>> {
     if (!this.verificationService) {
-      throw new Error('TaskSuggestionService: Verification service not initialized. Call setVerificationService() or pass verificationService to constructor.');
+      throw new Error(
+        'TaskSuggestionService: Verification service not initialized. Call setVerificationService() or pass verificationService to constructor.'
+      );
     }
 
     const suggestions = await this.suggestTasks(todos, context);

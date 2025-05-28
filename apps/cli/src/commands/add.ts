@@ -15,9 +15,16 @@ import {
   validateAIApiKey,
   validateBlockchainConfig,
 } from '../utils/CommandValidationMiddleware';
-import { NetworkError, ValidationError, ValidationErrorOptions } from '../types/errors/consolidated';
+import {
+  NetworkError,
+  ValidationError,
+  ValidationErrorOptions,
+} from '../types/errors/consolidated';
 import { jobManager, BackgroundJob } from '../utils/PerformanceMonitor';
-import { createBackgroundOperationsManager, BackgroundOperations } from '../utils/background-operations';
+import {
+  createBackgroundOperationsManager,
+  BackgroundOperations,
+} from '../utils/background-operations';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -182,7 +189,10 @@ class AddCommand extends BaseCommand {
       validateBlockchainConfig(flags);
 
       // Determine the list name and titles based on arguments and flags
-      const { listName, todoTitles } = this.parseInputArguments(args, this.cleanFlags(flags));
+      const { listName, todoTitles } = this.parseInputArguments(
+        args,
+        this.cleanFlags(flags)
+      );
 
       // Validate title lengths
       for (const title of todoTitles) {
@@ -197,9 +207,21 @@ class AddCommand extends BaseCommand {
 
       // Extract attribute arrays for the todos
       const storageLocation = flags.storage as StorageLocation;
-      const priorities = (Array.isArray(flags.priority) ? flags.priority : flags.priority ? [flags.priority] : ['medium']); // Default to medium priority if not specified
-      const dueDates = (Array.isArray(flags.due) ? flags.due : flags.due ? [flags.due] : []);
-      const tagSets = (Array.isArray(flags.tags) ? flags.tags : flags.tags ? [flags.tags] : []);
+      const priorities = Array.isArray(flags.priority)
+        ? flags.priority
+        : flags.priority
+          ? [flags.priority]
+          : ['medium']; // Default to medium priority if not specified
+      const dueDates = Array.isArray(flags.due)
+        ? flags.due
+        : flags.due
+          ? [flags.due]
+          : [];
+      const tagSets = Array.isArray(flags.tags)
+        ? flags.tags
+        : flags.tags
+          ? [flags.tags]
+          : [];
 
       // Create warning messages for attribute mismatches
       if (todoTitles.length > 1) {
@@ -293,7 +315,11 @@ class AddCommand extends BaseCommand {
 
         // Use AI if requested
         if (flags.ai) {
-          await this.enhanceWithAI(todo, todoTitle || '', this.cleanFlags(flags));
+          await this.enhanceWithAI(
+            todo,
+            todoTitle || '',
+            this.cleanFlags(flags)
+          );
         }
 
         // Add todo to the list
@@ -425,9 +451,21 @@ class AddCommand extends BaseCommand {
     const { listName, todoTitles } = this.parseInputArguments(args, flags);
 
     // Get attribute arrays
-    const priorities = (Array.isArray(flags.priority) ? flags.priority : flags.priority ? [flags.priority] : ['medium']);
-    const dueDates = (Array.isArray(flags.due) ? flags.due : flags.due ? [flags.due] : []);
-    const tagSets = (Array.isArray(flags.tags) ? flags.tags : flags.tags ? [flags.tags] : []);
+    const priorities = Array.isArray(flags.priority)
+      ? flags.priority
+      : flags.priority
+        ? [flags.priority]
+        : ['medium'];
+    const dueDates = Array.isArray(flags.due)
+      ? flags.due
+      : flags.due
+        ? [flags.due]
+        : [];
+    const tagSets = Array.isArray(flags.tags)
+      ? flags.tags
+      : flags.tags
+        ? [flags.tags]
+        : [];
     const storageLocation = flags.storage as StorageLocation;
 
     // Create list if it doesn't exist
@@ -454,8 +492,10 @@ class AddCommand extends BaseCommand {
       // Map attributes to this todo
       const priority =
         priorities[i] !== undefined && typeof priorities[i] === 'string'
-          ? priorities[i] as string
-          : (typeof priorities[priorities.length - 1] === 'string' ? priorities[priorities.length - 1] as string : 'medium');
+          ? (priorities[i] as string)
+          : typeof priorities[priorities.length - 1] === 'string'
+            ? (priorities[priorities.length - 1] as string)
+            : 'medium';
       const dueDate =
         dueDates[i] !== undefined && typeof dueDates[i] === 'string'
           ? CommandSanitizer.sanitizeDate(dueDates[i] as string)
@@ -587,7 +627,9 @@ class AddCommand extends BaseCommand {
         );
       } else {
         // Log for background job
-        console.log(`AI suggestions: tags=[${suggestedTags.join(', ')}], priority=${suggestedPriority}`);
+        console.log(
+          `AI suggestions: tags=[${suggestedTags.join(', ')}], priority=${suggestedPriority}`
+        );
       }
 
       // Merge existing and suggested tags
@@ -600,7 +642,7 @@ class AddCommand extends BaseCommand {
       todo.priority = suggestedPriority;
 
       this.debugLog('Todo updated with AI suggestions');
-      
+
       if (isBackground) {
         console.log('Progress: 75%'); // Report progress for background job
       }
@@ -694,7 +736,7 @@ class AddCommand extends BaseCommand {
   ): Promise<void> {
     let blobId: string = '';
     const isBackground = process.env.WALTODO_BACKGROUND === 'true';
-    
+
     // Show blockchain storage warning only if not in background
     if (!isBackground) {
       this.section(
@@ -710,9 +752,9 @@ class AddCommand extends BaseCommand {
     }
 
     // Start blockchain storage spinner only if not in background
-    const blockchainSpinner = !isBackground ? this.startSpinner(
-      'Connecting to blockchain storage...'
-    ) : undefined;
+    const blockchainSpinner = !isBackground
+      ? this.startSpinner('Connecting to blockchain storage...')
+      : undefined;
 
     try {
       // Initialize Walrus storage with retry
@@ -732,13 +774,17 @@ class AddCommand extends BaseCommand {
         {
           maxRetries: 5,
           baseDelay: 2000,
-          retryMessage: isBackground ? undefined : 'Retrying blockchain connection...',
+          retryMessage: isBackground
+            ? undefined
+            : 'Retrying blockchain connection...',
           operationName: 'walrus_connect',
         }
       );
 
       // Start storage spinner only if not in background
-      const storeSpinner = !isBackground ? this.startSpinner('Storing todo on blockchain...') : undefined;
+      const storeSpinner = !isBackground
+        ? this.startSpinner('Storing todo on blockchain...')
+        : undefined;
 
       // Store todo on Walrus with retry and transaction handling
       blobId = await this.executeTransaction(
@@ -754,7 +800,9 @@ class AddCommand extends BaseCommand {
             {
               maxRetries: 5,
               baseDelay: 2000,
-              retryMessage: isBackground ? undefined : 'Retrying blockchain storage...',
+              retryMessage: isBackground
+                ? undefined
+                : 'Retrying blockchain storage...',
               operationName: 'walrus_store_todo',
             }
           );
@@ -777,9 +825,11 @@ class AddCommand extends BaseCommand {
 
       // Update local todo with Walrus blob ID if we're keeping a local copy
       if (storageLocation === 'both') {
-        const updateSpinner = !isBackground ? this.startSpinner(
-          'Updating local copy with blockchain reference...'
-        ) : undefined;
+        const updateSpinner = !isBackground
+          ? this.startSpinner(
+              'Updating local copy with blockchain reference...'
+            )
+          : undefined;
         try {
           await this.todoService.updateTodo(listName, todo.id, {
             walrusBlobId: blobId,
@@ -806,7 +856,9 @@ class AddCommand extends BaseCommand {
 
       // If storage is blockchain only, remove from local storage
       if (storageLocation === 'blockchain') {
-        const cleanupSpinner = !isBackground ? this.startSpinner('Removing local copy...') : undefined;
+        const cleanupSpinner = !isBackground
+          ? this.startSpinner('Removing local copy...')
+          : undefined;
         try {
           await this.todoService.deleteTodo(listName, todo.id);
           if (!isBackground && cleanupSpinner !== undefined) {
@@ -816,7 +868,9 @@ class AddCommand extends BaseCommand {
           }
         } catch (_error) {
           if (!isBackground) {
-            this.warning('Failed to remove local copy after blockchain storage');
+            this.warning(
+              'Failed to remove local copy after blockchain storage'
+            );
           } else {
             console.log('Warning: Failed to remove local copy');
           }
@@ -920,7 +974,7 @@ class AddCommand extends BaseCommand {
     listName: string
   ): Promise<void> {
     const isBackground = process.env.WALTODO_BACKGROUND === 'true';
-    
+
     // Choose appropriate header based on whether this is a new list or just a new task
     const headerText = this.isNewList ? `New List Created` : `New Task Added`;
 
@@ -997,28 +1051,38 @@ class AddCommand extends BaseCommand {
     // Pattern 2: One positional argument - determine if it's a list name or title
     else if (args.titleOrList && !args.title) {
       const firstArg = args.titleOrList;
-      
+
       // If we have task flags, treat the first argument as a list name
-      if (flags.task && (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0) {
+      if (
+        flags.task &&
+        (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0
+      ) {
         listName = CommandSanitizer.sanitizeString(firstArg);
         const tasks = Array.isArray(flags.task) ? flags.task : [flags.task];
-        todoTitles = tasks.filter((t): t is string => typeof t === 'string').map((t: string) =>
-          CommandSanitizer.sanitizeString(t)
-        );
+        todoTitles = tasks
+          .filter((t): t is string => typeof t === 'string')
+          .map((t: string) => CommandSanitizer.sanitizeString(t));
       }
       // Otherwise, treat as title with explicit list flag or default list
       else {
-        listName = flags.list ? CommandSanitizer.sanitizeString(flags.list as string) : 'default';
+        listName = flags.list
+          ? CommandSanitizer.sanitizeString(flags.list as string)
+          : 'default';
         todoTitles = [CommandSanitizer.sanitizeString(firstArg)];
       }
     }
     // Pattern 3: No positional args - use task flags
-    else if (flags.task && (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0) {
-      listName = flags.list ? CommandSanitizer.sanitizeString(flags.list as string) : 'default';
+    else if (
+      flags.task &&
+      (Array.isArray(flags.task) ? flags.task : [flags.task]).length > 0
+    ) {
+      listName = flags.list
+        ? CommandSanitizer.sanitizeString(flags.list as string)
+        : 'default';
       const tasks = Array.isArray(flags.task) ? flags.task : [flags.task];
-      todoTitles = tasks.filter((t): t is string => typeof t === 'string').map((t: string) =>
-        CommandSanitizer.sanitizeString(t)
-      );
+      todoTitles = tasks
+        .filter((t): t is string => typeof t === 'string')
+        .map((t: string) => CommandSanitizer.sanitizeString(t));
     }
     // Pattern 4: No title provided anywhere
     else {
@@ -1035,7 +1099,7 @@ class AddCommand extends BaseCommand {
    */
   private showHelpfulErrorMessage(): never {
     const availableLists = this.todoService.getAllListsSync();
-    
+
     let errorMessage = 'Todo title is required. Use one of these formats:\n\n';
     errorMessage += '📝 Positional syntax (recommended):\n';
     errorMessage += `  ${this.config.bin} add "Buy groceries"              # Add to default list\n`;
@@ -1044,18 +1108,14 @@ class AddCommand extends BaseCommand {
     errorMessage += '🏷️  Legacy flag syntax (still supported):\n';
     errorMessage += `  ${this.config.bin} add -t "Buy groceries"           # Add to default list\n`;
     errorMessage += `  ${this.config.bin} add -t "Buy groceries" -l mylist # Add to specific list\n`;
-    
+
     if (availableLists.length > 0) {
       errorMessage += `\n📋 Available lists: ${chalk.cyan(availableLists.join(', '))}`;
     } else {
       errorMessage += `\n💡 No lists exist yet - a ${chalk.cyan('default')} list will be created`;
     }
 
-    this.errorWithHelp(
-      'Missing title',
-      'Todo title is required',
-      errorMessage
-    );
+    this.errorWithHelp('Missing title', 'Todo title is required', errorMessage);
   }
 
   /**
@@ -1099,9 +1159,11 @@ class AddCommand extends BaseCommand {
     // Validate task titles using unified validators
     if (flags.task) {
       const tasks = Array.isArray(flags.task) ? flags.task : [flags.task];
-      tasks.filter((task): task is string => typeof task === 'string').forEach((task: string) => {
-        this.validateFlag.nonEmpty(task, 'Task title');
-      });
+      tasks
+        .filter((task): task is string => typeof task === 'string')
+        .forEach((task: string) => {
+          this.validateFlag.nonEmpty(task, 'Task title');
+        });
     }
 
     // Validate priority using unified validators
@@ -1158,7 +1220,9 @@ class AddCommand extends BaseCommand {
 
     // Validate due dates
     if (flags.due) {
-      const dueDates = Array.isArray(flags.due) ? flags.due : [flags.due as string];
+      const dueDates = Array.isArray(flags.due)
+        ? flags.due
+        : [flags.due as string];
       dueDates.forEach((dueDate: string, index: number) => {
         InputValidator.validate(
           dueDate,
@@ -1170,7 +1234,9 @@ class AddCommand extends BaseCommand {
 
     // Validate tags
     if (flags.tags) {
-      const tagSets = Array.isArray(flags.tags) ? flags.tags : [flags.tags as string];
+      const tagSets = Array.isArray(flags.tags)
+        ? flags.tags
+        : [flags.tags as string];
       tagSets.forEach((tagSet: string, index: number) => {
         InputValidator.validate(
           tagSet,
@@ -1209,30 +1275,32 @@ class AddCommand extends BaseCommand {
     flags: Record<string, string | boolean | string[] | undefined>
   ): Promise<void> {
     const { listName, todoTitles } = this.parseInputArguments(args, flags);
-    
+
     // Create background job
     const commandArgs = [];
     if (args.titleOrList) commandArgs.push(args.titleOrList);
     if (args.title) commandArgs.push(args.title);
-    
+
     const jobFlags = { ...flags };
     delete jobFlags.background; // Remove background flag to prevent recursion
     delete jobFlags.watch; // Remove watch flag
-    
+
     const job = jobManager.createJob('add', commandArgs, jobFlags);
-    
+
     this.log(chalk.green(`🚀 Background job started: ${chalk.bold(job.id)}`));
     this.log(chalk.gray(`   Command: add ${commandArgs.join(' ')}`));
     this.log(chalk.gray(`   Todos: ${todoTitles.length} item(s)`));
     this.log(chalk.gray(`   List: ${listName}`));
     this.log('');
-    
+
     // Start the background process
     this.startBackgroundProcess(job, args, flags);
-    
+
     if (flags.watch) {
       // Watch progress if requested
-      this.log(chalk.blue('📊 Watching progress... (Press Ctrl+C to stop watching)'));
+      this.log(
+        chalk.blue('📊 Watching progress... (Press Ctrl+C to stop watching)')
+      );
       this.log('');
       await this.watchBackgroundJob(job.id);
     } else {
@@ -1241,7 +1309,7 @@ class AddCommand extends BaseCommand {
       this.log(chalk.gray(`   ${this.config.bin} status ${job.id}`));
       this.log(chalk.gray(`   ${this.config.bin} jobs --active`));
       this.log('');
-      
+
       // Show brief status
       setTimeout(async () => {
         const currentJob = jobManager.getJob(job.id);
@@ -1251,7 +1319,7 @@ class AddCommand extends BaseCommand {
       }, 1000);
     }
   }
-  
+
   /**
    * Start background process for add command
    */
@@ -1261,23 +1329,27 @@ class AddCommand extends BaseCommand {
     flags: Record<string, string | boolean | string[] | undefined>
   ): void {
     const { listName, todoTitles } = this.parseInputArguments(args, flags);
-    
+
     // For complex operations with AI or blockchain, use internal processing
-    if (flags.ai || flags.storage === 'blockchain' || flags.storage === 'both') {
+    if (
+      flags.ai ||
+      flags.storage === 'blockchain' ||
+      flags.storage === 'both'
+    ) {
       this.startAdvancedBackgroundProcess(job, args, flags);
       return;
     }
-    
+
     // Build command arguments for spawning
     const spawnArgs = ['run', 'add'];
-    
+
     if (args.titleOrList) spawnArgs.push(args.titleOrList);
     if (args.title) spawnArgs.push(args.title);
-    
+
     // Add flags
     Object.entries(flags).forEach(([key, value]) => {
       if (key === 'background' || key === 'watch') return; // Skip these flags
-      
+
       if (typeof value === 'boolean' && value) {
         spawnArgs.push(`--${key}`);
       } else if (typeof value === 'string') {
@@ -1288,25 +1360,25 @@ class AddCommand extends BaseCommand {
         });
       }
     });
-    
+
     const childProcess = spawn('node', spawnArgs, {
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, WALTODO_BACKGROUND: 'true' }
+      env: { ...process.env, WALTODO_BACKGROUND: 'true' },
     });
-    
+
     // Update job with PID
     jobManager.startJob(job.id, childProcess.pid);
     jobManager.updateProgress(job.id, 0, 0, todoTitles.length);
-    
+
     // Handle process events
     let output = '';
     let errorOutput = '';
-    
-    childProcess.stdout?.on('data', (data) => {
+
+    childProcess.stdout?.on('data', data => {
       output += data.toString();
       jobManager.writeJobLog(job.id, `STDOUT: ${data.toString()}`);
-      
+
       // Parse progress if available
       const progressMatch = data.toString().match(/Progress: (\d+)%/);
       if (progressMatch) {
@@ -1314,32 +1386,32 @@ class AddCommand extends BaseCommand {
         jobManager.updateProgress(job.id, progress);
       }
     });
-    
-    childProcess.stderr?.on('data', (data) => {
+
+    childProcess.stderr?.on('data', data => {
       errorOutput += data.toString();
       jobManager.writeJobLog(job.id, `STDERR: ${data.toString()}`);
     });
-    
-    childProcess.on('close', (code) => {
+
+    childProcess.on('close', code => {
       if (code === 0) {
         jobManager.completeJob(job.id, {
           output,
           todosAdded: todoTitles.length,
-          listName
+          listName,
         });
       } else {
         jobManager.failJob(job.id, `Process exited with code ${code}`);
       }
     });
-    
-    childProcess.on('error', (error) => {
+
+    childProcess.on('error', error => {
       jobManager.failJob(job.id, error.message);
     });
-    
+
     // Detach the child process so it can run independently
     childProcess.unref();
   }
-  
+
   /**
    * Advanced background processing for AI and blockchain operations
    */
@@ -1349,93 +1421,128 @@ class AddCommand extends BaseCommand {
     flags: Record<string, string | boolean | string[] | undefined>
   ): Promise<void> {
     jobManager.startJob(job.id);
-    
+
     try {
       // Initialize background operations if needed
       if (!this.backgroundOps) {
         this.backgroundOps = await createBackgroundOperationsManager();
       }
-      
+
       const { listName, todoTitles } = this.parseInputArguments(args, flags);
       jobManager.updateProgress(job.id, 5, 0, todoTitles.length);
-      
+
       // Create todos data for background processing
       const todosToProcess = todoTitles.map((title, index) => {
-        const priorities = Array.isArray(flags.priority) ? flags.priority : flags.priority ? [flags.priority] : ['medium'];
-        const dueDates = Array.isArray(flags.due) ? flags.due : flags.due ? [flags.due] : [];
-        const tagSets = Array.isArray(flags.tags) ? flags.tags : flags.tags ? [flags.tags] : [];
-        
+        const priorities = Array.isArray(flags.priority)
+          ? flags.priority
+          : flags.priority
+            ? [flags.priority]
+            : ['medium'];
+        const dueDates = Array.isArray(flags.due)
+          ? flags.due
+          : flags.due
+            ? [flags.due]
+            : [];
+        const tagSets = Array.isArray(flags.tags)
+          ? flags.tags
+          : flags.tags
+            ? [flags.tags]
+            : [];
+
         return {
           title,
-          priority: (typeof priorities[index] === 'string' ? priorities[index] : typeof priorities[priorities.length - 1] === 'string' ? priorities[priorities.length - 1] : 'medium') as 'high' | 'medium' | 'low',
-          dueDate: dueDates[index] && typeof dueDates[index] === 'string' ? CommandSanitizer.sanitizeDate(dueDates[index] as string) : undefined,
-          tags: tagSets[index] && typeof tagSets[index] === 'string' ? CommandSanitizer.sanitizeTags(tagSets[index] as string) : [],
+          priority: (typeof priorities[index] === 'string'
+            ? priorities[index]
+            : typeof priorities[priorities.length - 1] === 'string'
+              ? priorities[priorities.length - 1]
+              : 'medium') as 'high' | 'medium' | 'low',
+          dueDate:
+            dueDates[index] && typeof dueDates[index] === 'string'
+              ? CommandSanitizer.sanitizeDate(dueDates[index] as string)
+              : undefined,
+          tags:
+            tagSets[index] && typeof tagSets[index] === 'string'
+              ? CommandSanitizer.sanitizeTags(tagSets[index] as string)
+              : [],
           private: flags.private as boolean,
-          storageLocation: flags.storage as StorageLocation || 'local',
+          storageLocation: (flags.storage as StorageLocation) || 'local',
           useAI: flags.ai as boolean,
         };
       });
-      
+
       jobManager.updateProgress(job.id, 10, 0, todoTitles.length);
-      
+
       // Process todos in the background using BackgroundOperations
       const operationId = await this.backgroundOps.processBatchInBackground(
         todosToProcess.map(todo => ({
           type: 'add-todo',
           listName,
           todo,
-          metadata: { jobId: job.id }
+          metadata: { jobId: job.id },
         })),
         'normal'
       );
-      
+
       // Monitor the background operation and update job progress
       const monitorInterval = setInterval(async () => {
         try {
-          const status = await this.backgroundOps!.getOperationStatus(operationId);
+          const status =
+            await this.backgroundOps!.getOperationStatus(operationId);
           if (status) {
             const progress = Math.min(95, 10 + (status.progress || 0) * 0.85);
             jobManager.updateProgress(job.id, progress);
-            
+
             if (status.status === 'completed') {
               clearInterval(monitorInterval);
-              const result = await this.backgroundOps!.getOperationResult(operationId);
+              const result =
+                await this.backgroundOps!.getOperationResult(operationId);
               jobManager.completeJob(job.id, {
                 todosAdded: todoTitles.length,
                 listName,
                 operationId,
-                result
+                result,
               });
             } else if (status.status === 'failed') {
               clearInterval(monitorInterval);
-              jobManager.failJob(job.id, status.error || 'Background operation failed');
+              jobManager.failJob(
+                job.id,
+                status.error || 'Background operation failed'
+              );
             }
           }
         } catch (error) {
           clearInterval(monitorInterval);
-          jobManager.failJob(job.id, `Monitoring error: ${error instanceof Error ? error.message : String(error)}`);
+          jobManager.failJob(
+            job.id,
+            `Monitoring error: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }, 2000);
-      
+
       // Set a timeout to prevent infinite monitoring
       setTimeout(() => {
         clearInterval(monitorInterval);
         const currentJob = jobManager.getJob(job.id);
-        if (currentJob && (currentJob.status === 'pending' || currentJob.status === 'running')) {
+        if (
+          currentJob &&
+          (currentJob.status === 'pending' || currentJob.status === 'running')
+        ) {
           jobManager.failJob(job.id, 'Operation timeout');
         }
       }, 600000); // 10 minutes timeout
-      
     } catch (error) {
-      jobManager.failJob(job.id, `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`);
+      jobManager.failJob(
+        job.id,
+        `Failed to start background operation: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
-  
+
   /**
    * Watch background job progress with live updates
    */
   private async watchBackgroundJob(jobId: string): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const updateInterval = setInterval(() => {
         const job = jobManager.getJob(jobId);
         if (!job) {
@@ -1444,33 +1551,39 @@ class AddCommand extends BaseCommand {
           resolve();
           return;
         }
-        
+
         // Clear previous line and show current status
         process.stdout.write('\r\x1b[K'); // Clear line
-        
+
         const statusIcon = this.getJobStatusIcon(job.status);
         const progressBar = this.createProgressBarVisual(job.progress);
         const duration = Date.now() - job.startTime;
         const durationStr = this.formatAddCommandDuration(duration);
-        
+
         process.stdout.write(
           `${statusIcon} ${progressBar} ${chalk.yellow(job.progress + '%')} | ` +
-          `${chalk.gray(durationStr)} | ` +
-          `${job.processedItems || 0}/${job.totalItems || 0} items`
+            `${chalk.gray(durationStr)} | ` +
+            `${job.processedItems || 0}/${job.totalItems || 0} items`
         );
-        
+
         if (job.status === 'completed') {
           process.stdout.write('\n');
           this.log(chalk.green(`\n✅ Background job completed successfully!`));
           this.log(chalk.gray(`   Duration: ${durationStr}`));
           if (job.metadata?.todosAdded) {
-            this.log(chalk.gray(`   Added ${job.metadata.todosAdded} todo(s) to list '${job.metadata.listName}'`));
+            this.log(
+              chalk.gray(
+                `   Added ${job.metadata.todosAdded} todo(s) to list '${job.metadata.listName}'`
+              )
+            );
           }
           clearInterval(updateInterval);
           resolve();
         } else if (job.status === 'failed') {
           process.stdout.write('\n');
-          this.log(chalk.red(`\n❌ Background job failed: ${job.errorMessage}`));
+          this.log(
+            chalk.red(`\n❌ Background job failed: ${job.errorMessage}`)
+          );
           clearInterval(updateInterval);
           resolve();
         } else if (job.status === 'cancelled') {
@@ -1480,53 +1593,69 @@ class AddCommand extends BaseCommand {
           resolve();
         }
       }, 1000);
-      
+
       // Handle Ctrl+C to stop watching
       const handleExit = () => {
         clearInterval(updateInterval);
         process.stdout.write('\n');
-        this.log(chalk.yellow('\n👋 Stopped watching. Job continues in background.'));
-        this.log(chalk.gray(`   Check status with: ${this.config.bin} status ${jobId}`));
+        this.log(
+          chalk.yellow('\n👋 Stopped watching. Job continues in background.')
+        );
+        this.log(
+          chalk.gray(`   Check status with: ${this.config.bin} status ${jobId}`)
+        );
         resolve();
       };
-      
+
       process.once('SIGINT', handleExit);
     });
   }
-  
+
   /**
    * Get status icon for job status
    */
   private getJobStatusIcon(status: string): string {
     switch (status) {
-      case 'pending': return '⏳';
-      case 'running': return '🔄';
-      case 'completed': return '✅';
-      case 'failed': return '❌';
-      case 'cancelled': return '⚪';
-      default: return '❓';
+      case 'pending':
+        return '⏳';
+      case 'running':
+        return '🔄';
+      case 'completed':
+        return '✅';
+      case 'failed':
+        return '❌';
+      case 'cancelled':
+        return '⚪';
+      default:
+        return '❓';
     }
   }
-  
+
   /**
    * Create a progress bar visualization
    */
-  private createProgressBarVisual(progress: number, width: number = 20): string {
+  private createProgressBarVisual(
+    progress: number,
+    width: number = 20
+  ): string {
     const filled = Math.floor((progress / 100) * width);
     const empty = width - filled;
-    return chalk.green('[') + 
-           chalk.green('█'.repeat(filled)) + 
-           chalk.gray('░'.repeat(empty)) + 
-           chalk.green(']');
+    return (
+      chalk.green('[') +
+      chalk.green('█'.repeat(filled)) +
+      chalk.gray('░'.repeat(empty)) +
+      chalk.green(']')
+    );
   }
-  
+
   /**
    * Format duration in human readable format
    */
   private formatAddCommandDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
+    if (ms < 3600000)
+      return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
   }
 
@@ -1549,7 +1678,9 @@ class AddCommand extends BaseCommand {
   /**
    * Clean flags to remove help property for compatibility
    */
-  private cleanFlags(flags: any): Record<string, string | boolean | string[] | undefined> {
+  private cleanFlags(
+    flags: any
+  ): Record<string, string | boolean | string[] | undefined> {
     const { help, ...cleanedFlags } = flags;
     return cleanedFlags;
   }

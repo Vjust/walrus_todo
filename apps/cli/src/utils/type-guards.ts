@@ -36,7 +36,9 @@ export function hasCode(value: unknown): value is { code: string } {
 /**
  * Type guard to check if a value has both message and code properties
  */
-export function hasMessageAndCode(value: unknown): value is { message: string; code: string } {
+export function hasMessageAndCode(
+  value: unknown
+): value is { message: string; code: string } {
   return hasMessage(value) && hasCode(value);
 }
 
@@ -47,15 +49,15 @@ export function getErrorMessage(error: unknown): string {
   if (isError(error)) {
     return error.message;
   }
-  
+
   if (hasMessage(error)) {
     return error.message;
   }
-  
+
   if (typeof error === 'string') {
     return error;
   }
-  
+
   return 'Unknown error occurred';
 }
 
@@ -66,7 +68,7 @@ export function getErrorCode(error: unknown): string | undefined {
   if (hasCode(error)) {
     return error.code;
   }
-  
+
   return undefined;
 }
 
@@ -125,16 +127,16 @@ export function toError(value: unknown): Error {
   if (isError(value)) {
     return value;
   }
-  
+
   const message = getErrorMessage(value);
   const error = new Error(message);
-  
+
   // Preserve original error code if available
   const code = getErrorCode(value);
   if (code) {
     (error as any).code = code;
   }
-  
+
   return error;
 }
 
@@ -150,7 +152,9 @@ export function assertError(value: unknown): asserts value is Error {
 /**
  * Type assertion for objects (throws if not an object)
  */
-export function assertObject(value: unknown): asserts value is Record<string, unknown> {
+export function assertObject(
+  value: unknown
+): asserts value is Record<string, unknown> {
   if (!isObject(value)) {
     throw new Error(`Expected object, got ${typeof value}`);
   }

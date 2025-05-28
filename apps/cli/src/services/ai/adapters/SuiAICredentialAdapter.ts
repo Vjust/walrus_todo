@@ -135,11 +135,15 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       // Parse metadata if available
       const metadata: Record<string, unknown> = {};
-      const credentialFields = (content as SuiObjectContent).fields as SuiCredentialFields;
+      const credentialFields = (content as SuiObjectContent)
+        .fields as SuiCredentialFields;
       if (credentialFields.metadata) {
         try {
           const metadataStr = credentialFields.metadata;
-          const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
+          const metadataEntries = JSON.parse(metadataStr) as Array<{
+            key: string;
+            value: string;
+          }>;
 
           // Convert array of {key, value} objects to a Record
           metadataEntries.forEach((entry: { key: string; value: string }) => {
@@ -156,18 +160,16 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         id: credentialFields.credential_id || credentialId,
         providerName: credentialFields.provider_name || 'unknown',
         credentialType:
-          (credentialFields.credential_type as CredentialType) || CredentialType.API_KEY,
+          (credentialFields.credential_type as CredentialType) ||
+          CredentialType.API_KEY,
         credentialValue: '', // Not stored on-chain
         metadata,
         isVerified: credentialFields.is_verified || false,
-        verificationProof:
-          credentialFields.verification_proof || undefined,
+        verificationProof: credentialFields.verification_proof || undefined,
         storageOptions: { encrypt: true },
         createdAt: parseInt(credentialFields.created_at || '0'),
         expiresAt: parseInt(credentialFields.expires_at || '0'),
-        permissionLevel: parseInt(
-          credentialFields.permission_level || '0'
-        ),
+        permissionLevel: parseInt(credentialFields.permission_level || '0'),
       };
 
       return providerCredential;
@@ -230,11 +232,15 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
         // Parse metadata if available
         const metadata: Record<string, unknown> = {};
-        const credentialFields = (content as SuiObjectContent).fields as SuiCredentialFields;
+        const credentialFields = (content as SuiObjectContent)
+          .fields as SuiCredentialFields;
         if (credentialFields.metadata) {
           try {
             const metadataStr = credentialFields.metadata;
-            const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
+            const metadataEntries = JSON.parse(metadataStr) as Array<{
+              key: string;
+              value: string;
+            }>;
 
             // Convert array of {key, value} objects to a Record
             metadataEntries.forEach((entry: { key: string; value: string }) => {
@@ -250,18 +256,16 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           id: credentialFields.credential_id || obj.data.objectId,
           providerName: credentialFields.provider_name || 'unknown',
           credentialType:
-            (credentialFields.credential_type as CredentialType) || CredentialType.API_KEY,
+            (credentialFields.credential_type as CredentialType) ||
+            CredentialType.API_KEY,
           credentialValue: '', // Not stored on-chain
           metadata,
           isVerified: credentialFields.is_verified || false,
-          verificationProof:
-            credentialFields.verification_proof || undefined,
+          verificationProof: credentialFields.verification_proof || undefined,
           storageOptions: { encrypt: true },
           createdAt: parseInt(credentialFields.created_at || '0'),
           expiresAt: parseInt(credentialFields.expires_at || '0'),
-          permissionLevel: parseInt(
-            credentialFields.permission_level || '0'
-          ),
+          permissionLevel: parseInt(credentialFields.permission_level || '0'),
         };
 
         credentials.push(credential);
@@ -388,13 +392,12 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const content = verification.data.content;
 
       // Check if verification is still valid
-      const fields = (content as SuiObjectContent).fields as SuiVerificationFields;
+      const fields = (content as SuiObjectContent)
+        .fields as SuiVerificationFields;
       const isValid = fields.is_valid || false;
 
       // Check if verification has expired
-      const expiryTimestamp = parseInt(
-        fields.expiry_timestamp || '0'
-      );
+      const expiryTimestamp = parseInt(fields.expiry_timestamp || '0');
       if (expiryTimestamp > 0 && expiryTimestamp < Date.now()) {
         return false;
       }
@@ -438,8 +441,13 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         providerName: credential.providerName,
         credentialType: credential.credentialType,
         permissionLevel: credential.permissionLevel,
-        timestamp: parseInt(((content as SuiObjectContent).fields as SuiVerificationFields).timestamp || '0'),
-        verifier: ((content as SuiObjectContent).fields as SuiVerificationFields).verifier || '',
+        timestamp: parseInt(
+          ((content as SuiObjectContent).fields as SuiVerificationFields)
+            .timestamp || '0'
+        ),
+        verifier:
+          ((content as SuiObjectContent).fields as SuiVerificationFields)
+            .verifier || '',
         chainInfo: {
           network: 'sui',
           objectId: credential.verificationProof,
@@ -496,7 +504,9 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     response: SuiTransactionBlockResponse
   ): string {
     // Find the first created object in the transaction
-    const effects = response.effects as { created?: Array<{ reference: { objectId: string } }> } | undefined;
+    const effects = response.effects as
+      | { created?: Array<{ reference: { objectId: string } }> }
+      | undefined;
     const created = effects?.created;
 
     if (!created || created.length === 0) {

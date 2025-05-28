@@ -105,13 +105,13 @@ export default class ShareCommand extends BaseCommand {
         errorMessage += 'Usage:\n';
         errorMessage += `  ${chalk.cyan(`${this.config.bin} share <list> <recipient>`)}  # Recommended\n`;
         errorMessage += `  ${chalk.cyan(`${this.config.bin} share <list> --recipient <user>`)}  # Alternative\n`;
-        
+
         if (availableLists.length > 0) {
           errorMessage += `\nAvailable lists: ${chalk.cyan(availableLists.join(', '))}`;
         } else {
           errorMessage += `\n${chalk.yellow('No lists exist yet. Create one with:')} ${chalk.cyan(`${this.config.bin} add "Your first todo"`)}`;
         }
-        
+
         throw new CLIError(errorMessage, 'MISSING_PARAMETERS');
       }
 
@@ -126,7 +126,9 @@ export default class ShareCommand extends BaseCommand {
       }
 
       // Handle permissions
-      const permissionLevel = flags['read-only'] ? 'read' : (flags.permissions || 'edit');
+      const permissionLevel = flags['read-only']
+        ? 'read'
+        : flags.permissions || 'edit';
 
       // Update collaborators with permissions
       todoList.collaborators = todoList.collaborators || [];
@@ -158,17 +160,14 @@ export default class ShareCommand extends BaseCommand {
       todoList.updatedAt = new Date().toISOString();
 
       await this.todoService.saveList(listName, todoList);
-      
+
       // Success message with permission info
       this.log(
         chalk.green('✓'),
         `Todo list "${chalk.bold(listName)}" shared with ${chalk.cyan(recipient)}`
       );
-      this.log(
-        '  ',
-        chalk.dim(`Permission level: ${permissionLevel}`)
-      );
-      
+      this.log('  ', chalk.dim(`Permission level: ${permissionLevel}`));
+
       // Show helpful next steps
       this.log(chalk.dim('\nNext steps:'));
       this.log(chalk.dim(`  • ${recipient} can now access this list`));
@@ -177,7 +176,11 @@ export default class ShareCommand extends BaseCommand {
       } else {
         this.log(chalk.dim(`  • They have read-only access`));
       }
-      this.log(chalk.dim(`  • View shared lists with: ${chalk.cyan(`${this.config.bin} list --shared`)}`));
+      this.log(
+        chalk.dim(
+          `  • View shared lists with: ${chalk.cyan(`${this.config.bin} list --shared`)}`
+        )
+      );
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;

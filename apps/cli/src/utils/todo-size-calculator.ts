@@ -135,8 +135,10 @@ export class TodoSizeCalculator {
     if (todo.nftObjectId) estimatedSize += 18 + todo.nftObjectId.length;
     if (todo.imageUrl) estimatedSize += 15 + todo.imageUrl.length;
     if (todo.user) estimatedSize += 12 + todo.user.length;
-    if (todo.reminders) estimatedSize += 17 + JSON.stringify(todo.reminders).length;
-    if (todo.metadata) estimatedSize += 16 + JSON.stringify(todo.metadata).length;
+    if (todo.reminders)
+      estimatedSize += 17 + JSON.stringify(todo.reminders).length;
+    if (todo.metadata)
+      estimatedSize += 16 + JSON.stringify(todo.metadata).length;
 
     // Add buffer and metadata overhead
     return estimatedSize + MIN_SIZE_BUFFER_BYTES + METADATA_ESTIMATED_SIZE;

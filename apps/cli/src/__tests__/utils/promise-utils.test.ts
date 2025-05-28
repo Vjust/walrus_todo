@@ -153,11 +153,11 @@ describe('Promise Utilities', () => {
       } catch (error) {
         thrownError = error;
       }
-      
+
       expect(thrownError).toBeInstanceOf(AggregateOperationError);
       const aggregateError = thrownError as AggregateOperationError;
       expect(aggregateError.errors.length).toBe(2);
-      
+
       // Check that the errors are properly captured and transformed
       expect(aggregateError.errors[0]).toBeInstanceOf(OperationError);
       expect(aggregateError.errors[0]?.message).toContain('error1');

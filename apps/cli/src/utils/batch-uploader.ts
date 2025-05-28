@@ -7,8 +7,8 @@ import { Logger } from './Logger';
 const logger = new Logger('batch-uploader');
 
 interface BatchUploadResult {
-  successful: { 
-    id: string; 
+  successful: {
+    id: string;
     blobId: string;
     transactionId?: string;
     explorerUrl?: string;
@@ -36,21 +36,26 @@ export class BatchUploader {
    * Implements intelligent rate limiting delay based on upload sequence and network conditions
    * Follows Walrus best practices to avoid overwhelming storage nodes
    */
-  private async rateLimitDelay(uploadIndex: number, afterFailure: boolean = false): Promise<void> {
+  private async rateLimitDelay(
+    uploadIndex: number,
+    afterFailure: boolean = false
+  ): Promise<void> {
     // Base delay: Start with 2 seconds, increase for subsequent uploads
     let delayMs = 2000 + (uploadIndex - 1) * 1000; // 2s, 3s, 4s, etc.
-    
+
     // After failures, use exponential backoff to give network time to recover
     if (afterFailure) {
       delayMs = Math.min(delayMs * 2, 10000); // Max 10 second delay
     }
-    
+
     // Add small random jitter to avoid thundering herd problems
     const jitter = Math.random() * 500; // 0-500ms random
     delayMs += jitter;
-    
-    logger.info(`Rate limiting: waiting ${Math.round(delayMs / 1000 * 10) / 10}s before next upload`);
-    
+
+    logger.info(
+      `Rate limiting: waiting ${Math.round((delayMs / 1000) * 10) / 10}s before next upload`
+    );
+
     return new Promise(resolve => setTimeout(resolve, delayMs));
   }
 
@@ -137,26 +142,36 @@ export class BatchUploader {
         try {
           // Try to use detailed storage method if available
           let uploadResult;
-          if (typeof (this.walrusStorage as any).storeTodoWithDetails === 'function') {
-            uploadResult = await (this.walrusStorage as any).storeTodoWithDetails(todo, options.epochs || 5);
-            result.successful.push({ 
-              id: todo.id, 
+          if (
+            typeof (this.walrusStorage as any).storeTodoWithDetails ===
+            'function'
+          ) {
+            uploadResult = await (
+              this.walrusStorage as any
+            ).storeTodoWithDetails(todo, options.epochs || 5);
+            result.successful.push({
+              id: todo.id,
               blobId: uploadResult.blobId,
               transactionId: uploadResult.transactionId,
               explorerUrl: uploadResult.explorerUrl,
-              aggregatorUrl: uploadResult.aggregatorUrl
+              aggregatorUrl: uploadResult.aggregatorUrl,
             });
           } else {
             // Fallback to basic method
-            const blobId = await this.walrusStorage.storeTodo(todo, options.epochs || 5);
+            const blobId = await this.walrusStorage.storeTodo(
+              todo,
+              options.epochs || 5
+            );
             result.successful.push({ id: todo.id, blobId });
           }
-          
+
           result.totalBytesUploaded += exactSize;
-          
+
           // Add delay between uploads to respect rate limits (except for last upload)
           if (i < todos.length - 1) {
-            logger.info(`Upload ${i + 1}/${todos.length} completed. Waiting before next upload...`);
+            logger.info(
+              `Upload ${i + 1}/${todos.length} completed. Waiting before next upload...`
+            );
             await this.rateLimitDelay(i + 1);
           }
         } catch (error) {
@@ -164,10 +179,12 @@ export class BatchUploader {
             error instanceof Error ? error.message : String(error);
           logger.error(`Failed to upload todo "${todo.id}": ${errorMessage}`);
           result.failed.push({ id: todo.id, error: errorMessage });
-          
+
           // Still apply delay after failures to avoid hammering the network
           if (i < todos.length - 1) {
-            logger.info(`Upload ${i + 1}/${todos.length} failed. Waiting before retry...`);
+            logger.info(
+              `Upload ${i + 1}/${todos.length} failed. Waiting before retry...`
+            );
             await this.rateLimitDelay(i + 1, true);
           }
         }

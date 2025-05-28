@@ -10,7 +10,10 @@ import { configService } from '../services/config-service';
 import chalk = require('chalk');
 import { RetryManager } from '../utils/retry-manager';
 import { SuiClient } from '../utils/adapters/sui-client-compatibility';
-import { createBackgroundOperationsManager, BackgroundOperations } from '../utils/background-operations';
+import {
+  createBackgroundOperationsManager,
+  BackgroundOperations,
+} from '../utils/background-operations';
 import { jobManager } from '../utils/PerformanceMonitor';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -19,12 +22,12 @@ import { v4 as uuidv4 } from 'uuid';
  * @description Enhanced fetch command with positional syntax support and smart detection.
  * Fetches todos directly from blockchain storage (Sui NFT) or Walrus storage using their IDs.
  * Supports both positional arguments and legacy flag syntax for backward compatibility.
- * 
+ *
  * Positional Usage:
  * - waltodo fetch <id>                  # Auto-detect blob ID or object ID
  * - waltodo fetch <blob-id> --list work # Fetch blob and save to work list
  * - waltodo fetch <object-id>           # Fetch NFT from blockchain
- * 
+ *
  * Legacy Flag Usage (still supported):
  * - waltodo fetch --blob-id <id> --list mylist
  * - waltodo fetch --object-id <id> --list mylist
@@ -38,7 +41,7 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export default class FetchCommand extends BaseCommand {
   static description =
-    'Fetch todos with smart ID detection and intuitive syntax\n\nNEW SYNTAX:\n  waltodo fetch <id>                      # Auto-detect blob or object ID\n  waltodo fetch <id> --list work          # Fetch and save to specific list\n\nThe new syntax automatically detects whether you\'re fetching by blob ID\nor NFT object ID based on the format - no need to specify!\n\nID Detection:\n  • Blob IDs: Base58/64 strings (e.g., QmXyz123, bafy...)\n  • Object IDs: Hex strings starting with 0x (64+ chars)\n\nLEGACY SYNTAX (still supported):\n  waltodo fetch --blob-id <id> --list <list>\n  waltodo fetch --object-id <id> --list <list>';
+    "Fetch todos with smart ID detection and intuitive syntax\n\nNEW SYNTAX:\n  waltodo fetch <id>                      # Auto-detect blob or object ID\n  waltodo fetch <id> --list work          # Fetch and save to specific list\n\nThe new syntax automatically detects whether you're fetching by blob ID\nor NFT object ID based on the format - no need to specify!\n\nID Detection:\n  • Blob IDs: Base58/64 strings (e.g., QmXyz123, bafy...)\n  • Object IDs: Hex strings starting with 0x (64+ chars)\n\nLEGACY SYNTAX (still supported):\n  waltodo fetch --blob-id <id> --list <list>\n  waltodo fetch --object-id <id> --list <list>";
 
   static args = {
     id: Args.string({
@@ -53,7 +56,7 @@ export default class FetchCommand extends BaseCommand {
     '<%= config.bin %> fetch 0x123abc...                   # Fetch by NFT object ID (auto-detected)',
     '<%= config.bin %> fetch abc123 --list work            # Fetch and save to work list',
     '<%= config.bin %> fetch 0x456def --network testnet    # Fetch from specific network',
-    
+
     // Legacy flag syntax (backward compatibility)
     '<%= config.bin %> fetch --blob-id QmXyz --list my-todos           # Legacy: explicit blob ID',
     '<%= config.bin %> fetch --object-id 0x123 --list my-todos         # Legacy: explicit object ID',
@@ -94,7 +97,8 @@ export default class FetchCommand extends BaseCommand {
     }),
     wait: Flags.boolean({
       char: 'w',
-      description: 'Wait for background operation to complete and show progress',
+      description:
+        'Wait for background operation to complete and show progress',
       default: false,
     }),
     timeout: Flags.integer({
@@ -104,7 +108,8 @@ export default class FetchCommand extends BaseCommand {
       min: 30,
     }),
     'progress-interval': Flags.integer({
-      description: 'Progress update interval in seconds for background operations',
+      description:
+        'Progress update interval in seconds for background operations',
       default: 5,
       min: 1,
     }),
@@ -172,22 +177,24 @@ export default class FetchCommand extends BaseCommand {
     if (id.startsWith('0x') && id.length >= 64) {
       return 'object';
     }
-    
+
     // Walrus blob IDs are typically:
     // - Base58 encoded strings (IPFS-style, often start with 'Qm')
     // - Base32/Base64 encoded (can start with 'bafy', etc.)
     // - Or other alphanumeric identifiers
     // - Generally shorter than Sui object IDs
     if (
-      id.startsWith('Qm') || 
+      id.startsWith('Qm') ||
       id.startsWith('bafy') ||
       (id.length > 20 && id.length < 60 && /^[A-Za-z0-9+/=_-]+$/.test(id))
     ) {
       return 'blob';
     }
-    
+
     // For ambiguous cases, default to blob and provide helpful logging
-    this.debug(`ID '${id}' doesn't match standard patterns. Defaulting to blob ID.`);
+    this.debug(
+      `ID '${id}' doesn't match standard patterns. Defaulting to blob ID.`
+    );
     return 'blob';
   }
 
@@ -213,7 +220,9 @@ export default class FetchCommand extends BaseCommand {
           this.log(chalk.dim(`🔍 Auto-detected as Walrus blob ID: ${args.id}`));
         } else {
           objectId = args.id;
-          this.log(chalk.dim(`🔍 Auto-detected as Sui NFT object ID: ${args.id}`));
+          this.log(
+            chalk.dim(`🔍 Auto-detected as Sui NFT object ID: ${args.id}`)
+          );
         }
       } else if (flags['blob-id']) {
         // Legacy blob-id flag
@@ -230,26 +239,47 @@ export default class FetchCommand extends BaseCommand {
         // Make the error message more helpful with both syntaxes
         this.log(chalk.yellow('⚠️  You must specify an ID to fetch'));
         this.log(chalk.dim('\nPositional syntax (recommended):'));
-        this.log(chalk.dim(`  ${this.config.bin} fetch <id>                    # Auto-detect blob or object ID`));
-        this.log(chalk.dim(`  ${this.config.bin} fetch QmXyz123                # Blob ID (auto-detected)`));
-        this.log(chalk.dim(`  ${this.config.bin} fetch 0x123abc...             # Object ID (auto-detected)`));
-        
-        this.log(chalk.dim('\nLegacy flag syntax:'));
-        this.log(chalk.dim(`  ${this.config.bin} fetch --blob-id <blob-id>     # Explicit blob ID`));
-        this.log(chalk.dim(`  ${this.config.bin} fetch --object-id <object-id> # Explicit object ID`));
-        
-        this.log(chalk.dim('\n💡 Tip: Use "waltodo list -v" to see stored blob and object IDs'));
-        
-        throw new CLIError(
-          'No ID specified to fetch',
-          'MISSING_PARAMETER'
+        this.log(
+          chalk.dim(
+            `  ${this.config.bin} fetch <id>                    # Auto-detect blob or object ID`
+          )
         );
+        this.log(
+          chalk.dim(
+            `  ${this.config.bin} fetch QmXyz123                # Blob ID (auto-detected)`
+          )
+        );
+        this.log(
+          chalk.dim(
+            `  ${this.config.bin} fetch 0x123abc...             # Object ID (auto-detected)`
+          )
+        );
+
+        this.log(chalk.dim('\nLegacy flag syntax:'));
+        this.log(
+          chalk.dim(
+            `  ${this.config.bin} fetch --blob-id <blob-id>     # Explicit blob ID`
+          )
+        );
+        this.log(
+          chalk.dim(
+            `  ${this.config.bin} fetch --object-id <object-id> # Explicit object ID`
+          )
+        );
+
+        this.log(
+          chalk.dim(
+            '\n💡 Tip: Use "waltodo list -v" to see stored blob and object IDs'
+          )
+        );
+
+        throw new CLIError('No ID specified to fetch', 'MISSING_PARAMETER');
       }
 
       // Get config for Sui client
       const configInner = await configService.getConfig();
       const network = flags.network || configInner?.network || 'testnet';
-      
+
       // Validate network early
       if (!NETWORK_URLS[network as keyof typeof NETWORK_URLS]) {
         throw new CLIError(
@@ -268,9 +298,7 @@ export default class FetchCommand extends BaseCommand {
 
           // Retrieve todo from Walrus with retry
           this.log(
-            chalk.blue(
-              `📥 Retrieving todo from Walrus (blob ID: ${blobId})...`
-            )
+            chalk.blue(`📥 Retrieving todo from Walrus (blob ID: ${blobId})...`)
           );
           todo = await RetryManager.retry(
             () => this.walrusStorage.retrieveTodo(blobId),
@@ -298,13 +326,19 @@ export default class FetchCommand extends BaseCommand {
           this.log(chalk.green('✓ Todo retrieved successfully from Walrus'));
           this.log(chalk.dim('\nTodo details:'));
           this.log(`  ${chalk.bold('Title:')} ${todo.title}`);
-          this.log(`  ${chalk.bold('Status:')} ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`);
-          this.log(`  ${chalk.bold('Priority:')} ${getColoredPriority(todo.priority)}`);
+          this.log(
+            `  ${chalk.bold('Status:')} ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
+          );
+          this.log(
+            `  ${chalk.bold('Priority:')} ${getColoredPriority(todo.priority)}`
+          );
           this.log(`  ${chalk.bold('List:')} ${chalk.cyan(flags.list)}`);
           this.log(`  ${chalk.bold('Blob ID:')} ${chalk.dim(blobId)}`);
 
           if (todo.tags?.length) {
-            this.log(`  ${chalk.bold('Tags:')} ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`);
+            this.log(
+              `  ${chalk.bold('Tags:')} ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`
+            );
           }
         } catch (error) {
           // Make sure we disconnect from Walrus even if there was an error
@@ -432,20 +466,32 @@ export default class FetchCommand extends BaseCommand {
           );
           this.log(chalk.dim('\nTodo details:'));
           this.log(`  ${chalk.bold('Title:')} ${todo.title}`);
-          this.log(`  ${chalk.bold('Status:')} ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`);
-          this.log(`  ${chalk.bold('Priority:')} ${getColoredPriority(todo.priority)}`);
+          this.log(
+            `  ${chalk.bold('Status:')} ${todo.completed ? chalk.green('Completed') : chalk.yellow('Pending')}`
+          );
+          this.log(
+            `  ${chalk.bold('Priority:')} ${getColoredPriority(todo.priority)}`
+          );
           this.log(`  ${chalk.bold('List:')} ${chalk.cyan(flags.list)}`);
           this.log(`  ${chalk.bold('NFT Object ID:')} ${chalk.cyan(objectId)}`);
-          this.log(`  ${chalk.bold('Walrus Blob ID:')} ${chalk.dim(nftData.walrusBlobId)}`);
+          this.log(
+            `  ${chalk.bold('Walrus Blob ID:')} ${chalk.dim(nftData.walrusBlobId)}`
+          );
 
           if (todo.tags?.length) {
-            this.log(`  ${chalk.bold('Tags:')} ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`);
+            this.log(
+              `  ${chalk.bold('Tags:')} ${todo.tags.map(tag => chalk.blue(tag)).join(', ')}`
+            );
           }
-          
+
           // Add explorer link for NFTs
           if (!flags['dry-run']) {
             this.log(chalk.blue('\n🔗 View on Sui Explorer:'));
-            this.log(chalk.cyan(`  https://explorer.sui.io/object/${objectId}?network=${network}`));
+            this.log(
+              chalk.cyan(
+                `  https://explorer.sui.io/object/${objectId}?network=${network}`
+              )
+            );
           }
         } catch (error) {
           // Make sure we disconnect from Walrus even if there was an error
@@ -456,7 +502,11 @@ export default class FetchCommand extends BaseCommand {
           }
 
           // Provide helpful error message if object ID might be wrong
-          if (error instanceof Error && (error.message.includes('not found') || error.message.includes('does not exist'))) {
+          if (
+            error instanceof Error &&
+            (error.message.includes('not found') ||
+              error.message.includes('does not exist'))
+          ) {
             throw new CLIError(
               `NFT not found with object ID '${objectId}'.\n\n${chalk.yellow('Possible issues:')}\n  • The object ID might not exist or be invalid\n  • The NFT might be on a different network\n  • This might be a Walrus blob ID instead\n\n${chalk.blue('Try these solutions:')}\n  • If this is a blob ID: ${chalk.cyan(`waltodo fetch ${objectId}`)}\n  • Check the correct network: ${chalk.cyan(`waltodo fetch ${objectId} --network testnet`)}\n  • Verify the ID: ${chalk.cyan('waltodo list -v')}\n  • View on explorer: ${chalk.cyan(`https://explorer.sui.io/object/${objectId}?network=${network}`)}\n\nOriginal error: ${error.message}`,
               'OBJECT_NOT_FOUND'
@@ -491,26 +541,36 @@ export default class FetchCommand extends BaseCommand {
     this.backgroundOps = await createBackgroundOperationsManager();
 
     // Create background job
-    const job = jobManager.createJob('fetch', 
-      [args.id].filter(Boolean), 
-      flags
-    );
-    
+    const job = jobManager.createJob('fetch', [args.id].filter(Boolean), flags);
+
     this.log(chalk.blue(`🚀 Starting background fetch operation...`));
     this.log(chalk.dim(`Job ID: ${job.id}`));
-    this.log(chalk.dim(`Target ID: ${args.id || flags['blob-id'] || flags['object-id']}`));
+    this.log(
+      chalk.dim(
+        `Target ID: ${args.id || flags['blob-id'] || flags['object-id']}`
+      )
+    );
     this.log(chalk.dim(`Timeout: ${flags.timeout}s`));
-    
+
     try {
       // Start the job
       jobManager.startJob(job.id);
-      
+
       // Queue the background operation
-      const operationId = await this.queueBackgroundFetch(args, flags, job.id, timeoutMs);
-      
+      const operationId = await this.queueBackgroundFetch(
+        args,
+        flags,
+        job.id,
+        timeoutMs
+      );
+
       if (flags.wait) {
         this.log(chalk.yellow('⏳ Waiting for fetch to complete...'));
-        await this.waitForBackgroundOperation(operationId, job.id, flags['progress-interval'] || 5);
+        await this.waitForBackgroundOperation(
+          operationId,
+          job.id,
+          flags['progress-interval'] || 5
+        );
       } else {
         this.log(chalk.green('✓ Background fetch started'));
         this.log(chalk.dim(`\n💡 Track progress: waltodo jobs`));
@@ -518,7 +578,10 @@ export default class FetchCommand extends BaseCommand {
         this.log(chalk.dim(`💡 Cancel job: waltodo cancel ${job.id}`));
       }
     } catch (error) {
-      jobManager.failJob(job.id, error instanceof Error ? error.message : String(error));
+      jobManager.failJob(
+        job.id,
+        error instanceof Error ? error.message : String(error)
+      );
       throw error;
     }
   }
@@ -527,19 +590,22 @@ export default class FetchCommand extends BaseCommand {
    * Queue background fetch operation
    */
   private async queueBackgroundFetch(
-    args: any, 
-    flags: any, 
-    jobId: string, 
+    args: any,
+    flags: any,
+    jobId: string,
     timeoutMs: number
   ): Promise<string> {
     if (!this.backgroundOps) {
-      throw new CLIError('Background operations manager not initialized', 'BACKGROUND_NOT_INITIALIZED');
+      throw new CLIError(
+        'Background operations manager not initialized',
+        'BACKGROUND_NOT_INITIALIZED'
+      );
     }
 
     // Determine ID and type
     let blobId: string | undefined;
     let objectId: string | undefined;
-    
+
     if (args.id) {
       const idType = this.detectIdType(args.id);
       if (idType === 'blob') {
@@ -576,12 +642,12 @@ export default class FetchCommand extends BaseCommand {
           jobManager.writeJobLog(jobId, `Fetch progress: ${progress}%`);
         },
         onComplete: (id, result) => {
-          jobManager.completeJob(jobId, { 
-            operationId: id, 
+          jobManager.completeJob(jobId, {
+            operationId: id,
             result,
             itemsFetched: result?.fetched || 0,
             fetchType: blobId ? 'blob' : 'nft',
-            targetId: blobId || objectId
+            targetId: blobId || objectId,
           });
           jobManager.writeJobLog(jobId, `Fetch completed successfully`);
         },
@@ -602,8 +668,8 @@ export default class FetchCommand extends BaseCommand {
    * Store fetch operation data for background processing
    */
   private async storeFetchOperation(
-    operationId: string, 
-    data: any, 
+    operationId: string,
+    data: any,
     timeoutMs: number
   ): Promise<void> {
     const { createCache } = await import('../utils/performance-cache');
@@ -611,7 +677,7 @@ export default class FetchCommand extends BaseCommand {
       strategy: 'TTL',
       ttlMs: timeoutMs + 60000, // Add 1 minute buffer
     });
-    
+
     await cache.set(operationId, {
       ...data,
       timestamp: Date.now(),
@@ -623,19 +689,25 @@ export default class FetchCommand extends BaseCommand {
    * Wait for background operation to complete with progress updates
    */
   private async waitForBackgroundOperation(
-    operationId: string, 
-    jobId: string, 
+    operationId: string,
+    jobId: string,
     progressIntervalSec: number
   ): Promise<void> {
     if (!this.backgroundOps) {
-      throw new CLIError('Background operations manager not initialized', 'BACKGROUND_NOT_INITIALIZED');
+      throw new CLIError(
+        'Background operations manager not initialized',
+        'BACKGROUND_NOT_INITIALIZED'
+      );
     }
 
     let lastProgress = 0;
     let lastLogTime = 0;
     const progressCallback = (progress: number) => {
       const now = Date.now();
-      if (progress > lastProgress + 5 || now - lastLogTime > progressIntervalSec * 1000) {
+      if (
+        progress > lastProgress + 5 ||
+        now - lastLogTime > progressIntervalSec * 1000
+      ) {
         const progressBar = this.createProgressBarVisual(progress);
         const phase = this.getFetchPhase(progress);
         process.stdout.write(`\r${progressBar} ${progress}% - ${phase}`);
@@ -653,11 +725,11 @@ export default class FetchCommand extends BaseCommand {
 
       process.stdout.write('\n'); // New line after progress bar
       this.log(chalk.green('✓ Background fetch completed'));
-      
+
       if (result?.fetched) {
         this.log(chalk.dim(`Items fetched: ${result.fetched}`));
       }
-      
+
       // Show final job status
       const job = jobManager.getJob(jobId);
       if (job) {
@@ -686,40 +758,49 @@ export default class FetchCommand extends BaseCommand {
   /**
    * Create a simple progress bar
    */
-  private createProgressBarVisual(progress: number, width: number = 25): string {
+  private createProgressBarVisual(
+    progress: number,
+    width: number = 25
+  ): string {
     const filled = Math.floor((progress / 100) * width);
     const empty = width - filled;
-    return chalk.blue('[') + 
-           chalk.blue('█'.repeat(filled)) + 
-           chalk.gray('░'.repeat(empty)) + 
-           chalk.blue(']');
+    return (
+      chalk.blue('[') +
+      chalk.blue('█'.repeat(filled)) +
+      chalk.gray('░'.repeat(empty)) +
+      chalk.blue(']')
+    );
   }
 
   /**
    * Display job summary
    */
   private displayJobSummary(job: any): void {
-    const duration = job.endTime ? job.endTime - job.startTime : Date.now() - job.startTime;
+    const duration = job.endTime
+      ? job.endTime - job.startTime
+      : Date.now() - job.startTime;
     const durationStr = this.formatDuration(duration);
-    
+
     this.log(chalk.bold('\n📊 Fetch Summary'));
     this.log(chalk.gray('─'.repeat(30)));
     this.log(`Job ID: ${chalk.cyan(job.id)}`);
     this.log(`Status: ${this.getStatusDisplay(job.status)}`);
     this.log(`Duration: ${chalk.yellow(durationStr)}`);
-    
+
     if (job.metadata?.fetchType) {
-      this.log(`Fetch Type: ${chalk.blue(job.metadata.fetchType.toUpperCase())}`);
+      this.log(
+        `Fetch Type: ${chalk.blue(job.metadata.fetchType.toUpperCase())}`
+      );
     }
-    
+
     if (job.metadata?.targetId) {
       this.log(`Target ID: ${chalk.cyan(job.metadata.targetId)}`);
     }
-    
+
     if (job.metadata?.itemsFetched) {
       this.log(`Items Fetched: ${chalk.green(job.metadata.itemsFetched)}`);
     }
-    
+
     if (job.errorMessage) {
       this.log(`Error: ${chalk.red(job.errorMessage)}`);
     }
@@ -730,11 +811,16 @@ export default class FetchCommand extends BaseCommand {
    */
   private getStatusDisplay(status: string): string {
     switch (status) {
-      case 'completed': return chalk.green('✓ Completed');
-      case 'failed': return chalk.red('✗ Failed');
-      case 'running': return chalk.blue('🔄 Running');
-      case 'pending': return chalk.yellow('⏳ Pending');
-      default: return chalk.gray(status);
+      case 'completed':
+        return chalk.green('✓ Completed');
+      case 'failed':
+        return chalk.red('✗ Failed');
+      case 'running':
+        return chalk.blue('🔄 Running');
+      case 'pending':
+        return chalk.yellow('⏳ Pending');
+      default:
+        return chalk.gray(status);
     }
   }
 
@@ -744,7 +830,8 @@ export default class FetchCommand extends BaseCommand {
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
+    if (ms < 3600000)
+      return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
   }
 }

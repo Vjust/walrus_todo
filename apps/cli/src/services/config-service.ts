@@ -330,7 +330,8 @@ export class ConfigService {
     try {
       if (fs.existsSync(listPath)) {
         const data = await fsPromises.readFile(listPath, 'utf-8');
-        const dataStr = typeof data === 'string' ? data : data.toString('utf-8');
+        const dataStr =
+          typeof data === 'string' ? data : data.toString('utf-8');
         try {
           return JSON.parse(dataStr);
         } catch (parseError: unknown) {
@@ -340,7 +341,10 @@ export class ConfigService {
               'INVALID_JSON_FORMAT'
             );
           }
-          const typedError = parseError instanceof Error ? parseError : new Error(String(parseError));
+          const typedError =
+            parseError instanceof Error
+              ? parseError
+              : new Error(String(parseError));
           throw typedError;
         }
       }

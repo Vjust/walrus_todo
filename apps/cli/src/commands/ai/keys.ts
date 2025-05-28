@@ -199,7 +199,7 @@ export default class AIKeysCommand extends BaseCommand {
         },
       });
 
-      const selectedIndex = parseInt(response.backupIndex, 10) - 1;
+      const selectedIndex = parseInt((response as any).backupIndex, 10) - 1;
       const selectedBackup = backups[selectedIndex];
       if (!selectedBackup) {
         throw new CLIError('Invalid backup selection', 'VALIDATION_ERROR');

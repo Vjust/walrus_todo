@@ -284,11 +284,10 @@ export class StorageReuseAnalyzer {
 
       // Get cost estimate for allocating new storage from Walrus
       // Default to 52 epochs (approximately 6 months)
-      const { storageCost, totalCost } =
-        await this.walrusClient.storageCost(
-          requiredSize,
-          52 // Default to 52 epochs (approximately 6 months)
-        );
+      const { storageCost, totalCost } = await this.walrusClient.storageCost(
+        requiredSize,
+        52 // Default to 52 epochs (approximately 6 months)
+      );
       const newStorageCost = BigInt(totalCost);
 
       // Calculate potential savings if we reuse existing storage

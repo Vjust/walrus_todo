@@ -332,7 +332,7 @@ describe('Logger', () => {
       } else {
         delete process.env.NODE_ENV;
       }
-      
+
       if (originalJestWorker) {
         process.env.JEST_WORKER_ID = originalJestWorker;
       } else {
@@ -345,7 +345,7 @@ describe('Logger', () => {
       process.env.NODE_ENV = 'test';
       const testLogger = new Logger('TEST_ENV');
       testLogger.clearHandlers();
-      
+
       // Add only our test handler (no default console handler)
       const testHandler = jest.fn();
       testLogger.addHandler(testHandler);
@@ -364,7 +364,7 @@ describe('Logger', () => {
     it('should respect VERBOSE_TESTS environment variable', () => {
       process.env.NODE_ENV = 'test';
       process.env.VERBOSE_TESTS = 'true';
-      
+
       const testLogger = new Logger('VERBOSE_TEST');
       testLogger.clearHandlers();
       const testHandler = jest.fn();
@@ -376,7 +376,7 @@ describe('Logger', () => {
 
       // All logs should be shown in verbose test mode
       expect(testHandler).toHaveBeenCalledTimes(3);
-      
+
       // Clean up
       delete process.env.VERBOSE_TESTS;
     });
@@ -384,7 +384,7 @@ describe('Logger', () => {
     it('should respect LOG_LEVEL environment variable in tests', () => {
       process.env.NODE_ENV = 'test';
       process.env.LOG_LEVEL = 'warn';
-      
+
       const testLogger = new Logger('LOG_LEVEL_TEST');
       testLogger.clearHandlers();
       const testHandler = jest.fn();
@@ -398,7 +398,7 @@ describe('Logger', () => {
       expect(testHandler).toHaveBeenCalledTimes(2);
       expect(testHandler.mock.calls[0][0].level).toBe(LogLevel.WARN);
       expect(testHandler.mock.calls[1][0].level).toBe(LogLevel.ERROR);
-      
+
       // Clean up
       delete process.env.LOG_LEVEL;
     });

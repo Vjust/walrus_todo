@@ -1,7 +1,14 @@
 import { StorageReuseAnalyzer } from '../../apps/cli/src/utils/storage-reuse-analyzer';
-import { SuiClient, type SuiClientType } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
+import {
+  SuiClient,
+  type SuiClientType,
+} from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { WalrusClient } from '../../apps/cli/src/types/client';
-import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../apps/cli/src/__tests__/helpers/walrus-client-mock';
+import {
+  createWalrusClientMock,
+  setupDefaultWalrusClientMocks,
+  type MockWalrusClient,
+} from '../../apps/cli/src/__tests__/helpers/walrus-client-mock';
 
 // Mock the SuiClient and WalrusClient
 jest.mock('@mysten/sui/client');
@@ -20,7 +27,7 @@ describe('StorageReuseAnalyzer', () => {
     mockSuiClient = new SuiClient({
       url: 'mock-url',
     }) as jest.Mocked<typeof SuiClient>;
-    
+
     // Create proper WalrusClient mock
     mockWalrusClient = createWalrusClientMock();
     setupDefaultWalrusClientMocks(mockWalrusClient);
@@ -186,7 +193,12 @@ describe('StorageReuseAnalyzer', () => {
     it('should calculate cost savings when reusing existing storage', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: () => Promise<unknown> }, 'findBestStorageForReuse')
+        .spyOn(
+          storageReuseAnalyzer as StorageReuseAnalyzer & {
+            findBestStorageForReuse: () => Promise<unknown>;
+          },
+          'findBestStorageForReuse'
+        )
         .mockResolvedValue({
           bestMatch: {
             id: 'storage-1',
@@ -227,7 +239,12 @@ describe('StorageReuseAnalyzer', () => {
     it('should recommend allocating new storage when no viable storage exists', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: () => Promise<unknown> }, 'findBestStorageForReuse')
+        .spyOn(
+          storageReuseAnalyzer as StorageReuseAnalyzer & {
+            findBestStorageForReuse: () => Promise<unknown>;
+          },
+          'findBestStorageForReuse'
+        )
         .mockResolvedValue({
           bestMatch: null,
           totalStorage: 1000000,

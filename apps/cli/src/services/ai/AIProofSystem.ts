@@ -261,7 +261,8 @@ export class AIProofSystem {
     try {
       // Read file
       const proofJson = fs.readFileSync(filePath, 'utf8');
-      const proofJsonStr = typeof proofJson === 'string' ? proofJson : proofJson.toString('utf8');
+      const proofJsonStr =
+        typeof proofJson === 'string' ? proofJson : proofJson.toString('utf8');
 
       // Parse JSON
       const proof = JSON.parse(proofJsonStr);
@@ -404,7 +405,10 @@ export class AIProofSystem {
         try {
           const proofPath = path.join(this.proofCachePath, file);
           const proofJson = fs.readFileSync(proofPath, 'utf8');
-          const proofJsonStr = typeof proofJson === 'string' ? proofJson : proofJson.toString('utf8');
+          const proofJsonStr =
+            typeof proofJson === 'string'
+              ? proofJson
+              : proofJson.toString('utf8');
           const proof = JSON.parse(proofJsonStr);
 
           // Validate proof structure

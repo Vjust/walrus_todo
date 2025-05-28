@@ -10,7 +10,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function validateApiKey(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void {
@@ -29,23 +29,27 @@ export function validateApiKey(
     (req.query.apiKey as string);
 
   if (!apiKey) {
-    next(new AuthorizationError('API key required', {
-      code: 'AUTHORIZATION_UNAUTHENTICATED',
-      isLoginRequired: true
-    }));
+    next(
+      new AuthorizationError('API key required', {
+        code: 'AUTHORIZATION_UNAUTHENTICATED',
+        isLoginRequired: true,
+      })
+    );
     return;
   }
 
   // Validate API key
   if (!config.auth.apiKeys.includes(apiKey)) {
-    next(new AuthorizationError('Invalid API key', {
-      code: 'AUTHORIZATION_INVALID_CREDENTIALS'
-    }));
+    next(
+      new AuthorizationError('Invalid API key', {
+        code: 'AUTHORIZATION_INVALID_CREDENTIALS',
+      })
+    );
     return;
   }
 
   // Attach API key to request for logging
-  req.apiKey = apiKey;
+  (req as AuthenticatedRequest).apiKey = apiKey;
 
   next();
   return;
@@ -53,15 +57,17 @@ export function validateApiKey(
 
 // Optional middleware for specific routes that require user authentication
 export function requireUser(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void {
-  if (!req.userId) {
-    next(new AuthorizationError('User authentication required', {
-      code: 'AUTHORIZATION_UNAUTHENTICATED',
-      isLoginRequired: true
-    }));
+  if (!(req as AuthenticatedRequest).userId) {
+    next(
+      new AuthorizationError('User authentication required', {
+        code: 'AUTHORIZATION_UNAUTHENTICATED',
+        isLoginRequired: true,
+      })
+    );
     return;
   }
   next();

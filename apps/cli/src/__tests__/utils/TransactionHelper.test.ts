@@ -282,10 +282,13 @@ describe('TransactionHelper', () => {
     it('should merge retry configurations', async () => {
       const operation = jest.fn().mockRejectedValue(new Error('Test error'));
 
-      const customHelper = new TransactionHelper(mockSigner as unknown as Signer, {
-        attempts: 3,
-        baseDelay: 100,
-      });
+      const customHelper = new TransactionHelper(
+        mockSigner as unknown as Signer,
+        {
+          attempts: 3,
+          baseDelay: 100,
+        }
+      );
 
       await expect(
         customHelper.executeWithRetry(operation, {

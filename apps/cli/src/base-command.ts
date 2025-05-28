@@ -25,7 +25,10 @@ import {
   ProgressBarOptions,
 } from './utils/progress-indicators';
 import { jobManager } from './utils/PerformanceMonitor';
-import { backgroundOrchestrator, BackgroundOptions } from './utils/BackgroundCommandOrchestrator';
+import {
+  backgroundOrchestrator,
+  BackgroundOptions,
+} from './utils/BackgroundCommandOrchestrator';
 
 // Fix for undefined columns in non-TTY environments
 if (process.stdout && !process.stdout.columns) {
@@ -150,7 +153,9 @@ export abstract class BaseCommand extends Command {
     if (!this.config && process.env.NODE_ENV === 'test') {
       try {
         // Only try to import if we're in a test environment
-        const testUtils = await import('./__tests__/helpers/command-test-utils');
+        const testUtils = await import(
+          './__tests__/helpers/command-test-utils'
+        );
         (this as any).config = testUtils.createMockOCLIFConfig();
       } catch (error) {
         // If import fails, create minimal config for tests
@@ -158,7 +163,11 @@ export abstract class BaseCommand extends Command {
           name: 'waltodo',
           bin: 'waltodo',
           version: '1.0.0',
-          runHook: jest?.fn?.()?.mockResolvedValue?.({ successes: [], failures: [] }) || (() => Promise.resolve({ successes: [], failures: [] })),
+          runHook:
+            jest
+              ?.fn?.()
+              ?.mockResolvedValue?.({ successes: [], failures: [] }) ||
+            (() => Promise.resolve({ successes: [], failures: [] })),
           root: process.cwd(),
           dataDir: '/tmp/waltodo-test',
           configDir: '/tmp/waltodo-test-config',
@@ -167,7 +176,7 @@ export abstract class BaseCommand extends Command {
           platform: process.platform,
           arch: process.arch,
           shell: process.env.SHELL || '/bin/bash',
-          userAgent: 'waltodo/1.0.0'
+          userAgent: 'waltodo/1.0.0',
         };
       }
     }
@@ -239,12 +248,21 @@ export abstract class BaseCommand extends Command {
    */
   private setupErrorHandlers(): void {
     process.on('uncaughtException', error => {
-      this.error(`BaseCommand: Uncaught exception in ${this.constructor.name}: ${error.message}\nStack: ${error.stack}`, { exit: 1 });
+      this.error(
+        `BaseCommand: Uncaught exception in ${this.constructor.name}: ${error.message}\nStack: ${error.stack}`,
+        { exit: 1 }
+      );
     });
 
     process.on('unhandledRejection', (reason, promise) => {
-      const reasonStr = reason instanceof Error ? `${reason.message} (${reason.constructor.name})` : String(reason);
-      this.error(`BaseCommand: Unhandled promise rejection in ${this.constructor.name} at ${promise}: ${reasonStr}`, { exit: 1 });
+      const reasonStr =
+        reason instanceof Error
+          ? `${reason.message} (${reason.constructor.name})`
+          : String(reason);
+      this.error(
+        `BaseCommand: Unhandled promise rejection in ${this.constructor.name} at ${promise}: ${reasonStr}`,
+        { exit: 1 }
+      );
     });
   }
 
@@ -348,7 +366,7 @@ export abstract class BaseCommand extends Command {
     const errorType = error.constructor.name;
     const commandName = this.constructor.name;
     const errorMessage = error.message || 'No error message provided';
-    
+
     // Log detailed error for debugging
     if (this.flagsConfig.debug || this.flagsConfig.verbose) {
       this.debug(`${commandName}: Detailed error info:`);
@@ -358,7 +376,7 @@ export abstract class BaseCommand extends Command {
         this.debug(`- Stack trace: ${error.stack}`);
       }
     }
-    
+
     this.error(chalk.red(`${commandName}: ${errorMessage} (${errorType})`), {
       suggestions: [
         'Try running the command again',
@@ -389,7 +407,9 @@ export abstract class BaseCommand extends Command {
       isRetryable = () => true,
     } = options;
 
-    let lastError: Error = new Error(`BaseCommand.withRetry: ${operationName} failed with no specific error details`);
+    let lastError: Error = new Error(
+      `BaseCommand.withRetry: ${operationName} failed with no specific error details`
+    );
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -759,7 +779,9 @@ export abstract class BaseCommand extends Command {
       operationName = 'operation',
     } = options;
 
-    let lastError: Error = new Error(`BaseCommand.executeWithRetry: ${operationName} failed with no specific error details`);
+    let lastError: Error = new Error(
+      `BaseCommand.executeWithRetry: ${operationName} failed with no specific error details`
+    );
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -1006,7 +1028,7 @@ export abstract class BaseCommand extends Command {
   private checkJobNotifications(): void {
     try {
       const recentlyCompleted = this.getRecentlyCompletedJobs();
-      
+
       if (recentlyCompleted.length > 0) {
         this.showJobNotifications(recentlyCompleted);
       }
@@ -1020,16 +1042,16 @@ export abstract class BaseCommand extends Command {
    * Get jobs that completed in the last 24 hours and haven't been notified about
    */
   private getRecentlyCompletedJobs(): any[] {
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
     const completedJobs = jobManager.getCompletedJobs();
-    
+
     return completedJobs.filter(job => {
       // Job completed recently
       const recentlyCompleted = job.endTime && job.endTime > oneDayAgo;
-      
+
       // Haven't shown notification yet (check metadata)
       const notNotified = !job.metadata?.notificationShown;
-      
+
       return recentlyCompleted && notNotified;
     });
   }
@@ -1044,12 +1066,20 @@ export abstract class BaseCommand extends Command {
     const failed = jobs.filter(j => j.status === 'failed');
 
     if (successful.length > 0) {
-      this.log(chalk.green(`✅ ${successful.length} background job(s) completed successfully`));
-      
+      this.log(
+        chalk.green(
+          `✅ ${successful.length} background job(s) completed successfully`
+        )
+      );
+
       successful.forEach(job => {
         const duration = this.formatDuration(job.endTime - job.startTime);
-        this.log(chalk.gray(`   ${job.id}: ${job.command} ${job.args.join(' ')} (${duration})`));
-        
+        this.log(
+          chalk.gray(
+            `   ${job.id}: ${job.command} ${job.args.join(' ')} (${duration})`
+          )
+        );
+
         // Mark as notified
         this.markJobAsNotified(job.id);
       });
@@ -1057,13 +1087,15 @@ export abstract class BaseCommand extends Command {
 
     if (failed.length > 0) {
       this.log(chalk.red(`❌ ${failed.length} background job(s) failed`));
-      
+
       failed.forEach(job => {
-        this.log(chalk.gray(`   ${job.id}: ${job.command} ${job.args.join(' ')}`));
+        this.log(
+          chalk.gray(`   ${job.id}: ${job.command} ${job.args.join(' ')}`)
+        );
         if (job.errorMessage) {
           this.log(chalk.red(`   Error: ${job.errorMessage}`));
         }
-        
+
         // Mark as notified
         this.markJobAsNotified(job.id);
       });
@@ -1086,8 +1118,8 @@ export abstract class BaseCommand extends Command {
           metadata: {
             ...job.metadata,
             notificationShown: true,
-            notifiedAt: Date.now()
-          }
+            notifiedAt: Date.now(),
+          },
         });
       }
     } catch (error) {
@@ -1101,7 +1133,8 @@ export abstract class BaseCommand extends Command {
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
+    if (ms < 3600000)
+      return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
   }
 
@@ -1123,9 +1156,11 @@ export abstract class BaseCommand extends Command {
    * Check if command should run in background
    */
   protected async shouldRunInBackground(): Promise<boolean> {
-    const commandName = this.constructor.name.toLowerCase().replace('command', '');
+    const commandName = this.constructor.name
+      .toLowerCase()
+      .replace('command', '');
     const parsed = await this.parse();
-    
+
     return backgroundOrchestrator.shouldRunInBackground(
       commandName,
       (parsed.args as any[]) || [],
@@ -1137,14 +1172,18 @@ export abstract class BaseCommand extends Command {
    * Execute command in background
    */
   protected async executeInBackground(): Promise<void> {
-    const commandName = this.constructor.name.toLowerCase().replace('command', '');
+    const commandName = this.constructor.name
+      .toLowerCase()
+      .replace('command', '');
     const parsed = await this.parse();
-    
+
     const options: BackgroundOptions = {
       detached: true,
       silent: this.flagsConfig.quiet,
-      timeout: this.flagsConfig.timeout ? this.flagsConfig.timeout * 1000 : undefined,
-      priority: this.getCommandPriority()
+      timeout: this.flagsConfig.timeout
+        ? this.flagsConfig.timeout * 1000
+        : undefined,
+      priority: this.getCommandPriority(),
     };
 
     try {
@@ -1155,16 +1194,23 @@ export abstract class BaseCommand extends Command {
         options
       );
 
-      this.log(chalk.green(`🚀 Command started in background with job ID: ${jobId}`));
-      this.log(chalk.gray(`💡 Monitor progress with: waltodo jobs status ${jobId}`));
+      this.log(
+        chalk.green(`🚀 Command started in background with job ID: ${jobId}`)
+      );
+      this.log(
+        chalk.gray(`💡 Monitor progress with: waltodo jobs status ${jobId}`)
+      );
       this.log(chalk.gray(`📋 View all jobs with: waltodo jobs list`));
-      
+
       // Don't exit in test environment
       if (process.env.NODE_ENV !== 'test') {
         process.exit(0);
       }
     } catch (error) {
-      this.error(`Failed to start background job: ${error instanceof Error ? error.message : String(error)}`, { exit: 1 });
+      this.error(
+        `Failed to start background job: ${error instanceof Error ? error.message : String(error)}`,
+        { exit: 1 }
+      );
     }
   }
 
@@ -1172,18 +1218,24 @@ export abstract class BaseCommand extends Command {
    * Get command priority for background execution
    */
   protected getCommandPriority(): 'low' | 'medium' | 'high' {
-    const commandName = this.constructor.name.toLowerCase().replace('command', '');
-    
+    const commandName = this.constructor.name
+      .toLowerCase()
+      .replace('command', '');
+
     // High priority commands
     if (['deploy', 'create-nft'].includes(commandName)) {
       return 'high';
     }
-    
+
     // Medium priority commands
-    if (['store', 'store-list', 'store-file', 'sync', 'image'].includes(commandName)) {
+    if (
+      ['store', 'store-list', 'store-file', 'sync', 'image'].includes(
+        commandName
+      )
+    ) {
       return 'medium';
     }
-    
+
     // Default to low priority
     return 'low';
   }
@@ -1199,38 +1251,46 @@ export abstract class BaseCommand extends Command {
       progressCallback?: (progress: number, stage: string) => void;
     } = {}
   ): Promise<T> {
-    const { totalSteps = 100, stepName = 'operation', progressCallback } = options;
-    
+    const {
+      totalSteps = 100,
+      stepName = 'operation',
+      progressCallback,
+    } = options;
+
     // Check if running in background mode
     const isBackground = process.env.WALRUS_BACKGROUND_JOB;
-    
+
     if (isBackground && progressCallback) {
       // Setup progress reporting for background jobs
       let currentStep = 0;
-      
+
       const reportProgress = (stage: string) => {
         currentStep++;
         const progress = Math.round((currentStep / totalSteps) * 100);
-        
+
         // Output progress in format that background orchestrator can parse
         console.log(`PROGRESS:${progress}:${stage}`);
         console.log(`STAGE:${stage}`);
-        
+
         if (progressCallback) {
           progressCallback(progress, stage);
         }
       };
-      
+
       // Monkey patch console.log to report stages
       const originalLog = console.log;
       console.log = (...args: any[]) => {
         const message = args.join(' ');
-        if (message.includes('Starting') || message.includes('Processing') || message.includes('Completing')) {
+        if (
+          message.includes('Starting') ||
+          message.includes('Processing') ||
+          message.includes('Completing')
+        ) {
           reportProgress(message);
         }
         originalLog(...args);
       };
-      
+
       try {
         const result = await operation();
         reportProgress('Completed');

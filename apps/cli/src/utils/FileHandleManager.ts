@@ -387,7 +387,8 @@ export class FileHandleManager {
           fs.mkdirSync(dir, { recursive: true });
         }
       } catch (error) {
-        const errorObj = error instanceof Error ? error : new Error(String(error));
+        const errorObj =
+          error instanceof Error ? error : new Error(String(error));
         this.logger.error(`Failed to create directory ${dir}`, errorObj);
       }
     }

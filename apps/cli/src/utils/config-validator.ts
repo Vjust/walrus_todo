@@ -216,7 +216,9 @@ export class ConfigValidator {
       const frontendConfig = JSON.parse(frontendConfigContent);
 
       const cliPackageId =
-        cliConfig.packageId || (cliConfig.lastDeployment as Record<string, unknown> | undefined)?.packageId;
+        cliConfig.packageId ||
+        (cliConfig.lastDeployment as Record<string, unknown> | undefined)
+          ?.packageId;
       const frontendPackageId = frontendConfig.deployment?.packageId;
 
       if (

@@ -176,7 +176,9 @@ describe('Data Privacy and PII Security Tests', () => {
         createVerification: jest.fn().mockImplementation(params => {
           const { privacyLevel, request, response } = params;
 
-          const recordToReturn: VerificationRecord = { ...mockVerificationRecord };
+          const recordToReturn: VerificationRecord = {
+            ...mockVerificationRecord,
+          };
 
           // Simulate different privacy level behaviors
           switch (privacyLevel) {
@@ -254,10 +256,20 @@ describe('Data Privacy and PII Security Tests', () => {
           privacyLevel: AIPrivacyLevel.PUBLIC,
         })
       );
-      expect(((_publicResult.verification as VerificationRecord & { requestData?: string }).requestData)).toBeDefined();
-      expect(((_publicResult.verification as VerificationRecord & { requestData?: string }).requestData)).toContain(
-        'john.doe@example.com'
-      );
+      expect(
+        (
+          _publicResult.verification as VerificationRecord & {
+            requestData?: string;
+          }
+        ).requestData
+      ).toBeDefined();
+      expect(
+        (
+          _publicResult.verification as VerificationRecord & {
+            requestData?: string;
+          }
+        ).requestData
+      ).toContain('john.doe@example.com');
 
       // HASH_ONLY: only hashes are stored
       const _hashResult = await verificationService.createVerifiedSummary(
@@ -272,7 +284,13 @@ describe('Data Privacy and PII Security Tests', () => {
         })
       );
       expect(_hashResult.verification.requestHash).toBeDefined();
-      expect(((_hashResult.verification as VerificationRecord & { requestData?: string }).requestData)).toBeUndefined();
+      expect(
+        (
+          _hashResult.verification as VerificationRecord & {
+            requestData?: string;
+          }
+        ).requestData
+      ).toBeUndefined();
 
       // PRIVATE: encrypted data is stored
       const _privateResult = await verificationService.createVerifiedSummary(
@@ -287,12 +305,26 @@ describe('Data Privacy and PII Security Tests', () => {
         })
       );
       expect(
-        ((_privateResult.verification as VerificationRecord & { encryptedRequest?: string }).encryptedRequest)
+        (
+          _privateResult.verification as VerificationRecord & {
+            encryptedRequest?: string;
+          }
+        ).encryptedRequest
       ).toBeDefined();
-      expect(((_privateResult.verification as VerificationRecord & { encryptedRequest?: string }).encryptedRequest)).toContain(
-        ':'
-      );
-      expect(((_privateResult.verification as VerificationRecord & { requestData?: string }).requestData)).toBeUndefined();
+      expect(
+        (
+          _privateResult.verification as VerificationRecord & {
+            encryptedRequest?: string;
+          }
+        ).encryptedRequest
+      ).toContain(':');
+      expect(
+        (
+          _privateResult.verification as VerificationRecord & {
+            requestData?: string;
+          }
+        ).requestData
+      ).toBeUndefined();
     });
 
     it('should support differential privacy for aggregate operations', async () => {
@@ -310,7 +342,7 @@ describe('Data Privacy and PII Security Tests', () => {
               // In a real implementation, noise would be added to results
               // For this test, we just check it was requested
               const dpEnabled = options.differentialPrivacy === true;
-              
+
               // Return results based on differential privacy setting
               return {
                 result: {
@@ -586,7 +618,14 @@ describe('Data Privacy and PII Security Tests', () => {
                 );
 
                 // Add sensitive data to error object
-                (error as Error & { request?: { headers: Record<string, string>; body: Record<string, string> } }).request = {
+                (
+                  error as Error & {
+                    request?: {
+                      headers: Record<string, string>;
+                      body: Record<string, string>;
+                    };
+                  }
+                ).request = {
                   headers: {
                     Authorization: 'Bearer super-secret-api-key-12345',
                   },
@@ -611,19 +650,23 @@ describe('Data Privacy and PII Security Tests', () => {
 
       // Process a request that will throw
       await expect(aiService.summarize(sampleTodos)).rejects.toThrow();
-      
+
       // Create a test error to verify error sanitization behavior
       const testError = new Error('AI service error');
-      
+
       // Error message should not contain sensitive data
       expect(String(testError)).not.toContain('super-secret-api-key-12345');
       expect(String(testError)).not.toContain('123-45-6789');
 
       // Error object should not have sensitive fields
-      expect((testError as Error & { request?: unknown }).request).toBeUndefined();
+      expect(
+        (testError as Error & { request?: unknown }).request
+      ).toBeUndefined();
 
       // Log messages should not contain sensitive data
-      const allLogMessages = consoleErrorSpy.mock.calls.map(call => call.join(' '));
+      const allLogMessages = consoleErrorSpy.mock.calls.map(call =>
+        call.join(' ')
+      );
       allLogMessages.forEach(logMessage => {
         expect(logMessage).not.toContain('super-secret-api-key-12345');
         expect(logMessage).not.toContain('123-45-6789');
@@ -771,15 +814,21 @@ describe('Data Privacy and PII Security Tests', () => {
       });
 
       // Change operation to one that has consent
-      (aiService as AIService & { setOperationType: (type: string) => void }).setOperationType('summarize');
+      (
+        aiService as AIService & { setOperationType: (type: string) => void }
+      ).setOperationType('summarize');
       await expect(aiService.summarize(sampleTodos)).resolves.not.toThrow();
 
       // Change to categorize (allowed)
-      (aiService as AIService & { setOperationType: (type: string) => void }).setOperationType('categorize');
+      (
+        aiService as AIService & { setOperationType: (type: string) => void }
+      ).setOperationType('categorize');
       await expect(aiService.categorize(sampleTodos)).resolves.not.toThrow();
 
       // Change to operation that doesn't have consent
-      (aiService as AIService & { setOperationType: (type: string) => void }).setOperationType('analyze');
+      (
+        aiService as AIService & { setOperationType: (type: string) => void }
+      ).setOperationType('analyze');
       await expect(aiService.analyze(sampleTodos)).rejects.toThrow(
         'has not provided consent for operation analyze'
       );

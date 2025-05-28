@@ -6,15 +6,25 @@ import type { SuiNftStorage } from '../../apps/cli/src/utils/sui-nft-storage';
  */
 export interface MockSuiNftStorage extends jest.Mocked<SuiNftStorage> {
   createTodoNft: jest.MockedFunction<(todoData: any) => Promise<any>>;
-  updateTodoNftCompletionStatus: jest.MockedFunction<(nftObjectId: string, completed?: boolean) => Promise<any>>;
+  updateTodoNftCompletionStatus: jest.MockedFunction<
+    (nftObjectId: string, completed?: boolean) => Promise<any>
+  >;
   deleteTodoNft: jest.MockedFunction<(nftObjectId: string) => Promise<any>>;
   getTodoNft: jest.MockedFunction<(nftObjectId: string) => Promise<any>>;
   getAllTodoNfts: jest.MockedFunction<(owner?: string) => Promise<any[]>>;
-  verifyTodoNftOwnership: jest.MockedFunction<(nftObjectId: string, expectedOwner: string) => Promise<boolean>>;
-  transferTodoNft: jest.MockedFunction<(nftObjectId: string, newOwner: string) => Promise<any>>;
-  batchCreateTodoNfts: jest.MockedFunction<(todoDataArray: any[]) => Promise<any[]>>;
+  verifyTodoNftOwnership: jest.MockedFunction<
+    (nftObjectId: string, expectedOwner: string) => Promise<boolean>
+  >;
+  transferTodoNft: jest.MockedFunction<
+    (nftObjectId: string, newOwner: string) => Promise<any>
+  >;
+  batchCreateTodoNfts: jest.MockedFunction<
+    (todoDataArray: any[]) => Promise<any[]>
+  >;
   searchTodoNfts: jest.MockedFunction<(criteria: any) => Promise<any[]>>;
-  updateTodoNftMetadata: jest.MockedFunction<(nftObjectId: string, metadata: any) => Promise<any>>;
+  updateTodoNftMetadata: jest.MockedFunction<
+    (nftObjectId: string, metadata: any) => Promise<any>
+  >;
 }
 
 /**
@@ -64,8 +74,12 @@ export function createMockSuiNftStorage(): MockSuiNftStorage {
  * Creates a SuiNftStorage class mock for jest.MockedClass usage
  */
 export function createSuiNftStorageClassMock() {
-  const MockSuiNftStorageClass = jest.fn().mockImplementation(() => createMockSuiNftStorage()) as jest.MockedClass<typeof SuiNftStorage>;
-  
+  const MockSuiNftStorageClass = jest
+    .fn()
+    .mockImplementation(() => createMockSuiNftStorage()) as jest.MockedClass<
+    typeof SuiNftStorage
+  >;
+
   // Add prototype methods for cases where tests access methods via prototype
   const mockInstance = createMockSuiNftStorage();
   MockSuiNftStorageClass.prototype = mockInstance;

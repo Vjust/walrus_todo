@@ -8,7 +8,9 @@ export interface MockSuiClient extends jest.Mocked<SuiClient> {
   getLatestSuiSystemState: jest.MockedFunction<() => Promise<any>>;
   getObject: jest.MockedFunction<(input: any) => Promise<any>>;
   executeTransactionBlock: jest.MockedFunction<(input: any) => Promise<any>>;
-  signAndExecuteTransactionBlock: jest.MockedFunction<(input: any) => Promise<any>>;
+  signAndExecuteTransactionBlock: jest.MockedFunction<
+    (input: any) => Promise<any>
+  >;
   dryRunTransactionBlock: jest.MockedFunction<(input: any) => Promise<any>>;
   multiGetObjects: jest.MockedFunction<(input: any) => Promise<any>>;
   getTransactionBlock: jest.MockedFunction<(input: any) => Promise<any>>;
@@ -53,7 +55,11 @@ export function createMockSuiClient(): MockSuiClient {
       confirmedLocalExecution: true,
       effects: {
         status: { status: 'success' },
-        gasUsed: { computationCost: '1000', storageCost: '2000', storageRebate: '500' },
+        gasUsed: {
+          computationCost: '1000',
+          storageCost: '2000',
+          storageRebate: '500',
+        },
       },
     }),
     signAndExecuteTransactionBlock: jest.fn().mockResolvedValue({
@@ -61,13 +67,21 @@ export function createMockSuiClient(): MockSuiClient {
       confirmedLocalExecution: true,
       effects: {
         status: { status: 'success' },
-        gasUsed: { computationCost: '1000', storageCost: '2000', storageRebate: '500' },
+        gasUsed: {
+          computationCost: '1000',
+          storageCost: '2000',
+          storageRebate: '500',
+        },
       },
     }),
     dryRunTransactionBlock: jest.fn().mockResolvedValue({
       effects: {
         status: { status: 'success' },
-        gasUsed: { computationCost: '1000', storageCost: '2000', storageRebate: '500' },
+        gasUsed: {
+          computationCost: '1000',
+          storageCost: '2000',
+          storageRebate: '500',
+        },
       },
     }),
     multiGetObjects: jest.fn().mockResolvedValue([]),
@@ -110,8 +124,12 @@ export function createMockSuiClient(): MockSuiClient {
  * Creates a SuiClient class mock for jest.MockedClass usage
  */
 export function createSuiClientClassMock() {
-  const MockSuiClientClass = jest.fn().mockImplementation(() => createMockSuiClient()) as jest.MockedClass<typeof SuiClient>;
-  
+  const MockSuiClientClass = jest
+    .fn()
+    .mockImplementation(() => createMockSuiClient()) as jest.MockedClass<
+    typeof SuiClient
+  >;
+
   // Add prototype methods for cases where tests access methods via prototype
   const mockInstance = createMockSuiClient();
   MockSuiClientClass.prototype = mockInstance;

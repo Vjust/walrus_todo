@@ -1,8 +1,16 @@
 import type { Request, Response } from 'express';
-import { 
-  ListQueryParams, ListResponse, GetResponse, CreateResponse, 
-  UpdateResponse, DeleteResponse, CompleteResponse, StoreResponse, 
-  RetrieveResponse, BatchRequestBody, BatchResponse 
+import {
+  ListQueryParams,
+  ListResponse,
+  GetResponse,
+  CreateResponse,
+  UpdateResponse,
+  DeleteResponse,
+  CompleteResponse,
+  StoreResponse,
+  RetrieveResponse,
+  BatchRequestBody,
+  BatchResponse,
 } from '../../types/express';
 import { TodoService } from '../../services/todoService';
 import { BaseError } from '../../types/errors/consolidated/BaseError';
@@ -38,7 +46,15 @@ export class TodoController {
     this.todoService = new TodoService();
   }
 
-  list = async (req: Request<Record<string, never>, ListResponse, Record<string, never>, ListQueryParams>, res: Response<ListResponse>): Promise<void> => {
+  list = async (
+    req: Request<
+      Record<string, never>,
+      ListResponse,
+      Record<string, never>,
+      ListQueryParams
+    >,
+    res: Response<ListResponse>
+  ): Promise<void> => {
     const { page = '1', limit = '10' } = req.query;
 
     const todos = await this.todoService.listTodos();
@@ -61,7 +77,10 @@ export class TodoController {
     });
   };
 
-  get = async (req: Request<{ id: string }, GetResponse>, res: Response<GetResponse>): Promise<void> => {
+  get = async (
+    req: Request<{ id: string }, GetResponse>,
+    res: Response<GetResponse>
+  ): Promise<void> => {
     const { id } = req.params;
 
     const todos = await this.todoService.listTodos();
@@ -77,7 +96,10 @@ export class TodoController {
     res.json({ data: todo });
   };
 
-  create = async (req: Request<Record<string, never>, CreateResponse, CreateTodoBody>, res: Response<CreateResponse>): Promise<void> => {
+  create = async (
+    req: Request<Record<string, never>, CreateResponse, CreateTodoBody>,
+    res: Response<CreateResponse>
+  ): Promise<void> => {
     const { content, priority, category, tags } = req.body;
 
     const todo = await this.todoService.addTodo(content, {
@@ -94,7 +116,10 @@ export class TodoController {
     });
   };
 
-  update = async (req: Request<{ id: string }, UpdateResponse, Partial<CreateTodoBody>>, res: Response<UpdateResponse>): Promise<void> => {
+  update = async (
+    req: Request<{ id: string }, UpdateResponse, Partial<CreateTodoBody>>,
+    res: Response<UpdateResponse>
+  ): Promise<void> => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -111,7 +136,7 @@ export class TodoController {
     // Apply updates
     const updatedTodo: Todo = {
       ...todos[todoIndex],
-      ...updates as Partial<Todo>,
+      ...(updates as Partial<Todo>),
       updatedAt: new Date().toISOString(),
     } as Todo;
 
@@ -126,7 +151,10 @@ export class TodoController {
     });
   };
 
-  delete = async (req: Request<{ id: string }, DeleteResponse>, res: Response<DeleteResponse>): Promise<void> => {
+  delete = async (
+    req: Request<{ id: string }, DeleteResponse>,
+    res: Response<DeleteResponse>
+  ): Promise<void> => {
     const { id } = req.params;
 
     const todos = await this.todoService.listTodos();
@@ -151,7 +179,10 @@ export class TodoController {
     });
   };
 
-  complete = async (req: Request<{ id: string }, CompleteResponse>, res: Response<CompleteResponse>): Promise<void> => {
+  complete = async (
+    req: Request<{ id: string }, CompleteResponse>,
+    res: Response<CompleteResponse>
+  ): Promise<void> => {
     const { id } = req.params;
 
     // Find todo in all lists and complete it
@@ -182,7 +213,10 @@ export class TodoController {
     });
   };
 
-  store = async (req: Request<{ id: string }, StoreResponse>, res: Response<StoreResponse>): Promise<void> => {
+  store = async (
+    req: Request<{ id: string }, StoreResponse>,
+    res: Response<StoreResponse>
+  ): Promise<void> => {
     const { id } = req.params;
 
     // Store todo on blockchain (implementation would call blockchain storage service)
@@ -196,7 +230,10 @@ export class TodoController {
     });
   };
 
-  retrieve = async (req: Request<{ id: string }, RetrieveResponse>, res: Response<RetrieveResponse>): Promise<void> => {
+  retrieve = async (
+    req: Request<{ id: string }, RetrieveResponse>,
+    res: Response<RetrieveResponse>
+  ): Promise<void> => {
     const { id } = req.params;
 
     // Retrieve todo from blockchain (implementation would call blockchain storage service)
@@ -213,7 +250,10 @@ export class TodoController {
     });
   };
 
-  batch = async (req: Request<Record<string, never>, BatchResponse, BatchRequestBody>, res: Response<BatchResponse>): Promise<void> => {
+  batch = async (
+    req: Request<Record<string, never>, BatchResponse, BatchRequestBody>,
+    res: Response<BatchResponse>
+  ): Promise<void> => {
     const { operations } = req.body;
 
     if (!Array.isArray(operations)) {
@@ -268,7 +308,8 @@ export class TodoController {
 
         results.push({ success: true, ...result });
       } catch (error: unknown) {
-        const typedError = error instanceof Error ? error : new Error(String(error));
+        const typedError =
+          error instanceof Error ? error : new Error(String(error));
         results.push({
           success: false,
           error: typedError.message,

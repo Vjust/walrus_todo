@@ -2,58 +2,58 @@ name: Coverage Badge
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - uses: pnpm/action-setup@v4
-      with:
-        version: 8
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18.x'
-        cache: 'pnpm'
-        
-    - name: Install dependencies
-      run: pnpm install
-      
-    - name: Run tests with coverage
-      run: pnpm test:coverage
-      env:
-        NODE_ENV: test
-        SUI_NETWORK: testnet
-        SUI_FULL_NODE_URL: "https://fullnode.testnet.sui.io:443"
-      
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        fail_ci_if_error: true
-        files: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-        verbose: true
-      
-    - name: Create coverage badge
-      uses: schneegans/dynamic-badges-action@v1.6.0
-      with:
-        auth: ${{ secrets.GIST_SECRET }}
-        gistID: YOUR_GIST_ID_HERE
-        filename: walrus_todo_coverage.json
-        label: Coverage
-        message: ${{ steps.coverage.outputs.percentage }}%
-        color: 'green'
-        namedLogo: jest
-      
-    - name: Update README with coverage badge
-      run: |
-        # This step happens automatically when using Codecov or other badge services
-        echo "Coverage badge will be displayed from Codecov or your chosen badge service"
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+        env:
+          NODE_ENV: test
+          SUI_NETWORK: testnet
+          SUI_FULL_NODE_URL: 'https://fullnode.testnet.sui.io:443'
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          verbose: true
+
+      - name: Create coverage badge
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: YOUR_GIST_ID_HERE
+          filename: walrus_todo_coverage.json
+          label: Coverage
+          message: ${{ steps.coverage.outputs.percentage }}%
+          color: 'green'
+          namedLogo: jest
+
+      - name: Update README with coverage badge
+        run: |
+          # This step happens automatically when using Codecov or other badge services
+          echo "Coverage badge will be displayed from Codecov or your chosen badge service"

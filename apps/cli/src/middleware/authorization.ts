@@ -32,7 +32,12 @@ async function getAuthenticatedUser() {
     const authInfo = JSON.parse(dataStr);
 
     // Validate token - check for token property safely
-    if (typeof authInfo === 'object' && authInfo !== null && 'token' in authInfo && typeof (authInfo as Record<string, unknown>).token === 'string') {
+    if (
+      typeof authInfo === 'object' &&
+      authInfo !== null &&
+      'token' in authInfo &&
+      typeof (authInfo as Record<string, unknown>).token === 'string'
+    ) {
       const validation = await authenticationService.validateToken(
         (authInfo as Record<string, unknown>).token as string
       );
@@ -82,7 +87,9 @@ export function requirePermission(
   } = {}
 ) {
   return async function (args: {
-    resourceId?: string | ((args: Record<string, unknown>) => Promise<string | undefined>);
+    resourceId?:
+      | string
+      | ((args: Record<string, unknown>) => Promise<string | undefined>);
     id?: string;
     todoId?: string;
     listId?: string;
@@ -173,17 +180,26 @@ export const authorizationHook: Hook<'prerun'> = async function (options) {
 
   // Get required permissions from command safely
   const commandWithPermissions = Command as unknown;
-  const requiredPermissions = 
-    typeof commandWithPermissions === 'object' && 
-    commandWithPermissions !== null && 
+  const requiredPermissions =
+    typeof commandWithPermissions === 'object' &&
+    commandWithPermissions !== null &&
     'requiredPermissions' in commandWithPermissions
-      ? (commandWithPermissions as { requiredPermissions?: {
-          resource: string | ResourceType | ((argv: string[]) => Promise<string | ResourceType>);
-          action: string | ActionType;
-          allowPublic?: boolean;
-          errorMessage?: string;
-          resourceId?: (args: Record<string, unknown>) => Promise<string | undefined>;
-        } }).requiredPermissions
+      ? (
+          commandWithPermissions as {
+            requiredPermissions?: {
+              resource:
+                | string
+                | ResourceType
+                | ((argv: string[]) => Promise<string | ResourceType>);
+              action: string | ActionType;
+              allowPublic?: boolean;
+              errorMessage?: string;
+              resourceId?: (
+                args: Record<string, unknown>
+              ) => Promise<string | undefined>;
+            };
+          }
+        ).requiredPermissions
       : undefined;
   if (!requiredPermissions) {
     return;

@@ -91,7 +91,10 @@ describe('FileValidator', () => {
       Object.defineProperty(invalidBuffer, 'length', { value: 100 });
       (fs.readFileSync as jest.Mock).mockReturnValue(invalidBuffer);
       jest
-        .spyOn(validator as { detectMimeType: (buffer: Buffer) => string }, 'detectMimeType')
+        .spyOn(
+          validator as { detectMimeType: (buffer: Buffer) => string },
+          'detectMimeType'
+        )
         .mockReturnValueOnce('application/octet-stream');
 
       await expect(validator.validateFile('/test/file.txt')).rejects.toThrow(

@@ -111,9 +111,15 @@ export class SecureCredentialStore {
   private async initializeStore(): Promise<void> {
     try {
       // Handle test environment specially
-      if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing') {
+      if (
+        process.env.NODE_ENV === 'test' ||
+        process.env.NODE_ENV === 'testing'
+      ) {
         // Use a fixed key for test environments
-        this.masterKey = Buffer.alloc(AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE, 'a');
+        this.masterKey = Buffer.alloc(
+          AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE,
+          'a'
+        );
         this.credentials = new Map();
         this.initialized = true;
         this.logger.debug('Credential store initialized for test environment');
@@ -125,7 +131,7 @@ export class SecureCredentialStore {
         this.masterKey = crypto.randomBytes(
           AI_CONFIG.CREDENTIAL_ENCRYPTION.KEY_SIZE
         );
-        
+
         try {
           fs.writeFileSync(this.keyFile, this.masterKey, { mode: 0o600 }); // Only owner can read/write
         } catch (writeError) {
@@ -208,8 +214,15 @@ export class SecureCredentialStore {
       this.credentials = new Map();
       for (const [key, value] of Object.entries(credentials)) {
         this.credentials.set(key, {
-          metadata: (value as Record<string, unknown>).metadata as CredentialMetadata,
-          encryptedValue: Buffer.from(((value as Record<string, unknown>).encryptedValue as {data: number[]}).data),
+          metadata: (value as Record<string, unknown>)
+            .metadata as CredentialMetadata,
+          encryptedValue: Buffer.from(
+            (
+              (value as Record<string, unknown>).encryptedValue as {
+                data: number[];
+              }
+            ).data
+          ),
         });
       }
     } catch (_error) {
@@ -754,7 +767,10 @@ export class SecureCredentialStore {
 
     try {
       // For test environments, use simpler encryption to avoid crypto mocking issues
-      if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing') {
+      if (
+        process.env.NODE_ENV === 'test' ||
+        process.env.NODE_ENV === 'testing'
+      ) {
         // Simple base64 encoding for tests (not secure but functional)
         return Buffer.from(JSON.stringify({ value, test: true }), 'utf-8');
       }
@@ -880,7 +896,10 @@ export class SecureCredentialStore {
 
     try {
       // For test environments, use simpler decryption
-      if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'testing') {
+      if (
+        process.env.NODE_ENV === 'test' ||
+        process.env.NODE_ENV === 'testing'
+      ) {
         try {
           const decoded = JSON.parse(encryptedValue.toString('utf-8'));
           if (decoded.test && decoded.value) {

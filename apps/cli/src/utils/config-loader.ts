@@ -81,7 +81,11 @@ export function loadEnvFile(filePath: string, override = false): void {
         const envVars = parseEnvFile(filePath);
 
         for (const [key, value] of Object.entries(envVars)) {
-          if (override || (process.env as Record<string, string | undefined>)[key] === undefined) {
+          if (
+            override ||
+            (process.env as Record<string, string | undefined>)[key] ===
+              undefined
+          ) {
             (process.env as Record<string, string>)[key] = value;
           }
         }

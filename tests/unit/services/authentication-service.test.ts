@@ -1,7 +1,5 @@
 import { AuthenticationService } from '../../../apps/cli/src/services/authentication-service';
-import {
-  permissionService,
-} from '../../../apps/cli/src/services/permission-service';
+import { permissionService } from '../../../apps/cli/src/services/permission-service';
 import { auditLogger } from '../../../apps/cli/src/utils/AuditLogger';
 import { Logger } from '../../../apps/cli/src/utils/Logger';
 import {
@@ -64,20 +62,40 @@ describe('AuthenticationService', () => {
       error: jest.fn(),
       warn: jest.fn(),
     } as jest.Mocked<Logger>;
-    (Logger.getInstance as jest.MockedFunction<typeof Logger.getInstance>).mockReturnValue(mockLogger);
+    (
+      Logger.getInstance as jest.MockedFunction<typeof Logger.getInstance>
+    ).mockReturnValue(mockLogger);
 
     // Reset auditLogger mock
-    (auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).mockClear();
+    (
+      auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+    ).mockClear();
 
     // Set up mocked permissionService
-    (permissionService.createUser as jest.MockedFunction<typeof permissionService.createUser>).mockResolvedValue(mockUser);
-    (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
-    (permissionService.getUserByUsername as jest.MockedFunction<typeof permissionService.getUserByUsername>).mockResolvedValue(null);
-    (permissionService.getUserByAddress as jest.MockedFunction<typeof permissionService.getUserByAddress>).mockResolvedValue(null);
+    (
+      permissionService.createUser as jest.MockedFunction<
+        typeof permissionService.createUser
+      >
+    ).mockResolvedValue(mockUser);
+    (
+      permissionService.getUser as jest.MockedFunction<
+        typeof permissionService.getUser
+      >
+    ).mockResolvedValue(mockUser);
+    (
+      permissionService.getUserByUsername as jest.MockedFunction<
+        typeof permissionService.getUserByUsername
+      >
+    ).mockResolvedValue(null);
+    (
+      permissionService.getUserByAddress as jest.MockedFunction<
+        typeof permissionService.getUserByAddress
+      >
+    ).mockResolvedValue(null);
 
     // Get fresh instance (singleton will be reset due to jest module mocking)
     authService = AuthenticationService.getInstance();
-    
+
     // Inject the mock logger directly into the service
     (authService as any).logger = mockLogger;
   });
@@ -86,7 +104,7 @@ describe('AuthenticationService', () => {
     // Cleanup after each test to prevent memory leaks
     jest.clearAllMocks();
     jest.restoreAllMocks();
-    
+
     // Clear any singleton state
     if (authService) {
       // Clear internal state if accessible
@@ -105,7 +123,7 @@ describe('AuthenticationService', () => {
         // Ignore errors during cleanup
       }
     }
-    
+
     // Nullify references to help garbage collection
     mockUser = null as any;
     mockLogger = null as any;
@@ -118,11 +136,17 @@ describe('AuthenticationService', () => {
       const address = '0x987654321';
       const roles = [UserRole.USER];
 
-      (permissionService.getUserByUsername as jest.MockedFunction<typeof permissionService.getUserByUsername>).mockResolvedValue(
-        null
-      );
+      (
+        permissionService.getUserByUsername as jest.MockedFunction<
+          typeof permissionService.getUserByUsername
+        >
+      ).mockResolvedValue(null);
       // Create minimal mock response to avoid deep object references
-      (permissionService.createUser as jest.MockedFunction<typeof permissionService.createUser>).mockResolvedValue({
+      (
+        permissionService.createUser as jest.MockedFunction<
+          typeof permissionService.createUser
+        >
+      ).mockResolvedValue({
         id: 'user-456',
         username,
         address,
@@ -149,7 +173,9 @@ describe('AuthenticationService', () => {
       );
       expect(result.username).toBe(username);
       expect(result.address).toBe(address);
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'USER_CREATED',
           outcome: 'SUCCESS',
@@ -161,9 +187,11 @@ describe('AuthenticationService', () => {
       const username = 'existinguser';
       const password = 'Password123!';
 
-      (permissionService.getUserByUsername as jest.MockedFunction<typeof permissionService.getUserByUsername>).mockResolvedValue(
-        mockUser
-      );
+      (
+        permissionService.getUserByUsername as jest.MockedFunction<
+          typeof permissionService.getUserByUsername
+        >
+      ).mockResolvedValue(mockUser);
 
       await expect(
         authService.createUserAccount(username, password)
@@ -182,7 +210,11 @@ describe('AuthenticationService', () => {
       // Set up existing credentials
       await authService.createUserAccount(mockUser.username, currentPassword);
 
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const result = await authService.changePassword(
         userId,
@@ -191,7 +223,9 @@ describe('AuthenticationService', () => {
       );
 
       expect(result).toBe(true);
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'PASSWORD_CHANGED',
           outcome: 'SUCCESS',
@@ -210,7 +244,11 @@ describe('AuthenticationService', () => {
         'ActualPassword123!'
       );
 
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       await expect(
         authService.changePassword(userId, currentPassword, newPassword)
@@ -218,7 +256,9 @@ describe('AuthenticationService', () => {
         new CLIError('Current password is incorrect', 'INVALID_PASSWORD')
       );
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'PASSWORD_CHANGE',
           outcome: 'FAILED',
@@ -230,7 +270,11 @@ describe('AuthenticationService', () => {
   describe('Authentication Methods', () => {
     beforeEach(async () => {
       // Ensure createUser mock returns a minimal user object
-      (permissionService.createUser as jest.MockedFunction<typeof permissionService.createUser>).mockResolvedValue({
+      (
+        permissionService.createUser as jest.MockedFunction<
+          typeof permissionService.createUser
+        >
+      ).mockResolvedValue({
         id: mockUser.id,
         username: mockUser.username,
         address: mockUser.address,
@@ -253,7 +297,11 @@ describe('AuthenticationService', () => {
       const ipAddress = '192.168.1.1';
       const userAgent = 'Mozilla/5.0';
 
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const result = await authService.authenticateWithCredentials(
         username,
@@ -267,7 +315,9 @@ describe('AuthenticationService', () => {
       expect(result).toHaveProperty('refreshToken');
       expect(result).toHaveProperty('expiresAt');
       expect(result.user.id).toBe(mockUser.id);
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'LOGIN',
           outcome: 'SUCCESS',
@@ -285,7 +335,9 @@ describe('AuthenticationService', () => {
         new CLIError('Invalid username or password', 'INVALID_CREDENTIALS')
       );
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'LOGIN',
           outcome: 'FAILED',
@@ -298,9 +350,17 @@ describe('AuthenticationService', () => {
       const signature = 'valid-signature';
       const message = 'Sign this message';
 
-      (permissionService.getUserByAddress as jest.MockedFunction<typeof permissionService.getUserByAddress>).mockResolvedValue(null);
+      (
+        permissionService.getUserByAddress as jest.MockedFunction<
+          typeof permissionService.getUserByAddress
+        >
+      ).mockResolvedValue(null);
       // Create minimal mock response to avoid object spread operations
-      (permissionService.createUser as jest.MockedFunction<typeof permissionService.createUser>).mockResolvedValue({
+      (
+        permissionService.createUser as jest.MockedFunction<
+          typeof permissionService.createUser
+        >
+      ).mockResolvedValue({
         id: mockUser.id,
         username: `wallet_${address.substring(0, 8)}`,
         address,
@@ -323,7 +383,9 @@ describe('AuthenticationService', () => {
         address,
         [UserRole.USER]
       );
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'WALLET_LOGIN',
           outcome: 'SUCCESS',
@@ -337,11 +399,17 @@ describe('AuthenticationService', () => {
       const message = 'Sign this message';
 
       // Explicitly clear the createUser mock to prevent cross-test contamination
-      (permissionService.createUser as jest.MockedFunction<typeof permissionService.createUser>).mockClear();
-      
-      (permissionService.getUserByAddress as jest.MockedFunction<typeof permissionService.getUserByAddress>).mockResolvedValue(
-        mockUser
-      );
+      (
+        permissionService.createUser as jest.MockedFunction<
+          typeof permissionService.createUser
+        >
+      ).mockClear();
+
+      (
+        permissionService.getUserByAddress as jest.MockedFunction<
+          typeof permissionService.getUserByAddress
+        >
+      ).mockResolvedValue(mockUser);
 
       const result = await authService.authenticateWithWallet(
         address!,
@@ -357,7 +425,11 @@ describe('AuthenticationService', () => {
       const keyName = 'Test API Key';
       const expiryDays = 30;
 
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const apiKey = await authService.createApiKey(
         mockUser.id,
@@ -366,7 +438,9 @@ describe('AuthenticationService', () => {
       );
 
       expect(apiKey).toMatch(/^waltodo_[a-f0-9]{32}$/);
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'API_KEY_CREATED',
           outcome: 'SUCCESS',
@@ -377,7 +451,9 @@ describe('AuthenticationService', () => {
       const authResult = await authService.authenticateWithApiKey(apiKey);
 
       expect(authResult.user.id).toBe(mockUser.id);
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'API_KEY_AUTH',
           outcome: 'SUCCESS',
@@ -389,7 +465,11 @@ describe('AuthenticationService', () => {
       const keyName = 'Expired Key';
       const expiryDays = -1; // Already expired
 
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const apiKey = await authService.createApiKey(
         mockUser.id,
@@ -401,7 +481,9 @@ describe('AuthenticationService', () => {
         new CLIError('API key has expired', 'EXPIRED_API_KEY')
       );
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'API_KEY_AUTH',
           outcome: 'FAILED',
@@ -416,7 +498,9 @@ describe('AuthenticationService', () => {
         authService.authenticateWithApiKey(invalidApiKey)
       ).rejects.toThrow(new CLIError('Invalid API key', 'INVALID_API_KEY'));
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'API_KEY_AUTH',
           outcome: 'FAILED',
@@ -438,7 +522,11 @@ describe('AuthenticationService', () => {
         process.env.JWT_SECRET || 'walrus-todo-default-secret'
       );
 
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const result = await authService.validateToken(token);
 
@@ -487,7 +575,11 @@ describe('AuthenticationService', () => {
         process.env.JWT_SECRET || 'walrus-todo-default-secret'
       );
 
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(undefined);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(undefined);
 
       const result = await authService.validateToken(token);
 
@@ -504,7 +596,11 @@ describe('AuthenticationService', () => {
         mockUser.username,
         'TestPassword123!'
       );
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const authResult = await authService.authenticateWithCredentials(
         mockUser.username,
@@ -520,7 +616,9 @@ describe('AuthenticationService', () => {
       expect(refreshedResult).toHaveProperty('token');
       expect(refreshedResult).toHaveProperty('refreshToken');
       expect(refreshedResult.refreshToken).not.toBe(authResult.refreshToken); // New refresh token
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'SESSION_REFRESH',
           outcome: 'SUCCESS',
@@ -544,7 +642,11 @@ describe('AuthenticationService', () => {
         mockUser.username,
         'TestPassword123!'
       );
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const authResult = await authService.authenticateWithCredentials(
         mockUser.username,
@@ -571,7 +673,9 @@ describe('AuthenticationService', () => {
         new CLIError('Refresh token has expired', 'EXPIRED_REFRESH_TOKEN')
       );
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'SESSION_REFRESH',
           outcome: 'FAILED',
@@ -585,7 +689,11 @@ describe('AuthenticationService', () => {
         mockUser.username,
         'TestPassword123!'
       );
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const authResult = await authService.authenticateWithCredentials(
         mockUser.username,
@@ -595,7 +703,9 @@ describe('AuthenticationService', () => {
       // Logout
       await authService.invalidateSession(authResult.token);
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'LOGOUT',
           outcome: 'SUCCESS',
@@ -615,7 +725,11 @@ describe('AuthenticationService', () => {
         mockUser.username,
         'TestPassword123!'
       );
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       await authService.authenticateWithCredentials(
         mockUser.username,
@@ -635,7 +749,9 @@ describe('AuthenticationService', () => {
       // Invalidate all sessions
       await authService.invalidateAllUserSessions(mockUser.id);
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'ALL_SESSIONS_INVALIDATED',
           outcome: 'SUCCESS',
@@ -664,7 +780,11 @@ describe('AuthenticationService', () => {
 
   describe('API Key Management', () => {
     it('should revoke an API key', async () => {
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       // Create an API key
       const apiKey = await authService.createApiKey(mockUser.id, 'Test Key');
@@ -672,7 +792,9 @@ describe('AuthenticationService', () => {
       // Revoke it
       await authService.revokeApiKey(apiKey);
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'API_KEY_REVOKED',
           outcome: 'SUCCESS',
@@ -703,7 +825,11 @@ describe('AuthenticationService', () => {
       await authService.createUserAccount('user2', password);
 
       // Get credentials
-      const credentials = (authService as unknown as { credentials: Map<string, { salt: string; passwordHash: string }> }).credentials;
+      const credentials = (
+        authService as unknown as {
+          credentials: Map<string, { salt: string; passwordHash: string }>;
+        }
+      ).credentials;
       const cred1 = credentials.get('user1');
       const cred2 = credentials.get('user2');
 
@@ -720,7 +846,11 @@ describe('AuthenticationService', () => {
         mockUser.username,
         'TestPassword123!'
       );
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       await authService.authenticateWithCredentials(
         mockUser.username,
@@ -729,7 +859,9 @@ describe('AuthenticationService', () => {
         userAgent
       );
 
-      expect(auditLogger.log as jest.MockedFunction<typeof auditLogger.log>).toHaveBeenCalledWith(
+      expect(
+        auditLogger.log as jest.MockedFunction<typeof auditLogger.log>
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: expect.objectContaining({
             ipAddress,
@@ -744,7 +876,11 @@ describe('AuthenticationService', () => {
         mockUser.username,
         'TestPassword123!'
       );
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       const result = await authService.authenticateWithCredentials(
         mockUser.username,
@@ -767,7 +903,10 @@ describe('AuthenticationService', () => {
     it('should handle very long passwords', async () => {
       const longPassword = 'a'.repeat(1000);
 
-      const result = await authService.createUserAccount('testuser', longPassword);
+      const result = await authService.createUserAccount(
+        'testuser',
+        longPassword
+      );
 
       expect(result).toBeDefined();
       expect(result.username).toBe('testuser');
@@ -779,12 +918,16 @@ describe('AuthenticationService', () => {
       if (authServiceAny.sessions) {
         authServiceAny.sessions.clear();
       }
-      
+
       await authService.createUserAccount(
         mockUser.username,
         'TestPassword123!'
       );
-      (permissionService.getUser as jest.MockedFunction<typeof permissionService.getUser>).mockResolvedValue(mockUser);
+      (
+        permissionService.getUser as jest.MockedFunction<
+          typeof permissionService.getUser
+        >
+      ).mockResolvedValue(mockUser);
 
       // Create multiple sessions concurrently
       const promises = Array(5)
@@ -806,7 +949,11 @@ describe('AuthenticationService', () => {
       });
 
       // Verify we have 5 sessions
-      const sessions = (authService as unknown as { sessions: Map<string, { refreshToken: string; expiresAt: number }> }).sessions;
+      const sessions = (
+        authService as unknown as {
+          sessions: Map<string, { refreshToken: string; expiresAt: number }>;
+        }
+      ).sessions;
       expect(Array.from(sessions.values()).length).toBe(5);
     });
   });

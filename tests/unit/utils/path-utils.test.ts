@@ -47,7 +47,10 @@ jest.mock('../../../apps/cli/src/utils/path-utils', () => {
 });
 
 // Import the mocked functions
-import { getAssetPath, getProjectPath } from '../../../apps/cli/src/utils/path-utils';
+import {
+  getAssetPath,
+  getProjectPath,
+} from '../../../apps/cli/src/utils/path-utils';
 
 describe('path-utils', () => {
   const mockedFs = fs as jest.Mocked<typeof fs>;
@@ -246,7 +249,9 @@ describe('path-utils', () => {
 
   describe('PROJECT_ROOT constant', () => {
     it('should be defined', () => {
-      const pathUtils = jest.requireMock('../../../apps/cli/src/utils/path-utils');
+      const pathUtils = jest.requireMock(
+        '../../../apps/cli/src/utils/path-utils'
+      );
       expect(pathUtils.PROJECT_ROOT).toBeDefined();
       expect(pathUtils.PROJECT_ROOT).toBe(mockProjectRoot);
     });
@@ -254,7 +259,9 @@ describe('path-utils', () => {
 
   describe('edge cases and error scenarios', () => {
     it('should handle null/undefined inputs gracefully', () => {
-      const pathUtils = jest.requireMock('../../../apps/cli/src/utils/path-utils');
+      const pathUtils = jest.requireMock(
+        '../../../apps/cli/src/utils/path-utils'
+      );
 
       // TypeScript would normally prevent these, but testing runtime behavior
       expect(() => {
@@ -269,7 +276,9 @@ describe('path-utils', () => {
       const resultNull = pathUtils.getProjectPath(null as unknown as string);
       expect(resultNull).toBe(path.join(mockProjectRoot, String(null)));
 
-      const resultUndefined = pathUtils.getProjectPath(undefined as unknown as string);
+      const resultUndefined = pathUtils.getProjectPath(
+        undefined as unknown as string
+      );
       expect(resultUndefined).toBe(
         path.join(mockProjectRoot, String(undefined))
       );

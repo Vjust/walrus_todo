@@ -1,4 +1,11 @@
-import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  describe,
+  test,
+  expect,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { spawn, ChildProcess } from 'child_process';
 import { backgroundDataRetriever } from '../../apps/cli/src/utils/BackgroundDataRetriever';
 import { jobManager } from '../../apps/cli/src/utils/PerformanceMonitor';
@@ -40,14 +47,20 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
   describe('Background Retrieve Command', () => {
     test('should start background retrieval and return immediately', async () => {
-      const command = spawn('node', ['bin/run', 'retrieve', 'test-list', '--background', '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 10000,
-      });
+      const command = spawn(
+        'node',
+        ['bin/run', 'retrieve', 'test-list', '--background', '--mock'],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 10000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
-      expect(output.stdout).toContain('🚀 Starting background retrieval operation');
+
+      expect(output.stdout).toContain(
+        '🚀 Starting background retrieval operation'
+      );
       expect(output.stdout).toContain('Job ID:');
       expect(output.stdout).toContain('✓ Background retrieval started');
       expect(output.stdout).toContain('💡 Track progress: waltodo jobs');
@@ -61,14 +74,29 @@ describe('Background Retrieval Workflow E2E Tests', () => {
     }, 15000);
 
     test('should start background retrieval with wait flag and show progress', async () => {
-      const command = spawn('node', ['bin/run', 'retrieve', 'QmTestBlob123', '--background', '--wait', '--mock', '--timeout', '30'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 45000,
-      });
+      const command = spawn(
+        'node',
+        [
+          'bin/run',
+          'retrieve',
+          'QmTestBlob123',
+          '--background',
+          '--wait',
+          '--mock',
+          '--timeout',
+          '30',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 45000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
-      expect(output.stdout).toContain('🚀 Starting background retrieval operation');
+
+      expect(output.stdout).toContain(
+        '🚀 Starting background retrieval operation'
+      );
       expect(output.stdout).toContain('⏳ Waiting for retrieval to complete');
       // Should contain progress indicators
       expect(output.stdout).toMatch(/\[.*\]/); // Progress bar
@@ -83,14 +111,26 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
     test('should handle background retrieval with custom job ID', async () => {
       const customJobId = `test-retrieve-${Date.now()}`;
-      
-      const command = spawn('node', ['bin/run', 'retrieve', 'test-blob', '--background', '--job-id', customJobId, '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 10000,
-      });
+
+      const command = spawn(
+        'node',
+        [
+          'bin/run',
+          'retrieve',
+          'test-blob',
+          '--background',
+          '--job-id',
+          customJobId,
+          '--mock',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 10000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
+
       expect(output.stdout).toContain(`Job ID: ${customJobId}`);
       expect(output.exitCode).toBe(0);
 
@@ -100,13 +140,17 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
   describe('Background Fetch Command', () => {
     test('should start background fetch operation', async () => {
-      const command = spawn('node', ['bin/run', 'fetch', 'QmTestFetch123', '--background', '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 10000,
-      });
+      const command = spawn(
+        'node',
+        ['bin/run', 'fetch', 'QmTestFetch123', '--background', '--mock'],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 10000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
+
       expect(output.stdout).toContain('🚀 Starting background fetch operation');
       expect(output.stdout).toContain('Target ID: QmTestFetch123');
       expect(output.stdout).toContain('✓ Background fetch started');
@@ -120,13 +164,28 @@ describe('Background Retrieval Workflow E2E Tests', () => {
     }, 15000);
 
     test('should handle fetch with progress interval settings', async () => {
-      const command = spawn('node', ['bin/run', 'fetch', '0xTestNFT456', '--background', '--wait', '--progress-interval', '1', '--mock', '--timeout', '20'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 30000,
-      });
+      const command = spawn(
+        'node',
+        [
+          'bin/run',
+          'fetch',
+          '0xTestNFT456',
+          '--background',
+          '--wait',
+          '--progress-interval',
+          '1',
+          '--mock',
+          '--timeout',
+          '20',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 30000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
+
       expect(output.stdout).toContain('🚀 Starting background fetch operation');
       expect(output.stdout).toContain('Target ID: 0xTestNFT456');
       expect(output.stdout).toMatch(/\[.*\]/); // Should show progress
@@ -143,10 +202,14 @@ describe('Background Retrieval Workflow E2E Tests', () => {
   describe('Job Management Integration', () => {
     test('jobs command should list background operations', async () => {
       // Start a background operation first
-      const retrieveCommand = spawn('node', ['bin/run', 'retrieve', 'test-list', '--background', '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 5000,
-      });
+      const retrieveCommand = spawn(
+        'node',
+        ['bin/run', 'retrieve', 'test-list', '--background', '--mock'],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 5000,
+        }
+      );
 
       await captureCommandOutput(retrieveCommand);
 
@@ -160,17 +223,29 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       });
 
       const output = await captureCommandOutput(jobsCommand);
-      
+
       expect(output.stdout).toContain('Background Jobs');
       expect(output.exitCode).toBe(0);
     }, 20000);
 
     test('status command should show job details', async () => {
       // Start a background operation
-      const retrieveCommand = spawn('node', ['bin/run', 'retrieve', 'test-status', '--background', '--job-id', 'test-status-job', '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 5000,
-      });
+      const retrieveCommand = spawn(
+        'node',
+        [
+          'bin/run',
+          'retrieve',
+          'test-status',
+          '--background',
+          '--job-id',
+          'test-status-job',
+          '--mock',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 5000,
+        }
+      );
 
       await captureCommandOutput(retrieveCommand);
       testJobIds.push('test-status-job');
@@ -179,13 +254,17 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Check status
-      const statusCommand = spawn('node', ['bin/run', 'status', 'test-status-job'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 10000,
-      });
+      const statusCommand = spawn(
+        'node',
+        ['bin/run', 'status', 'test-status-job'],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 10000,
+        }
+      );
 
       const output = await captureCommandOutput(statusCommand);
-      
+
       expect(output.stdout).toContain('Job Status: test-status-job');
       expect(output.stdout).toContain('Command: retrieve');
       expect(output.stdout).toMatch(/Progress.*%/);
@@ -194,10 +273,24 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
     test('cancel command should stop background operation', async () => {
       // Start a long-running background operation
-      const retrieveCommand = spawn('node', ['bin/run', 'retrieve', 'large-dataset', '--background', '--job-id', 'test-cancel-job', '--mock', '--timeout', '300'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 5000,
-      });
+      const retrieveCommand = spawn(
+        'node',
+        [
+          'bin/run',
+          'retrieve',
+          'large-dataset',
+          '--background',
+          '--job-id',
+          'test-cancel-job',
+          '--mock',
+          '--timeout',
+          '300',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 5000,
+        }
+      );
 
       await captureCommandOutput(retrieveCommand);
       testJobIds.push('test-cancel-job');
@@ -206,13 +299,17 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Cancel the job
-      const cancelCommand = spawn('node', ['bin/run', 'cancel', 'test-cancel-job'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 10000,
-      });
+      const cancelCommand = spawn(
+        'node',
+        ['bin/run', 'cancel', 'test-cancel-job'],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 10000,
+        }
+      );
 
       const output = await captureCommandOutput(cancelCommand);
-      
+
       expect(output.stdout).toContain('🛑 Cancelling job: test-cancel-job');
       expect(output.stdout).toContain('✅ Job cancelled');
       expect(output.exitCode).toBe(0);
@@ -221,14 +318,29 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
   describe('Error Handling', () => {
     test('should handle invalid blob ID gracefully in background', async () => {
-      const command = spawn('node', ['bin/run', 'retrieve', 'InvalidBlobId123', '--background', '--wait', '--mock', '--timeout', '10'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 20000,
-      });
+      const command = spawn(
+        'node',
+        [
+          'bin/run',
+          'retrieve',
+          'InvalidBlobId123',
+          '--background',
+          '--wait',
+          '--mock',
+          '--timeout',
+          '10',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 20000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
-      expect(output.stdout).toContain('🚀 Starting background retrieval operation');
+
+      expect(output.stdout).toContain(
+        '🚀 Starting background retrieval operation'
+      );
       // Should handle error gracefully and show failure
       expect(output.exitCode).not.toBe(0);
 
@@ -240,13 +352,26 @@ describe('Background Retrieval Workflow E2E Tests', () => {
     }, 30000);
 
     test('should handle network timeout in background operation', async () => {
-      const command = spawn('node', ['bin/run', 'fetch', 'QmTimeoutTest', '--background', '--wait', '--timeout', '5', '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 15000,
-      });
+      const command = spawn(
+        'node',
+        [
+          'bin/run',
+          'fetch',
+          'QmTimeoutTest',
+          '--background',
+          '--wait',
+          '--timeout',
+          '5',
+          '--mock',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 15000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
+
       expect(output.stdout).toContain('🚀 Starting background fetch operation');
       // Should handle timeout gracefully
       expect(output.exitCode).not.toBe(0);
@@ -261,18 +386,29 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
   describe('Progress Tracking', () => {
     test('should show accurate progress updates', async () => {
-      const command = spawn('node', ['bin/run', 'retrieve', 'progress-test', '--background', '--wait', '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 30000,
-      });
+      const command = spawn(
+        'node',
+        [
+          'bin/run',
+          'retrieve',
+          'progress-test',
+          '--background',
+          '--wait',
+          '--mock',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 30000,
+        }
+      );
 
       let progressUpdates = 0;
       let lastProgress = -1;
 
-      command.stdout.on('data', (data) => {
+      command.stdout.on('data', data => {
         const output = data.toString();
         const progressMatch = output.match(/(\d+)%/);
-        
+
         if (progressMatch) {
           const currentProgress = parseInt(progressMatch[1]);
           if (currentProgress > lastProgress) {
@@ -283,7 +419,7 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       });
 
       const output = await captureCommandOutput(command);
-      
+
       // Should have multiple progress updates
       expect(progressUpdates).toBeGreaterThan(0);
       expect(output.exitCode).toBe(0);
@@ -298,10 +434,13 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
   describe('Background Data Retriever', () => {
     test('should handle blob retrieval operation', async () => {
-      const operationId = await backgroundDataRetriever.retrieveFromWalrusBlob('QmTestBlob789', {
-        mock: true,
-        timeout: 10000,
-      });
+      const operationId = await backgroundDataRetriever.retrieveFromWalrusBlob(
+        'QmTestBlob789',
+        {
+          mock: true,
+          timeout: 10000,
+        }
+      );
 
       testOperationIds.push(operationId);
 
@@ -311,7 +450,8 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       // Wait a moment for operation to start
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const status = await backgroundDataRetriever.getRetrievalStatus(operationId);
+      const status =
+        await backgroundDataRetriever.getRetrievalStatus(operationId);
       expect(status).toBeDefined();
       expect(status?.phase).toBeDefined();
     }, 15000);
@@ -336,39 +476,56 @@ describe('Background Retrieval Workflow E2E Tests', () => {
       // Wait for operation to progress
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const status = await backgroundDataRetriever.getRetrievalStatus(operationId);
+      const status =
+        await backgroundDataRetriever.getRetrievalStatus(operationId);
       expect(status).toBeDefined();
       expect(status?.totalItems).toBe(3);
     }, 20000);
 
     test('should handle cancellation of retrieval operation', async () => {
-      const operationId = await backgroundDataRetriever.retrieveFromWalrusBlob('QmCancelTest', {
-        mock: true,
-        timeout: 30000,
-      });
+      const operationId = await backgroundDataRetriever.retrieveFromWalrusBlob(
+        'QmCancelTest',
+        {
+          mock: true,
+          timeout: 30000,
+        }
+      );
 
       testOperationIds.push(operationId);
 
       // Wait for operation to start
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const cancelled = await backgroundDataRetriever.cancelRetrieval(operationId);
+      const cancelled =
+        await backgroundDataRetriever.cancelRetrieval(operationId);
       expect(cancelled).toBe(true);
 
-      const status = await backgroundDataRetriever.getRetrievalStatus(operationId);
+      const status =
+        await backgroundDataRetriever.getRetrievalStatus(operationId);
       expect(status?.phase).toBe('complete');
     }, 15000);
   });
 
   describe('Resource Management', () => {
     test('should clean up resources after operation completion', async () => {
-      const command = spawn('node', ['bin/run', 'retrieve', 'cleanup-test', '--background', '--wait', '--mock'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 20000,
-      });
+      const command = spawn(
+        'node',
+        [
+          'bin/run',
+          'retrieve',
+          'cleanup-test',
+          '--background',
+          '--wait',
+          '--mock',
+        ],
+        {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 20000,
+        }
+      );
 
       const output = await captureCommandOutput(command);
-      
+
       expect(output.stdout).toContain('📊 Retrieval Summary');
       expect(output.exitCode).toBe(0);
 
@@ -389,10 +546,20 @@ describe('Background Retrieval Workflow E2E Tests', () => {
 
       // Start multiple background operations
       for (let i = 0; i < 3; i++) {
-        const command = spawn('node', ['bin/run', 'retrieve', `concurrent-test-${i}`, '--background', '--mock'], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: 10000,
-        });
+        const command = spawn(
+          'node',
+          [
+            'bin/run',
+            'retrieve',
+            `concurrent-test-${i}`,
+            '--background',
+            '--mock',
+          ],
+          {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            timeout: 10000,
+          }
+        );
 
         operations.push(captureCommandOutput(command));
       }
@@ -426,15 +593,15 @@ async function captureCommandOutput(command: ChildProcess): Promise<{
     let stdout = '';
     let stderr = '';
 
-    command.stdout?.on('data', (data) => {
+    command.stdout?.on('data', data => {
       stdout += data.toString();
     });
 
-    command.stderr?.on('data', (data) => {
+    command.stderr?.on('data', data => {
       stderr += data.toString();
     });
 
-    command.on('close', (code) => {
+    command.on('close', code => {
       resolve({
         stdout,
         stderr,
@@ -442,7 +609,7 @@ async function captureCommandOutput(command: ChildProcess): Promise<{
       });
     });
 
-    command.on('error', (error) => {
+    command.on('error', error => {
       reject(error);
     });
   });
@@ -457,13 +624,13 @@ async function waitForCondition(
   intervalMs: number = 100
 ): Promise<boolean> {
   const startTime = Date.now();
-  
+
   while (Date.now() - startTime < timeoutMs) {
     if (await condition()) {
       return true;
     }
     await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
-  
+
   return false;
 }

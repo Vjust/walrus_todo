@@ -16,10 +16,10 @@ export class TodoSerializer {
   static bufferToTodo(buffer: Buffer): Todo {
     try {
       const parsed = JSON.parse(buffer.toString());
-      
+
       // Apply backwards compatibility defaults before validation
       const normalized = this.normalizeTodoForCompatibility(parsed);
-      
+
       // Validate the normalized data using Zod schema
       return validateTodo(normalized);
     } catch (error) {
@@ -42,10 +42,10 @@ export class TodoSerializer {
   static bufferToTodoList(buffer: Buffer): TodoList {
     try {
       const parsed = JSON.parse(buffer.toString());
-      
+
       // Apply backwards compatibility defaults before validation
       const normalized = this.normalizeTodoListForCompatibility(parsed);
-      
+
       // Validate the normalized data using Zod schema
       return validateTodoList(normalized);
     } catch (error) {
@@ -138,7 +138,7 @@ export class TodoSerializer {
     if (!obj || typeof obj !== 'object') return obj;
 
     // Normalize nested todos first
-    const normalizedTodos = Array.isArray(obj.todos) 
+    const normalizedTodos = Array.isArray(obj.todos)
       ? obj.todos.map((todo: any) => this.normalizeTodoForCompatibility(todo))
       : [];
 

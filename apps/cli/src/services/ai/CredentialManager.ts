@@ -53,7 +53,9 @@ export class CredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const dataBuffer = Buffer.isBuffer(encryptedData) ? encryptedData : Buffer.from(encryptedData);
+        const dataBuffer = Buffer.isBuffer(encryptedData)
+          ? encryptedData
+          : Buffer.from(encryptedData);
         const credentials = this.decrypt(dataBuffer);
         if (credentials) {
           this.credentials = JSON.parse(credentials.toString());

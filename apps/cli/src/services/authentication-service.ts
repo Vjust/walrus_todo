@@ -919,7 +919,9 @@ export class AuthenticationService {
       });
     } catch (_error: unknown) {
       // Silently fail for invalid tokens
-      this.logger?.debug('Failed to invalidate session', { error: _error instanceof Error ? _error.message : String(_error) });
+      this.logger?.debug('Failed to invalidate session', {
+        error: _error instanceof Error ? _error.message : String(_error),
+      });
     }
   }
 
@@ -990,7 +992,7 @@ export class AuthenticationService {
   /**
    * Reset the service state - used for testing purposes
    * Clears all stored credentials, sessions, and API keys
-   * 
+   *
    * @internal This method is intended for testing only
    */
   public resetState(): void {

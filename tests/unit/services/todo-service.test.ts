@@ -8,11 +8,27 @@ import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 
 // Mock file system modules
-jest.mock('fs');
+jest.mock('fs', () => ({
+  existsSync: jest.fn(() => false),
+  promises: {
+    access: jest.fn(),
+    mkdir: jest.fn(),
+    readFile: jest.fn(),
+    writeFile: jest.fn(),
+    unlink: jest.fn(),
+    readdir: jest.fn(),
+  },
+}));
 
 // Mock generateId to return predictable IDs
 jest.mock('../../../apps/cli/src/utils/id-generator', () => ({
   generateId: jest.fn(() => 'test-id-123'),
+}));
+
+// Mock config-loader
+jest.mock('../../../apps/cli/src/utils/config-loader', () => ({
+  loadConfigFile: jest.fn(() => ({})),
+  saveConfigToFile: jest.fn(),
 }));
 
 describe('TodoService', () => {
@@ -21,15 +37,26 @@ describe('TodoService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    todoService = new TodoService();
 
-    // Mock mkdir to simulate successful directory creation
-    (fsPromises.mkdir as jest.MockedFunction<typeof fsPromises.mkdir>).mockResolvedValue(undefined);
+    // Mock fs.promises methods before creating TodoService
+    const mockFs = require('fs');
+    // First call rejects (directory doesn't exist), second call resolves (after mkdir)
+    mockFs.promises.access
+      .mockRejectedValueOnce(new Error('Directory not found'))
+      .mockResolvedValue(undefined);
+    mockFs.promises.mkdir.mockResolvedValue(undefined);
+    mockFs.promises.readFile.mockRejectedValue(new Error('File not found'));
+    mockFs.promises.writeFile.mockResolvedValue(undefined);
+
+    todoService = new TodoService();
   });
 
   describe('constructor', () => {
-    it('should create todos directory on initialization', () => {
-      expect(fsPromises.mkdir).toHaveBeenCalledWith(todosDir, {
+    it('should create todos directory on initialization', async () => {
+      const mockFs = require('fs');
+      // Wait for the initialization to complete
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(mockFs.promises.mkdir).toHaveBeenCalledWith(todosDir, {
         recursive: true,
       });
     });
@@ -41,12 +68,14 @@ describe('TodoService', () => {
       const owner = 'test-owner';
 
       // Mock getList to return null (list doesn't exist)
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockRejectedValue(
-        new Error('File not found')
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockRejectedValue(new Error('File not found'));
 
       // Mock writeFile to simulate successful save
-      (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mockResolvedValue(undefined);
+      (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mockResolvedValue(undefined);
 
       const result = await todoService.createList(listName, owner);
 
@@ -77,9 +106,9 @@ describe('TodoService', () => {
       };
 
       // Mock getList to return existing list
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(existingList)
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(existingList));
 
       await expect(
         todoService.createList('test-list', 'test-owner')
@@ -101,9 +130,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(expectedList)
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(expectedList));
 
       const result = await todoService.getList('test-list');
 
@@ -115,9 +144,9 @@ describe('TodoService', () => {
     });
 
     it('should return null for non-existent list', async () => {
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockRejectedValue(
-        new Error('File not found')
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockRejectedValue(new Error('File not found'));
 
       const result = await todoService.getList('non-existent');
 
@@ -128,7 +157,9 @@ describe('TodoService', () => {
   describe('getAllLists', () => {
     it('should return all list names', async () => {
       const files = ['list1.json', 'list2.json', 'other.txt', 'list3.json'];
-      (fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>).mockResolvedValue(files);
+      (
+        fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>
+      ).mockResolvedValue(files);
 
       const result = await todoService.getAllLists();
 
@@ -137,7 +168,9 @@ describe('TodoService', () => {
     });
 
     it('should return empty array if directory is empty', async () => {
-      (fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>).mockResolvedValue([]);
+      (
+        fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>
+      ).mockResolvedValue([]);
 
       const result = await todoService.getAllLists();
 
@@ -147,7 +180,9 @@ describe('TodoService', () => {
     it('should return empty array if directory does not exist', async () => {
       const error = new Error('ENOENT') as NodeJS.ErrnoException;
       error.code = 'ENOENT';
-      (fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>).mockRejectedValue(error);
+      (
+        fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>
+      ).mockRejectedValue(error);
 
       const result = await todoService.getAllLists();
 
@@ -156,7 +191,9 @@ describe('TodoService', () => {
 
     it('should throw CLIError for other filesystem errors', async () => {
       const error = new Error('Permission denied');
-      (fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>).mockRejectedValue(error);
+      (
+        fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>
+      ).mockRejectedValue(error);
 
       await expect(todoService.getAllLists()).rejects.toThrow(
         new CLIError(
@@ -179,10 +216,12 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(existingList)
-      );
-      (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mockResolvedValue(undefined);
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(existingList));
+      (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mockResolvedValue(undefined);
 
       const todoData: Partial<Todo> = {
         title: 'Test Todo',
@@ -206,9 +245,9 @@ describe('TodoService', () => {
     });
 
     it('should throw error if list does not exist', async () => {
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockRejectedValue(
-        new Error('File not found')
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockRejectedValue(new Error('File not found'));
 
       await expect(
         todoService.addTodo('non-existent', { title: 'Test' })
@@ -242,9 +281,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
 
       const result = await todoService.getTodo('todo-1', 'test-list');
 
@@ -262,9 +301,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
 
       const result = await todoService.getTodo('non-existent', 'test-list');
 
@@ -296,9 +335,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
 
       const result = await todoService.getTodoByTitle('test todo', 'test-list');
 
@@ -330,10 +369,12 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
-      (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mockResolvedValue(undefined);
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
+      (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mockResolvedValue(undefined);
 
       const updates: Partial<Todo> = {
         title: 'Updated Title',
@@ -369,9 +410,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
 
       await expect(
         todoService.updateTodo('test-list', 'non-existent', {
@@ -409,17 +450,21 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
-      (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mockResolvedValue(undefined);
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
+      (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mockResolvedValue(undefined);
 
       await todoService.deleteTodo('test-list', 'todo-1');
 
       expect(fsPromises.writeFile).toHaveBeenCalled();
 
       // Verify the todo was removed from the list
-      const savedData = (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mock.calls[0][1];
+      const savedData = (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mock.calls[0][1];
       const savedList = JSON.parse(savedData);
       expect(savedList.todos).toHaveLength(0);
     });
@@ -435,9 +480,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
 
       await expect(
         todoService.deleteTodo('test-list', 'non-existent')
@@ -473,15 +518,19 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>).mockResolvedValue(
-        JSON.stringify(list)
-      );
-      (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mockResolvedValue(undefined);
+      (
+        fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>
+      ).mockResolvedValue(JSON.stringify(list));
+      (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mockResolvedValue(undefined);
 
       await todoService.toggleItemStatus('test-list', 'todo-1', true);
 
       // Verify the todo was updated with completed status
-      const savedData = (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mock.calls[0][1];
+      const savedData = (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mock.calls[0][1];
       const savedList = JSON.parse(savedData);
       expect(savedList.todos[0].completed).toBe(true);
       expect(savedList.todos[0].completedAt).toBeDefined();
@@ -500,7 +549,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mockResolvedValue(undefined);
+      (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mockResolvedValue(undefined);
 
       await todoService.saveList('test-list', list);
 
@@ -522,9 +573,9 @@ describe('TodoService', () => {
         updatedAt: new Date().toISOString(),
       };
 
-      (fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>).mockRejectedValue(
-        new Error('Permission denied')
-      );
+      (
+        fsPromises.writeFile as jest.MockedFunction<typeof fsPromises.writeFile>
+      ).mockRejectedValue(new Error('Permission denied'));
 
       await expect(todoService.saveList('test-list', list)).rejects.toThrow(
         new CLIError(
@@ -537,8 +588,12 @@ describe('TodoService', () => {
 
   describe('deleteList', () => {
     it('should delete existing list file', async () => {
-      (fs.existsSync as jest.MockedFunction<typeof fs.existsSync>).mockReturnValue(true);
-      (fsPromises.unlink as jest.MockedFunction<typeof fsPromises.unlink>).mockResolvedValue(undefined);
+      (
+        fs.existsSync as jest.MockedFunction<typeof fs.existsSync>
+      ).mockReturnValue(true);
+      (
+        fsPromises.unlink as jest.MockedFunction<typeof fsPromises.unlink>
+      ).mockResolvedValue(undefined);
 
       await todoService.deleteList('test-list');
 
@@ -548,7 +603,9 @@ describe('TodoService', () => {
     });
 
     it('should not throw error if list does not exist', async () => {
-      (fs.existsSync as jest.MockedFunction<typeof fs.existsSync>).mockReturnValue(false);
+      (
+        fs.existsSync as jest.MockedFunction<typeof fs.existsSync>
+      ).mockReturnValue(false);
 
       await expect(
         todoService.deleteList('non-existent')
@@ -558,10 +615,12 @@ describe('TodoService', () => {
     });
 
     it('should throw CLIError on delete failure', async () => {
-      (fs.existsSync as jest.MockedFunction<typeof fs.existsSync>).mockReturnValue(true);
-      (fsPromises.unlink as jest.MockedFunction<typeof fsPromises.unlink>).mockRejectedValue(
-        new Error('Permission denied')
-      );
+      (
+        fs.existsSync as jest.MockedFunction<typeof fs.existsSync>
+      ).mockReturnValue(true);
+      (
+        fsPromises.unlink as jest.MockedFunction<typeof fsPromises.unlink>
+      ).mockRejectedValue(new Error('Permission denied'));
 
       await expect(todoService.deleteList('test-list')).rejects.toThrow(
         new CLIError(
@@ -617,10 +676,9 @@ describe('TodoService', () => {
       };
 
       // Mock getAllLists to return list names
-      (fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>).mockResolvedValue([
-        'list1.json',
-        'list2.json',
-      ]);
+      (
+        fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>
+      ).mockResolvedValue(['list1.json', 'list2.json']);
 
       // Mock getList to return appropriate lists
       (fsPromises.readFile as jest.MockedFunction<typeof fsPromises.readFile>)
@@ -635,7 +693,9 @@ describe('TodoService', () => {
     });
 
     it('should return empty array if no lists exist', async () => {
-      (fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>).mockResolvedValue([]);
+      (
+        fsPromises.readdir as jest.MockedFunction<typeof fsPromises.readdir>
+      ).mockResolvedValue([]);
 
       const result = await todoService.listTodos();
 

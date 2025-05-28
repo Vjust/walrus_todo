@@ -315,7 +315,7 @@ export class TestMonitor extends EventEmitter {
       <tbody>
         ${report.failedTests
           .map(
-            (test) => `
+            test => `
           <tr>
             <td>${test.name}</td>
             <td>${test.category}</td>
