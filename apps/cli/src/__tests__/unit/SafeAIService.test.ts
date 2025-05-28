@@ -11,15 +11,14 @@ import { AIService } from '../../services/ai/aiService';
 import { Logger } from '../../utils/Logger';
 import { AIProvider } from '../../types/adapters/AIModelAdapter';
 
-// Mock dependencies
-jest.mock('../../services/ai/aiService');
-jest.mock('../../utils/Logger');
+// Using real implementations for better test coverage
+// Logger can be mocked as it's primarily for output
 
 
 describe('SafeAIService', () => {
   let safeAIService: SafeAIService;
-  let mockAIService: jest.Mocked<AIService>;
-  let mockLogger: jest.Mocked<Logger>;
+  let aiService: AIService;
+  let logger: Logger;
 
   const sampleTodos: Todo[] = [
     {

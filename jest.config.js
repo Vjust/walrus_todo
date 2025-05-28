@@ -64,7 +64,6 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node', 'mts'],
   // Setup files run before each test file
   setupFiles: [
-    '<rootDir>/__mocks__/global-mocks.js',
     '<rootDir>/jest.setup.ts'
   ],
   // Setup files run after the test framework is installed

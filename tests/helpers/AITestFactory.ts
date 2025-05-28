@@ -13,8 +13,37 @@ import {
 import {
   AIVerifierAdapter,
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
-import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
+// Create mock AI adapters inline
+const createMockAIModelAdapter = () => ({
+  processWithPromptTemplate: jest.fn().mockResolvedValue({
+    result: expectedResults.summarize,
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+  completeStructured: jest.fn().mockResolvedValue({
+    result: JSON.stringify(expectedResults.categorize),
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+  complete: jest.fn().mockResolvedValue({
+    result: expectedResults.summarize,
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+  getProvider: jest.fn().mockReturnValue(AIProvider.XAI),
+  getModelName: jest.fn().mockReturnValue('mock-model'),
+  updateConfig: jest.fn(),
+  validateConfig: jest.fn().mockReturnValue(true),
+});
+
+const createMockAIVerifierAdapter = (): AIVerifierAdapter => ({
+  verifyAIOperation: jest.fn().mockResolvedValue(true),
+  getVerificationStatus: jest.fn().mockResolvedValue('verified'),
+  createVerificationProof: jest.fn().mockResolvedValue('proof-data'),
+});
 import { expectedResults } from './ai-test-utils';
 import { Todo } from '../../apps/cli/src/types/todo';
 

@@ -60,11 +60,27 @@ jobs:
         curl -sSf https://docs.wal.app/setup/walrus-install.sh | sh
         echo "$HOME/.walrus/bin" >> $GITHUB_PATH
     
-    - name: Create test configuration
+    - name: Create real testnet configuration
       run: |
         mkdir -p ~/.config/walrus
-        echo 'api_endpoint: "https://walrus-testnet.walrus.app/"' > ~/.config/walrus/client_config.yaml
-        echo 'context: "testnet"' >> ~/.config/walrus/client_config.yaml
+        cat > ~/.config/walrus/client_config.yaml << EOF
+aggregator: "https://aggregator.walrus-testnet.walrus.space"
+publisher: "https://publisher.walrus-testnet.walrus.space"
+context: "testnet"
+EOF
+        
+        # Create Sui testnet configuration
+        mkdir -p ~/.sui/sui_config
+        cat > ~/.sui/sui_config/client.yaml << EOF
+keystore:
+  File: ~/.sui/sui_config/sui.keystore
+envs:
+  - alias: testnet
+    rpc: "https://fullnode.testnet.sui.io:443"
+    ws: ~
+active_env: testnet
+active_address: ~
+EOF
     
     - name: Build project
       run: pnpm run build
@@ -72,20 +88,22 @@ jobs:
     - name: Run unit tests
       run: pnpm test:unit
       env:
-        WALRUS_USE_MOCK: true
         NODE_ENV: test
     
     - name: Run command tests
       run: pnpm test:commands
       env:
-        WALRUS_USE_MOCK: true
         NODE_ENV: test
+        SUI_NETWORK: testnet
     
     - name: Run integration tests
       run: pnpm test:integration
       env:
-        WALRUS_USE_MOCK: true
         NODE_ENV: test
+        SUI_NETWORK: testnet
+        SUI_FULL_NODE_URL: "https://fullnode.testnet.sui.io:443"
+        WALRUS_AGGREGATOR: "https://aggregator.walrus-testnet.walrus.space"
+        WALRUS_PUBLISHER: "https://publisher.walrus-testnet.walrus.space"
     
     - name: Upload test results
       uses: actions/upload-artifact@v4

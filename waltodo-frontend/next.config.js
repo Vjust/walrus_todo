@@ -89,13 +89,7 @@ const nextConfig = {
     if (!dev) {
       config.optimization.usedExports = true;
       // Be more conservative with side effects to prevent hydration issues
-      config.optimization.sideEffects = [
-        '*.css',
-        '*.scss',
-        '*.sass',
-        '*.less',
-        '*.stylus'
-      ];
+      config.optimization.sideEffects = false;
     }
 
     // Define environment variables consistently for server and client
@@ -140,17 +134,14 @@ const nextConfig = {
     optimizePackageImports: ['@heroicons/react', 'socket.io-client'],
     // Enable optimizations that don't affect hydration
     optimizeCss: false, // Disable CSS optimization that can cause hydration issues
-    turbo: {
-      // Configure Turbopack for better hydration handling (if using turbo mode)
-      loaders: {
-        '.svg': ['@svgr/webpack'],
-      },
-    },
-    // Disable features that can cause hydration mismatches
-    serverComponentsExternalPackages: ['@mysten/sui', '@mysten/walrus'],
+    // External packages for server components (Next.js 13+ app directory feature)
     // Enable strict hydration checking in development
     strictNextHead: process.env.NODE_ENV === 'development',
   },
+
+  // Turbopack configuration (Turbopack is now stable in Next.js 15)
+  // For now, using empty config until we need specific turbopack settings
+  // turbopack: {},
 
   // Allow development origins (dynamic port support)
   allowedDevOrigins: (function () {

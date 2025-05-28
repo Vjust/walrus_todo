@@ -55,8 +55,6 @@ jobs:
     env:
       # Environment variables for unit tests
       NODE_ENV: test
-      WALRUS_USE_MOCK: true
-      SUI_USE_MOCK: true
       TZ: UTC
       # Default test environment variables
       SUI_KEYSTORE_PATH: /tmp/test-keystore
@@ -98,8 +96,6 @@ jobs:
     timeout-minutes: 20
     env:
       NODE_ENV: test
-      WALRUS_USE_MOCK: true
-      SUI_USE_MOCK: true
       # AI integration test variables - using secrets
       XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -143,17 +139,19 @@ jobs:
     timeout-minutes: 30
     env:
       NODE_ENV: test
-      WALRUS_USE_MOCK: true
-      SUI_USE_MOCK: true
       # Integration test configuration
       INTEGRATION_TESTS: true
       RATE_LIMIT_TESTS: true
       ERROR_SIMULATION: true
-      # Secrets for integration testing
+      # Real Sui and Walrus testnet configuration
       SUI_WALLET_PHRASE: ${{ secrets.SUI_WALLET_PHRASE }}
       SUI_NETWORK: testnet
+      SUI_FULL_NODE_URL: "https://fullnode.testnet.sui.io:443"
       WALRUS_AGGREGATOR: "https://aggregator.walrus-testnet.walrus.space"
       WALRUS_PUBLISHER: "https://publisher.walrus-testnet.walrus.space"
+      WALRUS_CONFIG_PATH: /tmp/walrus-testnet-config
+      # Real credentials for blockchain operations
+      ENABLE_REAL_BLOCKCHAIN_TESTS: ${{ secrets.SUI_WALLET_PHRASE != '' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
       
@@ -190,13 +188,18 @@ jobs:
     timeout-minutes: 15
     env:
       NODE_ENV: test
-      WALRUS_USE_MOCK: true
-      SUI_USE_MOCK: true
       SECURITY_TESTS: true
+      # Real blockchain security testing configuration
+      SUI_NETWORK: testnet
+      SUI_FULL_NODE_URL: "https://fullnode.testnet.sui.io:443"
+      SUI_WALLET_PHRASE: ${{ secrets.SUI_WALLET_PHRASE }}
+      WALRUS_AGGREGATOR: "https://aggregator.walrus-testnet.walrus.space"
+      WALRUS_PUBLISHER: "https://publisher.walrus-testnet.walrus.space"
       # Additional security test configurations
       ENABLE_CREDENTIAL_ROTATION_TESTS: true
       ENABLE_AUDIT_LOG_TESTS: true
       ENABLE_PERMISSION_TESTS: true
+      ENABLE_REAL_BLOCKCHAIN_TESTS: ${{ secrets.SUI_WALLET_PHRASE != '' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
       
@@ -233,12 +236,17 @@ jobs:
     timeout-minutes: 15
     env:
       NODE_ENV: test
-      WALRUS_USE_MOCK: true
-      SUI_USE_MOCK: true
       EDGE_CASE_TESTS: true
+      # Real testnet configuration for edge case testing
+      SUI_NETWORK: testnet
+      SUI_FULL_NODE_URL: "https://fullnode.testnet.sui.io:443"
+      SUI_WALLET_PHRASE: ${{ secrets.SUI_WALLET_PHRASE }}
+      WALRUS_AGGREGATOR: "https://aggregator.walrus-testnet.walrus.space"
+      WALRUS_PUBLISHER: "https://publisher.walrus-testnet.walrus.space"
       # Configure edge case testing
       ENABLE_FUZZ_TESTS: true
       FUZZ_TEST_ITERATIONS: 100
+      ENABLE_REAL_BLOCKCHAIN_TESTS: ${{ secrets.SUI_WALLET_PHRASE != '' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
       

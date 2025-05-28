@@ -11,6 +11,13 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     
+    env:
+      NODE_ENV: production
+      SUI_NETWORK: testnet
+      SUI_FULL_NODE_URL: "https://fullnode.testnet.sui.io:443"
+      WALRUS_AGGREGATOR: "https://aggregator.walrus-testnet.walrus.space"
+      WALRUS_PUBLISHER: "https://publisher.walrus-testnet.walrus.space"
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -38,17 +45,17 @@ jobs:
         # Run performance tests
         echo "Running performance benchmarks..."
         
-        # Storage performance
+        # Storage performance (using real testnet)
         echo "=== Storage Performance ===" >> benchmarks/results.txt
-        time pnpm exec walrus store --mock "Performance test todo" >> benchmarks/results.txt 2>&1
+        SUI_NETWORK=testnet time pnpm exec walrus store "Performance test todo" >> benchmarks/results.txt 2>&1
         
         # Command execution time
         echo -e "\n=== Command Execution Time ===" >> benchmarks/results.txt
-        time pnpm exec walrus list --mock >> benchmarks/results.txt 2>&1
+        SUI_NETWORK=testnet time pnpm exec walrus list >> benchmarks/results.txt 2>&1
         
         # AI operations (if enabled)
         echo -e "\n=== AI Operations Performance ===" >> benchmarks/results.txt
-        time pnpm exec walrus ai summarize --mock >> benchmarks/results.txt 2>&1
+        SUI_NETWORK=testnet time pnpm exec walrus ai summarize >> benchmarks/results.txt 2>&1
         
         # Bundle size analysis
         echo -e "\n=== Bundle Size Analysis ===" >> benchmarks/results.txt
@@ -57,7 +64,7 @@ jobs:
         
         # Memory usage
         echo -e "\n=== Memory Usage ===" >> benchmarks/results.txt
-        /usr/bin/time -v pnpm exec walrus list --mock 2>&1 | grep -E "Maximum resident set size" >> benchmarks/results.txt
+        SUI_NETWORK=testnet /usr/bin/time -v pnpm exec walrus list 2>&1 | grep -E "Maximum resident set size" >> benchmarks/results.txt
     
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4

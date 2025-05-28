@@ -5,7 +5,15 @@ import safeStorage, {
   isBrowser,
   isUsingFallbackStorage,
 } from '@/lib/safe-storage';
-import { useIsHydrated } from '@/lib/hydration-safe';
+
+// Simple hydration check hook
+function useIsHydrated() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  return hydrated;
+}
 
 // Define context types for storage environments
 type StorageContext =

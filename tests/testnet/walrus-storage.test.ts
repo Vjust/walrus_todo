@@ -26,13 +26,12 @@ describe('Walrus Testnet Integration', () => {
 
     beforeAll(() => {
       // Use real Walrus CLI (not mock)
-      const previousMockSetting = process.env.WALRUS_USE_MOCK;
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet implementation
       todoStorage = new TodoStorage();
 
       // Restore after test
       afterAll(() => {
-        process.env.WALRUS_USE_MOCK = previousMockSetting;
+        // Cleanup handled by test framework
       });
     });
 
@@ -98,7 +97,7 @@ describe('Walrus Testnet Integration', () => {
     const testImagePath = join(__dirname, '../../test-image.jpeg');
 
     beforeAll(() => {
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet
       imageStorage = new ImageStorage();
     });
 
@@ -137,7 +136,7 @@ describe('Walrus Testnet Integration', () => {
     let storageClient: StorageClient;
 
     beforeAll(() => {
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet
       storageClient = new StorageClient();
     });
 
@@ -193,7 +192,7 @@ describe('Walrus Testnet Integration', () => {
     let todoStorage: TodoStorage;
 
     beforeAll(() => {
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet
       todoStorage = new TodoStorage();
     });
 
