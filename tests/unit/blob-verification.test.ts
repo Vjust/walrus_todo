@@ -2,7 +2,7 @@ import { BlobVerificationManager } from '../../apps/cli/src/utils/blob-verificat
 import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import type { WalrusClientExt } from '../../apps/cli/src/types/client';
 import type { BlobMetadataShape, BlobInfo } from '../../apps/cli/src/types/walrus';
-import { createWalrusModuleMock, getMockWalrusClient } from '../helpers/walrus-client-mock';
+import { createWalrusModuleMock, getMockWalrusClient } from '../../apps/cli/src/__tests__/helpers/walrus-client-mock';
 
 jest.mock('@mysten/sui/client');
 jest.mock('@mysten/walrus', () => createWalrusModuleMock());

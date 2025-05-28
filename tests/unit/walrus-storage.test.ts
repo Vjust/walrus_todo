@@ -1,6 +1,7 @@
 import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
 import type { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
 import { Todo } from '../../apps/cli/src/types/todo';
+import type { CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
 // Using real WalrusStorage implementation
 
 // Mock the external dependencies for unit testing
