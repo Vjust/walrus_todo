@@ -1,11 +1,23 @@
 import * as fs from 'fs';
+import { Config } from '@oclif/core';
+
+// Mock WASM and Walrus modules early to prevent loading errors
+jest.mock('@mysten/walrus-wasm', () => ({
+  WalrusClient: class MockWalrusClient {},
+  init: jest.fn().mockResolvedValue(true),
+  default: jest.fn(),
+}));
+
+jest.mock('@mysten/walrus', () => ({
+  WalrusClient: class MockWalrusClient {},
+  default: jest.fn(),
+}));
+
+// Now import the modules after mocking
 import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import { TaskSuggestionService } from '../../apps/cli/src/services/ai/TaskSuggestionService';
-import { createSampleTodos } from '../helpers/ai-test-utils';
 import { TodoService } from '../../apps/cli/src/services/todoService';
 import AICommand from '../../apps/cli/src/commands/ai';
-// Helper function to create a mock config object for testing
-import { Config } from '@oclif/core';
 import { runCommandInTest } from '../../apps/cli/src/__tests__/helpers/command-test-utils';
 
 function createValidConfig(): Partial<Config> {

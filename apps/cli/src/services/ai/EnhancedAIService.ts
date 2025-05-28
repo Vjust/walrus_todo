@@ -103,6 +103,9 @@ export class EnhancedAIService {
           options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
+        }).catch(error => {
+          this.logger.warn('Failed to initialize AI provider:', error);
+          // Keep using the fallback adapter
         });
       } else {
         // Default to configured default provider if only apiKey is provided
@@ -116,6 +119,9 @@ export class EnhancedAIService {
           options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
+        }).catch(error => {
+          this.logger.warn('Failed to initialize default AI provider:', error);
+          // Keep using the fallback adapter
         });
       }
     } else {
@@ -131,7 +137,13 @@ export class EnhancedAIService {
           options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
+        }).catch(error => {
+          this.logger.warn('Failed to initialize AI provider from default:', error);
+          // Keep using the fallback adapter
         });
+      }).catch(error => {
+        this.logger.warn('Failed to get default AI provider:', error);
+        // Keep using the fallback adapter
       });
     }
 

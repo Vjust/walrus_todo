@@ -113,8 +113,8 @@ export default class Credentials extends BaseCommand {
     const permissionLevel = flags.permission && flags.permission in permissionLevelMap
       ? permissionLevelMap[flags.permission]!
       : AIPermissionLevel.STANDARD;
-    const credentialType = flags.type
-      ? credentialTypeMap[flags.type]
+    const credentialType = flags.type && flags.type in credentialTypeMap
+      ? credentialTypeMap[flags.type]!
       : CredentialType.API_KEY;
 
     switch (actionType) {
@@ -330,7 +330,7 @@ export default class Credentials extends BaseCommand {
             (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
           );
           const daysUntilRotation =
-            cred.metadata.rotationReminder - daysSinceCreation;
+            Number(cred.metadata.rotationReminder) - daysSinceCreation;
 
           if (daysUntilRotation <= 0) {
             this.log(

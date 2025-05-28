@@ -48,7 +48,7 @@ jest.mock('fs', () => {
       .fn()
       .mockImplementation((path: string, encoding?: string) => {
         if (path.includes('keyfile')) {
-          return Buffer.from('mock-key-32-bytes-long-for-testing'); // Mock encryption key
+          return Buffer.alloc(32, 'a'); // Mock 32-byte encryption key
         }
         if (path.includes('keymetadata')) {
           const metadata = JSON.stringify({
@@ -99,7 +99,7 @@ describe('SecureCredentialStorage', () => {
     (fs.readFileSync as jest.Mock).mockImplementation(
       (path: string, encoding?: string) => {
         if (path.includes('keyfile')) {
-          return Buffer.from('mock-key-32-bytes-long-for-testing'); // Mock encryption key
+          return Buffer.alloc(32, 'a'); // Mock 32-byte encryption key
         }
         if (path.includes('keymetadata')) {
           const metadata = JSON.stringify({
@@ -253,7 +253,7 @@ describe('SecureCredentialStorage', () => {
     (fs.readFileSync as jest.Mock).mockImplementation(
       (path: string, encoding?: string) => {
         if (path.includes('keyfile')) {
-          return Buffer.from('mock-key-32-bytes-long-for-testing'); // Mock encryption key
+          return Buffer.alloc(32, 'a'); // Mock 32-byte encryption key
         }
         if (path.includes('keymetadata')) {
           const metadata = JSON.stringify({

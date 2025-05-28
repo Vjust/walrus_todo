@@ -1,33 +1,16 @@
 import type { WalrusClientExt } from '../../types/client';
 import type {
-  BlobInfo,
-  BlobObject,
-  BlobMetadataShape,
-} from '../../types/walrus';
+  StandardBlobObject,
+  StandardBlobInfo,
+  StandardBlobMetadata,
+  MockBlobRecord,
+  BlobObjectFactory,
+  BlobMetadataFactory,
+} from '../../types/mocks/shared-types';
 import { createMemoryEfficientMock, cleanupMocks } from './memory-utils';
 
 // Internal storage for mock state to simulate real Walrus behavior
-interface MockBlobRecord {
-  blobId: string;
-  data: Uint8Array;
-  registered_epoch: number;
-  certified_epoch?: number;
-  size: number;
-  attributes?: Record<string, string>;
-  contentType?: string;
-  owner?: string;
-  tags?: string[];
-  encoding_type: number;
-  metadata: BlobMetadataShape;
-  storage: {
-    id: { id: string };
-    start_epoch: number;
-    end_epoch: number;
-    storage_size: string;
-    used_size: string;
-  };
-  certificationInProgress?: boolean;
-}
+// Using shared MockBlobRecord from mocks/shared-types.ts
 
 const mockBlobStorage: Record<string, MockBlobRecord> = {};
 let currentEpoch = 100;
@@ -44,12 +27,12 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
   getStorageUsage: jest.Mock<Promise<{ used: string; total: string }>, []>;
   readBlob: jest.Mock<Promise<Uint8Array>, [any]>;
   writeBlob: jest.Mock<
-    Promise<{ blobId: string; blobObject: BlobObject }>,
+    Promise<{ blobId: string; blobObject: StandardBlobObject }>,
     [any]
   >;
-  getBlobInfo: jest.Mock<Promise<BlobInfo>, [string]>;
-  getBlobObject: jest.Mock<Promise<BlobObject>, [any]>;
-  getBlobMetadata: jest.Mock<Promise<BlobMetadataShape>, [any]>;
+  getBlobInfo: jest.Mock<Promise<StandardBlobInfo>, [string]>;
+  getBlobObject: jest.Mock<Promise<StandardBlobObject>, [any]>;
+  getBlobMetadata: jest.Mock<Promise<StandardBlobMetadata>, [any]>;
   verifyPoA: jest.Mock<Promise<boolean>, [any]>;
   getBlobSize: jest.Mock<Promise<number>, [string]>;
   storageCost: jest.Mock<
@@ -67,7 +50,7 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
   >;
   deleteBlob: jest.Mock<(tx: any) => Promise<{ digest: string }>, [any]>;
   executeRegisterBlobTransaction: jest.Mock<
-    Promise<{ blob: BlobObject; digest: string }>,
+    Promise<{ blob: StandardBlobObject; digest: string }>,
     [any]
   >;
   getStorageConfirmationFromNode: jest.Mock<Promise<any>, [any]>;
@@ -80,7 +63,7 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
   reset: jest.Mock<void, []>;
   connect: jest.Mock<Promise<void>, []>;
   experimental?: {
-    getBlobData: jest.Mock<Promise<Uint8Array | BlobObject>, []>;
+    getBlobData: jest.Mock<Promise<Uint8Array | StandardBlobObject>, []>;
   };
   // Additional helper methods for test setup
   _setBlobCertified?: (blobId: string, certified: boolean) => void;
@@ -93,10 +76,10 @@ export interface CompleteWalrusClientMock extends WalrusClientExt {
 }
 
 // Helper function to create proper metadata structure
-function createMockMetadata(size: number = 1024): BlobMetadataShape {
+function createMockMetadata(size: number = 1024): StandardBlobMetadata {
   return {
     V1: {
-      encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+      encoding_type: { RedStuff: true, RS2: false, $kind: 'RedStuff' },
       unencoded_length: size.toString(),
       hashes: [
         {
@@ -185,7 +168,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           id: { id: blobId },
           blob_id: blobId,
           registered_epoch: currentEpoch,
-          certified_epoch: currentEpoch + 50,
+          cert_epoch: currentEpoch + 50,
           size: size.toString(),
           encoding_type: 0,
           storage,
@@ -207,7 +190,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           size: record.size.toString(),
           hashes: record.metadata.V1.hashes,
           metadata: record.metadata,
-        } as BlobInfo;
+        } as StandardBlobInfo;
       }
 
       // Default fallback for unknown blobs
@@ -225,13 +208,13 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
               $kind: 'Digest',
             },
             secondary_hash: {
-              Digest: new Uint8Array([5, 6, 7, 8]),
-              $kind: 'Digest',
+              Sha256: new Uint8Array([5, 6, 7, 8]),
+              $kind: 'Sha256',
             },
           },
         ],
         metadata: createMockMetadata(1024),
-      } as BlobInfo;
+      } as StandardBlobInfo;
     }),
 
     // Improved getBlobObject that uses mock storage
@@ -244,14 +227,14 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
             id: { id: record.blobId },
             blob_id: record.blobId,
             registered_epoch: record.registered_epoch,
-            certified_epoch: record.certified_epoch,
+            cert_epoch: record.certified_epoch,
             size: record.size.toString(),
-            encoding_type: 0,
+            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
             storage: record.storage,
             deletable: true,
             metadata: record.metadata,
             attributes: record.attributes,
-          } as BlobObject;
+          } as StandardBlobObject;
         }
 
         // Default fallback
@@ -259,9 +242,9 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
           id: { id: params.blobId },
           blob_id: params.blobId,
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
-          encoding_type: 0,
+          encoding_type: { RedStuff: true, $kind: 'RedStuff' },
           storage: {
             id: { id: 'storage1' },
             start_epoch: 100,
@@ -270,7 +253,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
             used_size: '1024',
           },
           deletable: true,
-        } as BlobObject;
+        } as StandardBlobObject;
       }),
 
     // Improved getBlobMetadata that uses mock storage
@@ -356,9 +339,9 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         id: { id: 'mock-blob-id' },
         blob_id: 'mock-blob-id',
         registered_epoch: 100,
-        certified_epoch: 150,
+        cert_epoch: 150,
         size: '1024',
-        encoding_type: 0,
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
@@ -446,7 +429,7 @@ export function getMockWalrusClient(): CompleteWalrusClientMock {
         registered_epoch: currentEpoch,
         certified_epoch: options?.certified_epoch,
         size,
-        encoding_type: 0,
+        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         metadata,
         storage,
         attributes: options?.attributes || {},
