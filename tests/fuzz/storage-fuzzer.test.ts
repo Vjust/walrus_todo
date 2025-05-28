@@ -31,28 +31,14 @@ describe('Storage Fuzzing Tests', () => {
     testDir = path.join(tmpdir(), `walrus-storage-fuzz-${Date.now()}`);
     await fs.mkdir(testDir, { recursive: true });
 
-    // Initialize storage instances with mock Walrus client
-    walrusStorage = new WalrusStorage({
-      url: 'http://localhost:8080',
-      token: fuzzer.string({ minLength: 32, maxLength: 64 }),
-      options: { timeout: 5000 },
-    });
+    // Initialize storage instances with mock mode
+    walrusStorage = new WalrusStorage('testnet', true); // Force mock mode
 
-    // Initialize specialized storage implementations
-    todoStorage = new TodoStorage({
-      url: 'http://localhost:8080',
-      token: fuzzer.string({ minLength: 32, maxLength: 64 }),
-    });
-
-    imageStorage = new ImageStorage({
-      url: 'http://localhost:8080',
-      token: fuzzer.string({ minLength: 32, maxLength: 64 }),
-    });
-
-    nftStorage = new NFTStorage({
-      url: 'http://localhost:8080',
-      token: fuzzer.string({ minLength: 32, maxLength: 64 }),
-    });
+    // Initialize specialized storage implementations with wallet address
+    const testAddress = fuzzer.blockchainData().address();
+    todoStorage = new TodoStorage(testAddress);
+    imageStorage = new ImageStorage(testAddress);
+    nftStorage = new NFTStorage(testAddress);
 
     storageInstances = [walrusStorage, todoStorage, imageStorage, nftStorage];
   });

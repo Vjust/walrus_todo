@@ -12,6 +12,10 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Import our helper modules
+const JestEnvironmentSetup = require('./jest-environment-setup');
+const JestErrorHandler = require('./jest-error-handler');
+
 class JestTestRunner {
   constructor() {
     this.projectRoot = path.resolve(__dirname, '..');
@@ -23,6 +27,8 @@ class JestTestRunner {
       'fallbackRunner'
     ];
     this.environment = this.detectEnvironment();
+    this.envSetup = new JestEnvironmentSetup();
+    this.errorHandler = new JestErrorHandler();
     this.setupEnvironment();
   }
 
@@ -47,31 +53,8 @@ class JestTestRunner {
    * Set up proper Node.js environment for Jest
    */
   setupEnvironment() {
-    // Ensure NODE_ENV is set
-    if (!process.env.NODE_ENV) {
-      process.env.NODE_ENV = 'test';
-    }
-
-    // Set up proper module resolution
-    process.env.NODE_OPTIONS = [
-      process.env.NODE_OPTIONS,
-      '--experimental-vm-modules',
-      '--no-warnings',
-      '--max-old-space-size=4096'
-    ].filter(Boolean).join(' ');
-
-    // Ensure proper Jest environment
-    process.env.JEST_WORKER_ID = process.env.JEST_WORKER_ID || '1';
-    
-    // Fix path issues on Windows
-    if (this.environment.platform === 'win32') {
-      process.env.PATH = process.env.PATH + ';' + path.join(this.projectRoot, 'node_modules', '.bin');
-    }
-
-    // Memory management for large test suites
-    if (this.environment.inCI) {
-      process.env.NODE_OPTIONS += ' --max-old-space-size=8192';
-    }
+    // Use the dedicated environment setup
+    this.envSetup.apply();
   }
 
   /**
@@ -387,9 +370,18 @@ class JestTestRunner {
       } catch (error) {
         console.log(`\n❌ Strategy ${strategy} failed: ${error.message}`);
         
-        // If this is the last strategy, throw the error
+        // Analyze error and provide recovery suggestions
+        const errorAnalysis = this.errorHandler.analyzeError(error, { strategy });
+        console.log(`   Classification: ${errorAnalysis.classification}`);
+        console.log(`   Recovery: ${errorAnalysis.recoveryStrategy.description}`);
+        
+        // If this is the last strategy, provide comprehensive error handling
         if (strategy === this.strategies[this.strategies.length - 1]) {
           console.error('\n💥 All strategies failed!');
+          this.errorHandler.handleError(error, { 
+            allStrategiesFailed: true,
+            strategies: this.strategies 
+          });
           throw error;
         }
         
@@ -429,6 +421,28 @@ if (require.main === module) {
   if (args.includes('--diagnostic')) {
     runner.generateDiagnosticReport();
     process.exit(0);
+  }
+
+  // Handle strategy selection
+  const strategyIndex = args.findIndex(arg => arg.startsWith('--strategy='));
+  if (strategyIndex !== -1) {
+    const strategy = args[strategyIndex].split('=')[1];
+    const filteredArgs = args.filter((_, index) => index !== strategyIndex);
+    
+    if (runner.strategies.includes(strategy + 'Jest') || strategy === 'fallback') {
+      const methodName = strategy === 'fallback' ? 'fallbackRunner' : strategy + 'Jest';
+      try {
+        const result = await runner[methodName](filteredArgs);
+        process.exit(result.code);
+      } catch (error) {
+        runner.errorHandler.handleError(error, { forcedStrategy: strategy });
+        process.exit(1);
+      }
+    } else {
+      console.error(`❌ Unknown strategy: ${strategy}`);
+      console.log(`Available strategies: ${runner.strategies.map(s => s.replace('Jest', '')).join(', ')}, fallback`);
+      process.exit(1);
+    }
   }
 
   if (args.includes('--help')) {

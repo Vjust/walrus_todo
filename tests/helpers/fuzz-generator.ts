@@ -104,6 +104,30 @@ export class FuzzGenerator {
     return result;
   }
 
+  // Generate random email addresses
+  email(): string {
+    const domains = ['example.com', 'test.org', 'demo.net', 'sample.edu'];
+    const usernames = ['user', 'test', 'demo', 'sample', 'admin'];
+    const username = usernames[Math.floor(Math.random() * usernames.length)];
+    const domain = domains[Math.floor(Math.random() * domains.length)];
+    const suffix = this.number(1, 999);
+    return `${username}${suffix}@${domain}`;
+  }
+
+  // Generate random URLs
+  url(): string {
+    const protocols = ['https://', 'http://'];
+    const domains = ['example.com', 'test.org', 'demo.net', 'sample.edu'];
+    const paths = ['/api/v1', '/data', '/files', '/images', '/docs'];
+    
+    const protocol = protocols[Math.floor(Math.random() * protocols.length)];
+    const domain = domains[Math.floor(Math.random() * domains.length)];
+    const path = paths[Math.floor(Math.random() * paths.length)];
+    const resource = this.string({ minLength: 5, maxLength: 20, charset: 'abcdefghijklmnopqrstuvwxyz0123456789' });
+    
+    return `${protocol}${domain}${path}/${resource}`;
+  }
+
   // Generate random network errors
   networkError(): Error {
     const errors = [
