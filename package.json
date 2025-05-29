@@ -266,8 +266,9 @@
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "pnpm": ">=10.11.0"
   },
+  "packageManager": "pnpm@10.11.0",
   "resolutions": {
     "glob": "^10.4.5",
     "path-scurry": "^1.11.1",

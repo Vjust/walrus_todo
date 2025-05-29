@@ -29,7 +29,11 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.11.0
+          run_install: false
+
+      - name: Setup pnpm PATH
+        run: echo "$PNPM_HOME" >> $GITHUB_PATH
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -48,7 +52,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd waltodo-frontend
-          CI=true pnpm install --no-frozen-lockfile
+          CI=true pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run linter
         run: |
