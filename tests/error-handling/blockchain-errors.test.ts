@@ -238,7 +238,7 @@ describe('Blockchain Error Handling', () => {
               {
                 operation: 'execute',
                 recoverable: false,
-                cause: error instanceof Error ? error : new Error(String(error)),
+                cause: error instanceof Error ? error : new Error(String(error)) as Error,
               }
             );
           });
@@ -548,7 +548,7 @@ describe('Blockchain Error Handling', () => {
             throw new BlockchainError('Signing operation failed', {
               operation: 'sign',
               recoverable: false,
-              cause: error instanceof Error ? error : new Error(String(error)),
+              cause: (error instanceof Error ? error : new Error(String(error))) as Error,
             });
           });
       };

@@ -132,12 +132,13 @@ describe('SecureStorageService', () => {
       const key = 'test-key-12345';
       const decryptedData = 'original data';
 
-      mockCreateHash.mockReturnValue({
+      const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest
           .fn()
           .mockReturnValue(Buffer.from('hashed-key-32-bytes-long-enough')),
-      });
+      } as unknown as Partial<Hash>;
+      mockCreateHash.mockReturnValue(mockHash);
 
       const mockDecipher = {
         setAuthTag: jest.fn(),
@@ -179,10 +180,11 @@ describe('SecureStorageService', () => {
       };
       const key = 'test-key';
 
-      mockCreateHash.mockReturnValue({
+      const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest.fn().mockReturnValue(Buffer.from('hashed-key')),
-      });
+      } as unknown as Partial<Hash>;
+      mockCreateHash.mockReturnValue(mockHash);
 
       const mockDecipher = {
         setAuthTag: jest.fn(),
@@ -209,12 +211,13 @@ describe('SecureStorageService', () => {
       const mockEncrypted = Buffer.from('secured-data');
 
       mockRandomBytes.mockReturnValue(mockIv);
-      mockCreateHash.mockReturnValue({
+      const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest
           .fn()
           .mockReturnValue(Buffer.from('hashed-secure-key-32-bytes-long')),
-      });
+      } as unknown as Partial<Hash>;
+      mockCreateHash.mockReturnValue(mockHash);
 
       // Mock cipher for encryption
       const mockCipher = {
