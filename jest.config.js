@@ -10,10 +10,9 @@ module.exports = {
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
-    '/dist/',
-    '/build/',
     '/waltodo-frontend/',
-    '<rootDir>/dist/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/waltodo-frontend/',
   ],
   // Fix haste module naming collisions
   haste: {
@@ -92,46 +91,19 @@ module.exports = {
   testTimeout: process.env.JEST_PROJECT === 'fuzz-tests' ? 60000 :
                process.env.JEST_PROJECT === 'stress-tests' ? 120000 : 30000,
   
-  // Fuzz test configuration - projects for different test types
-  projects: [
-    {
-      displayName: 'unit-integration',
-      testMatch: [
-        '**/tests/unit/**/*.test.ts',
-        '**/tests/integration/**/*.test.ts',
-        '**/tests/edge-cases/**/*.test.ts',
-        '**/tests/commands/**/*.test.ts',
-        '**/apps/cli/src/__tests__/**/*.test.ts',
-      ],
-      testPathIgnorePatterns: [
-        '/node_modules/',
-        '/dist/',
-        '/build/',
-        '/waltodo-frontend/',
-        '/tests/fuzz/',
-        '/tests/stress/',
-        '/tests/security/',
-      ],
-    },
-    {
-      displayName: 'security-tests',
-      testMatch: ['**/tests/security/**/*.test.ts'],
-      setupFilesAfterEnv: ['<rootDir>/tests/security/setup.js'],
-      testEnvironment: 'node',
-    },
-    {
-      displayName: 'fuzz-tests',
-      testMatch: ['**/tests/fuzz/**/*.test.ts'],
-      // Fuzz test specific configuration passed via environment
-      globalSetup: '<rootDir>/tests/fuzz/setup-fuzz-environment.js',
-    },
-    {
-      displayName: 'stress-tests', 
-      testMatch: ['**/tests/stress/**/*.test.ts'],
-      // Stress test specific configuration
-      globalSetup: '<rootDir>/tests/stress/setup-stress-environment.js',
-    },
-  ],
+  // Test projects configuration - simplified for basic test discovery
+  // projects: [
+  //   {
+  //     displayName: 'unit-integration',
+  //     testMatch: [
+  //       '**/tests/unit/**/*.test.ts',
+  //       '**/tests/integration/**/*.test.ts',
+  //       '**/tests/edge-cases/**/*.test.ts',
+  //       '**/tests/commands/**/*.test.ts',
+  //       '**/apps/cli/src/__tests__/**/*.test.ts',
+  //     ],
+  //   },
+  // ],
   clearMocks: true,
   restoreMocks: true,
   resetMocks: true,
