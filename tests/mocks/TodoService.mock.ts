@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+const { jest } = require('@jest/globals');
 import type { TodoService } from '../../apps/cli/src/services/todoService';
 import type { Todo, TodoList } from '../../apps/cli/src/types/todo';
 

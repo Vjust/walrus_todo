@@ -148,7 +148,7 @@ export default class Daemon extends BaseCommand {
       // Keep the daemon running
       await this.keepAlive();
     } catch (error) {
-      this.logger.error('Failed to start sync daemon:', error);
+      this.logger.error('Failed to start sync daemon:', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }

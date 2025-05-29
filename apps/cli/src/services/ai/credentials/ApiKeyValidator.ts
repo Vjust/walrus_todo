@@ -74,7 +74,7 @@ export class ApiKeyValidator {
   ): void {
     // Convert enum to string if needed
     const providerStr =
-      typeof provider === 'string' ? provider : provider;
+      typeof provider === 'string' ? provider.toLowerCase() : provider.toString().toLowerCase();
     const rules =
       this.VALIDATION_RULES[providerStr] || this.VALIDATION_RULES.custom;
 
@@ -188,7 +188,7 @@ export class ApiKeyValidator {
   public static getValidationHelp(provider: AIProvider | string): string {
     // Convert enum to string if needed
     const providerStr =
-      typeof provider === 'string' ? provider : provider;
+      typeof provider === 'string' ? provider.toLowerCase() : provider.toString().toLowerCase();
     const rules =
       this.VALIDATION_RULES[providerStr] || this.VALIDATION_RULES.custom;
     return rules.description;
@@ -220,7 +220,7 @@ export class ApiKeyValidator {
     let providerStr: string | undefined;
     if (provider) {
       providerStr =
-        typeof provider === 'string' ? provider : provider;
+        typeof provider === 'string' ? provider.toLowerCase() : provider.toString().toLowerCase();
     }
 
     // Use provider-specific prefix if available

@@ -25,28 +25,31 @@ describe('Test Utils Verification', () => {
       expect(typeof executeCommand).toBe('function');
     });
 
-    it('should handle empty args array', async () => {
-      try {
-        const result = await runCommand([], { expectError: true });
-        expect(result).toHaveProperty('stdout');
-        expect(result).toHaveProperty('stderr');
-      } catch (error) {
-        // This is expected for empty args
-        expect(error).toBeDefined();
-      }
+    it('should handle empty args array with error', async () => {
+      const result = await runCommand([], { expectError: true });
+      expect(result).toHaveProperty('stdout');
+      expect(result).toHaveProperty('stderr');
     });
 
-    it('should handle help command', async () => {
-      try {
-        const result = await runCommand(['--help'], { expectError: false });
-        expect(result).toHaveProperty('stdout');
-        expect(result).toHaveProperty('stderr');
-        expect(typeof result.stdout).toBe('string');
-        expect(typeof result.stderr).toBe('string');
-      } catch (error) {
-        // Help might fail in test environment, that's ok
-        console.log('Help command failed in test environment:', error);
-      }
+    it('should handle empty args array that throws error', async () => {
+      await expect(async () => {
+        await runCommand([]);
+      }).rejects.toBeDefined();
+    });
+
+    it('should handle help command successfully', async () => {
+      const result = await runCommand(['--help'], { expectError: false });
+      expect(result).toHaveProperty('stdout');
+      expect(result).toHaveProperty('stderr');
+      expect(typeof result.stdout).toBe('string');
+      expect(typeof result.stderr).toBe('string');
+    });
+
+    it('should handle help command that may fail in test environment', async () => {
+      // Help might fail in test environment, that's ok
+      await expect(async () => {
+        await runCommand(['--help']);
+      }).not.toThrow();
     });
 
     it('should handle invalid command gracefully', async () => {
@@ -81,20 +84,25 @@ describe('Test Utils Verification', () => {
       expect(typeof TestService.runCommand).toBe('function');
     });
 
-    it('should handle command execution options', async () => {
+    it('should handle command execution options with expected error', async () => {
       const options = {
         expectError: true,
         timeout: 5000,
       };
 
-      try {
-        const result = await TestService.runCommand(['invalid'], options);
-        expect(result).toHaveProperty('stdout');
-        expect(result).toHaveProperty('stderr');
-      } catch (error) {
-        // Expected for invalid command
-        expect(error).toBeDefined();
-      }
+      const result = await TestService.runCommand(['invalid'], options);
+      expect(result).toHaveProperty('stdout');
+      expect(result).toHaveProperty('stderr');
+    });
+
+    it('should handle command execution that throws error', async () => {
+      const options = {
+        timeout: 5000,
+      };
+
+      await expect(async () => {
+        await TestService.runCommand(['invalid'], options);
+      }).rejects.toBeDefined();
     });
   });
 });

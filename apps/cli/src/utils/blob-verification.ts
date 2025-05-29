@@ -40,6 +40,7 @@ interface VerificationOptions {
   verifySmartContract?: boolean;
   requireCertification?: boolean;
   verifyAttributes?: boolean;
+  requireEpochValidation?: boolean;
 }
 
 export class BlobVerificationManager {
@@ -50,6 +51,7 @@ export class BlobVerificationManager {
     verifySmartContract: true,
     requireCertification: true,
     verifyAttributes: true,
+    requireEpochValidation: false,
   };
 
   private signer: TransactionSigner | null = null;
@@ -369,6 +371,7 @@ export class BlobVerificationManager {
       verifySmartContract,
       requireCertification,
       verifyAttributes,
+      requireEpochValidation,
     } = { ...BlobVerificationManager.DEFAULT_OPTIONS, ...options };
 
     let attempts = 0;
@@ -477,6 +480,40 @@ export class BlobVerificationManager {
                   ? ` (registered at epoch ${contractVerification.registeredEpoch})`
                   : '')
             );
+          }
+
+          // Additional epoch validation if required
+          if (requireEpochValidation) {
+            const systemState = await this.suiClient.getLatestSuiSystemState();
+            if (
+              !systemState ||
+              typeof systemState !== 'object' ||
+              !('epoch' in systemState)
+            ) {
+              throw new Error('Epoch validation failed: Failed to get system state or epoch information');
+            }
+            const { epoch } = systemState as { epoch: string };
+            const currentEpoch = BigInt(epoch);
+            
+            // Validate that certification epoch is not in the future
+            if (contractVerification.certificateEpoch !== undefined) {
+              const certificationEpoch = BigInt(contractVerification.certificateEpoch);
+              if (certificationEpoch > currentEpoch) {
+                throw new Error(
+                  `Epoch validation failed: Certificate epoch ${contractVerification.certificateEpoch} is in the future (current: ${epoch})`
+                );
+              }
+            }
+            
+            // Validate that registration epoch is reasonable
+            if (contractVerification.registeredEpoch !== undefined) {
+              const registrationEpoch = BigInt(contractVerification.registeredEpoch);
+              if (registrationEpoch > currentEpoch) {
+                throw new Error(
+                  `Epoch validation failed: Registration epoch ${contractVerification.registeredEpoch} is in the future (current: ${epoch})`
+                );
+              }
+            }
           }
         }
 

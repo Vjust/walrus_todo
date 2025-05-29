@@ -132,9 +132,9 @@ describe('WalrusImageStorage', () => {
     // Setup default mock responses
     mockSuiClient.getBalance.mockResolvedValue({
       coinType: 'WAL',
-      totalBalance: BigInt(1000).toString(),
+      totalBalance: '1000',
       coinObjectCount: 1,
-      lockedBalance: { number: BigInt(0).toString() },
+      lockedBalance: { number: '0' },
       coinObjectId: 'mock-coin-object-id',
     });
 
@@ -180,14 +180,14 @@ describe('WalrusImageStorage', () => {
         blob_id: 'test-blob-id',
         registered_epoch: 100,
         cert_epoch: 150,
-        size: BigInt(1024).toString(),
+        size: '1024',
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
-          storage_size: BigInt(2048).toString(),
-          used_size: BigInt(1024).toString(),
+          storage_size: '2048',
+          used_size: '1024',
         },
         deletable: true,
       },
@@ -198,14 +198,14 @@ describe('WalrusImageStorage', () => {
       blob_id: 'test-blob-id',
       registered_epoch: 100,
       cert_epoch: 150,
-      size: BigInt(1024).toString(),
+      size: '1024',
       encoding_type: { RedStuff: true, $kind: 'RedStuff' },
       storage: {
         id: { id: 'storage1' },
         start_epoch: 100,
         end_epoch: 200,
-        storage_size: BigInt(2048).toString(),
-        used_size: BigInt(1024).toString(),
+        storage_size: '2048',
+        used_size: '1024',
       },
       deletable: true,
     });

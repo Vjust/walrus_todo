@@ -775,49 +775,64 @@ const cryptoMocks = createCryptoMocks();
 
 // ==================== MODULE MOCKS ====================
 
-// Mock @mysten/walrus
-jest.mock('@mysten/walrus', () => ({
-  WalrusClient: jest.fn().mockImplementation(() => walrusMock),
-  createWalrusClient: jest.fn().mockImplementation(() => walrusMock),
-}));
+const { 
+  createModuleMock, 
+  makePropertiesConfigurable 
+} = require('../mocks/mock-factory.js');
 
-// Mock @mysten/sui/client
-jest.mock('@mysten/sui/client', () => ({
-  SuiClient: jest.fn().mockImplementation(() => suiClientMock),
-  getFullnodeUrl: jest.fn(() => 'https://fullnode.testnet.sui.io:443'),
-}));
+// Mock @mysten/walrus with proper property handling
+jest.mock('@mysten/walrus', () => {
+  const mock = createModuleMock('@mysten/walrus', {
+    WalrusClient: () => walrusMock,
+    createWalrusClient: () => walrusMock,
+  });
+  return makePropertiesConfigurable(mock);
+});
+
+// Mock @mysten/sui/client with proper property handling
+jest.mock('@mysten/sui/client', () => {
+  const mock = createModuleMock('@mysten/sui/client', {
+    SuiClient: () => suiClientMock,
+    getFullnodeUrl: () => 'https://fullnode.testnet.sui.io:443',
+  });
+  return makePropertiesConfigurable(mock);
+});
 
 // Mock @mysten/sui/keypairs/ed25519
-jest.mock('@mysten/sui/keypairs/ed25519', () => ({
-  Ed25519Keypair: cryptoMocks.Ed25519Keypair,
-}));
+jest.mock('@mysten/sui/keypairs/ed25519', () => {
+  const mock = createModuleMock('@mysten/sui/keypairs/ed25519', {
+    Ed25519Keypair: cryptoMocks.Ed25519Keypair,
+  });
+  return makePropertiesConfigurable(mock);
+});
 
 // Mock @mysten/sui/keypairs/secp256k1
-jest.mock('@mysten/sui/keypairs/secp256k1', () => ({
-  Secp256k1Keypair: cryptoMocks.Secp256k1Keypair,
-}));
+jest.mock('@mysten/sui/keypairs/secp256k1', () => {
+  const mock = createModuleMock('@mysten/sui/keypairs/secp256k1', {
+    Secp256k1Keypair: cryptoMocks.Secp256k1Keypair,
+  });
+  return makePropertiesConfigurable(mock);
+});
 
-// Mock fs/promises
-jest.mock('fs/promises', () => fileSystemMocks);
+// Mock fs/promises - already handled by moduleNameMapper
 
-// Mock node:fs/promises
-jest.mock('node:fs/promises', () => fileSystemMocks);
-
-// Mock crypto module
-jest.mock('crypto', () => cryptoMocks);
-
-// Mock node:crypto
-jest.mock('node:crypto', () => cryptoMocks);
+// Mock crypto module - already handled by moduleNameMapper
 
 // Mock openai
-jest.mock('openai', () => ({
-  OpenAI: jest.fn().mockImplementation(() => aiServiceMocks.openai),
-}));
+jest.mock('openai', () => {
+  const mock = createModuleMock('openai', {
+    OpenAI: () => aiServiceMocks.openai,
+  });
+  return makePropertiesConfigurable(mock);
+});
 
 // Mock anthropic
-jest.mock('@anthropic-ai/sdk', () => ({
-  Anthropic: jest.fn().mockImplementation(() => aiServiceMocks.anthropic),
-}));
+jest.mock('@anthropic-ai/sdk', () => {
+  const mock = createModuleMock('@anthropic-ai/sdk', {
+    Anthropic: () => aiServiceMocks.anthropic,
+  });
+  return makePropertiesConfigurable(mock);
+});
 
 // ==================== GLOBAL UTILITIES ====================
 

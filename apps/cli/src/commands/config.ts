@@ -265,7 +265,7 @@ export default class ConfigCommand extends BaseCommand {
           .map(([key]) => key);
 
         const setRequiredKeys = requiredKeys.filter(key => {
-          const configEntry = config[key] as { value: unknown };
+          const configEntry = config[key as keyof typeof config] as { value: unknown } | undefined;
           return (
             configEntry?.value !== undefined &&
             configEntry?.value !== null &&
@@ -304,7 +304,7 @@ export default class ConfigCommand extends BaseCommand {
         .map(([key]) => key);
 
       const setRequiredKeys = requiredKeys.filter(key => {
-        const configEntry = config[key] as { value: unknown };
+        const configEntry = config[key as keyof typeof config] as { value: unknown } | undefined;
         return (
           configEntry?.value !== undefined &&
           configEntry?.value !== null &&
@@ -463,7 +463,7 @@ export default class ConfigCommand extends BaseCommand {
     process.env[key] = value;
 
     // Reload configuration
-    envConfig.reload();
+    envConfig.loadFromEnvironment();
 
     this.log(
       chalk.green(`✓ Set ${chalk.bold(key)} = ${this.formatValue(value)}`)
@@ -493,7 +493,7 @@ export default class ConfigCommand extends BaseCommand {
     }
 
     // Reload configuration to apply defaults
-    envConfig.reload();
+    envConfig.loadFromEnvironment();
 
     if (clearedCount > 0) {
       this.log(

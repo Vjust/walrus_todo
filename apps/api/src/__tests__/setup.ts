@@ -61,13 +61,33 @@ global.mockTodoFactory = (overrides = {}) => ({
   ...overrides,
 });
 
-// Extend Jest matchers if needed
+// Global type declarations
+interface TodoOverrides {
+  id?: string;
+  title?: string;
+  content?: string;
+  completed?: boolean;
+  priority?: 'low' | 'medium' | 'high';
+  category?: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  wallet?: string;
+}
+
+interface MockTodo {
+  id: string;
+  title: string;
+  content: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+  category: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  wallet: string;
+}
+
 declare global {
-  namespace jest {
-    interface Matchers<R> {
-      // Add custom matchers here if needed
-    }
-  }
-  
-  var mockTodoFactory: (overrides?: any) => any;
+  const mockTodoFactory: (overrides?: TodoOverrides) => MockTodo;
 }

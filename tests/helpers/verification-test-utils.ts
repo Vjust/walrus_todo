@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import { Todo } from '../../apps/cli/src/types/todo';
 import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
 import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
 import { BlockchainVerifier } from '../../apps/cli/src/services/ai/BlockchainVerifier';
@@ -241,4 +242,51 @@ export async function assertVerificationFailure(
   } catch (error) {
     return error as Error;
   }
+}
+
+/**
+ * Wait for a condition to be true with timeout
+ */
+export async function waitFor(
+  condition: () => boolean | Promise<boolean>,
+  timeout: number = 5000,
+  interval: number = 100
+): Promise<void> {
+  const start = Date.now();
+  
+  while (Date.now() - start < timeout) {
+    const result = await condition();
+    if (result) {
+      return;
+    }
+    await new Promise(resolve => setTimeout(resolve, interval));
+  }
+  
+  throw new Error(`Condition not met within ${timeout}ms`);
+}
+
+/**
+ * Create a promise that resolves after a delay
+ */
+export function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Create a test todo with minimal required fields
+ */
+export function createTestTodo(overrides: Partial<Todo> = {}): Todo {
+  return {
+    id: 'test-todo-id',
+    title: 'Test Todo',
+    description: 'Test description',
+    completed: false,
+    priority: 'medium',
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    private: false,
+    storageLocation: 'local',
+    ...overrides,
+  };
 }

@@ -2,10 +2,6 @@ import { jest } from '@jest/globals';
 import * as fs from 'fs';
 import * as path from 'path';
 import crypto from 'crypto';
-import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
-import { AIService } from '../../apps/cli/src/services/ai/aiService';
-import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
-import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import {
   CredentialType,
   AIPermissionLevel,
@@ -14,8 +10,14 @@ import {
   AIActionType,
   AIPrivacyLevel,
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { CLI_CONFIG } from '../../apps/cli/src/constants';
 import { Todo } from '../../apps/cli/src/types/todo';
+
+// Mock the service modules instead of importing them directly
+const { SecureCredentialManager } = jest.requireMock('../../apps/cli/src/services/ai/SecureCredentialManager');
+const { AIService } = jest.requireMock('../../apps/cli/src/services/ai/aiService');
+const { AIVerificationService } = jest.requireMock('../../apps/cli/src/services/ai/AIVerificationService');
+const { AIProviderFactory } = jest.requireMock('../../apps/cli/src/services/ai/AIProviderFactory');
+const { CLI_CONFIG } = jest.requireMock('../../apps/cli/src/constants');
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');

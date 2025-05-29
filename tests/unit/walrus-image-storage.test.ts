@@ -53,7 +53,8 @@ describe('WalrusImageStorage', () => {
     jest.clearAllMocks();
 
     // Setup mock implementations using complete mock
-    const { WalrusClient: MockWalrusClient } = require('@mysten/walrus');
+    const walrusModule = await import('@mysten/walrus');
+    const MockWalrusClient = walrusModule.WalrusClient;
     mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
 
     mockSuiClient = {
@@ -162,7 +163,7 @@ describe('WalrusImageStorage', () => {
         id: { id: 'test-blob-id' },
         blob_id: 'test-blob-id',
         registered_epoch: 100,
-        certified_epoch: 150,
+        cert_epoch: 150,
         size: BigInt(1024),
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
@@ -251,7 +252,7 @@ describe('WalrusImageStorage', () => {
             id: { id: 'test-blob-id' },
             blob_id: 'test-blob-id',
             registered_epoch: 100,
-            certified_epoch: 150,
+            cert_epoch: 150,
             size: '1024',
             encoding_type: 1,
             storage: {
@@ -259,6 +260,7 @@ describe('WalrusImageStorage', () => {
               start_epoch: 100,
               end_epoch: 200,
               storage_size: '2048',
+              used_size: '100',
             },
             deletable: true,
           },
@@ -281,7 +283,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -289,6 +291,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },
@@ -311,7 +314,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -319,6 +322,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },
@@ -344,7 +348,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -352,6 +356,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },

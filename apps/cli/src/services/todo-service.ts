@@ -128,6 +128,12 @@ export class TodoService {
     }
   }
 
+  async getAllLists(): Promise<string[]> {
+    await this.ensureInitialized();
+    // Use configService to get all available list names
+    return configService.getAvailableListNames?.() || [];
+  }
+
   async createList(name: string, owner: string): Promise<TodoList> {
     // Ensure service is properly initialized
     await this.ensureInitialized();
@@ -205,5 +211,234 @@ export class TodoService {
     }
 
     await configService.saveListData(listName, list);
+  }
+
+  /**
+   * Lists all todos from all available todo lists
+   *
+   * @returns {Promise<Todo[]>} Aggregated array of todos from all lists
+   */
+  async listTodos(): Promise<Todo[]> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    // Get all available lists
+    const lists = await this.getAllLists();
+    const allTodos: Todo[] = [];
+
+    for (const listName of lists) {
+      const list = await this.getList(listName);
+      if (list && list.todos && Array.isArray(list.todos)) {
+        allTodos.push(...list.todos);
+      }
+    }
+
+    return allTodos;
+  }
+
+  /**
+   * Retrieves all available todo list names from the storage directory
+   *
+   * @returns {Promise<string[]>} Array of todo list names without file extensions
+   */
+  async getAllLists(): Promise<string[]> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    // Use configService to get available lists if possible
+    try {
+      // Try to use configService method first
+      if (configService && typeof configService.getAllLists === 'function') {
+        return await configService.getAllLists();
+      }
+    } catch (error) {
+      // Fallback to basic implementation
+    }
+    
+    // Basic fallback - check if default list exists
+    const defaultList = await this.getList('default');
+    return defaultList ? ['default'] : [];
+  }
+
+  /**
+   * Updates an existing todo in a specified list
+   *
+   * @param {string} listName - Name of the list containing the todo
+   * @param {string} todoId - ID of the todo to update
+   * @param {Partial<Todo>} updates - Partial todo data with fields to update
+   * @returns {Promise<Todo>} The updated todo with complete data
+   * @throws {CLIError} If the list or todo doesn't exist
+   */
+  async updateTodo(
+    listName: string,
+    todoId: string,
+    updates: Partial<Todo>
+  ): Promise<Todo> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    const list = await this.getList(listName);
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    }
+
+    const todoIndex = list.todos.findIndex(t => t.id === todoId);
+    if (todoIndex === -1) {
+      throw new CLIError(
+        `Todo "${todoId}" not found in list "${listName}"`,
+        'TODO_NOT_FOUND'
+      );
+    }
+
+    // Create updated todo by merging existing data with updates
+    const todo = list.todos[todoIndex];
+    const updatedTodo: Todo = {
+      ...todo,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Update in list and persist changes
+    list.todos[todoIndex] = updatedTodo;
+    list.updatedAt = new Date().toISOString();
+    await configService.saveListData(listName, list);
+    return updatedTodo;
+  }
+
+  /**
+   * Gets a todo item by its ID from a specified list
+   *
+   * @param {string} todoId - ID of the todo to retrieve
+   * @param {string} [listName='default'] - Name of the list containing the todo
+   * @returns {Promise<Todo | null>} The todo if found, null otherwise
+   */
+  async getTodo(
+    todoId: string,
+    listName: string = 'default'
+  ): Promise<Todo | null> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    const list = await this.getList(listName);
+    if (!list) return null;
+    return list.todos.find(t => t.id === todoId) || null;
+  }
+
+  /**
+   * Deletes a todo from a specified list
+   *
+   * @param {string} listName - Name of the list containing the todo
+   * @param {string} todoId - ID of the todo to delete
+   * @returns {Promise<void>}
+   * @throws {CLIError} If the list or todo doesn't exist
+   */
+  async deleteTodo(listName: string, todoId: string): Promise<void> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    const list = await this.getList(listName);
+    if (!list) {
+      throw new CLIError(`List "${listName}" not found`, 'LIST_NOT_FOUND');
+    }
+
+    const todoIndex = list.todos.findIndex(t => t.id === todoId);
+    if (todoIndex === -1) {
+      throw new CLIError(
+        `Todo "${todoId}" not found in list "${listName}"`,
+        'TODO_NOT_FOUND'
+      );
+    }
+
+    // Remove todo from list and persist changes
+    list.todos.splice(todoIndex, 1);
+    list.updatedAt = new Date().toISOString();
+    await configService.saveListData(listName, list);
+  }
+
+  /**
+   * Saves a todo list to persistent storage
+   *
+   * @param {string} listName - Name of the list to save
+   * @param {TodoList} list - Todo list data to save
+   * @returns {Promise<void>}
+   * @throws {CLIError} If saving fails due to file system errors
+   */
+  async saveList(listName: string, list: TodoList): Promise<void> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    try {
+      await configService.saveListData(listName, list);
+    } catch (err) {
+      throw new CLIError(
+        `Failed to save list "${listName}": ${err instanceof Error ? err.message : 'Unknown error'}`,
+        'SAVE_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Finds a todo by ID or title across all lists
+   *
+   * @param {string} idOrTitle - ID or title of the todo to find
+   * @returns {Promise<{listName: string, todo: Todo} | null>} The found todo with its list name, or null if not found
+   */
+  async findTodoByIdOrTitleAcrossLists(
+    idOrTitle: string
+  ): Promise<{ listName: string; todo: Todo } | null> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    const listNames = await this.getAllLists();
+
+    for (const listName of listNames) {
+      const list = await this.getList(listName);
+      if (!list) continue;
+      
+      // Try to find by ID first, then by title
+      const todo =
+        list.todos.find(t => t.id === idOrTitle) ||
+        list.todos.find(t => t.title.toLowerCase() === idOrTitle.toLowerCase());
+
+      if (todo) {
+        return { listName, todo };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Marks a todo as completed by its ID
+   *
+   * @param {string} todoId - ID of the todo to complete
+   * @returns {Promise<Todo>} The completed todo
+   * @throws {CLIError} If the todo doesn't exist
+   */
+  async completeTodo(todoId: string): Promise<Todo> {
+    // Ensure service is properly initialized
+    await this.ensureInitialized();
+    
+    // Find the todo across all lists
+    const foundTodo = await this.findTodoByIdOrTitleAcrossLists(todoId);
+    if (!foundTodo) {
+      throw new CLIError(
+        `Todo with ID "${todoId}" not found`,
+        'TODO_NOT_FOUND'
+      );
+    }
+
+    const { listName, todo } = foundTodo;
+
+    // Update the todo to completed status
+    const updatedTodo = {
+      ...todo,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.updateTodo(listName, todoId, updatedTodo);
+    return updatedTodo;
   }
 }

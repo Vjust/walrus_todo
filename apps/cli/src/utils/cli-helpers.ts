@@ -173,7 +173,7 @@ export interface RetryOptions {
   initialDelay?: number;
   maxDelay?: number;
   backoffFactor?: number;
-  onRetry?: (attempt: number, error: Error) => void;
+  onRetry?: (error: Error, attempt: number, delay: number) => void;
 }
 
 export class RetryManager {
@@ -204,7 +204,7 @@ export class RetryManager {
           );
 
           if (onRetry) {
-            onRetry(attempt, lastError);
+            onRetry(lastError, attempt, delay);
           }
 
           await this.delay(delay);

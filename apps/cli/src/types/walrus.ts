@@ -146,6 +146,7 @@ export interface WriteBlobOptions {
   attributes?: Record<string, string>;
   transaction?: any; // TransactionBlock or Transaction type to be defined
   signal?: AbortSignal;
+  owner?: string;
 }
 
 export interface ReadBlobOptions {

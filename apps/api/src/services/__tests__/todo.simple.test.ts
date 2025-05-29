@@ -206,8 +206,8 @@ describe('Todo Service Logic', () => {
       
       expect(page1).toHaveLength(3);
       expect(page2).toHaveLength(3);
-      expect(page1[0].id).toBe('todo-0');
-      expect(page2[0].id).toBe('todo-3');
+      expect(page1[0]?.id).toBe('todo-0');
+      expect(page2[0]?.id).toBe('todo-3');
     });
 
     it('should handle partial last page', () => {
@@ -218,7 +218,7 @@ describe('Todo Service Logic', () => {
 
       const lastPage = paginate(mockTodos, 4, 3); // Page 4 with limit 3 should have 1 item
       expect(lastPage).toHaveLength(1);
-      expect(lastPage[0].id).toBe('todo-9');
+      expect(lastPage[0]?.id).toBe('todo-9');
     });
   });
 

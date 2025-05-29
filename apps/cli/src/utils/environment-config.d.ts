@@ -24,6 +24,9 @@ export interface EnvVariable<T> {
   deprecated_message?: string;
 }
 interface EnvironmentConfig {
+  // Index signature for type-safe string access
+  [key: string]: EnvVariable<any>;
+  
   NODE_ENV: EnvVariable<Environment>;
   LOG_LEVEL: EnvVariable<string>;
   NETWORK: EnvVariable<string>;

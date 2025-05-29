@@ -4,8 +4,9 @@
  */
 
 import { test, expect, Page, BrowserContext } from '@playwright/test';
+import type { Expect } from '@playwright/test';
 import { ChildProcess, spawn } from 'child_process';
-import path from 'path';
+import * as path from 'path';
 
 // Helper to run CLI commands
 class CLIHelper {
@@ -116,14 +117,14 @@ class MockWallet {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const digest = `mock_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const status = Math.random() > 0.1 ? 'success' : 'failure'; // 90% success rate
+    const status: 'success' | 'failed' = Math.random() > 0.1 ? 'success' : 'failed'; // 90% success rate
 
     this.transactions.push({ digest, status });
 
     return {
       digest,
       effects: {
-        status: { status },
+        status: { status: status === 'failed' ? 'failure' : status },
       },
     };
   }
@@ -245,17 +246,18 @@ test.describe('Frontend NFT Integration', () => {
 
     // Mock wallet API for browser
     await page.addInitScript(() => {
-      // @ts-ignore
+      // @ts-ignore - Wallet API not typed in test environment
       window.suiWallet = {
         connected: false,
         address: '0x1234567890123456789012345678901234567890',
         connect: async () => {
-          // @ts-ignore
+          // @ts-ignore - Wallet API not typed in test environment
           window.suiWallet.connected = true;
+          // @ts-ignore - Wallet API not typed in test environment
           return { address: window.suiWallet.address };
         },
         disconnect: async () => {
-          // @ts-ignore
+          // @ts-ignore - Wallet API not typed in test environment
           window.suiWallet.connected = false;
         },
         signAndExecuteTransaction: async (transaction: any) => {
@@ -277,22 +279,22 @@ test.describe('Frontend NFT Integration', () => {
   test('Frontend: Wallet connection flow', async () => {
     // Look for wallet connect button
     const connectButton = page.locator('button', { hasText: /connect/i });
-    await expect(connectButton).toBeVisible();
+    await (expect as Expect)(connectButton).toBeVisible();
 
     // Click connect wallet
     await connectButton.click();
 
     // Wait for connection status update
-    await expect(page.locator('text=Connected')).toBeVisible({ timeout: 5000 });
+    await (expect as Expect)(page.locator('text=Connected')).toBeVisible({ timeout: 5000 });
 
     // Verify wallet address is displayed
-    await expect(page.locator('text=0x1234')).toBeVisible();
+    await (expect as Expect)(page.locator('text=0x1234')).toBeVisible();
   });
 
   test('Frontend: Create todo and convert to NFT', async () => {
     // Connect wallet first
     await page.locator('button', { hasText: /connect/i }).click();
-    await expect(page.locator('text=Connected')).toBeVisible();
+    await (expect as Expect)(page.locator('text=Connected')).toBeVisible();
 
     // Navigate to todo creation form
     const createTodoButton = page.locator('button', {
@@ -318,7 +320,7 @@ test.describe('Frontend NFT Integration', () => {
     );
 
     // Wait for todo to appear in list
-    await expect(page.locator('text=Frontend NFT Todo')).toBeVisible({
+    await (expect as Expect)(page.locator('text=Frontend NFT Todo')).toBeVisible({
       timeout: 10000,
     });
 
@@ -328,7 +330,7 @@ test.describe('Frontend NFT Integration', () => {
       await nftButton.click();
 
       // Wait for transaction to complete
-      await expect(page.locator('text=NFT created successfully')).toBeVisible({
+      await (expect as Expect)(page.locator('text=NFT created successfully')).toBeVisible({
         timeout: 15000,
       });
     }
@@ -337,7 +339,7 @@ test.describe('Frontend NFT Integration', () => {
   test('Frontend: Transaction history and status', async () => {
     // Connect wallet
     await page.locator('button', { hasText: /connect/i }).click();
-    await expect(page.locator('text=Connected')).toBeVisible();
+    await (expect as Expect)(page.locator('text=Connected')).toBeVisible();
 
     // Navigate to transaction history if available
     const historyButton = page.locator('button', {
@@ -351,7 +353,7 @@ test.describe('Frontend NFT Integration', () => {
         '[data-testid="transaction-list"], .transaction-history'
       );
       if (await transactionList.isVisible()) {
-        await expect(transactionList).toBeVisible();
+        await (expect as Expect)(transactionList).toBeVisible();
       }
     }
   });
@@ -359,7 +361,7 @@ test.describe('Frontend NFT Integration', () => {
   test('Frontend: Error handling and user feedback', async () => {
     // Test wallet connection error
     await page.evaluate(() => {
-      // @ts-ignore
+      // @ts-ignore - Wallet API not typed in test environment
       window.suiWallet.connect = async () => {
         throw new Error('User rejected connection');
       };
@@ -368,7 +370,7 @@ test.describe('Frontend NFT Integration', () => {
     await page.locator('button', { hasText: /connect/i }).click();
 
     // Check for error message
-    await expect(page.locator('text=connection failed')).toBeVisible({
+    await (expect as Expect)(page.locator('text=connection failed')).toBeVisible({
       timeout: 5000,
     });
   });
@@ -376,7 +378,7 @@ test.describe('Frontend NFT Integration', () => {
   test('Frontend: NFT completion workflow', async () => {
     // Connect wallet and create todo
     await page.locator('button', { hasText: /connect/i }).click();
-    await expect(page.locator('text=Connected')).toBeVisible();
+    await (expect as Expect)(page.locator('text=Connected')).toBeVisible();
 
     // Create a todo (assuming form exists)
     const todoTitle = 'Completable Frontend Todo';
@@ -392,7 +394,7 @@ test.describe('Frontend NFT Integration', () => {
       await page.click(
         'button[type="submit"], button:has-text("Create"), button:has-text("Add")'
       );
-      await expect(page.locator(`text=${todoTitle}`)).toBeVisible();
+      await (expect as Expect)(page.locator(`text=${todoTitle}`)).toBeVisible();
 
       // Complete the todo
       const completeButton = page
@@ -402,7 +404,7 @@ test.describe('Frontend NFT Integration', () => {
         await completeButton.click();
 
         // Verify completion
-        await expect(
+        await (expect as Expect)(
           page.locator('.completed, [data-completed="true"]')
         ).toBeVisible({ timeout: 10000 });
       }
@@ -488,7 +490,7 @@ test.describe('Error Scenarios and Edge Cases', () => {
   test.beforeEach(async ({ browser }) => {
     cli = new CLIHelper();
 
-    const context = await browser.newContext();
+    const context: BrowserContext = await browser.newContext();
     page = await context.newPage();
     await page.goto('/');
   });
@@ -536,17 +538,17 @@ test.describe('Error Scenarios and Edge Cases', () => {
     // Mock sudden wallet disconnection
     await page.addInitScript(() => {
       let connectionLost = false;
-      // @ts-ignore
+      // @ts-ignore - Wallet API not typed in test environment
       const originalSign = window.suiWallet?.signAndExecuteTransaction;
-      // @ts-ignore
+      // @ts-ignore - Wallet API not typed in test environment
       if (window.suiWallet) {
-        // @ts-ignore
+        // @ts-ignore - Wallet API not typed in test environment
         window.suiWallet.signAndExecuteTransaction = async (
           transaction: any
         ) => {
           if (!connectionLost) {
             connectionLost = true;
-            // @ts-ignore
+            // @ts-ignore - Wallet API not typed in test environment
             window.suiWallet.connected = false;
             throw new Error('Wallet disconnected');
           }
@@ -564,7 +566,7 @@ test.describe('Error Scenarios and Edge Cases', () => {
         hasText: /error/i,
       });
       if (await errorMessage.isVisible({ timeout: 5000 })) {
-        await expect(errorMessage).toBeVisible();
+        await (expect as Expect)(errorMessage).toBeVisible();
       }
     }
   });

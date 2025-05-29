@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
-import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
-import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import { Todo } from '../../apps/cli/src/types/todo';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import { initializePermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
 
 // Mock dependencies

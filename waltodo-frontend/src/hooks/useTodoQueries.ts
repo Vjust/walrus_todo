@@ -27,7 +27,7 @@ export function useTodo(id: string) {
 export function useTodoLists() {
   return useQuery({
     queryKey: queryKeys.todos.lists(),
-    queryFn: () => apiClient.getLists(),
+    queryFn: () => apiClient.getAllLists(),
     staleTime: 60000, // Lists change less frequently
   });
 }

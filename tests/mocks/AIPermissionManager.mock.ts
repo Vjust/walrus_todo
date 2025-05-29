@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+const { jest } = require('@jest/globals');
 
 /**
  * Mock implementation of AIPermissionManager for testing

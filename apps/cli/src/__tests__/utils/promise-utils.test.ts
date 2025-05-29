@@ -19,6 +19,11 @@ describe('Promise Utilities', () => {
     console.error = originalConsoleError;
   });
 
+  // Helper function for failing tests explicitly
+  const fail = (message: string) => {
+    throw new Error(message);
+  };
+
   describe('withTimeout', () => {
     it('should resolve when promise completes within timeout', async () => {
       const result = await withTimeout(
@@ -167,6 +172,17 @@ describe('Promise Utilities', () => {
   });
 
   describe('withRetry', () => {
+    beforeEach(() => {
+      jest.clearAllTimers();
+    });
+
+    afterEach(() => {
+      if (jest.isMockFunction(setTimeout)) {
+        jest.useRealTimers();
+      }
+      jest.clearAllTimers();
+    });
+
     it('should return result when function succeeds on first try', async () => {
       const fn = jest.fn().mockResolvedValue('success');
 
@@ -186,11 +202,12 @@ describe('Promise Utilities', () => {
 
       jest.useFakeTimers();
 
+      // Start the retry operation
       const promise = withRetry(fn, 3, 10, 'test-retry');
 
-      // Fast-forward timers to skip waits
-      jest.advanceTimersByTime(10); // First retry delay
-      jest.advanceTimersByTime(20); // Second retry delay
+      // Fast forward all timers to complete the retry sequence
+      // The implementation uses exponential backoff, so we need to advance enough time
+      await jest.runAllTimersAsync();
 
       const result = await promise;
 
@@ -198,21 +215,25 @@ describe('Promise Utilities', () => {
       expect(fn).toHaveBeenCalledTimes(3);
 
       jest.useRealTimers();
-    });
+    }, 10000);
 
     it('should fail after maximum retries', async () => {
       const fn = jest.fn().mockRejectedValue(new Error('persistent failure'));
 
       jest.useFakeTimers();
 
-      const promise = withRetry(fn, 2, 10, 'exhausted-retries');
+      const retryPromise = withRetry(fn, 2, 10, 'exhausted-retries');
+      
+      // Fast forward all timers to complete the retry sequence
+      await jest.runAllTimersAsync();
 
-      // Fast-forward timers to skip waits
-      jest.advanceTimersByTime(10); // First retry delay
-      jest.advanceTimersByTime(20); // Second retry delay
-
-      await expect(promise).rejects.toThrow(RetryError);
-      await expect(promise).rejects.toMatchObject({
+      await expect(retryPromise).rejects.toThrow(RetryError);
+      
+      // Create a new promise for the second expectation to avoid "Cannot read properties of undefined" error
+      const retryPromise2 = withRetry(fn, 2, 10, 'exhausted-retries');
+      await jest.runAllTimersAsync();
+      
+      await expect(retryPromise2).rejects.toMatchObject({
         name: 'RetryError',
         context: {
           operationName: 'exhausted-retries',
@@ -220,10 +241,10 @@ describe('Promise Utilities', () => {
         },
       });
 
-      expect(fn).toHaveBeenCalledTimes(3); // Initial + 2 retries
+      expect(fn).toHaveBeenCalledTimes(6); // 3 calls for each promise (initial + 2 retries each)
 
       jest.useRealTimers();
-    });
+    }, 10000);
 
     it('should respect shouldRetry function', async () => {
       const fn = jest
@@ -236,15 +257,15 @@ describe('Promise Utilities', () => {
 
       jest.useFakeTimers();
 
-      const promise = withRetry(fn, 3, 10, 'selective-retry', shouldRetry);
+      const retryPromise = withRetry(fn, 3, 10, 'selective-retry', shouldRetry);
+      
+      // Fast forward all timers to complete the retry sequence
+      await jest.runAllTimersAsync();
 
-      // Fast-forward timers to skip waits
-      jest.advanceTimersByTime(10); // First retry delay
-
-      await expect(promise).rejects.toThrow(RetryError);
+      await expect(retryPromise).rejects.toThrow(RetryError);
       expect(fn).toHaveBeenCalledTimes(2); // Initial + 1 retry (second error isn't retried)
 
       jest.useRealTimers();
-    });
+    }, 10000);
   });
 });

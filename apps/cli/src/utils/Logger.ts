@@ -248,9 +248,11 @@ export class Logger {
 
   public error(
     message: string,
-    error?: Error,
+    error?: Error | unknown,
     context?: Record<string, unknown>
   ): void {
-    this.log(LogLevel.ERROR, message, context, error);
+    // Convert unknown error to Error if needed
+    const errorObj = error instanceof Error ? error : (error ? new Error(String(error)) : undefined);
+    this.log(LogLevel.ERROR, message, context, errorObj);
   }
 }

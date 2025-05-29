@@ -294,18 +294,17 @@ export default class StorageCommand extends BaseCommand {
       );
 
       // Connect to walrus
-      if (walrusStorage['storageReuseAnalyzer'] === null) {
+      const storage = walrusStorage as any;
+      if (storage.storageReuseAnalyzer === null) {
         this.log('Initializing storage analyzer...');
         // Initialize the managers via private method
-        (
-          walrusStorage as { initializeManagers: () => void }
-        ).initializeManagers();
+        if (typeof storage.initializeManagers === 'function') {
+          storage.initializeManagers();
+        }
       }
 
       // Get storage analyzer instance
-      const analyzer = (
-        walrusStorage as { storageReuseAnalyzer: StorageReuseAnalyzer }
-      ).storageReuseAnalyzer;
+      const analyzer = storage.storageReuseAnalyzer as StorageReuseAnalyzer;
 
       // Analyze for different storage sizes
       const smallTodoSize = 1024; // 1KB

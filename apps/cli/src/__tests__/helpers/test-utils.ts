@@ -30,17 +30,8 @@ export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => {
 };
 
 export type MockOf<T> = {
-  [P in keyof T]: T[P] extends (...args: unknown[]) => unknown
-    ? jest.Mock<
-        ReturnType<
-          T[P] extends (...args: unknown[]) => infer R ? () => R : never
-        >,
-        Parameters<
-          T[P] extends (...args: infer P) => unknown
-            ? (...args: P) => unknown
-            : never
-        >
-      >
+  [P in keyof T]: T[P] extends (...args: infer Args) => infer Return
+    ? jest.Mock<Return, Args>
     : T[P];
 };
 
@@ -51,7 +42,13 @@ export interface CommandResult {
   error?: Error;
 }
 
-// Functions are already exported below, so no need for this line
+// Export interface for command results
+export interface CommandExecutionOptions {
+  env?: NodeJS.ProcessEnv;
+  mockStdout?: boolean;
+  mockStderr?: boolean;
+  timeout?: number;
+}
 
 /**
  * Execute a CLI command directly from the src/index.ts implementation

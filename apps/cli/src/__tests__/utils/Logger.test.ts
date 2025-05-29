@@ -1,11 +1,11 @@
 import { Logger, LogLevel } from '../../utils/Logger';
 import {
-  WalrusError,
+  BaseError as WalrusError,
   StorageError,
   BlockchainError,
   ValidationError,
   NetworkError,
-} from '../../types/errors';
+} from '../../types/errors/consolidated';
 
 // Define the LogEntry interface based on Logger implementation
 interface LogEntry {
@@ -232,8 +232,7 @@ describe('Logger', () => {
     });
 
     it('should handle ValidationError', () => {
-      const error = new ValidationError('Invalid blob size', {
-        field: 'size',
+      const error = ValidationError.forField('Invalid blob size', 'size', {
         value: -1,
         constraint: 'positive',
       });

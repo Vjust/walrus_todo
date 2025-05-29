@@ -2,12 +2,14 @@ import { jest } from '@jest/globals';
 import * as fs from 'fs';
 // import path from 'path';
 import crypto from 'crypto';
-import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import {
   CredentialType,
   AIPermissionLevel,
 } from '../../apps/cli/src/types/adapters/AICredentialAdapter';
 // import { _CLI_CONFIG } from '../../apps/cli/src/constants';
+
+// Mock the service modules instead of importing them directly
+const { SecureCredentialManager } = jest.requireMock('../../apps/cli/src/services/ai/SecureCredentialManager');
 
 // Mock Logger module
 jest.mock('../../apps/cli/src/utils/Logger', () => ({

@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+const { jest } = require('@jest/globals');
 import * as fs from 'fs';
 import * as path from 'path';
 

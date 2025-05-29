@@ -23,13 +23,13 @@ export const STORAGE_CONFIG = {
   TEMPORARY_DIR: getEnv('TEMPORARY_STORAGE'),
 } as const;
 
-export const NETWORK_URLS = {
+export const NETWORK_URLS: Record<string, string> = {
   mainnet: 'https://fullnode.mainnet.sui.io:443',
   testnet: 'https://fullnode.testnet.sui.io:443',
   devnet: 'https://fullnode.devnet.sui.io:443',
   local: 'http://127.0.0.1:9000',
   localnet: 'http://127.0.0.1:9000',
-} as const;
+};
 
 export const WALRUS_CONFIG = {
   DEFAULT_IMAGE: 'QmeYxwj4CwYbQGAZqGLENhDmxGGWnYwKkBaZvxDFAEGPVR',
@@ -61,7 +61,7 @@ export const AI_CONFIG = {
     xai: ['grok-beta', 'grok-1'],
     openai: ['gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o'],
     anthropic: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-  },
+  } as Record<string, readonly string[]>,
   CREDENTIAL_ENCRYPTION: {
     ALGORITHM: 'aes-256-gcm' as const,
     KEY_DERIVATION: 'pbkdf2' as const,

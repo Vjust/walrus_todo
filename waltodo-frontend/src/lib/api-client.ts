@@ -92,7 +92,7 @@ export class TodoAPIClient {
   }
 
   // List operations
-  async getLists(): Promise<string[]> {
+  async getAllLists(): Promise<string[]> {
     return this.request<string[]>('/lists');
   }
 

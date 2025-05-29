@@ -1,4 +1,5 @@
 import type { WalrusClientExt } from '../../types/client';
+import type { BlobInfo, BlobObject, BlobMetadataShape } from '../../types/walrus';
 import type {
   StandardBlobObject,
   StandardBlobInfo,
@@ -23,12 +24,12 @@ export interface MockWalrusClient extends WalrusClientExt {
   getStorageUsage: jest.Mock<Promise<{ used: string; total: string }>, []>;
   readBlob: jest.Mock<Promise<Uint8Array>, [any]>;
   writeBlob: jest.Mock<
-    Promise<{ blobId: string; blobObject: StandardBlobObject }>,
+    Promise<{ blobId: string; blobObject: BlobObject }>,
     [any]
   >;
-  getBlobInfo: jest.Mock<Promise<StandardBlobInfo>, [string]>;
-  getBlobObject: jest.Mock<Promise<StandardBlobObject>, [any]>;
-  getBlobMetadata: jest.Mock<Promise<StandardBlobMetadata>, [any]>;
+  getBlobInfo: jest.Mock<Promise<BlobInfo>, [string]>;
+  getBlobObject: jest.Mock<Promise<BlobObject>, [any]>;
+  getBlobMetadata: jest.Mock<Promise<BlobMetadataShape>, [any]>;
   verifyPoA: jest.Mock<Promise<boolean>, [any]>;
   getBlobSize: jest.Mock<Promise<number>, [string]>;
   storageCost: jest.Mock<
@@ -46,7 +47,7 @@ export interface MockWalrusClient extends WalrusClientExt {
   >;
   deleteBlob: jest.Mock<(tx: any) => Promise<{ digest: string }>, [any]>;
   executeRegisterBlobTransaction: jest.Mock<
-    Promise<{ blob: StandardBlobObject; digest: string }>,
+    Promise<{ blob: BlobObject; digest: string }>,
     [any]
   >;
   getStorageConfirmationFromNode: jest.Mock<Promise<any>, [any]>;
@@ -59,7 +60,7 @@ export interface MockWalrusClient extends WalrusClientExt {
   reset: jest.Mock<void, []>;
   connect: jest.Mock<Promise<void>, []>;
   experimental?: {
-    getBlobData: jest.Mock<Promise<Uint8Array | StandardBlobObject>, []>;
+    getBlobData: jest.Mock<Promise<Uint8Array | BlobObject>, []>;
   };
 }
 
@@ -97,6 +98,70 @@ export function createWalrusClientMock(): MockWalrusClient {
 }
 
 /**
+ * Convert StandardBlobInfo to BlobInfo for interface compatibility
+ */
+function convertToCompatibleBlobInfo(standardBlobInfo: StandardBlobInfo): BlobInfo {
+  return {
+    blob_id: standardBlobInfo.blob_id,
+    id: standardBlobInfo.id,
+    registered_epoch: standardBlobInfo.registered_epoch,
+    certified_epoch: standardBlobInfo.certified_epoch,
+    storage_cost: standardBlobInfo.storage_cost,
+    storage_rebate: standardBlobInfo.storage_rebate,
+    size: standardBlobInfo.size,
+    encoding_type: standardBlobInfo.encoding_type,
+    deletable: standardBlobInfo.deletable,
+    cert_epoch: standardBlobInfo.cert_epoch,
+    storage: standardBlobInfo.storage,
+    metadata: convertToCompatibleBlobMetadata(standardBlobInfo.metadata),
+    provider_count: standardBlobInfo.provider_count,
+    slivers: standardBlobInfo.slivers,
+    attributes: standardBlobInfo.attributes,
+    checksum: standardBlobInfo.checksum,
+  };
+}
+
+/**
+ * Convert StandardBlobObject to BlobObject for interface compatibility
+ */
+function convertToCompatibleBlobObject(standardBlobObject: StandardBlobObject): BlobObject {
+  return {
+    blob_id: standardBlobObject.blob_id,
+    id: standardBlobObject.id,
+    registered_epoch: standardBlobObject.registered_epoch,
+    storage_cost: standardBlobObject.storage_cost,
+    storage_rebate: standardBlobObject.storage_rebate,
+    size: standardBlobObject.size,
+    encoding_type: standardBlobObject.encoding_type,
+    deletable: standardBlobObject.deletable,
+    cert_epoch: standardBlobObject.cert_epoch,
+    storage: standardBlobObject.storage,
+    metadata: convertToCompatibleBlobMetadata(standardBlobObject.metadata),
+    provider_count: standardBlobObject.provider_count,
+    slivers: standardBlobObject.slivers,
+    attributes: standardBlobObject.attributes,
+    checksum: standardBlobObject.checksum,
+  };
+}
+
+/**
+ * Convert StandardBlobMetadata to BlobMetadataShape for interface compatibility
+ */
+function convertToCompatibleBlobMetadata(standardMetadata?: StandardBlobMetadata): BlobMetadataShape | undefined {
+  if (!standardMetadata) return undefined;
+  
+  return {
+    blob_id: standardMetadata.blob_id,
+    metadata: {
+      V1: standardMetadata.V1,
+      $kind: 'V1' as const,
+    },
+    V1: standardMetadata.V1,
+    $kind: 'V1' as const,
+  };
+}
+
+/**
  * Sets up default mock implementations for a WalrusClient mock
  */
 export function setupDefaultWalrusClientMocks(
@@ -119,19 +184,19 @@ export function setupDefaultWalrusClientMocks(
 
   mockClient.writeBlob.mockResolvedValue({
     blobId: 'mock-blob-test-todo-id',
-    blobObject: createMockBlobObject('mock-blob-test-todo-id'),
+    blobObject: convertToCompatibleBlobObject(createMockBlobObject('mock-blob-test-todo-id')),
   });
 
   mockClient.getBlobInfo.mockResolvedValue(
-    createMockBlobInfo('mock-blob-test-todo-id')
+    convertToCompatibleBlobInfo(createMockBlobInfo('mock-blob-test-todo-id'))
   );
 
   mockClient.getBlobObject.mockResolvedValue(
-    createMockBlobObject('mock-blob-test-todo-id')
+    convertToCompatibleBlobObject(createMockBlobObject('mock-blob-test-todo-id'))
   );
 
   mockClient.getBlobMetadata.mockResolvedValue(
-    createMockBlobMetadata(1024)
+    convertToCompatibleBlobMetadata(createMockBlobMetadata(1024))!
   );
 
   mockClient.verifyPoA.mockResolvedValue(true);
@@ -170,7 +235,7 @@ export function setupDefaultWalrusClientMocks(
   );
 
   mockClient.executeRegisterBlobTransaction.mockResolvedValue({
-    blob: createMockBlobObject('mock-blob-id'),
+    blob: convertToCompatibleBlobObject(createMockBlobObject('mock-blob-id')),
     digest: 'mock-register-digest',
   });
 
