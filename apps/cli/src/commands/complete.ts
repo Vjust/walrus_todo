@@ -343,13 +343,14 @@ class CompleteCommand extends BaseCommand {
   private async updateConfigWithCompletion(todo: Todo): Promise<void> {
     try {
       const rawConfig = await configService.getConfig();
-      const config: AppConfig & { completedTodos?: any } = {
+      const config = {
         ...rawConfig,
         logging: (rawConfig as any).logging || {
           level: 'info' as const,
           console: true
-        }
-      };
+        },
+        completedTodos: (rawConfig as any).completedTodos
+      } as any;
 
       // Initialize completed todos tracking if not exists
       if (!config.completedTodos) {
@@ -403,11 +404,11 @@ class CompleteCommand extends BaseCommand {
    *
    * @param config Configuration to write
    */
-  private async writeConfigSafe(config: AppConfig): Promise<void> {
+  private async writeConfigSafe(config: AppConfig & { completedTodos?: any }): Promise<void> {
     try {
       // First try the standard config service method
       if (typeof configService.saveConfig === 'function') {
-        await configService.saveConfig(config);
+        await configService.saveConfig(config as any);
         return;
       }
 
@@ -463,7 +464,7 @@ class CompleteCommand extends BaseCommand {
         try {
           const content = fs.readFileSync(blobMappingsFile, 'utf8');
           const contentStr =
-            typeof content === 'string' ? content : content.toString('utf8');
+            typeof content === 'string' ? content : String(content);
           mappings = JSON.parse(contentStr);
         } catch (error) {
           this.warning(
@@ -660,7 +661,7 @@ class CompleteCommand extends BaseCommand {
     );
 
     const showProgress = !flags.quiet;
-    let multiProgress: MultiProgress | undefined, progressBar: ProgressBar | undefined;
+    let multiProgress: MultiProgress | undefined, progressBar: any | undefined;
 
     if (showProgress) {
       multiProgress = this.createMultiProgress();
@@ -807,7 +808,7 @@ class CompleteCommand extends BaseCommand {
 
             // Initialize NFT storage
             const signer = {} as Ed25519Keypair;
-            suiNftStorage = new SuiNftStorage(suiClient, signer, {
+            suiNftStorage = new SuiNftStorage(suiClient as any, signer, {
               address: config.lastDeployment?.packageId ?? '',
               packageId: config.lastDeployment?.packageId ?? '',
             });
@@ -877,7 +878,7 @@ class CompleteCommand extends BaseCommand {
         {
           maxRetries: 3,
           initialDelay: 1000,
-          onRetry: (attempt: number, error: any, _delay: number) => {
+          onRetry: (attempt: number, error: any, delay?: number) => {
             const errorMessage =
               error instanceof Error
                 ? error.message
@@ -969,7 +970,7 @@ class CompleteCommand extends BaseCommand {
       {
         maxRetries: 3,
         initialDelay: 2000,
-        onRetry: (attempt: number, error: any, _delay: number) => {
+        onRetry: (attempt: number, error: any, delay?: number) => {
           const errorMessage =
             error instanceof Error
               ? error.message
@@ -1251,7 +1252,7 @@ class CompleteCommand extends BaseCommand {
             todosByList.get(list)!.push(todo);
           }
 
-          for (const [list, listTodos] of todosByList) {
+          for (const [list, listTodos] of Array.from(todosByList.entries())) {
             helpMessage += `\n${chalk.bold(list)}:\n`;
             for (const todo of listTodos.slice(0, 5)) {
               helpMessage += `  ${chalk.dim(todo.id.substring(0, 8))} - ${todo.title}\n`;

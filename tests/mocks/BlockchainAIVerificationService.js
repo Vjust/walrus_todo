@@ -1,5 +1,3 @@
-const { jest } = require('@jest/globals');
-
 // Mock BlockchainAIVerificationService
 const mockBlockchainAIVerificationService = {
   verifyExternalProof: jest.fn().mockResolvedValue(true),

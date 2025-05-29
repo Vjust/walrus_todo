@@ -13,7 +13,7 @@ import { SuiAIVerifierAdapter } from '../services/ai/adapters/SuiAIVerifierAdapt
 import { AIPrivacyLevel } from '../types/adapters/AIVerifierAdapter';
 import { AIProvider } from '../types/adapters/AIModelAdapter';
 import chalk = require('chalk');
-import { TodoService } from '../services/todoService';
+import { todoService } from '../services';
 import { EnhancedAIService } from '../services/ai/EnhancedAIService';
 import { createCache } from '../utils/performance-cache';
 import crypto from 'crypto';
@@ -656,7 +656,7 @@ export default class Suggest extends BaseCommand {
    */
   private async promptToAddSuggestions(
     suggestions: import('../services/ai/TaskSuggestionService').SuggestedTask[],
-    todoService: TodoService
+    todoService: typeof todoService
   ) {
     // Ask which suggestions to add
     const selectedSuggestions = await checkbox({
@@ -943,5 +943,12 @@ export default class Suggest extends BaseCommand {
     return (
       statusColors[status as keyof typeof statusColors] || chalk.white(status)
     );
+  }
+
+  /**
+   * Get the TodoService instance
+   */
+  private async getTodoService() {
+    return todoService;
   }
 }

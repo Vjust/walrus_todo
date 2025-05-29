@@ -41,7 +41,7 @@ describe('TodoSizeCalculator', () => {
     });
 
     it('should calculate size for todo with all optional fields', () => {
-      const todo: Todo = {
+      const todo = createMockTodo({
         id: '12345',
         title: 'Complex task',
         description: 'A complex task with many fields',

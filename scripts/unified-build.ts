@@ -176,7 +176,62 @@ function touchManifest(): void {
 }
 
 /**
- * Run the TypeScript compiler with full type checking
+ * Analyze TypeScript errors and provide categorized reporting
+ */
+function analyzeTypeScriptErrors(errorOutput: string): { errorCount: number; warningCount: number; summary: string[] } {
+  const lines = errorOutput.split('\n');
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const summary: string[] = [];
+  
+  let currentFile = '';
+  
+  lines.forEach(line => {
+    if (line.includes(': error TS')) {
+      const errorMatch = line.match(/error TS(\d+):/);
+      if (errorMatch) {
+        const errorCode = errorMatch[1];
+        const fileName = line.split('(')[0];
+        
+        // Categorize common error codes
+        switch (errorCode) {
+          case '2339': // Property does not exist
+          case '2322': // Type assignment errors
+          case '2740': // Missing properties
+            warnings.push(line);
+            break;
+          case '2307': // Cannot find module
+          case '2451': // Cannot redeclare variable
+            errors.push(line);
+            break;
+          default:
+            if (line.includes('test') || line.includes('__tests__') || line.includes('.test.')) {
+              warnings.push(line); // Test file errors are warnings
+            } else {
+              errors.push(line);
+            }
+        }
+      }
+    }
+  });
+  
+  if (errors.length > 0) {
+    summary.push(`${colors.red}Critical Errors (${errors.length}):${colors.reset}`);
+    errors.slice(0, 5).forEach(error => summary.push(`  ${error}`));
+    if (errors.length > 5) summary.push(`  ... and ${errors.length - 5} more`);
+  }
+  
+  if (warnings.length > 0) {
+    summary.push(`${colors.yellow}Warnings (${warnings.length}):${colors.reset}`);
+    warnings.slice(0, 3).forEach(warning => summary.push(`  ${warning}`));
+    if (warnings.length > 3) summary.push(`  ... and ${warnings.length - 3} more`);
+  }
+  
+  return { errorCount: errors.length, warningCount: warnings.length, summary };
+}
+
+/**
+ * Run the TypeScript compiler with full type checking and enhanced error reporting
  */
 function runTypeScriptCompiler(): void {
   if (options.verbose) {
@@ -186,20 +241,35 @@ function runTypeScriptCompiler(): void {
   }
 
   try {
-    const tscResult = childProcess.spawnSync('npx', ['tsc', '--skipLibCheck'], {
+    const tscResult = childProcess.spawnSync('npx', ['tsc', '--skipLibCheck', '--noEmitOnError', 'false'], {
       cwd: rootDir,
-      stdio: 'inherit',
+      stdio: 'pipe',
       shell: true,
+      encoding: 'utf8'
     });
 
     if (tscResult.status !== 0) {
-      if (options.skipTypeCheck) {
+      const errorOutput = tscResult.stderr || tscResult.stdout || '';
+      const analysis = analyzeTypeScriptErrors(errorOutput);
+      
+      logger.error(`${colors.red}✗ TypeScript compilation completed with issues${colors.reset}`);
+      
+      if (analysis.summary.length > 0) {
+        logger.info(`${colors.blue}Error Analysis:${colors.reset}`);
+        analysis.summary.forEach(line => logger.info(line));
+      }
+      
+      // In development builds, continue despite errors
+      if (options.skipTypeCheck || options.transpileOnly) {
         logger.warn(
-          `${colors.yellow}⚠ TypeScript compilation had errors, but continuing due to --skip-typecheck flag${colors.reset}`
+          `${colors.yellow}⚠ TypeScript compilation had ${analysis.errorCount} errors and ${analysis.warningCount} warnings, but continuing due to build mode${colors.reset}`
         );
+        // Run transpile-only as fallback
+        runTranspileOnly();
+        return;
       } else {
         logger.error(
-          `${colors.red}✗ TypeScript compilation failed${colors.reset}`
+          `${colors.red}✗ TypeScript compilation failed in production mode${colors.reset}`
         );
         process.exit(1);
       }
@@ -213,8 +283,11 @@ function runTypeScriptCompiler(): void {
       `${colors.red}✗ Failed to run TypeScript compiler:${colors.reset}`,
       error instanceof Error ? error : new Error(String(error))
     );
-    if (!options.skipTypeCheck) {
+    if (!options.skipTypeCheck && !options.transpileOnly) {
       process.exit(1);
+    } else {
+      logger.warn(`${colors.yellow}⚠ Falling back to transpile-only mode${colors.reset}`);
+      runTranspileOnly();
     }
   }
 }

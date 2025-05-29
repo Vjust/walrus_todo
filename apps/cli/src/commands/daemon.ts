@@ -4,6 +4,7 @@ import { SyncEngine, SyncEngineConfig } from '../services/syncEngine';
 import { Logger } from '../utils/Logger';
 import { join } from 'path';
 import { homedir } from 'os';
+import { ChildProcess } from 'child_process';
 
 export default class Daemon extends BaseCommand {
   static description =
@@ -161,9 +162,9 @@ export default class Daemon extends BaseCommand {
 
     // In a real implementation, this would fork a child process
     // For now, we'll run in background mode
-    const { spawn } = await import('child_process');
+    const { spawn } = require('child_process');
 
-    const child = spawn(
+    const child: ChildProcess = spawn(
       process.execPath,
       [
         process.argv[1], // Script path
@@ -188,7 +189,9 @@ export default class Daemon extends BaseCommand {
       }
     );
 
-    child.unref();
+    if (child && 'unref' in child && typeof child.unref === 'function') {
+      child.unref();
+    }
 
     this.logger.info(`✅ Daemon started in detached mode (PID: ${child.pid})`);
 

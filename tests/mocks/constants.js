@@ -1,4 +1,4 @@
-const { jest } = require('@jest/globals');
+// Jest is available globally in the test environment
 
 // Mock CLI_CONFIG
 const CLI_CONFIG = {

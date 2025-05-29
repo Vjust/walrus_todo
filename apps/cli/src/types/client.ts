@@ -107,7 +107,7 @@ export interface WalrusClientExt {
     transaction?: Transaction | TransactionBlockAdapter;
   }): Promise<{
     blobId: string; // Changed from optional to required
-    blobObject: BlobObject | { blob_id: string };
+    blobObject: BlobObject;
   }>;
 
   // Utility methods
