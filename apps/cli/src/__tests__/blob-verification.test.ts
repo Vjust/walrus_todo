@@ -4,7 +4,7 @@ import {
   getMockWalrusClient,
   type CompleteWalrusClientMock,
 } from './helpers/complete-walrus-client-mock';
-import { createMockSuiClient } from '../../../tests/mocks/SuiClient.mock';
+import { createMockSuiClient } from '../../../../../tests/mocks/SuiClient.mock';
 
 jest.mock('@mysten/sui/client');
 jest.mock('@mysten/walrus');

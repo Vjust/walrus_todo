@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+const { jest } = require('@jest/globals');
 import type { SuiNftStorage } from '../../apps/cli/src/utils/sui-nft-storage';
 
 /**

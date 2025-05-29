@@ -41,30 +41,62 @@ export function createMockOCLIFConfig(): Config {
     windows: process.platform === 'win32',
 
     // Mock methods that commands might call
-    runHook: jest.fn().mockResolvedValue({ successes: [], failures: [] }),
-    runCommand: jest.fn(),
-    findCommand: jest.fn(),
-    findTopic: jest.fn(),
-    getAllCommandIDs: jest.fn().mockReturnValue([]),
-    load: jest.fn().mockResolvedValue(undefined),
-    scopedEnvVar: jest.fn((key: string) => `WALTODO_${key}`),
-    scopedEnvVarKey: jest.fn((key: string) => `WALTODO_${key}`),
-    scopedEnvVarTrue: jest.fn().mockReturnValue(false),
-    envVarTrue: jest.fn().mockReturnValue(false),
+    runHook: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockResolvedValue({ successes: [], failures: [] })
+      : () => Promise.resolve({ successes: [], failures: [] }),
+    runCommand: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockResolvedValue(undefined)
+      : () => Promise.resolve(),
+    findCommand: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue(undefined)
+      : () => undefined,
+    findTopic: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue(undefined)
+      : () => undefined,
+    getAllCommandIDs: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue([])
+      : () => [],
+    load: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockResolvedValue(undefined)
+      : () => Promise.resolve(),
+    scopedEnvVar: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn((key: string) => `WALTODO_${key}`)
+      : (key: string) => `WALTODO_${key}`,
+    scopedEnvVarKey: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn((key: string) => `WALTODO_${key}`)
+      : (key: string) => `WALTODO_${key}`,
+    scopedEnvVarTrue: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue(false)
+      : () => false,
+    envVarTrue: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue(false)
+      : () => false,
 
     // Additional properties that might be needed
     flexibleTaxonomy: false,
     topicSeparator: ':',
 
     // Event emitter methods
-    on: jest.fn(),
-    once: jest.fn(),
-    off: jest.fn(),
-    emit: jest.fn(),
+    on: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn()
+      : () => {},
+    once: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn()
+      : () => {},
+    off: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn()
+      : () => {},
+    emit: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue(true)
+      : () => true,
 
     // Additional utility methods
-    findMatches: jest.fn().mockReturnValue([]),
-    scopedEnvVarKeys: jest.fn().mockReturnValue([]),
+    findMatches: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue([])
+      : () => [],
+    scopedEnvVarKeys: typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockReturnValue([])
+      : () => [],
   } as any;
 
   return mockConfig;
@@ -92,22 +124,35 @@ export async function initializeCommandForTest<T extends Command>(
   (command as any).config = config;
 
   // Mock commonly used methods
-  command.log = jest.fn();
-  command.warn = jest.fn();
-  (command as any).error = jest
-    .fn()
-    .mockImplementation((message: string | Error, options?: any) => {
-      const error = typeof message === 'string' ? new Error(message) : message;
-      if (options?.exit) {
-        throw error;
-      }
-      console.error(error);
-    });
+  command.log = typeof jest !== 'undefined' && jest.fn 
+    ? jest.fn() 
+    : () => {};
+  command.warn = typeof jest !== 'undefined' && jest.fn 
+    ? jest.fn() 
+    : () => {};
+  (command as any).error = typeof jest !== 'undefined' && jest.fn 
+    ? jest.fn().mockImplementation((message: string | Error, options?: any) => {
+        const error = typeof message === 'string' ? new Error(message) : message;
+        if (options?.exit) {
+          throw error;
+        }
+        console.error(error);
+      })
+    : (message: string | Error, options?: any) => {
+        const error = typeof message === 'string' ? new Error(message) : message;
+        if (options?.exit) {
+          throw error;
+        }
+        console.error(error);
+      };
 
   // Mock parse method if requested
   if (options.mockParse) {
+    const parseMock = typeof jest !== 'undefined' && jest.fn 
+      ? jest.fn().mockResolvedValue(options.parseResult || { flags: {}, args: {} })
+      : () => Promise.resolve(options.parseResult || { flags: {}, args: {} });
     Object.defineProperty(command, 'parse', {
-      value: jest.fn().mockResolvedValue(options.parseResult || { flags: {}, args: {} }),
+      value: parseMock,
       writable: true,
       configurable: true
     });
@@ -142,13 +187,23 @@ export async function runCommandInTest<T extends Command>(
   });
 
   // Capture log output
-  (command.log as jest.Mock).mockImplementation((...args: any[]) => {
-    output.push(args.join(' '));
-  });
+  if (typeof jest !== 'undefined' && jest.fn) {
+    (command.log as jest.Mock).mockImplementation((...args: any[]) => {
+      output.push(args.join(' '));
+    });
 
-  (command.warn as jest.Mock).mockImplementation((...args: any[]) => {
-    errors.push(args.join(' '));
-  });
+    (command.warn as jest.Mock).mockImplementation((...args: any[]) => {
+      errors.push(args.join(' '));
+    });
+  } else {
+    // Fallback for non-Jest environments
+    command.log = (...args: any[]) => {
+      output.push(args.join(' '));
+    };
+    command.warn = (...args: any[]) => {
+      errors.push(args.join(' '));
+    };
+  }
 
   // Run the command using public API
   await (command as any).run();
@@ -207,8 +262,9 @@ export function createMockCommand<T extends Command>(
   command.log = jest.fn();
   command.warn = jest.fn();
   (command as any).error = jest.fn();
+  const parseMock = jest.fn().mockResolvedValue({ flags: {}, args: {} });
   Object.defineProperty(command, 'parse', {
-    value: jest.fn().mockResolvedValue({ flags: {}, args: {} }),
+    value: parseMock,
     writable: true,
     configurable: true
   });

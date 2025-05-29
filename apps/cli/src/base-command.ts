@@ -159,15 +159,15 @@ export abstract class BaseCommand extends Command {
         (this as any).config = testUtils.createMockOCLIFConfig();
       } catch (error) {
         // If import fails, create minimal config for tests
+        const jestMockFn = typeof jest !== 'undefined' && jest?.fn ? jest.fn() : () => Promise.resolve({ successes: [], failures: [] });
+        
         (this as any).config = {
           name: 'waltodo',
           bin: 'waltodo',
           version: '1.0.0',
-          runHook:
-            jest
-              ?.fn?.()
-              ?.mockResolvedValue?.({ successes: [], failures: [] }) ||
-            (() => Promise.resolve({ successes: [], failures: [] })),
+          runHook: typeof jestMockFn === 'function' && jestMockFn.mockResolvedValue 
+            ? jestMockFn.mockResolvedValue({ successes: [], failures: [] })
+            : () => Promise.resolve({ successes: [], failures: [] }),
           root: process.cwd(),
           dataDir: '/tmp/waltodo-test',
           configDir: '/tmp/waltodo-test-config',
@@ -177,8 +177,42 @@ export abstract class BaseCommand extends Command {
           arch: process.arch,
           shell: process.env.SHELL || '/bin/bash',
           userAgent: 'waltodo/1.0.0',
+          // Add additional OCLIF config properties that might be needed
+          plugins: new Map(),
+          commands: new Map(),
+          topics: new Map(),
+          commandIDs: [],
+          errlog: '/tmp/waltodo-test-error.log',
+          dirname: 'waltodo',
+          debug: 0,
+          npmRegistry: 'https://registry.npmjs.org/',
+          windows: process.platform === 'win32',
+          flexibleTaxonomy: false,
+          topicSeparator: ':',
+          // Mock additional methods that might be called
+          runCommand: () => Promise.resolve(),
+          findCommand: () => undefined,
+          findTopic: () => undefined,
+          getAllCommandIDs: () => [],
+          load: () => Promise.resolve(),
+          scopedEnvVar: (key: string) => `WALTODO_${key}`,
+          scopedEnvVarKey: (key: string) => `WALTODO_${key}`,
+          scopedEnvVarTrue: () => false,
+          envVarTrue: () => false,
+          findMatches: () => [],
+          scopedEnvVarKeys: () => [],
+          // Event emitter methods
+          on: () => {},
+          once: () => {},
+          off: () => {},
+          emit: () => false,
         };
       }
+    }
+
+    // Ensure config.runHook is always available, even if config exists but runHook is missing
+    if (this.config && typeof this.config.runHook !== 'function') {
+      (this.config as any).runHook = () => Promise.resolve({ successes: [], failures: [] });
     }
 
     await super.init();

@@ -41,7 +41,7 @@ jest.mock('../utils/env-loader', () => ({
 }));
 
 jest.mock('../utils/environment-config', () => ({
-  getEnv: jest.fn((key: string) => {
+  getEnv: jest.fn().mockImplementation((key) => {
     const defaults = {
       AI_DEFAULT_PROVIDER: 'xai',
       AI_DEFAULT_MODEL: 'grok-beta',
@@ -86,8 +86,9 @@ describe('OCLIF Command Parsing Fix', () => {
   });
 
   describe('BaseCommand Initialization', () => {
-    it('should initialize BaseCommand without config errors', async () => {
-      const command = await initializeCommandForTest(BaseCommand, [], {
+    it('should initialize a command extending BaseCommand without config errors', async () => {
+      // Use AI command which extends BaseCommand instead of BaseCommand directly
+      const command = await initializeCommandForTest(AI, [], {
         mockParse: true,
         parseResult: { flags: {}, args: {} },
       });
@@ -95,6 +96,7 @@ describe('OCLIF Command Parsing Fix', () => {
       expect(command.config).toBeDefined();
       expect(command.config.runHook).toBeDefined();
       expect(typeof command.config.runHook).toBe('function');
+      expect(command).toBeInstanceOf(Command); // BaseCommand extends Command
     });
   });
 

@@ -47,15 +47,13 @@ describe('complete command - positional arguments', () => {
     } as any);
 
     mockTodoService.prototype.getList = jest.fn().mockResolvedValue(mockList);
-    mockTodoService.prototype.getLists = jest
+    mockTodoService.prototype.getAllLists = jest
       .fn()
-      .mockResolvedValue([mockList]);
+      .mockResolvedValue(['mylist']);
     mockTodoService.prototype.getTodoByTitleOrId = jest
       .fn()
       .mockResolvedValue(mockTodo);
-    mockTodoService.prototype.getListItems = jest
-      .fn()
-      .mockResolvedValue([mockTodo]);
+    // Remove getListItems mock since the method doesn't exist in TodoService
     mockTodoService.prototype.toggleItemStatus = jest
       .fn()
       .mockResolvedValue(undefined);
@@ -182,13 +180,9 @@ describe('complete command - positional arguments', () => {
     test('shows available lists when list not found', async () => {
       const cmd = new CompleteCommand(['nonexistent', 'todo-123'], {} as any);
       mockTodoService.prototype.getList = jest.fn().mockResolvedValue(null);
-      mockTodoService.prototype.getLists = jest
+      mockTodoService.prototype.getAllLists = jest
         .fn()
-        .mockResolvedValue([
-          { name: 'default' },
-          { name: 'work' },
-          { name: 'personal' },
-        ]);
+        .mockResolvedValue(['default', 'work', 'personal']);
 
       await expect(cmd.run()).rejects.toThrow(CLIError);
 
@@ -210,11 +204,15 @@ describe('complete command - positional arguments', () => {
       mockTodoService.prototype.getTodoByTitleOrId = jest
         .fn()
         .mockResolvedValue(null);
-      mockTodoService.prototype.getListItems = jest.fn().mockResolvedValue([
-        { id: 'todo-111', title: 'Task 1', completed: false },
-        { id: 'todo-222', title: 'Task 2', completed: false },
-        { id: 'todo-333', title: 'Task 3', completed: true },
-      ]);
+      // Update getList to return a list with todos instead of using getListItems
+      mockTodoService.prototype.getList = jest.fn().mockResolvedValue({
+        ...mockList,
+        todos: [
+          { id: 'todo-111', title: 'Task 1', completed: false },
+          { id: 'todo-222', title: 'Task 2', completed: false },
+          { id: 'todo-333', title: 'Task 3', completed: true },
+        ]
+      });
 
       await expect(cmd.run()).rejects.toThrow(CLIError);
 

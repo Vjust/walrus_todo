@@ -33,6 +33,9 @@ export interface EnvVariable<T> {
 }
 
 interface EnvironmentConfig {
+  // Index signature for type-safe string access
+  [key: string]: EnvVariable<any>;
+  
   // Common configurations
   NODE_ENV: EnvVariable<Environment>;
   LOG_LEVEL: EnvVariable<string>;

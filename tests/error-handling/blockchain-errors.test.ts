@@ -238,7 +238,7 @@ describe('Blockchain Error Handling', () => {
               {
                 operation: 'execute',
                 recoverable: false,
-                cause: error,
+                cause: error instanceof Error ? error : new Error(String(error)),
               }
             );
           });
@@ -548,7 +548,7 @@ describe('Blockchain Error Handling', () => {
             throw new BlockchainError('Signing operation failed', {
               operation: 'sign',
               recoverable: false,
-              cause: error,
+              cause: error instanceof Error ? error : new Error(String(error)),
             });
           });
       };
@@ -699,7 +699,7 @@ describe('Blockchain Error Handling', () => {
       // Make multiple blockchain queries
       const promises = Array.from({ length: 10 }, () =>
         mockSuiClient.getLatestSuiSystemState().then(
-          result => ({ success: true, result }),
+          (result: unknown) => ({ success: true, result }),
           error => ({
             success: false,
             error: error instanceof Error ? error.message : String(error),

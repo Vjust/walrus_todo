@@ -1,5 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
-import { createHash } from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes, createHash, Hash } from 'crypto';
 import { SecureStorageService } from '../../../apps/cli/src/services/secure-storage';
 
 // Mock crypto module
@@ -55,12 +54,13 @@ describe('SecureStorageService', () => {
 
       // Mock crypto functions
       mockRandomBytes.mockReturnValue(mockIv);
-      mockCreateHash.mockReturnValue({
+      const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest
           .fn()
           .mockReturnValue(Buffer.from('hashed-key-32-bytes-long-enough')),
-      });
+      } as unknown as Partial<Hash>;
+      mockCreateHash.mockReturnValue(mockHash);
 
       const mockCipher = {
         update: jest.fn().mockReturnValue(mockEncrypted),
@@ -103,10 +103,11 @@ describe('SecureStorageService', () => {
       const key = 'test-key';
 
       mockRandomBytes.mockReturnValue(Buffer.from('mock-iv'));
-      mockCreateHash.mockReturnValue({
+      const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest.fn().mockReturnValue(Buffer.from('hashed-key')),
-      });
+      } as unknown as Partial<Hash>;
+      mockCreateHash.mockReturnValue(mockHash);
 
       const mockCipher = {
         update: jest.fn().mockImplementation(() => {
@@ -250,18 +251,20 @@ describe('SecureStorageService', () => {
       const key = 'consistent-key';
 
       const hashDigest = Buffer.from('consistent-hash-result-32-bytes-');
-      mockCreateHash.mockReturnValue({
+      const mockHash = {
         update: jest.fn().mockReturnThis(),
         digest: jest.fn().mockReturnValue(hashDigest),
-      });
+      } as unknown as Partial<Hash>;
+      mockCreateHash.mockReturnValue(mockHash);
 
       // Use internal method indirectly through encrypt
       mockRandomBytes.mockReturnValue(Buffer.from('iv'));
-      mockCreateCipheriv.mockReturnValue({
+      const mockCipher = {
         update: jest.fn().mockReturnValue(Buffer.alloc(0)),
         final: jest.fn().mockReturnValue(Buffer.alloc(0)),
         getAuthTag: jest.fn().mockReturnValue(Buffer.alloc(0)),
-      });
+      };
+      mockCreateCipheriv.mockReturnValue(mockCipher);
 
       await service.encrypt('data', key);
       await service.encrypt('data', key);

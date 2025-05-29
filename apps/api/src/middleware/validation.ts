@@ -78,7 +78,7 @@ export const validate = (schema: {
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errorMessages = error.errors.map((err: any) => ({
+        const errorMessages = error.errors.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
           received: err.input,

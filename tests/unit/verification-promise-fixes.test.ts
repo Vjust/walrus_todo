@@ -40,49 +40,57 @@ describe('Verification Operations Promise Returns', () => {
       const service = createMockAIVerificationService();
 
       // Test createVerification returns a promise
-      assertReturnsPromise(() =>
+      const createVerificationResult = assertReturnsPromise(() =>
         service.createVerification(
           AIActionType.SUMMARIZE,
           sampleTodos,
           'Test summary'
         )
       );
+      expect(createVerificationResult).toBeInstanceOf(Promise);
 
       // Test verifyRecord returns a promise
       const mockRecord = createMockVerificationRecord();
-      assertReturnsPromise(() =>
+      const verifyRecordResult = assertReturnsPromise(() =>
         service.verifyRecord(mockRecord, 'request', 'response')
       );
+      expect(verifyRecordResult).toBeInstanceOf(Promise);
 
       // Test verifyExistingOperation returns a promise
-      assertReturnsPromise(() =>
+      const verifyExistingResult = assertReturnsPromise(() =>
         service.verifyExistingOperation('test-verification-id')
       );
+      expect(verifyExistingResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedSummary returns a promise
-      assertReturnsPromise(() =>
+      const summaryResult = assertReturnsPromise(() =>
         service.createVerifiedSummary(sampleTodos, 'Test summary')
       );
+      expect(summaryResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedCategorization returns a promise
-      assertReturnsPromise(() =>
+      const categorizationResult = assertReturnsPromise(() =>
         service.createVerifiedCategorization(sampleTodos, { work: ['todo-1'] })
       );
+      expect(categorizationResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedPrioritization returns a promise
-      assertReturnsPromise(() =>
+      const prioritizationResult = assertReturnsPromise(() =>
         service.createVerifiedPrioritization(sampleTodos, { 'todo-1': 1 })
       );
+      expect(prioritizationResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedSuggestion returns a promise
-      assertReturnsPromise(() =>
+      const suggestionResult = assertReturnsPromise(() =>
         service.createVerifiedSuggestion(sampleTodos, ['suggestion 1'])
       );
+      expect(suggestionResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedAnalysis returns a promise
-      assertReturnsPromise(() =>
+      const analysisResult = assertReturnsPromise(() =>
         service.createVerifiedAnalysis(sampleTodos, { analysis: 'result' })
       );
+      expect(analysisResult).toBeInstanceOf(Promise);
     });
 
     it('should successfully complete verification operations', async () => {
@@ -133,68 +141,81 @@ describe('Verification Operations Promise Returns', () => {
       const service = createMockBlockchainAIVerificationService();
 
       // Test createBlockchainVerification returns a promise
-      assertReturnsPromise(() =>
+      const blockchainVerificationResult = assertReturnsPromise(() =>
         service.createBlockchainVerification(
           AIActionType.SUMMARIZE,
           sampleTodos,
           'Test summary'
         )
       );
+      expect(blockchainVerificationResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedSummary returns a promise
-      assertReturnsPromise(() =>
+      const summaryResult = assertReturnsPromise(() =>
         service.createVerifiedSummary(sampleTodos, 'Test summary')
       );
+      expect(summaryResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedCategorization returns a promise
-      assertReturnsPromise(() =>
+      const categorizationResult = assertReturnsPromise(() =>
         service.createVerifiedCategorization(sampleTodos, { work: ['todo-1'] })
       );
+      expect(categorizationResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedPrioritization returns a promise
-      assertReturnsPromise(() =>
+      const prioritizationResult = assertReturnsPromise(() =>
         service.createVerifiedPrioritization(sampleTodos, { 'todo-1': 1 })
       );
+      expect(prioritizationResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedSuggestion returns a promise
-      assertReturnsPromise(() =>
+      const suggestionResult = assertReturnsPromise(() =>
         service.createVerifiedSuggestion(sampleTodos, ['suggestion 1'])
       );
+      expect(suggestionResult).toBeInstanceOf(Promise);
 
       // Test createVerifiedAnalysis returns a promise
-      assertReturnsPromise(() =>
+      const analysisResult = assertReturnsPromise(() =>
         service.createVerifiedAnalysis(sampleTodos, { analysis: 'result' })
       );
+      expect(analysisResult).toBeInstanceOf(Promise);
 
       // Test getVerification returns a promise
-      assertReturnsPromise(() =>
+      const getVerificationResult = assertReturnsPromise(() =>
         service.getVerification('test-verification-id')
       );
+      expect(getVerificationResult).toBeInstanceOf(Promise);
 
       // Test listVerifications returns a promise
-      assertReturnsPromise(() => service.listVerifications());
+      const listVerificationsResult = assertReturnsPromise(() => 
+        service.listVerifications()
+      );
+      expect(listVerificationsResult).toBeInstanceOf(Promise);
 
       // Test generateProof returns a promise
-      assertReturnsPromise(() =>
+      const generateProofResult = assertReturnsPromise(() =>
         service.generateProof(
           AIActionType.SUMMARIZE,
           JSON.stringify(sampleTodos),
           'Test summary'
         )
       );
+      expect(generateProofResult).toBeInstanceOf(Promise);
 
       // Test verifyExternalProof returns a promise
-      assertReturnsPromise(() =>
+      const verifyExternalProofResult = assertReturnsPromise(() =>
         service.verifyExternalProof('test-proof-id', 'test-signature', {
           request: 'test-request',
           response: 'test-response',
         })
       );
+      expect(verifyExternalProofResult).toBeInstanceOf(Promise);
 
       // Test verifyProof returns a promise
-      assertReturnsPromise(() =>
+      const verifyProofResult = assertReturnsPromise(() =>
         service.verifyProof('test-proof-id', 'test-signature', { test: 'data' })
       );
+      expect(verifyProofResult).toBeInstanceOf(Promise);
     });
 
     it('should successfully complete blockchain verification operations', async () => {

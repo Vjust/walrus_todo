@@ -2,8 +2,10 @@ import { jest } from '@jest/globals';
 import * as fs from 'fs';
 import * as path from 'path';
 import crypto from 'crypto';
-import { AuditLogger } from '../../apps/cli/src/services/ai/AuditLogger';
-import { CLI_CONFIG } from '../../apps/cli/src/constants';
+
+// Mock the service modules instead of importing them directly
+const { AuditLogger } = jest.requireMock('../../apps/cli/src/services/ai/AuditLogger');
+const { CLI_CONFIG } = jest.requireMock('../../apps/cli/src/constants');
 
 // Mock the Logger class to capture direct error calls
 jest.mock('../../apps/cli/src/utils/Logger', () => {

@@ -6,6 +6,7 @@ module.exports = {
     '**/tests/integration/**/*.test.ts',
     '**/tests/commands/**/*.test.ts',
     '**/tests/edge-cases/**/*.test.ts',
+    '**/tests/fuzz/**/*.test.ts',
     '**/apps/cli/src/__tests__/**/*.test.ts',
   ],
   testPathIgnorePatterns: [
@@ -79,6 +80,14 @@ module.exports = {
     '^@waltodo/sui-client/(.*)$': '<rootDir>/packages/sui-client/src/$1',
     '^@waltodo/walrus-client/(.*)$': '<rootDir>/packages/walrus-client/src/$1',
     '^p-retry$': '<rootDir>/node_modules/p-retry/index.js',
+    // Map file system modules to our enhanced mocks
+    '^fs$': '<rootDir>/tests/mocks/fs-mock.js',
+    '^fs/promises$': '<rootDir>/tests/mocks/fs-mock.js',
+    '^node:fs$': '<rootDir>/tests/mocks/fs-mock.js', 
+    '^node:fs/promises$': '<rootDir>/tests/mocks/fs-mock.js',
+    // Map crypto modules to our enhanced mocks
+    '^crypto$': '<rootDir>/tests/mocks/crypto-mock.js',
+    '^node:crypto$': '<rootDir>/tests/mocks/crypto-mock.js',
     // Map problematic @langchain modules to empty mocks for tests
     '^@langchain/core/(.*)$': '<rootDir>/tests/mocks/langchain-mock.js',
     '^@langchain/(.*)$': '<rootDir>/tests/mocks/langchain-mock.js',

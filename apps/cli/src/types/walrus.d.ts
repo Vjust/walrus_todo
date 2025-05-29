@@ -115,6 +115,7 @@ declare module '@mysten/walrus' {
       options: StorageWithSizeOptions & {
         transaction?: Transaction;
         signer: SignerType;
+        owner?: string;
       }
     ): Promise<{
       digest: string;
@@ -126,16 +127,20 @@ declare module '@mysten/walrus' {
       };
     }>;
 
-    writeBlob(options: WriteBlobOptions): Promise<{
+    writeBlob(options: WriteBlobOptions & {
+      owner?: string;
+    }): Promise<{
       blobId: string;
       blobObject: BlobObject;
     }>;
 
     readBlob(options: ReadBlobOptions): Promise<Uint8Array>;
 
-    getBlobObject(blobId: string): Promise<BlobObject>;
+    getBlobObject(params: { blobId: string }): Promise<BlobObject>;
 
-    verifyPoA(blobId: string): Promise<boolean>;
+    getBlobInfo(blobId: string): Promise<BlobObject>;
+
+    verifyPoA(params: { blobId: string }): Promise<boolean>;
 
     getBlobMetadata(options: ReadBlobOptions): Promise<BlobMetadata>;
 
@@ -145,5 +150,19 @@ declare module '@mysten/walrus' {
       used: string;
       total: string;
     }>;
+
+    getBlobSize?(blobId: string): Promise<number>;
+
+    storageCost(size: number, epochs: number): Promise<{
+      storageCost: bigint;
+      writeCost: bigint;
+      totalCost: bigint;
+    }>;
+
+    getStorageProviders?(params: { blobId: string }): Promise<string[]>;
+
+    reset?(): void;
+
+    connect?(): Promise<void>;
   }
 }

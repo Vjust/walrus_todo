@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+const { jest } = require('@jest/globals');
 import type { Todo } from '../../apps/cli/src/types/todo';
 import {
   AIProvider,

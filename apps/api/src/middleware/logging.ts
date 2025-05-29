@@ -24,7 +24,7 @@ export const requestLogger = (
 
   // Override res.json to log response
   const originalJson = res.json;
-  res.json = function (body: any) {
+  res.json = function (body: Record<string, unknown>) {
     const duration = Date.now() - start;
 
     logger.info('Response sent', {

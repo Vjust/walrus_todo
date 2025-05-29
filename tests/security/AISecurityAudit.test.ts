@@ -1,10 +1,5 @@
 import { jest } from '@jest/globals';
 import * as fs from 'fs';
-import { AIService } from '../../apps/cli/src/services/ai/aiService';
-import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
-import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
-import { SuiAIVerifierAdapter } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { secureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import {
   AIProvider,
   AIModelOptions,
@@ -19,8 +14,25 @@ import {
   CredentialType,
   AIPermissionLevel,
 } from '../../apps/cli/src/types/adapters/AICredentialAdapter';
+
+// Import the services directly and let module mocking handle them
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
+import { secureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import { initializePermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
+
+// Create mock types for the tests
+interface MockSuiAIVerifierAdapter {
+  createVerification: jest.Mock;
+  verifyRecord: jest.Mock;
+  getProviderInfo: jest.Mock;
+  listVerifications: jest.Mock;
+  getRegistryAddress: jest.Mock;
+  registerProvider: jest.Mock;
+  getVerification: jest.Mock;
+}
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
@@ -695,7 +707,7 @@ describe('AI Security Audit', () => {
   describe('Blockchain Verification Security', () => {
     it('should verify content integrity with blockchain hashes', async () => {
       // Create mockAIService with verification
-      const mockVerifierAdapter: SuiAIVerifierAdapter = {
+      const mockVerifierAdapter: MockSuiAIVerifierAdapter = {
         createVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
         verifyRecord: jest.fn().mockResolvedValue(true),
         getProviderInfo: jest.fn(),
@@ -731,7 +743,7 @@ describe('AI Security Audit', () => {
 
     it('should detect tampering with verified results', async () => {
       // Create mockAIService with verification
-      const mockVerifierAdapter: SuiAIVerifierAdapter = {
+      const mockVerifierAdapter: MockSuiAIVerifierAdapter = {
         createVerification: jest.fn().mockResolvedValue(mockVerificationRecord),
         verifyRecord: jest
           .fn()

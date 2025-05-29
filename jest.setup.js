@@ -8,6 +8,48 @@ const sinon = require('sinon');
 // Global test timeout
 jest.setTimeout(30000);
 
+// Fix Node.js fs module property assignment issues
+const fs = require('fs');
+const fsPromises = require('fs/promises');
+
+// Create writable property descriptors for fs methods
+const fsMethodsToMock = ['readFileSync', 'writeFileSync', 'existsSync', 'mkdirSync', 'readFile', 'writeFile', 'access', 'mkdir', 'readdir', 'stat', 'lstat'];
+
+fsMethodsToMock.forEach(method => {
+  if (fs[method]) {
+    Object.defineProperty(fs, method, {
+      value: fs[method],
+      writable: true,
+      configurable: true,
+      enumerable: true
+    });
+  }
+  
+  if (fsPromises[method]) {
+    Object.defineProperty(fsPromises, method, {
+      value: fsPromises[method],
+      writable: true,
+      configurable: true,
+      enumerable: true
+    });
+  }
+});
+
+// Fix crypto module property assignment issues
+const crypto = require('crypto');
+const cryptoMethodsToMock = ['randomUUID', 'randomBytes', 'createHash', 'createCipher', 'createDecipher', 'pbkdf2Sync', 'timingSafeEqual'];
+
+cryptoMethodsToMock.forEach(method => {
+  if (crypto[method]) {
+    Object.defineProperty(crypto, method, {
+      value: crypto[method],
+      writable: true,
+      configurable: true,
+      enumerable: true
+    });
+  }
+});
+
 // Memory management
 let originalConsoleWarn = console.warn;
 
@@ -85,8 +127,59 @@ global.performCleanup = function() {
   // Sinon cleanup
   global.restoreAllSinon();
   
+  // Jest mock cleanup
+  if (typeof global.clearAllMockCalls === 'function') {
+    global.clearAllMockCalls();
+  }
+  
+  // Reset mock file system
+  if (global.mockUtils && typeof global.mockUtils.resetAllMocks === 'function') {
+    global.mockUtils.resetAllMocks();
+  }
+  
   // Force garbage collection
   if (global.gc) {
     global.gc();
+  }
+};
+
+// Add global mock utilities for property assignment fixes
+global.createConfigurableProperty = function(obj, propName, value) {
+  Object.defineProperty(obj, propName, {
+    value: value,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
+};
+
+global.makeMethodConfigurable = function(obj, methodName) {
+  if (obj[methodName] && typeof obj[methodName] === 'function') {
+    const originalMethod = obj[methodName];
+    Object.defineProperty(obj, methodName, {
+      value: originalMethod,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+  }
+};
+
+// Global helper for safe mock property assignment
+global.safeAssignMockProperty = function(mockObj, propName, mockImplementation) {
+  try {
+    if (typeof mockImplementation === 'function') {
+      mockObj[propName] = jest.fn(mockImplementation);
+    } else {
+      mockObj[propName] = mockImplementation;
+    }
+    
+    // Ensure property is configurable
+    global.createConfigurableProperty(mockObj, propName, mockObj[propName]);
+    
+    return true;
+  } catch (error) {
+    console.warn(`Failed to assign mock property ${propName}:`, error.message);
+    return false;
   }
 };

@@ -174,7 +174,7 @@ export class AIProviderFactory {
 
         // Verify that we have credentials for this provider
         const hasCredential = await credService.hasCredential(
-          providerString as unknown as AIProviderEnum
+          providerEnum
         );
 
         if (!hasCredential) {

@@ -4,7 +4,7 @@
  * without depending on the actual CLI implementation files
  */
 
-import { jest } from '@jest/globals';
+const { jest } = require('@jest/globals');
 
 // Re-export all the individual mocks
 export * from './AIService.mock';

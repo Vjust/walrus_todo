@@ -173,19 +173,19 @@ class PuppeteerTestRunner {
       let stdout = '';
       let stderr = '';
 
-      process.stdout?.on('data', data => {
+      process.stdout?.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
 
-      process.stderr?.on('data', data => {
+      process.stderr?.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
-      process.on('close', code => {
+      process.on('close', (code: number | null) => {
         resolve({ stdout, stderr, exitCode: code });
       });
 
-      process.on('error', error => {
+      process.on('error', (error: Error) => {
         reject(error);
       });
 
@@ -258,7 +258,7 @@ describe('Puppeteer NFT E2E Tests', () => {
 
       for (const button of connectButtons) {
         const text = await page.evaluate(
-          el => el.textContent?.toLowerCase() || '',
+          (el: Element) => el.textContent?.toLowerCase() || '',
           button
         );
         if (text.includes('connect')) {
@@ -315,7 +315,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       const buttons = await page.$$('button, [role="button"]');
       for (const button of buttons) {
         const text = await page.evaluate(
-          el => el.textContent?.toLowerCase() || '',
+          (el: Element) => el.textContent?.toLowerCase() || '',
           button
         );
         if (text.includes('connect')) {
@@ -380,7 +380,7 @@ describe('Puppeteer NFT E2E Tests', () => {
           const nftButtons = await page.$$('button');
           for (const button of nftButtons) {
             const text = await page.evaluate(
-              el => el.textContent?.toLowerCase() || '',
+              (el: Element) => el.textContent?.toLowerCase() || '',
               button
             );
             if (text.includes('nft') || text.includes('blockchain')) {
@@ -414,7 +414,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       const nftButtons = await page.$$('button');
       for (const button of nftButtons) {
         const text = await page.evaluate(
-          el => el.textContent?.toLowerCase() || '',
+          (el: Element) => el.textContent?.toLowerCase() || '',
           button
         );
         if (text.includes('nft') || text.includes('blockchain')) {
@@ -450,7 +450,7 @@ describe('Puppeteer NFT E2E Tests', () => {
       const historyButtons = await page.$$('button, a, [role="button"]');
       for (const button of historyButtons) {
         const text = await page.evaluate(
-          el => el.textContent?.toLowerCase() || '',
+          (el: Element) => el.textContent?.toLowerCase() || '',
           button
         );
         if (text.includes('history') || text.includes('transactions')) {

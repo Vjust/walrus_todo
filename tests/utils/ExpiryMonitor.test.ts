@@ -74,7 +74,8 @@ describe('ExpiryMonitor', () => {
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
     // Setup mock implementations using complete mock
-    const { WalrusClient: MockWalrusClient } = require('@mysten/walrus');
+    const walrusModule = await import('@mysten/walrus');
+    const MockWalrusClient = walrusModule.WalrusClient;
     mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
 
     // Override specific methods for this test

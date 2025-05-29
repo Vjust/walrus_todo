@@ -19,6 +19,7 @@ import {
   BackgroundJob,
   performanceMonitor,
 } from '../utils/PerformanceMonitor';
+import { MultiProgress, ProgressBar } from '../utils/progress-indicators';
 import { spawn } from 'child_process';
 
 // Define interface for parsed flags to fix property access
@@ -342,7 +343,7 @@ class CompleteCommand extends BaseCommand {
   private async updateConfigWithCompletion(todo: Todo): Promise<void> {
     try {
       const rawConfig = await configService.getConfig();
-      const config: any = {
+      const config: AppConfig & { completedTodos?: any } = {
         ...rawConfig,
         logging: (rawConfig as any).logging || {
           level: 'info' as const,
@@ -402,7 +403,7 @@ class CompleteCommand extends BaseCommand {
    *
    * @param config Configuration to write
    */
-  private async writeConfigSafe(config: any): Promise<void> {
+  private async writeConfigSafe(config: AppConfig): Promise<void> {
     try {
       // First try the standard config service method
       if (typeof configService.saveConfig === 'function') {
@@ -659,7 +660,7 @@ class CompleteCommand extends BaseCommand {
     );
 
     const showProgress = !flags.quiet;
-    let multiProgress: any, progressBar: any;
+    let multiProgress: MultiProgress | undefined, progressBar: ProgressBar | undefined;
 
     if (showProgress) {
       multiProgress = this.createMultiProgress();
@@ -876,7 +877,7 @@ class CompleteCommand extends BaseCommand {
         {
           maxRetries: 3,
           initialDelay: 1000,
-          onRetry: (error: any, attempt: number, _delay: number) => {
+          onRetry: (attempt: number, error: any, _delay: number) => {
             const errorMessage =
               error instanceof Error
                 ? error.message
@@ -935,7 +936,7 @@ class CompleteCommand extends BaseCommand {
             options: { showContent: true },
           });
 
-          let timeoutId: NodeJS.Timeout | undefined;
+          let timeoutId: NodeJS.Timeout | undefined = undefined;
           const timeoutPromise = new Promise<never>((_, reject) => {
             timeoutId = setTimeout(() => {
               reject(new Error('NFT verification timed out after 10 seconds'));
@@ -968,7 +969,7 @@ class CompleteCommand extends BaseCommand {
       {
         maxRetries: 3,
         initialDelay: 2000,
-        onRetry: (error: any, attempt: number, _delay: number) => {
+        onRetry: (attempt: number, error: any, _delay: number) => {
           const errorMessage =
             error instanceof Error
               ? error.message
@@ -1006,7 +1007,7 @@ class CompleteCommand extends BaseCommand {
       }
       await this.walrusStorage.connect();
 
-      let timeoutId: NodeJS.Timeout;
+      let timeoutId: NodeJS.Timeout | undefined = undefined;
       const timeout = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
           reject(new Error('Walrus operation timed out after 30 seconds'));
@@ -1158,15 +1159,15 @@ class CompleteCommand extends BaseCommand {
         const listName = typedFlags.list || 'default';
         const list = await this.todoService.getList(listName);
         if (!list) {
-          const availableLists = await this.todoService.getLists();
-          const listNames = availableLists.map(l => l.name).join(', ');
+          const availableLists = await this.todoService.getAllLists();
+          const listNames = availableLists.join(', ');
           throw new CLIError(
             `List "${listName}" not found.\n\nAvailable lists: ${listNames}`,
             'LIST_NOT_FOUND'
           );
         }
 
-        const todos = await this.todoService.getListItems(listName);
+        const todos = list.todos;
         const incompleteTodos = todos.filter(t => !t.completed);
 
         // Check if we're already in background mode to prevent recursion
@@ -1216,13 +1217,15 @@ class CompleteCommand extends BaseCommand {
         todoIdentifier = args.listOrTodo;
       } else {
         // No arguments provided - show helpful error
-        const lists = await this.todoService.getLists();
+        const listNames = await this.todoService.getAllLists();
         const todos: Todo[] = [];
 
         // Gather todos from all lists
-        for (const list of lists) {
-          const listTodos = await this.todoService.getListItems(list.name);
-          todos.push(...listTodos.filter(t => !t.completed));
+        for (const listName of listNames) {
+          const list = await this.todoService.getList(listName);
+          if (list) {
+            todos.push(...list.todos.filter(t => !t.completed));
+          }
         }
 
         let helpMessage = 'Please specify a todo to complete.\n\n';
@@ -1265,8 +1268,8 @@ class CompleteCommand extends BaseCommand {
       // Check list exists
       const list = await this.todoService.getList(listName);
       if (!list) {
-        const availableLists = await this.todoService.getLists();
-        const listNames = availableLists.map(l => l.name).join(', ');
+        const availableLists = await this.todoService.getAllLists();
+        const listNames = availableLists.join(', ');
         throw new CLIError(
           `List "${listName}" not found.\n\nAvailable lists: ${listNames}`,
           'LIST_NOT_FOUND'
@@ -1280,7 +1283,7 @@ class CompleteCommand extends BaseCommand {
       );
       if (!todo) {
         // Provide helpful error with available todos
-        const todos = await this.todoService.getListItems(listName);
+        const todos = list.todos;
         const incompleteTodos = todos.filter(t => !t.completed);
 
         let errorMessage = `Todo "${todoIdentifier}" not found in list "${listName}"`;

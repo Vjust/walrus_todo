@@ -14,7 +14,7 @@ export class WebSocketService {
   private walletSockets: Map<string, Set<string>> = new Map(); // wallet -> set of socket ids
 
   constructor(httpServer: HTTPServer) {
-    const serverOptions = {
+    const serverOptions: ServerOptions = {
       cors: {
         origin: config.cors.origins,
         methods: ['GET', 'POST'],
@@ -103,14 +103,17 @@ export class WebSocketService {
     if (!this.walletSockets.has(wallet)) {
       this.walletSockets.set(wallet, new Set());
     }
-    this.walletSockets.get(wallet)!.add(socket.id);
+    const walletSockets = this.walletSockets.get(wallet);
+    if (walletSockets) {
+      walletSockets.add(socket.id);
+    }
 
     socket.emit('joined-wallet', { wallet });
 
     logger.info('Socket joined wallet room', {
       socketId: socket.id,
       wallet,
-      roomSize: this.walletSockets.get(wallet)!.size,
+      roomSize: walletSockets?.size || 0,
     });
   }
 

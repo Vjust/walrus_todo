@@ -108,9 +108,13 @@ export function createMemoryEfficientMock<T = any>(
     }
 
     // Return size-limited value
-    const stringified = JSON.stringify(defaultValue);
-    if (stringified.length > maxReturnSize) {
-      return '[MOCK_VALUE_TOO_LARGE]';
+    try {
+      const stringified = JSON.stringify(defaultValue);
+      if (stringified.length > maxReturnSize) {
+        return '[MOCK_VALUE_TOO_LARGE]' as unknown as T;
+      }
+    } catch {
+      return '[MOCK_VALUE_UNSTRINGIFIABLE]' as unknown as T;
     }
 
     return defaultValue;

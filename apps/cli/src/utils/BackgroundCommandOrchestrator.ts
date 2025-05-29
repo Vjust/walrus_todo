@@ -5,7 +5,6 @@ import * as os from 'os';
 import {
   JobManager,
   BackgroundJob,
-  performanceMonitor,
 } from './PerformanceMonitor';
 import { Logger } from './Logger';
 import chalk = require('chalk');
@@ -542,7 +541,6 @@ export class BackgroundCommandOrchestrator extends EventEmitter {
    * Get current resource usage
    */
   private getCurrentResourceUsage(): ResourceUsage {
-    const memUsage = process.memoryUsage();
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;

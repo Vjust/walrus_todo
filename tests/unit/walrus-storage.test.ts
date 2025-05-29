@@ -38,22 +38,38 @@ describe('WalrusStorage', () => {
   let mockWalrusClient: CompleteWalrusClientMock;
   let mockSuiClient: jest.Mocked<InstanceType<typeof SuiClient>>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset all mocks
     jest.clearAllMocks();
 
-    // Setup mock implementations using complete mock
-    const { WalrusClient: MockWalrusClient } = require('@mysten/walrus');
-    mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
+    // Create mock walrus client
+    mockWalrusClient = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      getConfig: jest.fn().mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 10485760,
+      }),
+      readBlob: jest.fn(),
+      writeBlob: jest.fn(),
+      getBlobObject: jest.fn(),
+      verifyPoA: jest.fn(),
+      storageCost: jest.fn(),
+      executeCreateStorageTransaction: jest.fn(),
+      getWalBalance: jest.fn(),
+      getStorageUsage: jest.fn(),
+      getBlobInfo: jest.fn(),
+      deleteBlob: jest.fn(),
+    } as CompleteWalrusClientMock;
 
     mockSuiClient = {
       connect: jest.fn(),
       getBalance: jest.fn(),
       getLatestSuiSystemState: jest.fn(),
       getOwnedObjects: jest.fn(),
-      signAndExecuteTransactionBlock: jest.fn(),
+      signAndExecuteTransaction: jest.fn(),
       executeTransactionBlock: jest.fn(),
-    } as jest.Mocked<InstanceType<typeof SuiClient>>;
+    } as any;
 
     // Mock constructor implementations
     (SuiClient as jest.Mock).mockImplementation(() => mockSuiClient);
@@ -74,7 +90,45 @@ describe('WalrusStorage', () => {
       coinObjectId: 'mock-coin-object-id',
     });
 
-    mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '1' });
+    mockSuiClient.getLatestSuiSystemState.mockResolvedValue({
+      epoch: '1',
+      protocolVersion: '1',
+      systemStateVersion: '1',
+      storageFundTotalObjectStorageRebates: '0',
+      storageFundNonRefundableBalance: '0',
+      referenceGasPrice: '1000',
+      safeMode: false,
+      safeModeStorageRewards: '0',
+      safeModeComputationRewards: '0',
+      safeModeStorageRebates: '0',
+      safeModeNonRefundableStorageFee: '0',
+      epochStartTimestampMs: '0',
+      epochDurationMs: '86400000',
+      stakeSubsidyStartEpoch: '0',
+      maxValidatorCount: '150',
+      minValidatorJoiningStake: '30000000000000',
+      validatorLowStakeThreshold: '20000000000000',
+      validatorVeryLowStakeThreshold: '15000000000000',
+      validatorLowStakeGracePeriod: '7',
+      stakeSubsidyBalance: '0',
+      stakeSubsidyDistributionCounter: '0',
+      stakeSubsidyCurrentDistributionAmount: '0',
+      stakeSubsidyPeriodLength: '10',
+      stakeSubsidyDecreaseRate: 10,
+      totalStake: '0',
+      activeValidators: [],
+      pendingActiveValidatorsId: 'dummy',
+      pendingActiveValidatorsSize: '0',
+      pendingRemovals: [],
+      stakingPoolMappingsId: 'dummy',
+      stakingPoolMappingsSize: '0',
+      inactiveValidatorsId: 'dummy',
+      inactiveValidatorsSize: '0',
+      validatorCandidatesId: 'dummy',
+      validatorCandidatesSize: '0',
+      atRiskValidators: [],
+      validatorReportRecords: [],
+    } as any);
     mockSuiClient.getOwnedObjects.mockResolvedValue({
       data: [],
       hasNextPage: false,
@@ -105,7 +159,7 @@ describe('WalrusStorage', () => {
       private: false,
     };
 
-    storage = createWalrusStorage();
+    storage = createWalrusStorage(false);
   });
 
   describe('retrieveTodo', () => {
@@ -156,7 +210,20 @@ describe('WalrusStorage', () => {
         .mockRejectedValueOnce(new Error('Second attempt failed'))
         .mockResolvedValueOnce({
           ok: true,
+          status: 200,
+          statusText: 'OK',
+          headers: new Headers(),
+          url: 'https://test.com',
+          type: 'default' as ResponseType,
+          redirected: false,
           arrayBuffer: async () => Buffer.from(JSON.stringify(mockTodo)),
+          blob: async () => new Blob(),
+          formData: async () => new FormData(),
+          json: async () => ({}),
+          text: async () => '',
+          clone: () => ({} as Response),
+          body: null,
+          bodyUsed: false,
         } as Response);
       global.fetch = mockFetch;
 
