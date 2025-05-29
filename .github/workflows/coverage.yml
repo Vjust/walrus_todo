@@ -15,7 +15,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.11.0
+          run_install: false
+
+      - name: Setup pnpm PATH
+        run: echo "$PNPM_HOME" >> $GITHUB_PATH
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,7 +28,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run tests with coverage
         run: pnpm test:coverage
