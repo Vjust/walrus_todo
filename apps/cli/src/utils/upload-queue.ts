@@ -427,6 +427,10 @@ export class UploadQueue extends EventEmitter {
     }
 
     const job = availableJobs[0];
+    if (!job) {
+      return;
+    }
+    
     if (this.processingJobs.has(job.id)) {
       return;
     }
