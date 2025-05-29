@@ -5,16 +5,14 @@
  */
 
 import {
-  // _NetworkError,  // Unused import
   StorageError,
-  // _BlockchainError,  // Unused import
-} from '../../../apps/cli/src/types/errors';
+} from '../../dist/src/types/errors/consolidated/index';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
 
 // Import the components to test
-import { WalrusStorage } from '../../../apps/cli/src/utils/walrus-storage';
-import { RetryManager } from '../../../apps/cli/src/utils/retry-manager';
-import { AIService } from '../../../apps/cli/src/services/ai/aiService';
+import { WalrusStorage } from '../../dist/src/utils/walrus-storage';
+import { RetryManager } from '../../dist/src/utils/retry-manager';
+import { AIService } from '../../dist/src/services/ai/aiService';
 import { AITestFactory } from '../helpers/AITestFactory';
 
 // Mock cross-component dependencies - moved to beforeEach to avoid import issues
@@ -43,7 +41,7 @@ describe('Error Recovery Integration Tests', () => {
     jest.clearAllMocks();
 
     // Mock AIProviderFactory at runtime
-    jest.doMock('../../../apps/cli/src/services/ai/AIProviderFactory', () => ({
+    jest.doMock('../../dist/src/services/ai/AIProviderFactory', () => ({
       AIProviderFactory: {
         createProvider: jest.fn().mockImplementation(() => {
           const mockService = AITestFactory.createMockAIService();
