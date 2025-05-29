@@ -35,9 +35,9 @@ try {
   });
 }
 import { CLIError } from './error-handler';
-import { Logger } from './Logger';
+import { Logger as BaseLogger } from './Logger';
 
-const logger = new Logger('cli-helpers');
+const logger = new BaseLogger('cli-helpers');
 
 /**
  * Unified spinner management for CLI commands
