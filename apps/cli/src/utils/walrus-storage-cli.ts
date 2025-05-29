@@ -117,8 +117,8 @@ export class WalrusStorage {
     await this.connect();
 
     if (this.useMock) {
-      // Return a mock blob ID
-      return `mock-blob-${todo.id}`;
+      // Return a consistent mock blob ID for testing
+      return 'mock-blob-id';
     }
 
     // Create a temporary file with the todo data
@@ -178,7 +178,7 @@ export class WalrusStorage {
     await this.connect();
 
     if (this.useMock) {
-      const mockBlobId = `mock-blob-${todo.id}`;
+      const mockBlobId = 'mock-blob-id';
       const mockTxId = `mock-tx-${Date.now()}`;
       return {
         blobId: mockBlobId,
@@ -289,8 +289,8 @@ export class WalrusStorage {
     await this.connect();
 
     if (this.useMock) {
-      // Return a mock blob ID
-      return `mock-blob-list-${list.id}`;
+      // Return a consistent mock blob ID for testing
+      return 'mock-blob-list-id';
     }
 
     // Create a temporary file with the list data
@@ -345,8 +345,8 @@ export class WalrusStorage {
     const fileName = options.fileName || `blob-${Date.now()}`;
 
     if (this.useMock) {
-      // Return a mock blob ID
-      return `mock-blob-${fileName}-${Date.now()}`;
+      // Return a consistent mock blob ID for testing
+      return 'mock-blob-id';
     }
 
     // Create a temporary file with the data

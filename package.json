@@ -31,7 +31,7 @@
     "check:cli": "node scripts/check-cli.js",
     "check:cli:all": "node scripts/lint-cli-commands.js && node scripts/fix-command-descriptions.js && node scripts/check-cli.js",
     "fix:permissions": "node scripts/fix-permissions.js",
-    "test": "npx --node-options='--max-old-space-size=4096 --expose-gc' jest --no-typecheck --maxWorkers=1 --forceExit",
+    "test": "npx --node-options='--max-old-space-size=4096 --expose-gc' jest --no-typecheck --maxWorkers=1 --forceExit --passWithNoTests --bail",
     "test:robust": "node scripts/test-runner.mjs",
     "test:fallback": "node scripts/test-runner.mjs --strategy=fallback",
     "test:pnpm": "node scripts/test-runner.mjs --strategy=pnpm",

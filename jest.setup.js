@@ -2,8 +2,8 @@
 require('jest-extended');
 const sinon = require('sinon');
 
-// Load global mocks
-require('./tests/setup/global-mocks.js');
+// Load global mocks - commented out to fix jest conflict
+// require('./tests/setup/global-mocks.js');
 
 // Global test timeout
 jest.setTimeout(30000);

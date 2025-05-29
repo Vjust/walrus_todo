@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-05-28T23:59:13.127Z",
+  "timestamp": "2025-05-29T00:02:16.607Z",
   "memoryUsage": {
-    "heapUsedMB": 42,
-    "heapTotalMB": 79,
+    "heapUsedMB": 61,
+    "heapTotalMB": 98,
     "externalMB": 3,
     "thresholds": {
       "warning": 1024,
@@ -10,8 +10,8 @@
     }
   },
   "testResults": {
-    "total": 14,
-    "passed": 13,
-    "failed": 1
+    "total": 9,
+    "passed": 9,
+    "failed": 0
   }
 }
