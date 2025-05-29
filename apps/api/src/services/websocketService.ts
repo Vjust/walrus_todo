@@ -14,7 +14,7 @@ export class WebSocketService {
   private walletSockets: Map<string, Set<string>> = new Map(); // wallet -> set of socket ids
 
   constructor(httpServer: HTTPServer) {
-    const serverOptions: ServerOptions = {
+    const serverOptions: Partial<ServerOptions> = {
       cors: {
         origin: config.cors.origins,
         methods: ['GET', 'POST'],

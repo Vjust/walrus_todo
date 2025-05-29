@@ -81,7 +81,7 @@ export const validate = (schema: {
         const errorMessages = error.errors.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message,
-          received: err.input,
+          received: (err as any).input || 'unknown',
         }));
 
         logger.warn('Validation error', {

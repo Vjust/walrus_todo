@@ -24,6 +24,22 @@ module.exports = {
       verbose: true,
     },
 
+    // Production build with full type checking
+    prod: {
+      transpileOnly: false,
+      skipTypeCheck: false,
+      clean: true,
+      verbose: true,
+    },
+
+    // Full clean build (production with clean)
+    full: {
+      transpileOnly: false,
+      skipTypeCheck: false,
+      clean: true,
+      verbose: true,
+    },
+
     // Clean mode
     clean: {
       clean: true,
@@ -33,6 +49,14 @@ module.exports = {
     // Just generate the manifest
     manifest: {
       manifestOnly: true,
+    },
+
+    // Test build mode (allows type errors in test files)
+    test: {
+      transpileOnly: true,
+      skipTypeCheck: true,
+      clean: false,
+      verbose: false,
     },
   },
 

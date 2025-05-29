@@ -1,5 +1,3 @@
-const { jest } = require('@jest/globals');
-
 // Mock Permission Manager
 const mockPermissionManager = {
   checkPermission: jest.fn().mockImplementation((action, context = {}) => {

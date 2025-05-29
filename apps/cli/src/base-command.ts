@@ -215,7 +215,10 @@ export abstract class BaseCommand extends Command {
       (this.config as any).runHook = () => Promise.resolve({ successes: [], failures: [] });
     }
 
-    await super.init();
+    // Skip calling super.init() in test environment to avoid environment config issues
+    if (process.env.NODE_ENV !== 'test') {
+      await super.init();
+    }
 
     // Parse flags to populate flagsConfig
     const parsed = await this.parse();

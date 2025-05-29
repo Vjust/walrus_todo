@@ -11,7 +11,7 @@ import {
   setEnvFromFlags,
 } from '../utils/CommandValidationMiddleware';
 import { getEnv, hasEnv } from '../utils/environment-config';
-import { TodoService } from '../services/todoService';
+import { todoService } from '../services';
 import { CLIError } from '../types/errors/consolidated';
 import { Todo } from '../types/todo';
 import {
@@ -482,9 +482,7 @@ export default class AI extends BaseCommand {
    * @throws {Error} If no todos are found
    */
   private async getTodos(_listName?: string): Promise<Todo[]> {
-    // Import TodoService here to avoid circular dependencies
-    const todoService = new TodoService();
-
+    // Use the imported singleton todoService instance
     const todos = await todoService.listTodos();
 
     if (todos.length === 0) {

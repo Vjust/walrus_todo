@@ -138,12 +138,12 @@ export default class CreateCommand extends BaseCommand {
         arguments: args,
       });
       const signer = new KeystoreSigner(suiClient);
-      const tx = await signer.signAndExecuteTransaction(txb);
-      if (tx.effects?.status.status !== 'success') {
+      const tx = await signer.signAndExecuteTransaction(txb) as any;
+      if ((tx as any).effects?.status.status !== 'success') {
         // Add optional chaining for null check
         throw new CLIError('Transaction failed', 'TX_FAILED');
       }
-      const createdObjects = tx.effects.created;
+      const createdObjects = (tx as any).effects.created;
       if (!createdObjects || createdObjects.length === 0) {
         throw new CLIError(
           'No objects created in transaction',

@@ -1,5 +1,3 @@
-const { jest } = require('@jest/globals');
-
 // Mock AIVerificationService
 const mockAIVerificationService = {
   createVerification: jest.fn().mockResolvedValue({

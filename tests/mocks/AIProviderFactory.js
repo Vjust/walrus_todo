@@ -1,5 +1,3 @@
-const { jest } = require('@jest/globals');
-
 // Mock AIModelAdapter interface
 const createMockAIModelAdapter = () => ({
   getProviderName: jest.fn().mockReturnValue('mock-provider'),

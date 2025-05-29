@@ -1,5 +1,3 @@
-const { jest } = require('@jest/globals');
-
 // Mock SecureCredentialManager
 const mockSecureCredentialManager = {
   setCredential: jest.fn().mockImplementation(async (provider, credential, type = 'API_KEY', options = {}) => {

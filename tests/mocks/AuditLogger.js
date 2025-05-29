@@ -1,5 +1,3 @@
-const { jest } = require('@jest/globals');
-
 // Mock AuditLogger
 const mockAuditLogger = {
   log: jest.fn().mockImplementation(async (level, message, metadata = {}) => {

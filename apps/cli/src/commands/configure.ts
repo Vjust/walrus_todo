@@ -840,7 +840,7 @@ export default class ConfigureCommand extends BaseCommand {
       // Create background job
       const job = jobManager.createJob(
         'configure',
-        Object.keys(flags).filter(key => flags[key]),
+        Object.keys(flags).filter((key): key is keyof typeof flags => key in flags && flags[key as keyof typeof flags]),
         flags
       );
       jobManager.startJob(job.id);

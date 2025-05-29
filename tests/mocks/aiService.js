@@ -1,5 +1,3 @@
-const { jest } = require('@jest/globals');
-
 // Mock AIService class
 const mockAIService = {
   summarize: jest.fn().mockResolvedValue('Mock summary'),
