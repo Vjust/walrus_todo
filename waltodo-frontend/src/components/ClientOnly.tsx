@@ -1,31 +1,26 @@
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ClientOnlyProps {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
 /**
- * Component that only renders its children on the client, never during SSR
- * This prevents hydration errors for components that use browser-only APIs
+ * Component that only renders its children on the client side to prevent hydration mismatches.
+ * Useful for components that rely on browser-specific APIs or have dynamic content.
  */
 export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
-  // State to track if we're mounted on the client
-  const [mounted, setMounted] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
-  // Set mounted to true on client after hydration
   useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
+    setHasMounted(true);
   }, []);
 
-  // If we're not mounted yet, render nothing or fallback
-  if (!mounted) {
-    return fallback ? <div>{fallback}</div> : null;
+  if (!hasMounted) {
+    return <div suppressHydrationWarning>{fallback}</div>;
   }
 
-  // Render children only on client
-  return <div>{children}</div>;
+  return <div suppressHydrationWarning>{children}</div>;
 }

@@ -81,12 +81,32 @@ const commandRegistryHook: Hook<'init'> = async function (opts) {
 
   // Register basic commands manually
   const basicCommands = [
-    { name: 'add', description: 'Add a new todo', aliases: ['a'], group: 'todos' },
-    { name: 'list', description: 'List todos', aliases: ['ls'], group: 'todos' },
-    { name: 'complete', description: 'Complete a todo', aliases: ['done'], group: 'todos' },
-    { name: 'delete', description: 'Delete a todo', aliases: ['del'], group: 'todos' },
+    {
+      name: 'add',
+      description: 'Add a new todo',
+      aliases: ['a'],
+      group: 'todos',
+    },
+    {
+      name: 'list',
+      description: 'List todos',
+      aliases: ['ls'],
+      group: 'todos',
+    },
+    {
+      name: 'complete',
+      description: 'Complete a todo',
+      aliases: ['done'],
+      group: 'todos',
+    },
+    {
+      name: 'delete',
+      description: 'Delete a todo',
+      aliases: ['del'],
+      group: 'todos',
+    },
   ];
-  
+
   basicCommands.forEach(cmd => {
     commandRegistry.registerCommand(cmd);
   });

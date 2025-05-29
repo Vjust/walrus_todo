@@ -71,7 +71,8 @@ export class StorageManager {
       }
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Network verification failed: ${typedError.message}`,
         'WALRUS_NETWORK_ERROR'
@@ -119,7 +120,8 @@ export class StorageManager {
       };
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Failed to check balances: ${typedError.message}`,
         'WALRUS_BALANCE_CHECK_FAILED'
@@ -130,7 +132,9 @@ export class StorageManager {
   /**
    * Estimates storage costs including buffer and epoch requirements
    */
-  public async estimateStorageCost(sizeBytes: number): Promise<StorageCostEstimate> {
+  public async estimateStorageCost(
+    sizeBytes: number
+  ): Promise<StorageCostEstimate> {
     try {
       // Add buffer to requested size
       const sizeWithBuffer = BigInt(sizeBytes) + this.MIN_STORAGE_BUFFER;
@@ -153,7 +157,8 @@ export class StorageManager {
         epochs: this.DEFAULT_EPOCH_DURATION,
       };
     } catch (error: unknown) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Failed to estimate storage cost: ${typedError.message}`,
         'WALRUS_COST_ESTIMATION_FAILED'
@@ -281,7 +286,8 @@ export class StorageManager {
       };
     } catch (error: unknown) {
       if (error instanceof CLIError) throw error;
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       throw new CLIError(
         `Storage validation failed: ${typedError.message}`,
         'WALRUS_STORAGE_VALIDATION_FAILED'

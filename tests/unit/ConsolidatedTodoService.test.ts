@@ -3,8 +3,8 @@ import * as fsPromises from 'fs/promises';
 import {
   TodoService,
   todoService,
-} from '../../src/services/todoService.consolidated';
-import { STORAGE_CONFIG } from '../../src/constants';
+} from '../../apps/cli/src/services/todoService.consolidated';
+import { STORAGE_CONFIG } from '../../apps/cli/src/constants';
 
 // Mock the filesystem operations
 jest.mock('fs');
@@ -112,7 +112,7 @@ describe('Consolidated TodoService', () => {
       const todo = await todoService.addTodo('testList', {
         title: 'Test Todo',
         description: 'Test Description',
-        priority: 'high',
+        priority: 'high' as const,
       });
 
       expect(todo).toBeDefined();
@@ -167,12 +167,12 @@ describe('Consolidated TodoService', () => {
         description: '',
         completed: true,
         completedAt: expect.any(String),
-        priority: 'medium',
+        priority: 'medium' as const,
         tags: [],
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
         private: true,
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       });
 
       await todoService.toggleItemStatus('testList', '456', true);

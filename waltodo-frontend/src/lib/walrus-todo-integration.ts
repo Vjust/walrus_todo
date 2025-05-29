@@ -24,6 +24,7 @@ import {
   type CreateTodoParams,
   type TransactionResult,
   getSuiClient,
+  getSuiClientSync,
 } from './sui-client';
 
 // Extended Todo interface with Walrus integration

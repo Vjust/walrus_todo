@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/navbar';
 import TodoList from '@/components/todo-list';
 import CreateTodoForm from '@/components/create-todo-form';
+import InitializationGuard from '@/components/InitializationGuard';
 import { useWalletContext } from '@/contexts/WalletContext';
 import {
   getTodoLists,
@@ -12,18 +13,33 @@ import {
 } from '@/lib/todo-service';
 
 export default function Dashboard() {
+  // ALL HOOKS MUST BE DECLARED AT THE TOP - NO CONDITIONAL HOOKS
   const [selectedList, setSelectedList] = useState('default');
   const [refreshKey, setRefreshKey] = useState(0);
   const [todoLists, setTodoLists] = useState<string[]>(['default']);
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
-  const { address } = useWalletContext();
+  const [componentMounted, setComponentMounted] = useState(false);
+  
+  // Safe wallet context access - hook must be called unconditionally
+  const walletContext = useWalletContext();
+  const address = walletContext?.address || null;
 
-  // Load todo lists for the current wallet
+  // Component mount effect
   useEffect(() => {
+    setComponentMounted(true);
+    return () => {
+      setComponentMounted(false);
+    };
+  }, []);
+
+  // Load todo lists for the current wallet with mount guard
+  useEffect(() => {
+    if (!componentMounted) return;
+    
     const lists = getTodoLists(address || undefined);
     setTodoLists(lists.length > 0 ? lists : ['default']);
-  }, [address, refreshKey]);
+  }, [address, refreshKey, componentMounted]);
 
   const handleTodoAdded = () => {
     // Force TodoList to refresh by updating key
@@ -68,6 +84,18 @@ export default function Dashboard() {
       alert('Failed to delete list');
     }
   };
+
+  // Prevent render until component is mounted
+  if (!componentMounted) {
+    return (
+      <div className='max-w-6xl mx-auto'>
+        <Navbar currentPage='dashboard' />
+        <div className='flex justify-center py-12'>
+          <div className='w-12 h-12 rounded-full border-4 border-ocean-light border-t-ocean-deep animate-spin'></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='max-w-6xl mx-auto'>
@@ -204,10 +232,12 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <TodoList
-              key={`${selectedList}-${refreshKey}`}
-              listName={selectedList}
-            />
+            <InitializationGuard requireSuiClient={true}>
+              <TodoList
+                key={`${selectedList}-${refreshKey}`}
+                listName={selectedList}
+              />
+            </InitializationGuard>
           </div>
         </div>
       </div>

@@ -1,22 +1,26 @@
 import { jest } from '@jest/globals';
-import { WalrusClient } from '../../src/types/client';
-import { StorageManager } from '../../src/utils/StorageManager';
+import { WalrusClient } from '../../apps/cli/src/types/client';
+import { StorageManager } from '../../apps/cli/src/utils/StorageManager';
 import {
   StorageError,
   ValidationError,
   BlockchainError,
-} from '../../src/types/errors/consolidated';
-import { Logger } from '../../src/utils/Logger';
-import { createWalrusClientMock, setupDefaultWalrusClientMocks, type MockWalrusClient } from '../../src/__tests__/helpers/walrus-client-mock';
+} from '../../apps/cli/src/types/errors/consolidated';
+import { Logger } from '../../apps/cli/src/utils/Logger';
+import {
+  createWalrusClientMock,
+  setupDefaultWalrusClientMocks,
+  type MockWalrusClient,
+} from '../../apps/cli/src/__tests__/helpers/walrus-client-mock';
 
 jest.mock('@mysten/walrus');
-jest.mock('../../src/utils/Logger');
+jest.mock('../../apps/cli/src/utils/Logger');
 
 describe('StorageManager', () => {
   let manager: StorageManager;
   let mockWalrusClient: MockWalrusClient;
   let mockSuiClient: unknown;
-  let mockLogger: jest.MockedObject<Logger>;
+  let mockLogger: jest.Mocked<Logger>;
 
   const testConfig = {
     minAllocation: 1000n,
@@ -116,7 +120,9 @@ describe('StorageManager', () => {
 
     it('should handle missing balance data', async () => {
       // Mock getWalBalance to return null to simulate missing data
-      mockWalrusClient.getWalBalance.mockResolvedValue(null as unknown as string);
+      mockWalrusClient.getWalBalance.mockResolvedValue(
+        null as unknown as string
+      );
       mockWalrusClient.getStorageUsage.mockResolvedValue({
         used: '100',
         total: '1000',
@@ -130,7 +136,9 @@ describe('StorageManager', () => {
     it('should handle missing storage usage data', async () => {
       mockWalrusClient.getWalBalance.mockResolvedValue('1500');
       // Mock getStorageUsage to return null to simulate missing data
-      mockWalrusClient.getStorageUsage.mockResolvedValue(null as unknown as { used: string; total: string });
+      mockWalrusClient.getStorageUsage.mockResolvedValue(
+        null as unknown as { used: string; total: string }
+      );
 
       await expect(manager.ensureStorageAllocated(100n)).rejects.toThrow(
         ValidationError

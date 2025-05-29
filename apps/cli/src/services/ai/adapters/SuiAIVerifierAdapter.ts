@@ -121,6 +121,23 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   async createVerification(
     params: VerificationParams
   ): Promise<VerificationRecord> {
+    // Add type guards for verification parameters
+    if (!params) {
+      throw new Error('Verification parameters are required');
+    }
+
+    if (params.actionType === undefined || params.actionType === null) {
+      throw new Error('Action type is required for verification');
+    }
+
+    if (!params.request || typeof params.request !== 'string') {
+      throw new Error('Request data is required and must be a string');
+    }
+
+    if (!params.response || typeof params.response !== 'string') {
+      throw new Error('Response data is required and must be a string');
+    }
+
     try {
       // Calculate request and response hashes
       const requestHash = this.hashData(params.request);
@@ -178,7 +195,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   }
 
   /**
-   * Verify a record against provided data
+   * Verify a record against provided data with enhanced tamper detection
    */
   async verifyRecord(
     record: VerificationRecord,
@@ -186,14 +203,60 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     response: string
   ): Promise<boolean> {
     try {
-      // Calculate hashes of the provided request and response
-      const requestHash = this.hashData(request);
-      const responseHash = this.hashData(response);
+      // Calculate hashes of the provided request and response using secure algorithms
+      const calculatedRequestHash = this.hashData(request);
+      const calculatedResponseHash = this.hashData(response);
 
-      // Compare with the hashes in the record
-      const isValid =
-        record.requestHash === requestHash &&
-        record.responseHash === responseHash;
+      // Validate hash format and length for collision resistance
+      if (
+        !this.isValidHashFormat(calculatedRequestHash) ||
+        !this.isValidHashFormat(calculatedResponseHash)
+      ) {
+        logger.error('Invalid hash format detected during verification');
+        return false;
+      }
+
+      // Critical: Hash comparison for tamper detection
+      const requestHashMatches = record.requestHash === calculatedRequestHash;
+      const responseHashMatches =
+        record.responseHash === calculatedResponseHash;
+
+      // Detailed tamper detection logic
+      if (!requestHashMatches) {
+        logger.warn('TAMPERING DETECTED: Request hash mismatch', {
+          recordId: record.id,
+          expected: record.requestHash,
+          calculated: calculatedRequestHash,
+          tampered: true,
+        });
+      }
+
+      if (!responseHashMatches) {
+        logger.warn('TAMPERING DETECTED: Response hash mismatch', {
+          recordId: record.id,
+          expected: record.responseHash,
+          calculated: calculatedResponseHash,
+          tampered: true,
+        });
+      }
+
+      // Return true ONLY if both hashes match (no tampering detected)
+      const isValid = requestHashMatches && responseHashMatches;
+
+      // Log verification result
+      if (isValid) {
+        logger.info('Hash verification PASSED: No tampering detected', {
+          recordId: record.id,
+          verified: true,
+        });
+      } else {
+        logger.error('Hash verification FAILED: Tampering detected', {
+          recordId: record.id,
+          requestTampered: !requestHashMatches,
+          responseTampered: !responseHashMatches,
+          verified: false,
+        });
+      }
 
       return isValid;
     } catch (_error) {
@@ -225,9 +288,7 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       const providerInfo: ProviderInfo = {
         name: fields.name || 'unknown',
         publicKey: fields.public_key || '',
-        verificationCount: parseInt(
-          fields.verification_count || '0'
-        ),
+        verificationCount: parseInt(fields.verification_count || '0'),
         isActive: fields.is_active || false,
         metadata: {},
       };
@@ -236,7 +297,10 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       if (fields.metadata) {
         try {
           const metadataStr = fields.metadata;
-          const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
+          const metadataEntries = JSON.parse(metadataStr) as Array<{
+            key: string;
+            value: string;
+          }>;
 
           // Convert array of {key, value} objects to a Record
           metadataEntries.forEach((entry: { key: string; value: string }) => {
@@ -285,8 +349,13 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         const metadata: Record<string, string> = {};
         if ((content as SuiObjectContent).fields.metadata) {
           try {
-            const metadataStr = ((content as SuiObjectContent).fields as SuiVerificationFields).metadata;
-            const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
+            const metadataStr = (
+              (content as SuiObjectContent).fields as SuiVerificationFields
+            ).metadata;
+            const metadataEntries = JSON.parse(metadataStr) as Array<{
+              key: string;
+              value: string;
+            }>;
 
             // Convert array of {key, value} objects to a Record
             metadataEntries.forEach((entry: { key: string; value: string }) => {
@@ -298,19 +367,16 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
         }
 
         // Create a verification record
-        const fields = (content as SuiObjectContent).fields as SuiVerificationFields;
+        const fields = (content as SuiObjectContent)
+          .fields as SuiVerificationFields;
         const verification: VerificationRecord = {
           id: obj.data.objectId,
           requestHash: fields.request_hash || '',
           responseHash: fields.response_hash || '',
           user: address,
           provider: fields.provider || 'unknown',
-          timestamp: parseInt(
-            fields.timestamp || Date.now().toString()
-          ),
-          verificationType: parseInt(
-            fields.verification_type || '0'
-          ),
+          timestamp: parseInt(fields.timestamp || Date.now().toString()),
+          verificationType: parseInt(fields.verification_type || '0'),
           metadata,
         };
 
@@ -353,7 +419,9 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       const metadata: Record<string, string> = {};
       if ((content as SuiObjectContent).fields.metadata) {
         try {
-          const metadataStr = ((content as SuiObjectContent).fields as SuiVerificationFields).metadata;
+          const metadataStr = (
+            (content as SuiObjectContent).fields as SuiVerificationFields
+          ).metadata;
           const metadataEntries = JSON.parse(metadataStr);
 
           // Convert array of {key, value} objects to a Record
@@ -366,19 +434,16 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
       }
 
       // Create a verification record
-      const fields = (content as SuiObjectContent).fields as SuiVerificationFields;
+      const fields = (content as SuiObjectContent)
+        .fields as SuiVerificationFields;
       const verificationRecord: VerificationRecord = {
         id: verificationId,
         requestHash: fields.request_hash || '',
         responseHash: fields.response_hash || '',
         user: fields.user || '',
         provider: fields.provider || 'unknown',
-        timestamp: parseInt(
-          fields.timestamp || Date.now().toString()
-        ),
-        verificationType: parseInt(
-          fields.verification_type || '0'
-        ),
+        timestamp: parseInt(fields.timestamp || Date.now().toString()),
+        verificationType: parseInt(fields.verification_type || '0'),
         metadata,
       };
 
@@ -390,10 +455,27 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
   }
 
   /**
-   * Hash data for blockchain storage
+   * Hash data for blockchain storage with collision-resistant algorithm
    */
   private hashData(data: string): string {
-    return createHash('sha256').update(data).digest('hex');
+    // Use SHA-256 for collision resistance and standardization
+    const hash = createHash('sha256').update(data, 'utf8').digest('hex');
+
+    // Validate hash output format
+    if (!this.isValidHashFormat(hash)) {
+      throw new Error('Hash generation failed - invalid output format');
+    }
+
+    return hash;
+  }
+
+  /**
+   * Validate hash format for collision resistance verification
+   */
+  private isValidHashFormat(hash: string): boolean {
+    // SHA-256 should produce exactly 64 hexadecimal characters
+    const sha256Pattern = /^[a-fA-F0-9]{64}$/;
+    return sha256Pattern.test(hash);
   }
 
   /**
@@ -403,7 +485,9 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
     response: SuiTransactionBlockResponse
   ): string {
     // Find the first created object in the transaction
-    const effects = response.effects as { created?: Array<{ reference: { objectId: string } }> } | undefined;
+    const effects = response.effects as
+      | { created?: Array<{ reference: { objectId: string } }> }
+      | undefined;
     const created = effects?.created;
 
     if (!created || created.length === 0) {
@@ -531,18 +615,39 @@ export class SuiAIVerifierAdapter implements AIVerifierAdapter {
    */
   async enforceRetentionPolicy(retentionDays: number = 30): Promise<number> {
     try {
-      // Calculate the retention threshold timestamp
+      // Calculate the retention threshold timestamp with replay attack prevention
       const now = Date.now();
       const retentionThreshold = now - retentionDays * 24 * 60 * 60 * 1000;
+
+      // Validate timestamp to prevent manipulation
+      if (retentionThreshold > now || retentionThreshold < 0) {
+        throw new Error(
+          'Invalid retention threshold - potential timestamp manipulation detected'
+        );
+      }
 
       // Get all verifications for the current user
       const userAddress = this.signer.toSuiAddress();
       const verifications = await this.listVerifications(userAddress);
 
-      // Filter for records older than the retention threshold
-      const expiredRecords = verifications.filter(
-        record => record.timestamp < retentionThreshold
-      );
+      // Filter for records older than the retention threshold with timestamp validation
+      const expiredRecords = verifications.filter(record => {
+        // Validate record timestamp format and range
+        if (
+          typeof record.timestamp !== 'number' ||
+          record.timestamp < 0 ||
+          record.timestamp > now
+        ) {
+          logger.warn('Invalid timestamp detected in verification record', {
+            recordId: record.id,
+            timestamp: record.timestamp,
+            suspicious: true,
+          });
+          return false; // Skip suspicious records
+        }
+
+        return record.timestamp < retentionThreshold;
+      });
 
       if (expiredRecords.length === 0) {
         return 0; // No records to delete

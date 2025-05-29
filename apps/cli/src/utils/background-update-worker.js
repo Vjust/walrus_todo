@@ -7,7 +7,9 @@
 
 const { TodoService } = require('../services/todoService');
 const { jobManager } = require('./PerformanceMonitor');
-const { createBackgroundOperationsManager } = require('./background-operations');
+const {
+  createBackgroundOperationsManager,
+} = require('./background-operations');
 const { validateDate, validatePriority } = require('../utils');
 const { CLIError } = require('../types/errors/consolidated');
 
@@ -25,46 +27,49 @@ class BackgroundUpdateWorker {
     try {
       jobManager.startJob(this.jobId, process.pid);
       jobManager.writeJobLog(this.jobId, 'Background update worker started');
-      
+
       // Update progress
       this.updateProgress(10, 'Parsing arguments...');
-      
+
       // Parse arguments and find todo
       const { todo, listName } = await this.findTodo();
-      
+
       this.updateProgress(30, 'Found todo, processing updates...');
-      
+
       // Process update with batch handling if needed
       const updateResult = await this.processUpdate(todo);
-      
+
       this.updateProgress(60, 'Saving changes...');
-      
+
       // Save the list
       const list = await this.todoService.getList(listName);
       if (!list) {
         throw new Error(`List "${listName}" not found`);
       }
       await this.todoService.saveList(listName, list);
-      
+
       this.updateProgress(80, 'Handling post-update operations...');
-      
+
       // Handle background operations (storage sync, AI enhancement)
       await this.handlePostUpdateOperations(updateResult, listName);
-      
+
       this.updateProgress(100, 'Update completed successfully');
-      
+
       // Complete the job
       jobManager.completeJob(this.jobId, {
         todo: updateResult.todo,
         changes: updateResult.changes,
         listName,
-        completedAt: new Date().toISOString()
+        completedAt: new Date().toISOString(),
       });
-      
-      jobManager.writeJobLog(this.jobId, `Update completed: ${updateResult.changes} changes made to "${updateResult.todo.title}"`);
-      
+
+      jobManager.writeJobLog(
+        this.jobId,
+        `Update completed: ${updateResult.changes} changes made to "${updateResult.todo.title}"`
+      );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       jobManager.failJob(this.jobId, errorMessage);
       jobManager.writeJobLog(this.jobId, `Error: ${errorMessage}`);
       process.exit(1);
@@ -110,7 +115,10 @@ class BackgroundUpdateWorker {
     if (searchAllLists) {
       const lists = await this.todoService.getAllListsWithContent();
       for (const [name, list] of Object.entries(lists)) {
-        const found = await this.todoService.getTodoByTitleOrId(todoIdentifier, name);
+        const found = await this.todoService.getTodoByTitleOrId(
+          todoIdentifier,
+          name
+        );
         if (found) {
           todo = found;
           finalListName = name;
@@ -125,9 +133,14 @@ class BackgroundUpdateWorker {
       if (!list) {
         throw new Error(`List "${listName}" not found`);
       }
-      todo = await this.todoService.getTodoByTitleOrId(todoIdentifier, listName);
+      todo = await this.todoService.getTodoByTitleOrId(
+        todoIdentifier,
+        listName
+      );
       if (!todo) {
-        throw new Error(`Todo "${todoIdentifier}" not found in list "${listName}"`);
+        throw new Error(
+          `Todo "${todoIdentifier}" not found in list "${listName}"`
+        );
       }
     }
 
@@ -141,9 +154,12 @@ class BackgroundUpdateWorker {
 
     // Process batch updates if multiple items (future enhancement)
     const batchSize = flags['batch-size'] || 1;
-    
+
     if (batchSize > 1) {
-      jobManager.writeJobLog(this.jobId, `Processing with batch size: ${batchSize}`);
+      jobManager.writeJobLog(
+        this.jobId,
+        `Processing with batch size: ${batchSize}`
+      );
       // For now, we process single item but infrastructure is ready for batches
     }
 
@@ -161,7 +177,10 @@ class BackgroundUpdateWorker {
       }
       todo.priority = flags.priority;
       changes++;
-      jobManager.writeJobLog(this.jobId, `Priority updated to: ${flags.priority}`);
+      jobManager.writeJobLog(
+        this.jobId,
+        `Priority updated to: ${flags.priority}`
+      );
     }
 
     // Update due date
@@ -185,7 +204,10 @@ class BackgroundUpdateWorker {
     if (flags.tags) {
       todo.tags = flags.tags.split(',').map(tag => tag.trim());
       changes++;
-      jobManager.writeJobLog(this.jobId, `Tags updated to: ${todo.tags.join(', ')}`);
+      jobManager.writeJobLog(
+        this.jobId,
+        `Tags updated to: ${todo.tags.join(', ')}`
+      );
     }
 
     // Clear tags
@@ -199,7 +221,10 @@ class BackgroundUpdateWorker {
     if (flags.private !== undefined) {
       todo.private = flags.private;
       changes++;
-      jobManager.writeJobLog(this.jobId, `Privacy updated to: ${flags.private ? 'private' : 'public'}`);
+      jobManager.writeJobLog(
+        this.jobId,
+        `Privacy updated to: ${flags.private ? 'private' : 'public'}`
+      );
     }
 
     if (changes === 0) {
@@ -218,23 +243,35 @@ class BackgroundUpdateWorker {
     // Handle storage synchronization
     if (flags['sync-storage']) {
       try {
-        jobManager.writeJobLog(this.jobId, 'Starting storage synchronization...');
+        jobManager.writeJobLog(
+          this.jobId,
+          'Starting storage synchronization...'
+        );
         const backgroundOps = await createBackgroundOperationsManager();
-        
+
         const syncJobId = await backgroundOps.uploadTodosInBackground([todo], {
-          priority: 'normal'
+          priority: 'normal',
         });
-        
+
         jobManager.writeJobLog(this.jobId, `Storage sync queued: ${syncJobId}`);
-        
+
         // Wait for sync to complete
-        await backgroundOps.waitForOperationWithProgress(syncJobId, (progress) => {
-          jobManager.writeJobLog(this.jobId, `Storage sync progress: ${progress}%`);
-        });
-        
+        await backgroundOps.waitForOperationWithProgress(
+          syncJobId,
+          progress => {
+            jobManager.writeJobLog(
+              this.jobId,
+              `Storage sync progress: ${progress}%`
+            );
+          }
+        );
+
         jobManager.writeJobLog(this.jobId, 'Storage synchronization completed');
       } catch (error) {
-        jobManager.writeJobLog(this.jobId, `Storage sync warning: ${error.message}`);
+        jobManager.writeJobLog(
+          this.jobId,
+          `Storage sync warning: ${error.message}`
+        );
       }
     }
 
@@ -243,20 +280,31 @@ class BackgroundUpdateWorker {
       try {
         jobManager.writeJobLog(this.jobId, 'Starting AI enhancement...');
         const backgroundOps = await createBackgroundOperationsManager();
-        
-        const aiJobId = await backgroundOps.processBatchInBackground([{
-          type: 'ai-enhance',
-          todo,
-          listName,
-          operation: 'update'
-        }], 'low');
-        
+
+        const aiJobId = await backgroundOps.processBatchInBackground(
+          [
+            {
+              type: 'ai-enhance',
+              todo,
+              listName,
+              operation: 'update',
+            },
+          ],
+          'low'
+        );
+
         jobManager.writeJobLog(this.jobId, `AI enhancement queued: ${aiJobId}`);
-        
+
         // For AI enhancement, we don't wait (it's a nice-to-have)
-        jobManager.writeJobLog(this.jobId, 'AI enhancement processing in background');
+        jobManager.writeJobLog(
+          this.jobId,
+          'AI enhancement processing in background'
+        );
       } catch (error) {
-        jobManager.writeJobLog(this.jobId, `AI enhancement warning: ${error.message}`);
+        jobManager.writeJobLog(
+          this.jobId,
+          `AI enhancement warning: ${error.message}`
+        );
       }
     }
   }
@@ -286,7 +334,7 @@ async function main() {
 }
 
 // Handle uncaught errors
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('Uncaught exception in background worker:', error);
   process.exit(1);
 });
@@ -297,7 +345,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 if (require.main === module) {
-  main().catch((error) => {
+  main().catch(error => {
     console.error('Background worker failed:', error);
     process.exit(1);
   });

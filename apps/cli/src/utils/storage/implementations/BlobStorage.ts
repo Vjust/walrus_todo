@@ -230,7 +230,7 @@ export class BlobStorage extends AbstractStorage {
       const result = await StorageOperationHandler.execute(
         async () => {
           const walrusClient = this.client.getWalrusClient();
-          
+
           // We know signer is valid because validateSigner was called above
           if (!this.signer) {
             throw new ValidationError('Signer not available');
@@ -536,7 +536,9 @@ export class BlobStorage extends AbstractStorage {
         );
       }
 
-      const currentEpoch = Number((epochResult.data as { epoch?: string })?.epoch || 0);
+      const currentEpoch = Number(
+        (epochResult.data as { epoch?: string })?.epoch || 0
+      );
 
       // Check WAL balance
       const walBalance = await this.client.getWalBalance();
@@ -573,7 +575,9 @@ export class BlobStorage extends AbstractStorage {
 
       // Calculate required balance with 10% buffer
       const requiredBalance =
-        (BigInt((costResult.data as { totalCost: number }).totalCost) * BigInt(110)) / BigInt(100);
+        (BigInt((costResult.data as { totalCost: number }).totalCost) *
+          BigInt(110)) /
+        BigInt(100);
 
       if (walBalance < requiredBalance) {
         throw new BlockchainError(
@@ -646,7 +650,11 @@ export class BlobStorage extends AbstractStorage {
         { operation: 'get storage object' }
       );
 
-      if (!objectResult.success || !objectResult.data || !(objectResult.data as { data?: { content?: unknown } }).data?.content) {
+      if (
+        !objectResult.success ||
+        !objectResult.data ||
+        !(objectResult.data as { data?: { content?: unknown } }).data?.content
+      ) {
         throw new StorageError('Failed to verify created storage', {
           operation: 'verify storage',
           recoverable: false,
@@ -729,7 +737,9 @@ export class BlobStorage extends AbstractStorage {
         );
       }
 
-      const currentEpoch = Number((epochResult.data as { epoch?: string })?.epoch || 0);
+      const currentEpoch = Number(
+        (epochResult.data as { epoch?: string })?.epoch || 0
+      );
 
       // Get owned storage objects
       const objectsResult = await StorageOperationHandler.execute(
@@ -948,7 +958,7 @@ export class BlobStorage extends AbstractStorage {
 
     if (typeof response === 'object' && response !== null) {
       const obj = response as Record<string, unknown>;
-      
+
       if (obj.blobId && typeof obj.blobId === 'string') {
         return obj.blobId;
       }
@@ -962,7 +972,7 @@ export class BlobStorage extends AbstractStorage {
 
         if (blobObject && typeof blobObject === 'object') {
           const blobObj = blobObject as Record<string, unknown>;
-          
+
           if (blobObj.blob_id && typeof blobObj.blob_id === 'string') {
             return blobObj.blob_id;
           }

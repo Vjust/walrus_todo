@@ -47,14 +47,14 @@ const logger = new Logger('SuiAICredentialAdapter');
  * for verification and storage of AI credential records.
  */
 export class SuiAICredentialAdapter implements AICredentialAdapter {
-  private client: SuiClient;
+  private client: any;
   private signer: SignerAdapter;
   private packageId: string;
   private registryId: string;
   private walrusAdapter?: WalrusClientAdapter;
 
   constructor(
-    client: SuiClient,
+    client: any,
     signer: SignerAdapter,
     packageId: string,
     registryId: string,
@@ -110,7 +110,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return credentialObjectId;
     } catch (_error) {
-      logger.error('Failed to store credential:', _error);
+      logger.error('Failed to store credential:', _error as Error);
       throw new Error(`Failed to store credential: ${_error}`);
     }
   }
@@ -135,18 +135,22 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       // Parse metadata if available
       const metadata: Record<string, unknown> = {};
-      const credentialFields = (content as SuiObjectContent).fields as SuiCredentialFields;
+      const credentialFields = (content as SuiObjectContent)
+        .fields as SuiCredentialFields;
       if (credentialFields.metadata) {
         try {
           const metadataStr = credentialFields.metadata;
-          const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
+          const metadataEntries = JSON.parse(metadataStr) as Array<{
+            key: string;
+            value: string;
+          }>;
 
           // Convert array of {key, value} objects to a Record
           metadataEntries.forEach((entry: { key: string; value: string }) => {
             metadata[entry.key] = entry.value;
           });
         } catch (_error) {
-          logger.warn('Failed to parse credential metadata:', _error);
+          logger.warn('Failed to parse credential metadata:', _error as Record<string, unknown>);
         }
       }
 
@@ -156,23 +160,21 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         id: credentialFields.credential_id || credentialId,
         providerName: credentialFields.provider_name || 'unknown',
         credentialType:
-          (credentialFields.credential_type as CredentialType) || CredentialType.API_KEY,
+          (credentialFields.credential_type as CredentialType) ||
+          CredentialType.API_KEY,
         credentialValue: '', // Not stored on-chain
         metadata,
         isVerified: credentialFields.is_verified || false,
-        verificationProof:
-          credentialFields.verification_proof || undefined,
+        verificationProof: credentialFields.verification_proof || undefined,
         storageOptions: { encrypt: true },
         createdAt: parseInt(credentialFields.created_at || '0'),
         expiresAt: parseInt(credentialFields.expires_at || '0'),
-        permissionLevel: parseInt(
-          credentialFields.permission_level || '0'
-        ),
+        permissionLevel: parseInt(credentialFields.permission_level || '0'),
       };
 
       return providerCredential;
     } catch (_error) {
-      logger.error('Failed to get credential:', _error);
+      logger.error('Failed to get credential:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -198,7 +200,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return credential;
     } catch (_error) {
-      logger.error('Failed to get credential by provider:', _error);
+      logger.error('Failed to get credential by provider:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -230,18 +232,22 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
         // Parse metadata if available
         const metadata: Record<string, unknown> = {};
-        const credentialFields = (content as SuiObjectContent).fields as SuiCredentialFields;
+        const credentialFields = (content as SuiObjectContent)
+          .fields as SuiCredentialFields;
         if (credentialFields.metadata) {
           try {
             const metadataStr = credentialFields.metadata;
-            const metadataEntries = JSON.parse(metadataStr) as Array<{ key: string; value: string }>;
+            const metadataEntries = JSON.parse(metadataStr) as Array<{
+              key: string;
+              value: string;
+            }>;
 
             // Convert array of {key, value} objects to a Record
             metadataEntries.forEach((entry: { key: string; value: string }) => {
               metadata[entry.key] = entry.value;
             });
           } catch (_error) {
-            logger.warn('Failed to parse credential metadata:', _error);
+            logger.warn('Failed to parse credential metadata:', _error as Record<string, unknown>);
           }
         }
 
@@ -250,18 +256,16 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
           id: credentialFields.credential_id || obj.data.objectId,
           providerName: credentialFields.provider_name || 'unknown',
           credentialType:
-            (credentialFields.credential_type as CredentialType) || CredentialType.API_KEY,
+            (credentialFields.credential_type as CredentialType) ||
+            CredentialType.API_KEY,
           credentialValue: '', // Not stored on-chain
           metadata,
           isVerified: credentialFields.is_verified || false,
-          verificationProof:
-            credentialFields.verification_proof || undefined,
+          verificationProof: credentialFields.verification_proof || undefined,
           storageOptions: { encrypt: true },
           createdAt: parseInt(credentialFields.created_at || '0'),
           expiresAt: parseInt(credentialFields.expires_at || '0'),
-          permissionLevel: parseInt(
-            credentialFields.permission_level || '0'
-          ),
+          permissionLevel: parseInt(credentialFields.permission_level || '0'),
         };
 
         credentials.push(credential);
@@ -269,7 +273,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return credentials;
     } catch (_error) {
-      logger.error('Failed to list credentials:', _error);
+      logger.error('Failed to list credentials:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -282,7 +286,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const credentials = await this.listCredentials();
       return credentials.some(c => c.providerName === providerName);
     } catch (_error) {
-      logger.error('Failed to check credential existence:', _error);
+      logger.error('Failed to check credential existence:', _error as Error);
       return false;
     }
   }
@@ -309,7 +313,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return true;
     } catch (_error) {
-      logger.error('Failed to delete credential:', _error);
+      logger.error('Failed to delete credential:', _error as Error);
       return false;
     }
   }
@@ -364,7 +368,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return verificationResult;
     } catch (_error) {
-      logger.error('Failed to verify credential:', _error);
+      logger.error('Failed to verify credential:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -388,20 +392,19 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       const content = verification.data.content;
 
       // Check if verification is still valid
-      const fields = (content as SuiObjectContent).fields as SuiVerificationFields;
+      const fields = (content as SuiObjectContent)
+        .fields as SuiVerificationFields;
       const isValid = fields.is_valid || false;
 
       // Check if verification has expired
-      const expiryTimestamp = parseInt(
-        fields.expiry_timestamp || '0'
-      );
+      const expiryTimestamp = parseInt(fields.expiry_timestamp || '0');
       if (expiryTimestamp > 0 && expiryTimestamp < Date.now()) {
         return false;
       }
 
       return isValid;
     } catch (_error) {
-      logger.error('Failed to check verification status:', _error);
+      logger.error('Failed to check verification status:', _error as Error);
       return false;
     }
   }
@@ -438,8 +441,13 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
         providerName: credential.providerName,
         credentialType: credential.credentialType,
         permissionLevel: credential.permissionLevel,
-        timestamp: parseInt(((content as SuiObjectContent).fields as SuiVerificationFields).timestamp || '0'),
-        verifier: ((content as SuiObjectContent).fields as SuiVerificationFields).verifier || '',
+        timestamp: parseInt(
+          ((content as SuiObjectContent).fields as SuiVerificationFields)
+            .timestamp || '0'
+        ),
+        verifier:
+          ((content as SuiObjectContent).fields as SuiVerificationFields)
+            .verifier || '',
         chainInfo: {
           network: 'sui',
           objectId: credential.verificationProof,
@@ -450,7 +458,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
       // Convert to a shareable string
       return Buffer.from(JSON.stringify(proof)).toString('base64');
     } catch (_error) {
-      logger.error('Failed to generate credential proof:', _error);
+      logger.error('Failed to generate credential proof:', _error as Error);
       throw new Error(`${_error}`);
     }
   }
@@ -477,7 +485,7 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
 
       return true;
     } catch (_error) {
-      logger.error('Failed to revoke verification:', _error);
+      logger.error('Failed to revoke verification:', _error as Error);
       return false;
     }
   }
@@ -496,7 +504,9 @@ export class SuiAICredentialAdapter implements AICredentialAdapter {
     response: SuiTransactionBlockResponse
   ): string {
     // Find the first created object in the transaction
-    const effects = response.effects as { created?: Array<{ reference: { objectId: string } }> } | undefined;
+    const effects = response.effects as
+      | { created?: Array<{ reference: { objectId: string } }> }
+      | undefined;
     const created = effects?.created;
 
     if (!created || created.length === 0) {

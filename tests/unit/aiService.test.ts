@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
-import { AiService } from '../../src/services/ai';
+import { AiService } from '../../apps/cli/src/services/ai';
 import { ChatXAI } from '@langchain/xai';
-import { Todo, TodoList } from '../../src/types/todo';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 // Mock the ChatXAI class
 jest.mock('@langchain/xai', () => {
@@ -34,40 +34,49 @@ describe('AiService', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    process.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
+    // Create minimal env object to avoid deep copying
+    process.env = { XAI_API_KEY: 'mock-api-key' };
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   afterEach(() => {
+    // Restore original env and cleanup
     process.env = originalEnv;
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
-  // Sample todo and todo list for testing
-  const sampleTodo: Todo = {
-    id: 'todo-123',
-    title: 'Complete project',
-    description: 'Finish the quarterly project report',
-    completed: false,
-    priority: 'medium',
-    tags: ['work'],
-    createdAt: '2023-01-01T12:00:00Z',
-    updatedAt: '2023-01-01T12:00:00Z',
-    private: true,
-    storageLocation: 'local',
-  };
+  // Sample todo and todo list for testing - create fresh instances in each test
+  function createSampleTodo(): Todo {
+    return {
+      id: 'todo-123',
+      title: 'Complete project',
+      description: 'Finish the quarterly project report',
+      completed: false,
+      priority: 'medium' as const,
+      tags: ['work'],
+      createdAt: '2023-01-01T12:00:00Z',
+      updatedAt: '2023-01-01T12:00:00Z',
+      private: true,
+      storageLocation: 'local' as const,
+    };
+  }
 
-  const sampleTodoList: TodoList = {
-    id: 'list-123',
-    name: 'Work',
-    owner: 'user-1',
-    todos: [sampleTodo],
-    version: 1,
-    createdAt: '2023-01-01T12:00:00Z',
-    updatedAt: '2023-01-01T12:00:00Z',
-  };
+  function createSampleTodoList(): TodoList {
+    return {
+      id: 'list-123',
+      name: 'Work',
+      owner: 'user-1',
+      todos: [createSampleTodo()],
+      version: 1,
+      createdAt: '2023-01-01T12:00:00Z',
+      updatedAt: '2023-01-01T12:00:00Z',
+    };
+  }
 
   it('should initialize with API key from constructor', () => {
-      new AiService('test-api-key');
+    new AiService('test-api-key');
     expect(ChatXAI).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       model: 'grok-beta',
@@ -91,7 +100,8 @@ describe('AiService', () => {
 
   it('should summarize a todo list', async () => {
     const aiService = new AiService();
-    const summary = await aiService.summarizeTodoList(sampleTodoList);
+    const todoList = createSampleTodoList();
+    const summary = await aiService.summarizeTodoList(todoList);
 
     expect(summary).toBe('Mock summary of the todo list');
     expect(ChatXAI.mock.results[0].value.invoke).toHaveBeenCalled();
@@ -99,7 +109,8 @@ describe('AiService', () => {
 
   it('should suggest tags for a todo', async () => {
     const aiService = new AiService();
-    const tags = await aiService.suggestTags(sampleTodo);
+    const todo = createSampleTodo();
+    const tags = await aiService.suggestTags(todo);
 
     expect(tags).toEqual(['work', 'urgent', 'meeting']);
     expect(ChatXAI.mock.results[0].value.invoke).toHaveBeenCalled();
@@ -112,14 +123,16 @@ describe('AiService', () => {
     });
 
     const aiService = new AiService();
-    await expect(aiService.suggestTags(sampleTodo)).rejects.toThrow(
+    const todo = createSampleTodo();
+    await expect(aiService.suggestTags(todo)).rejects.toThrow(
       'Failed to parse tags'
     );
   });
 
   it('should suggest priority for a todo', async () => {
     const aiService = new AiService();
-    const priority = await aiService.suggestPriority(sampleTodo);
+    const todo = createSampleTodo();
+    const priority = await aiService.suggestPriority(todo);
 
     expect(priority).toBe('high');
     expect(ChatXAI.mock.results[0].value.invoke).toHaveBeenCalled();
@@ -132,14 +145,16 @@ describe('AiService', () => {
     });
 
     const aiService = new AiService();
-    const priority = await aiService.suggestPriority(sampleTodo);
+    const todo = createSampleTodo();
+    const priority = await aiService.suggestPriority(todo);
 
     expect(priority).toBe('medium');
   });
 
   it('should suggest related tasks', async () => {
     const aiService = new AiService();
-    const tasks = await aiService.suggestRelatedTasks(sampleTodoList, 3);
+    const todoList = createSampleTodoList();
+    const tasks = await aiService.suggestRelatedTasks(todoList, 3);
 
     expect(tasks).toEqual(['Task 1', 'Task 2', 'Task 3']);
     expect(ChatXAI.mock.results[0].value.invoke).toHaveBeenCalled();
@@ -152,14 +167,16 @@ describe('AiService', () => {
     });
 
     const aiService = new AiService();
-    await expect(aiService.suggestRelatedTasks(sampleTodoList)).rejects.toThrow(
+    const todoList = createSampleTodoList();
+    await expect(aiService.suggestRelatedTasks(todoList)).rejects.toThrow(
       'Failed to parse task suggestions'
     );
   });
 
   it('should analyze productivity patterns', async () => {
     const aiService = new AiService();
-    const analysis = await aiService.analyzeProductivity(sampleTodoList);
+    const todoList = createSampleTodoList();
+    const analysis = await aiService.analyzeProductivity(todoList);
 
     expect(analysis).toBe('Mock productivity analysis');
     expect(ChatXAI.mock.results[0].value.invoke).toHaveBeenCalled();

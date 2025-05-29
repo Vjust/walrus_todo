@@ -94,10 +94,7 @@ export const TodoSchema = z.object(
       .min(1, 'Walrus blob ID cannot be empty')
       .optional(),
 
-    nftObjectId: z
-      .string()
-      .min(1, 'NFT object ID cannot be empty')
-      .optional(),
+    nftObjectId: z.string().min(1, 'NFT object ID cannot be empty').optional(),
 
     imageUrl: z.string().url('Invalid image URL format').optional(),
 
@@ -156,7 +153,10 @@ export const TodoListSchema = z.object(
       .min(1, 'TodoList owner cannot be empty')
       .max(100, 'TodoList owner too long (max 100 characters)'),
 
-    todos: z.array(TodoSchema).max(1000, 'Too many todos in list (max 1000)').default([]),
+    todos: z
+      .array(TodoSchema)
+      .max(1000, 'Too many todos in list (max 1000)')
+      .default([]),
 
     version: z
       .number()
@@ -194,10 +194,7 @@ export const TodoListSchema = z.object(
       .min(1, 'Walrus blob ID cannot be empty')
       .optional(),
 
-    suiObjectId: z
-      .string()
-      .min(1, 'Sui object ID cannot be empty')
-      .optional(),
+    suiObjectId: z.string().min(1, 'Sui object ID cannot be empty').optional(),
   },
   {
     errorMap: (issue, ctx) => {

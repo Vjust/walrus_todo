@@ -8,10 +8,29 @@ const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
   }
+  if (error === null) {
+    return 'Null error occurred';
+  }
+  if (error === undefined) {
+    return 'Undefined error occurred';
+  }
+  if (typeof error === 'string') {
+    return error || 'Empty string error';
+  }
+  if (typeof error === 'object') {
+    try {
+      const stringified = JSON.stringify(error);
+      return stringified === '{}'
+        ? 'Empty object error'
+        : `Object error: ${stringified}`;
+    } catch {
+      return 'Non-serializable object error';
+    }
+  }
   try {
     return String(error);
-  } catch (error: unknown) {
-    return 'Unknown error';
+  } catch {
+    return `Unknown error of type: ${typeof error}`;
   }
 };
 
@@ -107,7 +126,12 @@ export async function withRetry<T>(
     }
   }
 
-  throw lastError || new Error('Operation failed after all retries');
+  throw (
+    lastError ||
+    new Error(
+      'withRetry: Operation failed after all retries with no error details available'
+    )
+  );
 }
 
 // Using isRetryableError from consolidated types now

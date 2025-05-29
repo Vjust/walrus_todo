@@ -26,6 +26,10 @@ import {
   AIActionType,
 } from '../../types/adapters/AIVerifierAdapter';
 import { Logger } from '../../utils/Logger';
+import {
+  EnhancedErrorHandler,
+  withEnhancedErrorHandling,
+} from '../../utils/enhanced-error-handler';
 
 /**
  * Represents a suggested task with relevance scoring
@@ -140,7 +144,7 @@ export class TaskSuggestionService {
       // This path is for backward compatibility with tests that pass API key
       // In practice, this would create a real EnhancedAIService instance
       throw new Error(
-        'String API key parameter is deprecated. Please pass EnhancedAIService instance directly.'
+        'TaskSuggestionService constructor: String API key parameter is deprecated. Please pass EnhancedAIService instance directly. Received type: string'
       );
     }
 
@@ -178,6 +182,15 @@ export class TaskSuggestionService {
     todos: Todo[],
     context: SuggestionContext = {}
   ): Promise<TaskSuggestionResult> {
+    // Add type guards for parameters
+    if (!Array.isArray(todos)) {
+      throw new Error('Todos parameter must be an array');
+    }
+
+    if (context && typeof context !== 'object') {
+      throw new Error('Context parameter must be an object');
+    }
+
     this.logger.debug(`Generating task suggestions for ${todos.length} todos`);
 
     // Handle empty todo list
@@ -268,7 +281,9 @@ export class TaskSuggestionService {
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<VerifiedAIResult<TaskSuggestionResult>> {
     if (!this.verificationService) {
-      throw new Error('Verification service not initialized');
+      throw new Error(
+        'TaskSuggestionService: Verification service not initialized. Call setVerificationService() or pass verificationService to constructor.'
+      );
     }
 
     const suggestions = await this.suggestTasks(todos, context);
@@ -351,7 +366,7 @@ export class TaskSuggestionService {
       return suggestions;
     } catch (error) {
       this.logger.error(`Error generating related tasks: ${error}`);
-      return [];
+      throw error;
     }
   }
 
@@ -450,7 +465,7 @@ export class TaskSuggestionService {
       }));
     } catch (error) {
       this.logger.error(`Error generating next step tasks: ${error}`);
-      return [];
+      throw error;
     }
   }
 
@@ -518,7 +533,7 @@ export class TaskSuggestionService {
       }));
     } catch (error) {
       this.logger.error(`Error generating dependency tasks: ${error}`);
-      return [];
+      throw error;
     }
   }
 

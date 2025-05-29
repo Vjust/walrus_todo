@@ -66,7 +66,7 @@ export class CLIError extends BaseError {
 
     // Build context with CLI details
     const context = {
-      ...(options.context || {} as Record<string, unknown>),
+      ...(options.context || ({} as Record<string, unknown>)),
       ...(command ? { command } : {}),
       ...(invalidParams ? { invalidParams } : {}),
     };

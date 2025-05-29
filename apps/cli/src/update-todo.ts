@@ -32,14 +32,14 @@ async function main() {
       logger.info(`Updating todo: ${todoToUpdate.title}`);
 
       await todoService.updateTodo(listName, todoToUpdate.id, {
-      // Removed unused updatedTodo variable assignment
-      title: 'Updated Todo Title',
-      description: 'This todo has been updated',
-      priority: 'medium',
-      tags: ['test', 'demo', 'updated'],
-    });
+        // Removed unused updatedTodo variable assignment
+        title: 'Updated Todo Title',
+        description: 'This todo has been updated',
+        priority: 'medium',
+        tags: ['test', 'demo', 'updated'],
+      });
 
-    logger.info('Todo updated');
+      logger.info('Todo updated');
     }
   }
 

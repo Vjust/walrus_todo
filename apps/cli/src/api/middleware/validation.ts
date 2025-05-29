@@ -9,7 +9,11 @@ export interface ValidationOptions {
 }
 
 export function validate(options: ValidationOptions) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       // Validate body
       if (options.body) {
@@ -18,12 +22,12 @@ export function validate(options: ValidationOptions) {
 
       // Validate query
       if (options.query) {
-        req.query = await options.query.parseAsync(req.query) as any;
+        req.query = (await options.query.parseAsync(req.query)) as any;
       }
 
       // Validate params
       if (options.params) {
-        req.params = await options.params.parseAsync(req.params) as any;
+        req.params = (await options.params.parseAsync(req.params)) as any;
       }
 
       next();
@@ -40,14 +44,15 @@ export function validate(options: ValidationOptions) {
                 field: e.path.join('.'),
                 message: e.message,
                 code: e.code,
-              }))
-            }
+              })),
+            },
           }
         );
         next(validationError);
         return;
       } else {
-        const typedError = error instanceof Error ? error : new Error(String(error));
+        const typedError =
+          error instanceof Error ? error : new Error(String(error));
         next(typedError);
         return;
       }

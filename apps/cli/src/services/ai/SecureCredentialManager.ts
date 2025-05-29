@@ -120,7 +120,8 @@ export class SecureCredentialManager {
       }
 
       // Load the key
-      this.encryptionKey = fs.readFileSync(this.keyPath);
+      const key = fs.readFileSync(this.keyPath);
+      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
     } catch (_error) {
       throw new CLIError(
         `Failed to initialize encryption key: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
@@ -136,11 +137,36 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.keyMetadataPath)) {
         const metadataRaw = fs.readFileSync(this.keyMetadataPath, 'utf8');
-        return JSON.parse(metadataRaw);
+        const metadataStr =
+          typeof metadataRaw === 'string'
+            ? metadataRaw
+            : metadataRaw.toString('utf8');
+        const metadata = JSON.parse(metadataStr);
+
+        // Validate metadata structure
+        if (typeof metadata === 'object' && metadata !== null) {
+          return {
+            version: metadata.version || 1,
+            created: metadata.created || metadata.createdAt || Date.now(),
+            lastRotated:
+              metadata.lastRotated || metadata.lastRotatedAt || Date.now(),
+            keyId: metadata.keyId,
+            lastRotatedAt: metadata.lastRotatedAt || metadata.lastRotated,
+            previousKeyId: metadata.previousKeyId,
+            backupLocations: Array.isArray(metadata.backupLocations)
+              ? metadata.backupLocations
+              : [],
+            lastCredentialBackup: metadata.lastCredentialBackup,
+            lastBackupPath: metadata.lastBackupPath,
+            ...metadata,
+          };
+        }
       }
       return null;
-    } catch (_error) {
-      logger.error('Failed to read key metadata:', _error);
+    } catch (_error: unknown) {
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
+      logger.error('Failed to read key metadata:', errorMessage);
       return null;
     }
   }
@@ -150,13 +176,55 @@ export class SecureCredentialManager {
    */
   private updateKeyMetadata(updates: Partial<KeyMetadata>): void {
     try {
-      const currentMetadata = this.getKeyMetadata() || {};
+      const currentMetadata = this.getKeyMetadata() || {
+        version: 1,
+        created: Date.now(),
+        lastRotated: Date.now(),
+        backupLocations: [],
+      };
+
       const updatedMetadata = { ...currentMetadata, ...updates };
-      fs.writeFileSync(this.keyMetadataPath, JSON.stringify(updatedMetadata), {
-        mode: 0o600,
-      });
-    } catch (_error) {
-      logger.error('Failed to update key metadata:', _error);
+
+      // Ensure required fields are present
+      if (!updatedMetadata.keyId) {
+        updatedMetadata.keyId = randomUUID();
+      }
+      if (!updatedMetadata.version) {
+        updatedMetadata.version = 1;
+      }
+      if (!updatedMetadata.created) {
+        updatedMetadata.created = Date.now();
+      }
+
+      // Create backup of current metadata before updating
+      const tempMetadataPath = `${this.keyMetadataPath}.tmp`;
+      fs.writeFileSync(
+        tempMetadataPath,
+        JSON.stringify(updatedMetadata, null, 2),
+        {
+          mode: 0o600,
+        }
+      );
+
+      // Atomic rename
+      fs.renameSync(tempMetadataPath, this.keyMetadataPath);
+    } catch (_error: unknown) {
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
+      logger.error('Failed to update key metadata:', errorMessage);
+
+      // Clean up temporary file if it exists
+      const tempMetadataPath = `${this.keyMetadataPath}.tmp`;
+      try {
+        if (fs.existsSync(tempMetadataPath)) {
+          fs.unlinkSync(tempMetadataPath);
+        }
+      } catch (cleanupError: unknown) {
+        logger.warn(
+          'Failed to clean up temporary metadata file:',
+          cleanupError
+        );
+      }
     }
   }
 
@@ -166,19 +234,37 @@ export class SecureCredentialManager {
   private checkAndRotateKeyIfNeeded(): void {
     try {
       const metadata = this.getKeyMetadata();
-      if (!metadata) return;
+      if (!metadata) {
+        logger.info('No key metadata found, skipping automatic rotation check');
+        return;
+      }
 
-      const lastRotation = metadata.lastRotated || 0;
+      const lastRotation = metadata.lastRotated || metadata.lastRotatedAt || 0;
       const currentTime = Date.now();
       const daysSinceLastRotation = Math.floor(
         (currentTime - lastRotation) / (1000 * 60 * 60 * 24)
       );
 
       if (daysSinceLastRotation >= this.keyRotationIntervalDays) {
-        this.rotateKey();
+        logger.info(
+          `Key rotation needed: ${daysSinceLastRotation} days since last rotation`
+        );
+
+        // Run rotation asynchronously to avoid blocking initialization
+        this.rotateKey().catch((error: unknown) => {
+          logger.error('Automatic key rotation failed:', error);
+          // Don't throw here as this runs during initialization
+        });
+      } else {
+        logger.debug(
+          `Key rotation not needed: ${daysSinceLastRotation}/${this.keyRotationIntervalDays} days`
+        );
       }
-    } catch (_error) {
-      logger.error('Failed to check key rotation status:', _error);
+    } catch (_error: unknown) {
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
+      logger.error('Failed to check key rotation status:', errorMessage);
+      // Don't throw here as this runs during initialization
     }
   }
 
@@ -189,7 +275,10 @@ export class SecureCredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const credentials = this.decrypt(encryptedData);
+        const dataBuffer = Buffer.isBuffer(encryptedData)
+          ? encryptedData
+          : Buffer.from(encryptedData);
+        const credentials = this.decrypt(dataBuffer);
         if (credentials) {
           this.credentials = JSON.parse(credentials.toString());
         }
@@ -249,7 +338,8 @@ export class SecureCredentialManager {
         `Failed to save credentials: ${_error instanceof Error ? _error.message : 'Unknown error'}`
       );
       saveError.name = 'CredentialSaveError';
-      (saveError as Error & { code?: string; cause?: unknown }).code = 'CREDENTIALS_SAVE_FAILED';
+      (saveError as Error & { code?: string; cause?: unknown }).code =
+        'CREDENTIALS_SAVE_FAILED';
       (saveError as Error & { code?: string; cause?: unknown }).cause = _error;
 
       // Log the error without sensitive information
@@ -269,7 +359,9 @@ export class SecureCredentialManager {
       const metadata = this.getKeyMetadata();
       if (!metadata) return;
 
-      const lastBackup = (metadata as KeyMetadata & { lastCredentialBackup?: number }).lastCredentialBackup || 0;
+      const lastBackup =
+        (metadata as KeyMetadata & { lastCredentialBackup?: number })
+          .lastCredentialBackup || 0;
       const currentTime = Date.now();
       const daysSinceLastBackup = Math.floor(
         (currentTime - lastBackup) / (1000 * 60 * 60 * 24)
@@ -825,47 +917,193 @@ export class SecureCredentialManager {
    * Rotate the encryption key
    */
   public async rotateKey(): Promise<boolean> {
+    let oldKey: Buffer | null = null;
+    let backupCreated = false;
+
     try {
+      // Store the old key for potential rollback
+      oldKey = this.encryptionKey ? Buffer.from(this.encryptionKey) : null;
+
       // First, backup the current key and credentials
-      await this.backupKey();
+      try {
+        await this.backupKey();
+        backupCreated = true;
+        logger.info('Key backup completed successfully');
+      } catch (backupError: unknown) {
+        logger.warn(
+          'Key backup failed, continuing with rotation:',
+          backupError
+        );
+        // Continue with rotation even if backup fails, but log the issue
+      }
 
       // Generate a new key
       const newKey = crypto.randomBytes(32);
+      logger.info('New encryption key generated');
 
       // Re-encrypt all credentials with the new key
       // First, decrypt with old key
       let decryptedData: Buffer | null = null;
+      let credentialsExisted = false;
+
       if (fs.existsSync(this.credentialsPath)) {
-        const encryptedData = fs.readFileSync(this.credentialsPath);
-        decryptedData = this.decrypt(encryptedData);
+        credentialsExisted = true;
+        try {
+          const encryptedData = fs.readFileSync(this.credentialsPath);
+          const dataBuffer = Buffer.isBuffer(encryptedData)
+            ? encryptedData
+            : Buffer.from(encryptedData);
+          decryptedData = this.decrypt(dataBuffer);
+
+          if (!decryptedData) {
+            throw new Error(
+              'Failed to decrypt existing credentials with current key'
+            );
+          }
+          logger.info('Existing credentials decrypted successfully');
+        } catch (decryptError: unknown) {
+          logger.error('Failed to decrypt existing credentials:', decryptError);
+          throw new CLIError(
+            'Cannot rotate key: Failed to decrypt existing credentials',
+            'CREDENTIALS_DECRYPT_FAILED'
+          );
+        }
       }
 
-      // Save the new key
-      this.encryptionKey = newKey;
-      fs.writeFileSync(this.keyPath, newKey, { mode: 0o600 });
-
-      // Update key metadata
-      const metadata = this.getKeyMetadata() || { keyId: undefined, version: 0 };
-      this.updateKeyMetadata({
-        keyId: randomUUID(),
-        lastRotatedAt: Date.now(),
-        previousKeyId: metadata.keyId,
-        version: (metadata.version || 0) + 1,
-      });
-
-      // Re-encrypt with new key if we had data
-      if (decryptedData) {
-        const newEncryptedData = this.encrypt(decryptedData.toString());
-        fs.writeFileSync(this.credentialsPath, newEncryptedData, {
-          mode: 0o600,
-        });
+      // Create a temporary backup of the current key before overwriting
+      const tempKeyPath = `${this.keyPath}.tmp_rotation`;
+      if (oldKey && fs.existsSync(this.keyPath)) {
+        try {
+          fs.copyFileSync(this.keyPath, tempKeyPath);
+        } catch (tempBackupError: unknown) {
+          logger.warn(
+            'Failed to create temporary key backup:',
+            tempBackupError
+          );
+          // Continue without temp backup
+        }
       }
 
-      return true;
-    } catch (_error) {
-      logger.error('Key rotation failed:', _error);
+      try {
+        // Save the new key
+        this.encryptionKey = newKey;
+        fs.writeFileSync(this.keyPath, newKey, { mode: 0o600 });
+        logger.info('New key written to disk');
+
+        // Update key metadata
+        const metadata = this.getKeyMetadata() || {
+          keyId: randomUUID(),
+          version: 0,
+          created: Date.now(),
+          lastRotated: 0,
+        };
+
+        const newMetadata = {
+          keyId: randomUUID(),
+          lastRotatedAt: Date.now(),
+          lastRotated: Date.now(), // For backward compatibility
+          previousKeyId: metadata.keyId,
+          version: (metadata.version || 0) + 1,
+          created: metadata.created || Date.now(),
+        };
+
+        this.updateKeyMetadata(newMetadata);
+        logger.info('Key metadata updated');
+
+        // Re-encrypt with new key if we had data
+        if (decryptedData && credentialsExisted) {
+          try {
+            const newEncryptedData = this.encrypt(decryptedData.toString());
+
+            // Create temporary encrypted file first
+            const tempCredentialsPath = `${this.credentialsPath}.tmp`;
+            fs.writeFileSync(tempCredentialsPath, newEncryptedData, {
+              mode: 0o600,
+            });
+
+            // Atomic rename to replace the original
+            fs.renameSync(tempCredentialsPath, this.credentialsPath);
+            logger.info('Credentials re-encrypted with new key');
+          } catch (reencryptError: unknown) {
+            logger.error('Failed to re-encrypt credentials:', reencryptError);
+
+            // Attempt to restore the old key
+            if (oldKey) {
+              try {
+                this.encryptionKey = oldKey;
+                fs.writeFileSync(this.keyPath, oldKey, { mode: 0o600 });
+                logger.info('Rolled back to previous key');
+              } catch (rollbackError: unknown) {
+                logger.error('Failed to rollback key:', rollbackError);
+              }
+            }
+
+            throw new CLIError(
+              'Failed to re-encrypt credentials with new key',
+              'CREDENTIALS_REENCRYPT_FAILED'
+            );
+          }
+        }
+
+        // Clean up temporary files
+        try {
+          if (fs.existsSync(tempKeyPath)) {
+            fs.unlinkSync(tempKeyPath);
+          }
+        } catch (cleanupError: unknown) {
+          logger.warn('Failed to clean up temporary files:', cleanupError);
+        }
+
+        // Validate the key rotation worked
+        if (!this.validateKeyIntegrity()) {
+          throw new Error('Key integrity validation failed after rotation');
+        }
+
+        logger.info('Key rotation completed successfully');
+        return true;
+      } catch (keyWriteError: unknown) {
+        logger.error('Failed to write new key:', keyWriteError);
+
+        // Attempt to restore from temporary backup
+        if (fs.existsSync(tempKeyPath) && oldKey) {
+          try {
+            fs.copyFileSync(tempKeyPath, this.keyPath);
+            this.encryptionKey = oldKey;
+            logger.info('Restored key from temporary backup');
+          } catch (restoreError: unknown) {
+            logger.error('Failed to restore key from backup:', restoreError);
+          }
+        }
+
+        throw keyWriteError;
+      }
+    } catch (_error: unknown) {
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
+      logger.error('Key rotation failed:', errorMessage);
+
+      // Provide more specific error information
+      let specificError = 'Unknown error';
+      if (_error instanceof CLIError) {
+        specificError = _error.message;
+      } else if (_error instanceof Error) {
+        if (
+          _error.message.includes('EACCES') ||
+          _error.message.includes('permission')
+        ) {
+          specificError =
+            'Permission denied - check file/directory permissions';
+        } else if (_error.message.includes('ENOSPC')) {
+          specificError = 'Insufficient disk space';
+        } else if (_error.message.includes('ENOENT')) {
+          specificError = 'Key file or directory not found';
+        } else {
+          specificError = _error.message;
+        }
+      }
+
       throw new CLIError(
-        `Failed to rotate encryption key: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        `Failed to rotate encryption key: ${specificError}`,
         'KEY_ROTATION_FAILED'
       );
     }
@@ -876,43 +1114,126 @@ export class SecureCredentialManager {
    */
   private async backupKey(): Promise<void> {
     try {
+      // Ensure backup directory exists with proper permissions
+      if (!fs.existsSync(this.backupDirectory)) {
+        fs.mkdirSync(this.backupDirectory, { recursive: true, mode: 0o700 });
+      }
+
       const metadata = this.getKeyMetadata();
-      if (!metadata) return;
+      if (!metadata) {
+        // Create minimal metadata if none exists
+        const newMetadata = {
+          keyId: randomUUID(),
+          version: 1,
+          created: Date.now(),
+          lastRotated: Date.now(),
+          backupLocations: [],
+        };
+        this.updateKeyMetadata(newMetadata);
+        return;
+      }
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const keyId = metadata.keyId || randomUUID();
       const backupPath = path.join(
         this.backupDirectory,
-        `key_backup_${metadata.keyId}_${timestamp}`
+        `key_backup_${keyId}_${timestamp}`
       );
 
-      // Copy the current key file to backup
-      fs.copyFileSync(this.keyPath, backupPath, fs.constants.COPYFILE_EXCL);
-      fs.chmodSync(backupPath, 0o400); // Make backup read-only
+      // Verify source key file exists before attempting backup
+      if (!fs.existsSync(this.keyPath)) {
+        logger.warn('Source key file does not exist, skipping backup');
+        return;
+      }
+
+      // Create backup with error handling for file conflicts
+      try {
+        fs.copyFileSync(this.keyPath, backupPath);
+        fs.chmodSync(backupPath, 0o400); // Make backup read-only
+      } catch (copyError: unknown) {
+        if (
+          copyError instanceof Error &&
+          copyError.message.includes('EEXIST')
+        ) {
+          // File already exists, create with unique suffix
+          const uniqueBackupPath = `${backupPath}_${Date.now()}`;
+          fs.copyFileSync(this.keyPath, uniqueBackupPath);
+          fs.chmodSync(uniqueBackupPath, 0o400);
+          // Update the backup path reference
+          backupPath.replace(backupPath, uniqueBackupPath);
+        } else {
+          throw copyError;
+        }
+      }
 
       // Create a backup of the metadata as well
       const metadataBackupPath = path.join(
         this.backupDirectory,
         `metadata_backup_${timestamp}.json`
       );
-      fs.writeFileSync(metadataBackupPath, JSON.stringify(metadata), {
-        mode: 0o400,
-      });
+
+      try {
+        fs.writeFileSync(
+          metadataBackupPath,
+          JSON.stringify(metadata, null, 2),
+          {
+            mode: 0o400,
+          }
+        );
+      } catch (metadataError: unknown) {
+        logger.warn(
+          'Failed to backup metadata, continuing with key backup only:',
+          metadataError
+        );
+        // Continue without metadata backup if it fails
+      }
 
       // Update metadata to record the backup
-      const backupLocations = metadata.backupLocations || [];
+      const backupLocations = Array.isArray(metadata.backupLocations)
+        ? metadata.backupLocations
+        : [];
       backupLocations.push({
         path: backupPath,
         timestamp: Date.now(),
         metadataBackupPath,
       });
 
-      this.updateKeyMetadata({
-        backupLocations: backupLocations.slice(-5), // Keep only the 5 most recent backup references
-      });
-    } catch (_error) {
-      logger.error('Key backup failed:', _error);
+      // Safely update metadata with error handling
+      try {
+        this.updateKeyMetadata({
+          backupLocations: backupLocations.slice(-5), // Keep only the 5 most recent backup references
+        });
+      } catch (updateError: unknown) {
+        logger.warn('Failed to update metadata with backup info:', updateError);
+        // Don't fail the entire backup process if metadata update fails
+      }
+
+      logger.info(`Key backup created successfully at: ${backupPath}`);
+    } catch (_error: unknown) {
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
+      logger.error('Key backup failed:', errorMessage);
+
+      // Provide more specific error information
+      let specificError = 'Unknown error';
+      if (_error instanceof Error) {
+        if (
+          _error.message.includes('EACCES') ||
+          _error.message.includes('permission')
+        ) {
+          specificError =
+            'Permission denied - check file/directory permissions';
+        } else if (_error.message.includes('ENOSPC')) {
+          specificError = 'Insufficient disk space';
+        } else if (_error.message.includes('ENOENT')) {
+          specificError = 'Directory or file not found';
+        } else {
+          specificError = _error.message;
+        }
+      }
+
       throw new CLIError(
-        `Failed to backup encryption key: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        `Failed to backup encryption key: ${specificError}`,
         'KEY_BACKUP_FAILED'
       );
     }
@@ -965,15 +1286,22 @@ export class SecureCredentialManager {
       fs.copyFileSync(backupInfo.path, this.keyPath);
       fs.chmodSync(this.keyPath, 0o600);
 
-      const backupMetadata = JSON.parse(
-        fs.readFileSync(backupInfo.metadataBackupPath, 'utf8')
+      const metadataContent = fs.readFileSync(
+        backupInfo.metadataBackupPath,
+        'utf8'
       );
+      const metadataStr =
+        typeof metadataContent === 'string'
+          ? metadataContent
+          : metadataContent.toString('utf8');
+      const backupMetadata = JSON.parse(metadataStr);
       fs.writeFileSync(this.keyMetadataPath, JSON.stringify(backupMetadata), {
         mode: 0o600,
       });
 
       // Load the restored key
-      this.encryptionKey = fs.readFileSync(this.keyPath);
+      const key = fs.readFileSync(this.keyPath);
+      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
 
       // Re-load credentials with the restored key
       this.loadCredentials();
@@ -1018,6 +1346,12 @@ export class SecureCredentialManager {
    */
   public validateKeyIntegrity(): boolean {
     try {
+      // Ensure we have an encryption key
+      if (!this.encryptionKey || this.encryptionKey.length === 0) {
+        logger.error('No encryption key available for validation');
+        return false;
+      }
+
       // Create a test string and verify encryption/decryption works
       const testString = `test-${Date.now()}-${randomUUID()}`;
       const encrypted = this.encrypt(testString);
@@ -1027,11 +1361,62 @@ export class SecureCredentialManager {
         throw new Error('Encryption/decryption test failed');
       }
 
+      logger.debug('Key integrity validation passed');
       return true;
-    } catch (_error) {
-      logger.error('Key validation failed:', _error);
+    } catch (_error: unknown) {
+      const errorMessage =
+        _error instanceof Error ? _error.message : String(_error);
+      logger.error('Key validation failed:', errorMessage);
       return false;
     }
+  }
+
+  /**
+   * Force key rotation (manual trigger)
+   */
+  public async forceKeyRotation(): Promise<boolean> {
+    logger.info('Manual key rotation initiated');
+    return await this.rotateKey();
+  }
+
+  /**
+   * Get key rotation status
+   */
+  public getKeyRotationStatus(): {
+    needsRotation: boolean;
+    daysSinceLastRotation: number;
+    nextRotationDue: Date;
+    lastRotation: Date | null;
+  } {
+    const metadata = this.getKeyMetadata();
+
+    if (!metadata) {
+      return {
+        needsRotation: false,
+        daysSinceLastRotation: 0,
+        nextRotationDue: new Date(
+          Date.now() + this.keyRotationIntervalDays * 24 * 60 * 60 * 1000
+        ),
+        lastRotation: null,
+      };
+    }
+
+    const lastRotation = metadata.lastRotated || metadata.lastRotatedAt || 0;
+    const currentTime = Date.now();
+    const daysSinceLastRotation = Math.floor(
+      (currentTime - lastRotation) / (1000 * 60 * 60 * 24)
+    );
+
+    const nextRotationDue = new Date(
+      lastRotation + this.keyRotationIntervalDays * 24 * 60 * 60 * 1000
+    );
+
+    return {
+      needsRotation: daysSinceLastRotation >= this.keyRotationIntervalDays,
+      daysSinceLastRotation,
+      nextRotationDue,
+      lastRotation: lastRotation ? new Date(lastRotation) : null,
+    };
   }
 
   /**

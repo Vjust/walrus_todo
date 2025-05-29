@@ -59,9 +59,17 @@ describe('StorageManager - Allocation Tests', () => {
       upload: jest.fn(),
       downloadBlob: jest.fn(),
       storageCost: jest.fn(),
-      getConfig: jest.fn().mockResolvedValue({ network: 'testnet', version: '1.0.0', maxSize: 1000000 }),
+      getConfig: jest
+        .fn()
+        .mockResolvedValue({
+          network: 'testnet',
+          version: '1.0.0',
+          maxSize: 1000000,
+        }),
       getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest.fn().mockResolvedValue({ used: '500', total: '2000' }),
+      getStorageUsage: jest
+        .fn()
+        .mockResolvedValue({ used: '500', total: '2000' }),
       getBlobInfo: jest.fn(),
       getBlobObject: jest.fn(),
       getBlobSize: jest.fn(),

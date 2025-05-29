@@ -5,9 +5,7 @@ import {
   mockXAIProvider,
 } from '../../../helpers/ai-test-utils';
 // MockXAIProvider is available through mocking
-import {
-  AIProviderType,
-} from '../../../../apps/cli/src/services/ai/types';
+import { AIProviderType } from '../../../../apps/cli/src/services/ai/types';
 import type { Todo } from '../../../../apps/cli/src/types/todo';
 
 describe('AIService', () => {
@@ -29,7 +27,7 @@ describe('AIService', () => {
         title: 'Test Todo 1',
         description: 'First test todo',
         status: 'pending',
-        priority: 'medium',
+        priority: 'medium' as const,
         created_at: Date.now().toString(),
         tags: [],
         private: false,
@@ -42,7 +40,7 @@ describe('AIService', () => {
         title: 'Test Todo 2',
         description: 'Second test todo',
         status: 'completed',
-        priority: 'high',
+        priority: 'high' as const,
         created_at: Date.now().toString(),
         tags: [],
         private: false,

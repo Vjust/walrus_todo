@@ -27,7 +27,9 @@ const logger = new Logger('CommandValidationMiddleware');
  * This allows proper typing when accessing command parsing functionality
  */
 type CommandWithParse = {
-  parse(argv: string[]): Promise<{ flags: Record<string, unknown>; args: Record<string, unknown> }>;
+  parse(
+    argv: string[]
+  ): Promise<{ flags: Record<string, unknown>; args: Record<string, unknown> }>;
   new (...args: unknown[]): Command;
 };
 
@@ -67,7 +69,8 @@ export function requireEnvironment(
   requirements: EnvironmentRequirement[]
 ): void {
   // Store the requirements on the command class
-  (cmd as unknown as Record<string, unknown>).environmentRequirements = requirements;
+  (cmd as unknown as Record<string, unknown>).environmentRequirements =
+    requirements;
 }
 
 /**
@@ -81,7 +84,7 @@ export function requireEnvironment(
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if environment requirements are not met
  */
-export const validateEnvironment: Hook<'init'> = async (_options) => {
+export const validateEnvironment: Hook<'init'> = async _options => {
   // For init hooks, we don't have access to the specific command class yet
   // Environment validation will be handled in prerun hooks where command info is available
   return;
@@ -91,15 +94,18 @@ export const validateEnvironment: Hook<'init'> = async (_options) => {
  * Validates environment requirements for commands with environment dependencies
  * This should be used as a prerun hook for specific commands that need environment validation
  */
-export const validateCommandEnvironment: Hook<'prerun'> = async (options) => {
+export const validateCommandEnvironment: Hook<'prerun'> = async options => {
   const command = options.Command;
   // Skip if the command has no environment requirements
-  if (!(command as unknown as Record<string, unknown>).environmentRequirements) {
+  if (
+    !(command as unknown as Record<string, unknown>).environmentRequirements
+  ) {
     return;
   }
 
-  const requirements: EnvironmentRequirement[] = (command as unknown as Record<string, unknown>)
-    .environmentRequirements as EnvironmentRequirement[];
+  const requirements: EnvironmentRequirement[] = (
+    command as unknown as Record<string, unknown>
+  ).environmentRequirements as EnvironmentRequirement[];
   const missingVars: string[] = [];
   const invalidVars: string[] = [];
 
@@ -319,7 +325,7 @@ export function createEnvFlag(
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const addCommandValidation: Hook<'prerun'> = async (options) => {
+export const addCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -341,7 +347,7 @@ export const addCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const completeCommandValidation: Hook<'prerun'> = async (options) => {
+export const completeCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -376,7 +382,7 @@ export const completeCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const deleteCommandValidation: Hook<'prerun'> = async (options) => {
+export const deleteCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -408,7 +414,7 @@ export const deleteCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const updateCommandValidation: Hook<'prerun'> = async (options) => {
+export const updateCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -447,7 +453,7 @@ export const updateCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const listCommandValidation: Hook<'prerun'> = async (options) => {
+export const listCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -474,7 +480,7 @@ export const listCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const aiCommandValidation: Hook<'prerun'> = async (options) => {
+export const aiCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -506,7 +512,7 @@ export const aiCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const imageUploadCommandValidation: Hook<'prerun'> = async (options) => {
+export const imageUploadCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -530,7 +536,7 @@ export const imageUploadCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const createNFTCommandValidation: Hook<'prerun'> = async (options) => {
+export const createNFTCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(
@@ -559,7 +565,7 @@ export const createNFTCommandValidation: Hook<'prerun'> = async (options) => {
  * @param options - The hook options provided by OCLIF
  * @throws Throws error if validation fails
  */
-export const configureCommandValidation: Hook<'prerun'> = async (options) => {
+export const configureCommandValidation: Hook<'prerun'> = async options => {
   // Parse command arguments to get flags
   const { Command, argv } = options;
   const parsedCommand = await (Command as unknown as CommandWithParse).parse(

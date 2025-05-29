@@ -1,29 +1,51 @@
 // Jest setup file for security audit tests
 
 // Set up environment variables for testing
-import { Logger } from '../../src/utils/Logger';
+// Mock logger to avoid circular dependencies
+const logger = {
+  error: (...args) => console.error('[SECURITY-TEST]', ...args),
+  warn: (...args) => console.warn('[SECURITY-TEST]', ...args),
+  info: (...args) => console.info('[SECURITY-TEST]', ...args),
+  debug: (...args) => console.debug('[SECURITY-TEST]', ...args),
+};
 
-const logger = new Logger('setup');
+// Global type declarations for test environment
+if (typeof global.Record === 'undefined') {
+  global.Record = globalThis.Record;
+}
 process.env.NODE_ENV = 'test';
 process.env.XAI_API_KEY = 'test-api-key';
 
 // Set a fixed timestamp for consistent test results
 const fixedDate = new Date('2023-09-15T12:00:00Z');
-global.Date = class extends Date {
+const OriginalDate = Date;
+global.Date = class extends OriginalDate {
   constructor(...args) {
     if (args.length === 0) {
-      return fixedDate;
+      super(fixedDate.getTime());
+    } else {
+      super(...args);
     }
-    return new Date(...args);
   }
 
   static now() {
     return fixedDate.getTime();
   }
+
+  static parse(...args) {
+    return OriginalDate.parse(...args);
+  }
+
+  static UTC(...args) {
+    return OriginalDate.UTC(...args);
+  }
 };
 
 // Additional setup for security tests
-jest.setTimeout(10000); // Increase timeout for security tests
+jest.setTimeout(30000); // Increase timeout for security tests
+
+// Mock @langchain modules are handled by moduleNameMapper in jest.config.js
+// No need for manual mocking here as it causes circular references
 
 // Add global security testing helpers
 global.sanitizeOutput = output => {

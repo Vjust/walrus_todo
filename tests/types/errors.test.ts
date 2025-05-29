@@ -4,7 +4,7 @@ import {
   BlockchainError,
   ValidationError,
   NetworkError,
-} from '../../src/types/errors/consolidated';
+} from '../../apps/cli/src/types/errors/consolidated';
 
 describe('Error Types', () => {
   describe('WalrusError', () => {
@@ -216,10 +216,14 @@ describe('Error Types', () => {
     });
 
     it('should handle non-string sensitive data', () => {
-      const error = ValidationError.forField('Validation failed', 'credentials', {
-        value: { token: 'secret123', key: 'key123' },
-        constraint: 'format',
-      });
+      const error = ValidationError.forField(
+        'Validation failed',
+        'credentials',
+        {
+          value: { token: 'secret123', key: 'key123' },
+          constraint: 'format',
+        }
+      );
 
       const logEntry = error.toLogEntry();
       const serialized = JSON.stringify(logEntry);

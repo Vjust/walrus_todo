@@ -15,12 +15,18 @@ export const isBrowser = () => typeof window !== 'undefined';
 
 // Global flag to track if we're during initial hydration
 let isHydrating = true;
+let hydrationTimer: NodeJS.Timeout | null = null;
 
 // Set isHydrating to false after proper DOM loading
 if (typeof window !== 'undefined') {
   // Use multiple events to ensure hydration is complete
   const markHydrationComplete = () => {
     isHydrating = false;
+    // Clear any pending timer
+    if (hydrationTimer) {
+      clearTimeout(hydrationTimer);
+      hydrationTimer = null;
+    }
   };
 
   // Immediately set to false if the document is already loaded
@@ -28,11 +34,11 @@ if (typeof window !== 'undefined') {
     markHydrationComplete();
   } else {
     // Wait for both DOMContentLoaded and window load
-    document.addEventListener('DOMContentLoaded', markHydrationComplete);
-    window.addEventListener('load', markHydrationComplete);
+    document.addEventListener('DOMContentLoaded', markHydrationComplete, { once: true });
+    window.addEventListener('load', markHydrationComplete, { once: true });
 
     // Fallback timeout in case events don't fire
-    setTimeout(markHydrationComplete, 1000);
+    hydrationTimer = setTimeout(markHydrationComplete, 500); // Reduced timeout for faster response
   }
 }
 
@@ -41,30 +47,25 @@ export function isStorageAvailable(): boolean {
   // Always return false during SSR or hydration
   if (!isBrowser() || isHydrating) return false;
 
-  // Delay access to localStorage until after hydration
-  if (typeof document !== 'undefined' && document.readyState !== 'complete') {
+  // Additional safety check for document readiness
+  if (typeof document !== 'undefined' && document.readyState === 'loading') {
     return false;
   }
 
   try {
     // First check if localStorage is defined
-    if (window.localStorage === undefined) {
+    if (typeof window.localStorage === 'undefined' || window.localStorage === null) {
       return false;
     }
 
-    // Use a safer detection method that doesn't cause errors
-    try {
-      // Check if we're in a private browsing context
-      // This is a safe way to test without triggering errors
-      if ('localStorage' in window && window.localStorage !== null) {
-        // Don't actually access localStorage during this check
-        return true;
-      }
-      return false;
-    } catch (privateBrowsingError) {
-      return false;
-    }
+    // Test actual localStorage functionality
+    const testKey = '__storage_test_key__';
+    window.localStorage.setItem(testKey, 'test');
+    const result = window.localStorage.getItem(testKey);
+    window.localStorage.removeItem(testKey);
+    return result === 'test';
   } catch (e) {
+    // localStorage is not available (private browsing, restrictions, etc.)
     return false;
   }
 }
@@ -83,35 +84,14 @@ function safeLocalStorageAccess<T>(
     return [false, null];
   }
 
-  // Don't access localStorage if document isn't fully loaded
-  if (typeof document !== 'undefined' && document.readyState !== 'complete') {
-    return [false, null];
-  }
-
-  // Additional safety check for iframe/restricted contexts
-  try {
-    // Quick test to see if localStorage is actually accessible
-    // This will throw if we're in a restricted context
-    if (!window.localStorage) {
-      return [false, null];
-    }
-
-    // Test write access (this will fail in private browsing)
-    // Skip this test to avoid console errors
-    // const testKey = '__test_storage_access__';
-    // window.localStorage.setItem(testKey, 'test');
-    // window.localStorage.removeItem(testKey);
-  } catch (accessError) {
-    // Silently return false instead of logging error
+  // Don't access localStorage if document is still loading
+  if (typeof document !== 'undefined' && document.readyState === 'loading') {
     return [false, null];
   }
 
   try {
-    // First verify that localStorage is available
-    if (
-      typeof window === 'undefined' ||
-      typeof window.localStorage === 'undefined'
-    ) {
+    // Verify localStorage availability before use
+    if (typeof window.localStorage === 'undefined' || window.localStorage === null) {
       return [false, null];
     }
 
@@ -129,7 +109,7 @@ function safeLocalStorageAccess<T>(
         return [false, null];
     }
   } catch (error) {
-    // Silently handle errors to avoid console spam
+    // Silently handle errors to avoid console spam during hydration
     return [false, null];
   }
 }

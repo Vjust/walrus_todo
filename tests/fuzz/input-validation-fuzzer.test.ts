@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-conditional-expect */
-import { InputValidator } from '../../src/utils/InputValidator';
-import { ValidationError } from '../../src/types/errors';
+import { InputValidator } from '../../apps/cli/src/utils/InputValidator';
+import { ValidationError } from '../../apps/cli/src/types/errors/consolidated/ValidationError';
 
 describe('Input Validation Fuzzer', () => {
   let validator: InputValidator;
@@ -362,9 +362,9 @@ describe('Input Validation Fuzzer', () => {
       ];
 
       for (const value of invalidValues) {
-        expect(() => validator.validateBatchSize(value as unknown as number)).toThrow(
-          ValidationError
-        );
+        expect(() =>
+          validator.validateBatchSize(value as unknown as number)
+        ).toThrow(ValidationError);
       }
     });
   });

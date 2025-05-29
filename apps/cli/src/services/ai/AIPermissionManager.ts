@@ -129,9 +129,33 @@ export class AIPermissionManager {
       );
     }
 
-    // Convert enum to string or use string directly
+    // Validate input parameters for security
+    if (!provider || typeof provider !== 'string') {
+      if (typeof provider !== 'object' || !(provider in AIProvider)) {
+        throw new Error('Invalid provider parameter');
+      }
+    }
+    if (!operation || typeof operation !== 'string') {
+      throw new Error('Invalid operation parameter');
+    }
+
+    // Convert enum to string or use string directly with proper type checking
     const providerName =
-      typeof provider === 'string' ? provider : AIProvider[provider];
+      typeof provider === 'string'
+        ? provider
+        : typeof provider === 'object' && provider in AIProvider
+          ? Object.keys(AIProvider)[
+              Object.values(AIProvider).indexOf(provider as AIProvider)
+            ]
+          : String(provider);
+
+    // Prevent privilege escalation by checking for restricted operations
+    if (
+      operation === 'blockchain_verification' &&
+      !(await this.hasPermissionLevel(providerName, AIPermissionLevel.ADMIN))
+    ) {
+      throw new Error(`Insufficient permissions for ${operation}`);
+    }
 
     // Get the operation permission requirements
     const operationPermission = this.operationPermissions.get(operation);
@@ -158,6 +182,14 @@ export class AIPermissionManager {
     level: AIPermissionLevel
   ): Promise<boolean> {
     try {
+      // Validate input parameters
+      if (!provider || typeof provider !== 'string') {
+        throw new Error('Invalid provider parameter');
+      }
+      if (typeof level !== 'number') {
+        throw new Error('Invalid permission level parameter');
+      }
+
       // Check if credential exists
       if (!(await this.credentialManager.hasCredential(provider))) {
         return false;
@@ -167,10 +199,23 @@ export class AIPermissionManager {
       const credential =
         await this.credentialManager.getCredentialObject(provider);
 
+      // Prevent unauthorized permission escalation attempts
+      if (
+        level === AIPermissionLevel.ADMIN &&
+        credential.permissionLevel < AIPermissionLevel.ADMIN
+      ) {
+        Logger.getInstance().warn(
+          `Unauthorized permission escalation attempt for provider ${provider}`
+        );
+        return false;
+      }
+
       // Check if permission level is sufficient
       return credential.permissionLevel >= level;
     } catch (err: unknown) {
-      Logger.getInstance().warn(`Permission check failed: ${err instanceof Error ? err.message : String(err)}`);
+      Logger.getInstance().warn(
+        `Permission check failed: ${err instanceof Error ? err.message : String(err)}`
+      );
       return false;
     }
   }
@@ -193,7 +238,9 @@ export class AIPermissionManager {
 
       return credential.permissionLevel;
     } catch (err: unknown) {
-      Logger.getInstance().warn(`Failed to get permission level: ${err instanceof Error ? err.message : String(err)}`);
+      Logger.getInstance().warn(
+        `Failed to get permission level: ${err instanceof Error ? err.message : String(err)}`
+      );
       return AIPermissionLevel.NO_ACCESS;
     }
   }

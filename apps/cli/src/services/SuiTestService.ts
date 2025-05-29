@@ -45,6 +45,7 @@ export interface ISuiService {
     itemId: string,
     changes: Partial<Omit<TodoItem, 'id'>>
   ): Promise<void>;
+  deleteTodo(listId: string, itemId: string): Promise<void>;
   deleteTodoList(listId: string): Promise<void>;
 }
 
@@ -187,6 +188,23 @@ export class SuiTestService implements ISuiService {
   }
 
   /**
+   * Delete a todo item
+   */
+  async deleteTodo(listId: string, itemId: string): Promise<void> {
+    const list = this.todoLists.get(listId);
+    if (!list) {
+      throw new CLIError('Todo list not found', 'LIST_NOT_FOUND');
+    }
+
+    if (!list.items.has(itemId)) {
+      throw new CLIError('Todo item not found', 'ITEM_NOT_FOUND');
+    }
+
+    list.items.delete(itemId);
+    list.updatedAt = Date.now();
+  }
+
+  /**
    * Delete a todo list
    */
   async deleteTodoList(listId: string): Promise<void> {
@@ -200,14 +218,14 @@ export class SuiTestService implements ISuiService {
   /**
    * Verify transaction execution and effects
    */
-  private async verifyTransaction(
-    result: { digest: string; effects?: { status?: { status?: string; error?: string } } }
-  ): Promise<void> {
-    const effects = result.effects as { status?: { status?: string; error?: string } } | undefined;
-    if (
-      !effects?.status?.status ||
-      effects.status.status !== 'success'
-    ) {
+  private async verifyTransaction(result: {
+    digest: string;
+    effects?: { status?: { status?: string; error?: string } };
+  }): Promise<void> {
+    const effects = result.effects as
+      | { status?: { status?: string; error?: string } }
+      | undefined;
+    if (!effects?.status?.status || effects.status.status !== 'success') {
       throw new CLIError(
         `Transaction failed: ${effects?.status?.error || 'Unknown error'}`,
         'TRANSACTION_FAILED'
@@ -237,7 +255,9 @@ export class SuiTestService implements ISuiService {
             },
           });
 
-          const transactionEffects = transactionData.effects as { status?: { status?: string } } | undefined;
+          const transactionEffects = transactionData.effects as
+            | { status?: { status?: string } }
+            | undefined;
           if (transactionEffects?.status?.status !== 'success') {
             throw new CLIError(
               'Transaction verification failed: effects do not match expected state',

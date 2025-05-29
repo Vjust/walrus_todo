@@ -8,5 +8,10 @@
     "revert": "ts-node revert-implicit-any-fixes.ts",
     "test-strict": "tsc --project ../tsconfig.strict.json",
     "incremental": "ts-node incremental-noImplicitAny.ts"
-  }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=10.11.0"
+  },
+  "packageManager": "pnpm@10.11.0"
 }

@@ -4,7 +4,6 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as sinon from 'sinon';
-import { BlobVerificationManager } from '../../src/utils/blob-verification';
 
 // Mock configuration values that would normally be in the user's home directory
 const mockBaseConfig = {
@@ -20,118 +19,48 @@ const mockBaseConfig = {
 // Create temporary directory for test files
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'walrus-verify-test-'));
 
-// Mock the SuiClient initialization
-jest.mock('@mysten/sui/client', () => {
-  return {
-    SuiClient: jest.fn().mockImplementation(() => ({
-      getLatestSuiSystemState: jest.fn().mockResolvedValue({ epoch: '42' }),
-      getObject: jest
-        .fn()
-        .mockResolvedValue({ data: { content: { fields: {} as Record<string, never> } } }),
-      signAndExecuteTransactionBlock: jest
-        .fn()
-        .mockResolvedValue({ digest: 'mock-transaction-digest' }),
-    })),
-  };
-});
+// Mock the background AI operations manager
+const mockBackgroundOpsManager = {
+  getOperationStatus: jest.fn().mockResolvedValue({
+    type: 'verification',
+    status: 'completed',
+    progress: 100,
+    stage: 'completed',
+    startedAt: new Date(),
+    completedAt: new Date(),
+    error: null,
+  }),
+  waitForOperationWithProgress: jest.fn().mockResolvedValue({
+    success: true,
+    result: 'verification completed',
+  }),
+};
 
-// Mock the BlobVerificationManager
-jest.mock('../../src/utils/blob-verification', () => {
-  return {
-    BlobVerificationManager: jest.fn().mockImplementation(() => ({
-      verifyBlob: jest.fn().mockResolvedValue({
-        success: true,
-        details: {
-          size: 1000,
-          checksum: 'mock-checksum',
-          blobId: 'mock-blob-id',
-          certified: true,
-          certificateEpoch: 41,
-          registeredEpoch: 40,
-          attributes: { contentType: 'application/json' },
-        },
-        attempts: 1,
-        poaComplete: true,
-        providers: 2,
-        metadata: {
-          V1: {
-            encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-            unencoded_length: '1000',
-            hashes: [
-              {
-                primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
-                secondary_hash: { Sha256: new Uint8Array(32), $kind: 'Sha256' },
-              },
-            ],
-            $kind: 'V1',
-          },
-          $kind: 'V1',
-        },
-      }),
-      verifyUpload: jest.fn().mockResolvedValue({
-        blobId: 'mock-blob-id',
-        checksums: {
-          sha256: 'mock-sha256',
-          sha512: 'mock-sha512',
-          blake2b: 'mock-blake2b',
-        },
-        certified: true,
-        poaComplete: true,
-        hasMinProviders: true,
-      }),
-      monitorBlobAvailability: jest.fn().mockResolvedValue(undefined),
-    })),
-  };
-});
+// Mock the createBackgroundAIOperationsManager function
+jest.mock('../../apps/cli/src/utils/background-ai-operations', () => ({
+  createBackgroundAIOperationsManager: jest
+    .fn()
+    .mockResolvedValue(mockBackgroundOpsManager),
+  BackgroundAIOperations: jest.fn(),
+  BackgroundAIUtils: jest.fn(),
+}));
 
-// Mock the createMockWalrusClient function
-jest.mock('../../src/utils/MockWalrusClient', () => {
-  const mockClient = {
-    readBlob: jest
-      .fn()
-      .mockResolvedValue(new Uint8Array(Buffer.from('{"test":"data"}'))),
-    getBlobInfo: jest.fn().mockResolvedValue({
-      blob_id: 'mock-blob-id',
-      registered_epoch: 40,
-      certified_epoch: 41,
-      size: '1000',
-      metadata: {
-        V1: { encoding_type: { RedStuff: true, $kind: 'RedStuff' } },
-      },
-    }),
-    getBlobMetadata: jest.fn().mockResolvedValue({
-      V1: {
-        encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-        unencoded_length: '1000',
-        contentType: 'application/json',
-        $kind: 'V1',
-      },
-      $kind: 'V1',
-    }),
-    writeBlob: jest.fn().mockResolvedValue({
-      blobId: 'mock-blob-id',
-      blobObject: { blob_id: 'mock-blob-id' },
-    }),
-    getUnderlyingClient: jest.fn().mockReturnValue({
-      // Mock the underlying client methods
-      readBlob: jest
-        .fn()
-        .mockResolvedValue(new Uint8Array(Buffer.from('{"test":"data"}'))),
-      getBlobInfo: jest.fn().mockResolvedValue({
-        blob_id: 'mock-blob-id',
-        registered_epoch: 40,
-        certified_epoch: 41,
-        size: '1000',
-      }),
-    }),
-  };
+// Mock the config service
+jest.mock('../../apps/cli/src/services/config-service', () => ({
+  configService: {
+    getConfig: jest.fn().mockResolvedValue(mockBaseConfig),
+  },
+}));
 
-  return {
-    createMockWalrusClient: jest.fn().mockReturnValue(mockClient),
-  };
-});
+// Mock the AIVerifierAdapter
+jest.mock('../../apps/cli/src/types/adapters/AIVerifierAdapter', () => ({
+  AIVerifierAdapter: jest.fn(),
+  VerificationRecord: jest.fn(),
+}));
 
 describe('verify commands', () => {
+  let clock: sinon.SinonFakeTimers;
+
   beforeEach(() => {
     // Create test files
     const testJsonContent = JSON.stringify({ test: 'data' }, null, 2);
@@ -139,6 +68,22 @@ describe('verify commands', () => {
 
     // Reset all mocks
     jest.clearAllMocks();
+
+    // Reset mock implementations
+    mockBackgroundOpsManager.getOperationStatus.mockResolvedValue({
+      type: 'verification',
+      status: 'completed',
+      progress: 100,
+      stage: 'completed',
+      startedAt: new Date(),
+      completedAt: new Date(),
+      error: null,
+    });
+
+    mockBackgroundOpsManager.waitForOperationWithProgress.mockResolvedValue({
+      success: true,
+      result: 'verification completed',
+    });
 
     // Set up config in home directory
     const configDir = path.join(os.homedir(), '.walrus-todo');
@@ -149,211 +94,299 @@ describe('verify commands', () => {
       path.join(configDir, 'config.json'),
       JSON.stringify(mockBaseConfig, null, 2)
     );
+
+    // Use fake timers for consistent testing
+    clock = sinon.useFakeTimers();
   });
 
   afterEach(() => {
     // Clean up test files
-    fs.readdirSync(tmpDir).forEach(file => {
-      fs.unlinkSync(path.join(tmpDir, file));
-    });
+    try {
+      fs.readdirSync(tmpDir).forEach(file => {
+        fs.unlinkSync(path.join(tmpDir, file));
+      });
+    } catch (error) {
+      // Ignore cleanup errors
+    }
 
     // Restore clock
-    if (Object.prototype.hasOwnProperty.call(sinon.clock, 'restore')) {
-      sinon.clock.restore();
+    if (clock) {
+      clock.restore();
     }
   });
 
-  after(() => {
+  afterAll(() => {
     // Remove temporary directory
-    fs.rmdirSync(tmpDir, { recursive: true });
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch (error) {
+      // Ignore cleanup errors
+    }
   });
 
-  describe('verify blob', () => {
-    test
-      .stdout()
-      .command(['verify', 'blob', 'mock-blob-id'])
-      .it('successfully verifies an existing blob', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Verification successful');
-        // expect(_ctx.stdout).toContain('Blob ID: mock-blob-id');
-        // expect(_ctx.stdout).toContain('Certified: true');
-        // expect(_ctx.stdout).toContain('Registered at epoch: 40');
-        // expect(_ctx.stdout).toContain('Certified at epoch: 41');
-      });
+  describe('AI verification operations', () => {
+    describe('list action', () => {
+      test
+        .stdout()
+        .command(['verify', 'list'])
+        .it('successfully lists AI operation verifications', ctx => {
+          expect(ctx.stdout).to.contain('Fetching AI operation verifications');
+          expect(ctx.stdout).to.contain('No verifications found');
+        });
 
-    test
-      .stdout()
-      .command(['verify', 'blob', 'mock-blob-id', '--full-metadata'])
-      .it('verifies a blob with full metadata display', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Verification successful');
-        // expect(_ctx.stdout).toContain('Metadata:');
-        // expect(_ctx.stdout).toContain('contentType: application/json');
-      });
+      test
+        .stdout()
+        .command(['verify', 'list', '--format', 'json'])
+        .it('lists verifications in JSON format', ctx => {
+          expect(ctx.stdout).to.contain('Fetching AI operation verifications');
+          expect(ctx.stdout).to.contain('No verifications found');
+        });
 
-    test
-      .stderr()
-      .do(() => {
-        // Mock the verification manager to fail for this test
-        const verifyBlob = BlobVerificationManager.prototype
-          .verifyBlob as jest.Mock;
-        verifyBlob.mockRejectedValueOnce(new Error('Blob not found'));
-      })
-      .command(['verify', 'blob', 'invalid-blob-id'])
-      .exit(1)
-      .it('handles verification failure for non-existent blob', ctx => {
-        expect(ctx.stderr).toContain('Blob not found');
-      });
-  });
+      test
+        .stdout()
+        .command(['verify', 'list', '--background'])
+        .it('starts list operation in background', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Starting verification list operation in background'
+          );
+          expect(ctx.stdout).to.contain('Job ID:');
+          expect(ctx.stdout).to.contain('Commands to check progress:');
+        });
 
-  describe('verify file', () => {
-    test
-      .stdout()
-      .command([
-        'verify',
-        'file',
-        path.join(tmpDir, 'test-data.json'),
-        'mock-blob-id',
-      ])
-      .it('successfully verifies a file against a blob', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('File verification successful');
-        // expect(_ctx.stdout).toContain(
-        //   'File: ' + path.join(tmpDir, 'test-data.json')
-        // );
-        // expect(_ctx.stdout).toContain('Blob ID: mock-blob-id');
-        // expect(_ctx.stdout).toContain('Content matches: true');
-      });
+      test
+        .stdout()
+        .timeout(10000)
+        .command(['verify', 'list', '--background', '--wait'])
+        .it('starts list operation in background and waits', async ctx => {
+          expect(ctx.stdout).to.contain(
+            'Starting verification list operation in background'
+          );
+          expect(ctx.stdout).to.contain(
+            'Simulating verification list operation'
+          );
+        });
+    });
 
-    test
-      .stderr()
-      .command(['verify', 'file', 'non-existent-file.json', 'mock-blob-id'])
-      .exit(1)
-      .it('handles non-existent file', _ctx => {
-        // The error is expected because the file doesn't exist
-        // expect(_ctx.stderr).toContain('ENOENT');
-      });
+    describe('show action', () => {
+      test
+        .stdout()
+        .command(['verify', 'show', 'test-verification-id'])
+        .it('successfully shows verification details', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Fetching verification details for test-verification-id'
+          );
+          expect(ctx.stdout).to.contain('Verification Details:');
+          expect(ctx.stdout).to.contain('ID:          test-verification-id');
+          expect(ctx.stdout).to.contain('Type:        SUMMARIZE');
+          expect(ctx.stdout).to.contain('Metadata:');
+        });
 
-    test
-      .stderr()
-      .do(() => {
-        // Mock the verification manager to fail for this test
-        const verifyBlob = BlobVerificationManager.prototype
-          .verifyBlob as jest.Mock;
-        verifyBlob.mockRejectedValueOnce(new Error('Blob not found'));
-      })
-      .command([
-        'verify',
-        'file',
-        path.join(tmpDir, 'test-data.json'),
-        'invalid-blob-id',
-      ])
-      .exit(1)
-      .it('handles verification failure for non-existent blob', ctx => {
-        expect(ctx.stderr).toContain('Blob not found');
-      });
-  });
+      test
+        .stdout()
+        .command(['verify', 'show', 'test-verification-id', '--format', 'json'])
+        .it('shows verification details in JSON format', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Fetching verification details for test-verification-id'
+          );
+          expect(ctx.stdout).to.contain('"id": "test-verification-id"');
+          expect(ctx.stdout).to.contain('"verificationType": 0');
+        });
 
-  describe('verify upload', () => {
-    test
-      .stdout()
-      .command(['verify', 'upload', path.join(tmpDir, 'test-data.json')])
-      .it('successfully uploads and verifies a file', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Upload and verification successful');
-        // expect(_ctx.stdout).toContain(
-        //   'File: ' + path.join(tmpDir, 'test-data.json')
-        // );
-        // expect(_ctx.stdout).toContain('Blob ID: mock-blob-id');
-        // expect(_ctx.stdout).toContain('Certified: true');
-      });
+      test
+        .stderr()
+        .command(['verify', 'show'])
+        .exit(2)
+        .it('requires verification ID for show action');
 
-    test
-      .stdout()
-      .command([
-        'verify',
-        'upload',
-        path.join(tmpDir, 'test-data.json'),
-        '--wait-for-certification',
-      ])
-      .it('uploads and waits for certification', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Upload and verification successful');
-        // expect(_ctx.stdout).toContain('Waiting for certification...');
-        // expect(_ctx.stdout).toContain('Certified: true');
-      });
+      test
+        .stdout()
+        .command(['verify', 'show', 'test-id', '--background'])
+        .it('starts show operation in background', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Starting verification show operation for test-id in background'
+          );
+          expect(ctx.stdout).to.contain('Job ID:');
+        });
+    });
 
-    test
-      .stdout()
-      .command([
-        'verify',
-        'upload',
-        path.join(tmpDir, 'test-data.json'),
-        '--monitor',
-      ])
-      .it('uploads and monitors availability', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Upload and verification successful');
-        // expect(_ctx.stdout).toContain('Monitoring availability...');
-        // expect(_ctx.stdout).toContain('Monitoring completed successfully');
-      });
+    describe('export action', () => {
+      test
+        .stdout()
+        .command(['verify', 'export', 'test-verification-id'])
+        .it('successfully exports verification', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Exporting verification test-verification-id'
+          );
+          expect(ctx.stdout).to.contain('"type": "AIVerificationAttestation"');
+          expect(ctx.stdout).to.contain('"version": "1.0.0"');
+        });
 
-    test
-      .stderr()
-      .command(['verify', 'upload', 'non-existent-file.json'])
-      .exit(1)
-      .it('handles non-existent file', _ctx => {
-        // The error is expected because the file doesn't exist
-        // expect(_ctx.stderr).toContain('ENOENT');
-      });
-  });
+      test
+        .stdout()
+        .command([
+          'verify',
+          'export',
+          'test-verification-id',
+          '--output',
+          path.join(tmpDir, 'export.json'),
+        ])
+        .it('exports verification to file', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Exporting verification test-verification-id'
+          );
+          expect(ctx.stdout).to.contain(
+            `Attestation exported to ${path.join(tmpDir, 'export.json')}`
+          );
+          // Verify file was created
+          expect(fs.existsSync(path.join(tmpDir, 'export.json'))).to.be.true;
+        });
 
-  describe('verify todo', () => {
-    test
-      .stdout()
-      .command(['verify', 'todo', 'mock-todo-id'])
-      .it('successfully verifies a todo', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Todo verification successful');
-        // expect(_ctx.stdout).toContain('Todo ID: mock-todo-id');
-        // expect(_ctx.stdout).toContain('Blockchain verified: true');
-      });
+      test
+        .stdout()
+        .command(['verify', 'export', 'test-verification-id', '--content'])
+        .it('exports verification with content', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Exporting verification test-verification-id'
+          );
+          expect(ctx.stdout).to.contain('"content"');
+          expect(ctx.stdout).to.contain('"request": "Mock request content"');
+          expect(ctx.stdout).to.contain(
+            '"response": "Mock AI response content"'
+          );
+        });
 
-    test
-      .stdout()
-      .command(['verify', 'todo', 'mock-todo-id', '--show-content'])
-      .it('verifies a todo and shows its content', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Todo verification successful');
-        // expect(_ctx.stdout).toContain('Todo content:');
-        // expect(_ctx.stdout).toContain('"test": "data"');
-      });
-  });
+      test
+        .stderr()
+        .command(['verify', 'export'])
+        .exit(2)
+        .it('requires verification ID for export action');
 
-  describe('verify credential', () => {
-    test
-      .stdout()
-      .command(['verify', 'credential', 'mock-credential-id'])
-      .it('successfully verifies a credential', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Credential verification successful');
-        // expect(_ctx.stdout).toContain('Credential ID: mock-credential-id');
-        // expect(_ctx.stdout).toContain('Signature: Valid');
-        // expect(_ctx.stdout).toContain('Blockchain verification: Passed');
-      });
+      test
+        .stdout()
+        .command(['verify', 'export', 'test-id', '--background'])
+        .it('starts export operation in background', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Starting verification export operation for test-id in background'
+          );
+          expect(ctx.stdout).to.contain('Job ID:');
+        });
+    });
 
-    test
-      .stdout()
-      .command([
-        'verify',
-        'credential',
-        'mock-credential-id',
-        '--skip-revocation-check',
-      ])
-      .it('verifies a credential without revocation check', _ctx => {
-        // Test expectations are handled by the test framework
-        // expect(_ctx.stdout).toContain('Credential verification successful');
-        // expect(_ctx.stdout).toContain('Revocation check: Skipped');
-      });
+    describe('background job management', () => {
+      test
+        .stdout()
+        .command(['verify', 'list', '--jobId', 'test-job-123'])
+        .it('checks status of background job', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Verification Job Status: test-job-123'
+          );
+          expect(ctx.stdout).to.contain('Type: verification');
+          expect(ctx.stdout).to.contain('Status: ✅ Completed');
+          expect(ctx.stdout).to.contain('Progress: 100%');
+        });
+
+      test
+        .stdout()
+        .timeout(5000)
+        .do(() => {
+          // Mock a running operation
+          mockBackgroundOpsManager.getOperationStatus.mockResolvedValueOnce({
+            type: 'verification',
+            status: 'running',
+            progress: 50,
+            stage: 'processing',
+            startedAt: new Date(),
+            completedAt: null,
+            error: null,
+          });
+        })
+        .command(['verify', 'list', '--jobId', 'test-job-123', '--wait'])
+        .it('waits for background job completion', ctx => {
+          expect(ctx.stdout).to.contain(
+            'Verification Job Status: test-job-123'
+          );
+          expect(ctx.stdout).to.contain(
+            'Waiting for verification operation to complete'
+          );
+        });
+
+      test
+        .stdout()
+        .command([
+          'verify',
+          'list',
+          '--jobId',
+          'test-job-123',
+          '--format',
+          'json',
+        ])
+        .it('shows job status in JSON format', ctx => {
+          expect(ctx.stdout).to.contain('"type": "verification"');
+          expect(ctx.stdout).to.contain('"status": "completed"');
+          expect(ctx.stdout).to.contain('"progress": 100');
+        });
+
+      test
+        .stderr()
+        .do(() => {
+          // Mock job not found
+          mockBackgroundOpsManager.getOperationStatus.mockResolvedValueOnce(
+            null
+          );
+        })
+        .command(['verify', 'list', '--jobId', 'nonexistent-job'])
+        .exit(2)
+        .it('handles non-existent job ID', ctx => {
+          expect(ctx.stderr).to.contain('Job nonexistent-job not found');
+        });
+
+      test
+        .stdout()
+        .do(() => {
+          // Mock operation with error
+          mockBackgroundOpsManager.getOperationStatus.mockResolvedValueOnce({
+            type: 'verification',
+            status: 'failed',
+            progress: 75,
+            stage: 'failed',
+            startedAt: new Date(),
+            completedAt: new Date(),
+            error: 'Verification failed: Network timeout',
+          });
+        })
+        .command(['verify', 'list', '--jobId', 'failed-job'])
+        .it('displays job error information', ctx => {
+          expect(ctx.stdout).to.contain('Status: ❌ Failed');
+          expect(ctx.stdout).to.contain(
+            'Error: Verification failed: Network timeout'
+          );
+        });
+    });
+
+    describe('error handling', () => {
+      test
+        .stderr()
+        .command(['verify', 'invalid-action'])
+        .exit(2)
+        .it('handles invalid action');
+
+      test
+        .stderr()
+        .do(() => {
+          // Mock background operations manager failure
+          const mockCreateBackgroundAIOperationsManager =
+            require('../../apps/cli/src/utils/background-ai-operations').createBackgroundAIOperationsManager;
+          mockCreateBackgroundAIOperationsManager.mockRejectedValueOnce(
+            new Error('Background service unavailable')
+          );
+        })
+        .command(['verify', 'list', '--background'])
+        .exit(2)
+        .it('handles background service failure', ctx => {
+          expect(ctx.stderr).to.contain(
+            'Failed to start background verification list: Background service unavailable'
+          );
+        });
+    });
   });
 });

@@ -75,7 +75,7 @@ export default class DeployCommand extends BaseCommand {
 
   static examples = [
     '<%= config.bin %> deploy                                            # Deploy to testnet (default)',
-    '<%= config.bin %> deploy testnet                                    # Deploy to testnet explicitly', 
+    '<%= config.bin %> deploy testnet                                    # Deploy to testnet explicitly',
     '<%= config.bin %> deploy mainnet                                    # Deploy to mainnet',
     '<%= config.bin %> deploy devnet --address 0x123456...              # Deploy to devnet with specific address',
     '<%= config.bin %> deploy localnet                                   # Deploy locally',
@@ -85,7 +85,8 @@ export default class DeployCommand extends BaseCommand {
 
   static args = {
     network: Args.string({
-      description: 'Network to deploy to (localnet, devnet, testnet, mainnet). Defaults to testnet if not specified',
+      description:
+        'Network to deploy to (localnet, devnet, testnet, mainnet). Defaults to testnet if not specified',
       required: false,
       options: ['localnet', 'devnet', 'testnet', 'mainnet'],
       default: 'testnet',
@@ -96,7 +97,8 @@ export default class DeployCommand extends BaseCommand {
     ...BaseCommand.flags,
     network: Flags.string({
       char: 'n',
-      description: 'Network to deploy to (localnet, devnet, testnet, mainnet) - overrides positional argument',
+      description:
+        'Network to deploy to (localnet, devnet, testnet, mainnet) - overrides positional argument',
       required: false,
       options: ['localnet', 'devnet', 'testnet', 'mainnet'],
       hidden: true, // Hide deprecated flag from help
@@ -143,7 +145,11 @@ export default class DeployCommand extends BaseCommand {
 
     // Show deprecation notice if using flag
     if (flags.network) {
-      this.log(chalk.yellow('⚠️  The --network flag is deprecated. Use positional argument instead:'));
+      this.log(
+        chalk.yellow(
+          '⚠️  The --network flag is deprecated. Use positional argument instead:'
+        )
+      );
       this.log(chalk.dim(`    waltodo deploy ${network}`));
     }
 
@@ -173,7 +179,7 @@ export default class DeployCommand extends BaseCommand {
 
     // Pre-deployment validation
     this.log(chalk.blue('\n🔍 Checking prerequisites...'));
-    
+
     try {
       // Check if sui client is installed using the safe command executor
       try {
@@ -232,12 +238,18 @@ export default class DeployCommand extends BaseCommand {
       this.log(chalk.cyan(`💳 Address:     ${chalk.bold(deployAddress)}`));
       this.log(chalk.cyan(`⛽ Gas Budget:  ${chalk.bold(gasBudget)}`));
       this.log(chalk.blue('━'.repeat(50)));
-      
+
       // Warn for mainnet deployment
       if (network === 'mainnet') {
         this.log(chalk.yellow('\n⚠️  WARNING: Deploying to MAINNET'));
-        this.log(chalk.yellow('   This will use real SUI tokens and cannot be undone.'));
-        this.log(chalk.dim('   Press Ctrl+C to cancel, or wait 3 seconds to continue...\n'));
+        this.log(
+          chalk.yellow('   This will use real SUI tokens and cannot be undone.')
+        );
+        this.log(
+          chalk.dim(
+            '   Press Ctrl+C to cancel, or wait 3 seconds to continue...\n'
+          )
+        );
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
 
@@ -309,12 +321,14 @@ export default class DeployCommand extends BaseCommand {
 
       this.log(chalk.blue('\n📦 Publishing package to the Sui blockchain...'));
       this.log(chalk.dim('⏳ This may take a few moments...'));
-      
+
       // Show spinner-like progress
       const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
       let spinnerIndex = 0;
       const spinnerInterval = setInterval(() => {
-        process.stdout.write(`\r${chalk.yellow(spinner[spinnerIndex])} Deploying contract...`);
+        process.stdout.write(
+          `\r${chalk.yellow(spinner[spinnerIndex])} Deploying contract...`
+        );
         spinnerIndex = (spinnerIndex + 1) % spinner.length;
       }, 100);
 
@@ -336,11 +350,11 @@ export default class DeployCommand extends BaseCommand {
           skipDependencyVerification: true,
           json: true,
         });
-        
+
         // Clear the spinner
         clearInterval(spinnerInterval);
         process.stdout.write('\r' + ' '.repeat(30) + '\r'); // Clear the line
-        
+
         let publishResult;
 
         try {
@@ -501,7 +515,7 @@ export default class DeployCommand extends BaseCommand {
         this.log(chalk.dim('   • Use "waltodo add" to create your first todo'));
         this.log(chalk.dim('   • Use "waltodo list" to view your todos'));
         this.log(chalk.dim('   • Run the frontend with "pnpm run nextjs"'));
-        
+
         this.log(chalk.blue('\n🔍 View on Sui Explorer:'));
         this.log(
           chalk.cyan(
@@ -512,7 +526,7 @@ export default class DeployCommand extends BaseCommand {
         // Clear the spinner on error
         clearInterval(spinnerInterval);
         process.stdout.write('\r' + ' '.repeat(30) + '\r'); // Clear the line
-        
+
         const errorObj = execError as {
           status?: number;
           stderr?: { toString(): string };

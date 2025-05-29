@@ -10,6 +10,7 @@ import {
   CredentialType,
 } from '../../types/adapters/AICredentialAdapter';
 import chalk = require('chalk');
+import { getErrorMessage, hasCode } from '../../utils/type-guards';
 
 export default class Credentials extends BaseCommand {
   static description =
@@ -109,8 +110,12 @@ export default class Credentials extends BaseCommand {
       blockchain_key: CredentialType.BLOCKCHAIN_KEY,
     };
 
-    const permissionLevel = permissionLevelMap[flags.permission];
-    const credentialType = credentialTypeMap[flags.type];
+    const permissionLevel = flags.permission && flags.permission in permissionLevelMap
+      ? permissionLevelMap[flags.permission]!
+      : AIPermissionLevel.STANDARD;
+    const credentialType = flags.type && flags.type in credentialTypeMap
+      ? credentialTypeMap[flags.type]!
+      : CredentialType.API_KEY;
 
     switch (actionType) {
       case 'add':
@@ -147,7 +152,12 @@ export default class Credentials extends BaseCommand {
     provider: AIProvider,
     permissionLevel: AIPermissionLevel,
     type: CredentialType,
-    flags: { verify?: boolean; expiry?: number; rotation?: number; permission: string }
+    flags: {
+      verify?: boolean;
+      expiry?: number;
+      rotation?: number;
+      permission: string;
+    }
   ) {
     // Validate provider
     if (!provider) {
@@ -159,7 +169,11 @@ export default class Credentials extends BaseCommand {
 
     try {
       // Create options object from flags
-      const options: { verify?: boolean; expiryDays?: number; rotationReminder?: number } = {
+      const options: {
+        verify?: boolean;
+        expiryDays?: number;
+        rotationReminder?: number;
+      } = {
         verify: flags.verify,
       };
 
@@ -210,12 +224,15 @@ export default class Credentials extends BaseCommand {
         );
       }
     } catch (error) {
-      if (error.code === 'CREDENTIAL_VERIFICATION_FAILED') {
-        this.log(`${chalk.yellow('\u26a0')} ${error.message}`);
-      } else if (error.code === 'INVALID_API_KEY_FORMAT') {
-        this.error(`${chalk.red('\u2717')} ${error.message}`);
+      const errorCode = hasCode(error) ? error.code : undefined;
+      const errorMessage = getErrorMessage(error);
+
+      if (errorCode === 'CREDENTIAL_VERIFICATION_FAILED') {
+        this.log(`${chalk.yellow('\u26a0')} ${errorMessage}`);
+      } else if (errorCode === 'INVALID_API_KEY_FORMAT') {
+        this.error(`${chalk.red('\u2717')} ${errorMessage}`);
       } else {
-        this.error(error.message);
+        this.error(errorMessage);
       }
     }
   }
@@ -242,7 +259,7 @@ export default class Credentials extends BaseCommand {
         `${chalk.green('\u2713')} API key for ${chalk.cyan(provider)} removed successfully`
       );
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -313,7 +330,7 @@ export default class Credentials extends BaseCommand {
             (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
           );
           const daysUntilRotation =
-            cred.metadata.rotationReminder - daysSinceCreation;
+            Number(cred.metadata.rotationReminder) - daysSinceCreation;
 
           if (daysUntilRotation <= 0) {
             this.log(
@@ -345,7 +362,7 @@ export default class Credentials extends BaseCommand {
         `- Set expiry: ${chalk.cyan('walrus_todo ai credentials add <provider> --key EXISTING_KEY --expiry <days>')}`
       );
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -400,7 +417,7 @@ export default class Credentials extends BaseCommand {
         chalk.gray('Note: Blockchain verification is currently in preview mode')
       );
     } catch (error) {
-      this.error(error.message);
+      this.error(getErrorMessage(error));
     }
   }
 
@@ -470,10 +487,13 @@ export default class Credentials extends BaseCommand {
         );
       }
     } catch (error) {
-      if (error.code === 'INVALID_API_KEY_FORMAT') {
-        this.error(`${chalk.red('\u2717')} ${error.message}`);
+      const errorCode = hasCode(error) ? error.code : undefined;
+      const errorMessage = getErrorMessage(error);
+
+      if (errorCode === 'INVALID_API_KEY_FORMAT') {
+        this.error(`${chalk.red('\u2717')} ${errorMessage}`);
       } else {
-        this.error(error.message);
+        this.error(errorMessage);
       }
     }
   }

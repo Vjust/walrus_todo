@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-import { Logger } from '../src/utils/Logger';
-
-const logger = new Logger('check-cli');
 
 /**
  * CLI Command Checker
@@ -13,10 +10,22 @@ const logger = new Logger('check-cli');
  * 4. Ensures proper error handling for invalid inputs
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { spawnSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { Logger } from '../apps/cli/src/utils/Logger.js';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+// Import chalk as CommonJS since it may not be ES module compatible
 const chalk = require('chalk');
-const { spawnSync } = require('child_process');
+
+const logger = new Logger('check-cli');
 
 // Configuration
 const COMMANDS_DIR = path.join(__dirname, '..', 'src', 'commands');

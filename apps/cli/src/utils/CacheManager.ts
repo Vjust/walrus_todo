@@ -41,7 +41,9 @@ export class CacheManager<K extends PropertyKey, V> {
   private readonly options: Required<CacheOptions<K, V>>;
 
   // Default cache options
-  private static readonly DEFAULT_OPTIONS: Required<CacheOptions<PropertyKey, unknown>> = {
+  private static readonly DEFAULT_OPTIONS: Required<
+    CacheOptions<PropertyKey, unknown>
+  > = {
     maxSize: 1000,
     ttl: 5 * 60 * 1000, // 5 minutes
     memoryThreshold: 0.8, // 80% of available memory
@@ -53,9 +55,9 @@ export class CacheManager<K extends PropertyKey, V> {
   };
 
   constructor(options: CacheOptions<K, V> = {}) {
-    this.options = { 
-      ...CacheManager.DEFAULT_OPTIONS, 
-      ...options 
+    this.options = {
+      ...CacheManager.DEFAULT_OPTIONS,
+      ...options,
     } as Required<CacheOptions<K, V>>;
     this.startGarbageCollection();
 

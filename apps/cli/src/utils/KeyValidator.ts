@@ -5,7 +5,7 @@
  * with provider-specific rules and security checks.
  */
 
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 // AIProvider imported but not used
 
 // Define provider-specific key patterns

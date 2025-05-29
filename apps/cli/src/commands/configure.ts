@@ -838,22 +838,34 @@ export default class ConfigureCommand extends BaseCommand {
   private async runConfigurationInBackground(flags: any): Promise<void> {
     try {
       // Create background job
-      const job = jobManager.createJob('configure', Object.keys(flags).filter(key => flags[key]), flags);
+      const job = jobManager.createJob(
+        'configure',
+        Object.keys(flags).filter((key): key is keyof typeof flags => key in flags && flags[key as keyof typeof flags]),
+        flags
+      );
       jobManager.startJob(job.id);
 
       this.log(chalk.blue(`⚙️ Starting configuration setup in background...`));
       this.log(chalk.gray(`Job ID: ${job.id}`));
       this.log(chalk.gray(`Use "waltodo jobs" to check progress`));
-      this.log(chalk.gray(`Use "waltodo status ${job.id}" for detailed status`));
+      this.log(
+        chalk.gray(`Use "waltodo status ${job.id}" for detailed status`)
+      );
 
       // Run configuration in background
       setImmediate(async () => {
         try {
-          jobManager.writeJobLog(job.id, 'Starting background configuration setup');
+          jobManager.writeJobLog(
+            job.id,
+            'Starting background configuration setup'
+          );
           jobManager.updateProgress(job.id, 10);
 
           if (flags.section) {
-            jobManager.writeJobLog(job.id, `Configuring section: ${flags.section}`);
+            jobManager.writeJobLog(
+              job.id,
+              `Configuring section: ${flags.section}`
+            );
             await this.configureSectionInBackground(flags.section, job.id);
           } else if (flags['env-only']) {
             jobManager.writeJobLog(job.id, 'Configuring environment variables');
@@ -867,16 +879,29 @@ export default class ConfigureCommand extends BaseCommand {
 
           // Optionally run validation
           if (flags['validate-after']) {
-            jobManager.writeJobLog(job.id, 'Running post-configuration validation');
+            jobManager.writeJobLog(
+              job.id,
+              'Running post-configuration validation'
+            );
             await this.runPostConfigValidation(job.id);
           }
 
           jobManager.updateProgress(job.id, 100);
-          jobManager.writeJobLog(job.id, 'Configuration setup completed successfully');
-          jobManager.completeJob(job.id, { success: true, configuredSections: flags.section || 'all' });
+          jobManager.writeJobLog(
+            job.id,
+            'Configuration setup completed successfully'
+          );
+          jobManager.completeJob(job.id, {
+            success: true,
+            configuredSections: flags.section || 'all',
+          });
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          jobManager.writeJobLog(job.id, `Configuration failed: ${errorMessage}`);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          jobManager.writeJobLog(
+            job.id,
+            `Configuration failed: ${errorMessage}`
+          );
           jobManager.failJob(job.id, errorMessage);
         }
       });
@@ -892,30 +917,39 @@ export default class ConfigureCommand extends BaseCommand {
   /**
    * Configure a section in background with default values
    */
-  private async configureSectionInBackground(section: string, jobId: string): Promise<void> {
+  private async configureSectionInBackground(
+    section: string,
+    jobId: string
+  ): Promise<void> {
     jobManager.updateProgress(jobId, 30);
-    
+
     switch (section) {
       case 'network':
-        jobManager.writeJobLog(jobId, 'Configuring network settings with defaults');
+        jobManager.writeJobLog(
+          jobId,
+          'Configuring network settings with defaults'
+        );
         // Use default network configuration
         const defaultNetworkConfig = {
           NETWORK: 'testnet',
-          WALLET_ADDRESS: ''
+          WALLET_ADDRESS: '',
         };
         await this.saveConfigInBackground(defaultNetworkConfig, jobId);
         break;
-        
+
       case 'storage':
-        jobManager.writeJobLog(jobId, 'Configuring storage settings with defaults');
+        jobManager.writeJobLog(
+          jobId,
+          'Configuring storage settings with defaults'
+        );
         const defaultStorageConfig = {
           STORAGE_PATH: path.join(process.cwd(), '.waltodo-data'),
           TEMPORARY_STORAGE: path.join(process.cwd(), '.waltodo-temp'),
-          ENCRYPTED_STORAGE: true
+          ENCRYPTED_STORAGE: true,
         };
         await this.saveConfigInBackground(defaultStorageConfig, jobId);
         break;
-        
+
       case 'ai':
         jobManager.writeJobLog(jobId, 'Configuring AI settings with defaults');
         const defaultAIConfig = {
@@ -924,28 +958,31 @@ export default class ConfigureCommand extends BaseCommand {
           AI_TEMPERATURE: 0.7,
           AI_MAX_TOKENS: 1000,
           AI_CACHE_ENABLED: true,
-          AI_CACHE_TTL_MS: 300000
+          AI_CACHE_TTL_MS: 300000,
         };
         await this.saveConfigInBackground(defaultAIConfig, jobId);
         break;
-        
+
       case 'security':
-        jobManager.writeJobLog(jobId, 'Configuring security settings with defaults');
+        jobManager.writeJobLog(
+          jobId,
+          'Configuring security settings with defaults'
+        );
         const defaultSecurityConfig = {
           REQUIRE_SIGNATURE_VERIFICATION: true,
           ENABLE_BLOCKCHAIN_VERIFICATION: true,
           CREDENTIAL_KEY_ITERATIONS: 100000,
           CREDENTIAL_AUTO_ROTATION_DAYS: 30,
           CREDENTIAL_ROTATION_WARNING_DAYS: 7,
-          CREDENTIAL_MAX_FAILED_AUTH: 5
+          CREDENTIAL_MAX_FAILED_AUTH: 5,
         };
         await this.saveConfigInBackground(defaultSecurityConfig, jobId);
         break;
-        
+
       default:
         throw new Error(`Unknown section: ${section}`);
     }
-    
+
     jobManager.updateProgress(jobId, 70);
   }
 
@@ -953,7 +990,10 @@ export default class ConfigureCommand extends BaseCommand {
    * Configure environment in background with defaults
    */
   private async configureEnvironmentInBackground(jobId: string): Promise<void> {
-    jobManager.writeJobLog(jobId, 'Setting up environment configuration with defaults');
+    jobManager.writeJobLog(
+      jobId,
+      'Setting up environment configuration with defaults'
+    );
     jobManager.updateProgress(jobId, 30);
 
     const defaultConfig = {
@@ -962,7 +1002,7 @@ export default class ConfigureCommand extends BaseCommand {
       NETWORK: 'testnet',
       STORAGE_PATH: path.join(process.cwd(), '.waltodo-data'),
       AI_DEFAULT_PROVIDER: 'xai',
-      ENCRYPTED_STORAGE: true
+      ENCRYPTED_STORAGE: true,
     };
 
     await this.saveConfigInBackground(defaultConfig, jobId);
@@ -972,24 +1012,30 @@ export default class ConfigureCommand extends BaseCommand {
   /**
    * Configure all settings in background with defaults
    */
-  private async configureAllInBackground(flags: any, jobId: string): Promise<void> {
-    jobManager.writeJobLog(jobId, 'Setting up complete configuration with defaults');
+  private async configureAllInBackground(
+    flags: any,
+    jobId: string
+  ): Promise<void> {
+    jobManager.writeJobLog(
+      jobId,
+      'Setting up complete configuration with defaults'
+    );
     jobManager.updateProgress(jobId, 20);
 
     const defaultConfig = {
       // Common
       NODE_ENV: 'development',
       LOG_LEVEL: 'info',
-      
+
       // Network
       NETWORK: flags.network || 'testnet',
       WALLET_ADDRESS: flags.walletAddress || '',
-      
+
       // Storage
       STORAGE_PATH: path.join(process.cwd(), '.waltodo-data'),
       TEMPORARY_STORAGE: path.join(process.cwd(), '.waltodo-temp'),
       ENCRYPTED_STORAGE: true,
-      
+
       // AI
       AI_DEFAULT_PROVIDER: 'xai',
       AI_DEFAULT_MODEL: 'grok-beta',
@@ -997,14 +1043,14 @@ export default class ConfigureCommand extends BaseCommand {
       AI_MAX_TOKENS: 1000,
       AI_CACHE_ENABLED: true,
       AI_CACHE_TTL_MS: 300000,
-      
+
       // Security
       REQUIRE_SIGNATURE_VERIFICATION: true,
       ENABLE_BLOCKCHAIN_VERIFICATION: true,
       CREDENTIAL_KEY_ITERATIONS: 100000,
       CREDENTIAL_AUTO_ROTATION_DAYS: 30,
       CREDENTIAL_ROTATION_WARNING_DAYS: 7,
-      CREDENTIAL_MAX_FAILED_AUTH: 5
+      CREDENTIAL_MAX_FAILED_AUTH: 5,
     };
 
     await this.saveConfigInBackground(defaultConfig, jobId);
@@ -1014,30 +1060,39 @@ export default class ConfigureCommand extends BaseCommand {
   /**
    * Save configuration in background
    */
-  private async saveConfigInBackground(config: Record<string, any>, jobId: string): Promise<void> {
+  private async saveConfigInBackground(
+    config: Record<string, any>,
+    jobId: string
+  ): Promise<void> {
     try {
       jobManager.writeJobLog(jobId, 'Saving configuration to file');
-      
+
       // Save to config file
       const homeDir = process.env.HOME || process.env.USERPROFILE || '';
       const configPath = path.join(homeDir, CLI_CONFIG.CONFIG_FILE);
       await saveConfigToFile(config, configPath);
 
       // Update wallet config if applicable
-      if (config.NETWORK || config.WALLET_ADDRESS !== undefined || config.ENCRYPTED_STORAGE !== undefined) {
+      if (
+        config.NETWORK ||
+        config.WALLET_ADDRESS !== undefined ||
+        config.ENCRYPTED_STORAGE !== undefined
+      ) {
         await configService.saveConfig({
           network: config.NETWORK,
           walletAddress: config.WALLET_ADDRESS,
-          encryptedStorage: config.ENCRYPTED_STORAGE
+          encryptedStorage: config.ENCRYPTED_STORAGE,
         });
       }
 
       // Reload environment configuration
       envConfig.loadFromObject(config);
-      
+
       jobManager.writeJobLog(jobId, 'Configuration saved successfully');
     } catch (error) {
-      throw new Error(`Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -1047,17 +1102,19 @@ export default class ConfigureCommand extends BaseCommand {
   private async runPostConfigValidation(jobId: string): Promise<void> {
     try {
       jobManager.writeJobLog(jobId, 'Running post-configuration validation');
-      
+
       // Basic validation
       envConfig.validate();
       jobManager.writeJobLog(jobId, 'Basic validation passed');
-      
+
       // Network connectivity check (simulated)
       await new Promise(resolve => setTimeout(resolve, 1000));
       jobManager.writeJobLog(jobId, 'Network connectivity verified');
-      
     } catch (error) {
-      jobManager.writeJobLog(jobId, `Validation warning: ${error instanceof Error ? error.message : String(error)}`);
+      jobManager.writeJobLog(
+        jobId,
+        `Validation warning: ${error instanceof Error ? error.message : String(error)}`
+      );
       // Don't fail the job for validation warnings
     }
   }
@@ -1066,24 +1123,41 @@ export default class ConfigureCommand extends BaseCommand {
    * Run validation in background (used for validate-after flag)
    */
   private async runValidationInBackground(): Promise<void> {
-    const validationJob = jobManager.createJob('config', ['validate', 'basic'], { background: true });
+    const validationJob = jobManager.createJob(
+      'config',
+      ['validate', 'basic'],
+      { background: true }
+    );
     jobManager.startJob(validationJob.id);
-    
+
     this.log(chalk.gray(`Validation job started: ${validationJob.id}`));
-    
+
     setImmediate(async () => {
       try {
-        jobManager.writeJobLog(validationJob.id, 'Running post-configuration validation');
+        jobManager.writeJobLog(
+          validationJob.id,
+          'Running post-configuration validation'
+        );
         jobManager.updateProgress(validationJob.id, 50);
-        
+
         envConfig.validate();
-        
+
         jobManager.updateProgress(validationJob.id, 100);
-        jobManager.writeJobLog(validationJob.id, 'Validation completed successfully');
-        jobManager.completeJob(validationJob.id, { success: true, type: 'post-config-validation' });
+        jobManager.writeJobLog(
+          validationJob.id,
+          'Validation completed successfully'
+        );
+        jobManager.completeJob(validationJob.id, {
+          success: true,
+          type: 'post-config-validation',
+        });
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        jobManager.writeJobLog(validationJob.id, `Validation failed: ${errorMessage}`);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        jobManager.writeJobLog(
+          validationJob.id,
+          `Validation failed: ${errorMessage}`
+        );
         jobManager.failJob(validationJob.id, errorMessage);
       }
     });

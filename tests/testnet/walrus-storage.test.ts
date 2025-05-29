@@ -10,29 +10,28 @@
  * Run with: WALRUS_TEST_ENABLE_TESTNET=true pnpm test tests/testnet/walrus-storage.test.ts
  */
 
-import { TodoStorage } from '../../src/utils/storage/implementations/TodoStorage';
-import { StorageClient } from '../../src/utils/storage/core/StorageClient';
-import { ImageStorage } from '../../src/utils/storage/implementations/ImageStorage';
+import { TodoStorage } from '../../apps/cli/src/utils/storage/implementations/TodoStorage';
+import { StorageClient } from '../../apps/cli/src/utils/storage/core/StorageClient';
+import { ImageStorage } from '../../apps/cli/src/utils/storage/implementations/ImageStorage';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
 describe('Walrus Testnet Integration', () => {
   const isTestnetEnabled = process.env.WALRUS_TEST_ENABLE_TESTNET === 'true';
-  
+
   const describeIfEnabled = isTestnetEnabled ? describe : describe.skip;
-  
+
   describeIfEnabled('TodoStorage on Testnet', () => {
     let todoStorage: TodoStorage;
 
     beforeAll(() => {
       // Use real Walrus CLI (not mock)
-      const previousMockSetting = process.env.WALRUS_USE_MOCK;
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet implementation
       todoStorage = new TodoStorage();
 
       // Restore after test
       afterAll(() => {
-        process.env.WALRUS_USE_MOCK = previousMockSetting;
+        // Cleanup handled by test framework
       });
     });
 
@@ -44,7 +43,7 @@ describe('Walrus Testnet Integration', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         tags: ['test', 'walrus', 'integration'],
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       // console.log('Storing todo on Walrus testnet...'); // Removed console statement
@@ -66,7 +65,7 @@ describe('Walrus Testnet Integration', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         tags: ['retrieval', 'test'],
-        priority: 'medium',
+        priority: 'medium' as const,
       };
 
       // console.log('Storing todo for retrieval test...'); // Removed console statement
@@ -98,7 +97,7 @@ describe('Walrus Testnet Integration', () => {
     const testImagePath = join(__dirname, '../../test-image.jpeg');
 
     beforeAll(() => {
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet
       imageStorage = new ImageStorage();
     });
 
@@ -137,7 +136,7 @@ describe('Walrus Testnet Integration', () => {
     let storageClient: StorageClient;
 
     beforeAll(() => {
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet
       storageClient = new StorageClient();
     });
 
@@ -193,7 +192,7 @@ describe('Walrus Testnet Integration', () => {
     let todoStorage: TodoStorage;
 
     beforeAll(() => {
-      process.env.WALRUS_USE_MOCK = 'false';
+      // Using real Walrus testnet
       todoStorage = new TodoStorage();
     });
 

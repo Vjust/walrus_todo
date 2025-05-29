@@ -4,19 +4,85 @@
  * the creation of test fixtures and enables consistent test setup across the test suite.
  */
 
-import { AIService } from '../../src/services/ai/aiService';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
-import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
 import {
   AIProvider,
-} from '../../src/types/adapters/AIModelAdapter';
-import {
-  AIVerifierAdapter,
-} from '../../src/types/adapters/AIVerifierAdapter';
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
+  AIModelAdapter,
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIVerifierAdapter } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { expectedResults } from './ai-test-utils';
-import { Todo } from '../../src/types/todo';
+import { Todo } from '../../apps/cli/src/types/todo';
+
+// Create comprehensive mock AI adapter with all required methods
+const createMockAIModelAdapter = (): AIModelAdapter => ({
+  // Core interface methods
+  getProviderName: jest.fn().mockReturnValue(AIProvider.XAI),
+  getModelName: jest.fn().mockReturnValue('mock-model'),
+
+  complete: jest.fn().mockResolvedValue({
+    result: expectedResults.summarize,
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+
+  completeStructured: jest.fn().mockResolvedValue({
+    result: JSON.stringify(expectedResults.categorize),
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+
+  processWithPromptTemplate: jest.fn().mockResolvedValue({
+    result: expectedResults.summarize,
+    modelName: 'mock-model',
+    provider: AIProvider.XAI,
+    timestamp: Date.now(),
+  }),
+
+  // Optional interface methods
+  checkConsentFor: jest.fn().mockReturnValue(true),
+  cancelAllRequests: jest.fn(),
+});
+
+/**
+ * Creates a test-ready AIService instance with proper mock adapter
+ * This ensures the adapter is properly initialized before tests run
+ */
+export const createTestAIService = (
+  apiKey: string = 'test-api-key',
+  provider: AIProvider = AIProvider.XAI,
+  modelName: string = 'mock-model',
+  verificationService?: AIVerificationService
+): AIService => {
+  const mockAdapter = createMockAIModelAdapter();
+
+  // Create service
+  const aiService = new AIService(
+    apiKey,
+    provider,
+    modelName,
+    {},
+    verificationService
+  );
+
+  // Ensure the adapter is properly set (override async initialization)
+  Object.defineProperty(aiService, 'modelAdapter', {
+    value: mockAdapter,
+    writable: true,
+    configurable: true,
+  });
+
+  return aiService;
+};
+
+/**
+ * Exported mock factory functions for use in individual test files
+ */
+export { createMockAIModelAdapter, createMockAIVerifierAdapter };
 
 /**
  * Factory class for creating pre-configured AI services and utilities for testing.
@@ -176,9 +242,9 @@ export class AITestFactory {
    *
    * @example
    * // In a test file where the dependencies are mocked
-   * jest.mock('../../src/services/ai/BlockchainVerifier');
-   * jest.mock('../../src/services/ai/AIPermissionManager');
-   * jest.mock('../../src/services/ai/SecureCredentialManager');
+   * jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier');
+   * jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
+   * jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
    *
    * const blockchainVerifier = AITestFactory.createMockBlockchainVerificationService();
    * await blockchainVerifier.verifyCredentials('mock-key');
@@ -186,13 +252,13 @@ export class AITestFactory {
   public static createMockBlockchainVerificationService(): BlockchainAIVerificationService {
     // These dependencies are expected to be mocked at the module level in tests
     const blockchainVerifier = new (jest.requireMock(
-      '../../src/services/ai/BlockchainVerifier'
+      '../../apps/cli/src/services/ai/BlockchainVerifier'
     ).BlockchainVerifier)();
     const permissionManager = jest
-      .requireMock('../../src/services/ai/AIPermissionManager')
+      .requireMock('../../apps/cli/src/services/ai/AIPermissionManager')
       .getPermissionManager();
     const credentialManager = new (jest.requireMock(
-      '../../src/services/ai/SecureCredentialManager'
+      '../../apps/cli/src/services/ai/SecureCredentialManager'
     ).SecureCredentialManager)();
 
     return new BlockchainAIVerificationService(
@@ -348,15 +414,19 @@ export class AITestFactory {
    *   expect(validation.errors).toEqual([]);
    * });
    */
-  public static createOperationValidator(
-    operationType: string
-  ): {
-    validate: (result: unknown, todos: Todo[]) => { isValid: boolean; errors: string[] };
+  public static createOperationValidator(operationType: string): {
+    validate: (
+      result: unknown,
+      todos: Todo[]
+    ) => { isValid: boolean; errors: string[] };
     getExpectedType: () => string;
   } {
-    const getValidationResult = (result: unknown, _todos: Todo[]): { isValid: boolean; errors: string[] } => {
+    const getValidationResult = (
+      result: unknown,
+      _todos: Todo[]
+    ): { isValid: boolean; errors: string[] } => {
       const errors: string[] = [];
-      
+
       if (result === undefined || result === null) {
         errors.push('Result is undefined or null');
         return { isValid: false, errors };
@@ -402,7 +472,9 @@ export class AITestFactory {
               if (typeof priority !== 'number') {
                 errors.push(`Priority for todo "${todoId}" is not a number`);
               } else if (priority < 1 || priority > 10) {
-                errors.push(`Priority for todo "${todoId}" is ${priority}, outside range 1-10`);
+                errors.push(
+                  `Priority for todo "${todoId}" is ${priority}, outside range 1-10`
+                );
               }
             });
           }
@@ -438,10 +510,10 @@ export class AITestFactory {
         default:
           throw new Error(`Unknown operation type: ${operationType}`);
       }
-      
+
       return { isValid: errors.length === 0, errors };
     };
-    
+
     const getExpectedType = (): string => {
       switch (operationType.toLowerCase()) {
         case 'summarize':
@@ -456,10 +528,10 @@ export class AITestFactory {
           return 'unknown';
       }
     };
-    
+
     return {
       validate: getValidationResult,
-      getExpectedType
+      getExpectedType,
     };
   }
 }

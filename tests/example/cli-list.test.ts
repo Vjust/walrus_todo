@@ -5,7 +5,7 @@
  * and the test environment setup utilities.
  */
 
-import { test } from '@oclif/test';
+import { runCommand } from '@oclif/test';
 // import * as fs from 'fs';
 import { execSync } from 'child_process';
 import {
@@ -14,10 +14,10 @@ import {
   createTestTodo,
   createTestTodoList,
 } from './setup-test-env';
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 
 // Mock the TodoService to avoid actual file system operations
-jest.mock('../../src/services/todoService');
+jest.mock('../../apps/cli/src/services/todoService');
 jest.mock('child_process');
 
 describe('WalTodo list command', () => {
@@ -26,12 +26,12 @@ describe('WalTodo list command', () => {
     createTestTodo({
       id: 'todo-1',
       title: 'First test todo',
-      priority: 'medium',
+      priority: 'medium' as const,
     }),
     createTestTodo({
       id: 'todo-2',
       title: 'High priority todo',
-      priority: 'high',
+      priority: 'high' as const,
     }),
     createTestTodo({
       id: 'todo-3',
@@ -64,7 +64,7 @@ describe('WalTodo list command', () => {
       testList,
       createTestTodoList('work', [
         createTestTodo({ title: 'Work todo 1' }),
-        createTestTodo({ title: 'Work todo 2', priority: 'high' }),
+        createTestTodo({ title: 'Work todo 2', priority: 'high' as const }),
       ]),
       createTestTodoList('personal', [
         createTestTodo({ title: 'Personal todo' }),
@@ -74,11 +74,8 @@ describe('WalTodo list command', () => {
 
   // Test listing all available todo lists
   it('lists all available todo lists', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['list'])
-      .run();
-    
+    const { stdout } = await runCommand(['list']);
+
     expect(stdout).toContain('default');
     expect(stdout).toContain('work');
     expect(stdout).toContain('personal');
@@ -87,11 +84,8 @@ describe('WalTodo list command', () => {
 
   // Test listing todos in a specific list
   it('lists todos in the default list', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['list', 'default'])
-      .run();
-    
+    const { stdout } = await runCommand(['list', 'default']);
+
     expect(stdout).toContain('First test todo');
     expect(stdout).toContain('High priority todo');
     expect(stdout).toContain('Completed todo');
@@ -100,11 +94,8 @@ describe('WalTodo list command', () => {
 
   // Test detailed view
   it('shows detailed view of todos', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['list', 'default', '--detailed'])
-      .run();
-    
+    const { stdout } = await runCommand(['list', 'default', '--detailed']);
+
     expect(stdout).toContain('First test todo');
     expect(stdout).toContain('High priority todo');
     expect(stdout).toContain('Completed todo');
@@ -116,11 +107,8 @@ describe('WalTodo list command', () => {
 
   // Test filtering by completion status
   it('shows only pending todos', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['list', 'default', '--pending'])
-      .run();
-    
+    const { stdout } = await runCommand(['list', 'default', '--pending']);
+
     expect(stdout).toContain('First test todo');
     expect(stdout).toContain('High priority todo');
     expect(stdout).not.toContain('Completed todo');
@@ -128,11 +116,8 @@ describe('WalTodo list command', () => {
   });
 
   it('shows only completed todos', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['list', 'default', '--completed'])
-      .run();
-    
+    const { stdout } = await runCommand(['list', 'default', '--completed']);
+
     expect(stdout).not.toContain('First test todo');
     expect(stdout).not.toContain('High priority todo');
     expect(stdout).toContain('Completed todo');
@@ -141,11 +126,13 @@ describe('WalTodo list command', () => {
 
   // Test filtering by priority
   it('shows only high priority todos', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['list', 'default', '--priority', 'high'])
-      .run();
-    
+    const { stdout } = await runCommand([
+      'list',
+      'default',
+      '--priority',
+      'high',
+    ]);
+
     expect(stdout).not.toContain('First test todo');
     expect(stdout).toContain('High priority todo');
     expect(stdout).not.toContain('Completed todo');
@@ -154,11 +141,13 @@ describe('WalTodo list command', () => {
 
   // Test JSON output format
   it('outputs todos in JSON format', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['list', 'default', '--format', 'json'])
-      .run();
-    
+    const { stdout } = await runCommand([
+      'list',
+      'default',
+      '--format',
+      'json',
+    ]);
+
     const output = JSON.parse(stdout);
     expect(output).toHaveLength(3);
     expect(output[0].title).toBe('First test todo');
@@ -173,13 +162,10 @@ describe('WalTodo list command', () => {
     (TodoService.prototype.getList as jest.Mock).mockRejectedValue(
       new Error('List not found')
     );
-    
-    await expect(
-      test
-        .stdout()
-        .command(['list', 'non-existent-list'])
-        .run()
-    ).rejects.toThrow('List not found');
+
+    await expect(runCommand(['list', 'non-existent-list'])).rejects.toThrow(
+      'List not found'
+    );
   });
 
   // Test using direct execSync mock for command execution

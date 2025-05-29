@@ -81,6 +81,9 @@ export interface FeaturesConfig {
  * Environment-specific settings
  */
 export interface EnvironmentConfig {
+  // Index signature for type-safe string access
+  [key: string]: any;
+  
   /** Environment mode (development, production) */
   mode: 'development' | 'production';
   /** Debug mode flag */

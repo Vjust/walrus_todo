@@ -34,10 +34,13 @@ export class BackgroundSyncService {
       }
 
       jobManager.updateProgress(jobId, 100, 100, 100);
-      jobManager.writeJobLog(jobId, 'Blockchain synchronization completed successfully');
-
+      jobManager.writeJobLog(
+        jobId,
+        'Blockchain synchronization completed successfully'
+      );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error(`Blockchain sync failed for job ${jobId}:`, error);
       jobManager.writeJobLog(jobId, `Sync failed: ${errorMessage}`);
       throw error;
@@ -47,16 +50,22 @@ export class BackgroundSyncService {
   /**
    * Sync specific list from blockchain
    */
-  private async syncSpecificList(jobId: string, listName: string): Promise<void> {
+  private async syncSpecificList(
+    jobId: string,
+    listName: string
+  ): Promise<void> {
     jobManager.writeJobLog(jobId, `Syncing list: ${listName}`);
     jobManager.updateProgress(jobId, 20, 1, 10);
 
     // Get current list
     const currentList = await this.todoService.getList(listName);
-    
+
     if (!currentList) {
-      jobManager.writeJobLog(jobId, `List ${listName} not found locally, creating new list`);
-      await this.todoService.createList(listName);
+      jobManager.writeJobLog(
+        jobId,
+        `List ${listName} not found locally, creating new list`
+      );
+      await this.todoService.createList(listName, 'background-sync');
     }
 
     // Simulate blockchain data fetching with progress updates
@@ -77,11 +86,11 @@ export class BackgroundSyncService {
    */
   private async syncAllLists(jobId: string): Promise<void> {
     jobManager.writeJobLog(jobId, 'Syncing all lists from blockchain');
-    
+
     // Get all local lists
     const localLists = await this.todoService.getAllLists();
     const totalLists = Math.max(localLists.length, 1);
-    
+
     jobManager.updateProgress(jobId, 10, 0, totalLists);
 
     // Simulate fetching blockchain lists
@@ -91,10 +100,13 @@ export class BackgroundSyncService {
     // Sync each list
     for (let i = 0; i < localLists.length; i++) {
       const listName = localLists[i];
-      jobManager.writeJobLog(jobId, `Syncing list ${i + 1}/${localLists.length}: ${listName}`);
-      
+      jobManager.writeJobLog(
+        jobId,
+        `Syncing list ${i + 1}/${localLists.length}: ${listName}`
+      );
+
       await this.syncSpecificList(jobId, listName);
-      
+
       const progress = 20 + (60 * (i + 1)) / localLists.length;
       jobManager.updateProgress(jobId, progress, i + 1, totalLists);
     }
@@ -105,32 +117,40 @@ export class BackgroundSyncService {
   /**
    * Simulate blockchain data fetching with realistic delays
    */
-  private async simulateBlockchainFetch(jobId: string, dataType: string): Promise<void> {
+  private async simulateBlockchainFetch(
+    jobId: string,
+    dataType: string
+  ): Promise<void> {
     jobManager.writeJobLog(jobId, `Fetching ${dataType} from blockchain...`);
-    
+
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-    
+    await new Promise(resolve =>
+      setTimeout(resolve, 500 + Math.random() * 1000)
+    );
+
     jobManager.writeJobLog(jobId, `${dataType} fetched successfully`);
   }
 
   /**
    * Update local data with blockchain changes
    */
-  private async updateLocalData(jobId: string, listName: string): Promise<void> {
+  private async updateLocalData(
+    jobId: string,
+    listName: string
+  ): Promise<void> {
     jobManager.writeJobLog(jobId, `Updating local data for ${listName}`);
-    
+
     // Simulate data processing
     await new Promise(resolve => setTimeout(resolve, 200));
-    
+
     // In a real implementation, this would merge blockchain data with local data
     const list = await this.todoService.getList(listName);
     if (list) {
       // Update metadata to show sync time
       list.updatedAt = new Date().toISOString();
-      await this.todoService.saveList(list);
+      await this.todoService.saveList(listName, list);
     }
-    
+
     jobManager.writeJobLog(jobId, `Local data updated for ${listName}`);
   }
 
@@ -138,31 +158,37 @@ export class BackgroundSyncService {
    * Process large dataset in chunks
    */
   async processLargeDataset(
-    jobId: string, 
-    data: any[], 
+    jobId: string,
+    data: any[],
     processor: (item: any, index: number) => Promise<void>,
     chunkSize: number = 10
   ): Promise<void> {
     const totalItems = data.length;
     let processedItems = 0;
 
-    jobManager.writeJobLog(jobId, `Processing ${totalItems} items in chunks of ${chunkSize}`);
+    jobManager.writeJobLog(
+      jobId,
+      `Processing ${totalItems} items in chunks of ${chunkSize}`
+    );
 
     for (let i = 0; i < data.length; i += chunkSize) {
       const chunk = data.slice(i, i + chunkSize);
-      
+
       // Process chunk
       for (let j = 0; j < chunk.length; j++) {
         await processor(chunk[j], i + j);
         processedItems++;
-        
+
         // Update progress
         const progress = (processedItems / totalItems) * 100;
         jobManager.updateProgress(jobId, progress, processedItems, totalItems);
-        
-        jobManager.writeJobLog(jobId, `Processed item ${processedItems}/${totalItems}`);
+
+        jobManager.writeJobLog(
+          jobId,
+          `Processed item ${processedItems}/${totalItems}`
+        );
       }
-      
+
       // Small delay between chunks to prevent blocking
       await new Promise(resolve => setTimeout(resolve, 50));
     }
@@ -184,26 +210,35 @@ export class BackgroundSyncService {
     },
     sortBy?: string
   ): Promise<Todo[]> {
-    jobManager.writeJobLog(jobId, `Filtering and sorting ${todos.length} todos`);
+    jobManager.writeJobLog(
+      jobId,
+      `Filtering and sorting ${todos.length} todos`
+    );
     jobManager.updateProgress(jobId, 10, 0, todos.length);
 
     let filteredTodos = [...todos];
 
     // Apply filters
     if (filters.completed !== undefined) {
-      filteredTodos = filteredTodos.filter(todo => todo.completed === filters.completed);
+      filteredTodos = filteredTodos.filter(
+        todo => todo.completed === filters.completed
+      );
     }
-    
+
     if (filters.pending !== undefined) {
-      filteredTodos = filteredTodos.filter(todo => !todo.completed === filters.pending);
+      filteredTodos = filteredTodos.filter(
+        todo => !todo.completed === filters.pending
+      );
     }
-    
+
     if (filters.priority) {
-      filteredTodos = filteredTodos.filter(todo => todo.priority === filters.priority);
+      filteredTodos = filteredTodos.filter(
+        todo => todo.priority === filters.priority
+      );
     }
-    
+
     if (filters.tags && filters.tags.length > 0) {
-      filteredTodos = filteredTodos.filter(todo => 
+      filteredTodos = filteredTodos.filter(todo =>
         todo.tags?.some(tag => filters.tags!.includes(tag))
       );
     }
@@ -225,15 +260,21 @@ export class BackgroundSyncService {
   /**
    * Sort todos with progress tracking
    */
-  private async sortTodos(jobId: string, todos: Todo[], sortBy: string): Promise<void> {
+  private async sortTodos(
+    jobId: string,
+    todos: Todo[],
+    sortBy: string
+  ): Promise<void> {
     jobManager.writeJobLog(jobId, `Sorting ${todos.length} todos by ${sortBy}`);
-    
+
     switch (sortBy) {
       case 'priority':
         todos.sort((a, b) => {
           const priorityOrder = { high: 3, medium: 2, low: 1 };
-          const aVal = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
-          const bVal = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
+          const aVal =
+            priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
+          const bVal =
+            priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
           return bVal - aVal;
         });
         break;
@@ -266,8 +307,11 @@ export class BackgroundSyncService {
    * Generate detailed report for large datasets
    */
   async generateDetailedReport(jobId: string, lists: string[]): Promise<any> {
-    jobManager.writeJobLog(jobId, `Generating detailed report for ${lists.length} lists`);
-    
+    jobManager.writeJobLog(
+      jobId,
+      `Generating detailed report for ${lists.length} lists`
+    );
+
     const report = {
       generatedAt: new Date().toISOString(),
       totalLists: lists.length,
@@ -277,18 +321,18 @@ export class BackgroundSyncService {
         completedTodos: 0,
         pendingTodos: 0,
         priorityBreakdown: { high: 0, medium: 0, low: 0 },
-        tagDistribution: {} as Record<string, number>
-      }
+        tagDistribution: {} as Record<string, number>,
+      },
     };
 
     for (let i = 0; i < lists.length; i++) {
       const listName = lists[i];
       const list = await this.todoService.getList(listName);
-      
+
       if (list) {
         const completed = list.todos.filter(t => t.completed).length;
         const pending = list.todos.length - completed;
-        
+
         // Priority breakdown
         const priorities = { high: 0, medium: 0, low: 0 };
         list.todos.forEach(todo => {
@@ -308,10 +352,11 @@ export class BackgroundSyncService {
           totalTodos: list.todos.length,
           completed,
           pending,
-          completionRate: list.todos.length > 0 ? (completed / list.todos.length) * 100 : 0,
+          completionRate:
+            list.todos.length > 0 ? (completed / list.todos.length) * 100 : 0,
           priorities,
           tags,
-          lastUpdated: list.updatedAt
+          lastUpdated: list.updatedAt,
         };
 
         report.lists.push(listReport);
@@ -320,20 +365,25 @@ export class BackgroundSyncService {
         report.summary.totalTodos += list.todos.length;
         report.summary.completedTodos += completed;
         report.summary.pendingTodos += pending;
-        
+
         Object.keys(priorities).forEach(priority => {
-          report.summary.priorityBreakdown[priority as keyof typeof priorities] += 
-            priorities[priority as keyof typeof priorities];
+          report.summary.priorityBreakdown[
+            priority as keyof typeof priorities
+          ] += priorities[priority as keyof typeof priorities];
         });
 
         Object.keys(tags).forEach(tag => {
-          report.summary.tagDistribution[tag] = (report.summary.tagDistribution[tag] || 0) + tags[tag];
+          report.summary.tagDistribution[tag] =
+            (report.summary.tagDistribution[tag] || 0) + tags[tag];
         });
       }
 
       const progress = ((i + 1) / lists.length) * 100;
       jobManager.updateProgress(jobId, progress, i + 1, lists.length);
-      jobManager.writeJobLog(jobId, `Processed list ${i + 1}/${lists.length}: ${listName}`);
+      jobManager.writeJobLog(
+        jobId,
+        `Processed list ${i + 1}/${lists.length}: ${listName}`
+      );
     }
 
     jobManager.writeJobLog(jobId, 'Detailed report generated successfully');
@@ -344,7 +394,7 @@ export class BackgroundSyncService {
    * Export data in background
    */
   async exportData(
-    jobId: string, 
+    jobId: string,
     format: 'json' | 'csv' | 'markdown',
     outputPath: string,
     data: any
@@ -358,25 +408,28 @@ export class BackgroundSyncService {
       case 'json':
         exportedData = JSON.stringify(data, null, 2);
         break;
-      
+
       case 'csv':
         exportedData = this.convertToCSV(data);
         break;
-      
+
       case 'markdown':
         exportedData = this.convertToMarkdown(data);
         break;
-      
+
       default:
         throw new Error(`Unsupported export format: ${format}`);
     }
 
     jobManager.updateProgress(jobId, 80, 80, 100);
-    
+
     await fs.promises.writeFile(outputPath, exportedData, 'utf8');
-    
+
     jobManager.updateProgress(jobId, 100, 100, 100);
-    jobManager.writeJobLog(jobId, `Data exported successfully to ${outputPath}`);
+    jobManager.writeJobLog(
+      jobId,
+      `Data exported successfully to ${outputPath}`
+    );
   }
 
   /**
@@ -387,13 +440,19 @@ export class BackgroundSyncService {
       return '';
     }
 
-    const headers = ['List Name', 'Total Todos', 'Completed', 'Pending', 'Completion Rate'];
+    const headers = [
+      'List Name',
+      'Total Todos',
+      'Completed',
+      'Pending',
+      'Completion Rate',
+    ];
     const rows = data.lists.map((list: any) => [
       list.name,
       list.totalTodos,
       list.completed,
       list.pending,
-      `${list.completionRate.toFixed(1)}%`
+      `${list.completionRate.toFixed(1)}%`,
     ]);
 
     return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
@@ -405,7 +464,7 @@ export class BackgroundSyncService {
   private convertToMarkdown(data: any): string {
     let md = `# Todo Lists Report\n\n`;
     md += `Generated: ${data.generatedAt}\n\n`;
-    
+
     md += `## Summary\n\n`;
     md += `- **Total Lists:** ${data.totalLists}\n`;
     md += `- **Total Todos:** ${data.summary.totalTodos}\n`;

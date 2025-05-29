@@ -9,11 +9,12 @@ import chalk = require('chalk');
  * @description List and manage background jobs
  */
 export default class JobsCommand extends BaseCommand {
-  static description = 'List and manage background jobs\n\nShow all background operations, their status, and progress. Use filters to show only specific job types or statuses.';
+  static description =
+    'List and manage background jobs\n\nShow all background operations, their status, and progress. Use filters to show only specific job types or statuses.';
 
   static examples = [
     '<%= config.bin %> jobs                           # List all jobs',
-    '<%= config.bin %> jobs --active                  # List only active jobs', 
+    '<%= config.bin %> jobs --active                  # List only active jobs',
     '<%= config.bin %> jobs --completed               # List only completed jobs',
     '<%= config.bin %> jobs --failed                  # List only failed jobs',
     '<%= config.bin %> jobs --cleanup                 # Clean up old completed jobs',
@@ -32,7 +33,7 @@ export default class JobsCommand extends BaseCommand {
       default: false,
     }),
     completed: Flags.boolean({
-      char: 'c', 
+      char: 'c',
       description: 'Show only completed jobs',
       default: false,
     }),
@@ -109,15 +110,20 @@ export default class JobsCommand extends BaseCommand {
     }
 
     // Get jobs based on filters - use both job manager and orchestrator
-    let jobs = [...jobManager.getAllJobs(), ...backgroundOrchestrator.getJobStatus()];
-    
+    let jobs = [
+      ...jobManager.getAllJobs(),
+      ...backgroundOrchestrator.getJobStatus(),
+    ];
+
     // Remove duplicates by ID
-    const uniqueJobs = jobs.filter((job, index, self) => 
-      index === self.findIndex(j => j.id === job.id)
+    const uniqueJobs = jobs.filter(
+      (job, index, self) => index === self.findIndex(j => j.id === job.id)
     );
 
     if (flags.active) {
-      jobs = uniqueJobs.filter(job => job.status === 'pending' || job.status === 'running');
+      jobs = uniqueJobs.filter(
+        job => job.status === 'pending' || job.status === 'running'
+      );
     } else if (flags.completed) {
       jobs = uniqueJobs.filter(job => job.status === 'completed');
     } else if (flags.failed) {
@@ -151,11 +157,13 @@ export default class JobsCommand extends BaseCommand {
 
   private async handleCleanup(maxAgeDays: number): Promise<void> {
     const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
-    
-    this.log(chalk.yellow(`🧹 Cleaning up jobs older than ${maxAgeDays} days...`));
-    
+
+    this.log(
+      chalk.yellow(`🧹 Cleaning up jobs older than ${maxAgeDays} days...`)
+    );
+
     const removedCount = jobManager.cleanupOldJobs(maxAgeMs);
-    
+
     if (removedCount > 0) {
       this.success(`Cleaned up ${removedCount} old jobs`);
     } else {
@@ -165,11 +173,15 @@ export default class JobsCommand extends BaseCommand {
 
   private displayNoJobs(flags: any): void {
     let message = 'No jobs found';
-    
+
     if (flags.active) {
       message = 'No active jobs running';
       this.info(message);
-      this.log(chalk.gray('💡 Use --background flag with commands to run them in background'));
+      this.log(
+        chalk.gray(
+          '💡 Use --background flag with commands to run them in background'
+        )
+      );
     } else if (flags.completed) {
       message = 'No completed jobs found';
       this.info(message);
@@ -184,8 +196,17 @@ export default class JobsCommand extends BaseCommand {
 
   private displayJobs(jobs: any[], flags: any): void {
     // Display header
-    const statusFilter = flags.active ? 'Active' : flags.completed ? 'Completed' : flags.failed ? 'Failed' : 'All';
-    this.section(`${statusFilter} Background Jobs`, `Found ${jobs.length} job(s)`);
+    const statusFilter = flags.active
+      ? 'Active'
+      : flags.completed
+        ? 'Completed'
+        : flags.failed
+          ? 'Failed'
+          : 'All';
+    this.section(
+      `${statusFilter} Background Jobs`,
+      `Found ${jobs.length} job(s)`
+    );
 
     // Group jobs by status for better organization
     const groupedJobs = this.groupJobsByStatus(jobs);
@@ -196,8 +217,12 @@ export default class JobsCommand extends BaseCommand {
 
       const statusIcon = this.getStatusIcon(status);
       const statusColor = this.getStatusColor(status);
-      
-      this.log(chalk.bold(`\n${statusIcon} ${statusColor(status.toUpperCase())} (${statusJobs.length})`));
+
+      this.log(
+        chalk.bold(
+          `\n${statusIcon} ${statusColor(status.toUpperCase())} (${statusJobs.length})`
+        )
+      );
       this.log(chalk.gray('─'.repeat(60)));
 
       statusJobs.forEach(job => {
@@ -215,7 +240,7 @@ export default class JobsCommand extends BaseCommand {
       pending: [],
       completed: [],
       failed: [],
-      cancelled: []
+      cancelled: [],
     };
 
     jobs.forEach(job => {
@@ -228,31 +253,39 @@ export default class JobsCommand extends BaseCommand {
   }
 
   private displayJob(job: any): void {
-    const duration = job.endTime ? job.endTime - job.startTime : Date.now() - job.startTime;
+    const duration = job.endTime
+      ? job.endTime - job.startTime
+      : Date.now() - job.startTime;
     const durationStr = this.formatDuration(duration);
     const progressBar = this.createTextProgressBar(job.progress);
-    
+
     // Main job info
-    const argsStr = Array.isArray(job.args) ? job.args.join(' ') : (job.args || '');
+    const argsStr = Array.isArray(job.args)
+      ? job.args.join(' ')
+      : job.args || '';
     this.log(`${chalk.bold(job.id)} - ${chalk.cyan(job.command)} ${argsStr}`);
-    
+
     // Progress and timing
-    this.log(`  ${progressBar} ${chalk.yellow(job.progress + '%')} | ${chalk.gray(durationStr)}`);
-    
+    this.log(
+      `  ${progressBar} ${chalk.yellow(job.progress + '%')} | ${chalk.gray(durationStr)}`
+    );
+
     // Items processed (if available)
     if (job.processedItems !== undefined && job.totalItems !== undefined) {
-      this.log(`  Items: ${chalk.green(job.processedItems)}/${chalk.blue(job.totalItems)}`);
+      this.log(
+        `  Items: ${chalk.green(job.processedItems)}/${chalk.blue(job.totalItems)}`
+      );
     }
-    
+
     // Error message (if failed)
     if (job.status === 'failed' && job.errorMessage) {
       this.log(`  ${chalk.red('Error:')} ${job.errorMessage}`);
     }
-    
+
     // Started time
     const startedAt = new Date(job.startTime).toLocaleString();
     this.log(`  ${chalk.gray('Started:')} ${startedAt}`);
-    
+
     this.log(''); // Empty line for spacing
   }
 
@@ -269,99 +302,132 @@ export default class JobsCommand extends BaseCommand {
     this.log(chalk.bold('\n📊 Summary'));
     this.log(chalk.gray('─'.repeat(30)));
     this.log(`Total: ${chalk.cyan(summary.total)}`);
-    
-    if (summary.running > 0) this.log(`Running: ${chalk.blue(summary.running)}`);
-    if (summary.pending > 0) this.log(`Pending: ${chalk.yellow(summary.pending)}`);
-    if (summary.completed > 0) this.log(`Completed: ${chalk.green(summary.completed)}`);
+
+    if (summary.running > 0)
+      this.log(`Running: ${chalk.blue(summary.running)}`);
+    if (summary.pending > 0)
+      this.log(`Pending: ${chalk.yellow(summary.pending)}`);
+    if (summary.completed > 0)
+      this.log(`Completed: ${chalk.green(summary.completed)}`);
     if (summary.failed > 0) this.log(`Failed: ${chalk.red(summary.failed)}`);
-    if (summary.cancelled > 0) this.log(`Cancelled: ${chalk.gray(summary.cancelled)}`);
+    if (summary.cancelled > 0)
+      this.log(`Cancelled: ${chalk.gray(summary.cancelled)}`);
 
     // Show helpful commands
     this.log(chalk.gray('\n💡 Useful commands:'));
-    this.log(chalk.gray('   waltodo status <job-id>  - View detailed job status'));
+    this.log(
+      chalk.gray('   waltodo status <job-id>  - View detailed job status')
+    );
     this.log(chalk.gray('   waltodo cancel <job-id>  - Cancel a running job'));
-    this.log(chalk.gray('   waltodo jobs --cleanup   - Clean up old completed jobs'));
+    this.log(
+      chalk.gray('   waltodo jobs --cleanup   - Clean up old completed jobs')
+    );
   }
 
   private getStatusIcon(status: string): string {
     switch (status) {
-      case 'pending': return '⏳';
-      case 'running': return '🔄';
-      case 'completed': return '✅';
-      case 'failed': return '❌';
-      case 'cancelled': return '⚪';
-      default: return '❓';
+      case 'pending':
+        return '⏳';
+      case 'running':
+        return '🔄';
+      case 'completed':
+        return '✅';
+      case 'failed':
+        return '❌';
+      case 'cancelled':
+        return '⚪';
+      default:
+        return '❓';
     }
   }
 
   private getStatusColor(status: string): (text: string) => string {
     switch (status) {
-      case 'pending': return chalk.yellow;
-      case 'running': return chalk.blue;
-      case 'completed': return chalk.green;
-      case 'failed': return chalk.red;
-      case 'cancelled': return chalk.gray;
-      default: return chalk.white;
+      case 'pending':
+        return chalk.yellow;
+      case 'running':
+        return chalk.blue;
+      case 'completed':
+        return chalk.green;
+      case 'failed':
+        return chalk.red;
+      case 'cancelled':
+        return chalk.gray;
+      default:
+        return chalk.white;
     }
   }
 
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
+    if (ms < 3600000)
+      return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
   }
 
   private createTextProgressBar(progress: number, width: number = 20): string {
     const filled = Math.floor((progress / 100) * width);
     const empty = width - filled;
-    return chalk.green('[') + 
-           chalk.green('█'.repeat(filled)) + 
-           chalk.gray(' '.repeat(empty)) + 
-           chalk.green(']');
+    return (
+      chalk.green('[') +
+      chalk.green('█'.repeat(filled)) +
+      chalk.gray(' '.repeat(empty)) +
+      chalk.green(']')
+    );
   }
 
-  private async showJobStatus(jobId: string | undefined, flags: any): Promise<void> {
+  private async showJobStatus(
+    jobId: string | undefined,
+    flags: any
+  ): Promise<void> {
     if (!jobId) {
       this.error('Job ID is required for status command', { exit: 1 });
     }
 
-    const job = backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
+    const job =
+      backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
     if (!job) {
       this.error(`Job not found: ${jobId}`, { exit: 1 });
     }
 
     this.log(chalk.bold.cyan(`\n🔍 Job Status: ${job.id}\n`));
-    
+
     this.log(`Command: ${chalk.bold(job.command)} ${job.args.join(' ')}`);
-    this.log(`Status: ${this.getStatusIcon(job.status)} ${chalk.bold(job.status.toUpperCase())}`);
-    
-    const duration = job.endTime ? job.endTime - job.startTime : Date.now() - job.startTime;
+    this.log(
+      `Status: ${this.getStatusIcon(job.status)} ${chalk.bold(job.status.toUpperCase())}`
+    );
+
+    const duration = job.endTime
+      ? job.endTime - job.startTime
+      : Date.now() - job.startTime;
     this.log(`Duration: ${this.formatDuration(duration)}`);
-    
+
     if (job.progress > 0) {
       const progressBar = this.createTextProgressBar(job.progress, 30);
       this.log(`Progress: ${progressBar} ${job.progress}%`);
     }
-    
+
     if (job.metadata?.currentStage) {
       this.log(`Current Stage: ${job.metadata.currentStage}`);
     }
-    
+
     if (job.processedItems && job.totalItems) {
       this.log(`Items Processed: ${job.processedItems}/${job.totalItems}`);
     }
-    
+
     if (job.pid) {
       this.log(`Process ID: ${job.pid}`);
     }
-    
+
     if (job.errorMessage) {
       this.log(`\n${chalk.red('Error:')} ${job.errorMessage}`);
     }
-    
+
     if (job.logFile) {
-      this.log(`\n${chalk.gray('💡 View logs with:')} waltodo jobs logs ${job.id}`);
+      this.log(
+        `\n${chalk.gray('💡 View logs with:')} waltodo jobs logs ${job.id}`
+      );
     }
   }
 
@@ -370,17 +436,24 @@ export default class JobsCommand extends BaseCommand {
       this.error('Job ID is required for cancel command', { exit: 1 });
     }
 
-    const job = backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
+    const job =
+      backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
     if (!job) {
       this.error(`Job not found: ${jobId}`, { exit: 1 });
     }
 
-    if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
+    if (
+      job.status === 'completed' ||
+      job.status === 'failed' ||
+      job.status === 'cancelled'
+    ) {
       this.log(chalk.yellow(`Job ${jobId} is already ${job.status}`));
       return;
     }
 
-    const confirmed = await this.confirm(`Cancel job ${jobId} (${job.command})?`);
+    const confirmed = await this.confirm(
+      `Cancel job ${jobId} (${job.command})?`
+    );
     if (!confirmed) {
       this.log('Cancelled');
       return;
@@ -399,14 +472,15 @@ export default class JobsCommand extends BaseCommand {
       this.error('Job ID is required for logs command', { exit: 1 });
     }
 
-    const job = backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
+    const job =
+      backgroundOrchestrator.getJob(jobId) || jobManager.getJob(jobId);
     if (!job) {
       this.error(`Job not found: ${jobId}`, { exit: 1 });
     }
 
     // Try to read logs from the job manager
     const logContent = jobManager.readJobLog(jobId);
-    
+
     if (!logContent) {
       this.log(chalk.gray('No logs available for this job'));
       return;
@@ -418,17 +492,20 @@ export default class JobsCommand extends BaseCommand {
 
   private async watchJobs(jobs: any[]): Promise<void> {
     this.log('👀 Watching jobs (Press Ctrl+C to stop)...');
-    
+
     const interval = setInterval(() => {
       // Clear screen and show updated job list
       process.stdout.write('\x1Bc');
-      
+
       // Get fresh job data
-      const allJobs = [...jobManager.getAllJobs(), ...backgroundOrchestrator.getJobStatus()];
-      const uniqueJobs = allJobs.filter((job, index, self) => 
-        index === self.findIndex(j => j.id === job.id)
+      const allJobs = [
+        ...jobManager.getAllJobs(),
+        ...backgroundOrchestrator.getJobStatus(),
+      ];
+      const uniqueJobs = allJobs.filter(
+        (job, index, self) => index === self.findIndex(j => j.id === job.id)
       );
-      
+
       this.displayJobs(uniqueJobs.slice(0, 20), {});
       this.log(chalk.gray('\n👀 Watching for updates... Press Ctrl+C to stop'));
     }, 2000);

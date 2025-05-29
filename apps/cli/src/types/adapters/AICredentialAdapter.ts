@@ -35,9 +35,9 @@ export enum AIPermissionLevel {
  */
 export interface AIOperationPermission {
   operationName: string;
+  actionType: number; // Required field for operation type mapping
   minPermissionLevel: AIPermissionLevel;
   additionalChecks?: string[];
-  actionType?: number; // Added actionType field to support verification
 }
 
 /**

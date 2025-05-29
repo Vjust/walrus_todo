@@ -41,7 +41,9 @@ export class KeystoreError extends Error {
 
 export class KeystoreSigner implements SignerAdapter {
   static async fromPath(_clientConfig: string): Promise<KeystoreSigner> {
-    const config: CompatibleSuiClientOptions = { url: 'https://testnet.suifrens.sui.io' };
+    const config: CompatibleSuiClientOptions = {
+      url: 'https://testnet.suifrens.sui.io',
+    };
     const client = createCompatibleSuiClient(config);
     return new KeystoreSigner(client);
   }
@@ -272,10 +274,11 @@ export class KeystoreSigner implements SignerAdapter {
         throw new Error('Invalid transaction');
       }
 
-      const { bytes, signature } =
-        await this.signedTransaction(transaction);
+      const { bytes, signature } = await this.signedTransaction(transaction);
 
-      const response = await (this.suiClient as Record<string, unknown>).executeTransactionBlock({
+      const response = await (
+        this.suiClient as Record<string, unknown>
+      ).executeTransactionBlock({
         transactionBlock: bytes,
         signature,
         requestType: options?.requestType || 'WaitForLocalExecution',

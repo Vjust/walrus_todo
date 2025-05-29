@@ -1,5 +1,8 @@
 import { Todo } from '../types/todo';
-import { BackgroundCacheManager, CacheOperation } from './BackgroundCacheManager';
+import {
+  BackgroundCacheManager,
+  CacheOperation,
+} from './BackgroundCacheManager';
 import { performanceMonitor } from './PerformanceMonitor';
 import { Logger } from './Logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -68,7 +71,7 @@ export class BackgroundOperations {
     options: BackgroundUploadOptions = {}
   ): Promise<string> {
     const operationId = uuidv4();
-    
+
     const operation: CacheOperation = {
       id: operationId,
       type: 'upload',
@@ -112,7 +115,7 @@ export class BackgroundOperations {
     }
 
     const queuedId = await this.cacheManager.queueOperation(operation);
-    
+
     // Track performance
     performanceMonitor.startOperation(operationId, 'background-upload');
 
@@ -126,7 +129,7 @@ export class BackgroundOperations {
     options: BackgroundBlobCacheOptions
   ): Promise<string> {
     const operationId = uuidv4();
-    
+
     const operation: CacheOperation = {
       id: operationId,
       type: 'blob-cache',
@@ -136,9 +139,12 @@ export class BackgroundOperations {
       priority: options.priority || 'low',
     };
 
-    logger.info(`Starting background blob ID caching for ${options.items.length} items`, {
-      operationId,
-    });
+    logger.info(
+      `Starting background blob ID caching for ${options.items.length} items`,
+      {
+        operationId,
+      }
+    );
 
     return await this.cacheManager.queueOperation(operation);
   }
@@ -150,7 +156,7 @@ export class BackgroundOperations {
     options: BackgroundStorageAllocationOptions
   ): Promise<string> {
     const operationId = uuidv4();
-    
+
     const operation: CacheOperation = {
       id: operationId,
       type: 'storage-allocation',
@@ -161,9 +167,12 @@ export class BackgroundOperations {
       priority: options.priority || 'normal',
     };
 
-    logger.info(`Starting background storage allocation for ${options.size} bytes`, {
-      operationId,
-    });
+    logger.info(
+      `Starting background storage allocation for ${options.size} bytes`,
+      {
+        operationId,
+      }
+    );
 
     return await this.cacheManager.queueOperation(operation);
   }
@@ -176,7 +185,7 @@ export class BackgroundOperations {
     priority: 'low' | 'normal' | 'high' = 'normal'
   ): Promise<string> {
     const operationId = uuidv4();
-    
+
     const operation: CacheOperation = {
       id: operationId,
       type: 'batch-process',
@@ -186,9 +195,12 @@ export class BackgroundOperations {
       priority,
     };
 
-    logger.info(`Starting background batch processing for ${items.length} items`, {
-      operationId,
-    });
+    logger.info(
+      `Starting background batch processing for ${items.length} items`,
+      {
+        operationId,
+      }
+    );
 
     return await this.cacheManager.queueOperation(operation);
   }
@@ -196,11 +208,9 @@ export class BackgroundOperations {
   /**
    * Sync todos in the background
    */
-  async syncTodosInBackground(
-    options: BackgroundSyncOptions
-  ): Promise<string> {
+  async syncTodosInBackground(options: BackgroundSyncOptions): Promise<string> {
     const operationId = uuidv4();
-    
+
     const operation: CacheOperation = {
       id: operationId,
       type: 'sync',
@@ -246,7 +256,7 @@ export class BackgroundOperations {
     }
 
     const queuedId = await this.cacheManager.queueOperation(operation);
-    
+
     // Track performance
     performanceMonitor.startOperation(operationId, 'background-sync');
 
@@ -260,7 +270,7 @@ export class BackgroundOperations {
     options: BackgroundContinuousSyncOptions = {}
   ): Promise<string> {
     const operationId = uuidv4();
-    
+
     const operation: CacheOperation = {
       id: operationId,
       type: 'continuous-sync',
@@ -308,9 +318,12 @@ export class BackgroundOperations {
     }
 
     const queuedId = await this.cacheManager.queueOperation(operation);
-    
+
     // Track performance
-    performanceMonitor.startOperation(operationId, 'background-continuous-sync');
+    performanceMonitor.startOperation(
+      operationId,
+      'background-continuous-sync'
+    );
 
     return queuedId;
   }
@@ -339,7 +352,9 @@ export class BackgroundOperations {
   ): Promise<any> {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error(`Operation ${operationId} timeout after ${timeoutMs}ms`));
+        reject(
+          new Error(`Operation ${operationId} timeout after ${timeoutMs}ms`)
+        );
       }, timeoutMs);
 
       // Setup progress listener
@@ -356,8 +371,12 @@ export class BackgroundOperations {
           this.cacheManager.off('operationProgress', progressListener);
           this.cacheManager.off('operationCompleted', completionListener);
           this.cacheManager.off('operationFailed', failureListener);
-          
-          performanceMonitor.endOperation(operationId, 'background-operation-wait', true);
+
+          performanceMonitor.endOperation(
+            operationId,
+            'background-operation-wait',
+            true
+          );
           resolve(result);
         }
       };
@@ -369,10 +388,15 @@ export class BackgroundOperations {
           this.cacheManager.off('operationProgress', progressListener);
           this.cacheManager.off('operationCompleted', completionListener);
           this.cacheManager.off('operationFailed', failureListener);
-          
-          performanceMonitor.endOperation(operationId, 'background-operation-wait', false, {
-            error: error instanceof Error ? error.message : String(error),
-          });
+
+          performanceMonitor.endOperation(
+            operationId,
+            'background-operation-wait',
+            false,
+            {
+              error: error instanceof Error ? error.message : String(error),
+            }
+          );
           reject(error);
         }
       };
@@ -382,7 +406,10 @@ export class BackgroundOperations {
       this.cacheManager.on('operationFailed', failureListener);
 
       // Start tracking
-      performanceMonitor.startOperation(operationId, 'background-operation-wait');
+      performanceMonitor.startOperation(
+        operationId,
+        'background-operation-wait'
+      );
     });
   }
 
@@ -427,14 +454,14 @@ export class BackgroundOperations {
       logger.error(`Background operation failed: ${id}`, error);
     });
 
-    this.cacheManager.on('operationCancelled', (id) => {
+    this.cacheManager.on('operationCancelled', id => {
       performanceMonitor.endOperation(id, 'background-operation', false, {
         cancelled: true,
       });
       logger.warn(`Background operation cancelled: ${id}`);
     });
 
-    this.cacheManager.on('operationTimeout', (id) => {
+    this.cacheManager.on('operationTimeout', id => {
       performanceMonitor.endOperation(id, 'background-operation', false, {
         timeout: true,
       });
@@ -470,7 +497,10 @@ export class BackgroundUtils {
     waitForCompletion: () => Promise<any>;
     cancel: () => Promise<boolean>;
   }> {
-    const operationId = await backgroundOps.uploadTodosInBackground(todos, options);
+    const operationId = await backgroundOps.uploadTodosInBackground(
+      todos,
+      options
+    );
 
     return {
       operationId,
@@ -498,18 +528,18 @@ export class BackgroundUtils {
     batchSize: number = 5
   ): Promise<T[]> {
     const results: T[] = [];
-    
+
     for (let i = 0; i < operations.length; i += batchSize) {
       const batch = operations.slice(i, i + batchSize);
       const batchResults = await Promise.all(batch.map(op => op()));
       results.push(...batchResults);
-      
+
       // Small delay between batches to prevent overwhelming
       if (i + batchSize < operations.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
-    
+
     return results;
   }
 
@@ -520,18 +550,22 @@ export class BackgroundUtils {
     backgroundOps: BackgroundOperations
   ): Promise<void> {
     const checkInterval = 30000; // 30 seconds
-    
+
     setInterval(async () => {
       const memUsage = process.memoryUsage();
       const heapUsedPercent = (memUsage.heapUsed / memUsage.heapTotal) * 100;
-      
+
       const activeOps = backgroundOps.getActiveOperations();
-      
-      logger.debug(`Resource usage check: ${heapUsedPercent.toFixed(1)}% heap, ${activeOps.length} active ops`);
-      
+
+      logger.debug(
+        `Resource usage check: ${heapUsedPercent.toFixed(1)}% heap, ${activeOps.length} active ops`
+      );
+
       // If memory usage is high, we could implement logic to pause or throttle operations
       if (heapUsedPercent > 85) {
-        logger.warn('High memory usage detected, consider reducing background operations');
+        logger.warn(
+          'High memory usage detected, consider reducing background operations'
+        );
         // Could implement automatic operation throttling here
       }
     }, checkInterval);
@@ -540,7 +574,9 @@ export class BackgroundUtils {
 
 // Export convenience functions
 export async function createBackgroundOperationsManager(): Promise<BackgroundOperations> {
-  const { createBackgroundCacheManager } = await import('./BackgroundCacheManager');
+  const { createBackgroundCacheManager } = await import(
+    './BackgroundCacheManager'
+  );
   const cacheManager = createBackgroundCacheManager();
   return new BackgroundOperations(cacheManager);
 }

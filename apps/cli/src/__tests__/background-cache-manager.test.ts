@@ -1,8 +1,10 @@
-import { BackgroundCacheManager, CacheOperation } from '../utils/BackgroundCacheManager';
+import {
+  BackgroundCacheManager,
+  CacheOperation,
+} from '../utils/BackgroundCacheManager';
 import { performanceMonitor } from '../utils/PerformanceMonitor';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
-import * as path from 'path';
 
 describe('BackgroundCacheManager', () => {
   let cacheManager: BackgroundCacheManager;
@@ -25,7 +27,7 @@ describe('BackgroundCacheManager', () => {
 
   afterEach(async () => {
     await cacheManager.shutdown();
-    
+
     // Clean up test cache directory
     if (fs.existsSync(testCacheDir)) {
       fs.rmSync(testCacheDir, { recursive: true, force: true });
@@ -38,7 +40,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [{ key: 'test', value: 'value' }] },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       const operationId = await cacheManager.queueOperation(operation);
@@ -55,14 +57,14 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'low',
+        priority: 'low' as const,
       };
 
       const highPriorityOp: CacheOperation = {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       await cacheManager.queueOperation(lowPriorityOp);
@@ -80,16 +82,18 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'storage-allocation',
         data: { size: 1024 },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       const status = await cacheManager.getOperationStatus(operation.id);
       expect(status).toBeTruthy();
       expect(status?.id).toBe(operation.id);
       expect(status?.type).toBe('storage-allocation');
-      expect(['pending', 'running', 'completed', 'failed']).toContain(status?.status);
+      expect(['pending', 'running', 'completed', 'failed']).toContain(
+        status?.status
+      );
     });
 
     it('should return null for non-existent operations', async () => {
@@ -104,11 +108,11 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'batch-process',
         data: { items: [] },
-        priority: 'low', // Low priority to keep it pending longer
+        priority: 'low' as const, // Low priority to keep it pending longer
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       // Try to cancel before it starts running
       const cancelled = await cacheManager.cancelOperation(operation.id);
       expect(cancelled).toBe(true);
@@ -130,14 +134,14 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       const operation2: CacheOperation = {
         id: uuidv4(),
         type: 'storage-allocation',
         data: { size: 2048 },
-        priority: 'high',
+        priority: 'high' as const,
       };
 
       await cacheManager.queueOperation(operation1);
@@ -145,13 +149,12 @@ describe('BackgroundCacheManager', () => {
 
       const activeOps = cacheManager.getActiveOperations();
       expect(activeOps.length).toBeGreaterThanOrEqual(0);
-      
+
       // Check that our operations are in the list
       const opIds = activeOps.map(op => op.id);
-      if (activeOps.length > 0) {
-        expect(opIds).toContain(operation1.id);
-        expect(opIds).toContain(operation2.id);
-      }
+      expect(activeOps.length).toBeGreaterThanOrEqual(2);
+      expect(opIds).toContain(operation1.id);
+      expect(opIds).toContain(operation2.id);
     });
   });
 
@@ -161,20 +164,16 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [{ key: 'test', value: 'test-value' }] },
-        priority: 'high',
+        priority: 'high' as const,
         timeout: 5000,
       };
 
       await cacheManager.queueOperation(operation);
 
       // Wait for operation with short timeout for test
-      try {
-        const result = await cacheManager.waitForOperation(operation.id, 8000);
-        expect(result).toBeTruthy();
-      } catch (error) {
-        // Timeout is acceptable in test environment
-        expect((error as Error).message).toContain('timeout');
-      }
+      await expect(
+        cacheManager.waitForOperation(operation.id, 8000)
+      ).resolves.toBeTruthy();
     });
 
     it('should timeout when waiting too long', async () => {
@@ -182,7 +181,7 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'batch-process',
         data: { items: Array(1000).fill({}) }, // Large data to take time
-        priority: 'low',
+        priority: 'low' as const,
       };
 
       await cacheManager.queueOperation(operation);
@@ -199,11 +198,11 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'blob-cache',
         data: { items: [] },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       // Wait a bit for the operation to be processed
       await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -216,13 +215,13 @@ describe('BackgroundCacheManager', () => {
     it('should handle invalid operation types gracefully', async () => {
       const operation: CacheOperation = {
         id: uuidv4(),
-        type: 'invalid-type' as any,
+        type: 'invalid-type' as never,
         data: {},
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       await cacheManager.queueOperation(operation);
-      
+
       // Wait for processing
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -234,14 +233,14 @@ describe('BackgroundCacheManager', () => {
   describe('Resource Management', () => {
     it('should limit concurrent processes', async () => {
       const operations: CacheOperation[] = [];
-      
+
       // Create more operations than the max concurrent limit
       for (let i = 0; i < 5; i++) {
         operations.push({
           id: uuidv4(),
           type: 'batch-process',
           data: { items: Array(10).fill({}) },
-          priority: 'normal',
+          priority: 'medium' as const,
         });
       }
 
@@ -262,18 +261,22 @@ describe('BackgroundCacheManager', () => {
         id: uuidv4(),
         type: 'storage-allocation',
         data: { size: 512 },
-        priority: 'normal',
+        priority: 'medium' as const,
       };
 
       const operationId = `test-operation-${Date.now()}`;
       performanceMonitor.startOperation(operationId, 'background-cache-test');
 
       await cacheManager.queueOperation(operation);
-      
+
       // Wait a bit
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      performanceMonitor.endOperation(operationId, 'background-cache-test', true);
+      performanceMonitor.endOperation(
+        operationId,
+        'background-cache-test',
+        true
+      );
 
       const report = performanceMonitor.generateReport();
       expect(report.totalOperations).toBeGreaterThan(0);

@@ -14,14 +14,21 @@ export class ApiError extends Error {
 }
 
 // Async handler wrapper to catch async errors
-export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+export const asyncHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>
+) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
 
 // Global error handler
-export const errorHandler = (error: Error | ApiError, req: Request, res: Response, next: NextFunction): void => {
+export const errorHandler = (
+  error: Error | ApiError,
+  req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
   let statusCode = 500;
   let message = 'Internal Server Error';
   let code = 'INTERNAL_ERROR';
@@ -50,15 +57,15 @@ export const errorHandler = (error: Error | ApiError, req: Request, res: Respons
       message: error.message,
       stack: error.stack,
       statusCode,
-      code
+      code,
     },
     request: {
       method: req.method,
       url: req.url,
       headers: req.headers,
       body: req.body,
-      ip: req.ip
-    }
+      ip: req.ip,
+    },
   });
 
   // Send error response
@@ -69,8 +76,8 @@ export const errorHandler = (error: Error | ApiError, req: Request, res: Respons
     timestamp: new Date().toISOString(),
     ...(process.env.NODE_ENV === 'development' && {
       stack: error.stack,
-      details: error
-    })
+      details: error,
+    }),
   });
 };
 
@@ -80,7 +87,7 @@ export const notFoundHandler = (req: Request, res: Response): void => {
     success: false,
     error: `Route ${req.method} ${req.path} not found`,
     code: 'NOT_FOUND',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };
 
@@ -90,6 +97,6 @@ export const rateLimitHandler = (req: Request, res: Response): void => {
     success: false,
     error: 'Too many requests, please try again later',
     code: 'RATE_LIMIT_EXCEEDED',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 };

@@ -34,7 +34,7 @@ export interface CredentialInfo {
   securityIssues?: string[];
 }
 
-interface CredentialMetadata {
+interface CredentialMetadata extends Record<string, unknown> {
   credentialId: string;
   permissionLevel: AIPermissionLevel;
   verified: boolean;
@@ -173,7 +173,8 @@ export class SecureCredentialService {
         );
       } catch (_error) {
         this.logger.error(
-          `Failed to verify ${provider} credential on blockchain: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+          `SecureCredentialService: Failed to verify ${provider} credential on blockchain: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+          _error instanceof Error ? _error : undefined
         );
       }
     }
@@ -259,7 +260,8 @@ export class SecureCredentialService {
             throw _error;
           }
           this.logger.warn(
-            `Failed to check blockchain verification: ${_error instanceof Error ? _error.message : 'Unknown error'}`
+            `SecureCredentialService: Failed to check blockchain verification for ${provider}: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+            _error instanceof Error ? _error : undefined
           );
           // Continue with credential even if verification check fails
         }
@@ -292,8 +294,10 @@ export class SecureCredentialService {
         return envValue;
       }
 
+      const baseError =
+        _error instanceof Error ? _error : new Error(String(_error));
       throw new CLIError(
-        `No API key found for ${provider}. Use 'walrus_todo ai credentials add ${provider} --key YOUR_API_KEY' to add one.`,
+        `No API key found for ${provider}. Use 'walrus_todo ai credentials add ${provider} --key YOUR_API_KEY' to add one. Original error: ${baseError.message}`,
         'CREDENTIAL_NOT_FOUND'
       );
     }

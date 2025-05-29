@@ -22,9 +22,7 @@ const logger = new Logger('walrus-storage-cli');
  * Determines if mock mode should be used based on environment
  */
 function shouldUseMock(): boolean {
-  return (
-    process.env.WALRUS_USE_MOCK === 'true' || process.env.NODE_ENV === 'test'
-  );
+  return process.env.NODE_ENV === 'test';
 }
 
 /**
@@ -119,8 +117,8 @@ export class WalrusStorage {
     await this.connect();
 
     if (this.useMock) {
-      // Return a mock blob ID
-      return `mock-blob-${todo.id}`;
+      // Return a consistent mock blob ID for testing
+      return 'mock-blob-id';
     }
 
     // Create a temporary file with the todo data
@@ -165,19 +163,22 @@ export class WalrusStorage {
   /**
    * Store a todo on Walrus with detailed results
    */
-  async storeTodoWithDetails(todo: Todo, epochs: number = 5): Promise<{
+  async storeTodoWithDetails(
+    todo: Todo,
+    epochs: number = 5
+  ): Promise<{
     blobId: string;
     transactionId?: string;
     explorerUrl?: string;
     networkInfo: {
       network: string;
       epochs: number;
-    }
+    };
   }> {
     await this.connect();
 
     if (this.useMock) {
-      const mockBlobId = `mock-blob-${todo.id}`;
+      const mockBlobId = 'mock-blob-id';
       const mockTxId = `mock-tx-${Date.now()}`;
       return {
         blobId: mockBlobId,
@@ -185,8 +186,8 @@ export class WalrusStorage {
         explorerUrl: `https://suiscan.xyz/${this._network}/tx/${mockTxId}`,
         networkInfo: {
           network: this._network,
-          epochs
-        }
+          epochs,
+        },
       };
     }
 
@@ -211,7 +212,7 @@ export class WalrusStorage {
       const command = `${this.walrusPath} --config ${this.configPath} store --epochs ${epochs} ${tempFile}`;
       logger.info(`Executing: ${command}`);
       const { stdout, stderr } = await execAsync(command);
-      
+
       logger.info(`Walrus CLI output: ${stdout}`);
       if (stderr) {
         logger.info(`Walrus CLI stderr: ${stderr}`);
@@ -227,19 +228,19 @@ export class WalrusStorage {
       }
 
       const blobId = blobIdMatch[1].trim();
-      
+
       // Try to extract transaction ID if available in output
       let transactionId: string | undefined;
       let explorerUrl: string | undefined;
-      
+
       // Look for transaction digest/ID patterns in output
       const txIdPatterns = [
         /Transaction digest: ([A-Za-z0-9]+)/,
         /Tx digest: ([A-Za-z0-9]+)/,
         /Transaction ID: ([A-Za-z0-9]+)/,
-        /Digest: ([A-Za-z0-9]+)/
+        /Digest: ([A-Za-z0-9]+)/,
       ];
-      
+
       for (const pattern of txIdPatterns) {
         const match = stdout.match(pattern) || stderr?.match(pattern);
         if (match) {
@@ -247,19 +248,21 @@ export class WalrusStorage {
           break;
         }
       }
-      
+
       // Generate explorer URL if we have transaction ID
       if (transactionId) {
-        const explorerBase = this._network === 'mainnet' 
-          ? 'https://suiscan.xyz/mainnet' 
-          : 'https://suiscan.xyz/testnet';
+        const explorerBase =
+          this._network === 'mainnet'
+            ? 'https://suiscan.xyz/mainnet'
+            : 'https://suiscan.xyz/testnet';
         explorerUrl = `${explorerBase}/tx/${transactionId}`;
       }
 
       // Generate Walrus aggregator URL for blob access
-      const aggregatorUrl = this._network === 'mainnet'
-        ? `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${blobId}`
-        : `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`;
+      const aggregatorUrl =
+        this._network === 'mainnet'
+          ? `https://aggregator.walrus-mainnet.walrus.space/v1/blobs/${blobId}`
+          : `https://aggregator.walrus-testnet.walrus.space/v1/blobs/${blobId}`;
 
       return {
         blobId,
@@ -268,8 +271,8 @@ export class WalrusStorage {
         aggregatorUrl,
         networkInfo: {
           network: this._network,
-          epochs
-        }
+          epochs,
+        },
       };
     } finally {
       // Clean up temp file
@@ -286,8 +289,8 @@ export class WalrusStorage {
     await this.connect();
 
     if (this.useMock) {
-      // Return a mock blob ID
-      return `mock-blob-list-${list.id}`;
+      // Return a consistent mock blob ID for testing
+      return 'mock-blob-list-id';
     }
 
     // Create a temporary file with the list data
@@ -342,8 +345,8 @@ export class WalrusStorage {
     const fileName = options.fileName || `blob-${Date.now()}`;
 
     if (this.useMock) {
-      // Return a mock blob ID
-      return `mock-blob-${fileName}-${Date.now()}`;
+      // Return a consistent mock blob ID for testing
+      return 'mock-blob-id';
     }
 
     // Create a temporary file with the data

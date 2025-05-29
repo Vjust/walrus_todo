@@ -8,7 +8,7 @@
  */
 
 import { execSync } from 'child_process';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../adapters/sui-client-compatibility';
 import { WalrusClient } from '@mysten/walrus';
 import { AsyncOperationHandler } from '../../walrus-error-handler';
 import {
@@ -106,9 +106,9 @@ export class StorageClient {
   }
 
   /**
-   * Gets the WalrusClient instance with null checking
+   * Gets the WalrusClient instance with null checking (private method)
    */
-  protected getWalrusClient(): WalrusClientAdapter {
+  protected getWalrusClientPrivate(): WalrusClientAdapter {
     if (!this.walrusClient) {
       throw new Error('WalrusClient not initialized. Call init() first.');
     }
@@ -210,7 +210,12 @@ export class StorageClient {
 
       // Verify network connectivity
       const systemStateResult = await AsyncOperationHandler.execute(
-        () => (this.suiClient as { getLatestSuiSystemState: () => Promise<{ epoch: string }> }).getLatestSuiSystemState(),
+        () =>
+          (
+            this.suiClient as {
+              getLatestSuiSystemState: () => Promise<{ epoch: string }>;
+            }
+          ).getLatestSuiSystemState(),
         {
           operation: 'network check',
           maxRetries: 2,
@@ -261,8 +266,21 @@ export class StorageClient {
    * @returns The WalrusClient adapter
    * @throws {ValidationError} if client is not initialized
    */
-  public getWalrusClientPublic(): WalrusClientAdapter {
+  public getWalrusClient(): WalrusClientAdapter {
     this.validateInitialized('get Walrus client');
+    if (!this.walrusClient) {
+      throw new Error('WalrusClient not initialized. Call init() first.');
+    }
+    return this.walrusClient;
+  }
+
+  /**
+   * Gets the WalrusClient instance (alias for compatibility).
+   *
+   * @returns The WalrusClient adapter
+   * @throws {ValidationError} if client is not initialized
+   */
+  public getWalrusClientPublic(): WalrusClientAdapter {
     return this.getWalrusClient();
   }
 
@@ -400,6 +418,91 @@ export class StorageClient {
         {
           operation: 'blob retrieval',
           itemId: blobId,
+          recoverable: true,
+          cause: error instanceof Error ? error : undefined,
+        }
+      );
+    }
+  }
+
+  /**
+   * Stores content using the WalrusClient.
+   *
+   * @param content - The content to store
+   * @param metadata - Metadata for the content
+   * @param options - Additional storage options
+   * @returns Promise resolving to the blob ID
+   * @throws {StorageError} if storage operation fails
+   */
+  public async store(
+    content: Uint8Array,
+    metadata: Record<string, string> = {},
+    options: StorageOperationOptions = {}
+  ): Promise<string> {
+    this.validateInitialized('store content');
+
+    const {
+      maxRetries = 3,
+      timeout = 30000,
+      signal,
+      throwErrors = true,
+    } = options;
+
+    try {
+      const walrusClient = this.getWalrusClientPrivate();
+      
+      // Prepare write options
+      const writeOptions = {
+        blob: content,
+        deletable: false,
+        epochs: 52, // Default epoch duration
+        attributes: metadata,
+        signal,
+      };
+
+      const result = await AsyncOperationHandler.execute(
+        () => walrusClient.writeBlob(writeOptions),
+        {
+          operation: 'store content',
+          maxRetries,
+          timeout,
+          signal,
+          throwErrors,
+        }
+      );
+
+      if (!result.success) {
+        throw new StorageError(
+          `Failed to store content: ${result.error?.message}`,
+          {
+            operation: 'content storage',
+            recoverable: true,
+            cause: result.error,
+          }
+        );
+      }
+
+      // Extract blob ID from result
+      const blobId = result.data?.blobId || 
+                     (typeof result.data === 'string' ? result.data : '');
+
+      if (!blobId) {
+        throw new StorageError('No blob ID returned from storage operation', {
+          operation: 'content storage',
+          recoverable: false,
+        });
+      }
+
+      return blobId;
+    } catch (error) {
+      if (error instanceof StorageError) {
+        throw error;
+      }
+
+      throw new StorageError(
+        `Failed to store content: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          operation: 'store content',
           recoverable: true,
           cause: error instanceof Error ? error : undefined,
         }

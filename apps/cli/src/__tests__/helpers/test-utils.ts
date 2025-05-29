@@ -20,17 +20,18 @@ export const createMockTodo = (overrides?: DeepPartial<Todo>): Todo => {
     private: true,
     storageLocation: 'local' as StorageLocation,
   };
-  
+
   return {
     ...base,
     ...overrides,
-    tags: (overrides?.tags?.filter((tag): tag is string => tag != null) ?? base.tags),
+    tags:
+      overrides?.tags?.filter((tag): tag is string => tag != null) ?? base.tags,
   } as Todo;
 };
 
 export type MockOf<T> = {
-  [P in keyof T]: T[P] extends (...args: unknown[]) => unknown
-    ? jest.Mock<ReturnType<T[P] extends (...args: unknown[]) => infer R ? () => R : never>, Parameters<T[P] extends (...args: infer P) => unknown ? (...args: P) => unknown : never>>
+  [P in keyof T]: T[P] extends (...args: infer Args) => infer Return
+    ? jest.Mock<Return, Args>
     : T[P];
 };
 
@@ -41,7 +42,13 @@ export interface CommandResult {
   error?: Error;
 }
 
-// Functions are already exported below, so no need for this line
+// Export interface for command results
+export interface CommandExecutionOptions {
+  env?: NodeJS.ProcessEnv;
+  mockStdout?: boolean;
+  mockStderr?: boolean;
+  timeout?: number;
+}
 
 /**
  * Execute a CLI command directly from the src/index.ts implementation
@@ -74,7 +81,7 @@ export async function runCommand(
   const testEnv = {
     ...process.env,
     NODE_ENV: 'test',
-    WALRUS_USE_MOCK: 'true', // Always use mock mode in tests
+    // Removed WALRUS_USE_MOCK - using real implementations
     ...env,
   };
 
@@ -215,7 +222,7 @@ export async function runCommandInProcess(
       env: {
         ...process.env,
         NODE_ENV: 'test',
-        WALRUS_USE_MOCK: 'true',
+        // Removed WALRUS_USE_MOCK - using real implementations
         ...env,
       },
       timeout,

@@ -139,11 +139,16 @@ export class InputValidator {
 
     for (const [field, rules] of Object.entries(schema)) {
       if (field in data) {
-        const result = this.validate((data as Record<string, unknown>)[field], rules, field, {
-          ...options,
-          throwOnFirstError: false,
-          collectAllErrors: true,
-        });
+        const result = this.validate(
+          (data as Record<string, unknown>)[field],
+          rules,
+          field,
+          {
+            ...options,
+            throwOnFirstError: false,
+            collectAllErrors: true,
+          }
+        );
 
         if (!result.valid) {
           allErrors.push(...result.errors);
@@ -300,7 +305,18 @@ export class InputValidator {
     sanitized = sanitized.replace(shellMetaChars, '\\$1');
 
     // Remove null bytes and other control characters
-    sanitized = sanitized.replace(new RegExp('[' + String.fromCharCode(1) + '-' + String.fromCharCode(31) + String.fromCharCode(127) + ']', 'g'), '');
+    sanitized = sanitized.replace(
+      new RegExp(
+        '[' +
+          String.fromCharCode(1) +
+          '-' +
+          String.fromCharCode(31) +
+          String.fromCharCode(127) +
+          ']',
+        'g'
+      ),
+      ''
+    );
 
     // Normalize whitespace but preserve intentional spacing
     sanitized = sanitized.replace(/\s+/g, ' ').trim();
@@ -366,7 +382,9 @@ export class InputValidator {
 
     // Check mutually exclusive flags - only consider defined values
     for (const group of mutuallyExclusive) {
-      const presentFlags = group.filter(flag => (flags as Record<string, unknown>)[flag] !== undefined);
+      const presentFlags = group.filter(
+        flag => (flags as Record<string, unknown>)[flag] !== undefined
+      );
       if (presentFlags.length > 1) {
         throw new ValidationError(
           `Cannot use these flags together: ${presentFlags.join(', ')}`,
@@ -432,7 +450,9 @@ export class InputValidator {
 
     // Set optional vars with defaults
     for (const [varName, defaultValue] of Object.entries(optional)) {
-      env[varName] = (process.env as Record<string, string | undefined>)[varName] || defaultValue;
+      env[varName] =
+        (process.env as Record<string, string | undefined>)[varName] ||
+        defaultValue;
     }
 
     return env;

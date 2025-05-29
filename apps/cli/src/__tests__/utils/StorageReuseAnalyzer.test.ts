@@ -226,7 +226,12 @@ describe('StorageReuseAnalyzer', () => {
     it('should calculate cost savings when reusing existing storage', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: jest.Mock }, 'findBestStorageForReuse')
+        .spyOn(
+          storageReuseAnalyzer as StorageReuseAnalyzer & {
+            findBestStorageForReuse: jest.Mock;
+          },
+          'findBestStorageForReuse'
+        )
         .mockResolvedValue({
           bestMatch: {
             id: 'storage-1',
@@ -267,7 +272,12 @@ describe('StorageReuseAnalyzer', () => {
     it('should recommend allocating new storage when no viable storage exists', async () => {
       // Mock the findBestStorageForReuse method
       jest
-        .spyOn(storageReuseAnalyzer as StorageReuseAnalyzer & { findBestStorageForReuse: jest.Mock }, 'findBestStorageForReuse')
+        .spyOn(
+          storageReuseAnalyzer as StorageReuseAnalyzer & {
+            findBestStorageForReuse: jest.Mock;
+          },
+          'findBestStorageForReuse'
+        )
         .mockResolvedValue({
           bestMatch: null,
           totalStorage: 1000000,

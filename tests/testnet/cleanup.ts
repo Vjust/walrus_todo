@@ -2,7 +2,7 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 
 /**
  * Test cleanup utility for removing test data and temporary files after test runs
@@ -106,12 +106,13 @@ export async function cleanupTestFiles(
             logger.debug(`Removed file: ${file}`);
             filesRemoved++;
           }
-        } catch (_error) {
-          logger.error(`Failed to remove file: ${file}`, error);
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          logger.error(`Failed to remove file: ${file}`, errorMessage);
           errors++;
         }
       }
-    } catch (_error) {
+    } catch (error: unknown) {
       logger.debug(`No files matching pattern: ${pathPattern}`);
     }
   }
@@ -144,7 +145,7 @@ async function findFiles(pattern: string): Promise<string[]> {
   try {
     const { stdout } = await execPromise(`find . -name "${pattern}" -type f`);
     return stdout.split('\n').filter(Boolean);
-  } catch (_error) {
+  } catch (error: unknown) {
     return [];
   }
 }
@@ -179,8 +180,9 @@ async function cleanupTestTodos(patterns: string[]): Promise<void> {
       await fs.writeFile(todosFile, JSON.stringify(filteredTodos, null, 2));
       logger.info(`Removed ${todos.length - filteredTodos.length} test todos`);
     }
-  } catch (_error) {
-    logger.debug('No todos file found or error reading it:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.debug('No todos file found or error reading it:', errorMessage);
   }
 }
 
@@ -198,8 +200,9 @@ async function cleanupNetworkTestData(): Promise<void> {
     await cleanupSuiTestNFTs();
 
     logger.info('Network test data cleanup completed');
-  } catch (_error) {
-    logger.error('Error cleaning up network test data:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Error cleaning up network test data:', errorMessage);
     throw error;
   }
 }
@@ -271,16 +274,18 @@ Examples:
     await cleanupTestFiles(config);
     logger.info('Cleanup completed successfully');
     process.exit(0);
-  } catch (_error) {
-    logger.error('Cleanup failed:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Cleanup failed:', errorMessage);
     process.exit(1);
   }
 }
 
 // Run if called directly
 if (require.main === module) {
-  main().catch(_error => {
-    logger.error('Fatal error:', error);
+  main().catch((error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Fatal error:', errorMessage);
     process.exit(1);
   });
 }

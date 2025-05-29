@@ -36,9 +36,10 @@ export class SecureStorage {
 
   private getEncryptionKey(): Buffer {
     if (!this.encryptionKey) {
-      this.encryptionKey = fs.readFileSync(this.keyFile);
+      const key = fs.readFileSync(this.keyFile);
+      this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
     }
-    return this.encryptionKey;
+    return this.encryptionKey as Buffer;
   }
 
   private getStorageFile(key: string): string {
@@ -80,7 +81,12 @@ export class SecureStorage {
     }
 
     try {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      const contentStr =
+        typeof fileContent === 'string'
+          ? fileContent
+          : fileContent.toString('utf8');
+      const data = JSON.parse(contentStr);
       const decipher = crypto.createDecipheriv(
         'aes-256-gcm',
         this.getEncryptionKey(),

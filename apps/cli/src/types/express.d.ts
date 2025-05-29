@@ -1,13 +1,20 @@
-
-import { Request as ExpressRequest, Response as ExpressResponse, NextFunction } from 'express';
+import {
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+  NextFunction,
+} from 'express';
 
 declare module 'express-serve-static-core' {
   interface Request {
     apiKey?: string;
     userId?: string;
+    user?: any;
+    wallet?: string;
     body?: any;
     params?: any;
     query?: any;
+    ip?: string;
+    header?: (name: string) => string | undefined;
     file?: {
       mimetype: string;
       size: number;
@@ -16,7 +23,7 @@ declare module 'express-serve-static-core' {
       fieldname: string;
     };
   }
-  
+
   interface Response {
     json(body?: any): this;
     status(code: number): this;
@@ -28,9 +35,13 @@ declare module 'express' {
   interface Request {
     apiKey?: string;
     userId?: string;
+    user?: any;
+    wallet?: string;
     body?: any;
     params?: any;
     query?: any;
+    ip?: string;
+    header?: (name: string) => string | undefined;
     file?: {
       mimetype: string;
       size: number;
@@ -39,7 +50,7 @@ declare module 'express' {
       fieldname: string;
     };
   }
-  
+
   interface Response {
     json(body?: any): this;
     status(code: number): this;

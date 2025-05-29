@@ -22,10 +22,10 @@ describe('Transaction Edge Cases', () => {
     suiService = new SuiTestService({
       activeNetwork: {
         name: 'testnet',
-        fullnode: 'https://fullnode.testnet.sui.io'
+        fullnode: 'https://fullnode.testnet.sui.io',
       },
       activeAccount: {
-        address: fuzzer.blockchainData().address()
+        address: fuzzer.blockchainData().address(),
       },
       storage: {
         defaultSize: 1024,
@@ -34,7 +34,7 @@ describe('Transaction Edge Cases', () => {
         directory: '/tmp',
         temporaryDirectory: '/tmp',
         maxRetries: 3,
-        retryDelay: 1000
+        retryDelay: 1000,
       },
       todo: {
         localStoragePath: '/tmp',
@@ -43,13 +43,13 @@ describe('Transaction Edge Cases', () => {
         maxTitleLength: 100,
         maxDescriptionLength: 1000,
         defaultDueDateOffsetDays: 7,
-        expiryCheckInterval: 60000
+        expiryCheckInterval: 60000,
       },
       walrus: {},
       logging: {
         level: 'info' as const,
-        console: false
-      }
+        console: false,
+      },
     });
     nftContract = new MockNFTStorageContract('0x456');
   });
@@ -101,10 +101,10 @@ describe('Transaction Edge Cases', () => {
             new SuiTestService({
               activeNetwork: {
                 name: 'testnet',
-                fullnode: 'https://fullnode.testnet.sui.io'
+                fullnode: 'https://fullnode.testnet.sui.io',
               },
               activeAccount: {
-                address: fuzzer.blockchainData().address()
+                address: fuzzer.blockchainData().address(),
               },
               storage: {
                 defaultSize: 1024,
@@ -113,7 +113,7 @@ describe('Transaction Edge Cases', () => {
                 directory: '/tmp',
                 temporaryDirectory: '/tmp',
                 maxRetries: 3,
-                retryDelay: 1000
+                retryDelay: 1000,
               },
               todo: {
                 localStoragePath: '/tmp',
@@ -122,13 +122,13 @@ describe('Transaction Edge Cases', () => {
                 maxTitleLength: 100,
                 maxDescriptionLength: 1000,
                 defaultDueDateOffsetDays: 7,
-                expiryCheckInterval: 60000
+                expiryCheckInterval: 60000,
               },
               walrus: {},
               logging: {
                 level: 'info' as const,
-                console: false
-              }
+                console: false,
+              },
             })
         );
 
@@ -146,7 +146,7 @@ describe('Transaction Edge Cases', () => {
       const rejectedResults = results.filter(
         result => result.status === 'rejected'
       ) as PromiseRejectedResult[];
-      
+
       // Verify rejected results have proper error structure
       rejectedResults.forEach(result => {
         expect(result.reason).toBeInstanceOf(Error);
@@ -177,7 +177,7 @@ describe('Transaction Edge Cases', () => {
       const failedOperations = operationResults.filter(
         result => result.status === 'rejected'
       ) as PromiseRejectedResult[];
-      
+
       failedOperations.forEach(result => {
         expect(result.reason).toBeInstanceOf(Error);
         expect((result.reason as Error).message).toMatch(
@@ -197,7 +197,9 @@ describe('Transaction Edge Cases', () => {
         await new Promise(resolve => setTimeout(resolve, latency));
         await suiService.addTodo(listId, fuzzer.string());
         const duration = Date.now() - start;
-        expect(duration).toBeGreaterThanOrEqual(latency);
+        // Account for JavaScript timing precision limitations (typically 1-2ms variance)
+        const tolerance = 5; // Allow 5ms tolerance for timing precision
+        expect(duration).toBeGreaterThanOrEqual(latency - tolerance);
       }
     });
   });

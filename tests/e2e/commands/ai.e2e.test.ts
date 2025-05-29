@@ -116,36 +116,36 @@ describe('AI Command E2E Tests', () => {
         title: 'Complete financial report',
         description: 'Q4 financial analysis and projections',
         completed: false,
-        priority: 'high',
+        priority: 'high' as const,
         tags: ['finance', 'urgent'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         private: false,
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       },
       {
         id: 'todo-2',
         title: 'Update project roadmap',
         description: 'Revise timeline and deliverables',
         completed: false,
-        priority: 'medium',
+        priority: 'medium' as const,
         tags: ['project'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         private: false,
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       },
       {
         id: 'todo-3',
         title: 'Buy groceries',
         description: 'Weekly grocery shopping',
         completed: false,
-        priority: 'low',
+        priority: 'low' as const,
         tags: ['personal'],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         private: false,
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       },
     ];
 
@@ -475,7 +475,7 @@ describe('AI Command E2E Tests', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         private: false,
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       }));
 
       fs.writeFileSync(
@@ -498,7 +498,7 @@ describe('AI Command E2E Tests', () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           private: false,
-          storageLocation: 'local',
+          storageLocation: 'local' as const,
         },
       ];
 
@@ -520,12 +520,12 @@ describe('AI Command E2E Tests', () => {
           title: 'Task with "quotes" and special chars: $@#!',
           description: 'Description with\nnewlines\tand\ttabs',
           completed: false,
-          priority: 'medium',
+          priority: 'medium' as const,
           tags: ['tag-with-dash', 'tag_with_underscore'],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           private: false,
-          storageLocation: 'local',
+          storageLocation: 'local' as const,
         },
       ];
 

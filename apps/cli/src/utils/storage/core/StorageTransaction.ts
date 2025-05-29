@@ -224,9 +224,17 @@ export class StorageTransaction {
               // Apply gas budget if API version supports it
               if (
                 'gasConfig' in txAdapter &&
-                typeof (txAdapter as { gasConfig?: (config: { budget: number }) => void }).gasConfig === 'function'
+                typeof (
+                  txAdapter as {
+                    gasConfig?: (config: { budget: number }) => void;
+                  }
+                ).gasConfig === 'function'
               ) {
-                (txAdapter as { gasConfig: (config: { budget: number }) => void }).gasConfig({ budget: gasBudget });
+                (
+                  txAdapter as {
+                    gasConfig: (config: { budget: number }) => void;
+                  }
+                ).gasConfig({ budget: gasBudget });
               }
             }
 

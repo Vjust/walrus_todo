@@ -1,6 +1,9 @@
 import * as childProcess from 'child_process';
-import { NetworkValidator } from '../../src/utils/NetworkValidator';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
+import { NetworkValidator } from '../../apps/cli/src/utils/NetworkValidator';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');
 jest.mock('@mysten/walrus');
@@ -17,10 +20,10 @@ describe('NetworkValidator', () => {
     // Use the complete mock implementation
     mockWalrusClient = getMockWalrusClient();
     // Override the default network to testnet for this test
-    mockWalrusClient.getConfig.mockResolvedValue({ 
-      network: 'testnet', 
-      version: '1.0.0', 
-      maxSize: 10485760 
+    mockWalrusClient.getConfig.mockResolvedValue({
+      network: 'testnet',
+      version: '1.0.0',
+      maxSize: 10485760,
     });
 
     validator = new NetworkValidator({
@@ -32,10 +35,10 @@ describe('NetworkValidator', () => {
   describe('Environment Validation', () => {
     it('should validate matching environments', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ 
-        network: 'testnet', 
-        version: '1.0.0', 
-        maxSize: 10485760 
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 10485760,
       });
 
       await expect(
@@ -45,10 +48,10 @@ describe('NetworkValidator', () => {
 
     it('should throw on Sui environment mismatch without auto-switch', async () => {
       mockExecSync.mockReturnValue('devnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ 
-        network: 'testnet', 
-        version: '1.0.0', 
-        maxSize: 10485760 
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 10485760,
       });
 
       await expect(
@@ -78,10 +81,10 @@ describe('NetworkValidator', () => {
 
     it('should throw on Walrus environment mismatch', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ 
-        network: 'devnet', 
-        version: '1.0.0', 
-        maxSize: 10485760 
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'devnet',
+        version: '1.0.0',
+        maxSize: 10485760,
       });
 
       await expect(
@@ -101,10 +104,10 @@ describe('NetworkValidator', () => {
 
     it('should throw on invalid Walrus environment', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ 
-        network: 'invalid-env', 
-        version: '1.0.0', 
-        maxSize: 10485760 
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'invalid-env',
+        version: '1.0.0',
+        maxSize: 10485760,
       });
 
       await expect(
@@ -135,10 +138,10 @@ describe('NetworkValidator', () => {
   describe('Network Status', () => {
     it('should return correct network status when valid', async () => {
       mockExecSync.mockReturnValue('testnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ 
-        network: 'testnet', 
-        version: '1.0.0', 
-        maxSize: 10485760 
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 10485760,
       });
 
       const status = await validator.getNetworkStatus(mockWalrusClient);
@@ -152,10 +155,10 @@ describe('NetworkValidator', () => {
 
     it('should return invalid status on environment mismatch', async () => {
       mockExecSync.mockReturnValue('devnet');
-      mockWalrusClient.getConfig.mockResolvedValue({ 
-        network: 'testnet', 
-        version: '1.0.0', 
-        maxSize: 10485760 
+      mockWalrusClient.getConfig.mockResolvedValue({
+        network: 'testnet',
+        version: '1.0.0',
+        maxSize: 10485760,
       });
 
       const status = await validator.getNetworkStatus(mockWalrusClient);

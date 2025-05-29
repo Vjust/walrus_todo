@@ -9,7 +9,7 @@ import {
   useCompleteTodo 
 } from '@/hooks/useTodoQueries';
 import { useWebSocket } from '@/lib/websocket';
-import { useTodoStore } from '@/stores/todoStore';
+import { useHydratedTodoStore } from '@/stores/todoStore';
 import { Todo } from '@/types/todo';
 
 interface ReactQueryTodoListProps {
@@ -27,12 +27,12 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
   const deleteTodo = useDeleteTodo();
   const completeTodo = useCompleteTodo();
 
-  // Zustand store
+  // Zustand store (hydration-safe)
   const { 
     uiState: { filter, sortBy, syncInProgress },
     setFilter,
     setSortBy 
-  } = useTodoStore();
+  } = useHydratedTodoStore();
 
   // WebSocket status
   const { connected: wsConnected, socketId } = useWebSocket();

@@ -97,7 +97,7 @@ check_node
 check_pnpm
 
 # If we need to build the project first
-if [ ! -d "$PROJECT_DIR/dist" ] || [ ! -f "$PROJECT_DIR/dist/src/index.js" ]; then
+if [ ! -d "$PROJECT_DIR/dist/apps/cli" ] || [ ! -f "$PROJECT_DIR/dist/apps/cli/src/index.js" ]; then
   echo "Building project..."
   BUILD_SUCCESS=false
 

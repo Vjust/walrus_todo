@@ -1,10 +1,30 @@
 /* eslint-disable jest/expect-expect */
 import { jest } from '@jest/globals';
-import { Logger } from '@/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 
-jest.mock('@mysten/walrus');
-jest.mock('@/utils/VaultManager');
-jest.mock('@/utils/Logger');
+// Mock external dependencies
+jest.mock('@mysten/walrus', () => ({}));
+
+// Mock internal utilities with proper implementations
+jest.mock('../../apps/cli/src/utils/VaultManager', () => ({
+  VaultManager: jest.fn().mockImplementation(() => ({
+    createVault: jest.fn(),
+    getVaultMetadata: jest.fn(),
+    storeBlob: jest.fn(),
+    retrieveBlob: jest.fn(),
+  })),
+}));
+
+jest.mock('../../apps/cli/src/utils/Logger', () => ({
+  Logger: {
+    getInstance: jest.fn(() => ({
+      debug: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    })),
+  },
+}));
 
 describe('Storage Allocation Integration', () => {
   let mockLogger: jest.Mocked<Logger>;
@@ -22,6 +42,10 @@ describe('Storage Allocation Integration', () => {
 
   test('should setup mock infrastructure correctly', () => {
     expect(mockLogger).toBeDefined();
+    
+    // Call getInstance to verify the mock works
+    const loggerInstance = Logger.getInstance();
     expect(Logger.getInstance).toHaveBeenCalled();
+    expect(loggerInstance).toBeDefined();
   });
 });

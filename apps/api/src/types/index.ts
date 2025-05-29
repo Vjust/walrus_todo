@@ -1,17 +1,21 @@
-import { Request, Response } from 'express';
+// Import our enhanced Express types
+import './express';
+import {
+  Request,
+  Response,
+  NextFunction,
+  RequestHandler,
+  ErrorRequestHandler,
+} from './express';
 
-// Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      wallet?: string;
-      user?: {
-        id: string;
-        wallet: string;
-      };
-    }
-  }
-}
+// Re-export the enhanced Express types
+export type {
+  Request,
+  Response,
+  NextFunction,
+  RequestHandler,
+  ErrorRequestHandler,
+};
 
 export interface AuthenticatedRequest extends Request {
   wallet?: string;

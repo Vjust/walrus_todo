@@ -1,10 +1,15 @@
-import { aiService } from '../../src/services/ai';
-import AddCommand from '../../src/commands/add';
-import { TodoService } from '../../src/services/todoService';
-import { AddCommandArgs, AddCommandFlags, ParsedOutput } from '../../src/types/command-types';
+import { aiService } from '../../apps/cli/src/services/ai';
+import AddCommand from '../../apps/cli/src/commands/add';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import {
+  AddCommandArgs,
+  AddCommandFlags,
+  ParsedOutput,
+} from '../../apps/cli/src/types/command-types';
+import { runCommandInTest } from '../../apps/cli/src/__tests__/helpers/command-test-utils';
 
 // Mock aiService
-jest.mock('../../src/services/ai', () => {
+jest.mock('../../apps/cli/src/services/ai', () => {
   return {
     aiService: {
       suggestTags: jest.fn().mockResolvedValue(['ai-suggested', 'important']),
@@ -14,7 +19,7 @@ jest.mock('../../src/services/ai', () => {
 });
 
 // Mock TodoService
-jest.mock('../../src/services/todoService', () => {
+jest.mock('../../apps/cli/src/services/todoService', () => {
   return {
     TodoService: jest.fn().mockImplementation(() => {
       return {
@@ -40,53 +45,51 @@ jest.mock('../../src/services/todoService', () => {
 describe('Add Command with AI', () => {
   // Save environment variables
   const originalEnv = process.env;
-  let command: AddCommand;
-  let stdoutSpy: jest.SpyInstance;
 
   beforeEach(() => {
     process.env = { ...originalEnv, XAI_API_KEY: 'mock-api-key' };
-    command = new AddCommand([], {} as any);
-    stdoutSpy = jest.spyOn(command, 'log').mockImplementation(() => undefined);
     jest.clearAllMocks();
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    stdoutSpy.mockRestore();
   });
 
   test('should add a todo without AI', async () => {
-    await command.run();
+    const { output } = await runCommandInTest(
+      AddCommand,
+      ['add', 'Test todo'],
+      { list: 'default', priority: 'medium', ai: false },
+      { listOrTitle: 'Test todo' }
+    );
 
     expect(aiService.suggestTags).not.toHaveBeenCalled();
     expect(TodoService).toHaveBeenCalled();
-    expect((TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]?.value.addTodo).toHaveBeenCalled();
+    expect(
+      (TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]
+        ?.value.addTodo
+    ).toHaveBeenCalled();
+    expect(output.length).toBeGreaterThan(0);
   });
 
   test('should add a todo with AI suggestions', async () => {
-    // Mock parse to return ai flag as true
-    jest.spyOn(command, 'parse').mockResolvedValue({
-      args: { listOrTitle: 'Test todo with AI' } as AddCommandArgs,
-      flags: {
-        list: 'default',
-        priority: 'medium',
-        ai: true,
-      } as AddCommandFlags,
-    } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
-
-    await command.run();
+    const { output } = await runCommandInTest(
+      AddCommand,
+      ['add', 'Test todo with AI'],
+      { list: 'default', priority: 'medium', ai: true },
+      { listOrTitle: 'Test todo with AI' }
+    );
 
     expect(aiService.suggestTags).toHaveBeenCalled();
     expect(aiService.suggestPriority).toHaveBeenCalled();
-    expect((TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]?.value.addTodo).toHaveBeenCalled();
+    expect(
+      (TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]
+        ?.value.addTodo
+    ).toHaveBeenCalled();
 
     // Check AI suggestions were logged
-    expect(stdoutSpy).toHaveBeenCalledWith(
-      expect.stringContaining('AI suggested tags')
-    );
-    expect(stdoutSpy).toHaveBeenCalledWith(
-      expect.stringContaining('AI suggested priority')
-    );
+    expect(output.join(' ')).toContain('AI suggested tags');
+    expect(output.join(' ')).toContain('AI suggested priority');
   });
 
   test('should handle AI error gracefully', async () => {
@@ -95,38 +98,33 @@ describe('Add Command with AI', () => {
       new Error('API key error')
     );
 
-    // Mock parse to return ai flag as true
-    jest.spyOn(command, 'parse').mockResolvedValue({
-      args: { listOrTitle: 'Test todo with AI error' } as AddCommandArgs,
-      flags: {
-        list: 'default',
-        priority: 'medium',
-        ai: true,
-      } as AddCommandFlags,
-    } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
-
-    await command.run();
+    const { output } = await runCommandInTest(
+      AddCommand,
+      ['add', 'Test todo with AI error'],
+      { list: 'default', priority: 'medium', ai: true },
+      { listOrTitle: 'Test todo with AI error' }
+    );
 
     // Should continue with regular todo creation
-    expect((TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]?.value.addTodo).toHaveBeenCalled();
-    expect(stdoutSpy).toHaveBeenCalledWith(
-      expect.stringContaining('AI enhancement failed')
-    );
+    expect(
+      (TodoService as jest.MockedClass<typeof TodoService>).mock.results[0]
+        ?.value.addTodo
+    ).toHaveBeenCalled();
+    expect(output.join(' ')).toContain('AI enhancement failed');
   });
 
   test('should use custom API key when provided', async () => {
-    // Mock parse to return ai flag and apiKey
-    jest.spyOn(command, 'parse').mockResolvedValue({
-      args: { listOrTitle: 'Test todo with custom API key' } as AddCommandArgs,
-      flags: {
+    await runCommandInTest(
+      AddCommand,
+      ['add', 'Test todo with custom API key'],
+      {
         list: 'default',
         priority: 'medium',
         ai: true,
         apiKey: 'custom-api-key',
-      } as AddCommandFlags,
-    } as ParsedOutput<AddCommandArgs, AddCommandFlags>);
-
-    await command.run();
+      },
+      { listOrTitle: 'Test todo with custom API key' }
+    );
 
     expect(aiService.suggestTags).toHaveBeenCalled();
   });

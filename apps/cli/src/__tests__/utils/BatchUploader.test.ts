@@ -14,7 +14,7 @@ describe('BatchUploader', () => {
       title: 'First Todo',
       description: 'This is the first test todo',
       completed: false,
-      priority: 'high',
+      priority: 'high' as const,
       tags: ['test', 'important'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -25,7 +25,7 @@ describe('BatchUploader', () => {
       title: 'Second Todo',
       description: 'This is the second test todo',
       completed: true,
-      priority: 'medium',
+      priority: 'medium' as const,
       tags: ['test'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -37,7 +37,7 @@ describe('BatchUploader', () => {
       description:
         'This is the third test todo with a longer description to test variable sizes',
       completed: false,
-      priority: 'low',
+      priority: 'low' as const,
       tags: ['test', 'optional', 'later'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -69,13 +69,13 @@ describe('BatchUploader', () => {
         start_epoch: '100',
         end_epoch: '200',
       }),
-      
-      storeTodo: jest.fn().mockImplementation((todo: Todo) => 
-        Promise.resolve(`blob-${todo.id}`)
-      ),
-      
+
+      storeTodo: jest
+        .fn()
+        .mockImplementation((todo: Todo) => Promise.resolve(`blob-${todo.id}`)),
+
       storeTodoList: jest.fn().mockResolvedValue('list-blob-123'),
-      
+
       // Add other required methods as no-ops for testing
       init: jest.fn().mockResolvedValue(undefined),
       connect: jest.fn().mockResolvedValue(undefined),

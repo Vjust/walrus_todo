@@ -101,13 +101,52 @@ export class SafeAIService {
   private logger: Logger;
   private isInitialized = false;
   private initializationError: string | null = null;
+  private initializationPromise: Promise<void> | null = null;
   private lastHealthCheck = 0;
   private readonly healthCheckInterval = 30000; // 30 seconds
   private aiHealthy = false;
+  private activeTimeouts: Set<NodeJS.Timeout> = new Set();
 
   constructor() {
     this.logger = Logger.getInstance();
-    this.initializeAIService();
+    // Initialize AI service in background, but don't await it
+    // This prevents blocking the constructor while still ensuring 
+    // the logger is available for any early calls to initializeAIService
+    this.initializationPromise = this.initializeAIService().catch(error => {
+      // Error handling is already done in initializeAIService
+      // This catch just prevents unhandled promise rejections
+      return Promise.resolve();
+    });
+  }
+
+  /**
+   * Creates a tracked timeout that will be automatically cleaned up
+   */
+  private createTimeout(callback: () => void, delay: number): NodeJS.Timeout {
+    const timeout = setTimeout(() => {
+      this.activeTimeouts.delete(timeout);
+      callback();
+    }, delay);
+    this.activeTimeouts.add(timeout);
+    return timeout;
+  }
+
+  /**
+   * Clears a specific timeout and removes it from tracking
+   */
+  private clearTrackedTimeout(timeout: NodeJS.Timeout): void {
+    clearTimeout(timeout);
+    this.activeTimeouts.delete(timeout);
+  }
+
+  /**
+   * Clears all active timeouts
+   */
+  private clearAllTimeouts(): void {
+    for (const timeout of this.activeTimeouts) {
+      clearTimeout(timeout);
+    }
+    this.activeTimeouts.clear();
   }
 
   /**
@@ -178,9 +217,12 @@ export class SafeAIService {
       // Attempt a simple summarize operation with short timeout
       const testResult = await Promise.race([
         this.aiService.summarize(testTodos),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Health check timeout')), 5000)
-        ),
+        new Promise((_, reject) => {
+          this.createTimeout(
+            () => reject(new Error('Health check timeout')),
+            5000
+          );
+        }),
       ]);
 
       this.aiHealthy = typeof testResult === 'string' && testResult.length > 0;
@@ -202,9 +244,20 @@ export class SafeAIService {
   }
 
   /**
+   * Ensures AI service is initialized (wait for constructor initialization)
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.isInitialized && this.initializationPromise) {
+      await this.initializationPromise;
+    }
+  }
+
+  /**
    * Checks if AI service is available and healthy
    */
   public async isAIAvailable(): Promise<boolean> {
+    await this.ensureInitialized();
+    
     if (!this.isInitialized || !this.aiService) {
       return false;
     }
@@ -238,6 +291,7 @@ export class SafeAIService {
     aiOperation: () => Promise<T>,
     fallbackResult: T
   ): Promise<SafeAIResult<T>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable) {
@@ -257,12 +311,12 @@ export class SafeAIService {
 
       const result = await Promise.race([
         aiOperation(),
-        new Promise<never>((_, reject) =>
-          setTimeout(
+        new Promise<never>((_, reject) => {
+          this.createTimeout(
             () => reject(new Error(`${operation} operation timeout`)),
             15000
-          )
-        ),
+          );
+        }),
       ]);
 
       this.logger.debug(`AI operation ${operation} completed successfully`);
@@ -315,6 +369,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<string>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -409,6 +464,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<Record<string, string[]>>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -503,6 +559,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<Record<string, number>>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -595,6 +652,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<string[]>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -689,6 +747,7 @@ export class SafeAIService {
     todos: Todo[],
     privacyLevel: AIPrivacyLevel = AIPrivacyLevel.HASH_ONLY
   ): Promise<SafeAIResult<VerifiedAIResult<Record<string, unknown>>>> {
+    await this.ensureInitialized();
     const aiAvailable = await this.isAIAvailable();
 
     if (!aiAvailable || !this.aiService) {
@@ -797,6 +856,8 @@ export class SafeAIService {
     modelName?: string,
     options?: Record<string, unknown>
   ): Promise<SafeAIResult<boolean>> {
+    await this.ensureInitialized();
+    
     if (!this.aiService) {
       return {
         success: false,
@@ -843,6 +904,9 @@ export class SafeAIService {
    */
   public cancelAllOperations(reason?: string): void {
     try {
+      // Clear all tracked timeouts first
+      this.clearAllTimeouts();
+
       if (this.aiService) {
         this.aiService.cancelAllOperations(reason);
       }
@@ -857,6 +921,17 @@ export class SafeAIService {
   }
 
   /**
+   * Cleans up all resources and timeouts
+   */
+  public cleanup(): void {
+    this.clearAllTimeouts();
+    this.cancelAllOperations('Service cleanup');
+    this.aiService = null;
+    this.isInitialized = false;
+    this.aiHealthy = false;
+  }
+
+  /**
    * Gets the underlying AI service (use with caution)
    */
   public getUnderlyingService(): AIService | null {
@@ -868,3 +943,15 @@ export class SafeAIService {
  * Global singleton instance of the Safe AI Service
  */
 export const safeAIService = new SafeAIService();
+
+// Ensure cleanup on process exit to prevent handle leaks
+if (typeof process !== 'undefined') {
+  const cleanup = () => {
+    safeAIService.cleanup();
+  };
+
+  process.on('exit', cleanup);
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+  process.on('beforeExit', cleanup);
+}

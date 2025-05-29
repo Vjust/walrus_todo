@@ -12,13 +12,13 @@ describe('TodoSerializer', () => {
       title: 'Test Todo',
       description: 'This is a test todo',
       completed: false,
-      priority: 'medium',
+      priority: 'medium' as const,
       dueDate: '2024-04-15',
       tags: ['test', 'example'],
       createdAt: '2024-01-01T12:00:00.000Z',
       updatedAt: '2024-01-01T12:00:00.000Z',
       private: false,
-      storageLocation: 'local',
+      storageLocation: 'local' as const,
       walrusBlobId: 'blob-456',
       nftObjectId: 'nft-789',
       imageUrl: 'https://example.com/image.jpg',
@@ -65,7 +65,7 @@ describe('TodoSerializer', () => {
         id: 'min-123',
         title: 'Minimal Todo',
         completed: false,
-        priority: 'low',
+        priority: 'low' as const,
         tags: [],
         createdAt: '2024-01-01T08:00:00.000Z',
         updatedAt: '2024-01-01T08:00:00.000Z',
@@ -262,11 +262,15 @@ describe('TodoSerializer', () => {
 
   describe('Error handling', () => {
     it('should throw error when null is passed to todoToBuffer', () => {
-      expect(() => TodoSerializer.todoToBuffer(null as unknown as Todo)).toThrow();
+      expect(() =>
+        TodoSerializer.todoToBuffer(null as unknown as Todo)
+      ).toThrow();
     });
 
     it('should throw error when undefined is passed to todoToBuffer', () => {
-      expect(() => TodoSerializer.todoToBuffer(undefined as unknown as Todo)).toThrow();
+      expect(() =>
+        TodoSerializer.todoToBuffer(undefined as unknown as Todo)
+      ).toThrow();
     });
 
     it('should throw error when invalid buffer is passed to bufferToTodo', () => {

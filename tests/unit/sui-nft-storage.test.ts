@@ -4,23 +4,26 @@ import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type {
   SuiTransactionBlockResponse,
   SuiObjectResponse,
-} from '../../src/utils/adapters/sui-client-compatibility';
+} from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { IntentScope, SignatureWithBytes } from '@mysten/sui/cryptography';
-import { SuiNftStorage } from '../../src/utils/sui-nft-storage';
-import { SuiClient } from '../../src/utils/adapters/sui-client-compatibility';
+import { SuiNftStorage } from '../../apps/cli/src/utils/sui-nft-storage';
+import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
-import { createMockSuiObjectResponse, createMockTransactionResponse } from '../sui-test-types';
+import {
+  createMockSuiObjectResponse,
+  createMockTransactionResponse,
+} from '../sui-test-types';
 
 // Mock PublicKey class for testing
 class MockPublicKey {
   toRawBytes(): Uint8Array {
     return new Uint8Array(32);
   }
-  
+
   flag(): number {
     return 0;
   }
-  
+
   toSuiAddress(): string {
     return 'mock-address';
   }
@@ -54,7 +57,8 @@ describe('SuiNftStorage', () => {
     const mockSigner = {
       connect: () => Promise.resolve(),
       getPublicKey: () => new MockPublicKey(),
-      sign: async (_data: Uint8Array): Promise<Uint8Array> => new Uint8Array(64),
+      sign: async (_data: Uint8Array): Promise<Uint8Array> =>
+        new Uint8Array(64),
       signPersonalMessage: async (
         data: Uint8Array
       ): Promise<SignatureWithBytes> => ({
@@ -95,7 +99,7 @@ describe('SuiNftStorage', () => {
   it('should verify mock functions are available', () => {
     const mockObjectResponse = createMockSuiObjectResponse({ id: 'test-id' });
     const mockTxResponse = createMockTransactionResponse(true);
-    
+
     expect(mockObjectResponse.data?.content).toBeDefined();
     expect(mockTxResponse.digest).toBe('test-digest');
     expect(storage).toBeInstanceOf(SuiNftStorage);

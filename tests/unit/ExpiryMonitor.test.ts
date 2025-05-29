@@ -1,10 +1,13 @@
-import { ExpiryMonitor } from '../../src/utils/ExpiryMonitor';
-import { VaultManager } from '../../src/utils/VaultManager';
+import { ExpiryMonitor } from '../../apps/cli/src/utils/ExpiryMonitor';
+import { VaultManager } from '../../apps/cli/src/utils/VaultManager';
 // Unused imports removed during TypeScript cleanup
-// import type { WalrusClientExt } from '../../src/types/client';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+// import type { WalrusClientExt } from '../../apps/cli/src/types/client';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../../helpers/complete-walrus-client-mock';
 
-jest.mock('../../src/utils/VaultManager');
+jest.mock('../../apps/cli/src/utils/VaultManager');
 jest.mock('@mysten/walrus');
 
 describe('ExpiryMonitor', () => {
@@ -68,7 +71,7 @@ describe('ExpiryMonitor', () => {
     } as unknown as jest.Mocked<VaultManager>;
 
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific methods for this test
     mockWalrusClient.getConfig.mockResolvedValue({
       network: 'testnet',
@@ -76,7 +79,10 @@ describe('ExpiryMonitor', () => {
       maxSize: 1000000,
     });
     mockWalrusClient.getWalBalance.mockResolvedValue('2000');
-    mockWalrusClient.getStorageUsage.mockResolvedValue({ used: '500', total: '2000' });
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '500',
+      total: '2000',
+    });
     mockWalrusClient.getBlobSize.mockResolvedValue(1024);
     mockWalrusClient.getBlobMetadata.mockResolvedValue({
       size: 1024,
@@ -90,10 +96,14 @@ describe('ExpiryMonitor', () => {
       created: new Date().toISOString(),
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
-    
+
     // Add missing method mock if it's used in tests
-    (mockWalrusClient as unknown as { getSuiBalance: jest.Mock }).getSuiBalance = jest.fn().mockResolvedValue('1000');
-    (mockWalrusClient as unknown as { allocateStorage: jest.Mock }).allocateStorage = jest.fn().mockResolvedValue({
+    (
+      mockWalrusClient as unknown as { getSuiBalance: jest.Mock }
+    ).getSuiBalance = jest.fn().mockResolvedValue('1000');
+    (
+      mockWalrusClient as unknown as { allocateStorage: jest.Mock }
+    ).allocateStorage = jest.fn().mockResolvedValue({
       digest: 'mock-storage-tx',
       storage: {
         id: { id: 'mock-storage-id' },
@@ -121,7 +131,7 @@ describe('ExpiryMonitor', () => {
       mockRenewalHandler,
       mockConfig
     );
-    
+
     expect(monitor).toBeInstanceOf(ExpiryMonitor);
   });
 });

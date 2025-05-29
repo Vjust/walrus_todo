@@ -11,46 +11,51 @@ import { AIService } from '../../services/ai/aiService';
 import { Logger } from '../../utils/Logger';
 import { AIProvider } from '../../types/adapters/AIModelAdapter';
 
-// Mock dependencies
-jest.mock('../../services/ai/aiService');
+// Mock Logger module
 jest.mock('../../utils/Logger');
-
+jest.mock('../../services/ai/aiService');
 
 describe('SafeAIService', () => {
   let safeAIService: SafeAIService;
-  let mockAIService: jest.Mocked<AIService>;
+  let aiService: AIService;
+  let logger: Logger;
   let mockLogger: jest.Mocked<Logger>;
+  let mockAIService: jest.Mocked<AIService>;
 
-  const sampleTodos: Todo[] = [
-    {
-      id: '1',
-      title: 'Test Todo 1',
-      description: 'First test todo',
-      completed: false,
-      priority: 'high',
-      tags: [],
-      private: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: 'Test Todo 2',
-      description: 'Second test todo',
-      completed: true,
-      priority: 'medium',
-      tags: [],
-      private: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+  // Factory function to create fresh test data for each test
+  function createSampleTodos(): Todo[] {
+    return [
+      {
+        id: '1',
+        title: 'Test Todo 1',
+        description: 'First test todo',
+        completed: false,
+        priority: 'high' as const,
+        tags: [],
+        private: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        title: 'Test Todo 2',
+        description: 'Second test todo',
+        completed: true,
+        priority: 'medium' as const,
+        tags: [],
+        private: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+  }
 
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
+    jest.restoreAllMocks();
 
-    // Mock Logger
+    // Create minimal mock Logger to reduce memory footprint
     mockLogger = {
       debug: jest.fn(),
       info: jest.fn(),
@@ -58,12 +63,14 @@ describe('SafeAIService', () => {
       error: jest.fn(),
       addHandler: jest.fn(),
       clearHandlers: jest.fn(),
-      getInstance: jest.fn(() => mockLogger),
     } as unknown as jest.Mocked<Logger>;
 
-    (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
+    // Mock Logger.getInstance to return our mock
+    (
+      Logger.getInstance as jest.MockedFunction<typeof Logger.getInstance>
+    ).mockReturnValue(mockLogger);
 
-    // Mock AIService
+    // Create minimal mock AIService
     mockAIService = {
       summarize: jest.fn(),
       categorize: jest.fn(),
@@ -83,9 +90,24 @@ describe('SafeAIService', () => {
       analyzeWithVerification: jest.fn(),
     } as unknown as jest.Mocked<AIService>;
 
-    (AIService as jest.Mock).mockImplementation(() => mockAIService);
+    (AIService as jest.MockedClass<typeof AIService>).mockImplementation(
+      () => mockAIService
+    );
 
     safeAIService = new SafeAIService();
+  });
+
+  afterEach(() => {
+    // Cleanup after each test to prevent memory leaks
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+
+    // Nullify references to help garbage collection
+    safeAIService = null as any;
+    aiService = null as any;
+    logger = null as any;
+    mockLogger = null as any;
+    mockAIService = null as any;
   });
 
   describe('initialization', () => {
@@ -126,8 +148,18 @@ describe('SafeAIService', () => {
     it('should return false when AI service is not initialized', async () => {
       const newSafeService = new SafeAIService();
       // Force uninitialized state
-      (newSafeService as unknown as { isInitialized: boolean; aiService: unknown }).isInitialized = false;
-      (newSafeService as unknown as { isInitialized: boolean; aiService: unknown }).aiService = null;
+      (
+        newSafeService as unknown as {
+          isInitialized: boolean;
+          aiService: unknown;
+        }
+      ).isInitialized = false;
+      (
+        newSafeService as unknown as {
+          isInitialized: boolean;
+          aiService: unknown;
+        }
+      ).aiService = null;
 
       const available = await newSafeService.isAIAvailable();
       expect(available).toBe(false);
@@ -156,7 +188,8 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.summarize.mockResolvedValue(expectedSummary);
 
-      const result = await safeAIService.summarize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.summarize(todos);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe(expectedSummary);
@@ -167,7 +200,8 @@ describe('SafeAIService', () => {
     it('should return fallback when AI is unavailable', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.summarize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.summarize(todos);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe(
@@ -183,7 +217,8 @@ describe('SafeAIService', () => {
         new Error('AI operation failed')
       );
 
-      const result = await safeAIService.summarize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.summarize(todos);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe(
@@ -199,7 +234,8 @@ describe('SafeAIService', () => {
         () => new Promise(resolve => setTimeout(resolve, 20000))
       );
 
-      const result = await safeAIService.summarize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.summarize(todos);
 
       expect(result.success).toBe(true);
       expect(result.usedFallback).toBe(true);
@@ -213,7 +249,8 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.categorize.mockResolvedValue(expectedCategories);
 
-      const result = await safeAIService.categorize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.categorize(todos);
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(expectedCategories);
@@ -226,7 +263,8 @@ describe('SafeAIService', () => {
         new Error('Health check failed')
       );
 
-      const result = await safeAIService.categorize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.categorize(todos);
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual({ General: ['1', '2'] });
@@ -240,7 +278,8 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.prioritize.mockResolvedValue(expectedPriorities);
 
-      const result = await safeAIService.prioritize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.prioritize(todos);
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(expectedPriorities);
@@ -251,7 +290,8 @@ describe('SafeAIService', () => {
     it('should return fallback priorities based on existing todo priorities', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.prioritize(sampleTodos);
+      const todos = createSampleTodos();
+      const result = await safeAIService.prioritize(todos);
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual({ '1': 8, '2': 5 }); // high=8, medium=5
@@ -268,7 +308,7 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.suggest.mockResolvedValue(expectedSuggestions);
 
-      const result = await safeAIService.suggest(sampleTodos);
+      const result = await safeAIService.suggest(createSampleTodos());
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(expectedSuggestions);
@@ -279,7 +319,7 @@ describe('SafeAIService', () => {
     it('should return default suggestions when AI fails', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.suggest(sampleTodos);
+      const result = await safeAIService.suggest(createSampleTodos());
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual([
@@ -300,7 +340,7 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.analyze.mockResolvedValue(expectedAnalysis);
 
-      const result = await safeAIService.analyze(sampleTodos);
+      const result = await safeAIService.analyze(createSampleTodos());
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(expectedAnalysis);
@@ -311,7 +351,7 @@ describe('SafeAIService', () => {
     it('should return default analysis when AI fails', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.analyze(sampleTodos);
+      const result = await safeAIService.analyze(createSampleTodos());
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual({
@@ -334,7 +374,9 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.suggestTags.mockResolvedValue(expectedTags);
 
-      const result = await safeAIService.suggestTags(sampleTodos[0] as Todo);
+      const result = await safeAIService.suggestTags(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(expectedTags);
@@ -345,7 +387,9 @@ describe('SafeAIService', () => {
     it('should return default tags when AI fails', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.suggestTags(sampleTodos[0] as Todo);
+      const result = await safeAIService.suggestTags(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toEqual(['general', 'task']);
@@ -358,7 +402,9 @@ describe('SafeAIService', () => {
       mockAIService.summarize.mockResolvedValue('Health check summary');
       mockAIService.suggestPriority.mockResolvedValue('high');
 
-      const result = await safeAIService.suggestPriority(sampleTodos[0] as Todo);
+      const result = await safeAIService.suggestPriority(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('high');
@@ -369,7 +415,9 @@ describe('SafeAIService', () => {
     it('should return default priority when AI fails', async () => {
       (safeAIService as unknown as { aiService: unknown }).aiService = null;
 
-      const result = await safeAIService.suggestPriority(sampleTodos[0] as Todo);
+      const result = await safeAIService.suggestPriority(
+        createSampleTodos()[0] as Todo
+      );
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('medium');

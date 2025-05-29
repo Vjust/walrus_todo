@@ -1,7 +1,9 @@
 // Polyfill for AggregateError if it doesn't exist globally
 
 // Check if AggregateError already exists globally
-const globalWithAggregateError = globalThis as unknown as { AggregateError?: unknown };
+const globalWithAggregateError = globalThis as unknown as {
+  AggregateError?: unknown;
+};
 if (typeof globalWithAggregateError.AggregateError === 'undefined') {
   // Define our own AggregateError implementation
   class AggregateErrorPolyfill extends Error {
@@ -10,7 +12,9 @@ if (typeof globalWithAggregateError.AggregateError === 'undefined') {
     constructor(errors: unknown[], message?: string) {
       super(message);
       this.name = 'AggregateError';
-      this.errors = Array.isArray(errors) ? errors : Array.from(errors as unknown as Iterable<unknown>);
+      this.errors = Array.isArray(errors)
+        ? errors
+        : Array.from(errors as unknown as Iterable<unknown>);
 
       // Maintain proper stack trace for where our error was thrown
       if (Error.captureStackTrace) {
@@ -27,13 +31,17 @@ if (typeof globalWithAggregateError.AggregateError === 'undefined') {
 
   // Also make it available globally for different environments
   if (typeof global !== 'undefined') {
-    const globalWithAggregateError = global as unknown as { AggregateError?: typeof AggregateErrorPolyfill };
+    const globalWithAggregateError = global as unknown as {
+      AggregateError?: typeof AggregateErrorPolyfill;
+    };
     globalWithAggregateError.AggregateError = AggregateErrorPolyfill;
   }
 
   // For browser environments
   if (typeof window !== 'undefined') {
-    const windowWithAggregateError = window as unknown as { AggregateError?: typeof AggregateErrorPolyfill };
+    const windowWithAggregateError = window as unknown as {
+      AggregateError?: typeof AggregateErrorPolyfill;
+    };
     windowWithAggregateError.AggregateError = AggregateErrorPolyfill;
   }
 }

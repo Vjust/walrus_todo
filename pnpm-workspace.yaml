@@ -1,8 +1,12 @@
+neverBuiltDependencies:
+  - test-exclude
+  - babel-plugin-istanbul
+
 packages:
-  - packages/*
-  - .
-  - apps/*
-  - waltodo-frontend
+  - "packages/*"
+  - "apps/*"
+  - "waltodo-frontend"
+  - "tests/testnet/setup"
 ignoreBuiltDependencies:
   - bufferutil
   - sharp

@@ -7,6 +7,7 @@ import {
   getProviderEnum,
   getProviderString,
 } from '../../utils/adapters/ai-provider-adapter';
+import { AIProvider } from '../../services/ai/types';
 import chalk = require('chalk');
 import { CLIError } from '../../types/errors/consolidated';
 
@@ -121,7 +122,17 @@ export default class Credentials extends BaseCommand {
   /**
    * Add a new credential
    */
-  private async addCredential(provider: string, flags: { key?: string; verify?: boolean; permission?: string; expiry?: number; rotation?: number; json?: boolean }) {
+  private async addCredential(
+    provider: string,
+    flags: {
+      key?: string;
+      verify?: boolean;
+      permission?: string;
+      expiry?: number;
+      rotation?: number;
+      json?: boolean;
+    }
+  ) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -132,7 +143,7 @@ export default class Credentials extends BaseCommand {
       apiKey = await this.securePrompt(`Enter API key for ${provider}:`);
     }
 
-    // Convert permission flag to enum
+    // Convert permission flag to enum with null check
     const permissionMap: Record<string, AIPermissionLevel> = {
       no_access: AIPermissionLevel.NO_ACCESS,
       read_only: AIPermissionLevel.READ_ONLY,
@@ -141,19 +152,18 @@ export default class Credentials extends BaseCommand {
       admin: AIPermissionLevel.ADMIN,
     };
 
-    const permissionLevel =
-      permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
+    const permissionLevel: AIPermissionLevel =
+      flags.permission && flags.permission in permissionMap
+        ? permissionMap[flags.permission]!
+        : AIPermissionLevel.STANDARD;
 
     try {
-      // Convert string provider to AIProvider enum value and back to string
-      // This ensures we have a valid AIProvider type from the AI types module
+      // Convert string provider to AIProvider enum
       const providerEnum = getProviderEnum(provider);
-      const providerString = getProviderString(providerEnum);
 
-      // The type cast is needed because the AIProvider in SecureCredentialService
-      // is different from the AIProvider enum in AIModelAdapter
+      // Store credential using the enum value directly
       const result = await secureCredentialService.storeCredential(
-        providerString as 'openai' | 'anthropic' | 'xai',
+        providerEnum,
         apiKey,
         {
           permissionLevel,
@@ -233,11 +243,13 @@ export default class Credentials extends BaseCommand {
           ? chalk.green('✓ verified')
           : chalk.gray('not verified');
 
-        // Get permission level name
+        // Get permission level name with null safety
         const permissionName =
-          Object.entries(AIPermissionLevel)
-            .find(([_, value]) => value === cred.permissionLevel)?.[0]
-            ?.toLowerCase() || 'standard';
+          cred.permissionLevel !== undefined && cred.permissionLevel !== null
+            ? Object.entries(AIPermissionLevel)
+                .find(([_, value]) => value === cred.permissionLevel)?.[0]
+                ?.toLowerCase() || 'standard'
+            : 'standard';
 
         this.log(
           `${chalk.green(cred.provider.padEnd(10))} | ${chalk.yellow(permissionName.padEnd(10))} | ` +
@@ -283,10 +295,7 @@ export default class Credentials extends BaseCommand {
       const providerEnum = getProviderEnum(provider);
 
       // First check if credential exists
-      const providerString = getProviderString(providerEnum);
-      if (
-        !(await secureCredentialService.hasCredential(providerString as 'openai' | 'anthropic' | 'xai'))
-      ) {
+      if (!(await secureCredentialService.hasCredential(providerEnum))) {
         throw new CLIError(`No credential found for ${provider}`);
       }
 
@@ -299,9 +308,8 @@ export default class Credentials extends BaseCommand {
         return;
       }
 
-      const removed = await secureCredentialService.removeCredential(
-        providerString as 'openai' | 'anthropic' | 'xai'
-      );
+      const removed =
+        await secureCredentialService.removeCredential(providerEnum);
 
       if (removed) {
         this.log(
@@ -331,10 +339,8 @@ export default class Credentials extends BaseCommand {
     try {
       // Convert string provider to AIProvider enum
       const providerEnum = getProviderEnum(provider);
-      const providerString = getProviderString(providerEnum);
-      const verified = await secureCredentialService.verifyCredential(
-        providerString as 'openai' | 'anthropic' | 'xai'
-      );
+      const verified =
+        await secureCredentialService.verifyCredential(providerEnum);
 
       if (verified) {
         this.log(
@@ -356,7 +362,10 @@ export default class Credentials extends BaseCommand {
   /**
    * Rotate a credential
    */
-  private async rotateCredential(provider: string, flags: { key?: string; json?: boolean }) {
+  private async rotateCredential(
+    provider: string,
+    flags: { key?: string; json?: boolean }
+  ) {
     if (!provider) {
       this.error('Provider is required');
     }
@@ -373,7 +382,6 @@ export default class Credentials extends BaseCommand {
 
       // Convert string provider to AIProvider enum
       const providerEnum = getProviderEnum(provider);
-      const providerString = getProviderString(providerEnum);
 
       // Confirm rotation
       const confirmed = await this.confirm(
@@ -386,7 +394,7 @@ export default class Credentials extends BaseCommand {
       }
 
       const result = await secureCredentialService.rotateCredential(
-        providerString as 'openai' | 'anthropic' | 'xai',
+        providerEnum,
         newApiKey
       );
 
@@ -426,12 +434,15 @@ export default class Credentials extends BaseCommand {
   /**
    * Update credential permissions
    */
-  private async updatePermissions(provider: string, flags: { permission?: string; json?: boolean }) {
+  private async updatePermissions(
+    provider: string,
+    flags: { permission?: string; json?: boolean }
+  ) {
     if (!provider) {
       this.error('Provider is required');
     }
 
-    // Convert permission flag to enum
+    // Convert permission flag to enum with null check
     const permissionMap: Record<string, AIPermissionLevel> = {
       no_access: AIPermissionLevel.NO_ACCESS,
       read_only: AIPermissionLevel.READ_ONLY,
@@ -440,15 +451,16 @@ export default class Credentials extends BaseCommand {
       admin: AIPermissionLevel.ADMIN,
     };
 
-    const permissionLevel =
-      permissionMap[flags.permission] || AIPermissionLevel.STANDARD;
+    const permissionLevel: AIPermissionLevel =
+      flags.permission && flags.permission in permissionMap
+        ? permissionMap[flags.permission]!
+        : AIPermissionLevel.STANDARD;
 
     try {
       // Convert string provider to AIProvider enum
       const providerEnum = getProviderEnum(provider);
-      const providerString = getProviderString(providerEnum);
       const result = await secureCredentialService.updatePermissions(
-        providerString as 'openai' | 'anthropic' | 'xai',
+        providerEnum,
         permissionLevel
       );
 

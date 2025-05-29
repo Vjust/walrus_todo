@@ -220,7 +220,9 @@ export default class Provider extends BaseCommand {
 
   // Helper methods
 
-  private formatTable(data: Record<string, string | number | boolean>[]): string {
+  private formatTable(
+    data: Record<string, string | number | boolean>[]
+  ): string {
     if (data.length === 0) return 'No data';
 
     // Extract column names

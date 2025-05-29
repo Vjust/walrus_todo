@@ -1,13 +1,13 @@
 import {
   AIProvider,
   AIModelOptions,
-} from '../../src/types/adapters/AIModelAdapter';
-import { AIProviderFactory } from '../../src/services/ai/AIProviderFactory';
+} from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
+import { createMockAIModelAdapter } from '../helpers/AITestFactory';
 
 // Mock adapters for XAI and OpenAI
-jest.mock('../../src/services/ai/adapters/XAIModelAdapter', () => {
+jest.mock('../../apps/cli/src/services/ai/adapters/XAIModelAdapter', () => {
   return {
     XAIModelAdapter: jest
       .fn()
@@ -15,7 +15,7 @@ jest.mock('../../src/services/ai/adapters/XAIModelAdapter', () => {
   };
 });
 
-jest.mock('../../src/services/ai/adapters/OpenAIModelAdapter', () => {
+jest.mock('../../apps/cli/src/services/ai/adapters/OpenAIModelAdapter', () => {
   return {
     OpenAIModelAdapter: jest
       .fn()
@@ -24,8 +24,8 @@ jest.mock('../../src/services/ai/adapters/OpenAIModelAdapter', () => {
 });
 
 // Import the mocked classes
-import { XAIModelAdapter } from '../../src/services/ai/adapters/XAIModelAdapter';
-import { OpenAIModelAdapter } from '../../src/services/ai/adapters/OpenAIModelAdapter';
+import { XAIModelAdapter } from '../../apps/cli/src/services/ai/adapters/XAIModelAdapter';
+import { OpenAIModelAdapter } from '../../apps/cli/src/services/ai/adapters/OpenAIModelAdapter';
 
 describe('AI Provider Abstraction', () => {
   // Environment setup

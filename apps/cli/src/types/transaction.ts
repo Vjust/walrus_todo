@@ -23,7 +23,7 @@ export interface TransactionBlock extends SuiTransaction {
 /**
  * Discriminated union types for different transaction implementations
  */
-export type TransactionVariant = 
+export type TransactionVariant =
   | { kind: 'sui'; transaction: SuiTransaction }
   | { kind: 'adapter'; transaction: TransactionBlockAdapter };
 
@@ -44,7 +44,13 @@ export function isTransactionBlock(obj: unknown): obj is TransactionBlock {
 }
 
 export function isSuiTransaction(obj: unknown): obj is SuiTransaction {
-  return obj && typeof obj === 'object' && obj !== null && 'serialize' in obj && typeof (obj as Record<string, unknown>).serialize === 'function';
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    obj !== null &&
+    'serialize' in obj &&
+    typeof (obj as Record<string, unknown>).serialize === 'function'
+  );
 }
 
 /**
@@ -64,11 +70,15 @@ export function isTransactionVariant(obj: unknown): obj is TransactionVariant {
 /**
  * Type narrowing functions for TransactionVariant
  */
-export function isSuiVariant(variant: TransactionVariant): variant is { kind: 'sui'; transaction: SuiTransaction } {
+export function isSuiVariant(
+  variant: TransactionVariant
+): variant is { kind: 'sui'; transaction: SuiTransaction } {
   return variant.kind === 'sui';
 }
 
-export function isAdapterVariant(variant: TransactionVariant): variant is { kind: 'adapter'; transaction: TransactionBlockAdapter } {
+export function isAdapterVariant(
+  variant: TransactionVariant
+): variant is { kind: 'adapter'; transaction: TransactionBlockAdapter } {
   return variant.kind === 'adapter';
 }
 
@@ -83,7 +93,13 @@ export function isLegacyVariant(_variant: unknown): _variant is never {
  * Type predicate for union type narrowing
  */
 export function isTransactionType(obj: unknown): obj is TransactionType {
-  return isSuiTransaction(obj) || (obj && typeof obj === 'object' && obj !== null && 'getUnderlyingImplementation' in obj);
+  return (
+    isSuiTransaction(obj) ||
+    (obj &&
+      typeof obj === 'object' &&
+      obj !== null &&
+      'getUnderlyingImplementation' in obj)
+  );
 }
 
 /**
@@ -97,7 +113,10 @@ export function asTransaction(
   }
 
   // For adapter types, extract the underlying implementation
-  if ('getUnderlyingImplementation' in input && typeof input.getUnderlyingImplementation === 'function') {
+  if (
+    'getUnderlyingImplementation' in input &&
+    typeof input.getUnderlyingImplementation === 'function'
+  ) {
     const underlying = input.getUnderlyingImplementation();
     if (isSuiTransaction(underlying)) {
       return underlying;
@@ -145,11 +164,15 @@ export function asStringUint8ArrayOrTransactionBlock(
 /**
  * Factory functions for creating discriminated union variants
  */
-export function createSuiVariant(transaction: SuiTransaction): TransactionVariant {
+export function createSuiVariant(
+  transaction: SuiTransaction
+): TransactionVariant {
   return { kind: 'sui', transaction };
 }
 
-export function createAdapterVariant(transaction: TransactionBlockAdapter): TransactionVariant {
+export function createAdapterVariant(
+  transaction: TransactionBlockAdapter
+): TransactionVariant {
   return { kind: 'adapter', transaction };
 }
 
@@ -163,7 +186,9 @@ export function createLegacyVariant(_transaction: unknown): never {
 /**
  * Safe transaction variant extraction with type narrowing
  */
-export function extractTransaction(variant: TransactionVariant): SuiTransaction | TransactionBlockAdapter {
+export function extractTransaction(
+  variant: TransactionVariant
+): SuiTransaction | TransactionBlockAdapter {
   switch (variant.kind) {
     case 'sui':
       return variant.transaction;
@@ -172,7 +197,9 @@ export function extractTransaction(variant: TransactionVariant): SuiTransaction 
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = variant;
-      throw new Error(`Unknown transaction variant: ${JSON.stringify(_exhaustive)}`);
+      throw new Error(
+        `Unknown transaction variant: ${JSON.stringify(_exhaustive)}`
+      );
     }
   }
 }
@@ -195,7 +222,9 @@ export function processTransactionVariant<T>(
     default: {
       // TypeScript exhaustiveness check
       const _exhaustive: never = variant;
-      throw new Error(`Unknown transaction variant: ${JSON.stringify(_exhaustive)}`);
+      throw new Error(
+        `Unknown transaction variant: ${JSON.stringify(_exhaustive)}`
+      );
     }
   }
 }

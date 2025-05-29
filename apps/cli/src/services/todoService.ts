@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { promises as fsPromises } from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { Todo, TodoList } from '../types/todo';
 import { STORAGE_CONFIG } from '../constants';
@@ -349,6 +349,37 @@ export class TodoService {
   }
 
   /**
+   * Marks a todo as completed by its ID
+   *
+   * @param {string} todoId - ID of the todo to complete
+   * @returns {Promise<Todo>} The completed todo
+   * @throws {CLIError} If the todo doesn't exist
+   */
+  async completeTodo(todoId: string): Promise<Todo> {
+    // Find the todo across all lists
+    const foundTodo = await this.findTodoByIdOrTitleAcrossLists(todoId);
+    if (!foundTodo) {
+      throw new CLIError(
+        `Todo with ID "${todoId}" not found`,
+        'TODO_NOT_FOUND'
+      );
+    }
+
+    const { listName, todo } = foundTodo;
+
+    // Update the todo to completed status
+    const updatedTodo = {
+      ...todo,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.updateTodo(listName, todoId, updatedTodo);
+    return updatedTodo;
+  }
+
+  /**
    * Deletes a todo from a specified list
    *
    * @param {string} listName - Name of the list containing the todo
@@ -446,5 +477,26 @@ export class TodoService {
       list.todos.find(t => t.title.toLowerCase() === idOrTitle.toLowerCase());
 
     return todo || null;
+  }
+
+  /**
+   * Finds a todo by ID or title across all lists
+   *
+   * @param {string} idOrTitle - ID or title of the todo to find
+   * @returns {Promise<{listName: string, todo: Todo} | null>} The found todo with its list name, or null if not found
+   */
+  async findTodoByIdOrTitleAcrossLists(
+    idOrTitle: string
+  ): Promise<{ listName: string; todo: Todo } | null> {
+    const listNames = await this.getAllLists();
+
+    for (const listName of listNames) {
+      const todo = await this.findTodoByIdOrTitle(listName, idOrTitle);
+      if (todo) {
+        return { listName, todo };
+      }
+    }
+
+    return null;
   }
 }

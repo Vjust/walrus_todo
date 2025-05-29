@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('monitoring');
 
@@ -315,7 +315,7 @@ export class TestMonitor extends EventEmitter {
       <tbody>
         ${report.failedTests
           .map(
-            (test) => `
+            test => `
           <tr>
             <td>${test.name}</td>
             <td>${test.category}</td>

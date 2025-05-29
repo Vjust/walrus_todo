@@ -2,10 +2,10 @@
  * Simplified test for the add command without using @oclif/test
  */
 
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 import { execSync } from 'child_process';
 
-jest.mock('../../src/services/todoService');
+jest.mock('../../apps/cli/src/services/todoService');
 
 // Mock command execution
 jest.mock('child_process', () => ({
@@ -18,12 +18,12 @@ const addTestTodo = {
   title: 'Test Todo',
   description: 'Test Description',
   completed: false,
-  priority: 'medium',
+  priority: 'medium' as const,
   tags: ['test'],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   private: false,
-  storageLocation: 'local',
+  storageLocation: 'local' as const,
 };
 
 describe('Add Command', () => {
@@ -71,7 +71,7 @@ describe('Add Command', () => {
     const todoService = new TodoService();
     const newTodo = {
       title: 'New Test Todo',
-      priority: 'high',
+      priority: 'high' as const,
       tags: ['important'],
     };
 

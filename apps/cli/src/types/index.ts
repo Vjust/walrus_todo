@@ -11,7 +11,10 @@ export interface Config {
   };
   packageId?: string;
   registryId?: string;
-  completedTodos?: Record<string, { id: string; title: string; completedAt: string }>; // Adding missing property
+  completedTodos?: Record<
+    string,
+    { id: string; title: string; completedAt: string }
+  >; // Adding missing property
 }
 
 // Export specific items from todo to avoid conflicts
@@ -28,7 +31,7 @@ export type {
   SortBy,
   SortOrder,
   OfflineData,
-  SyncData
+  SyncData,
 } from './todo';
 export {
   TransactionResult as TodoTransactionResult,
@@ -38,12 +41,10 @@ export {
   validateTodo,
   validateTodoList,
   serializeTodo,
-  deserializeTodo
+  deserializeTodo,
 } from './todo';
 // Export only specific items from error to avoid conflicts
-export type {
-  ErrorWithMessage,
-} from './error';
+export type { ErrorWithMessage } from './error';
 export {
   isErrorWithMessage as isErrorWithMessageLegacy,
   toErrorWithMessage as toErrorWithMessageLegacy,
@@ -54,7 +55,7 @@ export * from './errors/consolidated';
 // Export specific compatibility items to avoid naming conflicts
 export {
   WalrusErrorCode,
-  toErrorWithMessage as legacyToErrorWithMessage
+  toErrorWithMessage as legacyToErrorWithMessage,
 } from './errors/compatibility';
 export * from './config';
 export * from './walrus';
@@ -68,15 +69,13 @@ export type { Request, Response, NextFunction } from 'express';
 
 /**
  * Union Type Safety Exports
- * 
+ *
  * This section exports enhanced union type utilities and discriminated unions
  * for superior type safety throughout the application.
  */
 
 // Re-export discriminated union types from transaction module
-export type {
-  TransactionVariant,
-} from './transaction';
+export type { TransactionVariant } from './transaction';
 export {
   isTransactionVariant,
   isSuiVariant,
@@ -90,9 +89,7 @@ export {
 } from './transaction';
 
 // Re-export signer variant types
-export type {
-  SignerVariant,
-} from './adapters/SignerAdapter';
+export type { SignerVariant } from './adapters/SignerAdapter';
 export {
   isSignerVariant,
   isV1SignerVariant,

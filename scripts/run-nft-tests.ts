@@ -92,7 +92,7 @@ class NFTTestRunner {
     // Check dependencies
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     try {
-      const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+      const packageJsonContent = await fs.readFile(packageJsonPath, { encoding: 'utf-8' });
       const packageJson = JSON.parse(packageJsonContent) as { devDependencies?: Record<string, string>; dependencies?: Record<string, string> };
       const requiredDeps = ['jest', '@playwright/test', 'puppeteer'];
       
@@ -333,7 +333,7 @@ Examples:
       'blockchain': 'playwright-blockchain-interactions.test.ts'
     };
 
-    const suiteFile = suiteMap[suiteName];
+    const suiteFile = suiteMap[suiteName as keyof typeof suiteMap];
     if (suiteFile) {
       console.log(`Running specific suite: ${suiteName}\n`);
       // Filter test suites to only the requested one

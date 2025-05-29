@@ -1,6 +1,6 @@
 /**
  * @fileoverview Notification System - Provides user notifications for upload queue
- * 
+ *
  * This module handles various types of notifications including CLI messages,
  * desktop notifications (if supported), and progress updates for the upload queue.
  */
@@ -85,7 +85,7 @@ export class NotificationSystem extends EventEmitter {
 
     Object.assign(notification, updates, { timestamp: new Date() });
     this.emit('notificationUpdated', notification);
-    
+
     if (this.options.enableCLI) {
       this.displayCLINotification(notification);
     }
@@ -111,8 +111,9 @@ export class NotificationSystem extends EventEmitter {
    * Get all notifications
    */
   getNotifications(): Notification[] {
-    return Array.from(this.notifications.values())
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return Array.from(this.notifications.values()).sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    );
   }
 
   /**
@@ -134,11 +135,11 @@ export class NotificationSystem extends EventEmitter {
         cleared++;
       }
     }
-    
+
     if (cleared > 0) {
       this.emit('notificationsCleared', { type, count: cleared });
     }
-    
+
     return cleared;
   }
 
@@ -152,18 +153,14 @@ export class NotificationSystem extends EventEmitter {
     failed: string;
   } {
     const jobDetails = this.getJobDisplayName(job);
-    
+
     return {
-      started: this.info(
-        'Upload Started',
-        `Started uploading: ${jobDetails}`,
-        { jobId: job.id }
-      ),
-      progress: this.progress(
-        'Upload Progress',
-        `Uploading: ${jobDetails}`,
-        { jobId: job.id }
-      ),
+      started: this.info('Upload Started', `Started uploading: ${jobDetails}`, {
+        jobId: job.id,
+      }),
+      progress: this.progress('Upload Progress', `Uploading: ${jobDetails}`, {
+        jobId: job.id,
+      }),
       completed: this.success(
         'Upload Completed',
         `Successfully uploaded: ${jobDetails}`,
@@ -199,10 +196,11 @@ export class NotificationSystem extends EventEmitter {
     failed: number,
     duration: number
   ): string {
-    const type = failed === 0 ? 'success' : (successful > 0 ? 'warning' : 'error');
+    const type =
+      failed === 0 ? 'success' : successful > 0 ? 'warning' : 'error';
     const title = 'Batch Upload Complete';
     const message = `${successful}/${totalJobs} uploads successful (${this.formatDuration(duration)})`;
-    
+
     return this.createNotification(type, title, message, {
       totalJobs,
       successful,
@@ -245,7 +243,7 @@ export class NotificationSystem extends EventEmitter {
     persistent?: boolean
   ): string {
     const id = `notification-${++this.notificationCounter}-${Date.now()}`;
-    
+
     const notification: Notification = {
       id,
       type,
@@ -286,8 +284,12 @@ export class NotificationSystem extends EventEmitter {
     const timestamp = notification.timestamp.toLocaleTimeString();
     const icon = this.getNotificationIcon(notification.type);
     const colorFn = this.getNotificationColor(notification.type);
-    
-    console.log(colorFn(`${icon} [${timestamp}] ${notification.title}: ${notification.message}`));
+
+    console.log(
+      colorFn(
+        `${icon} [${timestamp}] ${notification.title}: ${notification.message}`
+      )
+    );
   }
 
   /**
@@ -335,26 +337,40 @@ export class NotificationSystem extends EventEmitter {
    */
   private getNotificationIcon(type: Notification['type']): string {
     switch (type) {
-      case 'info': return 'ℹ️';
-      case 'success': return '✅';
-      case 'warning': return '⚠️';
-      case 'error': return '❌';
-      case 'progress': return '⏳';
-      default: return '📢';
+      case 'info':
+        return 'ℹ️';
+      case 'success':
+        return '✅';
+      case 'warning':
+        return '⚠️';
+      case 'error':
+        return '❌';
+      case 'progress':
+        return '⏳';
+      default:
+        return '📢';
     }
   }
 
   /**
    * Get notification color function based on type
    */
-  private getNotificationColor(type: Notification['type']): (text: string) => string {
+  private getNotificationColor(
+    type: Notification['type']
+  ): (text: string) => string {
     switch (type) {
-      case 'info': return chalk.blue;
-      case 'success': return chalk.green;
-      case 'warning': return chalk.yellow;
-      case 'error': return chalk.red;
-      case 'progress': return chalk.cyan;
-      default: return chalk.white;
+      case 'info':
+        return chalk.blue;
+      case 'success':
+        return chalk.green;
+      case 'warning':
+        return chalk.yellow;
+      case 'error':
+        return chalk.red;
+      case 'progress':
+        return chalk.cyan;
+      default:
+        return chalk.white;
     }
   }
 
@@ -402,7 +418,9 @@ export class NotificationSystem extends EventEmitter {
 /**
  * Create a notification system instance
  */
-export function createNotificationSystem(options: Partial<NotificationOptions> = {}): NotificationSystem {
+export function createNotificationSystem(
+  options: Partial<NotificationOptions> = {}
+): NotificationSystem {
   const defaultOptions: NotificationOptions = {
     enableDesktop: false, // Disabled by default (requires additional deps)
     enableSound: true,
@@ -427,18 +445,18 @@ export function getGlobalNotificationSystem(): NotificationSystem {
  * Quick notification functions for common use cases
  */
 export const notify = {
-  info: (title: string, message: string, data?: any) => 
+  info: (title: string, message: string, data?: any) =>
     getGlobalNotificationSystem().info(title, message, data),
-  
-  success: (title: string, message: string, data?: any) => 
+
+  success: (title: string, message: string, data?: any) =>
     getGlobalNotificationSystem().success(title, message, data),
-  
-  warning: (title: string, message: string, data?: any) => 
+
+  warning: (title: string, message: string, data?: any) =>
     getGlobalNotificationSystem().warning(title, message, data),
-  
-  error: (title: string, message: string, data?: any) => 
+
+  error: (title: string, message: string, data?: any) =>
     getGlobalNotificationSystem().error(title, message, data),
-  
-  progress: (title: string, message: string, data?: any) => 
+
+  progress: (title: string, message: string, data?: any) =>
     getGlobalNotificationSystem().progress(title, message, data),
 };

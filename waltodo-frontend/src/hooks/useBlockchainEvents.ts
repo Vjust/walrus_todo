@@ -122,23 +122,29 @@ export function useBlockchainEvents(
 
   // Auto-start subscription when wallet connects
   useEffect(() => {
-    if (autoStart && targetOwner) {
+    let isMounted = true;
+    
+    if (autoStart && targetOwner && isMounted) {
       startSubscription();
     }
 
     return () => {
+      isMounted = false;
       if (eventManagerRef.current) {
         eventManagerRef.current.destroy();
+        eventManagerRef.current = null;
       }
     };
-  }, [autoStart, targetOwner, startSubscription]);
+  }, [autoStart, targetOwner]);
 
   // Update connection state periodically
   useEffect(() => {
     if (!eventManagerRef.current) return;
 
     const interval = setInterval(() => {
-      setConnectionState(eventManagerRef.current!.getConnectionState());
+      if (eventManagerRef.current) {
+        setConnectionState(eventManagerRef.current.getConnectionState());
+      }
     }, 5000);
 
     return () => clearInterval(interval);
@@ -319,7 +325,9 @@ export function useTodoStateSync(
 
   // Update local state when external todos change
   useEffect(() => {
-    setSyncedTodos(todos || []);
+    if (todos) {
+      setSyncedTodos(todos);
+    }
   }, [todos]);
 
   return {

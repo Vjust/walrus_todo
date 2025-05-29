@@ -169,7 +169,10 @@ export class AICommandExample {
     });
   }
 
-  private async callAIService(_prompt: string, _apiKey: string): Promise<unknown> {
+  private async callAIService(
+    _prompt: string,
+    _apiKey: string
+  ): Promise<unknown> {
     // Mock AI service call
     throw new Error('Not implemented');
   }
