@@ -68,13 +68,7 @@ describe('BatchUploader', () => {
     ) as jest.Mocked<WalrusStorageType>;
 
     // Mock the storage methods
-    mockWalrusStorage.ensureStorageAllocated = jest.fn().mockResolvedValue({
-      id: { id: 'mock-storage-id' },
-      storage_size: '1000000',
-      used_size: '0',
-      end_epoch: '100',
-      start_epoch: '1',
-    });
+    mockWalrusStorage.ensureStorageAllocated = jest.fn().mockResolvedValue(true);
 
     mockWalrusStorage.storeTodo = jest.fn().mockImplementation(todo => {
       return Promise.resolve(`mock-blob-${todo.id}`);
@@ -206,10 +200,13 @@ describe('BatchUploader', () => {
       expect(mockWalrusStorage.storeTodoList).toHaveBeenCalledTimes(1);
 
       // Verify the list being uploaded has the updated blob IDs
-      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0][0];
-      expect(uploadedList.todos[0].walrusBlobId).toBe('mock-blob-1');
-      expect(uploadedList.todos[1].walrusBlobId).toBe('mock-blob-2');
-      expect(uploadedList.todos[2].walrusBlobId).toBe('mock-blob-3');
+      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
+      expect(uploadedList).toBeDefined();
+      if (uploadedList) {
+        expect(uploadedList.todos[0]!.walrusBlobId).toBe('mock-blob-1');
+        expect(uploadedList.todos[1]!.walrusBlobId).toBe('mock-blob-2');
+        expect(uploadedList.todos[2]!.walrusBlobId).toBe('mock-blob-3');
+      }
     });
 
     it('should update the list with successful blob IDs even if some todos fail', async () => {
@@ -228,10 +225,13 @@ describe('BatchUploader', () => {
       expect(result.todoResults.failed.length).toBe(1);
 
       // Verify the list being uploaded has the updated blob IDs for successful uploads only
-      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0][0];
-      expect(uploadedList.todos[0].walrusBlobId).toBe('mock-blob-1');
-      expect(uploadedList.todos[1].walrusBlobId).toBeUndefined(); // Failed
-      expect(uploadedList.todos[2].walrusBlobId).toBe('mock-blob-3');
+      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
+      expect(uploadedList).toBeDefined();
+      if (uploadedList) {
+        expect(uploadedList.todos[0]!.walrusBlobId).toBe('mock-blob-1');
+        expect(uploadedList.todos[1]!.walrusBlobId).toBeUndefined(); // Failed
+        expect(uploadedList.todos[2]!.walrusBlobId).toBe('mock-blob-3');
+      }
     });
   });
 });
