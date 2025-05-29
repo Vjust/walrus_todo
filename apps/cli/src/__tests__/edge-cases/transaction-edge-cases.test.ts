@@ -197,7 +197,9 @@ describe('Transaction Edge Cases', () => {
         await new Promise(resolve => setTimeout(resolve, latency));
         await suiService.addTodo(listId, fuzzer.string());
         const duration = Date.now() - start;
-        expect(duration).toBeGreaterThanOrEqual(latency);
+        // Account for JavaScript timing precision limitations (typically 1-2ms variance)
+        const tolerance = 5; // Allow 5ms tolerance for timing precision
+        expect(duration).toBeGreaterThanOrEqual(latency - tolerance);
       }
     });
   });
