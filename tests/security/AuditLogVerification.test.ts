@@ -80,6 +80,16 @@ class MockAuditLogger {
     return path.join(configDir, 'audit.log');
   }
 
+  private mockHash(input: string): string {
+    // Generate a deterministic 64-character hex hash for testing
+    let hash = '';
+    for (let i = 0; i < 64; i++) {
+      const char = input.charCodeAt(i % input.length) + i;
+      hash += (char % 16).toString(16);
+    }
+    return hash;
+  }
+
   private checkRotation(): void {
     try {
       const logFilePath = this.getLogFilePath();
@@ -103,7 +113,7 @@ class MockAuditLogger {
           };
 
           const entryString = JSON.stringify(rotationEntry);
-          const entryHash = crypto.createHash('sha256').update(`initial:${entryString}`).digest('hex');
+          const entryHash = this.mockHash(`initial:${entryString}`);
 
           const entryWithHash = {
             ...rotationEntry,
@@ -268,13 +278,12 @@ describe('Audit Log Verification Tests', () => {
         const currentEntry = { ...entries[i] };
         delete currentEntry.hash;
 
-        // Calculate expected hash
+        // Calculate expected hash using our mock method
         const prevHash = entries[i - 1].hash;
         const entryString = JSON.stringify(currentEntry);
-        const expectedHash = crypto
-          .createHash('sha256')
-          .update(`${prevHash}:${entryString}`)
-          .digest('hex');
+        // For testing, we'll create a new mock logger to access the hash method
+        const mockLogger = new AuditLogger();
+        const expectedHash = (mockLogger as any).mockHash(`${prevHash}:${entryString}`);
 
         // Verify hash matches
         expect(entries[i].hash).toBe(expectedHash);

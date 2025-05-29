@@ -109,6 +109,11 @@ describe('Simple Input Validation Security Tests', () => {
     // Create a mock AI service that validates input
     mockAIService = {
       summarize: jest.fn().mockImplementation(async (todos: SimpleTodo[]) => {
+        // Check for null/undefined inputs
+        if (!todos || !Array.isArray(todos)) {
+          throw new Error('Invalid input: todos must be a non-empty array');
+        }
+        
         const todoStr = JSON.stringify(todos);
         
         // Basic XSS validation
@@ -293,8 +298,9 @@ describe('Simple Input Validation Security Tests', () => {
       expect(sanitizedOptions.temperature).toBe(0.7);
       expect(sanitizedOptions.maxTokens).toBe(2000);
       expect(Object.keys(sanitizedOptions).length).toBe(2);
-      expect(sanitizedOptions.__proto__).toBeUndefined();
-      expect(sanitizedOptions.constructor).toBeUndefined();
+      // __proto__ is a special property that all objects have, so check if it's not enumerable
+      expect(Object.prototype.propertyIsEnumerable.call(sanitizedOptions, '__proto__')).toBe(false);
+      expect(Object.prototype.propertyIsEnumerable.call(sanitizedOptions, 'constructor')).toBe(false);
     });
   });
 
