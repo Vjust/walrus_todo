@@ -1,5 +1,5 @@
-import { TodoSizeCalculator } from '../../src/utils/todo-size-calculator';
-import { Todo, TodoList } from '../../src/types/todo';
+import { TodoSizeCalculator } from '../../apps/cli/src/utils/todo-size-calculator';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 describe('TodoSizeCalculator', () => {
   // Sample todo for testing
@@ -8,7 +8,7 @@ describe('TodoSizeCalculator', () => {
     title: 'Test Todo',
     description: 'This is a test todo description for calculator testing',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     tags: ['test', 'calculator'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-import { Logger } from '../src/utils/Logger';
-
-const logger = new Logger('run-build');
 
 /**
  * A simple Node.js wrapper for running the unified-build.ts script
@@ -9,8 +6,18 @@ const logger = new Logger('run-build');
  * a simple interface for running builds with different options.
  */
 
-const { spawnSync } = require('child_process');
-const path = require('path');
+import { spawnSync } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { Logger } from '../apps/cli/src/utils/Logger.js';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+const logger = new Logger('run-build');
 
 // Get command line arguments
 const args = process.argv.slice(2);

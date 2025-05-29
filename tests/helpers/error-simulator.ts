@@ -6,13 +6,13 @@
  */
 
 import {
-  WalrusError,
+  CLIError,
   NetworkError,
   BlockchainError,
   StorageError,
   ValidationError,
   TransactionError,
-} from '../../src/types/errors';
+} from '../../apps/cli/src/types/errors/consolidated';
 
 /**
  * Available error types that can be simulated
@@ -86,7 +86,10 @@ export class ErrorSimulator {
     };
 
     // If disabled, restore original methods
-    if (Object.prototype.hasOwnProperty.call(config, 'enabled') && !config.enabled) {
+    if (
+      Object.prototype.hasOwnProperty.call(config, 'enabled') &&
+      !config.enabled
+    ) {
       this.restoreAllMethods();
     }
   }
@@ -119,7 +122,7 @@ export class ErrorSimulator {
         });
 
       case ErrorType.AUTHENTICATION:
-        return new WalrusError(message, 'AUTHENTICATION_ERROR');
+        return new CLIError(message, 'AUTHENTICATION_ERROR');
 
       case ErrorType.VALIDATION:
         return new ValidationError(message, {
@@ -177,7 +180,7 @@ export class ErrorSimulator {
         });
 
       case ErrorType.PERMISSION_DENIED:
-        return new WalrusError('Permission denied', 'PERMISSION_DENIED');
+        return new CLIError('Permission denied', 'PERMISSION_DENIED');
 
       case ErrorType.CERTIFICATION:
         return new BlockchainError('Certification failed', {

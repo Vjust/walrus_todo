@@ -112,22 +112,22 @@ class PuppeteerTestRunner {
 
     // Create new page
     this.page = await this.browser.newPage();
-    
+
     // Set viewport
     await this.page.setViewport({ width: 1280, height: 720 });
-    
+
     // Inject mock wallet before navigation
     await this.page.evaluateOnNewDocument(MOCK_WALLET_SCRIPT);
-    
+
     // Set up console logging
-    this.page.on('console', (msg) => {
+    this.page.on('console', msg => {
       if (process.env.LOG_BROWSER_CONSOLE) {
         console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`);
       }
     });
-    
+
     // Set up error handling
-    this.page.on('pageerror', (error) => {
+    this.page.on('pageerror', error => {
       console.error(`[Browser Error] ${error.message}`);
     });
   }
@@ -146,14 +146,17 @@ class PuppeteerTestRunner {
 
   async navigateToApp(): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
-    
+
     await this.page.goto(TEST_CONFIG.baseUrl, {
       waitUntil: 'networkidle2',
       timeout: 10000,
     });
   }
 
-  async runCLICommand(command: string, args: string[] = []): Promise<{
+  async runCLICommand(
+    command: string,
+    args: string[] = []
+  ): Promise<{
     stdout: string;
     stderr: string;
     exitCode: number | null;
@@ -170,19 +173,19 @@ class PuppeteerTestRunner {
       let stdout = '';
       let stderr = '';
 
-      process.stdout?.on('data', (data) => {
+      process.stdout?.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
 
-      process.stderr?.on('data', (data) => {
+      process.stderr?.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
-      process.on('close', (code) => {
+      process.on('close', (code: number | null) => {
         resolve({ stdout, stderr, exitCode: code });
       });
 
-      process.on('error', (error) => {
+      process.on('error', (error: Error) => {
         reject(error);
       });
 
@@ -196,13 +199,13 @@ class PuppeteerTestRunner {
 
   async waitForElement(selector: string, timeout = 10000): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
-    
+
     await this.page.waitForSelector(selector, { timeout });
   }
 
   async waitForText(text: string, timeout = 10000): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
-    
+
     await this.page.waitForFunction(
       (searchText: string) => {
         return document.body.innerText.includes(searchText);
@@ -214,7 +217,7 @@ class PuppeteerTestRunner {
 
   async screenshot(filename: string): Promise<void> {
     if (!this.page) throw new Error('Page not initialized');
-    
+
     await this.page.screenshot({
       path: path.join(__dirname, '../../screenshots', `${filename}.png`),
       fullPage: true,
@@ -246,52 +249,59 @@ describe('Puppeteer NFT E2E Tests', () => {
   describe('Wallet Connection Flow', () => {
     test('should connect wallet successfully', async () => {
       const page = runner.getPage();
-      
+
       // Look for connect button
       await runner.waitForElement('button, [role="button"]');
-      
+
       const connectButtons = await page.$$('button, [role="button"]');
       let connectButton = null;
-      
+
       for (const button of connectButtons) {
-        const text = await page.evaluate(el => el.textContent?.toLowerCase() || '', button);
+        const text = await page.evaluate(
+          (el: Element) => el.textContent?.toLowerCase() || '',
+          button
+        );
         if (text.includes('connect')) {
           connectButton = button;
           break;
         }
       }
-      
+
       if (connectButton) {
         await connectButton.click();
-        
+
         // Wait for connection
         await runner.waitForText('Connected', 5000);
-        
+
         // Verify wallet address appears
         const addressVisible = await page.evaluate(() => {
           return document.body.innerText.includes('0x1234');
         });
-        
+
         expect(addressVisible).toBe(true);
       } else {
         // If no connect button found, app might auto-connect or have different UI
         console.log('No connect button found, checking for auto-connection...');
-        
+
         // Check if already connected
         const isConnected = await page.evaluate(() => {
-          return document.body.innerText.includes('Connected') || 
-                 document.body.innerText.includes('0x1234');
+          return (
+            document.body.innerText.includes('Connected') ||
+            document.body.innerText.includes('0x1234')
+          );
         });
-        
+
         if (!isConnected) {
-          throw new Error('Unable to find connect button or establish connection');
+          throw new Error(
+            'Unable to find connect button or establish connection'
+          );
         }
       }
     }, 15000);
 
     test('should handle wallet connection errors', async () => {
       const page = runner.getPage();
-      
+
       // Mock wallet connection failure
       await page.evaluate(() => {
         if (window.suiWallet) {
@@ -300,17 +310,20 @@ describe('Puppeteer NFT E2E Tests', () => {
           };
         }
       });
-      
+
       // Try to connect
       const buttons = await page.$$('button, [role="button"]');
       for (const button of buttons) {
-        const text = await page.evaluate(el => el.textContent?.toLowerCase() || '', button);
+        const text = await page.evaluate(
+          (el: Element) => el.textContent?.toLowerCase() || '',
+          button
+        );
         if (text.includes('connect')) {
           await button.click();
           break;
         }
       }
-      
+
       // Wait for error message
       setTimeout(async () => {
         const hasError = await page.evaluate(() => {
@@ -318,7 +331,7 @@ describe('Puppeteer NFT E2E Tests', () => {
           const bodyText = document.body.innerText.toLowerCase();
           return errorTerms.some(term => bodyText.includes(term));
         });
-        
+
         expect(hasError).toBe(true);
       }, 3000);
     }, 10000);
@@ -327,41 +340,52 @@ describe('Puppeteer NFT E2E Tests', () => {
   describe('Todo Creation and NFT Conversion', () => {
     test('should create todo and convert to NFT', async () => {
       const page = runner.getPage();
-      
+
       // Connect wallet first
       await page.evaluate(() => {
         if (window.suiWallet) {
           window.suiWallet.connect();
         }
       });
-      
+
       await runner.waitForText('Connected');
-      
+
       // Find and fill todo creation form
-      const titleInput = await page.$('input[name="title"], input[placeholder*="title"], input[placeholder*="Todo"]');
+      const titleInput = await page.$(
+        'input[name="title"], input[placeholder*="title"], input[placeholder*="Todo"]'
+      );
       if (titleInput) {
         await titleInput.type('Puppeteer Test Todo NFT');
-        
-        const descriptionInput = await page.$('textarea[name="description"], textarea[placeholder*="description"]');
+
+        const descriptionInput = await page.$(
+          'textarea[name="description"], textarea[placeholder*="description"]'
+        );
         if (descriptionInput) {
-          await descriptionInput.type('Created via Puppeteer automation for NFT testing');
+          await descriptionInput.type(
+            'Created via Puppeteer automation for NFT testing'
+          );
         }
-        
+
         // Submit form
-        const submitButton = await page.$('button[type="submit"], button:has-text("Create"), button:has-text("Add")');
+        const submitButton = await page.$(
+          'button[type="submit"], button:has-text("Create"), button:has-text("Add")'
+        );
         if (submitButton) {
           await submitButton.click();
-          
+
           // Wait for todo to appear
           await runner.waitForText('Puppeteer Test Todo NFT');
-          
+
           // Look for NFT conversion option
           const nftButtons = await page.$$('button');
           for (const button of nftButtons) {
-            const text = await page.evaluate(el => el.textContent?.toLowerCase() || '', button);
+            const text = await page.evaluate(
+              (el: Element) => el.textContent?.toLowerCase() || '',
+              button
+            );
             if (text.includes('nft') || text.includes('blockchain')) {
               await button.click();
-              
+
               // Wait for transaction to complete
               await runner.waitForText('NFT created', 10000);
               break;
@@ -373,7 +397,7 @@ describe('Puppeteer NFT E2E Tests', () => {
 
     test('should handle NFT creation failures', async () => {
       const page = runner.getPage();
-      
+
       // Connect wallet and mock transaction failure
       await page.evaluate(() => {
         if (window.suiWallet) {
@@ -383,16 +407,19 @@ describe('Puppeteer NFT E2E Tests', () => {
           };
         }
       });
-      
+
       await runner.waitForText('Connected');
-      
+
       // Try to create NFT (assuming todo exists or can be created quickly)
       const nftButtons = await page.$$('button');
       for (const button of nftButtons) {
-        const text = await page.evaluate(el => el.textContent?.toLowerCase() || '', button);
+        const text = await page.evaluate(
+          (el: Element) => el.textContent?.toLowerCase() || '',
+          button
+        );
         if (text.includes('nft') || text.includes('blockchain')) {
           await button.click();
-          
+
           // Wait for error message
           await runner.waitForText('failed', 5000);
           break;
@@ -404,7 +431,7 @@ describe('Puppeteer NFT E2E Tests', () => {
   describe('Transaction History and Status', () => {
     test('should display transaction history', async () => {
       const page = runner.getPage();
-      
+
       // Connect wallet with mock transactions
       await page.evaluate(() => {
         if (window.suiWallet) {
@@ -412,20 +439,23 @@ describe('Puppeteer NFT E2E Tests', () => {
           // Add mock transaction
           window.suiWallet.transactions.push({
             digest: 'mock_tx_12345',
-            effects: { status: { status: 'success' } }
+            effects: { status: { status: 'success' } },
           });
         }
       });
-      
+
       await runner.waitForText('Connected');
-      
+
       // Look for transaction history section
       const historyButtons = await page.$$('button, a, [role="button"]');
       for (const button of historyButtons) {
-        const text = await page.evaluate(el => el.textContent?.toLowerCase() || '', button);
+        const text = await page.evaluate(
+          (el: Element) => el.textContent?.toLowerCase() || '',
+          button
+        );
         if (text.includes('history') || text.includes('transactions')) {
           await button.click();
-          
+
           // Wait for transaction list
           await runner.waitForText('mock_tx_', 5000);
           break;
@@ -437,18 +467,20 @@ describe('Puppeteer NFT E2E Tests', () => {
   describe('CLI Integration', () => {
     test('should create todo via CLI and verify in frontend', async () => {
       // Create todo via CLI
-      const cliResult = await runner.runCLICommand('add', ['"CLI to Frontend Test"']);
+      const cliResult = await runner.runCLICommand('add', [
+        '"CLI to Frontend Test"',
+      ]);
       expect(cliResult.exitCode).toBe(0);
-      
+
       // Refresh frontend and check for todo
       const page = runner.getPage();
       await page.reload({ waitUntil: 'networkidle2' });
-      
+
       // Look for the todo in the frontend
       const hasTodo = await page.evaluate(() => {
         return document.body.innerText.includes('CLI to Frontend Test');
       });
-      
+
       expect(hasTodo).toBe(true);
     }, 15000);
 
@@ -457,17 +489,17 @@ describe('Puppeteer NFT E2E Tests', () => {
       await runner.runCLICommand('add', ['"CLI Complete Test"']);
       const completeResult = await runner.runCLICommand('complete', ['1']);
       expect(completeResult.exitCode).toBe(0);
-      
+
       // Check in frontend
       const page = runner.getPage();
       await page.reload({ waitUntil: 'networkidle2' });
-      
+
       // Look for completed todo indicators
       const hasCompleted = await page.evaluate(() => {
         const text = document.body.innerText.toLowerCase();
         return text.includes('completed') || text.includes('done');
       });
-      
+
       expect(hasCompleted).toBe(true);
     }, 15000);
   });
@@ -475,57 +507,66 @@ describe('Puppeteer NFT E2E Tests', () => {
   describe('Error Handling and Edge Cases', () => {
     test('should handle network disconnection gracefully', async () => {
       const page = runner.getPage();
-      
+
       // Connect wallet
       await page.evaluate(() => {
         if (window.suiWallet) {
           window.suiWallet.connect();
         }
       });
-      
+
       await runner.waitForText('Connected');
-      
+
       // Simulate network disconnection
       await page.setOfflineMode(true);
-      
+
       // Try to perform action that requires network
       const buttons = await page.$$('button');
       for (const button of buttons) {
-        const text = await page.evaluate(el => el.textContent?.toLowerCase() || '', button);
+        const text = await page.evaluate(
+          el => el.textContent?.toLowerCase() || '',
+          button
+        );
         if (text.includes('nft') || text.includes('sync')) {
           await button.click();
           break;
         }
       }
-      
+
       // Should show network error
       await runner.waitForText('network', 5000);
-      
+
       // Restore connection
       await page.setOfflineMode(false);
     }, 10000);
 
     test('should handle large todo titles gracefully', async () => {
       const page = runner.getPage();
-      
-      const largeTitleInput = await page.$('input[name="title"], input[placeholder*="title"]');
+
+      const largeTitleInput = await page.$(
+        'input[name="title"], input[placeholder*="title"]'
+      );
       if (largeTitleInput) {
         const largeTitle = 'Very Long Todo Title '.repeat(20);
         await largeTitleInput.type(largeTitle);
-        
+
         // Should either truncate or show error
         const submitButton = await page.$('button[type="submit"]');
         if (submitButton) {
           await submitButton.click();
-          
+
           // Wait for response (success or error)
           await page.waitForTimeout(2000);
-          
+
           const hasResponse = await page.evaluate(() => {
             const text = document.body.innerText.toLowerCase();
-            return text.includes('added') || text.includes('error') || text.includes('too long');
+            return (
+              text.includes('added') ||
+              text.includes('error') ||
+              text.includes('too long')
+            );
           });
-          
+
           expect(hasResponse).toBe(true);
         }
       }
@@ -535,45 +576,47 @@ describe('Puppeteer NFT E2E Tests', () => {
   describe('Performance and Responsiveness', () => {
     test('should handle rapid user interactions', async () => {
       const page = runner.getPage();
-      
+
       // Connect wallet
       await page.evaluate(() => {
         if (window.suiWallet) {
           window.suiWallet.connect();
         }
       });
-      
+
       await runner.waitForText('Connected');
-      
+
       // Rapidly click buttons (stress test)
       const buttons = await page.$$('button');
       const clickPromises = [];
-      
+
       for (let i = 0; i < Math.min(5, buttons.length); i++) {
         clickPromises.push(
           buttons[i].click().catch(() => {}) // Ignore click errors
         );
       }
-      
+
       await Promise.allSettled(clickPromises);
-      
+
       // App should still be responsive
       const isResponsive = await page.evaluate(() => {
         // Check if page is still interactive
-        return document.readyState === 'complete' && 
-               !document.body.classList.contains('loading');
+        return (
+          document.readyState === 'complete' &&
+          !document.body.classList.contains('loading')
+        );
       });
-      
+
       expect(isResponsive).toBe(true);
     }, 10000);
 
     test('should load within acceptable time', async () => {
       const startTime = Date.now();
-      
+
       await runner.navigateToApp();
-      
+
       const loadTime = Date.now() - startTime;
-      
+
       // Should load within 5 seconds
       expect(loadTime).toBeLessThan(5000);
     }, 8000);
@@ -582,26 +625,26 @@ describe('Puppeteer NFT E2E Tests', () => {
   describe('Visual Regression Testing', () => {
     test('should maintain consistent UI layout', async () => {
       const page = runner.getPage();
-      
+
       // Take screenshot of initial state
       await runner.screenshot('initial-state');
-      
+
       // Connect wallet
       await page.evaluate(() => {
         if (window.suiWallet) {
           window.suiWallet.connect();
         }
       });
-      
+
       await runner.waitForText('Connected');
-      
+
       // Take screenshot of connected state
       await runner.screenshot('connected-state');
-      
+
       // Basic layout checks
       const hasHeader = await page.$('header, .header, nav');
       const hasMain = await page.$('main, .main, .container');
-      
+
       expect(hasHeader).toBeTruthy();
       expect(hasMain).toBeTruthy();
     }, 10000);
@@ -624,7 +667,7 @@ describe('Puppeteer NFT Specific Tests', () => {
   test('should verify NFT metadata display', async () => {
     await runner.navigateToApp();
     const page = runner.getPage();
-    
+
     // Connect wallet and create NFT
     await page.evaluate(() => {
       if (window.suiWallet) {
@@ -634,55 +677,62 @@ describe('Puppeteer NFT Specific Tests', () => {
           digest: 'nft_metadata_test',
           effects: {
             status: { status: 'success' },
-            created: [{
-              reference: { objectId: 'nft_with_metadata' },
-              objectType: 'TodoNFT',
-              metadata: {
-                title: 'Test NFT',
-                description: 'NFT with metadata',
-                image_url: 'https://example.com/image.jpg'
-              }
-            }]
-          }
+            created: [
+              {
+                reference: { objectId: 'nft_with_metadata' },
+                objectType: 'TodoNFT',
+                metadata: {
+                  title: 'Test NFT',
+                  description: 'NFT with metadata',
+                  image_url: 'https://example.com/image.jpg',
+                },
+              },
+            ],
+          },
         });
       }
     });
-    
+
     // Check if metadata is displayed properly
     const hasMetadata = await page.evaluate(() => {
-      return document.body.innerText.includes('Test NFT') ||
-             document.body.innerText.includes('NFT with metadata');
+      return (
+        document.body.innerText.includes('Test NFT') ||
+        document.body.innerText.includes('NFT with metadata')
+      );
     });
-    
+
     expect(hasMetadata).toBe(true);
   }, 10000);
 
   test('should handle NFT transfer flow', async () => {
     await runner.navigateToApp();
     const page = runner.getPage();
-    
+
     // Setup mock NFT for transfer
     await page.evaluate(() => {
       if (window.suiWallet) {
         window.suiWallet.connect();
       }
     });
-    
+
     // Look for transfer functionality
     const transferButtons = await page.$$('button');
     for (const button of transferButtons) {
-      const text = await page.evaluate(el => el.textContent?.toLowerCase() || '', button);
+      const text = await page.evaluate(
+        el => el.textContent?.toLowerCase() || '',
+        button
+      );
       if (text.includes('transfer') || text.includes('send')) {
         await button.click();
-        
+
         // Should show transfer form or modal
         await page.waitForTimeout(1000);
-        
+
         const hasTransferUI = await page.evaluate(() => {
           const text = document.body.innerText.toLowerCase();
           return text.includes('address') || text.includes('recipient');
         });
-        
+
         expect(hasTransferUI).toBe(true);
         break;
       }

@@ -645,9 +645,25 @@ waltodo store --todo 123 --list default
 
 ### System Requirements
 
-- **Node.js**: v18.0.0 or higher
+- **Node.js**: v18.0.0 or higher (includes automatic compatibility polyfills for CI environments)
 - **pnpm**: v8.0.0 or higher
 - **Operating Systems**: macOS, Linux, or Windows with WSL
+
+### Node.js Compatibility
+
+WalTodo includes comprehensive compatibility polyfills that ensure it works reliably across different Node.js versions:
+
+- **Automatic Detection**: The CLI automatically detects your Node.js version and provides helpful upgrade guidance if needed
+- **Modern Feature Support**: Includes polyfills for `String.prototype.replaceAll`, `Array.prototype.at`, `Object.hasOwn`, and other features
+- **CI/CD Friendly**: Prevents "replaceAll is not a function" and similar errors in GitHub Actions and other CI environments
+- **Zero Performance Impact**: Polyfills only add methods that don't exist natively in your Node.js version
+
+To test compatibility on your system:
+```bash
+./scripts/test-node-compatibility.sh
+```
+
+For detailed information, see [Node.js Compatibility Guide](docs/node-js-compatibility-fixes.md).
 
 ### For Local Usage Only
 

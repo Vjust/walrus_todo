@@ -1,4 +1,4 @@
-import { CLIError } from '../types/error';
+import { CLIError } from '../types/errors/consolidated';
 import { RETRY_CONFIG } from '../constants';
 import { Logger } from './Logger';
 
@@ -156,14 +156,15 @@ export class RetryManager {
 
     if (!breaker.isOpen) return false;
 
-    // Check if it's time to try reset
+    // Check if it's time to try reset (half-open state)
     if (
       Date.now() - breaker.lastFailure >=
       options.circuitBreaker.resetTimeout
     ) {
+      // Move to half-open state - allow one attempt
       breaker.isOpen = false;
-      breaker.failureCount = 0;
       breaker.lastReset = Date.now();
+      // Don't reset failure count yet - wait for successful operation
       return false;
     }
 
@@ -241,10 +242,10 @@ export class RetryManager {
     const options = { ...RetryManager.DEFAULT_OPTIONS, ...this.options };
     const nodes = Array.from(this.nodes.values());
 
-    // Filter out completely unhealthy nodes
+    // Filter out nodes with open circuits
     const availableNodes = nodes.filter(node => !this.isCircuitOpen(node));
 
-    // Check if we have enough healthy nodes
+    // Check if we have enough healthy nodes BEFORE filtering by health threshold
     if (availableNodes.length < options.minNodes) {
       throw new CLIError(
         `Insufficient healthy nodes (found ${availableNodes.length}, need ${options.minNodes})`,
@@ -252,24 +253,32 @@ export class RetryManager {
       );
     }
 
+    // Further filter by health threshold only if we have enough nodes
+    const healthyNodes = availableNodes.filter(
+      node => node.healthScore >= options.healthThreshold
+    );
+    
+    // Use healthy nodes if available, otherwise fall back to all available nodes
+    const candidateNodes = healthyNodes.length >= options.minNodes ? healthyNodes : availableNodes;
+
     switch (options.loadBalancing) {
       case 'round-robin': {
         // Simple round-robin
         const node =
-          availableNodes[this.roundRobinIndex % availableNodes.length];
+          candidateNodes[this.roundRobinIndex % candidateNodes.length];
         this.roundRobinIndex =
-          (this.roundRobinIndex + 1) % availableNodes.length;
+          (this.roundRobinIndex + 1) % candidateNodes.length;
         return node;
       }
 
       case 'priority':
         // Use node priority only
-        return availableNodes.sort((a, b) => a.priority - b.priority)[0];
+        return candidateNodes.sort((a, b) => a.priority - b.priority)[0];
 
       case 'health':
       default:
         // Use weighted scoring
-        return availableNodes.sort((a, b) => {
+        return candidateNodes.sort((a, b) => {
           const scoreA = this.getNodeScore(a);
           const scoreB = this.getNodeScore(b);
           return scoreB - scoreA;
@@ -433,9 +442,18 @@ export class RetryManager {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
+      // Check if all circuits are open BEFORE incrementing attempt - prevent infinite loops
+      const availableNodes = Array.from(this.nodes.values()).filter(node => !this.isCircuitOpen(node));
+      if (availableNodes.length < options.minNodes) {
+        throw new CLIError(
+          `Insufficient healthy nodes (found ${availableNodes.length}, need ${options.minNodes})`,
+          'RETRY_INSUFFICIENT_NODES'
+        );
+      }
+
       retryContext.attempt++;
 
-      // Check if we've exceeded max retries or duration
+      // Check if we've exceeded max retries or duration AFTER incrementing attempt
       if (retryContext.attempt > options.maxRetries) {
         throw new CLIError(
           `Maximum retries (${options.maxRetries}) exceeded during ${context}`,
@@ -453,15 +471,46 @@ export class RetryManager {
       try {
         // Get next node, ensuring we don't use the same failed node immediately
         let node: NetworkNode;
-        do {
-          node = this.getNextNode();
-        } while (
-          lastNode &&
-          node.url === lastNode.url &&
-          this.nodes.size > 1 &&
-          retryContext.attempt <= 3
-        );
+        try {
+          let attempts = 0;
+          const maxNodeSelectionAttempts = 10; // Prevent infinite loops
+          
+          do {
+            node = this.getNextNode();
+            attempts++;
+            
+            // Break if we've tried too many times or only have one node
+            if (attempts >= maxNodeSelectionAttempts || this.nodes.size <= 1) {
+              break;
+            }
+          } while (
+            lastNode &&
+            node.url === lastNode.url &&
+            retryContext.attempt <= 3
+          );
+        } catch (error) {
+          // Handle node selection errors (insufficient healthy nodes, etc.)
+          if (error instanceof CLIError && error.code === 'RETRY_INSUFFICIENT_NODES') {
+            throw error; // Re-throw immediately, don't retry
+          }
+          // For other node selection errors, use the first available node
+          node = Array.from(this.nodes.values())[0];
+          if (!node) {
+            throw new CLIError(
+              `No nodes available during ${context}`,
+              'RETRY_NO_NODES'
+            );
+          }
+          throw error;
+        }
+        
         lastNode = node;
+        
+        // Skip closed circuits early to avoid unnecessary operations
+        if (this.isCircuitOpen(node)) {
+          const circuit = this.circuitBreakers.get(node.url);
+          throw new Error(`Circuit breaker is open for node ${node.url} (${circuit?.failureCount} failures)`);
+        }
 
         const startTime = Date.now();
         let timeoutId: NodeJS.Timeout | undefined;
@@ -519,6 +568,11 @@ export class RetryManager {
         };
         retryContext.errors.push(errorInfo);
 
+        // Handle specific error types that should not be retried
+        if (errorObj instanceof CLIError && errorObj.code === 'RETRY_INSUFFICIENT_NODES') {
+          throw errorObj; // Re-throw immediately
+        }
+
         // Check if error is retryable
         if (!this.isRetryableError(error)) {
           throw new CLIError(
@@ -527,18 +581,24 @@ export class RetryManager {
           );
         }
 
-        // Check for circuit breaker conditions
+        // Calculate next delay with adaptivity FIRST
+        const delay = this.getNextDelay(retryContext);
+        retryContext.lastDelay = delay;
+
+        // Check for circuit breaker conditions and log appropriately
         const circuit = this.circuitBreakers.get(node.url);
         if (circuit?.isOpen) {
           this.logger.warn(
             `Circuit breaker open for node ${node.url}. ` +
-              `Will retry after ${options.circuitBreaker.resetTimeout}ms`
+              `Will retry after ${options.circuitBreaker.resetTimeout}ms`,
+            {
+              context,
+              node: node.url,
+              failureCount: circuit.failureCount,
+              attempt: retryContext.attempt,
+            }
           );
         }
-
-        // Calculate next delay with adaptivity
-        const delay = this.getNextDelay(retryContext);
-        retryContext.lastDelay = delay;
 
         // Enhanced retry callback with more context
         options.onRetry(errorObj, retryContext.attempt, delay);
@@ -637,7 +697,7 @@ export class RetryManager {
       // Adapt the onRetry callback to match instance method's parameter order
       onRetry: options.onRetry
         ? (error: Error, attempt: number, delay: number) => {
-            options.onRetry(attempt, error, delay);
+            options.onRetry!(attempt, error, delay);
           }
         : undefined,
     });

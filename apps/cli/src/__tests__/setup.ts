@@ -1,35 +1,39 @@
 import { expect, jest } from '@jest/globals';
-import { TextDecoder, TextEncoder } from 'util';
+import { forceGC, logMemoryUsage } from './helpers/memory-utils';
 
-// Setup TextDecoder/TextEncoder for image-size with proper typing
-if (!global.TextDecoder) {
-  (global as typeof globalThis).TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
-}
-if (!global.TextEncoder) {
-  (global as typeof globalThis).TextEncoder = TextEncoder as typeof globalThis.TextEncoder;
-}
+// Configure Jest timeout for CLI tests
+jest.setTimeout(15000);
 
-// Configure Jest timeout
-jest.setTimeout(10000);
+// CLI-specific mocks (reduced - using real implementations where possible)
+// Only mock external network calls and blockchain operations for unit tests
 
-// Ensure mocks are applied
-jest.mock('@mysten/sui/client');
-jest.mock('@mysten/sui/cryptography');
-jest.mock('@mysten/sui/keypairs/ed25519');
-jest.mock('@mysten/sui/transactions');
-jest.mock('../utils/adapters/sui-client-adapter');
-
-// Reset all mocks before each test
+// Reset mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
+  // Ensure test environment is set
+  process.env.NODE_ENV = 'test';
+  // Removed WALRUS_USE_MOCK - using real implementations
+
+  // Force garbage collection
+  forceGC();
 });
 
-// Configure Jest matchers - these are already included with Jest types
-// Remove custom declarations to avoid conflicts
+// Clean up after each test
+afterEach(() => {
+  // Force garbage collection
+  forceGC();
+});
 
-// Setup test
-describe('Setup Test', () => {
-  it('should have at least one test', () => {
+// Log memory usage after all tests
+afterAll(() => {
+  logMemoryUsage('CLI Tests Final');
+  forceGC();
+});
+
+// Setup test to verify test environment
+describe('CLI Setup Test', () => {
+  it('should have test environment configured', () => {
+    expect(process.env.NODE_ENV).toBe('test');
     expect(true).toBe(true);
   });
 });

@@ -9,7 +9,8 @@ import { BaseError, BaseErrorOptions } from './BaseError';
 /**
  * Options for ValidationError construction
  */
-export interface ValidationErrorOptions extends Omit<BaseErrorOptions, 'code' | 'message'> {
+export interface ValidationErrorOptions
+  extends Omit<BaseErrorOptions, 'code' | 'message'> {
   /** Field that failed validation */
   field?: string;
 
@@ -73,7 +74,7 @@ export class ValidationError extends BaseError {
 
     // Build context object
     const errorContext: Record<string, unknown> = {
-      ...(context || {} as Record<string, unknown>),
+      ...(context || ({} as Record<string, unknown>)),
       ...(value !== undefined ? { value } : {}),
       ...(constraint !== undefined ? { constraint } : {}),
       ...(operation !== undefined ? { operation } : {}),

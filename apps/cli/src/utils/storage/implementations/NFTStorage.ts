@@ -12,15 +12,15 @@ import { Transaction } from '@mysten/sui/transactions';
 const logger = new Logger('NFTStorage');
 
 import { AbstractStorage } from '../core/AbstractStorage';
-import {
-  StorageInfo,
-  StorageUsage,
-  StorageConfig,
-} from '../core/StorageTypes';
+import { StorageInfo, StorageUsage, StorageConfig } from '../core/StorageTypes';
 import { StorageClient } from '../core/StorageClient';
 import { StorageTransaction } from '../core/StorageTransaction';
 import { StorageOperationHandler } from '../utils/StorageOperationHandler';
-import { StorageError, BlockchainError, TransactionError } from '../../../types/errors/consolidated';
+import {
+  StorageError,
+  BlockchainError,
+  TransactionError,
+} from '../../../types/errors/consolidated';
 import { ValidationError } from '../../../types/errors/ValidationError';
 import { TransactionSigner } from '../../../types/signer';
 import { Todo } from '../../../types/todo';
@@ -791,7 +791,8 @@ export class NFTStorage extends AbstractStorage {
 
       // Find NFT object in created objects
       const nftObject = txResult.data.effects.created.find(obj => {
-        const reference = (obj as { reference?: { objectId: string } })?.reference;
+        const reference = (obj as { reference?: { objectId: string } })
+          ?.reference;
         return reference && reference.objectId;
       });
 
@@ -801,7 +802,8 @@ export class NFTStorage extends AbstractStorage {
       }
 
       // Extract object ID from reference
-      const objectId = (nftObject as { reference?: { objectId: string } })?.reference?.objectId;
+      const objectId = (nftObject as { reference?: { objectId: string } })
+        ?.reference?.objectId;
       if (!objectId) {
         return idOrDigest;
       }

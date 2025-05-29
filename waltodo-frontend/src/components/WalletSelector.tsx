@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useWalletContext } from '@/contexts/WalletContext';
+import React, { useState, useEffect } from 'react';
+import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 import { WalletType } from '@/types/wallet';
 import { WalletErrorModal } from './WalletErrorModal';
 import { WalletNotInstalledError, WalletError } from '@/lib/wallet-errors';
+import { ClientOnly } from '@/components/ClientOnly';
 
 interface WalletOption {
   type: WalletType;
@@ -14,12 +15,27 @@ interface WalletOption {
 }
 
 export function WalletSelector() {
-  const { connected, connecting, connect, error, clearError } =
-    useWalletContext();
+  const { connected, connecting, connect, error, clearError, isLoading } =
+    useClientSafeWallet();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<WalletType | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle client-side mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show loading state during initialization
+  if (isLoading) {
+    return (
+      <div className='px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg'>
+        <span className='text-sm text-gray-600 dark:text-gray-400'>Loading wallet...</span>
+      </div>
+    );
+  }
 
   // Disable the selector if already connected or connecting
   if (connected || connecting) {
@@ -154,21 +170,22 @@ export function WalletSelector() {
   };
 
   return (
-    <div className='relative'>
-      {/* Show error modal when there's a wallet error */}
-      {error && (
-        <WalletErrorModal 
-          error={typeof error === 'string' ? new WalletError(error) : error} 
-          onDismiss={handleDismissError} 
-        />
-      )}
+    <ClientOnly fallback={<div className="px-4 py-2 bg-gray-200 animate-pulse rounded-lg">Loading...</div>}>
+      <div className='relative'>
+        {/* Show error modal when there's a wallet error */}
+        {error && (
+          <WalletErrorModal 
+            error={typeof error === 'string' ? new WalletError(error) : error} 
+            onDismiss={handleDismissError} 
+          />
+        )}
 
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={isConnecting}
-        className='px-4 py-2 bg-ocean-deep text-white rounded-lg hover:bg-ocean-deep/80 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2'
-        aria-expanded={isOpen}
-      >
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          disabled={isConnecting || !mounted}
+          className='px-4 py-2 bg-ocean-deep text-white rounded-lg hover:bg-ocean-deep/80 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2'
+          aria-expanded={isOpen}
+        >
         {isConnecting ? (
           <>
             <svg
@@ -244,6 +261,7 @@ export function WalletSelector() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ClientOnly>
   );
 }

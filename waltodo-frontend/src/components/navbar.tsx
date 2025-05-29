@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
+import { ClientOnly } from '@/components/ClientOnly';
 
 type NavbarProps = {
   currentPage: string;
@@ -60,7 +61,9 @@ export default function Navbar({ currentPage }: NavbarProps) {
         </div>
 
         <div>
-          <WalletConnectButton />
+          <ClientOnly fallback={<div className="w-24 h-10 bg-gray-200 animate-pulse rounded"></div>}>
+            <WalletConnectButton />
+          </ClientOnly>
         </div>
       </nav>
     </header>

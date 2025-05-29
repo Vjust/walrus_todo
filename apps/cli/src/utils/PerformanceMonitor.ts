@@ -23,16 +23,22 @@ export interface PerformanceReport {
     avgHeapTotal: number;
     peakHeapUsed: number;
   };
-  operationBreakdown: Record<string, {
-    count: number;
-    avgDuration: number;
-    successRate: number;
-  }>;
+  operationBreakdown: Record<
+    string,
+    {
+      count: number;
+      avgDuration: number;
+      successRate: number;
+    }
+  >;
 }
 
 export class PerformanceMonitor {
   private metrics: PerformanceMetric[] = [];
-  private activeOperations = new Map<string, { start: number; cpuStart?: NodeJS.CpuUsage }>();
+  private activeOperations = new Map<
+    string,
+    { start: number; cpuStart?: NodeJS.CpuUsage }
+  >();
   private logger: Logger;
   private metricsFile: string;
   private maxMetrics = 10000; // Prevent memory overflow
@@ -70,16 +76,21 @@ export class PerformanceMonitor {
   startOperation(operationId: string, operation: string): void {
     const start = performance.now();
     const cpuStart = process.cpuUsage();
-    
+
     this.activeOperations.set(operationId, {
       start,
-      cpuStart
+      cpuStart,
     });
 
     this.logger.debug(`Started tracking: ${operation} (${operationId})`);
   }
 
-  endOperation(operationId: string, operation: string, success = true, metadata?: Record<string, any>): PerformanceMetric {
+  endOperation(
+    operationId: string,
+    operation: string,
+    success = true,
+    metadata?: Record<string, any>
+  ): PerformanceMetric {
     const activeOp = this.activeOperations.get(operationId);
     if (!activeOp) {
       throw new Error(`No active operation found for ID: ${operationId}`);
@@ -87,7 +98,9 @@ export class PerformanceMonitor {
 
     const duration = performance.now() - activeOp.start;
     const memoryUsage = process.memoryUsage();
-    const cpuUsage = activeOp.cpuStart ? process.cpuUsage(activeOp.cpuStart) : undefined;
+    const cpuUsage = activeOp.cpuStart
+      ? process.cpuUsage(activeOp.cpuStart)
+      : undefined;
 
     const metric: PerformanceMetric = {
       operation,
@@ -96,7 +109,7 @@ export class PerformanceMonitor {
       success,
       metadata,
       memoryUsage,
-      cpuUsage
+      cpuUsage,
     };
 
     this.metrics.push(metric);
@@ -107,8 +120,10 @@ export class PerformanceMonitor {
       this.metrics = this.metrics.slice(-this.maxMetrics);
     }
 
-    this.logger.debug(`Completed tracking: ${operation} (${duration.toFixed(2)}ms)`);
-    
+    this.logger.debug(
+      `Completed tracking: ${operation} (${duration.toFixed(2)}ms)`
+    );
+
     // Auto-save periodically
     if (this.metrics.length % 10 === 0) {
       this.saveMetrics();
@@ -117,35 +132,43 @@ export class PerformanceMonitor {
     return metric;
   }
 
-  async measureOperation<T>(operation: string, fn: () => Promise<T>, metadata?: Record<string, any>): Promise<T> {
+  async measureOperation<T>(
+    operation: string,
+    fn: () => Promise<T>,
+    metadata?: Record<string, any>
+  ): Promise<T> {
     const operationId = `${operation}-${Date.now()}-${Math.random()}`;
     this.startOperation(operationId, operation);
-    
+
     try {
       const result = await fn();
       this.endOperation(operationId, operation, true, metadata);
       return result;
     } catch (error) {
-      this.endOperation(operationId, operation, false, { 
-        ...metadata, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.endOperation(operationId, operation, false, {
+        ...metadata,
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
   }
 
-  measureSync<T>(operation: string, fn: () => T, metadata?: Record<string, any>): T {
+  measureSync<T>(
+    operation: string,
+    fn: () => T,
+    metadata?: Record<string, any>
+  ): T {
     const operationId = `${operation}-${Date.now()}-${Math.random()}`;
     this.startOperation(operationId, operation);
-    
+
     try {
       const result = fn();
       this.endOperation(operationId, operation, true, metadata);
       return result;
     } catch (error) {
-      this.endOperation(operationId, operation, false, { 
-        ...metadata, 
-        error: error instanceof Error ? error.message : String(error) 
+      this.endOperation(operationId, operation, false, {
+        ...metadata,
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
@@ -153,7 +176,7 @@ export class PerformanceMonitor {
 
   generateReport(timeRangeMs?: number): PerformanceReport {
     const now = Date.now();
-    const relevantMetrics = timeRangeMs 
+    const relevantMetrics = timeRangeMs
       ? this.metrics.filter(m => now - m.timestamp <= timeRangeMs)
       : this.metrics;
 
@@ -167,9 +190,9 @@ export class PerformanceMonitor {
         memoryStats: {
           avgHeapUsed: 0,
           avgHeapTotal: 0,
-          peakHeapUsed: 0
+          peakHeapUsed: 0,
         },
-        operationBreakdown: {}
+        operationBreakdown: {},
       };
     }
 
@@ -178,19 +201,28 @@ export class PerformanceMonitor {
     const memoryMetrics = relevantMetrics.filter(m => m.memoryUsage);
 
     // Calculate operation breakdown
-    const operationBreakdown: Record<string, { count: number; avgDuration: number; successRate: number }> = {};
-    
+    const operationBreakdown: Record<
+      string,
+      { count: number; avgDuration: number; successRate: number }
+    > = {};
+
     for (const metric of relevantMetrics) {
       if (!operationBreakdown[metric.operation]) {
-        operationBreakdown[metric.operation] = { count: 0, avgDuration: 0, successRate: 0 };
+        operationBreakdown[metric.operation] = {
+          count: 0,
+          avgDuration: 0,
+          successRate: 0,
+        };
       }
       operationBreakdown[metric.operation].count++;
     }
 
     for (const [operation, stats] of Object.entries(operationBreakdown)) {
       const opMetrics = relevantMetrics.filter(m => m.operation === operation);
-      stats.avgDuration = opMetrics.reduce((sum, m) => sum + m.duration, 0) / opMetrics.length;
-      stats.successRate = opMetrics.filter(m => m.success).length / opMetrics.length;
+      stats.avgDuration =
+        opMetrics.reduce((sum, m) => sum + m.duration, 0) / opMetrics.length;
+      stats.successRate =
+        opMetrics.filter(m => m.success).length / opMetrics.length;
     }
 
     return {
@@ -200,11 +232,17 @@ export class PerformanceMonitor {
       maxDuration: Math.max(...durations),
       successRate: successfulOps.length / relevantMetrics.length,
       memoryStats: {
-        avgHeapUsed: memoryMetrics.reduce((sum, m) => sum + m.memoryUsage!.heapUsed, 0) / memoryMetrics.length,
-        avgHeapTotal: memoryMetrics.reduce((sum, m) => sum + m.memoryUsage!.heapTotal, 0) / memoryMetrics.length,
-        peakHeapUsed: Math.max(...memoryMetrics.map(m => m.memoryUsage!.heapUsed))
+        avgHeapUsed:
+          memoryMetrics.reduce((sum, m) => sum + m.memoryUsage!.heapUsed, 0) /
+          memoryMetrics.length,
+        avgHeapTotal:
+          memoryMetrics.reduce((sum, m) => sum + m.memoryUsage!.heapTotal, 0) /
+          memoryMetrics.length,
+        peakHeapUsed: Math.max(
+          ...memoryMetrics.map(m => m.memoryUsage!.heapUsed)
+        ),
       },
-      operationBreakdown
+      operationBreakdown,
     };
   }
 
@@ -221,7 +259,9 @@ export class PerformanceMonitor {
   saveMetrics(): void {
     try {
       fs.writeFileSync(this.metricsFile, JSON.stringify(this.metrics, null, 2));
-      this.logger.debug(`Saved ${this.metrics.length} metrics to ${this.metricsFile}`);
+      this.logger.debug(
+        `Saved ${this.metrics.length} metrics to ${this.metricsFile}`
+      );
     } catch (error) {
       this.logger.error('Failed to save metrics:', error);
     }
@@ -237,19 +277,26 @@ export class PerformanceMonitor {
 
   exportReport(format: 'json' | 'csv' = 'json', timeRangeMs?: number): string {
     const report = this.generateReport(timeRangeMs);
-    
+
     if (format === 'json') {
       return JSON.stringify(report, null, 2);
     } else {
       // CSV format
-      const headers = ['Operation', 'Count', 'Avg Duration (ms)', 'Success Rate'];
-      const rows = Object.entries(report.operationBreakdown).map(([op, stats]) => [
-        op,
-        stats.count.toString(),
-        stats.avgDuration.toFixed(2),
-        (stats.successRate * 100).toFixed(2) + '%'
-      ]);
-      
+      const headers = [
+        'Operation',
+        'Count',
+        'Avg Duration (ms)',
+        'Success Rate',
+      ];
+      const rows = Object.entries(report.operationBreakdown).map(
+        ([op, stats]) => [
+          op,
+          stats.count.toString(),
+          stats.avgDuration.toFixed(2),
+          (stats.successRate * 100).toFixed(2) + '%',
+        ]
+      );
+
       return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
     }
   }
@@ -320,7 +367,11 @@ export class JobManager {
     }
   }
 
-  public createJob(command: string, args: string[], flags: Record<string, any>): BackgroundJob {
+  public createJob(
+    command: string,
+    args: string[],
+    flags: Record<string, any>
+  ): BackgroundJob {
     const id = this.generateJobId();
     const logFile = path.join(this.jobsDir, `${id}.log`);
     const outputFile = path.join(this.jobsDir, `${id}.out`);
@@ -335,13 +386,13 @@ export class JobManager {
       progress: 0,
       logFile,
       outputFile,
-      metadata: {}
+      metadata: {},
     };
 
     this.activeJobs.set(id, job);
     this.saveJobs();
     this.logger.info(`Created background job: ${id} for command: ${command}`);
-    
+
     return job;
   }
 
@@ -357,7 +408,12 @@ export class JobManager {
     this.saveJobs();
   }
 
-  public updateProgress(jobId: string, progress: number, processedItems?: number, totalItems?: number): void {
+  public updateProgress(
+    jobId: string,
+    progress: number,
+    processedItems?: number,
+    totalItems?: number
+  ): void {
     const job = this.activeJobs.get(jobId);
     if (!job) return;
 
@@ -372,7 +428,7 @@ export class JobManager {
     this.updateJob(jobId, {
       status: 'running',
       startTime: Date.now(),
-      pid
+      pid,
     });
   }
 
@@ -381,7 +437,7 @@ export class JobManager {
       status: 'completed',
       endTime: Date.now(),
       progress: 100,
-      metadata: { ...this.getJob(jobId)?.metadata, ...metadata }
+      metadata: { ...this.getJob(jobId)?.metadata, ...metadata },
     });
     this.logger.info(`Job completed: ${jobId}`);
   }
@@ -390,7 +446,7 @@ export class JobManager {
     this.updateJob(jobId, {
       status: 'failed',
       endTime: Date.now(),
-      errorMessage
+      errorMessage,
     });
     this.logger.error(`Job failed: ${jobId} - ${errorMessage}`);
   }
@@ -403,9 +459,9 @@ export class JobManager {
 
     this.updateJob(jobId, {
       status: 'cancelled',
-      endTime: Date.now()
+      endTime: Date.now(),
     });
-    
+
     this.logger.info(`Job cancelled: ${jobId}`);
     return true;
   }
@@ -415,18 +471,23 @@ export class JobManager {
   }
 
   public getAllJobs(): BackgroundJob[] {
-    return Array.from(this.activeJobs.values()).sort((a, b) => b.startTime - a.startTime);
+    return Array.from(this.activeJobs.values()).sort(
+      (a, b) => b.startTime - a.startTime
+    );
   }
 
   public getActiveJobs(): BackgroundJob[] {
-    return this.getAllJobs().filter(job => 
-      job.status === 'pending' || job.status === 'running'
+    return this.getAllJobs().filter(
+      job => job.status === 'pending' || job.status === 'running'
     );
   }
 
   public getCompletedJobs(): BackgroundJob[] {
-    return this.getAllJobs().filter(job => 
-      job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled'
+    return this.getAllJobs().filter(
+      job =>
+        job.status === 'completed' ||
+        job.status === 'failed' ||
+        job.status === 'cancelled'
     );
   }
 
@@ -435,22 +496,30 @@ export class JobManager {
     const jobsToRemove: string[] = [];
 
     this.activeJobs.forEach((job, id) => {
-      if ((job.endTime || job.startTime) < cutoff && 
-          (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled')) {
+      if (
+        (job.endTime || job.startTime) < cutoff &&
+        (job.status === 'completed' ||
+          job.status === 'failed' ||
+          job.status === 'cancelled')
+      ) {
         jobsToRemove.push(id);
-        
+
         // Clean up log files
         if (job.logFile && fs.existsSync(job.logFile)) {
-          try { fs.unlinkSync(job.logFile); } catch {}
+          try {
+            fs.unlinkSync(job.logFile);
+          } catch {}
         }
         if (job.outputFile && fs.existsSync(job.outputFile)) {
-          try { fs.unlinkSync(job.outputFile); } catch {}
+          try {
+            fs.unlinkSync(job.outputFile);
+          } catch {}
         }
       }
     });
 
     jobsToRemove.forEach(id => this.activeJobs.delete(id));
-    
+
     if (jobsToRemove.length > 0) {
       this.saveJobs();
       this.logger.info(`Cleaned up ${jobsToRemove.length} old jobs`);
@@ -465,11 +534,13 @@ export class JobManager {
 
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] ${message}\n`;
-    
+
     try {
       fs.appendFileSync(job.logFile, logEntry);
     } catch (error) {
-      this.logger.warn(`Failed to write job log: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.warn(
+        `Failed to write job log: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -493,7 +564,9 @@ export class JobManager {
   }
 
   public formatJobForDisplay(job: BackgroundJob): string {
-    const duration = job.endTime ? job.endTime - job.startTime : Date.now() - job.startTime;
+    const duration = job.endTime
+      ? job.endTime - job.startTime
+      : Date.now() - job.startTime;
     const durationStr = this.formatDuration(duration);
     const statusIcon = this.getStatusIcon(job.status);
     const progressBar = this.createProgressBar(job.progress);
@@ -501,11 +574,11 @@ export class JobManager {
     let output = `${statusIcon} ${job.id} - ${job.command} ${job.args.join(' ')}\n`;
     output += `   Progress: ${progressBar} ${job.progress}%\n`;
     output += `   Duration: ${durationStr}`;
-    
+
     if (job.processedItems && job.totalItems) {
       output += ` | Items: ${job.processedItems}/${job.totalItems}`;
     }
-    
+
     if (job.errorMessage) {
       output += `\n   Error: ${job.errorMessage}`;
     }
@@ -516,18 +589,25 @@ export class JobManager {
   private formatDuration(ms: number): string {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    if (ms < 3600000) return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
+    if (ms < 3600000)
+      return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
     return `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m`;
   }
 
   private getStatusIcon(status: string): string {
     switch (status) {
-      case 'pending': return '⏳';
-      case 'running': return '🔄';
-      case 'completed': return '✅';
-      case 'failed': return '❌';
-      case 'cancelled': return '⚪';
-      default: return '❓';
+      case 'pending':
+        return '⏳';
+      case 'running':
+        return '🔄';
+      case 'completed':
+        return '✅';
+      case 'failed':
+        return '❌';
+      case 'cancelled':
+        return '⚪';
+      default:
+        return '❓';
     }
   }
 

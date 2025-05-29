@@ -1,4 +1,4 @@
-import { SuiClient } from '../../utils/adapters/sui-client-compatibility';
+import type { SuiClientType } from '../../utils/adapters/sui-client-adapter';
 import { SignerAdapter } from './SignerAdapter';
 import { WalrusClientAdapter } from './WalrusClientAdapter';
 
@@ -14,6 +14,8 @@ export enum AIPrivacyLevel {
   PUBLIC = 'public', // Full request/response on-chain
   HASH_ONLY = 'hash_only', // Only hashes on-chain, content on Walrus
   PRIVATE = 'private', // Only verification record on-chain, encrypted content
+  METADATA_ONLY = 'metadata_only', // Only metadata on-chain
+  FULL_CONTENT = 'full_content', // Full content on-chain
 }
 
 export interface VerificationParams {
@@ -81,14 +83,14 @@ export interface AIVerifierAdapter {
 }
 
 export class SuiAIVerifierAdapter implements AIVerifierAdapter {
-  private client: SuiClient;
+  private client: SuiClientType;
   private signer: SignerAdapter;
   private packageId: string;
   private registryId: string;
   private walrusAdapter?: WalrusClientAdapter;
 
   constructor(
-    client: SuiClient,
+    client: SuiClientType,
     signer: SignerAdapter,
     packageId: string,
     registryId: string,

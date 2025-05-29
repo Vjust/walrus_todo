@@ -85,7 +85,7 @@ test.describe('Slush Wallet Integration', () => {
       // After disconnection, we should see the connect button again
       await expect(page.getByText('Connect Slush Wallet')).toBeVisible();
     }
-    
+
     // Always verify we checked visibility
     expect(typeof isDisconnectVisible).toBe('boolean');
   });

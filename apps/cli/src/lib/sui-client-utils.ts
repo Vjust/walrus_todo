@@ -16,10 +16,7 @@ import {
   NetworkType,
   ErrorContext,
 } from '../types/todo';
-import {
-  TransactionError,
-  CLIError,
-} from '../types/errors';
+import { TransactionError, CLIError } from '../types/errors';
 
 // Mock implementations for basic utility functions
 export function initializeSuiClient(): unknown {
@@ -44,35 +41,42 @@ export function handleSuiOperationError(
   context: ErrorContext
 ): never {
   const timestamp = Date.now();
-  const errorContext = { 
-    ...context, 
-    metadata: { 
-      ...context.metadata, 
-      timestamp, 
-      error: String(error) 
-    } 
+  const errorContext = {
+    ...context,
+    metadata: {
+      ...context.metadata,
+      timestamp,
+      error: String(error),
+    },
   };
 
   // Log error with context for debugging
-  logger.error('Sui operation failed:', error instanceof Error ? error : new Error(String(error)), {
-    context: errorContext,
-  });
+  logger.error(
+    'Sui operation failed:',
+    error instanceof Error ? error : new Error(String(error)),
+    {
+      context: errorContext,
+    }
+  );
 
   if (error instanceof TransactionError) {
-    throw new CLIError(
-      `Transaction failed: ${error.message}`,
-      { operation: 'transaction', recoverable: false }
-    );
+    throw new CLIError(`Transaction failed: ${error.message}`, {
+      operation: 'transaction',
+      recoverable: false,
+    });
   }
 
   if (error instanceof Error) {
-    throw new CLIError(
-      `Unexpected error: ${error.message}`,
-      { operation: 'execution', recoverable: false }
-    );
+    throw new CLIError(`Unexpected error: ${error.message}`, {
+      operation: 'execution',
+      recoverable: false,
+    });
   }
 
-  throw new CLIError('An unknown error occurred', { operation: 'unknown', recoverable: false });
+  throw new CLIError('An unknown error occurred', {
+    operation: 'unknown',
+    recoverable: false,
+  });
 }
 
 /**
@@ -153,17 +157,20 @@ export async function createTodoSafely(
     // Validate parameters
     const validationErrors = validateCreateTodoParams(params);
     if (validationErrors.length > 0) {
-      throw new CLIError(
-        `Validation failed: ${validationErrors.join(', ')}`,
-        { operation: 'validation', recoverable: false }
-      );
+      throw new CLIError(`Validation failed: ${validationErrors.join(', ')}`, {
+        operation: 'validation',
+        recoverable: false,
+      });
     }
 
     // Create transaction block - mock implementation
     const txb = {};
 
     // Mock transaction construction
-    logger.info('Creating todo with params:', { title: params.title, description: params.description });
+    logger.info('Creating todo with params:', {
+      title: params.title,
+      description: params.description,
+    });
 
     // Execute transaction
     const result = await signAndExecuteTransaction(txb);
@@ -195,7 +202,11 @@ export async function waitForTransactionConfirmation(
       }
 
       if (status.status === 'failure') {
-        throw new TransactionError('Transaction failed', { operation: 'execution', transactionId: digest, recoverable: false });
+        throw new TransactionError('Transaction failed', {
+          operation: 'execution',
+          transactionId: digest,
+          recoverable: false,
+        });
       }
 
       // Wait 1 second before checking again
@@ -227,7 +238,9 @@ export async function checkNetworkHealth(): Promise<{
     const client = initializeSuiClient();
 
     // Try to get chain identifier as a health check
-    await (client as { getChainIdentifier?: () => Promise<string> })?.getChainIdentifier?.();
+    await (
+      client as { getChainIdentifier?: () => Promise<string> }
+    )?.getChainIdentifier?.();
 
     const latency = Date.now() - startTime;
 

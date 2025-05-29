@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 
-// Import polyfills first
-import './utils/polyfills/aggregate-error';
+// Import polyfills first - ensures compatibility with older Node.js versions
+import './utils/polyfills';
+
+// Check Node.js version compatibility
+import {
+  checkNodeVersion,
+  logCompatibilityInfo,
+} from './utils/node-version-check';
+checkNodeVersion();
+logCompatibilityInfo();
 
 // Import core dependencies with CommonJS compatibility
 import { Command, Flags } from '@oclif/core';
@@ -151,7 +159,8 @@ export const run = async () => {
     // Run the command with the remaining arguments
     await CommandClass.run(args.slice(1));
   } catch (_error) {
-    const errorMessage = _error instanceof Error ? _error.message : String(_error);
+    const errorMessage =
+      _error instanceof Error ? _error.message : String(_error);
 
     // Handle common network errors with better messaging
     if (

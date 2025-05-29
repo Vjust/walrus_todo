@@ -3,10 +3,10 @@
 
 import { expect, describe, test, beforeEach } from '@jest/globals';
 
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
-import { TodoService } from '../../src/services/todoService';
-import { CLIError } from '../../src/types/errors/consolidated';
-import { Todo } from '../../src/types/todo';
+import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import { CLIError } from '../../apps/cli/src/types/errors/consolidated';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 import { createMockTodo } from '../helpers/test-utils';
 
@@ -28,7 +28,7 @@ const addCommand = {
 
     const newTodo = createMockTodo({
       title,
-      storageLocation: 'local',
+      storageLocation: 'local' as const,
     });
 
     if (options?.storage === 'blockchain') {
@@ -37,7 +37,7 @@ const addCommand = {
         await walrusStorage.connect();
         await walrusStorage.storeTodo({
           ...newTodo,
-          storageLocation: 'blockchain',
+          storageLocation: 'blockchain' as const,
         });
       } catch (error) {
         throw new CLIError(
@@ -75,7 +75,7 @@ describe('add', () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           private: true,
-          priority: 'medium',
+          priority: 'medium' as const,
           tags: [],
         }) as Todo
     );
@@ -93,7 +93,7 @@ describe('add', () => {
       'default',
       expect.objectContaining({
         title: 'Test Todo',
-        storageLocation: 'local',
+        storageLocation: 'local' as const,
       })
     );
   });

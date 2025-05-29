@@ -1,9 +1,9 @@
 import {
   SecureCredentialManager,
   AIPermissionLevel,
-} from '../../src/services/ai/SecureCredentialManager';
-import { AIProvider } from '../../src/types/adapters/AIModelAdapter';
-import { CLIError } from '../../src/types/errors/consolidated';
+} from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { CLIError } from '../../apps/cli/src/types/errors/consolidated';
 
 // Mock the crypto module
 jest.mock('crypto', () => {

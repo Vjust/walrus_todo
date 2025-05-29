@@ -33,6 +33,9 @@ export class Logger {
     // Add default console handler
     this.componentName = componentName;
     this.addHandler(entry => {
+      // Detect test environment
+      const isTestEnv = this.isTestEnvironment();
+
       // Skip debug messages unless NODE_ENV is development
       if (
         entry.level === LogLevel.DEBUG &&
@@ -41,15 +44,23 @@ export class Logger {
         return;
       }
 
+      // In test environments, only show ERROR level logs by default
+      // unless LOG_LEVEL is explicitly set or VERBOSE_TESTS is enabled
+      if (isTestEnv && !this.shouldLogInTests(entry.level)) {
+        return;
+      }
+
       const context = entry.context ? ` ${JSON.stringify(entry.context)}` : '';
       const error = entry.error
         ? `\n${JSON.stringify(entry.error, null, 2)}`
         : '';
       const component = this.componentName ? `[${this.componentName}] ` : '';
+      const logMessage = `[${entry.timestamp}] ${component}${entry.message}${context}${error}`;
+
+      // Safely map log levels to console methods with type guards
+      const consoleMethod = this.getConsoleMethod(entry.level);
       // eslint-disable-next-line no-console
-      console[entry.level](
-        `[${entry.timestamp}] ${component}${entry.message}${context}${error}`
-      );
+      consoleMethod(logMessage);
     });
   }
 
@@ -58,6 +69,74 @@ export class Logger {
       Logger.instance = new Logger();
     }
     return Logger.instance;
+  }
+
+  /**
+   * Detect if we're running in a test environment
+   * @returns true if in test environment
+   */
+  private isTestEnvironment(): boolean {
+    // Always check current environment state, not cached
+    return (
+      process.env.NODE_ENV === 'test' ||
+      process.env.JEST_WORKER_ID !== undefined ||
+      process.env.npm_lifecycle_event === 'test' ||
+      process.argv.some(arg => arg.includes('jest')) ||
+      typeof global.expect !== 'undefined' ||
+      typeof jest !== 'undefined'
+    );
+  }
+
+  /**
+   * Determine if a log level should be shown in tests
+   * @param level Log level to check
+   * @returns true if should log in tests
+   */
+  private shouldLogInTests(level: LogLevel): boolean {
+    // Allow explicit override via environment variables
+    if (
+      process.env.VERBOSE_TESTS === 'true' ||
+      process.env.VERBOSE_TESTS === '1'
+    ) {
+      return true;
+    }
+
+    // Respect explicit LOG_LEVEL setting
+    if (process.env.LOG_LEVEL) {
+      const logLevels = [
+        LogLevel.DEBUG,
+        LogLevel.INFO,
+        LogLevel.WARN,
+        LogLevel.ERROR,
+      ];
+      const targetIndex = logLevels.indexOf(process.env.LOG_LEVEL as LogLevel);
+      const currentIndex = logLevels.indexOf(level);
+      return targetIndex !== -1 && currentIndex >= targetIndex;
+    }
+
+    // Default test behavior: only show ERROR level and above
+    return level === LogLevel.ERROR;
+  }
+
+  /**
+   * Safely get console method for log level
+   * @param level Log level
+   * @returns Console method function
+   */
+  private getConsoleMethod(level: LogLevel): (...args: any[]) => void {
+    switch (level) {
+      case LogLevel.DEBUG:
+        return console.debug;
+      case LogLevel.INFO:
+        return console.info;
+      case LogLevel.WARN:
+        return console.warn;
+      case LogLevel.ERROR:
+        return console.error;
+      default:
+        // Fallback to console.log for unknown levels
+        return console.log;
+    }
   }
 
   /**
@@ -88,6 +167,14 @@ export class Logger {
     context?: Record<string, unknown>,
     error?: Error
   ): void {
+    // Validate parameters
+    if (!level || !Object.values(LogLevel).includes(level)) {
+      level = LogLevel.INFO; // Default fallback
+    }
+    if (typeof message !== 'string') {
+      message = String(message || ''); // Convert to string
+    }
+
     const entry: LogEntry = {
       level,
       message,
@@ -97,14 +184,22 @@ export class Logger {
 
     if (error) {
       entry.error = {
-        name: error.name,
+        name: error.name || 'Error',
         code: error instanceof WalrusError ? error.code : 'UNKNOWN_ERROR',
-        message: error.message,
+        message: error.message || 'No error message provided',
         stack: error.stack,
       };
     }
 
-    this.logHandlers.forEach(handler => handler(entry));
+    // Safely execute handlers with error handling
+    this.logHandlers.forEach(handler => {
+      try {
+        handler(entry);
+      } catch (handlerError) {
+        // Prevent handler errors from breaking logging
+        console.error('Logger handler error:', handlerError);
+      }
+    });
   }
 
   /**
@@ -153,9 +248,11 @@ export class Logger {
 
   public error(
     message: string,
-    error?: Error,
+    error?: Error | unknown,
     context?: Record<string, unknown>
   ): void {
-    this.log(LogLevel.ERROR, message, context, error);
+    // Convert unknown error to Error if needed
+    const errorObj = error instanceof Error ? error : (error ? new Error(String(error)) : undefined);
+    this.log(LogLevel.ERROR, message, context, errorObj);
   }
 }

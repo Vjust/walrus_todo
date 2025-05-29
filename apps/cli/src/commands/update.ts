@@ -63,7 +63,8 @@ export default class UpdateCommand extends BaseCommand {
     ...BaseCommand.flags,
     id: Flags.string({
       char: 'i',
-      description: 'Todo ID or title to update (optional if using positional syntax)',
+      description:
+        'Todo ID or title to update (optional if using positional syntax)',
       required: false,
     }),
     task: Flags.string({
@@ -98,7 +99,8 @@ export default class UpdateCommand extends BaseCommand {
       default: false,
     }),
     'batch-size': Flags.integer({
-      description: 'Number of items to process in each batch (for batch updates)',
+      description:
+        'Number of items to process in each batch (for batch updates)',
       default: 5,
       min: 1,
       max: 50,
@@ -116,7 +118,8 @@ export default class UpdateCommand extends BaseCommand {
   static args = {
     listName: Args.string({
       name: 'listName',
-      description: 'Name of the todo list (or todo ID/title if searching all lists)',
+      description:
+        'Name of the todo list (or todo ID/title if searching all lists)',
       required: false,
     }),
     todoId: Args.string({
@@ -149,19 +152,25 @@ export default class UpdateCommand extends BaseCommand {
    */
   private async runInBackground(args: any, flags: any): Promise<void> {
     // Create background job
-    const job = jobManager.createJob('update', this.buildArgsArray(args), flags);
-    
+    const job = jobManager.createJob(
+      'update',
+      this.buildArgsArray(args),
+      flags
+    );
+
     this.log(chalk.blue('🔄 Starting background update operation...'));
     this.log(chalk.dim(`Job ID: ${job.id}`));
-    
+
     // Start the background process
     const backgroundProcess = this.startBackgroundProcess(job, args, flags);
-    
+
     // Handle non-blocking output
     this.log(chalk.green('✅ Update job started in background'));
     this.log(chalk.gray(`📋 Use "waltodo jobs" to monitor progress`));
-    this.log(chalk.gray(`📋 Use "waltodo status ${job.id}" for detailed status`));
-    
+    this.log(
+      chalk.gray(`📋 Use "waltodo status ${job.id}" for detailed status`)
+    );
+
     if (flags.verbose) {
       this.log(chalk.dim(`Process PID: ${backgroundProcess.pid}`));
       this.log(chalk.dim(`Log file: ${job.logFile}`));
@@ -169,7 +178,9 @@ export default class UpdateCommand extends BaseCommand {
 
     // For batch operations, show estimated time
     if (flags['batch-size'] && flags['batch-size'] > 1) {
-      this.log(chalk.yellow(`⚡ Batch size: ${flags['batch-size']} items per batch`));
+      this.log(
+        chalk.yellow(`⚡ Batch size: ${flags['batch-size']} items per batch`)
+      );
     }
 
     // Exit immediately, leaving background process running
@@ -216,7 +227,10 @@ export default class UpdateCommand extends BaseCommand {
       } else if (flags.id) {
         // Flag-based syntax (backward compatible)
         if (!args.listName) {
-          throw new CLIError('List name is required when using flag syntax', 'MISSING_LIST');
+          throw new CLIError(
+            'List name is required when using flag syntax',
+            'MISSING_LIST'
+          );
         }
         listName = args.listName;
         todoIdentifier = flags.id;
@@ -236,7 +250,10 @@ export default class UpdateCommand extends BaseCommand {
         // Search across all lists
         const lists = await todoService.getAllListsWithContent();
         for (const [name, list] of Object.entries(lists)) {
-          const found = await todoService.getTodoByTitleOrId(todoIdentifier, name);
+          const found = await todoService.getTodoByTitleOrId(
+            todoIdentifier,
+            name
+          );
           if (found) {
             todo = found;
             finalListName = name;
@@ -266,7 +283,7 @@ export default class UpdateCommand extends BaseCommand {
 
       // Process the update
       const updatedTodo = await this.processUpdate(todo, flags, newTitle);
-      
+
       // Save the list
       const list = await todoService.getList(finalListName);
       if (!list) {
@@ -280,7 +297,6 @@ export default class UpdateCommand extends BaseCommand {
 
       // Display results
       this.displayUpdateResults(updatedTodo, finalListName, flags);
-
     } catch (error) {
       if (error instanceof CLIError) {
         throw error;
@@ -295,7 +311,11 @@ export default class UpdateCommand extends BaseCommand {
   /**
    * Process the actual todo update with change tracking
    */
-  private async processUpdate(todo: Todo, flags: any, newTitle?: string): Promise<{ todo: Todo; changes: number }> {
+  private async processUpdate(
+    todo: Todo,
+    flags: any,
+    newTitle?: string
+  ): Promise<{ todo: Todo; changes: number }> {
     let changes = 0;
 
     // Update title if provided (from positional args or flags)
@@ -353,7 +373,10 @@ export default class UpdateCommand extends BaseCommand {
     }
 
     if (changes === 0) {
-      throw new CLIError('No changes specified. Use -h to see available options.', 'NO_CHANGES');
+      throw new CLIError(
+        'No changes specified. Use -h to see available options.',
+        'NO_CHANGES'
+      );
     }
 
     todo.updatedAt = new Date().toISOString();
@@ -365,8 +388,8 @@ export default class UpdateCommand extends BaseCommand {
    * Handle post-update operations (storage sync, AI enhancement)
    */
   private async handlePostUpdateOperations(
-    updateResult: { todo: Todo; changes: number }, 
-    listName: string, 
+    updateResult: { todo: Todo; changes: number },
+    listName: string,
     flags: any
   ): Promise<void> {
     const { todo } = updateResult;
@@ -382,12 +405,14 @@ export default class UpdateCommand extends BaseCommand {
           },
           onError: (operationId: string, error: Error) => {
             this.warning(`Storage sync failed: ${error.message}`);
-          }
+          },
         });
-        
+
         this.log(chalk.blue(`🔄 Storage sync queued: ${syncJobId}`));
       } catch (error) {
-        this.warning(`Failed to queue storage sync: ${error instanceof Error ? error.message : String(error)}`);
+        this.warning(
+          `Failed to queue storage sync: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -395,16 +420,23 @@ export default class UpdateCommand extends BaseCommand {
     if (flags['ai-enhance']) {
       try {
         const backgroundOps = await createBackgroundOperationsManager();
-        const aiJobId = await backgroundOps.processBatchInBackground([{
-          type: 'ai-enhance',
-          todo,
-          listName,
-          operation: 'update'
-        }], 'low');
-        
+        const aiJobId = await backgroundOps.processBatchInBackground(
+          [
+            {
+              type: 'ai-enhance',
+              todo,
+              listName,
+              operation: 'update',
+            },
+          ],
+          'low'
+        );
+
         this.log(chalk.magenta(`🤖 AI enhancement queued: ${aiJobId}`));
       } catch (error) {
-        this.warning(`Failed to queue AI enhancement: ${error instanceof Error ? error.message : String(error)}`);
+        this.warning(
+          `Failed to queue AI enhancement: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
   }
@@ -413,8 +445,8 @@ export default class UpdateCommand extends BaseCommand {
    * Display update results
    */
   private displayUpdateResults(
-    updateResult: { todo: Todo; changes: number }, 
-    listName: string, 
+    updateResult: { todo: Todo; changes: number },
+    listName: string,
     flags: any
   ): void {
     const { todo, changes } = updateResult;
@@ -423,7 +455,7 @@ export default class UpdateCommand extends BaseCommand {
     this.log(chalk.dim('List: ') + listName);
     this.log(chalk.dim('ID: ') + todo.id);
     this.log(chalk.dim(`Changes made: ${changes}`));
-    
+
     // Show what was updated
     if (flags.task) {
       this.log(chalk.dim('  • Title updated'));
@@ -444,7 +476,9 @@ export default class UpdateCommand extends BaseCommand {
       this.log(chalk.dim('  • Tags cleared'));
     }
     if (flags.private !== undefined) {
-      this.log(chalk.dim(`  • Privacy set to ${flags.private ? 'private' : 'public'}`));
+      this.log(
+        chalk.dim(`  • Privacy set to ${flags.private ? 'private' : 'public'}`)
+      );
     }
   }
 
@@ -452,17 +486,22 @@ export default class UpdateCommand extends BaseCommand {
    * Start background process for update operation
    */
   private startBackgroundProcess(job: any, args: any, flags: any): any {
-    const scriptPath = path.join(__dirname, '..', 'utils', 'background-update-worker.js');
+    const scriptPath = path.join(
+      __dirname,
+      '..',
+      'utils',
+      'background-update-worker.js'
+    );
     const updateArgs = [
       scriptPath,
       job.id,
       JSON.stringify(args),
-      JSON.stringify(flags)
+      JSON.stringify(flags),
     ];
 
     const childProcess = spawn('node', updateArgs, {
       detached: true,
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
     // Update job with process ID
@@ -470,13 +509,13 @@ export default class UpdateCommand extends BaseCommand {
 
     // Set up logging
     if (childProcess.stdout) {
-      childProcess.stdout.on('data', (data) => {
+      childProcess.stdout.on('data', data => {
         jobManager.writeJobLog(job.id, `STDOUT: ${data.toString()}`);
       });
     }
 
     if (childProcess.stderr) {
-      childProcess.stderr.on('data', (data) => {
+      childProcess.stderr.on('data', data => {
         jobManager.writeJobLog(job.id, `STDERR: ${data.toString()}`);
       });
     }
@@ -486,7 +525,10 @@ export default class UpdateCommand extends BaseCommand {
       if (code === 0) {
         jobManager.completeJob(job.id, { exitCode: code });
       } else {
-        jobManager.failJob(job.id, `Process exited with code ${code}, signal: ${signal}`);
+        jobManager.failJob(
+          job.id,
+          `Process exited with code ${code}, signal: ${signal}`
+        );
       }
     });
 

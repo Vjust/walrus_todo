@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 
 const logger = new Logger('run-network-retry-fuzzer');
 
@@ -33,9 +33,9 @@ async function runNetworkRetryFuzzer() {
     if (stderr) logger.error(stderr);
 
     logger.info('\n✅ Network Retry Fuzzer Tests Completed Successfully!');
-  } catch (_error) {
+  } catch (error: unknown) {
     logger.error('\n❌ Network Retry Fuzzer Tests Failed:');
-    logger.error(error.message);
+    logger.error((error as Error).message);
     process.exit(1);
   }
 }

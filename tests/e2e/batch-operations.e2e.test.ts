@@ -83,7 +83,9 @@ describe('Batch Operations E2E Tests', () => {
   describe('Store Batch Command', () => {
     beforeEach(async () => {
       // Clear todos for each test
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', { todos: [] });
+      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
+        todos: [],
+      });
     });
 
     it('should batch store todos efficiently', async () => {
@@ -146,7 +148,9 @@ describe('Batch Operations E2E Tests', () => {
   describe('Batch Operations with Filters', () => {
     beforeEach(async () => {
       // Set up variety of todos for filtering
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', { todos: [] });
+      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
+        todos: [],
+      });
 
       execSync(`${walrusCLI} add "High priority task 1" --priority high`);
       execSync(`${walrusCLI} add "High priority task 2" --priority high`);
@@ -211,9 +215,9 @@ describe('Batch Operations E2E Tests', () => {
         errorCaught = true;
         output = (error as { stdout: Buffer }).stdout.toString();
       }
-      
+
       expect(errorCaught).toBe(true);
-      
+
       // Test error output - assertions moved outside conditional
       expect(output).toContain('Partial batch failure');
       expect(output).toContain('Successfully stored: 2 todos');
@@ -301,9 +305,13 @@ describe('Batch Operations E2E Tests', () => {
     it('should maintain data integrity across batch operations', async () => {
       // Add todos with specific data
       const testData = [
-        { title: 'Test 1', priority: 'high', tags: ['urgent', 'work'] },
-        { title: 'Test 2', priority: 'medium', tags: ['personal'] },
-        { title: 'Test 3', priority: 'low', tags: ['optional'] },
+        {
+          title: 'Test 1',
+          priority: 'high' as const,
+          tags: ['urgent', 'work'],
+        },
+        { title: 'Test 2', priority: 'medium' as const, tags: ['personal'] },
+        { title: 'Test 3', priority: 'low' as const, tags: ['optional'] },
       ];
 
       for (const item of testData) {
@@ -316,7 +324,9 @@ describe('Batch Operations E2E Tests', () => {
       execSync(`${walrusCLI} store-list --mock`);
 
       // Clear local and retrieve from storage
-      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', { todos: [] });
+      await fs.writeJson(process.env.WALRUS_CLI_DEV_TODOS_PATH ?? '', {
+        todos: [],
+      });
       execSync(`${walrusCLI} retrieve --mock`);
 
       // Verify data integrity
@@ -326,7 +336,7 @@ describe('Batch Operations E2E Tests', () => {
       expect(retrievedTodos).toHaveLength(3);
       expect(retrievedTodos[0]).toMatchObject({
         title: 'Test 1',
-        priority: 'high',
+        priority: 'high' as const,
         tags: expect.arrayContaining(['urgent', 'work']),
       });
     });

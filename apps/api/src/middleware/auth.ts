@@ -10,31 +10,35 @@ export interface JWTPayload {
 }
 
 // API Key authentication middleware
-export const validateApiKey = (req: Request, res: Response, next: NextFunction): void => {
+export const validateApiKey = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   if (!config.auth.required) {
     return next();
   }
 
-  const apiKey = req.header('X-API-Key') || req.query.apiKey as string;
-  
+  const apiKey = req.header?.('X-API-Key') || (req.query.apiKey as string);
+
   if (!apiKey) {
     res.status(401).json({
       success: false,
       error: 'API key required',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
 
   if (!config.auth.apiKeys.includes(apiKey)) {
-    logger.warn('Invalid API key attempt', { 
-      key: apiKey.substring(0, 8) + '...', 
-      ip: req.ip 
+    logger.warn('Invalid API key attempt', {
+      key: apiKey.substring(0, 8) + '...',
+      ip: req.ip,
     });
     res.status(401).json({
       success: false,
       error: 'Invalid API key',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -43,15 +47,19 @@ export const validateApiKey = (req: Request, res: Response, next: NextFunction):
 };
 
 // JWT authentication middleware
-export const authenticateJWT = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.header('Authorization');
+export const authenticateJWT = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const authHeader = req.header?.('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
     res.status(401).json({
       success: false,
       error: 'Access token required',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     return;
   }
@@ -61,34 +69,41 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
     req.wallet = decoded.wallet;
     req.user = {
       id: decoded.wallet,
-      wallet: decoded.wallet
+      wallet: decoded.wallet,
     };
     next();
   } catch (error) {
-    logger.warn('Invalid JWT token', { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.warn('Invalid JWT token', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     res.status(403).json({
       success: false,
       error: 'Invalid or expired token',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 };
 
 // Optional wallet extraction from query/header
-export const extractWallet = (req: Request, res: Response, next: NextFunction): void => {
+export const extractWallet = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
   // Try to get wallet from JWT first
   if (req.wallet) {
     return next();
   }
 
   // Fall back to wallet parameter/header for development
-  const wallet = req.query.wallet as string || req.header('X-Wallet-Address');
-  
+  const wallet =
+    (req.query.wallet as string) || req.header?.('X-Wallet-Address');
+
   if (wallet) {
     req.wallet = wallet;
     req.user = {
       id: wallet,
-      wallet: wallet
+      wallet: wallet,
     };
   }
 
@@ -97,11 +112,7 @@ export const extractWallet = (req: Request, res: Response, next: NextFunction): 
 
 // Generate JWT token for wallet
 export const generateToken = (wallet: string): string => {
-  return jwt.sign(
-    { wallet },
-    config.auth.jwtSecret,
-    { expiresIn: '24h' }
-  );
+  return jwt.sign({ wallet }, config.auth.jwtSecret, { expiresIn: '24h' });
 };
 
 // Validate wallet format (Sui address)

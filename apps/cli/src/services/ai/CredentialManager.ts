@@ -39,7 +39,8 @@ export class CredentialManager {
       fs.writeFileSync(keyPath, newKey, { mode: 0o600 }); // Restrict file permissions
     }
 
-    this.encryptionKey = fs.readFileSync(keyPath);
+    const key = fs.readFileSync(keyPath);
+    this.encryptionKey = Buffer.isBuffer(key) ? key : Buffer.from(key);
 
     // Load credentials if they exist
     this.loadCredentials();
@@ -52,7 +53,10 @@ export class CredentialManager {
     try {
       if (fs.existsSync(this.credentialsPath)) {
         const encryptedData = fs.readFileSync(this.credentialsPath);
-        const credentials = this.decrypt(encryptedData);
+        const dataBuffer = Buffer.isBuffer(encryptedData)
+          ? encryptedData
+          : Buffer.from(encryptedData);
+        const credentials = this.decrypt(dataBuffer);
         if (credentials) {
           this.credentials = JSON.parse(credentials.toString());
         }

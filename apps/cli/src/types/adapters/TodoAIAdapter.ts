@@ -80,10 +80,11 @@ export class TodoAIAdapter {
         ],
       });
 
-      const result: SuiTransactionResponse = await this.client.signAndExecuteTransaction({
-        signer: keypair,
-        transaction: tx,
-      });
+      const result: SuiTransactionResponse =
+        await this.client.signAndExecuteTransaction({
+          signer: keypair,
+          transaction: tx,
+        });
 
       this.logger.info(
         `Linked verification ${verificationId} to todo ${todoId}`
@@ -91,9 +92,7 @@ export class TodoAIAdapter {
       return result.digest;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : `${error}`;
-      this.logger.error(
-        `Failed to link verification to todo: ${errorMessage}`
-      );
+      this.logger.error(`Failed to link verification to todo: ${errorMessage}`);
       throw new CLIError(
         `Failed to link verification to todo: ${errorMessage}`,
         'VERIFICATION_LINK_FAILED'
@@ -123,10 +122,11 @@ export class TodoAIAdapter {
         ],
       });
 
-      const result: SuiInspectionResult = await this.client.devInspectTransactionBlock({
-        sender: '0x0', // Dummy address for read-only operation
-        transaction: tx,
-      });
+      const result: SuiInspectionResult =
+        await this.client.devInspectTransactionBlock({
+          sender: '0x0', // Dummy address for read-only operation
+          transaction: tx,
+        });
 
       if (result?.results?.[0]) {
         const returnValue = result.results[0].returnValues?.[0]?.[0];
@@ -158,10 +158,11 @@ export class TodoAIAdapter {
         arguments: [tx.object(this.todoAIRegistry), tx.pure(todoId)],
       });
 
-      const result: SuiInspectionResult = await this.client.devInspectTransactionBlock({
-        sender: '0x0', // Dummy address for read-only operation
-        transaction: tx,
-      });
+      const result: SuiInspectionResult =
+        await this.client.devInspectTransactionBlock({
+          sender: '0x0', // Dummy address for read-only operation
+          transaction: tx,
+        });
 
       if (result?.results?.[0]) {
         // Parse vector of strings from the result
@@ -207,10 +208,11 @@ export class TodoAIAdapter {
         ],
       });
 
-      const result: SuiInspectionResult = await this.client.devInspectTransactionBlock({
-        sender: '0x0', // Dummy address for read-only operation
-        transaction: tx,
-      });
+      const result: SuiInspectionResult =
+        await this.client.devInspectTransactionBlock({
+          sender: '0x0', // Dummy address for read-only operation
+          transaction: tx,
+        });
 
       if (result?.results?.[0]) {
         const returnValue = result.results[0].returnValues?.[0]?.[0];
@@ -279,14 +281,15 @@ export class TodoAIAdapter {
       });
 
       // Execute the transaction
-      const txResult: SuiTransactionResponse = await this.client.signAndExecuteTransaction({
-        signer: keypair,
-        transaction: tx,
-      });
+      const txResult: SuiTransactionResponse =
+        await this.client.signAndExecuteTransaction({
+          signer: keypair,
+          transaction: tx,
+        });
 
       this.logger.info(`Created and linked verification to todo ${todoId}`, {
         transactionDigest: txResult.digest,
-        effects: txResult.effects?.status
+        effects: txResult.effects?.status,
       });
 
       return {

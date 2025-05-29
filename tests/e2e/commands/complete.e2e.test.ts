@@ -31,7 +31,11 @@ describe('E2E: complete command', () => {
       });
       return { stdout, stderr: '' };
     } catch (error: unknown) {
-      const execError = error as { stdout?: string; stderr?: string; message?: string };
+      const execError = error as {
+        stdout?: string;
+        stderr?: string;
+        message?: string;
+      };
       return {
         stdout: execError.stdout || '',
         stderr: execError.stderr || execError.message || '',
@@ -391,7 +395,7 @@ describe('E2E: complete command', () => {
         completed: false,
         createdAt: new Date().toISOString(),
         aiGenerated: true,
-        priority: 'high',
+        priority: 'high' as const,
         tags: ['important', 'urgent'],
         customField: 'custom value',
       };

@@ -48,13 +48,18 @@ test.describe('API Contract Testing', () => {
     await cli.expectSuccess('add', [
       todoTitle,
       'Testing JSON schema compliance',
-      '--priority', 'high',
-      '--tags', 'test,schema'
+      '--priority',
+      'high',
+      '--tags',
+      'test,schema',
     ]);
 
     // Get todos in JSON format
-    const todos = await cli.executeJSON<TodoSchema[]>('list', ['--format', 'json']);
-    
+    const todos = await cli.executeJSON<TodoSchema[]>('list', [
+      '--format',
+      'json',
+    ]);
+
     expect(Array.isArray(todos)).toBe(true);
     expect(todos.length).toBeGreaterThan(0);
 
@@ -63,7 +68,7 @@ test.describe('API Contract Testing', () => {
 
     // Validate TodoSchema compliance
     const todo = testTodo!;
-    
+
     // Required fields
     expect(typeof todo.id).toBe('string');
     expect(typeof todo.title).toBe('string');
@@ -93,9 +98,9 @@ test.describe('API Contract Testing', () => {
   test('CLI error responses conform to APIErrorSchema', async () => {
     // Trigger an error with invalid command
     const result = await cli.execute('add', ['', '']); // Empty title and description
-    
+
     expect(result.failed).toBe(true);
-    
+
     // Try to parse stderr as JSON error response
     let errorResponse: APIErrorSchema;
     try {
@@ -113,7 +118,9 @@ test.describe('API Contract Testing', () => {
     expect(typeof errorResponse.timestamp).toBe('string');
 
     // Validate timestamp format
-    expect(new Date(errorResponse.timestamp).toISOString()).toBe(errorResponse.timestamp);
+    expect(new Date(errorResponse.timestamp).toISOString()).toBe(
+      errorResponse.timestamp
+    );
 
     console.log('✅ CLI error response schema validation passed');
   });
@@ -121,19 +128,21 @@ test.describe('API Contract Testing', () => {
   test('Blockchain todos include blockchain-specific fields', async () => {
     // Create blockchain todo
     const todoTitle = `Blockchain Schema Test ${Date.now()}`;
-    
+
     try {
       await cli.expectSuccess('add', [
         todoTitle,
         'Testing blockchain schema fields',
         '--blockchain',
-        '--priority', 'medium'
+        '--priority',
+        'medium',
       ]);
 
       // Get todos with blockchain data
       const todos = await cli.executeJSON<TodoSchema[]>('list', [
-        '--format', 'json',
-        '--blockchain'
+        '--format',
+        'json',
+        '--blockchain',
       ]);
 
       const blockchainTodo = todos.find(todo => todo.title === todoTitle);
@@ -158,16 +167,17 @@ test.describe('API Contract Testing', () => {
       }
 
       console.log('✅ Blockchain todo schema validation passed');
-      
     } catch (error) {
-      console.warn('⚠️ Blockchain functionality not available, skipping blockchain schema test');
+      console.warn(
+        '⚠️ Blockchain functionality not available, skipping blockchain schema test'
+      );
       test.skip();
     }
   });
 
   test('WebSocket events conform to EventSchema', async ({ page }) => {
     const wsEvents: WebSocketEventSchema[] = [];
-    
+
     // Capture WebSocket events
     page.on('websocket', ws => {
       ws.on('framereceived', event => {
@@ -192,9 +202,9 @@ test.describe('API Contract Testing', () => {
     await page.waitForTimeout(2000);
 
     if (wsEvents.length > 0) {
-      const todoEvent = wsEvents.find(event => 
-        event.type === 'todo:created' || 
-        event.payload?.title === todoTitle
+      const todoEvent = wsEvents.find(
+        event =>
+          event.type === 'todo:created' || event.payload?.title === todoTitle
       );
 
       if (todoEvent) {
@@ -205,7 +215,9 @@ test.describe('API Contract Testing', () => {
         expect(['cli', 'frontend', 'blockchain']).toContain(todoEvent.source);
 
         // Validate timestamp format
-        expect(new Date(todoEvent.timestamp).toISOString()).toBe(todoEvent.timestamp);
+        expect(new Date(todoEvent.timestamp).toISOString()).toBe(
+          todoEvent.timestamp
+        );
 
         // Validate payload contains todo data
         if (todoEvent.payload.title) {
@@ -217,20 +229,22 @@ test.describe('API Contract Testing', () => {
         console.warn('⚠️ No relevant WebSocket events captured');
       }
     } else {
-      console.warn('⚠️ No WebSocket events captured, may indicate connection issues');
+      console.warn(
+        '⚠️ No WebSocket events captured, may indicate connection issues'
+      );
     }
   });
 
   test('Config command output is valid JSON', async () => {
     const configResult = await cli.executeJSON('config', ['--format', 'json']);
-    
+
     // Validate config has expected structure
     expect(typeof configResult).toBe('object');
     expect(configResult).not.toBeNull();
 
     // Check for expected config fields
     const expectedFields = ['network', 'rpcUrl', 'walletAddress'];
-    
+
     for (const field of expectedFields) {
       if (configResult[field]) {
         expect(typeof configResult[field]).toBe('string');
@@ -252,7 +266,7 @@ test.describe('API Contract Testing', () => {
 
   test('Status command provides consistent structure', async () => {
     const statusResult = await cli.executeJSON('status', ['--format', 'json']);
-    
+
     expect(typeof statusResult).toBe('object');
     expect(statusResult).not.toBeNull();
 
@@ -264,7 +278,9 @@ test.describe('API Contract Testing', () => {
 
     if (statusResult.lastSync) {
       expect(typeof statusResult.lastSync).toBe('string');
-      expect(new Date(statusResult.lastSync).toISOString()).toBe(statusResult.lastSync);
+      expect(new Date(statusResult.lastSync).toISOString()).toBe(
+        statusResult.lastSync
+      );
     }
 
     if (statusResult.todoCount) {
@@ -277,8 +293,9 @@ test.describe('API Contract Testing', () => {
 
   test('List command supports pagination metadata', async () => {
     // Create multiple todos for pagination testing
-    const todoTitles = Array.from({ length: 5 }, (_, i) => 
-      `Pagination Test ${i + 1} ${Date.now()}`
+    const todoTitles = Array.from(
+      { length: 5 },
+      (_, i) => `Pagination Test ${i + 1} ${Date.now()}`
     );
 
     for (const title of todoTitles) {
@@ -287,9 +304,12 @@ test.describe('API Contract Testing', () => {
 
     // Test paginated list
     const paginatedResult = await cli.executeJSON('list', [
-      '--format', 'json',
-      '--limit', '3',
-      '--page', '1'
+      '--format',
+      'json',
+      '--limit',
+      '3',
+      '--page',
+      '1',
     ]);
 
     // If pagination is implemented, validate metadata
@@ -299,7 +319,7 @@ test.describe('API Contract Testing', () => {
       // Structured pagination response
       expect(Array.isArray(paginatedResult.todos)).toBe(true);
       expect(typeof paginatedResult.pagination).toBe('object');
-      
+
       const pagination = paginatedResult.pagination;
       expect(typeof pagination.page).toBe('number');
       expect(typeof pagination.limit).toBe('number');
@@ -316,13 +336,16 @@ test.describe('API Contract Testing', () => {
     await cli.expectSuccess('add', [
       `Todo with ${searchTerm}`,
       `Description containing ${searchTerm}`,
-      '--tags', searchTerm
+      '--tags',
+      searchTerm,
     ]);
 
     // Search for todos
     const searchResults = await cli.executeJSON<TodoSchema[]>('list', [
-      '--format', 'json',
-      '--search', searchTerm
+      '--format',
+      'json',
+      '--search',
+      searchTerm,
     ]);
 
     expect(Array.isArray(searchResults)).toBe(true);
@@ -333,13 +356,13 @@ test.describe('API Contract Testing', () => {
       expect(typeof todo.title).toBe('string');
       expect(typeof todo.description).toBe('string');
       expect(typeof todo.completed).toBe('boolean');
-      
+
       // Verify search term appears in at least one field
-      const hasSearchTerm = 
+      const hasSearchTerm =
         todo.title.includes(searchTerm) ||
         todo.description.includes(searchTerm) ||
         todo.tags.some(tag => tag.includes(searchTerm));
-        
+
       expect(hasSearchTerm).toBe(true);
     }
 

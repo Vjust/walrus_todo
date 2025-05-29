@@ -1,69 +1,111 @@
-import { AIVerificationService } from '../../src/services/ai';
-import { BlockchainAIVerificationService } from '../../src/services/ai/BlockchainAIVerificationService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
 import {
   AIActionType,
   AIPrivacyLevel,
-} from '../../src/types/adapters/AIVerifierAdapter';
+} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';
-import { BlockchainVerifier } from '../../src/services/ai/BlockchainVerifier';
-import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
-import { getPermissionManager } from '../../src/services/ai/AIPermissionManager';
+import { BlockchainVerifier } from '../../apps/cli/src/services/ai/BlockchainVerifier';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { getPermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
 
 // Mock blockchain verifier
-jest.mock('../../src/services/ai/BlockchainVerifier', () => {
+jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier', () => {
+  const mockSigner = {
+    getAddress: jest.fn().mockResolvedValue('0x1234567890abcdef'),
+    signMessage: jest.fn().mockResolvedValue('mock_signature'),
+    signTransactionBlock: jest.fn(),
+    getPublicKey: jest.fn().mockReturnValue({
+      toBase64: jest.fn().mockReturnValue('mock_public_key_base64'),
+    }),
+  };
+
+  const mockVerifierAdapter = {
+    createVerification: jest.fn().mockResolvedValue({
+      id: 'bc-ver-123',
+      requestHash: 'bc-req-hash',
+      responseHash: 'bc-resp-hash',
+      user: '0x1234567890abcdef',
+      provider: 'blockchain-provider',
+      timestamp: Date.now(),
+      verificationType: 0, // AIActionType.SUMMARIZE
+      metadata: {},
+    }),
+    verifyRecord: jest.fn().mockResolvedValue(true),
+    getProviderInfo: jest.fn().mockResolvedValue({
+      name: 'blockchain-provider',
+      publicKey: 'mock_public_key',
+      verificationCount: 0,
+      isActive: true,
+      metadata: {},
+    }),
+    listVerifications: jest.fn().mockResolvedValue([]),
+    getRegistryAddress: jest.fn().mockResolvedValue('0xregistry123'),
+    registerProvider: jest.fn().mockResolvedValue('provider_id_123'),
+    getVerification: jest.fn().mockResolvedValue({
+      id: 'bc-ver-123',
+      requestHash: 'bc-req-hash',
+      responseHash: 'bc-resp-hash',
+      user: '0x1234567890abcdef',
+      provider: 'blockchain-provider',
+      timestamp: Date.now(),
+      verificationType: 0, // AIActionType.SUMMARIZE
+      metadata: {},
+    }),
+    getSigner: jest.fn().mockReturnValue(mockSigner),
+    generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
+    exportVerifications: jest.fn().mockResolvedValue(JSON.stringify([])),
+    enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
+    securelyDestroyData: jest.fn().mockResolvedValue(true),
+  };
+
   return {
     BlockchainVerifier: jest.fn().mockImplementation(() => ({
       verifyOperation: jest.fn().mockResolvedValue({
-        verified: true,
-        record: {
-          id: 'bc-ver-123',
-          actionType: 'summarize',
-          requestHash: 'bc-req-hash',
-          responseHash: 'bc-resp-hash',
-          timestamp: Date.now(),
-          provider: 'blockchain-provider',
-          privacyLevel: AIPrivacyLevel.HASH_ONLY,
-          metadata: {},
-          signature: 'bc-mock-sig',
-        },
-        transactionId: 'tx-123',
+        id: 'bc-ver-123',
+        requestHash: 'bc-req-hash',
+        responseHash: 'bc-resp-hash',
+        user: '0x1234567890abcdef',
+        provider: 'blockchain-provider',
         timestamp: Date.now(),
-        errorMessage: null,
+        verificationType: 0, // AIActionType.SUMMARIZE
+        metadata: {},
       }),
       getVerification: jest.fn().mockResolvedValue({
         id: 'bc-ver-123',
-        actionType: 'summarize',
         requestHash: 'bc-req-hash',
         responseHash: 'bc-resp-hash',
-        timestamp: Date.now(),
+        user: '0x1234567890abcdef',
         provider: 'blockchain-provider',
-        privacyLevel: AIPrivacyLevel.HASH_ONLY,
+        timestamp: Date.now(),
+        verificationType: 0, // AIActionType.SUMMARIZE
         metadata: {},
-        signature: 'bc-mock-sig',
       }),
       listVerifications: jest.fn().mockResolvedValue([
         {
           id: 'bc-ver-123',
-          actionType: 'summarize',
           requestHash: 'bc-req-hash',
           responseHash: 'bc-resp-hash',
-          timestamp: Date.now(),
+          user: '0x1234567890abcdef',
           provider: 'blockchain-provider',
-          privacyLevel: AIPrivacyLevel.HASH_ONLY,
+          timestamp: Date.now(),
+          verificationType: 0, // AIActionType.SUMMARIZE
           metadata: {},
-          signature: 'bc-mock-sig',
         },
       ]),
+      getVerifierAdapter: jest.fn().mockReturnValue(mockVerifierAdapter),
+      getSigner: jest.fn().mockReturnValue(mockSigner),
+      generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
     })),
   };
 });
 
 // Mock proof system
-jest.mock('../../src/services/ai/AIProofSystem', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProofSystem', () => {
   return {
     AIProofSystem: jest.fn().mockImplementation(() => ({
-      createProof: jest.fn().mockResolvedValue({
+      generateProof: jest.fn().mockResolvedValue({
         proofId: 'proof-123',
         verificationId: 'bc-ver-123',
         timestamp: Date.now(),
@@ -87,7 +129,7 @@ jest.mock('../../src/services/ai/AIProofSystem', () => {
 });
 
 // Mock credential manager
-jest.mock('../../src/services/ai/SecureCredentialManager', () => {
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager', () => {
   return {
     SecureCredentialManager: jest.fn().mockImplementation(() => ({
       getCredentialObject: jest.fn().mockReturnValue({
@@ -106,13 +148,10 @@ jest.mock('../../src/services/ai/SecureCredentialManager', () => {
 });
 
 // Mock permission manager
-jest.mock('../../src/services/ai/AIPermissionManager', () => {
+jest.mock('../../apps/cli/src/services/ai/AIPermissionManager', () => {
   return {
     getPermissionManager: jest.fn().mockReturnValue({
-      checkPermission: jest.fn().mockResolvedValue({
-        granted: true,
-        reason: null,
-      }),
+      checkPermission: jest.fn().mockResolvedValue(true), // Return boolean directly
     }),
   };
 });
@@ -340,16 +379,80 @@ describe('AI Verification Services', () => {
     let blockchainVerificationService: BlockchainAIVerificationService;
 
     beforeEach(() => {
-      const blockchainVerifier = new (BlockchainVerifier as new (...args: unknown[]) => InstanceType<typeof BlockchainVerifier>)();
-      const permissionManager = getPermissionManager();
-      const credentialManager = new (SecureCredentialManager as new (...args: unknown[]) => InstanceType<typeof SecureCredentialManager>)(
-        '/mock/keys'
-      );
+      // Create mock instances with proper methods
+      const blockchainVerifier = {
+        verifyOperation: jest.fn().mockResolvedValue({
+          id: 'bc-ver-123',
+          requestHash: 'bc-req-hash',
+          responseHash: 'bc-resp-hash',
+          user: '0x1234567890abcdef',
+          provider: 'xai',
+          timestamp: Date.now(),
+          verificationType: 0,
+          metadata: {},
+        }),
+        getVerification: jest.fn().mockResolvedValue({
+          id: 'bc-ver-123',
+          requestHash: 'bc-req-hash',
+          responseHash: 'bc-resp-hash',
+          user: '0x1234567890abcdef',
+          provider: 'xai',
+          timestamp: Date.now(),
+          verificationType: 0,
+          metadata: {},
+        }),
+        listVerifications: jest.fn().mockResolvedValue([
+          {
+            id: 'bc-ver-123',
+            requestHash: 'bc-req-hash',
+            responseHash: 'bc-resp-hash',
+            user: '0x1234567890abcdef',
+            provider: 'xai',
+            timestamp: Date.now(),
+            verificationType: 0,
+            metadata: {},
+          },
+        ]),
+        getVerifierAdapter: jest
+          .fn()
+          .mockReturnValue(createMockAIVerifierAdapter()),
+        getSigner: jest.fn().mockReturnValue({
+          getAddress: jest.fn().mockResolvedValue('0x1234567890abcdef'),
+          signMessage: jest.fn().mockResolvedValue('mock_signature'),
+          signTransactionBlock: jest.fn(),
+          getPublicKey: jest.fn().mockReturnValue({
+            toBase64: jest.fn().mockReturnValue('mock_public_key_base64'),
+          }),
+        }),
+        generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
+        // Add proofSystem mock
+        proofSystem: {
+          generateProof: jest.fn().mockResolvedValue({
+            proofId: 'proof-123',
+            verificationId: 'bc-ver-123',
+            timestamp: Date.now(),
+            signature: 'proof-sig',
+            hash: 'proof-hash',
+          }),
+        },
+      };
+
+      const permissionManager = {
+        checkPermission: jest.fn().mockResolvedValue(true),
+      };
+
+      const credentialManager = {
+        getCredentialObject: jest.fn().mockReturnValue({
+          provider: 'xai',
+          key: 'mock-api-key',
+          permissionLevel: 'FULL',
+        }),
+      };
 
       blockchainVerificationService = new BlockchainAIVerificationService(
-        blockchainVerifier,
-        permissionManager,
-        credentialManager,
+        blockchainVerifier as any,
+        permissionManager as any,
+        credentialManager as any,
         'xai'
       );
     });
@@ -405,7 +508,7 @@ describe('AI Verification Services', () => {
 
       expect(verification).toBeDefined();
       expect(verification.verification).toBeDefined();
-      expect(verification.provider).toBe('blockchain-provider');
+      expect(verification.provider).toBe('xai');
     });
 
     it('should list all blockchain verifications', async () => {

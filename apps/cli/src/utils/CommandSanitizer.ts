@@ -15,7 +15,20 @@ export class CommandSanitizer {
     return input
       .replace(/<[^>]*>/g, '') // Remove HTML tags
       .replace(/[\\$'"`;(){}[\]|&*?~<>]/g, '\\$&') // Escape shell and special metacharacters
-      .replace(new RegExp('[' + String.fromCharCode(1) + '-' + String.fromCharCode(31) + String.fromCharCode(127) + '-' + String.fromCharCode(159) + ']', 'g'), '') // Remove control characters (excluding \u0000)
+      .replace(
+        new RegExp(
+          '[' +
+            String.fromCharCode(1) +
+            '-' +
+            String.fromCharCode(31) +
+            String.fromCharCode(127) +
+            '-' +
+            String.fromCharCode(159) +
+            ']',
+          'g'
+        ),
+        ''
+      ) // Remove control characters (excluding \u0000)
       .replace(/\r\n|\r|\n/g, ' ') // Normalize line breaks
       .trim();
   }

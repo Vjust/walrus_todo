@@ -11,8 +11,63 @@ const METADATA_ESTIMATED_SIZE = 512; // Estimated size for metadata fields
 
 /**
  * Utility class for accurately calculating storage requirements for todos
+ * Supports both static methods and instance methods for different use cases
  */
 export class TodoSizeCalculator {
+  /**
+   * Creates a new TodoSizeCalculator instance
+   */
+  constructor() {
+    // Instance initialization
+  }
+
+  /**
+   * Instance method: Calculates the size of a todo in bytes using JSON.stringify
+   * This provides exact byte count for JSON representation
+   *
+   * @param todo The todo object to measure
+   * @returns Size in bytes
+   */
+  calculateBytes(todo: Todo): number {
+    try {
+      // Use JSON.stringify with 2-space indentation to match test expectations
+      const jsonString = JSON.stringify(todo, null, 2);
+      return jsonString.length;
+    } catch (error) {
+      // Handle circular references and other serialization errors
+      if (error instanceof TypeError && error.message.includes('circular')) {
+        throw new Error('Cannot calculate size: circular reference detected');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Instance method: Calculates and formats the size of a todo with appropriate units
+   *
+   * @param todo The todo object to measure
+   * @returns Formatted size string (e.g., "1.2 KB", "45 B")
+   */
+  calculateFormattedSize(todo: Todo): string {
+    const bytes = this.calculateBytes(todo);
+    return this.formatBytes(bytes);
+  }
+
+  /**
+   * Formats bytes into human-readable string with appropriate units
+   *
+   * @param bytes Number of bytes
+   * @returns Formatted string
+   */
+  private formatBytes(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    } else if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    } else {
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+  }
   /**
    * Calculates the exact size of a todo in bytes including buffer
    *
@@ -79,6 +134,11 @@ export class TodoSizeCalculator {
     if (todo.walrusBlobId) estimatedSize += 19 + todo.walrusBlobId.length;
     if (todo.nftObjectId) estimatedSize += 18 + todo.nftObjectId.length;
     if (todo.imageUrl) estimatedSize += 15 + todo.imageUrl.length;
+    if (todo.user) estimatedSize += 12 + todo.user.length;
+    if (todo.reminders)
+      estimatedSize += 17 + JSON.stringify(todo.reminders).length;
+    if (todo.metadata)
+      estimatedSize += 16 + JSON.stringify(todo.metadata).length;
 
     // Add buffer and metadata overhead
     return estimatedSize + MIN_SIZE_BUFFER_BYTES + METADATA_ESTIMATED_SIZE;

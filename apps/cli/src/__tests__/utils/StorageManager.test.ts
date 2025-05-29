@@ -6,7 +6,10 @@ import {
   BlockchainError,
 } from '../../types/errors/consolidated/index';
 import { Logger } from '../../utils/Logger';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../helpers/complete-walrus-client-mock';
 import { WalrusClient } from '../../types/client';
 
 jest.mock('@mysten/walrus');
@@ -15,7 +18,7 @@ jest.mock('../../utils/Logger');
 describe('StorageManager', () => {
   let manager: StorageManager;
   let mockWalrusClient: CompleteWalrusClientMock;
-  let mockLogger: jest.MockedObject<Logger>;
+  let mockLogger: jest.Mocked<Logger>;
 
   const testConfig = {
     minAllocation: 1000n,

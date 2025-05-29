@@ -47,7 +47,8 @@ export async function withTimeout<T>(
       throw error;
     }
 
-    const typedError = error instanceof Error ? error : new Error(String(error));
+    const typedError =
+      error instanceof Error ? error : new Error(String(error));
     throw new OperationError(
       `Operation '${operationName}' failed: ${typedError.message}`,
       { operationName, cause: typedError }
@@ -176,7 +177,7 @@ export class TimeoutError extends Error {
  */
 export class OperationError extends Error {
   public readonly cause?: unknown;
-  
+
   constructor(
     message: string,
     public readonly context: {
@@ -195,7 +196,7 @@ export class OperationError extends Error {
  */
 export class RetryError extends Error {
   public readonly cause?: unknown;
-  
+
   constructor(
     message: string,
     public readonly context: {
@@ -216,7 +217,7 @@ export class RetryError extends Error {
 export class AggregateOperationError extends Error {
   public readonly name = 'AggregateOperationError';
   public readonly errors: Error[];
-  
+
   constructor(
     message: string,
     errors: Error[],
@@ -224,11 +225,16 @@ export class AggregateOperationError extends Error {
   ) {
     super(message);
     this.errors = errors;
-    
+
     // Use AggregateError if available, otherwise fall back to custom implementation
-    const globalWithAggregateError = globalThis as unknown as { AggregateError?: new (errors: Error[], message: string) => Error };
+    const globalWithAggregateError = globalThis as unknown as {
+      AggregateError?: new (errors: Error[], message: string) => Error;
+    };
     if (typeof globalWithAggregateError.AggregateError !== 'undefined') {
-      const aggregateError = new globalWithAggregateError.AggregateError(errors, message);
+      const aggregateError = new globalWithAggregateError.AggregateError(
+        errors,
+        message
+      );
       this.stack = aggregateError.stack;
     }
   }

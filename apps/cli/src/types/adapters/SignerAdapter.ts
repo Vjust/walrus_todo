@@ -132,11 +132,43 @@ export interface BaseSigner {
 /**
  * Discriminated union for different signer implementations
  */
-export type SignerVariant = 
-  | { kind: 'v1'; signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } }
-  | { kind: 'v2'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> } }
-  | { kind: 'v2.5'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } }
-  | { kind: 'v3'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } };
+export type SignerVariant =
+  | {
+      kind: 'v1';
+      signer: BaseSigner & {
+        signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+      };
+    }
+  | {
+      kind: 'v2';
+      signer: BaseSigner & {
+        signTransactionBlock: (
+          bytes: Uint8Array
+        ) => Promise<SignatureWithBytes>;
+      };
+    }
+  | {
+      kind: 'v2.5';
+      signer: BaseSigner & {
+        signTransactionBlock: (
+          bytes: Uint8Array
+        ) => Promise<SignatureWithBytes>;
+        signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+      };
+    }
+  | {
+      kind: 'v3';
+      signer: BaseSigner & {
+        signTransactionBlock: (
+          bytes: Uint8Array
+        ) => Promise<SignatureWithBytes>;
+        signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+        signAndExecuteTransaction: (
+          tx: TransactionType,
+          options?: SuiTransactionBlockResponseOptions
+        ) => Promise<SuiTransactionBlockResponse>;
+      };
+    };
 
 /**
  * Unified Signer interface that accommodates both Signer implementation variants
@@ -188,38 +220,94 @@ export function isSignerVariant(obj: unknown): obj is SignerVariant {
 /**
  * Type narrowing functions for SignerVariant
  */
-export function isV1SignerVariant(variant: SignerVariant): variant is { kind: 'v1'; signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } } {
+export function isV1SignerVariant(
+  variant: SignerVariant
+): variant is {
+  kind: 'v1';
+  signer: BaseSigner & {
+    signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+  };
+} {
   return variant.kind === 'v1';
 }
 
-export function isV2SignerVariant(variant: SignerVariant): variant is { kind: 'v2'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> } } {
+export function isV2SignerVariant(
+  variant: SignerVariant
+): variant is {
+  kind: 'v2';
+  signer: BaseSigner & {
+    signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>;
+  };
+} {
   return variant.kind === 'v2';
 }
 
-export function isV25SignerVariant(variant: SignerVariant): variant is { kind: 'v2.5'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> } } {
+export function isV25SignerVariant(
+  variant: SignerVariant
+): variant is {
+  kind: 'v2.5';
+  signer: BaseSigner & {
+    signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>;
+    signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+  };
+} {
   return variant.kind === 'v2.5';
 }
 
-export function isV3SignerVariant(variant: SignerVariant): variant is { kind: 'v3'; signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } } {
+export function isV3SignerVariant(
+  variant: SignerVariant
+): variant is {
+  kind: 'v3';
+  signer: BaseSigner & {
+    signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>;
+    signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+    signAndExecuteTransaction: (
+      tx: TransactionType,
+      options?: SuiTransactionBlockResponseOptions
+    ) => Promise<SuiTransactionBlockResponse>;
+  };
+} {
   return variant.kind === 'v3';
 }
 
 /**
  * Factory functions for creating SignerVariant instances
  */
-export function createV1SignerVariant(signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }): SignerVariant {
+export function createV1SignerVariant(
+  signer: BaseSigner & {
+    signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+  }
+): SignerVariant {
   return { kind: 'v1', signer };
 }
 
-export function createV2SignerVariant(signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> }): SignerVariant {
+export function createV2SignerVariant(
+  signer: BaseSigner & {
+    signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>;
+  }
+): SignerVariant {
   return { kind: 'v2', signer };
 }
 
-export function createV25SignerVariant(signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }): SignerVariant {
+export function createV25SignerVariant(
+  signer: BaseSigner & {
+    signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>;
+    signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+  }
+): SignerVariant {
   return { kind: 'v2.5', signer };
 }
 
-export function createV3SignerVariant(signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> }): SignerVariant {
+export function createV3SignerVariant(
+  signer: BaseSigner & {
+    signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>;
+    signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+    signAndExecuteTransaction: (
+      tx: TransactionType,
+      options?: SuiTransactionBlockResponseOptions
+    ) => Promise<SuiTransactionBlockResponse>;
+  }
+): SignerVariant {
   return { kind: 'v3', signer };
 }
 
@@ -229,10 +317,38 @@ export function createV3SignerVariant(signer: BaseSigner & { signTransactionBloc
 export function processSignerVariant<T>(
   variant: SignerVariant,
   handlers: {
-    v1: (signer: BaseSigner & { signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }) => T;
-    v2: (signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes> }) => T;
-    'v2.5': (signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes> }) => T;
-    v3: (signer: BaseSigner & { signTransactionBlock: (bytes: Uint8Array) => Promise<SignatureWithBytes>; signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>; signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> }) => T;
+    v1: (
+      signer: BaseSigner & {
+        signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+      }
+    ) => T;
+    v2: (
+      signer: BaseSigner & {
+        signTransactionBlock: (
+          bytes: Uint8Array
+        ) => Promise<SignatureWithBytes>;
+      }
+    ) => T;
+    'v2.5': (
+      signer: BaseSigner & {
+        signTransactionBlock: (
+          bytes: Uint8Array
+        ) => Promise<SignatureWithBytes>;
+        signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+      }
+    ) => T;
+    v3: (
+      signer: BaseSigner & {
+        signTransactionBlock: (
+          bytes: Uint8Array
+        ) => Promise<SignatureWithBytes>;
+        signTransaction: (tx: TransactionType) => Promise<SignatureWithBytes>;
+        signAndExecuteTransaction: (
+          tx: TransactionType,
+          options?: SuiTransactionBlockResponseOptions
+        ) => Promise<SuiTransactionBlockResponse>;
+      }
+    ) => T;
   }
 ): T {
   switch (variant.kind) {
@@ -255,7 +371,10 @@ export function processSignerVariant<T>(
 /**
  * Create SignerVariant from a detected signer and its SDK version
  */
-export function createSignerVariantFromSDK(signer: unknown, sdkVersion: SuiSDKVersion): SignerVariant | null {
+export function createSignerVariantFromSDK(
+  signer: unknown,
+  sdkVersion: SuiSDKVersion
+): SignerVariant | null {
   if (!isValidBaseSigner(signer)) {
     return null;
   }
@@ -277,7 +396,11 @@ export function createSignerVariantFromSDK(signer: unknown, sdkVersion: SuiSDKVe
       }
       break;
     case SuiSDKVersion.VERSION_3:
-      if (hasSignTransactionBlock(signer) && hasSignTransaction(signer) && hasSignAndExecuteTransaction(signer)) {
+      if (
+        hasSignTransactionBlock(signer) &&
+        hasSignTransaction(signer) &&
+        hasSignAndExecuteTransaction(signer)
+      ) {
         return createV3SignerVariant(signer);
       }
       break;
@@ -295,12 +418,16 @@ export function createSignerVariantFromSDK(signer: unknown, sdkVersion: SuiSDKVe
  * with the minimum required methods
  */
 export function isValidBaseSigner(_signer: unknown): _signer is BaseSigner {
-  if (_signer === null || typeof _signer !== 'object' || _signer === undefined) {
+  if (
+    _signer === null ||
+    typeof _signer !== 'object' ||
+    _signer === undefined
+  ) {
     return false;
   }
 
   const signerObj = _signer as Record<string, unknown>;
-  
+
   // Core required methods with proper type checking
   return (
     'signPersonalMessage' in signerObj &&
@@ -326,11 +453,13 @@ export function isValidSigner(_signer: unknown): _signer is SignerSuiJs {
  */
 export function hasSignTransactionBlock(
   _signer: unknown
-): _signer is BaseSigner & { signTransactionBlock: (_bytes: Uint8Array) => Promise<SignatureWithBytes> } {
+): _signer is BaseSigner & {
+  signTransactionBlock: (_bytes: Uint8Array) => Promise<SignatureWithBytes>;
+} {
   if (!isValidBaseSigner(_signer)) {
     return false;
   }
-  
+
   const signerObj = _signer as Record<string, unknown>;
   return (
     'signTransactionBlock' in signerObj &&
@@ -343,11 +472,15 @@ export function hasSignTransactionBlock(
  */
 export function hasSignTransaction(
   _signer: unknown
-): _signer is BaseSigner & { signTransaction: (_transaction: TransactionType) => Promise<SignatureWithBytes> } {
+): _signer is BaseSigner & {
+  signTransaction: (
+    _transaction: TransactionType
+  ) => Promise<SignatureWithBytes>;
+} {
   if (!isValidBaseSigner(_signer)) {
     return false;
   }
-  
+
   const signerObj = _signer as Record<string, unknown>;
   return (
     'signTransaction' in signerObj &&
@@ -364,11 +497,10 @@ export function hasGetPublicKey(
   if (!isValidBaseSigner(_signer)) {
     return false;
   }
-  
+
   const signerObj = _signer as Record<string, unknown>;
   return (
-    'getPublicKey' in signerObj &&
-    typeof signerObj.getPublicKey === 'function'
+    'getPublicKey' in signerObj && typeof signerObj.getPublicKey === 'function'
   );
 }
 
@@ -377,11 +509,16 @@ export function hasGetPublicKey(
  */
 export function hasSignAndExecuteTransaction(
   _signer: unknown
-): _signer is BaseSigner & { signAndExecuteTransaction: (tx: TransactionType, options?: SuiTransactionBlockResponseOptions) => Promise<SuiTransactionBlockResponse> } {
+): _signer is BaseSigner & {
+  signAndExecuteTransaction: (
+    tx: TransactionType,
+    options?: SuiTransactionBlockResponseOptions
+  ) => Promise<SuiTransactionBlockResponse>;
+} {
   if (!isValidBaseSigner(_signer)) {
     return false;
   }
-  
+
   const signerObj = _signer as Record<string, unknown>;
   return (
     'signAndExecuteTransaction' in signerObj &&
@@ -394,16 +531,15 @@ export function hasSignAndExecuteTransaction(
  */
 export function hasSignData(
   _signer: unknown
-): _signer is BaseSigner & { signData: (_data: Uint8Array) => Promise<Uint8Array> } {
+): _signer is BaseSigner & {
+  signData: (_data: Uint8Array) => Promise<Uint8Array>;
+} {
   if (!isValidBaseSigner(_signer)) {
     return false;
   }
-  
+
   const signerObj = _signer as Record<string, unknown>;
-  return (
-    'signData' in signerObj &&
-    typeof signerObj.signData === 'function'
-  );
+  return 'signData' in signerObj && typeof signerObj.signData === 'function';
 }
 
 /**
@@ -411,11 +547,15 @@ export function hasSignData(
  */
 export function hasSignPersonalMessage(
   _signer: unknown
-): _signer is BaseSigner & { signPersonalMessage: (_message: Uint8Array) => Promise<{ signature: Uint8Array; bytes?: Uint8Array }> } {
+): _signer is BaseSigner & {
+  signPersonalMessage: (
+    _message: Uint8Array
+  ) => Promise<{ signature: Uint8Array; bytes?: Uint8Array }>;
+} {
   if (!isValidBaseSigner(_signer)) {
     return false;
   }
-  
+
   const signerObj = _signer as Record<string, unknown>;
   return (
     'signPersonalMessage' in signerObj &&
@@ -432,12 +572,9 @@ export function hasConnect(
   if (!isValidBaseSigner(_signer)) {
     return false;
   }
-  
+
   const signerObj = _signer as Record<string, unknown>;
-  return (
-    'connect' in signerObj &&
-    typeof signerObj.connect === 'function'
-  );
+  return 'connect' in signerObj && typeof signerObj.connect === 'function';
 }
 
 /**
@@ -672,7 +809,7 @@ export function isSignerAdapter(
   if (!isBaseAdapter(_obj) || _obj === null || typeof _obj !== 'object') {
     return false;
   }
-  
+
   const adapterObj = _obj as Record<string, unknown>;
   return (
     'signWithIntent' in adapterObj &&

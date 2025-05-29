@@ -43,7 +43,7 @@ function parseArgs() {
   const modeArg = args.find(arg => arg.startsWith('--mode='));
   if (modeArg) {
     const mode = modeArg.split('=')[1];
-    if (buildConfig.modes[mode]) {
+    if (buildConfig.modes && buildConfig.modes[mode]) {
       Object.assign(options, buildConfig.modes[mode]);
       print('blue', `Using predefined build mode: ${mode}`);
     } else {

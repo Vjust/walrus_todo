@@ -2,9 +2,9 @@
  * Basic test file to verify Jest is working correctly
  */
 
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 
-jest.mock('../../src/services/todoService');
+jest.mock('../../apps/cli/src/services/todoService');
 
 // Sample test data for basic tests
 const basicTestTodo = {
@@ -12,12 +12,12 @@ const basicTestTodo = {
   title: 'Test Todo',
   description: 'Test Description',
   completed: false,
-  priority: 'medium',
+  priority: 'medium' as const,
   tags: ['test'],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   private: false,
-  storageLocation: 'local',
+  storageLocation: 'local' as const,
 };
 
 describe('Basic Jest Test', () => {
@@ -25,7 +25,9 @@ describe('Basic Jest Test', () => {
     jest.clearAllMocks();
 
     // Mock TodoService methods
-    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(basicTestTodo);
+    (TodoService.prototype.addTodo as jest.Mock).mockResolvedValue(
+      basicTestTodo
+    );
     (TodoService.prototype.getList as jest.Mock).mockResolvedValue({
       id: 'default',
       name: 'default',

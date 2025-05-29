@@ -27,11 +27,14 @@ export function useInactivityTimer({
     const now = Date.now();
 
     // Throttle updates to avoid excessive state changes
-    if (now - lastActivity > throttle) {
-      setLastActivity(now);
-      setIsActive(true);
-    }
-  }, [lastActivity, throttle]);
+    setLastActivity(prevTime => {
+      if (now - prevTime > throttle) {
+        setIsActive(true);
+        return now;
+      }
+      return prevTime;
+    });
+  }, [throttle]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

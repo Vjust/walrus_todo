@@ -1,5 +1,5 @@
-import { Todo } from '../../src/types/todo';
-import { TodoService } from '../../src/services/todoService';
+import { Todo } from '../../apps/cli/src/types/todo';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 
 describe('TodoService', () => {
   let todoService: TodoService;
@@ -31,7 +31,7 @@ describe('TodoService', () => {
     const todo: Partial<Todo> = {
       title: 'Test Todo',
       description: 'Test Description',
-      priority: 'high',
+      priority: 'high' as const,
       tags: ['test'],
     };
 

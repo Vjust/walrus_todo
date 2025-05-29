@@ -1,6 +1,6 @@
 import { test, expect } from '@jest/globals';
 import { runCommand } from '../helpers/test-utils';
-import { BackgroundOperations } from '../../src/utils/background-operations';
+import { BackgroundOperations } from '../../apps/cli/src/utils/background-operations';
 
 describe('Background Sync Command', () => {
   beforeEach(() => {
@@ -10,7 +10,7 @@ describe('Background Sync Command', () => {
 
   test('should show background flag in help', async () => {
     const { stdout } = await runCommand(['sync', '--help']);
-    
+
     expect(stdout).toContain('--background');
     expect(stdout).toContain('Run sync in background without blocking');
     expect(stdout).toContain('--continuous');
@@ -26,14 +26,18 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
     // Add a test todo first
     await runCommand(['add', 'Test background sync todo', '--storage', 'both']);
 
     const { stdout } = await runCommand(['sync', '--background', '--force']);
-    
+
     expect(stdout).toContain('Background sync started');
     expect(stdout).toContain('job');
     expect(stdout).toContain('Use "waltodo jobs" to monitor progress');
@@ -42,25 +46,40 @@ describe('Background Sync Command', () => {
 
   test('should start continuous sync with --continuous flag', async () => {
     const mockBackgroundOps = {
-      startContinuousSyncInBackground: jest.fn().mockResolvedValue('continuous-job-456'),
+      startContinuousSyncInBackground: jest
+        .fn()
+        .mockResolvedValue('continuous-job-456'),
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
-    const { stdout } = await runCommand(['sync', '--background', '--continuous', '--interval', '60', '--force']);
-    
+    const { stdout } = await runCommand([
+      'sync',
+      '--background',
+      '--continuous',
+      '--interval',
+      '60',
+      '--force',
+    ]);
+
     expect(stdout).toContain('Continuous sync started in background');
     expect(stdout).toContain('continuous-job-456');
     expect(stdout).toContain('Use "waltodo status');
     expect(stdout).toContain('Use "waltodo cancel');
-    expect(mockBackgroundOps.startContinuousSyncInBackground).toHaveBeenCalledWith({
+    expect(
+      mockBackgroundOps.startContinuousSyncInBackground
+    ).toHaveBeenCalledWith({
       interval: 60,
       direction: 'both',
       resolve: 'ask',
       force: true,
-      priority: 'normal',
+      priority: 'medium' as const,
       onProgress: expect.any(Function),
       onComplete: expect.any(Function),
       onError: expect.any(Function),
@@ -73,7 +92,11 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
     // Add multiple test todos
@@ -81,8 +104,14 @@ describe('Background Sync Command', () => {
     await runCommand(['add', 'Todo 2', '--storage', 'both']);
     await runCommand(['add', 'Todo 3', '--storage', 'both']);
 
-    const { stdout } = await runCommand(['sync', '--background', '--batch-size', '2', '--force']);
-    
+    const { stdout } = await runCommand([
+      'sync',
+      '--background',
+      '--batch-size',
+      '2',
+      '--force',
+    ]);
+
     expect(stdout).toContain('Background sync started');
     // Should create multiple batches for 3 todos with batch size 2
     expect(mockBackgroundOps.syncTodosInBackground).toHaveBeenCalled();
@@ -94,30 +123,45 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
     await runCommand(['add', 'High priority sync todo', '--storage', 'both']);
 
-    const { stdout } = await runCommand(['sync', '--background', '--priority', 'high', '--force']);
-    
+    const { stdout } = await runCommand([
+      'sync',
+      '--background',
+      '--priority',
+      'high',
+      '--force',
+    ]);
+
     expect(stdout).toContain('Background sync started');
     expect(mockBackgroundOps.syncTodosInBackground).toHaveBeenCalledWith(
       expect.objectContaining({
-        priority: 'high',
+        priority: 'high' as const,
       })
     );
   });
 
   test('should require --background flag for continuous mode', async () => {
-    const { stderr } = await runCommand(['sync', '--continuous'], { expectError: true });
-    
+    const { stderr } = await runCommand(['sync', '--continuous'], {
+      expectError: true,
+    });
+
     expect(stderr).toContain('--continuous depends on --background');
   });
 
   test('should validate interval minimum value', async () => {
-    const { stderr } = await runCommand(['sync', '--background', '--continuous', '--interval', '10'], { expectError: true });
-    
+    const { stderr } = await runCommand(
+      ['sync', '--background', '--continuous', '--interval', '10'],
+      { expectError: true }
+    );
+
     expect(stderr).toContain('Expected --interval=10 to be >= 30');
   });
 
@@ -127,13 +171,23 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
     await runCommand(['add', 'Direction test todo', '--storage', 'both']);
 
-    const { stdout } = await runCommand(['sync', '--background', '--direction', 'push', '--force']);
-    
+    const { stdout } = await runCommand([
+      'sync',
+      '--background',
+      '--direction',
+      'push',
+      '--force',
+    ]);
+
     expect(stdout).toContain('Background sync started');
     expect(mockBackgroundOps.syncTodosInBackground).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -148,13 +202,23 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
     await runCommand(['add', 'Resolve test todo', '--storage', 'both']);
 
-    const { stdout } = await runCommand(['sync', '--background', '--resolve', 'newest', '--force']);
-    
+    const { stdout } = await runCommand([
+      'sync',
+      '--background',
+      '--resolve',
+      'newest',
+      '--force',
+    ]);
+
     expect(stdout).toContain('Background sync started');
     expect(mockBackgroundOps.syncTodosInBackground).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -169,13 +233,29 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
-    await runCommand(['add', 'Work todo', '--storage', 'both', '--list', 'work']);
+    await runCommand([
+      'add',
+      'Work todo',
+      '--storage',
+      'both',
+      '--list',
+      'work',
+    ]);
 
-    const { stdout } = await runCommand(['sync', 'work', '--background', '--force']);
-    
+    const { stdout } = await runCommand([
+      'sync',
+      'work',
+      '--background',
+      '--force',
+    ]);
+
     expect(stdout).toContain('Background sync started');
     expect(mockBackgroundOps.syncTodosInBackground).toHaveBeenCalled();
   });
@@ -186,11 +266,15 @@ describe('Background Sync Command', () => {
       shutdown: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    jest.spyOn(require('../../src/utils/background-operations'), 'createBackgroundOperationsManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/background-operations'),
+        'createBackgroundOperationsManager'
+      )
       .mockResolvedValue(mockBackgroundOps);
 
     const { stdout } = await runCommand(['sync', '--background', '--force']);
-    
+
     expect(stdout).toContain('No todos found with "both" storage mode');
     expect(mockBackgroundOps.syncTodosInBackground).not.toHaveBeenCalled();
   });
@@ -205,7 +289,11 @@ describe('Background Operations Integration', () => {
       shutdown: jest.fn(),
     } as any;
 
-    jest.spyOn(require('../../src/utils/BackgroundCacheManager'), 'createBackgroundCacheManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/BackgroundCacheManager'),
+        'createBackgroundCacheManager'
+      )
       .mockReturnValue(mockCacheManager);
 
     const backgroundOps = new BackgroundOperations(mockCacheManager);
@@ -221,9 +309,18 @@ describe('Background Operations Integration', () => {
       onError: errorCallback,
     });
 
-    expect(mockCacheManager.on).toHaveBeenCalledWith('operationProgress', expect.any(Function));
-    expect(mockCacheManager.on).toHaveBeenCalledWith('operationCompleted', expect.any(Function));
-    expect(mockCacheManager.on).toHaveBeenCalledWith('operationFailed', expect.any(Function));
+    expect(mockCacheManager.on).toHaveBeenCalledWith(
+      'operationProgress',
+      expect.any(Function)
+    );
+    expect(mockCacheManager.on).toHaveBeenCalledWith(
+      'operationCompleted',
+      expect.any(Function)
+    );
+    expect(mockCacheManager.on).toHaveBeenCalledWith(
+      'operationFailed',
+      expect.any(Function)
+    );
   });
 
   test('should handle continuous sync configuration', async () => {
@@ -234,7 +331,11 @@ describe('Background Operations Integration', () => {
       shutdown: jest.fn(),
     } as any;
 
-    jest.spyOn(require('../../src/utils/BackgroundCacheManager'), 'createBackgroundCacheManager')
+    jest
+      .spyOn(
+        require('../../apps/cli/src/utils/BackgroundCacheManager'),
+        'createBackgroundCacheManager'
+      )
       .mockReturnValue(mockCacheManager);
 
     const backgroundOps = new BackgroundOperations(mockCacheManager);
@@ -243,7 +344,7 @@ describe('Background Operations Integration', () => {
       interval: 120,
       direction: 'pull',
       resolve: 'local',
-      priority: 'high',
+      priority: 'high' as const,
     });
 
     expect(mockCacheManager.queueOperation).toHaveBeenCalledWith(
@@ -254,7 +355,7 @@ describe('Background Operations Integration', () => {
           direction: 'pull',
           resolve: 'local',
         }),
-        priority: 'high',
+        priority: 'high' as const,
         timeout: undefined, // No timeout for continuous operations
       })
     );

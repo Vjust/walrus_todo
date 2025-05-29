@@ -5,7 +5,7 @@
  * and the test environment setup utilities.
  */
 
-import { test } from '@oclif/test';
+import { runCommand } from '@oclif/test';
 // import * as fs from 'fs';
 import { execSync } from 'child_process';
 import {
@@ -16,12 +16,12 @@ import {
 } from './setup-test-env';
 
 // Mock the TodoService to avoid actual file system operations
-import { TodoService } from '../../src/services/todoService';
-jest.mock('../../src/services/todoService');
+import { TodoService } from '../../apps/cli/src/services/todoService';
+jest.mock('../../apps/cli/src/services/todoService');
 
 // Mock walrus-storage module for blockchain testing
-import { createWalrusStorage } from '../../src/utils/walrus-storage';
-jest.mock('../../src/utils/walrus-storage');
+import { createWalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+jest.mock('../../apps/cli/src/utils/walrus-storage');
 
 describe('WalTodo complete command', () => {
   // Sample test todo
@@ -80,11 +80,12 @@ describe('WalTodo complete command', () => {
 
   // Test using @oclif/test library for command testing
   it('completes a todo by ID', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['complete', '--id', 'test-todo-id-123'])
-      .run();
-    
+    const { stdout } = await runCommand([
+      'complete',
+      '--id',
+      'test-todo-id-123',
+    ]);
+
     expect(stdout).toContain('Todo completion');
     expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
       'default',
@@ -93,11 +94,14 @@ describe('WalTodo complete command', () => {
   });
 
   it('completes a todo in a specific list', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['complete', '--id', 'test-todo-id-123', '--list', 'work'])
-      .run();
-    
+    const { stdout } = await runCommand([
+      'complete',
+      '--id',
+      'test-todo-id-123',
+      '--list',
+      'work',
+    ]);
+
     expect(stdout).toContain('Todo completion');
     expect(TodoService.prototype.completeTodo).toHaveBeenCalledWith(
       'work',
@@ -107,11 +111,14 @@ describe('WalTodo complete command', () => {
 
   // Test local storage completion
   it('completes a todo with local storage only', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command(['complete', '--id', 'test-todo-id-123', '--storage', 'local'])
-      .run();
-    
+    const { stdout } = await runCommand([
+      'complete',
+      '--id',
+      'test-todo-id-123',
+      '--storage',
+      'local',
+    ]);
+
     expect(stdout).toContain('Todo completion');
     expect(TodoService.prototype.completeTodo).toHaveBeenCalled();
     expect(createWalrusStorage).not.toHaveBeenCalled();
@@ -119,17 +126,14 @@ describe('WalTodo complete command', () => {
 
   // Test blockchain storage (tests the error path when blockchain is unavailable)
   it('attempts to complete a todo with blockchain storage', async () => {
-    const { stdout } = await test
-      .stdout()
-      .command([
-        'complete',
-        '--id',
-        'test-todo-id-123',
-        '--storage',
-        'blockchain',
-      ])
-      .run();
-    
+    const { stdout } = await runCommand([
+      'complete',
+      '--id',
+      'test-todo-id-123',
+      '--storage',
+      'blockchain',
+    ]);
+
     expect(stdout).toContain('Todo completion');
     expect(createWalrusStorage).toHaveBeenCalled();
   });
@@ -140,23 +144,17 @@ describe('WalTodo complete command', () => {
     (TodoService.prototype.getTodo as jest.Mock).mockRejectedValue(
       new Error('Todo not found')
     );
-    
+
     await expect(
-      test
-        .stdout()
-        .command(['complete', '--id', 'non-existent-id'])
-        .run()
+      runCommand(['complete', '--id', 'non-existent-id'])
     ).rejects.toThrow('Todo not found');
   });
 
   // Test error handling for missing ID
   it('errors when no ID is provided', async () => {
-    await expect(
-      test
-        .stdout()
-        .command(['complete'])
-        .run()
-    ).rejects.toThrow('Missing required flag');
+    await expect(runCommand(['complete'])).rejects.toThrow(
+      'Missing required flag'
+    );
   });
 
   // Integration style test that mocks the CLI execution

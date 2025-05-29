@@ -5,18 +5,16 @@
  * the functionality of both the original aiService and EnhancedAIService classes.
  */
 
-import { AIService, aiService } from '../../src/services/ai';
-import {
-  AIProvider,
-} from '../../src/types/adapters/AIModelAdapter';
-import { Todo } from '../../src/types/todo';
-import { AIVerificationService } from '../../src/services/ai/AIVerificationService';
-import { ResultCache } from '../../src/services/ai/ResultCache';
-import { AIConfigManager } from '../../src/services/ai/AIConfigManager';
-import { PromptManager } from '../../src/services/ai/PromptManager';
+import { AIService, aiService } from '../../apps/cli/src/services/ai';
+import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { Todo } from '../../apps/cli/src/types/todo';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
+import { ResultCache } from '../../apps/cli/src/services/ai/ResultCache';
+import { AIConfigManager } from '../../apps/cli/src/services/ai/AIConfigManager';
+import { PromptManager } from '../../apps/cli/src/services/ai/PromptManager';
 
 // Mock secureCredentialService
-jest.mock('../../src/services/ai/SecureCredentialService', () => ({
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialService', () => ({
   secureCredentialService: {
     getCredential: jest
       .fn()
@@ -32,7 +30,7 @@ jest.mock('../../src/services/ai/SecureCredentialService', () => ({
 }));
 
 // Create mocks
-jest.mock('../../src/services/ai/AIProviderFactory', () => ({
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => ({
   createDefaultAdapter: jest.fn().mockReturnValue({
     getProviderName: jest.fn().mockReturnValue('mock-provider'),
     processWithPromptTemplate: jest
@@ -96,7 +94,7 @@ jest.mock('../../src/services/ai/AIProviderFactory', () => ({
   }),
 }));
 
-jest.mock('../../src/services/ai/ResultCache', () => {
+jest.mock('../../apps/cli/src/services/ai/ResultCache', () => {
   const mockInstance = {
     configure: jest.fn(),
     getConfig: jest.fn().mockReturnValue({
@@ -154,7 +152,7 @@ jest.spyOn(ResultCache, 'getInstance').mockReturnValue({
   recordMiss: jest.fn(),
 });
 
-jest.mock('../../src/services/ai/PromptManager', () => {
+jest.mock('../../apps/cli/src/services/ai/PromptManager', () => {
   const mockInstance = {
     getPromptTemplate: jest.fn().mockReturnValue({
       format: jest.fn().mockResolvedValue('Mock formatted prompt'),
@@ -187,7 +185,7 @@ jest.spyOn(PromptManager, 'getInstance').mockReturnValue({
   clearPromptOverride: jest.fn(),
 });
 
-jest.mock('../../src/services/ai/AIConfigManager', () => {
+jest.mock('../../apps/cli/src/services/ai/AIConfigManager', () => {
   const mockInstance = {
     getGlobalConfig: jest.fn().mockReturnValue({
       defaultProvider: 'xai',
@@ -275,7 +273,7 @@ jest.spyOn(AIConfigManager, 'getInstance').mockReturnValue({
   resetToDefaults: jest.fn(),
 });
 
-jest.mock('../../src/utils/Logger', () => {
+jest.mock('../../apps/cli/src/utils/Logger', () => {
   return {
     Logger: jest.fn().mockImplementation(() => ({
       debug: jest.fn(),
@@ -293,7 +291,7 @@ jest.mock('../../src/utils/Logger', () => {
 });
 
 // Import Logger first
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 
 // Add a getInstance mock to Logger
 // Unused imports removed during TypeScript cleanup
@@ -318,7 +316,7 @@ describe('Consolidated AIService', () => {
         title: 'First todo',
         description: 'This is the first todo',
         completed: false,
-        priority: 'medium',
+        priority: 'medium' as const,
         tags: [],
         private: false,
         createdAt: new Date().toISOString(),
@@ -449,7 +447,7 @@ describe('Consolidated AIService', () => {
         title: 'Single todo',
         description: 'This is a single todo',
         completed: false,
-        priority: 'medium',
+        priority: 'medium' as const,
         tags: [],
         private: false,
         createdAt: new Date().toISOString(),

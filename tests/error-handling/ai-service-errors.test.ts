@@ -9,11 +9,11 @@
 import { AIService } from '../../apps/cli/src/services/ai/aiService';
 import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { ErrorSimulator, ErrorType } from '../helpers/error-simulator';
-import { createMockAIModelAdapter } from '../mocks/AIModelAdapter.mock';
+import { createMockAIModelAdapter } from '../helpers/AITestFactory';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 
 // Mock the AIProviderFactory
-jest.mock('../../src/services/ai/AIProviderFactory', () => {
+jest.mock('../../apps/cli/src/services/ai/AIProviderFactory', () => {
   return {
     AIProviderFactory: {
       createProvider: jest
@@ -96,7 +96,10 @@ describe('AI Service Error Handling', () => {
           const result = await aiService.summarize(sampleTodos);
           results.push({ success: true, result });
         } catch (error: unknown) {
-          results.push({ success: false, error: error instanceof Error ? error.message : String(error) });
+          results.push({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       }
 
@@ -159,7 +162,11 @@ describe('AI Service Error Handling', () => {
           try {
             return await aiService.summarize(sampleTodos);
           } catch (error: unknown) {
-            if (attempts < maxAttempts - 1 && error instanceof Error && error.message?.includes('429')) {
+            if (
+              attempts < maxAttempts - 1 &&
+              error instanceof Error &&
+              error.message?.includes('429')
+            ) {
               attempts++;
               await new Promise(resolve => setTimeout(resolve, backoffMs));
               backoffMs *= 2; // Exponential backoff
@@ -215,7 +222,12 @@ describe('AI Service Error Handling', () => {
     it('should truncate large inputs to prevent token limit errors', async () => {
       // Mock the tokenizer/truncator method
       const truncateSpy = jest
-        .spyOn(aiService as AIService & { truncateInputForTokenLimit: (todos: unknown[]) => unknown[] }, 'truncateInputForTokenLimit')
+        .spyOn(
+          aiService as AIService & {
+            truncateInputForTokenLimit: (todos: unknown[]) => unknown[];
+          },
+          'truncateInputForTokenLimit'
+        )
         .mockImplementation(todos => {
           // Return only first 3 todos with truncated descriptions
           return todos.slice(0, 3).map(todo => ({
@@ -363,13 +375,28 @@ describe('AI Service Error Handling', () => {
 
       // Implement fallback method on service
       jest
-        .spyOn(aiService as AIService & { withFallback: <T>(operation: () => Promise<T>, fallbackValue: T) => Promise<T> }, 'withFallback')
+        .spyOn(
+          aiService as AIService & {
+            withFallback: <T>(
+              operation: () => Promise<T>,
+              fallbackValue: T
+            ) => Promise<T>;
+          },
+          'withFallback'
+        )
         .mockImplementation(async (operation, fallbackValue) => {
           return operation().catch(() => fallbackValue);
         });
 
       // Call with fallback
-      const result = await (aiService as AIService & { withFallback: <T>(operation: () => Promise<T>, fallbackValue: T) => Promise<T> }).withFallback(
+      const result = await (
+        aiService as AIService & {
+          withFallback: <T>(
+            operation: () => Promise<T>,
+            fallbackValue: T
+          ) => Promise<T>;
+        }
+      ).withFallback(
         () => aiService.summarize(sampleTodos),
         'Fallback summary when AI is unavailable'
       );
@@ -396,7 +423,12 @@ describe('AI Service Error Handling', () => {
 
       // Implement local processing fallback
       const localProcessingSpy = jest
-        .spyOn(aiService as AIService & { localProcessing: (todos: unknown[]) => string }, 'localProcessing')
+        .spyOn(
+          aiService as AIService & {
+            localProcessing: (todos: unknown[]) => string;
+          },
+          'localProcessing'
+        )
         .mockImplementation(todos => {
           // Basic local processing implementation
           const completed = todos.filter(t => t.completed).length;
@@ -409,7 +441,11 @@ describe('AI Service Error Handling', () => {
         try {
           return await aiService.summarize(todos);
         } catch (error: unknown) {
-          return (aiService as AIService & { localProcessing: (todos: unknown[]) => string }).localProcessing(todos);
+          return (
+            aiService as AIService & {
+              localProcessing: (todos: unknown[]) => string;
+            }
+          ).localProcessing(todos);
         }
       };
 

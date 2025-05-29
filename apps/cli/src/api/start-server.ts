@@ -27,7 +27,10 @@ async function main() {
       process.exit(0);
     });
   } catch (error) {
-    logger.error('Failed to start API server', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to start API server',
+      error instanceof Error ? error : new Error(String(error))
+    );
     process.exit(1);
   }
 }

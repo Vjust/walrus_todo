@@ -19,20 +19,22 @@ describe('SyncEngine', () => {
 
   beforeEach(async () => {
     // Create a temporary directory for testing
-    mockTodosDir = await fs.mkdtemp(path.join(os.tmpdir(), 'waltodo-sync-test-'));
-    
+    mockTodosDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), 'waltodo-sync-test-')
+    );
+
     mockConfig = {
       todosDirectory: mockTodosDir,
       apiConfig: {
         baseURL: 'http://localhost:3001',
         timeout: 5000,
-        enableWebSocket: true
+        enableWebSocket: true,
       },
       syncInterval: 1000,
       conflictResolution: 'newest',
       enableRealTimeSync: true,
       maxConcurrentSyncs: 2,
-      syncDebounceMs: 500
+      syncDebounceMs: 500,
     };
 
     syncEngine = new SyncEngine(mockConfig);
@@ -42,7 +44,7 @@ describe('SyncEngine', () => {
     if (syncEngine) {
       await syncEngine.shutdown();
     }
-    
+
     // Clean up temp directory
     try {
       await fs.rmdir(mockTodosDir, { recursive: true });
@@ -53,7 +55,7 @@ describe('SyncEngine', () => {
 
   describe('initialization', () => {
     it('should initialize successfully', async () => {
-      const initPromise = new Promise<void>((resolve) => {
+      const initPromise = new Promise<void>(resolve => {
         syncEngine.on('initialized', resolve);
       });
 
@@ -65,18 +67,18 @@ describe('SyncEngine', () => {
 
     it('should create todos directory if it does not exist', async () => {
       const nonExistentDir = path.join(mockTodosDir, 'nested', 'todos');
-      
+
       const config = {
         ...mockConfig,
-        todosDirectory: nonExistentDir
+        todosDirectory: nonExistentDir,
       };
 
       const engine = new SyncEngine(config);
       await engine.initialize('test-wallet');
-      
+
       const stats = await fs.stat(nonExistentDir);
       expect(stats.isDirectory()).toBe(true);
-      
+
       await engine.shutdown();
     });
   });
@@ -84,20 +86,20 @@ describe('SyncEngine', () => {
   describe('sync status', () => {
     it('should return correct initial status', () => {
       const status = syncEngine.getSyncStatus();
-      
+
       expect(status).toEqual({
         isActive: false,
         lastSync: 0,
         pendingChanges: 0,
         conflicts: [],
-        errors: []
+        errors: [],
       });
     });
 
     it('should update status when started', async () => {
       await syncEngine.initialize('test-wallet');
       await syncEngine.start();
-      
+
       const status = syncEngine.getSyncStatus();
       expect(status.isActive).toBe(true);
     });
@@ -108,13 +110,13 @@ describe('SyncEngine', () => {
       const minimalConfig: SyncEngineConfig = {
         todosDirectory: mockTodosDir,
         apiConfig: {
-          baseURL: 'http://localhost:3001'
-        }
+          baseURL: 'http://localhost:3001',
+        },
       };
 
       const engine = new SyncEngine(minimalConfig);
       const config = engine.getConfig();
-      
+
       expect(config.syncInterval).toBe(30000); // Default value
       expect(config.conflictResolution).toBe('newest'); // Default value
       expect(config.enableRealTimeSync).toBe(true); // Default value
@@ -122,7 +124,7 @@ describe('SyncEngine', () => {
 
     it('should override default values with provided config', () => {
       const config = syncEngine.getConfig();
-      
+
       expect(config.syncInterval).toBe(1000); // From mockConfig
       expect(config.conflictResolution).toBe('newest'); // From mockConfig
       expect(config.maxConcurrentSyncs).toBe(2); // From mockConfig
@@ -131,10 +133,12 @@ describe('SyncEngine', () => {
 
   describe('file watching', () => {
     it('should setup file watcher correctly', async () => {
-      const MockFileWatcher = FileWatcher as jest.MockedClass<typeof FileWatcher>;
-      
+      const MockFileWatcher = FileWatcher as jest.MockedClass<
+        typeof FileWatcher
+      >;
+
       await syncEngine.initialize('test-wallet');
-      
+
       expect(MockFileWatcher).toHaveBeenCalledWith({
         recursive: true,
         ignoreInitial: false,
@@ -142,7 +146,7 @@ describe('SyncEngine', () => {
         fileExtensions: ['.json'],
         excludePatterns: expect.arrayContaining([
           expect.any(RegExp), // Should include exclude patterns
-        ])
+        ]),
       });
     });
   });
@@ -150,31 +154,33 @@ describe('SyncEngine', () => {
   describe('API client', () => {
     it('should setup API client with correct config', async () => {
       const MockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>;
-      
+
       await syncEngine.initialize('test-wallet');
-      
+
       expect(MockApiClient).toHaveBeenCalledWith({
         baseURL: 'http://localhost:3001',
         timeout: 5000,
-        enableWebSocket: true
+        enableWebSocket: true,
       });
     });
   });
 
   describe('error handling', () => {
     it('should emit error events when file watcher fails', async () => {
-      const MockFileWatcher = FileWatcher as jest.MockedClass<typeof FileWatcher>;
+      const MockFileWatcher = FileWatcher as jest.MockedClass<
+        typeof FileWatcher
+      >;
       const mockInstance = MockFileWatcher.mock.instances[0] as any;
-      
+
       await syncEngine.initialize('test-wallet');
-      
-      const errorPromise = new Promise<Error>((resolve) => {
+
+      const errorPromise = new Promise<Error>(resolve => {
         syncEngine.on('error', resolve);
       });
-      
+
       const testError = new Error('File watcher error');
       mockInstance.emit('error', testError);
-      
+
       const receivedError = await errorPromise;
       expect(receivedError).toBe(testError);
     });
@@ -182,16 +188,16 @@ describe('SyncEngine', () => {
     it('should emit error events when API client fails', async () => {
       const MockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>;
       const mockInstance = MockApiClient.mock.instances[0] as any;
-      
+
       await syncEngine.initialize('test-wallet');
-      
-      const errorPromise = new Promise<Error>((resolve) => {
+
+      const errorPromise = new Promise<Error>(resolve => {
         syncEngine.on('error', resolve);
       });
-      
+
       const testError = new Error('API client error');
       mockInstance.emit('error', testError);
-      
+
       const receivedError = await errorPromise;
       expect(receivedError).toBe(testError);
     });
@@ -200,33 +206,33 @@ describe('SyncEngine', () => {
   describe('lifecycle management', () => {
     it('should start and stop correctly', async () => {
       await syncEngine.initialize('test-wallet');
-      
-      const startPromise = new Promise<void>((resolve) => {
+
+      const startPromise = new Promise<void>(resolve => {
         syncEngine.on('started', resolve);
       });
-      
+
       await syncEngine.start();
       await startPromise;
-      
+
       expect(syncEngine.getSyncStatus().isActive).toBe(true);
-      
-      const stopPromise = new Promise<void>((resolve) => {
+
+      const stopPromise = new Promise<void>(resolve => {
         syncEngine.on('stopped', resolve);
       });
-      
+
       await syncEngine.stop();
       await stopPromise;
-      
+
       expect(syncEngine.getSyncStatus().isActive).toBe(false);
     });
 
     it('should shutdown cleanly', async () => {
       await syncEngine.initialize('test-wallet');
       await syncEngine.start();
-      
+
       // Should not throw
       await syncEngine.shutdown();
-      
+
       expect(syncEngine.getSyncStatus().isActive).toBe(false);
     });
   });
@@ -234,9 +240,9 @@ describe('SyncEngine', () => {
   describe('wallet management', () => {
     it('should set wallet correctly', async () => {
       await syncEngine.initialize();
-      
+
       await syncEngine.setWallet('new-wallet-address');
-      
+
       // Verify API client was called to connect with new wallet
       const MockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>;
       const mockInstance = MockApiClient.mock.instances[0] as any;
@@ -251,14 +257,16 @@ describe('SyncEngine Integration', () => {
   let mockTodosDir: string;
 
   beforeEach(async () => {
-    mockTodosDir = await fs.mkdtemp(path.join(os.tmpdir(), 'waltodo-integration-'));
+    mockTodosDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), 'waltodo-integration-')
+    );
   });
 
   afterEach(async () => {
     if (syncEngine) {
       await syncEngine.shutdown();
     }
-    
+
     try {
       await fs.rmdir(mockTodosDir, { recursive: true });
     } catch (error) {
@@ -271,14 +279,14 @@ describe('SyncEngine Integration', () => {
       todosDirectory: mockTodosDir,
       apiConfig: {
         baseURL: 'http://localhost:3001',
-        enableWebSocket: false // Disable for testing
+        enableWebSocket: false, // Disable for testing
       },
       enableRealTimeSync: true,
-      syncDebounceMs: 100 // Fast for testing
+      syncDebounceMs: 100, // Fast for testing
     };
 
     syncEngine = new SyncEngine(config);
-    
+
     await syncEngine.initialize('test-wallet');
     await syncEngine.start();
 
@@ -286,26 +294,28 @@ describe('SyncEngine Integration', () => {
     const testTodoFile = path.join(mockTodosDir, 'test-list.json');
     const testTodo = {
       name: 'test-list',
-      todos: [{
-        id: 'test-todo-1',
-        title: 'Test Todo',
-        completed: false,
-        createdAt: new Date().toISOString()
-      }],
+      todos: [
+        {
+          id: 'test-todo-1',
+          title: 'Test Todo',
+          completed: false,
+          createdAt: new Date().toISOString(),
+        },
+      ],
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     // Write the file and wait for sync
     await fs.writeFile(testTodoFile, JSON.stringify(testTodo, null, 2));
-    
+
     // Wait a bit for the file watcher to detect the change
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     // Verify that sync was triggered (through mocked API calls)
     const MockApiClient = ApiClient as jest.MockedClass<typeof ApiClient>;
     const mockInstance = MockApiClient.mock.instances[0] as any;
-    
+
     // Should have attempted to push the todo
     expect(mockInstance.pushTodo).toHaveBeenCalled();
   });

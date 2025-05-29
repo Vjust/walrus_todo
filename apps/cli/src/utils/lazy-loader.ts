@@ -89,7 +89,8 @@ export class LazyLoader {
       return module;
     } catch (error: unknown) {
       this.loadingPromises.delete(modulePath);
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       throw typedError;
     }
   }
@@ -137,7 +138,8 @@ export class LazyLoader {
 
       return module;
     } catch (error: unknown) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       this.logger.error(`Failed to load module: ${modulePath}`, typedError);
       throw typedError;
     }
@@ -218,7 +220,8 @@ export class LazyLoader {
         loadTime: `${loadTime}ms`,
       });
     } catch (error: unknown) {
-      const typedError = error instanceof Error ? error : new Error(String(error));
+      const typedError =
+        error instanceof Error ? error : new Error(String(error));
       this.logger.warn(`Failed to preload module: ${modulePath}`, typedError);
     }
   }

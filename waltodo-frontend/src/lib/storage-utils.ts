@@ -64,11 +64,16 @@ export function detectContext(): StorageContext {
 
   // Check for incognito/private mode or storage restrictions
   try {
-    localStorage.setItem('__storage_test__', '__storage_test__');
-    localStorage.removeItem('__storage_test__');
-    sessionStorage.setItem('__storage_test__', '__storage_test__');
-    sessionStorage.removeItem('__storage_test__');
-    return 'browser';
+    // Only test localStorage if we're sure we're in browser context
+    if (typeof window.localStorage !== 'undefined' && typeof window.sessionStorage !== 'undefined') {
+      const testKey = '__storage_test__';
+      window.localStorage.setItem(testKey, testKey);
+      window.localStorage.removeItem(testKey);
+      window.sessionStorage.setItem(testKey, testKey);
+      window.sessionStorage.removeItem(testKey);
+      return 'browser';
+    }
+    return 'unknown';
   } catch (e) {
     // If storage test fails but browser isn't otherwise identified as a specific context
     return 'incognito';
@@ -83,16 +88,19 @@ export function isStorageAvailable(): boolean {
     // First check if we're in a context that blocks storage APIs
     // Common in SSR, cross-origin iframes, or when "Block all cookies" is enabled
     if (
-      window.localStorage === undefined ||
-      window.sessionStorage === undefined
+      typeof window.localStorage === 'undefined' ||
+      typeof window.sessionStorage === 'undefined' ||
+      window.localStorage === null ||
+      window.sessionStorage === null
     ) {
       return false;
     }
 
     const testKey = '__storage_test__';
     window.localStorage.setItem(testKey, testKey);
+    const result = window.localStorage.getItem(testKey);
     window.localStorage.removeItem(testKey);
-    return true;
+    return result === testKey;
   } catch (e) {
     return false;
   }

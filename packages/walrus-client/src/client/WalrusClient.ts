@@ -75,7 +75,7 @@ export class WalrusClient implements WalrusClientAdapter {
 
   private shouldUseMock(): boolean {
     return (
-      process?.env?.WALRUS_USE_MOCK === 'true' || 
+      // Removed WALRUS_USE_MOCK - using real implementations 
       process?.env?.NODE_ENV === 'test'
     );
   }

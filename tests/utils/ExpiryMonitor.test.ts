@@ -1,22 +1,26 @@
-import { WalrusClient } from '../../src/types/client';
-import { ExpiryMonitor } from '../../src/utils/ExpiryMonitor';
-import { VaultManager, BlobRecord } from '../../src/utils/VaultManager';
-import { StorageError } from '../../src/types/errors/consolidated';
+import { ExpiryMonitor } from '../../apps/cli/src/utils/ExpiryMonitor';
+import {
+  VaultManager,
+  BlobRecord,
+} from '../../apps/cli/src/utils/VaultManager';
+import { StorageError } from '../../apps/cli/src/types/errors/consolidated';
 import { Signer } from '@mysten/sui/cryptography';
 // import * as childProcess from 'child_process';
-import { Logger } from '../../src/utils/Logger';
-// Unused imports removed during TypeScript cleanup
-// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import { Logger } from '../../apps/cli/src/utils/Logger';
+import {
+  createWalrusModuleMock,
+  type CompleteWalrusClientMock,
+} from '../helpers/complete-walrus-client-mock';
 
 jest.mock('child_process');
-jest.mock('@mysten/walrus');
-jest.mock('../../src/utils/VaultManager');
-jest.mock('../../src/utils/Logger');
+jest.mock('@mysten/walrus', () => createWalrusModuleMock());
+jest.mock('../../apps/cli/src/utils/VaultManager');
+jest.mock('../../apps/cli/src/utils/Logger');
 
 describe('ExpiryMonitor', () => {
   let monitor: ExpiryMonitor;
   let mockVaultManager: jest.Mocked<VaultManager>;
-  let mockWalrusClient: jest.Mocked<WalrusClient>;
+  let mockWalrusClient: CompleteWalrusClientMock;
   let mockWarningHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockRenewalHandler: jest.Mock<Promise<void>, [BlobRecord[]]>;
   let mockSigner: jest.Mocked<Signer>;
@@ -69,53 +73,48 @@ describe('ExpiryMonitor', () => {
 
     (Logger.getInstance as jest.Mock).mockReturnValue(mockLogger);
 
-    mockWalrusClient = {
-      getConfig: jest.fn().mockResolvedValue({
-        network: 'testnet',
-        version: '1.0.0',
-        maxSize: 1000000,
-      }),
-      getWalBalance: jest.fn().mockResolvedValue('2000'),
-      getStorageUsage: jest
-        .fn()
-        .mockResolvedValue({ used: '500', total: '2000' }),
-      getBlobObject: jest.fn().mockResolvedValue({
-        id: { id: 'mock-blob-id' },
-        blob_id: 'mock-blob-id',
-        registered_epoch: 1,
-        size: '1024',
-        encoding_type: 1,
-        cert_epoch: 1,
-        storage: {
-          id: { id: 'mock-storage-id' },
-          storage_size: '1000',
-          used_size: '100',
-          end_epoch: 100,
-          start_epoch: 1,
-        },
-        deletable: false,
-      }),
-      verifyPoA: jest.fn().mockResolvedValue(true),
-      executeCreateStorageTransaction: jest.fn().mockResolvedValue({
-        digest: 'tx1',
-        storage: {
-          id: { id: 'storage1' },
-          start_epoch: 40,
-          end_epoch: 52,
-          storage_size: '1000000',
-        },
-      }),
-      // Additional required methods
-      readBlob: jest.fn(),
-      writeBlob: jest.fn(),
-      getBlobInfo: jest.fn(),
-      storageCost: jest.fn(),
-      connect: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn(),
-      reset: jest.fn(),
-    } as unknown as jest.Mocked<WalrusClient>;
+    // Setup mock implementations using complete mock
+    const walrusModule = await import('@mysten/walrus');
+    const MockWalrusClient = walrusModule.WalrusClient;
+    mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
+
+    // Override specific methods for this test
+    mockWalrusClient.getConfig.mockResolvedValue({
+      network: 'testnet',
+      version: '1.0.0',
+      maxSize: 1000000,
+    });
+    mockWalrusClient.getWalBalance.mockResolvedValue('2000');
+    mockWalrusClient.getStorageUsage.mockResolvedValue({
+      used: '500',
+      total: '2000',
+    });
+    mockWalrusClient.getBlobObject.mockResolvedValue({
+      id: { id: 'mock-blob-id' },
+      blob_id: 'mock-blob-id',
+      registered_epoch: 1,
+      size: '1024',
+      encoding_type: 1,
+      cert_epoch: 1,
+      storage: {
+        id: { id: 'mock-storage-id' },
+        storage_size: '1000',
+        used_size: '100',
+        end_epoch: 100,
+        start_epoch: 1,
+      },
+      deletable: false,
+    });
+    mockWalrusClient.verifyPoA.mockResolvedValue(true);
+    mockWalrusClient.executeCreateStorageTransaction.mockResolvedValue({
+      digest: 'tx1',
+      storage: {
+        id: { id: 'storage1' },
+        start_epoch: 40,
+        end_epoch: 52,
+        storage_size: '1000000',
+      },
+    });
 
     mockSigner = {
       signData: jest.fn().mockReturnValue(new Uint8Array([1, 2, 3])),

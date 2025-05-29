@@ -1,11 +1,11 @@
-import { BatchUploader } from '../../src/utils/batch-uploader';
-import { TodoSizeCalculator } from '../../src/utils/todo-size-calculator';
-import { WalrusStorage } from '../../src/utils/walrus-storage';
-import type { WalrusStorage as WalrusStorageType } from '../../src/utils/walrus-storage';
-import { Todo, TodoList } from '../../src/types/todo';
+import { BatchUploader } from '../../apps/cli/src/utils/batch-uploader';
+import { TodoSizeCalculator } from '../../apps/cli/src/utils/todo-size-calculator';
+import { WalrusStorage } from '../../apps/cli/src/utils/walrus-storage';
+import type { WalrusStorage as WalrusStorageType } from '../../apps/cli/src/utils/walrus-storage';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
 
 // Mock the WalrusStorage class
-jest.mock('../../src/utils/walrus-storage');
+jest.mock('../../apps/cli/src/utils/walrus-storage');
 
 describe('BatchUploader', () => {
   // Sample test data
@@ -15,7 +15,7 @@ describe('BatchUploader', () => {
       title: 'First Todo',
       description: 'This is the first test todo',
       completed: false,
-      priority: 'high',
+      priority: 'high' as const,
       tags: ['test', 'important'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -26,7 +26,7 @@ describe('BatchUploader', () => {
       title: 'Second Todo',
       description: 'This is the second test todo',
       completed: true,
-      priority: 'medium',
+      priority: 'medium' as const,
       tags: ['test'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -38,7 +38,7 @@ describe('BatchUploader', () => {
       description:
         'This is the third test todo with a longer description to test variable sizes',
       completed: false,
-      priority: 'low',
+      priority: 'low' as const,
       tags: ['test', 'optional', 'later'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -68,13 +68,7 @@ describe('BatchUploader', () => {
     ) as jest.Mocked<WalrusStorageType>;
 
     // Mock the storage methods
-    mockWalrusStorage.ensureStorageAllocated = jest.fn().mockResolvedValue({
-      id: { id: 'mock-storage-id' },
-      storage_size: '1000000',
-      used_size: '0',
-      end_epoch: '100',
-      start_epoch: '1',
-    });
+    mockWalrusStorage.ensureStorageAllocated = jest.fn().mockResolvedValue(true);
 
     mockWalrusStorage.storeTodo = jest.fn().mockImplementation(todo => {
       return Promise.resolve(`mock-blob-${todo.id}`);
@@ -98,7 +92,9 @@ describe('BatchUploader', () => {
 
   describe('uploadTodos', () => {
     it('should throw error for empty batch', async () => {
-      const { CLIError } = await import('../../src/types/errors/consolidated');
+      const { CLIError } = await import(
+        '../../apps/cli/src/types/errors/consolidated'
+      );
       await expect(batchUploader.uploadTodos([])).rejects.toThrow(CLIError);
     });
 
@@ -110,7 +106,9 @@ describe('BatchUploader', () => {
         TodoSizeCalculator.calculateOptimalStorageSize
       ).toHaveBeenCalledWith(
         sampleTodos,
-        expect.objectContaining({ extraAllocation: expect.any(Number) as number })
+        expect.objectContaining({
+          extraAllocation: expect.any(Number) as number,
+        })
       );
 
       // Verify storage was allocated with the calculated size
@@ -202,10 +200,13 @@ describe('BatchUploader', () => {
       expect(mockWalrusStorage.storeTodoList).toHaveBeenCalledTimes(1);
 
       // Verify the list being uploaded has the updated blob IDs
-      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0][0];
-      expect(uploadedList.todos[0].walrusBlobId).toBe('mock-blob-1');
-      expect(uploadedList.todos[1].walrusBlobId).toBe('mock-blob-2');
-      expect(uploadedList.todos[2].walrusBlobId).toBe('mock-blob-3');
+      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
+      expect(uploadedList).toBeDefined();
+      if (uploadedList) {
+        expect(uploadedList.todos[0]!.walrusBlobId).toBe('mock-blob-1');
+        expect(uploadedList.todos[1]!.walrusBlobId).toBe('mock-blob-2');
+        expect(uploadedList.todos[2]!.walrusBlobId).toBe('mock-blob-3');
+      }
     });
 
     it('should update the list with successful blob IDs even if some todos fail', async () => {
@@ -224,10 +225,13 @@ describe('BatchUploader', () => {
       expect(result.todoResults.failed.length).toBe(1);
 
       // Verify the list being uploaded has the updated blob IDs for successful uploads only
-      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0][0];
-      expect(uploadedList.todos[0].walrusBlobId).toBe('mock-blob-1');
-      expect(uploadedList.todos[1].walrusBlobId).toBeUndefined(); // Failed
-      expect(uploadedList.todos[2].walrusBlobId).toBe('mock-blob-3');
+      const uploadedList = mockWalrusStorage.storeTodoList.mock.calls[0]?.[0];
+      expect(uploadedList).toBeDefined();
+      if (uploadedList) {
+        expect(uploadedList.todos[0]!.walrusBlobId).toBe('mock-blob-1');
+        expect(uploadedList.todos[1]!.walrusBlobId).toBeUndefined(); // Failed
+        expect(uploadedList.todos[2]!.walrusBlobId).toBe('mock-blob-3');
+      }
     });
   });
 });

@@ -104,7 +104,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       } catch (error: unknown) {
         // console.warn('Could not fetch blob from Walrus:', error instanceof Error ? error.message : String(error)); // Removed console statement
       }
-      
+
       // Verify fetch operation outcome
       expect(typeof fetchSuccessful).toBe('boolean');
       // Validate fetch output based on success
@@ -113,7 +113,6 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       } else {
         expect(fetchOutput).toBe('');
       }
-
     }
 
     // Step 6: User verifies on Sui scanner
@@ -135,7 +134,7 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       } catch (error: unknown) {
         // console.warn('Could not check Sui object:', error instanceof Error ? error.message : String(error)); // Removed console statement
       }
-      
+
       // Verify Sui check operation outcome
       expect(typeof suiCheckSuccessful).toBe('boolean');
       // Validate check output based on success
@@ -144,7 +143,6 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
       } else {
         expect(checkOutput).toBe('');
       }
-
     }
 
     // Step 7: Summary for the user
@@ -177,4 +175,3 @@ describe('Real User Workflow: Create and Store TODO on Testnet', () => {
     expect(retrieveOutput).toContain('todo for aj');
   });
 });
-

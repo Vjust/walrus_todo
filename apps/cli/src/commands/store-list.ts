@@ -124,8 +124,12 @@ export default class StoreListCommand extends BaseCommand {
 
         try {
           const fileContent = fs.readFileSync(filePath, 'utf-8');
+          const contentStr =
+            typeof fileContent === 'string'
+              ? fileContent
+              : fileContent.toString('utf-8');
           try {
-            todoList = JSON.parse(fileContent);
+            todoList = JSON.parse(contentStr);
           } catch (parseError) {
             if (parseError instanceof SyntaxError) {
               throw new CLIError(

@@ -3,9 +3,9 @@
  */
 
 import { execSync } from 'child_process';
-import { TodoService } from '../../src/services/todoService';
+import { TodoService } from '../../apps/cli/src/services/todoService';
 
-jest.mock('../../src/services/todoService');
+jest.mock('../../apps/cli/src/services/todoService');
 
 // Mock command execution
 jest.mock('child_process', () => ({
@@ -19,24 +19,24 @@ const testTodos = [
     title: 'First Todo',
     description: 'Description 1',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     tags: ['test'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: false,
-    storageLocation: 'local',
+    storageLocation: 'local' as const,
   },
   {
     id: 'todo-2',
     title: 'High Priority Todo',
     description: 'Description 2',
     completed: false,
-    priority: 'high',
+    priority: 'high' as const,
     tags: ['important'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: false,
-    storageLocation: 'local',
+    storageLocation: 'local' as const,
   },
   {
     id: 'todo-3',
@@ -44,12 +44,12 @@ const testTodos = [
     description: 'Description 3',
     completed: true,
     completedAt: new Date().toISOString(),
-    priority: 'low',
+    priority: 'low' as const,
     tags: ['done'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     private: false,
-    storageLocation: 'local',
+    storageLocation: 'local' as const,
   },
 ];
 

@@ -30,10 +30,14 @@ export class PerformanceMonitor {
     const duration = performance.now() - startTime;
     this.startTimes.delete(operation);
     
-    if (!this.metrics.has(operation)) {
+    const operationMetrics = this.metrics.get(operation);
+    if (!operationMetrics) {
       this.metrics.set(operation, []);
     }
-    this.metrics.get(operation)!.push(duration);
+    const metrics = this.metrics.get(operation);
+    if (metrics) {
+      metrics.push(duration);
+    }
     
     return duration;
   }
@@ -52,8 +56,8 @@ export class PerformanceMonitor {
   }
 
   getAllMetrics(): Record<string, { avg: number; min: number; max: number; count: number }> {
-    const result: Record<string, any> = {};
-    for (const [operation] of this.metrics) {
+    const result: Record<string, { avg: number; min: number; max: number; count: number }> = {};
+    for (const [operation] of Array.from(this.metrics)) {
       result[operation] = this.getMetrics(operation);
     }
     return result;
@@ -69,7 +73,7 @@ export class PerformanceMonitor {
 export class Debouncer {
   private timeouts: Map<string, NodeJS.Timeout> = new Map();
 
-  debounce<T extends (...args: any[]) => any>(
+  debounce<T extends (...args: unknown[]) => unknown>(
     key: string,
     func: T,
     delay: number
@@ -108,7 +112,7 @@ export class Throttler {
   private lastExecution: Map<string, number> = new Map();
   private pending: Map<string, NodeJS.Timeout> = new Map();
 
-  throttle<T extends (...args: any[]) => any>(
+  throttle<T extends (...args: unknown[]) => unknown>(
     key: string,
     func: T,
     limit: number
@@ -153,8 +157,8 @@ export class Throttler {
 }
 
 // Memory-efficient caching with TTL
-export class PerformanceCache {
-  private cache: Map<string, { data: any; expiry: number; hits: number }> = new Map();
+export class PerformanceCache<T = unknown> {
+  private cache: Map<string, { data: T; expiry: number; hits: number }> = new Map();
   private maxSize: number;
   private defaultTTL: number;
 
@@ -163,7 +167,7 @@ export class PerformanceCache {
     this.defaultTTL = defaultTTL;
   }
 
-  set(key: string, value: any, ttl?: number): void {
+  set(key: string, value: T, ttl?: number): void {
     const expiry = Date.now() + (ttl || this.defaultTTL);
     
     // Evict expired entries and maintain size limit
@@ -178,7 +182,7 @@ export class PerformanceCache {
     this.cache.set(key, { data: value, expiry, hits: 0 });
   }
 
-  get(key: string): any {
+  get(key: string): T | undefined {
     const entry = this.cache.get(key);
     if (!entry) return undefined;
 
@@ -213,7 +217,7 @@ export class PerformanceCache {
 
   cleanup(): void {
     const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of Array.from(this.cache.entries())) {
       if (now > entry.expiry) {
         this.cache.delete(key);
       }
@@ -222,7 +226,7 @@ export class PerformanceCache {
 
   getStats(): { size: number; hitRates: Record<string, number> } {
     const hitRates: Record<string, number> = {};
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of Array.from(this.cache.entries())) {
       hitRates[key] = entry.hits;
     }
     return { size: this.cache.size, hitRates };
@@ -231,7 +235,7 @@ export class PerformanceCache {
 
 // Batched operation executor
 export class BatchProcessor {
-  private batches: Map<string, { items: any[]; timeout: NodeJS.Timeout }> = new Map();
+  private batches: Map<string, { items: unknown[]; timeout: NodeJS.Timeout }> = new Map();
   private batchSize: number;
   private flushInterval: number;
 
@@ -252,7 +256,9 @@ export class BatchProcessor {
       });
     }
 
-    const batch = this.batches.get(key)!;
+    const batch = this.batches.get(key);
+    if (!batch) return;
+    
     batch.items.push(item);
 
     // Process immediately if batch is full
@@ -269,15 +275,17 @@ export class BatchProcessor {
     this.batches.delete(key);
 
     if (batch.items.length > 0) {
-      processor(batch.items);
+      processor(batch.items as T[]);
     }
   }
 
   flushAll(): void {
-    for (const [key] of this.batches) {
-      const batch = this.batches.get(key)!;
-      clearTimeout(batch.timeout);
-      this.batches.delete(key);
+    for (const [key] of Array.from(this.batches)) {
+      const batch = this.batches.get(key);
+      if (batch) {
+        clearTimeout(batch.timeout);
+        this.batches.delete(key);
+      }
     }
   }
 }
@@ -288,7 +296,7 @@ export class OptimizedWebSocketManager extends EventEmitter {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
-  private messageQueue: any[] = [];
+  private messageQueue: unknown[] = [];
   private batchProcessor: BatchProcessor;
   private throttler: Throttler;
 
@@ -309,7 +317,7 @@ export class OptimizedWebSocketManager extends EventEmitter {
       };
 
       this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        const data = JSON.parse(event.data as string) as unknown;
         
         // Batch similar events to reduce re-renders
         this.batchProcessor.add('events', data, (events) => {
@@ -339,7 +347,7 @@ export class OptimizedWebSocketManager extends EventEmitter {
     }
   }
 
-  send(data: any): void {
+  send(data: unknown): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
     } else {
@@ -348,8 +356,8 @@ export class OptimizedWebSocketManager extends EventEmitter {
   }
 
   // Throttled send for high-frequency updates
-  sendThrottled(key: string, data: any, limit: number = 100): void {
-    const throttledSend = this.throttler.throttle(key, (data: any) => {
+  sendThrottled(key: string, data: unknown, limit: number = 100): void {
+    const throttledSend = this.throttler.throttle(key, (data: unknown) => {
       this.send(data);
     }, limit);
     
@@ -375,11 +383,11 @@ export class OptimizedWebSocketManager extends EventEmitter {
 
 // API response caching with smart invalidation
 export class APICache {
-  private cache: PerformanceCache;
+  private cache: PerformanceCache<unknown>;
   private static instance: APICache;
 
   constructor() {
-    this.cache = new PerformanceCache(500, 300000); // 5 minutes default TTL
+    this.cache = new PerformanceCache<unknown>(500, 300000); // 5 minutes default TTL
   }
 
   static getInstance(): APICache {
@@ -389,17 +397,17 @@ export class APICache {
     return this.instance;
   }
 
-  generateKey(url: string, params?: any): string {
+  generateKey(url: string, params?: unknown): string {
     const keyString = url + (params ? JSON.stringify(params) : '');
     return createHash('md5').update(keyString).digest('hex');
   }
 
-  set(url: string, params: any, data: any, ttl?: number): void {
+  set(url: string, params: unknown, data: unknown, ttl?: number): void {
     const key = this.generateKey(url, params);
     this.cache.set(key, data, ttl);
   }
 
-  get(url: string, params?: any): any {
+  get(url: string, params?: unknown): unknown {
     const key = this.generateKey(url, params);
     return this.cache.get(key);
   }
@@ -421,9 +429,9 @@ export class APICache {
 // Lazy loading utility
 export class LazyLoader {
   private static loadedModules: Set<string> = new Set();
-  private static loading: Map<string, Promise<any>> = new Map();
+  private static loading: Map<string, Promise<unknown>> = new Map();
 
-  static async loadModule(modulePath: string): Promise<any> {
+  static async loadModule(modulePath: string): Promise<unknown> {
     if (this.loadedModules.has(modulePath)) {
       return; // Already loaded
     }

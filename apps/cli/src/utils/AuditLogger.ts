@@ -115,7 +115,7 @@ export class AuditLogger {
           const content = fs.readFileSync(this.currentLogFile, 'utf-8');
           const lines = content
             .split('\n')
-            .filter(line => line.trim().length > 0);
+            .filter((line: string) => line.trim().length > 0);
           if (lines.length > 0) {
             try {
               const lastEntry = JSON.parse(lines[lines.length - 1]);
@@ -496,7 +496,7 @@ export class AuditLogger {
 
         const filePath = path.join(this.config.storage.path, file);
         const content = fs.readFileSync(filePath, 'utf-8');
-        const lines = content
+        const lines = (content as string)
           .split('\n')
           .filter(line => line.trim().length > 0);
 

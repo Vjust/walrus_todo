@@ -1,11 +1,11 @@
 import { Logger, LogLevel } from '../../utils/Logger';
 import {
-  WalrusError,
+  BaseError as WalrusError,
   StorageError,
   BlockchainError,
   ValidationError,
   NetworkError,
-} from '../../types/errors';
+} from '../../types/errors/consolidated';
 
 // Define the LogEntry interface based on Logger implementation
 interface LogEntry {
@@ -232,8 +232,7 @@ describe('Logger', () => {
     });
 
     it('should handle ValidationError', () => {
-      const error = new ValidationError('Invalid blob size', {
-        field: 'size',
+      const error = ValidationError.forField('Invalid blob size', 'size', {
         value: -1,
         constraint: 'positive',
       });
@@ -314,6 +313,93 @@ describe('Logger', () => {
         stack: expect.any(String),
         cause: 'Network timeout',
       });
+    });
+  });
+
+  describe('Test Environment Behavior', () => {
+    let originalNodeEnv: string | undefined;
+    let originalJestWorker: string | undefined;
+
+    beforeEach(() => {
+      originalNodeEnv = process.env.NODE_ENV;
+      originalJestWorker = process.env.JEST_WORKER_ID;
+    });
+
+    afterEach(() => {
+      if (originalNodeEnv) {
+        process.env.NODE_ENV = originalNodeEnv;
+      } else {
+        delete process.env.NODE_ENV;
+      }
+
+      if (originalJestWorker) {
+        process.env.JEST_WORKER_ID = originalJestWorker;
+      } else {
+        delete process.env.JEST_WORKER_ID;
+      }
+    });
+
+    it('should suppress non-error logs in test environment', () => {
+      // Create a completely new logger instance with handlers cleared
+      process.env.NODE_ENV = 'test';
+      const testLogger = new Logger('TEST_ENV');
+      testLogger.clearHandlers();
+
+      // Add only our test handler (no default console handler)
+      const testHandler = jest.fn();
+      testLogger.addHandler(testHandler);
+
+      testLogger.info('Info message');
+      testLogger.warn('Warning message');
+      testLogger.debug('Debug message');
+      testLogger.error('Error message');
+
+      // Only error should be logged in test environment
+      expect(testHandler).toHaveBeenCalledTimes(1);
+      expect(testHandler.mock.calls[0][0].level).toBe(LogLevel.ERROR);
+      expect(testHandler.mock.calls[0][0].message).toBe('Error message');
+    });
+
+    it('should respect VERBOSE_TESTS environment variable', () => {
+      process.env.NODE_ENV = 'test';
+      process.env.VERBOSE_TESTS = 'true';
+
+      const testLogger = new Logger('VERBOSE_TEST');
+      testLogger.clearHandlers();
+      const testHandler = jest.fn();
+      testLogger.addHandler(testHandler);
+
+      testLogger.info('Info message');
+      testLogger.warn('Warning message');
+      testLogger.error('Error message');
+
+      // All logs should be shown in verbose test mode
+      expect(testHandler).toHaveBeenCalledTimes(3);
+
+      // Clean up
+      delete process.env.VERBOSE_TESTS;
+    });
+
+    it('should respect LOG_LEVEL environment variable in tests', () => {
+      process.env.NODE_ENV = 'test';
+      process.env.LOG_LEVEL = 'warn';
+
+      const testLogger = new Logger('LOG_LEVEL_TEST');
+      testLogger.clearHandlers();
+      const testHandler = jest.fn();
+      testLogger.addHandler(testHandler);
+
+      testLogger.info('Info message');
+      testLogger.warn('Warning message');
+      testLogger.error('Error message');
+
+      // Only warn and error should be logged
+      expect(testHandler).toHaveBeenCalledTimes(2);
+      expect(testHandler.mock.calls[0][0].level).toBe(LogLevel.WARN);
+      expect(testHandler.mock.calls[1][0].level).toBe(LogLevel.ERROR);
+
+      // Clean up
+      delete process.env.LOG_LEVEL;
     });
   });
 });

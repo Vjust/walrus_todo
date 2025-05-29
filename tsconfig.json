@@ -15,12 +15,15 @@
       "@services/*": ["apps/cli/src/services/*"],
       "@commands/*": ["apps/cli/src/commands/*"],
       "@adapters/*": ["apps/cli/src/types/adapters/*"],
-      "@errors/*": ["apps/cli/src/types/errors/*"]
+      "@errors/*": ["apps/cli/src/types/errors/*"],
+      "@waltodo/config-loader": ["packages/config-loader/src/*"],
+      "@waltodo/sui-client": ["packages/sui-client/src/*"],
+      "@waltodo/walrus-client": ["packages/walrus-client/src/*"]
     },
     "typeRoots": ["./node_modules/@types", "./apps/cli/src/types"],
     "types": ["node", "jest", "cli-progress", "express"],
     "resolveJsonModule": true,
-    "outDir": "./dist/root",
+    "outDir": "./dist",
     "importHelpers": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -70,6 +73,6 @@
       "module": "commonjs"
     }
   },
-  "include": ["apps/cli/src/**/*", "scripts/**/*", "tests/**/*", "*.ts"],
+  "include": ["src/**/*", "apps/**/*", "packages/**/*", "scripts/**/*", "tests/**/*", "*.ts"],
   "exclude": ["node_modules", "dist", "backup", "waltodo-frontend", "frontend-demo"]
 }

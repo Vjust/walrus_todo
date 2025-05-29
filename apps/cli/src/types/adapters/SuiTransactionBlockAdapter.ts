@@ -173,9 +173,7 @@ export class DefaultSuiTransactionBlockAdapter
   /**
    * Inspect a transaction without executing it
    */
-  async dryRunTransaction(
-    transaction: Transaction
-  ): Promise<unknown> {
+  async dryRunTransaction(transaction: Transaction): Promise<unknown> {
     try {
       const result = await this.client.devInspectTransactionBlock({
         transactionBlock: transaction as TransactionType,

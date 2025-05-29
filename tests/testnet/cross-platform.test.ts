@@ -1,4 +1,5 @@
 import * as childProcess from 'child_process';
+import { execSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -68,7 +69,7 @@ describe('Cross-Platform Compatibility Tests', () => {
       beforeEach(() => mockPlatform('win32'));
 
       it('should execute commands with Windows shell', () => {
-        const command = `${process.execPath} ${path.join(__dirname, '../../src/index.js')} add "Windows test"`;
+        const command = `${process.execPath} ${path.join(__dirname, '../../apps/cli/src/index.js')} add "Windows test"`;
 
         const mockExecSync = jest.fn(() => 'Todo added successfully');
         const _originalExecSync = execSync;
@@ -97,7 +98,7 @@ describe('Cross-Platform Compatibility Tests', () => {
           beforeEach(() => mockPlatform(platform as NodeJS.Platform));
 
           it(`should execute commands on ${platform}`, () => {
-            const command = `${process.execPath} ${path.join(__dirname, '../../src/index.js')} add "${platform} test"`;
+            const command = `${process.execPath} ${path.join(__dirname, '../../apps/cli/src/index.js')} add "${platform} test"`;
 
             const mockExecSync = jest.fn(() => 'Todo added successfully');
             const _originalExecSync = execSync;
@@ -235,7 +236,8 @@ describe('Cross-Platform Compatibility Tests', () => {
         const todos = [{ id: 1, text, completed: false }];
 
         fs.writeFileSync(todoFile, JSON.stringify(todos), 'utf8');
-        const content = fs.readFileSync(todoFile, 'utf8');
+        const rawContent: string | Buffer = fs.readFileSync(todoFile, 'utf8');
+        const content: string = typeof rawContent === 'string' ? rawContent : (rawContent as Buffer).toString('utf8');
         const parsed = JSON.parse(content);
 
         expect(parsed[0].text).toBe(text);
@@ -251,7 +253,8 @@ describe('Cross-Platform Compatibility Tests', () => {
       const file = path.join(tempDir, 'windows.txt');
 
       fs.writeFileSync(file, content);
-      const read = fs.readFileSync(file, 'utf8');
+      const rawRead: string | Buffer = fs.readFileSync(file, 'utf8');
+      const read: string = typeof rawRead === 'string' ? rawRead : (rawRead as Buffer).toString('utf8');
 
       expect(read).toContain('\r\n');
     });
@@ -263,7 +266,8 @@ describe('Cross-Platform Compatibility Tests', () => {
       const file = path.join(tempDir, 'unix.txt');
 
       fs.writeFileSync(file, content);
-      const read = fs.readFileSync(file, 'utf8');
+      const rawRead: string | Buffer = fs.readFileSync(file, 'utf8');
+      const read: string = typeof rawRead === 'string' ? rawRead : (rawRead as Buffer).toString('utf8');
 
       expect(read).not.toContain('\r\n');
       expect(read).toContain('\n');

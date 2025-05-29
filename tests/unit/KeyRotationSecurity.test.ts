@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import crypto from 'crypto';
-import { SecureCredentialManager } from '../../src/services/ai/SecureCredentialManager';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
 import {
   AIPermissionLevel,
   CredentialType,
-} from '../../src/types/adapters/AICredentialAdapter';
+} from '../../apps/cli/src/types/adapters/AICredentialAdapter';
 
 // Mock the fs module
 jest.mock('fs', () => {
@@ -68,7 +68,8 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
     '/mock/home/.config/walrus-todo/secure_credentials.enc';
 
   beforeEach(() => {
-    // Mock environment variables
+    // Set test environment
+    process.env.NODE_ENV = 'test';
     process.env.HOME = mockHomeDir;
 
     // Mock file existence checks
@@ -81,10 +82,10 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
       return false;
     });
 
-    // Mock reading files
+    // Mock reading files with proper 32-byte key
     (fs.readFileSync as jest.Mock).mockImplementation(
       (path: string, _encoding?: string) => {
-        if (path === mockKeyPath) return Buffer.from('mockencryptionkey');
+        if (path === mockKeyPath) return Buffer.alloc(32, 'a'); // Proper 32-byte key
         if (path === mockMetadataPath)
           return JSON.stringify({
             keyId: 'test-key-id',
@@ -104,6 +105,18 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
           const mockIv = Buffer.alloc(16, 'a');
           const mockEncrypted = Buffer.from('mockencryptedcredentials');
           return Buffer.concat([mockIv, mockEncrypted]);
+        }
+        // Return backup file contents for restore test
+        if (path.includes('key_backup_') || path.includes('metadata_backup_')) {
+          if (path.includes('metadata_backup_')) {
+            return JSON.stringify({
+              keyId: 'backup-key-id',
+              createdAt: Date.now() - 2000000,
+              lastRotatedAt: Date.now() - 2000000,
+              version: 1,
+            });
+          }
+          return Buffer.alloc(32, 'b'); // Backup key
         }
         return Buffer.from('');
       }
@@ -125,6 +138,7 @@ describe('SecureCredentialManager Key Rotation and Security', () => {
   afterEach(() => {
     jest.clearAllMocks();
     delete process.env.HOME;
+    delete process.env.NODE_ENV;
   });
 
   test('should initialize with existing key and metadata', () => {

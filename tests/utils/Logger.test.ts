@@ -1,15 +1,18 @@
-import { Logger, LogLevel } from '../../src/utils/Logger';
+import { Logger, LogLevel } from '../../apps/cli/src/utils/Logger';
 import {
   BaseError as WalrusError,
   StorageError,
   BlockchainError,
   ValidationError,
   NetworkError,
-} from '../../src/types/errors/consolidated';
+} from '../../apps/cli/src/types/errors/consolidated';
 
 describe('Logger', () => {
   let logger: Logger;
-  let mockConsole: jest.SpyInstance<void, [message?: any, ...optionalParams: any[]]>[];
+  let mockConsole: jest.SpyInstance<
+    void,
+    [message?: any, ...optionalParams: any[]]
+  >[];
   let mockHandler: jest.Mock<
     void,
     [{ level: LogLevel; message: string; context?: unknown; error?: unknown }]

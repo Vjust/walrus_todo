@@ -29,9 +29,29 @@ const colors = {
 const packageJson = require('../package.json');
 const version = packageJson.version || '1.0.0';
 
-// Configuration
-const commandsDir = path.join(__dirname, '..', 'dist', 'src', 'commands');
-const manifestPath = path.join(__dirname, '..', 'oclif.manifest.json');
+// Configuration - check multiple possible paths for commands directory
+const rootDir = path.join(__dirname, '..');
+const possibleCommandsPaths = [
+  path.join(rootDir, 'dist', 'apps', 'cli', 'src', 'commands'), // Actual build output path (from tsconfig)
+  path.join(rootDir, 'dist', 'src', 'commands'), // Desired simplified path
+  path.join(rootDir, 'dist', 'apps', 'cli', 'apps', 'cli', 'src', 'commands'), // Legacy duplicate path
+  path.join(rootDir, 'dist', 'commands'),
+  path.join(rootDir, 'apps', 'cli', 'src', 'commands') // Fallback to source
+];
+
+// Find the first existing commands directory
+let commandsDir = null;
+let commandsBasePath = '';
+for (const possiblePath of possibleCommandsPaths) {
+  if (fs.existsSync(possiblePath)) {
+    commandsDir = possiblePath;
+    // Calculate relative path for command references
+    commandsBasePath = path.relative(rootDir, possiblePath).replace(/\\/g, '/');
+    break;
+  }
+}
+
+const manifestPath = path.join(rootDir, 'oclif.manifest.json');
 
 // Topic descriptions
 const topics = {
@@ -137,7 +157,7 @@ function scanDirectory(directory, pathSegments = []) {
         aliases: [],
         flags: {},
         args: [],
-        path: `./dist/src/commands/${relativePath}`,
+        path: `./${commandsBasePath}/${relativePath}`,
       };
     });
 
@@ -175,6 +195,26 @@ function generateManifest() {
   );
 
   try {
+    // Check if commands directory exists
+    if (!commandsDir) {
+      logger.warn(
+        `${colors.yellow}⚠ No commands directory found in any of the expected locations:${colors.reset}`
+      );
+      possibleCommandsPaths.forEach(p => logger.info(`  - ${p}`));
+      
+      // Create a basic manifest with empty commands
+      manifest.commands = {};
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+      logger.info(
+        `${colors.green}✓ Created empty manifest file${colors.reset}`
+      );
+      return;
+    }
+
+    logger.info(
+      `${colors.blue}Using commands directory: ${commandsDir}${colors.reset}`
+    );
+    
     // Scan the commands directory recursively
     scanDirectory(commandsDir);
 
@@ -193,7 +233,7 @@ function generateManifest() {
           aliases: [],
           flags: {},
           args: [],
-          path: `./dist/src/commands/${topic}/index`,
+          path: `./${commandsBasePath}/${topic}/index`,
         };
       }
     });

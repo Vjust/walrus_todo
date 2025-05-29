@@ -1,9 +1,12 @@
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import { SignatureWithBytes, IntentScope } from '@mysten/sui/cryptography';
 import { Transaction } from '@mysten/sui/transactions';
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from '../../../apps/cli/src/utils/adapters/sui-client-compatibility';
 import type { WalrusClientExt } from '../../../apps/cli/src/types/client';
-import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
+import {
+  getMockWalrusClient,
+  type CompleteWalrusClientMock,
+} from '../../helpers/complete-walrus-client-mock';
 import { BlobVerificationManager } from '../../../apps/cli/src/utils/blob-verification';
 import { CLIError } from '../../../apps/cli/src/types/errors/consolidated';
 
@@ -114,12 +117,37 @@ class VerificationFlowController {
       if (verifyAfterUpload) {
         // console.log('Verifying uploaded data...'); // Removed console statement
 
-        verificationResult = await this.verificationManager.verifyBlob(
-          blobId,
-          data,
-          metadata,
-          { requireCertification: false }
-        );
+        try {
+          verificationResult = await this.verificationManager.verifyBlob(
+            blobId,
+            data,
+            metadata,
+            { requireCertification: false }
+          );
+        } catch (error) {
+          // If verification fails, return a failure result instead of throwing
+          verificationResult = {
+            success: false,
+            details: {
+              size: data.length,
+              checksum: '',
+              blobId,
+              certified: false,
+            },
+            attempts: 1,
+            poaComplete: false,
+            providers: 0,
+            metadata: {
+              V1: {
+                encoding_type: { RedStuff: true, $kind: 'RedStuff' },
+                unencoded_length: String(data.length),
+                hashes: [],
+                $kind: 'V1',
+              },
+              $kind: 'V1',
+            },
+          };
+        }
 
         // console.log(`Verification result: ${verificationResult.success ? 'Success' : 'Failed'}`); // Removed console statement
       }
@@ -285,7 +313,9 @@ const mockSigner = {
   }),
   signData: async (_data: Uint8Array): Promise<Uint8Array> =>
     new Uint8Array(64),
-  signTransaction: async (_transaction: unknown): Promise<SignatureWithBytes> => ({
+  signTransaction: async (
+    _transaction: unknown
+  ): Promise<SignatureWithBytes> => ({
     bytes: 'mock-transaction-bytes',
     signature: Buffer.from(new Uint8Array(64)).toString('base64'),
   }),
@@ -302,7 +332,7 @@ describe('Verification Flow End-to-End', () => {
 
     // Create inline mock for WalrusClient with all required methods
     mockWalrusClient = getMockWalrusClient();
-    
+
     // Override specific methods for this test as needed
     // Example: mockWalrusClient.getConfig.mockResolvedValue({ ... });
 
@@ -327,7 +357,10 @@ describe('Verification Flow End-to-End', () => {
         owner: 'Test User',
       };
 
-      // Mock Walrus client responses
+      // Ensure mock SuiClient returns proper system state
+      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '42' });
+
+      // Mock Walrus client responses with consistent data sizes
       mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: 'test-flow-blob-id',
         blobObject: { blob_id: 'test-flow-blob-id' },
@@ -337,11 +370,11 @@ describe('Verification Flow End-to-End', () => {
         blob_id: 'test-flow-blob-id',
         registered_epoch: 40,
         certified_epoch: 41,
-        size: String(testData.length),
+        size: String(testData.length), // Use actual test data length
         metadata: {
           V1: {
             encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-            unencoded_length: String(testData.length),
+            unencoded_length: String(testData.length), // Use actual test data length
             hashes: [
               {
                 primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -357,7 +390,7 @@ describe('Verification Flow End-to-End', () => {
       mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: String(testData.length),
+          unencoded_length: String(testData.length), // Use actual test data length
           contentType: 'text/plain',
           description: 'Test data for verification',
           owner: 'Test User',
@@ -366,6 +399,7 @@ describe('Verification Flow End-to-End', () => {
         $kind: 'V1',
       });
 
+      // Return the exact same test data to ensure size/checksum consistency
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
       mockWalrusClient.getStorageProviders.mockResolvedValue([
         'provider1',
@@ -411,6 +445,9 @@ describe('Verification Flow End-to-End', () => {
         description: 'Test data for verification',
       };
 
+      // Ensure mock SuiClient returns proper system state
+      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '42' });
+
       // Mock Walrus client responses for upload success
       mockWalrusClient.writeBlob.mockResolvedValue({
         blobId: 'test-flow-blob-id',
@@ -422,11 +459,11 @@ describe('Verification Flow End-to-End', () => {
         blob_id: 'test-flow-blob-id',
         registered_epoch: 40,
         certified_epoch: undefined, // Not certified
-        size: String(testData.length),
+        size: String(testData.length), // Use actual test data length
         metadata: {
           V1: {
             encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-            unencoded_length: String(testData.length),
+            unencoded_length: String(testData.length), // Use actual test data length
             hashes: [
               {
                 primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -439,10 +476,8 @@ describe('Verification Flow End-to-End', () => {
         },
       });
 
-      // Mock that data is modified during retrieval
-      const modifiedData = Buffer.from(
-        'modified test data for verification flow'
-      );
+      // Mock that data is modified during retrieval (same size, different content)
+      const modifiedData = Buffer.from('XXXX data for verification flow'); // Same length as original test data (31 bytes)
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(modifiedData));
       mockWalrusClient.getStorageProviders.mockResolvedValue(['provider1']);
       mockWalrusClient.verifyPoA.mockResolvedValue(false);
@@ -471,6 +506,9 @@ describe('Verification Flow End-to-End', () => {
       // Test data
       const testData = Buffer.from('test data for verification flow');
 
+      // Ensure mock SuiClient returns proper system state
+      mockSuiClient.getLatestSuiSystemState.mockResolvedValue({ epoch: '42' });
+
       // Mock Walrus client error
       mockWalrusClient.writeBlob.mockRejectedValue(
         new Error('Storage allocation failed')
@@ -493,16 +531,16 @@ describe('Verification Flow End-to-End', () => {
         description: 'Existing test data',
       };
 
-      // Mock Walrus client responses
+      // Mock Walrus client responses with consistent data sizes
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
-        size: String(testData.length),
+        size: String(testData.length), // Use actual test data length
         metadata: {
           V1: {
             encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-            unencoded_length: String(testData.length),
+            unencoded_length: String(testData.length), // Use actual test data length
             hashes: [
               {
                 primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -518,7 +556,7 @@ describe('Verification Flow End-to-End', () => {
       mockWalrusClient.getBlobMetadata.mockResolvedValue({
         V1: {
           encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-          unencoded_length: String(testData.length),
+          unencoded_length: String(testData.length), // Use actual test data length
           contentType: 'text/plain',
           description: 'Existing test data',
           $kind: 'V1',
@@ -526,6 +564,7 @@ describe('Verification Flow End-to-End', () => {
         $kind: 'V1',
       });
 
+      // Return the exact same test data to ensure size/checksum consistency
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(testData));
 
       // Execute the verification
@@ -554,16 +593,16 @@ describe('Verification Flow End-to-End', () => {
       const expectedData = Buffer.from('expected test data');
       const actualData = Buffer.from('actual test data'); // Different content
 
-      // Mock Walrus client responses
+      // Mock Walrus client responses with consistent actual data sizes
       mockWalrusClient.getBlobInfo.mockResolvedValue({
         blob_id: blobId,
         registered_epoch: 40,
         certified_epoch: 41,
-        size: String(actualData.length),
+        size: String(actualData.length), // Use actual data length that will be returned
         metadata: {
           V1: {
             encoding_type: { RedStuff: true, $kind: 'RedStuff' },
-            unencoded_length: String(actualData.length),
+            unencoded_length: String(actualData.length), // Use actual data length
             hashes: [
               {
                 primary_hash: { Digest: new Uint8Array(32), $kind: 'Digest' },
@@ -576,6 +615,7 @@ describe('Verification Flow End-to-End', () => {
         },
       });
 
+      // Return the actual data (which differs from expected)
       mockWalrusClient.readBlob.mockResolvedValue(new Uint8Array(actualData));
 
       // Execute the verification

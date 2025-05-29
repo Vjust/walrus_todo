@@ -1,7 +1,7 @@
 import type { WalrusClientExt } from '../types/client';
 import type { Signer } from '@mysten/sui/cryptography';
 // Transaction imported but not used
-import { execa } from 'execa';
+const execa = require('execa');
 import { VaultManager, BlobRecord } from './VaultManager';
 import { NetworkValidator, NetworkEnvironment } from './NetworkValidator';
 import { Logger } from './Logger';
@@ -339,7 +339,8 @@ export class ExpiryMonitor {
       }
 
       // Wait for all pending operations to complete with tracking
-      const results: PromiseSettledResult<void>[] = await Promise.allSettled(pendingOperations);
+      const results: PromiseSettledResult<void>[] =
+        await Promise.allSettled(pendingOperations);
       results.forEach((result, index) => {
         if (result.status === 'rejected') {
           // This should not happen since each promise has its own catch handler,
@@ -362,7 +363,8 @@ export class ExpiryMonitor {
       // Ensure any unfinished operations complete
       if (pendingOperations.length > 0) {
         try {
-          const results: PromiseSettledResult<void>[] = await Promise.allSettled(pendingOperations);
+          const results: PromiseSettledResult<void>[] =
+            await Promise.allSettled(pendingOperations);
           const pendingErrors = results
             .filter(r => r.status === 'rejected')
             .map(r => (r.status === 'rejected' ? r.reason : null))
@@ -466,7 +468,10 @@ export class ExpiryMonitor {
             }, 10000);
           });
 
-          storageUsage = await Promise.race<{ used: string; total: string }>([storagePromise, timeoutPromise]);
+          storageUsage = await Promise.race<{ used: string; total: string }>([
+            storagePromise,
+            timeoutPromise,
+          ]);
         } catch (storageError) {
           const error =
             storageError instanceof Error

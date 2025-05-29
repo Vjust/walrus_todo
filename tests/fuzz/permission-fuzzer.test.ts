@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { Permission, UserRole } from '../../src/types/permissions';
+import { Permission, UserRole } from '../../apps/cli/src/types/permissions';
 
 describe('Permission Fuzzer Tests', () => {
   beforeEach(() => {
@@ -214,8 +214,16 @@ describe('Permission Fuzzer Tests', () => {
     it('should handle edge cases with empty or invalid permissions', () => {
       const edgeCases = [
         { permissions: [], check: 'read:todo', expected: false },
-        { permissions: null as unknown as Permission[], check: 'read:todo', expected: false },
-        { permissions: undefined as unknown as Permission[], check: 'read:todo', expected: false },
+        {
+          permissions: null as unknown as Permission[],
+          check: 'read:todo',
+          expected: false,
+        },
+        {
+          permissions: undefined as unknown as Permission[],
+          check: 'read:todo',
+          expected: false,
+        },
         {
           permissions: ['invalid:permission'] as unknown as Permission[],
           check: 'read:todo',

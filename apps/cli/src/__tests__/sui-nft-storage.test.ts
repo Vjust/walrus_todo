@@ -1,6 +1,9 @@
 /* eslint-disable jest/expect-expect, @typescript-eslint/no-unused-vars */
 import { describe, beforeEach, jest } from '@jest/globals';
-import { SuiClient, type SuiClientType } from '../utils/adapters/sui-client-compatibility';
+import {
+  SuiClient,
+  type SuiClientType,
+} from '../utils/adapters/sui-client-compatibility';
 import { Transaction } from '@mysten/sui/transactions';
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
 import type {

@@ -1,14 +1,15 @@
-import {
-  createWalrusImageStorage,
-} from '../utils/walrus-image-storage';
+import { createWalrusImageStorage } from '../utils/walrus-image-storage';
 import { KeystoreSigner } from '../utils/sui-keystore';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { walrusModuleMock, type MockWalrusClient } from './helpers/walrus-client-mock';
+import {
+  createWalrusModuleMock,
+  getMockWalrusClient,
+} from './helpers/complete-walrus-client-mock';
 
 // Mock the external dependencies
-jest.mock('@mysten/walrus', () => walrusModuleMock);
+jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 
 jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
@@ -47,7 +48,7 @@ describe('WalrusImageStorage', () => {
     signAndExecuteTransactionBlock: jest.Mock;
     executeTransactionBlock: jest.Mock;
   };
-  let mockWalrusClient: MockWalrusClient;
+  let mockWalrusClient: ReturnType<typeof getMockWalrusClient>;
   let mockKeystoreSigner: {
     fromPath: jest.Mock;
   };
@@ -62,7 +63,7 @@ describe('WalrusImageStorage', () => {
     jest.clearAllMocks();
 
     // Setup mock implementations
-    mockWalrusClient = walrusModuleMock.WalrusClient() as MockWalrusClient;
+    mockWalrusClient = getMockWalrusClient();
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -119,7 +120,9 @@ describe('WalrusImageStorage', () => {
     // Mock constructor implementations
     // WalrusClient mock already set up in module mock
     // SuiClient mock already set up in module mock
-    (KeystoreSigner as unknown as jest.Mock).mockImplementation(() => mockKeystoreSigner);
+    (KeystoreSigner as unknown as jest.Mock).mockImplementation(
+      () => mockKeystoreSigner
+    );
     (execSync as jest.Mock).mockImplementation((cmd: string): string => {
       if (cmd.includes('active-env')) return 'testnet';
       if (cmd.includes('active-address')) return '0xtest-address';
@@ -129,9 +132,9 @@ describe('WalrusImageStorage', () => {
     // Setup default mock responses
     mockSuiClient.getBalance.mockResolvedValue({
       coinType: 'WAL',
-      totalBalance: BigInt(1000),
+      totalBalance: '1000',
       coinObjectCount: 1,
-      lockedBalance: { number: BigInt(0) },
+      lockedBalance: { number: '0' },
       coinObjectId: 'mock-coin-object-id',
     });
 
@@ -176,15 +179,15 @@ describe('WalrusImageStorage', () => {
         id: { id: 'test-blob-id' },
         blob_id: 'test-blob-id',
         registered_epoch: 100,
-        certified_epoch: 150,
-        size: BigInt(1024),
+        cert_epoch: 150,
+        size: '1024',
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
           id: { id: 'storage1' },
           start_epoch: 100,
           end_epoch: 200,
-          storage_size: BigInt(2048),
-          used_size: BigInt(1024),
+          storage_size: '2048',
+          used_size: '1024',
         },
         deletable: true,
       },
@@ -194,15 +197,15 @@ describe('WalrusImageStorage', () => {
       id: { id: 'test-blob-id' },
       blob_id: 'test-blob-id',
       registered_epoch: 100,
-      certified_epoch: 150,
-      size: BigInt(1024),
+      cert_epoch: 150,
+      size: '1024',
       encoding_type: { RedStuff: true, $kind: 'RedStuff' },
       storage: {
         id: { id: 'storage1' },
         start_epoch: 100,
         end_epoch: 200,
-        storage_size: BigInt(2048),
-        used_size: BigInt(1024),
+        storage_size: '2048',
+        used_size: '1024',
       },
       deletable: true,
     });
@@ -265,7 +268,7 @@ describe('WalrusImageStorage', () => {
             id: { id: 'test-blob-id' },
             blob_id: 'test-blob-id',
             registered_epoch: 100,
-            certified_epoch: 150,
+            cert_epoch: 150,
             size: '1024',
             encoding_type: 1,
             storage: {
@@ -273,6 +276,7 @@ describe('WalrusImageStorage', () => {
               start_epoch: 100,
               end_epoch: 200,
               storage_size: '2048',
+              used_size: '100',
             },
             deletable: true,
           },
@@ -295,7 +299,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -303,6 +307,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },
@@ -328,7 +333,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -336,6 +341,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },

@@ -103,6 +103,9 @@ export class EnhancedAIService {
           options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
+        }).catch(error => {
+          this.logger.warn('Failed to initialize AI provider:', error);
+          // Keep using the fallback adapter
         });
       } else {
         // Default to configured default provider if only apiKey is provided
@@ -116,6 +119,9 @@ export class EnhancedAIService {
           options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
+        }).catch(error => {
+          this.logger.warn('Failed to initialize default AI provider:', error);
+          // Keep using the fallback adapter
         });
       }
     } else {
@@ -131,7 +137,13 @@ export class EnhancedAIService {
           options: this.options,
         }).then(adapter => {
           this.modelAdapter = adapter;
+        }).catch(error => {
+          this.logger.warn('Failed to initialize AI provider from default:', error);
+          // Keep using the fallback adapter
         });
+      }).catch(error => {
+        this.logger.warn('Failed to get default AI provider:', error);
+        // Keep using the fallback adapter
       });
     }
 
@@ -236,7 +248,9 @@ export class EnhancedAIService {
     const response = await this.modelAdapter.processWithPromptTemplate(
       promptTemplate,
       {
-        todos: todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n'),
+        todos: todos
+          .map(t => `- ${t.title}: ${t.description || 'No description'}`)
+          .join('\n'),
       }
     );
 
@@ -301,7 +315,11 @@ export class EnhancedAIService {
       Record<string, string[]>
     >({
       prompt: promptTemplate,
-      input: { todos: todos.map(t => `- ${t.title}: ${t.description || 'No description'}`).join('\n') },
+      input: {
+        todos: todos
+          .map(t => `- ${t.title}: ${t.description || 'No description'}`)
+          .join('\n'),
+      },
       options: modelOptions,
       metadata: { operation },
     });

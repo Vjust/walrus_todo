@@ -1,13 +1,13 @@
 import { jest } from '@jest/globals';
-import { TransactionHelper } from '../../src/utils/TransactionHelper';
+import { TransactionHelper } from '../../apps/cli/src/utils/TransactionHelper';
 import { Signer } from '@mysten/sui/cryptography';
-import { Logger } from '../../src/utils/Logger';
+import { Logger } from '../../apps/cli/src/utils/Logger';
 import {
   ValidationError,
   BlockchainError,
-} from '../../src/types/errors/consolidated';
+} from '../../apps/cli/src/types/errors/consolidated';
 
-jest.mock('../../src/utils/Logger');
+jest.mock('../../apps/cli/src/utils/Logger');
 
 describe('TransactionHelper', () => {
   let mockSigner: jest.Mocked<Signer>;
@@ -79,18 +79,17 @@ describe('TransactionHelper', () => {
 
     it('should implement exponential backoff', async () => {
       const delays: number[] = [];
-      const operation = jest
-        .fn()
-        .mockRejectedValue(new Error('Network error'));
+      const operation = jest.fn().mockRejectedValue(new Error('Network error'));
 
       // Override setTimeout to capture delays
-      jest
-        .spyOn(global, 'setTimeout')
-        .mockImplementation(((cb: () => void, delay?: number) => {
-          delays.push(delay || 0);
-          cb();
-          return {} as NodeJS.Timeout;
-        }) as any);
+      jest.spyOn(global, 'setTimeout').mockImplementation(((
+        cb: () => void,
+        delay?: number
+      ) => {
+        delays.push(delay || 0);
+        cb();
+        return {} as NodeJS.Timeout;
+      }) as any);
 
       helper = new TransactionHelper(mockSigner, {
         attempts: 3,
@@ -204,9 +203,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should include operation name in errors', async () => {
-      const operation = jest
-        .fn()
-        .mockRejectedValue(new Error('Test error'));
+      const operation = jest.fn().mockRejectedValue(new Error('Test error'));
 
       await expect(
         helper.executeWithRetry(operation, {
@@ -251,9 +248,7 @@ describe('TransactionHelper', () => {
     });
 
     it('should merge retry configurations', async () => {
-      const operation = jest
-        .fn()
-        .mockRejectedValue(new Error('Test error'));
+      const operation = jest.fn().mockRejectedValue(new Error('Test error'));
 
       helper = new TransactionHelper(mockSigner, {
         attempts: 3,
@@ -275,9 +270,7 @@ describe('TransactionHelper', () => {
 
   describe('Integration Tests', () => {
     it('should handle concurrent operations', async () => {
-      const successOperation = jest
-        .fn()
-        .mockResolvedValue('success');
+      const successOperation = jest.fn().mockResolvedValue('success');
       const failOperation = jest
         .fn()
         .mockRejectedValue(new Error('Test error'));

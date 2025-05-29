@@ -21,29 +21,16 @@ export function createTodoRoutes(websocketService?: WebSocketService): Router {
   );
 
   // GET /api/v1/todos/categories - Get all categories for wallet
-  router.get(
-    '/categories',
-    todoController.getCategories
-  );
+  router.get('/categories', todoController.getCategories);
 
   // GET /api/v1/todos/tags - Get all tags for wallet
-  router.get(
-    '/tags',
-    todoController.getTags
-  );
+  router.get('/tags', todoController.getTags);
 
   // GET /api/v1/todos/stats - Get todo statistics for wallet
-  router.get(
-    '/stats',
-    todoController.getStats
-  );
+  router.get('/stats', todoController.getStats);
 
   // GET /api/v1/todos/:id - Get specific todo
-  router.get(
-    '/:id',
-    validateId(),
-    todoController.getTodo
-  );
+  router.get('/:id', validateId(), todoController.getTodo);
 
   // POST /api/v1/todos - Create new todo
   router.post(
@@ -60,11 +47,7 @@ export function createTodoRoutes(websocketService?: WebSocketService): Router {
   );
 
   // POST /api/v1/todos/:id/complete - Mark todo as complete
-  router.post(
-    '/:id/complete',
-    validateId(),
-    todoController.completeTodo
-  );
+  router.post('/:id/complete', validateId(), todoController.completeTodo);
 
   // PUT /api/v1/todos/:id - Update todo
   router.put(
@@ -83,11 +66,7 @@ export function createTodoRoutes(websocketService?: WebSocketService): Router {
   );
 
   // DELETE /api/v1/todos/:id - Delete todo
-  router.delete(
-    '/:id',
-    validateId(),
-    todoController.deleteTodo
-  );
+  router.delete('/:id', validateId(), todoController.deleteTodo);
 
   return router;
 }

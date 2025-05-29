@@ -22,10 +22,10 @@ describe('Transaction Fuzzing Tests', () => {
     suiService = new SuiTestService({
       activeNetwork: {
         name: 'testnet',
-        fullnode: 'https://fullnode.testnet.sui.io'
+        fullnode: 'https://fullnode.testnet.sui.io',
       },
       activeAccount: {
-        address: fuzzer.blockchainData().address()
+        address: fuzzer.blockchainData().address(),
       },
       storage: {
         defaultSize: 1024,
@@ -34,7 +34,7 @@ describe('Transaction Fuzzing Tests', () => {
         directory: '/tmp',
         temporaryDirectory: '/tmp',
         maxRetries: 3,
-        retryDelay: 1000
+        retryDelay: 1000,
       },
       todo: {
         localStoragePath: '/tmp',
@@ -43,13 +43,13 @@ describe('Transaction Fuzzing Tests', () => {
         maxTitleLength: 100,
         maxDescriptionLength: 1000,
         defaultDueDateOffsetDays: 7,
-        expiryCheckInterval: 60000
+        expiryCheckInterval: 60000,
       },
       walrus: {},
       logging: {
         level: 'info' as const,
-        console: false
-      }
+        console: false,
+      },
     });
     nftContract = new MockNFTStorageContract('0x456');
   });

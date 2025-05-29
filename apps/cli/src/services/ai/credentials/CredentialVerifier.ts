@@ -36,7 +36,8 @@ export class CredentialVerifier {
    */
   private initializeClient() {
     // Initialize Sui client (skip network validation for now)
-    const clientUrl = process.env.SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443';
+    const clientUrl =
+      process.env.SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443';
     this.client = { url: clientUrl } as SuiClient; // TODO: Replace with proper SuiClient instantiation
   }
 
@@ -79,7 +80,9 @@ export class CredentialVerifier {
       );
       return result.digest;
     } catch (_error) {
-      this.logger.error(`Failed to register credential: ${_error instanceof Error ? _error.message : String(_error)}`);
+      this.logger.error(
+        `Failed to register credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      );
       throw new CLIError(
         `Failed to register credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`,
         'CREDENTIAL_REGISTRATION_FAILED'
@@ -114,7 +117,9 @@ export class CredentialVerifier {
 
       return false;
     } catch (_error) {
-      this.logger.error(`Failed to verify credential: ${_error instanceof Error ? _error.message : String(_error)}`);
+      this.logger.error(
+        `Failed to verify credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      );
       return false;
     }
   }
@@ -173,7 +178,9 @@ export class CredentialVerifier {
 
       this.logger.info(`Credential for ${provider} revoked successfully`);
     } catch (_error) {
-      this.logger.error(`Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error)}`);
+      this.logger.error(
+        `Failed to revoke credential: ${_error instanceof Error ? _error.message : String(_error)}`
+      );
       throw new CLIError(
         `Failed to revoke credential on blockchain: ${_error instanceof Error ? _error.message : String(_error)}`,
         'CREDENTIAL_REVOCATION_FAILED'

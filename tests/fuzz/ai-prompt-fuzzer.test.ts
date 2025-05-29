@@ -1,12 +1,14 @@
-import { AIService } from '../../src/services/ai/aiService';
-import { Logger } from '../../src/utils/Logger';
-import { Todo } from '../../src/types/todo';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { Logger } from '../../apps/cli/src/utils/Logger';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 // Mock PromptValidator for testing
 class MockPromptValidator {
-  async validatePrompt(prompt: string): Promise<{ isValid: boolean; errors: string[] }> {
+  async validatePrompt(
+    prompt: string
+  ): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
-    
+
     if (!prompt || typeof prompt !== 'string') {
       errors.push('Prompt must be a string');
     }
@@ -16,27 +18,27 @@ class MockPromptValidator {
     if (prompt.length > 10000) {
       errors.push('Prompt exceeds maximum length');
     }
-    
+
     // Check for malicious patterns
     const maliciousPatterns = [
-      /[<>"'&]/,  // XSS patterns
-      /[;|&`$()]/,  // Command injection
-      /\.\.[/\\]/,  // Path traversal
-      /DROP|DELETE|INSERT|UPDATE/i,  // SQL injection
-      /eval|exec|system|import/i,  // Code execution
+      /[<>"'&]/, // XSS patterns
+      /[;|&`$()]/, // Command injection
+      /\.\.[/\\]/, // Path traversal
+      /DROP|DELETE|INSERT|UPDATE/i, // SQL injection
+      /eval|exec|system|import/i, // Code execution
       // eslint-disable-next-line no-control-regex
-      /[\x00-\x1F\x7F]/,  // Control characters
+      /[\x00-\x1F\x7F]/, // Control characters
       // eslint-disable-next-line no-control-regex
-      /\x00|\u200B|\uFEFF|\u202E/,  // Invalid Unicode
+      /\x00|\u200B|\uFEFF|\u202E/, // Invalid Unicode
     ];
-    
+
     for (const pattern of maliciousPatterns) {
       if (pattern.test(prompt)) {
         errors.push('Potentially malicious content detected');
         break;
       }
     }
-    
+
     // Check for other patterns
     // eslint-disable-next-line no-control-regex
     if (/[\x00-\x1F\x7F]/.test(prompt)) {
@@ -54,20 +56,22 @@ class MockPromptValidator {
     if (/processing limits/i.test(prompt)) {
       errors.push('Prompt may exceed processing limits');
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
-  
+
   async sanitize(prompt: string): Promise<string> {
-    return prompt
-      .replace(/<script.*?<\/script>/gi, '')
-      // eslint-disable-next-line no-control-regex
-      .replace(/[\x00-\x1F\x7F]/g, '')
-      .replace(/\.\.[/\\]/g, '')
-      .replace(/[<>"'&]/g, '');
+    return (
+      prompt
+        .replace(/<script.*?<\/script>/gi, '')
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\x00-\x1F\x7F]/g, '')
+        .replace(/\.\.[/\\]/g, '')
+        .replace(/[<>"'&]/g, '')
+    );
   }
 }
 
@@ -167,7 +171,9 @@ describe('AI Prompt Fuzzer Tests', () => {
       expect(emptyResult.isValid).toBe(false);
       expect(emptyResult.errors).toContain('Prompt cannot be empty');
 
-      const nullResult = await promptValidator.validatePrompt(null as unknown as string);
+      const nullResult = await promptValidator.validatePrompt(
+        null as unknown as string
+      );
       expect(nullResult.isValid).toBe(false);
       expect(nullResult.errors).toContain('Prompt must be a string');
     });
@@ -226,7 +232,9 @@ describe('AI Prompt Fuzzer Tests', () => {
         const prompt = `Normal text${char}hidden`;
         const result = await promptValidator.validatePrompt(prompt);
         expect(result.isValid).toBe(false);
-        expect(result.errors).toContain('Potentially malicious content detected');
+        expect(result.errors).toContain(
+          'Potentially malicious content detected'
+        );
       }
     });
   });
@@ -283,15 +291,13 @@ describe('AI Prompt Fuzzer Tests', () => {
           id: '1',
           title: override,
           completed: false,
-          priority: 'medium',
+          priority: 'medium' as const,
           tags: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          private: false
+          private: false,
         };
-        await expect(
-          aiService.summarize([maliciousTodo])
-        ).rejects.toThrow();
+        await expect(aiService.summarize([maliciousTodo])).rejects.toThrow();
       }
     });
 
@@ -308,11 +314,11 @@ describe('AI Prompt Fuzzer Tests', () => {
           id: '1',
           title: attempt,
           completed: false,
-          priority: 'medium',
+          priority: 'medium' as const,
           tags: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          private: false
+          private: false,
         };
         const result = await aiService.analyze([maliciousTodo]);
         expect(JSON.stringify(result)).not.toContain('system prompt');
@@ -335,11 +341,11 @@ describe('AI Prompt Fuzzer Tests', () => {
           id: '1',
           title: op,
           completed: false,
-          priority: 'medium',
+          priority: 'medium' as const,
           tags: [],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          private: false
+          private: false,
         };
         // Test that the AI service handles malicious operation names gracefully
         const result = await aiService.analyze([testTodo]);
@@ -458,16 +464,14 @@ describe('AI Prompt Fuzzer Tests', () => {
         id: '1',
         title: maliciousPrompt,
         completed: false,
-        priority: 'medium',
+        priority: 'medium' as const,
         tags: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        private: false
+        private: false,
       };
-      await expect(
-        aiService.summarize([maliciousTodo])
-      ).rejects.toThrow();
-      
+      await expect(aiService.summarize([maliciousTodo])).rejects.toThrow();
+
       expect(mockLogger.error).toHaveBeenCalled();
 
       // Service should still be functional after error
@@ -475,11 +479,11 @@ describe('AI Prompt Fuzzer Tests', () => {
         id: '1',
         title: 'Valid todo',
         completed: false,
-        priority: 'medium',
+        priority: 'medium' as const,
         tags: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        private: false
+        private: false,
       };
       const validResult = await aiService.summarize([validTodo]);
       expect(validResult).toBeDefined();

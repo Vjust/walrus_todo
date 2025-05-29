@@ -1,19 +1,20 @@
-import { WalrusClient } from '../../src/types/client';
-import { createWalrusImageStorage } from '../../src/utils/walrus-image-storage';
-import { SuiClient } from '@mysten/sui/client';
+import { createWalrusImageStorage } from '../../apps/cli/src/utils/walrus-image-storage';
+import { SuiClient } from '../../apps/cli/src/utils/adapters/sui-client-compatibility';
 // import { TransactionBlock } from '@mysten/sui/transactions';
-import { KeystoreSigner } from '../../src/utils/sui-keystore';
-import { walrusModuleMock } from '../helpers/walrus-client-mock';
+import { KeystoreSigner } from '../../apps/cli/src/utils/sui-keystore';
+import {
+  createWalrusModuleMock,
+  type CompleteWalrusClientMock,
+} from '../helpers/complete-walrus-client-mock';
 
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Mock the external dependencies
-// Unused imports removed during TypeScript cleanup
-// import { getMockWalrusClient, type CompleteWalrusClientMock } from '../../helpers/complete-walrus-client-mock';
-jest.mock('@mysten/walrus', () => walrusModuleMock);
+// Mock the Walrus module with complete implementation
+jest.mock('@mysten/walrus', () => createWalrusModuleMock());
 
-jest.mock('@mysten/sui/client', () => ({
+jest.mock('../../apps/cli/src/utils/adapters/sui-client-compatibility', () => ({
   SuiClient: jest.fn().mockImplementation(() => ({
     connect: jest.fn(),
     getBalance: jest.fn(),
@@ -33,14 +34,14 @@ jest.mock('path', () => ({
   basename: jest.fn(),
 }));
 
-jest.mock('../../src/utils/sui-keystore', () => ({
+jest.mock('../../apps/cli/src/utils/sui-keystore', () => ({
   KeystoreSigner: jest.fn(),
 }));
 
 describe('WalrusImageStorage', () => {
-  let mockWalrusClient: jest.Mocked<InstanceType<typeof WalrusClient>>;
+  let mockWalrusClient: CompleteWalrusClientMock;
   let mockSuiClient: jest.Mocked<InstanceType<typeof SuiClient>>;
-  let mockKeystoreSigner: jest.MockedObject<typeof KeystoreSigner>;
+  let mockKeystoreSigner: jest.Mocked<typeof KeystoreSigner>;
   let storage: ReturnType<typeof createWalrusImageStorage>;
 
   const mockImagePath = '/path/to/image.jpg';
@@ -51,24 +52,10 @@ describe('WalrusImageStorage', () => {
     // Reset all mocks
     jest.clearAllMocks();
 
-    // Setup mock implementations
-    mockWalrusClient = {
-      readBlob: jest.fn(),
-      writeBlob: jest.fn(),
-      getBlobObject: jest.fn(),
-      verifyPoA: jest.fn(),
-      getBlobInfo: jest.fn(),
-      storageCost: jest.fn(),
-      executeCreateStorageTransaction: jest.fn(),
-      connect: jest.fn(),
-      getConfig: jest.fn(),
-      getWalBalance: jest.fn(),
-      getStorageUsage: jest.fn(),
-      getBlobMetadata: jest.fn(),
-      getStorageProviders: jest.fn(),
-      getBlobSize: jest.fn(),
-      reset: jest.fn(),
-    } as jest.Mocked<InstanceType<typeof WalrusClient>>;
+    // Setup mock implementations using complete mock
+    const walrusModule = await import('@mysten/walrus');
+    const MockWalrusClient = walrusModule.WalrusClient;
+    mockWalrusClient = new MockWalrusClient() as CompleteWalrusClientMock;
 
     mockSuiClient = {
       connect: jest.fn(),
@@ -123,7 +110,6 @@ describe('WalrusImageStorage', () => {
     };
 
     // Mock constructor implementations
-    (WalrusClient as jest.Mock).mockImplementation(() => mockWalrusClient);
     (SuiClient as jest.Mock).mockImplementation(() => mockSuiClient);
     (KeystoreSigner as jest.Mock).mockImplementation(() => mockKeystoreSigner);
 
@@ -177,7 +163,7 @@ describe('WalrusImageStorage', () => {
         id: { id: 'test-blob-id' },
         blob_id: 'test-blob-id',
         registered_epoch: 100,
-        certified_epoch: 150,
+        cert_epoch: 150,
         size: BigInt(1024),
         encoding_type: { RedStuff: true, $kind: 'RedStuff' },
         storage: {
@@ -266,7 +252,7 @@ describe('WalrusImageStorage', () => {
             id: { id: 'test-blob-id' },
             blob_id: 'test-blob-id',
             registered_epoch: 100,
-            certified_epoch: 150,
+            cert_epoch: 150,
             size: '1024',
             encoding_type: 1,
             storage: {
@@ -274,6 +260,7 @@ describe('WalrusImageStorage', () => {
               start_epoch: 100,
               end_epoch: 200,
               storage_size: '2048',
+              used_size: '100',
             },
             deletable: true,
           },
@@ -296,7 +283,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -304,6 +291,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },
@@ -326,7 +314,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -334,6 +322,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },
@@ -359,7 +348,7 @@ describe('WalrusImageStorage', () => {
           id: { id: 'test-blob-id' },
           blob_id: 'test-blob-id',
           registered_epoch: 100,
-          certified_epoch: 150,
+          cert_epoch: 150,
           size: '1024',
           encoding_type: 1,
           storage: {
@@ -367,6 +356,7 @@ describe('WalrusImageStorage', () => {
             start_epoch: 100,
             end_epoch: 200,
             storage_size: '2048',
+            used_size: '100',
           },
           deletable: true,
         },

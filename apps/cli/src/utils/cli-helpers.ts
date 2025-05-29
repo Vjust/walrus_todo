@@ -2,33 +2,42 @@ import chalk = require('chalk');
 import type { Ora } from 'ora';
 
 // Safe ora import with fallback
-let ora: typeof import('ora').default | (() => { start: () => { succeed: () => void; fail: () => void; stop: () => void }; succeed: () => void; fail: () => void; stop: () => void });
+let ora:
+  | typeof import('ora').default
+  | (() => {
+      start: () => { succeed: () => void; fail: () => void; stop: () => void };
+      succeed: () => void;
+      fail: () => void;
+      stop: () => void;
+    });
 try {
   // Using import instead of require - still dynamic for safety
-  void import('ora').then(module => {
-    ora = module.default || module;
-  }).catch(() => {
-    // Fallback for missing ora
-    ora = () => ({
-      start: () => ({ succeed: () => {}, fail: () => {}, stop: () => {} }),
-      succeed: () => {},
-      fail: () => {},
-      stop: () => {}
+  void import('ora')
+    .then(module => {
+      ora = module.default || module;
+    })
+    .catch(() => {
+      // Fallback for missing ora
+      ora = () => ({
+        start: () => ({ succeed: () => {}, fail: () => {}, stop: () => {} }),
+        succeed: () => {},
+        fail: () => {},
+        stop: () => {},
+      });
     });
-  });
 } catch {
   // Fallback for missing ora
   ora = () => ({
     start: () => ({ succeed: () => {}, fail: () => {}, stop: () => {} }),
     succeed: () => {},
     fail: () => {},
-    stop: () => {}
+    stop: () => {},
   });
 }
 import { CLIError } from './error-handler';
-import { Logger } from './Logger';
+import { Logger as BaseLogger } from './Logger';
 
-const logger = new Logger('cli-helpers');
+const logger = new BaseLogger('cli-helpers');
 
 /**
  * Unified spinner management for CLI commands
@@ -164,7 +173,7 @@ export interface RetryOptions {
   initialDelay?: number;
   maxDelay?: number;
   backoffFactor?: number;
-  onRetry?: (attempt: number, error: Error) => void;
+  onRetry?: (error: Error, attempt: number, delay: number) => void;
 }
 
 export class RetryManager {
@@ -195,7 +204,7 @@ export class RetryManager {
           );
 
           if (onRetry) {
-            onRetry(attempt, lastError);
+            onRetry(lastError, attempt, delay);
           }
 
           await this.delay(delay);

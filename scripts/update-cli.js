@@ -1,16 +1,23 @@
 #!/usr/bin/env node
-import { Logger } from '../src/utils/Logger';
-
-const logger = new Logger('update-cli');
 
 /**
  * Cross-platform script to update an installed CLI
  * This provides an easy way to update the globally installed CLI
  */
 
-const { spawnSync } = require('child_process');
-const os = require('os');
-const path = require('path');
+import { spawnSync } from 'child_process';
+import os from 'os';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { Logger } from '../apps/cli/src/utils/Logger.js';
+
+// ES module compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+const logger = new Logger('update-cli');
 
 // ANSI color codes
 const colors = {

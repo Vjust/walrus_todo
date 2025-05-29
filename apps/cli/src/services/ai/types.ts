@@ -5,7 +5,9 @@
  * consistent provider types throughout the codebase
  */
 import { AIProvider } from '../../types/adapters/AIModelAdapter';
-export { AIProvider };
+import { AIPermissionLevel } from '../../types/adapters/AICredentialAdapter';
+import { AIActionType } from '../../types/adapters/AIVerifierAdapter';
+export { AIProvider, AIPermissionLevel, AIActionType };
 
 /**
  * AI operation types
@@ -229,4 +231,46 @@ export interface ParseOptions {
   strict?: boolean;
   defaultValue?: unknown;
   validator?: (value: unknown) => boolean;
+}
+
+/**
+ * Standard AI service response wrapper
+ */
+export interface AIServiceResponse<T = unknown> {
+  success: boolean;
+  result?: T;
+  error?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Type guards for AI service responses
+ */
+export function isValidAIResponse<T>(
+  response: unknown
+): response is AIServiceResponse<T> {
+  return (
+    typeof response === 'object' &&
+    response !== null &&
+    'success' in response &&
+    typeof (response as AIServiceResponse).success === 'boolean'
+  );
+}
+
+/**
+ * Type guard for permission levels
+ */
+export function isValidPermissionLevel(
+  level: unknown
+): level is AIPermissionLevel {
+  return typeof level === 'number' && level >= 0 && level <= 4;
+}
+
+/**
+ * Type guard for AI action types
+ */
+export function isValidActionType(
+  actionType: unknown
+): actionType is AIActionType {
+  return typeof actionType === 'number' && actionType >= 0 && actionType <= 4;
 }

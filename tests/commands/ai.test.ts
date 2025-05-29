@@ -1,11 +1,15 @@
 import { TestService } from '../helpers/test-utils';
-import { AiService } from '../../src/services/ai';
-import { TodoService } from '../../src/services/todoService';
-
-import { TodoList } from '../../src/types/todo';
+import { AiService } from '../../apps/cli/src/services/ai';
+import { TodoService } from '../../apps/cli/src/services/todoService';
+import { Todo, TodoList } from '../../apps/cli/src/types/todo';
+import AI from '../../apps/cli/src/commands/ai';
+import {
+  runCommandInTest,
+  initializeCommandForTest,
+} from '../../apps/cli/src/__tests__/helpers/command-test-utils';
 
 // Mock AiService
-jest.mock('../../src/services/ai', () => {
+jest.mock('../../apps/cli/src/services/ai', () => {
   return {
     AiService: jest.fn().mockImplementation(() => {
       return {
@@ -26,18 +30,18 @@ jest.mock('../../src/services/ai', () => {
 });
 
 // Mock TodoService
-jest.mock('../../src/services/todoService', () => {
+jest.mock('../../apps/cli/src/services/todoService', () => {
   const mockTodo: Todo = {
     id: 'todo-123',
     title: 'Complete project',
     description: 'Finish the quarterly project report',
     completed: false,
-    priority: 'medium',
+    priority: 'medium' as const,
     tags: ['work'],
     createdAt: '2023-01-01T12:00:00Z',
     updatedAt: '2023-01-01T12:00:00Z',
     private: true,
-    storageLocation: 'local',
+    storageLocation: 'local' as const,
   };
 
   const mockTodoList: TodoList = {

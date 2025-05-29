@@ -1,4 +1,4 @@
-import { SuiClient } from '@mysten/sui/client';
+import { SuiClient } from './adapters/sui-client-compatibility';
 import { type Signer } from '@mysten/sui/cryptography';
 import { Logger } from './Logger';
 
@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getAssetPath } from './path-utils';
 import { handleError } from './error-handler';
-import { execa } from 'execa';
+const execa = require('execa');
 import { KeystoreSigner } from './sui-keystore';
 import * as crypto from 'crypto';
 import { CLIError } from '../types/errors/consolidated';
@@ -177,7 +177,8 @@ export class WalrusImageStorage {
         this.walrusClient.reset();
       } catch (error) {
         // Log but don't throw since we're cleaning up
-        const errorObj = error instanceof Error ? error : new Error(String(error));
+        const errorObj =
+          error instanceof Error ? error : new Error(String(error));
         logger.error('Error resetting Walrus client:', errorObj);
       }
     }
@@ -195,7 +196,10 @@ export class WalrusImageStorage {
       }
     } catch (cleanupError) {
       // Just log errors during cleanup, don't throw
-      const errorObj = cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError));
+      const errorObj =
+        cleanupError instanceof Error
+          ? cleanupError
+          : new Error(String(cleanupError));
       logger.error('Error during connection cleanup:', errorObj);
     }
 
@@ -213,8 +217,12 @@ export class WalrusImageStorage {
         blobObject: { blob_id: string };
       }> => ({ blobId: '', blobObject: { blob_id: '' } }),
       getBlobInfo: async (): Promise<{ blob_id: string }> => ({ blob_id: '' }),
-      getBlobObject: async (): Promise<{ blob_id: string }> => ({ blob_id: '' }),
-      getBlobMetadata: async (): Promise<{ blob_id: string }> => ({ blob_id: '' }),
+      getBlobObject: async (): Promise<{ blob_id: string }> => ({
+        blob_id: '',
+      }),
+      getBlobMetadata: async (): Promise<{ blob_id: string }> => ({
+        blob_id: '',
+      }),
       getStorageUsage: async (): Promise<{ used: string; total: string }> => ({
         used: '0',
         total: '0',
@@ -649,7 +657,7 @@ export class WalrusImageStorage {
             for (let verifyAttempt = 1; verifyAttempt <= 3; verifyAttempt++) {
               const readOptions: ReadBlobOptions = { blobId };
               // Using Promise.race for timeout handling
-              const uploadResult = await Promise.race([
+              const uploadResult = (await Promise.race([
                 this.walrusClient?.readBlob(readOptions).then(result => ({
                   success: true,
                   data: result,
@@ -658,7 +666,7 @@ export class WalrusImageStorage {
                   success: false,
                   error: err,
                 })),
-              ]) as { success: boolean; data?: Uint8Array; error?: Error };
+              ])) as { success: boolean; data?: Uint8Array; error?: Error };
 
               // Check if the result indicates failure
               if (
