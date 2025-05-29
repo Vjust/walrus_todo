@@ -52,7 +52,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd waltodo-frontend
-          CI=true pnpm install --frozen-lockfile --prefer-offline
+          CI=true pnpm install --frozen-lockfile --prefer-offline --link=false
 
       - name: Run linter
         run: |

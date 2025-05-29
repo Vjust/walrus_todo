@@ -26,6 +26,11 @@
     "perf:test": "pnpm run analyze:bundle && pnpm run test:lighthouse",
     "build:analyze": "pnpm run build && pnpm run analyze:bundle:report"
   },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=10.11.0"
+  },
+  "packageManager": "pnpm@10.11.0",
   "dependencies": {
     "@heroicons/react": "^2.0.18",
     "@mysten/dapp-kit": "^0.16.3",
@@ -104,5 +109,9 @@
     "modulePaths": [
       "<rootDir>"
     ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=10.11.0"
   }
 }
