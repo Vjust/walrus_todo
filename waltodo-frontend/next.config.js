@@ -154,7 +154,7 @@ const nextConfig = {
   // Allow development origins (dynamic port support)
   allowedDevOrigins: (function () {
     const port = process.env.PORT || '3000';
-    return [`192.168.8.204:${port}`, `localhost:${port}`];
+    return [`192.168.8.204:${port}`, `localhost:${port}`, 'localhost:3001'];
   })(),
 
   // Define custom headers to help with caching and security

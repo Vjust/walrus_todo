@@ -59,7 +59,10 @@
     "progress": 0,
     "logFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748482855259_msiw16.log",
     "outputFile": "/Users/angel/Documents/Projects/walrus_todo/.waltodo-cache/jobs/job_1748482855259_msiw16.out",
-    "metadata": {},
+    "metadata": {
+      "notificationShown": true,
+      "notifiedAt": 1748553513196
+    },
     "pid": 71922,
     "endTime": 1748482855291,
     "errorMessage": "Process exited with code: 1"

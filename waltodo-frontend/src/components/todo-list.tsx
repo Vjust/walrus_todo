@@ -5,6 +5,7 @@ import { Todo } from '@/lib/sui-client';
 // import { useTodoStateSync } from '@/hooks/useBlockchainEvents'
 // import { BlockchainEventIndicator } from './BlockchainEventStatus'
 import { useWalletContext } from '@/contexts/WalletContext';
+import { useWebSocketStatus } from '@/contexts/WebSocketContext';
 import { getTodos, updateTodo } from '@/lib/todo-service';
 import {
   getTodosFromBlockchain,
@@ -12,6 +13,7 @@ import {
   deleteTodoOnBlockchain,
 } from '@/lib/sui-client';
 import { useSuiClient } from '@/hooks/useSuiClient';
+import toast from 'react-hot-toast';
 
 type TodoListProps = {
   listName: string;
@@ -32,6 +34,8 @@ function TodoList({ listName }: TodoListProps) {
   const walletContext = useWalletContext();
   const { address, connected, signAndExecuteTransaction } = walletContext || {};
   
+  // WebSocket status
+  const { isConnected: wsConnected, statusText: wsStatusText, statusColor: wsStatusColor } = useWebSocketStatus();
   
   // Sui client hook with initialization state
   const { 
@@ -128,6 +132,11 @@ function TodoList({ listName }: TodoListProps) {
         console.error('[TodoList] Failed to load blockchain todos:', error);
         if (isMounted) {
           setBlockchainTodos([]);
+          // Show error toast for blockchain loading failures
+          toast.error('Failed to load blockchain todos. Using local storage only.', {
+            duration: 4000,
+            icon: '⚠️',
+          });
         }
       } finally {
         if (isMounted) {
@@ -163,6 +172,9 @@ function TodoList({ listName }: TodoListProps) {
         // Fallback to empty array
         if (isMounted) {
           setTodos([]);
+          toast.error('Failed to load todos from local storage', {
+            duration: 4000,
+          });
         }
       } finally {
         if (isMounted) {
@@ -191,6 +203,9 @@ function TodoList({ listName }: TodoListProps) {
       console.log(`[TodoList] Refreshed ${fetchedTodos.length} todos from blockchain`);
     } catch (error) {
       console.error('[TodoList] Failed to refresh blockchain todos:', error);
+      toast.error('Failed to refresh blockchain todos', {
+        duration: 3000,
+      });
     }
   }, [connected, address, suiClientInitialized, componentMounted, initializationComplete]);
 
@@ -224,6 +239,10 @@ function TodoList({ listName }: TodoListProps) {
 
         if (result.success) {
           console.log('[TodoList] ✅ Todo completed on blockchain:', result.digest);
+          toast.success('Todo updated on blockchain!', {
+            duration: 3000,
+            icon: '🎉',
+          });
           // Refresh blockchain todos to get updated state
           await refreshBlockchainTodos();
         } else {
@@ -242,13 +261,24 @@ function TodoList({ listName }: TodoListProps) {
 
         if (!success) {
           console.error('Failed to update todo in storage');
+          toast.error('Failed to update todo', {
+            duration: 3000,
+          });
           // Revert optimistic update by reloading from storage
           const localTodos = getTodos(listName, address || undefined);
           setTodos(localTodos);
+        } else {
+          toast.success('Todo updated!', {
+            duration: 2000,
+          });
         }
       }
     } catch (error) {
       console.error('Failed to toggle todo completion:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update todo';
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
       // Revert optimistic update by reloading from storage and blockchain
       const localTodos = getTodos(listName, address || undefined);
       setTodos(localTodos);
@@ -269,11 +299,15 @@ function TodoList({ listName }: TodoListProps) {
       // This would create an NFT version of the local todo
       // Implementation would involve calling storeTodoOnBlockchain
       // For now, just show a placeholder
-      alert(
-        'Feature coming soon: Store existing todo as NFT on Sui blockchain'
-      );
+      toast('Feature coming soon: Store existing todo as NFT on Sui blockchain', {
+        duration: 4000,
+        icon: '🚧',
+      });
     } catch (error) {
       console.error('[TodoList] Failed to store todo on blockchain:', error);
+      toast.error('Failed to store todo on blockchain', {
+        duration: 4000,
+      });
     }
   }, [connected, address, signAndExecuteTransaction, suiClientInitialized, componentMounted, initializationComplete]);
 
@@ -294,6 +328,10 @@ function TodoList({ listName }: TodoListProps) {
 
         if (result.success) {
           console.log('[TodoList] ✅ Todo deleted from blockchain:', result.digest);
+          toast.success('Todo deleted from blockchain!', {
+            duration: 3000,
+            icon: '🗑️',
+          });
           // Refresh blockchain todos
           await refreshBlockchainTodos();
         } else {
@@ -305,11 +343,17 @@ function TodoList({ listName }: TodoListProps) {
         // Delete from local storage
         const updatedTodos = todos.filter(t => t.id !== todo.id);
         setTodos(updatedTodos);
+        toast.success('Todo deleted!', {
+          duration: 2000,
+        });
         // Update storage would happen here
       }
     } catch (error) {
       console.error('Failed to delete todo:', error);
-      alert('Failed to delete todo. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete todo';
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
     }
   }, [signAndExecuteTransaction, address, refreshBlockchainTodos, todos, suiClientInitialized, componentMounted, initializationComplete]);
 
@@ -387,14 +431,22 @@ function TodoList({ listName }: TodoListProps) {
 
   return (
     <div className='space-y-4'>
-      {/* Event connection indicator - temporarily disabled */}
+      {/* Connection status indicators */}
       {connected && (
         <div className='flex items-center justify-between mb-4 p-3 bg-white/30 dark:bg-ocean-deep/30 rounded-lg border border-ocean-light/20'>
-          <div className='flex items-center space-x-2'>
-            <div className='w-2 h-2 bg-blue-500 rounded-full' />
-            <span className='text-sm text-ocean-medium dark:text-ocean-light'>
-              Blockchain integration active
-            </span>
+          <div className='flex items-center space-x-4'>
+            <div className='flex items-center space-x-2'>
+              <div className='w-2 h-2 bg-blue-500 rounded-full' />
+              <span className='text-sm text-ocean-medium dark:text-ocean-light'>
+                Blockchain active
+              </span>
+            </div>
+            <div className='flex items-center space-x-2'>
+              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className={`text-sm ${wsStatusColor}`}>
+                Real-time sync {wsStatusText.toLowerCase()}
+              </span>
+            </div>
           </div>
           <div className='text-xs text-ocean-medium/70 dark:text-ocean-light/70'>
             {displayTodos.length} todos

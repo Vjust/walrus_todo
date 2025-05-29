@@ -22,7 +22,7 @@
     "analyze:bundle": "node scripts/bundle-analyzer.js analyze",
     "analyze:bundle:report": "node scripts/bundle-analyzer.js report",
     "test:lighthouse": "node scripts/lighthouse-performance.js",
-    "test:lighthouse:single": "node scripts/lighthouse-performance.js http://localhost:3000 single",
+    "test:lighthouse:single": "node scripts/lighthouse-performance.js http://localhost:3001 single",
     "perf:test": "pnpm run analyze:bundle && pnpm run test:lighthouse",
     "build:analyze": "pnpm run build && pnpm run analyze:bundle:report"
   },
@@ -46,12 +46,14 @@
     "@suiet/wallet-kit": "^0.4.1",
     "@tanstack/react-query": "^5.76.1",
     "@tanstack/react-query-devtools": "^5.77.2",
+    "@waltodo/shared-types": "workspace:*",
     "@wallet-standard/features": "^1.1.0",
     "encoding": "^0.1.13",
     "nanoid": "^5.1.5",
     "next": "^15.3.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "react-hot-toast": "^2.5.2",
     "socket.io-client": "^4.8.1",
     "zustand": "^5.0.5"
   },
@@ -109,9 +111,5 @@
     "modulePaths": [
       "<rootDir>"
     ]
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=10.11.0"
   }
 }

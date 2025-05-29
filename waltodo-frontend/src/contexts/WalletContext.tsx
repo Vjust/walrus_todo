@@ -18,6 +18,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Transaction } from '@mysten/sui/transactions';
 import { useInactivityTimer } from '@/hooks/useInactivityTimer';
 import { initializeSuiClient } from '@/lib/sui-client';
+import { apiClient } from '@/lib/api-client';
 
 // Network Configuration using createNetworkConfig
 const { networkConfig } = createNetworkConfig({
@@ -155,6 +156,34 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
   // Connection state
   const connected = Boolean(account);
 
+  // Handle wallet authentication with API
+  const authenticateWithAPI = useCallback(async (walletAddress: string) => {
+    try {
+      console.log('[WalletContext] Authenticating with API for wallet:', walletAddress);
+      
+      // Create a message to sign
+      const message = `Sign this message to authenticate with WalTodo API\nTimestamp: ${new Date().toISOString()}\nWallet: ${walletAddress}`;
+      
+      // For now, we'll use a mock signature since actual signing requires user interaction
+      // In production, you would use the wallet's signMessage function
+      const mockSignature = 'mock_signature_' + Date.now();
+      
+      // Set wallet address in API client
+      apiClient.setWalletAddress(walletAddress);
+      
+      // Attempt to login
+      const authResponse = await apiClient.login(walletAddress, mockSignature, message);
+      
+      console.log('[WalletContext] API authentication successful');
+      return authResponse;
+    } catch (error) {
+      console.error('[WalletContext] API authentication failed:', error);
+      // Don't throw - allow wallet connection to continue even if API auth fails
+      setError('Failed to authenticate with API. Some features may be limited.');
+      return null;
+    }
+  }, []);
+
   // Auto-reconnect logic with proper cleanup and mount guard
   useEffect(() => {
     // Only run auto-reconnect on client side
@@ -185,10 +214,14 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
             connectWallet(
               { wallet },
               {
-                onSuccess: () => {
+                onSuccess: async () => {
                   if (isMounted) {
                     console.log('[WalletContext] Auto-reconnect successful');
                     resetActivityTimer();
+                    // Re-authenticate with API after auto-reconnect
+                    if (account?.address) {
+                      await authenticateWithAPI(account.address);
+                    }
                   }
                 },
                 onError: (error) => {
@@ -232,7 +265,7 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
     setError(null);
   }, [connected]);
 
-  // Initialize Sui client when wallet connects (but don't duplicate global initialization)
+  // Initialize Sui client and authenticate with API when wallet connects
   useEffect(() => {
     if (connected && account?.address) {
       const initClient = async () => {
@@ -248,8 +281,11 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
           } else {
             console.log('[WalletContext] Sui client already initialized');
           }
+          
+          // Authenticate with API
+          await authenticateWithAPI(account.address);
         } catch (error) {
-          console.error('[WalletContext] Failed to initialize Sui client:', error);
+          console.error('[WalletContext] Failed to initialize:', error);
           setError('Failed to initialize blockchain connection. Some features may not work properly.');
           // Don't block the app completely, just warn the user
         }
@@ -258,8 +294,11 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
       // Small delay to ensure global initialization has had a chance to complete
       const timeoutId = setTimeout(initClient, 200);
       return () => clearTimeout(timeoutId);
+    } else if (!connected) {
+      // Clear API authentication when wallet disconnects
+      apiClient.setWalletAddress(null);
     }
-  }, [connected, account?.address, currentNetwork]);
+  }, [connected, account?.address, currentNetwork, authenticateWithAPI]);
 
   // WebSocket connection management - temporarily disabled
   // useEffect(() => {
@@ -297,10 +336,18 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
     try {
       setError(null);
       console.log('[WalletContext] Disconnecting wallet...');
+      
+      // Logout from API first
+      try {
+        await apiClient.logout();
+      } catch (error) {
+        console.warn('[WalletContext] API logout failed:', error);
+      }
+      
       disconnectWallet();
       // Safe localStorage access
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -437,13 +484,15 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
         <ConnectModal
           trigger={<button style={{ display: 'none' }}>Hidden trigger</button>}
           open={isModalOpen}
-          onOpenChange={(open) => {
+          onOpenChange={async (open) => {
             setIsModalOpen(open);
             if (!open) {
               // Modal was closed, save the connected wallet
               if (connected && account && typeof window !== 'undefined' && window.localStorage) {
                 try {
                   localStorage.setItem('sui-wallet-last-connected', 'sui-wallet');
+                  // Authenticate with API when wallet first connects
+                  await authenticateWithAPI(account.address);
                 } catch (storageError) {
                   console.warn('[WalletContext] Failed to save wallet to localStorage:', storageError);
                 }

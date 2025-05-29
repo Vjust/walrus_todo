@@ -13,37 +13,36 @@ export function setupGlobalErrorSuppression() {
   const originalWarn = console.warn;
   const originalLog = console.log;
 
-  // List of error patterns to suppress (reduce noise)
+  // List of harmless third-party library warnings to suppress
+  // IMPORTANT: Do NOT suppress critical application errors
   const suppressedErrorPatterns = [
-    'Access to storage is not allowed from this context',
-    'localStorage',
-    'sessionStorage',
-    'select failed: wallet',
-    'UNKNOWN_ERROR',
-    'KIT.UNKNOWN_ERROR',
+    // Browser extension/wallet library warnings (not critical)
+    'overrideMethod',
+    'installHook.js',
+    'hook.js',
+    'opcgpfmipidbgpenhmajoajpbobppdil',
+    'chrome-extension://',
+    
+    // Wallet availability warnings (expected when wallets not installed)
     'wallet Slush is not available',
     'all wallets are listed here: []',
     'Wallet Standard has already been loaded',
     'Could not determine how to get wallets from wallet kit',
     'Not saving wallet info - wallet not in available list',
     'Auto-reconnect disabled',
-    'Failed to load resource: the server responded with a status of 404',
-    'Error storing todo on blockchain',
-    'Failed to create todo: Error: Wallet not connected',
-    'overrideMethod',
-    'installHook.js',
-    'hook.js',
-    'Would execute transaction with dApp Kit',
-    'Todo created successfully',
-    'dApp.connect',
-    'query #1',
-    'query #2',
-    'query #3',
+    
+    // Known third-party library warnings
     'dapp-interface.js',
-    'opcgpfmipidbgpenhmajoajpbobppdil',
-    'chrome-extension://',
     '[[ << query #',
     'Error: [[ << query #',
+    
+    // Storage context warnings (handled by fallback)
+    'Access to storage is not allowed from this context',
+    
+    // Harmless wallet connection info
+    'select failed: wallet',
+    'UNKNOWN_ERROR',
+    'KIT.UNKNOWN_ERROR',
   ];
 
   // Enhanced console.error that filters known issues

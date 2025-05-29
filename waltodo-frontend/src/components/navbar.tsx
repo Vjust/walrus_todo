@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { WalletConnectButton } from '@/components/WalletConnectButton';
 import { ClientOnly } from '@/components/ClientOnly';
+import { WebSocketIndicator } from '@/components/WebSocketStatus';
+import { AuthIndicator } from '@/components/AuthStatus';
 
 type NavbarProps = {
   currentPage: string;
@@ -58,9 +60,25 @@ export default function Navbar({ currentPage }: NavbarProps) {
           >
             NFT Todos
           </Link>
+          <Link
+            href='/websocket-demo'
+            className={`transition-colors ${
+              currentPage === 'websocket-demo'
+                ? 'text-ocean-deep dark:text-ocean-foam font-medium'
+                : 'text-ocean-medium dark:text-ocean-light hover:text-ocean-deep dark:hover:text-ocean-foam'
+            }`}
+          >
+            WebSocket
+          </Link>
         </div>
 
-        <div>
+        <div className='flex items-center space-x-4'>
+          <ClientOnly>
+            <div className="hidden md:flex items-center space-x-3">
+              <WebSocketIndicator />
+              <AuthIndicator />
+            </div>
+          </ClientOnly>
           <ClientOnly fallback={<div className="w-24 h-10 bg-gray-200 animate-pulse rounded"></div>}>
             <WalletConnectButton />
           </ClientOnly>

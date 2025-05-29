@@ -3,29 +3,25 @@
  * This ensures consistency between useSuiTodos and lib/sui-client
  */
 
-export interface CreateTodoParams {
-  title: string;
-  description: string;
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string;
-  tags?: string[];
+import { 
+  CreateTodoInput as SharedCreateTodoInput,
+  UpdateTodoInput as SharedUpdateTodoInput,
+  Todo as SharedTodo 
+} from '@waltodo/shared-types';
+
+export interface CreateTodoParams extends SharedCreateTodoInput {
   imageUrl?: string;
   metadata?: string;
   isPrivate?: boolean;
 }
 
-export interface UpdateTodoParams {
+export interface UpdateTodoParams extends SharedUpdateTodoInput {
   objectId: string;
-  title?: string;
-  description?: string;
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string;
-  tags?: string[];
   imageUrl?: string;
   metadata?: string;
 }
 
-export interface Todo {
+export interface Todo extends Omit<SharedTodo, 'storageLocation' | 'walrusUrls' | 'blobId' | 'transactionId' | 'nftId' | 'nftMetadata'> {
   id: string;
   title: string;
   description?: string;
@@ -36,7 +32,7 @@ export interface Todo {
   blockchainStored: boolean;
   objectId?: string; // Sui object ID when stored on chain
   imageUrl?: string;
-  createdAt?: number;
+  createdAt?: number | string;
   completedAt?: number;
   updatedAt?: string;
   owner?: string;
