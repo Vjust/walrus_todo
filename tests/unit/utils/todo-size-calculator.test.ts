@@ -77,6 +77,7 @@ describe('TodoSizeCalculator', () => {
 
       expect(actualSize).toBe(expectedSize);
     });
+  });
 
     it('should handle empty todo', () => {
       const todo: Todo = createMockTodo({
