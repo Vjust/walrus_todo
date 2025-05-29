@@ -47,7 +47,7 @@ jobs:
 
       - name: Install global dependencies
         run: |
-          pnpm add -g @oclif/cli
+          pnpm add -g oclif
           pnpm add -g typescript
 
       - name: Setup Sui CLI
