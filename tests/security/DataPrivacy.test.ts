@@ -1,14 +1,23 @@
 import { jest } from '@jest/globals';
+
+// Mock the module before importing to avoid Jest auto-mocking issues
+jest.mock('../../apps/cli/src/types/adapters/AIModelAdapter', () => ({
+  AIProvider: {
+    XAI: 'xai',
+    OPENAI: 'openai',
+    ANTHROPIC: 'anthropic',
+    OLLAMA: 'ollama',
+  },
+}));
+
+// Import local types instead of CLI types
 import {
   AIProvider,
-  // _AIModelOptions,
-} from '../../apps/cli/src/types/adapters/AIModelAdapter';
-import {
   AIPrivacyLevel,
   AIActionType,
   VerificationRecord,
-} from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { Todo } from '../../apps/cli/src/types/todo';
+  Todo,
+} from './types';
 import crypto from 'crypto';
 
 // Mock the service modules instead of importing them directly

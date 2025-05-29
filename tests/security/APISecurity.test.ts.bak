@@ -8,7 +8,6 @@ jest.mock('fs', () => ({
   readFileSync: jest.fn(() => '{}'),
   copyFileSync: jest.fn(),
   unlinkSync: jest.fn(),
-  renameSync: jest.fn(),
   promises: {
     access: jest.fn().mockResolvedValue(undefined),
     mkdir: jest.fn().mockResolvedValue(undefined),
@@ -19,7 +18,6 @@ jest.mock('fs', () => ({
 
 jest.mock('crypto', () => ({
   randomBytes: jest.fn(() => Buffer.from('mock-random-bytes')),
-  randomUUID: jest.fn(() => 'mock-uuid-1234-5678-9012-345678901234'),
   createCipher: jest.fn(() => ({
     update: jest.fn(() => 'encrypted'),
     final: jest.fn(() => 'final'),
@@ -41,39 +39,6 @@ jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
 jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
 jest.mock('../../apps/cli/src/services/ai/SecureCredentialService');
 jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier');
-
-// Create a mock AIService class that can be properly spied on
-class MockAIService {
-  constructor(apiKey, provider, model, options) {
-    this.apiKey = apiKey;
-    this.provider = provider;
-    this.model = model;
-    this.options = options;
-  }
-  
-  async summarize(todos) {
-    return 'Test result';
-  }
-  
-  async categorize(todos) {
-    return {};
-  }
-  
-  async analyze(todos) {
-    return {};
-  }
-  
-  async suggest(todos) {
-    return [];
-  }
-}
-
-// Mock AIService to avoid initialization issues
-jest.mock('../../apps/cli/src/services/ai/aiService', () => {
-  return {
-    AIService: MockAIService,
-  };
-});
 
 import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
@@ -164,9 +129,9 @@ describe('API Security Tests', () => {
       const sensitiveKey = 'very-sensitive-key-12345';
       const aiService = new AIService(sensitiveKey);
 
-      // Force error that might leak API key by mocking the summarize method
+      // Force error that might leak API key
       jest
-        .spyOn(aiService, 'summarize')
+        .spyOn(aiService['modelAdapter'], 'processWithPromptTemplate')
         .mockRejectedValue(
           new Error(`Authentication failed with key ${sensitiveKey}`)
         );
@@ -238,17 +203,15 @@ describe('API Security Tests', () => {
 
       // Too short API key should fail
       const shortKeyService = new AIService('short');
-      jest.spyOn(shortKeyService, 'summarize').mockRejectedValue(
-        new Error('API key is too short')
-      );
-      await expect(shortKeyService.summarize(sampleTodos)).rejects.toThrow('API key is too short');
+      await expect(
+        shortKeyService['modelAdapter'].processWithPromptTemplate({}, {})
+      ).rejects.toThrow('API key is too short');
 
       // Invalid characters in API key should fail
       const invalidCharsService = new AIService('invalid!@#$%^&*()');
-      jest.spyOn(invalidCharsService, 'summarize').mockRejectedValue(
-        new Error('API key contains invalid characters')
-      );
-      await expect(invalidCharsService.summarize(sampleTodos)).rejects.toThrow('API key contains invalid characters');
+      await expect(
+        invalidCharsService['modelAdapter'].processWithPromptTemplate({}, {})
+      ).rejects.toThrow('API key contains invalid characters');
     });
 
     it('should implement rate limiting for API requests', async () => {
@@ -259,7 +222,7 @@ describe('API Security Tests', () => {
       const RATE_WINDOW = 60000; // 1 minute in ms
 
       // Mock the provider adapter to implement rate limiting
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -306,11 +269,6 @@ describe('API Security Tests', () => {
         }
       );
 
-      Object.defineProperty(AIProviderFactory, 'createProvider', {
-        value: mockCreateProvider,
-        configurable: true,
-      });
-
       // Create AI service
       const aiService = new AIService('test-api-key');
 
@@ -330,7 +288,7 @@ describe('API Security Tests', () => {
       const maxRetries = 3;
 
       // Mock the provider adapter to fail temporarily
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -359,11 +317,6 @@ describe('API Security Tests', () => {
         }
       );
 
-      Object.defineProperty(AIProviderFactory, 'createProvider', {
-        value: mockCreateProvider,
-        configurable: true,
-      });
-
       // Create AI service with retry options
       const aiService = new AIService('test-api-key', AIProvider.XAI, 'model', {
         retries: maxRetries,
@@ -382,7 +335,7 @@ describe('API Security Tests', () => {
   describe('Input Validation and Sanitization', () => {
     it('should sanitize todo content against XSS', async () => {
       // Create a mock adapter that checks for sanitization
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -413,11 +366,6 @@ describe('API Security Tests', () => {
           };
         }
       );
-
-      Object.defineProperty(AIProviderFactory, 'createProvider', {
-        value: mockCreateProvider,
-        configurable: true,
-      });
 
       // Create AI service
       const aiService = new AIService('test-api-key');
@@ -456,7 +404,7 @@ describe('API Security Tests', () => {
 
     it('should sanitize todo content against SQL injection', async () => {
       // Create a mock adapter that checks for sanitization
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -485,11 +433,6 @@ describe('API Security Tests', () => {
           };
         }
       );
-
-      Object.defineProperty(AIProviderFactory, 'createProvider', {
-        value: mockCreateProvider,
-        configurable: true,
-      });
 
       // Create AI service
       const aiService = new AIService('test-api-key');
@@ -568,7 +511,7 @@ describe('API Security Tests', () => {
 
     it('should validate and limit input size to prevent DoS', async () => {
       // Create a mock adapter that checks input size
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -599,11 +542,6 @@ describe('API Security Tests', () => {
         }
       );
 
-      Object.defineProperty(AIProviderFactory, 'createProvider', {
-        value: mockCreateProvider,
-        configurable: true,
-      });
-
       // Create AI service
       const aiService = new AIService('test-api-key');
 
@@ -628,7 +566,7 @@ describe('API Security Tests', () => {
 
     it('should validate and sanitize structured AI responses', async () => {
       // Create a mock adapter that returns a malicious structured response
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -669,7 +607,7 @@ describe('API Security Tests', () => {
 
     it('should detect and prevent prompt injection attacks', async () => {
       // Create a mock adapter that checks for prompt injection
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -711,11 +649,6 @@ describe('API Security Tests', () => {
         }
       );
 
-      Object.defineProperty(AIProviderFactory, 'createProvider', {
-        value: mockCreateProvider,
-        configurable: true,
-      });
-
       // Create AI service
       const aiService = new AIService('test-api-key');
 
@@ -751,7 +684,7 @@ describe('API Security Tests', () => {
   describe('Request and Response Protection', () => {
     it('should enforce HTTPS for all API requests', async () => {
       // Mock provider factory to detect HTTP URLs
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -814,7 +747,7 @@ describe('API Security Tests', () => {
 
     it('should use secure headers for API requests', async () => {
       // Mock provider factory to enforce secure headers
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -912,7 +845,7 @@ describe('API Security Tests', () => {
 
     it('should enforce proper TLS configuration', async () => {
       // Mock provider factory to check TLS configuration
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
@@ -997,7 +930,7 @@ describe('API Security Tests', () => {
 
     it('should prevent response data leakage', async () => {
       // Create a provider that leaks data in debug mode
-      const mockCreateProvider = jest.fn().mockImplementation(
+      (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
         params => {
           return {
             getProviderName: () => params.provider,
