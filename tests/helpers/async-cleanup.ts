@@ -145,9 +145,8 @@ export function setupAsyncCleanup(): void {
         reject: (reason?: any) => void
       ) => void
     ) {
-      const trackedPromise = new OriginalPromise<T>(executor);
-      trackPromise(trackedPromise);
-      return trackedPromise as any;
+      super(executor);
+      trackPromise(this);
     }
   } as any;
 

@@ -1,3 +1,7 @@
+neverBuiltDependencies:
+  - test-exclude
+  - babel-plugin-istanbul
+
 packages:
   - "packages/*"
   - "apps/*"

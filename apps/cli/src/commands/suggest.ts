@@ -677,7 +677,7 @@ export default class Suggest extends BaseCommand {
       const suggestion = suggestions[index];
 
       try {
-        await todoService.addTodo({
+        await todoService.addTodo('default', {
           title: suggestion.title,
           description: suggestion.description || '',
           priority: suggestion.priority || 'medium',

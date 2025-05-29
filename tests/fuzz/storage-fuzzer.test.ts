@@ -645,7 +645,12 @@ describe('Storage Fuzzing Tests', () => {
 
   describe('Storage Analyzer Fuzzing', () => {
     it('should handle edge cases in storage reuse analysis', async () => {
-      const analyzer = new StorageReuseAnalyzer();
+      // Create mock instances for the analyzer constructor
+      const mockSuiClient = {} as any;
+      const mockWalrusClient = {} as any;
+      const mockUserAddress = 'test-address';
+      
+      const analyzer = new StorageReuseAnalyzer(mockSuiClient, mockWalrusClient, mockUserAddress);
 
       const testCases = fuzzer.array(
         () => {

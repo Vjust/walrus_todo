@@ -298,8 +298,7 @@ export class SecureCredentialService {
         _error instanceof Error ? _error : new Error(String(_error));
       throw new CLIError(
         `No API key found for ${provider}. Use 'walrus_todo ai credentials add ${provider} --key YOUR_API_KEY' to add one. Original error: ${baseError.message}`,
-        'CREDENTIAL_NOT_FOUND',
-        baseError
+        'CREDENTIAL_NOT_FOUND'
       );
     }
   }

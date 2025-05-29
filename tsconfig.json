@@ -21,7 +21,7 @@
       "@waltodo/walrus-client": ["packages/walrus-client/src/*"]
     },
     "typeRoots": ["./node_modules/@types", "./apps/cli/src/types"],
-    "types": ["node", "jest", "cli-progress", "express"],
+    "types": ["node", "jest", "@playwright/test", "@types/jest", "cli-progress", "express"],
     "resolveJsonModule": true,
     "outDir": "./dist",
     "importHelpers": true,

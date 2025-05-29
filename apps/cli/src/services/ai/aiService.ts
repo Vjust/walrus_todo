@@ -144,7 +144,8 @@ export class AIService {
       // Create new permission manager if none exists
       try {
         const credentialManager = new SecureCredentialManager();
-        const blockchainVerifier = new BlockchainVerifier();
+        const mockVerifierAdapter = {} as any;
+        const blockchainVerifier = new BlockchainVerifier(mockVerifierAdapter);
         this.permissionManager = initializePermissionManager(
           credentialManager,
           blockchainVerifier

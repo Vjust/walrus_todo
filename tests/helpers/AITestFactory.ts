@@ -12,8 +12,9 @@ import {
   AIModelAdapter,
 } from '../../apps/cli/src/types/adapters/AIModelAdapter';
 import { AIVerifierAdapter } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-// Import the full interface for proper typing
-import { AIModelAdapter } from '../../apps/cli/src/types/adapters/AIModelAdapter';
+import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
+import { expectedResults } from './ai-test-utils';
+import { Todo } from '../../apps/cli/src/types/todo';
 
 // Create comprehensive mock AI adapter with all required methods
 const createMockAIModelAdapter = (): AIModelAdapter => ({
@@ -46,90 +47,6 @@ const createMockAIModelAdapter = (): AIModelAdapter => ({
   checkConsentFor: jest.fn().mockReturnValue(true),
   cancelAllRequests: jest.fn(),
 });
-
-const createMockAIVerifierAdapter = (): jest.Mocked<AIVerifierAdapter> => {
-  const mockSigner = {
-    getAddress: jest.fn().mockResolvedValue('0x1234567890abcdef'),
-    signMessage: jest.fn().mockResolvedValue('mock_signature'),
-    signTransactionBlock: jest.fn(),
-    getPublicKey: jest.fn().mockReturnValue({
-      toBase64: jest.fn().mockReturnValue('mock_public_key_base64'),
-    }),
-  };
-
-  return {
-    createVerification: jest.fn().mockImplementation(async params => ({
-      id: `verification_${Date.now()}`,
-      requestHash: 'hash1',
-      responseHash: 'hash2',
-      user: '0x1234567890abcdef',
-      provider: params.provider || 'test_provider',
-      timestamp: Date.now(),
-      verificationType: params.actionType,
-      actionType: params.actionType, // Also include actionType for compatibility
-      metadata: params.metadata || {},
-      privacyLevel: params.privacyLevel,
-    })),
-    verifyRecord: jest.fn().mockResolvedValue(true),
-    getProviderInfo: jest.fn().mockResolvedValue({
-      name: 'test_provider',
-      publicKey: 'mock_public_key',
-      verificationCount: 0,
-      isActive: true,
-      metadata: {},
-    }),
-    listVerifications: jest.fn().mockResolvedValue([
-      {
-        id: 'verification_1',
-        requestHash: 'hash1',
-        responseHash: 'hash2',
-        user: '0x1234567890abcdef',
-        provider: 'test_provider',
-        timestamp: Date.now(),
-        verificationType: 0,
-        actionType: 0,
-        metadata: {},
-        privacyLevel: 'hash_only',
-      },
-      {
-        id: 'verification_2',
-        requestHash: 'hash3',
-        responseHash: 'hash4',
-        user: '0x1234567890abcdef',
-        provider: 'test_provider',
-        timestamp: Date.now(),
-        verificationType: 1,
-        actionType: 1,
-        metadata: {},
-        privacyLevel: 'hash_only',
-      },
-    ]),
-    getRegistryAddress: jest.fn().mockResolvedValue('0xregistry123'),
-    registerProvider: jest.fn().mockResolvedValue('provider_id_123'),
-    getVerification: jest.fn().mockImplementation(async verificationId => ({
-      id: verificationId,
-      requestHash: 'hash1',
-      responseHash: 'hash2',
-      user: '0x1234567890abcdef',
-      provider: 'test_provider',
-      timestamp: Date.now(),
-      verificationType: 0, // AIActionType.SUMMARIZE
-      actionType: 0, // Also include actionType for compatibility
-      metadata: {},
-      privacyLevel: 'hash_only',
-    })),
-    getSigner: jest.fn().mockReturnValue(mockSigner),
-    generateProof: jest.fn().mockResolvedValue('base64_encoded_proof'),
-    exportVerifications: jest.fn().mockResolvedValue(JSON.stringify([])),
-    enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-    securelyDestroyData: jest.fn().mockResolvedValue(true),
-  };
-};
-
-import { expectedResults } from './ai-test-utils';
-import { Todo } from '../../apps/cli/src/types/todo';
-
-export { createMockAIVerifierAdapter };
 
 /**
  * Creates a test-ready AIService instance with proper mock adapter

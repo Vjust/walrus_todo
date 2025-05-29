@@ -8,7 +8,44 @@ import { BaseError } from '../../types/errors/consolidated/BaseError';
 import { CLIError } from '../../types/errors/consolidated/CLIError';
 import { Logger } from '../Logger';
 
-const logger = new Logger('error-handler');
+// Lazy logger initialization to avoid constructor issues in Jest
+let logger: Logger;
+const getLogger = () => {
+  if (!logger) {
+    logger = new Logger('error-handler');
+  }
+  return logger;
+};
+
+/**
+ * Options for centralized error handling
+ */
+interface ErrorHandlerOptions {
+  /** Whether to exit the process */
+  exit?: boolean;
+
+  /** Exit code to use when exiting (defaults to 1) */
+  exitCode?: number;
+
+  /** Whether to log the error stack trace (defaults to false) */
+  logStack?: boolean;
+
+  /** Custom prefix for the error message */
+  prefix?: string;
+
+  /** Context to include with the error */
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Main error handler function - primary export for Jest compatibility
+ * @param err Error to handle
+ * @param options Error handler options
+ */
+export function errorHandler(err: unknown, options: ErrorHandlerOptions = {}): void {
+  handleError(err, options);
+}
+
 // Import or define error utility functions
 const isRetryableError = (error: unknown): boolean => {
   // Check if it's a network-related error based on the message
@@ -45,26 +82,6 @@ const toBaseError = (error: unknown): BaseError => {
 };
 
 // Chalk is imported directly above
-
-/**
- * Options for centralized error handling
- */
-interface ErrorHandlerOptions {
-  /** Whether to exit the process */
-  exit?: boolean;
-
-  /** Exit code to use when exiting (defaults to 1) */
-  exitCode?: number;
-
-  /** Whether to log the error stack trace (defaults to false) */
-  logStack?: boolean;
-
-  /** Custom prefix for the error message */
-  prefix?: string;
-
-  /** Context to include with the error */
-  context?: Record<string, unknown>;
-}
 
 /**
  * Handle an error consistently across the application
@@ -110,17 +127,17 @@ export function handleError(
   const errorPrefix = prefix || '❌';
 
   // Display the error
-  logger.error(
+  getLogger().error(
     `\n${errorPrefix} ${contextPrefix}${chalk.red(baseError.message)}`
   );
 
   // Display additional information for BaseError instances
   if (baseError instanceof BaseError) {
-    logger.error(`${chalk.dim('Error Code:')} ${chalk.yellow(baseError.code)}`);
+    getLogger().error(`${chalk.dim('Error Code:')} ${chalk.yellow(baseError.code)}`);
 
     // Display cause if available and requested
     if (baseError.cause && logStack) {
-      logger.error(
+      getLogger().error(
         `${chalk.dim('Caused by:')} ${chalk.red(baseError.cause.message)}`
       );
     }
@@ -128,14 +145,14 @@ export function handleError(
     // Display context if available and requested
     const combinedContext = { ...baseError.context, ...additionalContext };
     if (Object.keys(combinedContext).length > 0) {
-      logger.error(
+      getLogger().error(
         `${chalk.dim('Context:')} ${JSON.stringify(combinedContext, null, 2)}`
       );
     }
 
     // Display recovery information
     if (baseError.recoverable) {
-      logger.error(
+      getLogger().error(
         `${chalk.green('This error is recoverable.')}${baseError.shouldRetry ? ' You can retry the operation.' : ''}`
       );
     }
@@ -143,7 +160,7 @@ export function handleError(
 
   // Display stack trace if requested
   if (logStack && baseError.stack) {
-    logger.error(
+    getLogger().error(
       `\n${chalk.dim('Stack trace:')}\n${chalk.dim(baseError.stack)}`
     );
   }
@@ -235,8 +252,11 @@ export async function withRetry<T>(
  * @param delay Delay before next attempt
  */
 function defaultOnRetry(error: unknown, attempt: number, delay: number): void {
-  logger.info(
+  getLogger().info(
     chalk.yellow(`Operation failed, retrying (${attempt}/${delay})...`),
     { error: error instanceof Error ? error.message : String(error) }
   );
 }
+
+// Default export for compatibility with existing callers
+export default errorHandler;
