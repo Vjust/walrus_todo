@@ -677,7 +677,7 @@ export class EnhancedCredentialManager {
   private validateApiKey(provider: AIProvider | string, apiKey: string): void {
     // Convert enum to string if needed
     const providerStr =
-      typeof provider === 'string' ? provider : AIProvider[provider];
+      typeof provider === 'string' ? provider : provider;
     const rules =
       PROVIDER_VALIDATION_RULES[providerStr] ||
       PROVIDER_VALIDATION_RULES.custom;

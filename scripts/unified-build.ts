@@ -6,8 +6,8 @@ import * as ts from 'typescript';
 // Simple console logger instead of importing Logger to avoid path issues
 const logger = {
   info: (msg: string) => console.log(`[INFO] ${msg}`),
-  error: (msg: string) => console.error(`[ERROR] ${msg}`),
-  warn: (msg: string) => console.warn(`[WARN] ${msg}`),
+  error: (msg: string, ...args: any[]) => console.error(`[ERROR] ${msg}`, ...args),
+  warn: (msg: string, ...args: any[]) => console.warn(`[WARN] ${msg}`, ...args),
   debug: (msg: string) => console.log(`[DEBUG] ${msg}`)
 };
 
@@ -82,8 +82,7 @@ function cleanDist(): void {
       );
     } catch (error) {
       logger.error(
-        `${colors.red}✗ Failed to clean dist directory:${colors.reset}`,
-        error instanceof Error ? error : new Error(String(error))
+        `${colors.red}✗ Failed to clean dist directory:${colors.reset} ${error instanceof Error ? error.message : String(error)}`
       );
       process.exit(1);
     }
@@ -125,8 +124,7 @@ function fixBinPermissions(): void {
             }
           } catch (error) {
             logger.warn(
-              `${colors.yellow}⚠ Could not change permissions for ${filePath}:${colors.reset}`,
-              { error: error instanceof Error ? error.message : String(error) }
+              `${colors.yellow}⚠ Could not change permissions for ${filePath}:${colors.reset} ${error instanceof Error ? error.message : String(error)}`
             );
           }
         }
@@ -142,8 +140,7 @@ function fixBinPermissions(): void {
     }
   } catch (error) {
     logger.error(
-      `${colors.red}✗ Failed to fix bin directory permissions:${colors.reset}`,
-      error instanceof Error ? error : new Error(String(error))
+      `${colors.red}✗ Failed to fix bin directory permissions:${colors.reset} ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
