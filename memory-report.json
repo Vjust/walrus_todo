@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-05-29T01:49:08.141Z",
+  "timestamp": "2025-05-29T02:45:58.735Z",
   "memoryUsage": {
-    "heapUsedMB": 90,
-    "heapTotalMB": 119,
-    "externalMB": 7,
+    "heapUsedMB": 69,
+    "heapTotalMB": 102,
+    "externalMB": 5,
     "thresholds": {
       "warning": 1024,
       "critical": 2048
