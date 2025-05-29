@@ -1,19 +1,41 @@
 import { jest } from '@jest/globals';
-import { AIProvider } from '../../apps/cli/src/types/adapters/AIModelAdapter';
+
+// Mock the module before importing to avoid Jest auto-mocking issues
+jest.mock('../../apps/cli/src/types/adapters/AIModelAdapter', () => ({
+  AIProvider: {
+    XAI: 'xai',
+    OPENAI: 'openai',
+    ANTHROPIC: 'anthropic',
+    OLLAMA: 'ollama',
+  },
+}));
+
+// Import local types instead of CLI types
 import {
+  AIProvider,
   CredentialType,
   AIPermissionLevel,
-} from '../../apps/cli/src/types/adapters/AICredentialAdapter';
-import { AIActionType } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { Todo } from '../../apps/cli/src/types/todo';
-import { CLIError } from '../../apps/cli/src/types/errors';
+  AIActionType,
+  Todo,
+} from './types';
 
-// Mock the service modules instead of importing them directly
-const { AIPermissionManager, initializePermissionManager, getPermissionManager } = jest.requireMock('../../apps/cli/src/services/ai/AIPermissionManager');
-const { SecureCredentialManager } = jest.requireMock('../../apps/cli/src/services/ai/SecureCredentialManager');
-const { BlockchainVerifier } = jest.requireMock('../../apps/cli/src/services/ai/BlockchainVerifier');
-const { AIService } = jest.requireMock('../../apps/cli/src/services/ai/aiService');
-const { AIProviderFactory } = jest.requireMock('../../apps/cli/src/services/ai/AIProviderFactory');
+// Define CLIError locally for the test
+class CLIError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CLIError';
+  }
+}
+
+// Import the service classes for proper mocking
+import { AIPermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+import { BlockchainVerifier } from '../../apps/cli/src/services/ai/BlockchainVerifier';
+
+// Mock the service modules
+const { initializePermissionManager, getPermissionManager } = jest.requireMock('../../apps/cli/src/services/ai/AIPermissionManager');
 
 // Type definitions for test interfaces
 interface MockPermissionManager {
@@ -58,7 +80,7 @@ interface UsageTracker {
 
 // Mock dependencies
 jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
-jest.mock('../../apps/cli/src/services/ai/BlockchainVerifier');
+jest.mock('../../apps/cli/src/services/ai/aiService');
 jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
 jest.mock('../../apps/cli/src/services/ai/AIPermissionManager', () => {
   const actual = jest.requireActual(
@@ -68,6 +90,14 @@ jest.mock('../../apps/cli/src/services/ai/AIPermissionManager', () => {
     ...actual,
     initializePermissionManager: jest.fn(),
     getPermissionManager: jest.fn(),
+    AIPermissionManager: jest.fn().mockImplementation(() => ({
+      checkPermission: jest.fn(),
+      setPermissionLevel: jest.fn(),
+      getPermissionLevel: jest.fn(),
+      registerOperationPermission: jest.fn(),
+      verifyOperationPermission: jest.fn(),
+      getAllowedOperations: jest.fn(),
+    })),
   };
 });
 jest.mock('@langchain/core/prompts', () => {

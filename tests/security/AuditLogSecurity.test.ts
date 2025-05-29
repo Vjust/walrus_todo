@@ -12,16 +12,21 @@ import {
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import { Todo } from '../../apps/cli/src/types/todo';
 
-// Mock the service modules instead of importing them directly
-const { SecureCredentialManager } = jest.requireMock('../../apps/cli/src/services/ai/SecureCredentialManager');
-const { AIService } = jest.requireMock('../../apps/cli/src/services/ai/aiService');
-const { AIVerificationService } = jest.requireMock('../../apps/cli/src/services/ai/AIVerificationService');
-const { AIProviderFactory } = jest.requireMock('../../apps/cli/src/services/ai/AIProviderFactory');
-const { CLI_CONFIG } = jest.requireMock('../../apps/cli/src/constants');
+// Import the service classes for proper mocking  
+import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+
+// Mock CLI_CONFIG
+const CLI_CONFIG = { APP_NAME: 'waltodo' };
 
 // Mock dependencies
 jest.mock('@langchain/core/prompts');
 jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
+jest.mock('../../apps/cli/src/services/ai/aiService');
+jest.mock('../../apps/cli/src/services/ai/AIVerificationService');
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
 
 // Mock SecureCredentialManager to avoid encryption issues
 jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager', () => {

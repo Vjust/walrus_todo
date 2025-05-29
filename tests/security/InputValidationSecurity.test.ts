@@ -8,19 +8,79 @@ import {
   AIActionType,
   AIPrivacyLevel,
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { createMockTodo } from '../../apps/cli/src/__tests__/helpers/test-utils';
 
-// Mock the service modules instead of importing them directly
-const { AIService } = jest.requireMock('../../apps/cli/src/services/ai/aiService');
-const { AIProviderFactory } = jest.requireMock('../../apps/cli/src/services/ai/AIProviderFactory');
-const { initializePermissionManager } = jest.requireMock('../../apps/cli/src/services/ai/AIPermissionManager');
-const { BlockchainAIVerificationService } = jest.requireMock('../../apps/cli/src/services/ai/BlockchainAIVerificationService');
-const { AIVerificationService } = jest.requireMock('../../apps/cli/src/services/ai/AIVerificationService');
+// Mock file system operations first
+jest.mock('fs', () => ({
+  copyFileSync: jest.fn(),
+  readFileSync: jest.fn(() => 'mock content'),
+  writeFileSync: jest.fn(),
+  existsSync: jest.fn(() => true),
+  mkdirSync: jest.fn(),
+  readdirSync: jest.fn(() => []),
+  statSync: jest.fn(() => ({ isFile: () => true, isDirectory: () => false })),
+}));
 
-// Mock dependencies
-jest.mock('@langchain/core/prompts');
+jest.mock('path', () => ({
+  join: jest.fn((...args) => args.join('/')),
+  dirname: jest.fn(() => '/mock/dir'),
+  basename: jest.fn(() => 'mock-file'),
+  resolve: jest.fn((...args) => '/' + args.join('/')),
+  relative: jest.fn(() => 'mock-relative'),
+}));
+
+// Mock crypto operations
+jest.mock('crypto', () => ({
+  randomBytes: jest.fn(() => Buffer.from('mock-random')),
+  createHash: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    digest: jest.fn(() => 'mock-hash'),
+  })),
+  createCipher: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    final: jest.fn(() => 'mock-encrypted'),
+  })),
+  createDecipher: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    final: jest.fn(() => 'mock-decrypted'),
+  })),
+}));
+
+// Mock all the services before importing
+jest.mock('../../apps/cli/src/services/ai/aiService');
 jest.mock('../../apps/cli/src/services/ai/AIProviderFactory');
 jest.mock('../../apps/cli/src/services/ai/AIPermissionManager');
+jest.mock('../../apps/cli/src/services/ai/BlockchainAIVerificationService');
+jest.mock('../../apps/cli/src/services/ai/AIVerificationService');
+jest.mock('@langchain/core/prompts');
+jest.mock('../../apps/cli/src/utils/Logger');
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialManager');
+jest.mock('../../apps/cli/src/services/ai/SecureCredentialService');
+jest.mock('../../apps/cli/src/utils/config-loader');
+jest.mock('../../apps/cli/src/utils/path-utils');
+
+// Import after mocking
+import { AIService } from '../../apps/cli/src/services/ai/aiService';
+import { AIProviderFactory } from '../../apps/cli/src/services/ai/AIProviderFactory';
+import { initializePermissionManager } from '../../apps/cli/src/services/ai/AIPermissionManager';
+import { BlockchainAIVerificationService } from '../../apps/cli/src/services/ai/BlockchainAIVerificationService';
+import { AIVerificationService } from '../../apps/cli/src/services/ai/AIVerificationService';
+
+// Helper function to create mock todos
+const createMockTodo = (overrides: Partial<Todo> = {}): Todo => {
+  return {
+    id: 'test-todo-id',
+    title: 'Test Todo',
+    description: '',
+    completed: false,
+    priority: 'medium' as const,
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    private: true,
+    storageLocation: 'local' as const,
+    ...overrides,
+  };
+};
 
 // Sample data for tests
 const sampleTodo: Todo = {
@@ -33,6 +93,7 @@ const sampleTodo: Todo = {
   private: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  storageLocation: 'local' as const,
 };
 
 const sampleTodos: Todo[] = [
@@ -47,6 +108,7 @@ const sampleTodos: Todo[] = [
     private: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    storageLocation: 'local' as const,
   },
 ];
 
@@ -62,6 +124,7 @@ function createMaliciousInput(type: string): Todo[] {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          storageLocation: 'local' as const,
         },
         {
           id: 'todo-xss-2',
@@ -70,6 +133,7 @@ function createMaliciousInput(type: string): Todo[] {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          storageLocation: 'local' as const,
         },
       ];
     case 'sql':
@@ -81,6 +145,7 @@ function createMaliciousInput(type: string): Todo[] {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          storageLocation: 'local' as const,
         },
         {
           id: 'todo-sql-2',
@@ -89,6 +154,7 @@ function createMaliciousInput(type: string): Todo[] {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          storageLocation: 'local' as const,
         },
       ];
     case 'command':
@@ -100,6 +166,7 @@ function createMaliciousInput(type: string): Todo[] {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          storageLocation: 'local' as const,
         },
       ];
     case 'prototype': {
@@ -110,6 +177,7 @@ function createMaliciousInput(type: string): Todo[] {
         completed: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        storageLocation: 'local' as const,
       };
       // @ts-expect-error - intentional for testing
       maliciousTodo.__proto__ = { polluted: true };
@@ -125,6 +193,7 @@ function createMaliciousInput(type: string): Todo[] {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          storageLocation: 'local' as const,
         }));
     case 'prompt_injection':
       return [
@@ -162,6 +231,7 @@ function createMaliciousInput(type: string): Todo[] {
           completed: false,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          storageLocation: 'local' as const,
         },
       ];
     default:
@@ -172,6 +242,15 @@ function createMaliciousInput(type: string): Todo[] {
 describe('Input Validation Security Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock AIService constructor and methods
+    (AIService as jest.MockedClass<typeof AIService>).mockImplementation(() => ({
+      summarize: jest.fn().mockResolvedValue('Test summary'),
+      categorize: jest.fn().mockResolvedValue({ categories: {} }),
+      prioritize: jest.fn().mockResolvedValue([]),
+      suggest: jest.fn().mockResolvedValue('Test suggestion'),
+      analyze: jest.fn().mockResolvedValue('Test analysis'),
+    }) as any);
 
     // Default mock implementation for AIProviderFactory
     (AIProviderFactory.createProvider as jest.Mock).mockImplementation(
@@ -195,6 +274,38 @@ describe('Input Validation Security Tests', () => {
         };
       }
     );
+
+    // Mock AIVerificationService
+    (AIVerificationService as jest.MockedClass<typeof AIVerificationService>).mockImplementation(() => ({
+      createVerification: jest.fn().mockResolvedValue({
+        id: 'ver-123',
+        requestHash: 'req-hash-123',
+        responseHash: 'res-hash-123',
+        user: 'user-123',
+        provider: 'xai',
+        timestamp: Date.now(),
+        verificationType: AIActionType.SUMMARIZE,
+        metadata: {},
+      }),
+      createVerifiedSummary: jest.fn().mockResolvedValue({
+        summary: 'Test summary',
+        verification: {
+          id: 'ver-123',
+          requestHash: 'req-hash-123',
+          responseHash: 'res-hash-123',
+        },
+      }),
+    }) as any);
+
+    // Mock BlockchainAIVerificationService
+    (BlockchainAIVerificationService as jest.MockedClass<typeof BlockchainAIVerificationService>).mockImplementation(() => ({
+      createVerification: jest.fn().mockResolvedValue({
+        id: 'ver-123',
+        requestHash: 'req-hash-123',
+        responseHash: 'res-hash-123',
+        timestamp: Date.now(),
+      }),
+    }) as any);
 
     // Default permission manager
     (initializePermissionManager as jest.Mock).mockReturnValue({
