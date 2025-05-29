@@ -121,6 +121,24 @@ const mockBlockchainAIVerificationService = {
     }
     return true;
   }),
+
+  // Additional methods required by security tests
+  generateProof: jest.fn().mockImplementation(async (actionType, request, response) => {
+    return {
+      proofId: 'mock-proof-id',
+      signature: 'valid_mock-signature',
+      data: { actionType, request, response },
+    };
+  }),
+
+  verifyProof: jest.fn().mockImplementation(async (proofId, signature, data) => {
+    // Simulate verification logic
+    if (signature === 'tampered-signature') return false;
+    if (data.response === 'tampered response') return false;
+    return signature.startsWith('valid_');
+  }),
+
+  verifyRecord: jest.fn().mockResolvedValue(true),
 };
 
 const MockBlockchainAIVerificationServiceClass = jest

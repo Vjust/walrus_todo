@@ -7,6 +7,7 @@ module.exports = {
     '**/tests/commands/**/*.test.ts',
     '**/tests/edge-cases/**/*.test.ts',
     '**/tests/fuzz/**/*.test.ts',
+    '**/tests/security/**/*.test.ts',
     '**/apps/cli/src/__tests__/**/*.test.ts',
   ],
   testPathIgnorePatterns: [
