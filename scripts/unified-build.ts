@@ -184,7 +184,7 @@ function analyzeTypeScriptErrors(errorOutput: string): { errorCount: number; war
   const warnings: string[] = [];
   const summary: string[] = [];
   
-  let currentFile = '';
+  const currentFile = '';
   
   lines.forEach(line => {
     if (line.includes(': error TS')) {
