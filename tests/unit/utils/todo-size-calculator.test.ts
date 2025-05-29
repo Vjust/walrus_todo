@@ -70,7 +70,7 @@ describe('TodoSizeCalculator', () => {
             },
           },
         },
-      };
+      });
 
       const expectedSize = JSON.stringify(todo, null, 2).length;
       const actualSize = calculator.calculateBytes(todo);
@@ -79,6 +79,7 @@ describe('TodoSizeCalculator', () => {
     });
   });
 
+  describe('edge cases', () => {
     it('should handle empty todo', () => {
       const todo: Todo = createMockTodo({
         id: '',
