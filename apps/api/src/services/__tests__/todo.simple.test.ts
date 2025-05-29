@@ -4,7 +4,7 @@ describe('Todo Service Logic', () => {
   interface Todo {
     id: string;
     title: string;
-    content: string;
+    description: string;
     completed: boolean;
     priority?: 'high' | 'medium' | 'low';
     category?: string;
@@ -45,7 +45,7 @@ describe('Todo Service Logic', () => {
       };
 
       const arrayFormat = [
-        { id: '1', title: 'Todo 1', content: 'Content 1', completed: false, wallet: testWallet, createdAt: '', updatedAt: '' }
+        { id: '1', title: 'Todo 1', description: 'Description 1', completed: false, wallet: testWallet, createdAt: '', updatedAt: '' }
       ];
       expect(parseData(arrayFormat)).toEqual(arrayFormat);
     });
@@ -64,7 +64,7 @@ describe('Todo Service Logic', () => {
 
       const objectFormat = {
         todos: [
-          { id: '1', title: 'Todo 1', content: 'Content 1', completed: false, wallet: testWallet, createdAt: '', updatedAt: '' }
+          { id: '1', title: 'Todo 1', description: 'Description 1', completed: false, wallet: testWallet, createdAt: '', updatedAt: '' }
         ],
         metadata: {}
       };
@@ -85,7 +85,7 @@ describe('Todo Service Logic', () => {
 
       const objectFormat = {
         items: [
-          { id: '1', title: 'Todo 1', content: 'Content 1', completed: false, wallet: testWallet, createdAt: '', updatedAt: '' }
+          { id: '1', title: 'Todo 1', description: 'Description 1', completed: false, wallet: testWallet, createdAt: '', updatedAt: '' }
         ],
         metadata: {}
       };
@@ -116,7 +116,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-1',
         title: 'Work Todo',
-        content: 'Work Todo',
+        description: 'Work Todo',
         completed: false,
         priority: 'high',
         category: 'work',
@@ -128,7 +128,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-2',
         title: 'Personal Todo',
-        content: 'Personal Todo',
+        description: 'Personal Todo',
         completed: true,
         priority: 'low',
         category: 'personal',
@@ -140,7 +140,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-3',
         title: 'Other Wallet Todo',
-        content: 'Other Wallet Todo',
+        description: 'Other Wallet Todo',
         completed: false,
         priority: 'medium',
         category: 'work',
@@ -187,7 +187,7 @@ describe('Todo Service Logic', () => {
     const mockTodos = Array.from({ length: 10 }, (_, i) => ({
       id: `todo-${i}`,
       title: `Todo ${i}`,
-      content: `Content ${i}`,
+      description: `Description ${i}`,
       completed: false,
       priority: 'medium' as const,
       createdAt: '2023-01-01T00:00:00.000Z',
@@ -228,8 +228,8 @@ describe('Todo Service Logic', () => {
         const now = new Date().toISOString();
         return {
           id,
-          title: data.content,
-          content: data.content,
+          title: data.description,
+          description: data.description,
           completed: false,
           priority: data.priority || 'medium',
           category: data.category,
@@ -241,7 +241,7 @@ describe('Todo Service Logic', () => {
       };
 
       const data = {
-        content: 'New todo content',
+        description: 'New todo description',
         priority: 'high' as const,
         category: 'work',
         tags: ['urgent'],
@@ -250,8 +250,8 @@ describe('Todo Service Logic', () => {
       const todo = createTodo(data, testWallet, 'new-id');
       
       expect(todo.id).toBe('new-id');
-      expect(todo.content).toBe('New todo content');
-      expect(todo.title).toBe('New todo content');
+      expect(todo.description).toBe('New todo description');
+      expect(todo.title).toBe('New todo description');
       expect(todo.priority).toBe('high');
       expect(todo.completed).toBe(false);
       expect(todo.wallet).toBe(testWallet);
@@ -262,8 +262,8 @@ describe('Todo Service Logic', () => {
         const now = new Date().toISOString();
         return {
           id,
-          title: data.content,
-          content: data.content,
+          title: data.description,
+          description: data.description,
           completed: false,
           priority: data.priority || 'medium',
           category: data.category,
@@ -274,7 +274,7 @@ describe('Todo Service Logic', () => {
         };
       };
 
-      const data = { content: 'Simple todo' };
+      const data = { description: 'Simple todo' };
       const todo = createTodo(data, testWallet, 'new-id');
       
       expect(todo.priority).toBe('medium');
@@ -287,7 +287,7 @@ describe('Todo Service Logic', () => {
     const existingTodo = {
       id: 'todo-1',
       title: 'Original Todo',
-      content: 'Original Todo',
+      description: 'Original Todo',
       completed: false,
       priority: 'medium' as const,
       category: 'work',
@@ -302,7 +302,7 @@ describe('Todo Service Logic', () => {
         return {
           ...existing,
           ...updates,
-          ...(updates.content && { title: updates.content }),
+          ...(updates.description && { title: updates.description }),
           updatedAt: new Date().toISOString(),
           wallet: existing.wallet,
           id: existing.id,
@@ -311,15 +311,15 @@ describe('Todo Service Logic', () => {
       };
 
       const updates = {
-        content: 'Updated content',
+        description: 'Updated description',
         priority: 'high' as const,
         completed: true,
       };
 
       const updated = updateTodo(existingTodo, updates);
       
-      expect(updated.content).toBe('Updated content');
-      expect(updated.title).toBe('Updated content');
+      expect(updated.description).toBe('Updated description');
+      expect(updated.title).toBe('Updated description');
       expect(updated.priority).toBe('high');
       expect(updated.completed).toBe(true);
       expect(updated.category).toBe('work'); // preserved
@@ -332,7 +332,7 @@ describe('Todo Service Logic', () => {
         return {
           ...existing,
           ...updates,
-          ...(updates.content && { title: updates.content }),
+          ...(updates.description && { title: updates.description }),
           updatedAt: new Date().toISOString(),
           wallet: existing.wallet,
           id: existing.id,
@@ -343,7 +343,7 @@ describe('Todo Service Logic', () => {
       const updates = { priority: 'high' as const };
       const updated = updateTodo(existingTodo, updates);
       
-      expect(updated.content).toBe(existingTodo.content);
+      expect(updated.description).toBe(existingTodo.description);
       expect(updated.category).toBe(existingTodo.category);
       expect(updated.tags).toBe(existingTodo.tags);
       expect(updated.completed).toBe(existingTodo.completed);
@@ -355,7 +355,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-1',
         title: 'Completed High Priority',
-        content: 'Completed High Priority',
+        description: 'Completed High Priority',
         completed: true,
         priority: 'high',
         category: 'work',
@@ -366,7 +366,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-2',
         title: 'Pending Medium Priority',
-        content: 'Pending Medium Priority',
+        description: 'Pending Medium Priority',
         completed: false,
         priority: 'medium',
         category: 'personal',
@@ -377,7 +377,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-3',
         title: 'Pending High Priority',
-        content: 'Pending High Priority',
+        description: 'Pending High Priority',
         completed: false,
         priority: 'high',
         category: 'work',
@@ -423,7 +423,7 @@ describe('Todo Service Logic', () => {
       const todoWithoutDefaults = {
         id: 'todo-1',
         title: 'Default Todo',
-        content: 'Default Todo',
+        description: 'Default Todo',
         completed: false,
         createdAt: '2023-01-01T00:00:00.000Z',
         updatedAt: '2023-01-01T00:00:00.000Z',
@@ -462,7 +462,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-1',
         title: 'Todo 1',
-        content: 'Todo 1',
+        description: 'Todo 1',
         completed: false,
         priority: 'medium',
         category: 'work',
@@ -474,7 +474,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-2',
         title: 'Todo 2',
-        content: 'Todo 2',
+        description: 'Todo 2',
         completed: false,
         priority: 'medium',
         category: 'personal',
@@ -486,7 +486,7 @@ describe('Todo Service Logic', () => {
       {
         id: 'todo-3',
         title: 'Todo 3',
-        content: 'Todo 3',
+        description: 'Todo 3',
         completed: false,
         priority: 'medium',
         category: 'work',

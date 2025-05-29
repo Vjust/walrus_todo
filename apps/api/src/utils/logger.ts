@@ -1,7 +1,7 @@
 import winston from 'winston';
 import { config } from '../config';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 // Ensure logs directory exists
 const logsDir = path.join(process.cwd(), 'logs');

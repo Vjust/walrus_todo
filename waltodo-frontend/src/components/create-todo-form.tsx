@@ -6,6 +6,7 @@ import { addTodo } from '@/lib/todo-service';
 import { storeTodoOnBlockchain } from '@/lib/sui-client';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import React, { useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 type CreateTodoFormProps = {
   listName: string;
@@ -124,6 +125,11 @@ export default function CreateTodoForm({
             'Blockchain creation failed, but local todo was created:',
             blockchainError
           );
+          // Show warning toast but don't fail the entire operation
+          toast.error('Todo created locally but blockchain storage failed. It will be retried later.', {
+            duration: 5000,
+            icon: '⚠️',
+          });
           // Don't throw - local todo creation succeeded
         }
       }
@@ -141,14 +147,26 @@ export default function CreateTodoForm({
 
       console.log('Todo created successfully:', newTodo);
 
-      // Show success message for blockchain creation
+      // Show success message
       if (createOnBlockchain && newTodo.blockchainStored) {
-        // Could add a success toast here
-        console.log('✅ Todo NFT created on Sui blockchain!');
+        toast.success('Todo NFT created on Sui blockchain!', {
+          duration: 5000,
+          icon: '🎉',
+        });
+      } else {
+        toast.success('Todo created successfully!', {
+          duration: 3000,
+        });
       }
     } catch (error) {
       console.error('Failed to create todo:', error);
-      setError('Failed to create todo. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create todo';
+      setError(errorMessage);
+      
+      // Show error toast
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
     } finally {
       setIsSubmitting(false);
       setIsCreatingOnChain(false);

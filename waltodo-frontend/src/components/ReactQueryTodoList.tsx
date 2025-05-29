@@ -11,6 +11,9 @@ import {
 import { useWebSocket } from '@/lib/websocket';
 import { useHydratedTodoStore } from '@/stores/todoStore';
 import { Todo } from '@/types/todo';
+import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
+import { useWalletContext } from '@/contexts/WalletContext';
+import toast from 'react-hot-toast';
 
 interface ReactQueryTodoListProps {
   listName?: string;
@@ -19,6 +22,10 @@ interface ReactQueryTodoListProps {
 export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListProps) {
   const [newTodoTitle, setNewTodoTitle] = useState('');
   const [isAddingTodo, setIsAddingTodo] = useState(false);
+  
+  // Wallet and error handling
+  const walletContext = useWalletContext();
+  const { handleApiError } = useApiErrorHandler();
 
   // React Query hooks
   const { data: todos = [], isLoading, error } = useTodos(listName);
@@ -86,27 +93,56 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
         listName,
       });
       setNewTodoTitle('');
-    } catch (error) {
+      toast.success('Todo created successfully!');
+    } catch (error: any) {
       console.error('Failed to create todo:', error);
+      
+      // Use the error handler
+      if (!handleApiError(error)) {
+        // If not handled by the global handler, show a generic error
+        toast.error(error.message || 'Failed to create todo');
+      }
     } finally {
       setIsAddingTodo(false);
     }
   };
 
   const handleToggleComplete = (todo: Todo) => {
+    const mutation = todo.completed ? updateTodo : completeTodo;
+    
+    const handleError = (error: any) => {
+      console.error('Failed to update todo:', error);
+      if (!handleApiError(error)) {
+        toast.error('Failed to update todo');
+      }
+    };
+    
     if (todo.completed) {
-      updateTodo.mutate({
-        id: todo.id,
-        updates: { completed: false, completedAt: undefined },
-      });
+      updateTodo.mutate(
+        {
+          id: todo.id,
+          updates: { completed: false, completedAt: undefined },
+        },
+        { onError: handleError }
+      );
     } else {
-      completeTodo.mutate(todo.id);
+      completeTodo.mutate(todo.id, { onError: handleError });
     }
   };
 
   const handleDeleteTodo = (todoId: string) => {
     if (confirm('Are you sure you want to delete this todo?')) {
-      deleteTodo.mutate(todoId);
+      deleteTodo.mutate(todoId, {
+        onError: (error: any) => {
+          console.error('Failed to delete todo:', error);
+          if (!handleApiError(error)) {
+            toast.error('Failed to delete todo');
+          }
+        },
+        onSuccess: () => {
+          toast.success('Todo deleted');
+        }
+      });
     }
   };
 
@@ -129,10 +165,28 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
   }
 
   if (error) {
+    // Check if it's an auth error
+    const isAuthError = error.message?.includes('401') || error.message?.includes('Unauthorized');
+    
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <h3 className="text-red-800 font-medium">Error loading todos</h3>
-        <p className="text-red-600 text-sm mt-1">{error.message}</p>
+        <h3 className="text-red-800 font-medium">
+          {isAuthError ? 'Authentication Required' : 'Error loading todos'}
+        </h3>
+        <p className="text-red-600 text-sm mt-1">
+          {isAuthError 
+            ? 'Please connect your wallet to view todos' 
+            : error.message
+          }
+        </p>
+        {isAuthError && !walletContext?.connected && (
+          <button
+            onClick={() => walletContext?.connect()}
+            className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Connect Wallet
+          </button>
+        )}
       </div>
     );
   }

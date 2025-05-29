@@ -347,4 +347,83 @@ export class TodoController {
       });
     }
   );
+
+  // GET /api/v1/todos/lists
+  public getLists = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const wallet = req.wallet;
+
+      if (!wallet) {
+        throw new ApiError('Wallet address required', 400, 'WALLET_REQUIRED');
+      }
+
+      const lists = await this.todoService.getLists(wallet);
+
+      res.json({
+        success: true,
+        data: lists,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  );
+
+  // POST /api/v1/todos/lists
+  public createList = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { name, description } = req.body;
+      const wallet = req.wallet;
+
+      if (!wallet) {
+        throw new ApiError('Wallet address required', 400, 'WALLET_REQUIRED');
+      }
+
+      const list = await this.todoService.createList(wallet, name, description);
+
+      // Broadcast to WebSocket clients
+      if (this.websocketService) {
+        this.websocketService.broadcast({
+          type: 'LIST_CREATED',
+          data: list,
+          wallet,
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        data: list,
+        message: 'List created successfully',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  );
+
+  // DELETE /api/v1/todos/lists/:name
+  public deleteList = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const { name } = req.params;
+      const wallet = req.wallet;
+
+      if (!wallet) {
+        throw new ApiError('Wallet address required', 400, 'WALLET_REQUIRED');
+      }
+
+      const deletedList = await this.todoService.deleteList(wallet, name);
+
+      // Broadcast to WebSocket clients
+      if (this.websocketService) {
+        this.websocketService.broadcast({
+          type: 'LIST_DELETED',
+          data: { name, wallet },
+          wallet,
+        });
+      }
+
+      res.json({
+        success: true,
+        data: deletedList,
+        message: 'List deleted successfully',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  );
 }

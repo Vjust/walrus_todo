@@ -157,7 +157,7 @@ describe('WebSocket Service Logic', () => {
       const todo = {
         id: 'todo-123',
         title: 'Test Todo',
-        content: 'Test content',
+        description: 'Test description',
         completed: false,
         wallet: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
         createdAt: '2023-01-01T00:00:00.000Z',
@@ -171,9 +171,9 @@ describe('WebSocket Service Logic', () => {
       expect(todoCreatedEvent.data.wallet).toBe(todo.wallet);
 
       // Test todo updated event
-      const updatedTodo = { ...todo, content: 'Updated content' };
+      const updatedTodo = { ...todo, description: 'Updated description' };
       const todoUpdatedEvent = { type: 'todo-updated', data: updatedTodo };
-      expect(todoUpdatedEvent.data.content).toBe('Updated content');
+      expect(todoUpdatedEvent.data.description).toBe('Updated description');
 
       // Test todo deleted event
       const todoDeletedEvent = { 

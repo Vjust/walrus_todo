@@ -15,6 +15,7 @@ import {
   UpdateTodoParams,
 } from '@/hooks/useSuiTodos';
 import { useWalletContext } from '@/contexts/WalletContext';
+import toast from 'react-hot-toast';
 
 // TodoNFT creation form component
 function CreateTodoForm({
@@ -73,8 +74,16 @@ function CreateTodoForm({
         tags: [],
       });
       setErrors({});
+      toast.success('TodoNFT created successfully!', {
+        duration: 3000,
+        icon: '🎉',
+      });
     } catch (error) {
       console.error('Create todo error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create TodoNFT';
+      toast.error(errorMessage, {
+        duration: 5000,
+      });
     }
   };
 
@@ -271,6 +280,10 @@ function TodoItem({
     if (window.confirm('Are you sure you want to delete this TodoNFT?')) {
       await executeOperation(async () => {
         await onDelete(todo.objectId!);
+        toast.success('TodoNFT deleted successfully!', {
+          duration: 3000,
+          icon: '🗑️',
+        });
         return { success: true };
       });
     }

@@ -141,7 +141,7 @@ curl -X POST http://localhost:3000/api/v1/todos \
   -H "Content-Type: application/json" \
   -H "X-Wallet-Address: 0x..." \
   -d '{
-    "content": "Buy groceries",
+    "description": "Buy groceries",
     "priority": "high",
     "category": "personal",
     "tags": ["shopping", "urgent"]

@@ -29,6 +29,20 @@ export function createTodoRoutes(websocketService?: WebSocketService): Router {
   // GET /api/v1/todos/stats - Get todo statistics for wallet
   router.get('/stats', todoController.getStats);
 
+  // List management routes (must be before /:id routes)
+  // GET /api/v1/todos/lists - Get all todo lists for wallet
+  router.get('/lists', todoController.getLists);
+
+  // POST /api/v1/todos/lists - Create new list
+  router.post(
+    '/lists',
+    validate({ body: schemas.createList }),
+    todoController.createList
+  );
+
+  // DELETE /api/v1/todos/lists/:name - Delete a list
+  router.delete('/lists/:name', todoController.deleteList);
+
   // GET /api/v1/todos/:id - Get specific todo
   router.get('/:id', validateId(), todoController.getTodo);
 

@@ -4,8 +4,11 @@
 import React, { ReactNode, useEffect, useState, createContext, useContext } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ErrorSuppressor } from '@/components/ErrorSuppressor';
+import { ToastProvider } from '@/components/ToastProvider';
 import { AppWalletProvider } from '@/contexts/WalletContext';
+import { WebSocketProvider } from '@/contexts/WebSocketContext';
 import { initializeSuiClientWithConfig, isSuiClientInitialized } from '@/lib/sui-client';
+import { useAuthListener } from '@/hooks/useAuthListener';
 
 interface ClientOnlyRootProps {
   children: ReactNode;
@@ -37,6 +40,12 @@ export const useAppInitialization = () => {
   // Context should never be null/undefined now, but keep fallback for safety
   return context || defaultContextValue;
 };
+
+// Component to use auth listener within wallet context
+function AuthListenerWrapper({ children }: { children: ReactNode }) {
+  useAuthListener();
+  return <>{children}</>;
+}
 
 export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
   // Initialize states to prevent hydration mismatch
@@ -161,8 +170,13 @@ export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
       <AppInitializationContext.Provider value={initializationContextValue}>
         <ErrorBoundary>
           <ErrorSuppressor />
+          <ToastProvider />
           <AppWalletProvider>
-            {children}
+            <WebSocketProvider>
+              <AuthListenerWrapper>
+                {children}
+              </AuthListenerWrapper>
+            </WebSocketProvider>
           </AppWalletProvider>
         </ErrorBoundary>
       </AppInitializationContext.Provider>

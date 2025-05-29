@@ -220,6 +220,17 @@ export class WebSocketService {
     });
   }
 
+  // Generic broadcast method for any event type
+  public broadcast(event: { type: string; data: any; wallet: string }): void {
+    const roomName = `wallet:${event.wallet}`;
+    this.io.to(roomName).emit(event.type.toLowerCase().replace(/_/g, '-'), event.data);
+
+    logger.debug('Broadcasted event', {
+      type: event.type,
+      wallet: event.wallet,
+    });
+  }
+
   // Stats and monitoring
 
   public getStats(): {

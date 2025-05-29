@@ -28,8 +28,8 @@ export interface ApiConfig {
     pingInterval: number;
   };
   todo: {
-    dataPath: string;
     maxTodosPerWallet: number;
+    dataPath: string;
   };
   server?: {
     host?: string;
@@ -38,7 +38,7 @@ export interface ApiConfig {
 }
 
 export const config: ApiConfig = {
-  port: parseInt(process.env.API_PORT || '3000', 10),
+  port: parseInt(process.env.API_PORT || '3001', 10),
   env: process.env.NODE_ENV || 'development',
 
   cors: {
@@ -73,8 +73,8 @@ export const config: ApiConfig = {
   },
 
   todo: {
-    dataPath: process.env.TODO_DATA_PATH || '../../Todos',
     maxTodosPerWallet: parseInt(process.env.MAX_TODOS_PER_WALLET || '1000', 10),
+    dataPath: process.env.TODO_DATA_PATH || '../../data/todos',
   },
 };
 

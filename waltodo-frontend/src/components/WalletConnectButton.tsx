@@ -13,6 +13,7 @@ import { WalletError } from '@/lib/wallet-errors';
 import { ErrorBoundary } from './ErrorBoundary';
 import { WalletSelector } from './WalletSelector';
 import { ClientOnly } from '@/components/ClientOnly';
+import toast from 'react-hot-toast';
 
 function WalletConnectButton() {
   const {
@@ -75,6 +76,9 @@ function WalletConnectButton() {
 
       if (result.success) {
         setCopyStatus('success');
+        toast.success('Address copied to clipboard!', {
+          duration: 2000,
+        });
         // Reset success status after 2 seconds
         const timeoutId = setTimeout(() => {
           setCopyStatus('idle');
@@ -91,6 +95,9 @@ function WalletConnectButton() {
           setClipboardError(result.error);
         }
 
+        toast.error('Failed to copy address', {
+          duration: 3000,
+        });
         console.error('Failed to copy address:', result.error);
       }
     } catch (error) {
@@ -103,6 +110,9 @@ function WalletConnectButton() {
         setClipboardError(error);
       }
 
+      toast.error(message, {
+        duration: 4000,
+      });
       console.error('Copy operation failed:', error);
     }
   }, [address, copyStatus]);
@@ -131,11 +141,13 @@ function WalletConnectButton() {
         tempInput.select();
 
         // Show instructions
-        alert(
-          'Please use keyboard shortcut to copy:\n' +
-            '• Windows/Linux: Press Ctrl+C\n' +
-            '• Mac: Press Command+C\n\n' +
-            'Then click OK to continue.'
+        toast(
+          'Use keyboard shortcut to copy: ' +
+            (navigator.platform.includes('Mac') ? 'Cmd+C' : 'Ctrl+C'),
+          {
+            duration: 5000,
+            icon: '📋',
+          }
         );
       } finally {
         // Always clean up, even if there's an error
@@ -161,9 +173,14 @@ function WalletConnectButton() {
     try {
       await switchNetwork(network);
       setShowNetworkOptions(false);
+      toast.success(`Switched to ${network}`, {
+        duration: 2000,
+      });
     } catch (error) {
       console.error(`Failed to switch to ${network}:`, error);
-      // Note: clearError is available, but we'd need an setError function for this
+      toast.error(`Failed to switch to ${network}`, {
+        duration: 4000,
+      });
     } finally {
       setIsNetworkSwitching(false);
     }

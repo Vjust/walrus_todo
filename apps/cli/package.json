@@ -37,6 +37,7 @@
     "@waltodo/config-loader": "workspace:*",
     "@waltodo/sui-client": "workspace:*",
     "@waltodo/walrus-client": "workspace:*",
+    "@waltodo/shared-constants": "workspace:*",
     "axios": "^1.9.0",
     "chalk": "^4.1.2",
     "cli-progress": "^3.12.0",

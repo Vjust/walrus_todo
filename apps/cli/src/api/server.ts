@@ -9,6 +9,7 @@ import { validateApiKey } from './middleware/auth';
 import todoRoutes from './routes/todos';
 import syncRoutes from './routes/sync';
 import { ApiConfig } from './config';
+import { getCorsConfig } from './config/cors';
 import { Logger } from '../utils/Logger';
 
 const logger = new Logger('server');

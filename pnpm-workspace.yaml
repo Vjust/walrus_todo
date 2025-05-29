@@ -3,10 +3,21 @@ neverBuiltDependencies:
   - babel-plugin-istanbul
 
 packages:
+  # Shared packages (built first)
+  - "packages/shared-types"
+  - "packages/shared-constants"
+  - "packages/config-loader"
+  - "packages/sui-client"
+  - "packages/walrus-client"
+  # All other packages
   - "packages/*"
+  # Application packages
   - "apps/*"
+  # Frontend
   - "waltodo-frontend"
+  # Test setup package
   - "tests/testnet/setup"
+  
 ignoreBuiltDependencies:
   - bufferutil
   - sharp

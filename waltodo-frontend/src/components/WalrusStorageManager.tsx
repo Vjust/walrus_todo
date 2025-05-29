@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { walrusClient } from '@/lib/walrus-client';
+import toast from 'react-hot-toast';
 
 export default function WalrusStorageManager() {
   const [uploadStatus, setUploadStatus] = useState<string>('');
@@ -28,12 +29,18 @@ export default function WalrusStorageManager() {
       setImageUrl(url);
 
       setUploadStatus(`✅ Upload successful! Blob ID: ${result.blobId}`);
+      toast.success('Image uploaded to Walrus successfully!', {
+        duration: 4000,
+        icon: '🖼️',
+      });
       console.log('Upload result:', result);
     } catch (error) {
       console.error('Upload error:', error);
-      setUploadStatus(
-        `❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setUploadStatus(`❌ Upload failed: ${errorMessage}`);
+      toast.error(`Upload failed: ${errorMessage}`, {
+        duration: 5000,
+      });
     } finally {
       setIsUploading(false);
     }
@@ -54,6 +61,10 @@ export default function WalrusStorageManager() {
 
       setBlobId(result.blobId);
       setUploadStatus(`✅ Text uploaded! Blob ID: ${result.blobId}`);
+      toast.success('Text uploaded to Walrus successfully!', {
+        duration: 3000,
+        icon: '📝',
+      });
 
       // Test downloading it back
       const downloaded = await walrusClient.download(result.blobId);
@@ -61,9 +72,11 @@ export default function WalrusStorageManager() {
       console.log('Downloaded text:', downloadedText);
     } catch (error) {
       console.error('Upload error:', error);
-      setUploadStatus(
-        `❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setUploadStatus(`❌ Upload failed: ${errorMessage}`);
+      toast.error(`Upload failed: ${errorMessage}`, {
+        duration: 5000,
+      });
     } finally {
       setIsUploading(false);
     }
@@ -87,15 +100,21 @@ export default function WalrusStorageManager() {
 
       setBlobId(result.blobId);
       setUploadStatus(`✅ JSON uploaded! Blob ID: ${result.blobId}`);
+      toast.success('JSON data uploaded to Walrus successfully!', {
+        duration: 3000,
+        icon: '📦',
+      });
 
       // Test downloading it back
       const downloaded = await walrusClient.downloadJson(result.blobId);
       console.log('Downloaded JSON:', downloaded);
     } catch (error) {
       console.error('Upload error:', error);
-      setUploadStatus(
-        `❌ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setUploadStatus(`❌ Upload failed: ${errorMessage}`);
+      toast.error(`Upload failed: ${errorMessage}`, {
+        duration: 5000,
+      });
     } finally {
       setIsUploading(false);
     }

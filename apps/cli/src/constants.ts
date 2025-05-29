@@ -3,6 +3,7 @@
  * These are loaded from the environment configuration system.
  */
 import { getEnv, initializeConfig } from './utils/environment-config';
+import { SHARED_STORAGE_CONFIG } from '@waltodo/shared-constants';
 
 // Initialize environment configuration if not already initialized, but skip in test environment
 if (typeof process.env.ENV_CONFIG_INITIALIZED === 'undefined' && process.env.NODE_ENV !== 'test') {
@@ -36,9 +37,11 @@ const safeGetEnv = (key: any, defaultValue: any = '') => {
 };
 
 export const STORAGE_CONFIG = {
-  TODOS_DIR: safeGetEnv('STORAGE_PATH', 'Todos'),
-  FILE_EXT: '.json',
+  TODOS_DIR: safeGetEnv('STORAGE_PATH', 'Todos'), // Keep for backward compatibility
+  FILE_EXT: SHARED_STORAGE_CONFIG.FILE_EXT,
   TEMPORARY_DIR: safeGetEnv('TEMPORARY_STORAGE', '/tmp/waltodo'),
+  // Expose shared config method for direct usage
+  getTodosPath: SHARED_STORAGE_CONFIG.getTodosPath,
 } as const;
 
 export const NETWORK_URLS: Record<string, string> = {

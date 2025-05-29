@@ -5,10 +5,15 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { createServer, Server } from 'http';
 import { config } from './config';
+import { getCorsConfig } from './config/cors';
 import { logger } from './utils/logger';
 import { WebSocketService } from './services/websocketService';
+import { TodoService } from './services/todoService';
 import { createTodoRoutes } from './routes/todos';
 import { createHealthRoutes } from './routes/health';
+import { createAIRoutes } from './routes/ai';
+import { createAuthRoutes } from './routes/auth';
+import { createSyncRoutes } from './routes/sync';
 import { validateApiKey } from './middleware/auth';
 import { requestLogger, securityHeaders } from './middleware/logging';
 import {
@@ -55,23 +60,11 @@ export class ApiServer {
 
     this.app.use(securityHeaders);
 
-    // CORS configuration
-    this.app.use(
-      cors({
-        origin: config.cors.origins,
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: [
-          'Content-Type',
-          'Authorization',
-          'X-API-Key',
-          'X-Wallet-Address',
-          'Origin',
-          'Accept',
-        ],
-        exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
-      })
-    );
+    // CORS configuration - use shared config with dynamic port support
+    this.app.use(cors(getCorsConfig(config.env)));
+    
+    // Handle preflight requests explicitly
+    this.app.options('*', cors(getCorsConfig(config.env)));
 
     // Rate limiting
     if (config.rateLimit.max > 0) {
@@ -127,8 +120,16 @@ export class ApiServer {
     // Health check routes (no auth required)
     this.app.use(createHealthRoutes(this.websocketService));
 
+    // Auth routes (no API key required for authentication)
+    this.app.use('/api/v1/auth', createAuthRoutes());
+
     // API routes
     this.app.use('/api/v1/todos', createTodoRoutes(this.websocketService));
+    this.app.use('/api/v1/ai', createAIRoutes(this.websocketService));
+    
+    // Sync routes
+    const todoService = new TodoService();
+    this.app.use('/api/v1/sync', createSyncRoutes(todoService, this.websocketService));
 
     // API documentation endpoint
     this.app.get(
@@ -145,6 +146,12 @@ export class ApiServer {
               'GET /ready': 'Readiness probe',
               'GET /live': 'Liveness probe',
             },
+            auth: {
+              'POST /api/v1/auth/login': 'Login with wallet signature',
+              'POST /api/v1/auth/verify': 'Verify JWT token',
+              'POST /api/v1/auth/refresh': 'Refresh JWT token',
+              'POST /api/v1/auth/logout': 'Logout (invalidate token)',
+            },
             todos: {
               'GET /api/v1/todos': 'List todos with pagination',
               'GET /api/v1/todos/:id': 'Get specific todo',
@@ -158,6 +165,21 @@ export class ApiServer {
               'GET /api/v1/todos/tags': 'Get tags',
               'GET /api/v1/todos/stats': 'Get statistics',
             },
+            ai: {
+              'POST /api/v1/ai/suggest': 'Get AI-powered task suggestions',
+              'POST /api/v1/ai/summarize': 'Get AI summary of todo list',
+              'POST /api/v1/ai/categorize': 'Get AI-suggested categories and tags',
+              'POST /api/v1/ai/prioritize': 'Get AI-suggested priority levels',
+              'POST /api/v1/ai/analyze': 'Get AI productivity analysis',
+            },
+            sync: {
+              'POST /api/v1/sync/todos/:id/walrus': 'Sync todo to Walrus storage',
+              'POST /api/v1/sync/todos/:id/blockchain': 'Sync todo to blockchain',
+              'POST /api/v1/sync/lists/:listName/walrus': 'Sync list to Walrus storage',
+              'GET /api/v1/sync/walrus/:blobId': 'Retrieve data from Walrus',
+              'GET /api/v1/sync/status/:todoId': 'Get sync status for a todo',
+              'POST /api/v1/sync/batch': 'Batch sync operations',
+            },
             websocket: {
               events: config.websocket.enabled
                 ? [
@@ -166,6 +188,7 @@ export class ApiServer {
                     'todo-deleted',
                     'todo-completed',
                     'sync-requested',
+                    'sync-completed',
                     'error',
                   ]
                 : ['WebSocket disabled'],

@@ -47,7 +47,7 @@ export class ApiConfig {
   public readonly version: string;
 
   constructor(options: ApiConfigOptions = {}) {
-    this.port = options.port || parseInt(process.env.API_PORT || '3000', 10);
+    this.port = options.port || parseInt(process.env.API_PORT || '3001', 10);
     this.env = options.env || process.env.NODE_ENV || 'development';
     this.bodyLimit = options.bodyLimit || process.env.API_BODY_LIMIT || '10mb';
 

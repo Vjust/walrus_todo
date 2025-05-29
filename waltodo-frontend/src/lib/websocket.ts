@@ -2,13 +2,14 @@
 
 import { io, Socket } from 'socket.io-client';
 import { queryClient, queryKeys, invalidateQueries } from './queryClient';
-import { Todo } from '../types/todo';
+import { Todo, adaptSharedTodo } from '../types/todo';
+import { Todo as SharedTodo } from '@waltodo/shared-types';
 
 export interface ServerToClientEvents {
-  'todo-created': (todo: Todo) => void;
-  'todo-updated': (todo: Todo) => void;
+  'todo-created': (todo: SharedTodo) => void;
+  'todo-updated': (todo: SharedTodo) => void;
   'todo-deleted': (data: { id: string; wallet: string }) => void;
-  'todo-completed': (todo: Todo) => void;
+  'todo-completed': (todo: SharedTodo) => void;
   'sync-requested': (data: { wallet: string }) => void;
   'auth-success': (data: { wallet: string }) => void;
   'auth-error': (data: { message: string }) => void;
@@ -78,7 +79,8 @@ class WebSocketManager {
     });
 
     // Todo events with optimistic updates
-    this.socket.on('todo-created', (todo: Todo) => {
+    this.socket.on('todo-created', (sharedTodo: SharedTodo) => {
+      const todo = adaptSharedTodo(sharedTodo);
       console.log('📝 Todo created:', todo.title);
       
       // Update the todos list cache
@@ -91,7 +93,8 @@ class WebSocketManager {
       invalidateQueries.todos('default');
     });
 
-    this.socket.on('todo-updated', (todo: Todo) => {
+    this.socket.on('todo-updated', (sharedTodo: SharedTodo) => {
+      const todo = adaptSharedTodo(sharedTodo);
       console.log('📝 Todo updated:', todo.title);
       
       // Update specific todo in cache
@@ -121,7 +124,8 @@ class WebSocketManager {
       invalidateQueries.todos('default');
     });
 
-    this.socket.on('todo-completed', (todo: Todo) => {
+    this.socket.on('todo-completed', (sharedTodo: SharedTodo) => {
+      const todo = adaptSharedTodo(sharedTodo);
       console.log('✅ Todo completed:', todo.title);
       
       // Update specific todo in cache
@@ -200,6 +204,10 @@ class WebSocketManager {
 
   get socketId() {
     return this.socket?.id;
+  }
+
+  getSocket() {
+    return this.socket;
   }
 }
 

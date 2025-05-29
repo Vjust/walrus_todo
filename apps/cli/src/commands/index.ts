@@ -16,6 +16,7 @@ import JobsCommand from './jobs';
 import ListCommand from './list';
 import QueueCommand from './queue';
 import RetrieveCommand from './retrieve';
+import ServeCommand from './serve';
 import ShareCommand from './share';
 import SimpleCommand from './simple';
 import StatusCommand from './status';
@@ -43,6 +44,7 @@ export {
   ListCommand,
   QueueCommand,
   RetrieveCommand,
+  ServeCommand,
   ShareCommand,
   SimpleCommand,
   StatusCommand,

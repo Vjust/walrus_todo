@@ -1,12 +1,33 @@
 /**
  * Todo types for frontend
+ * Re-exported from @waltodo/shared-types for consistency
  */
 
+// Import all types from shared package
+import {
+  Todo as SharedTodo,
+  CreateTodoInput,
+  UpdateTodoInput,
+  TodoFilters,
+  TodoSortOptions,
+  TodoNFTMetadata,
+  StorageLocation as SharedStorageLocation
+} from '@waltodo/shared-types';
+
+// Re-export shared types
+export type { 
+  CreateTodoInput,
+  UpdateTodoInput,
+  TodoFilters,
+  TodoSortOptions,
+  TodoNFTMetadata
+};
+
+// Map shared StorageLocation enum to string literal type for backward compatibility
 export type StorageLocation = 'local' | 'blockchain' | 'both';
 
-export interface Todo {
-  /** Unique identifier for the todo */
-  id: string;
+// Extend the shared Todo interface to add frontend-specific fields
+export interface Todo extends Omit<SharedTodo, 'storageLocation' | 'description'> {
   /** Title of the todo item */
   title: string;
   /** Detailed description of the todo item */
@@ -64,4 +85,52 @@ export interface TodoList {
   walrusBlobId?: string;
   /** Sui object ID for this list on the Sui blockchain */
   suiObjectId?: string;
+}
+
+// Helper function to convert between storage location formats
+export function mapStorageLocation(location?: string): StorageLocation | undefined {
+  if (!location) return undefined;
+  
+  switch (location) {
+    case 'local':
+    case SharedStorageLocation.LOCAL:
+      return 'local';
+    case 'walrus':
+    case SharedStorageLocation.WALRUS:
+    case 'blockchain':
+    case SharedStorageLocation.BLOCKCHAIN:
+      return 'blockchain';
+    case 'both':
+      return 'both';
+    default:
+      return undefined;
+  }
+}
+
+// Helper function to adapt shared Todo to frontend Todo
+export function adaptSharedTodo(sharedTodo: SharedTodo): Todo {
+  return {
+    ...sharedTodo,
+    description: sharedTodo.description || '',
+    priority: sharedTodo.priority || 'medium',
+    tags: sharedTodo.tags || [],
+    createdAt: typeof sharedTodo.createdAt === 'string' 
+      ? sharedTodo.createdAt 
+      : new Date(sharedTodo.createdAt).toISOString(),
+    updatedAt: typeof sharedTodo.updatedAt === 'string' 
+      ? sharedTodo.updatedAt 
+      : sharedTodo.updatedAt 
+        ? new Date(sharedTodo.updatedAt).toISOString()
+        : new Date().toISOString(),
+    dueDate: sharedTodo.dueDate 
+      ? (typeof sharedTodo.dueDate === 'string' 
+        ? sharedTodo.dueDate 
+        : new Date(sharedTodo.dueDate).toISOString())
+      : undefined,
+    private: false,
+    storageLocation: mapStorageLocation(sharedTodo.storageLocation),
+    walrusBlobId: sharedTodo.blobId,
+    nftObjectId: sharedTodo.nftId,
+    imageUrl: sharedTodo.nftMetadata?.image,
+  };
 }
