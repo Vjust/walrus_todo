@@ -338,9 +338,7 @@ export class BlobVerificationManager {
         maxDuration: 180000, // Total timeout of 3 minutes
         onRetry: (error: Error, attempt: number, delay: number) => {
           logger.info(
-            `Retrieval attempt ${attempt} failed:`,
-            error.message,
-            `Retrying in ${delay}ms...`
+            `Retrieval attempt ${attempt} failed: ${error.message}. Retrying in ${delay}ms...`
           );
         },
       }

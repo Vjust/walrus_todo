@@ -4,7 +4,7 @@ import {
   AIActionType,
   AIPrivacyLevel,
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
-import { createMockAIVerifierAdapter } from '../helpers/AITestFactory';
+import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import { createSampleTodos } from '../helpers/ai-test-utils';
 import { BlockchainVerifier } from '../../apps/cli/src/services/ai/BlockchainVerifier';
 import { SecureCredentialManager } from '../../apps/cli/src/services/ai/SecureCredentialManager';

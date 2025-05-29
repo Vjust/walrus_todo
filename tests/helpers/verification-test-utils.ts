@@ -6,8 +6,9 @@ import {
   AIActionType,
   AIPrivacyLevel,
   VerificationRecord,
-  SuiAIVerifierAdapter,
+  AIVerifierAdapter,
 } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
+import { createMockAIVerifierAdapter as baseMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 
 /**
  * Create a complete mock verification record
@@ -30,41 +31,18 @@ export function createMockVerificationRecord(
 
 /**
  * Create a mock AIVerifierAdapter with all required methods
+ * Uses the canonical mock implementation with custom behavior overlay
  */
 export function createMockAIVerifierAdapter(
-  customBehavior: Partial<SuiAIVerifierAdapter> = {}
-): jest.Mocked<SuiAIVerifierAdapter> {
-  const mockRecord = createMockVerificationRecord();
-
+  customBehavior: Partial<AIVerifierAdapter> = {}
+): jest.Mocked<AIVerifierAdapter> {
+  const baseMock = baseMockAIVerifierAdapter();
+  
+  // Apply custom behavior overrides if provided
   return {
-    createVerification: jest.fn().mockResolvedValue(mockRecord),
-    verifyRecord: jest.fn().mockResolvedValue(true),
-    getProviderInfo: jest.fn().mockResolvedValue({
-      name: 'test-provider',
-      publicKey: 'test-key',
-      verificationCount: 0,
-      isActive: true,
-    }),
-    listVerifications: jest.fn().mockResolvedValue([mockRecord]),
-    getRegistryAddress: jest.fn().mockResolvedValue('test-registry-address'),
-    registerProvider: jest.fn().mockResolvedValue('test-provider-id'),
-    getVerification: jest.fn().mockResolvedValue(mockRecord),
-    getSigner: jest.fn().mockReturnValue({
-      getPublicKey: jest.fn().mockReturnValue({
-        toBase64: jest.fn().mockReturnValue('test-public-key'),
-      }),
-      toSuiAddress: jest.fn().mockReturnValue('test-sui-address'),
-      signPersonalMessage: jest.fn().mockResolvedValue({
-        bytes: 'test-bytes',
-        signature: 'test-signature',
-      }),
-    }),
-    generateProof: jest.fn().mockResolvedValue('test-proof-string'),
-    exportVerifications: jest.fn().mockResolvedValue('test-export-data'),
-    enforceRetentionPolicy: jest.fn().mockResolvedValue(0),
-    securelyDestroyData: jest.fn().mockResolvedValue(true),
+    ...baseMock,
     ...customBehavior,
-  } as jest.Mocked<SuiAIVerifierAdapter>;
+  } as jest.Mocked<AIVerifierAdapter>;
 }
 
 /**

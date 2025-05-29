@@ -18,7 +18,10 @@ describe('Transaction Fuzzing Tests', () => {
 
   beforeEach(() => {
     suiService = new SuiTestService({
-      activeNetwork: { name: 'testnet' },
+      activeNetwork: { 
+        name: 'testnet',
+        fullnode: 'https://fullnode.testnet.sui.io'
+      },
       activeAccount: { address: fuzzer.blockchainData().address() },
       encryptedStorage: false,
     });

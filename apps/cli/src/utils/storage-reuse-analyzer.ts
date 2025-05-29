@@ -337,4 +337,100 @@ export class StorageReuseAnalyzer {
       );
     }
   }
+
+  /**
+   * Analyzes storage reuse patterns for a collection of todos.
+   *
+   * This method calculates how efficiently todos can be packed into storage blocks
+   * and provides metrics on storage utilization and allocation efficiency.
+   *
+   * @param todos - Array of todo objects to analyze
+   * @param blockSize - Size of storage blocks in bytes
+   * @returns Analysis result with allocations and usage metrics
+   */
+  analyzeStorageReuse(
+    todos: Array<{
+      id: string;
+      text?: string;
+      completed?: boolean;
+      createdAt?: Date;
+      tags?: string[];
+      metadata?: Record<string, unknown>;
+    }>,
+    blockSize: number
+  ): {
+    allocations: Array<{
+      blockId: string;
+      size: number;
+      used: number;
+      todos: string[];
+    }>;
+    usage: {
+      totalSize: number;
+      allocatedSize: number;
+      utilization: number;
+    };
+  } {
+    // Calculate size for each todo (JSON serialization + metadata)
+    const todoSizes = todos.map(todo => {
+      const serialized = JSON.stringify(todo);
+      const baseSize = Buffer.byteLength(serialized, 'utf8');
+      // Add overhead for metadata, timestamps, etc.
+      const overhead = 100; // bytes
+      return {
+        id: todo.id,
+        size: baseSize + overhead,
+      };
+    });
+
+    // Sort todos by size (descending) for better packing efficiency
+    todoSizes.sort((a, b) => b.size - a.size);
+
+    // Allocate todos to storage blocks using a first-fit decreasing algorithm
+    const allocations: Array<{
+      blockId: string;
+      size: number;
+      used: number;
+      todos: string[];
+    }> = [];
+
+    let currentBlock: {
+      blockId: string;
+      size: number;
+      used: number;
+      todos: string[];
+    } | null = null;
+
+    for (const todo of todoSizes) {
+      // Check if current block has enough space
+      if (!currentBlock || currentBlock.used + todo.size > blockSize) {
+        // Need a new block
+        currentBlock = {
+          blockId: `block-${allocations.length + 1}`,
+          size: blockSize,
+          used: 0,
+          todos: [],
+        };
+        allocations.push(currentBlock);
+      }
+
+      // Add todo to current block
+      currentBlock.used += todo.size;
+      currentBlock.todos.push(todo.id);
+    }
+
+    // Calculate usage metrics
+    const totalSize = todoSizes.reduce((sum, todo) => sum + todo.size, 0);
+    const allocatedSize = allocations.length * blockSize;
+    const utilization = allocatedSize > 0 ? Math.min(1.0, totalSize / allocatedSize) : 0;
+
+    return {
+      allocations,
+      usage: {
+        totalSize,
+        allocatedSize,
+        utilization,
+      },
+    };
+  }
 }

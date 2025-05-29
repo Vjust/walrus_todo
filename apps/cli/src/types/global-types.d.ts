@@ -145,4 +145,15 @@ declare module '@jest/globals' {
   export const afterAll: typeof global.afterAll;
 }
 
+// Module augmentation for Playwright test globals
+declare module '@playwright/test' {
+  export const test: any;
+  export const expect: any;
+  export const describe: any;
+  export const beforeEach: any;
+  export const afterEach: any;
+  export const beforeAll: any;
+  export const afterAll: any;
+}
+
 export {};

@@ -7,9 +7,9 @@ import {
 import { AIPrivacyLevel } from '../../apps/cli/src/types/adapters/AIVerifierAdapter';
 import {
   createMockAIModelAdapter,
-  createMockAIVerifierAdapter,
   createTestAIService,
 } from '../helpers/AITestFactory';
+import { createMockAIVerifierAdapter } from '../mocks/AIVerifierAdapter.mock';
 import {
   createSampleTodos,
   expectedResults,

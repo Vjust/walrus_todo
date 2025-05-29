@@ -33,6 +33,7 @@ module.exports = {
     '!apps/cli/src/examples/**',
     '!apps/cli/src/move/**',
   ],
+  coverageProvider: "v8",
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   // ESM Module Handling - consolidated transformIgnorePatterns

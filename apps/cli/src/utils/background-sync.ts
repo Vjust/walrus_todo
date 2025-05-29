@@ -65,7 +65,7 @@ export class BackgroundSyncService {
         jobId,
         `List ${listName} not found locally, creating new list`
       );
-      await this.todoService.createList(listName);
+      await this.todoService.createList(listName, 'background-sync');
     }
 
     // Simulate blockchain data fetching with progress updates
@@ -148,7 +148,7 @@ export class BackgroundSyncService {
     if (list) {
       // Update metadata to show sync time
       list.updatedAt = new Date().toISOString();
-      await this.todoService.saveList(list);
+      await this.todoService.saveList(listName, list);
     }
 
     jobManager.writeJobLog(jobId, `Local data updated for ${listName}`);

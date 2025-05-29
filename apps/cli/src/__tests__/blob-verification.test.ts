@@ -4,14 +4,14 @@ import {
   getMockWalrusClient,
   type CompleteWalrusClientMock,
 } from './helpers/complete-walrus-client-mock';
-// SuiClient mocked where needed
+import { createMockSuiClient } from '../../../tests/mocks/SuiClient.mock';
 
 jest.mock('@mysten/sui/client');
 jest.mock('@mysten/walrus');
 jest.mock('blake3');
 
 describe('BlobVerificationManager', () => {
-  let mockSuiClient: { getLatestSuiSystemState: jest.Mock };
+  let mockSuiClient: ReturnType<typeof createMockSuiClient>;
   let mockWalrusClient: CompleteWalrusClientMock;
   let verificationManager: BlobVerificationManager;
 
@@ -49,22 +49,21 @@ describe('BlobVerificationManager', () => {
   };
 
   beforeEach(() => {
-    mockSuiClient = {
-      getLatestSuiSystemState: jest.fn().mockResolvedValue({
-        epoch: '42',
-        storageFund: '1000000',
-        atRiskValidatorSize: '0',
-        validatorVeryLowStakeGracePeriod: 7,
-        minValidatorCount: 10,
-        referenceGasPrice: '1000',
-        protocolVersion: '1',
-        systemStateVersion: '1',
-        storageFundNonRefundableBalance: '0',
-        validatorLowStakeGracePeriod: 7,
-        validatorLowStakeThreshold: '10000',
-        validatorVeryLowStakeThreshold: '5000',
-      }),
-    }; // as Pick<SuiClient, 'getLatestSuiSystemState'>;
+    mockSuiClient = createMockSuiClient();
+    mockSuiClient.getLatestSuiSystemState.mockResolvedValue({
+      epoch: '42',
+      storageFund: '1000000',
+      atRiskValidatorSize: '0',
+      validatorVeryLowStakeGracePeriod: 7,
+      minValidatorCount: 10,
+      referenceGasPrice: '1000',
+      protocolVersion: '1',
+      systemStateVersion: '1',
+      storageFundNonRefundableBalance: '0',
+      validatorLowStakeGracePeriod: 7,
+      validatorLowStakeThreshold: '10000',
+      validatorVeryLowStakeThreshold: '5000',
+    });
 
     // Use the complete mock implementation
     mockWalrusClient = getMockWalrusClient();
@@ -77,7 +76,21 @@ describe('BlobVerificationManager', () => {
     });
     mockWalrusClient.writeBlob.mockResolvedValue({
       blobId: mockBlobId,
-      blobObject: { blob_id: mockBlobId },
+      blobObject: {
+        blob_id: mockBlobId,
+        id: { id: mockBlobId },
+        registered_epoch: 100,
+        size: '1024',
+        encoding_type: 1,
+        deletable: true,
+        storage: {
+          id: { id: 'storage1' },
+          start_epoch: 100,
+          end_epoch: 200,
+          storage_size: '2048',
+          used_size: '1024',
+        },
+      },
     });
 
     verificationManager = new BlobVerificationManager(

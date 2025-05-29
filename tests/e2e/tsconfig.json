@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "@playwright/test", "@types/jest"],
     "lib": ["es2022"],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
