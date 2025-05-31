@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Todo } from '@/lib/sui-client';
+import type { Todo } from '@/types/todo-nft';
 import { useTodoStateSync, useTodoEvents } from '@/hooks/useBlockchainEvents';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { BlockchainEventIndicator } from './BlockchainEventStatus';
@@ -30,7 +30,9 @@ export function RealtimeTodoList({
   className = '',
   showEventIndicator = true,
 }: RealtimeTodoListProps) {
-  const { address, connected } = useWalletContext();
+  const walletContext = useWalletContext();
+  const address = walletContext?.address || null;
+  const connected = walletContext?.connected || false;
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const [notifications, setNotifications] = useState<
     Array<{

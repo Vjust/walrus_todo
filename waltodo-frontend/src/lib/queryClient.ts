@@ -12,7 +12,7 @@ export const queryClient = new QueryClient({
       staleTime: 30000, // 30 seconds
       refetchOnWindowFocus: typeof window !== 'undefined', // Only refetch on window focus in browser
       refetchOnReconnect: typeof window !== 'undefined', // Only refetch on reconnect in browser
-      refetchInterval: false, // Will be managed by WebSocket
+      refetchInterval: false, // TODO: Will be managed by WebSocket when re-enabled
       // Prevent queries from running during SSR by default
       enabled: typeof window !== 'undefined',
     },

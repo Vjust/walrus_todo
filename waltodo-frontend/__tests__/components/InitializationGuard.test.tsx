@@ -1,6 +1,9 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render } from '../test-utils';
 import { InitializationGuard } from '@/components/InitializationGuard';
+
+// Import centralized mocks
+import '../mocks';
 
 // Mock the useAppInitialization hook to avoid context dependency
 jest.mock('@/app/ClientOnlyRoot', () => ({

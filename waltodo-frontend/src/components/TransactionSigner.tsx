@@ -20,8 +20,10 @@ export function TransactionSigner({
   onError,
   children,
 }: TransactionSignerProps) {
-  const { connected, signAndExecuteTransaction, trackTransaction } =
-    useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const signAndExecuteTransaction = walletContext?.signAndExecuteTransaction;
+  const trackTransaction = walletContext?.trackTransaction;
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

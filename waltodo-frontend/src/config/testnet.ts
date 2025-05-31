@@ -1,7 +1,7 @@
 /**
  * Auto-generated configuration for testnet network
- * Generated at: 2025-05-28T02:30:02.394Z
- * Package ID: 0x123456789
+ * Generated at: 2025-05-30T00:00:00.000Z
+ * Package ID: 0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b
  */
 
 export const TESTNET_CONFIG = {
@@ -20,15 +20,15 @@ export const TESTNET_CONFIG = {
   },
   
   deployment: {
-    packageId: '0x123456789',
+    packageId: '0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b',
     digest: 'unknown',
-    timestamp: '2025-05-28T02:30:02.394Z',
-    deployerAddress: '0x987654321',
+    timestamp: '2025-05-30T00:00:00.000Z',
+    deployerAddress: '0xca793690985183dc8e2180fd059d76f3b0644f5c2ecd3b01cdebe7d40b0cca39',
   },
   
   contracts: {
     todoNft: {
-      packageId: '0x123456789',
+      packageId: '0xe8d420d723b6813d1e001d8cba0dfc8613cbc814dedb4adcd41909f2e11daa8b',
       moduleName: 'todo_nft',
       structName: 'TodoNFT',
     },

@@ -110,7 +110,7 @@
     {
       "name": "API Response Time",
       "description": "Measure API endpoint response time",
-      "endpoint": "/api/todos",
+      "endpoint": "/api/v1/todos",
       "method": "GET",
       "max_time_ms": 500,
       "iterations": 10
@@ -118,7 +118,7 @@
     {
       "name": "WebSocket Connection",
       "description": "Test WebSocket connection establishment",
-      "endpoint": "/api/ws-status",
+      "endpoint": "/health",
       "max_time_ms": 1000,
       "expected_response": {"connected": true}
     },

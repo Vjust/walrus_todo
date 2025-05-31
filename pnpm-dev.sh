@@ -155,6 +155,7 @@ tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo --help       # Show al
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo add \"task\"   # Add a new todo'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo list         # List all todos'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  waltodo status       # Show system status'" Enter
+tmux send-keys -t "$SESSION_NAME:main.0" "echo '  pnpm status          # Check service health'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo ''" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo 'Tmux Controls:'" Enter
 tmux send-keys -t "$SESSION_NAME:main.0" "echo '  Ctrl+B then arrow keys: Switch panes'" Enter

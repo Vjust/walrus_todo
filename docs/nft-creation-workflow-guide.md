@@ -286,10 +286,10 @@ pnpm dev
 pnpm run api:start
 
 # API endpoints available at http://localhost:8080
-# - GET /api/todos
-# - POST /api/todos
-# - PUT /api/todos/:id
-# - DELETE /api/todos/:id
+# - GET /api/v1/todos
+# - POST /api/v1/todos
+# - PUT /api/v1/todos/:id
+# - DELETE /api/v1/todos/:id
 ```
 
 ## Workflow Examples

@@ -1,9 +1,12 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '../test-utils';
 import { WalletConnectButton } from '../../src/components/WalletConnectButton';
 import { useWalletContext } from '../../src/contexts/WalletContext';
 import { WalletError } from '../../src/lib/wallet-errors';
 import { ClipboardError } from '../../src/lib/clipboard';
+
+// Import centralized mocks
+import '../mocks';
 
 // Mock the entire wallet context
 jest.mock('../../src/contexts/WalletContext', () => ({

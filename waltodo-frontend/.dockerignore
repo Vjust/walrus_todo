@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+dist
+out
+
+# Environment files
+.env*.local
+.env.development
+
+# Development files
+.git
+.gitignore
+*.log
+*.md
+.DS_Store
+
+# Testing
+__tests__
+__mocks__
+coverage
+.nyc_output
+jest.config.js
+jest.setup.js
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Performance reports
+performance-reports
+lighthouse-report-*.html
+
+# Cache
+.cache
+*.tsbuildinfo
+
+# Scripts (except necessary ones)
+scripts/*.test.js
+scripts/*-test.js
+
+# Documentation
+docs
+README.md
+WALLET_TESTING_GUIDE.md
+VALIDATION_SUMMARY.md
+IMPORT_FIX_REPORT.md

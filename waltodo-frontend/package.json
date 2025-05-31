@@ -5,8 +5,12 @@
   "scripts": {
     "dev": "pnpm run setup-config && node scripts/start-with-available-port.js dev",
     "dev:simple": "pnpm run setup-config && next dev",
+    "dev:proxy": "pnpm run setup-config && NEXT_PUBLIC_API_URL= next dev",
+    "dev:api": "cd ../api && pnpm dev",
+    "dev:all": "pnpm run setup-config && concurrently \"pnpm run dev:api\" \"pnpm run dev:proxy\"",
     "build": "pnpm run setup-config && next build",
     "build:dev": "pnpm run setup-config && next build",
+    "build:production": "pnpm run setup-config && NODE_ENV=production next build && node scripts/deploy.js",
     "start": "node scripts/start-with-available-port.js start",
     "start:fixed-port": "next start",
     "dev:fixed-port": "pnpm run setup-config && next dev",
@@ -32,9 +36,10 @@
   },
   "packageManager": "pnpm@10.11.0",
   "dependencies": {
-    "@heroicons/react": "^2.0.18",
+    "@heroicons/react": "^2.2.0",
     "@mysten/dapp-kit": "^0.16.3",
     "@mysten/sui": "^1.30.1",
+    "@mysten/wallet-standard": "^0.15.2",
     "@mysten/walrus": "^0.1.1",
     "@solana/wallet-adapter-base": "^0.9.26",
     "@solana/wallet-adapter-phantom": "^0.9.0",
@@ -46,15 +51,26 @@
     "@suiet/wallet-kit": "^0.4.1",
     "@tanstack/react-query": "^5.76.1",
     "@tanstack/react-query-devtools": "^5.77.2",
-    "@waltodo/shared-types": "workspace:*",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.9",
     "@wallet-standard/features": "^1.1.0",
+    "@waltodo/shared-types": "workspace:*",
+    "date-fns": "^4.1.0",
     "encoding": "^0.1.13",
+    "fuse.js": "^7.1.0",
+    "lodash": "^4.17.21",
+    "lucide-react": "^0.511.0",
     "nanoid": "^5.1.5",
     "next": "^15.3.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hot-toast": "^2.5.2",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-window": "^1.8.11",
+    "react-window-infinite-loader": "^1.0.10",
+    "recharts": "^2.15.3",
     "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^3.3.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
@@ -65,51 +81,38 @@
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@types/jest": "^29.5.12",
+    "@types/lodash": "^4.17.17",
     "@types/node": "22.0.0",
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.1",
+    "assert": "^2.1.0",
     "autoprefixer": "10.4.20",
+    "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
     "chrome-launcher": "^1.1.0",
     "compression": "^1.7.4",
+    "concurrently": "^8.2.2",
+    "constants-browserify": "^1.0.0",
+    "crypto-browserify": "^3.12.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "15.3.2",
+    "events": "^3.3.0",
     "express-rate-limit": "^7.4.1",
-    "get-port": "^7.1.0",
+    "get-port": "7.1.0",
     "helmet": "^8.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "lighthouse": "^12.0.0",
     "pino-pretty": "^13.0.0",
     "postcss": "8.4.30",
+    "process": "^0.11.10",
+    "querystring-es3": "^0.2.1",
     "sinon": "^19.0.0",
+    "stream-browserify": "^3.0.0",
     "style-loader": "^4.0.0",
     "tailwindcss": "3.4.0",
-    "typescript": "5.8.3"
-  },
-  "jest": {
-    "testEnvironment": "jsdom",
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    },
-    "setupFilesAfterEnv": [
-      "<rootDir>/jest.setup.js"
-    ],
-    "testPathIgnorePatterns": [
-      "<rootDir>/node_modules/",
-      "<rootDir>/.next/"
-    ],
-    "transform": {
-      "^.+\\.(js|jsx|ts|tsx)$": [
-        "babel-jest",
-        {
-          "presets": [
-            "next/babel"
-          ]
-        }
-      ]
-    },
-    "modulePaths": [
-      "<rootDir>"
-    ]
+    "typescript": "5.8.3",
+    "url": "^0.11.4",
+    "util": "^0.12.5"
   }
 }

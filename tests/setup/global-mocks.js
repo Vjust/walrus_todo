@@ -693,9 +693,9 @@ function createNetworkMocks() {
       // Mock responses based on URL
       let responseData = { success: true };
 
-      if (url.includes('/api/todos')) {
+      if (url.includes('/api/v1/todos')) {
         responseData = { todos: [] };
-      } else if (url.includes('/api/ai/')) {
+      } else if (url.includes('/api/v1/ai/')) {
         responseData = { result: 'Mock AI response' };
       } else if (url.includes('faucet')) {
         responseData = { success: true, amount: 1000000000 };

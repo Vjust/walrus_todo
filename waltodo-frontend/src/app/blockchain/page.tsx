@@ -1,15 +1,38 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Navbar from '@/components/navbar';
+import { useState, useEffect, Suspense } from 'react';
+// import Navbar from '@/components/navbar';
 import BlockchainTodoManager from '@/components/BlockchainTodoManager';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiTodos } from '@/hooks/useSuiTodos';
+import { OfflineNFTGallery } from '@/components/OfflineNFTGallery';
+import { usePWA } from '@/hooks/usePWA';
+import { useSearchParams } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
-export default function BlockchainPage() {
-  const { connected, connecting, account, connect } = useWalletContext();
+function BlockchainPageContent() {
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const connecting = walletContext?.connecting || false;
+  const account = walletContext?.account || null;
+  const connect = walletContext?.connect || (() => {});
   const { state, network, isWalletReady } = useSuiTodos();
   const [showFullManager, setShowFullManager] = useState(false);
+  const [showOfflineGallery, setShowOfflineGallery] = useState(false);
+  const { isOnline } = usePWA();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Handle share target for NFT creation
+    const action = searchParams.get('action');
+    const shared = searchParams.get('shared');
+    const title = searchParams.get('title');
+    
+    if (action === 'create-nft' && shared === 'true') {
+      toast.success(`Ready to create NFT from shared content: ${title}`);
+      // Here you would open the NFT creation modal with pre-filled data
+    }
+  }, [searchParams]);
 
   // Wallet connection component
   const WalletConnectionSection = () => {
@@ -37,6 +60,12 @@ export default function BlockchainPage() {
                 className='ocean-button text-sm'
               >
                 {showFullManager ? 'Simple View' : 'Advanced Manager'}
+              </button>
+              <button
+                onClick={() => setShowOfflineGallery(!showOfflineGallery)}
+                className='ocean-button text-sm'
+              >
+                {showOfflineGallery ? 'Hide' : 'Show'} Offline Gallery
               </button>
             </div>
           </div>
@@ -90,7 +119,7 @@ export default function BlockchainPage() {
 
   return (
     <div className='max-w-6xl mx-auto'>
-      <Navbar currentPage='blockchain' />
+      
 
       <div className='mb-8'>
         <h1 className='text-3xl font-bold mb-4 text-ocean-deep dark:text-ocean-foam'>
@@ -125,8 +154,35 @@ export default function BlockchainPage() {
               </div>
             </div>
           )}
+
+          {/* Offline NFT Gallery */}
+          {showOfflineGallery && (
+            <div className='ocean-card mb-6'>
+              <div className='flex justify-between items-center mb-6'>
+                <h2 className='text-xl font-semibold text-ocean-deep dark:text-ocean-foam'>
+                  {isOnline ? 'NFT Gallery' : 'Offline NFT Gallery'}
+                </h2>
+                <span className={`px-3 py-1 rounded-full text-sm ${
+                  isOnline 
+                    ? 'bg-emerald-500/20 text-emerald-600' 
+                    : 'bg-amber-500/20 text-amber-600'
+                }`}>
+                  {isOnline ? '🟢 Online' : '🟡 Offline'}
+                </span>
+              </div>
+              <OfflineNFTGallery />
+            </div>
+          )}
         </>
       )}
     </div>
+  );
+}
+
+export default function BlockchainPage() {
+  return (
+    <Suspense fallback={<div className="ocean-background min-h-screen" />}>
+      <BlockchainPageContent />
+    </Suspense>
   );
 }
