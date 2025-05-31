@@ -24,7 +24,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
 
     // Set up global error handler for uncaught errors
     const errorHandler = (event: ErrorEvent) => {
-      console.error('[ErrorBoundary] Caught error:', event.error);
+      // Caught error in ErrorBoundary
 
       // Special handling for storage access errors
       if (
@@ -32,9 +32,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         event.error?.message?.includes('localStorage') ||
         event.error?.message?.includes('sessionStorage')
       ) {
-        console.warn(
-          '[ErrorBoundary] Storage access error caught. Using in-memory fallback.'
-        );
+        // Storage access error caught. Using in-memory fallback.
         // Don't set error state for these specific errors
         // They'll be handled by the storage utility's fallback
 
@@ -81,7 +79,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
 
     // Set up handler for unhandled promise rejections
     const rejectionHandler = (event: PromiseRejectionEvent) => {
-      console.error('[ErrorBoundary] Unhandled rejection:', event.reason);
+      // Unhandled rejection in ErrorBoundary
 
       // Special handling for storage access rejections
       const rejectionString = String(event.reason);
@@ -90,9 +88,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         rejectionString.includes('localStorage') ||
         rejectionString.includes('sessionStorage')
       ) {
-        console.warn(
-          '[ErrorBoundary] Storage access rejection caught. Using in-memory fallback.'
-        );
+        // Storage access rejection caught. Using in-memory fallback.
         // Don't set error state for these specific errors
 
         // Still prevent default to stop error propagation
@@ -110,9 +106,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         rejectionString.includes('all wallets are listed here: []') ||
         rejectionString.includes('Wallet Standard has already been loaded')
       ) {
-        console.warn(
-          '[ErrorBoundary] Wallet availability error suppressed. This is expected when wallets are not installed.'
-        );
+        // Wallet availability error suppressed. This is expected when wallets are not installed.
         // Don't set error state for wallet availability issues
 
         // Still prevent default to stop error propagation
@@ -131,6 +125,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         '503',
       ];
 
+      const rejectionMessage = String(event.reason);
       const isCriticalError = criticalErrors.some(pattern => 
         rejectionMessage.includes(pattern)
       );
@@ -165,7 +160,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
       window.removeEventListener('error', errorHandler);
       window.removeEventListener('unhandledrejection', rejectionHandler);
     };
-  }, []);
+  }, [onError]);
 
   // Reset error state with retry functionality
   const resetError = useCallback(() => {

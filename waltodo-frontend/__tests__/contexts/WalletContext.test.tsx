@@ -1,57 +1,57 @@
 import React from 'react';
-import { render, screen, waitFor, act, renderHook } from '@testing-library/react';
-import { AppWalletProvider, useWalletContext } from '../../src/contexts/WalletContext';
-import { nanoid } from 'nanoid';
+import { render, screen, waitFor, act, renderHookSafe, createLocalStorageMock } from '../test-utils';
 
-// Mock the nanoid package
-jest.mock('nanoid', () => ({
-  nanoid: jest.fn(() => 'mocked-nanoid-value')
-}));
-
-// Mock the Suiet wallet kit
-jest.mock('@suiet/wallet-kit', () => {
-  const mockWalletHook = {
-    connected: false,
-    connecting: false,
-    account: null,
-    wallet: null,
-    networkId: null,
-    select: jest.fn(),
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    executeMoveCall: jest.fn(),
-    executeSerializedMoveCall: jest.fn(),
-    signMessage: jest.fn(),
-    signAndExecuteTransaction: jest.fn(),
-    signTransaction: jest.fn(),
-    on: jest.fn(),
-    verifySignedMessage: jest.fn()
-  };
-
+// Mock the wallet modules before importing WalletContext
+jest.mock('@mysten/dapp-kit', () => {
+  const React = require('react');
   return {
-    useWallet: jest.fn(() => mockWalletHook),
-    WalletProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    AllDefaultWallets: ['mock-wallet-1', 'mock-wallet-2']
+    createNetworkConfig: () => ({ networkConfig: {} }),
+    SuiClientProvider: ({ children }: any) => React.createElement(React.Fragment, null, children),
+    WalletProvider: ({ children }: any) => React.createElement(React.Fragment, null, children),
+    useCurrentAccount: () => null,
+    useConnectWallet: () => ({ mutate: jest.fn(), isPending: false }),
+    useDisconnectWallet: () => ({ mutate: jest.fn() }),
+    useSignAndExecuteTransaction: () => ({ mutateAsync: jest.fn() }),
+    useWallets: () => [],
   };
 });
 
-// Mock window.localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
+jest.mock('@mysten/sui', () => ({
+  getFullnodeUrl: (network: string) => `https://fullnode.${network}.sui.io`,
+  SuiClient: jest.fn(),
+  Transaction: jest.fn(),
+}));
+
+// Mock sui-client before importing WalletContext
+jest.mock('@/lib/sui-client', () => ({
+  initializeSuiClient: jest.fn(),
+  getSuiClient: jest.fn(() => ({ getObject: jest.fn() })),
+  isSuiClientInitialized: jest.fn(() => true),
+}));
+
+// Mock react-query
+jest.mock('@tanstack/react-query', () => {
+  const React = require('react');
   return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: jest.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: jest.fn(() => {
-      store = {};
-    })
+    QueryClient: jest.fn(() => ({ defaultOptions: {} })),
+    QueryClientProvider: ({ children }: any) => React.createElement(React.Fragment, null, children),
+    useQuery: jest.fn(() => ({ data: null, isLoading: false })),
+    useMutation: jest.fn(() => ({ mutate: jest.fn() })),
   };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+});
+
+import { AppWalletProvider, useWalletContext } from '../../src/contexts/WalletContext';
+
+// Create localStorage mock
+const localStorageMock = createLocalStorageMock();
+
+// Set up localStorage before tests
+beforeAll(() => {
+  Object.defineProperty(window, 'localStorage', {
+    value: localStorageMock,
+    writable: true,
+  });
+});
 
 // Create a wrapper for testing hooks with the provider
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -65,7 +65,7 @@ describe('WalletContext', () => {
   });
 
   it('should provide initial values', () => {
-    const { result } = renderHook(() => useWalletContext(), { wrapper });
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
     // Check initial values
     expect(result.current.connected).toBe(false);
@@ -74,7 +74,7 @@ describe('WalletContext', () => {
     expect(result.current.chainId).toBeNull();
     expect(result.current.name).toBeNull();
     expect(result.current.error).toBeNull();
-    expect(result.current.transactions).toEqual([]);
+    expect(result.current.transactionHistory).toEqual([]);
     expect(result.current.lastActivity).toBeDefined();
     
     // Check that functions are defined
@@ -87,7 +87,7 @@ describe('WalletContext', () => {
   });
 
   it('should maintain stable function references between renders', async () => {
-    const { result, rerender } = renderHook(() => useWalletContext(), { wrapper });
+    const { result, rerender } = renderHookSafe(() => useWalletContext(), { wrapper });
     
     // Capture initial function references
     const initialConnect = result.current.connect;
@@ -106,7 +106,7 @@ describe('WalletContext', () => {
   });
 
   it('should track transactions correctly', async () => {
-    const { result } = renderHook(() => useWalletContext(), { wrapper });
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
     // Mock transaction promise
     const mockTransaction = Promise.resolve({ digest: 'mock-tx-hash' });
@@ -121,17 +121,17 @@ describe('WalletContext', () => {
     expect(txResult).toEqual({ digest: 'mock-tx-hash' });
     
     // Check transaction was added to history
-    expect(result.current.transactions).toHaveLength(1);
-    expect(result.current.transactions[0]).toEqual(expect.objectContaining({
-      id: 'mocked-nanoid-value',
+    expect(result.current.transactionHistory).toHaveLength(1);
+    expect(result.current.transactionHistory[0]).toEqual(expect.objectContaining({
+      id: expect.any(String),
       status: 'success',
       type: 'TestTransaction',
-      hash: 'mock-tx-hash'
+      details: { digest: 'mock-tx-hash' }
     }));
   });
   
   it('should handle failed transactions', async () => {
-    const { result } = renderHook(() => useWalletContext(), { wrapper });
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
     // Mock failed transaction promise
     const mockError = new Error('Transaction failed');
@@ -147,21 +147,21 @@ describe('WalletContext', () => {
     });
     
     // Check transaction was added to history with error status
-    expect(result.current.transactions).toHaveLength(1);
-    expect(result.current.transactions[0]).toEqual(expect.objectContaining({
-      id: 'mocked-nanoid-value',
-      status: 'error',
+    expect(result.current.transactionHistory).toHaveLength(1);
+    expect(result.current.transactionHistory[0]).toEqual(expect.objectContaining({
+      id: expect.any(String),
+      status: 'failed',
       type: 'FailedTransaction',
-      message: 'Transaction failed'
+      details: { error: 'Transaction failed' }
     }));
   });
 
   it('should handle error states', async () => {
-    const { result } = renderHook(() => useWalletContext(), { wrapper });
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
     // Set an error
     act(() => {
-      result.current.setError(new Error('Test error'));
+      result.current.setError('Test error');
     });
     
     // Check error state
@@ -177,7 +177,7 @@ describe('WalletContext', () => {
   });
 
   it('should update lastActivity on resetActivityTimer', async () => {
-    const { result } = renderHook(() => useWalletContext(), { wrapper });
+    const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
     // Get initial lastActivity value
     const initialLastActivity = result.current.lastActivity;

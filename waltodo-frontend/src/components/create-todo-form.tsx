@@ -118,13 +118,10 @@ export default function CreateTodoForm({
             // Mark as blockchain stored after creation
             newTodo.blockchainStored = true;
             newTodo.objectId = blockchainResult.objectId;
-            console.log('✅ Todo created on blockchain:', blockchainResult);
+            // Todo created on blockchain
           }
         } catch (blockchainError) {
-          console.warn(
-            'Blockchain creation failed, but local todo was created:',
-            blockchainError
-          );
+          // Blockchain creation failed, but local todo was created
           // Show warning toast but don't fail the entire operation
           toast.error('Todo created locally but blockchain storage failed. It will be retried later.', {
             duration: 5000,
@@ -145,7 +142,7 @@ export default function CreateTodoForm({
       // Notify parent component to refresh
       onTodoAdded?.();
 
-      console.log('Todo created successfully:', newTodo);
+      // Todo created successfully
 
       // Show success message
       if (createOnBlockchain && newTodo.blockchainStored) {
@@ -159,7 +156,7 @@ export default function CreateTodoForm({
         });
       }
     } catch (error) {
-      console.error('Failed to create todo:', error);
+      // Failed to create todo
       const errorMessage = error instanceof Error ? error.message : 'Failed to create todo';
       setError(errorMessage);
       

@@ -1,6 +1,517 @@
 {
   "version": "1.0.0",
-  "commands": {},
+  "commands": {
+    "add": {
+      "id": "add",
+      "description": "Add a new todo item to a specified list",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/add"
+    },
+    "ai": {
+      "id": "ai",
+      "description": "AI operations for todo management",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/ai/index"
+    },
+    "cancel": {
+      "id": "cancel",
+      "description": "cancel command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/cancel"
+    },
+    "check": {
+      "id": "check",
+      "description": "Toggle completion status of a todo item",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/check"
+    },
+    "complete": {
+      "id": "complete",
+      "description": "Mark a todo as completed.",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/complete"
+    },
+    "config": {
+      "id": "config",
+      "description": "Display or validate environment configuration",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/config"
+    },
+    "configure": {
+      "id": "configure",
+      "description": "Configure CLI settings, environment variables, and wallet preferences",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/configure"
+    },
+    "create": {
+      "id": "create",
+      "description": "Create a new todo item as an NFT on the Sui blockchain",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/create"
+    },
+    "daemon": {
+      "id": "daemon",
+      "description": "daemon command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/daemon"
+    },
+    "delete": {
+      "id": "delete",
+      "description": "Delete a specific todo item or an entire list",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/delete"
+    },
+    "demo-progress": {
+      "id": "demo-progress",
+      "description": "demo-progress command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/demo-progress"
+    },
+    "deploy": {
+      "id": "deploy",
+      "description": "Deploy the Todo NFT smart contract to the Sui blockchain",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/deploy"
+    },
+    "env": {
+      "id": "env",
+      "description": "Manage environment variables and configuration",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/env"
+    },
+    "fetch": {
+      "id": "fetch",
+      "description": "Fetch todos directly from blockchain or Walrus storage using IDs",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/fetch"
+    },
+    "generate-frontend-config": {
+      "id": "generate-frontend-config",
+      "description": "generate-frontend-config command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/generate-frontend-config"
+    },
+    "help": {
+      "id": "help",
+      "description": "help command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/help"
+    },
+    "history": {
+      "id": "history",
+      "description": "history command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/history"
+    },
+    "image": {
+      "id": "image",
+      "description": "Manage todo images for storage on Walrus and NFT creation",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/image"
+    },
+    "interactive": {
+      "id": "interactive",
+      "description": "interactive command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/interactive"
+    },
+    "jobs": {
+      "id": "jobs",
+      "description": "jobs command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/jobs"
+    },
+    "list": {
+      "id": "list",
+      "description": "Display todo items or available todo lists",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/list"
+    },
+    "provider": {
+      "id": "provider",
+      "description": "Manage AI providers for blockchain verification",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/provider"
+    },
+    "queue": {
+      "id": "queue",
+      "description": "queue command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/queue"
+    },
+    "retrieve": {
+      "id": "retrieve",
+      "description": "Retrieve stored todos from blockchain or Walrus storage",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/retrieve"
+    },
+    "share": {
+      "id": "share",
+      "description": "Share a todo list with another user",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/share"
+    },
+    "simple": {
+      "id": "simple",
+      "description": "Manage todos with simplified commands for basic operations",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/simple"
+    },
+    "status": {
+      "id": "status",
+      "description": "status command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/status"
+    },
+    "storage": {
+      "id": "storage",
+      "description": "Manage Walrus storage for todos",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/storage"
+    },
+    "store-file": {
+      "id": "store-file",
+      "description": "store-file command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store-file"
+    },
+    "store-list": {
+      "id": "store-list",
+      "description": "store-list command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store-list"
+    },
+    "store-simple": {
+      "id": "store-simple",
+      "description": "store-simple command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store-simple"
+    },
+    "store": {
+      "id": "store",
+      "description": "Store a todo on blockchain with Walrus storage and create an NFT",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/store"
+    },
+    "suggest": {
+      "id": "suggest",
+      "description": "Get intelligent task suggestions based on your current todo list",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/suggest"
+    },
+    "sync": {
+      "id": "sync",
+      "description": "sync command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/sync"
+    },
+    "template": {
+      "id": "template",
+      "description": "Template for creating new CLI commands - not for end users",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/template"
+    },
+    "update-storage": {
+      "id": "update-storage",
+      "description": "update-storage command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/update-storage"
+    },
+    "update": {
+      "id": "update",
+      "description": "Update properties of an existing todo item",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/update"
+    },
+    "validate-config": {
+      "id": "validate-config",
+      "description": "validate-config command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/validate-config"
+    },
+    "verify": {
+      "id": "verify",
+      "description": "Manage blockchain verifications for AI operations",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/verify"
+    },
+    "account:auth": {
+      "id": "account:auth",
+      "description": "account:auth command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/account/auth"
+    },
+    "account:permissions": {
+      "id": "account:permissions",
+      "description": "account:permissions command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/account/permissions"
+    },
+    "account:show": {
+      "id": "account:show",
+      "description": "account:show command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/account/show"
+    },
+    "account:switch": {
+      "id": "account:switch",
+      "description": "account:switch command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/account/switch"
+    },
+    "ai:credentials": {
+      "id": "ai:credentials",
+      "description": "ai:credentials command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/ai/credentials"
+    },
+    "ai:enhance-credentials": {
+      "id": "ai:enhance-credentials",
+      "description": "ai:enhance-credentials command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/ai/enhance-credentials"
+    },
+    "ai:keys": {
+      "id": "ai:keys",
+      "description": "ai:keys command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/ai/keys"
+    },
+    "ai:permissions": {
+      "id": "ai:permissions",
+      "description": "ai:permissions command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/ai/permissions"
+    },
+    "ai:verify": {
+      "id": "ai:verify",
+      "description": "ai:verify command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/ai/verify"
+    },
+    "image:create-nft": {
+      "id": "image:create-nft",
+      "description": "image:create-nft command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/image/create-nft"
+    },
+    "image:upload": {
+      "id": "image:upload",
+      "description": "image:upload command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/image/upload"
+    },
+    "system:audit": {
+      "id": "system:audit",
+      "description": "system:audit command",
+      "pluginName": "waltodo",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": [],
+      "path": "./dist/src/commands/system/audit"
+    }
+  },
   "topics": {
     "account": {
       "description": "Manage Sui accounts"

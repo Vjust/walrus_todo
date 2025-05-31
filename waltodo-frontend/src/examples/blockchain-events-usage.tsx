@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Todo } from '@/lib/sui-client';
+import type { Todo } from '@/types/todo-nft';
 import {
   useBlockchainEvents,
   useTodoEvents,
@@ -24,7 +24,8 @@ import { useWalletContext } from '@/contexts/WalletContext';
  * Example 1: Basic Event Subscription
  */
 export function BasicEventSubscription() {
-  const { address } = useWalletContext();
+  const walletContext = useWalletContext();
+  const address = walletContext?.address || null;
   const {
     isConnected,
     isConnecting,
@@ -77,7 +78,8 @@ export function BasicEventSubscription() {
  * Example 2: Todo Event Handlers
  */
 export function TodoEventHandlers() {
-  const { address } = useWalletContext();
+  const walletContext = useWalletContext();
+  const address = walletContext?.address || null;
   const [notifications, setNotifications] = useState<string[]>([]);
 
   const addNotification = useCallback((message: string) => {
@@ -152,7 +154,8 @@ export function TodoEventHandlers() {
  * Example 3: Real-time Todo State Sync
  */
 export function TodoStateSync() {
-  const { address } = useWalletContext();
+  const walletContext = useWalletContext();
+  const address = walletContext?.address || null;
   const [localTodos, setLocalTodos] = useState<Todo[]>([
     {
       id: '1',
@@ -283,7 +286,9 @@ export function ConnectionStatusManagement() {
  * Example 5: Complete Real-time Todo Application
  */
 export function CompleteRealtimeTodoApp() {
-  const { address, connected } = useWalletContext();
+  const walletContext = useWalletContext();
+  const address = walletContext?.address || null;
+  const connected = walletContext?.connected || false;
   const [todos, setTodos] = useState<Todo[]>([]);
 
   const handleTodoComplete = async (todo: Todo) => {
@@ -294,7 +299,7 @@ export function CompleteRealtimeTodoApp() {
     setTodos(prev =>
       prev.map(t =>
         t.id === todo.id
-          ? { ...t, completed: true, completedAt: Date.now() }
+          ? { ...t, completed: true, completedAt: new Date().toISOString() }
           : t
       )
     );

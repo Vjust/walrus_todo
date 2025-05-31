@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiTodos } from '@/hooks/useSuiTodos';
-import Navbar from '@/components/navbar';
+// import Navbar from '@/components/navbar';
 import WalrusStorageManager from '@/components/WalrusStorageManager';
 
 export default function TestBlockchainPage() {
-  const { connected, address, connect, disconnect } = useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const address = walletContext?.address || null;
+  const connect = walletContext?.connect || (() => {});
+  const disconnect = walletContext?.disconnect || (() => {});
   const { state, actions, isWalletReady } = useSuiTodos();
   const [testResult, setTestResult] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +73,7 @@ export default function TestBlockchainPage() {
 
   return (
     <div className='max-w-6xl mx-auto'>
-      <Navbar currentPage='test' />
+      
 
       <div className='mb-8'>
         <h1 className='text-3xl font-bold mb-4 text-ocean-deep dark:text-ocean-foam'>

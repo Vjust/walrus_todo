@@ -179,7 +179,7 @@ function CreateTodoForm({
         <input
           type='date'
           id='dueDate'
-          value={formData.dueDate || ''}
+          value={typeof formData.dueDate === 'string' ? formData.dueDate : (formData.dueDate instanceof Date ? formData.dueDate.toISOString().split('T')[0] : '')}
           onChange={e =>
             setFormData(prev => ({
               ...prev,
@@ -445,7 +445,10 @@ function NetworkSwitcher({
 
 // Main TodoNFT management component
 export default function BlockchainTodoManager() {
-  const { connected, connecting, address } = useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const connecting = walletContext?.connecting || false;
+  const address = walletContext?.address || null;
   const { state, actions, network, isWalletReady } = useSuiTodos();
 
   const [showCreateForm, setShowCreateForm] = useState(false);

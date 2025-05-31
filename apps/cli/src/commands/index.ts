@@ -16,7 +16,7 @@ import JobsCommand from './jobs';
 import ListCommand from './list';
 import QueueCommand from './queue';
 import RetrieveCommand from './retrieve';
-import ServeCommand from './serve';
+// ServeCommand removed - using blockchain-first architecture
 import ShareCommand from './share';
 import SimpleCommand from './simple';
 import StatusCommand from './status';
@@ -44,7 +44,7 @@ export {
   ListCommand,
   QueueCommand,
   RetrieveCommand,
-  ServeCommand,
+  // ServeCommand removed
   ShareCommand,
   SimpleCommand,
   StatusCommand,

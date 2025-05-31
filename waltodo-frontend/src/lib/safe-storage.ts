@@ -126,10 +126,7 @@ export function getItem<T>(key: string, defaultValue?: T): T | null {
       try {
         return JSON.parse(value);
       } catch (parseError) {
-        console.warn(
-          `Error parsing localStorage value for key "${key}":`,
-          parseError
-        );
+        // Error parsing localStorage value
       }
     }
 
@@ -138,7 +135,7 @@ export function getItem<T>(key: string, defaultValue?: T): T | null {
     return memoryValue ? JSON.parse(memoryValue) : (defaultValue ?? null);
   } catch (error) {
     // This could be a parsing error or other issue
-    console.warn(`Error getting item "${key}" from storage:`, error);
+    // Error getting item from storage
 
     // Return default value as ultimate fallback
     return defaultValue ?? null;
@@ -162,14 +159,14 @@ export function setItem<T>(key: string, value: T): boolean {
     // Return true even if localStorage failed but memory store succeeded
     return true;
   } catch (error) {
-    console.warn(`Error setting item "${key}" in storage:`, error);
+    // Error setting item in storage
 
     // Try to update memory store as a fallback
     try {
       memoryStore[key] = JSON.stringify(value);
       return true; // Success with memory fallback
     } catch (e) {
-      console.error(`Failed to save in memory store:`, e);
+      // Failed to save in memory store
       return false; // Complete failure
     }
   }
@@ -188,7 +185,7 @@ export function removeItem(key: string): boolean {
 
     return true;
   } catch (error) {
-    console.warn(`Error removing item "${key}" from storage:`, error);
+    // Error removing item from storage
 
     // Ensure it's removed from memory store even if localStorage fails
     delete memoryStore[key];
@@ -215,13 +212,13 @@ export function clearStorage(): boolean {
       try {
         window.localStorage.clear();
       } catch (clearError) {
-        console.warn('Error clearing localStorage:', clearError);
+        // Error clearing localStorage
       }
     }
 
     return true;
   } catch (error) {
-    console.warn(`Error clearing storage:`, error);
+    // Error clearing storage
 
     // Ensure memory store is cleared even if localStorage fails
     Object.keys(memoryStore).forEach(key => delete memoryStore[key]);
@@ -254,7 +251,7 @@ export function getAllKeys(): string[] {
         );
         return uniqueKeys;
       } catch (storageError) {
-        console.warn('Error accessing localStorage keys:', storageError);
+        // Error accessing localStorage keys
         return memoryStoreKeys;
       }
     }
@@ -262,7 +259,7 @@ export function getAllKeys(): string[] {
     // Default to memory store keys only
     return memoryStoreKeys;
   } catch (error) {
-    console.warn(`Error getting storage keys:`, error);
+    // Error getting storage keys
     return Object.keys(memoryStore);
   }
 }

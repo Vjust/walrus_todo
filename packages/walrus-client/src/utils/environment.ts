@@ -56,6 +56,6 @@ export async function universalFetch(
   }
   
   // Use cross-fetch for Node.js
-  const { default: fetch } = await import('cross-fetch');
-  return fetch(input, init);
+  const { default: crossFetch } = await import('cross-fetch');
+  return crossFetch(input, init);
 }

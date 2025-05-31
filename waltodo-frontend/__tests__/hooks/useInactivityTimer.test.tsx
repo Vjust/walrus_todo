@@ -1,5 +1,8 @@
-import { renderHook, act } from '@testing-library/react';
-import { useInactivityTimer } from '../../src/contexts/WalletContext'; // Import the hook from actual file
+import { renderHookSafe as renderHook, act } from '../test-utils';
+import { useInactivityTimer } from '../../src/hooks/useInactivityTimer';
+
+// Import centralized mocks
+import '../mocks';
 
 // Mock the Date.now function
 const mockDateNow = jest.fn(() => 1621234567890); // Fixed timestamp for testing
@@ -22,32 +25,49 @@ describe('useInactivityTimer', () => {
 
   it('should initialize with current timestamp', () => {
     const onTimeout = jest.fn();
-    const { result } = renderHook(() => useInactivityTimer(true, onTimeout));
+    const { result } = renderHook(() => useInactivityTimer({
+      timeout: 30 * 60 * 1000, // 30 minutes
+      onTimeout,
+    }));
     
     expect(result.current.lastActivity).toBe(1621234567890);
   });
 
-  it('should not set up event listeners when not connected', () => {
+  it('should set up default event listeners', () => {
     const onTimeout = jest.fn();
-    renderHook(() => useInactivityTimer(false, onTimeout));
+    renderHook(() => useInactivityTimer({
+      timeout: 30 * 60 * 1000,
+      onTimeout,
+    }));
     
-    expect(window.addEventListener).not.toHaveBeenCalled();
+    // Should set up 4 default event listeners: mousedown, keydown, touchstart, scroll
+    expect(window.addEventListener).toHaveBeenCalledTimes(4);
+    expect(window.addEventListener).toHaveBeenCalledWith('mousedown', expect.any(Function), { passive: true });
+    expect(window.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function), { passive: true });
+    expect(window.addEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function), { passive: true });
+    expect(window.addEventListener).toHaveBeenCalledWith('scroll', expect.any(Function), { passive: true });
   });
 
-  it('should set up event listeners when connected', () => {
+  it('should set up custom event listeners when provided', () => {
     const onTimeout = jest.fn();
-    renderHook(() => useInactivityTimer(true, onTimeout));
+    renderHook(() => useInactivityTimer({
+      timeout: 30 * 60 * 1000,
+      onTimeout,
+      events: ['click', 'mousemove'],
+    }));
     
-    // Check for 3 event listeners: mousedown, keydown, touchstart
-    expect(window.addEventListener).toHaveBeenCalledTimes(3);
-    expect(window.addEventListener).toHaveBeenCalledWith('mousedown', expect.any(Function));
-    expect(window.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
-    expect(window.addEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function));
+    // Check for custom event listeners
+    expect(window.addEventListener).toHaveBeenCalledTimes(2);
+    expect(window.addEventListener).toHaveBeenCalledWith('click', expect.any(Function), { passive: true });
+    expect(window.addEventListener).toHaveBeenCalledWith('mousemove', expect.any(Function), { passive: true });
   });
 
   it('should reset lastActivity when resetActivityTimer is called', () => {
     const onTimeout = jest.fn();
-    const { result } = renderHook(() => useInactivityTimer(true, onTimeout));
+    const { result } = renderHook(() => useInactivityTimer({
+      timeout: 30 * 60 * 1000,
+      onTimeout,
+    }));
     
     // Update the mocked Date.now return value
     mockDateNow.mockReturnValue(1621234667890); // 100s later
@@ -63,7 +83,10 @@ describe('useInactivityTimer', () => {
 
   it('should call onTimeout when session times out', () => {
     const onTimeout = jest.fn();
-    renderHook(() => useInactivityTimer(true, onTimeout));
+    renderHook(() => useInactivityTimer({
+      timeout: 30 * 60 * 1000, // 30 minutes
+      onTimeout,
+    }));
     
     // Move time forward by less than timeout (29 min)
     mockDateNow.mockReturnValue(1621234567890 + 29 * 60 * 1000); 
@@ -82,20 +105,27 @@ describe('useInactivityTimer', () => {
 
   it('should clean up event listeners on unmount', () => {
     const onTimeout = jest.fn();
-    const { unmount } = renderHook(() => useInactivityTimer(true, onTimeout));
+    const { unmount } = renderHook(() => useInactivityTimer({
+      timeout: 30 * 60 * 1000,
+      onTimeout,
+    }));
     
     unmount();
     
-    // Check for 3 event listeners being removed
-    expect(window.removeEventListener).toHaveBeenCalledTimes(3);
+    // Check for 4 default event listeners being removed
+    expect(window.removeEventListener).toHaveBeenCalledTimes(4);
     expect(window.removeEventListener).toHaveBeenCalledWith('mousedown', expect.any(Function));
     expect(window.removeEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
     expect(window.removeEventListener).toHaveBeenCalledWith('touchstart', expect.any(Function));
+    expect(window.removeEventListener).toHaveBeenCalledWith('scroll', expect.any(Function));
   });
 
   it('should reset timer on user activity', () => {
     const onTimeout = jest.fn();
-    renderHook(() => useInactivityTimer(true, onTimeout));
+    renderHook(() => useInactivityTimer({
+      timeout: 30 * 60 * 1000,
+      onTimeout,
+    }));
     
     // Capture the callback function registered with the event listener
     const handleActivity = (window.addEventListener as jest.Mock).mock.calls[0][1];

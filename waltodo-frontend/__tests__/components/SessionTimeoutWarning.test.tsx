@@ -1,7 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '../test-utils';
 import { SessionTimeoutWarning } from '../../src/components/SessionTimeoutWarning';
 import { useWalletContext } from '../../src/contexts/WalletContext';
+
+// Import centralized mocks
+import '../mocks';
 
 // Mock wallet context
 jest.mock('../../src/contexts/WalletContext', () => ({

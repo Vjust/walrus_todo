@@ -10,7 +10,10 @@ const SESSION_TIMEOUT = 30 * 60 * 1000;
 const WARNING_THRESHOLD = 5 * 60 * 1000;
 
 export function SessionTimeoutWarning() {
-  const { connected, lastActivity, resetActivityTimer } = useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const lastActivity = walletContext?.lastActivity || 0;
+  const resetActivityTimer = walletContext?.resetActivityTimer || (() => {});
   const [showWarning, setShowWarning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
 

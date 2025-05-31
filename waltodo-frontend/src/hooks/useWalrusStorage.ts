@@ -78,6 +78,11 @@ interface UseWalrusStorageReturn extends WalrusStorageState {
     perTodoCost: Array<{ totalCost: bigint; size: number }>;
   } | null>;
 
+  // Health check operations
+  testConnection: () => Promise<{ success: boolean; error?: string }>;
+  uploadBlob: (data: Uint8Array, options?: { metadata?: any }) => Promise<{ success: boolean; blobId?: string; error?: string }>;
+  retrieveBlob: (blobId: string) => Promise<{ success: boolean; data?: Uint8Array; error?: string }>;
+
   // Utility operations
   refreshWalBalance: () => Promise<void>;
   refreshStorageUsage: () => Promise<void>;
@@ -107,7 +112,10 @@ export function useWalrusStorage(
   } = options;
 
   // Get wallet context
-  const { connected, address, error: walletError } = useWalletContext();
+  const walletContext = useWalletContext();
+  const connected = walletContext?.connected || false;
+  const address = walletContext?.address || null;
+  const walletError = walletContext?.error || null;
 
   // State management
   const [state, setState] = useState<WalrusStorageState>({
@@ -505,6 +513,76 @@ export function useWalrusStorage(
     refreshStorageUsage,
   ]);
 
+  // Test connection health
+  const testConnection = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const manager = getManager();
+      const client = manager['walrusClient'];
+      
+      // Try to check if a known test blob exists
+      const testBlobId = 'test-connection-check';
+      await client.exists(testBlobId);
+      
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Connection test failed',
+      };
+    }
+  }, [getManager]);
+
+  // Upload blob for health check
+  const uploadBlob = useCallback(
+    async (
+      data: Uint8Array,
+      options?: { metadata?: any }
+    ): Promise<{ success: boolean; blobId?: string; error?: string }> => {
+      try {
+        const manager = getManager();
+        const client = manager['walrusClient'];
+        
+        const result = await client.upload(data, {
+          epochs: 1, // Minimal epochs for health check
+        });
+
+        return {
+          success: true,
+          blobId: result.blobId,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Upload test failed',
+        };
+      }
+    },
+    [getManager]
+  );
+
+  // Retrieve blob for health check
+  const retrieveBlob = useCallback(
+    async (blobId: string): Promise<{ success: boolean; data?: Uint8Array; error?: string }> => {
+      try {
+        const manager = getManager();
+        const client = manager['walrusClient'];
+        
+        const result = await client.download(blobId);
+
+        return {
+          success: true,
+          data: result.data,
+        };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Retrieval test failed',
+        };
+      }
+    },
+    [getManager]
+  );
+
   // Clear error when wallet error changes
   useEffect(() => {
     if (walletError) {
@@ -521,6 +599,9 @@ export function useWalrusStorage(
     createMultipleTodos,
     getTodoStorageInfo,
     estimateStorageCosts,
+    testConnection,
+    uploadBlob,
+    retrieveBlob,
     refreshWalBalance,
     refreshStorageUsage,
     clearError,

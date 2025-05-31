@@ -1,6 +1,7 @@
 {
   "name": "@waltodo/config-loader",
   "version": "1.0.0",
+  "type": "module",
   "description": "Runtime network configuration loader for WalTodo applications",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

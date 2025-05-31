@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  useTodos, 
-  useCreateTodo, 
-  useUpdateTodo, 
-  useDeleteTodo, 
-  useCompleteTodo 
-} from '@/hooks/useTodoQueries';
-import { useWebSocket } from '@/lib/websocket';
-import { useHydratedTodoStore } from '@/stores/todoStore';
+// TODO: Re-implement React Query hooks for todo operations
+// import { 
+//   useTodos, 
+//   useCreateTodo, 
+//   useUpdateTodo, 
+//   useDeleteTodo, 
+//   useCompleteTodo 
+// } from '@/hooks/useTodoQueries';
+// import { useWebSocket } from '@/lib/websocket';
+// import { useHydratedTodoStore } from '@/stores/todoStore';
 import { Todo } from '@/types/todo';
 import { useApiErrorHandler } from '@/hooks/useApiErrorHandler';
 import { useWalletContext } from '@/contexts/WalletContext';
@@ -27,22 +28,25 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
   const walletContext = useWalletContext();
   const { handleApiError } = useApiErrorHandler();
 
-  // React Query hooks
-  const { data: todos = [], isLoading, error } = useTodos(listName);
-  const createTodo = useCreateTodo();
-  const updateTodo = useUpdateTodo();
-  const deleteTodo = useDeleteTodo();
-  const completeTodo = useCompleteTodo();
+  // TODO: React Query hooks - temporarily disabled
+  const todos: Todo[] = [];
+  const isLoading = false;
+  const error: Error | null = null;
+  const createTodo = { mutateAsync: async (data: any) => { throw new Error('Not implemented'); } };
+  const updateTodo = { mutate: (data: any, options?: any) => {} };
+  const deleteTodo = { mutate: (id: string, options?: any) => {} };
+  const completeTodo = { mutate: (id: string, options?: any) => {} };
 
-  // Zustand store (hydration-safe)
-  const { 
-    uiState: { filter, sortBy, syncInProgress },
-    setFilter,
-    setSortBy 
-  } = useHydratedTodoStore();
+  // TODO: Zustand store - temporarily disabled
+  const [filter, setFilterState] = useState<'all' | 'active' | 'completed'>('all');
+  const [sortBy, setSortByState] = useState<'created' | 'title' | 'priority'>('created');
+  const syncInProgress = new Set<string>();
+  const setFilter = (f: 'all' | 'active' | 'completed') => setFilterState(f);
+  const setSortBy = (s: 'created' | 'title' | 'priority') => setSortByState(s);
 
-  // WebSocket status
-  const { connected: wsConnected, socketId } = useWebSocket();
+  // TODO: WebSocket status - temporarily disabled
+  const wsConnected = false;
+  const socketId: string | null = null;
 
   // Filter todos based on store settings
   const filteredTodos = React.useMemo(() => {
@@ -164,32 +168,33 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
     );
   }
 
-  if (error) {
-    // Check if it's an auth error
-    const isAuthError = error.message?.includes('401') || error.message?.includes('Unauthorized');
-    
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <h3 className="text-red-800 font-medium">
-          {isAuthError ? 'Authentication Required' : 'Error loading todos'}
-        </h3>
-        <p className="text-red-600 text-sm mt-1">
-          {isAuthError 
-            ? 'Please connect your wallet to view todos' 
-            : error.message
-          }
-        </p>
-        {isAuthError && !walletContext?.connected && (
-          <button
-            onClick={() => walletContext?.connect()}
-            className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Connect Wallet
-          </button>
-        )}
-      </div>
-    );
-  }
+  // TODO: Error handling temporarily disabled
+  // if (error) {
+  //   // Check if it's an auth error
+  //   const isAuthError = error.message?.includes('401') || error.message?.includes('Unauthorized');
+  //   
+  //   return (
+  //     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+  //       <h3 className="text-red-800 font-medium">
+  //         {isAuthError ? 'Authentication Required' : 'Error loading todos'}
+  //       </h3>
+  //       <p className="text-red-600 text-sm mt-1">
+  //         {isAuthError 
+  //           ? 'Please connect your wallet to view todos' 
+  //           : error.message
+  //         }
+  //       </p>
+  //       {isAuthError && !walletContext?.connected && (
+  //         <button
+  //           onClick={() => walletContext?.connect()}
+  //           className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+  //         >
+  //           Connect Wallet
+  //         </button>
+  //       )}
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-6">
@@ -200,9 +205,7 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
           <span className="text-sm text-gray-600">
             {wsConnected ? 'Real-time sync active' : 'Connecting...'}
           </span>
-          {socketId && (
-            <span className="text-xs text-gray-400">({socketId.slice(0, 8)})</span>
-          )}
+          {/* Socket ID display disabled */}
         </div>
         
         {/* Filter controls */}

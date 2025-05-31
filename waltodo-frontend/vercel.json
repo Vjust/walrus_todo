@@ -1,0 +1,95 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "pnpm run build:production",
+  "outputDirectory": ".next",
+  "installCommand": "pnpm install",
+  "devCommand": "pnpm dev",
+  
+  "env": {
+    "NEXT_PUBLIC_ENVIRONMENT": "production"
+  },
+  
+  "build": {
+    "env": {
+      "NODE_ENV": "production",
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  },
+  
+  "functions": {
+    "app/api/monitoring/route.ts": {
+      "maxDuration": 10
+    },
+    "app/api/walrus/[...path]/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "on"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/:path*{/}?",
+      "has": [
+        {
+          "type": "query",
+          "key": "authorized"
+        }
+      ],
+      "headers": [
+        {
+          "key": "x-authorized",
+          "value": "true"
+        }
+      ]
+    }
+  ],
+  
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://api.waltodo.app/api/v1/:path*"
+    },
+    {
+      "source": "/walrus/:path*",
+      "destination": "https://walrus-testnet-aggregator.nodes.guru/:path*"
+    }
+  ],
+  
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
+  
+  "crons": [
+    {
+      "path": "/api/monitoring/health-check",
+      "schedule": "*/5 * * * *"
+    }
+  ],
+  
+  "regions": ["iad1", "sfo1"],
+  
+  "github": {
+    "silent": false,
+    "autoAlias": true
+  }
+}

@@ -1,447 +1,263 @@
 'use client';
 
-import React, { useState, useCallback, memo, useEffect } from 'react';
-import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
-import {
-  copyToClipboard,
-  getClipboardCapabilities,
-  ClipboardError,
-} from '@/lib/clipboard';
-import { WalletErrorModal } from './WalletErrorModal';
-import { ClipboardErrorModal } from './ClipboardErrorModal';
-import { WalletError } from '@/lib/wallet-errors';
-import { ErrorBoundary } from './ErrorBoundary';
-import { WalletSelector } from './WalletSelector';
-import { ClientOnly } from '@/components/ClientOnly';
-import toast from 'react-hot-toast';
+import React, { useEffect, useState } from 'react';
+import { useWalletContext } from '@/contexts/WalletContext';
 
-function WalletConnectButton() {
-  const {
-    connected,
-    connecting,
-    disconnect,
-    account,
-    currentNetwork,
-    error,
-    clearError,
-    switchNetwork,
-    connect,
-    isLoading,
-  } = useClientSafeWallet();
+interface WalletConnectButtonProps {
+  className?: string;
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
+}
 
-  const address = account?.address || null;
-  const chainId = currentNetwork;
-
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>(
-    'idle'
-  );
-  const [copyError, setCopyError] = useState<string | null>(null);
-  const [clipboardError, setClipboardError] = useState<ClipboardError | null>(
-    null
-  );
-  const [showNetworkOptions, setShowNetworkOptions] = useState(false);
-  const [isNetworkSwitching, setIsNetworkSwitching] = useState(false);
+function WalletConnectButton({ 
+  className = '', 
+  variant = 'primary',
+  size = 'md'
+}: WalletConnectButtonProps) {
+  const walletContext = useWalletContext();
+  const [showDropdown, setShowDropdown] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [hasWallet, setHasWallet] = useState(false);
 
   // Handle client-side mounting
   useEffect(() => {
     setMounted(true);
+    // Check for wallet availability only on client
+    if (typeof window !== 'undefined') {
+      // Import useWallets dynamically to avoid SSR issues
+      import('@mysten/dapp-kit').then(({ useWallets }) => {
+        // This won't work as hooks can't be called dynamically
+        // We'll need to check for wallet differently
+      }).catch(() => {
+        setHasWallet(false);
+      });
+      
+      // Check if any wallet extensions are installed
+      const checkWallets = () => {
+        // Check for common Sui wallet indicators
+        const hasSuiWallet = typeof window !== 'undefined' && (
+          (window as any).sui || 
+          (window as any).suiWallet ||
+          (window as any).martian
+        );
+        setHasWallet(!!hasSuiWallet);
+      };
+      
+      checkWallets();
+      // Also check after a small delay as some wallets inject asynchronously
+      setTimeout(checkWallets, 500);
+    }
   }, []);
 
-  // Helper function to truncate address
-  const truncateAddress = (address: string) => {
-    if (!address) return '';
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const getSizeClasses = (size: 'sm' | 'md' | 'lg') => {
+    switch (size) {
+      case 'sm':
+        return 'text-xs px-3 py-1.5';
+      case 'lg':
+        return 'text-base px-6 py-3';
+      default:
+        return 'text-sm px-4 py-2';
+    }
   };
+  
+  // Handle SSR and initialization phase
+  if (!mounted || !walletContext) {
+    return (
+      <button 
+        className={`
+          inline-flex items-center justify-center
+          bg-gray-500 text-white
+          px-4 py-2 rounded-md
+          text-sm font-medium
+          cursor-not-allowed opacity-50
+          ${getSizeClasses(size)}
+          ${className}
+        `}
+        disabled
+      >
+        <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        Loading...
+      </button>
+    );
+  }
 
-  // Handle copying address to clipboard
-  const handleCopyAddress = useCallback(async () => {
-    // Prevent function execution if no address exists
-    if (!address) {
-      console.warn('Attempted to copy address but no address is available');
-      setCopyStatus('error');
-      setCopyError('No wallet address available');
+  const { connected, connecting, address, connect, disconnect, error, name } = walletContext;
+
+  const handleConnect = () => {
+    if (!hasWallet) {
+      window.open('https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank');
       return;
     }
+    connect();
+  };
 
-    // Prevent multiple simultaneous copy operations
-    if (copyStatus === 'success') return;
+  const handleDisconnect = () => {
+    disconnect();
+    setShowDropdown(false);
+  };
 
-    setCopyStatus('idle');
-    setCopyError(null);
-    setClipboardError(null);
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
-    try {
-      const result = await copyToClipboard(address || '');
-
-      if (result.success) {
-        setCopyStatus('success');
-        toast.success('Address copied to clipboard!', {
-          duration: 2000,
-        });
-        // Reset success status after 2 seconds
-        const timeoutId = setTimeout(() => {
-          setCopyStatus('idle');
-        }, 2000);
-        
-        // Cleanup on unmount
-        return () => clearTimeout(timeoutId);
-      } else {
-        setCopyStatus('error');
-        setCopyError(result.error?.message || 'Unknown error');
-
-        // If it's a ClipboardError, show the modal
-        if (result.error instanceof ClipboardError) {
-          setClipboardError(result.error);
-        }
-
-        toast.error('Failed to copy address', {
-          duration: 3000,
-        });
-        console.error('Failed to copy address:', result.error);
-      }
-    } catch (error) {
-      setCopyStatus('error');
-      const message = error instanceof Error ? error.message : 'Failed to copy';
-      setCopyError(message);
-
-      // If it's a ClipboardError, show the modal
-      if (error instanceof ClipboardError) {
-        setClipboardError(error);
-      }
-
-      toast.error(message, {
-        duration: 4000,
-      });
-      console.error('Copy operation failed:', error);
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'secondary':
+        return connected 
+          ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300'
+          : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300';
+      case 'outline':
+        return connected
+          ? 'bg-transparent text-green-600 hover:bg-green-50 border border-green-600'
+          : 'bg-transparent text-blue-600 hover:bg-blue-50 border border-blue-600';
+      default: // primary
+        return connected
+          ? 'bg-green-600 text-white hover:bg-green-700'
+          : 'bg-blue-600 text-white hover:bg-blue-700';
     }
-  }, [address, copyStatus]);
+  };
 
-  // Add clipboard manual fallback option
-  const handleManualCopy = useCallback(() => {
-    try {
-      // Prevent function execution if no address exists or not on client
-      if (!address || typeof window === 'undefined' || typeof document === 'undefined') {
-        console.warn('Attempted manual copy but no address is available or not on client');
-        return;
-      }
+  const buttonClasses = `
+    inline-flex items-center justify-center
+    font-medium rounded-md
+    transition-all duration-200
+    disabled:opacity-50 disabled:cursor-not-allowed
+    focus:outline-none focus:ring-2 focus:ring-offset-2
+    ${connected ? 'focus:ring-green-500' : 'focus:ring-blue-500'}
+    ${getVariantClasses()}
+    ${getSizeClasses(size)}
+    ${className}
+  `;
 
-      // Create a temporary input element to display the address for manual copying
-      const tempInput = document.createElement('textarea');
-      tempInput.value = address || '';
-      tempInput.setAttribute('readonly', '');
-      tempInput.style.position = 'fixed';
-      tempInput.style.top = '0';
-      tempInput.style.opacity = '1'; // Make visible but out of normal flow
-      tempInput.style.zIndex = '1000';
-      document.body.appendChild(tempInput);
-
-      try {
-        tempInput.focus();
-        tempInput.select();
-
-        // Show instructions
-        toast(
-          'Use keyboard shortcut to copy: ' +
-            (navigator.platform.includes('Mac') ? 'Cmd+C' : 'Ctrl+C'),
-          {
-            duration: 5000,
-            icon: '📋',
-          }
-        );
-      } finally {
-        // Always clean up, even if there's an error
-        try {
-          document.body.removeChild(tempInput);
-        } catch (err) {
-          console.error('Error removing temporary input element:', err);
-        }
-      }
-    } catch (error) {
-      console.error('Error in manual copy function:', error);
-    }
-  }, [address]);
-
-  // Handle network switching
-  const handleNetworkSwitch = useCallback(async (
-    network: 'mainnet' | 'testnet' | 'devnet'
-  ) => {
-    if (isNetworkSwitching) return; // Prevent multiple clicks
-
-    setIsNetworkSwitching(true);
-
-    try {
-      await switchNetwork(network);
-      setShowNetworkOptions(false);
-      toast.success(`Switched to ${network}`, {
-        duration: 2000,
-      });
-    } catch (error) {
-      console.error(`Failed to switch to ${network}:`, error);
-      toast.error(`Failed to switch to ${network}`, {
-        duration: 4000,
-      });
-    } finally {
-      setIsNetworkSwitching(false);
-    }
-  }, [isNetworkSwitching, switchNetwork]);
-
-  // Convert network string to display name
-  const getNetworkDisplayName = useCallback((networkId: string | null) => {
-    if (networkId === null) return 'Unknown';
-
-    // Convert network ID to readable name as needed
-    const networkMap: Record<string, string> = {
-      mainnet: 'Mainnet',
-      testnet: 'Testnet',
-      devnet: 'Devnet',
-    };
-
-    // Return formatted name or the original if not in our map
-    return networkMap[String(networkId)] || String(networkId);
-  }, []);
-
-  // Render the connected wallet UI
-  const renderConnectedUI = () => {
-    if (!connected || !address || !mounted) return null;
-
-    // Get clipboard capabilities to determine what UI to show (only on client)
-    const clipboardCapabilities = getClipboardCapabilities();
-    const showClipboardButton =
-      clipboardCapabilities.hasModernApi ||
-      clipboardCapabilities.hasLegacySupport;
-
+  if (connected && address) {
     return (
-      <div className='flex items-center gap-4'>
-        <div className='px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg flex items-center gap-2 relative'>
-          <div className='flex flex-col'>
-            <p className='text-sm text-ocean-deep dark:text-ocean-foam'>
-              Wallet: {truncateAddress(address)}
-            </p>
-            <p className='text-xs text-ocean-medium dark:text-ocean-light'>
-              {getNetworkDisplayName(chainId)}
-              {!isNetworkSwitching ? (
-                <button
-                  onClick={() => setShowNetworkOptions(!showNetworkOptions)}
-                  className='ml-2 text-xs text-ocean-medium hover:text-ocean-deep dark:text-ocean-light dark:hover:text-ocean-foam'
-                  disabled={isNetworkSwitching}
-                >
-                  (change)
-                </button>
-              ) : (
-                <span className='ml-2 text-xs text-yellow-500 animate-pulse'>
-                  (switching...)
-                </span>
-              )}
-            </p>
-
-            {/* Network selection dropdown */}
-            {showNetworkOptions && !isNetworkSwitching && (
-              <div className='absolute top-full left-0 mt-2 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg z-10 w-full min-w-[150px]'>
-                <div className='flex flex-col gap-2'>
-                  <button
-                    onClick={() => handleNetworkSwitch('mainnet')}
-                    disabled={isNetworkSwitching || chainId === 'mainnet'}
-                    className={`text-sm px-3 py-1 rounded-md ${
-                      chainId === 'mainnet'
-                        ? 'bg-ocean-deep text-white'
-                        : isNetworkSwitching
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    Mainnet
-                  </button>
-                  <button
-                    onClick={() => handleNetworkSwitch('testnet')}
-                    disabled={isNetworkSwitching || chainId === 'testnet'}
-                    className={`text-sm px-3 py-1 rounded-md ${
-                      chainId === 'testnet'
-                        ? 'bg-ocean-deep text-white'
-                        : isNetworkSwitching
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    Testnet
-                  </button>
-                  <button
-                    onClick={() => handleNetworkSwitch('devnet')}
-                    disabled={isNetworkSwitching || chainId === 'devnet'}
-                    className={`text-sm px-3 py-1 rounded-md ${
-                      chainId === 'devnet'
-                        ? 'bg-ocean-deep text-white'
-                        : isNetworkSwitching
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'hover:bg-ocean-light/20 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    Devnet
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {showClipboardButton && (
-            <button
-              onClick={handleCopyAddress}
-              className={`text-ocean-medium hover:text-ocean-deep dark:text-ocean-light dark:hover:text-ocean-foam transition-colors ${
-                copyStatus === 'error'
-                  ? 'text-red-500 dark:text-red-400'
-                  : copyStatus === 'success'
-                    ? 'text-green-500 dark:text-green-400'
-                    : ''
-              }`}
-              title={
-                copyStatus === 'error'
-                  ? 'Copy failed'
-                  : copyStatus === 'success'
-                    ? 'Copied!'
-                    : 'Copy address'
-              }
-            >
-              {copyStatus === 'success' ? (
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M5 13l4 4L19 7'
-                  />
-                </svg>
-              ) : copyStatus === 'error' ? (
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className='w-4 h-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
-                  />
-                </svg>
-              )}
-            </button>
-          )}
-
-          {/* Error tooltip */}
-          {copyStatus === 'error' && copyError && (
-            <div className='absolute top-full left-0 mt-2 p-2 bg-red-100 text-red-800 text-xs rounded shadow-md z-10'>
-              {copyError}
-            </div>
-          )}
-
-          {/* Success tooltip */}
-          {copyStatus === 'success' && (
-            <div className='absolute top-full left-0 mt-2 p-2 bg-green-100 text-green-800 text-xs rounded shadow-md z-10'>
-              Address copied to clipboard!
-            </div>
-          )}
-        </div>
+      <div className="relative">
         <button
-          onClick={() => {
-            try {
-              disconnect();
-            } catch (error) {
-              console.error('Error in disconnect handler:', error);
-            }
-          }}
-          disabled={isNetworkSwitching}
-          className='px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:bg-red-300 disabled:cursor-not-allowed'
+          className={buttonClasses}
+          onClick={() => setShowDropdown(!showDropdown)}
+          disabled={connecting}
         >
-          Disconnect
+          <div className="flex items-center space-x-2">
+            {/* Wallet Icon */}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            <span>{formatAddress(address)}</span>
+            {/* Dropdown Arrow */}
+            <svg className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} 
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </button>
+
+        {/* Dropdown Menu */}
+        {showDropdown && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-10" 
+              onClick={() => setShowDropdown(false)}
+            />
+            
+            {/* Dropdown */}
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+              <div className="p-4 border-b border-gray-100">
+                <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Connected Wallet</div>
+                <div className="font-medium text-gray-900">{name || 'Sui Wallet'}</div>
+                <div className="text-sm text-gray-500 mt-1 font-mono">{formatAddress(address)}</div>
+              </div>
+              
+              <div className="p-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(address);
+                    // You could add a toast notification here
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy Address
+                </button>
+                
+                <button
+                  onClick={handleDisconnect}
+                  className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center mt-1"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Disconnect
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
-  };
+  }
 
-  // Render the connecting UI
-  const renderConnectingUI = () => {
-    if (!connecting) return null;
-
-    return (
-      <div className='px-4 py-2 bg-ocean-deep/20 dark:bg-ocean-foam/20 rounded-lg'>
-        <p className='text-sm text-ocean-deep dark:text-ocean-foam flex items-center'>
-          <svg
-            className='animate-spin -ml-1 mr-2 h-4 w-4 text-ocean-deep dark:text-ocean-foam'
-            xmlns='http://www.w3.org/2000/svg'
-            fill='none'
-            viewBox='0 0 24 24'
-          >
-            <circle
-              className='opacity-25'
-              cx='12'
-              cy='12'
-              r='10'
-              stroke='currentColor'
-              strokeWidth='4'
-            ></circle>
-            <path
-              className='opacity-75'
-              fill='currentColor'
-              d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-            ></path>
-          </svg>
-          Connecting...
-        </p>
-      </div>
-    );
-  };
-
-  // Render the connect button UI with wallet selector
-  const renderConnectUI = () => {
-    if (connected || connecting) return null;
-
-    // Use the WalletSelector component instead of a simple button
-    return <WalletSelector />;
-  };
-
-  // Wrap the entire component in an ErrorBoundary and ClientOnly
   return (
-    <ErrorBoundary>
-      <ClientOnly fallback={<div className="px-4 py-2 bg-gray-200 animate-pulse rounded-lg">Loading...</div>}>
-        <div>
-          {renderConnectedUI() || renderConnectingUI() || renderConnectUI()}
+    <>
+      <button
+        className={buttonClasses}
+        onClick={handleConnect}
+        disabled={connecting}
+      >
+        {connecting ? (
+          <>
+            <div className="w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            Connecting...
+          </>
+        ) : !hasWallet ? (
+          <>
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Install Wallet
+          </>
+        ) : (
+          <>
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            Connect Wallet
+          </>
+        )}
+      </button>
 
-          <WalletErrorModal
-            error={error ? new WalletError(error) : null}
-            onDismiss={clearError}
-          />
-          <ClipboardErrorModal
-            error={clipboardError}
-            onDismiss={() => setClipboardError(null)}
-            onTryAlternative={handleManualCopy}
-          />
+      {/* Error Toast */}
+      {error && mounted && (
+        <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-lg flex items-start max-w-sm">
+            <svg className="w-5 h-5 text-red-400 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Connection Error</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+            <button
+              onClick={() => walletContext.clearError()}
+              className="ml-3 text-red-400 hover:text-red-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
-      </ClientOnly>
-    </ErrorBoundary>
+      )}
+    </>
   );
 }
 
-const MemoizedWalletConnectButton = memo(WalletConnectButton);
-
-export { MemoizedWalletConnectButton as WalletConnectButton };
-export default MemoizedWalletConnectButton;
+export default WalletConnectButton;

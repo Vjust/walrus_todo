@@ -26,6 +26,9 @@ export type {
 // Map shared StorageLocation enum to string literal type for backward compatibility
 export type StorageLocation = 'local' | 'blockchain' | 'both';
 
+// Import ExtendedTodoMetadata from sui-client
+import type { ExtendedTodoMetadata } from '@/lib/sui-client';
+
 // Extend the shared Todo interface to add frontend-specific fields
 export interface Todo extends Omit<SharedTodo, 'storageLocation' | 'description'> {
   /** Title of the todo item */
@@ -54,14 +57,28 @@ export interface Todo extends Omit<SharedTodo, 'storageLocation' | 'description'
   walrusBlobId?: string;
   /** Sui NFT object ID referencing this todo */
   nftObjectId?: string;
+  /** Sui object ID when stored on chain (alias for nftObjectId) */
+  objectId?: string;
+  /** Whether the todo is stored on blockchain */
+  blockchainStored?: boolean;
   /** URL to the todo image stored on Walrus */
   imageUrl?: string;
+  /** Thumbnail URLs for different sizes */
+  thumbnails?: Record<string, string>;
   /** Category of the todo item */
   category?: string;
   /** Name of the list the todo belongs to */
   listName?: string;
   /** Sync timestamp for API server integration */
   syncedAt?: string;
+  /** Raw metadata from blockchain */
+  metadata?: string;
+  /** Whether the todo is private on chain */
+  isPrivate?: boolean;
+  /** Owner address from blockchain */
+  owner?: string;
+  /** Extended metadata parsed from NFT */
+  extendedMetadata?: ExtendedTodoMetadata;
 }
 
 export interface TodoList {
@@ -109,6 +126,9 @@ export function mapStorageLocation(location?: string): StorageLocation | undefin
 
 // Helper function to adapt shared Todo to frontend Todo
 export function adaptSharedTodo(sharedTodo: SharedTodo): Todo {
+  const storageLocation = mapStorageLocation(sharedTodo.storageLocation);
+  const nftObjectId = sharedTodo.nftId;
+  
   return {
     ...sharedTodo,
     description: sharedTodo.description || '',
@@ -128,9 +148,11 @@ export function adaptSharedTodo(sharedTodo: SharedTodo): Todo {
         : new Date(sharedTodo.dueDate).toISOString())
       : undefined,
     private: false,
-    storageLocation: mapStorageLocation(sharedTodo.storageLocation),
+    storageLocation,
     walrusBlobId: sharedTodo.blobId,
-    nftObjectId: sharedTodo.nftId,
+    nftObjectId,
+    objectId: nftObjectId, // Alias for compatibility
+    blockchainStored: storageLocation === 'blockchain' || storageLocation === 'both',
     imageUrl: sharedTodo.nftMetadata?.image,
   };
 }

@@ -109,13 +109,13 @@ export function setupGlobalErrorSuppression() {
     );
 
     if (isKnownError) {
-      console.warn('[Global Error Suppressed]', errorMessage);
+      // Global error suppressed
       event.preventDefault();
       return;
     }
 
     // Let genuine errors through
-    console.error('[Global Error]', event.error || event.message);
+    originalError('[Global Error]', event.error || event.message);
   };
 
   // Global unhandled promise rejection handler
@@ -128,13 +128,13 @@ export function setupGlobalErrorSuppression() {
     );
 
     if (isKnownError) {
-      console.warn('[Global Rejection Suppressed]', rejectionMessage);
+      // Global rejection suppressed
       event.preventDefault();
       return;
     }
 
     // Let genuine rejections through
-    console.error('[Global Rejection]', event.reason);
+    originalError('[Global Rejection]', event.reason);
   };
 
   // Add global event listeners
