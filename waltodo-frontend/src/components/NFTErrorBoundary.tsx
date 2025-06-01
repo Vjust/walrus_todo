@@ -84,15 +84,8 @@ export class NFTErrorBoundary extends Component<Props, State> {
         id: `nft_error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: Date.now(),
         type: errorType,
-        message: error.message,
+        message: `NFTErrorBoundary: ${error.message}`,
         stack: error.stack,
-        context: {
-          componentStack: errorInfo.componentStack,
-          userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
-          url: typeof window !== 'undefined' ? window.location.href : 'Unknown',
-          component: 'NFTErrorBoundary',
-          retryCount: this.state.retryCount
-        },
         retryCount: this.state.retryCount,
         recovered: false,
         recoveryAttempts: []
@@ -169,20 +162,14 @@ export class NFTErrorBoundary extends Component<Props, State> {
         // Clear session storage
         sessionStorage.clear();
         
-        // Clear error logs for NFT errors
-        const errors = await errorPersistence.getErrors(100);
-        const nftErrors = errors.filter(e => e.context?.component === 'NFTErrorBoundary');
-        if (nftErrors.length > 0) {
-          // Clear only NFT-related errors by getting all and filtering
-          showSuccess('Cache and error logs cleared');
-        } else {
-          showSuccess('Cache cleared successfully');
-        }
+        // Clear error logs
+        await errorPersistence.clearErrors();
+        console.log('Cache and error logs cleared');
         
         // Then retry
         await this.handleRetry();
       } catch (error) {
-        showError('Failed to clear cache');
+        console.error('Failed to clear cache:', error);
       }
     }
   };

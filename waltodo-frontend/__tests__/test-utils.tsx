@@ -112,7 +112,7 @@ export const createMockBlockchainHooks = () => {
 // Safe renderHook that handles null results properly
 type SafeRenderHookResult<Result, Props> = Omit<RenderHookResult<Result, Props>, 'result'> & {
   result: {
-    current: Result;
+    current: NonNullable<Result>;
   };
 };
 
@@ -122,12 +122,29 @@ export function renderHookSafe<Result, Props>(
 ): SafeRenderHookResult<Result, Props> {
   const result = originalRenderHook(renderCallback, options);
   
-  // Ensure result.current is never undefined
-  if (result.result.current === undefined) {
-    throw new Error('Hook returned undefined. Ensure the hook always returns a value.');
+  // Ensure result.current is never null or undefined
+  if (result.result.current === undefined || result.result.current === null) {
+    throw new Error('Hook returned null or undefined. Ensure the hook always returns a non-null value.');
   }
   
-  return result as SafeRenderHookResult<Result, Props>;
+  // Create a proxy that provides better type safety and runtime checks
+  const safeResult = {
+    ...result,
+    result: {
+      get current() {
+        const current = result.result.current;
+        if (current === null || current === undefined) {
+          throw new Error('Hook result became null or undefined after initialization');
+        }
+        return current;
+      },
+      set current(value: Result) {
+        result.result.current = value;
+      }
+    }
+  };
+  
+  return safeResult as SafeRenderHookResult<Result, Props>;
 }
 
 // Create a test query client
@@ -136,7 +153,7 @@ export const createTestQueryClient = () => {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0,
         staleTime: 0,
       },
     },

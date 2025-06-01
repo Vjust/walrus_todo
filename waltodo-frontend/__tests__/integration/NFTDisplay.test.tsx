@@ -141,6 +141,13 @@ describe('NFT Display Integration Tests', () => {
   let mockBlockchainEvents: any;
 
   beforeEach(() => {
+    // Mock environment variables
+    Object.defineProperty(process.env, 'NEXT_PUBLIC_PACKAGE_ID', {
+      value: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      writable: true,
+      configurable: true,
+    });
+
     // Setup SuiClient mock
     mockSuiClient = {
       getOwnedObjects: jest.fn(),

@@ -246,7 +246,7 @@ const ExpandedRowContent: React.FC<{ todo: TodoNFTDisplay }> = ({ todo }) => {
           <h4 className="font-medium text-gray-900 dark:text-gray-100">Image Preview</h4>
           <div className="relative h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
             <TodoNFTImage
-              imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
+              url={todo.imageUrl || todo.displayImageUrl || ''}
               alt={todo.title}
               displayMode="preview"
               className="w-full h-full object-contain"
@@ -401,7 +401,7 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
         return (
           <div className="w-16 h-16 relative">
             <TodoNFTImage
-              imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
+              url={todo.imageUrl || todo.displayImageUrl || ''}
               alt={todo.title}
               displayMode="thumbnail"
               className="w-full h-full object-cover rounded-md"

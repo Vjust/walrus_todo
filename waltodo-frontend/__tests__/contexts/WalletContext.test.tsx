@@ -67,42 +67,45 @@ describe('WalletContext', () => {
   it('should provide initial values', () => {
     const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
-    // Check initial values
-    expect(result.current.connected).toBe(false);
-    expect(result.current.connecting).toBe(false);
-    expect(result.current.address).toBeNull();
-    expect(result.current.chainId).toBeNull();
-    expect(result.current.name).toBeNull();
-    expect(result.current.error).toBeNull();
-    expect(result.current.transactionHistory).toEqual([]);
-    expect(result.current.lastActivity).toBeDefined();
+    // Check initial values with proper null guards
+    expect(result.current).toBeTruthy();
+    expect(result.current!.connected).toBe(false);
+    expect(result.current!.connecting).toBe(false);
+    expect(result.current!.address).toBeNull();
+    expect(result.current!.chainId).toBeNull();
+    expect(result.current!.name).toBeNull();
+    expect(result.current!.error).toBeNull();
+    expect(result.current!.transactionHistory).toEqual([]);
+    expect(result.current!.lastActivity).toBeDefined();
     
     // Check that functions are defined
-    expect(typeof result.current.connect).toBe('function');
-    expect(typeof result.current.disconnect).toBe('function');
-    expect(typeof result.current.switchNetwork).toBe('function');
-    expect(typeof result.current.trackTransaction).toBe('function');
-    expect(typeof result.current.setError).toBe('function');
-    expect(typeof result.current.resetActivityTimer).toBe('function');
+    expect(typeof result.current!.connect).toBe('function');
+    expect(typeof result.current!.disconnect).toBe('function');
+    expect(typeof result.current!.switchNetwork).toBe('function');
+    expect(typeof result.current!.trackTransaction).toBe('function');
+    expect(typeof result.current!.setError).toBe('function');
+    expect(typeof result.current!.resetActivityTimer).toBe('function');
   });
 
   it('should maintain stable function references between renders', async () => {
     const { result, rerender } = renderHookSafe(() => useWalletContext(), { wrapper });
     
-    // Capture initial function references
-    const initialConnect = result.current.connect;
-    const initialDisconnect = result.current.disconnect;
-    const initialSwitchNetwork = result.current.switchNetwork;
-    const initialTrackTransaction = result.current.trackTransaction;
+    // Capture initial function references with null guards
+    expect(result.current).toBeTruthy();
+    const initialConnect = result.current!.connect;
+    const initialDisconnect = result.current!.disconnect;
+    const initialSwitchNetwork = result.current!.switchNetwork;
+    const initialTrackTransaction = result.current!.trackTransaction;
     
     // Force a re-render
     rerender();
     
     // Check that function references haven't changed
-    expect(result.current.connect).toBe(initialConnect);
-    expect(result.current.disconnect).toBe(initialDisconnect);
-    expect(result.current.switchNetwork).toBe(initialSwitchNetwork);
-    expect(result.current.trackTransaction).toBe(initialTrackTransaction);
+    expect(result.current).toBeTruthy();
+    expect(result.current!.connect).toBe(initialConnect);
+    expect(result.current!.disconnect).toBe(initialDisconnect);
+    expect(result.current!.switchNetwork).toBe(initialSwitchNetwork);
+    expect(result.current!.trackTransaction).toBe(initialTrackTransaction);
   });
 
   it('should track transactions correctly', async () => {
@@ -111,18 +114,20 @@ describe('WalletContext', () => {
     // Mock transaction promise
     const mockTransaction = Promise.resolve({ digest: 'mock-tx-hash' });
     
-    // Track the transaction
+    // Track the transaction with null guard
     let txResult;
     await act(async () => {
-      txResult = await result.current.trackTransaction(mockTransaction, 'TestTransaction');
+      expect(result.current).toBeTruthy();
+      txResult = await result.current!.trackTransaction(mockTransaction, 'TestTransaction');
     });
     
     // Check result
     expect(txResult).toEqual({ digest: 'mock-tx-hash' });
     
     // Check transaction was added to history
-    expect(result.current.transactionHistory).toHaveLength(1);
-    expect(result.current.transactionHistory[0]).toEqual(expect.objectContaining({
+    expect(result.current).toBeTruthy();
+    expect(result.current!.transactionHistory).toHaveLength(1);
+    expect(result.current!.transactionHistory[0]).toEqual(expect.objectContaining({
       id: expect.any(String),
       status: 'success',
       type: 'TestTransaction',
@@ -137,18 +142,20 @@ describe('WalletContext', () => {
     const mockError = new Error('Transaction failed');
     const mockFailedTransaction = Promise.reject(mockError);
     
-    // Track the transaction (expecting it to fail)
+    // Track the transaction (expecting it to fail) with null guard
     await act(async () => {
       try {
-        await result.current.trackTransaction(mockFailedTransaction, 'FailedTransaction');
+        expect(result.current).toBeTruthy();
+        await result.current!.trackTransaction(mockFailedTransaction, 'FailedTransaction');
       } catch (error) {
         // Expected to fail
       }
     });
     
     // Check transaction was added to history with error status
-    expect(result.current.transactionHistory).toHaveLength(1);
-    expect(result.current.transactionHistory[0]).toEqual(expect.objectContaining({
+    expect(result.current).toBeTruthy();
+    expect(result.current!.transactionHistory).toHaveLength(1);
+    expect(result.current!.transactionHistory[0]).toEqual(expect.objectContaining({
       id: expect.any(String),
       status: 'failed',
       type: 'FailedTransaction',
@@ -159,40 +166,47 @@ describe('WalletContext', () => {
   it('should handle error states', async () => {
     const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
-    // Set an error
+    // Set an error with null guard
     act(() => {
-      result.current.setError('Test error');
+      expect(result.current).toBeTruthy();
+      result.current!.setError('Test error');
     });
     
     // Check error state
-    expect(result.current.error).toEqual(new Error('Test error'));
+    expect(result.current).toBeTruthy();
+    expect(result.current!.error).toEqual(new Error('Test error'));
     
     // Clear error
     act(() => {
-      result.current.setError(null);
+      expect(result.current).toBeTruthy();
+      result.current!.setError(null);
     });
     
     // Check error cleared
-    expect(result.current.error).toBeNull();
+    expect(result.current).toBeTruthy();
+    expect(result.current!.error).toBeNull();
   });
 
   it('should update lastActivity on resetActivityTimer', async () => {
     const { result } = renderHookSafe(() => useWalletContext(), { wrapper });
     
-    // Get initial lastActivity value
-    const initialLastActivity = result.current.lastActivity;
+    // Get initial lastActivity value with null guard
+    expect(result.current).toBeTruthy();
+    const initialLastActivity = result.current!.lastActivity;
     
     // Wait a bit to ensure time difference
     await new Promise(resolve => setTimeout(resolve, 10));
     
     // Reset activity timer
     act(() => {
-      result.current.resetActivityTimer();
+      expect(result.current).toBeTruthy();
+      result.current!.resetActivityTimer();
     });
     
     // Check lastActivity was updated
-    expect(result.current.lastActivity).not.toBe(initialLastActivity);
-    expect(result.current.lastActivity).toBeGreaterThan(initialLastActivity);
+    expect(result.current).toBeTruthy();
+    expect(result.current!.lastActivity).not.toBe(initialLastActivity);
+    expect(result.current!.lastActivity).toBeGreaterThan(initialLastActivity);
   });
   
   // Tests for localStorage persistence would go here, but they require more complex mocking

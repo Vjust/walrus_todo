@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-export const dynamic = 'force-dynamic';
+// Disabled for static export: export const dynamic = 'force-dynamic';
 
 export default function BlockchainLayout({
   children,

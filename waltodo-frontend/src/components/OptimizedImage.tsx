@@ -283,3 +283,6 @@ export function ProgressiveImage({
     </div>
   );
 }
+
+// Export as default for easier importing
+export default OptimizedImage;

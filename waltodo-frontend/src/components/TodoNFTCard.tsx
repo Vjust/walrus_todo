@@ -230,7 +230,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
           {/* Thumbnail */}
           <div className="flex-shrink-0 w-20 h-20 relative">
             <TodoNFTImage
-              imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
+              url={todo.imageUrl || todo.displayImageUrl || ''}
               alt={todo.title}
               displayMode="thumbnail"
               className="w-full h-full object-cover rounded-md"
@@ -387,7 +387,7 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
             {/* Image Section */}
             <div className="relative h-48 bg-gray-100">
               <TodoNFTImage
-                imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
+                url={todo.imageUrl || todo.displayImageUrl || ''}
                 alt={todo.title}
                 displayMode={displayMode === 'thumbnail' ? 'thumbnail' : 'preview'}
                 className="w-full h-full object-cover"
