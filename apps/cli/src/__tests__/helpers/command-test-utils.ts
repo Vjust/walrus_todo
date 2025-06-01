@@ -124,13 +124,13 @@ export async function initializeCommandForTest<T extends Command>(
   (command as any).config = config;
 
   // Mock commonly used methods
-  command.log = typeof jest !== 'undefined' && jest.fn 
+  command.log = typeof jest !== 'undefined' && typeof jest.fn === 'function'
     ? jest.fn() 
-    : () => {};
-  command.warn = typeof jest !== 'undefined' && jest.fn 
+    : (..._args: any[]) => {};
+  command.warn = typeof jest !== 'undefined' && typeof jest.fn === 'function'
     ? jest.fn() 
-    : () => {};
-  (command as any).error = typeof jest !== 'undefined' && jest.fn 
+    : (input: string | Error) => input;
+  (command as any).error = typeof jest !== 'undefined' && typeof jest.fn === 'function'
     ? jest.fn().mockImplementation((message: string | Error, options?: any) => {
         const error = typeof message === 'string' ? new Error(message) : message;
         if (options?.exit) {
@@ -187,7 +187,7 @@ export async function runCommandInTest<T extends Command>(
   });
 
   // Capture log output
-  if (typeof jest !== 'undefined' && jest.fn) {
+  if (typeof jest !== 'undefined' && typeof jest.fn === 'function') {
     (command.log as jest.Mock).mockImplementation((...args: any[]) => {
       output.push(args.join(' '));
     });
@@ -200,8 +200,9 @@ export async function runCommandInTest<T extends Command>(
     command.log = (...args: any[]) => {
       output.push(args.join(' '));
     };
-    command.warn = (...args: any[]) => {
-      errors.push(args.join(' '));
+    command.warn = (input: string | Error) => {
+      errors.push(typeof input === 'string' ? input : input.message);
+      return input;
     };
   }
 
