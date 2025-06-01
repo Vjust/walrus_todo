@@ -1,7 +1,19 @@
 'use client';
 
+/**
+ * WalletConnectButton - Updated for 2024/2025 Slush Wallet Integration
+ * 
+ * Features:
+ * - Modern wallet standard detection (primary method)
+ * - Fallback injection pattern detection for compatibility
+ * - Updated Slush wallet naming consistency (formerly Sui Wallet)
+ * - Current Chrome store URL for Slush wallet installation
+ * - Support for multiple Sui ecosystem wallets
+ */
+
 import React, { useEffect, useState } from 'react';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
+import { analytics } from '@/lib/analytics';
 
 interface WalletConnectButtonProps {
   className?: string;
@@ -14,38 +26,114 @@ function WalletConnectButton({
   variant = 'primary',
   size = 'md'
 }: WalletConnectButtonProps) {
-  const walletContext = useWalletContext();
+  const walletContext = useClientSafeWallet();
   const [showDropdown, setShowDropdown] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [hasWallet, setHasWallet] = useState(false);
+  const [detectedWallets, setDetectedWallets] = useState<string[]>([]);
 
   // Handle client-side mounting
   useEffect(() => {
     setMounted(true);
     // Check for wallet availability only on client
     if (typeof window !== 'undefined') {
-      // Import useWallets dynamically to avoid SSR issues
-      import('@mysten/dapp-kit').then(({ useWallets }) => {
-        // This won't work as hooks can't be called dynamically
-        // We'll need to check for wallet differently
-      }).catch(() => {
-        setHasWallet(false);
-      });
-      
       // Check if any wallet extensions are installed
       const checkWallets = () => {
-        // Check for common Sui wallet indicators
-        const hasSuiWallet = typeof window !== 'undefined' && (
-          (window as any).sui || 
-          (window as any).suiWallet ||
-          (window as any).martian
-        );
-        setHasWallet(!!hasSuiWallet);
+        const detected: string[] = [];
+        
+        // Primary: Check for Wallet Standard implementation (modern 2024/2025 approach)
+        try {
+          // Check for wallet standard registry in window
+          const walletRegistry = (window as any).wallets || (window as any).getWallets;
+          
+          if (typeof walletRegistry === 'function') {
+            const wallets = walletRegistry();
+            if (wallets && wallets.get) {
+              const availableWallets = wallets.get();
+              availableWallets.forEach((wallet: any) => {
+                if (wallet.name) {
+                  // Normalize wallet names for consistency
+                  let walletName = wallet.name;
+                  if (walletName.toLowerCase().includes('sui wallet')) {
+                    walletName = 'Slush Wallet';
+                  }
+                  detected.push(walletName);
+                }
+              });
+            }
+          }
+          
+          // Also check for wallet standard events registry
+          if ((window as any).addEventListener && detected.length === 0) {
+            // Some wallets register through events, check if any wallet standard events exist
+            const hasWalletStandard = (window as any).dispatchEvent && 
+                                     typeof (window as any).CustomEvent === 'function';
+            if (hasWalletStandard) {
+              console.debug('[WalletConnect] Wallet standard event system detected');
+            }
+          }
+        } catch (error) {
+          // Fallback to manual detection if wallet standard fails
+          console.debug('[WalletConnect] Wallet standard detection failed, using fallback:', error);
+        }
+        
+        // Fallback: Manual detection for specific wallet injections
+        if (detected.length === 0) {
+          // Check for Slush wallet (current official Sui wallet 2024/2025)
+          // Multiple injection patterns for maximum compatibility
+          if ((window as any).sui || (window as any).slush || (window as any).suiWallet) {
+            // Prefer "Slush Wallet" as the current official name
+            detected.push('Slush Wallet');
+          }
+          
+          // Check for other popular Sui ecosystem wallets with updated patterns
+          if ((window as any).suiet || (window as any).SuietWallet) {
+            detected.push('Suiet');
+          }
+          
+          if ((window as any).martian || (window as any).MartianWallet) {
+            detected.push('Martian');
+          }
+          
+          if ((window as any).ethos || (window as any).EthosWallet) {
+            detected.push('Ethos');
+          }
+          
+          if ((window as any).glass || (window as any).GlassWallet) {
+            detected.push('Glass');
+          }
+          
+          // Check for newer wallets in the Sui ecosystem
+          if ((window as any).navi) {
+            detected.push('Navi');
+          }
+          
+          if ((window as any).surf) {
+            detected.push('Surf');
+          }
+          
+          // Generic wallet standard fallback
+          if ((window as any).wallet && !(window as any).sui) {
+            detected.push('Generic Wallet');
+          }
+        }
+        
+        setDetectedWallets(detected);
+        setHasWallet(detected.length > 0);
+        
+        // Log detected wallets for debugging
+        if (detected.length > 0) {
+          console.log('[WalletConnect] Detected wallets:', detected);
+        } else {
+          console.debug('[WalletConnect] No wallets detected');
+        }
       };
       
       checkWallets();
-      // Also check after a small delay as some wallets inject asynchronously
+      // Also check after delays as some wallets inject asynchronously
       setTimeout(checkWallets, 500);
+      setTimeout(checkWallets, 1000);
+      setTimeout(checkWallets, 2000);
     }
   }, []);
 
@@ -84,14 +172,45 @@ function WalletConnectButton({
   const { connected, connecting, address, connect, disconnect, error, name } = walletContext;
 
   const handleConnect = () => {
+    const connectStartTime = performance.now();
+    
     if (!hasWallet) {
-      window.open('https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank');
+      // Safe analytics tracking with null check
+      if (analytics) {
+        analytics.trackWallet({
+          action: 'connect',
+          success: false,
+          error: 'No wallet installed',
+        });
+      }
+      
+      // Redirect to Slush wallet (the official Sui wallet - current 2024/2025 Chrome store URL)
+      window.open('https://chromewebstore.google.com/detail/slush-%E2%80%94-a-sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil', '_blank');
       return;
     }
+    
     connect();
+    
+    // Track connection attempt with safe analytics
+    if (analytics) {
+      analytics.trackWallet({
+        action: 'connect',
+        wallet: name || detectedWallets[0] || undefined,
+        success: false, // Will be updated on success
+        duration: performance.now() - connectStartTime,
+      });
+    }
   };
 
   const handleDisconnect = () => {
+    // Safe analytics tracking
+    if (analytics) {
+      analytics.trackWallet({
+        action: 'disconnect',
+        wallet: name || undefined,
+        success: true,
+      });
+    }
     disconnect();
     setShowDropdown(false);
   };
@@ -165,8 +284,13 @@ function WalletConnectButton({
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
               <div className="p-4 border-b border-gray-100">
                 <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Connected Wallet</div>
-                <div className="font-medium text-gray-900">{name || 'Sui Wallet'}</div>
+                <div className="font-medium text-gray-900">{name || detectedWallets[0] || 'Slush Wallet'}</div>
                 <div className="text-sm text-gray-500 mt-1 font-mono">{formatAddress(address)}</div>
+                {detectedWallets.length > 1 && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    Other wallets: {detectedWallets.slice(1).join(', ')}
+                  </div>
+                )}
               </div>
               
               <div className="p-2">
@@ -220,7 +344,7 @@ function WalletConnectButton({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Install Wallet
+            Install Slush Wallet
           </>
         ) : (
           <>
@@ -234,26 +358,22 @@ function WalletConnectButton({
       </button>
 
       {/* Error Toast */}
-      {error && mounted && (
-        <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-lg flex items-start max-w-sm">
-            <svg className="w-5 h-5 text-red-400 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {error && (
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50">
+          <div className="flex items-center">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Connection Error</p>
-              <p className="text-sm mt-1">{error}</p>
-            </div>
-            <button
-              onClick={() => walletContext.clearError()}
-              className="ml-3 text-red-400 hover:text-red-600"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <span className="text-sm">{error}</span>
           </div>
+        </div>
+      )}
+
+      {/* Debug info in development */}
+      {process.env.NODE_ENV === 'development' && detectedWallets.length > 0 && (
+        <div className="fixed bottom-4 left-4 bg-blue-500 text-white px-3 py-2 rounded text-xs z-50">
+          Detected: {detectedWallets.join(', ')}
         </div>
       )}
     </>

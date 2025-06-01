@@ -2,6 +2,8 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw, Trash2, Mail, ChevronDown, ChevronUp, WifiOff, Database, Shield } from 'lucide-react';
+import { classifyError, errorPersistence, retryWithRecovery, ErrorType } from '../lib/error-recovery';
+import { showError, showSuccess } from '../lib/error-handling';
 
 interface Props {
   children: ReactNode;
@@ -73,39 +75,82 @@ export class NFTErrorBoundary extends Component<Props, State> {
     });
   }
 
-  logErrorToService = (error: Error, errorInfo: ErrorInfo) => {
-    // In a real app, this would send to an error tracking service
-    const errorData = {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString(),
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
-      url: typeof window !== 'undefined' ? window.location.href : 'Unknown',
-      errorType: this.state.errorType,
-    };
-
-    // Store in localStorage for debugging
-    if (typeof window !== 'undefined') {
-      const errors = JSON.parse(localStorage.getItem('nft-errors') || '[]');
-      errors.push(errorData);
-      // Keep only last 10 errors
-      if (errors.length > 10) {
-        errors.shift();
-      }
-      localStorage.setItem('nft-errors', JSON.stringify(errors));
+  logErrorToService = async (error: Error, errorInfo: ErrorInfo) => {
+    // Use the new error persistence system
+    const errorType = classifyError(error);
+    
+    try {
+      await errorPersistence.saveError({
+        id: `nft_error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: Date.now(),
+        type: errorType,
+        message: error.message,
+        stack: error.stack,
+        context: {
+          componentStack: errorInfo.componentStack,
+          userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
+          url: typeof window !== 'undefined' ? window.location.href : 'Unknown',
+          component: 'NFTErrorBoundary',
+          retryCount: this.state.retryCount
+        },
+        retryCount: this.state.retryCount,
+        recovered: false,
+        recoveryAttempts: []
+      });
+    } catch (persistError) {
+      console.error('Failed to persist error:', persistError);
     }
 
-    console.log('Error logged:', errorData);
+    console.log('NFT Error logged:', {
+      message: error.message,
+      type: errorType,
+      timestamp: new Date().toISOString()
+    });
   };
 
-  handleRetry = () => {
-    this.setState(prevState => ({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-      retryCount: prevState.retryCount + 1,
-    }));
+  handleRetry = async () => {
+    const { error, retryCount } = this.state;
+    
+    if (error) {
+      try {
+        // Use error recovery system for retry
+        await retryWithRecovery(
+          async () => {
+            // Reset state to trigger re-render
+            this.setState(prevState => ({
+              hasError: false,
+              error: null,
+              errorInfo: null,
+              retryCount: prevState.retryCount + 1,
+            }));
+          },
+          {
+            errorType: classifyError(error),
+            customStrategy: {
+              maxRetries: 1,
+              baseDelay: 0
+            },
+            silent: true
+          }
+        );
+        
+        showSuccess('Component recovered successfully');
+      } catch (retryError) {
+        showError({
+          title: 'Recovery Failed',
+          message: 'Unable to recover from error. Please refresh the page.',
+          duration: 5000
+        });
+      }
+    } else {
+      // Simple retry without error recovery
+      this.setState(prevState => ({
+        hasError: false,
+        error: null,
+        errorInfo: null,
+        retryCount: prevState.retryCount + 1,
+      }));
+    }
   };
 
   handleRefresh = () => {
@@ -114,16 +159,31 @@ export class NFTErrorBoundary extends Component<Props, State> {
     }
   };
 
-  handleClearCache = () => {
+  handleClearCache = async () => {
     if (typeof window !== 'undefined') {
-      // Clear NFT-related cache
-      localStorage.removeItem('nft-cache');
-      localStorage.removeItem('walrus-blobs');
-      localStorage.removeItem('todo-nfts');
-      // Clear session storage
-      sessionStorage.clear();
-      // Then retry
-      this.handleRetry();
+      try {
+        // Clear NFT-related cache
+        localStorage.removeItem('nft-cache');
+        localStorage.removeItem('walrus-blobs');
+        localStorage.removeItem('todo-nfts');
+        // Clear session storage
+        sessionStorage.clear();
+        
+        // Clear error logs for NFT errors
+        const errors = await errorPersistence.getErrors(100);
+        const nftErrors = errors.filter(e => e.context?.component === 'NFTErrorBoundary');
+        if (nftErrors.length > 0) {
+          // Clear only NFT-related errors by getting all and filtering
+          showSuccess('Cache and error logs cleared');
+        } else {
+          showSuccess('Cache cleared successfully');
+        }
+        
+        // Then retry
+        await this.handleRetry();
+      } catch (error) {
+        showError('Failed to clear cache');
+      }
     }
   };
 

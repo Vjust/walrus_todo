@@ -52,7 +52,7 @@ export function NFTAnalytics({
   
   // Privacy-respecting user ID (could be session-based or wallet-based hash)
   const userId = anonymousUserId || (walletContext?.account ? 
-    btoa(walletContext.account).slice(0, 8) : // Simple hash for demo
+    btoa(walletContext.account.address).slice(0, 8) : // Simple hash for demo
     'anonymous'
   );
 

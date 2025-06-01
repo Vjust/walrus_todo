@@ -4,6 +4,7 @@ import {
   type ImagePreloadOptions 
 } from './image-optimization';
 import { getImageUrl as getWalrusImageUrl } from '@/lib/walrus-client';
+import { useState, useEffect } from 'react';
 
 // Configuration for Walrus image optimization
 const WALRUS_IMAGE_CONFIG = {
@@ -18,6 +19,14 @@ const WALRUS_IMAGE_CONFIG = {
   },
   // Cache duration for Walrus images (7 days)
   cacheDuration: 7 * 24 * 60 * 60 * 1000,
+  // Image size presets
+  sizes: {
+    thumbnail: { width: 150, height: 150, quality: 0.7 },
+    small: { width: 320, height: 320, quality: 0.8 },
+    medium: { width: 640, height: 640, quality: 0.85 },
+    large: { width: 1024, height: 1024, quality: 0.9 },
+    full: { width: 1920, height: 1920, quality: 0.95 }
+  }
 };
 
 /**
@@ -28,6 +37,11 @@ export class WalrusImageLoader extends ProgressiveImageLoader {
   private retryAttempts = 0;
 
   constructor(blobIdOrUrl: string) {
+    // Validate input
+    if (!blobIdOrUrl) {
+      throw new Error('blobIdOrUrl is required');
+    }
+    
     // Convert blob ID to URL if needed
     const url = blobIdOrUrl.startsWith('blob:') || blobIdOrUrl.includes('aggregator')
       ? blobIdOrUrl
@@ -190,101 +204,201 @@ export function useWalrusImage(blobIdOrUrl: string | undefined, options: ImagePr
     return () => {
       isMounted = false;
     };
-  }, [blobIdOrUrl, options.priority]);
+  }, [blobIdOrUrl, options]);
 
   return state;
 }
 
 /**
- * Component for displaying Walrus-stored images with optimization
+ * Client-side image optimization for Walrus images
  */
-// export function WalrusOptimizedImage({
-//   blobId,
-//   alt,
-//   className,
-//   width,
-//   height,
-//   priority = 'auto',
-//   onLoad,
-//   onError,
-// }: {
-//   blobId: string;
-//   alt: string;
-//   className?: string;
-//   width?: number;
-//   height?: number;
-//   priority?: 'high' | 'low' | 'auto';
-//   onLoad?: () => void;
-//   onError?: () => void;
-// }) {
-//   const { isLoading, hasError, imageUrl, blurDataUrl } = useWalrusImage(blobId, { priority });
-// 
-//   if (hasError) {
-//     return (
-//       <div 
-//         className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 ${className}`}
-//         style={{ width, height }}
-//       >
-//         <div className="text-center p-4">
-//           <svg
-//             className="w-12 h-12 mx-auto text-gray-400"
-//             fill="none"
-//             viewBox="0 0 24 24"
-//             stroke="currentColor"
-//           >
-//             <path
-//               strokeLinecap="round"
-//               strokeLinejoin="round"
-//               strokeWidth={2}
-//               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-//             />
-//           </svg>
-//           <p className="mt-2 text-sm text-gray-500">Failed to load Walrus image</p>
-//           <p className="text-xs text-gray-400 mt-1">Blob ID: {blobId.slice(0, 8)}...</p>
-//         </div>
-//       </div>
-//     );
-//   }
-// 
-//   return (
-//     <div className="relative" style={{ width, height }}>
-//       {/* Blur placeholder */}
-//       {isLoading && blurDataUrl && (
-//         <img
-//           src={blurDataUrl}
-//           alt=""
-//           className={`absolute inset-0 w-full h-full object-cover filter blur-lg scale-110 ${className}`}
-//           aria-hidden="true"
-//         />
-//       )}
-//       
-//       {/* Loading spinner */}
-//       {isLoading && !blurDataUrl && (
-//         <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 ${className}`}>
-//           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-//         </div>
-//       )}
-//       
-//       {/* Main image */}
-//       {imageUrl && (
-//         <img
-//           src={imageUrl}
-//           alt={alt}
-//           className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-//           onLoad={() => {
-//             onLoad?.();
-//           }}
-//           onError={() => {
-//             onError?.();
-//           }}
-//           loading="lazy"
-//           decoding="async"
-//         />
-//       )}
-//     </div>
-//   );
-// }
-// 
-// // Re-export for convenience
-// import { useState, useEffect } from 'react';
-// export { getImagePerformanceMetrics, clearImageCaches } from './image-optimization';
+export async function optimizeWalrusImage(
+  imageUrl: string,
+  targetSize: keyof typeof WALRUS_IMAGE_CONFIG.sizes = 'medium'
+): Promise<string> {
+  try {
+    const sizeConfig = WALRUS_IMAGE_CONFIG.sizes[targetSize];
+    
+    // Load image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = imageUrl;
+    });
+
+    // Create canvas for resizing
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas context not available');
+
+    // Calculate dimensions maintaining aspect ratio
+    const aspectRatio = img.width / img.height;
+    let width = sizeConfig.width;
+    let height = sizeConfig.height;
+
+    if (img.width > img.height) {
+      height = width / aspectRatio;
+    } else {
+      width = height * aspectRatio;
+    }
+
+    // Don't upscale images
+    if (img.width < width && img.height < height) {
+      width = img.width;
+      height = img.height;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // Enable image smoothing for better quality
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Draw resized image
+    ctx.drawImage(img, 0, 0, width, height);
+
+    // Convert to WebP if supported, otherwise JPEG
+    const supportsWebP = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+    const format = supportsWebP ? 'webp' : 'jpeg';
+    const dataUrl = canvas.toDataURL(`image/${format}`, sizeConfig.quality);
+
+    return dataUrl;
+  } catch (error) {
+    console.error('Failed to optimize Walrus image:', error);
+    return imageUrl; // Return original on error
+  }
+}
+
+/**
+ * Generate a blur placeholder from Walrus image
+ */
+export async function generateWalrusBlurPlaceholder(imageUrl: string): Promise<string> {
+  try {
+    // Use very small size for blur
+    const optimized = await optimizeWalrusImage(imageUrl, 'thumbnail');
+    
+    // Additional blur processing
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = optimized;
+    });
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas context not available');
+
+    // Very small for performance
+    canvas.width = 20;
+    canvas.height = 20;
+
+    ctx.filter = 'blur(10px)';
+    ctx.drawImage(img, 0, 0, 20, 20);
+
+    return canvas.toDataURL('image/jpeg', 0.3);
+  } catch (error) {
+    // Return gradient fallback
+    return 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 viewBox%3D%220 0 100 100%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22%3E%3Cstop stop-color%3D%22%23e5e7eb%22 offset%3D%220%25%22%2F%3E%3Cstop stop-color%3D%22%23f3f4f6%22 offset%3D%22100%25%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect width%3D%22100%22 height%3D%22100%22 fill%3D%22url(%23g)%22%2F%3E%3C%2Fsvg%3E';
+  }
+}
+
+/**
+ * Enhanced hook for Walrus images with client-side optimization
+ */
+export function useOptimizedWalrusImage(
+  blobIdOrUrl: string | undefined,
+  options: {
+    size?: keyof typeof WALRUS_IMAGE_CONFIG.sizes;
+    priority?: 'high' | 'low' | 'auto';
+    generateBlur?: boolean;
+  } = {}
+) {
+  const [state, setState] = useState({
+    isLoading: true,
+    hasError: false,
+    originalUrl: undefined as string | undefined,
+    optimizedUrl: undefined as string | undefined,
+    blurDataUrl: undefined as string | undefined,
+  });
+
+  useEffect(() => {
+    if (!blobIdOrUrl) {
+      setState({
+        isLoading: false,
+        hasError: false,
+        originalUrl: undefined,
+        optimizedUrl: undefined,
+        blurDataUrl: undefined,
+      });
+      return;
+    }
+
+    let isMounted = true;
+    const abortController = new AbortController();
+
+    async function loadAndOptimize() {
+      try {
+        // Get original URL (blobIdOrUrl is guaranteed to be defined here due to early return above)
+        const url = blobIdOrUrl!.startsWith('blob:') || blobIdOrUrl!.includes('aggregator')
+          ? blobIdOrUrl!
+          : getWalrusImageUrl(blobIdOrUrl!);
+
+        if (!isMounted) return;
+
+        setState(prev => ({ ...prev, originalUrl: url }));
+
+        // Generate blur placeholder first if requested
+        if (options.generateBlur) {
+          try {
+            const blurUrl = await generateWalrusBlurPlaceholder(url);
+            if (isMounted) {
+              setState(prev => ({ ...prev, blurDataUrl: blurUrl }));
+            }
+          } catch (error) {
+            console.warn('Failed to generate blur placeholder:', error);
+          }
+        }
+
+        // Optimize image
+        const optimized = await optimizeWalrusImage(url, options.size || 'medium');
+        
+        if (isMounted) {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            hasError: false,
+            originalUrl: url,
+            optimizedUrl: optimized,
+          }));
+        }
+      } catch (error) {
+        if (isMounted && !abortController.signal.aborted) {
+          console.error('Failed to optimize Walrus image:', error);
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            hasError: true,
+          }));
+        }
+      }
+    }
+
+    loadAndOptimize();
+
+    return () => {
+      isMounted = false;
+      abortController.abort();
+    };
+  }, [blobIdOrUrl, options.size, options.generateBlur]);
+
+  return state;
+}
+
+// Re-export for convenience
+export { getImagePerformanceMetrics, clearImageCaches } from './image-optimization';
+export { checkWebPSupport } from './image-optimization';

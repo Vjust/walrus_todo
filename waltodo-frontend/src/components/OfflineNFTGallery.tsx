@@ -45,27 +45,30 @@ export function OfflineNFTGallery() {
 
     setLoading(true);
     try {
-      // Fetch NFTs from API
-      const response = await fetch('/api/nfts');
-      if (response.ok) {
-        const nfts = await response.json();
-        
-        // Cache each NFT image
-        for (const nft of nfts) {
-          if (nft.imageUrl) {
-            await cacheNFTImage(nft.imageUrl);
-          }
-        }
-        
-        // Update localStorage
-        const cachedData = nfts.map((nft: any) => ({
-          ...nft,
-          cachedAt: Date.now()
-        }));
-        
-        localStorage.setItem('cached-nfts', JSON.stringify(cachedData));
-        setCachedNFTs(cachedData);
-      }
+      // Fetch NFTs from blockchain directly
+      // This would be handled by the wallet/blockchain integration
+      // For now, we'll use cached data only
+      console.log('Online refresh would fetch from blockchain');
+      // In a real implementation, you'd use:
+      // const nfts = await fetchNFTsFromBlockchain();
+      // Placeholder for blockchain fetch
+      // if (nfts) {
+      //   // Cache each NFT image
+      //   for (const nft of nfts) {
+      //     if (nft.imageUrl) {
+      //       await cacheNFTImage(nft.imageUrl);
+      //     }
+      //   }
+      //   
+      //   // Update localStorage
+      //   const cachedData = nfts.map((nft: any) => ({
+      //     ...nft,
+      //     cachedAt: Date.now()
+      //   }));
+      //   
+      //   localStorage.setItem('cached-nfts', JSON.stringify(cachedData));
+      //   setCachedNFTs(cachedData);
+      // }
     } catch (error) {
       console.error('Failed to refresh NFT cache:', error);
     } finally {

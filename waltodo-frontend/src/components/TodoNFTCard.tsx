@@ -127,8 +127,9 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
   
   const router = useRouter();
   const suiClient = useSuiClient();
-  const { account } = useWalletContext();
+  const walletContext = useWalletContext();
   const signTransaction = useSignTransaction();
+  const account = walletContext?.account;
 
   // Generate NFT attributes for display
   const attributes = useMemo(() => generateNFTAttributes(todo), [todo]);
@@ -229,13 +230,10 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
           {/* Thumbnail */}
           <div className="flex-shrink-0 w-20 h-20 relative">
             <TodoNFTImage
-              url={todo.imageUrl || todo.displayImageUrl || ''}
+              imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
               alt={todo.title}
-              mode="thumbnail"
+              displayMode="thumbnail"
               className="w-full h-full object-cover rounded-md"
-              expandable={false}
-              showSkeleton={true}
-              enableHover={false}
               priority={false}
               onError={() => setImageError(true)}
             />
@@ -389,13 +387,10 @@ export const TodoNFTCard: React.FC<TodoNFTCardProps> = ({
             {/* Image Section */}
             <div className="relative h-48 bg-gray-100">
               <TodoNFTImage
-                url={todo.imageUrl || todo.displayImageUrl || ''}
+                imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
                 alt={todo.title}
-                mode={displayMode === 'thumbnail' ? 'thumbnail' : 'preview'}
+                displayMode={displayMode === 'thumbnail' ? 'thumbnail' : 'preview'}
                 className="w-full h-full object-cover"
-                expandable={false}
-                showSkeleton={true}
-                enableHover={false}
                 priority={displayMode === 'thumbnail'}
               />
               

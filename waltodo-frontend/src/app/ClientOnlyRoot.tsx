@@ -1,11 +1,7 @@
 'use client';
 
-import React, { ReactNode, useEffect, useState, createContext, useContext } from 'react';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ErrorSuppressor } from '@/components/ErrorSuppressor';
-import { ToastProvider } from '@/components/ToastProvider';
+import React, { ReactNode, useEffect, useState, createContext, useContext, Suspense } from 'react';
 import { AppWalletProvider } from '@/contexts/WalletContext';
-import { WalrusHealthCheck } from '@/components/WalrusHealthCheck';
 
 interface ClientOnlyRootProps {
   children: ReactNode;
@@ -39,15 +35,21 @@ export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
   const [isClientReady, setIsClientReady] = useState(false);
   const [suiClientReady, setSuiClientReady] = useState(false);
   const [initializationError, setInitializationError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // Derived state for overall app readiness
-  const isAppReady = isClientReady && suiClientReady;
+  const isAppReady = isClientReady && suiClientReady && mounted;
 
-  // Initialize after mounting
+  // Initialize after mounting - fix hydration issues
   useEffect(() => {
-    // Set ready states immediately to prevent blocking
-    setIsClientReady(true);
-    setSuiClientReady(true);
+    // Use a timeout to ensure proper client-side initialization
+    const timeout = setTimeout(() => {
+      setMounted(true);
+      setIsClientReady(true);
+      setSuiClientReady(true);
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const initializationContextValue: AppInitializationContextType = {
@@ -57,17 +59,25 @@ export default function ClientOnlyRoot({ children }: ClientOnlyRootProps) {
     initializationError,
   };
 
+  // Don't render anything until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div style={{ display: 'none' }}>
+        {/* Hidden during SSR to prevent hydration mismatch */}
+      </div>
+    );
+  }
+
   return (
     <div suppressHydrationWarning>
       <AppInitializationContext.Provider value={initializationContextValue}>
-        <ErrorBoundary>
-          <ErrorSuppressor />
-          <ToastProvider />
-          <AppWalletProvider>
-            {children}
-            {isAppReady && <WalrusHealthCheck />}
-          </AppWalletProvider>
-        </ErrorBoundary>
+        <AppWalletProvider>
+          <Suspense fallback={<div>Loading...</div>}>
+            <div>
+              {children}
+            </div>
+          </Suspense>
+        </AppWalletProvider>
       </AppInitializationContext.Provider>
     </div>
   );

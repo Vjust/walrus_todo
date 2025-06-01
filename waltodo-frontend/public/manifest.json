@@ -70,7 +70,7 @@
       "url": "/dashboard?action=create",
       "icons": [
         {
-          "src": "/icons/shortcut-new-todo.png",
+          "src": "/icons/shortcut-task.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -83,7 +83,7 @@
       "url": "/blockchain",
       "icons": [
         {
-          "src": "/icons/shortcut-nfts.png",
+          "src": "/icons/shortcut-nft.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -130,5 +130,21 @@
   ],
   "edge_side_panel": {
     "preferred_width": 400
+  },
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["image/*"]
+        }
+      ]
+    }
   }
 }

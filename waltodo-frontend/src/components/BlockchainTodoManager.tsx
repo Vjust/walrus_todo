@@ -15,6 +15,15 @@ import {
   UpdateTodoParams,
 } from '@/hooks/useSuiTodos';
 import { useWalletContext } from '@/contexts/WalletContext';
+import { useSuiClient } from '@/hooks/useSuiClient';
+import { TransactionSafetyManager } from '@/lib/transaction-safety';
+import {
+  storeTodoOnBlockchainSafely,
+  updateTodoOnBlockchainSafely,
+  completeTodoOnBlockchainSafely,
+  transferTodoNFTSafely,
+  deleteTodoNFTSafely,
+} from '@/lib/sui-client-safe';
 import toast from 'react-hot-toast';
 
 // TodoNFT creation form component

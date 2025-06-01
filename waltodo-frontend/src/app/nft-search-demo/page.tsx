@@ -10,88 +10,65 @@ import { useWalletContext } from '../../contexts/WalletContext';
 const mockNFTs: TodoNFT[] = [
   {
     id: '1',
-    objectId: '0x123',
     title: 'Complete project documentation',
-    description: 'Write comprehensive documentation for the new API endpoints',
+    content: 'Write comprehensive documentation for the new API endpoints',
+    priority: 'high' as const,
     completed: false,
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-    owner: '0xowner1',
-    metadata: {
-      tags: ['documentation', 'api', 'urgent'],
-      priority: 'high',
-      category: 'Development'
-    },
-    imageUrl: 'https://via.placeholder.com/150',
-    walrusUrl: ''
+    createdAt: new Date('2024-01-20T10:00:00Z').getTime(),
+    blobId: '0xblob123',
+    storageSize: 1024,
+    tags: ['documentation', 'api', 'urgent'],
+    walTokensSpent: 100
   },
   {
     id: '2',
-    objectId: '0x124',
     title: 'Review code changes',
-    description: 'Review and approve pending pull requests for the frontend refactor',
+    content: 'Review and approve pending pull requests for the frontend refactor',
+    priority: 'medium' as const,
     completed: true,
-    createdAt: '2024-01-19T14:30:00Z',
-    updatedAt: '2024-01-21T09:15:00Z',
-    owner: '0xowner1',
-    metadata: {
-      tags: ['review', 'frontend', 'code-review'],
-      priority: 'medium',
-      category: 'Development'
-    },
-    imageUrl: 'https://via.placeholder.com/150',
-    walrusUrl: ''
+    createdAt: new Date('2024-01-19T14:30:00Z').getTime(),
+    completedAt: new Date('2024-01-21T09:15:00Z').getTime(),
+    blobId: '0xblob124',
+    storageSize: 1024,
+    tags: ['review', 'frontend', 'code-review'],
+    walTokensSpent: 80
   },
   {
     id: '3',
-    objectId: '0x125',
     title: 'Update deployment scripts',
-    description: 'Modify CI/CD pipeline to include new environment variables',
+    content: 'Modify CI/CD pipeline to include new environment variables',
+    priority: 'low' as const,
     completed: false,
-    createdAt: '2024-01-18T08:45:00Z',
-    updatedAt: '2024-01-18T08:45:00Z',
-    owner: '0xowner1',
-    metadata: {
-      tags: ['deployment', 'devops', 'infrastructure'],
-      priority: 'low',
-      category: 'Operations'
-    },
-    imageUrl: 'https://via.placeholder.com/150',
-    walrusUrl: ''
+    createdAt: new Date('2024-01-18T08:45:00Z').getTime(),
+    blobId: '0xblob125',
+    storageSize: 512,
+    tags: ['deployment', 'devops', 'infrastructure'],
+    walTokensSpent: 50
   },
   {
     id: '4',
-    objectId: '0x126',
     title: 'Design new user interface',
-    description: 'Create mockups for the new dashboard layout with improved UX',
+    content: 'Create mockups for the new dashboard layout with improved UX',
+    priority: 'high' as const,
     completed: false,
-    createdAt: '2024-01-17T16:20:00Z',
-    updatedAt: '2024-01-20T11:30:00Z',
-    owner: '0xowner1',
-    metadata: {
-      tags: ['design', 'ui', 'ux', 'dashboard'],
-      priority: 'high',
-      category: 'Design'
-    },
-    imageUrl: 'https://via.placeholder.com/150',
-    walrusUrl: ''
+    createdAt: new Date('2024-01-17T16:20:00Z').getTime(),
+    blobId: '0xblob126',
+    storageSize: 2048,
+    tags: ['design', 'ui', 'ux', 'dashboard'],
+    walTokensSpent: 150
   },
   {
     id: '5',
-    objectId: '0x127',
     title: 'Fix authentication bug',
-    description: 'Resolve issue where users are logged out after browser refresh',
+    content: 'Resolve issue where users are logged out after browser refresh',
+    priority: 'high' as const,
     completed: true,
-    createdAt: '2024-01-16T12:00:00Z',
-    updatedAt: '2024-01-17T15:45:00Z',
-    owner: '0xowner1',
-    metadata: {
-      tags: ['bug', 'authentication', 'urgent', 'security'],
-      priority: 'critical',
-      category: 'Bug Fix'
-    },
-    imageUrl: 'https://via.placeholder.com/150',
-    walrusUrl: ''
+    createdAt: new Date('2024-01-16T12:00:00Z').getTime(),
+    completedAt: new Date('2024-01-17T15:45:00Z').getTime(),
+    blobId: '0xblob127',
+    storageSize: 768,
+    tags: ['bug', 'authentication', 'urgent', 'security'],
+    walTokensSpent: 75
   }
 ];
 
@@ -99,7 +76,8 @@ export default function NFTSearchDemoPage() {
   const [nfts, setNfts] = useState<TodoNFT[]>(mockNFTs);
   const [searchResults, setSearchResults] = useState<TodoNFT[]>(mockNFTs);
   const [activeFilters, setActiveFilters] = useState<any>({});
-  const { connectedAddress } = useWalletContext();
+  const walletContext = useWalletContext();
+  const connectedAddress = walletContext?.address;
   const suiClient = useSuiClient();
 
   // In a real app, you would fetch NFTs from the blockchain
@@ -122,7 +100,7 @@ export default function NFTSearchDemoPage() {
     // This would be populated by the search component with highlighted matches
     return {
       title: nft.title,
-      description: nft.description
+      description: nft.content
     };
   };
 
@@ -164,33 +142,23 @@ export default function NFTSearchDemoPage() {
                 className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 
                          hover:shadow-lg transition-shadow bg-white dark:bg-gray-800"
               >
-                {/* NFT Image */}
+                {/* NFT Image Placeholder */}
                 <div className="w-full h-32 bg-gray-200 dark:bg-gray-700 rounded mb-4 
                               flex items-center justify-center overflow-hidden">
-                  {nft.imageUrl ? (
-                    <img
-                      src={nft.imageUrl}
-                      alt={nft.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-gray-400">No image</span>
-                  )}
+                  <span className="text-gray-400">NFT #{nft.id}</span>
                 </div>
 
                 {/* NFT Details */}
-                <h3
-                  className="font-semibold text-lg mb-2"
-                  dangerouslySetInnerHTML={{ __html: highlighted.title }}
-                />
-                <p
-                  className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2"
-                  dangerouslySetInnerHTML={{ __html: highlighted.description }}
-                />
+                <h3 className="font-semibold text-lg mb-2">
+                  {highlighted.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                  {highlighted.description}
+                </p>
 
                 {/* Tags */}
                 <div className="flex flex-wrap gap-1 mb-3">
-                  {nft.metadata.tags.map((tag) => (
+                  {nft.tags.map((tag) => (
                     <span
                       key={tag}
                       className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 
@@ -204,12 +172,11 @@ export default function NFTSearchDemoPage() {
                 {/* Metadata */}
                 <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                   <span className={`px-2 py-1 rounded ${
-                    nft.metadata.priority === 'critical' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
-                    nft.metadata.priority === 'high' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' :
-                    nft.metadata.priority === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+                    nft.priority === 'high' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' :
+                    nft.priority === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
                     'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                   }`}>
-                    {nft.metadata.priority}
+                    {nft.priority}
                   </span>
                   <span className={nft.completed ? 'text-green-600' : 'text-gray-400'}>
                     {nft.completed ? '✓ Completed' : '○ Pending'}

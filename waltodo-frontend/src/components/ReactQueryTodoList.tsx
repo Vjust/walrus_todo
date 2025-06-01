@@ -29,7 +29,7 @@ export function ReactQueryTodoList({ listName = 'default' }: ReactQueryTodoListP
   const { handleApiError } = useApiErrorHandler();
 
   // TODO: React Query hooks - temporarily disabled
-  const todos: Todo[] = [];
+  const todos: Todo[] = React.useMemo(() => [], []);
   const isLoading = false;
   const error: Error | null = null;
   const createTodo = { mutateAsync: async (data: any) => { throw new Error('Not implemented'); } };

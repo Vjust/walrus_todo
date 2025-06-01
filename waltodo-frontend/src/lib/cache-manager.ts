@@ -107,12 +107,11 @@ export class CacheManager {
     
     if (!existing) {
       await tx.store.put({
-        key: 'cache-meta',
         totalSize: 0,
         entryCount: 0,
         version: this.version,
         lastCleanup: Date.now(),
-      });
+      }, 'cache-meta');
     }
     
     await tx.done;
@@ -458,8 +457,7 @@ export class CacheManager {
         data.metadata.version = this.version;
         await tx.objectStore('metadata').put({
           ...data.metadata,
-          key: 'cache-meta',
-        });
+        }, 'cache-meta');
       }
 
       await tx.done;

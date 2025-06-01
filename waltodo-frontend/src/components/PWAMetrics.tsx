@@ -9,6 +9,11 @@ export function PWAMetrics() {
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
+    // Ensure pwaManager is initialized
+    if (!pwaManager.isInitialized()) {
+      pwaManager.init();
+    }
+    
     // Update metrics every 5 seconds
     const interval = setInterval(() => {
       setMetrics(pwaManager.getMetrics());

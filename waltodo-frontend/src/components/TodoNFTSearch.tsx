@@ -104,8 +104,8 @@ export function TodoNFTSearch({
     };
   }, []);
 
-  // Configure Fuse.js for fuzzy search
-  const fuseOptions = {
+  // Configure Fuse.js for fuzzy search (memoized to prevent recreation)
+  const fuseOptions = useMemo(() => ({
     keys: [
       { name: 'title', weight: 0.4 },
       { name: 'description', weight: 0.3 },
@@ -116,9 +116,9 @@ export function TodoNFTSearch({
     includeMatches: true,
     ignoreLocation: true,
     useExtendedSearch: true
-  };
+  }), []);
 
-  const fuse = useMemo(() => new Fuse(nfts, fuseOptions), [nfts]);
+  const fuse = useMemo(() => new Fuse(nfts, fuseOptions), [nfts, fuseOptions]);
 
   // Perform search
   const performSearch = useCallback((searchQuery: string) => {

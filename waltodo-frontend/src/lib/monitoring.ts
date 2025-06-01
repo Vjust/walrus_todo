@@ -222,22 +222,28 @@ class ErrorMonitor {
         console.error('Error batch:', errors);
       }
 
-      // Also send to our API for logging
-      if (process.env.NEXT_PUBLIC_API_URL) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/monitoring/errors`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            errors: errors.map(({ error, context, timestamp }) => ({
-              message: error.message,
-              stack: error.stack,
-              context,
-              timestamp,
-            })),
-          }),
-        });
+      // Log errors locally instead of sending to API
+      // In a static deployment, we store errors in localStorage
+      // These can be retrieved for debugging or sent to analytics
+      if (typeof window !== 'undefined') {
+        try {
+          const errorLogKey = 'waltodo_error_batch';
+          const existingLog = localStorage.getItem(errorLogKey);
+          const errorLog = existingLog ? JSON.parse(existingLog) : [];
+          
+          const newErrors = errors.map(({ error, context, timestamp }) => ({
+            message: error.message,
+            stack: error.stack,
+            context,
+            timestamp,
+          }));
+          
+          // Keep only last 100 errors
+          const updatedLog = [...errorLog, ...newErrors].slice(-100);
+          localStorage.setItem(errorLogKey, JSON.stringify(updatedLog));
+        } catch (e) {
+          console.error('Failed to store error batch locally:', e);
+        }
       }
     } catch (e) {
       console.error('Failed to send errors to monitoring service:', e);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ClipboardIcon, CheckIcon, ExternalLinkIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { ClipboardIcon, CheckIcon, ArrowTopRightOnSquareIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { CloudArrowUpIcon, CloudIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import type { Todo } from '../types/todo';
 
@@ -190,7 +190,7 @@ export default function WalrusStorageIndicator({
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           title="View on Walrus Explorer"
         >
-          <ExternalLinkIcon className="h-4 w-4" />
+          <ArrowTopRightOnSquareIcon className="h-4 w-4" />
         </a>
       </div>
 

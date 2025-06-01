@@ -90,7 +90,7 @@ export default function NFTListDemoPage() {
               priority: (fields?.priority || 'medium') as 'low' | 'medium' | 'high',
               createdAt: new Date(fields?.created_at || Date.now()).toISOString(),
               imageUrl: fields?.image_url || '',
-              owner: fields?.owner || (typeof obj.data?.owner === 'string' ? obj.data.owner : obj.data?.owner?.AddressOwner) || '',
+              owner: fields?.owner || (typeof obj.data?.owner === 'string' ? obj.data.owner : (obj.data?.owner && 'AddressOwner' in obj.data.owner) ? obj.data.owner.AddressOwner : '') || '',
               blockchainStored: true,
               objectId: obj.data?.objectId,
               metadata: fields?.metadata,
@@ -124,7 +124,7 @@ export default function NFTListDemoPage() {
       const searchLower = debouncedSearch.toLowerCase();
       filtered = filtered.filter(nft => 
         nft.title.toLowerCase().includes(searchLower) ||
-        nft.description.toLowerCase().includes(searchLower)
+        (nft.description?.toLowerCase().includes(searchLower) ?? false)
       );
     }
 
@@ -141,6 +141,7 @@ export default function NFTListDemoPage() {
     // Apply date range filter
     if (dateRange.start || dateRange.end) {
       filtered = filtered.filter(nft => {
+        if (!nft.createdAt) return false;
         const nftDate = new Date(nft.createdAt);
         if (dateRange.start && nftDate < dateRange.start) return false;
         if (dateRange.end && nftDate > dateRange.end) return false;
@@ -152,7 +153,9 @@ export default function NFTListDemoPage() {
     filtered.sort((a, b) => {
       switch (sortOption) {
         case 'date':
-          return b.createdAt - a.createdAt;
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
         case 'title':
           return a.title.localeCompare(b.title);
         case 'priority':

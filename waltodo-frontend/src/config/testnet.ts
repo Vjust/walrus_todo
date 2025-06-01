@@ -10,6 +10,13 @@ export const TESTNET_CONFIG = {
     url: 'https://fullnode.testnet.sui.io:443',
     faucetUrl: 'https://faucet.testnet.sui.io',
     explorerUrl: 'https://testnet.suiexplorer.com',
+    websocketUrl: 'wss://fullnode.testnet.sui.io:443',
+    fallbackUrls: [
+      'https://sui-testnet-endpoint.blockvision.org/v1',
+      'https://sui-testnet.publicnode.com',
+      'https://testnet.sui.rpcpool.com',
+    ],
+    chainId: '4c78adac',
   },
   
   walrus: {
@@ -17,6 +24,22 @@ export const TESTNET_CONFIG = {
     publisherUrl: 'https://publisher-testnet.walrus.site',
     aggregatorUrl: 'https://aggregator-testnet.walrus.site',
     apiPrefix: 'https://api-testnet.walrus.tech/1.0',
+    fallbackPublisherUrls: [
+      'https://walrus-testnet-publisher.nodes.guru',
+      'https://walrus-testnet-publisher.blockscope.net',
+    ],
+  },
+  
+  slushWallet: {
+    enabled: true,
+    autoConnect: true,
+    features: [
+      'transaction_signing',
+      'account_management',
+      'network_switching',
+    ],
+    supportedNetworks: ['testnet', 'devnet'],
+    networkSwitchingEnabled: true,
   },
   
   deployment: {
@@ -38,6 +61,23 @@ export const TESTNET_CONFIG = {
     aiEnabled: true,
     blockchainVerification: true,
     encryptedStorage: false,
+    networkSwitching: true,
+    automaticRetry: true,
+    fallbackEndpoints: true,
+  },
+  
+  networkSwitching: {
+    enabled: true,
+    supportedNetworks: ['testnet', 'devnet'],
+    autoDetectNetwork: true,
+    confirmationRequired: true,
+  },
+  
+  connectivity: {
+    timeout: 10000,
+    retryAttempts: 3,
+    retryDelay: 1000,
+    healthCheckInterval: 30000,
   },
 } as const;
 

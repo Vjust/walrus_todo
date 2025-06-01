@@ -43,6 +43,15 @@
 }
 
 /* Custom animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 @keyframes slide-up {
   from {
     transform: translateY(100%);
@@ -56,6 +65,21 @@
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
 }
 
 /* Scrollbar styling */
@@ -106,25 +130,19 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Shimmer animation for image placeholders */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
+/* Utility classes for optimized images */
+@layer utilities {
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+    background: linear-gradient(
+      to right,
+      theme('colors.gray.200') 0%,
+      theme('colors.gray.300') 20%,
+      theme('colors.gray.200') 40%,
+      theme('colors.gray.200') 100%
+    );
+    background-size: 200% 100%;
   }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 1.5s infinite;
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.04) 25%,
-    rgba(0, 0, 0, 0.08) 50%,
-    rgba(0, 0, 0, 0.04) 75%
-  );
-  background-size: 200% 100%;
 }
 
 /* Dark mode shimmer */
@@ -135,4 +153,20 @@
     rgba(255, 255, 255, 0.08) 50%,
     rgba(255, 255, 255, 0.04) 75%
   );
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
 }

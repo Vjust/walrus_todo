@@ -50,34 +50,34 @@ export default function NFTLayout({
       {/* Structured data for SEO */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'CollectionPage',
-            name: 'WalTodo NFT Gallery',
-            description: 'A collection of Todo NFTs stored on Walrus decentralized storage',
-            url: 'https://waltodo.app/nfts',
-            mainEntity: {
-              '@type': 'ItemList',
-              name: 'Todo NFT Collection',
-              description: 'User-created Todo NFTs with images stored on Walrus',
-              itemListElement: [],
+        suppressHydrationWarning
+      >
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'WalTodo NFT Gallery',
+          description: 'A collection of Todo NFTs stored on Walrus decentralized storage',
+          url: 'https://waltodo.app/nfts',
+          mainEntity: {
+            '@type': 'ItemList',
+            name: 'Todo NFT Collection',
+            description: 'User-created Todo NFTs with images stored on Walrus',
+            itemListElement: [],
+          },
+          isPartOf: {
+            '@type': 'WebApplication',
+            name: 'WalTodo',
+            description: 'Decentralized todo list application powered by Sui blockchain and Walrus storage',
+            applicationCategory: 'ProductivityApplication',
+            operatingSystem: 'Web',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
             },
-            isPartOf: {
-              '@type': 'WebApplication',
-              name: 'WalTodo',
-              description: 'Decentralized todo list application powered by Sui blockchain and Walrus storage',
-              applicationCategory: 'ProductivityApplication',
-              operatingSystem: 'Web',
-              offers: {
-                '@type': 'Offer',
-                price: '0',
-                priceCurrency: 'USD',
-              },
-            },
-          }),
-        }}
-      />
+          },
+        })}
+      </script>
       {children}
     </>
   );
