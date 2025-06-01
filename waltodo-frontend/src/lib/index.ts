@@ -11,7 +11,29 @@ export * from './sui-client';
 // Essential storage and content
 export * from './walrus-client';
 export * from './walrus-content-fetcher';
-export * from './walrus-url-utils';
+// Export walrus-url-utils with specific exports to avoid WalrusNetwork conflict
+export {
+  type BlobId,
+  type WalrusUrl,
+  type WalrusUrlConfig,
+  isValidBlobId,
+  validateBlobId,
+  extractBlobIdFromWalrusUrl,
+  walrusToHttpUrl,
+  generateHttpUrl,
+  generateWalrusUrl,
+  extractBlobId,
+  getNetworkFromUrl,
+  isWalrusUrl,
+  WalrusUrlManager,
+  transformWalrusBlobToUrl,
+  generateThumbnailUrls,
+  extractBlobIdFromUrl,
+  isValidWalrusUrl,
+  clearUrlCache,
+  getCacheStats,
+  WalrusUrlError
+} from './walrus-url-utils';
 
 // Essential config and utilities
 export * from './config-loader';

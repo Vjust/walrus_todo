@@ -300,8 +300,8 @@ export default function CreateTodoNFTForm({
     setUploadProgress(0);
     
     try {
-      // Initialize offline sync with current signer
-      initializeOfflineSync({ signAndExecuteTransaction, address });
+      // Initialize offline sync
+      await initializeOfflineSync();
       
       // Prepare todo data
       const todoData = {
@@ -322,17 +322,19 @@ export default function CreateTodoNFTForm({
       setUploadStage('Creating NFT...');
       setUploadProgress(30);
       
-      const { todoId, objectId } = await createNFT(
-        listName,
-        todoData,
-        imageFile || undefined,
-        { signAndExecuteTransaction, address },
-        address
-      );
+      const result = await createNFT({
+        title: todoData.title,
+        description: todoData.description,
+        tags: todoData.tags,
+        priority: todoData.priority,
+      });
       
-      if (!todoId) {
-        throw new Error('Failed to generate todo ID');
+      if (!result.success || !result.todo) {
+        throw new Error(result.error || 'Failed to create NFT');
       }
+      
+      const todoId = result.todo.id;
+      const objectId = result.todo.id; // Use the same ID as object ID for offline
       
       if (!navigator.onLine) {
         toast.success('Todo created locally and queued for sync when online');

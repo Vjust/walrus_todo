@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../test-utils';
-import { WalletConnectButton } from '../../src/components/WalletConnectButton';
+import WalletConnectButton from '../../src/components/WalletConnectButton';
 import { useWalletContext } from '../../src/contexts/WalletContext';
 import { WalletError } from '../../src/lib/wallet-errors';
 import { ClipboardError } from '../../src/lib/clipboard';

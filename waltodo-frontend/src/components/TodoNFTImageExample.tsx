@@ -35,7 +35,7 @@ export function TodoNFTImageExample() {
           {exampleImages.map((image, index) => (
             <TodoNFTImage
               key={index}
-              imageUrl={image.url}
+              url={image.url}
               alt={image.alt}
               displayMode="thumbnail"
               className="border-2 border-gray-200 rounded-lg"
@@ -51,7 +51,7 @@ export function TodoNFTImageExample() {
           {exampleImages.map((image, index) => (
             <TodoNFTImage
               key={index}
-              imageUrl={image.url}
+              url={image.url}
               alt={image.alt}
               displayMode="preview"
               className="shadow-lg"
@@ -66,7 +66,7 @@ export function TodoNFTImageExample() {
       <section>
         <h3 className="text-lg font-semibold mb-3">Full Width View</h3>
         <TodoNFTImage
-          imageUrl={exampleImages[0].url}
+          url={exampleImages[0].url}
           alt="Full width NFT image"
           displayMode="full"
           className="w-full max-w-4xl mx-auto"
@@ -78,7 +78,7 @@ export function TodoNFTImageExample() {
       <section>
         <h3 className="text-lg font-semibold mb-3">Error State</h3>
         <TodoNFTImage
-          imageUrl="invalid-blob-id"
+          url="invalid-blob-id"
           alt="This will show error state"
           displayMode="preview"
         />

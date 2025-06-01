@@ -109,8 +109,13 @@ describe('PWAInitializer', () => {
       delete (window as any).location;
       window.location = { hostname: 'localhost' } as any;
       
-      // Mock process.env
-      process.env.NODE_ENV = 'development';
+      // Mock process.env.NODE_ENV properly
+      const originalNodeEnv = process.env.NODE_ENV;
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      });
 
       render(<PWAInitializer />);
 
@@ -119,7 +124,11 @@ describe('PWAInitializer', () => {
       });
 
       // Restore
-      process.env.NODE_ENV = 'test';
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalNodeEnv,
+        writable: true,
+        configurable: true,
+      });
     });
   });
 

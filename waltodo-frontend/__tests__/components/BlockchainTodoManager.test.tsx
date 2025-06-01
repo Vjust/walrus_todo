@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../test-utils';
-import { BlockchainTodoManager } from '../../src/components/BlockchainTodoManager';
+import BlockchainTodoManager from '../../src/components/BlockchainTodoManager';
 import { useWalletContext } from '../../src/contexts/WalletContext';
 import { useSuiTodos, useTodoOperation } from '../../src/hooks/useSuiTodos';
 import toast from 'react-hot-toast';
