@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "bin": {
-    "waltodo": "../../bin/waltodo"
+    "waltodo": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",

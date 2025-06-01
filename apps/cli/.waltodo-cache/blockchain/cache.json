@@ -1,0 +1,16 @@
+{
+  "entries": [],
+  "statistics": {
+    "hits": 0,
+    "misses": 0,
+    "evictions": 0,
+    "totalEntries": 0,
+    "hitRate": 0,
+    "lastReset": "2025-06-01T01:43:59.182Z"
+  },
+  "metadata": {
+    "savedAt": "2025-06-01T01:44:59.185Z",
+    "strategy": "TTL",
+    "version": "1.0.0"
+  }
+}
