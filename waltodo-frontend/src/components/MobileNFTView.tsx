@@ -1,17 +1,28 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import Image from 'next/image';
 import { useSwipeable } from 'react-swipeable';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Share2, Download, Heart, Info, ChevronUp, RefreshCw } from 'lucide-react';
 import { TodoNFT } from '../types/todo-nft';
-import { useWalrusStorage } from '../hooks/useWalrusStorage';
 
 interface MobileNFTViewProps {
   nfts: TodoNFT[];
   initialIndex?: number;
   onClose?: () => void;
 }
+
+// Helper functions for TodoNFT compatibility
+const getNFTName = (nft: TodoNFT) => nft.title || `NFT #${nft.id}`;
+const getNFTImageUrl = (nft: TodoNFT) => {
+  // Use the blobId property which exists on TodoNFT
+  if (nft.blobId) {
+    return `https://aggregator-testnet.walrus.space/v1/${nft.blobId}`;
+  }
+  return '/images/nft-placeholder.png';
+};
+const getNFTDescription = (nft: TodoNFT) => nft.content || '';
 
 export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTViewProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -20,14 +31,32 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
   const [offlineCache, setOfflineCache] = useState<Map<string, string>>(new Map());
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [imageLoading, setImageLoading] = useState(true);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout>();
   
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Pull-to-refresh motion values
   const pullDistance = useMotionValue(0);
   const pullOpacity = useTransform(pullDistance, [0, 150], [0, 1]);
   const pullScale = useTransform(pullDistance, [0, 150], [0.8, 1]);
   
-  const { downloadImage } = useWalrusStorage();
   const currentNFT = nfts[currentIndex];
+  
+  // Download function
+  const downloadImage = useCallback(async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (error) {
+      console.error('Download failed:', error);
+      throw error;
+    }
+  }, []);
 
   // Haptic feedback utility
   const triggerHaptic = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
@@ -46,12 +75,13 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
     const preloadImage = async (index: number) => {
       if (index >= 0 && index < nfts.length) {
         const nft = nfts[index];
-        if (nft.imageUrl && !offlineCache.has(nft.imageUrl)) {
+        const imageUrl = getNFTImageUrl(nft);
+        if (imageUrl && !offlineCache.has(imageUrl)) {
           try {
-            const response = await fetch(nft.imageUrl);
+            const response = await fetch(imageUrl);
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
-            setOfflineCache(prev => new Map(prev).set(nft.imageUrl!, url));
+            setOfflineCache(prev => new Map(prev).set(imageUrl, url));
           } catch (error) {
             console.error('Failed to preload image:', error);
           }
@@ -65,38 +95,33 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
     preloadImage(currentIndex + 1);
   }, [currentIndex, nfts, offlineCache]);
 
-  // Battery optimization: reduce animations when battery is low
-  const [reducedMotion, setReducedMotion] = useState(false);
+  // Clean up object URLs on unmount
   useEffect(() => {
-    const checkBattery = async () => {
-      if ('getBattery' in navigator) {
-        const battery = await (navigator as any).getBattery();
-        setReducedMotion(battery.level < 0.2);
-        
-        battery.addEventListener('levelchange', () => {
-          setReducedMotion(battery.level < 0.2);
-        });
-      }
+    return () => {
+      offlineCache.forEach(url => URL.revokeObjectURL(url));
     };
-    checkBattery();
-  }, []);
+  }, [offlineCache]);
 
   // Pull-to-refresh handler
-  const handlePullToRefresh = useCallback(async () => {
+  const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
     
     setIsRefreshing(true);
     triggerHaptic('medium');
     
     try {
-      // Simulate refresh - in real app, refetch NFT data
+      // Clear cache for current NFT
+      const imageUrl = getNFTImageUrl(currentNFT);
+      if (imageUrl) {
+        offlineCache.delete(imageUrl);
+        setOfflineCache(new Map(offlineCache));
+      }
+      
+      // Simulate refresh delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Clear cache and reload current image
-      if (currentNFT.imageUrl) {
-        offlineCache.delete(currentNFT.imageUrl);
-        setImageLoading(true);
-      }
+      // Reload image
+      setImageLoading(true);
     } finally {
       setIsRefreshing(false);
       pullDistance.set(0);
@@ -127,25 +152,28 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
       if (showDetails) {
         setShowDetails(false);
         triggerHaptic('light');
-      } else if (onClose) {
-        onClose();
+      } else if (pullDistance.get() > 100) {
+        handleRefresh();
+      }
+    },
+    onSwiping: (eventData) => {
+      if (!showDetails && eventData.dir === 'Down' && eventData.deltaY > 0) {
+        pullDistance.set(Math.min(eventData.deltaY, 150));
       }
     },
     trackMouse: false,
     trackTouch: true,
-    delta: 10,
-    preventScrollOnSwipe: true,
   });
 
-  // Native share functionality
+  // Share functionality
   const handleShare = useCallback(async () => {
     triggerHaptic('medium');
     
-    if (navigator.share && currentNFT) {
+    if (navigator.share) {
       try {
         await navigator.share({
-          title: currentNFT.name,
-          text: currentNFT.description || `Check out this NFT: ${currentNFT.name}`,
+          title: getNFTName(currentNFT),
+          text: getNFTDescription(currentNFT) || `Check out this NFT: ${getNFTName(currentNFT)}`,
           url: window.location.href,
         });
       } catch (error) {
@@ -156,13 +184,14 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
     }
   }, [currentNFT, triggerHaptic]);
 
-  // Download for offline viewing
+  // Download functionality
   const handleDownload = useCallback(async () => {
     triggerHaptic('medium');
     
-    if (currentNFT.imageUrl) {
+    const imageUrl = getNFTImageUrl(currentNFT);
+    if (imageUrl) {
       try {
-        await downloadImage(currentNFT.imageUrl, `${currentNFT.name}.png`);
+        await downloadImage(imageUrl, `${getNFTName(currentNFT)}.png`);
       } catch (error) {
         console.error('Download failed:', error);
       }
@@ -173,275 +202,276 @@ export function MobileNFTView({ nfts, initialIndex = 0, onClose }: MobileNFTView
   const handleLike = useCallback(() => {
     triggerHaptic('medium');
     
-    const newLiked = new Set(liked);
-    if (liked.has(currentNFT.id)) {
-      newLiked.delete(currentNFT.id);
-    } else {
-      newLiked.add(currentNFT.id);
-    }
-    setLiked(newLiked);
-    
-    // Save to localStorage for offline persistence
-    localStorage.setItem('liked-nfts', JSON.stringify([...newLiked]));
-  }, [currentNFT, liked, triggerHaptic]);
-
-  // Load liked state from localStorage
-  useEffect(() => {
-    const savedLikes = localStorage.getItem('liked-nfts');
-    if (savedLikes) {
-      setLiked(new Set(JSON.parse(savedLikes)));
-    }
-  }, []);
-
-  // Pull-to-refresh touch handling
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    const startY = touch.clientY;
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      const deltaY = touch.clientY - startY;
-      
-      if (deltaY > 0 && containerRef.current?.scrollTop === 0) {
-        pullDistance.set(Math.min(deltaY, 150));
-        
-        if (deltaY > 100 && !isRefreshing) {
-          handlePullToRefresh();
-        }
+    setLiked(prev => {
+      const newLiked = new Set(prev);
+      if (newLiked.has(currentNFT.id)) {
+        newLiked.delete(currentNFT.id);
+      } else {
+        newLiked.add(currentNFT.id);
       }
-    };
-    
-    const handleTouchEnd = () => {
-      if (!isRefreshing) {
-        pullDistance.set(0);
-      }
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-    
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
-    document.addEventListener('touchend', handleTouchEnd);
-  }, [pullDistance, isRefreshing, handlePullToRefresh]);
+      return newLiked;
+    });
+  }, [currentNFT.id, triggerHaptic]);
 
+  // Calculate progress indicators
+  const progress = (currentIndex + 1) / nfts.length;
+  const isFirstNFT = currentIndex === 0;
+  const isLastNFT = currentIndex === nfts.length - 1;
+
+  // Format timestamps
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date);
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // Get attributes for display
+  const nftAttributes = useMemo(() => [
+    { label: 'Priority', value: currentNFT.priority },
+    { label: 'Status', value: currentNFT.completed ? 'Completed' : 'Active' },
+    { label: 'Created', value: formatDate(currentNFT.createdAt) },
+    { label: 'Storage Size', value: formatFileSize(currentNFT.storageSize) },
+    { label: 'WAL Tokens', value: currentNFT.walTokensSpent.toString() },
+    { label: 'Blob ID', value: currentNFT.blobId.slice(0, 8) + '...' }
+  ], [currentNFT]);
+
+  // Get cached or original image URL
   const imageUrl = useMemo(() => {
-    return offlineCache.get(currentNFT.imageUrl || '') || currentNFT.imageUrl;
-  }, [currentNFT.imageUrl, offlineCache]);
+    const originalUrl = getNFTImageUrl(currentNFT);
+    return offlineCache.get(originalUrl) || originalUrl;
+  }, [currentNFT, offlineCache]);
 
   return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 bg-black overflow-hidden touch-none"
-      {...handlers}
-      onTouchStart={handleTouchStart}
-    >
-      {/* Pull-to-refresh indicator */}
+    <div className="fixed inset-0 bg-black z-50" {...handlers}>
+      {/* Pull to refresh indicator */}
       <motion.div
-        className="absolute top-0 left-1/2 transform -translate-x-1/2 z-50 mt-4"
-        style={{ opacity: pullOpacity, scale: pullScale }}
+        className="absolute top-0 left-0 right-0 flex justify-center items-center py-4 z-10"
+        style={{ opacity: pullOpacity }}
       >
-        <RefreshCw 
-          className={`w-8 h-8 text-white ${isRefreshing ? 'animate-spin' : ''}`}
-        />
+        <motion.div style={{ scale: pullScale }}>
+          <RefreshCw className={`h-6 w-6 text-white ${isRefreshing ? 'animate-spin' : ''}`} />
+        </motion.div>
       </motion.div>
 
-      {/* Main content */}
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="relative z-10 bg-gradient-to-b from-black/70 to-transparent p-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-white text-lg font-semibold truncate">
-              {currentNFT.name}
-            </h1>
-            <button
-              onClick={onClose}
-              className="text-white/80 hover:text-white p-2"
-              aria-label="Close"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-
-        {/* Image viewer */}
-        <div className="flex-1 relative flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentIndex}
-              initial={{ opacity: 0, x: reducedMotion ? 0 : 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: reducedMotion ? 0 : -100 }}
-              transition={{ duration: reducedMotion ? 0 : 0.3 }}
-              className="relative w-full h-full flex items-center justify-center p-4"
-            >
-              {imageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-                </div>
-              )}
-              
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt={currentNFT.name}
-                  className="max-w-full max-h-full object-contain rounded-lg"
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => setImageLoading(false)}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation dots */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-            {nfts.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setCurrentIndex(index);
-                  triggerHaptic('light');
-                }}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentIndex ? 'bg-white w-6' : 'bg-white/40'
-                }`}
-                aria-label={`Go to image ${index + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Action bar */}
-        <div className="relative z-10 bg-gradient-to-t from-black/70 to-transparent p-4">
-          <div className="flex justify-around items-center">
-            <button
-              onClick={handleLike}
-              className="p-3 rounded-full bg-white/10 backdrop-blur-sm"
-              aria-label="Like"
-            >
-              <Heart
-                className={`w-6 h-6 ${
-                  liked.has(currentNFT.id)
-                    ? 'fill-red-500 text-red-500'
-                    : 'text-white'
-                }`}
-              />
-            </button>
-            
-            <button
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/70 to-transparent">
+        <div className="flex justify-between items-center p-4">
+          <button 
+            onClick={onClose}
+            className="p-2 rounded-full bg-white/10 backdrop-blur-sm"
+          >
+            <ChevronUp className="h-6 w-6 text-white rotate-180" />
+          </button>
+          
+          <h2 className="text-white font-medium text-lg">
+            {getNFTName(currentNFT)}
+          </h2>
+          
+          <div className="flex gap-2">
+            <button 
               onClick={handleShare}
-              className="p-3 rounded-full bg-white/10 backdrop-blur-sm"
-              aria-label="Share"
+              className="p-2 rounded-full bg-white/10 backdrop-blur-sm"
             >
-              <Share2 className="w-6 h-6 text-white" />
+              <Share2 className="h-5 w-5 text-white" />
             </button>
-            
-            <button
-              onClick={handleDownload}
-              className="p-3 rounded-full bg-white/10 backdrop-blur-sm"
-              aria-label="Download"
-            >
-              <Download className="w-6 h-6 text-white" />
-            </button>
-            
-            <button
-              onClick={() => {
-                setShowDetails(true);
-                triggerHaptic('light');
-              }}
-              className="p-3 rounded-full bg-white/10 backdrop-blur-sm"
-              aria-label="Show details"
-            >
-              <Info className="w-6 h-6 text-white" />
-            </button>
+          </div>
+        </div>
+        
+        {/* Progress bar */}
+        <div className="px-4 pb-2">
+          <div className="h-1 bg-white/20 rounded-full overflow-hidden">
+            <motion.div 
+              className="h-full bg-white rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress * 100}%` }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Bottom sheet for details */}
-      <AnimatePresence>
-        {showDetails && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
-              onClick={() => {
-                setShowDetails(false);
-                triggerHaptic('light');
-              }}
-            />
-            
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={0.2}
-              onDragEnd={(_, info) => {
-                if (info.velocity.y > 500 || info.offset.y > 100) {
-                  setShowDetails(false);
-                  triggerHaptic('light');
-                }
-              }}
-              className="fixed bottom-0 left-0 right-0 bg-gray-900 rounded-t-2xl z-50 max-h-[80vh] overflow-hidden"
-            >
-              {/* Drag handle */}
-              <div className="flex justify-center p-2">
-                <div className="w-12 h-1.5 bg-gray-600 rounded-full" />
-              </div>
+      {/* Main content */}
+      <motion.div 
+        className="h-full flex items-center justify-center px-4"
+        style={{ y: pullDistance }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentNFT.id}
+            className="relative w-full max-w-md aspect-[3/4] rounded-2xl overflow-hidden bg-gray-900"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* NFT Image */}
+            <div className="relative h-full">
+              {imageUrl && (
+                <Image
+                  src={imageUrl}
+                  alt={getNFTName(currentNFT)}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 384px"
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => setImageLoading(false)}
+                  priority
+                />
+              )}
               
-              {/* Details content */}
-              <div className="p-6 pb-safe overflow-y-auto max-h-[70vh]">
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  {currentNFT.name}
-                </h2>
-                
-                {currentNFT.description && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-300 mb-2">
-                      Description
-                    </h3>
-                    <p className="text-gray-400">{currentNFT.description}</p>
+              {imageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                  <div className="animate-pulse text-white">Loading...</div>
+                </div>
+              )}
+              
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              
+              {/* NFT info overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <h3 className="text-2xl font-bold mb-2">{getNFTName(currentNFT)}</h3>
+                {currentNFT.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {currentNFT.tags.map((tag, index) => (
+                      <span 
+                        key={index}
+                        className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 )}
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-300 mb-1">
-                      Token ID
-                    </h3>
-                    <p className="text-gray-400 font-mono text-xs break-all">
-                      {currentNFT.id}
-                    </p>
-                  </div>
-                  
-                  {currentNFT.creator && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-300 mb-1">
-                        Creator
-                      </h3>
-                      <p className="text-gray-400 font-mono text-xs break-all">
-                        {currentNFT.creator}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {currentNFT.createdAt && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-300 mb-1">
-                        Created
-                      </h3>
-                      <p className="text-gray-400">
-                        {new Date(currentNFT.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <p className="text-sm opacity-80 line-clamp-2">
+                  {getNFTDescription(currentNFT)}
+                </p>
               </div>
-            </motion.div>
-          </>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Bottom actions */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/70 to-transparent">
+        <div className="flex justify-around items-center p-6">
+          <button 
+            onClick={handleDownload}
+            className="p-3 rounded-full bg-white/10 backdrop-blur-sm"
+          >
+            <Download className="h-6 w-6 text-white" />
+          </button>
+          
+          <button 
+            onClick={handleLike}
+            className={`p-3 rounded-full backdrop-blur-sm transition-all ${
+              liked.has(currentNFT.id) 
+                ? 'bg-red-500 text-white' 
+                : 'bg-white/10 text-white'
+            }`}
+          >
+            <Heart className={`h-6 w-6 ${liked.has(currentNFT.id) ? 'fill-current' : ''}`} />
+          </button>
+          
+          <button 
+            onClick={() => {
+              setShowDetails(true);
+              triggerHaptic('light');
+            }}
+            className="p-3 rounded-full bg-white/10 backdrop-blur-sm"
+          >
+            <Info className="h-6 w-6 text-white" />
+          </button>
+        </div>
+        
+        {/* Navigation hints */}
+        <div className="flex justify-between px-6 pb-4 text-white/60 text-xs">
+          <span>{isFirstNFT ? '' : '← Swipe'}</span>
+          <span>{currentIndex + 1} / {nfts.length}</span>
+          <span>{isLastNFT ? '' : 'Swipe →'}</span>
+        </div>
+      </div>
+
+      {/* Details panel */}
+      <AnimatePresence>
+        {showDetails && (
+          <motion.div
+            className="absolute inset-0 bg-black/95 z-30"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          >
+            <div className="h-full overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <h3 className="text-2xl font-bold text-white">
+                    {getNFTName(currentNFT)}
+                  </h3>
+                  <button 
+                    onClick={() => {
+                      setShowDetails(false);
+                      triggerHaptic('light');
+                    }}
+                    className="p-2 rounded-full bg-white/10"
+                  >
+                    <ChevronUp className="h-6 w-6 text-white" />
+                  </button>
+                </div>
+                
+                {/* Description */}
+                <div className="mb-6">
+                  <h4 className="text-white/80 text-sm mb-2">Description</h4>
+                  <p className="text-white">
+                    {getNFTDescription(currentNFT) || 'No description available'}
+                  </p>
+                </div>
+                
+                {/* Attributes */}
+                <div className="mb-6">
+                  <h4 className="text-white/80 text-sm mb-3">Properties</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {nftAttributes.map((attr, index) => (
+                      <div 
+                        key={index}
+                        className="bg-white/10 backdrop-blur-sm rounded-lg p-3"
+                      >
+                        <p className="text-white/60 text-xs">{attr.label}</p>
+                        <p className="text-white font-medium">{attr.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Tags */}
+                {currentNFT.tags.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-white/80 text-sm mb-3">Tags</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {currentNFT.tags.map((tag, index) => (
+                        <span 
+                          key={index}
+                          className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

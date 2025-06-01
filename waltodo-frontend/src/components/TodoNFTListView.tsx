@@ -65,6 +65,31 @@ function truncateAddress(address: string, startLength = 6, endLength = 4): strin
   return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
 }
 
+// Header checkbox component for table selection
+const HeaderCheckbox: React.FC<{
+  table: any;
+}> = ({ table }) => {
+  const checkboxRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    if (checkboxRef.current) {
+      const isSomeRowsSelected = table.getIsSomeRowsSelected();
+      const isAllRowsSelected = table.getIsAllRowsSelected();
+      checkboxRef.current.indeterminate = isSomeRowsSelected && !isAllRowsSelected;
+    }
+  }, [table]);
+
+  return (
+    <input
+      ref={checkboxRef}
+      type="checkbox"
+      checked={table.getIsAllRowsSelected()}
+      onChange={table.getToggleAllRowsSelectedHandler()}
+      className="cursor-pointer"
+    />
+  );
+};
+
 // Row Actions Component
 const RowActions: React.FC<{
   todo: TodoNFTDisplay;
@@ -221,14 +246,10 @@ const ExpandedRowContent: React.FC<{ todo: TodoNFTDisplay }> = ({ todo }) => {
           <h4 className="font-medium text-gray-900 dark:text-gray-100">Image Preview</h4>
           <div className="relative h-64 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
             <TodoNFTImage
-              url={todo.imageUrl || todo.displayImageUrl || ''}
+              imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
               alt={todo.title}
-              mode="preview"
+              displayMode="preview"
               className="w-full h-full object-contain"
-              expandable={true}
-              showSkeleton={true}
-              enableHover={true}
-              priority={false}
             />
           </div>
         </div>
@@ -326,7 +347,8 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const { account } = useWalletContext();
+  const walletContext = useWalletContext();
+  const account = walletContext?.account;
 
   // Column definitions
   const columnHelper = createColumnHelper<TodoNFTDisplay>();
@@ -335,15 +357,7 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
     // Selection column
     columnHelper.display({
       id: 'select',
-      header: ({ table }) => (
-        <input
-          type="checkbox"
-          checked={table.getIsAllRowsSelected()}
-          indeterminate={table.getIsSomeRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-          className="cursor-pointer"
-        />
-      ),
+      header: ({ table }) => <HeaderCheckbox table={table} />,
       cell: ({ row }) => (
         <input
           type="checkbox"
@@ -387,14 +401,10 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
         return (
           <div className="w-16 h-16 relative">
             <TodoNFTImage
-              url={todo.imageUrl || todo.displayImageUrl || ''}
+              imageUrl={todo.imageUrl || todo.displayImageUrl || ''}
               alt={todo.title}
-              mode="thumbnail"
+              displayMode="thumbnail"
               className="w-full h-full object-cover rounded-md"
-              expandable={false}
-              showSkeleton={true}
-              enableHover={false}
-              priority={false}
             />
           </div>
         );
@@ -498,7 +508,7 @@ export const TodoNFTListView: React.FC<TodoNFTListViewProps> = ({
       ),
       size: 120,
     }),
-  ], [account?.address, onComplete, onTransfer, isProcessing]);
+  ], [columnHelper, account?.address, onComplete, onTransfer, isProcessing]);
 
   // Create table instance
   const table = useReactTable({

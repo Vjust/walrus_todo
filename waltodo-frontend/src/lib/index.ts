@@ -1,34 +1,42 @@
 /**
  * Centralized exports for lib modules
+ * Note: Some exports are commented out due to conflicting exports between modules
+ * Components should import directly from specific modules when needed
  */
 
-// Blockchain and events
+// Essential blockchain and events - minimal exports to avoid conflicts
 export * from './blockchain-events';
 export * from './sui-client';
-export * from './sui-client-utils';
 
-// Storage and content
+// Essential storage and content
 export * from './walrus-client';
 export * from './walrus-content-fetcher';
-export * from './walrus-error-handling';
-export * from './walrus-todo-integration';
 export * from './walrus-url-utils';
 
-// Services
-export * from './todo-service';
-export * from './todo-service-blockchain';
-
-// Config and utilities
+// Essential config and utilities
 export * from './config-loader';
-export * from './safe-storage';
-export * from './storage-utils';
 export * from './queryClient';
 
 // Error handling
 export * from './error-handling';
 export * from './wallet-errors';
-export * from './wallet-safe-operations';
 
 // System utilities
 export * from './clipboard';
 export * from './global-error-suppression';
+
+// Cache and offline support
+export * from './cache-manager';
+
+// Note: The following modules have conflicting exports and are commented out
+// Components should import directly from these modules when needed:
+// - ./sui-client-utils
+// - ./todo-service
+// - ./todo-service-blockchain  
+// - ./safe-storage
+// - ./storage-utils
+// - ./wallet-safe-operations
+// - ./walrus-error-handling
+// - ./walrus-todo-integration
+// - ./analytics
+// - ./cache-utilities

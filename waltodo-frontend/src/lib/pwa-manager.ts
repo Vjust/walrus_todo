@@ -2,7 +2,7 @@
 interface ToastAPI {
   success: (message: string) => void;
   error: (message: string) => void;
-  info: (message: string) => void;
+  (message: string, options?: any): string;
   custom: (component: any, options?: any) => any;
   dismiss: (id: string) => void;
 }
@@ -42,15 +42,26 @@ class PWAManager {
     cacheHits: 0,
     cacheMisses: 0
   };
+  private initialized = false;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      this.init();
-      this.loadMetrics();
-    }
+    // Don't initialize in constructor to avoid SSR issues
+    // Client code should call init() explicitly when ready
   }
 
-  private async init() {
+  // Check if PWA manager has been initialized
+  public isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  public async init() {
+    // Prevent multiple initializations
+    if (this.initialized || typeof window === 'undefined') {
+      return;
+    }
+    
+    this.initialized = true;
+    this.loadMetrics();
     // Register service worker
     if ('serviceWorker' in navigator) {
       try {
@@ -105,7 +116,9 @@ class PWAManager {
 
     window.addEventListener('offline', () => {
       if (toast) {
-        toast.info('You\'re offline. Changes will sync when reconnected.');
+        toast('You\'re offline. Changes will sync when reconnected.', {
+          icon: 'ℹ️',
+        });
       }
       this.metrics.offlineUsage++;
       this.saveMetrics();
@@ -152,7 +165,10 @@ class PWAManager {
 
   // Check if app is installed
   isInstalled(): boolean {
-    if (typeof window === 'undefined') return false;
+    // Return false during SSR
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return false;
+    }
     
     // Check for display-mode
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
@@ -166,7 +182,7 @@ class PWAManager {
 
   // Request notification permission
   async requestNotificationPermission(): Promise<NotificationPermission> {
-    if (!('Notification' in window)) {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
       console.log('[PWA] Notifications not supported');
       return 'denied';
     }
@@ -183,8 +199,8 @@ class PWAManager {
 
   // Send notification
   async sendNotification(title: string, options?: NotificationOptions) {
-    if (Notification.permission !== 'granted') {
-      console.log('[PWA] Notifications not granted');
+    if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') {
+      console.log('[PWA] Notifications not available or not granted');
       return;
     }
 
@@ -192,7 +208,6 @@ class PWAManager {
       await this.swRegistration.showNotification(title, {
         icon: '/icons/icon-192x192.png',
         badge: '/icons/badge-72x72.png',
-        vibrate: [100, 50, 100],
         ...options
       });
     }
@@ -200,21 +215,25 @@ class PWAManager {
 
   // Cache NFT image
   async cacheNFTImage(url: string) {
-    if (this.swRegistration && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'CACHE_NFT',
-        url
-      });
+    if (typeof navigator === 'undefined' || !this.swRegistration || !navigator.serviceWorker?.controller) {
+      return;
     }
+    
+    navigator.serviceWorker.controller.postMessage({
+      type: 'CACHE_NFT',
+      url
+    });
   }
 
   // Clear NFT cache
   async clearNFTCache() {
-    if (this.swRegistration && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'CLEAR_NFT_CACHE'
-      });
+    if (typeof navigator === 'undefined' || !this.swRegistration || !navigator.serviceWorker?.controller) {
+      return;
     }
+    
+    navigator.serviceWorker.controller.postMessage({
+      type: 'CLEAR_NFT_CACHE'
+    });
   }
 
   // Register sync
@@ -225,7 +244,7 @@ class PWAManager {
     }
 
     try {
-      await this.swRegistration.sync.register(tag);
+      await (this.swRegistration as any).sync.register(tag);
       console.log(`[PWA] Sync registered: ${tag}`);
     } catch (error) {
       console.error('[PWA] Sync registration failed:', error);
@@ -251,7 +270,7 @@ class PWAManager {
 
   // Share content
   async share(data: ShareData): Promise<boolean> {
-    if (!navigator.share) {
+    if (typeof navigator === 'undefined' || !navigator.share) {
       console.log('[PWA] Web Share API not supported');
       return false;
     }
@@ -269,7 +288,10 @@ class PWAManager {
 
   // Check if can share
   canShare(data?: ShareData): boolean {
-    if (!navigator.share) return false;
+    if (typeof navigator === 'undefined' || !navigator.share) {
+      return false;
+    }
+    
     if (!data) return true;
     
     // Check if navigator.canShare exists (newer API)
@@ -333,6 +355,10 @@ class PWAManager {
   }
 
   private loadMetrics() {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
+    }
+    
     try {
       const stored = localStorage.getItem('pwa-metrics');
       if (stored) {
@@ -344,6 +370,10 @@ class PWAManager {
   }
 
   private saveMetrics() {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
+    }
+    
     try {
       localStorage.setItem('pwa-metrics', JSON.stringify(this.metrics));
     } catch (error) {
@@ -352,5 +382,15 @@ class PWAManager {
   }
 }
 
-// Export singleton instance
-export const pwaManager = new PWAManager();
+// Create singleton instance that's safe for SSR
+let instance: PWAManager | null = null;
+
+export const getPWAManager = (): PWAManager => {
+  if (!instance) {
+    instance = new PWAManager();
+  }
+  return instance;
+};
+
+// Export for convenience but recommend using getPWAManager()
+export const pwaManager = getPWAManager();

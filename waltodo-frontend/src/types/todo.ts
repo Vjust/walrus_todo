@@ -14,6 +14,13 @@ import {
   StorageLocation as SharedStorageLocation
 } from '@waltodo/shared-types';
 
+// Todo status enum
+export enum TodoStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled'
+}
+
 // Re-export shared types
 export type { 
   CreateTodoInput,

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { OptimizedImage, OptimizedImageGallery } from './OptimizedImage';
-import { useWalrusStorage } from '@/hooks/useWalrusStorage';
 import { getImagePerformanceMetrics, clearImageCaches } from '@/lib/image-optimization';
 
 interface TodoImageDisplayProps {
@@ -18,12 +17,13 @@ export function TodoImageDisplay({
   imageUrls,
   showPerformanceMetrics = false 
 }: TodoImageDisplayProps) {
-  const { getImageUrl } = useWalrusStorage();
-  
   // Convert Walrus blob IDs to accessible URLs
   const processImageUrl = (url: string): string => {
-    if (url.startsWith('blob:') || url.includes('walrus')) {
-      return getImageUrl(url);
+    // If it's a Walrus blob ID, convert to URL
+    if (url.startsWith('0x') || url.includes('walrus')) {
+      // Use testnet aggregator URL
+      const aggregatorUrl = 'https://aggregator.walrus-testnet.walrus.space';
+      return `${aggregatorUrl}/v1/${url}`;
     }
     return url;
   };
@@ -137,7 +137,6 @@ function PerformanceDisplay() {
 // Hook for managing todo images with optimization
 export function useTodoImages(todoId: string, imageUrls?: string[]) {
   const [optimizedUrls, setOptimizedUrls] = React.useState<string[]>([]);
-  const { getImageUrl } = useWalrusStorage();
 
   React.useEffect(() => {
     if (!imageUrls || imageUrls.length === 0) return;
@@ -147,8 +146,11 @@ export function useTodoImages(todoId: string, imageUrls?: string[]) {
       const { preloadImages } = await import('@/lib/image-optimization');
       
       const processed = imageUrls.map(url => {
-        if (url.startsWith('blob:') || url.includes('walrus')) {
-          return getImageUrl(url);
+        // If it's a Walrus blob ID, convert to URL
+        if (url.startsWith('0x') || url.includes('walrus')) {
+          // Use testnet aggregator URL
+          const aggregatorUrl = 'https://aggregator.walrus-testnet.walrus.space';
+          return `${aggregatorUrl}/v1/${url}`;
         }
         return url;
       });
@@ -165,7 +167,7 @@ export function useTodoImages(todoId: string, imageUrls?: string[]) {
     };
 
     processImages();
-  }, [imageUrls, getImageUrl]);
+  }, [imageUrls]);
 
   return optimizedUrls;
 }

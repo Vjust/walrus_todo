@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
@@ -68,7 +68,7 @@ export const ShortcutFeedback: React.FC<{ shortcut: string }> = ({ shortcut }) =
     return () => clearTimeout(timer);
   }, []);
 
-  return show ? { shortcut, show } : null;
+  return show ? shortcut : null;
 };
 
 // Help modal component
@@ -331,7 +331,7 @@ export const useNFTKeyboardShortcuts = (options?: {
         event.preventDefault();
         event.stopPropagation();
 
-        const action = actionMap[id];
+        const action = actionMap[id as keyof typeof actionMap];
         if (action) {
           showFeedback(id);
           action();
@@ -363,7 +363,7 @@ export const useNFTKeyboardShortcuts = (options?: {
       ...customBindings,
       [id]: { ...DEFAULT_BINDINGS[id], ...newBinding }
     };
-    setCustomBindings(updated);
+    setCustomBindings(updated as Record<string, KeyBinding>);
     localStorage.setItem('nft-shortcuts', JSON.stringify(updated));
     toast.success('Shortcut updated!');
   }, [customBindings]);
@@ -390,13 +390,11 @@ export const useNFTKeyboardShortcuts = (options?: {
     for (const [id, binding] of Object.entries(bindings)) {
       if (binding.enabled === false) continue;
       
-      const action = actionMap[id];
-      if (action) {
-        categories[binding.category].push({
-          ...binding,
-          action
-        });
-      }
+      const action = actionMap[id as keyof typeof actionMap];
+      categories[binding.category].push({
+        ...binding,
+        action
+      });
     }
 
     return [

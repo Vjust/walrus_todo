@@ -3,6 +3,9 @@
  * Prevents common wallet errors from crashing the application
  */
 
+import { retryWithRecovery, ErrorType, classifyError } from './error-recovery';
+import { showError } from './error-handling';
+
 export type WalletOperationResult<T> = {
   success: boolean;
   data?: T;
@@ -11,14 +14,37 @@ export type WalletOperationResult<T> = {
 };
 
 /**
- * Safely execute a wallet operation with comprehensive error handling
+ * Safely execute a wallet operation with comprehensive error handling and recovery
  */
 export async function safeWalletOperation<T>(
   operation: () => Promise<T>,
-  operationName: string = 'wallet operation'
+  operationName: string = 'wallet operation',
+  options?: {
+    enableRecovery?: boolean;
+    maxRetries?: number;
+    silent?: boolean;
+  }
 ): Promise<WalletOperationResult<T>> {
   try {
-    const result = await operation();
+    let result: T;
+    
+    // Use error recovery for wallet operations if enabled
+    if (options?.enableRecovery) {
+      result = await retryWithRecovery(
+        operation,
+        {
+          errorType: ErrorType.AUTH,
+          customStrategy: {
+            maxRetries: options.maxRetries || 2,
+            baseDelay: 1000
+          },
+          silent: options.silent
+        }
+      );
+    } else {
+      result = await operation();
+    }
+    
     return {
       success: true,
       data: result,
@@ -162,27 +188,120 @@ export function safeClearWalletStorage(walletName?: string): void {
 }
 
 /**
- * Create a safer version of wallet select with validation
+ * Create a safer version of wallet select with validation and recovery
  */
 export async function safeWalletSelect(
   walletKit: any,
-  walletName: string
+  walletName: string,
+  options?: {
+    enableRecovery?: boolean;
+    showErrors?: boolean;
+  }
 ): Promise<WalletOperationResult<void>> {
-  return safeWalletOperation(async () => {
-    // First check if wallet is available
-    const availableWallets = safeGetWallets(walletKit);
+  return safeWalletOperation(
+    async () => {
+      // First check if wallet is available
+      const availableWallets = safeGetWallets(walletKit);
 
-    if (!isWalletAvailable(walletName, availableWallets)) {
-      throw new Error(
-        `Wallet "${walletName}" is not available. Available wallets: ${availableWallets.map(w => w.name || w.label).join(', ')}`
-      );
-    }
+      if (!isWalletAvailable(walletName, availableWallets)) {
+        const availableNames = availableWallets.map(w => w.name || w.label).join(', ');
+        const error = new Error(
+          `Wallet "${walletName}" is not available. Available wallets: ${availableNames || 'none'}`
+        );
+        
+        if (options?.showErrors !== false) {
+          showError({
+            title: 'Wallet Not Available',
+            message: `${walletName} wallet is not installed or available`,
+            duration: 5000
+          });
+        }
+        
+        throw error;
+      }
 
-    // Attempt to select the wallet
-    if (typeof walletKit.select === 'function') {
-      await walletKit.select(walletName);
-    } else {
-      throw new Error('Wallet kit does not support select operation');
+      // Attempt to select the wallet
+      if (typeof walletKit.select === 'function') {
+        await walletKit.select(walletName);
+      } else {
+        throw new Error('Wallet kit does not support select operation');
+      }
+    }, 
+    `select wallet "${walletName}"`,
+    {
+      enableRecovery: options?.enableRecovery,
+      silent: options?.showErrors === false
     }
-  }, `select wallet "${walletName}"`);
+  );
+}
+
+/**
+ * Safely connect to a wallet with recovery
+ */
+export async function safeWalletConnect(
+  walletKit: any,
+  options?: {
+    enableRecovery?: boolean;
+    showErrors?: boolean;
+  }
+): Promise<WalletOperationResult<string>> {
+  return safeWalletOperation(
+    async () => {
+      if (!walletKit) {
+        throw new Error('Wallet kit not initialized');
+      }
+
+      // Check if already connected
+      if (walletKit.currentAccount?.address) {
+        return walletKit.currentAccount.address;
+      }
+
+      // Attempt to connect
+      if (typeof walletKit.connect === 'function') {
+        const result = await walletKit.connect();
+        if (result?.address) {
+          return result.address;
+        } else if (walletKit.currentAccount?.address) {
+          return walletKit.currentAccount.address;
+        } else {
+          throw new Error('Failed to get wallet address after connect');
+        }
+      } else {
+        throw new Error('Wallet kit does not support connect operation');
+      }
+    },
+    'connect wallet',
+    {
+      enableRecovery: options?.enableRecovery,
+      maxRetries: 3,
+      silent: options?.showErrors === false
+    }
+  );
+}
+
+/**
+ * Safely disconnect from wallet
+ */
+export async function safeWalletDisconnect(
+  walletKit: any
+): Promise<WalletOperationResult<void>> {
+  return safeWalletOperation(
+    async () => {
+      if (!walletKit) {
+        return; // Nothing to disconnect
+      }
+
+      if (typeof walletKit.disconnect === 'function') {
+        await walletKit.disconnect();
+      }
+
+      // Clear any stored wallet data
+      safeClearWalletStorage();
+    },
+    'disconnect wallet',
+    {
+      enableRecovery: false, // Don't retry disconnection
+      silent: true
+    }
+  );
 }

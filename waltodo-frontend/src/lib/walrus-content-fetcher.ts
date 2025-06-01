@@ -1,10 +1,13 @@
 /**
  * Walrus Content Fetcher
  * React hook and utilities for fetching content from Walrus storage
+ * Uses IndexedDB for persistent caching and offline support
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { walrusToHttpUrl, isValidBlobId, parseWalrusHeaders } from './walrus-url-utils';
+import { transformWalrusBlobToUrl, extractBlobIdFromUrl, isValidWalrusUrl } from './walrus-url-utils';
+import { cacheManager } from './cache-manager';
+import { analytics } from './analytics';
 
 export interface WalrusContentOptions {
   network?: 'mainnet' | 'testnet';
@@ -23,16 +26,6 @@ export interface WalrusContentResult {
   contentLength?: number;
   refetch: () => void;
 }
-
-// In-memory cache for content
-const contentCache = new Map<string, {
-  data: string;
-  contentType?: string;
-  contentLength?: number;
-  timestamp: number;
-}>();
-
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Fetch content from Walrus
@@ -54,25 +47,29 @@ export async function fetchWalrusContent(
     cache = true,
   } = options || {};
 
-  // Check cache first
+  // Check persistent cache first
   if (cache) {
-    const cached = contentCache.get(blobIdOrUrl);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return {
-        data: cached.data,
-        contentType: cached.contentType,
-        contentLength: cached.contentLength,
-      };
+    try {
+      const cached = await cacheManager.get(blobIdOrUrl);
+      if (cached) {
+        return {
+          data: cached.data,
+          contentType: cached.contentType,
+          contentLength: cached.contentLength,
+        };
+      }
+    } catch (cacheError) {
+      console.warn('Cache read failed:', cacheError);
     }
   }
 
   // Convert to HTTP URL
   let url: string;
   try {
-    if (isValidBlobId(blobIdOrUrl)) {
-      url = walrusToHttpUrl(`walrus://${blobIdOrUrl}`, network, gateway);
+    if (blobIdOrUrl.startsWith('walrus://')) {
+      url = transformWalrusBlobToUrl(blobIdOrUrl);
     } else {
-      url = walrusToHttpUrl(blobIdOrUrl, network, gateway);
+      url = transformWalrusBlobToUrl(`walrus://${blobIdOrUrl}`);
     }
   } catch (error) {
     throw new Error(`Invalid Walrus URL or blob ID: ${error}`);
@@ -85,6 +82,8 @@ export async function fetchWalrusContent(
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+      const fetchStartTime = performance.now();
+      
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
@@ -128,13 +127,25 @@ export async function fetchWalrusContent(
         contentLength: contentLength ? parseInt(contentLength, 10) : undefined,
       };
 
-      // Cache the result
+      // Cache the result in persistent storage
       if (cache) {
-        contentCache.set(blobIdOrUrl, {
-          ...result,
-          timestamp: Date.now(),
-        });
+        try {
+          await cacheManager.set(blobIdOrUrl, data, {
+            contentType: contentType || undefined,
+            contentLength: result.contentLength,
+          });
+        } catch (cacheError) {
+          console.warn('Failed to cache content:', cacheError);
+        }
       }
+      
+      // Track successful API call
+      analytics?.trackPerformance('api-call', performance.now() - fetchStartTime, 'ms', {
+        endpoint: 'walrus-content',
+        cached: false,
+        contentType,
+        size: result.contentLength,
+      });
 
       return result;
     } catch (error) {
@@ -206,10 +217,14 @@ export function useWalrusContent(
   }, [fetchContent]);
 
   useEffect(() => {
+    // Store ref values in variables for proper cleanup
+    const isMounted = isMountedRef;
+    const abortController = abortControllerRef;
+    
     return () => {
-      isMountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      isMounted.current = false;
+      if (abortController.current) {
+        abortController.current.abort();
       }
     };
   }, []);
@@ -227,37 +242,27 @@ export function useWalrusContent(
 /**
  * Clear the content cache
  */
-export function clearWalrusCache(blobId?: string): void {
+export async function clearWalrusCache(blobId?: string): Promise<void> {
   if (blobId) {
-    contentCache.delete(blobId);
+    await cacheManager.delete(blobId);
   } else {
-    contentCache.clear();
+    await cacheManager.clear();
   }
 }
 
 /**
  * Get cache statistics
  */
-export function getWalrusCacheStats(): {
+export async function getWalrusCacheStats(): Promise<{
   size: number;
   entries: number;
   oldestEntry?: number;
-} {
-  let oldestTimestamp: number | undefined;
-  
-  for (const entry of contentCache.values()) {
-    if (!oldestTimestamp || entry.timestamp < oldestTimestamp) {
-      oldestTimestamp = entry.timestamp;
-    }
-  }
-
+}> {
+  const stats = await cacheManager.getStats();
   return {
-    size: Array.from(contentCache.values()).reduce(
-      (total, entry) => total + entry.data.length,
-      0
-    ),
-    entries: contentCache.size,
-    oldestEntry: oldestTimestamp,
+    size: stats.totalSize,
+    entries: stats.entryCount,
+    oldestEntry: stats.oldestEntry,
   };
 }
 
@@ -274,4 +279,36 @@ export async function preloadWalrusContent(
         .catch(err => console.error(`Failed to preload ${blobId}:`, err))
     )
   );
+}
+
+/**
+ * Run cache cleanup
+ */
+export async function cleanupWalrusCache(): Promise<{
+  removedEntries: number;
+  freedSpace: number;
+}> {
+  return cacheManager.cleanup();
+}
+
+/**
+ * Check if content is cached
+ */
+export async function isWalrusContentCached(blobId: string): Promise<boolean> {
+  const cached = await cacheManager.get(blobId);
+  return cached !== null;
+}
+
+/**
+ * Export cache for backup/migration
+ */
+export async function exportWalrusCache() {
+  return cacheManager.export();
+}
+
+/**
+ * Import cache from backup
+ */
+export async function importWalrusCache(data: any) {
+  return cacheManager.import(data);
 }

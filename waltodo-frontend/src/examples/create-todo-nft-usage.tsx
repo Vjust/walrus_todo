@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import Image from 'next/image';
 import CreateTodoNFTForm from '@/components/CreateTodoNFTForm';
 import { Todo } from '@/types/todo-nft';
 import toast from 'react-hot-toast';
@@ -138,9 +139,11 @@ export function TodoListWithNFTCreation() {
                   </div>
                 </div>
                 {todo.imageUrl && (
-                  <img
+                  <Image
                     src={todo.imageUrl}
                     alt={todo.title}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-lg object-cover ml-4"
                   />
                 )}

@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { TransactionBlock } from '@mysten/sui/transactions';
+import { Transaction } from '@mysten/sui/transactions';
 import { SuiClient } from '@mysten/sui/client';
 import toast from 'react-hot-toast';
 
@@ -48,8 +48,8 @@ export interface UserConfirmationData {
 }
 
 const DEFAULT_CONFIG: TransactionSafetyConfig = {
-  maxGasPrice: 1000n, // 1000 MIST per gas unit
-  maxGasBudget: 100000000n, // 0.1 SUI
+  maxGasPrice: BigInt(1000), // 1000 MIST per gas unit
+  maxGasBudget: BigInt(100000000), // 0.1 SUI
   simulationRetries: 3,
   confirmationRequired: true,
   dryRunFirst: true,
@@ -68,7 +68,7 @@ export class TransactionSafetyManager {
    * Estimate gas for a transaction
    */
   async estimateGas(
-    tx: TransactionBlock,
+    tx: Transaction,
     sender: string
   ): Promise<GasEstimation> {
     try {
@@ -93,7 +93,7 @@ export class TransactionSafetyManager {
       const totalCost = totalGasUnits * gasPriceBigInt;
 
       // Calculate recommended gas budget (with 20% buffer)
-      const recommendedBudget = (totalCost * 120n) / 100n;
+      const recommendedBudget = (totalCost * BigInt(120)) / BigInt(100);
 
       // Check safety
       const warnings: string[] = [];
@@ -141,7 +141,7 @@ export class TransactionSafetyManager {
    * Simulate transaction execution
    */
   async simulateTransaction(
-    tx: TransactionBlock,
+    tx: Transaction,
     sender: string
   ): Promise<TransactionSimulationResult> {
     const warnings: string[] = [];
@@ -281,7 +281,7 @@ export class TransactionSafetyManager {
    * Execute transaction with full safety checks
    */
   async executeTransactionSafely(
-    tx: TransactionBlock,
+    tx: Transaction,
     sender: string,
     signAndExecuteTransaction: (tx: any) => Promise<any>,
     options: {
@@ -425,7 +425,9 @@ export class TransactionSafetyManager {
         recoverable: true,
         suggestion: 'Increase gas budget and retry',
         action: async () => {
-          toast.info('Please increase the gas budget in transaction settings');
+          toast('Please increase the gas budget in transaction settings', {
+            icon: 'ℹ️',
+          });
         },
       };
     }
@@ -468,7 +470,7 @@ export class TransactionSafetyManager {
 // Export convenience functions
 export async function estimateGas(
   suiClient: SuiClient,
-  tx: TransactionBlock,
+  tx: Transaction,
   sender: string
 ): Promise<GasEstimation> {
   const manager = new TransactionSafetyManager(suiClient);
@@ -477,7 +479,7 @@ export async function estimateGas(
 
 export async function simulateTransaction(
   suiClient: SuiClient,
-  tx: TransactionBlock,
+  tx: Transaction,
   sender: string
 ): Promise<TransactionSimulationResult> {
   const manager = new TransactionSafetyManager(suiClient);
@@ -486,7 +488,7 @@ export async function simulateTransaction(
 
 export async function executeTransactionSafely(
   suiClient: SuiClient,
-  tx: TransactionBlock,
+  tx: Transaction,
   sender: string,
   signAndExecuteTransaction: (tx: any) => Promise<any>,
   options: {

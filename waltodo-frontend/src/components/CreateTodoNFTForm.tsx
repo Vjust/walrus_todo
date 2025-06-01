@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { useWalletContext } from '@/contexts/WalletContext';
+import Image from 'next/image';
+import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 import { useSuiClient } from '@/hooks/useSuiClient';
 import { useWalrusStorage } from '@/hooks/useWalrusStorage';
 import { storeTodoOnBlockchain } from '@/lib/sui-client';
-import { addTodo } from '@/lib/todo-service';
+import { storeTodoOnBlockchainSafely } from '@/lib/sui-client-safe';
+import { createNFT, initializeOfflineSync } from '@/lib/todo-service-offline';
 import toast from 'react-hot-toast';
 import type { CreateTodoParams, Todo } from '@/types/todo-nft';
 
@@ -104,7 +106,7 @@ export default function CreateTodoNFTForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Hooks
-  const walletContext = useWalletContext();
+  const walletContext = useClientSafeWallet();
   const { address, connected, signAndExecuteTransaction } = walletContext || {};
   const { isInitialized: suiClientInitialized } = useSuiClient('testnet');
   const {
@@ -229,7 +231,7 @@ export default function CreateTodoNFTForm({
   // Image compression function
   const compressImage = async (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
-      const img = new Image();
+      const img = new globalThis.Image();
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
@@ -298,21 +300,10 @@ export default function CreateTodoNFTForm({
     setUploadProgress(0);
     
     try {
-      // Step 1: Upload image to Walrus if provided
-      setUploadStage('Uploading image to Walrus...');
-      setUploadProgress(10);
+      // Initialize offline sync with current signer
+      initializeOfflineSync({ signAndExecuteTransaction, address });
       
-      let imageUrl = 'https://walrus-todo.vercel.app/images/todo-default.png'; // Default
-      
-      if (imageFile) {
-        // TODO: Implement actual Walrus image upload
-        // For now, we'll use the default image
-        // const imageResult = await uploadImageToWalrus(imageFile);
-        // imageUrl = imageResult.url;
-        setUploadProgress(30);
-      }
-      
-      // Step 2: Prepare todo data
+      // Prepare todo data
       const todoData = {
         title: title.trim(),
         description: description.trim(),
@@ -324,71 +315,37 @@ export default function CreateTodoNFTForm({
           .filter(Boolean),
         dueDate: dueDate || undefined,
         category,
-      };
-      
-      // Step 3: Create local todo first
-      setUploadStage('Creating local todo...');
-      setUploadProgress(40);
-      
-      const localTodo = addTodo(listName, todoData, address);
-      
-      // Step 4: Upload todo data to Walrus
-      setUploadStage('Uploading todo data to Walrus...');
-      setUploadProgress(50);
-      
-      const walrusResult = await createWalrusTodo(
-        {
-          ...todoData,
-          imageUrl,
-          isPrivate,
-          walrusBlobId: undefined,
-        },
-        {
-          epochs: Math.ceil(expirationDays / 30),
-        }
-      );
-      
-      if (!walrusResult) {
-        throw new Error('Failed to upload to Walrus');
-      }
-      
-      // Step 5: Create NFT on blockchain
-      setUploadStage('Creating NFT on Sui blockchain...');
-      setUploadProgress(70);
-      
-      const blockchainParams: CreateTodoParams = {
-        title: todoData.title,
-        description: todoData.description || '',
-        imageUrl,
-        metadata: JSON.stringify({
-          priority: todoData.priority,
-          tags: todoData.tags,
-          dueDate: todoData.dueDate,
-          listName,
-          category: todoData.category,
-          walrusBlobId: walrusResult.walrusBlobId,
-          expirationDays,
-        }),
         isPrivate,
       };
       
-      const blockchainResult = await storeTodoOnBlockchain(
-        blockchainParams,
-        signAndExecuteTransaction,
+      // Create NFT with offline support
+      setUploadStage('Creating NFT...');
+      setUploadProgress(30);
+      
+      const { todoId, objectId } = await createNFT(
+        listName,
+        todoData,
+        imageFile || undefined,
+        { signAndExecuteTransaction, address },
         address
       );
       
-      if (!blockchainResult.success || !blockchainResult.objectId) {
-        throw new Error('Failed to create NFT on blockchain');
+      if (!todoId) {
+        throw new Error('Failed to generate todo ID');
       }
       
-      setUploadProgress(90);
+      if (!navigator.onLine) {
+        toast.success('Todo created locally and queued for sync when online');
+        setUploadProgress(100);
+        if (onTodoCreated) {
+          onTodoCreated({ id: todoId, ...todoData } as Todo);
+        }
+        resetForm();
+        return;
+      }
       
-      // Step 6: Update local todo with blockchain info
-      if (localTodo) {
-        localTodo.blockchainStored = true;
-        localTodo.objectId = blockchainResult.objectId;
-        localTodo.walrusBlobId = walrusResult.walrusBlobId;
+      if (!objectId) {
+        throw new Error('Failed to create NFT on blockchain');
       }
       
       setUploadProgress(100);
@@ -400,9 +357,17 @@ export default function CreateTodoNFTForm({
       });
       
       // Call success callback
-      if (onTodoCreated && localTodo) {
-        onTodoCreated(localTodo as Todo);
+      const createdTodo: Todo = {
+        id: todoId,
+        ...todoData,
+        blockchainStored: true,
+        objectId,
+      };
+      
+      if (onTodoCreated) {
+        onTodoCreated(createdTodo);
       }
+      
       
       // Reset form
       resetForm();
@@ -500,10 +465,13 @@ export default function CreateTodoNFTForm({
             <div className="flex-shrink-0">
               {imagePreview ? (
                 <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-ocean-light">
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="NFT preview"
+                    width={128}
+                    height={128}
                     className="w-full h-full object-cover"
+                    priority
                   />
                   <button
                     type="button"

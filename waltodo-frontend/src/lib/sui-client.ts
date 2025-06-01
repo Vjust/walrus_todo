@@ -545,7 +545,6 @@ function transformSuiObjectToTodo(
       tags,
       blockchainStored: true,
       imageUrl,
-      thumbnails,
       createdAt: fields.created_at 
         ? new Date(parseInt(fields.created_at)).toISOString() 
         : new Date().toISOString(),
@@ -555,7 +554,6 @@ function transformSuiObjectToTodo(
       owner: fields.owner,
       metadata: fields.metadata || '',
       isPrivate: fields.is_private === true,
-      extendedMetadata,
     };
 
     // Cache the result if caching is enabled
@@ -671,7 +669,7 @@ export function filterTodos(todos: Todo[], filter: NFTFilterOptions): Todo[] {
     }
 
     // Filter by date range
-    if (filter.dateRange) {
+    if (filter.dateRange && todo.createdAt) {
       const createdAt = new Date(todo.createdAt);
       if (createdAt < filter.dateRange.start || createdAt > filter.dateRange.end) {
         return false;
@@ -835,6 +833,23 @@ export function deleteTodoNFTTransaction(
     target: `${getPackageId()}::${TODO_NFT_CONFIG.MODULE_NAME}::delete_todo`,
     arguments: [tx.object(objectId)],
   });
+
+  return tx;
+}
+
+/**
+ * Transfer TodoNFT transaction
+ */
+export function transferTodoNFTTransaction(
+  objectId: string,
+  recipientAddress: string,
+  senderAddress: string
+): Transaction {
+  const tx = new Transaction();
+  tx.setSender(senderAddress);
+
+  // Transfer the TodoNFT object to the recipient
+  tx.transferObjects([tx.object(objectId)], recipientAddress);
 
   return tx;
 }
@@ -1278,7 +1293,9 @@ export function sortTodos(
 
     switch (sortBy) {
       case 'createdAt':
-        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        comparison = aTime - bTime;
         break;
       case 'title':
         comparison = a.title.localeCompare(b.title);
@@ -1315,7 +1332,7 @@ export function groupTodos(
 
     switch (groupBy) {
       case 'date':
-        key = new Date(todo.createdAt).toLocaleDateString();
+        key = todo.createdAt ? new Date(todo.createdAt).toLocaleDateString() : 'No Date';
         break;
       case 'priority':
         key = todo.priority;

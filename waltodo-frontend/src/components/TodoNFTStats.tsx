@@ -50,7 +50,7 @@ const PRIORITY_COLORS = {
 export const TodoNFTStats: React.FC = () => {
   const account = useCurrentAccount();
   const client = useSuiClient();
-  const { events } = useBlockchainEvents();
+  const { eventCache } = useBlockchainEvents();
   const [nfts, setNfts] = useState<TodoNFT[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +65,10 @@ export const TodoNFTStats: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const objects = await client.getOwnedObjects({
+        const suiClient = await client.getClient();
+        if (!suiClient) return;
+
+        const objects = await suiClient.getOwnedObjects({
           owner: account.address,
           filter: {
             StructType: `${testnetConfig.contracts.todoNft.packageId}::${testnetConfig.contracts.todoNft.moduleName}::${testnetConfig.contracts.todoNft.structName}`
@@ -112,7 +115,7 @@ export const TodoNFTStats: React.FC = () => {
 
   // Refresh on new events
   useEffect(() => {
-    const relevantEvents = events.filter(e => 
+    const relevantEvents = eventCache.filter(e => 
       e.type.includes('TodoCreated') || 
       e.type.includes('TodoCompleted') ||
       e.type.includes('TodoDeleted')
@@ -121,7 +124,7 @@ export const TodoNFTStats: React.FC = () => {
     if (relevantEvents.length > 0) {
       setRefreshKey(prev => prev + 1);
     }
-  }, [events]);
+  }, [eventCache]);
 
   // Calculate statistics
   const stats = useMemo<NFTStats>(() => {

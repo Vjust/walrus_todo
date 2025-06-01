@@ -19,7 +19,7 @@ interface ResponsiveImage {
   height?: number;
 }
 
-interface ImagePreloadOptions {
+export interface ImagePreloadOptions {
   priority?: 'high' | 'low' | 'auto';
   fetchPriority?: 'high' | 'low' | 'auto';
 }
@@ -35,7 +35,7 @@ interface PerformanceMetrics {
 const imageCache = new LRUCache<string, string>({
   max: 100,
   ttl: 1000 * 60 * 60 * 24, // 24 hours
-  sizeCalculation: (value) => value.length,
+  sizeCalculation: (value: string) => value.length,
   maxSize: 50 * 1024 * 1024, // 50MB
 });
 
@@ -404,7 +404,7 @@ export function useProgressiveImage(src: string, options: ImagePreloadOptions = 
           hasError: true,
         }));
       });
-  }, [src, options.priority]);
+  }, [src, options]);
 
   return state;
 }

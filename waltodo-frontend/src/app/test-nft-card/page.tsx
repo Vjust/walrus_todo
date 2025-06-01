@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { TodoNFTCard } from '@/components/TodoNFTCard';
 import type { Todo } from '@/types/todo-nft';
+import { todoToNFTDisplay } from '@/types/nft-display';
 
 /**
  * Test page for TodoNFTCard component
@@ -115,7 +116,7 @@ export default function TestNFTCardPage() {
             <div>
               <h3 className="text-lg font-medium text-gray-700 mb-3">Loading State</h3>
               <TodoNFTCard
-                todo={sampleTodos[0]}
+                todo={todoToNFTDisplay(sampleTodos[0])}
                 loading={true}
                 showActions={true}
               />
@@ -125,8 +126,7 @@ export default function TestNFTCardPage() {
             <div>
               <h3 className="text-lg font-medium text-gray-700 mb-3">Error State</h3>
               <TodoNFTCard
-                todo={sampleTodos[0]}
-                error="Failed to load NFT data from blockchain"
+                todo={todoToNFTDisplay(sampleTodos[0])}
                 showActions={true}
               />
             </div>
@@ -135,7 +135,7 @@ export default function TestNFTCardPage() {
             <div>
               <h3 className="text-lg font-medium text-gray-700 mb-3">No Actions</h3>
               <TodoNFTCard
-                todo={sampleTodos[1]}
+                todo={todoToNFTDisplay(sampleTodos[1])}
                 showActions={false}
               />
             </div>
@@ -154,10 +154,11 @@ export default function TestNFTCardPage() {
             {todos.map((todo) => (
               <TodoNFTCard
                 key={todo.id}
-                todo={todo}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-                onTransfer={handleTransfer}
+                todo={todoToNFTDisplay(todo)}
+                onTransfer={async (todoId: string, recipient: string) => {
+                  console.log('Transfer initiated for:', todoId, 'to', recipient);
+                  alert(`Transfer NFT: ${todoId}\nTo: ${recipient}`);
+                }}
                 showActions={true}
               />
             ))}

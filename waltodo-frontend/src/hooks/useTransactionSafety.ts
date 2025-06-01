@@ -3,7 +3,6 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { TransactionBlock } from '@mysten/sui/transactions';
 import { Transaction } from '@mysten/sui/transactions';
 import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiClient } from '@/hooks/useSuiClient';
@@ -30,7 +29,7 @@ interface TransactionSafetyState {
 
 export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) {
   const walletContext = useWalletContext();
-  const { suiClient } = useSuiClient();
+  const { getClient } = useSuiClient();
   
   const [state, setState] = useState<TransactionSafetyState>({
     isLoading: false,
@@ -43,18 +42,19 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
   const address = walletContext?.address;
   const signAndExecuteTransaction = walletContext?.signAndExecuteTransaction;
 
-  // Initialize safety manager
-  const safetyManager = useMemo(() => {
-    if (!suiClient) return null;
-    return new TransactionSafetyManager(suiClient, options.safetyConfig);
-  }, [suiClient, options.safetyConfig]);
+  // Initialize safety manager asynchronously
+  const getSafetyManager = useCallback(async () => {
+    const client = await getClient();
+    if (!client) return null;
+    return new TransactionSafetyManager(client, options.safetyConfig);
+  }, [getClient, options.safetyConfig]);
 
   /**
    * Estimate gas for a transaction
    */
   const estimateGas = useCallback(
-    async (transaction: TransactionBlock | Transaction): Promise<GasEstimation | null> => {
-      if (!safetyManager || !address) {
+    async (transaction: Transaction): Promise<GasEstimation | null> => {
+      if (!address) {
         toast.error('Cannot estimate gas: wallet not connected');
         return null;
       }
@@ -62,15 +62,22 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
       try {
+        const safetyManager = await getSafetyManager();
+        if (!safetyManager) {
+          throw new Error('Failed to initialize safety manager');
+        }
+
         const estimation = await safetyManager.estimateGas(
-          transaction as TransactionBlock,
+          transaction,
           address
         );
         
         setState(prev => ({ ...prev, gasEstimation: estimation, isLoading: false }));
         
         if (!estimation.isSafe) {
-          toast.warning('Transaction may have issues. Check gas estimation warnings.');
+          toast('Transaction may have issues. Check gas estimation warnings.', {
+            icon: '⚠️',
+          });
         }
         
         return estimation;
@@ -82,15 +89,15 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
         return null;
       }
     },
-    [safetyManager, address, options]
+    [getSafetyManager, address, options]
   );
 
   /**
    * Simulate a transaction
    */
   const simulateTransaction = useCallback(
-    async (transaction: TransactionBlock | Transaction): Promise<TransactionSimulationResult | null> => {
-      if (!safetyManager || !address) {
+    async (transaction: Transaction): Promise<TransactionSimulationResult | null> => {
+      if (!address) {
         toast.error('Cannot simulate: wallet not connected');
         return null;
       }
@@ -98,8 +105,13 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
       try {
+        const safetyManager = await getSafetyManager();
+        if (!safetyManager) {
+          throw new Error('Failed to initialize safety manager');
+        }
+
         const result = await safetyManager.simulateTransaction(
-          transaction as TransactionBlock,
+          transaction,
           address
         );
         
@@ -108,7 +120,9 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
         if (!result.success) {
           toast.error(`Simulation failed: ${result.error}`);
         } else if (result.warnings.length > 0) {
-          toast.warning('Simulation completed with warnings');
+          toast('Simulation completed with warnings', {
+            icon: '⚠️',
+          });
         } else {
           toast.success('Simulation successful');
         }
@@ -122,7 +136,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
         return null;
       }
     },
-    [safetyManager, address, options]
+    [getSafetyManager, address, options]
   );
 
   /**
@@ -130,11 +144,11 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
    */
   const executeTransactionSafely = useCallback(
     async (
-      transaction: TransactionBlock | Transaction,
+      transaction: Transaction,
       operation: string,
       details?: Record<string, any>
     ): Promise<boolean> => {
-      if (!safetyManager || !address || !signAndExecuteTransaction) {
+      if (!address || !signAndExecuteTransaction) {
         const error = new Error('Wallet not connected');
         setState(prev => ({ ...prev, error }));
         toast.error(error.message);
@@ -145,8 +159,13 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
       try {
+        const safetyManager = await getSafetyManager();
+        if (!safetyManager) {
+          throw new Error('Failed to initialize safety manager');
+        }
+
         const result = await safetyManager.executeTransactionSafely(
-          transaction as TransactionBlock,
+          transaction,
           address,
           signAndExecuteTransaction,
           {
@@ -174,7 +193,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
         return false;
       }
     },
-    [safetyManager, address, signAndExecuteTransaction, options]
+    [getSafetyManager, address, signAndExecuteTransaction, options]
   );
 
   /**
@@ -182,6 +201,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
    */
   const handleTransactionError = useCallback(
     async (error: Error) => {
+      const safetyManager = await getSafetyManager();
       if (!safetyManager) return;
 
       const recovery = await safetyManager.handleTransactionError(error);
@@ -192,7 +212,7 @@ export function useTransactionSafety(options: UseTransactionSafetyOptions = {}) 
       
       return recovery;
     },
-    [safetyManager]
+    [getSafetyManager]
   );
 
   /**
@@ -247,7 +267,7 @@ export function useSafeTodoTransaction(options: UseTransactionSafetyOptions = {}
 
       // Execute with safety
       return transactionSafety.executeTransactionSafely(
-        tx as unknown as TransactionBlock,
+        tx as unknown as Transaction,
         `Create TodoNFT: ${params.title}`,
         params
       );
@@ -276,7 +296,7 @@ export function useSafeTodoTransaction(options: UseTransactionSafetyOptions = {}
 
       // Execute with safety
       return transactionSafety.executeTransactionSafely(
-        tx as unknown as TransactionBlock,
+        tx as unknown as Transaction,
         `Update TodoNFT: ${params.title || 'Untitled'}`,
         params
       );
@@ -299,7 +319,7 @@ export function useSafeTodoTransaction(options: UseTransactionSafetyOptions = {}
 
       // Execute with safety
       return transactionSafety.executeTransactionSafely(
-        tx as unknown as TransactionBlock,
+        tx as unknown as Transaction,
         'Complete TodoNFT',
         { objectId }
       );
@@ -322,7 +342,7 @@ export function useSafeTodoTransaction(options: UseTransactionSafetyOptions = {}
 
       // Execute with safety
       return transactionSafety.executeTransactionSafely(
-        tx as unknown as TransactionBlock,
+        tx as unknown as Transaction,
         `Transfer TodoNFT to ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`,
         { objectId, recipient: recipientAddress }
       );
@@ -345,7 +365,7 @@ export function useSafeTodoTransaction(options: UseTransactionSafetyOptions = {}
 
       // Execute with safety
       return transactionSafety.executeTransactionSafely(
-        tx as unknown as TransactionBlock,
+        tx as unknown as Transaction,
         'Delete TodoNFT',
         { objectId }
       );

@@ -10,8 +10,12 @@ export function usePWA() {
   const [metrics, setMetrics] = useState<PWAMetrics>(pwaManager.getMetrics());
 
   useEffect(() => {
+    // Ensure pwaManager is initialized
+    pwaManager.init();
+    
     // Check initial states
-    setCanInstall(pwaManager.canInstall());
+    // INSTALL PROMPT DISABLED: Always set canInstall to false
+    setCanInstall(false);
     setIsInstalled(pwaManager.isInstalled());
     setIsOnline(navigator.onLine);
 
@@ -27,31 +31,27 @@ export function usePWA() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Listen for install state changes
+    // INSTALL PROMPT DISABLED: Removed beforeinstallprompt event listener
+    // Only listen for appinstalled to detect manual installation
     const checkInstallState = () => {
-      setCanInstall(pwaManager.canInstall());
       setIsInstalled(pwaManager.isInstalled());
+      // Keep canInstall always false to disable install prompts
+      setCanInstall(false);
     };
 
-    window.addEventListener('beforeinstallprompt', checkInstallState);
     window.addEventListener('appinstalled', checkInstallState);
 
     return () => {
       clearInterval(metricsInterval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('beforeinstallprompt', checkInstallState);
       window.removeEventListener('appinstalled', checkInstallState);
     };
   }, []);
 
   const install = useCallback(async () => {
-    const result = await pwaManager.showInstallPrompt();
-    if (result) {
-      setIsInstalled(true);
-      setCanInstall(false);
-    }
-    return result;
+    // INSTALL PROMPT DISABLED: Return false immediately without attempting installation
+    return false;
   }, []);
 
   const requestNotificationPermission = useCallback(async () => {

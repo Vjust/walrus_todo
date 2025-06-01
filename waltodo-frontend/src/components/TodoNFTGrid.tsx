@@ -33,7 +33,7 @@ const LIST_ITEM_HEIGHT = 120;
 
 export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const suiClientHook = useSuiClient();
   const address = currentAccount?.address;
 
   // State management
@@ -57,8 +57,13 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
     isError,
   } = useInfiniteQuery({
     queryKey: ['todoNFTs', address, debouncedSearch, sortOption, filterOption, priorityFilter, dateRange],
-    queryFn: async ({ pageParam = null }) => {
-      if (!address || !suiClient) {
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      if (!address) {
+        return { nfts: [], nextCursor: null };
+      }
+
+      const suiClient = await suiClientHook.getClient();
+      if (!suiClient) {
         return { nfts: [], nextCursor: null };
       }
 
@@ -83,7 +88,8 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
         const nfts: TodoNFTDisplay[] = ownedObjects
           .filter(obj => obj.data?.content?.dataType === 'moveObject')
           .map(obj => {
-            const fields = obj.data?.content?.fields as any;
+            const content = obj.data?.content;
+            const fields = (content?.dataType === 'moveObject' ? content.fields : {}) as any;
             const todo: Todo = {
               id: obj.data?.objectId || '',
               title: fields?.title || '',
@@ -92,7 +98,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
               priority: (fields?.priority || 'medium') as 'low' | 'medium' | 'high',
               createdAt: new Date(fields?.created_at || Date.now()).toISOString(),
               imageUrl: fields?.image_url || '',
-              owner: fields?.owner || (typeof obj.data?.owner === 'string' ? obj.data.owner : obj.data?.owner?.AddressOwner) || '',
+              owner: fields?.owner || (typeof obj.data?.owner === 'string' ? obj.data.owner : (obj.data?.owner as any)?.AddressOwner) || '',
               blockchainStored: true,
               objectId: obj.data?.objectId,
               metadata: fields?.metadata,
@@ -108,7 +114,8 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
       }
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
-    enabled: !!address && !!suiClient,
+    initialPageParam: null as string | null,
+    enabled: !!address && suiClientHook.isInitialized,
   });
 
   // Flatten pages of data
@@ -125,7 +132,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
       const searchLower = debouncedSearch.toLowerCase();
       filtered = filtered.filter(nft => 
         nft.title.toLowerCase().includes(searchLower) ||
-        nft.description.toLowerCase().includes(searchLower)
+        (nft.description && nft.description.toLowerCase().includes(searchLower))
       );
     }
 
@@ -142,7 +149,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
     // Apply date range filter
     if (dateRange.start || dateRange.end) {
       filtered = filtered.filter(nft => {
-        const nftDate = new Date(nft.createdAt);
+        const nftDate = new Date(nft.createdAt || Date.now());
         if (dateRange.start && nftDate < dateRange.start) return false;
         if (dateRange.end && nftDate > dateRange.end) return false;
         return true;
@@ -153,7 +160,7 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
     filtered.sort((a, b) => {
       switch (sortOption) {
         case 'date':
-          return b.createdAt - a.createdAt;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
         case 'title':
           return a.title.localeCompare(b.title);
         case 'priority':
@@ -169,11 +176,10 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
 
   // Load more items
   const loadMoreItems = useCallback(
-    (startIndex: number, stopIndex: number) => {
+    async (startIndex: number, stopIndex: number): Promise<void> => {
       if (hasNextPage && !isFetchingNextPage) {
-        return fetchNextPage();
+        await fetchNextPage();
       }
-      return Promise.resolve();
     },
     [fetchNextPage, hasNextPage, isFetchingNextPage]
   );
@@ -433,6 +439,8 @@ export const TodoNFTGrid: React.FC<TodoNFTGridProps> = ({ className = '' }) => {
                         onItemsRendered({
                           visibleStartIndex,
                           visibleStopIndex,
+                          overscanStartIndex: visibleStartIndex,
+                          overscanStopIndex: visibleStopIndex,
                         });
                       }}
                     >

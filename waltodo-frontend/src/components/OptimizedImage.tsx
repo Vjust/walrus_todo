@@ -1,121 +1,162 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import { 
-  useProgressiveImage, 
-  useLazyImage, 
-  getOptimizedImageProps,
-  type OptimizedImageProps 
-} from '@/lib/image-optimization';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
+import Image from 'next/image';
+import { useProgressiveImage, useLazyImage } from '@/lib/image-optimization';
+import { useOptimizedWalrusImage } from '@/lib/walrus-image-optimization';
 
-interface OptimizedImageComponentProps extends OptimizedImageProps {
+interface OptimizedImageComponentProps {
+  src: string;
+  alt: string;
+  className?: string;
   width?: number;
   height?: number;
   lazy?: boolean;
   placeholder?: 'blur' | 'empty' | 'shimmer';
+  priority?: boolean | 'high' | 'low' | 'auto';
+  size?: 'thumbnail' | 'small' | 'medium' | 'large' | 'full';
+  sizes?: string;
+  quality?: number;
+  onLoad?: () => void;
+  onError?: () => void;
+  fallbackSrc?: string;
 }
 
 export function OptimizedImage({
   src,
   alt,
+  className = '',
   width,
   height,
-  sizes,
-  className = '',
-  priority = 'auto',
   lazy = true,
   placeholder = 'blur',
+  priority = 'auto',
+  size = 'medium',
+  sizes,
+  quality = 75,
   onLoad,
   onError,
-}: OptimizedImageComponentProps) {
+  fallbackSrc = '/images/nft-placeholder.png'
+}: OptimizedImageComponentProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  // Always call both hooks to maintain consistent hook order
-  const lazyImageState = useLazyImage(src, containerRef);
-  const progressiveImageState = useProgressiveImage(src, { priority });
+  const [showFallback, setShowFallback] = useState(false);
   
-  // Use the appropriate state based on lazy prop
-  const imageState = lazy ? lazyImageState : progressiveImageState;
-
-  const handleLoad = () => {
-    setImageLoaded(true);
-    onLoad?.();
-  };
-
-  const handleError = () => {
+  // Determine if this is a Walrus image
+  const isWalrusImage = src && (src.includes('walrus') || src.includes('blob'));
+  
+  // Convert boolean priority to string format for Walrus hook
+  const walrusPriority: 'high' | 'low' | 'auto' = 
+    typeof priority === 'boolean' 
+      ? (priority ? 'high' : 'auto')
+      : priority;
+  
+  // Use appropriate hook based on image source
+  const walrusImageState = useOptimizedWalrusImage(
+    isWalrusImage ? src : undefined,
+    { size, priority: walrusPriority, generateBlur: placeholder === 'blur' }
+  );
+  
+  const progressiveImageState = useProgressiveImage(
+    !isWalrusImage ? src : '',
+    { priority: walrusPriority }
+  );
+  
+  const lazyImageState = useLazyImage(
+    lazy && !isWalrusImage ? src : '',
+    containerRef
+  );
+  
+  // Choose the appropriate state
+  const imageState = isWalrusImage ? {
+    isLoading: walrusImageState.isLoading,
+    hasError: walrusImageState.hasError || showFallback,
+    loadedSrc: walrusImageState.optimizedUrl,
+    blurDataUrl: walrusImageState.blurDataUrl
+  } : lazy ? lazyImageState : progressiveImageState;
+  
+  const handleImageError = useCallback(() => {
+    setShowFallback(true);
     onError?.();
-  };
-
-  // Determine placeholder content
+  }, [onError]);
+  
+  const handleImageLoad = useCallback(() => {
+    onLoad?.();
+  }, [onLoad]);
+  
+  // Placeholder rendering
   const renderPlaceholder = () => {
     if (placeholder === 'shimmer') {
       return (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-shimmer" />
+        <div className="animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 w-full h-full" />
       );
     }
     
     if (placeholder === 'blur' && imageState.blurDataUrl) {
       return (
-        <img
+        <Image
           src={imageState.blurDataUrl}
           alt=""
+          fill
           className="absolute inset-0 w-full h-full object-cover filter blur-lg scale-110"
           aria-hidden="true"
+          unoptimized
         />
       );
     }
-
-    return null;
+    
+    return (
+      <div className="bg-gray-200 w-full h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   };
-
-  const optimizedProps = getOptimizedImageProps({
-    src: imageState.loadedSrc || src,
-    alt,
-    sizes,
-    className: `${className} ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`,
-    priority,
-    onLoad: handleLoad,
-    onError: handleError,
-  });
-
+  
+  // Error state
+  if (imageState.hasError) {
+    return (
+      <div
+        ref={containerRef}
+        className={`relative overflow-hidden ${className}`}
+        style={{ width, height }}
+      >
+        <Image
+          src={fallbackSrc}
+          alt={alt}
+          fill
+          className="w-full h-full object-cover"
+          onError={() => console.error('Even fallback image failed to load')}
+          unoptimized
+        />
+      </div>
+    );
+  }
+  
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden ${width ? `w-[${width}px]` : ''} ${height ? `h-[${height}px]` : ''}`}
+      className={`relative overflow-hidden ${className}`}
       style={{ width, height }}
     >
-      {/* Placeholder */}
-      {!imageLoaded && renderPlaceholder()}
-
+      {/* Show placeholder while loading */}
+      {imageState.isLoading && renderPlaceholder()}
+      
       {/* Main image */}
-      {(!lazy || imageState.isInView) && !imageState.hasError && (
-        <img
-          {...optimizedProps}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      {imageState.loadedSrc && (
+        <Image
+          src={imageState.loadedSrc}
+          alt={alt}
+          fill
+          className={`w-full h-full object-cover transition-opacity duration-300 ${
+            imageState.isLoading ? 'opacity-0' : 'opacity-100'
+          }`}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          loading={lazy ? 'lazy' : 'eager'}
+          priority={priority === 'high' || priority === true}
+          sizes={sizes}
+          quality={quality}
+          unoptimized={Boolean(isWalrusImage)}
         />
-      )}
-
-      {/* Error state */}
-      {imageState.hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="text-center">
-            <svg
-              className="w-12 h-12 mx-auto text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <p className="mt-2 text-sm text-gray-500">Failed to load image</p>
-          </div>
-        </div>
       )}
     </div>
   );
@@ -125,72 +166,120 @@ export function OptimizedImage({
 export function OptimizedImageGallery({ 
   images,
   columns = 3,
+  imageSize = 'medium',
+  gap = 4,
+  aspectRatio = 'square'
 }: { 
-  images: Array<{ src: string; alt: string; id: string }>; 
+  images: Array<{ src: string; alt: string; id: string; priority?: boolean }>; 
   columns?: number;
+  imageSize?: 'thumbnail' | 'small' | 'medium' | 'large';
+  gap?: number;
+  aspectRatio?: 'square' | 'video' | 'portrait' | 'landscape';
 }) {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 12 });
-  const galleryRef = useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleScroll = () => {
-      if (!galleryRef.current) return;
-
-      const rect = galleryRef.current.getBoundingClientRect();
-      const itemHeight = rect.height / Math.ceil(images.length / columns);
-      const scrollTop = window.scrollY;
-      const viewportHeight = window.innerHeight;
-
-      const start = Math.max(0, Math.floor((scrollTop - rect.top) / itemHeight) * columns);
-      const end = Math.min(
-        images.length,
-        Math.ceil((scrollTop - rect.top + viewportHeight) / itemHeight) * columns + columns
-      );
-
-      setVisibleRange({ start, end });
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Initial check
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [images.length, columns]);
-
-  // Preload next batch of images
-  React.useEffect(() => {
-    const nextBatch = images.slice(
-      visibleRange.end,
-      Math.min(visibleRange.end + columns * 2, images.length)
-    );
-
-    if (nextBatch.length > 0) {
-      import('@/lib/image-optimization').then(({ preloadImages }) => {
-        preloadImages(
-          nextBatch.map(img => img.src),
-          { priority: 'low' }
-        );
-      });
-    }
-  }, [visibleRange, images, columns]);
-
+  // Preload first few images
+  useEffect(() => {
+    const imagesToPreload = images.slice(0, columns * 2).map(img => img.src);
+    
+    // Preload images in the background
+    imagesToPreload.forEach((src, index) => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = src;
+      // Higher priority for first row
+      if (index < columns) {
+        link.fetchPriority = 'high';
+      }
+      document.head.appendChild(link);
+      
+      // Clean up
+      return () => {
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+      };
+    });
+  }, [images, columns]);
+  
+  const aspectRatioClass = {
+    square: 'aspect-square',
+    video: 'aspect-video',
+    portrait: 'aspect-[3/4]',
+    landscape: 'aspect-[4/3]'
+  }[aspectRatio];
+  
   return (
     <div
-      ref={galleryRef}
-      className={`grid grid-cols-${columns} gap-4`}
+      className={`grid gap-${gap}`}
       style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
     >
       {images.map((image, index) => (
-        <div key={image.id} className="aspect-square">
+        <div key={image.id} className={`${aspectRatioClass} relative overflow-hidden rounded-lg`}>
           <OptimizedImage
             src={image.src}
             alt={image.alt}
-            className="w-full h-full object-cover rounded-lg"
-            priority={index < columns * 2 ? 'high' : 'auto'}
-            lazy={index >= columns * 2}
-            placeholder="shimmer"
+            className="absolute inset-0 w-full h-full"
+            size={imageSize}
+            priority={image.priority || index < columns ? 'high' : 'auto'}
+            lazy={index >= columns * 2} // Lazy load images beyond second row
           />
         </div>
       ))}
+    </div>
+  );
+}
+
+// Progressive image loader component
+export function ProgressiveImage({
+  src,
+  alt,
+  className,
+  thumbnail,
+  onLoad
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  thumbnail?: string;
+  onLoad?: () => void;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(thumbnail || '');
+  
+  useEffect(() => {
+    // Load thumbnail first if provided
+    if (thumbnail && !isLoaded) {
+      const img = new window.Image();
+      img.src = thumbnail;
+      img.onload = () => setCurrentSrc(thumbnail);
+    }
+    
+    // Load full image
+    const fullImage = new window.Image();
+    fullImage.src = src;
+    fullImage.onload = () => {
+      setCurrentSrc(src);
+      setIsLoaded(true);
+      onLoad?.();
+    };
+  }, [src, thumbnail, isLoaded, onLoad]);
+  
+  return (
+    <div className={`relative ${className}`}>
+      {currentSrc && (
+        <Image
+          src={currentSrc}
+          alt={alt}
+          fill
+          className={`w-full h-full object-cover transition-all duration-500 ${
+            !isLoaded ? 'filter blur-sm scale-105' : ''
+          }`}
+          unoptimized
+        />
+      )}
+      {!currentSrc && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+      )}
     </div>
   );
 }

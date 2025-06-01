@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import WalletConnectButton from './WalletConnectButton';
-import { useWalletContext } from '@/contexts/WalletContext';
+import { useClientSafeWallet } from '@/hooks/useClientSafeWallet';
 import { useBlockchainEvents } from '@/hooks/useBlockchainEvents';
 import { useSuiClientRecovery } from '@/hooks/useSuiClientRecovery';
 import { getSuiClient } from '@/lib/sui-client';
@@ -26,6 +26,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ChartBarIcon,
+  CircleStackIcon,
 } from '@heroicons/react/24/outline';
 import { BellIcon as BellIconSolid } from '@heroicons/react/24/solid';
 
@@ -40,9 +41,11 @@ interface Breadcrumb {
 
 function Navbar({ currentPage }: NavbarProps) {
   const pathname = usePathname();
-  const { connected, address } = useWalletContext();
-  const { events, connectionState } = useBlockchainEvents();
-  const { suiClient } = useSuiClientRecovery();
+  const walletContext = useClientSafeWallet();
+  const connected = walletContext?.connected || false;
+  const address = walletContext?.address || null;
+  const { eventCache, connectionState } = useBlockchainEvents();
+  const { executeWithSuiClient } = useSuiClientRecovery();
   
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -92,24 +95,38 @@ function Navbar({ currentPage }: NavbarProps) {
   // Fetch NFT count and balance when wallet is connected
   useEffect(() => {
     const fetchWalletData = async () => {
-      if (!connected || !address || !suiClient) return;
+      if (!connected || !address) return;
 
-      try {
-        // Fetch balance
-        const balanceData = await suiClient.getBalance({ owner: address });
-        const suiBalance = (parseInt(balanceData.totalBalance) / 1e9).toFixed(4);
-        setBalance(suiBalance);
+      // Fetch balance
+      const balanceResult = await executeWithSuiClient(
+        async (client) => {
+          const balanceData = await client.getBalance({ owner: address });
+          const suiBalance = (parseInt(balanceData.totalBalance) / 1e9).toFixed(4);
+          return suiBalance;
+        },
+        'Fetching wallet balance'
+      );
+      
+      if (balanceResult) {
+        setBalance(balanceResult);
+      }
 
-        // Fetch NFT count
-        const objects = await suiClient.getOwnedObjects({
-          owner: address,
-          filter: {
-            StructType: `${testnetConfig.contracts.todoNft.packageId}::${testnetConfig.contracts.todoNft.moduleName}::${testnetConfig.contracts.todoNft.structName}`,
-          },
-        });
-        setNftCount(objects.data.length);
-      } catch (error) {
-        console.error('Error fetching wallet data:', error);
+      // Fetch NFT count
+      const nftCountResult = await executeWithSuiClient(
+        async (client) => {
+          const objects = await client.getOwnedObjects({
+            owner: address,
+            filter: {
+              StructType: `${testnetConfig.contracts.todoNft.packageId}::${testnetConfig.contracts.todoNft.moduleName}::${testnetConfig.contracts.todoNft.structName}`,
+            },
+          });
+          return objects.data.length;
+        },
+        'Fetching NFT count'
+      );
+      
+      if (nftCountResult !== null) {
+        setNftCount(nftCountResult);
       }
     };
 
@@ -117,15 +134,15 @@ function Navbar({ currentPage }: NavbarProps) {
     // Refresh every 30 seconds
     const interval = setInterval(fetchWalletData, 30000);
     return () => clearInterval(interval);
-  }, [connected, address, suiClient]);
+  }, [connected, address, executeWithSuiClient]);
 
   // Handle blockchain events for notifications
   useEffect(() => {
-    const recentEvents = events.filter(
-      event => Date.now() - event.timestamp < 5 * 60 * 1000 // Last 5 minutes
+    const recentEvents = (eventCache || []).filter(
+      (event: any) => Date.now() - event.timestamp < 5 * 60 * 1000 // Last 5 minutes
     );
     setNotifications(recentEvents);
-  }, [events]);
+  }, [eventCache]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -159,6 +176,7 @@ function Navbar({ currentPage }: NavbarProps) {
   const navLinks = [
     { href: '/', label: 'Home', icon: HomeIcon },
     { href: '/dashboard', label: 'Dashboard', icon: CreditCardIcon },
+    { href: '/storage', label: 'Storage', icon: CircleStackIcon },
     { href: '/walrus-health', label: 'Health Monitor', icon: ChartBarIcon },
     { href: '/nfts', label: 'NFT Gallery', icon: PhotoIcon },
     { href: '/nft-demo', label: 'NFT Demo', icon: RocketLaunchIcon },

@@ -2,6 +2,9 @@
 
 import React, { ReactNode, useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { getAnalytics } from '@/lib/analytics';
+import { classifyError, errorPersistence, retryWithRecovery, ErrorType } from '../lib/error-recovery';
+import { showError } from '../lib/error-handling';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -14,6 +17,27 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
   const [error, setError] = useState<Error | null>(null);
   const [mounted, setMounted] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isRecovering, setIsRecovering] = useState(false);
+
+  // Reset error state with retry functionality
+  const resetError = useCallback(async () => {
+    if (isRecovering) return;
+    
+    setIsRecovering(true);
+    setHasError(false);
+    setError(null);
+    setRetryCount(prev => prev + 1);
+    
+    // Show a toast that we're retrying
+    toast.success('Attempting recovery...', {
+      duration: 2000,
+      position: 'top-right',
+    });
+    
+    // Add delay for recovery
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsRecovering(false);
+  }, [isRecovering]);
 
   useEffect(() => {
     // Track mounting for hydration safety
@@ -61,17 +85,47 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         ? event.error
         : new Error(String(event.error));
 
+      // Save error to persistence
+      const errorType = classifyError(errorInstance);
+      errorPersistence.saveError({
+        id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: Date.now(),
+        type: errorType,
+        message: errorInstance.message,
+        stack: errorInstance.stack,
+        retryCount: 0,
+        recovered: false,
+        recoveryAttempts: []
+      }).catch(() => {
+        // Ignore persistence errors
+      });
+
       if (isCriticalError) {
         // Show toast notification for critical errors
-        toast.error(errorMessage || 'An unexpected error occurred', {
+        showError({
+          title: 'Critical Error',
+          message: errorMessage || 'An unexpected error occurred',
           duration: 5000,
-          position: 'top-right',
+          showRetry: true,
+          onRetry: () => {
+            resetError();
+          }
         });
       }
 
       setError(errorInstance);
       setHasError(true);
       onError?.(errorInstance);
+      
+      // Track error in analytics
+      const analytics = getAnalytics();
+      if (analytics) {
+        analytics.trackError(errorInstance, {
+          source: 'error-boundary',
+          critical: isCriticalError,
+          url: window.location.href,
+        });
+      }
 
       // Prevent the error from propagating
       event.preventDefault();
@@ -134,11 +188,31 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
         ? event.reason
         : new Error(String(event.reason));
 
+      // Save error to persistence
+      const errorType = classifyError(errorInstance);
+      errorPersistence.saveError({
+        id: `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: Date.now(),
+        type: errorType,
+        message: errorInstance.message,
+        stack: errorInstance.stack,
+        retryCount: 0,
+        recovered: false,
+        recoveryAttempts: []
+      }).catch(() => {
+        // Ignore persistence errors
+      });
+
       if (isCriticalError) {
         // Show toast notification for critical errors
-        toast.error(rejectionMessage || 'An unexpected error occurred', {
+        showError({
+          title: 'Critical Error',
+          message: rejectionMessage || 'An unexpected error occurred',
           duration: 5000,
-          position: 'top-right',
+          showRetry: true,
+          onRetry: () => {
+            resetError();
+          }
         });
       }
 
@@ -146,6 +220,16 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
       setError(errorInstance);
       setHasError(true);
       onError?.(errorInstance);
+      
+      // Track rejection in analytics
+      const analytics = getAnalytics();
+      if (analytics) {
+        analytics.trackError(errorInstance, {
+          source: 'unhandled-rejection',
+          critical: isCriticalError,
+          url: window.location.href,
+        });
+      }
 
       // Prevent the error from propagating
       event.preventDefault();
@@ -160,20 +244,7 @@ export function ErrorBoundary({ children, fallback, onError }: ErrorBoundaryProp
       window.removeEventListener('error', errorHandler);
       window.removeEventListener('unhandledrejection', rejectionHandler);
     };
-  }, [onError]);
-
-  // Reset error state with retry functionality
-  const resetError = useCallback(() => {
-    setHasError(false);
-    setError(null);
-    setRetryCount(prev => prev + 1);
-    
-    // Show a toast that we're retrying
-    toast.success('Retrying...', {
-      duration: 2000,
-      position: 'top-right',
-    });
-  }, []);
+  }, [onError, resetError]);
 
   // Enhanced default fallback UI with better error display
   const defaultFallback = (

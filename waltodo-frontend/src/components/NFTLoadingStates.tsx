@@ -290,7 +290,7 @@ const animationStyles = `
 
 // Export a style tag component for the animations
 export const NFTLoadingStyles = () => (
-  <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
+  <style>{animationStyles}</style>
 );
 
 // Main component that showcases all loading states

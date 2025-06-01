@@ -25,9 +25,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Basic Thumbnail</p>
             <TodoNFTImage
-              url={exampleWalrusUrl}
+              imageUrl={exampleWalrusUrl}
               alt="NFT Thumbnail"
-              mode="thumbnail"
+              displayMode="thumbnail"
             />
           </div>
 
@@ -35,10 +35,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">No Hover Effects</p>
             <TodoNFTImage
-              url={exampleHttpUrl}
+              imageUrl={exampleHttpUrl}
               alt="NFT Thumbnail"
-              mode="thumbnail"
-              enableHover={false}
+              displayMode="thumbnail"
             />
           </div>
 
@@ -46,10 +45,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Non-Expandable</p>
             <TodoNFTImage
-              url={exampleBlobId}
+              imageUrl={exampleBlobId}
               alt="NFT Thumbnail"
-              mode="thumbnail"
-              expandable={false}
+              displayMode="thumbnail"
             />
           </div>
         </div>
@@ -63,9 +61,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Standard Preview</p>
             <TodoNFTImage
-              url={exampleWalrusUrl}
+              imageUrl={exampleWalrusUrl}
               alt="NFT Preview"
-              mode="preview"
+              displayMode="preview"
             />
           </div>
 
@@ -73,9 +71,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Custom Styled Preview</p>
             <TodoNFTImage
-              url={exampleHttpUrl}
+              imageUrl={exampleHttpUrl}
               alt="Styled NFT Preview"
-              mode="preview"
+              displayMode="preview"
               className="shadow-xl border-4 border-blue-500"
             />
           </div>
@@ -88,9 +86,9 @@ export default function TodoNFTImageUsageExample() {
         <div className="space-y-2">
           <p className="text-sm text-gray-600">Full Size with Priority Loading</p>
           <TodoNFTImage
-            url={exampleWalrusUrl}
+            imageUrl={exampleWalrusUrl}
             alt="Full Size NFT"
-            mode="full"
+            displayMode="full"
             priority={true}
             quality={100}
           />
@@ -105,10 +103,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">With Loading Skeleton</p>
             <TodoNFTImage
-              url={exampleWalrusUrl}
+              imageUrl={exampleWalrusUrl}
               alt="Loading Example"
-              mode="thumbnail"
-              showSkeleton={true}
+              displayMode="thumbnail"
             />
           </div>
 
@@ -116,10 +113,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Without Loading Skeleton</p>
             <TodoNFTImage
-              url={exampleHttpUrl}
+              imageUrl={exampleHttpUrl}
               alt="No Skeleton Example"
-              mode="thumbnail"
-              showSkeleton={false}
+              displayMode="thumbnail"
             />
           </div>
         </div>
@@ -133,9 +129,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Invalid URL</p>
             <TodoNFTImage
-              url="invalid-url"
+              imageUrl="invalid-url"
               alt="Error Example"
-              mode="thumbnail"
+              displayMode="thumbnail"
             />
           </div>
 
@@ -143,10 +139,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Custom Fallback Image</p>
             <TodoNFTImage
-              url="invalid-url"
+              imageUrl="invalid-url"
               alt="Custom Fallback Example"
-              mode="thumbnail"
-              fallbackUrl="/images/custom-fallback.png"
+              displayMode="thumbnail"
             />
           </div>
         </div>
@@ -160,9 +155,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">With Click Handler</p>
             <TodoNFTImage
-              url={exampleWalrusUrl}
+              imageUrl={exampleWalrusUrl}
               alt="Clickable NFT"
-              mode="thumbnail"
+              displayMode="thumbnail"
               onClick={() => alert('Image clicked!')}
             />
           </div>
@@ -171,10 +166,9 @@ export default function TodoNFTImageUsageExample() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Eager Loading</p>
             <TodoNFTImage
-              url={exampleHttpUrl}
+              imageUrl={exampleHttpUrl}
               alt="Eager Loaded NFT"
-              mode="thumbnail"
-              lazy={false}
+              displayMode="thumbnail"
             />
           </div>
         </div>
@@ -186,10 +180,9 @@ export default function TodoNFTImageUsageExample() {
         <div className="space-y-2">
           <p className="text-sm text-gray-600">With Custom ARIA Label</p>
           <TodoNFTImage
-            url={exampleWalrusUrl}
+            imageUrl={exampleWalrusUrl}
             alt="Accessible NFT Image"
-            mode="preview"
-            ariaLabel="NFT artwork depicting a digital landscape. Click to view in full size."
+            displayMode="preview"
           />
         </div>
       </section>
@@ -202,9 +195,9 @@ export default function TodoNFTImageUsageExample() {
           {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
             <TodoNFTImage
               key={index}
-              url={exampleWalrusUrl}
+              imageUrl={exampleWalrusUrl}
               alt={`NFT ${index}`}
-              mode="thumbnail"
+              displayMode="thumbnail"
               className="w-full h-full"
             />
           ))}
@@ -218,31 +211,25 @@ export default function TodoNFTImageUsageExample() {
           <pre className="text-sm">
             <code>{`// Basic usage
 <TodoNFTImage
-  url="walrus://blobId123..."
+  imageUrl="walrus://blobId123..."
   alt="My NFT"
 />
 
 // With all options
 <TodoNFTImage
-  url={nftUrl}
+  imageUrl={nftUrl}
   alt="Detailed NFT Description"
-  mode="preview"
+  displayMode="preview"
   className="custom-class"
-  lazy={true}
   onClick={handleClick}
-  showSkeleton={true}
-  enableHover={true}
-  fallbackUrl="/fallback.png"
   priority={false}
   quality={85}
-  expandable={true}
-  ariaLabel="Custom accessibility label"
 />
 
 // Different URL formats supported
-<TodoNFTImage url="walrus://blob123..." alt="Walrus URL" />
-<TodoNFTImage url="https://testnet.wal.app/blob/123..." alt="HTTP URL" />
-<TodoNFTImage url="1234567890abcdef..." alt="Direct Blob ID" />`}</code>
+<TodoNFTImage imageUrl="walrus://blob123..." alt="Walrus URL" />
+<TodoNFTImage imageUrl="https://testnet.wal.app/blob/123..." alt="HTTP URL" />
+<TodoNFTImage imageUrl="1234567890abcdef..." alt="Direct Blob ID" />`}</code>
           </pre>
         </div>
       </section>

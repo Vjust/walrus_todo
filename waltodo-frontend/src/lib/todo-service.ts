@@ -759,7 +759,8 @@ export async function createNFT(
         format: 'jpeg'
       });
       
-      const imageResult = await walrusClient.uploadBlob(processedImage.blob, { epochs: 5 });
+      const imageBuffer = new Uint8Array(await processedImage.blob.arrayBuffer());
+      const imageResult = await walrusClient.upload(imageBuffer, { epochs: 5 });
       imageData = {
         blobId: imageResult.blobId,
         url: walrusClient.getBlobUrl(imageResult.blobId),
@@ -872,7 +873,8 @@ export async function updateNFTMetadata(
         format: 'jpeg'
       });
       
-      const imageResult = await walrusClient.uploadBlob(processedImage.blob, { epochs: 5 });
+      const imageBuffer = new Uint8Array(await processedImage.blob.arrayBuffer());
+      const imageResult = await walrusClient.upload(imageBuffer, { epochs: 5 });
       newImageData = {
         blobId: imageResult.blobId,
         url: walrusClient.getBlobUrl(imageResult.blobId),
@@ -1261,7 +1263,7 @@ function updateNFTCache(objectId: string, todo: Todo): void {
   });
   
   // Clean up old cache entries
-  for (const [key, value] of nftCache.entries()) {
+  for (const [key, value] of Array.from(nftCache.entries())) {
     if (Date.now() - value.timestamp > CACHE_DURATION) {
       nftCache.delete(key);
     }

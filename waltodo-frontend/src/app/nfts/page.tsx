@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TodoNFTGrid } from '@/components/TodoNFTGrid';
 import WalletConnectButton from '@/components/WalletConnectButton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { useWallet } from '@/contexts/WalletContext';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { useSuiTodos } from '@/hooks/useSuiTodos';
 import toast from 'react-hot-toast';
 import { Todo } from '@/types/todo-nft';
@@ -45,9 +45,11 @@ const AlertCircleIcon = ({ className }: { className?: string }) => (
 
 // Set page metadata dynamically
 function NFTGalleryPage() {
-  const { address, connected: isConnected } = useWallet();
+  const walletContext = useWalletContext();
+  const { address, connected: isConnected } = walletContext || { address: null, connected: false };
   const { state, actions } = useSuiTodos();
-  const { todos, loading, error } = state;
+  const { loading, error } = state;
+  const todos = useMemo(() => state.todos, [state.todos]);
   const { refreshTodos } = actions;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -105,7 +107,7 @@ function NFTGalleryPage() {
           todo.title,
           todo.description || '',
           (todo.tags && todo.tags[0]) || 'Uncategorized',
-          new Date(todo.createdAt).toISOString(),
+          todo.createdAt ? new Date(todo.createdAt).toISOString() : new Date().toISOString(),
           todo.imageUrl || '',
           100000, // estimated size
         ]);
@@ -277,7 +279,7 @@ function NFTGalleryPage() {
                 Error loading NFTs
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {error.message || 'Failed to load your NFT collection'}
+                {String(error) || 'Failed to load your NFT collection'}
               </p>
               <div className="mt-6">
                 <button
@@ -310,14 +312,7 @@ function NFTGalleryPage() {
               </div>
             </div>
           ) : (
-            <TodoNFTGrid
-              showActions={true}
-              onTodoUpdate={() => refreshTodos()}
-              onTodoDelete={() => refreshTodos()}
-              onTodoTransfer={() => refreshTodos()}
-              useInfiniteScroll={true}
-              enableVirtualization={true}
-            />
+            <TodoNFTGrid className="w-full" />
           )}
         </main>
 
