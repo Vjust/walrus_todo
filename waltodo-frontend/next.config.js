@@ -1,8 +1,19 @@
 /** @type {import('next').NextConfig} */
 
+// Check if we're building for static export
+const isStaticExport = process.env.NEXT_EXPORT === 'true' || process.env.BUILD_MODE === 'static';
+
 // Simple Next.js configuration for production build
 const nextConfig = {
   reactStrictMode: true,
+  
+  // Static export configuration
+  ...(isStaticExport && {
+    output: 'export',
+    trailingSlash: true,
+    skipTrailingSlashRedirect: true,
+    distDir: 'out',
+  }),
   
   // Transpile packages that need it
   transpilePackages: ['@mysten/dapp-kit', '@suiet/wallet-sdk', '@wallet-standard/react'],
