@@ -234,20 +234,20 @@ describe('VanillaSuiClient', () => {
     it('should get todos from blockchain', async () => {
       const todos = await client.getTodosFromBlockchain('0x123');
       expect(Array.isArray(todos)).toBe(true);
-      if (todos.length > 0) {
-        expect(todos[0]).toHaveProperty('id');
-        expect(todos[0]).toHaveProperty('title');
-        expect(todos[0]).toHaveProperty('completed');
-      }
+      
+      // If todos exist, validate their structure
+      todos.forEach(todo => {
+        expect(todo).toHaveProperty('id');
+        expect(todo).toHaveProperty('title');
+        expect(todo).toHaveProperty('completed');
+      });
     });
 
     it('should get todo by object ID', async () => {
       const todo = await client.getTodoByObjectId('0xtest');
       expect(todo).toBeTruthy();
-      if (todo) {
-        expect(todo.id).toBe('0xtest');
-        expect(todo.title).toBe('Test Todo');
-      }
+      expect(todo?.id).toBe('0xtest');
+      expect(todo?.title).toBe('Test Todo');
     });
 
     it('should get transaction status', async () => {
